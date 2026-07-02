@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -97,8 +97,8 @@ func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 				Active:      new(u.Active),
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if record.FullName == "" && u.Name.Formatted != "" {

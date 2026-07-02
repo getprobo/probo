@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -66,13 +66,13 @@ func (d *IntercomDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 		record := AccountRecord{
 			Email:       a.Email,
 			FullName:    a.Name,
-			Role:        intercomRole(a.HasInboxSeat),
+			Roles:       intercomRoles(a.HasInboxSeat),
 			JobTitle:    a.JobTitle,
 			IsAdmin:     false, // Intercom API does not expose admin role information
 			ExternalID:  a.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if record.Email != "" || record.FullName != "" {
@@ -117,10 +117,10 @@ func (d *IntercomDriver) fetchAdmins(ctx context.Context) (*intercomAdminsRespon
 // seat. The Intercom API does not expose a proper role field, so this is the
 // best approximation available: users with inbox seats are active agents,
 // those without are limited/viewer users.
-func intercomRole(hasInboxSeat bool) string {
+func intercomRoles(hasInboxSeat bool) []string {
 	if hasInboxSeat {
-		return "Agent"
+		return []string{"Agent"}
 	}
 
-	return "Viewer"
+	return []string{"Viewer"}
 }

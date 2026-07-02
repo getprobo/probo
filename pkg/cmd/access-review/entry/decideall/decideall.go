@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,9 +24,9 @@ import (
 )
 
 const decideAllMutation = `
-mutation($input: RecordAccessEntryDecisionsInput!) {
-  recordAccessEntryDecisions(input: $input) {
-    accessEntries {
+mutation($input: RecordAccessReviewEntryDecisionsInput!) {
+  recordAccessReviewEntryDecisions(input: $input) {
+    accessReviewEntries {
       id
       email
       decision
@@ -36,13 +36,13 @@ mutation($input: RecordAccessEntryDecisionsInput!) {
 `
 
 type decideAllResponse struct {
-	RecordAccessEntryDecisions struct {
-		AccessEntries []struct {
+	RecordAccessReviewEntryDecisions struct {
+		AccessReviewEntries []struct {
 			ID       string `json:"id"`
 			Email    string `json:"email"`
 			Decision string `json:"decision"`
-		} `json:"accessEntries"`
-	} `json:"recordAccessEntryDecisions"`
+		} `json:"accessReviewEntries"`
+	} `json:"recordAccessReviewEntryDecisions"`
 }
 
 func NewCmdDecideAll(f *cmdutil.Factory) *cobra.Command {
@@ -96,8 +96,8 @@ func NewCmdDecideAll(f *cmdutil.Factory) *cobra.Command {
 			decisions := make([]map[string]any, len(flagEntryIDs))
 			for i, id := range flagEntryIDs {
 				d := map[string]any{
-					"accessEntryId": id,
-					"decision":      flagDecision,
+					"accessReviewEntryId": id,
+					"decision":            flagDecision,
 				}
 				if flagNote != "" {
 					d["decisionNote"] = flagNote
@@ -119,7 +119,7 @@ func NewCmdDecideAll(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			entries := resp.RecordAccessEntryDecisions.AccessEntries
+			entries := resp.RecordAccessReviewEntryDecisions.AccessReviewEntries
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, entries)

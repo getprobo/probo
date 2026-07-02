@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Card, Spinner, useToast } from "@probo/ui";
+import { Card, useToast } from "@probo/ui";
 import { useEffect, useRef, useState } from "react";
 import {
   type PreloadedQuery,
@@ -24,7 +24,7 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 import { graphql } from "react-relay";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { useWindowSize } from "usehooks-ts";
 
 import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "#/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
@@ -94,6 +94,7 @@ export function EmployeeDocumentSignaturePage(props: {
   queryRef: PreloadedQuery<EmployeeDocumentSignaturePageQuery>;
 }) {
   const { queryRef } = props;
+  const organizationId = useOrganizationId();
   const { viewer } = usePreloadedQuery<EmployeeDocumentSignaturePageQuery>(
     employeeDocumentSignaturePageQuery,
     queryRef,
@@ -102,9 +103,10 @@ export function EmployeeDocumentSignaturePage(props: {
 
   if (!document) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner />
-      </div>
+      <Navigate
+        to={`/organizations/${organizationId}/employee/signatures`}
+        replace
+      />
     );
   }
 
@@ -180,7 +182,7 @@ function DocumentSignatureContent({
           title: __("Error"),
           description: formatError(
             __("Failed to sign document"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -203,7 +205,7 @@ function DocumentSignatureContent({
             title: __("Error"),
             description: formatError(
               __("Failed to load PDF"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -220,7 +222,7 @@ function DocumentSignatureContent({
           title: __("Error"),
           description: formatError(
             __("Failed to load PDF"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -231,6 +233,15 @@ function DocumentSignatureContent({
       pdfUrlRef.current = null;
     };
   }, [selectedVersion?.id, exportEmployeeDocumentVersionPDF, toast, __]);
+
+  if (versions.length === 0) {
+    return (
+      <Navigate
+        to={`/organizations/${organizationId}/employee/signatures`}
+        replace
+      />
+    );
+  }
 
   return (
     <div

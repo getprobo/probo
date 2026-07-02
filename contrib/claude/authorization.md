@@ -251,9 +251,13 @@ and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
 | Product action constants (`core:*`) | `pkg/probo/actions.go` |
 | IAM action constants (`iam:*`) | `pkg/iam/iam_actions.go` |
 | Product role policies (`ProboPolicySet`) | `pkg/probo/policies.go` |
+| Per-service policy sets (e.g. `accessreview.PolicySet`, `agentrun.PolicySet`) | `pkg/<service>/actions.go`, `pkg/<service>/policies.go` |
 | IAM role policies (`IAMPolicySet`) | `pkg/iam/iam_policies.go` |
 | Authorizer + `AuthorizationAttributer` | `pkg/iam/authorizer.go` |
 | PolicySet registration | `pkg/iam/policy_set.go` |
+| OAuth2 scope registry (`oauth2scope.Registry`) | `pkg/iam/oauth2scope/registry.go` |
+| OAuth2 scope constants (per domain) | `pkg/<service>/oauth2_scopes.go` |
+| OAuth2 discovery + request context | `pkg/iam/oauth2/` |
 | GraphQL authz helper | `pkg/server/api/authz/authorization.go` |
 | MCP authz + recovery | `pkg/server/api/mcp/v1/resolver.go`, `mcputils/recovery.go` |
 
@@ -270,6 +274,51 @@ const (
 	ActionThirdPartyDelete = "core:thirdParty:delete"
 )
 ```
+
+## OAuth2 API scopes
+
+OAuth2 scopes for API access are defined as `coredata.OAuth2Scope` constants in each owning package (for example [`pkg/probo/oauth2_scopes.go`](../../pkg/probo/oauth2_scopes.go), [`pkg/iam/oauth2_scopes.go`](../../pkg/iam/oauth2_scopes.go)). [`pkg/coredata/oauth2_scope.go`](../../pkg/coredata/oauth2_scope.go) defines the persistence type. Standard OIDC scopes live in [`pkg/iam/oauth2/scope.go`](../../pkg/iam/oauth2/scope.go). Register scope sets with `Authorizer.RegisterScopes`.
+
+**Format:**
+
+- Read: `v1:<namespace>:read` (e.g. `v1:privacy:read`, `v1:document:read`, `v1:org:read`)
+- Write / full: `v1:<namespace>` without the `:read` suffix (e.g. `v1:org`, `v1:connector`, `v1:agent`)
+
+Scopes are namespace- or product-level only — no resource segments (e.g. `v1:privacy:dpia` is not supported).
+
+**Discovery:**
+
+- Authorization server (RFC 8414): `scopes_supported` on `/.well-known/oauth-authorization-server` lists OIDC + all API scopes; `protected_resources` links to the resource metadata document
+- Protected resource (RFC 9728): `scopes_supported` on `/.well-known/oauth-protected-resource` lists `openid` plus write API scopes only (no `:read` suffix); matches CIMD client registration
+
+**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `oauth2scope.Registry` mappings via `Registry.Allows`. Each domain package exports `OAuth2ScopeMappings` in its `oauth2_scopes.go`; `probod` registers all domain mappings on the shared registry before `iam.NewService`. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
+
+Add new namespace-level scope constants in the owning package's `oauth2_scopes.go`, map their IAM actions in that package's `OAuth2ScopeMappings`, and add the mapping to `probod` wiring alongside the other domain registrations. Write scopes are registered only when their mutating IAM actions are mapped.
+
+**Well-known Probo CLI client:** `iam_oauth2_clients` scopes for `AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp` must match `CLIClientScopes` in `pkg/cli/config/config.go` (requested by `prb auth login`). When adding API scopes, update the client migration, `CLIClientScopes`, and scope registration together.
+
+### Personal OAuth2 access tokens
+
+Manual bearer tokens created from the console are stored in `iam_oauth2_access_tokens` with a `NULL` `client_id` and are scoped to the creating identity. They are managed via Connect GraphQL on the signed-in user's `Identity`, similar to personal API keys. IAM actions:
+
+| Action | Purpose |
+|--------|---------|
+| `iam:oauth2-access-token:create` | Create a manual token |
+| `iam:oauth2-access-token:list` | List your tokens |
+| `iam:oauth2-access-token:get` | Read token metadata |
+| `iam:oauth2-access-token:delete` | Revoke (delete) a token |
+
+**Policies:** `IAMSelfManageIdentityPolicy` allows listing on your identity; `IAMSelfManageOAuth2AccessTokenPolicy` allows create/get/delete when `principal.id == resource.identity_id`. **OAuth2 scope gate:** create/list/get/delete map to `v1:iam:read` / `v1:iam` in `pkg/iam/oauth2_scopes.go`.
+
+## Built-in role policies
+
+| Role | Access level |
+|------|-------------|
+| `OWNER` | Full access to all features including org management |
+| `ADMIN` | Full access to core features, restricted org management |
+| `VIEWER` | Read-only access to most entities |
+| `AUDITOR` | Read-only, excludes internal/employee content |
+| `EMPLOYEE` | Can sign documents and view internal content |
 
 ## Built-in role policies
 
@@ -290,6 +339,20 @@ When adding a new entity that needs authorization:
 3. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
 4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
 5. **Resolver calls** — add `scope, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `scope, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
+
+## Decision logging
+
+Every authorization evaluation (allow and deny) emits a structured `authz decision`
+log line through the authorizer logger with opaque IDs only:
+
+- `effect` — `allow`, `deny`, `no_match`, or `error`
+- `action`, `principal_id`, `resource_id`
+- `policy_id` — statement SID when available
+- `reason` — human-readable explanation for operators (never returned to clients)
+- `latency` — PDP evaluation duration
+
+Audit log entries remain **allow-only**. Denials are visible in application logs,
+not the product audit trail.
 
 ## Key patterns
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 
 //go:generate go tool github.com/99designs/gqlgen generate
 
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,11 +39,14 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -61,6 +64,8 @@ type (
 
 	Resolver struct {
 		trust         *trust.Service
+		resourceAlias *resourcealias.Service
+		fileManager   *filemanager.Service
 		esign         *esign.Service
 		mailman       *mailman.Service
 		logger        *log.Logger
@@ -74,11 +79,14 @@ func NewMux(
 	logger *log.Logger,
 	iamSvc *iam.Service,
 	trustSvc *trust.Service,
+	resourceAliasSvc *resourcealias.Service,
+	fileManagerSvc *filemanager.Service,
 	esignSvc *esign.Service,
 	mailmanSvc *mailman.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	baseURL *baseurl.BaseURL,
+	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -95,7 +103,19 @@ func NewMux(
 	)
 	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
+	graphqlHandler := NewGraphQLHandler(
+		iamSvc,
+		trustSvc,
+		resourceAliasSvc,
+		fileManagerSvc,
+		esignSvc,
+		mailmanSvc,
+		logger,
+		baseURL,
+		cookieConfig,
+		tokenSecret,
+		graphqlLimits,
+	)
 
 	r.Group(
 		func(r chi.Router) {

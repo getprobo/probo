@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+import { getSelfResourceUrls } from "./self-origin";
 
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
 const STACK_URL_RE =
@@ -43,6 +45,8 @@ export function getInitiatorURL(apiOrigin: string): InitiatorContext {
   let fromExtension = false;
   let url: string | null = null;
 
+  const selfUrls = getSelfResourceUrls();
+
   STACK_URL_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = STACK_URL_RE.exec(stack)) !== null) {
@@ -67,6 +71,8 @@ export function getInitiatorURL(apiOrigin: string): InitiatorContext {
     if (parsed.origin === location.origin) continue;
 
     const result = parsed.origin + parsed.pathname;
+    if (selfUrls.has(result)) continue;
+
     url = result.length > MAX_INITIATOR_URL_LENGTH
       ? result.slice(0, MAX_INITIATOR_URL_LENGTH)
       : result;

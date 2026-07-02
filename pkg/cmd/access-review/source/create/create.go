@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,9 +25,9 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateAccessSourceInput!) {
-  createAccessSource(input: $input) {
-    accessSourceEdge {
+mutation($input: CreateAccessReviewSourceInput!) {
+  createAccessReviewSource(input: $input) {
+    accessReviewSourceEdge {
       node {
         id
         name
@@ -38,14 +38,14 @@ mutation($input: CreateAccessSourceInput!) {
 `
 
 type createResponse struct {
-	CreateAccessSource struct {
-		AccessSourceEdge struct {
+	CreateAccessReviewSource struct {
+		AccessReviewSourceEdge struct {
 			Node struct {
 				ID   string `json:"id"`
 				Name string `json:"name"`
 			} `json:"node"`
-		} `json:"accessSourceEdge"`
-	} `json:"createAccessSource"`
+		} `json:"accessReviewSourceEdge"`
+	} `json:"createAccessReviewSource"`
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
@@ -127,7 +127,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			s := resp.CreateAccessSource.AccessSourceEdge.Node
+			s := resp.CreateAccessReviewSource.AccessReviewSourceEdge.Node
 			out := f.IOStreams.Out
 			_, _ = fmt.Fprintf(out, "Created access source %s\n", s.ID)
 			_, _ = fmt.Fprintf(out, "Name: %s\n", s.Name)

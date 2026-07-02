@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -90,6 +90,48 @@ func TestRegistry_Register(t *testing.T) {
 			DisplayName:     "Slack",
 			APIKeyBasicAuth: true,
 			APIKeyHeader:    "x-api-key",
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "mutually exclusive")
+	})
+
+	t.Run("APIKeyAuthScheme and APIKeyHeader mutually exclusive", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:         coredata.ConnectorProviderSlack,
+			DisplayName:      "Slack",
+			APIKeyAuthScheme: "SSWS",
+			APIKeyHeader:     "x-api-key",
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "mutually exclusive")
+	})
+
+	t.Run("APIKeyBasicAuthUserPass and APIKeyHeader mutually exclusive", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:                coredata.ConnectorProviderSlack,
+			DisplayName:             "Slack",
+			APIKeyBasicAuthUserPass: true,
+			APIKeyHeader:            "x-api-key",
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "mutually exclusive")
+	})
+
+	t.Run("BuildTokenURLForDomain and BuildTokenURLForSite mutually exclusive", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:               coredata.ConnectorProviderSlack,
+			DisplayName:            "Slack",
+			BuildTokenURLForDomain: func(string) (string, error) { return "", nil },
+			BuildTokenURLForSite:   func(string) (string, error) { return "", nil },
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "mutually exclusive")

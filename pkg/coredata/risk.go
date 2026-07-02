@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -448,57 +448,6 @@ WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query risks: %w", err)
-	}
-
-	risks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Risk])
-	if err != nil {
-		return fmt.Errorf("cannot collect risks: %w", err)
-	}
-
-	*r = risks
-
-	return nil
-}
-
-func (r *Risks) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-SELECT
-	r.id,
-	r.organization_id,
-	r.name,
-	r.description,
-	r.category,
-	r.owner_profile_id,
-	NULL as owner_full_name,
-	r.treatment,
-	r.note,
-	r.inherent_likelihood,
-	r.inherent_impact,
-	r.inherent_risk_score,
-	r.residual_likelihood,
-	r.residual_impact,
-	r.residual_risk_score,
-	r.created_at,
-	r.updated_at
-FROM
-	risks r
-WHERE %s
-	AND r.organization_id = @organization_id
-ORDER BY r.name ASC, r.id ASC
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

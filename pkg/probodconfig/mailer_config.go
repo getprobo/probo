@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,14 +16,15 @@ package probodconfig
 
 type MailerConfig struct {
 	MailerInterval int        `json:"mailer-interval"`
-	SenderName     string     `json:"sender-name"`
-	SenderEmail    string     `json:"sender-email"`
-	SMTP           SMTPConfig `json:"smtp"`
+	SenderName     string     `json:"sender-name,omitempty"`
+	SenderEmail    string     `json:"sender-email,omitempty"`
+	SMTP           SMTPConfig `json:"smtp,omitzero"`
 }
 
 type SMTPConfig struct {
-	Addr        string `json:"addr"`
-	User        string `json:"user"`
-	Password    string `json:"password"`
+	Addr        string `json:"addr,omitempty"`
+	User        string `json:"user,omitempty"`
+	Password    string `json:"password,omitempty"`
 	TLSRequired bool   `json:"tls-required"`
+	HelloName   string `json:"hello-name,omitempty"`
 }

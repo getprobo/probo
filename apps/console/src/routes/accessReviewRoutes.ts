@@ -38,7 +38,7 @@ export const accessReviewRoutes = [
     path: "access-reviews/sources/new/csv",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("#/pages/organizations/access-reviews/CreateCsvAccessSourcePageLoader"),
+      () => import("#/pages/organizations/access-reviews/CreateCsvAccessReviewSourcePageLoader"),
     ),
   },
 ] satisfies AppRoute[];

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,16 @@ import { THEMED_STYLES } from "./styles";
 
 export class ProboThemedBanner extends HTMLElement {
   private shadow: ShadowRoot;
+  private scrollLocked = false;
+  private savedScrollY = 0;
+  private prevHtmlOverflow = "";
+  private prevBodyPosition = "";
+  private prevBodyTop = "";
+  private prevBodyLeft = "";
+  private prevBodyRight = "";
+  private prevBodyWidth = "";
+  private prevBodyOverflow = "";
+  private prevBodyPaddingRight = "";
 
   constructor() {
     super();
@@ -150,6 +160,11 @@ export class ProboThemedBanner extends HTMLElement {
       }
     });
 
+    root.addEventListener("probo-state", (e: Event) => {
+      const { state } = (e as CustomEvent).detail;
+      this.setScrollLock(state === "panel");
+    });
+
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
       root.setState(root.client.hasConsent ? "hidden" : "banner");
     });
@@ -175,6 +190,83 @@ export class ProboThemedBanner extends HTMLElement {
       btn.setAttribute("aria-label", open ? hideLabel : showLabel);
     });
   }
+
+  disconnectedCallback(): void {
+    this.setScrollLock(false);
+  }
+
+  private setScrollLock(locked: boolean): void {
+    if (locked === this.scrollLocked) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+
+    if (locked) {
+      this.savedScrollY = window.scrollY;
+      const scrollbarWidth = window.innerWidth - html.clientWidth;
+
+      this.prevHtmlOverflow = html.style.overflow;
+      this.prevBodyPosition = body.style.position;
+      this.prevBodyTop = body.style.top;
+      this.prevBodyLeft = body.style.left;
+      this.prevBodyRight = body.style.right;
+      this.prevBodyWidth = body.style.width;
+      this.prevBodyOverflow = body.style.overflow;
+      this.prevBodyPaddingRight = body.style.paddingRight;
+
+      // Pin the body in place. Unlike `overflow: hidden`, this removes the
+      // viewport's scroll distance entirely, so JS-driven smooth-scroll
+      // libraries (Lenis, Locomotive, ...) have nothing left to animate even
+      // when they intercept wheel/touch in the capture phase before us.
+      html.style.overflow = "hidden";
+      body.style.position = "fixed";
+      body.style.top = `-${this.savedScrollY}px`;
+      body.style.left = "0";
+      body.style.right = "0";
+      body.style.width = "100%";
+      body.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+
+      // Defense in depth for the common case where the body is not the
+      // scroller (e.g. an inner scroll container): capture-phase listeners run
+      // before bubble-phase smooth-scroll handlers, cancelling page scroll
+      // while still letting the panel's own scrollable region scroll.
+      window.addEventListener("wheel", this.onScrollLockEvent, { capture: true, passive: false });
+      window.addEventListener("touchmove", this.onScrollLockEvent, { capture: true, passive: false });
+    } else {
+      html.style.overflow = this.prevHtmlOverflow;
+      body.style.position = this.prevBodyPosition;
+      body.style.top = this.prevBodyTop;
+      body.style.left = this.prevBodyLeft;
+      body.style.right = this.prevBodyRight;
+      body.style.width = this.prevBodyWidth;
+      body.style.overflow = this.prevBodyOverflow;
+      body.style.paddingRight = this.prevBodyPaddingRight;
+
+      window.removeEventListener("wheel", this.onScrollLockEvent, { capture: true });
+      window.removeEventListener("touchmove", this.onScrollLockEvent, { capture: true });
+
+      // Restore the scroll position the body pinning discarded.
+      window.scrollTo(0, this.savedScrollY);
+    }
+
+    this.scrollLocked = locked;
+  }
+
+  private onScrollLockEvent = (e: Event): void => {
+    // When the gesture happens inside the banner, only stop propagation so a
+    // smooth-scroll library does not move the page; the browser still performs
+    // the panel's native scroll (bounded by its overscroll-behavior: contain).
+    // Anywhere else, cancel the gesture entirely.
+    if (e.composedPath().includes(this)) {
+      e.stopImmediatePropagation();
+      return;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
 
   private applyTexts(config: BannerConfig): void {
     const texts = config.texts ?? {};

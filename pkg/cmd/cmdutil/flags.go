@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -73,4 +73,14 @@ func ValidateEnum(flag string, value string, allowed []string) error {
 		value,
 		strings.Join(allowed, ", "),
 	)
+}
+
+// ValidateLimit checks that a --limit value is positive. A non-positive limit
+// would otherwise cause pagination to return no results without an error.
+func ValidateLimit(value int) error {
+	if value <= 0 {
+		return fmt.Errorf("invalid --limit value %d: must be greater than 0", value)
+	}
+
+	return nil
 }

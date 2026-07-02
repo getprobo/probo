@@ -24,12 +24,20 @@ enum ConnectorProvider
     OPENAI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOpenAI")
     POSTHOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPostHog")
     SENTRY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSentry")
+    SIGNOZ
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSigNoz")
     SUPABASE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSupabase")
+    BETTER_STACK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBetterStack"
+        )
     GITHUB @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGitHub")
     INTERCOM
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIntercom")
     RESEND @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderResend")
+    SENDGRID
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSendGrid")
     MICROSOFT_365
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMicrosoft365"
@@ -45,6 +53,7 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNetlify")
     CLICKUP
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderClickUp")
+    CLERK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderClerk")
     VERCEL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderVercel")
     MONDAY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMonday")
     METABASE
@@ -56,6 +65,33 @@ enum ConnectorProvider
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAnthropic"
         )
     CURSOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCursor")
+    DATADOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDatadog")
+    OKTA @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOkta")
+    ZENDESK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderZendesk")
+    QOVERY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderQovery")
+    RENDER @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRender")
+    NEON @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNeon")
+    MERCURY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMercury")
+    APOLLO @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderApollo")
+    DEEPGRAM
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDeepgram")
+    CLICKHOUSE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderClickHouse"
+        )
+    LANGFUSE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLangfuse")
+    PYLON @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPylon")
+    OPENROUTER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOpenRouter"
+        )
+    INCIDENT_IO
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIncidentIO"
+        )
+    BREVO @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrevo")
 }
 
 type ConnectorProviderInfo {
@@ -127,8 +163,17 @@ input CreateAPIKeyConnectorInput {
     supabaseOrganizationSlug: String
     githubOrganization: String
     grafanaBaseUrl: String
+    signozBaseUrl: String
     onePasswordScimBridgeUrl: String
     metabaseInstanceUrl: String
+    posthogRegion: String
+    posthogInstanceUrl: String
+    oktaDomain: String
+    betterStackTeamName: String
+    qoveryOrganizationId: String
+    renderWorkspaceId: String
+    neonOrganizationId: String
+    langfuseBaseUrl: String
 }
 
 type CreateAPIKeyConnectorPayload {

@@ -83,21 +83,21 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		return types.NewFramework(framework), nil
 
-	case coredata.ReportEntityType:
+	case coredata.FileEntityType:
 		trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-		report, err := trustService.Reports.Get(ctx, scope, trustCenter.OrganizationID, id)
+		file, err := trustService.Reports.Get(ctx, scope, trustCenter.OrganizationID, id)
 		if err != nil {
 			if errors.Is(err, trust.ErrReportNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get report", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot get audit report file", log.Error(err))
 
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		return types.NewReport(report), nil
+		return types.NewAuditReport(file), nil
 
 	case coredata.AuditEntityType:
 		audit, err := trustService.Audits.Get(ctx, scope, id)
@@ -156,6 +156,32 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	}
 }
 
+// AliasedNode is the resolver for the aliasedNode field.
+func (r *queryResolver) AliasedNode(ctx context.Context, alias string) (types.Node, error) {
+	resourceID, err := gid.ParseGID(alias)
+	if err != nil {
+		trustCenter := compliancepage.CompliancePageFromContext(ctx)
+		scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+
+		resourceID, err = r.resourceAlias.ResolveAlias(
+			ctx,
+			scope,
+			alias,
+		)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", alias)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot resolve resource alias", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return r.Node(ctx, resourceID)
+}
+
 // CurrentTrustCenter is the resolver for the currentTrustCenter field.
 func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -188,10 +214,13 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 
 	for _, p := range providers {
 		name := strings.ToLower(p.String())
-		result = append(result, &types.OIDCProviderInfo{
-			Name:     name,
-			LoginURL: r.baseURL.WithPath("/api/connect/v1/oidc/" + name + "/login").MustString(),
-		})
+		result = append(
+			result,
+			&types.OIDCProviderInfo{
+				Name:     name,
+				LoginURL: r.baseURL.WithPath("/api/connect/v1/oidc/" + name + "/login").MustString(),
+			},
+		)
 	}
 
 	return result, nil

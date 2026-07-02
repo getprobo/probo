@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -29,13 +30,15 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 )
 
-func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
+func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, fileManagerSvc *filemanager.Service, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config, limits gqlutils.Limits) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			authorize:      authz.NewAuthorizeFunc(svc, logger),
 			batchAuthorize: authz.NewBatchAuthorizeFunc(svc, logger),
 			logger:         logger,
 			iam:            svc,
+			scopeRegistry:  svc.OAuth2ScopeRegistry,
+			fileManager:    fileManagerSvc,
 			baseURL:        baseURL,
 			sessionCookie:  authn.NewCookie(&cookieConfig),
 		},
@@ -46,7 +49,7 @@ func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.Ba
 	}
 
 	es := schema.NewExecutableSchema(config)
-	gqlh := gqlutils.NewHandler(es, logger)
+	gqlh := gqlutils.NewHandler(es, logger, limits)
 
 	return gqlh
 }

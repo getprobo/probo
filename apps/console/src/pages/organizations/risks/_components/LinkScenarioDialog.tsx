@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -123,7 +123,7 @@ type ContentProps = Omit<LinkScenarioDialogProps, "children"> & {
 };
 
 function LinkScenarioDialogContent(props: ContentProps) {
-  const query = usePreloadedQuery(scenariosQuery, props.queryRef);
+  const query = usePreloadedQuery<LinkScenarioDialogQuery>(scenariosQuery, props.queryRef);
   const { data, loadNext, hasNext, isLoadingNext }
     = usePaginationFragment<LinkScenarioDialogQuery_fragment, LinkScenarioDialogFragment$key>(
       scenariosFragment,

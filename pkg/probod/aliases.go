@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@ type (
 	TrustCenterConfig             = probodconfig.TrustCenterConfig
 	APIConfig                     = probodconfig.APIConfig
 	CorsConfig                    = probodconfig.CorsConfig
+	GraphQLConfig                 = probodconfig.GraphQLConfig
 	ProxyProtocolConfig           = probodconfig.ProxyProtocolConfig
 	AuthConfig                    = probodconfig.AuthConfig
 	OAuth2ServerConfig            = probodconfig.OAuth2ServerConfig
@@ -43,16 +44,19 @@ type (
 	ThirdPartyVettingWorkerConfig = probodconfig.ThirdPartyVettingWorkerConfig
 	AgentsConfig                  = probodconfig.AgentsConfig
 
-	TrackerMappingWorkerConfig          = probodconfig.TrackerMappingWorkerConfig
-	CommonPatternEnrichmentWorkerConfig = probodconfig.CommonPatternEnrichmentWorkerConfig
+	TrackerMappingWorkerConfig             = probodconfig.TrackerMappingWorkerConfig
+	CommonPatternEnrichmentWorkerConfig    = probodconfig.CommonPatternEnrichmentWorkerConfig
+	CommonThirdPartyEnrichmentWorkerConfig = probodconfig.CommonThirdPartyEnrichmentWorkerConfig
 
 	MailerConfig        = probodconfig.MailerConfig
 	SMTPConfig          = probodconfig.SMTPConfig
 	NotificationsConfig = probodconfig.NotificationsConfig
 	WebhookConfig       = probodconfig.WebhookConfig
-	OIDCProviderConfig  = probodconfig.OIDCProviderConfig
-	PgConfig            = probodconfig.PgConfig
-	SAMLConfig          = probodconfig.SAMLConfig
-	SCIMBridgeConfig    = probodconfig.SCIMBridgeConfig
-	SlackConfig         = probodconfig.SlackConfig
+
+	DocumentNotificationConfig = probodconfig.DocumentNotificationConfig
+	OIDCProviderConfig         = probodconfig.OIDCProviderConfig
+	PgConfig                   = probodconfig.PgConfig
+	SAMLConfig                 = probodconfig.SAMLConfig
+	SCIMBridgeConfig           = probodconfig.SCIMBridgeConfig
+	SlackConfig                = probodconfig.SlackConfig
 )

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,9 +29,8 @@ query(
   $id: ID!,
   $first: Int,
   $after: CursorKey,
-  $orderBy: AccessEntryOrder,
-  $accessSourceId: ID,
-  $filter: AccessEntryFilter
+  $orderBy: AccessReviewEntryOrder,
+  $filter: AccessReviewEntryFilter
 ) {
   node(id: $id) {
     __typename
@@ -40,7 +39,6 @@ query(
         first: $first,
         after: $after,
         orderBy: $orderBy,
-        accessSourceId: $accessSourceId,
         filter: $filter
       ) {
         totalCount
@@ -52,6 +50,7 @@ query(
             role
             jobTitle
             isAdmin
+            active
             mfaStatus
             authMethod
             accountType
@@ -62,8 +61,60 @@ query(
             flagReasons
             decision
             decisionNote
-            accessSource {
-              id
+            campaignSource {
+              name
+            }
+            createdAt
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+`
+
+const listBySourceQuery = `
+query(
+  $id: ID!,
+  $first: Int,
+  $after: CursorKey,
+  $orderBy: AccessReviewEntryOrder,
+  $filter: AccessReviewEntryFilter
+) {
+  node(id: $id) {
+    __typename
+    ... on AccessReviewCampaignSource {
+      entries(
+        first: $first,
+        after: $after,
+        orderBy: $orderBy,
+        filter: $filter
+      ) {
+        totalCount
+        edges {
+          node {
+            id
+            email
+            fullName
+            role
+            jobTitle
+            isAdmin
+            active
+            mfaStatus
+            authMethod
+            accountType
+            lastLogin
+            externalId
+            incrementalTag
+            flags
+            flagReasons
+            decision
+            decisionNote
+            campaignSource {
               name
             }
             createdAt
@@ -86,6 +137,7 @@ type entryNode struct {
 	Role           string   `json:"role"`
 	JobTitle       string   `json:"jobTitle"`
 	IsAdmin        bool     `json:"isAdmin"`
+	Active         *bool    `json:"active"`
 	MfaStatus      string   `json:"mfaStatus"`
 	AuthMethod     string   `json:"authMethod"`
 	AccountType    string   `json:"accountType"`
@@ -96,37 +148,37 @@ type entryNode struct {
 	FlagReasons    []string `json:"flagReasons"`
 	Decision       string   `json:"decision"`
 	DecisionNote   *string  `json:"decisionNote"`
-	AccessSource   struct {
-		ID   string `json:"id"`
+	CampaignSource struct {
 		Name string `json:"name"`
-	} `json:"accessSource"`
+	} `json:"campaignSource"`
 	CreatedAt string `json:"createdAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagLimit       int
-		flagOrderBy     string
-		flagOrderDir    string
-		flagSourceID    string
-		flagDecision    string
-		flagFlag        string
-		flagIncTag      string
-		flagIsAdmin     *bool
-		flagAuthMethod  string
-		flagAccountType string
-		flagOutput      *string
+		flagLimit            int
+		flagOrderBy          string
+		flagOrderDir         string
+		flagCampaignSourceID string
+		flagDecision         string
+		flagFlag             string
+		flagIncTag           string
+		flagIsAdmin          *bool
+		flagActive           *bool
+		flagAuthMethod       string
+		flagAccountType      string
+		flagOutput           *string
 	)
 
 	cmd := &cobra.Command{
-		Use:   "list <campaign-id>",
-		Short: "List access entries for a campaign",
-		Args:  cobra.ExactArgs(1),
+		Use:   "list [<campaign-id>]",
+		Short: "List access entries for a campaign or campaign source",
+		Args:  cobra.MaximumNArgs(1),
 		Example: `  # List all entries for a campaign
   prb access-review entry list <campaign-id>
 
-  # List entries for a specific source
-  prb access-review entry list <campaign-id> --source-id <source-id>
+  # List entries for a specific campaign source
+  prb access-review entry list --source-id <campaign-source-id>
 
   # List only pending entries
   prb access-review entry list <campaign-id> --decision PENDING
@@ -136,6 +188,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
+			}
+
+			if flagCampaignSourceID == "" && len(args) == 0 {
+				return fmt.Errorf("campaign ID is required when --source-id is not set")
 			}
 
 			cfg, err := f.Config()
@@ -156,8 +212,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			variables := map[string]any{
-				"id": args[0],
+			variables := map[string]any{}
+
+			if len(args) > 0 {
+				variables["id"] = args[0]
+			}
+
+			if flagCampaignSourceID != "" {
+				variables["id"] = flagCampaignSourceID
 			}
 
 			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
@@ -173,10 +235,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
 				}
-			}
-
-			if flagSourceID != "" {
-				variables["accessSourceId"] = flagSourceID
 			}
 
 			filter := map[string]any{}
@@ -226,6 +284,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				filter["isAdmin"] = *flagIsAdmin
 			}
 
+			if cmd.Flags().Changed("active") {
+				filter["active"] = *flagActive
+			}
+
 			if flagAuthMethod != "" {
 				if err := cmdutil.ValidateEnum(
 					"auth-method",
@@ -254,9 +316,19 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = filter
 			}
 
+			query := listQuery
+			expectedTypename := "AccessReviewCampaign"
+			notFoundLabel := "campaign"
+
+			if flagCampaignSourceID != "" {
+				query = listBySourceQuery
+				expectedTypename = "AccessReviewCampaignSource"
+				notFoundLabel = "campaign source"
+			}
+
 			entries, totalCount, err := api.Paginate(
 				client,
-				listQuery,
+				query,
 				variables,
 				flagLimit,
 				func(data json.RawMessage) (*api.Connection[entryNode], error) {
@@ -271,11 +343,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					}
 
 					if resp.Node == nil {
-						return nil, fmt.Errorf("campaign %s not found", args[0])
+						return nil, fmt.Errorf("%s %s not found", notFoundLabel, variables["id"])
 					}
 
-					if resp.Node.Typename != "AccessReviewCampaign" {
-						return nil, fmt.Errorf("expected AccessReviewCampaign node, got %s", resp.Node.Typename)
+					if resp.Node.Typename != expectedTypename {
+						return nil, fmt.Errorf("expected %s node, got %s", expectedTypename, resp.Node.Typename)
 					}
 
 					return &resp.Node.Entries, nil
@@ -305,18 +377,29 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					admin = "yes"
 				}
 
+				active := "unknown"
+
+				if e.Active != nil {
+					if *e.Active {
+						active = "active"
+					} else {
+						active = "disabled"
+					}
+				}
+
 				rows = append(rows, []string{
 					e.ID,
 					e.Email,
 					e.FullName,
-					e.AccessSource.Name,
+					e.CampaignSource.Name,
 					e.Decision,
 					strings.Join(e.Flags, ","),
 					admin,
+					active,
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN").Rows(rows...)
+			t := cmdutil.NewTable("ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN", "ACTIVE").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
@@ -336,11 +419,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of entries to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().StringVar(&flagSourceID, "source-id", "", "Filter by access source ID")
+	cmd.Flags().StringVar(&flagCampaignSourceID, "source-id", "", "Campaign source ID to list entries for")
 	cmd.Flags().StringVar(&flagDecision, "decision", "", "Filter by decision (PENDING, APPROVED, REVOKE, DEFER, ESCALATE)")
 	cmd.Flags().StringVar(&flagFlag, "flag", "", "Filter by flag (NONE, ORPHANED, INACTIVE, EXCESSIVE, ROLE_MISMATCH, NEW)")
 	cmd.Flags().StringVar(&flagIncTag, "incremental-tag", "", "Filter by incremental tag (NEW, REMOVED, UNCHANGED)")
 	flagIsAdmin = cmd.Flags().Bool("is-admin", false, "Filter by admin status")
+	flagActive = cmd.Flags().Bool("active", false, "Filter by active status at the source")
 	cmd.Flags().StringVar(&flagAuthMethod, "auth-method", "", "Filter by auth method (SSO, PASSWORD, API_KEY, SERVICE_ACCOUNT, UNKNOWN)")
 	cmd.Flags().StringVar(&flagAccountType, "account-type", "", "Filter by account type (USER, SERVICE_ACCOUNT)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

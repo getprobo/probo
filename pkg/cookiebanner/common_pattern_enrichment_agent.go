@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,14 +35,23 @@ type CommonPatternEnrichmentResult struct {
 	Description string `json:"description" jsonschema:"A concise, factual, compliance-grade description of what this tracker stores or does and its purpose. One or two sentences. Name the operating company when known. Empty when the purpose cannot be substantiated from evidence."`
 }
 
+// buildCommonPatternEnrichmentAgent builds the common-pattern enrichment
+// agent. extraTools carries the browser read-only toolset when a headless
+// Chrome endpoint is configured; it is empty otherwise, in which case the
+// agent relies on the DB search tool and web search alone. The browser
+// lets it open authoritative vendor and cookie-database pages to ground a
+// description.
 func buildCommonPatternEnrichmentAgent(
-	cfg TrackerAgentsConfig,
+	cfg TrackerEnrichmentAgentConfig,
 	pgClient *pg.Client,
 	logger *log.Logger,
+	extraTools []agent.Tool,
 ) *agent.Agent {
 	tools := []agent.Tool{
 		searchThirdPartiesTool(pgClient),
 	}
+
+	tools = append(tools, extraTools...)
 
 	if cfg.FirecrawlAPIKey != "" {
 		tools = append(tools, search.FirecrawlSearchTool(cfg.FirecrawlAPIKey))
@@ -53,7 +62,7 @@ func buildCommonPatternEnrichmentAgent(
 		panic(fmt.Sprintf("cookiebanner: cannot build tracker enrichment output type: %s", err))
 	}
 
-	maxTurns := cfg.EnrichmentMaxTurns
+	maxTurns := cfg.MaxTurns
 	if maxTurns < 1 {
 		maxTurns = defaultEnrichmentMaxTurns
 	}

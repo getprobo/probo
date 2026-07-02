@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -96,16 +96,17 @@ type (
 	}
 
 	RecordConsentRequest struct {
-		Version     int
-		VisitorID   string
-		IPAddress   *string
-		UserAgent   *string
-		ConsentData json.RawMessage
-		Action      coredata.CookieConsentAction
-		SdkVersion  string
-		Regulation  *Regulation
-		CountryCode *coredata.CountryCode
-		ConsentMode *coredata.CookieConsentMode
+		Version          int
+		VisitorID        string
+		IPAddress        *string
+		UserAgent        *string
+		ConsentData      json.RawMessage
+		Action           coredata.CookieConsentAction
+		SdkVersion       string
+		Regulation       *Regulation
+		RegulationSource coredata.RegulationSource
+		CountryCode      *coredata.CountryCode
+		ConsentMode      *coredata.CookieConsentMode
 	}
 
 	DetectedCookie struct {
@@ -552,21 +553,42 @@ func (s *Service) ensureDraftVersionForBanner(
 
 	consentFilter := coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised))
 
-	var categories coredata.CookieCategories
-	if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, bannerID, consentFilter); err != nil {
-		return nil, fmt.Errorf("cannot load cookie categories: %w", err)
+	categories, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.CookieCategoryOrderField]{
+			Field:     coredata.CookieCategoryOrderFieldRank,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.CookieCategoryOrderField]) ([]*coredata.CookieCategory, error) {
+			var batch coredata.CookieCategories
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, bannerID, cursor, consentFilter); err != nil {
+				return nil, fmt.Errorf("cannot load cookie categories: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	var allPatterns coredata.TrackerPatterns
-	if err := allPatterns.LoadAllByCookieBannerID(
+	allPatterns, err := page.LoadAll(
 		ctx,
-		tx,
-		scope,
-		bannerID,
-		coredata.NewTrackerPatternFilter(nil, nil, new(false)),
-		nil,
-	); err != nil {
-		return nil, fmt.Errorf("cannot load tracker patterns: %w", err)
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+			var batch coredata.TrackerPatterns
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, bannerID, cursor, coredata.NewTrackerPatternFilter(nil, nil, new(false))); err != nil {
+				return nil, fmt.Errorf("cannot load tracker patterns: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return s.ensureDraftVersion(ctx, tx, scope, &banner, categories, allPatterns)
@@ -977,6 +999,51 @@ func (s *Service) PublishCookieBannerVersion(
 	}
 
 	return &version, nil
+}
+
+// RegenerateTrackerPolicy re-arms tracker policy generation for a banner
+// that already has a published version, so the tracker-policy worker
+// regenerates the policy document (e.g. after iterating on the generator).
+// It returns ErrNoPublishedVersion when nothing has been published yet.
+func (s *Service) RegenerateTrackerPolicy(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (*coredata.CookieBanner, error) {
+	var banner coredata.CookieBanner
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			var version coredata.CookieBannerVersion
+			if err := version.LoadLatestPublishedByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrNoPublishedVersion
+				}
+
+				return fmt.Errorf("cannot load latest published version: %w", err)
+			}
+
+			if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+				return fmt.Errorf("cannot request tracker policy generation: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &banner, nil
 }
 
 func (s *Service) ActivateCookieBanner(
@@ -1649,14 +1716,42 @@ func (s *Service) GetActiveBannerConfig(
 
 			consentFilter := coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised))
 
-			var categories coredata.CookieCategories
-			if err := categories.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID, consentFilter); err != nil {
-				return fmt.Errorf("cannot load cookie categories: %w", err)
+			categories, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CookieCategoryOrderField]{
+					Field:     coredata.CookieCategoryOrderFieldRank,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CookieCategoryOrderField]) ([]*coredata.CookieCategory, error) {
+					var batch coredata.CookieCategories
+					if err := batch.LoadByCookieBannerID(ctx, conn, scope, banner.ID, cursor, consentFilter); err != nil {
+						return nil, fmt.Errorf("cannot load cookie categories: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
-			var translations coredata.CookieBannerTranslations
-			if err := translations.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
-				return fmt.Errorf("cannot load cookie banner translations: %w", err)
+			translations, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CookieBannerTranslationOrderField]{
+					Field:     coredata.CookieBannerTranslationOrderFieldLanguage,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CookieBannerTranslationOrderField]) ([]*coredata.CookieBannerTranslation, error) {
+					var batch coredata.CookieBannerTranslations
+					if err := batch.LoadByCookieBannerID(ctx, conn, scope, banner.ID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load cookie banner translations: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
 			resolved := resolveTranslations(translations, categories)
@@ -1913,7 +2008,28 @@ func (s *Service) ListCookieBannerTranslations(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return translations.LoadAllByCookieBannerID(ctx, conn, scope, cookieBannerID)
+			loaded, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CookieBannerTranslationOrderField]{
+					Field:     coredata.CookieBannerTranslationOrderFieldLanguage,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CookieBannerTranslationOrderField]) ([]*coredata.CookieBannerTranslation, error) {
+					var batch coredata.CookieBannerTranslations
+					if err := batch.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load cookie banner translations: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			translations = loaded
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -2031,6 +2147,7 @@ func (s *Service) RecordConsent(
 				Action:                req.Action,
 				SdkVersion:            req.SdkVersion,
 				Regulation:            req.Regulation,
+				RegulationSource:      &req.RegulationSource,
 				CountryCode:           req.CountryCode,
 				ConsentMode:           req.ConsentMode,
 				CreatedAt:             time.Now(),
@@ -2237,9 +2354,8 @@ func (s *Service) reportDetectedTracker(
 
 			// A stronger source can unblock mapping: the detection
 			// upserted below carries a fresh initiator domain that
-			// matchByDomain/matchBySiblingOrigin can now use, and an
-			// EXTENSION->SCRIPT promotion lifts the creationAllowed
-			// gate. Re-arm mapping so the worker revisits the pattern.
+			// matchByDomain/matchBySiblingOrigin can now use. Re-arm
+			// mapping so the worker revisits the pattern.
 			if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
 				return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
 			}

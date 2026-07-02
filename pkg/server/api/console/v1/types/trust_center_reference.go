@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,6 +35,7 @@ func NewTrustCenterReference(tcc *coredata.TrustCenterReference) *TrustCenterRef
 		Name:        tcc.Name,
 		Description: tcc.Description,
 		WebsiteURL:  tcc.WebsiteURL,
+		Logo:        &File{ID: tcc.LogoFileID},
 		Rank:        tcc.Rank,
 		CreatedAt:   tcc.CreatedAt,
 		UpdatedAt:   tcc.UpdatedAt,

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,5 +38,5 @@ func TestResendDriver(t *testing.T) {
 	r := records[0]
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
-	assert.Equal(t, coredata.AccessEntryAccountTypeServiceAccount, r.AccountType)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, r.AccountType)
 }

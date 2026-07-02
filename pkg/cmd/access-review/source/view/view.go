@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,7 +28,7 @@ const viewQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
-    ... on AccessSource {
+    ... on AccessReviewSource {
       id
       name
       connectorId
@@ -97,8 +97,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("access source %s not found", args[0])
 			}
 
-			if resp.Node.Typename != "AccessSource" {
-				return fmt.Errorf("expected AccessSource node, got %s", resp.Node.Typename)
+			if resp.Node.Typename != "AccessReviewSource" {
+				return fmt.Errorf("expected AccessReviewSource node, got %s", resp.Node.Typename)
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {

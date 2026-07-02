@@ -13,36 +13,32 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "eslint . --concurrency auto && npm -w @probo/n8n-nodes-probo run lint",
     "check": "turbo run check",
-    "relay-clean": "find apps -type d -name __generated__ -exec rm -rf {} +",
-    "relay-compile": "npx relay-compiler",
-    "relay": "npm run relay-clean && npm run relay-compile"
+    "relay": "relay-compiler"
   },
   "devDependencies": {
-    "relay-compiler": "^20.1.1",
+    "@probo/eslint-config": "1.0.0",
+    "eslint": "^10.5.0",
+    "relay-compiler": "^21.0.1",
     "turbo": "^2.9.14"
   },
-  "graphql": {
-    "schema": "./pkg/server/api/console/v1/graphql/"
-  },
   "overrides": {
-    "brace-expansion": "^5.0.5",
-    "minimatch@3": {
-      "brace-expansion": "^1.1.11"
-    },
-    "minimatch@9": "^9.0.9",
-    "@langchain/classic": "^1.0.27",
-    "langsmith": "^0.5.19",
-    "handlebars": "4.7.9",
-    "@langchain/community": "^1.1.25",
-    "lodash": "^4.18.1",
-    "lodash-es": "^4.18.1",
-    "axios": "^1.16.0"
+    "uuid": "^14.0.0",
+    "js-yaml": "^4.2.0",
+    "glob": "^13.0.6"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true,
+    "unrs-resolver": true,
+    "core-js": false,
+    "isolated-vm": false,
+    "eslint-plugin-n8n-nodes-base": false
   },
   "license": "MIT",
   "packageManager": "npm@11.8.0",
   "dependencies": {
-    "react-dom": "^19.2.1"
+    "react-dom": "^19.2.7"
   }
 }

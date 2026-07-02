@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,9 +15,8 @@
 import {
   formatError,
   getControlMaturityLevelLabel,
-  type GraphQLError,
+  promisifyMutation,
 } from "@probo/helpers";
-import { promisifyMutation } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -183,7 +182,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
     framework: FrameworkDetailPageFragment$data;
   }>();
   const connectionId = framework.controls.__id;
-  const control = usePreloadedQuery(frameworkControlNodeQuery, queryRef).node;
+  const control = usePreloadedQuery<FrameworkGraphControlNodeQuery>(frameworkControlNodeQuery, queryRef).node;
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const navigate = useNavigate();
@@ -249,7 +248,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                 title: __("Error"),
                 description: formatError(
                   errorMessage,
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });
@@ -261,7 +260,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
               title: __("Error"),
               description: formatError(
                 errorMessage,
-                error as GraphQLError,
+                error,
               ),
               variant: "error",
             });

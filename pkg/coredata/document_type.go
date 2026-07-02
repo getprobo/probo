@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -78,6 +78,31 @@ func (v DocumentType) IsValid() bool {
 
 func (v DocumentType) String() string {
 	return string(v)
+}
+
+func (v DocumentType) Label() string {
+	switch v {
+	case DocumentTypeGovernance:
+		return "Governance"
+	case DocumentTypePolicy:
+		return "Policy"
+	case DocumentTypeProcedure:
+		return "Procedure"
+	case DocumentTypePlan:
+		return "Plan"
+	case DocumentTypeRegister:
+		return "Register"
+	case DocumentTypeRecord:
+		return "Record"
+	case DocumentTypeReport:
+		return "Report"
+	case DocumentTypeTemplate:
+		return "Template"
+	case DocumentTypeStatementOfApplicability:
+		return "Statement of Applicability"
+	default:
+		return "Document"
+	}
 }
 
 func (v DocumentType) MarshalText() ([]byte, error) {

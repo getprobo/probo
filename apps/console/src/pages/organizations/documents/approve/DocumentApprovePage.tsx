@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
+import { formatDate, formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -38,7 +38,7 @@ import {
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 import { useWindowSize } from "usehooks-ts";
 
@@ -98,6 +98,7 @@ const decisionFragment = graphql`
   fragment DocumentApprovePageDecisionFragment on DocumentVersionApprovalDecision {
     id
     state
+    consentText
     canApprove: permission(action: "core:document-version:approve")
     canReject: permission(action: "core:document-version:reject")
   }
@@ -141,6 +142,7 @@ export function DocumentApprovePage(props: {
   queryRef: PreloadedQuery<DocumentApprovePageQuery>;
 }) {
   const { queryRef } = props;
+  const organizationId = useOrganizationId();
   const data = usePreloadedQuery<DocumentApprovePageQuery>(
     documentApprovePageQuery,
     queryRef,
@@ -149,9 +151,10 @@ export function DocumentApprovePage(props: {
   const document = data.viewer.approvableDocument;
   if (!document) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner />
-      </div>
+      <Navigate
+        to={`/organizations/${organizationId}/employee/approvals`}
+        replace
+      />
     );
   }
 
@@ -350,12 +353,12 @@ function ViewerDecision(props: {
                 });
               }}
             >
-              {__("Approve")}
+              {__("Review and approve")}
             </Button>
           )}
         </div>
         <p className="text-xs text-txt-tertiary">
-          {__("By clicking Approve, I consent to approve this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature.")}
+          {decision.consentText}
         </p>
         <Button onClick={onBack} className="w-full" variant="secondary">
           {__("Back to Documents")}
@@ -467,7 +470,7 @@ function DocumentApproveContent({
             title: __("Error"),
             description: formatError(
               __("Failed to load PDF"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -484,7 +487,7 @@ function DocumentApproveContent({
           title: __("Error"),
           description: formatError(
             __("Failed to load PDF"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -495,6 +498,15 @@ function DocumentApproveContent({
       pdfUrlRef.current = null;
     };
   }, [selectedVersion?.id, exportPDF, toast, __]);
+
+  if (versions.length === 0) {
+    return (
+      <Navigate
+        to={`/organizations/${organizationId}/employee/approvals`}
+        replace
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 top-12 bg-level-2 flex flex-col">

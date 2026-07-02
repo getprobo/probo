@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -76,15 +76,12 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionProcessingActivityGet, ActionProcessingActivityList,
 		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
-		ActionFileGet, ActionFileDownloadUrl,
+		ActionFileGet,
 		ActionSlackConnectionList, ActionConnectorList,
 		ActionRightsRequestGet, ActionRightsRequestList,
 		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 		ActionWebhookSubscriptionGet, ActionWebhookSubscriptionList,
-		ActionAccessReviewCampaignGet, ActionAccessReviewCampaignList,
-		ActionAccessEntryGet, ActionAccessEntryList,
-		ActionAccessSourceGet, ActionAccessSourceList,
 		ActionCookieBannerGet, ActionCookieBannerList,
 		ActionCookieBannerVersionGet, ActionCookieBannerVersionList,
 		ActionCookieCategoryGet, ActionCookieCategoryList,
@@ -93,6 +90,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionRiskAssessmentGet, ActionRiskAssessmentList,
 		ActionRiskAssessmentScopeGet, ActionRiskAssessmentScopeList,
 		ActionRiskAssessmentNodeGet, ActionRiskAssessmentNodeList,
+		ActionRiskAssessmentBoundaryGet, ActionRiskAssessmentBoundaryList,
 		ActionRiskAssessmentProcessGet, ActionRiskAssessmentProcessList,
 		ActionRiskAssessmentThreatGet, ActionRiskAssessmentThreatList,
 		ActionRiskAssessmentScenarioGet, ActionRiskAssessmentScenarioList,
@@ -133,6 +131,8 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionOrganizationGetHorizontalLogoUrl,
 	).WithSID("org-read-access").When(organizationCondition),
 
+	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
+
 	policy.Allow(
 		ActionThirdPartyGet, ActionThirdPartyList,
 		ActionThirdPartyContactGet, ActionThirdPartyContactList,
@@ -161,12 +161,13 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionProcessingActivityGet, ActionProcessingActivityList,
 		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
-		ActionFileGet, ActionFileDownloadUrl,
+		ActionFileGet,
 		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 		ActionRiskAssessmentGet, ActionRiskAssessmentList,
 		ActionRiskAssessmentScopeGet, ActionRiskAssessmentScopeList,
 		ActionRiskAssessmentNodeGet, ActionRiskAssessmentNodeList,
+		ActionRiskAssessmentBoundaryGet, ActionRiskAssessmentBoundaryList,
 		ActionRiskAssessmentProcessGet, ActionRiskAssessmentProcessList,
 		ActionRiskAssessmentThreatGet, ActionRiskAssessmentThreatList,
 		ActionRiskAssessmentScenarioGet, ActionRiskAssessmentScenarioList,

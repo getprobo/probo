@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
 func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) http.Handler {
@@ -35,15 +36,19 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 					return
 				}
 
-				tokenValue, err := bearertoken.Parse(r.Header.Get("Authorization"))
+				authorization := r.Header.Get("Authorization")
+
+				tokenValue, err := bearertoken.Parse(authorization)
 				if err != nil {
 					next.ServeHTTP(w, r)
+
 					return
 				}
 
 				accessToken, err := svc.OAuth2ServerService.LoadAccessToken(ctx, tokenValue)
 				if err != nil {
 					next.ServeHTTP(w, r)
+
 					return
 				}
 
@@ -53,6 +58,7 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 				}
 
 				ctx = ContextWithIdentity(ctx, identity)
+				ctx = oauth2.ContextWithAccessToken(ctx, accessToken)
 
 				httpserver.LoggerFromContext(ctx).InfoCtx(
 					ctx,

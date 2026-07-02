@@ -151,8 +151,7 @@ type Audit implements Node {
     framework: Framework @goField(forceResolver: true)
     validFrom: Datetime
     validUntil: Datetime
-    report: Report @goField(forceResolver: true)
-    reportUrl: String @goField(forceResolver: true)
+    reportFile: File @goField(forceResolver: true)
     state: AuditState!
 
     controls(
@@ -205,20 +204,6 @@ type Finding implements Node {
     effectivenessCheck: String
     createdAt: Datetime!
     updatedAt: Datetime!
-    permission(action: String!): Boolean! @goField(forceResolver: true)
-}
-
-type Report implements Node {
-    id: ID!
-    objectKey: String!
-    mimeType: String!
-    filename: String!
-    size: Int!
-    downloadUrl: String @goField(forceResolver: true)
-    createdAt: Datetime!
-    updatedAt: Datetime!
-    audit: Audit @goField(forceResolver: true)
-
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 

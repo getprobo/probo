@@ -1,0 +1,76 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package drivers
+
+import (
+	"context"
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+func TestPylonDriver(t *testing.T) {
+	t.Parallel()
+
+	rec := newRecorder(t, "testdata/pylon", "PYLON_API_KEY")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("PYLON_API_KEY")))
+
+	driver := NewPylonDriver(client)
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 3)
+
+	admin := records[0]
+	assert.Equal(t, "user_1", admin.ExternalID)
+	assert.Equal(t, "alice@example.com", admin.Email)
+	assert.Equal(t, "Alice Admin", admin.FullName)
+	// role_id "role_admin" resolved through GET /user-roles.
+	assert.Equal(t, []string{"Admin"}, admin.Roles)
+	assert.True(t, admin.IsAdmin)
+	require.NotNil(t, admin.Active)
+	assert.True(t, *admin.Active)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
+
+	member := records[1]
+	assert.Equal(t, []string{"Member"}, member.Roles)
+	assert.False(t, member.IsAdmin)
+
+	// No name → display name falls back to the email; "deactivated" status →
+	// Active false.
+	deactivated := records[2]
+	assert.Equal(t, "carol@example.com", deactivated.FullName)
+	assert.Equal(t, []string{"Member"}, deactivated.Roles)
+	require.NotNil(t, deactivated.Active)
+	assert.False(t, *deactivated.Active)
+}
+
+func TestPylonIsAdmin(t *testing.T) {
+	t.Parallel()
+
+	// The stable slug is preferred when present.
+	assert.True(t, pylonIsAdmin(pylonRole{Slug: "admin", Name: "Admin"}))
+	assert.False(t, pylonIsAdmin(pylonRole{Slug: "member", Name: "Member"}))
+	// A custom role named like an admin but with a non-admin slug is NOT an
+	// admin — the slug wins.
+	assert.False(t, pylonIsAdmin(pylonRole{Slug: "billing", Name: "Billing Admin"}))
+	// With no slug, the exact (case-insensitive) name is used.
+	assert.True(t, pylonIsAdmin(pylonRole{Name: "Admin"}))
+	assert.False(t, pylonIsAdmin(pylonRole{Name: "Billing Admin"}))
+	// An unresolved role (zero value: role_id not in the catalogue) is not admin.
+	assert.False(t, pylonIsAdmin(pylonRole{}))
+}

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -62,15 +63,22 @@ func (d *SupabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 
 		isAdmin := m.RoleName == "Owner" || m.RoleName == "Administrator"
 
+		role := strings.TrimSpace(m.RoleName)
+
+		roles := []string{}
+		if role != "" {
+			roles = []string{role}
+		}
+
 		record := AccountRecord{
 			Email:       m.Email,
 			FullName:    m.UserName,
-			Role:        m.RoleName,
+			Roles:       roles,
 			IsAdmin:     isAdmin,
 			ExternalID:  m.UserID,
 			MFAStatus:   mfaStatus,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		records = append(records, record)

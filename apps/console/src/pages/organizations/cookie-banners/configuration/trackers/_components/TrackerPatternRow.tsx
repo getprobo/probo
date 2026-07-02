@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
+import { DownloadSimpleIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -28,12 +28,13 @@ import {
 } from "@probo/ui";
 import { useState } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { ConnectionHandler } from "relay-runtime";
 
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
+import type { TrackerPatternRowImportMutation } from "#/__generated__/core/TrackerPatternRowImportMutation.graphql";
 import type { TrackerPatternRowMoveMutation } from "#/__generated__/core/TrackerPatternRowMoveMutation.graphql";
 import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/TrackerPatternRowUpdateMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { MoveToCategorySelect } from "./MoveToCategorySelect";
 import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
@@ -51,6 +52,7 @@ const trackerPatternFragment = graphql`
     cookieCategory {
       id
       name
+      kind
     }
     thirdParty {
       id
@@ -91,6 +93,8 @@ const movePatternMutation = graphql`
         id
         cookieCategory {
           id
+          name
+          kind
         }
       }
       cookieBanner {
@@ -130,6 +134,22 @@ const updatePatternMutation = graphql`
   }
 `;
 
+const importThirdPartyMutation = graphql`
+  mutation TrackerPatternRowImportMutation(
+    $input: ImportThirdPartyFromCommonInput!
+  ) {
+    importThirdPartyFromCommon(input: $input) {
+      created
+      thirdPartyEdge {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
 interface TrackerPatternRowProps {
   patternKey: TrackerPatternRowFragment$key;
   connectionId: string;
@@ -139,6 +159,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const { __ } = useTranslate();
   const { toast } = useToast();
   const confirm = useConfirm();
+  const organizationId = useOrganizationId();
   const pattern = useFragment(trackerPatternFragment, patternKey);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -149,6 +170,8 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     = useMutation<TrackerPatternRowMoveMutation>(movePatternMutation);
   const [updatePattern, isUpdating]
     = useMutation<TrackerPatternRowUpdateMutation>(updatePatternMutation);
+  const [importThirdParty, isImporting]
+    = useMutation<TrackerPatternRowImportMutation>(importThirdPartyMutation);
 
   const handleDelete = () => {
     confirm(
@@ -168,7 +191,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: formatError(__("Failed to delete cookie"), error as GraphQLError), variant: "error" });
+              toast({ title: __("Error"), description: formatError(__("Failed to delete cookie"), error), variant: "error" });
               resolve();
             },
           });
@@ -182,23 +205,15 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   };
 
   const handleMove = (targetCategoryId: string) => {
+    if (targetCategoryId === pattern.cookieCategory?.id) {
+      return;
+    }
     movePattern({
       variables: {
         input: {
           trackerPatternId: pattern.id,
           targetCookieCategoryId: targetCategoryId,
         },
-      },
-      updater(store) {
-        const payload = store.getRootField("moveTrackerPatternToCategory");
-        if (!payload?.getLinkedRecord("trackerPattern")) {
-          return;
-        }
-
-        const conn = store.get(connectionId);
-        if (conn) {
-          ConnectionHandler.deleteNode(conn, pattern.id);
-        }
       },
       onCompleted(_, errors) {
         if (errors?.length) {
@@ -208,25 +223,9 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         toast({ title: __("Success"), description: __("Cookie moved"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error), variant: "error" });
       },
     });
-  };
-
-  const handleMoveWithConfirm = (targetCategoryId: string) => {
-    if (targetCategoryId === pattern.cookieCategory?.id) {
-      return;
-    }
-    confirm(
-      () => {
-        handleMove(targetCategoryId);
-      },
-      {
-        message: __("Moving this tracker to a category will create a third party for it (or link an existing one) if it doesn't have one yet. Continue?"),
-        variant: "primary",
-        label: __("Move"),
-      },
-    );
   };
 
   const handleToggleExcluded = () => {
@@ -244,7 +243,50 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error), variant: "error" });
+      },
+    });
+  };
+
+  const handleImport = () => {
+    const commonThirdParty = pattern.commonThirdParty;
+    if (!commonThirdParty || isImporting) {
+      return;
+    }
+
+    importThirdParty({
+      variables: {
+        input: {
+          organizationId,
+          commonThirdPartyId: commonThirdParty.id,
+        },
+      },
+      updater(store) {
+        const node = store
+          .getRootField("importThirdPartyFromCommon")
+          ?.getLinkedRecord("thirdPartyEdge")
+          ?.getLinkedRecord("node");
+        if (!node) {
+          return;
+        }
+
+        // Reflect the import on the clicked pattern immediately. Sibling
+        // patterns of the same vendor are backfilled server-side and pick
+        // up the link on the next fetch of the list.
+        const patternRecord = store.get(pattern.id);
+        if (patternRecord) {
+          patternRecord.setLinkedRecord(node, "thirdParty");
+        }
+      },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          return;
+        }
+        toast({ title: __("Success"), description: __("Third party imported"), variant: "success" });
+      },
+      onError(error) {
+        toast({ title: __("Error"), description: formatError(__("Failed to import third party"), error), variant: "error" });
       },
     });
   };
@@ -267,7 +309,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         setIsEditing(false);
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error), variant: "error" });
       },
     });
   };
@@ -289,12 +331,19 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const srcBadge = pattern.source ? getTrackerSourceBadge(pattern.source, __) : null;
 
   return (
-    <Tr to={pattern.id} className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
+    <Tr
+      to={pattern.id}
+      className={
+        pattern.excluded
+          ? "bg-txt-quaternary/70 line-through"
+          : pattern.source === "SCRIPT"
+            ? undefined
+            : "bg-txt-quaternary/25"
+      }
+    >
       <Td>
-        <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
-      </Td>
-      <Td>
-        <div className="flex flex-col min-w-0 max-w-xs">
+        <div className="flex flex-col items-start min-w-0 max-w-xs gap-1">
+          <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
           <span className={pattern.excluded ? undefined : "font-medium"}>{pattern.displayName}</span>
           {pattern.description && (
             <span className="text-xs text-txt-tertiary wrap-break-word line-clamp-1">
@@ -306,13 +355,12 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       <Td>
         {pattern.thirdParty
           ? (
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="truncate">{pattern.thirdParty.name}</span>
-              </div>
+              <span className="truncate">{pattern.thirdParty.name}</span>
             )
           : pattern.commonThirdParty
             ? (
-                <div className="flex items-center gap-2 min-w-0">
+                <div>
+                  <Badge variant="info">{__("Common catalog")}</Badge>
                   <span className="truncate">{pattern.commonThirdParty.name}</span>
                 </div>
               )
@@ -324,14 +372,17 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
           : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td noLink>
-        <MoveToCategorySelect
-          currentCategoryId={pattern.cookieCategory?.id}
-          currentCategoryName={pattern.cookieCategory?.name}
-          onSelect={handleMoveWithConfirm}
-        />
+        <div className="pr-2 flex justify-start">
+          <MoveToCategorySelect
+            currentCategoryId={pattern.cookieCategory?.id}
+            currentCategoryName={pattern.cookieCategory?.name}
+            highlight={!!pattern.cookieCategory && pattern.cookieCategory.kind !== "UNCATEGORISED"}
+            onSelect={handleMove}
+          />
+        </div>
       </Td>
       <Td>
-        <span>{humanizeSeconds(pattern.maxAgeSeconds ?? null)}</span>
+        <span className="pl-2">{humanizeSeconds(pattern.maxAgeSeconds ?? null, pattern.trackerType)}</span>
       </Td>
       <Td>
         {pattern.lastMatchedAt
@@ -353,6 +404,14 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             <IconPencil size={14} />
           </button>
           <ActionDropdown>
+            {!pattern.thirdParty && pattern.commonThirdParty && (
+              <DropdownItem
+                icon={DownloadSimpleIcon}
+                onSelect={handleImport}
+              >
+                {__("Import to third parties")}
+              </DropdownItem>
+            )}
             <DropdownItem
               icon={pattern.excluded ? EyeIcon : EyeSlashIcon}
               onSelect={handleToggleExcluded}

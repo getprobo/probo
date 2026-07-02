@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,9 +58,10 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScopeId  string
-		flagNodeType string
-		flagName     string
+		flagScopeId    string
+		flagBoundaryId string
+		flagNodeType   string
+		flagName       string
 	)
 
 	cmd := &cobra.Command{
@@ -106,7 +107,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						Title("Node type").
 						Options(
 							huh.NewOption("Entity", "ENTITY"),
-							huh.NewOption("Boundary", "BOUNDARY"),
 							huh.NewOption("Asset", "ASSET"),
 							huh.NewOption("Data", "DATA"),
 						).
@@ -126,7 +126,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("node type is required; pass --node-type or run interactively")
 			}
 
-			if err := cmdutil.ValidateEnum("node-type", flagNodeType, []string{"ENTITY", "BOUNDARY", "ASSET", "DATA"}); err != nil {
+			if err := cmdutil.ValidateEnum("node-type", flagNodeType, []string{"ENTITY", "ASSET", "DATA"}); err != nil {
 				return err
 			}
 
@@ -134,6 +134,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				"riskAssessmentScopeId": flagScopeId,
 				"nodeType":              flagNodeType,
 				"name":                  flagName,
+			}
+
+			if flagBoundaryId != "" {
+				input["boundaryId"] = flagBoundaryId
 			}
 
 			data, err := client.Do(
@@ -162,7 +166,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagScopeId, "scope-id", "", "Risk assessment scope ID (required)")
-	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, BOUNDARY, ASSET, DATA (required)")
+	cmd.Flags().StringVar(&flagBoundaryId, "boundary-id", "", "Boundary ID that contains this node (optional)")
+	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, ASSET, DATA (required)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Node name (required)")
 
 	_ = cmd.MarkFlagRequired("scope-id")

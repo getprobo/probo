@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@ package agent_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -72,6 +73,20 @@ func (r *simpleRegistry) Agent(name string) (*agent.Agent, error) {
 	}
 
 	return a, nil
+}
+
+type saveFailCheckpointer struct {
+	cp *agent.Checkpoint
+}
+
+func (s *saveFailCheckpointer) Save(_ context.Context, _ string, _ *agent.Checkpoint) error {
+	return errors.New("save exploded")
+}
+
+func (s *saveFailCheckpointer) Load(_ context.Context, _ string) (*agent.Checkpoint, error) {
+	clone := *s.cp
+
+	return &clone, nil
 }
 
 func TestRestore(t *testing.T) {
@@ -558,6 +573,267 @@ func TestRestore(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, result)
 			assert.Equal(t, "Completed after resume.", result.FinalMessage().Text())
+		},
+	)
+
+	t.Run(
+		"nested suspended restore persists progress when one inner agent missing",
+		func(t *testing.T) {
+			t.Parallel()
+
+			outerAgent := agent.New(
+				"outer-agent",
+				newTestClient(&mockProvider{}),
+				agent.WithModel("test-model"),
+			)
+			// done-agent resolves and completes on restore; its
+			// progress must be persisted even though inner-agent
+			// (below) cannot be resolved.
+			doneAgent := agent.New(
+				"done-agent",
+				newTestClient(&mockProvider{
+					responses: []*llm.ChatCompletionResponse{
+						stopResponse("inner done"),
+					},
+				}),
+				agent.WithModel("test-model"),
+			)
+
+			store := newMemoryCheckpointer()
+			err := store.Save(context.Background(), "run-nested-missing-inner", &agent.Checkpoint{
+				Status:    agent.AgentStatusSuspended,
+				AgentName: "outer-agent",
+				Messages: []llm.Message{
+					{
+						Role:  llm.RoleUser,
+						Parts: []llm.Part{llm.TextPart{Text: "continue"}},
+					},
+				},
+				AllToolCalls: []llm.ToolCall{
+					{
+						ID: "tc_done",
+						Function: llm.FunctionCall{
+							Name:      "call_done",
+							Arguments: `{"input":"go"}`,
+						},
+					},
+					{
+						ID: "tc_missing",
+						Function: llm.FunctionCall{
+							Name:      "call_inner",
+							Arguments: `{"input":"go"}`,
+						},
+					},
+				},
+				InnerCheckpoints: map[string]*agent.Checkpoint{
+					"tc_done": {
+						Status:    agent.AgentStatusSuspended,
+						AgentName: "done-agent",
+						Messages: []llm.Message{
+							{
+								Role:  llm.RoleUser,
+								Parts: []llm.Part{llm.TextPart{Text: "go"}},
+							},
+						},
+					},
+					"tc_missing": {
+						Status:    agent.AgentStatusSuspended,
+						AgentName: "inner-agent",
+					},
+				},
+			})
+			require.NoError(t, err)
+
+			registry := &simpleRegistry{
+				agents: map[string]*agent.Agent{
+					"outer-agent": outerAgent,
+					"done-agent":  doneAgent,
+				},
+			}
+
+			_, err = agent.Restore(
+				context.Background(),
+				store,
+				"run-nested-missing-inner",
+				registry,
+			)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), `cannot resolve inner agent "inner-agent"`)
+
+			cp, loadErr := store.Load(context.Background(), "run-nested-missing-inner")
+			require.NoError(t, loadErr)
+			require.NotNil(t, cp)
+
+			// The unresolved tool call is retained for a future retry.
+			require.Contains(t, cp.InnerCheckpoints, "tc_missing")
+
+			// The resolved tool call's progress was persisted: its
+			// inner checkpoint is dropped and its result recorded as a
+			// completed call, so a later retry does not re-run it.
+			require.NotContains(t, cp.InnerCheckpoints, "tc_done")
+			require.Len(t, cp.CompletedCalls, 1)
+			require.Equal(t, "tc_done", cp.CompletedCalls[0].ToolCallID)
+			require.Equal(t, "inner done", cp.CompletedCalls[0].Result.Content)
+		},
+	)
+
+	t.Run(
+		"nested suspended restore returns suspended when inner stays suspended",
+		func(t *testing.T) {
+			t.Parallel()
+
+			outerAgent := agent.New(
+				"outer-agent",
+				newTestClient(&mockProvider{}),
+				agent.WithModel("test-model"),
+			)
+			innerAgent := agent.New(
+				"inner-agent",
+				newTestClient(&mockProvider{}),
+				agent.WithModel("test-model"),
+			)
+
+			store := newMemoryCheckpointer()
+			err := store.Save(context.Background(), "run-nested-still-suspended", &agent.Checkpoint{
+				Status:    agent.AgentStatusSuspended,
+				AgentName: "outer-agent",
+				Messages: []llm.Message{
+					{
+						Role:  llm.RoleUser,
+						Parts: []llm.Part{llm.TextPart{Text: "continue"}},
+					},
+				},
+				AllToolCalls: []llm.ToolCall{
+					{
+						ID: "tc_inner",
+						Function: llm.FunctionCall{
+							Name:      "call_inner",
+							Arguments: `{"input":"go"}`,
+						},
+					},
+				},
+				InnerCheckpoints: map[string]*agent.Checkpoint{
+					"tc_inner": {
+						Status:    agent.AgentStatusSuspended,
+						AgentName: "inner-agent",
+					},
+				},
+			})
+			require.NoError(t, err)
+
+			registry := &simpleRegistry{
+				agents: map[string]*agent.Agent{
+					"outer-agent": outerAgent,
+					"inner-agent": innerAgent,
+				},
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+
+			_, err = agent.Restore(
+				ctx,
+				store,
+				"run-nested-still-suspended",
+				registry,
+			)
+
+			var se *agent.SuspendedError
+			require.ErrorAs(t, err, &se)
+			require.NotNil(t, se.Checkpoint)
+			require.Contains(t, se.Checkpoint.InnerCheckpoints, "tc_inner")
+		},
+	)
+
+	t.Run(
+		"nested suspended restore joins save failure with restore error",
+		func(t *testing.T) {
+			t.Parallel()
+
+			outerAgent := agent.New(
+				"outer-agent",
+				newTestClient(&mockProvider{}),
+				agent.WithModel("test-model"),
+			)
+
+			store := &saveFailCheckpointer{
+				cp: &agent.Checkpoint{
+					Status:    agent.AgentStatusSuspended,
+					AgentName: "outer-agent",
+					AllToolCalls: []llm.ToolCall{
+						{
+							ID: "tc_missing",
+							Function: llm.FunctionCall{
+								Name:      "call_inner",
+								Arguments: `{"input":"go"}`,
+							},
+						},
+					},
+					InnerCheckpoints: map[string]*agent.Checkpoint{
+						"tc_missing": {
+							Status:    agent.AgentStatusSuspended,
+							AgentName: "inner-agent",
+						},
+					},
+				},
+			}
+
+			registry := &simpleRegistry{
+				agents: map[string]*agent.Agent{
+					"outer-agent": outerAgent,
+				},
+			}
+
+			_, err := agent.Restore(
+				context.Background(),
+				store,
+				"run-nested-save-fail",
+				registry,
+			)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), `cannot resolve inner agent "inner-agent"`)
+			assert.Contains(t, err.Error(), "cannot save nested restore progress")
+		},
+	)
+
+	t.Run(
+		"nested awaiting approval with unknown inner agent returns error",
+		func(t *testing.T) {
+			t.Parallel()
+
+			outerAgent := agent.New(
+				"outer-agent",
+				newTestClient(&mockProvider{}),
+				agent.WithModel("test-model"),
+			)
+
+			store := newMemoryCheckpointer()
+			err := store.Save(context.Background(), "run-awaiting-missing-inner", &agent.Checkpoint{
+				Status:    agent.AgentStatusAwaitingApproval,
+				AgentName: "outer-agent",
+				InnerCheckpoints: map[string]*agent.Checkpoint{
+					"tc_inner": {
+						Status:    agent.AgentStatusAwaitingApproval,
+						AgentName: "inner-agent",
+					},
+				},
+			})
+			require.NoError(t, err)
+
+			registry := &simpleRegistry{
+				agents: map[string]*agent.Agent{
+					"outer-agent": outerAgent,
+				},
+			}
+
+			_, err = agent.Restore(
+				context.Background(),
+				store,
+				"run-awaiting-missing-inner",
+				registry,
+			)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), `cannot resolve inner agent "inner-agent"`)
 		},
 	)
 }

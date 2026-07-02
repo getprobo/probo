@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -60,10 +60,6 @@ export const description: INodeProperties[] = [
 						value: 'ENTITY',
 					},
 					{
-						name: 'Boundary',
-						value: 'BOUNDARY',
-					},
-					{
 						name: 'Asset',
 						value: 'ASSET',
 					},
@@ -74,6 +70,13 @@ export const description: INodeProperties[] = [
 				],
 				default: 'ENTITY',
 				description: 'The type of the node',
+			},
+			{
+				displayName: 'Boundary ID',
+				name: 'boundaryId',
+				type: 'string',
+				default: '',
+				description: 'The ID of the boundary that contains this node. Leave empty to move it to the top level.',
 			},
 		],
 	},
@@ -87,6 +90,7 @@ export async function execute(
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
 		nodeType?: string;
+		boundaryId?: string;
 	};
 
 	const query = `
@@ -95,6 +99,7 @@ export async function execute(
 				riskAssessmentNode {
 					id
 					riskAssessmentScopeId
+					boundaryId
 					nodeType
 					name
 					createdAt
@@ -107,6 +112,9 @@ export async function execute(
 	const input: Record<string, unknown> = { id: nodeId };
 	if (additionalFields.name) input.name = additionalFields.name;
 	if (additionalFields.nodeType) input.nodeType = additionalFields.nodeType;
+	if (additionalFields.boundaryId !== undefined) {
+		input.boundaryId = additionalFields.boundaryId || null;
+	}
 
 	if (Object.keys(input).length === 1) {
 		throw new Error('At least one field must be provided to update');

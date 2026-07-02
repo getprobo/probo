@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -120,8 +120,8 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 			Active:      new(!u.IsDeleted),
 			ExternalID:  u.ID,
 			MFAStatus:   mfaStatus,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			CreatedAt:   new(u.CreatedAt),
 		}
 
@@ -176,9 +176,9 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 			Active:      new(false),
 			ExternalID:  inv.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
-			Role:        "Invited",
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
+			Roles:       tallyRoles(),
 		}
 
 		if record.Email != "" {
@@ -187,4 +187,8 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 	}
 
 	return records, nil
+}
+
+func tallyRoles() []string {
+	return []string{"Invited"}
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -112,7 +112,7 @@ func handleConnectorInitiate(
 		// Union-not-delta because most providers replace rather than
 		// merge. No short-circuit: every reconnect runs the full OAuth
 		// flow so revoked or stale tokens are never silently reused.
-		opts := connector.InitiateOptions{Scopes: requestedScopes}
+		opts := connector.InitiateOptions{Scopes: requestedScopes, Site: r.URL.Query().Get("site")}
 		if existing != nil {
 			opts.Scopes = connector.UnionScopes(existing.Connection.Scopes(), requestedScopes)
 			opts.IncludeGrantedScopes = true

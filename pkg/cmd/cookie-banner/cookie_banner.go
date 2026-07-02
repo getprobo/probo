@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/latestversion"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/list"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/publish"
+	regeneratepolicy "go.probo.inc/probo/pkg/cmd/cookie-banner/regenerate-policy"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/translate"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/update"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/view"
@@ -43,6 +44,7 @@ func NewCmdCookieBanner(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(activate.NewCmdActivate(f))
 	cmd.AddCommand(deactivate.NewCmdDeactivate(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
+	cmd.AddCommand(regeneratepolicy.NewCmdRegeneratePolicy(f))
 	cmd.AddCommand(translate.NewCmdTranslate(f))
 	cmd.AddCommand(latestversion.NewCmdLatestVersion(f))
 

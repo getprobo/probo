@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
@@ -46,24 +45,6 @@ type (
 
 	Files []*File
 )
-
-func (f *File) GetName() string {
-	return f.FileName
-}
-
-func (f *File) GetObjectKey() string {
-	return f.FileKey
-}
-
-func (f *File) GetBucketName() string {
-	return f.BucketName
-}
-
-func (f *File) GetMimeType() string {
-	return f.MimeType
-}
-
-var _ filemanager.File = (*File)(nil)
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (f *File) AuthorizationAttributes(
@@ -157,6 +138,10 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByIDs Loads every given files, whether they are active or not. See
+// Files.LoadActiveByIDs for a safer option.
+//
+// DISCLAIMER: use with caution on user-facing features.
 func (f *Files) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -265,6 +250,59 @@ VALUES (
 
 		return fmt.Errorf("cannot insert file: %w", err)
 	}
+
+	return nil
+}
+
+func (f *File) LoadActiveByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	fileID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    visibility,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    %s
+    AND id = @file_id
+    AND deleted_at IS NULL
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"file_id": fileID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query file: %w", err)
+	}
+	defer rows.Close()
+
+	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect file: %w", err)
+	}
+
+	*f = file
 
 	return nil
 }

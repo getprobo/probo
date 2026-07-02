@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@ import { type RouteObject } from "react-router";
 export type AppRoute = Omit<RouteObject, "children"> & {
   children?: AppRoute[];
   Fallback?: ComponentType;
-}
+};
 
 export function routeFromAppRoute(appRoute: AppRoute): RouteObject {
   const { Component, Fallback, children, ...rest } = appRoute;

@@ -1,0 +1,46 @@
+/* Copyright (c) 2026 Probo Inc <hello@probo.com>.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Radius — Radix Themes radius scale (steps 1–6)
+ *
+ * Sourced from the "Probo Radix UI" Figma file, which defaults to the
+ * Radix "Medium" radius set. Exposed as rounded-1 … rounded-6, matching the
+ * numbered convention used for color and type.
+ *
+ *   Step   value           rem
+ *   ─────  ──────────────  ─────────
+ *   1      3px             0.1875rem
+ *   2      4px             0.25rem
+ *   3      6px             0.375rem
+ *   4      8px             0.5rem
+ *   5      12px            0.75rem
+ *   6      16px            1rem
+ *
+ * --radius-* is reset to initial so the v2 build exposes only the numeric
+ * Radix scale (the static rounded-none / rounded-full utilities are
+ * unaffected, as they are not theme-driven), mirroring the color and type
+ * resets in the other layers.
+ * ------------------------------------------------------------------------- */
+@theme {
+    --radius-*: initial;
+
+    --radius-1: 0.1875rem;
+    --radius-2: 0.25rem;
+    --radius-3: 0.375rem;
+    --radius-4: 0.5rem;
+    --radius-5: 0.75rem;
+    --radius-6: 1rem;
+}

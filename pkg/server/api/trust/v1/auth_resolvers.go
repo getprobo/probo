@@ -59,7 +59,7 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 	email, err := r.iam.AuthService.GetMagicLinkEmail(ctx, input.Token)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlutils.TokenExpired(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
@@ -80,7 +80,11 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
-				return nil, gqlutils.Invalid(ctx, err)
+				return nil, gqlutils.TokenExpired(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
+				return nil, gqlutils.TokenAlreadyUsed(ctx, err)
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
@@ -102,7 +106,11 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
-				return nil, gqlutils.Invalid(ctx, err)
+				return nil, gqlutils.TokenExpired(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
+				return nil, gqlutils.TokenAlreadyUsed(ctx, err)
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {

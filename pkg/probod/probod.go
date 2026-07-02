@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,8 +41,8 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -56,20 +56,21 @@ import (
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
-	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -93,6 +94,12 @@ func New() *Implm {
 			BaseURL: "http://localhost:8080",
 			Api: APIConfig{
 				Addr: "localhost:8080",
+				GraphQL: GraphQLConfig{
+					ParserTokenLimit:  15000,
+					ComplexityLimit:   2000,
+					QueryCacheSize:    1000,
+					DisableSuggestion: true,
+				},
 			},
 			Pg: PgConfig{
 				Addr:                         "localhost:5432",
@@ -154,6 +161,11 @@ func New() *Implm {
 					SenderInterval: 5,
 					CacheTTL:       86400,
 				},
+				Document: DocumentNotificationConfig{
+					Interval:         300,   // 5 minutes
+					DebounceDelay:    900,   // 15 minutes
+					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x)
+				},
 			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
@@ -161,7 +173,7 @@ func New() *Implm {
 				ResolverAddr:      "8.8.8.8:53",
 				ACME: ACMEConfig{
 					Directory: "https://acme-v02.api.letsencrypt.org/directory",
-					Email:     "admin@getprobo.com",
+					Email:     "admin@probo.com",
 					KeyType:   "EC256",
 				},
 			},
@@ -182,6 +194,15 @@ func New() *Implm {
 				Interval:       10,
 				StaleAfter:     1500,
 				MaxConcurrency: 1,
+			},
+			CommonThirdPartyEnrichmentWorker: CommonThirdPartyEnrichmentWorkerConfig{
+				Interval:            10,
+				MaxConcurrency:      1,
+				StaleAfter:          900,
+				AgentTimeout:        90,
+				AgentMaxTurns:       12,
+				ConfidenceThreshold: 0.7,
+				MaxAttempts:         3,
 			},
 		},
 	}
@@ -245,7 +266,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot get cookie secret bytes: %w", err)
 	}
 
-	awsConfig := awsconfig.NewConfig(
+	awsConfig, err := awsconfig.NewConfig(
 		l,
 		httpclient.DefaultPooledClient(
 			httpclient.WithLogger(l),
@@ -259,6 +280,9 @@ func (impl *Implm) Run(
 			Endpoint:        impl.cfg.AWS.Endpoint,
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("cannot initialize AWS config: %w", err)
+	}
 
 	html2pdfConverter := html2pdf.NewConverter(
 		impl.cfg.ChromeDPAddr,
@@ -320,12 +344,17 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	trackerAgentsCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgentsConfig(l, tp, r)
+	trackerMappingCfg, trackerEnrichmentCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgents(l, tp, r)
 	if err != nil {
 		return err
 	}
 
-	fileManagerService := filemanager.NewService(s3Client)
+	fileManagerService := filemanager.NewService(pgClient, baseURL, s3Client)
+
+	commonThirdPartyEnrichmentCfg, err := impl.buildCommonThirdPartyEnrichmentConfig(l, tp, r, fileManagerService)
+	if err != nil {
+		return err
+	}
 
 	var (
 		samlCert *x509.Certificate
@@ -365,8 +394,9 @@ func (impl *Implm) Run(
 	}
 
 	var (
-		oauth2SigningKeys oauth2server.SigningKeys
-		hasActive         bool
+		oauth2SigningKeys   oauth2.SigningKeys
+		hasActive           bool
+		activeSigningKeyPEM string
 	)
 
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
@@ -387,11 +417,12 @@ func (impl *Implm) Run(
 
 		if keyCfg.Active {
 			hasActive = true
+			activeSigningKeyPEM = keyCfg.PrivateKey
 		}
 
 		oauth2SigningKeys = append(
 			oauth2SigningKeys,
-			oauth2server.SigningKey{
+			oauth2.SigningKey{
 				PrivateKey: rsaKey,
 				KID:        kid,
 				Active:     keyCfg.Active,
@@ -403,13 +434,40 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
 	}
 
-	if err := emails.UploadStaticAssets(
-		ctx,
-		s3Client,
-		impl.cfg.AWS.Bucket,
-	); err != nil {
-		return fmt.Errorf("cannot upload email static assets: %w", err)
+	// Auto-register public-client (CIMD) connectors, which need no operator
+	// credentials: the client_id is this deployment's hosted CIMD metadata
+	// URL and the OAuth2 state token is signed with a key derived from the
+	// active OAuth2 server signing key. Providers an operator configured
+	// explicitly (already registered from impl.cfg.Connectors above) are
+	// left untouched.
+	connectorStateKey := connector.DeriveConnectorStateKey(activeSigningKeyPEM)
+	cimdClientID := baseURL.WithPath(connector.CIMDMetadataPath).MustString()
+
+	for _, reg := range providerRegistry.PublicClients() {
+		if _, err := defaultConnectorRegistry.Get(string(reg.Provider)); err == nil {
+			continue
+		}
+
+		oauth2c := &connector.OAuth2Connector{
+			ClientID:        cimdClientID,
+			StateSigningKey: connectorStateKey,
+		}
+
+		if err := providerRegistry.ApplyOAuth2Defaults(string(reg.Provider), redirectURI, oauth2c); err != nil {
+			return fmt.Errorf("cannot apply oauth2 defaults for public client %q: %w", reg.Provider, err)
+		}
+
+		if err := defaultConnectorRegistry.Register(string(reg.Provider), oauth2c); err != nil {
+			return fmt.Errorf("cannot register public client connector %q: %w", reg.Provider, err)
+		}
 	}
+
+	oauth2ScopeRegistry := oauth2scope.NewRegistry().
+		Register(iam.IAMOAuth2ScopeMappings).
+		Register(probo.OAuth2ScopeMappings).
+		Register(agentrun.OAuth2ScopeMappings).
+		Register(accessreview.OAuth2ScopeMappings).
+		Register(resourcealias.OAuth2ScopeMappings)
 
 	iamService, err := iam.NewService(
 		ctx,
@@ -448,6 +506,7 @@ func (impl *Implm) Run(
 			},
 			OAuth2ServerSigningKeys: oauth2SigningKeys,
 			OAuth2ServerOptions:     oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
+			OAuth2ScopeRegistry:     oauth2ScopeRegistry,
 		},
 	)
 	if err != nil {
@@ -505,9 +564,6 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
-	fileService := file.NewService(pgClient, baseURL)
-	filesignService := filesign.NewService(pgClient, fileManagerService)
-
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -531,11 +587,12 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		fileService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
 	}
+
+	resourceAliasService := resourcealias.NewService(pgClient)
 
 	trustService := trust.NewService(
 		pgClient,
@@ -549,7 +606,7 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
-		fileService,
+		resourceAliasService,
 	)
 
 	accessReviewService := accessreview.NewService(
@@ -560,7 +617,13 @@ func (impl *Implm) Run(
 		l.Named("access-review"),
 	)
 
-	thirdPartyService := thirdparty.NewService(pgClient, fileService, thirdPartyVetter)
+	agentRunService := agentrun.NewService(pgClient)
+
+	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
+
+	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
@@ -568,11 +631,13 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			FileSign:          filesignService,
+			ResourceAlias:     resourceAliasService,
+			File:              fileManagerService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,
 			AccessReview:      accessReviewService,
+			AgentRun:          agentRunService,
 			Mailman:           mailmanService,
 			CookieBanner:      cookieBannerService,
 			Geoloc:            geolocService,
@@ -582,6 +647,12 @@ func (impl *Implm) Run(
 			ConnectorRegistry: defaultConnectorRegistry,
 			ProviderRegistry:  providerRegistry,
 			BaseURL:           baseURL,
+			GraphQLLimits: gqlutils.Limits{
+				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
+				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
+				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
+				DisableSuggestion: impl.cfg.Api.GraphQL.DisableSuggestion,
+			},
 
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
@@ -624,6 +695,7 @@ func (impl *Implm) Run(
 			User:        impl.cfg.Notifications.Mailer.SMTP.User,
 			Password:    impl.cfg.Notifications.Mailer.SMTP.Password,
 			TLSRequired: impl.cfg.Notifications.Mailer.SMTP.TLSRequired,
+			HelloName:   impl.cfg.Notifications.Mailer.SMTP.HelloName,
 		},
 		l.Named("sending-worker"),
 		[]mailer.SendingWorkerOption{
@@ -642,20 +714,25 @@ func (impl *Implm) Run(
 	)
 
 	slackSenderCtx, stopSlackSender := context.WithCancel(context.Background())
-	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), encryptionKey, slack.Config{
-		Interval: time.Duration(impl.cfg.Notifications.Slack.SenderInterval) * time.Second,
-	})
+	slackSendingWorker := slack.NewSendingWorker(
+		pgClient,
+		l.Named("slack-sending-worker"),
+		encryptionKey,
+		nil,
+		worker.WithInterval(time.Duration(impl.cfg.Notifications.Slack.SenderInterval)*time.Second),
+		worker.WithMaxConcurrency(1),
+	)
 
 	wg.Go(
 		func() {
-			if err := slackSender.Run(slackSenderCtx); err != nil {
-				cancel(fmt.Errorf("slack sender crashed: %w", err))
+			if err := slackSendingWorker.Run(slackSenderCtx); err != nil {
+				cancel(fmt.Errorf("slack sending worker crashed: %w", err))
 			}
 		},
 	)
 
-	webhookSenderCtx, stopWebhookSender := context.WithCancel(context.Background())
-	webhookSender := webhook.NewSender(pgClient, l.Named("webhook-sender"), webhook.Config{
+	webhookWorkerCtx, stopWebhookWorker := context.WithCancel(context.Background())
+	webhookWorker := webhook.NewWebhookWorker(pgClient, l.Named("webhook-sender"), webhook.Config{
 		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
 		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
 		EncryptionKey: encryptionKey,
@@ -664,8 +741,8 @@ func (impl *Implm) Run(
 
 	wg.Go(
 		func() {
-			if err := webhookSender.Run(webhookSenderCtx); err != nil {
-				cancel(fmt.Errorf("webhook sender crashed: %w", err))
+			if err := webhookWorker.Run(webhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("webhook worker crashed: %w", err))
 			}
 		},
 	)
@@ -691,6 +768,40 @@ func (impl *Implm) Run(
 		func() {
 			if err := documentPDFWorker.Run(documentPDFWorkerCtx); err != nil {
 				cancel(fmt.Errorf("document pdf worker crashed: %w", err))
+			}
+		},
+	)
+
+	documentNotificationInterval := time.Duration(impl.cfg.Notifications.Document.Interval) * time.Second
+	if documentNotificationInterval <= 0 {
+		documentNotificationInterval = 5 * time.Minute
+	}
+
+	documentNotificationDebounce := time.Duration(impl.cfg.Notifications.Document.DebounceDelay) * time.Second
+	if documentNotificationDebounce <= 0 {
+		documentNotificationDebounce = 15 * time.Minute
+	}
+
+	documentNotificationReminder := time.Duration(impl.cfg.Notifications.Document.ReminderInterval) * time.Second
+	if documentNotificationReminder <= 0 {
+		documentNotificationReminder = 24 * time.Hour
+	}
+
+	documentNotificationWorker := probo.NewDocumentNotificationWorker(
+		proboService,
+		l.Named("document-notification-worker"),
+		probo.DocumentNotificationWorkerConfig{
+			DebounceDelay:    documentNotificationDebounce,
+			ReminderInterval: documentNotificationReminder,
+		},
+		worker.WithInterval(documentNotificationInterval),
+	)
+	documentNotificationCtx, stopDocumentNotification := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := documentNotificationWorker.Run(documentNotificationCtx); err != nil {
+				cancel(fmt.Errorf("document notification worker crashed: %w", err))
 			}
 		},
 	)
@@ -750,7 +861,7 @@ func (impl *Implm) Run(
 	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(
 		pgClient,
 		l,
-		trackerAgentsCfg,
+		trackerMappingCfg,
 		thirdPartyDisambiguationCfg,
 		time.Duration(impl.cfg.TrackerMappingWorker.StaleAfter)*time.Second,
 		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
@@ -771,15 +882,14 @@ func (impl *Implm) Run(
 	// the tracker agents are configured.
 	stopCommonPatternEnrichmentWorker := func() {}
 
-	if trackerAgentsCfg.LLMClient != nil {
-		enrichmentCfg := trackerAgentsCfg
-		enrichmentCfg.AgentTimeout = time.Duration(impl.cfg.CommonPatternEnrichmentWorker.AgentTimeout) * time.Second
-
+	if trackerEnrichmentCfg.LLMClient != nil {
 		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(
 			pgClient,
 			l,
-			enrichmentCfg,
+			trackerEnrichmentCfg,
+			trackerMappingCfg,
 			time.Duration(impl.cfg.CommonPatternEnrichmentWorker.StaleAfter)*time.Second,
+			0,
 			worker.WithInterval(time.Duration(impl.cfg.CommonPatternEnrichmentWorker.Interval)*time.Second),
 			worker.WithMaxConcurrency(impl.cfg.CommonPatternEnrichmentWorker.MaxConcurrency),
 		)
@@ -792,6 +902,34 @@ func (impl *Implm) Run(
 			func() {
 				if err := commonPatternEnrichmentWorker.Run(commonPatternEnrichmentWorkerCtx); err != nil {
 					cancel(fmt.Errorf("common pattern enrichment worker crashed: %w", err))
+				}
+			},
+		)
+	}
+
+	// The common-third-party enrichment worker fills catalog metadata
+	// (URLs, address, certifications, logo) via two agents plus a
+	// deterministic logo step. It needs an LLM client, so it is only
+	// started when its agent config is present.
+	stopCommonThirdPartyEnrichmentWorker := func() {}
+
+	if commonThirdPartyEnrichmentCfg.LLMClient != nil {
+		commonThirdPartyEnrichmentWorker := thirdparty.NewCommonThirdPartyEnrichmentWorker(
+			pgClient,
+			l.Named("common-third-party-enrichment-worker"),
+			commonThirdPartyEnrichmentCfg,
+			worker.WithInterval(time.Duration(impl.cfg.CommonThirdPartyEnrichmentWorker.Interval)*time.Second),
+			worker.WithMaxConcurrency(impl.cfg.CommonThirdPartyEnrichmentWorker.MaxConcurrency),
+		)
+
+		var commonThirdPartyEnrichmentWorkerCtx context.Context
+
+		commonThirdPartyEnrichmentWorkerCtx, stopCommonThirdPartyEnrichmentWorker = context.WithCancel(context.Background())
+
+		wg.Go(
+			func() {
+				if err := commonThirdPartyEnrichmentWorker.Run(commonThirdPartyEnrichmentWorkerCtx); err != nil {
+					cancel(fmt.Errorf("common third party enrichment worker crashed: %w", err))
 				}
 			},
 		)
@@ -882,16 +1020,18 @@ func (impl *Implm) Run(
 
 	stopApiServer()
 	stopTrustCenterServer()
-	stopWebhookSender()
+	stopWebhookWorker()
 	stopESignService()
 	stopTrackerPatternAnalysisWorker()
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
 	stopCommonPatternEnrichmentWorker()
+	stopCommonThirdPartyEnrichmentWorker()
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
+	stopDocumentNotification()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
 	stopIAMService()
@@ -1294,23 +1434,27 @@ func (impl *Implm) runTrustCenterServer(
 	return ctx.Err()
 }
 
-func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2server.Option {
-	var opts []oauth2server.Option
+func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
+	var opts []oauth2.Option
 
 	if cfg.AccessTokenDuration > 0 {
-		opts = append(opts, oauth2server.WithAccessTokenDuration(time.Duration(cfg.AccessTokenDuration)*time.Second))
+		opts = append(opts, oauth2.WithAccessTokenDuration(time.Duration(cfg.AccessTokenDuration)*time.Second))
 	}
 
 	if cfg.RefreshTokenDuration > 0 {
-		opts = append(opts, oauth2server.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
+		opts = append(opts, oauth2.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
 	}
 
 	if cfg.AuthorizationCodeDuration > 0 {
-		opts = append(opts, oauth2server.WithAuthorizationCodeDuration(time.Duration(cfg.AuthorizationCodeDuration)*time.Second))
+		opts = append(opts, oauth2.WithAuthorizationCodeDuration(time.Duration(cfg.AuthorizationCodeDuration)*time.Second))
 	}
 
 	if cfg.DeviceCodeDuration > 0 {
-		opts = append(opts, oauth2server.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
+		opts = append(opts, oauth2.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
+	}
+
+	if len(cfg.CIMDAllowedClientIDs) > 0 {
+		opts = append(opts, oauth2.WithCIMDAllowedClientIDs(cfg.CIMDAllowedClientIDs))
 	}
 
 	return opts

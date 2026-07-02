@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/clientip"
-	"go.probo.inc/probo/pkg/server/jsonutil"
+	"go.probo.inc/probo/pkg/server/jsonx"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -69,33 +69,29 @@ func NewMux(
 func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	lang := r.URL.Query().Get("lang")
 	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
-
-	var regulation cookiebanner.Regulation
-	if cc != nil {
-		regulation = cookiebanner.RegulationForCountry(*cc)
-	}
+	regulation, _ := cookiebanner.ResolveRegulation(cc)
 
 	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation, sdkVersion)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 
 		if errors.Is(err, cookiebanner.ErrNoPublishedVersion) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("no published version"))
+			jsonx.RenderNotFound(w, fmt.Errorf("no published version"))
 			return
 		}
 
 		h.logger.ErrorCtx(r.Context(), "cannot get banner config", log.Error(err), log.String("sdk_version", sdkVersion))
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}
@@ -128,25 +124,25 @@ func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
 func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	visitorID := chi.URLParam(r, "visitorID")
 	if visitorID == "" {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("missing visitor id"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("missing visitor id"))
 		return
 	}
 
 	consent, err := h.cookieBannerSvc.GetVisitorConsent(r.Context(), bannerID, visitorID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 
 		if errors.Is(err, cookiebanner.ErrConsentNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("consent not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("consent not found"))
 			return
 		}
 
@@ -156,7 +152,7 @@ func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
 			log.Error(err),
 			log.String("sdk_version", sdkVersionFromContext(r.Context())),
 		)
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}
@@ -183,13 +179,13 @@ type (
 func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	var body postConsentBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return
 	}
 
@@ -197,45 +193,38 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	ua := r.UserAgent()
 	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
+	regulation, regulationSource := cookiebanner.ResolveRegulation(cc)
 
-	var (
-		regulation         *cookiebanner.Regulation
-		resolvedRegulation cookiebanner.Regulation
-	)
-	if cc != nil {
-		resolvedRegulation = cookiebanner.RegulationForCountry(*cc)
-		regulation = &resolvedRegulation
-	}
-
-	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(resolvedRegulation))
+	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(regulation))
 
 	req := cookiebanner.RecordConsentRequest{
-		Version:     body.Version,
-		VisitorID:   body.VisitorID,
-		IPAddress:   &ip,
-		UserAgent:   &ua,
-		ConsentData: body.ConsentData,
-		Action:      body.Action,
-		SdkVersion:  sdkVersion,
-		Regulation:  regulation,
-		CountryCode: cc,
-		ConsentMode: &cm,
+		Version:          body.Version,
+		VisitorID:        body.VisitorID,
+		IPAddress:        &ip,
+		UserAgent:        &ua,
+		ConsentData:      body.ConsentData,
+		Action:           body.Action,
+		SdkVersion:       sdkVersion,
+		Regulation:       &regulation,
+		RegulationSource: regulationSource,
+		CountryCode:      cc,
+		ConsentMode:      &cm,
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) || errors.Is(err, cookiebanner.ErrVersionNotPublished) {
-			jsonutil.RenderBadRequest(w, fmt.Errorf("invalid version"))
+			jsonx.RenderBadRequest(w, fmt.Errorf("invalid version"))
 			return
 		}
 
 		h.logger.ErrorCtx(r.Context(), "cannot record consent", log.Error(err), log.String("sdk_version", sdkVersion))
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}
@@ -301,23 +290,23 @@ func sanitizeInitiatorURL(raw *string) *string {
 func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	var body reportDetectedCookiesBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return
 	}
 
 	if len(body.Cookies) == 0 {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("cookies list is empty"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("cookies list is empty"))
 		return
 	}
 
 	if len(body.Cookies) > maxDetectedCookiesPerRequest {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("too many cookies, maximum is %d", maxDetectedCookiesPerRequest))
+		jsonx.RenderBadRequest(w, fmt.Errorf("too many cookies, maximum is %d", maxDetectedCookiesPerRequest))
 		return
 	}
 
@@ -351,7 +340,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 	}
 
 	if len(detected) == 0 {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("no valid cookie names provided"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("no valid cookie names provided"))
 		return
 	}
 
@@ -361,7 +350,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 
 	if err := h.cookieBannerSvc.ReportDetectedCookies(r.Context(), bannerID, req); err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 
@@ -371,7 +360,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			log.Error(err),
 			log.String("sdk_version", sdkVersionFromContext(r.Context())),
 		)
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}
@@ -403,24 +392,24 @@ const maxDetectedTrackersPerRequest = 100
 func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid banner id"))
 		return
 	}
 
 	var body reportDetectedTrackersBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return
 	}
 
 	total := len(body.Cookies) + len(body.Storage) + len(body.Resources)
 	if total == 0 {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("no items provided"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("no items provided"))
 		return
 	}
 
 	if total > maxDetectedTrackersPerRequest {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("too many items, maximum is %d", maxDetectedTrackersPerRequest))
+		jsonx.RenderBadRequest(w, fmt.Errorf("too many items, maximum is %d", maxDetectedTrackersPerRequest))
 		return
 	}
 
@@ -544,18 +533,18 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	if len(req.Cookies)+len(req.Storage)+len(req.Resources) == 0 {
-		jsonutil.RenderBadRequest(w, fmt.Errorf("no valid items provided"))
+		jsonx.RenderBadRequest(w, fmt.Errorf("no valid items provided"))
 		return
 	}
 
 	if err := h.cookieBannerSvc.ReportDetectedTrackers(r.Context(), bannerID, req); err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
 
 		h.logger.ErrorCtx(r.Context(), "cannot report detected trackers", log.Error(err), log.String("sdk_version", sdkVersionFromContext(r.Context())))
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}

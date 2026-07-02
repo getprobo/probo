@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,10 @@ type (
 
 	SentryConnectorSettings struct {
 		OrganizationSlug string `json:"organization_slug"`
+	}
+
+	SigNozConnectorSettings struct {
+		BaseURL string `json:"base_url"`
 	}
 
 	GrafanaConnectorSettings struct {
@@ -84,12 +88,91 @@ type (
 		TeamID string `json:"team_id"`
 	}
 
+	// DocuSignConnectorSettings holds the DocuSign account the user picked
+	// after OAuth. A DocuSign user can have access to multiple accounts, so
+	// the post-OAuth picker scopes the access source to one; AccountID is the
+	// selected account's UUID. The driver and name resolver re-resolve the
+	// account's data-center base URI from /oauth/userinfo at fetch time.
+	DocuSignConnectorSettings struct {
+		AccountID string `json:"account_id"`
+	}
+
 	VercelConnectorSettings struct {
 		TeamID string `json:"team_id"`
 	}
 
 	MetabaseConnectorSettings struct {
 		InstanceURL string `json:"instance_url"`
+	}
+
+	// PostHogConnectorSettings carries the data-API base host for the
+	// PostHog provider, which spans cloud and self-hosted deployments. For
+	// API-key connections it is the region-pinned host
+	// (https://us.posthog.com / https://eu.posthog.com) or a self-hosted
+	// instance URL. It is empty for cloud OAuth connections — the driver
+	// then discovers the region (us/eu) by probing, since the
+	// region-agnostic oauth.posthog.com gateway does not serve the data API.
+	PostHogConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
+	// DatadogConnectorSettings holds the per-customer Datadog site captured
+	// during the OAuth callback. Region is the site key (e.g. "US3") used for
+	// the AccessReviewSource title; Domain is the API domain (e.g.
+	// "us3.datadoghq.com") the driver and name resolver use to build hosts.
+	DatadogConnectorSettings struct {
+		Region string `json:"region"`
+		Domain string `json:"domain"`
+	}
+
+	// OktaConnectorSettings holds the customer's Okta org domain (the bare
+	// host, e.g. "acme.okta.com") supplied with the API token. It is the
+	// single-tenant identifier the driver and name resolver use to build
+	// the per-org API host (https://<domain>/api/v1/...). Okta has no
+	// central API gateway — every org authenticates against its own
+	// domain — so the host is operator-supplied and validated (see
+	// connector.NormalizeOktaDomain) before it reaches URL construction.
+	OktaConnectorSettings struct {
+		Domain string `json:"domain"`
+	}
+
+	// ZendeskConnectorSettings holds the per-customer Zendesk subdomain
+	// captured at connect time (the customer types it before the OAuth
+	// redirect, and it rides the signed state token to the callback —
+	// Zendesk does not echo it back). Subdomain is the <subdomain> part of
+	// <subdomain>.zendesk.com, used by the driver to build the API host and
+	// by the name resolver for the AccessReviewSource title.
+	ZendeskConnectorSettings struct {
+		Subdomain string `json:"subdomain"`
+	}
+
+	BetterStackConnectorSettings struct {
+		TeamName string `json:"team_name"`
+	}
+
+	QoveryConnectorSettings struct {
+		OrganizationID string `json:"organization_id"`
+	}
+
+	// RenderConnectorSettings stores the Render workspace identifier. The
+	// value is Render's owner ID (e.g. "tea-..." for a team workspace or
+	// "usr-..." for a personal one), surfaced to operators as "Workspace ID"
+	// and used as the {ownerId} path segment on /v1/owners/{ownerId}/...
+	RenderConnectorSettings struct {
+		OwnerID string `json:"owner_id"`
+	}
+
+	NeonConnectorSettings struct {
+		OrganizationID string `json:"organization_id"`
+	}
+
+	// LangfuseConnectorSettings carries the Langfuse API base URL, which
+	// spans the regional cloud hosts (cloud.langfuse.com /
+	// us.cloud.langfuse.com / …) and self-hosted instances. The
+	// organization-scoped API key is bound to a single organization on
+	// that host, so the base URL is the only per-tenant setting.
+	LangfuseConnectorSettings struct {
+		BaseURL string `json:"base_url"`
 	}
 )
 

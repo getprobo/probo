@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +34,7 @@ func NewTrustCenterFile(tcf *coredata.TrustCenterFile) *TrustCenterFile {
 		ID:                    tcf.ID,
 		Name:                  tcf.Name,
 		Category:              tcf.Category,
+		File:                  &File{ID: tcf.FileID},
 		TrustCenterVisibility: tcf.TrustCenterVisibility,
 		CreatedAt:             tcf.CreatedAt,
 		UpdatedAt:             tcf.UpdatedAt,

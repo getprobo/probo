@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -129,7 +129,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
 			if err != nil {
@@ -606,10 +606,26 @@ func (s AccountService) ListInvitingOrganizations(ctx context.Context, identityI
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := organizations.LoadAllByIdentityIDWithPendingInvitation(ctx, conn, coredata.NewNoScope(), identityID)
+			loaded, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.OrganizationOrderField]{
+					Field:     coredata.OrganizationOrderFieldName,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.OrganizationOrderField]) ([]*coredata.Organization, error) {
+					var batch coredata.Organizations
+					if err := batch.LoadByIdentityIDWithPendingInvitation(ctx, conn, coredata.NewNoScope(), identityID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load inviting organizations: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
 			if err != nil {
-				return fmt.Errorf("cannot load inviting organizations: %w", err)
+				return err
 			}
+
+			organizations = loaded
 
 			return nil
 		},

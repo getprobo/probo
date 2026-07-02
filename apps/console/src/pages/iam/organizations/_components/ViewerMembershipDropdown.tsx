@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +38,9 @@ export const fragment = graphql`
       identity @required(action: THROW) {
         email
         canListAPIKeys: permission(action: "iam:personal-api-key:list")
+        canListOAuth2AccessTokens: permission(
+          action: "iam:oauth2-access-token:list"
+        )
       }
     }
   }
@@ -63,7 +66,7 @@ export function ViewerMembershipDropdown(props: {
   const {
     viewer: {
       fullName,
-      identity: { canListAPIKeys, email },
+      identity: { canListAPIKeys, canListOAuth2AccessTokens, email },
     },
   } = useFragment<ViewerMembershipDropdownFragment$key>(fragment, fKey);
   const [signOut] = useMutation<ViewerMembershipDropdownSignOutMutation>(signOutMutation);
@@ -103,13 +106,20 @@ export function ViewerMembershipDropdown(props: {
           label={__("API Keys")}
         />
       )}
+      {canListOAuth2AccessTokens && (
+        <UserDropdownItem
+          to="/me/oauth-tokens"
+          icon={IconKey}
+          label={__("OAuth tokens")}
+        />
+      )}
       <UserDropdownItem
         to={`/organizations/${organizationId}/employee`}
         icon={IconPageTextLine}
         label={__("My Signatures")}
       />
       <UserDropdownItem
-        to="mailto:support@govrly.com"
+        to="mailto:support@probo.com"
         icon={IconCircleQuestionmark}
         label={__("Help")}
       />

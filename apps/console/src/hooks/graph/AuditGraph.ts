@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,21 +41,24 @@ export const auditNodeQuery = graphql`
         name
         validFrom
         validUntil
-        report {
+        reportFile {
           id
-          filename
+          fileName
           mimeType
           size
           downloadUrl
           createdAt
         }
-        reportUrl
         state
         framework {
           id
           name
-          lightLogoURL
-          darkLogoURL
+          lightLogo {
+            downloadUrl
+          }
+          darkLogo {
+            downloadUrl
+          }
         }
         organization {
           id
@@ -82,9 +85,9 @@ export const createAuditMutation = graphql`
           name
           validFrom
           validUntil
-          report {
+          reportFile {
             id
-            filename
+            fileName
           }
           state
           framework {
@@ -108,9 +111,9 @@ export const updateAuditMutation = graphql`
         name
         validFrom
         validUntil
-        report {
+        reportFile {
           id
-          filename
+          fileName
         }
         state
         framework {
@@ -241,9 +244,9 @@ export const uploadAuditReportMutation = graphql`
     uploadAuditReport(input: $input) {
       audit {
         id
-        report {
+        reportFile {
           id
-          filename
+          fileName
           downloadUrl
           createdAt
         }
@@ -286,9 +289,9 @@ export const deleteAuditReportMutation = graphql`
     deleteAuditReport(input: $input) {
       audit {
         id
-        report {
+        reportFile {
           id
-          filename
+          fileName
           downloadUrl
           createdAt
         }

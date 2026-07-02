@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,10 +37,13 @@ const (
 	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
 	ConnectorProviderPostHog      ConnectorProvider = "POSTHOG"
 	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
+	ConnectorProviderSigNoz       ConnectorProvider = "SIGNOZ"
 	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
+	ConnectorProviderBetterStack  ConnectorProvider = "BETTER_STACK"
 	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
 	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
 	ConnectorProviderResend       ConnectorProvider = "RESEND"
+	ConnectorProviderSendGrid     ConnectorProvider = "SENDGRID"
 	ConnectorProviderMicrosoft365 ConnectorProvider = "MICROSOFT_365"
 	ConnectorProviderGitLab       ConnectorProvider = "GITLAB"
 	ConnectorProviderBitbucket    ConnectorProvider = "BITBUCKET"
@@ -49,12 +52,28 @@ const (
 	ConnectorProviderAsana        ConnectorProvider = "ASANA"
 	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
+	ConnectorProviderClerk        ConnectorProvider = "CLERK"
 	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
 	ConnectorProviderMetabase     ConnectorProvider = "METABASE"
 	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
 	ConnectorProviderAnthropic    ConnectorProvider = "ANTHROPIC"
 	ConnectorProviderCursor       ConnectorProvider = "CURSOR"
+	ConnectorProviderDatadog      ConnectorProvider = "DATADOG"
+	ConnectorProviderOkta         ConnectorProvider = "OKTA"
+	ConnectorProviderZendesk      ConnectorProvider = "ZENDESK"
+	ConnectorProviderQovery       ConnectorProvider = "QOVERY"
+	ConnectorProviderRender       ConnectorProvider = "RENDER"
+	ConnectorProviderNeon         ConnectorProvider = "NEON"
+	ConnectorProviderMercury      ConnectorProvider = "MERCURY"
+	ConnectorProviderApollo       ConnectorProvider = "APOLLO"
+	ConnectorProviderDeepgram     ConnectorProvider = "DEEPGRAM"
+	ConnectorProviderClickHouse   ConnectorProvider = "CLICKHOUSE"
+	ConnectorProviderLangfuse     ConnectorProvider = "LANGFUSE"
+	ConnectorProviderPylon        ConnectorProvider = "PYLON"
+	ConnectorProviderOpenRouter   ConnectorProvider = "OPENROUTER"
+	ConnectorProviderIncidentIO   ConnectorProvider = "INCIDENT_IO"
+	ConnectorProviderBrevo        ConnectorProvider = "BREVO"
 )
 
 var (
@@ -79,10 +98,13 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderOpenAI,
 		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
+		ConnectorProviderSigNoz,
 		ConnectorProviderSupabase,
+		ConnectorProviderBetterStack,
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
+		ConnectorProviderSendGrid,
 		ConnectorProviderMicrosoft365,
 		ConnectorProviderGitLab,
 		ConnectorProviderBitbucket,
@@ -91,12 +113,28 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderAsana,
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
+		ConnectorProviderClerk,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
 		ConnectorProviderCursor,
+		ConnectorProviderDatadog,
+		ConnectorProviderOkta,
+		ConnectorProviderZendesk,
+		ConnectorProviderQovery,
+		ConnectorProviderRender,
+		ConnectorProviderNeon,
+		ConnectorProviderMercury,
+		ConnectorProviderApollo,
+		ConnectorProviderDeepgram,
+		ConnectorProviderClickHouse,
+		ConnectorProviderLangfuse,
+		ConnectorProviderPylon,
+		ConnectorProviderOpenRouter,
+		ConnectorProviderIncidentIO,
+		ConnectorProviderBrevo,
 	}
 }
 
@@ -117,10 +155,13 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderOpenAI,
 		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
+		ConnectorProviderSigNoz,
 		ConnectorProviderSupabase,
+		ConnectorProviderBetterStack,
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
+		ConnectorProviderSendGrid,
 		ConnectorProviderMicrosoft365,
 		ConnectorProviderGitLab,
 		ConnectorProviderBitbucket,
@@ -129,12 +170,28 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderAsana,
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
+		ConnectorProviderClerk,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
-		ConnectorProviderCursor:
+		ConnectorProviderCursor,
+		ConnectorProviderDatadog,
+		ConnectorProviderOkta,
+		ConnectorProviderZendesk,
+		ConnectorProviderQovery,
+		ConnectorProviderRender,
+		ConnectorProviderNeon,
+		ConnectorProviderMercury,
+		ConnectorProviderApollo,
+		ConnectorProviderDeepgram,
+		ConnectorProviderClickHouse,
+		ConnectorProviderLangfuse,
+		ConnectorProviderPylon,
+		ConnectorProviderOpenRouter,
+		ConnectorProviderIncidentIO,
+		ConnectorProviderBrevo:
 		return true
 	}
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ import { ControlledField } from "#/components/form/ControlledField";
 const updateNodeMutation = graphql`
   mutation NodeActionsUpdateMutation($input: UpdateRiskAssessmentNodeInput!) {
     updateRiskAssessmentNode(input: $input) {
-      riskAssessmentNode { id nodeType name }
+      riskAssessmentNode { id nodeType name boundaryId }
     }
   }
 `;
@@ -55,7 +55,8 @@ const deleteNodeMutation = graphql`
 `;
 
 export function NodeActions(props: {
-  node: { id: string; name: string; nodeType: string };
+  node: { id: string; name: string; nodeType: string; boundaryId: string | null };
+  boundaries: { id: string; name: string }[];
   connectionId: string;
 }) {
   const { __ } = useTranslate();
@@ -64,7 +65,11 @@ export function NodeActions(props: {
   const [updateNode] = useMutation<NodeActionsUpdateMutation>(updateNodeMutation);
   const [deleteNode] = useMutation<NodeActionsDeleteMutation>(deleteNodeMutation);
   const { register, control, handleSubmit } = useForm({
-    values: { name: props.node.name, nodeType: props.node.nodeType },
+    values: {
+      name: props.node.name,
+      nodeType: props.node.nodeType,
+      boundaryId: props.node.boundaryId ?? "none",
+    },
   });
   return (
     <>
@@ -93,7 +98,7 @@ export function NodeActions(props: {
       <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Nodes"), __("Edit")]} />}>
         <form onSubmit={e => void handleSubmit((d) => {
           updateNode({
-            variables: { input: { id: props.node.id, name: d.name, nodeType: d.nodeType as "ENTITY" | "BOUNDARY" | "ASSET" | "DATA" } },
+            variables: { input: { id: props.node.id, name: d.name, nodeType: d.nodeType as "ENTITY" | "ASSET" | "DATA", boundaryId: d.boundaryId === "none" ? null : d.boundaryId } },
             onCompleted: () => { dialogRef.current?.close(); },
           });
         })(e)}
@@ -101,11 +106,16 @@ export function NodeActions(props: {
           <DialogContent padded className="space-y-4">
             <ControlledField label={__("Type")} name="nodeType" control={control} type="select">
               <Option value="ENTITY">{__("Entity")}</Option>
-              <Option value="BOUNDARY">{__("Boundary")}</Option>
               <Option value="ASSET">{__("Asset")}</Option>
               <Option value="DATA">{__("Data")}</Option>
             </ControlledField>
             <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" />
+            <ControlledField label={__("Boundary")} name="boundaryId" control={control} type="select">
+              <Option value="none">{__("None")}</Option>
+              {props.boundaries.map(b => (
+                <Option key={b.id} value={b.id}>{b.name}</Option>
+              ))}
+            </ControlledField>
           </DialogContent>
           <DialogFooter><Button type="submit">{__("Save")}</Button></DialogFooter>
         </form>

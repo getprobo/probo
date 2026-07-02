@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,26 +37,31 @@ const createNodeMutation = graphql`
   ) {
     createRiskAssessmentNode(input: $input) {
       riskAssessmentNodeEdge @appendEdge(connections: $connections) {
-        node { id nodeType name }
+        node { id nodeType name boundaryId }
       }
     }
   }
 `;
 
-export function CreateNodeDialog(props: { scopeId: string; connectionId: string }) {
+export function CreateNodeDialog(props: {
+  scopeId: string;
+  connectionId: string;
+  boundaries: { id: string; name: string }[];
+}) {
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
   const [createNode, isCreating] = useMutation<CreateNodeDialogMutation>(createNodeMutation);
   const { register, control, handleSubmit, reset, formState } = useForm({
-    defaultValues: { name: "", nodeType: "ASSET" },
+    defaultValues: { name: "", nodeType: "ASSET", boundaryId: "none" },
   });
-  const onSubmit = (data: { name: string; nodeType: string }) => {
+  const onSubmit = (data: { name: string; nodeType: string; boundaryId: string }) => {
     createNode({
       variables: {
         input: {
           riskAssessmentScopeId: props.scopeId,
-          nodeType: data.nodeType as "ENTITY" | "BOUNDARY" | "ASSET" | "DATA",
+          nodeType: data.nodeType as "ENTITY" | "ASSET" | "DATA",
           name: data.name,
+          boundaryId: data.boundaryId === "none" ? null : data.boundaryId,
         },
         connections: [props.connectionId],
       },
@@ -77,11 +82,18 @@ export function CreateNodeDialog(props: { scopeId: string; connectionId: string 
         <DialogContent padded className="space-y-4">
           <ControlledField label={__("Type")} name="nodeType" control={control} type="select">
             <Option value="ENTITY">{__("Entity")}</Option>
-            <Option value="BOUNDARY">{__("Boundary")}</Option>
             <Option value="ASSET">{__("Asset")}</Option>
             <Option value="DATA">{__("Data")}</Option>
           </ControlledField>
           <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" error={formState.errors.name?.message} />
+          {props.boundaries.length > 0 && (
+            <ControlledField label={__("Boundary")} name="boundaryId" control={control} type="select">
+              <Option value="none">{__("None")}</Option>
+              {props.boundaries.map(b => (
+                <Option key={b.id} value={b.id}>{b.name}</Option>
+              ))}
+            </ControlledField>
+          )}
         </DialogContent>
         <DialogFooter><Button type="submit" disabled={isCreating}>{__("Add")}</Button></DialogFooter>
       </form>

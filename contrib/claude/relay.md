@@ -25,6 +25,26 @@ make relay  # merge split schemas + clean + compile
 
 Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → string`, `Duration → string`, `BigInt → number`, `EmailAddr → string`.
 
+## Naming operations and fragments
+
+Every operation (query, mutation, subscription) and fragment carries its **module-name prefix**: `<ModuleName><Type>` for operations, `<ModuleName>_<localName>` for fragments, where `<ModuleName>` is the file's basename.
+
+```tsx
+// PosterHovercard.tsx
+query PosterHovercardQuery { ... }                 // operation: <ModuleName><Type>
+fragment PosterHovercard_poster on Poster { ... }  // fragment:  <ModuleName>_<localName>
+```
+
+Relay 21 dropped the **compiler** requirement to prefix names with the filename for non-Haste projects (now opt-in via `enforce_module_name_prefix_for_non_haste`). We keep the prefix as mandatory house style:
+
+- **Operations still require it regardless** — the `relay/graphql-naming` rule (from `eslint-plugin-relay`'s `ts-recommended`) reports any operation whose name doesn't start with the module name. Dropping it only for fragments would split the convention.
+- **Uniqueness** — Relay still requires globally-unique operation/fragment names per project; the module prefix is the collision-free scheme that guarantees it.
+- **Discoverability** — generated artifact filenames and the `$key` / `$data` types derive from the name, so `PosterHovercard_poster$key` points straight back to its source module.
+
+We set `enforce_module_name_prefix_for_non_haste` in `relay.config.json` so the **compiler** guarantees the convention for fragments too — the lint rule only covers operations and legacy fragment containers, not hooks-based fragments.
+
+`<localName>` is the data the key feeds (the prop minus its `Key` suffix), never a redundant `Fragment` word: a `contactKey` prop reads a `ContactListItem_contact` fragment.
+
 ## Colocated queries
 
 Queries are defined inline in the file that uses them. Route-level queries are preloaded in a dedicated `*PageLoader` component before the page renders.
@@ -191,7 +211,7 @@ Fragments colocate data requirements with the component that reads them:
 
 ```tsx
 const contactFragment = graphql`
-  fragment ContactRow_contactFragment on ThirdPartyContact {
+  fragment ContactListItem_contact on ThirdPartyContact {
     id
     fullName
     email
@@ -204,11 +224,42 @@ const contactFragment = graphql`
   }
 `;
 
-function ContactRow(props: { contactKey: ContactRow_contactFragment$key }) {
+function ContactListItem(props: { contactKey: ContactListItem_contact$key }) {
   const contact = useFragment(contactFragment, props.contactKey);
   // ...
 }
 ```
+
+Select `permission(action:)` fields (aliased `canUpdate` / `canDelete`) in the fragment of the component that renders the action, and gate the UI on the resulting boolean. See [`contrib/claude/permissions.md`](permissions.md).
+
+### Required fields (`@required`)
+
+GraphQL schemas mark many fields nullable defensively, but at a given call site you usually **expect** a value to be there. When a field is nullable in the schema but the component cannot meaningfully render without it, annotate it with `@required` so the **generated type is non-null**. This keeps typing honest and consistent: callers stop threading `?.` / `?? ""` / non-null `!` assertions through code that always expects data, and a genuinely-missing value surfaces as a real signal instead of silently rendering an empty UI.
+
+Pick the action by what should happen when the value is actually absent at runtime:
+
+- **`@required(action: THROW)`** — the value is an invariant for this view (e.g. a page's root entity, the `currentTrustCenter` a portal is built around). A null throws on read and propagates to the nearest error boundary (see [`error-handling.md`](error-handling.md)). The field becomes non-null in the type.
+- **`@required(action: LOG)`** — a missing value should degrade gracefully rather than crash: the null **bubbles up** to the nearest `@required` ancestor (or makes the fragment/field data null), and Relay logs it. Use when the surrounding UI can render a sensible fallback.
+- **`@required(action: NONE)`** — bubble nullability without logging; rarely needed.
+
+```graphql
+# Good — the view is built around this entity; THROW makes it non-null
+currentTrustCenter @required(action: THROW) {
+  organization {
+    name          # already String! in the schema — no @required needed
+    logo { downloadUrl }   # legitimately optional — leave nullable
+  }
+}
+```
+
+```tsx
+// Good — non-null typing falls out of @required; no defensive chaining
+const { organization } = data.currentTrustCenter;
+const name = organization.name;
+const logoUrl = organization.logo?.downloadUrl ?? undefined; // logo stays optional
+```
+
+Do **not** reach for `@required` to silence nullability on fields that are *genuinely* optional (an avatar, a logo, a description that may be empty). Those keep their nullable type and get a real empty/fallback state. Likewise, never select a field, mark it `@required(action: THROW)`, and rely on the throw as control flow for an expected-empty case — that is an error path, not a branch. And there is no need to annotate fields the schema already declares non-null (`String!`, `Organization!`).
 
 ### Refetchable fragments
 
@@ -266,7 +317,34 @@ Every mutation **must** update the Relay store so the UI reflects changes immedi
 
 ### `useMutation`
 
-Direct Relay hook for simple cases.
+The project mutation primitive — awaitable, preserves every `UseMutationConfig` option, and routes success/error feedback through an injected notifier.
+
+> Import `useMutation` from `#/lib/relay/useMutation`, never from `react-relay`. In compliance-portal this is enforced by a `no-restricted-imports` ESLint rule. See [`contrib/claude/hooks.md`](hooks.md#mutation-hooks).
+
+#### Shared hook, app binding
+
+The mechanics live in `@probo/relay` as `createUseMutation(useNotifier)` — a factory that wraps `react-relay`'s `useMutation` (promise wrapping, `onCompleted`/`onError` dispatch, `errorToast` semantics) but knows nothing about toasts or i18n. Each app binds it once to its own feedback stack via a `MutationNotifier` and re-exports the result as the canonical `useMutation`:
+
+```tsx
+// apps/compliance-portal/src/lib/relay/useMutation.ts — the only place feedback is wired
+import { createUseMutation, type MutationNotifier } from "@probo/relay";
+
+function useMutationNotifier(): MutationNotifier {
+  const toast = Toast.useToastManager();
+  const { t } = useTranslation();
+  return useMemo<MutationNotifier>(() => ({
+    notifySuccess: (title) => toast.add({ title, type: "success" }),
+    notifyError: (error, title) => {
+      const finalTitle = title ?? t("common.error");
+      toast.add({ title: finalTitle, description: formatError(finalTitle, error as GraphQLError), type: "error" });
+    },
+  }), [toast, t]);
+}
+
+export const useMutation = createUseMutation(useMutationNotifier);
+```
+
+This keeps `@probo/relay` free of UI and i18n dependencies (the toast system, `react-i18next`, and `formatError` stay in the app), while the awaitable behavior is shared. Pass `MutationFeedback` (`successMessage`, `errorToast`) to control notifications without writing `onCompleted`/`onError` by hand.
 
 #### Naming convention
 
@@ -297,30 +375,29 @@ createCookieBanner({ variables: { ... } });
 const [deleteThirdParty] = useMutation<ThirdPartyGraphDeleteMutation>(deleteThirdPartyMutation);
 ```
 
-For mutations with user feedback, combine with `useToast` and use `onCompleted`/`onError` callbacks:
+For mutations with user feedback, queue a toast with Base UI's toast manager (`Toast.useToastManager()`; see [`ui.md`](ui.md#user-feedback-toasts)) from the `onCompleted` / `onError` callbacks:
 
 ```tsx
-const { toast } = useToast();
+const toast = Toast.useToastManager();
 const [createObligation, isCreating] = useMutation<CreateObligationMutation>(createObligationMutation);
 
-const onSubmit = (formData: FormData) => {
+const onSubmit = (input: ObligationInput) => {
   createObligation({
     variables: {
-      input: { ...formData },
+      input,
       connections: [connectionId],
     },
     onCompleted() {
-      toast({
-        title: __("Success"),
-        description: __("Obligation created successfully"),
-        variant: "success",
+      toast.add({
+        title: t("obligations.created"),
+        type: "success",
       });
     },
     onError(error) {
-      toast({
-        title: __("Error"),
-        description: formatError(__("Failed to create obligation"), error as GraphQLError),
-        variant: "error",
+      toast.add({
+        title: t("common.error"),
+        description: formatError(t("obligations.createFailed"), error as GraphQLError),
+        type: "error",
       });
     },
   });
@@ -329,7 +406,7 @@ const onSubmit = (formData: FormData) => {
 
 ### `useMutationWithToasts` (deprecated)
 
-**Do not use.** Use `useMutation` combined with `useToast` instead.
+**Do not use.** Use `useMutation` and queue feedback with Base UI's toast manager (see [`ui.md`](ui.md#user-feedback-toasts)).
 
 ### `promisifyMutation` (deprecated)
 
@@ -539,9 +616,10 @@ pages/organizations/third-parties/
   _components/
     CreateContactDialog.tsx          # create mutation
     EditContactDialog.tsx            # update mutation
-  tabs/
-    ThirdPartyContactsTab.tsx            # refetchable fragment + item fragment
-    ThirdPartyComplianceTab.tsx
+    ThirdPartyContactListItem.tsx    # connection-item fragment
+  contacts/
+    ThirdPartyContactsPage.tsx           # refetchable fragment + list section
+    ThirdPartyContactsSection.tsx        # section fragment
 ```
 
 Component-specific operations (queries, fragments, mutations) are defined inline in the component file that uses them. Shared sub-components live in `_components/` next to the page (scoped to the nearest common ancestor).

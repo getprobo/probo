@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type GeneratedDocumentService struct {
@@ -148,9 +149,23 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load organization: %w", err)
 	}
 
-	var applicabilityStatements coredata.ApplicabilityStatements
-	if err := applicabilityStatements.LoadAllByStatementOfApplicabilityID(ctx, conn, scope, statementOfApplicability.ID); err != nil {
-		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load applicability statements: %w", err)
+	applicabilityStatements, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+			Field:     coredata.ApplicabilityStatementOrderFieldControlSectionTitle,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.ApplicabilityStatementOrderField]) ([]*coredata.ApplicabilityStatement, error) {
+			var batch coredata.ApplicabilityStatements
+			if err := batch.LoadByStatementOfApplicabilityID(ctx, conn, scope, statementOfApplicability.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load applicability statements: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.StatementOfApplicabilityData{}, err
 	}
 
 	if len(applicabilityStatements) == 0 {
@@ -421,9 +436,23 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.DataListData, error) {
-	var data coredata.Data
-	if err := data.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.DataListData{}, fmt.Errorf("cannot load data: %w", err)
+	data, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.DatumOrderField]{
+			Field:     coredata.DatumOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.DatumOrderField]) ([]*coredata.Datum, error) {
+			var batch coredata.Data
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load data: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.DataListData{}, err
 	}
 
 	if len(data) == 0 {
@@ -462,9 +491,23 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 			ownerName = p.FullName
 		}
 
-		var thirdParties coredata.ThirdParties
-		if err := thirdParties.LoadAllByDatumID(ctx, conn, scope, d.ID); err != nil {
-			return docgen.DataListData{}, fmt.Errorf("cannot load thirdParties for datum %s: %w", d.ID, err)
+		thirdParties, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.ThirdPartyOrderField]{
+				Field:     coredata.ThirdPartyOrderFieldName,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.ThirdPartyOrderField]) ([]*coredata.ThirdParty, error) {
+				var batch coredata.ThirdParties
+				if err := batch.LoadByDatumID(ctx, conn, scope, d.ID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load thirdParties for datum %s: %w", d.ID, err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return docgen.DataListData{}, err
 		}
 
 		thirdPartyNames := make([]string, 0, len(thirdParties))
@@ -665,9 +708,23 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.AssetListData, error) {
-	var assets coredata.Assets
-	if err := assets.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.AssetListData{}, fmt.Errorf("cannot load assets: %w", err)
+	assets, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.AssetOrderField]{
+			Field:     coredata.AssetOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.AssetOrderField]) ([]*coredata.Asset, error) {
+			var batch coredata.Assets
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load assets: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.AssetListData{}, err
 	}
 
 	if len(assets) == 0 {
@@ -706,9 +763,23 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			ownerName = p.FullName
 		}
 
-		var thirdParties coredata.ThirdParties
-		if err := thirdParties.LoadAllByAssetID(ctx, conn, scope, a.ID); err != nil {
-			return docgen.AssetListData{}, fmt.Errorf("cannot load thirdParties for asset %s: %w", a.ID, err)
+		thirdParties, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.ThirdPartyOrderField]{
+				Field:     coredata.ThirdPartyOrderFieldName,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.ThirdPartyOrderField]) ([]*coredata.ThirdParty, error) {
+				var batch coredata.ThirdParties
+				if err := batch.LoadByAssetID(ctx, conn, scope, a.ID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load thirdParties for asset %s: %w", a.ID, err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return docgen.AssetListData{}, err
 		}
 
 		thirdPartyNames := make([]string, 0, len(thirdParties))
@@ -932,9 +1003,23 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.FindingListData, error) {
-	var findings coredata.Findings
-	if err := findings.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.FindingListData{}, fmt.Errorf("cannot load findings: %w", err)
+	findings, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.FindingOrderField]{
+			Field:     coredata.FindingOrderFieldReferenceId,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.FindingOrderField]) ([]*coredata.Finding, error) {
+			var batch coredata.Findings
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewFindingFilter(nil, nil, nil, nil)); err != nil {
+				return nil, fmt.Errorf("cannot load findings: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.FindingListData{}, err
 	}
 
 	if len(findings) == 0 {
@@ -1244,9 +1329,23 @@ func (s *GeneratedDocumentService) buildObligationListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.ObligationListData, error) {
-	var obligations coredata.Obligations
-	if err := obligations.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.ObligationListData{}, fmt.Errorf("cannot load obligations: %w", err)
+	obligations, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.ObligationOrderField]{
+			Field:     coredata.ObligationOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.ObligationOrderField]) ([]*coredata.Obligation, error) {
+			var batch coredata.Obligations
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load obligations: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.ObligationListData{}, err
 	}
 
 	if len(obligations) == 0 {
@@ -1524,9 +1623,23 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.ProcessingActivityListData, error) {
-	var processingActivities coredata.ProcessingActivities
-	if err := processingActivities.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load processing activities: %w", err)
+	processingActivities, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.ProcessingActivityOrderField]{
+			Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
+			Direction: page.OrderDirectionDesc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.ProcessingActivityOrderField]) ([]*coredata.ProcessingActivity, error) {
+			var batch coredata.ProcessingActivities
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load processing activities: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.ProcessingActivityListData{}, err
 	}
 
 	if len(processingActivities) == 0 {
@@ -1905,9 +2018,23 @@ func (s *GeneratedDocumentService) buildDataProtectionImpactAssessmentListDocume
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.DataProtectionImpactAssessmentListData, error) {
-	var assessments coredata.DataProtectionImpactAssessments
-	if err := assessments.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.DataProtectionImpactAssessmentListData{}, fmt.Errorf("cannot load DPIAs: %w", err)
+	assessments, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+			Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.DataProtectionImpactAssessmentOrderField]) ([]*coredata.DataProtectionImpactAssessment, error) {
+			var batch coredata.DataProtectionImpactAssessments
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load DPIAs: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.DataProtectionImpactAssessmentListData{}, err
 	}
 
 	if len(assessments) == 0 {
@@ -2123,9 +2250,23 @@ func (s *GeneratedDocumentService) buildTransferImpactAssessmentListDocumentData
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.TransferImpactAssessmentListData, error) {
-	var assessments coredata.TransferImpactAssessments
-	if err := assessments.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.TransferImpactAssessmentListData{}, fmt.Errorf("cannot load TIAs: %w", err)
+	assessments, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+			Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TransferImpactAssessmentOrderField]) ([]*coredata.TransferImpactAssessment, error) {
+			var batch coredata.TransferImpactAssessments
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load TIAs: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.TransferImpactAssessmentListData{}, err
 	}
 
 	if len(assessments) == 0 {
@@ -2357,9 +2498,25 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.ThirdPartyListData, error) {
-	var thirdParties coredata.ThirdParties
-	if err := thirdParties.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParties: %w", err)
+	firstLevel := 1
+
+	thirdParties, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.ThirdPartyOrderField]{
+			Field:     coredata.ThirdPartyOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.ThirdPartyOrderField]) ([]*coredata.ThirdParty, error) {
+			var batch coredata.ThirdParties
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewThirdPartyFilter(nil, &firstLevel, nil)); err != nil {
+				return nil, fmt.Errorf("cannot load thirdParties: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.ThirdPartyListData{}, err
 	}
 
 	if len(thirdParties) == 0 {
@@ -2892,9 +3049,23 @@ func (s *GeneratedDocumentService) buildRiskListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.RiskListData, error) {
-	var risks coredata.Risks
-	if err := risks.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-		return docgen.RiskListData{}, fmt.Errorf("cannot load risks: %w", err)
+	risks, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.RiskOrderField]{
+			Field:     coredata.RiskOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.RiskOrderField]) ([]*coredata.Risk, error) {
+			var batch coredata.Risks
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewRiskFilter(nil)); err != nil {
+				return nil, fmt.Errorf("cannot load risks: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.RiskListData{}, err
 	}
 
 	if len(risks) == 0 {
@@ -3043,6 +3214,8 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 ) error {
 	previousVersion := &coredata.DocumentVersion{}
 
+	isFirstVersion := false
+
 	err := previousVersion.LoadLatestVersion(ctx, tx, scope, document.ID)
 	switch {
 	case err == nil:
@@ -3051,6 +3224,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		version.DocumentType = previousVersion.DocumentType
 	case errors.Is(err, coredata.ErrResourceNotFound):
 		// First publish: keep the caller-provided defaults.
+		isFirstVersion = true
 	default:
 		return fmt.Errorf("cannot load previous document version: %w", err)
 	}
@@ -3105,8 +3279,28 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 			return fmt.Errorf("cannot save default approvers: %w", err)
 		}
 
-		if _, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, scope, tx, document, version, approverIDs, nil); err != nil {
+		quorum, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, scope, tx, document, version, approverIDs, nil)
+		if err != nil {
 			return fmt.Errorf("cannot request approval: %w", err)
+		}
+
+		if isFirstVersion {
+			if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document created webhook: %w", err)
+			}
+		}
+
+		if err := s.svc.Documents.emitDocumentEventInTx(
+			ctx,
+			scope,
+			tx,
+			version.DocumentID,
+			coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
+			version,
+			nil,
+			&quorum.ID,
+		); err != nil {
+			return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
 		}
 
 		return nil
@@ -3124,6 +3318,25 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		if err := s.svc.Documents.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, document.ID, version.Major); err != nil {
 			return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
 		}
+	}
+
+	if isFirstVersion {
+		if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+			return fmt.Errorf("cannot emit document created webhook: %w", err)
+		}
+	}
+
+	if err := s.svc.Documents.emitDocumentEventInTx(
+		ctx,
+		scope,
+		tx,
+		version.DocumentID,
+		coredata.WebhookEventTypeDocumentVersionPublished,
+		version,
+		nil,
+		nil,
+	); err != nil {
+		return fmt.Errorf("cannot emit document version published webhook: %w", err)
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -140,6 +140,22 @@ func Conflict(ctx context.Context, err error) *gqlerror.Error {
 
 func Conflictf(ctx context.Context, format string, a ...any) *gqlerror.Error {
 	return Conflict(ctx, fmt.Errorf(format, a...))
+}
+
+func TokenExpired(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message:    err.Error(),
+		Path:       graphql.GetPath(ctx),
+		Extensions: map[string]any{"code": "TOKEN_EXPIRED"},
+	}
+}
+
+func TokenAlreadyUsed(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message:    err.Error(),
+		Path:       graphql.GetPath(ctx),
+		Extensions: map[string]any{"code": "TOKEN_ALREADY_USED"},
+	}
 }
 
 func Invalid(ctx context.Context, err error) *gqlerror.Error {

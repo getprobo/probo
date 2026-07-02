@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -35,20 +34,22 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/prosemirror"
-	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
+
+const DocumentSignatureConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 
 type (
 	DocumentService struct {
@@ -67,6 +68,9 @@ type (
 	}
 
 	ErrDocumentVersionNotPublished struct {
+	}
+
+	ErrDocumentVersionNotCurrent struct {
 	}
 
 	ErrDocumentVersionPendingApproval struct {
@@ -117,6 +121,15 @@ type (
 	RequestSignatureRequest struct {
 		DocumentVersionID gid.GID
 		Signatory         gid.GID
+	}
+
+	SignDocumentVersionRequest struct {
+		DocumentVersionID gid.GID
+		IdentityID        gid.GID
+		SignerFullName    string
+		SignerEmail       mail.Addr
+		SignerIPAddr      string
+		SignerUA          string
 	}
 
 	BulkRequestSignaturesRequest struct {
@@ -184,6 +197,27 @@ func (req *PublishDocumentRequest) Validate() error {
 	})
 	v.Check(req.Changelog, "changelog", validator.Required(), validator.SafeText(5000))
 
+	// approver_ids must be an explicit choice for a major publish (an empty list
+	// publishes directly without approval, a non-empty list requests approval)
+	// and must be omitted for a minor publish, which ignores approvers.
+	if req.Minor && req.ApproverIDs != nil {
+		v.Check(req.ApproverIDs, "approver_ids", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must not be set when publishing a minor version",
+			}
+		})
+	}
+
+	if !req.Minor && req.ApproverIDs == nil {
+		v.Check(req.ApproverIDs, "approver_ids", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must be set when publishing a major version: provide approver profile IDs to request approval, or an empty list to publish directly without approval",
+			}
+		})
+	}
+
 	return v.Error()
 }
 
@@ -239,6 +273,10 @@ func (e ErrDocumentVersionNotDraft) Error() string {
 
 func (e ErrDocumentVersionNotPublished) Error() string {
 	return "document version is not published"
+}
+
+func (e ErrDocumentVersionNotCurrent) Error() string {
+	return "document version is not the current published version"
 }
 
 func (e ErrDocumentVersionPendingApproval) Error() string {
@@ -571,6 +609,19 @@ func (s *DocumentService) PublishVersion(
 				result.Document = document
 				result.Version = version
 
+				if err := s.emitDocumentEventInTx(
+					ctx,
+					scope,
+					tx,
+					version.DocumentID,
+					coredata.WebhookEventTypeDocumentVersionPublished,
+					version,
+					nil,
+					nil,
+				); err != nil {
+					return fmt.Errorf("cannot emit document version published webhook: %w", err)
+				}
+
 				return nil
 			}
 
@@ -582,6 +633,19 @@ func (s *DocumentService) PublishVersion(
 
 				result.Document = document
 				result.Version = version
+
+				if err := s.emitDocumentEventInTx(
+					ctx,
+					scope,
+					tx,
+					version.DocumentID,
+					coredata.WebhookEventTypeDocumentVersionPublished,
+					version,
+					nil,
+					nil,
+				); err != nil {
+					return fmt.Errorf("cannot emit document version published webhook: %w", err)
+				}
 
 				return nil
 			}
@@ -624,6 +688,19 @@ func (s *DocumentService) PublishVersion(
 			result.Document = document
 			result.Version = dv
 			result.Quorum = quorum
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				dv.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
+				dv,
+				nil,
+				&quorum.ID,
+			); err != nil {
+				return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
+			}
 
 			return nil
 		},
@@ -713,6 +790,23 @@ func (s *DocumentService) Create(
 				}
 			}
 
+			if err := s.emitDocumentEventInTx(ctx, scope, conn, documentID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document created webhook: %w", err)
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				conn,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionCreated,
+				documentVersion,
+				nil,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version created webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -723,173 +817,176 @@ func (s *DocumentService) Create(
 	return document, documentVersion, nil
 }
 
-func (s *DocumentService) SendSigningNotifications(
+func (s *DocumentService) SignDocumentVersionByIdentity(
 	ctx context.Context, scope coredata.Scoper,
-	organizationID gid.GID,
-) error {
-	now := time.Now()
+	req SignDocumentVersionRequest,
+) (*coredata.DocumentVersionSignature, error) {
+	var (
+		documentVersion          *coredata.DocumentVersion
+		document                 *coredata.Document
+		documentVersionSignature *coredata.DocumentVersionSignature
+	)
 
-	err := s.svc.pg.WithTx(
+	err := s.svc.pg.WithConn(
 		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var signatories coredata.MembershipProfiles
-			if err := signatories.LoadAwaitingSigning(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot load signatories: %w", err)
+		func(ctx context.Context, conn pg.Querier) error {
+			documentVersion = &coredata.DocumentVersion{}
+			if err := documentVersion.LoadByID(ctx, conn, scope, req.DocumentVersionID); err != nil {
+				return fmt.Errorf("cannot get document version: %w", err)
 			}
 
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
+				return &ErrDocumentVersionNotPublished{}
 			}
 
-			for _, signatory := range signatories {
-				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, signatory.FullName)
+			document = &coredata.Document{}
+			if err := document.LoadByID(ctx, conn, scope, documentVersion.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
 
-				var (
-					employeeDocumentsURLPath = "/organizations/" + organizationID.String() + "/employee"
-					emailLinkURLPath         = employeeDocumentsURLPath
-					query                    = make(url.Values)
-				)
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
 
-				if signatory.State != coredata.ProfileStateActive {
-					if signatory.Source != coredata.ProfileSourceSCIM {
-						invitation := &coredata.Invitation{
-							ID:             gid.New(organizationID.TenantID(), coredata.InvitationEntityType),
-							OrganizationID: organizationID,
-							UserID:         signatory.ID,
-							Status:         coredata.InvitationStatusPending,
-							ExpiresAt:      now.Add(s.invitationTokenValidity),
-							CreatedAt:      now,
-						}
-						if err := invitation.Insert(ctx, tx, coredata.NewScopeFromObjectID(organizationID)); err != nil {
-							return fmt.Errorf("cannot insert invitation: %w", err)
-						}
+			profile := &coredata.MembershipProfile{}
+			// FIXME: will be done differently
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, req.IdentityID, documentVersion.OrganizationID); err != nil {
+				return fmt.Errorf("cannot find profile record for user email in organization %q: %w", documentVersion.OrganizationID, err)
+			}
 
-						invitationToken, err := statelesstoken.NewToken(
-							s.tokenSecret,
-							iam.TokenTypeOrganizationInvitation,
-							s.invitationTokenValidity,
-							iam.InvitationTokenData{InvitationID: invitation.ID},
-						)
-						if err != nil {
-							return fmt.Errorf("cannot generate invitation token: %w", err)
-						}
+			documentVersionSignature = &coredata.DocumentVersionSignature{}
+			if err := documentVersionSignature.LoadByDocumentVersionIDAndSignatory(ctx, conn, scope, req.DocumentVersionID, profile.ID); err != nil {
+				return fmt.Errorf("cannot load document version signature: %w", err)
+			}
 
-						emailLinkURLPath = "/auth/activate-account"
-						continueURL := baseurl.MustParse(s.svc.baseURL).AppendPath(employeeDocumentsURLPath).MustString()
-
-						query.Add("token", invitationToken)
-						query.Add("continue", continueURL)
-					}
-				}
-
-				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
-					ctx,
-					emailLinkURLPath,
-					query,
-					organization.Name,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot render signing request email: %w", err)
-				}
-
-				email := coredata.NewEmail(
-					signatory.FullName,
-					signatory.EmailAddress,
-					subject,
-					textBody,
-					htmlBody,
-					&coredata.EmailOptions{
-						SenderName: new(organization.Name),
-					},
-				)
-
-				if err := email.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert email: %w", err)
-				}
+			if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
+				return &ErrDocumentVersionSignatureAlreadySigned{}
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("cannot send signing notifications: %w", err)
+		return nil, err
 	}
 
-	return nil
-}
+	now := time.Now()
 
-func (s *DocumentService) SignDocumentVersionByIdentity(
-	ctx context.Context, scope coredata.Scoper,
-	documentVersionID gid.GID,
-	identityID gid.GID,
-) (*coredata.DocumentVersionSignature, error) {
-	var documentVersionSignature *coredata.DocumentVersionSignature
+	pdfData, err := s.ExportPDF(ctx, scope, req.DocumentVersionID, ExportPDFOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("cannot export document PDF: %w", err)
+	}
 
-	err := s.svc.pg.WithTx(
+	fileRecord := &coredata.File{
+		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
+		OrganizationID: documentVersion.OrganizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       "application/pdf",
+		FileName:       fmt.Sprintf("signature-%s.pdf", documentVersionSignature.ID),
+		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	fileSize, err := s.svc.fileManager.PutFile(
 		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			documentVersion := &coredata.DocumentVersion{}
-			if err := documentVersion.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
-				return fmt.Errorf("cannot get document version: %w", err)
-			}
-
-			profile := &coredata.MembershipProfile{}
-			// FIXME: will be done differently
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, documentVersion.OrganizationID); err != nil {
-				return fmt.Errorf("cannot find profile record for user email in organization %q: %w", documentVersion.OrganizationID, err)
-			}
-
-			var signErr error
-
-			documentVersionSignature, signErr = s.signDocumentVersionInTx(ctx, scope, conn, documentVersionID, profile.ID)
-
-			return signErr
+		fileRecord,
+		bytes.NewReader(pdfData),
+		map[string]string{
+			"type":         "signature-document",
+			"signature-id": documentVersionSignature.ID.String(),
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot sign document version: %w", err)
+		return nil, fmt.Errorf("cannot upload signature PDF: %w", err)
 	}
 
-	return documentVersionSignature, nil
-}
+	fileRecord.FileSize = fileSize
 
-func (s *DocumentService) signDocumentVersionInTx(
-	ctx context.Context, scope coredata.Scoper,
-	conn pg.Tx,
-	documentVersionID gid.GID,
-	signatory gid.GID,
-) (*coredata.DocumentVersionSignature, error) {
-	documentVersion := &coredata.DocumentVersion{}
-	documentVersionSignature := &coredata.DocumentVersionSignature{}
-	now := time.Now()
+	signatureID := documentVersionSignature.ID
 
-	if err := documentVersion.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
-		return nil, fmt.Errorf("cannot load document version %q: %w", documentVersionID, err)
-	}
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			documentVersion = &coredata.DocumentVersion{}
+			if err := documentVersion.LoadByID(ctx, tx, scope, req.DocumentVersionID); err != nil {
+				return fmt.Errorf("cannot load document version: %w", err)
+			}
 
-	if documentVersion.Status != coredata.DocumentVersionStatusPublished {
-		return nil, fmt.Errorf("cannot sign unpublished version")
-	}
+			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
+				return &ErrDocumentVersionNotPublished{}
+			}
 
-	if err := documentVersionSignature.LoadByDocumentVersionIDAndSignatory(ctx, conn, scope, documentVersionID, signatory); err != nil {
-		return nil, fmt.Errorf("cannot load document version signature: %w", err)
-	}
+			document = &coredata.Document{}
+			if err := document.LoadByID(ctx, tx, scope, documentVersion.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
 
-	if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
-		return nil, &ErrDocumentVersionSignatureAlreadySigned{}
-	}
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
 
-	documentVersionSignature.State = coredata.DocumentVersionSignatureStateSigned
-	documentVersionSignature.SignedAt = &now
-	documentVersionSignature.UpdatedAt = now
+			documentVersionSignature = &coredata.DocumentVersionSignature{}
+			if err := documentVersionSignature.LoadByID(ctx, tx, scope, signatureID); err != nil {
+				return fmt.Errorf("cannot load document version signature: %w", err)
+			}
 
-	if err := documentVersion.Update(ctx, conn, scope); err != nil {
-		return nil, fmt.Errorf("cannot update document version: %w", err)
-	}
+			if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
+				return &ErrDocumentVersionSignatureAlreadySigned{}
+			}
 
-	if err := documentVersionSignature.Update(ctx, conn, scope); err != nil {
-		return nil, fmt.Errorf("cannot update document version signature: %w", err)
+			if err := fileRecord.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert signature file record: %w", err)
+			}
+
+			esig, err := s.svc.esign.CreateAndAcceptSignature(
+				ctx,
+				tx,
+				&esign.CreateAndAcceptSignatureRequest{
+					OrganizationID: documentVersion.OrganizationID,
+					DocumentType:   coredata.ElectronicSignatureDocumentTypeFromDocumentType(documentVersion.DocumentType),
+					DocumentName:   &document.Title,
+					FileID:         fileRecord.ID,
+					SignerEmail:    req.SignerEmail,
+					SignerFullName: req.SignerFullName,
+					SignerIPAddr:   req.SignerIPAddr,
+					SignerUA:       req.SignerUA,
+					ConsentText:    DocumentSignatureConsentText,
+					EmailSubject:   fmt.Sprintf("Your signed %s - Certificate of Completion", document.Title),
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot create electronic signature: %w", err)
+			}
+
+			documentVersionSignature.State = coredata.DocumentVersionSignatureStateSigned
+			documentVersionSignature.SignedAt = &now
+			documentVersionSignature.ElectronicSignatureID = &esig.ID
+			documentVersionSignature.UpdatedAt = now
+
+			if err := documentVersionSignature.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update document version signature: %w", err)
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionSignatureSigned,
+				documentVersion,
+				documentVersionSignature,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version signature signed webhook: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return documentVersionSignature, nil
@@ -984,13 +1081,35 @@ func (s *DocumentService) BulkRequestSignatures(
 					return &ErrDocumentVersionNotPublished{}
 				}
 
+				document := &coredata.Document{}
+				if err := document.LoadByID(ctx, tx, scope, documentVersion.DocumentID); err != nil {
+					return fmt.Errorf("cannot load document %q: %w", documentVersion.DocumentID, err)
+				}
+
 				for _, signatoryID := range req.SignatoryIDs {
-					signature, err := s.createSignatureRequestInTx(ctx, scope, tx, documentVersion.ID, signatoryID)
+					signature, created, err := s.createSignatureRequestInTx(ctx, scope, tx, documentVersion.ID, signatoryID)
 					if err != nil {
 						return fmt.Errorf("cannot create signature request for document %q and signatory %q: %w", documentID, signatoryID, err)
 					}
 
 					signatures = append(signatures, signature)
+
+					if !created {
+						continue
+					}
+
+					if err := s.emitLoadedDocumentEventInTx(
+						ctx,
+						scope,
+						tx,
+						document,
+						coredata.WebhookEventTypeDocumentVersionSignatureRequested,
+						documentVersion,
+						signature,
+						nil,
+					); err != nil {
+						return fmt.Errorf("cannot emit signature requested webhook: %w", err)
+					}
 				}
 			}
 
@@ -1009,16 +1128,16 @@ func (s *DocumentService) createSignatureRequestInTx(
 	tx pg.Tx,
 	documentVersionID gid.GID,
 	signatoryID gid.GID,
-) (*coredata.DocumentVersionSignature, error) {
+) (*coredata.DocumentVersionSignature, bool, error) {
 	signatory := &coredata.MembershipProfile{}
 	documentVersion := &coredata.DocumentVersion{}
 
 	if err := documentVersion.LoadByID(ctx, tx, scope, documentVersionID); err != nil {
-		return nil, fmt.Errorf("cannot load document version: %w", err)
+		return nil, false, fmt.Errorf("cannot load document version: %w", err)
 	}
 
 	if err := signatory.LoadByID(ctx, tx, scope, signatoryID); err != nil {
-		return nil, fmt.Errorf("cannot load signatory: %w", err)
+		return nil, false, fmt.Errorf("cannot load signatory: %w", err)
 	}
 
 	// A signature applies to the whole major version: minor publishes keep it
@@ -1030,11 +1149,11 @@ func (s *DocumentService) createSignatureRequestInTx(
 
 	err := existingSignature.LoadByDocumentMajorAndSignatory(ctx, tx, scope, documentVersionID, signatoryID)
 	if err == nil {
-		return existingSignature, nil
+		return existingSignature, false, nil
 	}
 
 	if !errors.Is(err, coredata.ErrResourceNotFound) {
-		return nil, fmt.Errorf("cannot load existing signature for signatory: %w", err)
+		return nil, false, fmt.Errorf("cannot load existing signature for signatory: %w", err)
 	}
 
 	documentVersionSignatureID := gid.New(scope.GetTenantID(), coredata.DocumentVersionSignatureEntityType)
@@ -1052,10 +1171,10 @@ func (s *DocumentService) createSignatureRequestInTx(
 	}
 
 	if err := documentVersionSignature.Insert(ctx, tx, scope); err != nil {
-		return nil, fmt.Errorf("cannot insert document version signature: %w", err)
+		return nil, false, fmt.Errorf("cannot insert document version signature: %w", err)
 	}
 
-	return documentVersionSignature, nil
+	return documentVersionSignature, true, nil
 }
 
 func (s *DocumentService) RequestSignature(
@@ -1085,6 +1204,13 @@ func (s *DocumentService) RequestSignature(
 				return &ErrDocumentVersionNotPublished{}
 			}
 
+			if document.CurrentPublishedMajor == nil ||
+				document.CurrentPublishedMinor == nil ||
+				documentVersion.Major != *document.CurrentPublishedMajor ||
+				documentVersion.Minor != *document.CurrentPublishedMinor {
+				return &ErrDocumentVersionNotCurrent{}
+			}
+
 			profile := &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, tx, scope, req.Signatory); err != nil {
 				return fmt.Errorf("cannot load signatory profile: %w", err)
@@ -1094,11 +1220,31 @@ func (s *DocumentService) RequestSignature(
 				return &ErrProfileContractEnded{ProfileID: profile.ID}
 			}
 
-			var err error
+			var (
+				err     error
+				created bool
+			)
 
-			signature, err = s.createSignatureRequestInTx(ctx, scope, tx, req.DocumentVersionID, req.Signatory)
+			signature, created, err = s.createSignatureRequestInTx(ctx, scope, tx, req.DocumentVersionID, req.Signatory)
 			if err != nil {
 				return fmt.Errorf("cannot create signature request: %w", err)
+			}
+
+			if !created {
+				return nil
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionSignatureRequested,
+				documentVersion,
+				signature,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version signature requested webhook: %w", err)
 			}
 
 			return nil
@@ -1207,6 +1353,162 @@ func (s *DocumentService) deleteDraftInTx(
 	return nil
 }
 
+// For deletion events this must be called before the document is soft-deleted,
+// since Document.LoadByID filters out soft-deleted rows.
+func (s *DocumentService) emitDocumentEventInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+	eventType coredata.WebhookEventType,
+	version *coredata.DocumentVersion,
+	signature *coredata.DocumentVersionSignature,
+	quorumID *gid.GID,
+) error {
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load document for %q webhook: %w", eventType, err)
+	}
+
+	return s.emitLoadedDocumentEventInTx(ctx, scope, tx, document, eventType, version, signature, quorumID)
+}
+
+func (s *DocumentService) emitLoadedDocumentEventInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+	eventType coredata.WebhookEventType,
+	version *coredata.DocumentVersion,
+	signature *coredata.DocumentVersionSignature,
+	quorumID *gid.GID,
+) error {
+	subscriptions := coredata.WebhookSubscriptions{}
+
+	exists, err := subscriptions.ExistsByOrganizationIDAndEventType(ctx, tx, scope, document.OrganizationID, eventType)
+	if err != nil {
+		return fmt.Errorf("cannot check webhook subscriptions for %q: %w", eventType, err)
+	}
+
+	if !exists {
+		return nil
+	}
+
+	var payload any
+
+	switch {
+	case signature != nil:
+		payload = webhooktypes.NewDocumentVersionSignature(signature, version, document)
+	case quorumID != nil:
+		payload, err = s.loadDocumentApprovalQuorumForWebhook(ctx, scope, tx, *quorumID, version, document)
+		if err != nil {
+			return fmt.Errorf("cannot build approval quorum payload for %q webhook: %w", eventType, err)
+		}
+	case version != nil:
+		payload = webhooktypes.NewDocumentVersion(version, document)
+	default:
+		payload = webhooktypes.NewDocument(document)
+	}
+
+	if err := webhook.InsertData(
+		ctx,
+		tx,
+		scope,
+		document.OrganizationID,
+		eventType,
+		payload,
+	); err != nil {
+		return fmt.Errorf("cannot insert %q webhook event: %w", eventType, err)
+	}
+
+	return nil
+}
+
+func (s *DocumentService) emitDocumentLifecycleEventsInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentIDs []gid.GID,
+	eventType coredata.WebhookEventType,
+) error {
+	if len(documentIDs) == 0 {
+		return nil
+	}
+
+	documents := coredata.Documents{}
+	if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot load documents for %q webhook: %w", eventType, err)
+	}
+
+	subscribed := make(map[gid.GID]bool)
+
+	for _, document := range documents {
+		hasSubscription, cached := subscribed[document.OrganizationID]
+		if !cached {
+			subscriptions := coredata.WebhookSubscriptions{}
+
+			exists, err := subscriptions.ExistsByOrganizationIDAndEventType(ctx, tx, scope, document.OrganizationID, eventType)
+			if err != nil {
+				return fmt.Errorf("cannot check webhook subscriptions for %q: %w", eventType, err)
+			}
+
+			hasSubscription = exists
+			subscribed[document.OrganizationID] = exists
+		}
+
+		if !hasSubscription {
+			continue
+		}
+
+		if err := webhook.InsertData(
+			ctx,
+			tx,
+			scope,
+			document.OrganizationID,
+			eventType,
+			webhooktypes.NewDocument(document),
+		); err != nil {
+			return fmt.Errorf("cannot insert %q webhook event: %w", eventType, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *DocumentService) loadDocumentApprovalQuorumForWebhook(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	quorumID gid.GID,
+	version *coredata.DocumentVersion,
+	document *coredata.Document,
+) (*webhooktypes.DocumentApprovalQuorum, error) {
+	quorum := &coredata.DocumentVersionApprovalQuorum{}
+	if err := quorum.LoadByID(ctx, tx, scope, quorumID); err != nil {
+		return nil, fmt.Errorf("cannot load approval quorum for webhook: %w", err)
+	}
+
+	decisions, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+			Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(
+			ctx context.Context,
+			cursor *page.Cursor[coredata.DocumentVersionApprovalDecisionOrderField],
+		) ([]*coredata.DocumentVersionApprovalDecision, error) {
+			var batch coredata.DocumentVersionApprovalDecisions
+			if err := batch.LoadByQuorumID(ctx, tx, scope, quorumID, cursor, coredata.NewDocumentVersionApprovalDecisionFilter(nil)); err != nil {
+				return nil, fmt.Errorf("cannot load approval decisions: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load approval decisions for webhook: %w", err)
+	}
+
+	return webhooktypes.NewDocumentApprovalQuorum(quorum, decisions, version, document), nil
+}
+
 func (s *DocumentService) SoftDelete(
 	ctx context.Context, scope coredata.Scoper,
 	documentID gid.GID,
@@ -1216,6 +1518,10 @@ func (s *DocumentService) SoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := s.emitDocumentEventInTx(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentDeleted, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document deleted webhook: %w", err)
+			}
+
 			if err := s.clearDocumentReferences(ctx, scope, tx, []gid.GID{documentID}); err != nil {
 				return err
 			}
@@ -1238,6 +1544,10 @@ func (s *DocumentService) BulkSoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentDeleted); err != nil {
+				return fmt.Errorf("cannot emit document deleted webhooks: %w", err)
+			}
+
 			if err := s.clearDocumentReferences(ctx, scope, tx, documentIDs); err != nil {
 				return err
 			}
@@ -1279,7 +1589,15 @@ func (s *DocumentService) BulkArchive(
 				return err
 			}
 
-			return documents.BulkArchive(ctx, tx, scope)
+			if err := documents.BulkArchive(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentArchived); err != nil {
+				return fmt.Errorf("cannot emit document archived webhooks: %w", err)
+			}
+
+			return nil
 		},
 	)
 }
@@ -1294,10 +1612,18 @@ func (s *DocumentService) BulkUnarchive(
 		documents = append(documents, &coredata.Document{ID: documentID})
 	}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return documents.BulkUnarchive(ctx, conn, scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := documents.BulkUnarchive(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentUnarchived); err != nil {
+				return fmt.Errorf("cannot emit document unarchived webhooks: %w", err)
+			}
+
+			return nil
 		},
 	)
 }
@@ -1803,84 +2129,104 @@ func (s *DocumentService) Update(
 				return fmt.Errorf("cannot update document: %w", err)
 			}
 
-			// Handle draft version logic for title/content/classification/type changes.
 			latestVersion := &coredata.DocumentVersion{}
 			if err := latestVersion.LoadLatestVersion(ctx, tx, scope, req.DocumentID); err != nil {
 				return fmt.Errorf("cannot load latest version: %w", err)
 			}
 
 			hasVersionChanges := req.Title != nil || req.Content != nil || req.Classification != nil || req.DocumentType != nil
+			docLevelChanged := req.TrustCenterVisibility != nil || req.DefaultApproverIDs != nil
 
 			if req.Content != nil && document.WriteMode == coredata.DocumentWriteModeGenerated {
 				return &ErrDocumentVersionGenerated{}
-			}
-
-			if !hasVersionChanges {
-				if req.DefaultApproverIDs != nil {
-					defaultApprovers := &coredata.DocumentDefaultApprovers{}
-					if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
-						return fmt.Errorf("cannot update default approvers: %w", err)
-					}
-				}
-
-				return nil
-			}
-
-			if latestVersion.Status == coredata.DocumentVersionStatusDraft {
-				// Draft exists: update it with any new values.
-				if err := s.updateVersionInTx(ctx, scope, tx, latestVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
-					return err
-				}
-
-				// If there is a published version and the draft matches it, delete the draft.
-				// Never delete the initial draft (v0.1) since there's nothing to fall back to.
-				if document.CurrentPublishedMajor != nil && (latestVersion.Major != 0 || latestVersion.Minor != 1) {
-					publishedVersion := &coredata.DocumentVersion{}
-					if err := publishedVersion.LoadByDocumentIDAndVersion(
-						ctx,
-						tx,
-						scope,
-						req.DocumentID,
-						*document.CurrentPublishedMajor,
-						*document.CurrentPublishedMinor,
-					); err != nil {
-						return fmt.Errorf("cannot load published version: %w", err)
-					}
-
-					if latestVersion.Title == publishedVersion.Title &&
-						latestVersion.Content == publishedVersion.Content &&
-						latestVersion.Classification == publishedVersion.Classification &&
-						latestVersion.DocumentType == publishedVersion.DocumentType {
-						if err := s.deleteDraftInTx(ctx, scope, tx, latestVersion); err != nil {
-							return err
-						}
-
-						resultVersion = nil
-
-						return nil
-					}
-				}
-
-				resultVersion = latestVersion
-			} else {
-				// No draft exists: create one.
-				draftVersion, err := s.createDraftInTx(ctx, scope, tx, document, latestVersion)
-				if err != nil {
-					return err
-				}
-
-				if err := s.updateVersionInTx(ctx, scope, tx, draftVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
-					return err
-				}
-
-				resultVersion = draftVersion
-				draftCreated = true
 			}
 
 			if req.DefaultApproverIDs != nil {
 				defaultApprovers := &coredata.DocumentDefaultApprovers{}
 				if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
 					return fmt.Errorf("cannot update default approvers: %w", err)
+				}
+			}
+
+			versionDeleted := false
+
+			if hasVersionChanges {
+				if latestVersion.Status == coredata.DocumentVersionStatusDraft {
+					if err := s.updateVersionInTx(ctx, scope, tx, latestVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
+						return err
+					}
+
+					if document.CurrentPublishedMajor != nil && (latestVersion.Major != 0 || latestVersion.Minor != 1) {
+						publishedVersion := &coredata.DocumentVersion{}
+						if err := publishedVersion.LoadByDocumentIDAndVersion(
+							ctx,
+							tx,
+							scope,
+							req.DocumentID,
+							*document.CurrentPublishedMajor,
+							*document.CurrentPublishedMinor,
+						); err != nil {
+							return fmt.Errorf("cannot load published version: %w", err)
+						}
+
+						if latestVersion.Title == publishedVersion.Title &&
+							latestVersion.Content == publishedVersion.Content &&
+							latestVersion.Classification == publishedVersion.Classification &&
+							latestVersion.DocumentType == publishedVersion.DocumentType {
+							if err := s.deleteDraftInTx(ctx, scope, tx, latestVersion); err != nil {
+								return err
+							}
+
+							resultVersion = nil
+							versionDeleted = true
+						}
+					}
+
+					if !versionDeleted {
+						resultVersion = latestVersion
+					}
+				} else {
+					draftVersion, err := s.createDraftInTx(ctx, scope, tx, document, latestVersion)
+					if err != nil {
+						return err
+					}
+
+					if err := s.updateVersionInTx(ctx, scope, tx, draftVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
+						return err
+					}
+
+					resultVersion = draftVersion
+					draftCreated = true
+				}
+
+				if versionDeleted {
+					if err := s.emitDocumentEventInTx(
+						ctx,
+						scope,
+						tx,
+						latestVersion.DocumentID,
+						coredata.WebhookEventTypeDocumentVersionDeleted,
+						latestVersion,
+						nil,
+						nil,
+					); err != nil {
+						return fmt.Errorf("cannot emit document version deleted webhook: %w", err)
+					}
+				} else {
+					versionEvent := coredata.WebhookEventTypeDocumentVersionUpdated
+					if draftCreated {
+						versionEvent = coredata.WebhookEventTypeDocumentVersionCreated
+					}
+
+					if err := s.emitDocumentEventInTx(ctx, scope, tx, resultVersion.DocumentID, versionEvent, resultVersion, nil, nil); err != nil {
+						return fmt.Errorf("cannot emit document version webhook: %w", err)
+					}
+				}
+			}
+
+			if docLevelChanged {
+				if err := s.emitDocumentEventInTx(ctx, scope, tx, req.DocumentID, coredata.WebhookEventTypeDocumentUpdated, nil, nil, nil); err != nil {
+					return fmt.Errorf("cannot emit document updated webhook: %w", err)
 				}
 			}
 
@@ -1924,7 +2270,24 @@ func (s *DocumentService) DeleteDraft(
 				return &ErrDocumentDraftNotDeletable{}
 			}
 
-			return s.deleteDraftInTx(ctx, scope, tx, latestVersion)
+			if err := s.deleteDraftInTx(ctx, scope, tx, latestVersion); err != nil {
+				return err
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				latestVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionDeleted,
+				latestVersion,
+				nil,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version deleted webhook: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -1980,6 +2343,10 @@ func (s *DocumentService) Archive(
 				return fmt.Errorf("cannot archive document: %w", err)
 			}
 
+			if err := s.emitDocumentEventInTx(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentArchived, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document archived webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -2014,6 +2381,10 @@ func (s *DocumentService) Unarchive(
 
 			if err := document.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot unarchive document: %w", err)
+			}
+
+			if err := s.emitDocumentEventInTx(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentUnarchived, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document unarchived webhook: %w", err)
 			}
 
 			return nil
@@ -2062,6 +2433,19 @@ func (s *DocumentService) CancelSignatureRequest(
 
 			if err := documentVersionSignature.Delete(ctx, tx, scope, documentVersionSignatureID); err != nil {
 				return fmt.Errorf("cannot delete document version signature: %w", err)
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionSignatureCancelled,
+				documentVersion,
+				documentVersionSignature,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version signature cancelled webhook: %w", err)
 			}
 
 			return nil
@@ -2191,15 +2575,16 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, scope coreda
 			now := time.Now()
 
 			file := coredata.File{
-				ID:         gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
-				BucketName: s.svc.bucket,
-				MimeType:   "application/zip",
-				FileName:   fmt.Sprintf("Documents Export %s.zip", now.Format("2006-01-02")),
-				FileKey:    uuid.String(),
-				FileSize:   fileInfo.Size(),
-				Visibility: coredata.FileVisibilityPrivate,
-				CreatedAt:  now,
-				UpdatedAt:  now,
+				ID:             gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
+				OrganizationID: organizationID,
+				BucketName:     s.svc.bucket,
+				MimeType:       "application/zip",
+				FileName:       fmt.Sprintf("Documents Export %s.zip", now.Format("2006-01-02")),
+				FileKey:        uuid.String(),
+				FileSize:       fileInfo.Size(),
+				Visibility:     coredata.FileVisibilityPrivate,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if err := file.Insert(ctx, tx, scope); err != nil {
@@ -2629,7 +3014,7 @@ func (s *DocumentService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, recipientName)
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderDocumentExport(
 				ctx,
@@ -2855,7 +3240,29 @@ func (s *DocumentService) publishMinorVersionInTx(
 		return nil, nil, err
 	}
 
+	if err := s.moveRequestedSignaturesToVersionInTx(ctx, scope, tx, documentVersion.ID); err != nil {
+		return nil, nil, err
+	}
+
 	return document, documentVersion, nil
+}
+
+// moveRequestedSignaturesToVersionInTx carries every still-pending signature
+// request from a prior minor of the same major onto the newly published minor
+// version. The new minor supersedes the previous one while keeping the same
+// signing obligations, so REQUESTED signatures follow along with their
+// notification schedule (time and count) intact. SIGNED signatures stay put.
+func (s *DocumentService) moveRequestedSignaturesToVersionInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentVersionID gid.GID,
+) error {
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.MoveRequestedToVersionWithinMajor(ctx, tx, scope, documentVersionID); err != nil {
+		return fmt.Errorf("cannot move signature requests to the newly published minor version: %w", err)
+	}
+
+	return nil
 }
 
 func (s *DocumentService) generateAndUploadPublicationPDF(

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -82,7 +82,7 @@ const paginatedAuditsFragment = graphql`
           name
           validFrom
           validUntil
-          report {
+          reportFile {
             id
           }
           state
@@ -109,7 +109,7 @@ export default function AuditsPage(props: Props) {
   const { toast } = useToast();
   const organizationId = useOrganizationId();
 
-  const data = usePreloadedQuery(auditsQuery, props.queryRef);
+  const data = usePreloadedQuery<AuditGraphListQuery>(auditsQuery, props.queryRef);
   // eslint-disable-next-line relay/generated-typescript-types
   const pagination = usePaginationFragment(
     paginatedAuditsFragment,
@@ -293,7 +293,7 @@ function AuditRow({
       <Td>{formatDate(entry.validFrom) || __("Not set")}</Td>
       <Td>{formatDate(entry.validUntil) || __("Not set")}</Td>
       <Td>
-        {entry.report
+        {entry.reportFile
           ? (
               <div className="flex flex-col">
                 <Badge variant="success">{__("Uploaded")}</Badge>

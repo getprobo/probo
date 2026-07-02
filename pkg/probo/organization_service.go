@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
@@ -295,7 +296,7 @@ func (s OrganizationService) Update(
 					}
 				}
 
-				fileSize, err := s.svc.fileManager.GetFileSize(req.File.Content)
+				fileSize, err := filemanager.GetFileSize(req.File.Content)
 				if err != nil {
 					return fmt.Errorf("cannot get file size: %w", err)
 				}
@@ -305,14 +306,15 @@ func (s OrganizationService) Update(
 				}
 
 				fileRecord := &coredata.File{
-					ID:         fileID,
-					BucketName: s.svc.bucket,
-					MimeType:   contentType,
-					FileName:   filename,
-					FileKey:    objectKey.String(),
-					Visibility: coredata.FileVisibilityPublic,
-					CreatedAt:  now,
-					UpdatedAt:  now,
+					ID:             fileID,
+					OrganizationID: organization.ID,
+					BucketName:     s.svc.bucket,
+					MimeType:       contentType,
+					FileName:       filename,
+					FileKey:        objectKey.String(),
+					Visibility:     coredata.FileVisibilityPublic,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				fileSize, err = s.svc.fileManager.PutFile(
@@ -358,7 +360,7 @@ func (s OrganizationService) Update(
 					}
 				}
 
-				fileSize, err := s.svc.fileManager.GetFileSize(req.HorizontalLogoFile.Content)
+				fileSize, err := filemanager.GetFileSize(req.HorizontalLogoFile.Content)
 				if err != nil {
 					return fmt.Errorf("cannot get file size: %w", err)
 				}
@@ -368,14 +370,15 @@ func (s OrganizationService) Update(
 				}
 
 				fileRecord := &coredata.File{
-					ID:         fileID,
-					BucketName: s.svc.bucket,
-					MimeType:   contentType,
-					FileName:   filename,
-					FileKey:    objectKey.String(),
-					Visibility: coredata.FileVisibilityPublic,
-					CreatedAt:  now,
-					UpdatedAt:  now,
+					ID:             fileID,
+					OrganizationID: organization.ID,
+					BucketName:     s.svc.bucket,
+					MimeType:       contentType,
+					FileName:       filename,
+					FileKey:        objectKey.String(),
+					Visibility:     coredata.FileVisibilityPublic,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				fileSize, err = s.svc.fileManager.PutFile(
@@ -448,7 +451,7 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -490,7 +493,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

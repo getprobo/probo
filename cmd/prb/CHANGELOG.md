@@ -4,6 +4,68 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.198.0] - 2026-06-30
+
+### Removed
+
+- Access review campaigns no longer expose a framework-controls field
+
+## [0.197.1] - 2026-06-25
+
+### Fixed
+
+- `prb login` now requests the correct OAuth2 scopes (removed redundant `:read` suffix variants)
+
+## [0.197.0] - 2026-06-22
+
+### Added
+
+- `prb resource-alias` commands to set and remove aliases on trust center entries
+
+## [0.196.0] - 2026-06-19
+
+### Added
+
+- `prb login` now requests all v1 API scopes so device tokens work under OAuth2 scope enforcement
+
+## [0.195.0] - 2026-06-16
+
+### Changed
+
+- `prb access-review` campaign sources are now first-class: each campaign captures a source snapshot (name, connector) at start time so a review stays coherent when the underlying source is edited or deleted, and fetch attempts are tracked as an append-only log instead of a single denormalized status field
+
+## [0.194.0] - 2026-06-11
+
+### Added
+
+- `active` status field on access entries exposed in `prb access-entry` commands
+
+### Changed
+
+- References updated to probo.com
+
+## [0.193.0] - 2026-06-10
+
+### Added
+
+- Expose `regulation_source` (`detected`/`default`) on `prb consent-record list`/`view` to show whether the regulation was resolved from geolocation or fell back to GDPR
+
+### Changed
+
+- `prb third-party list --first-level` replaced by `--level <N>` (1 = direct, 2+ = indirect) to support arbitrary nesting depth
+
+### Removed
+
+- `prb third-party link`/`unlink` commands; sub-third-parties are now scoped by a `parent_third_party_id` on the third-party itself
+
+## [0.192.0] - 2026-06-09
+
+### Added
+
+- Add `prb risk-assessment boundary` command group (`create`, `list`, `view`, `update`, `delete`) and `--boundary-id` flag on `node create`/`update` to group risk assessment nodes within a scope
+- Add `prb cookie-banner regenerate-policy` command to re-trigger tracker policy generation for a banner that already has a published version
+- Expose `common_tracker_pattern_id` on `prb tracker-pattern list`/`view` to show whether a pattern is linked to the common tracker catalog
+
 ## [0.191.0] - 2026-06-02
 
 ### Changed

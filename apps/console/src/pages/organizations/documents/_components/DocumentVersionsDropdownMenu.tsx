@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -69,7 +69,7 @@ export function DocumentVersionsDropdownMenu(props: {
   }
 
   const lastVersion = document.lastVersion?.edges[0].node;
-  const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
+  const currentVersion = lastVersion ?? version;
 
   return (
     <>
@@ -77,7 +77,7 @@ export function DocumentVersionsDropdownMenu(props: {
         <DocumentVersionsDropdownItem
           key={version.id}
           fragmentRef={version}
-          active={version.id === currentVersion.id}
+          active={version.id === currentVersion?.id}
           currentTab={currentTab}
         />
       ))}

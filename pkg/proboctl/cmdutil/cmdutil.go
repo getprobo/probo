@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,12 +26,28 @@ type Factory struct {
 	IOStreams *iostreams.IOStreams
 	Version   string
 	PgDSN     string
+
+	pgClient *pg.Client
 }
 
+// PgClient returns a shared pg client, building it on first use. The client
+// is memoized because pg.NewClient registers Prometheus collectors, so
+// constructing it more than once panics with a duplicate registration.
 func (f *Factory) PgClient() (*pg.Client, error) {
+	if f.pgClient != nil {
+		return f.pgClient, nil
+	}
+
 	if f.PgDSN == "" {
 		return nil, fmt.Errorf("set --pg-dsn or DATABASE_URL")
 	}
 
-	return pgconn.NewPgClientFromDSN(f.PgDSN)
+	client, err := pgconn.NewPgClientFromDSN(f.PgDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	f.pgClient = client
+
+	return f.pgClient, nil
 }

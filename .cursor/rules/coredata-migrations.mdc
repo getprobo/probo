@@ -1,0 +1,36 @@
+---
+description: Coredata SQL migration naming and conventions
+globs: pkg/coredata/migrations/*.sql
+alwaysApply: false
+---
+
+# Coredata migrations
+
+See full guides: `contrib/claude/coredata.md` (Migrations) and
+`contrib/claude/license.md` (SQL header).
+
+## Naming — never invent or infer the timestamp
+
+Migration files use UTC timestamp naming `YYYYMMDDTHHMMSSZ.sql`. The
+timestamp is the **real current time**, obtained by running the command —
+do NOT hand-write a round number (e.g. `...T100000Z`) and do NOT infer the
+next name from existing files.
+
+```bash
+# Run this and use its exact output as the filename:
+date -u +"%Y%m%dT%H%M%SZ.sql"
+```
+
+## License header
+
+Every `.sql` file starts with the ISC header (use the current year). Copy
+the exact block from `contrib/claude/license.md` (SQL section).
+
+## Content rules
+
+- One logical change per file.
+- No indexes by default — add one only when justified by observed
+  production latency. Constraint-enforcing indexes (e.g. unique) are exempt.
+- Avoid `DEFAULT` clauses. When adding a non-nullable column to an existing
+  table, set a `DEFAULT` to backfill existing rows, then `DROP DEFAULT` in
+  the same migration so inserts must supply the value explicitly.

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,9 @@ import { DeleteTrustCenterReferenceDialog } from "#/components/trustCenter/Delet
 const fragment = graphql`
   fragment CompliancePageReferenceListItemFragment on TrustCenterReference {
     id
-    logoUrl
+    logo {
+      downloadUrl
+    }
     name
     description
     websiteUrl
@@ -81,7 +83,7 @@ export function CompliancePageReferenceListItem(props: {
     >
       <Td>
         <div className="flex items-center gap-3">
-          <Avatar src={reference.logoUrl} name={reference.name} size="m" />
+          <Avatar src={reference.logo?.downloadUrl} name={reference.name} size="m" />
           <span className="font-medium">{reference.name}</span>
         </div>
       </Td>

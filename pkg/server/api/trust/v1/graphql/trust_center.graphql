@@ -2,8 +2,8 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
-  logoFileUrl: String @goField(forceResolver: true)
-  darkLogoFileUrl: String @goField(forceResolver: true)
+  logo: File @goField(forceResolver: true)
+  darkLogo: File @goField(forceResolver: true)
 
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
@@ -93,6 +93,7 @@ type Document implements Node @nda {
   id: ID!
   title: String!
   documentType: DocumentType!
+  alias: String @goField(forceResolver: true)
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   access: DocumentAccess @goField(forceResolver: true)
 }
@@ -110,13 +111,14 @@ type DocumentEdge @nda {
 type Framework implements Node @nda {
   id: ID!
   name: String!
-  lightLogoURL: String @goField(forceResolver: true)
-  darkLogoURL: String @goField(forceResolver: true)
+  lightLogo: File @goField(forceResolver: true)
+  darkLogo: File @goField(forceResolver: true)
 }
 
-type Report implements Node @nda {
+type AuditReport implements Node @nda {
   id: ID!
-  filename: String!
+  fileName: String!
+  alias: String @goField(forceResolver: true)
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   access: DocumentAccess @goField(forceResolver: true)
 }
@@ -125,7 +127,7 @@ type Audit implements Node @nda {
   id: ID!
   name: String
   framework: Framework! @goField(forceResolver: true)
-  report: Report @goField(forceResolver: true)
+  reportFile: AuditReport @goField(forceResolver: true)
 }
 
 type AuditConnection @nda {
@@ -262,7 +264,7 @@ type TrustCenterReference implements Node @nda {
   name: String!
   description: String
   websiteUrl: String!
-  logoUrl: String! @goField(forceResolver: true)
+  logo: File! @goField(forceResolver: true)
 }
 
 type TrustCenterReferenceConnection @nda {
@@ -279,6 +281,7 @@ type TrustCenterFile implements Node @nda {
   id: ID!
   name: String!
   category: String!
+  alias: String @goField(forceResolver: true)
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   access: DocumentAccess @goField(forceResolver: true)
 }

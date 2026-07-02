@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,28 +24,26 @@ const campaignNameMaxLength = 255
 
 type (
 	CreateAccessReviewCampaignRequest struct {
-		OrganizationID    gid.GID
-		Name              string
-		Description       string
-		FrameworkControls []string
-		AccessSourceIDs   []gid.GID
+		OrganizationID        gid.GID
+		Name                  string
+		Description           string
+		AccessReviewSourceIDs []gid.GID
 	}
 
 	UpdateAccessReviewCampaignRequest struct {
-		CampaignID        gid.GID
-		Name              *string
-		Description       *string
-		FrameworkControls *[]string
+		CampaignID  gid.GID
+		Name        **string
+		Description **string
 	}
 
-	AddCampaignScopeSourceRequest struct {
-		CampaignID     gid.GID
-		AccessSourceID gid.GID
+	AddCampaignSourceRequest struct {
+		CampaignID           gid.GID
+		AccessReviewSourceID gid.GID
 	}
 
-	RemoveCampaignScopeSourceRequest struct {
-		CampaignID     gid.GID
-		AccessSourceID gid.GID
+	RemoveCampaignSourceRequest struct {
+		CampaignID           gid.GID
+		AccessReviewSourceID gid.GID
 	}
 )
 

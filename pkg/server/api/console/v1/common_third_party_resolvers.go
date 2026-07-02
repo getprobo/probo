@@ -8,30 +8,22 @@ package console_v1
 import (
 	"context"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *commonThirdPartyResolver) LogoURL(ctx context.Context, obj *types.CommonThirdParty) (*string, error) {
+// Logo is the resolver for the logo field.
+func (r *commonThirdPartyResolver) Logo(ctx context.Context, obj *types.CommonThirdParty) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionCommonThirdPartyGet); err != nil {
 		return nil, err
 	}
 
-	if obj.LogoFileID == nil {
+	if obj.Logo == nil {
 		return nil, nil
 	}
 
-	logoURL, err := r.thirdParty.GenerateLogoURL(ctx, *obj.LogoFileID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate common third party logo URL", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return logoURL, nil
+	return r.loadFile(ctx, obj.Logo.ID)
 }
 
 // CommonThirdParty returns schema.CommonThirdPartyResolver implementation.

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,14 +26,16 @@ import (
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/slack"
 )
+
+const NDAConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact security@probo.com."
 
 type (
 	Service struct {
@@ -47,7 +49,6 @@ type (
 		esign                  *esign.Service
 		html2pdfConverter      *html2pdf.Converter
 		fileManager            *filemanager.Service
-		file                   *file.Service
 		logger                 *log.Logger
 		slack                  *slack.Service
 		TrustCenters           *TrustCenterService
@@ -62,6 +63,7 @@ type (
 		Reports                *ReportService
 		Organizations          *OrganizationService
 		ComplianceExternalURLs *ComplianceExternalURLService
+		resourceAlias          *resourcealias.Service
 	}
 )
 
@@ -77,7 +79,7 @@ func NewService(
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	slack *slack.Service,
-	fileService *file.Service,
+	resourceAliasSvc *resourcealias.Service,
 ) *Service {
 	svc := &Service{
 		pg:                 pgClient,
@@ -89,9 +91,9 @@ func NewService(
 		esign:              esignSvc,
 		html2pdfConverter:  html2pdfConverter,
 		fileManager:        fileManagerService,
-		file:               fileService,
 		logger:             logger,
 		slack:              slack,
+		resourceAlias:      resourceAliasSvc,
 	}
 	svc.TrustCenters = &TrustCenterService{svc: svc}
 	svc.Documents = &DocumentService{svc: svc, html2pdfConverter: html2pdfConverter}
@@ -389,6 +391,7 @@ func (s *Service) ProvisionMember(
 							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 							FileID:         *compliancePage.NonDisclosureAgreementFileID,
 							SignerEmail:    identity.EmailAddress,
+							ConsentText:    NDAConsentText,
 						},
 					)
 					if err != nil {

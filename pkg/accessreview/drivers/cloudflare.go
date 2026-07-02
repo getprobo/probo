@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -170,9 +169,8 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 				roles = append(roles, r.Name)
 			}
 
-			role := "Member"
-			if len(roles) > 0 {
-				role = strings.Join(roles, ", ")
+			if len(roles) == 0 {
+				roles = []string{"Member"}
 			}
 
 			isAdmin := false
@@ -192,13 +190,13 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 			record := AccountRecord{
 				Email:       m.User.Email,
 				FullName:    m.User.FirstName + " " + m.User.LastName,
-				Role:        role,
+				Roles:       roles,
 				Active:      new(m.Status == "accepted"),
 				IsAdmin:     isAdmin,
 				ExternalID:  m.ID,
 				MFAStatus:   mfaStatus,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if record.Email != "" {

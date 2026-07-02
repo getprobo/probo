@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -269,28 +269,116 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 		return nil, fmt.Errorf("cannot load distinct third party ids: %w", err)
 	}
 
-	if len(thirdPartyIDs) == 0 {
+	var thirdParties coredata.ThirdParties
+	if len(thirdPartyIDs) > 0 {
+		if err := thirdParties.LoadByIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
+			return nil, fmt.Errorf("cannot load third parties: %w", err)
+		}
+	}
+
+	// Patterns not linked to an org ThirdParty still surface their catalog
+	// (CommonThirdParty) vendor, mirroring the banner's linkedThirdParties
+	// union, so the policy stays complete whether or not the vendor was
+	// imported into the org register.
+	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load distinct common tracker pattern ids: %w", err)
+	}
+
+	var commonParties coredata.CommonThirdParties
+
+	if len(commonPatternIDs) > 0 {
+		var commonPatterns coredata.CommonTrackerPatterns
+		if err := commonPatterns.LoadByIDs(ctx, conn, commonPatternIDs); err != nil {
+			return nil, fmt.Errorf("cannot load common tracker patterns: %w", err)
+		}
+
+		seen := make(map[gid.GID]struct{}, len(commonPatterns))
+		commonThirdPartyIDs := make([]gid.GID, 0, len(commonPatterns))
+
+		for _, cp := range commonPatterns {
+			if cp.CommonThirdPartyID == nil {
+				continue
+			}
+
+			if _, ok := seen[*cp.CommonThirdPartyID]; ok {
+				continue
+			}
+
+			seen[*cp.CommonThirdPartyID] = struct{}{}
+			commonThirdPartyIDs = append(commonThirdPartyIDs, *cp.CommonThirdPartyID)
+		}
+
+		if len(commonThirdPartyIDs) > 0 {
+			if err := commonParties.LoadByIDs(ctx, conn, commonThirdPartyIDs); err != nil {
+				return nil, fmt.Errorf("cannot load common third parties: %w", err)
+			}
+		}
+	}
+
+	if len(thirdParties) == 0 && len(commonParties) == 0 {
 		return nil, nil
 	}
 
-	var thirdParties coredata.ThirdParties
-	if err := thirdParties.LoadByIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
-		return nil, fmt.Errorf("cannot load third parties: %w", err)
+	rows := make([]docgen.TrackerPolicyThirdParty, 0, len(thirdParties)+len(commonParties))
+
+	// Dedupe by name so a vendor present both as an org third party (one
+	// pattern) and as a catalog entry (an unlinked pattern) is listed
+	// once. Org third parties are appended first, so their richer
+	// (user-editable) data wins for a shared name. When the kept row left a
+	// field empty (e.g. an org third party with no privacy policy URL), a
+	// later duplicate backfills it from the catalog so common-vendor
+	// metadata is not dropped.
+	rowIndexByName := make(map[string]int, len(thirdParties)+len(commonParties))
+
+	addRow := func(name, description, privacyPolicyURL string) {
+		name = strings.TrimSpace(name)
+		description = collapseWhitespace(description)
+		privacyPolicyURL = strings.TrimSpace(privacyPolicyURL)
+
+		key := strings.ToLower(name)
+		if idx, ok := rowIndexByName[key]; ok {
+			if rows[idx].Description == "" {
+				rows[idx].Description = description
+			}
+
+			if rows[idx].PrivacyPolicyURL == "" {
+				rows[idx].PrivacyPolicyURL = privacyPolicyURL
+			}
+
+			return
+		}
+
+		rowIndexByName[key] = len(rows)
+
+		rows = append(rows, docgen.TrackerPolicyThirdParty{
+			Name:             name,
+			Description:      description,
+			PrivacyPolicyURL: privacyPolicyURL,
+		})
 	}
 
-	rows := make([]docgen.TrackerPolicyThirdParty, 0, len(thirdParties))
 	for _, tp := range thirdParties {
-		row := docgen.TrackerPolicyThirdParty{Name: strings.TrimSpace(tp.Name)}
-
+		description := ""
 		if tp.Description != nil {
-			row.Description = collapseWhitespace(*tp.Description)
+			description = *tp.Description
 		}
 
+		privacyPolicyURL := ""
 		if tp.PrivacyPolicyURL != nil {
-			row.PrivacyPolicyURL = strings.TrimSpace(*tp.PrivacyPolicyURL)
+			privacyPolicyURL = *tp.PrivacyPolicyURL
 		}
 
-		rows = append(rows, row)
+		addRow(tp.Name, description, privacyPolicyURL)
+	}
+
+	for _, cp := range commonParties {
+		privacyPolicyURL := ""
+		if cp.PrivacyPolicyURL != nil {
+			privacyPolicyURL = *cp.PrivacyPolicyURL
+		}
+
+		addRow(cp.Name, "", privacyPolicyURL)
 	}
 
 	// LoadByIDs returns rows in an unspecified order (no ORDER BY), so sort

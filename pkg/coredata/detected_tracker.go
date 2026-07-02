@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -293,6 +293,46 @@ LIMIT @limit;
 	}
 
 	return ids, nil
+}
+
+// UpdateTrackerPatternID repoints a single detected tracker at another
+// pattern. It is the per-row counterpart of RelinkByTrackerPatternID,
+// used by the banner-reset rebuild where each detection of a glob moves
+// to its own recreated exact pattern.
+func (dt *DetectedTracker) UpdateTrackerPatternID(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE detected_trackers
+SET
+	tracker_pattern_id = @tracker_pattern_id,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":                 dt.ID,
+		"tracker_pattern_id": dt.TrackerPatternID,
+		"updated_at":         time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update detected tracker pattern: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (dts *DetectedTrackers) RelinkByTrackerPatternID(

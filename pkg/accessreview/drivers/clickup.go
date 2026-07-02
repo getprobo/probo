@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -101,18 +101,18 @@ func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 	records := make([]AccountRecord, 0, len(resp.Team.Members))
 	for _, m := range resp.Team.Members {
-		role := clickupRoleLabel(m.User.Role)
+		roles := clickupRoles(m.User.Role)
 		isAdmin := m.User.Role == 1 || m.User.Role == 2
 
 		record := AccountRecord{
 			Email:       m.User.Email,
 			FullName:    m.User.Username,
-			Role:        role,
+			Roles:       roles,
 			IsAdmin:     isAdmin,
 			ExternalID:  m.User.ID.String(),
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if m.InvitePending != nil {
@@ -134,20 +134,20 @@ func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 	return records, nil
 }
 
-// clickupRoleLabel maps ClickUp numeric role codes to human-readable
+// clickupRoles maps ClickUp numeric role codes to human-readable
 // labels. Source: https://clickup.com/api (Team Members endpoint).
-func clickupRoleLabel(role int) string {
+func clickupRoles(role int) []string {
 	switch role {
 	case 1:
-		return "owner"
+		return []string{"owner"}
 	case 2:
-		return "admin"
+		return []string{"admin"}
 	case 3:
-		return "member"
+		return []string{"member"}
 	case 4:
-		return "guest"
+		return []string{"guest"}
 	default:
-		return ""
+		return []string{}
 	}
 }
 

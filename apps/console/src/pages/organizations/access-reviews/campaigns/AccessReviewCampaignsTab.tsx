@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { formatError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -48,7 +48,7 @@ export const accessReviewCampaignsTabQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        canCreateCampaign: permission(action: "core:access-review-campaign:create")
+        canCreateCampaign: permission(action: "access-review:campaign:create")
         ...AccessReviewCampaignsTabFragment
       }
     }
@@ -78,7 +78,7 @@ const campaignsFragment = graphql`
           name
           status
           createdAt
-          canDelete: permission(action: "core:access-review-campaign:delete")
+          canDelete: permission(action: "access-review:campaign:delete")
         }
       }
     }
@@ -106,7 +106,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
   const confirm = useConfirm();
   const { toast } = useToast();
 
-  const { organization } = usePreloadedQuery(accessReviewCampaignsTabQuery, queryRef);
+  const { organization } = usePreloadedQuery<AccessReviewCampaignsTabQuery>(accessReviewCampaignsTabQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
@@ -143,7 +143,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete campaign"),
-                  errors as GraphQLError[],
+                  errors,
                 ),
                 variant: "error",
               });
@@ -160,7 +160,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
               title: __("Error"),
               description: formatError(
                 __("Failed to delete campaign"),
-                error as GraphQLError,
+                error,
               ),
               variant: "error",
             });

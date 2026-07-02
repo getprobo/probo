@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -314,7 +314,7 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderPasswordReset(
 				ctx,
@@ -387,7 +387,7 @@ func (s AuthService) CreateIdentityWithPassword(
 		return nil, nil, fmt.Errorf("cannot generate confirmation token: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, req.FullName)
+	emailPresenter := emails.NewPresenter(s.baseURL, req.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
 	if err != nil {
@@ -594,7 +594,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			emailPresenterCfg := emails.DefaultPresenterConfig(s.bucket, s.baseURL)
+			emailPresenterCfg := emails.DefaultPresenterConfig(s.baseURL)
 
 			if req.CompliancePageID != nil {
 				var err error
@@ -605,7 +605,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				}
 			}
 
-			emailPresenter := emails.NewPresenterFromConfig(s.fm, emailPresenterCfg, fullName)
+			emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderMagicLink(
 				ctx,
@@ -680,7 +680,7 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 
 			if err := token.LoadByHashedValueForUpdate(ctx, tx, hashedValue); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewInvalidTokenError()
+					return NewTokenAlreadyUsedError()
 				}
 
 				return fmt.Errorf("cannot load token by hashed value: %w", err)

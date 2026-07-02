@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -144,8 +145,8 @@ func newMappingHandler(client *pg.Client) *trackerMappingHandler {
 }
 
 // promote runs resolveOrgThirdParty, which manages its own short
-// transactions internally (creation gating is derived from the
-// pattern's category, not passed in).
+// transactions internally and only links to an existing org ThirdParty
+// (it never creates one).
 func promote(
 	t *testing.T,
 	ctx context.Context,
@@ -164,7 +165,7 @@ func promote(
 func TestPromoteThirdParty_ExactCommonLink(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -194,7 +195,7 @@ func TestPromoteThirdParty_ExactCommonLink(t *testing.T) {
 func TestPromoteThirdParty_HeuristicMatch(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -209,6 +210,7 @@ func TestPromoteThirdParty_HeuristicMatch(t *testing.T) {
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
 		Countries:      coredata.CountryCodes{},
+		Level:          1,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -232,51 +234,20 @@ func TestPromoteThirdParty_HeuristicMatch(t *testing.T) {
 	assert.Equal(t, fx.commonThirdPartyID, *reloaded.CommonThirdPartyID)
 }
 
-func TestPromoteThirdParty_FallbackCreate(t *testing.T) {
+// TestPromoteThirdParty_NoCreateWithoutMatch asserts that when no
+// existing org ThirdParty matches the catalog third party, resolution
+// returns nothing: the worker never creates a brand new org ThirdParty
+// (that is done only through the explicit ImportFromCommon action).
+func TestPromoteThirdParty_NoCreateWithoutMatch(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
 	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
 
-	require.NotNil(t, got, "fallback should create a new ThirdParty")
-
-	var reloaded coredata.ThirdParty
-
-	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return reloaded.LoadByID(ctx, conn, fx.scope, *got)
-	}))
-
-	assert.Equal(t, fx.organizationID, reloaded.OrganizationID)
-	assert.Equal(t, fx.commonThirdParty.Name, reloaded.Name)
-	require.NotNil(t, reloaded.CommonThirdPartyID)
-	assert.Equal(t, fx.commonThirdPartyID, *reloaded.CommonThirdPartyID)
-	assert.Equal(t, coredata.ThirdPartyCategoryAnalytics, reloaded.Category)
-	assert.True(t, reloaded.FirstLevel)
-	assert.False(t, reloaded.ShowOnTrustCenter)
-}
-
-// TestResolveOrgThirdParty_CreationGated asserts that when no existing
-// org ThirdParty matches the catalog third party, creating a new one is
-// suppressed for an uncategorised pattern (creation gating is derived
-// from the pattern's category) and proceeds for a categorised one.
-func TestResolveOrgThirdParty_CreationGated(t *testing.T) {
-	t.Parallel()
-
-	client := newTestPgClient(t)
-	ctx := context.Background()
-	fx := seedPromotionFixture(t, ctx, client)
-
-	gatedPattern := fx.trackerPattern
-	gatedPattern.CookieCategoryID = fx.uncategorisedID
-
-	gated := promote(t, ctx, newMappingHandler(client), gatedPattern, fx.commonThirdPartyID)
-	assert.Nil(t, gated, "creation must be suppressed for an uncategorised pattern with nothing to link")
-
-	allowed := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
-	require.NotNil(t, allowed, "creation must proceed for a categorised pattern")
+	assert.Nil(t, got, "resolution must not create a new org ThirdParty")
 }
 
 // TestProcess_PreservesCatalogMappingOnReTrigger asserts that when
@@ -286,7 +257,7 @@ func TestResolveOrgThirdParty_CreationGated(t *testing.T) {
 func TestProcess_PreservesCatalogMappingOnReTrigger(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -305,7 +276,7 @@ func TestProcess_PreservesCatalogMappingOnReTrigger(t *testing.T) {
 
 	require.NotNil(t, reloaded.CommonTrackerPatternID, "common tracker pattern link must be preserved")
 	assert.Equal(t, fx.commonPatternID, *reloaded.CommonTrackerPatternID)
-	require.NotNil(t, reloaded.ThirdPartyID, "the worker should have promoted to an org ThirdParty")
+	assert.Nil(t, reloaded.ThirdPartyID, "no org ThirdParty exists to link, so third_party_id stays unset")
 }
 
 // TestProcess_UncategorisedPatternIsNotPromoted asserts that a pattern
@@ -314,7 +285,7 @@ func TestProcess_PreservesCatalogMappingOnReTrigger(t *testing.T) {
 func TestProcess_UncategorisedPatternIsNotPromoted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -359,7 +330,7 @@ func TestProcess_UncategorisedPatternIsNotPromoted(t *testing.T) {
 func TestProcess_ExtensionPatternIsNotPromoted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -405,7 +376,7 @@ func TestProcess_ExtensionPatternIsNotPromoted(t *testing.T) {
 func TestProcess_NoOpWhenAlreadyPromoted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -465,7 +436,7 @@ func TestProcess_NoOpWhenAlreadyPromoted(t *testing.T) {
 func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -595,7 +566,7 @@ func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
 func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -779,7 +750,7 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 func TestMatchBySiblingOrigin_NoSiblings(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
 
@@ -820,7 +791,7 @@ func TestMatchBySiblingOrigin_NoSiblings(t *testing.T) {
 func TestMatchBySiblingOrigin_EmptyDomains(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
 
@@ -861,7 +832,7 @@ func TestMatchBySiblingOrigin_EmptyDomains(t *testing.T) {
 func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1015,7 +986,7 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 func TestPromoteThirdParty_ExactCommonLinkIgnoresSimilarUnlinked(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1065,7 +1036,7 @@ func TestPromoteThirdParty_ExactCommonLinkIgnoresSimilarUnlinked(t *testing.T) {
 func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1219,7 +1190,7 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 func TestProcess_UncategorisedLinksExistingThirdParty(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1282,7 +1253,7 @@ func TestProcess_UncategorisedLinksExistingThirdParty(t *testing.T) {
 func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1435,7 +1406,7 @@ func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1567,7 +1538,7 @@ func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 func TestProcess_DoesNotReenqueuePromotedOrExtensionSiblings(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1709,7 +1680,7 @@ func TestProcess_DoesNotReenqueuePromotedOrExtensionSiblings(t *testing.T) {
 func TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1770,4 +1741,207 @@ func TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted(t *testing.T) {
 	}))
 
 	assert.Nil(t, reloadedUnmapped.MappingRequestedAt, "re-trigger with a pre-existing common third party must not re-enqueue siblings")
+}
+
+// TestProcess_FirstPartyVerdictIsTerminal asserts that a pattern whose
+// matching catalog row carries the FIRST_PARTY verdict is linked to that
+// row but never attributed a third party: the heuristic signals and the
+// agent are short-circuited, leaving third_party_id unset.
+func TestProcess_FirstPartyVerdictIsTerminal(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	patternName := "loglevel_" + fx.scope.GetTenantID().String()
+
+	firstPartyCommon := coredata.CommonTrackerPattern{
+		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType: coredata.TrackerTypeLocalStorage,
+		Pattern:     patternName,
+		MatchType:   coredata.TrackerPatternMatchTypeExact,
+		Confidence:  0.8,
+		Attribution: coredata.CommonTrackerPatternAttributionFirstParty,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	// An org pattern with no catalog link yet, so matchByPattern resolves
+	// the FIRST_PARTY row by (tracker_type, pattern, max_age).
+	target := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeLocalStorage,
+		Pattern:          patternName,
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      patternName,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if _, err := firstPartyCommon.Upsert(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := target.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return target.SetMappingRequested(ctx, tx)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, _ = tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, firstPartyCommon.ID)
+			return nil
+		})
+	})
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, target))
+
+	var reloaded coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, target.ID)
+	}))
+
+	require.NotNil(t, reloaded.CommonTrackerPatternID, "the pattern must be linked to the first-party catalog row for coverage")
+	assert.Equal(t, firstPartyCommon.ID, *reloaded.CommonTrackerPatternID)
+	assert.Nil(t, reloaded.ThirdPartyID, "a first-party verdict must never attribute a third party")
+
+	reloadedCommon := coredata.CommonTrackerPattern{}
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedCommon.LoadByID(ctx, conn, firstPartyCommon.ID)
+	}))
+
+	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, reloadedCommon.Attribution, "verdict must remain first-party")
+	assert.Nil(t, reloadedCommon.CommonThirdPartyID, "first-party row must stay vendor-free")
+}
+
+// TestProcess_LowConfidenceCatalogVendorNotAdopted asserts that a catalog
+// row whose vendor was attributed below trustedAttributionConfidence is
+// not adopted deterministically: the pattern links to the row but is not
+// promoted to the vendor's org third party, so a single low-confidence
+// guess never auto-propagates across organizations.
+func TestProcess_LowConfidenceCatalogVendorNotAdopted(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	suffix := fx.scope.GetTenantID().String()
+	patternName := "lowconf_" + suffix
+
+	commonThirdPartyID := gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType)
+	commonThirdParty := coredata.CommonThirdParty{
+		ID:             commonThirdPartyID,
+		Name:           "Acme " + suffix,
+		Slug:           "acme-lowconf-" + suffix,
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	// Agent-tier (0.8) attribution: below the 0.9 trusted bar.
+	lowConfCommon := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: &commonThirdPartyID,
+		TrackerType:        coredata.TrackerTypeCookie,
+		Pattern:            patternName,
+		MatchType:          coredata.TrackerPatternMatchTypeExact,
+		Confidence:         agentSourceConfidence,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	// An existing org party for the vendor, so promotion WOULD link if the
+	// vendor were adopted.
+	orgThirdParty := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &commonThirdPartyID,
+		Name:               "Acme LLC",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	target := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          patternName,
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      patternName,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := commonThirdParty.Insert(ctx, tx); err != nil {
+			return err
+		}
+
+		if _, err := lowConfCommon.Upsert(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := orgThirdParty.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := target.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return target.SetMappingRequested(ctx, tx)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, _ = tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, lowConfCommon.ID)
+			_, _ = tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, commonThirdPartyID)
+
+			return nil
+		})
+	})
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, target))
+
+	var reloaded coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, target.ID)
+	}))
+
+	require.NotNil(t, reloaded.CommonTrackerPatternID, "the pattern must still be linked to the catalog row")
+	assert.Equal(t, lowConfCommon.ID, *reloaded.CommonTrackerPatternID)
+	assert.Nil(t, reloaded.ThirdPartyID, "a below-trust catalog vendor must not be adopted/promoted")
+
+	// The catalog row is untouched: its low-confidence vendor remains for
+	// a later evidence-backed corroboration.
+	reloadedCommon := coredata.CommonTrackerPattern{}
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedCommon.LoadByID(ctx, conn, lowConfCommon.ID)
+	}))
+
+	require.NotNil(t, reloadedCommon.CommonThirdPartyID, "the catalog vendor must be left in place")
+	assert.Equal(t, commonThirdPartyID, *reloadedCommon.CommonThirdPartyID)
 }

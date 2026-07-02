@@ -1,0 +1,82 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: api.datadoghq.com
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form:
+            page[number]:
+                - "0"
+            page[size]:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.datadoghq.com/api/v2/users?page%5Bnumber%5D=0&page%5Bsize%5D=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: |
+            {
+              "data": [
+                {
+                  "type": "users",
+                  "id": "abc-111",
+                  "attributes": {
+                    "email": "alice@example.com",
+                    "name": "Alice Example",
+                    "handle": "alice@example.com",
+                    "title": "Security Engineer",
+                    "disabled": false,
+                    "status": "Active",
+                    "verified": true,
+                    "service_account": false,
+                    "mfa_enabled": true,
+                    "created_at": "2025-01-02T03:04:05.000000+00:00"
+                  },
+                  "relationships": { "roles": { "data": [ { "type": "roles", "id": "role-admin" } ] } }
+                },
+                {
+                  "type": "users",
+                  "id": "abc-222",
+                  "attributes": {
+                    "email": "bob@example.com",
+                    "name": "Bob Example",
+                    "handle": "bob@example.com",
+                    "disabled": true,
+                    "status": "Disabled",
+                    "verified": true,
+                    "service_account": true,
+                    "mfa_enabled": false,
+                    "created_at": "2025-02-02T03:04:05.000000+00:00"
+                  },
+                  "relationships": { "roles": { "data": [ { "type": "roles", "id": "role-standard" } ] } }
+                }
+              ],
+              "included": [
+                { "type": "roles", "id": "role-admin", "attributes": { "name": "Datadog Admin Role" } },
+                { "type": "roles", "id": "role-standard", "attributes": { "name": "Datadog Standard Role" } }
+              ],
+              "meta": { "page": { "total_count": 2, "total_filtered_count": 2 } }
+            }
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

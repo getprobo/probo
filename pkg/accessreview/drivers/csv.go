@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -70,8 +70,8 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 
 		record := AccountRecord{
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if idx, ok := colIndex["email"]; ok && idx < len(row) {
@@ -83,7 +83,14 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		}
 
 		if idx, ok := colIndex["role"]; ok && idx < len(row) {
-			record.Role = strings.TrimSpace(row[idx])
+			role := strings.TrimSpace(row[idx])
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
+			record.Roles = roles
 		}
 
 		if idx, ok := colIndex["job_title"]; ok && idx < len(row) {
@@ -104,7 +111,7 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 
 		if idx, ok := colIndex["account_type"]; ok && idx < len(row) {
 			if strings.TrimSpace(strings.ToUpper(row[idx])) == "SERVICE_ACCOUNT" {
-				record.AccountType = coredata.AccessEntryAccountTypeServiceAccount
+				record.AccountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 			}
 		}
 

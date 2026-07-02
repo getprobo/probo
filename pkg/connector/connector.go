@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,6 +39,11 @@ type (
 		// existing connector: the callback updates the row in place
 		// instead of creating a new one.
 		ConnectorID string
+		// Site selects a per-customer region/site for multi-site
+		// providers (e.g. Datadog). Consumed by the connector's
+		// Registration.BuildAuthURLForSite. Empty for single-site
+		// providers.
+		Site string
 	}
 
 	Connector interface {

@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -26,6 +27,16 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+// Alias is the resolver for the alias field.
+func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
+	scope, err := r.authorize(ctx, obj.ID, resourcealias.ActionAliasGet)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
+}
 
 // Organization is the resolver for the organization field.
 func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
@@ -427,6 +438,11 @@ func (r *documentVersionApprovalDecisionResolver) Approver(ctx context.Context, 
 	return types.NewProfile(profile), nil
 }
 
+// ConsentText is the resolver for the consentText field.
+func (r *documentVersionApprovalDecisionResolver) ConsentText(ctx context.Context, obj *types.DocumentVersionApprovalDecision) (string, error) {
+	return probo.DocumentApprovalConsentText, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *documentVersionApprovalDecisionResolver) Permission(ctx context.Context, obj *types.DocumentVersionApprovalDecision, action string) (bool, error) {
 	// Approve and reject actions are only allowed for the viewer's own decision.
@@ -786,6 +802,11 @@ func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types
 	}
 
 	return signed, nil
+}
+
+// ConsentText is the resolver for the consentText field.
+func (r *employeeDocumentVersionResolver) ConsentText(ctx context.Context, obj *types.EmployeeDocumentVersion) (string, error) {
+	return probo.DocumentSignatureConsentText, nil
 }
 
 // ApprovalDecision is the resolver for the approvalDecision field.
@@ -1316,6 +1337,10 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 			return nil, gqlutils.Conflict(ctx, errNotPublished)
 		}
 
+		if errNotCurrent, ok := errors.AsType[*probo.ErrDocumentVersionNotCurrent](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotCurrent)
+		}
+
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
 			return nil, gqlutils.Conflict(ctx, errContractEnded)
 		}
@@ -1376,23 +1401,6 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 	}, nil
 }
 
-// SendSigningNotifications is the resolver for the sendSigningNotifications field.
-func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionDocumentSendSigningNotifications)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.probo.Documents.SendSigningNotifications(ctx, scope, input.OrganizationID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot send signing notifications", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.SendSigningNotificationsPayload{
-		Success: true,
-	}, nil
-}
-
 // CancelSignatureRequest is the resolver for the cancelSignatureRequest field.
 func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input types.CancelSignatureRequestInput) (*types.CancelSignatureRequestPayload, error) {
 	scope, err := r.authorize(ctx, input.DocumentVersionSignatureID, probo.ActionDocumentVersionCancelSignature)
@@ -1423,9 +1431,38 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+	httpReq := gqlutils.HTTPRequestFromContext(ctx)
 
-	documentVersionSignature, err := r.probo.Documents.SignDocumentVersionByIdentity(ctx, scope, input.DocumentVersionID, identity.ID)
+	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
+	if signerIP == "" {
+		signerIP = httpReq.RemoteAddr
+	}
+
+	documentVersionSignature, err := r.probo.Documents.SignDocumentVersionByIdentity(
+		ctx,
+		scope,
+		probo.SignDocumentVersionRequest{
+			DocumentVersionID: input.DocumentVersionID,
+			IdentityID:        identity.ID,
+			SignerFullName:    identity.FullName,
+			SignerEmail:       identity.EmailAddress,
+			SignerIPAddr:      signerIP,
+			SignerUA:          httpReq.UserAgent(),
+		},
+	)
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
+		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
+			return nil, gqlutils.Invalid(ctx, errNotPublished)
+		}
+
+		if errAlreadySigned, ok := errors.AsType[*probo.ErrDocumentVersionSignatureAlreadySigned](err); ok {
+			return nil, gqlutils.Conflict(ctx, errAlreadySigned)
+		}
+
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}

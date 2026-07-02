@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 // Use of this source code is governed by the ISC license
 // that can be found in the LICENSE file.
 
@@ -7,6 +7,8 @@ import type { ReactNodeViewProps } from "@tiptap/react";
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import mermaid from "mermaid";
 import { useEffect, useId, useState } from "react";
+
+import { mermaidRenderConfig } from "../mermaidConfig";
 
 type MermaidMode = "code" | "preview";
 
@@ -22,7 +24,7 @@ function MermaidPreview({ chart }: { chart: string }) {
 
     let cancelled = false;
 
-    mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+    mermaid.initialize(mermaidRenderConfig);
 
     mermaid
       .render(`mermaid-editor-${id}`, source)

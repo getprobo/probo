@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 )
 
 const (
@@ -327,9 +328,23 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 	reports = []SlackMessageReport{}
 	files = []SlackMessageFile{}
 
-	var accesses coredata.TrustCenterDocumentAccesses
-	if err := accesses.LoadAllByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID); err != nil {
-		return nil, nil, nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
+	accesses, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+			Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterDocumentAccessOrderField]) ([]*coredata.TrustCenterDocumentAccess, error) {
+			var batch coredata.TrustCenterDocumentAccesses
+			if err := batch.LoadByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	for _, access := range accesses {
@@ -349,14 +364,9 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 			)
 		}
 
-		if access.ReportID != nil {
-			rep := &coredata.Report{}
-			if err := rep.LoadByID(ctx, conn, scope, *access.ReportID); err != nil {
-				return nil, nil, nil, fmt.Errorf("cannot load report: %w", err)
-			}
-
+		if access.ReportFileID != nil {
 			audit := &coredata.Audit{}
-			if err := audit.LoadByReportID(ctx, conn, scope, *access.ReportID); err != nil {
+			if err := audit.LoadByReportFileID(ctx, conn, scope, *access.ReportFileID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -373,7 +383,7 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 			reports = append(
 				reports,
 				SlackMessageReport{
-					ID:      access.ReportID.String(),
+					ID:      access.ReportFileID.String(),
 					Title:   label,
 					AuditID: audit.ID.String(),
 					Status:  access.Status.String(),

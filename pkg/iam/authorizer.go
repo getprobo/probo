@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,8 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
@@ -82,25 +84,49 @@ type AuthorizeMultiParams struct {
 
 // Authorizer evaluates authorization requests against registered policies.
 type Authorizer struct {
-	pg        *pg.Client
-	evaluator *policy.Evaluator
-	policySet *PolicySet
-	logger    *log.Logger
+	pg            *pg.Client
+	evaluator     *policy.Evaluator
+	policySet     *PolicySet
+	scopeRegistry *oauth2scope.Registry
+	logger        *log.Logger
 }
 
 // NewAuthorizer creates a new Authorizer instance.
-func NewAuthorizer(pgClient *pg.Client, logger *log.Logger) *Authorizer {
+func NewAuthorizer(pgClient *pg.Client, logger *log.Logger, scopeRegistry *oauth2scope.Registry) *Authorizer {
 	return &Authorizer{
-		pg:        pgClient,
-		evaluator: policy.NewEvaluator(),
-		policySet: NewPolicySet(),
-		logger:    logger,
+		pg:            pgClient,
+		evaluator:     policy.NewEvaluator(),
+		policySet:     NewPolicySet(),
+		scopeRegistry: scopeRegistry,
+		logger:        logger,
 	}
 }
 
 // RegisterPolicySet merges the given policy set into the authorizer.
 func (a *Authorizer) RegisterPolicySet(ps *PolicySet) {
 	a.policySet.Merge(ps)
+}
+
+func (a *Authorizer) checkOAuth2Scope(
+	ctx context.Context,
+	principal gid.GID,
+	action Action,
+) error {
+	accessToken, ok := oauth2.AccessTokenFromContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	if a.scopeRegistry == nil || !a.scopeRegistry.Allows(accessToken.Scopes, action) {
+		var scopes []coredata.OAuth2Scope
+		if a.scopeRegistry != nil {
+			scopes = a.scopeRegistry.ScopesForAction(action)
+		}
+
+		return NewInsufficientOAuth2ScopeError(principal, scopes...)
+	}
+
+	return nil
 }
 
 // Authorize checks if the principal is allowed to perform the action on the resource.
@@ -445,6 +471,33 @@ func (a *Authorizer) evaluateMultiInTx(
 
 		if assumptionErr != nil && !item.SkipAssumptionCheck {
 			decisions[i] = assumptionErr
+			a.logDecision(
+				ctx,
+				DecisionRecord{
+					Effect:     effectError,
+					Action:     item.Action,
+					ResourceID: item.Resource,
+					Principal:  params.Principal,
+					Reason:     assumptionErr.Error(),
+				},
+			)
+
+			continue
+		}
+
+		if err := a.checkOAuth2Scope(ctx, params.Principal, item.Action); err != nil {
+			decisions[i] = err
+			a.logDecision(
+				ctx,
+				DecisionRecord{
+					Effect:     effectError,
+					Action:     item.Action,
+					ResourceID: item.Resource,
+					Principal:  params.Principal,
+					Reason:     err.Error(),
+				},
+			)
+
 			continue
 		}
 
@@ -458,7 +511,22 @@ func (a *Authorizer) evaluateMultiInTx(
 			},
 		}
 
-		if !a.evaluator.Evaluate(req, policies).IsAllowed() {
+		startedAt := time.Now()
+		result := a.evaluator.Evaluate(req, policies)
+
+		a.logDecision(
+			ctx,
+			newDecisionRecord(
+				result,
+				params.Principal,
+				item.Resource,
+				item.Action,
+				role,
+				time.Since(startedAt),
+			),
+		)
+
+		if !result.IsAllowed() {
 			decisions[i] = NewInsufficientPermissionsError(params.Principal, item.Resource, item.Action)
 		}
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -242,6 +242,12 @@ func TestHeuristicTemplate(t *testing.T) {
 			name:    "all variable tokens with leading underscores rejected",
 			input:   "__a1b2c3d4_e5f6g7h8",
 			changed: false,
+		},
+		{
+			name:     "colon-delimited trailing UUID collapses to wildcard",
+			input:    "letaido.onboarding.invite_done:0a1b2c3d-4e5f-6789-abcd-ef0123456789",
+			template: "letaido.onboarding.invite_done:*",
+			changed:  true,
 		},
 	}
 
@@ -537,6 +543,12 @@ func TestSplitTokens(t *testing.T) {
 			input:  "session_550e8400-e29b-41d4-a716-446655440000_data",
 			tokens: []string{"session", "550e8400-e29b-41d4-a716-446655440000", "data"},
 			seps:   []byte{'_', '_'},
+		},
+		{
+			name:   "colon and dot separators isolate trailing UUID",
+			input:  "letaido.onboarding.invite_done:0a1b2c3d-4e5f-6789-abcd-ef0123456789",
+			tokens: []string{"letaido", "onboarding", "invite", "done", "0a1b2c3d-4e5f-6789-abcd-ef0123456789"},
+			seps:   []byte{'.', '.', '_', ':'},
 		},
 	}
 
@@ -953,6 +965,26 @@ func TestFindMergeGroups(t *testing.T) {
 	)
 
 	t.Run(
+		"colon-delimited UUID keys merge under heuristic glob",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("letaido.onboarding.invite_done:0a1b2c3d-4e5f-6789-abcd-ef0123456789", &oneYear),
+				makePattern("letaido.onboarding.invite_done:11111111-2222-3333-4444-555555555555", &oneYear),
+				makePattern("letaido.onboarding.invite_done:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "letaido.onboarding.invite_done:*", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, group, 3)
+		},
+	)
+
+	t.Run(
 		"unrelated double-underscore keys do not merge under anchor-free glob",
 		func(t *testing.T) {
 			t.Parallel()
@@ -1127,15 +1159,45 @@ func TestShouldPromoteSource(t *testing.T) {
 			want:      false,
 		},
 		{
-			name:      "HTTP collapses to PRE_EXISTING rank: does not promote SCRIPT",
+			name:      "HTTP does not promote to SCRIPT (HTTP ranks below SCRIPT)",
 			existing:  &script,
 			candidate: &http,
 			want:      false,
 		},
 		{
-			name:      "HTTP collapses to PRE_EXISTING rank: equal to nil existing",
+			name:      "nil existing promotes to HTTP",
 			existing:  nil,
 			candidate: &http,
+			want:      true,
+		},
+		{
+			name:      "PRE_EXISTING promotes to HTTP",
+			existing:  &preExisting,
+			candidate: &http,
+			want:      true,
+		},
+		{
+			name:      "EXTENSION promotes to HTTP (real server cookie outranks extension state)",
+			existing:  &extension,
+			candidate: &http,
+			want:      true,
+		},
+		{
+			name:      "HTTP promotes to SCRIPT",
+			existing:  &http,
+			candidate: &script,
+			want:      true,
+		},
+		{
+			name:      "HTTP does not promote to EXTENSION",
+			existing:  &http,
+			candidate: &extension,
+			want:      false,
+		},
+		{
+			name:      "HTTP does not promote to PRE_EXISTING",
+			existing:  &http,
+			candidate: &preExisting,
 			want:      false,
 		},
 	}

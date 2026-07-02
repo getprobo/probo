@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,14 +75,21 @@ func (d *GrafanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				continue
 			}
 
+			role := strings.TrimSpace(u.Role)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       email,
 				FullName:    strings.TrimSpace(u.Name),
-				Role:        strings.TrimSpace(u.Role),
-				IsAdmin:     strings.EqualFold(strings.TrimSpace(u.Role), "Admin"),
+				Roles:       roles,
+				IsAdmin:     strings.EqualFold(role, "Admin"),
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  strconv.Itoa(u.UserID),
 			}
 

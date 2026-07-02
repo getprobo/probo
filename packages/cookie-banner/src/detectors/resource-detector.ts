@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 import type { Detector } from "./detector";
 import { isExtensionContext } from "./extension-context";
 import type { ReportQueue } from "./report-queue";
+import { getSelfResourceUrls } from "./self-origin";
 import type { ResourceType } from "./types";
 
 // Map browser-reported PerformanceResourceTiming.initiatorType to the
@@ -223,6 +224,8 @@ export class ResourceDetector implements Detector {
     if (resourceType !== "service_worker" && parsed.origin === this.pageOrigin) return;
 
     const identifier = parsed.origin + parsed.pathname;
+    if (getSelfResourceUrls().has(identifier)) return;
+
     this.queue.reportResource({ url: identifier, resource_type: resourceType });
   }
 }

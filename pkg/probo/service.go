@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
@@ -80,7 +79,6 @@ type (
 		html2pdfConverter                     *html2pdf.Converter
 		acmeService                           *certmanager.ACMEService
 		fileManager                           *filemanager.Service
-		file                                  *file.Service
 		logger                                *log.Logger
 		slack                                 *slack.Service
 		esign                                 *esign.Service
@@ -106,7 +104,6 @@ type (
 		Data                                  *DatumService
 		Audits                                *AuditService
 		WebhookSubscriptions                  *WebhookSubscriptionService
-		Reports                               *ReportService
 		TrustCenters                          *TrustCenterService
 		TrustCenterAccesses                   *TrustCenterAccessService
 		TrustCenterReferences                 *TrustCenterReferenceService
@@ -146,7 +143,6 @@ func NewService(
 	esignService *esign.Service,
 	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
-	fileService *file.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -166,7 +162,6 @@ func NewService(
 		html2pdfConverter:       html2pdfConverter,
 		acmeService:             acmeService,
 		fileManager:             fileManagerService,
-		file:                    fileService,
 		logger:                  logger,
 		slack:                   slackService,
 		esign:                   esignService,
@@ -230,7 +225,6 @@ func NewService(
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}
 	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}
-	svc.Reports = &ReportService{svc: svc}
 	svc.TrustCenters = &TrustCenterService{svc: svc}
 	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc}
 	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}

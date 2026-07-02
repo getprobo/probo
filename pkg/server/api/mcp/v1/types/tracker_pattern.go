@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,21 +26,22 @@ func NewTrackerPattern(p *coredata.TrackerPattern) *TrackerPattern {
 	}
 
 	return &TrackerPattern{
-		ID:               p.ID,
-		OrganizationID:   p.OrganizationID,
-		CookieBannerID:   p.CookieBannerID,
-		CookieCategoryID: p.CookieCategoryID,
-		TrackerType:      TrackerPatternTrackerType(p.TrackerType),
-		Pattern:          p.Pattern,
-		MatchType:        TrackerPatternMatchType(p.MatchType),
-		DisplayName:      p.DisplayName,
-		MaxAgeSeconds:    p.MaxAgeSeconds,
-		Description:      p.Description,
-		Source:           source,
-		Excluded:         p.Excluded,
-		LastMatchedAt:    p.LastMatchedAt,
-		CreatedAt:        p.CreatedAt,
-		UpdatedAt:        p.UpdatedAt,
+		ID:                     p.ID,
+		OrganizationID:         p.OrganizationID,
+		CookieBannerID:         p.CookieBannerID,
+		CookieCategoryID:       p.CookieCategoryID,
+		TrackerType:            TrackerPatternTrackerType(p.TrackerType),
+		Pattern:                p.Pattern,
+		MatchType:              TrackerPatternMatchType(p.MatchType),
+		DisplayName:            p.DisplayName,
+		MaxAgeSeconds:          p.MaxAgeSeconds,
+		Description:            p.Description,
+		Source:                 source,
+		Excluded:               p.Excluded,
+		LastMatchedAt:          p.LastMatchedAt,
+		CommonTrackerPatternID: p.CommonTrackerPatternID,
+		CreatedAt:              p.CreatedAt,
+		UpdatedAt:              p.UpdatedAt,
 	}
 }
 

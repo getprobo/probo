@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
+	"go.probo.inc/probo/pkg/proboctl/commonthirdparty"
+	"go.probo.inc/probo/pkg/proboctl/commontrackerpattern"
+	proboctlcookiebanner "go.probo.inc/probo/pkg/proboctl/cookiebanner"
 	"go.probo.inc/probo/pkg/proboctl/seed"
 	"go.probo.inc/probo/pkg/proboctl/version"
 )
@@ -39,6 +42,9 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd.AddCommand(seed.NewCmdSeed(f))
+	cmd.AddCommand(commontrackerpattern.NewCmdCommonTrackerPattern(f))
+	cmd.AddCommand(commonthirdparty.NewCmdCommonThirdParty(f))
+	cmd.AddCommand(proboctlcookiebanner.NewCmdCookieBanner(f))
 	cmd.AddCommand(version.NewCmdVersion(f))
 
 	return cmd

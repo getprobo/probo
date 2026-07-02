@@ -249,10 +249,9 @@ type TrustCenter implements Node
     id: ID!
     active: Boolean!
     searchEngineIndexing: SearchEngineIndexing!
-    logoFileUrl: String @goField(forceResolver: true)
-    darkLogoFileUrl: String @goField(forceResolver: true)
-    ndaFileName: String
-    ndaFileUrl: String @goField(forceResolver: true)
+    logo: File @goField(forceResolver: true)
+    darkLogo: File @goField(forceResolver: true)
+    nda: File @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
@@ -334,7 +333,8 @@ type TrustCenterDocumentAccess
     id: ID!
     status: TrustCenterDocumentAccessStatus!
     document: Document @goField(forceResolver: true)
-    report: Report @goField(forceResolver: true)
+    reportFile: File @goField(forceResolver: true)
+    audit: Audit @goField(forceResolver: true)
     trustCenterFile: TrustCenterFile @goField(forceResolver: true)
 }
 
@@ -367,7 +367,7 @@ type TrustCenterReference implements Node {
     name: String!
     description: String
     websiteUrl: String!
-    logoUrl: String! @goField(forceResolver: true)
+    logo: File! @goField(forceResolver: true)
     rank: Int!
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -442,8 +442,9 @@ type TrustCenterFile implements Node {
     id: ID!
     name: String!
     category: String!
-    fileUrl: String! @goField(forceResolver: true)
+    file: File! @goField(forceResolver: true)
     trustCenterVisibility: TrustCenterVisibility!
+    alias: String @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)

@@ -1,0 +1,32 @@
+---
+# Hand-authored fixture for GET /api/public/organizations/memberships against a
+# Langfuse organization (org-scoped API key). The membership object shape
+# (userId, role, email, name) and the {memberships:[...]} wrapper mirror the
+# documented response. Synthetic IDs/emails only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: cloud.langfuse.com
+        headers:
+            Accept:
+                - application/json
+        url: https://cloud.langfuse.com/api/public/organizations/memberships
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"memberships":[{"userId":"lf-user-1","role":"OWNER","email":"owner@example.com","name":"Olivia Owner"},{"userId":"lf-user-2","role":"ADMIN","email":"admin@example.com","name":"Adam Admin"},{"userId":"lf-user-3","role":"MEMBER","email":"member@example.com","name":"Mia Member"},{"userId":"lf-user-4","role":"VIEWER","email":"viewer@example.com","name":""}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -94,7 +94,6 @@ const (
 
 	// ThirdPartyRelation actions
 	ActionThirdPartyRelationCreate = "core:thirdParty-relation:create"
-	ActionThirdPartyRelationDelete = "core:thirdParty-relation:delete"
 	ActionThirdPartyRelationList   = "core:thirdParty-relation:list"
 
 	// ThirdPartyContact actions
@@ -184,16 +183,15 @@ const (
 	ActionEvidenceDelete = "core:evidence:delete"
 
 	// Document actions
-	ActionDocumentGet                      = "core:document:get"
-	ActionDocumentList                     = "core:document:list"
-	ActionDocumentCreate                   = "core:document:create"
-	ActionDocumentUpdate                   = "core:document:update"
-	ActionDocumentDelete                   = "core:document:delete"
-	ActionDocumentChangelogGenerate        = "core:document:generate-changelog"
-	ActionDocumentArchive                  = "core:document:archive"
-	ActionDocumentUnarchive                = "core:document:unarchive"
-	ActionDocumentDeleteDraft              = "core:document:delete-draft"
-	ActionDocumentSendSigningNotifications = "core:document:send-signing-notifications"
+	ActionDocumentGet               = "core:document:get"
+	ActionDocumentList              = "core:document:list"
+	ActionDocumentCreate            = "core:document:create"
+	ActionDocumentUpdate            = "core:document:update"
+	ActionDocumentDelete            = "core:document:delete"
+	ActionDocumentChangelogGenerate = "core:document:generate-changelog"
+	ActionDocumentArchive           = "core:document:archive"
+	ActionDocumentUnarchive         = "core:document:unarchive"
+	ActionDocumentDeleteDraft       = "core:document:delete-draft"
 
 	// DocumentVersion actions
 	ActionDocumentVersionGet             = "core:document-version:get"
@@ -295,8 +293,7 @@ const (
 	ActionCustomDomainDelete = "core:custom-domain:delete"
 
 	// File actions
-	ActionFileGet         = "core:file:get"
-	ActionFileDownloadUrl = "core:file:download-url"
+	ActionFileGet = "core:file:get"
 
 	// Connector actions
 	ActionConnectorInitiate = "core:connector:initiate"
@@ -306,6 +303,7 @@ const (
 
 	// Connector actions (generic)
 	ActionConnectorCreate = "core:connector:create"
+	ActionConnectorGet    = "core:connector:get"
 	ActionConnectorList   = "core:connector:list"
 	ActionConnectorDelete = "core:connector:delete"
 
@@ -356,32 +354,6 @@ const (
 	ActionWebhookSubscriptionUpdate = "core:webhook-subscription:update"
 	ActionWebhookSubscriptionDelete = "core:webhook-subscription:delete"
 
-	// AccessReviewCampaign actions
-	ActionAccessReviewCampaignGet               = "core:access-review-campaign:get"
-	ActionAccessReviewCampaignList              = "core:access-review-campaign:list"
-	ActionAccessReviewCampaignCreate            = "core:access-review-campaign:create"
-	ActionAccessReviewCampaignUpdate            = "core:access-review-campaign:update"
-	ActionAccessReviewCampaignDelete            = "core:access-review-campaign:delete"
-	ActionAccessReviewCampaignStart             = "core:access-review-campaign:start"
-	ActionAccessReviewCampaignClose             = "core:access-review-campaign:close"
-	ActionAccessReviewCampaignCancel            = "core:access-review-campaign:cancel"
-	ActionAccessReviewCampaignAddScopeSource    = "core:access-review-campaign:add-scope-source"
-	ActionAccessReviewCampaignRemoveScopeSource = "core:access-review-campaign:remove-scope-source"
-
-	// AccessEntry actions
-	ActionAccessEntryGet    = "core:access-entry:get"
-	ActionAccessEntryList   = "core:access-entry:list"
-	ActionAccessEntryDecide = "core:access-entry:decide"
-	ActionAccessEntryFlag   = "core:access-entry:flag"
-
-	// AccessSource actions
-	ActionAccessSourceGet    = "core:access-source:get"
-	ActionAccessSourceList   = "core:access-source:list"
-	ActionAccessSourceCreate = "core:access-source:create"
-	ActionAccessSourceUpdate = "core:access-source:update"
-	ActionAccessSourceDelete = "core:access-source:delete"
-	ActionAccessSourceSync   = "core:access-source:sync"
-
 	// CookieBanner actions
 	ActionCookieBannerGet        = "core:cookie-banner:get"
 	ActionCookieBannerList       = "core:cookie-banner:list"
@@ -390,6 +362,8 @@ const (
 	ActionCookieBannerDelete     = "core:cookie-banner:delete"
 	ActionCookieBannerActivate   = "core:cookie-banner:activate"
 	ActionCookieBannerDeactivate = "core:cookie-banner:deactivate"
+
+	ActionCookieBannerRegeneratePolicy = "core:cookie-banner:regenerate-policy"
 
 	// CookieBannerVersion actions
 	ActionCookieBannerVersionGet     = "core:cookie-banner-version:get"
@@ -423,6 +397,13 @@ const (
 	ActionRiskAssessmentNodeCreate = "core:risk-assessment-node:create"
 	ActionRiskAssessmentNodeUpdate = "core:risk-assessment-node:update"
 	ActionRiskAssessmentNodeDelete = "core:risk-assessment-node:delete"
+
+	// RiskAssessmentBoundary actions
+	ActionRiskAssessmentBoundaryGet    = "core:risk-assessment-boundary:get"
+	ActionRiskAssessmentBoundaryList   = "core:risk-assessment-boundary:list"
+	ActionRiskAssessmentBoundaryCreate = "core:risk-assessment-boundary:create"
+	ActionRiskAssessmentBoundaryUpdate = "core:risk-assessment-boundary:update"
+	ActionRiskAssessmentBoundaryDelete = "core:risk-assessment-boundary:delete"
 
 	// RiskAssessmentProcess actions
 	ActionRiskAssessmentProcessGet    = "core:risk-assessment-process:get"

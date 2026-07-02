@@ -4,6 +4,45 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.4.1] - 2026-07-01
+
+### Changed
+
+- String configuration defaults now defer to `probod`'s built-in values when the corresponding environment variable is unset
+
+## [0.4.0] - 2026-06-30
+
+### Added
+
+- `--format` flag: pass `--format json` to emit the resolved configuration as JSON instead of YAML
+
+### Fixed
+
+- Empty-valued env vars are now omitted from the generated configuration file
+
+## [0.3.0] - 2026-06-30
+
+### Added
+
+- AWS Systems Manager Parameter Store resolution: env values prefixed with `awsps://<parameter-name>` are fetched at startup using the standard AWS SDK credential chain and cached per run
+- Secrets Manager prefix `awssm://<secret-id>` as an explicit alias alongside the existing `aws://<secret-id>` prefix
+
+## [0.2.0] - 2026-06-24
+
+### Breaking Changes
+
+- **All bootstrap env vars are now prefixed with `PROBOD_`** (e.g. `AUTH_COOKIE_SECRET` → `PROBOD_AUTH_COOKIE_SECRET`). Deployments must rename every bootstrap env var before upgrading.
+
+### Added
+
+- AWS Secrets Manager resolution: env values prefixed with `aws://<secret-id>` are fetched at startup using the standard AWS SDK credential chain and cached per run
+
+## [0.1.2] - 2026-06-11
+
+### Changed
+
+- Support email updated to hello@probo.com
+
 ## [0.1.1] - 2026-05-08
 
 ### Fixed

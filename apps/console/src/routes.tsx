@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,7 @@ import { compliancePageRoutes } from "./pages/organizations/compliance-page/rout
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { riskAssessmentRoutes } from "./pages/organizations/risk-assessments/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
@@ -47,7 +48,6 @@ import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
-import { thirdPartyRoutes } from "./routes/thirdPartyRoutes";
 
 const routes = [
   {
@@ -129,6 +129,29 @@ const routes = [
             Component: lazy(
               () => import("./pages/iam/apiKeys/APIKeysPageLoader"),
             ),
+          },
+          {
+            path: "me/oauth-tokens",
+            Component: lazy(
+              () => import("./pages/iam/oauthTokens/OAuthTokensPageLoader"),
+            ),
+          },
+          {
+            path: "me/oauth-tokens/new",
+            Component: lazy(
+              () => import("./pages/iam/oauthTokens/NewOAuthTokenPageLoader"),
+            ),
+          },
+          {
+            Component: CenteredLayout,
+            children: [
+              {
+                path: "organizations/new",
+                Component: lazy(
+                  () => import("./pages/iam/organizations/NewOrganizationPage"),
+                ),
+              },
+            ],
           },
         ],
       },

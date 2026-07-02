@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -77,14 +78,21 @@ func (d *PagerDutyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 		for _, u := range page.Users {
 			isAdmin := u.Role == "admin" || u.Role == "owner"
 
+			role := strings.TrimSpace(u.Role)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.Name,
-				Role:        u.Role,
+				Roles:       roles,
 				IsAdmin:     isAdmin,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  u.ID,
 			}
 

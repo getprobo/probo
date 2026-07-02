@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -565,14 +565,15 @@ func (s FrameworkService) Import(
 				contentType := "image/svg+xml"
 
 				fileRecord := &coredata.File{
-					ID:         fileID,
-					BucketName: s.svc.bucket,
-					MimeType:   contentType,
-					FileName:   filename,
-					FileKey:    objectKey.String(),
-					Visibility: coredata.FileVisibilityPublic,
-					CreatedAt:  now,
-					UpdatedAt:  now,
+					ID:             fileID,
+					OrganizationID: organization.ID,
+					BucketName:     s.svc.bucket,
+					MimeType:       contentType,
+					FileName:       filename,
+					FileKey:        objectKey.String(),
+					Visibility:     coredata.FileVisibilityPublic,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				fileSize, err := s.svc.fileManager.PutFile(ctx, fileRecord, strings.NewReader(logo), map[string]string{
@@ -675,7 +676,7 @@ func (s FrameworkService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, recipientName)
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderFrameworkExport(
 				ctx,
@@ -801,15 +802,16 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope cored
 			now := time.Now()
 
 			file := coredata.File{
-				ID:         gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
-				BucketName: s.svc.bucket,
-				MimeType:   "application/zip",
-				FileName:   fmt.Sprintf("Framework Export %s.zip", now.Format("2006-01-02")),
-				FileKey:    uuid.String(),
-				FileSize:   fileInfo.Size(),
-				Visibility: coredata.FileVisibilityPrivate,
-				CreatedAt:  now,
-				UpdatedAt:  now,
+				ID:             gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
+				OrganizationID: framework.OrganizationID,
+				BucketName:     s.svc.bucket,
+				MimeType:       "application/zip",
+				FileName:       fmt.Sprintf("Framework Export %s.zip", now.Format("2006-01-02")),
+				FileKey:        uuid.String(),
+				FileSize:       fileInfo.Size(),
+				Visibility:     coredata.FileVisibilityPrivate,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if err := file.Insert(ctx, tx, scope); err != nil {
@@ -865,7 +867,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -907,7 +909,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

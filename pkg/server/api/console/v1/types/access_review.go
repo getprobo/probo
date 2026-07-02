@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,21 +15,20 @@
 package types
 
 import (
-	"time"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
-	AccessSourceOrderBy         OrderBy[coredata.AccessSourceOrderField]
-	AccessReviewCampaignOrderBy OrderBy[coredata.AccessReviewCampaignOrderField]
-	AccessEntryOrderBy          OrderBy[coredata.AccessEntryOrderField]
+	AccessReviewSourceOrderBy                     OrderBy[coredata.AccessReviewSourceOrderField]
+	AccessReviewCampaignOrderBy                   OrderBy[coredata.AccessReviewCampaignOrderField]
+	AccessReviewEntryOrderBy                      OrderBy[coredata.AccessReviewEntryOrderField]
+	AccessReviewCampaignSourceFetchAttemptOrderBy OrderBy[coredata.AccessReviewCampaignSourceFetchAttemptOrderField]
 
-	AccessSourceConnection struct {
+	AccessReviewSourceConnection struct {
 		TotalCount int
-		Edges      []*AccessSourceEdge
+		Edges      []*AccessReviewSourceEdge
 		PageInfo   PageInfo
 
 		Resolver any
@@ -45,32 +44,41 @@ type (
 		ParentID gid.GID
 	}
 
-	AccessEntryConnection struct {
+	AccessReviewEntryConnection struct {
 		TotalCount int
-		Edges      []*AccessEntryEdge
+		Edges      []*AccessReviewEntryEdge
 		PageInfo   PageInfo
 
 		Resolver any
 		ParentID gid.GID
 		SourceID *gid.GID
-		Filter   *coredata.AccessEntryFilter
+		Filter   *coredata.AccessReviewEntryFilter
+	}
+
+	AccessReviewCampaignSourceFetchAttemptConnection struct {
+		TotalCount int
+		Edges      []*AccessReviewCampaignSourceFetchAttemptEdge
+		PageInfo   PageInfo
+
+		Resolver any
+		ParentID gid.GID
 	}
 )
 
-// AccessSource helpers
+// AccessReviewSource helpers
 
-func NewAccessSourceConnection(
-	p *page.Page[*coredata.AccessSource, coredata.AccessSourceOrderField],
+func NewAccessReviewSourceConnection(
+	p *page.Page[*coredata.AccessReviewSource, coredata.AccessReviewSourceOrderField],
 	parentType any,
 	parentID gid.GID,
-) *AccessSourceConnection {
-	edges := make([]*AccessSourceEdge, len(p.Data))
+) *AccessReviewSourceConnection {
+	edges := make([]*AccessReviewSourceEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewAccessSourceEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewAccessReviewSourceEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &AccessSourceConnection{
+	return &AccessReviewSourceConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -79,15 +87,15 @@ func NewAccessSourceConnection(
 	}
 }
 
-func NewAccessSourceEdge(s *coredata.AccessSource, orderBy coredata.AccessSourceOrderField) *AccessSourceEdge {
-	return &AccessSourceEdge{
+func NewAccessReviewSourceEdge(s *coredata.AccessReviewSource, orderBy coredata.AccessReviewSourceOrderField) *AccessReviewSourceEdge {
+	return &AccessReviewSourceEdge{
 		Cursor: s.CursorKey(orderBy),
-		Node:   NewAccessSource(s),
+		Node:   NewAccessReviewSource(s),
 	}
 }
 
-func NewAccessSource(s *coredata.AccessSource) *AccessSource {
-	return &AccessSource{
+func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
+	return &AccessReviewSource{
 		ID: s.ID,
 		Organization: &Organization{
 			ID: s.OrganizationID,
@@ -100,41 +108,75 @@ func NewAccessSource(s *coredata.AccessSource) *AccessSource {
 	}
 }
 
-func NewAccessReviewCampaignScopeSource(
-	campaignID gid.GID,
-	source *coredata.AccessSource,
-	fetch *coredata.AccessReviewCampaignSourceFetch,
-) *AccessReviewCampaignScopeSource {
-	status := coredata.AccessReviewCampaignSourceFetchStatusQueued
-	fetchedAccountsCount := 0
-	attemptCount := 0
+// NewAccessReviewCampaignSource builds the GraphQL campaign source from a
+// snapshot row. Fetch state is resolved lazily via field resolvers on
+// AccessReviewCampaignSource. The live access source is resolved via the
+// source field resolver from SourceID.
+func NewAccessReviewCampaignSource(
+	campaignSource *coredata.AccessReviewCampaignSource,
+) *AccessReviewCampaignSource {
+	return &AccessReviewCampaignSource{
+		ID: campaignSource.ID,
+		Campaign: &AccessReviewCampaign{
+			ID: campaignSource.AccessReviewCampaignID,
+		},
+		SourceID: campaignSource.AccessReviewSourceID,
+		Name:     campaignSource.Name,
+	}
+}
 
-	var (
-		lastError        *string
-		fetchStartedAt   *time.Time
-		fetchCompletedAt *time.Time
-	)
-
-	if fetch != nil {
-		status = fetch.Status
-		fetchedAccountsCount = fetch.FetchedAccountsCount
-		attemptCount = fetch.AttemptCount
-		lastError = fetch.LastError
-		fetchStartedAt = fetch.StartedAt
-		fetchCompletedAt = fetch.CompletedAt
+// NewAccessReviewCampaignSourceFetchAttempt builds the GraphQL representation of a
+// single append-only fetch attempt. attemptNumber is the 1-based position in the
+// snapshot's history, counting up from the oldest attempt.
+func NewAccessReviewCampaignSourceFetchAttempt(
+	a *coredata.AccessReviewCampaignSourceFetchAttempt,
+	attemptNumber int,
+) *AccessReviewCampaignSourceFetchAttempt {
+	if a.AttemptNumber > 0 {
+		attemptNumber = a.AttemptNumber
 	}
 
-	return &AccessReviewCampaignScopeSource{
-		ID:                   source.ID,
-		CampaignID:           campaignID,
-		Source:               NewAccessSource(source),
-		Name:                 source.Name,
-		FetchStatus:          status,
-		FetchedAccountsCount: fetchedAccountsCount,
-		AttemptCount:         attemptCount,
-		LastError:            lastError,
-		FetchStartedAt:       fetchStartedAt,
-		FetchCompletedAt:     fetchCompletedAt,
+	return &AccessReviewCampaignSourceFetchAttempt{
+		ID:                   a.ID,
+		AttemptNumber:        attemptNumber,
+		Status:               a.Status,
+		FetchedAccountsCount: a.FetchedAccountsCount,
+		Error:                a.Error,
+		StartedAt:            a.StartedAt,
+		CompletedAt:          a.CompletedAt,
+		CreatedAt:            a.CreatedAt,
+		UpdatedAt:            a.UpdatedAt,
+	}
+}
+
+func NewAccessReviewCampaignSourceFetchAttemptConnection(
+	p *page.Page[*coredata.AccessReviewCampaignSourceFetchAttempt, coredata.AccessReviewCampaignSourceFetchAttemptOrderField],
+	parentType any,
+	parentID gid.GID,
+) *AccessReviewCampaignSourceFetchAttemptConnection {
+	edges := make([]*AccessReviewCampaignSourceFetchAttemptEdge, len(p.Data))
+
+	for i := range edges {
+		edges[i] = NewAccessReviewCampaignSourceFetchAttemptEdge(p.Data[i], p.Cursor.OrderBy.Field, 0)
+	}
+
+	return &AccessReviewCampaignSourceFetchAttemptConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+
+		Resolver: parentType,
+		ParentID: parentID,
+	}
+}
+
+func NewAccessReviewCampaignSourceFetchAttemptEdge(
+	a *coredata.AccessReviewCampaignSourceFetchAttempt,
+	orderBy coredata.AccessReviewCampaignSourceFetchAttemptOrderField,
+	attemptNumber int,
+) *AccessReviewCampaignSourceFetchAttemptEdge {
+	return &AccessReviewCampaignSourceFetchAttemptEdge{
+		Cursor: a.CursorKey(orderBy),
+		Node:   NewAccessReviewCampaignSourceFetchAttempt(a, attemptNumber),
 	}
 }
 
@@ -173,21 +215,20 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 		Organization: &Organization{
 			ID: c.OrganizationID,
 		},
-		Name:              c.Name,
-		Description:       c.Description,
-		Status:            c.Status,
-		StartedAt:         c.StartedAt,
-		CompletedAt:       c.CompletedAt,
-		FrameworkControls: c.FrameworkControls,
-		CreatedAt:         c.CreatedAt,
-		UpdatedAt:         c.UpdatedAt,
+		Name:        c.Name,
+		Description: c.Description,
+		Status:      c.Status,
+		StartedAt:   c.StartedAt,
+		CompletedAt: c.CompletedAt,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
 	}
 
 	return campaign
 }
 
-func NewAccessEntryDecisionHistoryEntry(h *coredata.AccessEntryDecisionHistory) *AccessEntryDecisionHistoryEntry {
-	entry := &AccessEntryDecisionHistoryEntry{
+func NewAccessReviewEntryDecisionHistoryEntry(h *coredata.AccessReviewEntryDecisionHistory) *AccessReviewEntryDecisionHistoryEntry {
+	entry := &AccessReviewEntryDecisionHistoryEntry{
 		ID:           h.ID,
 		Decision:     h.Decision,
 		DecisionNote: h.DecisionNote,
@@ -202,22 +243,22 @@ func NewAccessEntryDecisionHistoryEntry(h *coredata.AccessEntryDecisionHistory) 
 	return entry
 }
 
-// AccessEntry helpers
+// AccessReviewEntry helpers
 
-func NewAccessEntryConnection(
-	p *page.Page[*coredata.AccessEntry, coredata.AccessEntryOrderField],
+func NewAccessReviewEntryConnection(
+	p *page.Page[*coredata.AccessReviewEntry, coredata.AccessReviewEntryOrderField],
 	parentType any,
 	parentID gid.GID,
 	sourceID *gid.GID,
-	filter *coredata.AccessEntryFilter,
-) *AccessEntryConnection {
-	edges := make([]*AccessEntryEdge, len(p.Data))
+	filter *coredata.AccessReviewEntryFilter,
+) *AccessReviewEntryConnection {
+	edges := make([]*AccessReviewEntryEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewAccessEntryEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewAccessReviewEntryEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &AccessEntryConnection{
+	return &AccessReviewEntryConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -228,27 +269,33 @@ func NewAccessEntryConnection(
 	}
 }
 
-func NewAccessEntryEdge(e *coredata.AccessEntry, orderBy coredata.AccessEntryOrderField) *AccessEntryEdge {
-	return &AccessEntryEdge{
+func NewAccessReviewEntryEdge(e *coredata.AccessReviewEntry, orderBy coredata.AccessReviewEntryOrderField) *AccessReviewEntryEdge {
+	return &AccessReviewEntryEdge{
 		Cursor: e.CursorKey(orderBy),
-		Node:   NewAccessEntry(e),
+		Node:   NewAccessReviewEntry(e),
 	}
 }
 
-func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
-	entry := &AccessEntry{
+func NewAccessReviewEntry(e *coredata.AccessReviewEntry) *AccessReviewEntry {
+	roles := e.Roles
+	if roles == nil {
+		roles = []string{}
+	}
+
+	entry := &AccessReviewEntry{
 		ID: e.ID,
 		Campaign: &AccessReviewCampaign{
 			ID: e.AccessReviewCampaignID,
 		},
-		AccessSource: &AccessSource{
-			ID: e.AccessSourceID,
+		CampaignSource: &AccessReviewCampaignSource{
+			ID: e.AccessReviewCampaignSourceID,
 		},
 		Email:            e.Email,
 		FullName:         e.FullName,
-		Role:             e.Role,
+		Roles:            roles,
 		JobTitle:         e.JobTitle,
 		IsAdmin:          e.IsAdmin,
+		Active:           e.Active,
 		MfaStatus:        e.MFAStatus,
 		AuthMethod:       e.AuthMethod,
 		AccountType:      e.AccountType,
@@ -272,32 +319,32 @@ func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
 	return entry
 }
 
-func NewAccessReviewCampaignStatistics(stats *coredata.AccessEntryStatistics) *AccessReviewCampaignStatistics {
-	decisionCounts := make([]*AccessEntryDecisionCount, 0, len(stats.DecisionCounts))
+func NewAccessReviewStatistics(stats *coredata.AccessReviewStatistics) *AccessReviewStatistics {
+	decisionCounts := make([]*AccessReviewEntryDecisionCount, 0, len(stats.DecisionCounts))
 	for decision, count := range stats.DecisionCounts {
 		decisionCounts = append(
 			decisionCounts,
-			&AccessEntryDecisionCount{Decision: decision, Count: count},
+			&AccessReviewEntryDecisionCount{Decision: decision, Count: count},
 		)
 	}
 
-	flagCounts := make([]*AccessEntryFlagCount, 0, len(stats.FlagCounts))
+	flagCounts := make([]*AccessReviewEntryFlagCount, 0, len(stats.FlagCounts))
 	for flag, count := range stats.FlagCounts {
 		flagCounts = append(
 			flagCounts,
-			&AccessEntryFlagCount{Flag: flag, Count: count},
+			&AccessReviewEntryFlagCount{Flag: flag, Count: count},
 		)
 	}
 
-	incrementalTagCounts := make([]*AccessEntryIncrementalTagCount, 0, len(stats.IncrementalTagCounts))
+	incrementalTagCounts := make([]*AccessReviewEntryIncrementalTagCount, 0, len(stats.IncrementalTagCounts))
 	for tag, count := range stats.IncrementalTagCounts {
 		incrementalTagCounts = append(
 			incrementalTagCounts,
-			&AccessEntryIncrementalTagCount{IncrementalTag: tag, Count: count},
+			&AccessReviewEntryIncrementalTagCount{IncrementalTag: tag, Count: count},
 		)
 	}
 
-	return &AccessReviewCampaignStatistics{
+	return &AccessReviewStatistics{
 		TotalCount:           stats.TotalCount,
 		DecisionCounts:       decisionCounts,
 		FlagCounts:           flagCounts,

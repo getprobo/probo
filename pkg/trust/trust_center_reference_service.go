@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,12 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 		return "", fmt.Errorf("cannot load trust center reference: %w", err)
 	}
 
-	return s.svc.file.GenerateFileURL(ctx, reference.LogoFileID)
+	file, err := s.svc.fileManager.GetPublicFile(ctx, reference.LogoFileID)
+	if err != nil {
+		return "", err
+	}
+
+	return s.svc.fileManager.GenerateFileURL(file), nil
 }
 
 func (s TrustCenterReferenceService) Get(

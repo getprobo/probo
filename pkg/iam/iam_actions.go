@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -94,8 +94,11 @@ const (
 	ActionOAuth2ConsentGet     = "iam:oauth2-consent:get"
 	ActionOAuth2ConsentApprove = "iam:oauth2-consent:approve"
 
-	// Connector actions
-	ActionConnectorGet = "iam:connector:get"
+	// OAuth2 Access Token actions
+	ActionOAuth2AccessTokenCreate = "iam:oauth2-access-token:create"
+	ActionOAuth2AccessTokenGet    = "iam:oauth2-access-token:get"
+	ActionOAuth2AccessTokenList   = "iam:oauth2-access-token:list"
+	ActionOAuth2AccessTokenDelete = "iam:oauth2-access-token:delete"
 
 	// Audit log entry actions
 	ActionAuditLogEntryGet  = "iam:audit-log-entry:get"

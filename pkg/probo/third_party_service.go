@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -54,7 +55,7 @@ type (
 		StatusPageURL                 *string
 		BusinessOwnerID               *gid.GID
 		SecurityOwnerID               *gid.GID
-		FirstLevel                    *bool
+		ParentThirdPartyID            *gid.GID
 	}
 
 	UpdateThirdPartyRequest struct {
@@ -79,7 +80,6 @@ type (
 		BusinessOwnerID               **gid.GID
 		SecurityOwnerID               **gid.GID
 		ShowOnTrustCenter             *bool
-		FirstLevel                    *bool
 	}
 
 	CreateThirdPartyRiskAssessmentRequest struct {
@@ -89,7 +89,21 @@ type (
 		BusinessImpact  coredata.BusinessImpact
 		Notes           *string
 	}
+
+	ImportThirdPartyFromCommonRequest struct {
+		OrganizationID     gid.GID
+		CommonThirdPartyID gid.GID
+	}
 )
+
+func (r *ImportThirdPartyFromCommonRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(r.CommonThirdPartyID, "common_third_party_id", validator.Required(), validator.GID(coredata.CommonThirdPartyEntityType))
+
+	return v.Error()
+}
 
 func (cvr *CreateThirdPartyRequest) Validate() error {
 	v := validator.New()
@@ -398,10 +412,6 @@ func (s ThirdPartyService) Update(
 				thirdParty.ShowOnTrustCenter = *req.ShowOnTrustCenter
 			}
 
-			if req.FirstLevel != nil {
-				thirdParty.FirstLevel = *req.FirstLevel
-			}
-
 			if req.TrustPageURL != nil {
 				thirdParty.TrustPageURL = *req.TrustPageURL
 			}
@@ -589,11 +599,7 @@ func (s ThirdPartyService) Create(
 		StatusPageURL:                 req.StatusPageURL,
 		TermsOfServiceURL:             req.TermsOfServiceURL,
 		ShowOnTrustCenter:             false,
-		FirstLevel:                    true,
-	}
-
-	if req.FirstLevel != nil {
-		thirdParty.FirstLevel = *req.FirstLevel
+		Level:                         1,
 	}
 
 	err := s.svc.pg.WithTx(
@@ -605,6 +611,29 @@ func (s ThirdPartyService) Create(
 			}
 
 			thirdParty.OrganizationID = organization.ID
+
+			if req.ParentThirdPartyID != nil {
+				parent := &coredata.ThirdParty{}
+				if err := parent.LoadByID(ctx, conn, scope, *req.ParentThirdPartyID); err != nil {
+					return fmt.Errorf("cannot load parent third party: %w", err)
+				}
+
+				if parent.OrganizationID != organization.ID {
+					return fmt.Errorf("parent third party belongs to a different organization: %w", coredata.ErrResourceNotFound)
+				}
+
+				thirdParty.ParentThirdPartyID = &parent.ID
+				// The level always follows the parent chain; ignore any
+				// client-supplied level so it cannot desync from the hierarchy.
+				thirdParty.Level = parent.Level + 1
+			}
+
+			levelValidator := validator.New()
+			levelValidator.Check(thirdParty.Level, "level", validator.Max(coredata.MaxThirdPartyLevel))
+
+			if err := levelValidator.Error(); err != nil {
+				return err
+			}
 
 			if req.BusinessOwnerID != nil {
 				businessOwner := &coredata.MembershipProfile{}
@@ -653,6 +682,131 @@ func (s ThirdPartyService) Create(
 	}
 
 	return thirdParty, nil
+}
+
+// ImportFromCommon creates an org ThirdParty seeded from the global
+// CommonThirdParty catalog entry, or returns the existing one when the
+// organization already imported it (idempotent on the
+// (organization_id, common_third_party_id) pair). It then backfills
+// tracker_patterns.third_party_id for the organization's unlinked
+// patterns whose catalog row resolves to the same common third party, so
+// the trackers UI and tracker-policy document surface the managed vendor
+// instead of the catalog entry. The backfill runs on both the create and
+// reuse paths because new patterns may have been detected since a prior
+// import; it only touches patterns with no existing link. Returns the
+// org ThirdParty and whether it was newly created.
+func (s ThirdPartyService) ImportFromCommon(
+	ctx context.Context, scope coredata.Scoper,
+	req ImportThirdPartyFromCommonRequest,
+) (*coredata.ThirdParty, bool, error) {
+	if err := req.Validate(); err != nil {
+		return nil, false, err
+	}
+
+	thirdParty := &coredata.ThirdParty{}
+	created := false
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			existing := &coredata.ThirdParty{}
+
+			err := existing.LoadByOrganizationIDAndCommonThirdPartyID(
+				ctx,
+				conn,
+				scope,
+				organization.ID,
+				req.CommonThirdPartyID,
+			)
+
+			switch {
+			case err == nil:
+				*thirdParty = *existing
+			case errors.Is(err, coredata.ErrResourceNotFound):
+				commonParty := &coredata.CommonThirdParty{}
+				if err := commonParty.LoadByID(ctx, conn, req.CommonThirdPartyID); err != nil {
+					return fmt.Errorf("cannot load common third party: %w", err)
+				}
+
+				now := time.Now()
+				commonID := commonParty.ID
+
+				certifications := commonParty.Certifications
+				if certifications == nil {
+					certifications = []string{}
+				}
+
+				*thirdParty = coredata.ThirdParty{
+					ID:                            gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
+					OrganizationID:                organization.ID,
+					CommonThirdPartyID:            &commonID,
+					Name:                          commonParty.Name,
+					Category:                      commonParty.Category,
+					HeadquarterAddress:            commonParty.HeadquarterAddress,
+					LegalName:                     commonParty.LegalName,
+					WebsiteURL:                    commonParty.WebsiteURL,
+					PrivacyPolicyURL:              commonParty.PrivacyPolicyURL,
+					ServiceLevelAgreementURL:      commonParty.ServiceLevelAgreementURL,
+					DataProcessingAgreementURL:    commonParty.DataProcessingAgreementURL,
+					BusinessAssociateAgreementURL: commonParty.BusinessAssociateAgreementURL,
+					SubprocessorsListURL:          commonParty.SubprocessorsListURL,
+					Certifications:                certifications,
+					Countries:                     coredata.CountryCodes{},
+					StatusPageURL:                 commonParty.StatusPageURL,
+					TermsOfServiceURL:             commonParty.TermsOfServiceURL,
+					SecurityPageURL:               commonParty.SecurityPageURL,
+					TrustPageURL:                  commonParty.TrustPageURL,
+					ShowOnTrustCenter:             false,
+					Level:                         1,
+					CreatedAt:                     now,
+					UpdatedAt:                     now,
+				}
+
+				if err := thirdParty.Insert(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot insert third party: %w", err)
+				}
+
+				created = true
+
+				if err := webhook.InsertData(
+					ctx,
+					conn,
+					scope,
+					organization.ID,
+					coredata.WebhookEventTypeThirdPartyCreated,
+					webhooktypes.NewThirdParty(thirdParty),
+				); err != nil {
+					return fmt.Errorf("cannot insert webhook event: %w", err)
+				}
+			default:
+				return fmt.Errorf("cannot load third party by common id: %w", err)
+			}
+
+			var patterns coredata.TrackerPatterns
+			if err := patterns.LinkThirdPartyByCommonThirdPartyID(
+				ctx,
+				conn,
+				scope,
+				organization.ID,
+				req.CommonThirdPartyID,
+				thirdParty.ID,
+			); err != nil {
+				return fmt.Errorf("cannot link tracker patterns to imported third party: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return thirdParty, created, nil
 }
 
 func (s ThirdPartyService) CountForAssetID(
@@ -848,69 +1002,24 @@ func (s ThirdPartyService) GetByRiskAssessmentID(
 	return thirdParty, nil
 }
 
-func (s ThirdPartyService) CreateThirdPartyMapping(
+func (s ThirdPartyService) GetAncestors(
 	ctx context.Context,
 	scope coredata.Scoper,
-	parentThirdPartyID gid.GID,
-	childThirdPartyID gid.GID,
-) (*coredata.ThirdParty, error) {
-	childThirdParty := &coredata.ThirdParty{}
+	thirdPartyID gid.GID,
+) (coredata.ThirdParties, error) {
+	var ancestors coredata.ThirdParties
 
-	err := s.svc.pg.WithTx(
+	err := s.svc.pg.WithConn(
 		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			parentThirdParty := &coredata.ThirdParty{}
-			if err := parentThirdParty.LoadByID(ctx, conn, scope, parentThirdPartyID); err != nil {
-				return fmt.Errorf("cannot load parent third party: %w", err)
-			}
-
-			if err := childThirdParty.LoadByID(ctx, conn, scope, childThirdPartyID); err != nil {
-				return fmt.Errorf("cannot load child third party: %w", err)
-			}
-
-			if parentThirdParty.OrganizationID != childThirdParty.OrganizationID {
-				return fmt.Errorf("cannot create mapping for third parties from different organizations: %w", coredata.ErrResourceNotFound)
-			}
-
-			relation := &coredata.ThirdPartyThirdParty{
-				ParentThirdPartyID: parentThirdPartyID,
-				ChildThirdPartyID:  childThirdPartyID,
-				CreatedAt:          time.Now(),
-			}
-			if err := relation.Insert(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot create third party mapping: %w", err)
-			}
-
-			return nil
+		func(ctx context.Context, conn pg.Querier) error {
+			return ancestors.LoadAllAncestorsByThirdPartyID(ctx, conn, scope, thirdPartyID)
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return childThirdParty, nil
-}
-
-func (s ThirdPartyService) DeleteThirdPartyMapping(
-	ctx context.Context,
-	scope coredata.Scoper,
-	parentThirdPartyID gid.GID,
-	childThirdPartyID gid.GID,
-) error {
-	return s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			relation := &coredata.ThirdPartyThirdParty{
-				ParentThirdPartyID: parentThirdPartyID,
-				ChildThirdPartyID:  childThirdPartyID,
-			}
-			if err := relation.Delete(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot delete third party mapping: %w", err)
-			}
-
-			return nil
-		},
-	)
+	return ancestors, nil
 }
 
 func (s ThirdPartyService) CountForParentThirdPartyID(

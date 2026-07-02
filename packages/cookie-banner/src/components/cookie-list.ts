@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -52,8 +52,8 @@ export class ProboCookieList extends ProboElement {
     if (!this.template) return;
 
     const duration = cookie.max_age_seconds != null
-      ? humanizeDuration(cookie.max_age_seconds, lang)
-      : humanizeDuration(0, lang);
+      ? humanizeDuration(cookie.max_age_seconds, lang, cookie.tracker_type)
+      : humanizeDuration(0, lang, cookie.tracker_type);
 
     const type = getTrackerTypeLabel(cookie.tracker_type);
 

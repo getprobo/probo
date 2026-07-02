@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -76,12 +77,25 @@ func (s TrustCenterAccessService) Request(
 
 			documentIDs := req.DocumentIDs
 			if req.DocumentIDs == nil {
-				var allDocuments coredata.Documents
-
 				filter := coredata.NewDocumentTrustCenterFilter()
 
-				if err := allDocuments.LoadAllByOrganizationID(ctx, tx, scope, organizationID, filter); err != nil {
-					return fmt.Errorf("cannot list documents: %w", err)
+				allDocuments, err := page.LoadAll(
+					ctx,
+					page.OrderBy[coredata.DocumentOrderField]{
+						Field:     coredata.DocumentOrderFieldTitle,
+						Direction: page.OrderDirectionAsc,
+					},
+					func(ctx context.Context, cursor *page.Cursor[coredata.DocumentOrderField]) ([]*coredata.Document, error) {
+						var batch coredata.Documents
+						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
+							return nil, fmt.Errorf("cannot list documents: %w", err)
+						}
+
+						return batch, nil
+					},
+				)
+				if err != nil {
+					return err
 				}
 
 				for _, doc := range allDocuments {
@@ -91,31 +105,57 @@ func (s TrustCenterAccessService) Request(
 
 			reportIDs := req.ReportIDs
 			if req.ReportIDs == nil {
-				var allAudits coredata.Audits
-
 				auditFilter := coredata.NewAuditTrustCenterFilter()
 
-				if err := allAudits.LoadAllByOrganizationID(ctx, tx, scope, organizationID, auditFilter); err != nil {
-					return fmt.Errorf("cannot list audits: %w", err)
+				allAudits, err := page.LoadAll(
+					ctx,
+					page.OrderBy[coredata.AuditOrderField]{
+						Field:     coredata.AuditOrderFieldCreatedAt,
+						Direction: page.OrderDirectionAsc,
+					},
+					func(ctx context.Context, cursor *page.Cursor[coredata.AuditOrderField]) ([]*coredata.Audit, error) {
+						var batch coredata.Audits
+						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, auditFilter); err != nil {
+							return nil, fmt.Errorf("cannot list audits: %w", err)
+						}
+
+						return batch, nil
+					},
+				)
+				if err != nil {
+					return err
 				}
 
 				for _, audit := range allAudits {
-					if audit.ReportID != nil {
-						reportIDs = append(reportIDs, *audit.ReportID)
+					if audit.ReportFileID != nil {
+						reportIDs = append(reportIDs, *audit.ReportFileID)
 					}
 				}
 			}
 
 			trustCenterFileIDs := req.TrustCenterFileIDs
 			if req.TrustCenterFileIDs == nil {
-				var allTrustCenterFiles coredata.TrustCenterFiles
-
 				filter := coredata.NewTrustCenterFileFilter(
 					coredata.WithTrustCenterFileVisibilities(coredata.TrustCenterVisibilityPrivate, coredata.TrustCenterVisibilityNone),
 				)
 
-				if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, scope, organizationID, filter); err != nil {
-					return fmt.Errorf("cannot list trust center files: %w", err)
+				allTrustCenterFiles, err := page.LoadAll(
+					ctx,
+					page.OrderBy[coredata.TrustCenterFileOrderField]{
+						Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+						Direction: page.OrderDirectionDesc,
+					},
+					func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterFileOrderField]) ([]*coredata.TrustCenterFile, error) {
+						var batch coredata.TrustCenterFiles
+						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
+							return nil, fmt.Errorf("cannot list trust center files: %w", err)
+						}
+
+						return batch, nil
+					},
+				)
+				if err != nil {
+					return err
 				}
 
 				for _, file := range allTrustCenterFiles {
@@ -123,9 +163,23 @@ func (s TrustCenterAccessService) Request(
 				}
 			}
 
-			var existingAccesses coredata.TrustCenterDocumentAccesses
-			if err := existingAccesses.LoadAllByTrustCenterAccessID(ctx, tx, scope, access.ID); err != nil {
-				return fmt.Errorf("cannot load existing access records: %w", err)
+			existingAccesses, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+					Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterDocumentAccessOrderField]) ([]*coredata.TrustCenterDocumentAccess, error) {
+					var batch coredata.TrustCenterDocumentAccesses
+					if err := batch.LoadByTrustCenterAccessID(ctx, tx, scope, access.ID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load existing access records: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
 			existingDocumentIDs, existingReportIDs, existingTrustCenterFileIDs := extractExistingIDs(existingAccesses)
@@ -148,7 +202,7 @@ func (s TrustCenterAccessService) Request(
 				return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
 			}
 
-			if err := accesses.BulkInsertReportAccesses(
+			if err := accesses.BulkInsertReportFileAccesses(
 				ctx,
 				tx,
 				scope,
@@ -255,12 +309,12 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 	return documentAccess, nil
 }
 
-func (s TrustCenterAccessService) GetReportAccess(
+func (s TrustCenterAccessService) GetReportFileAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trustCenterID gid.GID,
 	identityID gid.GID,
-	reportID gid.GID,
+	reportFileID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var reportAccess *coredata.TrustCenterDocumentAccess
 
@@ -289,7 +343,7 @@ func (s TrustCenterAccessService) GetReportAccess(
 
 		reportAccess = &coredata.TrustCenterDocumentAccess{}
 
-		err = reportAccess.LoadByTrustCenterAccessIDAndReportID(ctx, conn, scope, access.ID, reportID)
+		err = reportAccess.LoadByTrustCenterAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrDocumentAccessNotFound
@@ -405,7 +459,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 		}
 
 		if len(reportIDs) > 0 {
-			if err := coredata.GrantByReportIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+			if err := coredata.GrantByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot grant report accesses: %w", err)
 			}
 		}
@@ -457,7 +511,7 @@ func (s *TrustCenterAccessService) sendAccessEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, profile.FullName)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {
@@ -526,7 +580,7 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		if len(reportIDs) > 0 {
 			shouldSendEmail = true
 
-			if err := coredata.RejectOrRevokeByReportIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+			if err := coredata.RejectOrRevokeByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke report accesses: %w", err)
 			}
 		}
@@ -579,15 +633,13 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		}
 	}
 
-	var reports coredata.Reports
 	if len(reportIDs) > 0 {
-		if err := reports.LoadByIDs(ctx, tx, scope, reportIDs); err != nil {
-			return fmt.Errorf("cannot load reports by IDs: %w", err)
+		reportLabels, err := reportAccessLabels(ctx, tx, scope, reportIDs)
+		if err != nil {
+			return fmt.Errorf("cannot build report access labels: %w", err)
 		}
 
-		for _, r := range reports {
-			fileNames = append(fileNames, r.Filename)
-		}
+		fileNames = append(fileNames, reportLabels...)
 	}
 
 	var files coredata.TrustCenterFiles
@@ -606,7 +658,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, profile.FullName)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterDocumentAccessRejected(
 		ctx,
@@ -647,8 +699,8 @@ func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GI
 			documentIDs = append(documentIDs, *access.DocumentID)
 		}
 
-		if access.ReportID != nil {
-			reportIDs = append(reportIDs, *access.ReportID)
+		if access.ReportFileID != nil {
+			reportIDs = append(reportIDs, *access.ReportFileID)
 		}
 
 		if access.TrustCenterFileID != nil {
@@ -674,4 +726,90 @@ func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
 	}
 
 	return newIDs
+}
+
+func reportAccessLabels(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	reportFileIDs []gid.GID,
+) ([]string, error) {
+	var reportFiles coredata.Files
+	if err := reportFiles.LoadByIDs(ctx, conn, scope, reportFileIDs); err != nil {
+		return nil, fmt.Errorf("cannot load report files by IDs: %w", err)
+	}
+
+	fileByID := make(map[gid.GID]*coredata.File, len(reportFiles))
+	for _, f := range reportFiles {
+		fileByID[f.ID] = f
+	}
+
+	var audits coredata.Audits
+	if err := audits.LoadByReportFileIDs(ctx, conn, scope, reportFileIDs); err != nil {
+		return nil, fmt.Errorf("cannot load audits by report file IDs: %w", err)
+	}
+
+	auditByFileID := make(map[gid.GID]*coredata.Audit, len(audits))
+	frameworkIDSet := make(map[gid.GID]struct{})
+
+	for _, audit := range audits {
+		if audit.ReportFileID == nil {
+			continue
+		}
+
+		if _, exists := auditByFileID[*audit.ReportFileID]; exists {
+			continue
+		}
+
+		auditByFileID[*audit.ReportFileID] = audit
+		frameworkIDSet[audit.FrameworkID] = struct{}{}
+	}
+
+	frameworkIDs := make([]gid.GID, 0, len(frameworkIDSet))
+	for frameworkID := range frameworkIDSet {
+		frameworkIDs = append(frameworkIDs, frameworkID)
+	}
+
+	frameworkByID := make(map[gid.GID]*coredata.Framework, len(frameworkIDs))
+
+	if len(frameworkIDs) > 0 {
+		var frameworks coredata.Frameworks
+		if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+			return nil, fmt.Errorf("cannot load frameworks by IDs: %w", err)
+		}
+
+		for _, framework := range frameworks {
+			frameworkByID[framework.ID] = framework
+		}
+	}
+
+	labels := make([]string, 0, len(reportFileIDs))
+
+	for _, fileID := range reportFileIDs {
+		file, ok := fileByID[fileID]
+		if !ok {
+			return nil, fmt.Errorf("cannot load report file %q: %w", fileID, coredata.ErrResourceNotFound)
+		}
+
+		audit, ok := auditByFileID[fileID]
+		if !ok {
+			labels = append(labels, file.FileName)
+			continue
+		}
+
+		framework, ok := frameworkByID[audit.FrameworkID]
+		if !ok {
+			labels = append(labels, file.FileName)
+			continue
+		}
+
+		if audit.Name != nil && *audit.Name != "" {
+			labels = append(labels, fmt.Sprintf("%s - %s", framework.Name, *audit.Name))
+			continue
+		}
+
+		labels = append(labels, framework.Name)
+	}
+
+	return labels, nil
 }

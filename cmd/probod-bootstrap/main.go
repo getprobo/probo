@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@ var (
 
 func main() {
 	outputPath := flag.String("output", "/etc/probod/config.yml", "output path for the generated config file")
+	format := flag.String("format", "yaml", "output format for the generated config file (yaml or json)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 
 	flag.Parse()
@@ -38,7 +39,19 @@ func main() {
 		return
 	}
 
-	builder := bootstrap.NewBuilder(nil)
+	var configFormat bootstrap.Format
+
+	switch *format {
+	case "yaml":
+		configFormat = bootstrap.FormatYAML
+	case "json":
+		configFormat = bootstrap.FormatJSON
+	default:
+		fmt.Fprintf(os.Stderr, "error: unsupported format %q, must be yaml or json\n", *format)
+		os.Exit(1)
+	}
+
+	builder := bootstrap.NewBuilder(bootstrap.NewResolver(nil))
 
 	cfg, err := builder.Build()
 	if err != nil {
@@ -46,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := bootstrap.WriteConfig(cfg, *outputPath); err != nil {
+	if err := bootstrap.WriteConfig(cfg, *outputPath, configFormat); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}

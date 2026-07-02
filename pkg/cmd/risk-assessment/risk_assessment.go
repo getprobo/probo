@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@ package riskassessment
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/risk-assessment/boundary"
 	"go.probo.inc/probo/pkg/cmd/risk-assessment/create"
 	"go.probo.inc/probo/pkg/cmd/risk-assessment/delete"
 	"go.probo.inc/probo/pkg/cmd/risk-assessment/list"
@@ -42,6 +43,7 @@ func NewCmdRiskAssessment(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(scope.NewCmdScope(f))
 	cmd.AddCommand(node.NewCmdNode(f))
+	cmd.AddCommand(boundary.NewCmdBoundary(f))
 	cmd.AddCommand(process.NewCmdProcess(f))
 	cmd.AddCommand(threat.NewCmdThreat(f))
 	cmd.AddCommand(scenario.NewCmdScenario(f))

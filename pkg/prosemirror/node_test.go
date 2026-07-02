@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -108,7 +108,7 @@ func TestUnmarshalDocument(t *testing.T) {
 
 			linkAttrs, err := linkNode.Marks[0].LinkAttrs()
 			require.NoError(t, err)
-			assert.Equal(t, "https://getprobo.com", linkAttrs.Href)
+			assert.Equal(t, "https://probo.com", linkAttrs.Href)
 			require.NotNil(t, linkAttrs.Target)
 			assert.Equal(t, "_blank", *linkAttrs.Target)
 			require.NotNil(t, linkAttrs.Rel)

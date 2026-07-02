@@ -1,0 +1,37 @@
+---
+# Hand-authored fixture for GET /api/v1/users/search against an Apollo.io
+# account (teammates, not the prospect DB). The user object shape (id, name,
+# first_name, last_name, email, role) and the pagination wrapper mirror the
+# documented response. Synthetic IDs/emails only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.apollo.io
+        form:
+            page:
+                - "1"
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.apollo.io/api/v1/users/search?page=1&per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"users":[{"id":"5f0000000000000000000001","name":"Alice Admin","first_name":"Alice","last_name":"Admin","email":"alice@example.com","role":"Admin"},{"id":"5f0000000000000000000002","name":"Bob Rep","first_name":"Bob","last_name":"Rep","email":"bob@example.com","role":"Sales Rep"},{"id":"5f0000000000000000000003","name":"Carol Manager","first_name":"Carol","last_name":"Manager","email":"carol@example.com","role":"Billing and Seat Manager"},{"id":"5f0000000000000000000004","name":"","first_name":"","last_name":"","email":"dave@example.com","role":"Sales Rep"}],"pagination":{"page":1,"per_page":100,"total_entries":4,"total_pages":1}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 140ms

@@ -48,6 +48,20 @@
     "privacyPolicyUrl": "https://www.33across.com/privacy-policy"
   },
   {
+    "name": "4Degrees",
+    "category": "SALES",
+    "headquarterAddress": "1210 S. Indiana Ave, Chicago, IL 60605, USA",
+    "legalName": "4Degrees",
+    "websiteUrl": "https://www.4degrees.ai",
+    "privacyPolicyUrl": "https://www.4degrees.ai/privacy-policy",
+    "serviceSoftwareAgreementUrl": "https://www.4degrees.ai/order-form-terms",
+    "termsOfServiceUrl": "https://www.4degrees.ai/order-form-terms",
+    "securityPageUrl": "https://www.4degrees.ai/use-cases/security",
+    "domains": [
+      "4degrees.ai"
+    ]
+  },
+  {
     "name": "ABlyft",
     "category": "ANALYTICS",
     "domains": [
@@ -238,6 +252,46 @@
     "privacyPolicyUrl": "https://www.adobe.com/privacy/policy.html"
   },
   {
+    "name": "Adobe Experience Manager",
+    "category": "MARKETING",
+    "legalName": "Adobe Experience Manager",
+    "websiteUrl": "https://www.adobe.com",
+    "privacyPolicyUrl": "https://www.adobe.com/privacy/policy.html",
+    "serviceSoftwareAgreementUrl": "https://www.adobe.com/legal/terms.html",
+    "certifications": [
+      "SOC 2–Type 2 (Security, Availability, & Confidentiality)",
+      "SOC 3 (Security, Availability, & Confidentiality)",
+      "ISO 9001:2015",
+      "ISO 27001:2022",
+      "ISO 27017:2015",
+      "ISO 27018:2019",
+      "ISO 22301:2019",
+      "FedRAMP Tailored",
+      "HIPAA ready",
+      "PCI DSS 4.0",
+      "GLBA ready",
+      "FERPA ready",
+      "CSA STAR Level 2",
+      "IRAP Assessed",
+      "ISMAP Registered",
+      "C5 Certified",
+      "TISAX Registered",
+      "CMMC Level 1",
+      "GDPR",
+      "CCPA",
+      "WCAG 2.2 level AA",
+      "TrustArc GDPR Privacy Practices Management Compliance Validation",
+      "TrustArc APEC Privacy Recognition for Processors (PRP)"
+    ],
+    "statusPageUrl": "https://status.adobe.com/",
+    "termsOfServiceUrl": "https://www.adobe.com/legal/terms.html",
+    "securityPageUrl": "https://www.adobe.com/trust/security.html",
+    "trustPageUrl": "https://www.adobe.com/trust.html",
+    "domains": [
+      "adobe.com"
+    ]
+  },
+  {
     "name": "adscale.de",
     "category": "MARKETING",
     "domains": [
@@ -348,6 +402,19 @@
     ]
   },
   {
+    "name": "Akamai mPulse (Boomerang)",
+    "category": "ANALYTICS",
+    "headquarterAddress": "145 Broadway, Cambridge, MA 02142, U.S.A.",
+    "legalName": "Akamai Technologies, Inc.",
+    "websiteUrl": "https://www.akamai.com",
+    "privacyPolicyUrl": "https://www.akamai.com/legal/privacy-statement",
+    "dataProcessingAgreementUrl": "https://www.akamai.com/site/en/documents/corporate/akamai-data-protection-addendum.pdf",
+    "statusPageUrl": "https://www.akamaiistatus.com/",
+    "termsOfServiceUrl": "https://www.akamai.com/legal/terms-and-conditions",
+    "securityPageUrl": "https://www.akamai.com/security",
+    "trustPageUrl": "https://trust.akamai.com/"
+  },
+  {
     "name": "Algolia",
     "headquarterAddress": "301 Howard St Suite 300, San Francisco, CA 94105",
     "legalName": "Algolia Inc.",
@@ -403,10 +470,24 @@
   {
     "name": "Amazon Web Services",
     "category": "OTHER",
-    "websiteUrl": "https://aws.amazon.com",
-    "legalName": "Amazon Web Services, Inc.",
     "headquarterAddress": "410 Terry Avenue North, Seattle, WA 98109, United States",
+    "legalName": "Amazon Web Services, Inc.",
+    "websiteUrl": "https://aws.amazon.com",
     "privacyPolicyUrl": "https://aws.amazon.com/privacy/",
+    "dataProcessingAgreementUrl": "https://aws.amazon.com/compliance/gdpr-center/",
+    "certifications": [
+      "SOC 1",
+      "SOC 2",
+      "SOC 3",
+      "ISO 27001",
+      "ISO 27017",
+      "ISO 27018",
+      "PCI DSS",
+      "HIPAA"
+    ],
+    "statusPageUrl": "https://health.aws.amazon.com/health/status",
+    "termsOfServiceUrl": "https://aws.amazon.com/service-terms/",
+    "trustPageUrl": "https://aws.amazon.com/compliance/",
     "domains": [
       "amazonaws.com",
       "aws.amazon.com",
@@ -508,13 +589,23 @@
   {
     "name": "Amplitude",
     "category": "ANALYTICS",
+    "headquarterAddress": "201 Third Street, Suite 200, San Francisco, CA 94103, United States",
+    "legalName": "Amplitude, Inc.",
+    "websiteUrl": "https://www.amplitude.com",
+    "privacyPolicyUrl": "https://amplitude.com/privacy",
+    "serviceLevelAgreementUrl": "https://amplitude.com/sla",
+    "dataProcessingAgreementUrl": "https://amplitude.com/dpa",
+    "certifications": [
+      "SOC2",
+      "ISO27001"
+    ],
+    "statusPageUrl": "https://status.amplitude.com",
+    "termsOfServiceUrl": "https://amplitude.com/terms",
+    "securityPageUrl": "https://amplitude.com/security",
+    "trustPageUrl": "https://amplitude.com/trust",
     "domains": [
       "cdn.amplitude.com"
-    ],
-    "websiteUrl": "https://www.amplitude.com",
-    "legalName": "Amplitude, Inc.",
-    "headquarterAddress": "201 Third Street, Suite 200, San Francisco, CA 94103, United States",
-    "privacyPolicyUrl": "https://amplitude.com/privacy"
+    ]
   },
   {
     "name": "Aniview",
@@ -575,6 +666,30 @@
     ]
   },
   {
+    "name": "Apple",
+    "category": "IT",
+    "websiteUrl": "https://www.apple.com",
+    "domains": [
+      "apple.com"
+    ]
+  },
+  {
+    "name": "Asana",
+    "category": "COLLABORATION",
+    "headquarterAddress": "633 Folsom Street, Suite 100, San Francisco, CA 94107, United States",
+    "legalName": "Asana, Inc.",
+    "websiteUrl": "https://asana.com",
+    "privacyPolicyUrl": "https://asana.com/terms/privacy",
+    "dataProcessingAgreementUrl": "https://asana.com/terms/data-processing",
+    "subprocessorsListUrl": "https://asana.com/terms/subprocessors",
+    "statusPageUrl": "https://status.asana.com",
+    "termsOfServiceUrl": "https://asana.com/terms",
+    "securityPageUrl": "https://asana.com/security",
+    "domains": [
+      "asana.com"
+    ]
+  },
+  {
     "name": "ASP.net",
     "category": "OTHER",
     "domains": [
@@ -584,6 +699,22 @@
     "headquarterAddress": "One Microsoft Way, Redmond, WA 98052, United States",
     "websiteUrl": "https://dotnet.microsoft.com/en-us/apps/aspnet",
     "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement"
+  },
+  {
+    "name": "AssemblyAI",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "AssemblyAI, Inc.",
+    "websiteUrl": "https://www.assemblyai.com/",
+    "privacyPolicyUrl": "https://www.assemblyai.com/privacy",
+    "serviceLevelAgreementUrl": "https://www.assemblyai.com/sla",
+    "dataProcessingAgreementUrl": "https://www.assemblyai.com/dpa",
+    "statusPageUrl": "https://status.assemblyai.com",
+    "termsOfServiceUrl": "https://www.assemblyai.com/terms",
+    "securityPageUrl": "https://www.assemblyai.com/security",
+    "trustPageUrl": "https://www.assemblyai.com/trust",
+    "domains": [
+      "assemblyai.com"
+    ]
   },
   {
     "name": "AT Internet",
@@ -733,6 +864,29 @@
     ]
   },
   {
+    "name": "Axiom",
+    "category": "CLOUD_MONITORING",
+    "headquarterAddress": "New York, NY",
+    "legalName": "Axiom, Inc.",
+    "websiteUrl": "https://axiom.co",
+    "privacyPolicyUrl": "https://axiom.co/docs/legal/privacy",
+    "dataProcessingAgreementUrl": "https://axiom.co/docs/legal/data-processing",
+    "subprocessorsListUrl": "https://trust.axiom.co/subprocessors",
+    "certifications": [
+      "SOC 2 Type II",
+      "ISO/IEC 27001",
+      "HIPAA",
+      "GDPR",
+      "CCPA"
+    ],
+    "termsOfServiceUrl": "https://axiom.co/docs/legal/terms-of-service",
+    "securityPageUrl": "https://axiom.co/security",
+    "trustPageUrl": "https://trust.axiom.co",
+    "domains": [
+      "axiom.co"
+    ]
+  },
+  {
     "name": "Baidu",
     "category": "ANALYTICS",
     "websiteUrl": "https://www.baidu.com",
@@ -747,15 +901,38 @@
     ]
   },
   {
+    "name": "Baseten",
+    "category": "ENGINEERING",
+    "legalName": "Baseten Labs, Inc.",
+    "websiteUrl": "https://www.baseten.co",
+    "domains": [
+      "baseten.co"
+    ]
+  },
+  {
     "name": "Bazaar Voice",
     "category": "ANALYTICS",
+    "headquarterAddress": "10901 Stonelake Boulevard, Austin, TX 78759, United States",
+    "legalName": "Bazaarvoice, Inc.",
+    "websiteUrl": "https://www.bazaarvoice.com",
+    "privacyPolicyUrl": "https://www.bazaarvoice.com/legal/privacy-policy/",
+    "subprocessorsListUrl": "https://docs.bazaarvoice.com/articles/portal-basics/vendorlist",
+    "certifications": [
+      "ISO/IEC 27001:2013 (Information Security Management System) - certified",
+      "GDPR (General Data Protection Regulation) - compliance",
+      "CCPA (California Consumer Privacy Act) - compliance",
+      "EU-U.S. Data Privacy Framework (principles)",
+      "U.K.-U.S. Data Privacy Framework (principles)",
+      "Swiss-U.S. Data Privacy Framework (principles)",
+      "Cloud Security Alliance (CSA) CAIQ (assessment framework used)"
+    ],
+    "statusPageUrl": "https://status.bazaarvoice.com/",
+    "termsOfServiceUrl": "https://www.bazaarvoice.com/legal/terms-of-use/",
+    "securityPageUrl": "https://www.bazaarvoice.com/company/trust/security/",
+    "trustPageUrl": "https://www.bazaarvoice.com/company/trust/",
     "domains": [
       "network.bazaarvoice.com"
-    ],
-    "websiteUrl": "https://www.bazaarvoice.com",
-    "legalName": "Bazaarvoice, Inc.",
-    "headquarterAddress": "10901 Stonelake Boulevard, Austin, TX 78759, United States",
-    "privacyPolicyUrl": "https://www.bazaarvoice.com/legal/privacy-policy/"
+    ]
   },
   {
     "name": "Beamer",
@@ -803,24 +980,26 @@
   },
   {
     "name": "Better Stack",
+    "category": "CLOUD_MONITORING",
+    "headquarterAddress": "Prague, Czech Republic",
     "legalName": "Better Stack, Inc.",
     "websiteUrl": "https://betterstack.com",
     "privacyPolicyUrl": "https://betterstack.com/privacy",
+    "serviceLevelAgreementUrl": "https://betterstack.com/sla",
     "dataProcessingAgreementUrl": "https://betterstack.com/dpa",
     "subprocessorsListUrl": "https://betterstack.com/dpa/schedules",
-    "category": "CLOUD_MONITORING",
     "certifications": [
       "SOC 2 Type 2",
       "GDPR",
       "CCPA"
     ],
-    "securityPageUrl": "https://betterstack.com/security",
     "statusPageUrl": "https://status.betterstack.com/",
     "termsOfServiceUrl": "https://betterstack.com/terms",
+    "securityPageUrl": "https://betterstack.com/security",
+    "trustPageUrl": "https://betterstack.com/trust",
     "domains": [
       "betterstack.com"
-    ],
-    "headquarterAddress": "Prague, Czech Republic"
+    ]
   },
   {
     "name": "BetweenDigital",
@@ -982,6 +1161,20 @@
     "privacyPolicyUrl": "https://www.wunderkind.co/privacy"
   },
   {
+    "name": "Braintree",
+    "headquarterAddress": "2211 North First Street, San Jose, CA 95131, USA (PayPal’s headquarters, as Braintree operates under PayPal)",
+    "legalName": "Braintree, a division of PayPal, Inc.",
+    "websiteUrl": "https://www.braintreepayments.com/",
+    "privacyPolicyUrl": "https://www.paypal.com/us/legalhub/braintree/home?utm_campaign=Braintree_Migration&utm_medium=Website&utm_source=Braintree",
+    "dataProcessingAgreementUrl": "https://www.paypal.com/us/legalhub/braintree/home?utm_campaign=Braintree_Migration&utm_medium=Website&utm_source=Braintree",
+    "statusPageUrl": "https://www.paypal-status.com/product/production",
+    "termsOfServiceUrl": "https://www.paypal.com/us/legalhub/braintree/home?utm_campaign=Braintree_Migration&utm_medium=Website&utm_source=Braintree",
+    "securityPageUrl": "https://www.paypal.com/us/security",
+    "domains": [
+      "braintreepayments.com"
+    ]
+  },
+  {
     "name": "Braze",
     "category": "OTHER",
     "websiteUrl": "https://www.braze.com",
@@ -1052,6 +1245,14 @@
     "headquarterAddress": "Vienna, Austria",
     "websiteUrl": "https://browser-update.org",
     "privacyPolicyUrl": "https://browser-update.org/privacy.html"
+  },
+  {
+    "name": "Bugsnag",
+    "websiteUrl": "https://www.bugsnag.com/",
+    "privacyPolicyUrl": "https://smartbear.com/privacy/",
+    "domains": [
+      "bugsnag.com"
+    ]
   },
   {
     "name": "bunny.net",
@@ -1137,6 +1338,29 @@
     ]
   },
   {
+    "name": "Canva",
+    "category": "PRODUCT_AND_DESIGN",
+    "headquarterAddress": "Level 1, 110 Kippax Street, Surry Hills NSW 2010, Australia",
+    "legalName": "Canva Pty Ltd",
+    "websiteUrl": "https://canva.com",
+    "privacyPolicyUrl": "https://www.canva.com/policies/privacy-policy/",
+    "dataProcessingAgreementUrl": "https://www.canva.com/policies/data-processing-addendum/",
+    "subprocessorsListUrl": "https://www.canva.com/policies/subprocessors/",
+    "certifications": [
+      "ISO/IEC 27001:2013",
+      "ISO/IEC 27018:2019",
+      "SOC 2 Type II",
+      "SOC 3"
+    ],
+    "statusPageUrl": "https://status.canva.com/",
+    "termsOfServiceUrl": "https://www.canva.com/policies/terms-of-use/",
+    "securityPageUrl": "https://www.canva.com/trust/security/",
+    "trustPageUrl": "https://www.canva.com/trust/",
+    "domains": [
+      "canva.com"
+    ]
+  },
+  {
     "name": "Carta",
     "headquarterAddress": "333 Bush Street, San Francisco, California 94104, United States",
     "legalName": "eShares, Inc.",
@@ -1160,6 +1384,26 @@
     ]
   },
   {
+    "name": "Cartesia",
+    "category": "ENGINEERING",
+    "headquarterAddress": "1766 18th Street, San Francisco, CA 941107",
+    "legalName": "Cartesia AI, Inc.",
+    "websiteUrl": "https://cartesia.ai/",
+    "privacyPolicyUrl": "https://cartesia.ai/legal/privacy.html",
+    "dataProcessingAgreementUrl": "https://cartesia.ai/legal/dpa.html",
+    "certifications": [
+      "HIPAA",
+      "SOC 2 Type 2"
+    ],
+    "statusPageUrl": "https://status.cartesia.ai/",
+    "termsOfServiceUrl": "https://cartesia.ai/legal/terms.html",
+    "securityPageUrl": "https://cartesia.ai/legal/safety",
+    "trustPageUrl": "https://cartesia.ai/legal/safety",
+    "domains": [
+      "cartesia.ai"
+    ]
+  },
+  {
     "name": "Casale Media",
     "category": "MARKETING",
     "domains": [
@@ -1169,6 +1413,23 @@
     "headquarterAddress": "Toronto, ON, Canada",
     "websiteUrl": "https://www.indexexchange.com",
     "privacyPolicyUrl": "https://www.indexexchange.com/privacy/"
+  },
+  {
+    "name": "Cerebras",
+    "category": "ENGINEERING",
+    "legalName": "Cerebras Systems, Inc.",
+    "websiteUrl": "https://cerebras.ai",
+    "privacyPolicyUrl": "https://cerebras.ai/privacy-policy/",
+    "certifications": [
+      "SOC 2 Type II",
+      "GDPR",
+      "CCPA"
+    ],
+    "termsOfServiceUrl": "https://cerebras.ai/terms-of-service/",
+    "trustPageUrl": "https://trust.cerebras.ai",
+    "domains": [
+      "cerebras.ai"
+    ]
   },
   {
     "name": "Channel.me",
@@ -1182,6 +1443,26 @@
     "privacyPolicyUrl": "https://www.channel.me/privacy-statement"
   },
   {
+    "name": "Chargebee",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Chargebee, Inc.",
+    "websiteUrl": "https://www.chargebee.com/",
+    "privacyPolicyUrl": "https://www.chargebee.com/privacy/",
+    "serviceLevelAgreementUrl": "https://www.chargebee.com/sla/",
+    "dataProcessingAgreementUrl": "https://www.chargebee.com/dpa/",
+    "certifications": [
+      "SOC2",
+      "ISO27001"
+    ],
+    "statusPageUrl": "https://status.chargebee.com/",
+    "termsOfServiceUrl": "https://www.chargebee.com/terms/",
+    "securityPageUrl": "https://www.chargebee.com/security/",
+    "trustPageUrl": "https://www.chargebee.com/trust/",
+    "domains": [
+      "chargebee.com"
+    ]
+  },
+  {
     "name": "Chartbeat",
     "category": "ANALYTICS",
     "websiteUrl": "https://chartbeat.com",
@@ -1191,6 +1472,26 @@
     "domains": [
       "chartbeat.com",
       "chartbeat.net"
+    ]
+  },
+  {
+    "name": "Checkout.com",
+    "headquarterAddress": "London, United Kingdom",
+    "legalName": "Checkout.com Limited",
+    "websiteUrl": "https://www.checkout.com/",
+    "privacyPolicyUrl": "https://www.checkout.com/legal/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.checkout.com/sla",
+    "dataProcessingAgreementUrl": "https://www.checkout.com/dpa",
+    "certifications": [
+      "PCI DSS",
+      "ISO 27001"
+    ],
+    "statusPageUrl": "https://status.checkout.com",
+    "termsOfServiceUrl": "https://www.checkout.com/terms",
+    "securityPageUrl": "https://www.checkout.com/security",
+    "trustPageUrl": "https://www.checkout.com/trust",
+    "domains": [
+      "checkout.com"
     ]
   },
   {
@@ -1230,6 +1531,38 @@
     "headquarterAddress": "Tel Aviv, Israel",
     "websiteUrl": "https://cheq.ai",
     "privacyPolicyUrl": "https://cheq.ai/privacy-policy/"
+  },
+  {
+    "name": "Chili Piper",
+    "category": "SALES",
+    "headquarterAddress": "228 Park Ave S #78136, New York, NY 10003-1502, United States",
+    "legalName": "Chili Piper, Inc.",
+    "websiteUrl": "https://www.chilipiper.com",
+    "privacyPolicyUrl": "https://www.chilipiper.com/privacy-policy",
+    "serviceSoftwareAgreementUrl": "https://www.chilipiper.com/terms-and-conditions",
+    "subprocessorsListUrl": "https://trust.chilipiper.com/",
+    "certifications": [
+      "SOC 2 (SOC 2 Type II reported)",
+      "ISO 27001:2013",
+      "CCPA compliant",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.chilipiper.com/",
+    "termsOfServiceUrl": "https://www.chilipiper.com/terms-and-conditions",
+    "securityPageUrl": "https://www.chilipiper.com/security",
+    "trustPageUrl": "https://trust.chilipiper.com/",
+    "domains": [
+      "chilipiper.com"
+    ]
+  },
+  {
+    "name": "Chroma",
+    "websiteUrl": "https://www.trychroma.com/",
+    "privacyPolicyUrl": "https://www.trychroma.com/privacy",
+    "termsOfServiceUrl": "https://www.trychroma.com/terms",
+    "domains": [
+      "trychroma.com"
+    ]
   },
   {
     "name": "Citrix",
@@ -1440,6 +1773,18 @@
     "privacyPolicyUrl": "https://blog.codepen.io/documentation/privacy-policy/"
   },
   {
+    "name": "Coder",
+    "headquarterAddress": "Austin, TX",
+    "legalName": "Coder, Inc.",
+    "websiteUrl": "https://coder.com/",
+    "privacyPolicyUrl": "https://coder.com/privacy",
+    "termsOfServiceUrl": "https://coder.com/terms",
+    "securityPageUrl": "https://coder.com/security",
+    "domains": [
+      "coder.com"
+    ]
+  },
+  {
     "name": "CognitoForms",
     "category": "ANALYTICS",
     "domains": [
@@ -1449,6 +1794,28 @@
     "headquarterAddress": "Columbia, SC, United States",
     "websiteUrl": "https://www.cognitoforms.com",
     "privacyPolicyUrl": "https://www.cognitoforms.com/legal/privacy"
+  },
+  {
+    "name": "Cohere",
+    "headquarterAddress": "171 John St., Suite 200, Toronto, ON M5T 1X3, Canada",
+    "legalName": "Cohere Inc.",
+    "websiteUrl": "https://cohere.com",
+    "privacyPolicyUrl": "https://cohere.com/privacy",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "ISO/IEC 42001",
+      "UK Cyber Essentials",
+      "GDPR",
+      "CCPA",
+      "HIPAA"
+    ],
+    "termsOfServiceUrl": "https://cohere.com/terms-of-use",
+    "securityPageUrl": "https://cohere.com/security",
+    "trustPageUrl": "https://trustcenter.cohere.com",
+    "domains": [
+      "cohere.com"
+    ]
   },
   {
     "name": "Command Act",
@@ -1464,13 +1831,14 @@
   {
     "name": "Complianz",
     "category": "OTHER",
+    "headquarterAddress": "Leeuwarden, Netherlands",
+    "legalName": "Really Simple Plugins B.V.",
+    "websiteUrl": "https://complianz.io",
+    "privacyPolicyUrl": "https://complianz.io/legal/privacy-statement/",
+    "termsOfServiceUrl": "https://complianz.io/terms-conditions/",
     "domains": [
       "complianz.io"
-    ],
-    "legalName": "Really Simple Plugins B.V.",
-    "headquarterAddress": "Leeuwarden, Netherlands",
-    "websiteUrl": "https://complianz.io",
-    "privacyPolicyUrl": "https://complianz.io/legal/privacy-statement/"
+    ]
   },
   {
     "name": "ComScore",
@@ -1482,6 +1850,33 @@
     "legalName": "comScore, Inc.",
     "headquarterAddress": "11950 Democracy Drive, Suite 600, Reston, VA 20190, United States",
     "privacyPolicyUrl": "https://www.comscore.com/About/Privacy-Policy"
+  },
+  {
+    "name": "Confluent",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "headquarterAddress": "899 W Evelyn Ave, Mountain View, CA 94041, United States",
+    "legalName": "Confluent, Inc.",
+    "websiteUrl": "https://www.confluent.io",
+    "privacyPolicyUrl": "https://www.confluent.io/legal/confluent-privacy-statement/",
+    "dataProcessingAgreementUrl": "https://www.confluent.io/legal/confluent-cloud-data-processing-addendum/",
+    "subprocessorsListUrl": "https://www.confluent.io/legal/confluent-cloud-sub-processors/",
+    "certifications": [
+      "SOC 1 Type 2",
+      "SOC 2 Type 2",
+      "SOC 3",
+      "ISO/IEC 27001",
+      "PCI DSS",
+      "HIPAA",
+      "GDPR",
+      "CSA STAR"
+    ],
+    "statusPageUrl": "https://status.confluent.cloud/",
+    "termsOfServiceUrl": "https://www.confluent.io/terms-of-service/",
+    "securityPageUrl": "https://www.confluent.io/security/",
+    "trustPageUrl": "https://trust.confluent.io/",
+    "domains": [
+      "confluent.io"
+    ]
   },
   {
     "name": "Consentmanager.net",
@@ -1584,6 +1979,17 @@
     "privacyPolicyUrl": "https://www.cookieyes.com/privacy-policy/"
   },
   {
+    "name": "Coolify",
+    "headquarterAddress": "Not specified",
+    "legalName": "Coolify, Inc.",
+    "websiteUrl": "https://coolify.io/",
+    "privacyPolicyUrl": "https://coolify.io/privacy",
+    "termsOfServiceUrl": "https://coolify.io/terms",
+    "domains": [
+      "coolify.io"
+    ]
+  },
+  {
     "name": "CraftCMS",
     "category": "OTHER",
     "domains": [
@@ -1619,12 +2025,46 @@
   {
     "name": "Crisp",
     "category": "OTHER",
-    "websiteUrl": "https://crisp.chat",
-    "legalName": "Crisp IM SAS",
     "headquarterAddress": "2 Boulevard de Launay, 44100 Nantes, France",
+    "legalName": "Crisp IM SAS",
+    "websiteUrl": "https://crisp.chat",
     "privacyPolicyUrl": "https://crisp.chat/en/privacy/",
+    "statusPageUrl": "https://status.crisp.chat",
+    "termsOfServiceUrl": "https://crisp.chat/terms",
+    "securityPageUrl": "https://crisp.chat/security",
+    "trustPageUrl": "https://crisp.chat/trust",
     "domains": [
       "crisp.chat"
+    ]
+  },
+  {
+    "name": "Cronitor",
+    "category": "CLOUD_MONITORING",
+    "legalName": "Cronitor, Inc.",
+    "websiteUrl": "https://cronitor.io",
+    "privacyPolicyUrl": "https://cronitor.io/legal/privacy",
+    "dataProcessingAgreementUrl": "https://cronitor.io/legal/dpa",
+    "statusPageUrl": "https://status.cronitor.io",
+    "termsOfServiceUrl": "https://cronitor.io/legal/terms",
+    "securityPageUrl": "https://cronitor.io/security",
+    "domains": [
+      "cronitor.io"
+    ]
+  },
+  {
+    "name": "Crowdin",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Crowdin, Inc.",
+    "websiteUrl": "https://crowdin.com/",
+    "privacyPolicyUrl": "https://crowdin.com/privacy",
+    "serviceLevelAgreementUrl": "https://crowdin.com/sla",
+    "dataProcessingAgreementUrl": "https://crowdin.com/dpa",
+    "statusPageUrl": "https://status.crowdin.com",
+    "termsOfServiceUrl": "https://crowdin.com/terms",
+    "securityPageUrl": "https://crowdin.com/security",
+    "trustPageUrl": "https://crowdin.com/trust",
+    "domains": [
+      "crowdin.com"
     ]
   },
   {
@@ -1662,10 +2102,16 @@
   {
     "name": "Customer.io",
     "category": "MARKETING",
-    "websiteUrl": "https://customer.io",
-    "legalName": "Peaberry Software, Inc.",
     "headquarterAddress": "921 SW Washington Street, Suite 820, Portland, OR 97205, United States",
+    "legalName": "Peaberry Software, Inc.",
+    "websiteUrl": "https://customer.io",
     "privacyPolicyUrl": "https://customer.io/legal/privacy-policy",
+    "serviceLevelAgreementUrl": "https://customer.io/sla",
+    "dataProcessingAgreementUrl": "https://customer.io/dpa",
+    "statusPageUrl": "https://status.customer.io",
+    "termsOfServiceUrl": "https://customer.io/terms",
+    "securityPageUrl": "https://customer.io/security",
+    "trustPageUrl": "https://customer.io/trust",
     "domains": [
       "customer.io"
     ]
@@ -1683,13 +2129,41 @@
     ]
   },
   {
+    "name": "Databricks",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "headquarterAddress": "160 Spear Street, Suite 1300, San Francisco, CA 94105, United States",
+    "legalName": "Databricks, Inc.",
+    "websiteUrl": "https://databricks.com",
+    "privacyPolicyUrl": "https://www.databricks.com/privacy",
+    "serviceLevelAgreementUrl": "https://www.databricks.com/legal/service-level-agreement",
+    "dataProcessingAgreementUrl": "https://www.databricks.com/legal/data-processing-addendum",
+    "subprocessorsListUrl": "https://www.databricks.com/legal/sub-processors",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27701",
+      "SOC 2 Type II",
+      "SOC 1 Type II",
+      "HIPAA",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.databricks.com",
+    "termsOfServiceUrl": "https://www.databricks.com/terms",
+    "securityPageUrl": "https://www.databricks.com/trust/security",
+    "trustPageUrl": "https://www.databricks.com/trust",
+    "domains": [
+      "databricks.com"
+    ]
+  },
+  {
     "name": "Datadog",
+    "category": "CLOUD_MONITORING",
     "headquarterAddress": "New York Times Bldg, 620 8th Ave, New York, NY 10018",
     "legalName": "Datadog, Inc.",
     "websiteUrl": "https://www.datadoghq.com",
     "privacyPolicyUrl": "https://datadog.com/privacy",
     "serviceLevelAgreementUrl": "https://datadog.com/terms",
-    "category": "CLOUD_MONITORING",
+    "dataProcessingAgreementUrl": "https://www.datadoghq.com/legal/dpa/",
+    "subprocessorsListUrl": "https://www.datadoghq.com/legal/subprocessors/",
     "certifications": [
       "CCPA",
       "CSA STAR",
@@ -1702,9 +2176,10 @@
       "ISO/IEC 27017:2015",
       "GDPR"
     ],
+    "statusPageUrl": "https://status.datadoghq.com/",
+    "termsOfServiceUrl": "https://www.datadoghq.com/legal/terms/",
     "securityPageUrl": "https://datadog.com/security",
     "trustPageUrl": "https://datadog.com/trust",
-    "statusPageUrl": "https://status.datadoghq.com/",
     "domains": [
       "datadog-agent.com",
       "datadoghq.com",
@@ -1734,6 +2209,72 @@
     "privacyPolicyUrl": "https://www.datatrics.com/privacy-policy/"
   },
   {
+    "name": "dbt Cloud",
+    "category": "ANALYTICS",
+    "legalName": "dbt Labs, Inc.",
+    "websiteUrl": "https://www.getdbt.com/",
+    "privacyPolicyUrl": "https://www.getdbt.com/cloud/privacy-policy",
+    "statusPageUrl": "https://status.getdbt.com/",
+    "termsOfServiceUrl": "https://www.getdbt.com/cloud/terms",
+    "trustPageUrl": "https://trust.getdbt.com/",
+    "domains": [
+      "getdbt.com"
+    ]
+  },
+  {
+    "name": "Deel",
+    "category": "EMPLOYEE_MANAGEMENT",
+    "headquarterAddress": "650 2nd St, San Francisco, CA 94107, United States",
+    "legalName": "Deel, Inc.",
+    "websiteUrl": "https://www.deel.com",
+    "privacyPolicyUrl": "https://www.deel.com/legal/privacy-policy",
+    "dataProcessingAgreementUrl": "https://www.deel.com/legal/data-processing-agreement",
+    "subprocessorsListUrl": "https://www.deel.com/legal/sub-processors-list",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "GDPR",
+      "CCPA",
+      "HIPAA"
+    ],
+    "statusPageUrl": "https://status.deel.com",
+    "termsOfServiceUrl": "https://www.deel.com/legal/terms-of-service",
+    "securityPageUrl": "https://www.deel.com/security",
+    "trustPageUrl": "https://trust.deel.com",
+    "domains": [
+      "deel.com"
+    ]
+  },
+  {
+    "name": "Deepgram",
+    "headquarterAddress": "548 Market St Suite 25104 San Francisco, CA 94104-5401",
+    "legalName": "Deepgram, Inc.",
+    "websiteUrl": "https://deepgram.com",
+    "certifications": [
+      "SOC2 Type2",
+      "HIPAA",
+      "PCI DSS",
+      "GDPR",
+      "CCPA"
+    ],
+    "domains": [
+      "deepgram.com"
+    ]
+  },
+  {
+    "name": "Depot",
+    "category": "ENGINEERING",
+    "legalName": "Depot Technologies, Inc.",
+    "websiteUrl": "https://depot.dev",
+    "privacyPolicyUrl": "https://depot.dev/privacy",
+    "statusPageUrl": "https://status.depot.dev",
+    "termsOfServiceUrl": "https://depot.dev/terms",
+    "securityPageUrl": "https://depot.dev/security",
+    "domains": [
+      "depot.dev"
+    ]
+  },
+  {
     "name": "Devise (Ruby on Rails)",
     "category": "OTHER",
     "domains": [
@@ -1753,6 +2294,16 @@
     "privacyPolicyUrl": "https://www.didomi.io/privacy-policy",
     "domains": [
       "didomi.io"
+    ]
+  },
+  {
+    "name": "DigiCert",
+    "category": "SECURITY",
+    "headquarterAddress": "Lehi, UT, USA",
+    "legalName": "DigiCert, Inc.",
+    "websiteUrl": "https://www.digicert.com",
+    "domains": [
+      "digicert.com"
     ]
   },
   {
@@ -1776,6 +2327,44 @@
     "headquarterAddress": "Geneva, Switzerland",
     "websiteUrl": "https://www.jahia.com",
     "privacyPolicyUrl": "https://www.jahia.com/privacy-policy"
+  },
+  {
+    "name": "DigitalOcean",
+    "category": "CLOUD_PROVIDER",
+    "headquarterAddress": "101 Avenue of the Americas, 10th Floor, New York, NY 10013, USA",
+    "legalName": "DigitalOcean, LLC",
+    "websiteUrl": "https://www.digitalocean.com",
+    "privacyPolicyUrl": "https://www.digitalocean.com/legal/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://www.digitalocean.com/legal/sla/",
+    "dataProcessingAgreementUrl": "https://www.digitalocean.com/legal/data-processing-agreement/",
+    "certifications": [
+      "SOC 2 Type II",
+      "SOC 3",
+      "ISO/IEC 27001",
+      "PCI DSS"
+    ],
+    "statusPageUrl": "https://status.digitalocean.com/",
+    "termsOfServiceUrl": "https://www.digitalocean.com/legal/terms/",
+    "securityPageUrl": "https://www.digitalocean.com/security/",
+    "trustPageUrl": "https://www.digitalocean.com/trust/",
+    "domains": [
+      "digitalocean.com"
+    ]
+  },
+  {
+    "name": "Discord",
+    "category": "COLLABORATION",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Discord Inc.",
+    "websiteUrl": "https://discord.com/",
+    "privacyPolicyUrl": "https://discord.com/privacy",
+    "statusPageUrl": "https://status.discord.com",
+    "termsOfServiceUrl": "https://discord.com/terms",
+    "securityPageUrl": "https://discord.com/security",
+    "trustPageUrl": "https://discord.com/trust",
+    "domains": [
+      "discord.com"
+    ]
   },
   {
     "name": "Disqus",
@@ -1831,6 +2420,57 @@
     ]
   },
   {
+    "name": "DocuSign",
+    "category": "DOCUMENT_MANAGEMENT",
+    "headquarterAddress": "221 Main Street, Suite 1000, San Francisco, CA 94105, United States",
+    "legalName": "DocuSign, Inc.",
+    "websiteUrl": "https://docusign.com",
+    "privacyPolicyUrl": "https://www.docusign.com/company/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.docusign.com/company/terms-and-conditions/docusign-service-level-commitment",
+    "dataProcessingAgreementUrl": "https://www.docusign.com/company/terms-and-conditions/data-protection-exhibit",
+    "subprocessorsListUrl": "https://www.docusign.com/company/terms-and-conditions/subprocessors",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "SOC 1 Type 2",
+      "SOC 2 Type 2",
+      "SOC 3",
+      "PCI DSS",
+      "FedRAMP Moderate",
+      "HIPAA"
+    ],
+    "statusPageUrl": "https://status.docusign.com",
+    "termsOfServiceUrl": "https://www.docusign.com/company/terms-and-conditions/docusign-signature",
+    "securityPageUrl": "https://www.docusign.com/trust/security",
+    "trustPageUrl": "https://www.docusign.com/trust",
+    "domains": [
+      "docusign.com"
+    ]
+  },
+  {
+    "name": "Dokploy",
+    "category": "ENGINEERING",
+    "websiteUrl": "https://dokploy.com/",
+    "domains": [
+      "dokploy.com"
+    ]
+  },
+  {
+    "name": "Doppler",
+    "category": "SECURITY",
+    "legalName": "Doppler Labs, Inc.",
+    "websiteUrl": "https://www.doppler.com",
+    "certifications": [
+      "SOC 2",
+      "ISO/IEC 27001"
+    ],
+    "securityPageUrl": "https://www.doppler.com/security",
+    "domains": [
+      "doppler.com"
+    ]
+  },
+  {
     "name": "Dotmetrics",
     "category": "ANALYTICS",
     "domains": [
@@ -1864,6 +2504,32 @@
     ]
   },
   {
+    "name": "Dropbox",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "headquarterAddress": "Dropbox, Inc., 1800 Owens Street, San Francisco, CA 94158, United States",
+    "legalName": "Dropbox, Inc.",
+    "websiteUrl": "https://dropbox.com",
+    "privacyPolicyUrl": "https://www.dropbox.com/privacy",
+    "serviceLevelAgreementUrl": "https://www.dropbox.com/terms/business/sla",
+    "dataProcessingAgreementUrl": "https://assets.dropbox.com/documents/en/legal/dfb-data-processing-agreement.pdf",
+    "subprocessorsListUrl": "https://assets.dropbox.com/documents/en/legal/dfb-list-of-subprocessors.pdf",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27018",
+      "SOC 1 Type II",
+      "SOC 2 Type II",
+      "SOC 3",
+      "CSA STAR Level 2"
+    ],
+    "statusPageUrl": "https://status.dropbox.com",
+    "termsOfServiceUrl": "https://www.dropbox.com/terms",
+    "securityPageUrl": "https://www.dropbox.com/business/trust/security",
+    "trustPageUrl": "https://www.dropbox.com/business/trust",
+    "domains": [
+      "dropbox.com"
+    ]
+  },
+  {
     "name": "Drupal CMS",
     "category": "OTHER",
     "domains": [
@@ -1873,6 +2539,26 @@
     "headquarterAddress": "Portland, OR, United States",
     "websiteUrl": "https://www.drupal.org",
     "privacyPolicyUrl": "https://www.drupal.org/privacy"
+  },
+  {
+    "name": "Dubsado",
+    "category": "CUSTOMER_SUPPORT",
+    "headquarterAddress": "1500 Flower St, Glendale, California 91201, United States",
+    "legalName": "Dubsado, LLC",
+    "websiteUrl": "https://www.dubsado.com",
+    "privacyPolicyUrl": "https://www.dubsado.com/legal/privacy-policy",
+    "serviceSoftwareAgreementUrl": "https://www.dubsado.com/legal/terms-conditions",
+    "subprocessorsListUrl": "https://www.dubsado.com/legal/sub-processors",
+    "certifications": [
+      "EU-U.S. Data Privacy Framework (EU-U.S. DPF)",
+      "UK Extension to the EU-U.S. Data Privacy Framework",
+      "Swiss-U.S. Data Privacy Framework (Swiss-U.S. DPF)"
+    ],
+    "termsOfServiceUrl": "https://www.dubsado.com/legal/terms-conditions",
+    "securityPageUrl": "https://www.dubsado.com/legal/vulnerability-disclosure-policy",
+    "domains": [
+      "dubsado.com"
+    ]
   },
   {
     "name": "Duda",
@@ -1919,6 +2605,21 @@
     "privacyPolicyUrl": "https://www.e-volution.ai/privacy"
   },
   {
+    "name": "E2B",
+    "category": "ENGINEERING",
+    "headquarterAddress": "166 Geary St, 5th Floor, San Francisco, CA 94108, United States",
+    "legalName": "FoundryLabs, Inc.",
+    "websiteUrl": "https://e2b.dev",
+    "certifications": [
+      "SOC 2 Type 2"
+    ],
+    "termsOfServiceUrl": "https://e2b.dev/terms",
+    "trustPageUrl": "https://trust.e2b.dev",
+    "domains": [
+      "e2b.dev"
+    ]
+  },
+  {
     "name": "Easysize.me",
     "category": "OTHER",
     "domains": [
@@ -1928,6 +2629,28 @@
     "headquarterAddress": "Copenhagen, Denmark",
     "websiteUrl": "https://www.easysize.me",
     "privacyPolicyUrl": "https://www.easysize.me/privacy-policy"
+  },
+  {
+    "name": "Elevenlabs",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Eleven Labs, Inc.",
+    "websiteUrl": "https://elevenlabs.io/",
+    "privacyPolicyUrl": "https://elevenlabs.io/privacy-policy",
+    "dataProcessingAgreementUrl": "https://elevenlabs.io/dpa",
+    "certifications": [
+      "SOC 2 Type II",
+      "ISO 27001",
+      "PCI DSS",
+      "HIPAA",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.elevenlabs.io/",
+    "termsOfServiceUrl": "https://elevenlabs.io/terms-of-use",
+    "securityPageUrl": "https://elevenlabs.io/safety",
+    "trustPageUrl": "https://compliance.elevenlabs.io/",
+    "domains": [
+      "elevenlabs.io"
+    ]
   },
   {
     "name": "Emetric",
@@ -1941,6 +2664,14 @@
     "privacyPolicyUrl": "https://emetric.de/datenschutz"
   },
   {
+    "name": "Enpass",
+    "category": "PASSWORD_MANAGEMENT",
+    "websiteUrl": "https://www.enpass.io/",
+    "domains": [
+      "enpass.io"
+    ]
+  },
+  {
     "name": "Enzuzo",
     "category": "OTHER",
     "domains": [
@@ -1950,6 +2681,40 @@
     "headquarterAddress": "Toronto, ON, Canada",
     "websiteUrl": "https://www.enzuzo.com",
     "privacyPolicyUrl": "https://www.enzuzo.com/privacy-policy"
+  },
+  {
+    "name": "Equinix",
+    "headquarterAddress": "201 Spear Street, 9th Floor, San Francisco, CA 94105, USA",
+    "legalName": "Equinix, Inc.",
+    "websiteUrl": "https://www.equinix.com/",
+    "privacyPolicyUrl": "https://www.equinix.com/company/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://www.equinix.com/company/terms-of-service/",
+    "dataProcessingAgreementUrl": "https://www.equinix.com/company/terms-of-service/",
+    "certifications": [
+      "ISO 27001",
+      "SOC 1",
+      "SOC 2",
+      "PCI DSS"
+    ],
+    "statusPageUrl": "https://status.equinix.com/",
+    "termsOfServiceUrl": "https://www.equinix.com/company/terms-of-service/",
+    "securityPageUrl": "https://www.equinix.com/security/",
+    "trustPageUrl": "https://www.equinix.com/trust/",
+    "domains": [
+      "equinix.com"
+    ]
+  },
+  {
+    "name": "Exa",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Exa AI, Inc.",
+    "websiteUrl": "https://exa.ai/",
+    "privacyPolicyUrl": "https://exa.ai/privacy-policy",
+    "termsOfServiceUrl": "https://exa.ai/terms",
+    "securityPageUrl": "https://exa.ai/security",
+    "domains": [
+      "exa.ai"
+    ]
   },
   {
     "name": "Exponea",
@@ -2083,6 +2848,64 @@
     ]
   },
   {
+    "name": "Firecrawl",
+    "category": "ENGINEERING",
+    "legalName": "Firecrawl, Inc.",
+    "websiteUrl": "https://www.firecrawl.dev",
+    "privacyPolicyUrl": "https://www.firecrawl.dev/privacy",
+    "subprocessorsListUrl": "https://trust.firecrawl.dev/subprocessors",
+    "certifications": [
+      "SOC 2 Type II",
+      "GDPR"
+    ],
+    "termsOfServiceUrl": "https://www.firecrawl.dev/terms",
+    "trustPageUrl": "https://trust.firecrawl.dev",
+    "domains": [
+      "firecrawl.dev"
+    ]
+  },
+  {
+    "name": "Fireflies",
+    "category": "COLLABORATION",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Fireflies.ai, Inc.",
+    "websiteUrl": "http://fireflies.ai/",
+    "privacyPolicyUrl": "https://fireflies.ai/privacy",
+    "termsOfServiceUrl": "https://fireflies.ai/terms-of-service.pdf",
+    "domains": [
+      "fireflies.ai"
+    ]
+  },
+  {
+    "name": "Fireworks AI",
+    "category": "ENGINEERING",
+    "websiteUrl": "https://fireworks.ai/",
+    "domains": [
+      "fireworks.ai"
+    ]
+  },
+  {
+    "name": "Fivetran",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "headquarterAddress": "Oakland, CA",
+    "legalName": "Fivetran Inc.",
+    "websiteUrl": "https://www.fivetran.com/",
+    "privacyPolicyUrl": "https://www.fivetran.com/legal/privacy",
+    "serviceLevelAgreementUrl": "https://fivetran.com/sla",
+    "dataProcessingAgreementUrl": "https://fivetran.com/dpa",
+    "certifications": [
+      "SOC2",
+      "ISO27001"
+    ],
+    "statusPageUrl": "https://status.fivetran.com/",
+    "termsOfServiceUrl": "https://www.fivetran.com/legal/services-agreement",
+    "securityPageUrl": "https://fivetran.com/security",
+    "trustPageUrl": "https://www.fivetran.com/trust",
+    "domains": [
+      "fivetran.com"
+    ]
+  },
+  {
     "name": "Flowbox",
     "category": "OTHER",
     "domains": [
@@ -2177,6 +3000,77 @@
     "privacyPolicyUrl": "https://www.freewheel.com/privacy-policy"
   },
   {
+    "name": "Freshdesk",
+    "category": "CUSTOMER_SUPPORT",
+    "headquarterAddress": "2950 S Delaware St, Suite 201, San Mateo, CA 94403, United States",
+    "legalName": "Freshworks Inc.",
+    "websiteUrl": "https://freshdesk.com",
+    "privacyPolicyUrl": "https://www.freshworks.com/privacy/",
+    "serviceLevelAgreementUrl": "https://www.freshworks.com/terms/sla/",
+    "dataProcessingAgreementUrl": "https://www.freshworks.com/data-processing-addendum/",
+    "subprocessorsListUrl": "https://www.freshworks.com/sub-processors/",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "SOC 2 Type II",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.freshworks.com/",
+    "termsOfServiceUrl": "https://www.freshworks.com/terms/",
+    "securityPageUrl": "https://www.freshworks.com/security/",
+    "trustPageUrl": "https://www.freshworks.com/trust/",
+    "domains": [
+      "freshdesk.com"
+    ]
+  },
+  {
+    "name": "Froala",
+    "category": "PRODUCT_AND_DESIGN",
+    "headquarterAddress": "6805 N Capital of Texas Hwy, Suite 275, Austin, TX 78731, United States",
+    "legalName": "Idera, Inc.",
+    "websiteUrl": "https://froala.com",
+    "privacyPolicyUrl": "https://www.ideracorp.com/Legal/PrivacyPolicy",
+    "serviceSoftwareAgreementUrl": "https://www.ideracorp.com/~/media/IderaInc/Files/Froala/Froala%20Master%20Software%20Subscription%20Agreement%20050124ns",
+    "dataProcessingAgreementUrl": "https://www.ideracorp.com/legal/jurisdiction-specific-terms-vendors",
+    "certifications": [
+      "EU-U.S. Data Privacy Framework",
+      "UK Extension to the EU-U.S. Data Privacy Framework",
+      "Swiss-U.S. Data Privacy Framework",
+      "EU 2021 Standard Contractual Clauses (SCCs) / UK Transfer Addendum (as referenced in DPA)",
+      "GDPR (claims of compliance/coverage)",
+      "U.S. State Privacy Laws (CCPA/CPRA and other state privacy laws) - claimed coverage"
+    ],
+    "termsOfServiceUrl": "https://www.ideracorp.com/Legal/Terms-of-Use",
+    "securityPageUrl": "https://www.ideracorp.com/Legal/Froala/SecurityStatement",
+    "trustPageUrl": "https://www.ideracorp.com/legal/froala",
+    "domains": [
+      "froala.com",
+      "froala.help"
+    ]
+  },
+  {
+    "name": "Front",
+    "category": "CUSTOMER_SUPPORT",
+    "headquarterAddress": "660 4th Street, Suite 443, San Francisco, CA 94107, United States",
+    "legalName": "FrontApp, Inc.",
+    "websiteUrl": "https://front.com",
+    "privacyPolicyUrl": "https://front.com/privacy-policy",
+    "serviceLevelAgreementUrl": "https://front.com/legal/sla",
+    "dataProcessingAgreementUrl": "https://front.com/legal/dpa",
+    "subprocessorsListUrl": "https://front.com/legal/sub-processors",
+    "certifications": [
+      "SOC 2 Type II"
+    ],
+    "statusPageUrl": "https://status.frontapp.com",
+    "termsOfServiceUrl": "https://front.com/terms",
+    "securityPageUrl": "https://front.com/security",
+    "trustPageUrl": "https://front.com/security",
+    "domains": [
+      "front.com"
+    ]
+  },
+  {
     "name": "Funda",
     "category": "MARKETING",
     "domains": [
@@ -2188,6 +3082,50 @@
     "privacyPolicyUrl": "https://www.funda.nl/privacy/"
   },
   {
+    "name": "Gamma",
+    "headquarterAddress": "2261 Market Street Suite 4544 San Francisco, CA 94114 United States",
+    "legalName": "Gamma Tech, Inc.",
+    "websiteUrl": "https://gamma.app",
+    "privacyPolicyUrl": "https://gamma.app/privacy",
+    "termsOfServiceUrl": "https://gamma.app/terms",
+    "securityPageUrl": "https://gamma.ai/security",
+    "trustPageUrl": "https://gamma.app/privacy",
+    "domains": [
+      "gamma.app"
+    ]
+  },
+  {
+    "name": "Gandi.net",
+    "headquarterAddress": "63-65 Boulevard Massena, Paris (75013), France",
+    "legalName": "Gandi SAS",
+    "websiteUrl": "https://www.gandi.net",
+    "privacyPolicyUrl": "https://www.gandi.net/en/contracts/privacy-policy",
+    "statusPageUrl": "https://status.gandi.net/",
+    "termsOfServiceUrl": "https://www.gandi.net/en/contracts/terms-of-use",
+    "securityPageUrl": "https://www.gandi.net/en/security",
+    "trustPageUrl": "https://www.gandi.net/en/trust-center",
+    "domains": [
+      "gandi.net"
+    ]
+  },
+  {
+    "name": "Gcore",
+    "category": "CLOUD_PROVIDER",
+    "headquarterAddress": "Luxembourg",
+    "legalName": "Gcore Labs S.A.",
+    "websiteUrl": "https://gcore.com",
+    "privacyPolicyUrl": "https://gcore.com/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://gcore.com/service-level-agreement/",
+    "dataProcessingAgreementUrl": "https://gcore.com/data-processing-agreement/",
+    "statusPageUrl": "https://status.gcore.com/",
+    "termsOfServiceUrl": "https://gcore.com/terms-of-service/",
+    "securityPageUrl": "https://gcore.com/security/",
+    "trustPageUrl": "https://gcore.com/trust/",
+    "domains": [
+      "gcore.com"
+    ]
+  },
+  {
     "name": "Gemius",
     "category": "ANALYTICS",
     "domains": [
@@ -2197,6 +3135,34 @@
     "legalName": "Gemius SA",
     "headquarterAddress": "18 Domaniewska Street, 02-672 Warsaw, Poland",
     "privacyPolicyUrl": "https://www.gemius.com/privacy-policy.html"
+  },
+  {
+    "name": "GitBook",
+    "category": "DOCUMENT_MANAGEMENT",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "GitBook, Inc.",
+    "websiteUrl": "https://www.gitbook.com/",
+    "privacyPolicyUrl": "https://www.gitbook.com/privacy",
+    "termsOfServiceUrl": "https://www.gitbook.com/terms",
+    "securityPageUrl": "https://www.gitbook.com/security",
+    "domains": [
+      "gitbook.com"
+    ]
+  },
+  {
+    "name": "GitGuardian",
+    "category": "SECURITY",
+    "headquarterAddress": "Paris, France",
+    "legalName": "GitGuardian SAS",
+    "websiteUrl": "https://www.gitguardian.com/",
+    "privacyPolicyUrl": "https://www.gitguardian.com/privacy",
+    "statusPageUrl": "https://status.gitguardian.com",
+    "termsOfServiceUrl": "https://www.gitguardian.com/terms",
+    "securityPageUrl": "https://www.gitguardian.com/security",
+    "trustPageUrl": "https://www.gitguardian.com/trust",
+    "domains": [
+      "gitguardian.com"
+    ]
   },
   {
     "name": "Github",
@@ -2226,13 +3192,14 @@
   },
   {
     "name": "Gitlab",
+    "category": "VERSION_CONTROL",
     "headquarterAddress": "268 Bush Street, San Francisco, CA 94104-3503, United States of America",
     "legalName": "Gitlab, Inc.",
     "websiteUrl": "https://about.gitlab.com/company/",
     "privacyPolicyUrl": "https://about.gitlab.com/privacy/",
     "serviceLevelAgreementUrl": "https://about.gitlab.com/terms/",
+    "dataProcessingAgreementUrl": "https://about.gitlab.com/handbook/legal/data-processing-agreement/",
     "subprocessorsListUrl": "https://about.gitlab.com/privacy/subprocessors/",
-    "category": "VERSION_CONTROL",
     "certifications": [
       "CCPA",
       "CSA STAR Level 1",
@@ -2246,11 +3213,72 @@
       "TISAX",
       "Section 508 VPATS"
     ],
-    "securityPageUrl": "https://about.gitlab.com/security/",
     "statusPageUrl": "https://status.gitlab.com/",
+    "termsOfServiceUrl": "https://about.gitlab.com/terms/",
+    "securityPageUrl": "https://about.gitlab.com/security/",
+    "trustPageUrl": "https://about.gitlab.com/security/compliance/",
     "domains": [
       "gitlab.com",
       "gitlab.io"
+    ]
+  },
+  {
+    "name": "Gladia",
+    "headquarterAddress": "Paris, France",
+    "legalName": "Gladia SAS",
+    "websiteUrl": "https://www.gladia.io",
+    "privacyPolicyUrl": "https://www.gladia.io/privacy",
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR"
+    ],
+    "termsOfServiceUrl": "https://www.gladia.io/terms-and-conditions",
+    "domains": [
+      "gladia.io"
+    ]
+  },
+  {
+    "name": "GoCardless",
+    "headquarterAddress": "London, United Kingdom",
+    "legalName": "GoCardless Ltd.",
+    "websiteUrl": "https://gocardless.com/",
+    "privacyPolicyUrl": "https://gocardless.com/legal/privacy/",
+    "serviceLevelAgreementUrl": "https://gocardless.com/legal/sla/",
+    "dataProcessingAgreementUrl": "https://gocardless.com/legal/dpa/",
+    "certifications": [
+      "ISO 27001",
+      "PCI DSS"
+    ],
+    "statusPageUrl": "https://status.gocardless.com/",
+    "termsOfServiceUrl": "https://gocardless.com/legal/terms/",
+    "securityPageUrl": "https://gocardless.com/security/",
+    "trustPageUrl": "https://gocardless.com/trust/",
+    "domains": [
+      "gocardless.com"
+    ]
+  },
+  {
+    "name": "GoDaddy",
+    "category": "IT",
+    "headquarterAddress": "14455 N Hayden Rd Ste 226, Scottsdale, AZ 85260, USA",
+    "legalName": "GoDaddy.com, LLC",
+    "websiteUrl": "https://www.godaddy.com",
+    "privacyPolicyUrl": "https://www.godaddy.com/legal/agreements/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.godaddy.com/agreements/hosting-sla",
+    "serviceSoftwareAgreementUrl": "https://www.godaddy.com/legal/agreements/website-services-agreement",
+    "dataProcessingAgreementUrl": "https://www.godaddy.com/agreements/dpa",
+    "subprocessorsListUrl": "https://www.godaddy.com/legal/agreements/subprocessor-list",
+    "certifications": [
+      "PCI DSS",
+      "WebTrust for CAs",
+      "EU-US Data Privacy Framework"
+    ],
+    "statusPageUrl": "https://status.godaddy.com",
+    "termsOfServiceUrl": "https://www.godaddy.com/legal/agreements/universal-terms-of-service-agreement",
+    "securityPageUrl": "https://www.godaddy.com/security",
+    "trustPageUrl": "https://www.godaddy.com/trust",
+    "domains": [
+      "godaddy.com"
     ]
   },
   {
@@ -2290,13 +3318,15 @@
   {
     "name": "Google Ads",
     "category": "MARKETING",
+    "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
+    "legalName": "Google LLC",
+    "websiteUrl": "https://ads.google.com",
+    "privacyPolicyUrl": "https://policies.google.com/privacy",
+    "dataProcessingAgreementUrl": "https://business.safety.google/adsprocessorterms/",
+    "termsOfServiceUrl": "https://www.google.com/intl/en_us/ads/terms/",
     "domains": [
       "www.googleadservices.com"
-    ],
-    "websiteUrl": "https://ads.google.com",
-    "legalName": "Google LLC",
-    "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
-    "privacyPolicyUrl": "https://policies.google.com/privacy"
+    ]
   },
   {
     "name": "Google AdSense",
@@ -2314,10 +3344,21 @@
   {
     "name": "Google Analytics",
     "category": "ANALYTICS",
-    "websiteUrl": "https://analytics.google.com",
-    "legalName": "Google LLC",
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
+    "legalName": "Google LLC",
+    "websiteUrl": "https://analytics.google.com",
     "privacyPolicyUrl": "https://policies.google.com/privacy",
+    "dataProcessingAgreementUrl": "https://business.safety.google/processorterms/",
+    "certifications": [
+      "ISO 27001",
+      "ISO 27017",
+      "ISO 27018",
+      "ISO 27701",
+      "SOC 2 Type 2",
+      "SOC 3",
+      "EU-US Data Privacy Framework"
+    ],
+    "termsOfServiceUrl": "https://marketingplatform.google.com/about/analytics/terms/us/",
     "domains": [
       "google.com",
       "google-analytics.com",
@@ -2569,6 +3610,51 @@
     ]
   },
   {
+    "name": "Gorgias",
+    "category": "CUSTOMER_SUPPORT",
+    "legalName": "Gorgias Inc.",
+    "websiteUrl": "https://www.gorgias.com/",
+    "privacyPolicyUrl": "https://www.gorgias.com/legal/privacy-policy",
+    "statusPageUrl": "https://status.gorgias.com/",
+    "termsOfServiceUrl": "https://www.gorgias.com/legal/terms-of-service",
+    "trustPageUrl": "https://www.gorgias.com/security",
+    "domains": [
+      "gorgias.com"
+    ]
+  },
+  {
+    "name": "Grafana",
+    "headquarterAddress": "Austin, TX",
+    "legalName": "Grafana Labs, Inc.",
+    "websiteUrl": "https://grafana.com/",
+    "privacyPolicyUrl": "https://grafana.com/docs/grafana/latest/administration/privacy/",
+    "statusPageUrl": "https://status.grafana.com/",
+    "termsOfServiceUrl": "https://grafana.com/docs/grafana/latest/administration/terms/",
+    "securityPageUrl": "https://grafana.com/docs/grafana/latest/administration/security/",
+    "domains": [
+      "grafana.com"
+    ]
+  },
+  {
+    "name": "Granola",
+    "headquarterAddress": "1151 Walker Road, Suite 417, Dover, Delaware 19904",
+    "legalName": "Granola, Inc.",
+    "websiteUrl": "https://www.granola.ai",
+    "privacyPolicyUrl": "https://go.granola.so/privacy",
+    "dataProcessingAgreementUrl": "https://docs.granola.ai/help-center/policies/data-processing-addendum",
+    "subprocessorsListUrl": "https://trust.granola.ai/subprocessors",
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.granola.ai/",
+    "termsOfServiceUrl": "https://www.granola.ai/policies",
+    "securityPageUrl": "https://www.granola.ai/security",
+    "domains": [
+      "granola.ai"
+    ]
+  },
+  {
     "name": "Groovinads",
     "category": "MARKETING",
     "domains": [
@@ -2578,6 +3664,24 @@
     "headquarterAddress": "Buenos Aires, Argentina",
     "websiteUrl": "https://www.groovinads.com",
     "privacyPolicyUrl": "https://www.groovinads.com/privacy-policy/"
+  },
+  {
+    "name": "Groq",
+    "headquarterAddress": "400 Castro Street, Mountain View, CA 94041, USA",
+    "legalName": "Groq, Inc.",
+    "websiteUrl": "https://groq.com",
+    "privacyPolicyUrl": "https://groq.com/privacy-policy",
+    "dataProcessingAgreementUrl": "https://console.groq.com/docs/legal/customer-data-processing-addendum",
+    "subprocessorsListUrl": "https://trust.groq.com/subprocessors",
+    "certifications": [
+      "SOC 2 Type 2"
+    ],
+    "termsOfServiceUrl": "https://groq.com/terms-of-use",
+    "securityPageUrl": "https://groq.com/security",
+    "trustPageUrl": "https://trust.groq.com",
+    "domains": [
+      "groq.com"
+    ]
   },
   {
     "name": "GumGum",
@@ -2624,6 +3728,16 @@
     "privacyPolicyUrl": "https://www.haproxy.com/privacy"
   },
   {
+    "name": "HashiCorp",
+    "category": "SECURITY",
+    "headquarterAddress": "101 Second Street, Suite 700, San Francisco, CA 94105, United States",
+    "legalName": "HashiCorp, Inc.",
+    "websiteUrl": "https://www.hashicorp.com",
+    "domains": [
+      "hashicorp.com"
+    ]
+  },
+  {
     "name": "Heap Analytics",
     "category": "ANALYTICS",
     "websiteUrl": "https://www.heap.io",
@@ -2661,6 +3775,57 @@
     "termsOfServiceUrl": "https://www.salesforce.com/company/legal/sfdc-website-terms-of-service/",
     "domains": [
       "heroku.com"
+    ]
+  },
+  {
+    "name": "Hetzner",
+    "category": "CLOUD_PROVIDER",
+    "headquarterAddress": "Industriestr. 25, 91710 Gunzenhausen, Germany",
+    "legalName": "Hetzner Online GmbH",
+    "websiteUrl": "https://www.hetzner.com/",
+    "privacyPolicyUrl": "https://www.hetzner.com/legal/privacy-policy/",
+    "statusPageUrl": "https://status.hetzner.com/",
+    "domains": [
+      "hetzner.com"
+    ]
+  },
+  {
+    "name": "Heygen",
+    "websiteUrl": "https://www.heygen.com/",
+    "privacyPolicyUrl": "https://www.heygen.com/privacy-policy",
+    "termsOfServiceUrl": "https://www.heygen.com/terms-of-service",
+    "domains": [
+      "heygen.com"
+    ]
+  },
+  {
+    "name": "Hightouch",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Hightouch, Inc.",
+    "websiteUrl": "https://hightouch.com/",
+    "privacyPolicyUrl": "https://hightouch.com/privacy",
+    "serviceLevelAgreementUrl": "https://hightouch.com/sla",
+    "dataProcessingAgreementUrl": "https://hightouch.com/dpa",
+    "statusPageUrl": "https://status.hightouch.com",
+    "termsOfServiceUrl": "https://hightouch.com/terms",
+    "securityPageUrl": "https://hightouch.com/security",
+    "trustPageUrl": "https://hightouch.com/trust",
+    "domains": [
+      "hightouch.com"
+    ]
+  },
+  {
+    "name": "Honeycomb",
+    "headquarterAddress": "San Francisco, CA, USA",
+    "legalName": "Hound Technology, Inc.",
+    "websiteUrl": "https://www.honeycomb.io",
+    "privacyPolicyUrl": "https://www.honeycomb.io/privacy",
+    "dataProcessingAgreementUrl": "https://www.honeycomb.io/dpa",
+    "statusPageUrl": "https://status.honeycomb.io",
+    "termsOfServiceUrl": "https://www.honeycomb.io/terms",
+    "securityPageUrl": "https://www.honeycomb.io/security",
+    "domains": [
+      "honeycomb.io"
     ]
   },
   {
@@ -2713,6 +3878,23 @@
     ]
   },
   {
+    "name": "Hugging Face",
+    "category": "ENGINEERING",
+    "legalName": "Hugging Face, Inc.",
+    "websiteUrl": "https://huggingface.co",
+    "privacyPolicyUrl": "https://huggingface.co/privacy",
+    "certifications": [
+      "SOC 2 Type II",
+      "GDPR",
+      "HIPAA BAA (Enterprise)"
+    ],
+    "termsOfServiceUrl": "https://huggingface.co/terms-of-service",
+    "trustPageUrl": "https://huggingface.co/security",
+    "domains": [
+      "huggingface.co"
+    ]
+  },
+  {
     "name": "ID5",
     "category": "MARKETING",
     "domains": [
@@ -2722,6 +3904,27 @@
     "legalName": "ID5 Technology Ltd.",
     "headquarterAddress": "London, United Kingdom",
     "privacyPolicyUrl": "https://id5.io/privacy-policy"
+  },
+  {
+    "name": "Impact Radius",
+    "category": "MARKETING",
+    "headquarterAddress": "223 E. De La Guerra Street, Santa Barbara, CA 93101, USA",
+    "legalName": "Impact Tech, Inc.",
+    "websiteUrl": "https://impact.com",
+    "privacyPolicyUrl": "https://impact.com/privacy-policy/",
+    "certifications": [
+      "SOC 1 Type II",
+      "ISO/IEC 27001:2022",
+      "PCI-DSS (Level 4)",
+      "GDPR compliance (privacy practices)"
+    ],
+    "termsOfServiceUrl": "https://impact.com/terms-of-use/",
+    "securityPageUrl": "https://impact.com/security-and-privacy/",
+    "trustPageUrl": "https://impact.com/security-and-privacy/",
+    "domains": [
+      "impact.com",
+      "impact.com.cn"
+    ]
   },
   {
     "name": "Imperva",
@@ -2758,6 +3961,45 @@
     "privacyPolicyUrl": "https://www.indeed.com/legal/privacy-policy"
   },
   {
+    "name": "Infisical",
+    "category": "SECURITY",
+    "headquarterAddress": "235 2nd St Ste 110, San Francisco, California, 94105, United States",
+    "legalName": "Infisical Inc.",
+    "websiteUrl": "https://infisical.com",
+    "privacyPolicyUrl": "https://infisical.com/privacy",
+    "dataProcessingAgreementUrl": "https://infisical.com/legal/data-processing-agreement",
+    "certifications": [
+      "SOC 2",
+      "HIPAA",
+      "FIPS 140-3"
+    ],
+    "statusPageUrl": "https://status.infisical.com",
+    "termsOfServiceUrl": "https://infisical.com/terms",
+    "securityPageUrl": "https://infisical.com/security",
+    "domains": [
+      "infisical.com"
+    ]
+  },
+  {
+    "name": "Infomaniak",
+    "category": "CLOUD_PROVIDER",
+    "headquarterAddress": "Avenue de la Praille 26, 1227 Carouge, Switzerland",
+    "legalName": "Infomaniak Network SA",
+    "websiteUrl": "https://infomaniak.com",
+    "privacyPolicyUrl": "https://www.infomaniak.com/en/corporate/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.infomaniak.com/en/corporate/agreements/service-level-agreement",
+    "dataProcessingAgreementUrl": "https://www.infomaniak.com/en/corporate/agreements/data-processing-agreement",
+    "certifications": [
+      "ISO/IEC 27001:2013"
+    ],
+    "statusPageUrl": "https://status.infomaniak.com",
+    "termsOfServiceUrl": "https://www.infomaniak.com/en/corporate/terms-and-conditions",
+    "securityPageUrl": "https://www.infomaniak.com/en/corporate/privacy-policy/security-and-data-protection",
+    "domains": [
+      "infomaniak.com"
+    ]
+  },
+  {
     "name": "infOnline",
     "category": "MARKETING",
     "domains": [
@@ -2767,6 +4009,19 @@
     "headquarterAddress": "Bonn, Germany",
     "websiteUrl": "https://www.infonline.de",
     "privacyPolicyUrl": "https://www.infonline.de/en/privacy/"
+  },
+  {
+    "name": "Inngest",
+    "headquarterAddress": "600 California St Suite 1200 San Francisco, CA 94109, USA",
+    "legalName": "Inngest Inc",
+    "websiteUrl": "https://www.inngest.com/",
+    "privacyPolicyUrl": "https://www.inngest.com/privacy",
+    "termsOfServiceUrl": "https://www.inngest.com/terms",
+    "securityPageUrl": "https://www.inngest.com/security",
+    "trustPageUrl": "https://trust.inngest.com/",
+    "domains": [
+      "inngest.com"
+    ]
   },
   {
     "name": "Inspectlet",
@@ -2793,10 +4048,21 @@
   {
     "name": "Intercom",
     "category": "ANALYTICS",
-    "websiteUrl": "https://www.intercom.com",
-    "legalName": "Intercom, Inc.",
     "headquarterAddress": "55 2nd Street, 4th Floor, San Francisco, CA 94105, United States",
+    "legalName": "Intercom, Inc.",
+    "websiteUrl": "https://www.intercom.com",
     "privacyPolicyUrl": "https://www.intercom.com/legal/privacy",
+    "serviceLevelAgreementUrl": "https://www.intercom.com/legal/sla",
+    "dataProcessingAgreementUrl": "https://www.intercom.com/legal/data-protection-agreement",
+    "subprocessorsListUrl": "https://www.intercom.com/legal/third-parties",
+    "certifications": [
+      "SOC 2",
+      "ISO 27001"
+    ],
+    "statusPageUrl": "https://www.intercomstatus.com",
+    "termsOfServiceUrl": "https://www.intercom.com/legal/terms-and-policies",
+    "securityPageUrl": "https://www.intercom.com/legal/security",
+    "trustPageUrl": "https://www.intercom.com/legal/security",
     "domains": [
       "intercom.com",
       "intercom.io",
@@ -2846,6 +4112,45 @@
     "headquarterAddress": "2300 Oracle Way, Austin, TX 78741, United States",
     "websiteUrl": "https://www.oracle.com/java/technologies/",
     "privacyPolicyUrl": "https://www.oracle.com/legal/privacy/"
+  },
+  {
+    "name": "Jasper",
+    "category": "MARKETING",
+    "headquarterAddress": "3001 Bee Caves Rd., Ste. 100 A, Rollingwood, TX 78746, United States",
+    "legalName": "Jasper AI, Inc.",
+    "websiteUrl": "https://www.jasper.ai",
+    "privacyPolicyUrl": "https://www.jasper.ai/legal/privacy",
+    "dataProcessingAgreementUrl": "https://www.jasper.ai/legal/dpa",
+    "subprocessorsListUrl": "https://www.jasper.ai/legal/sub-processors",
+    "certifications": [
+      "SOC 2",
+      "PCI DSS",
+      "GDPR (compliance)",
+      "CCPA (compliance)"
+    ],
+    "termsOfServiceUrl": "https://www.jasper.ai/legal/terms",
+    "securityPageUrl": "https://www.jasper.ai/security",
+    "trustPageUrl": "https://www.jasper.ai/trust"
+  },
+  {
+    "name": "Jenkins",
+    "category": "ENGINEERING",
+    "websiteUrl": "https://www.jenkins.io",
+    "domains": [
+      "jenkins.io"
+    ]
+  },
+  {
+    "name": "JetBrains",
+    "headquarterAddress": "Prague, Czech Republic",
+    "legalName": "JetBrains s.r.o.",
+    "websiteUrl": "https://www.jetbrains.com/",
+    "privacyPolicyUrl": "https://www.jetbrains.com/legal/docs/privacy/",
+    "termsOfServiceUrl": "https://www.jetbrains.com/legal/terms.html",
+    "securityPageUrl": "https://www.jetbrains.com/security/",
+    "domains": [
+      "jetbrains.com"
+    ]
   },
   {
     "name": "Jimdo",
@@ -2924,6 +4229,18 @@
     "privacyPolicyUrl": "https://justpremium.com/privacy-policy/"
   },
   {
+    "name": "Justworks",
+    "category": "EMPLOYEE_MANAGEMENT",
+    "headquarterAddress": "New York, NY",
+    "legalName": "Justworks, Inc.",
+    "websiteUrl": "https://www.justworks.com/",
+    "privacyPolicyUrl": "https://www.justworks.com/privacy",
+    "termsOfServiceUrl": "https://www.justworks.com/terms",
+    "domains": [
+      "justworks.com"
+    ]
+  },
+  {
     "name": "Kelkoo",
     "category": "MARKETING",
     "domains": [
@@ -2968,12 +4285,29 @@
     "privacyPolicyUrl": "https://www.kiyoh.com/privacy-policy"
   },
   {
+    "name": "Klarna",
+    "category": "FINANCE",
+    "websiteUrl": "https://www.klarna.com",
+    "domains": [
+      "klarna.com"
+    ]
+  },
+  {
     "name": "Klaviyo",
     "category": "MARKETING",
-    "websiteUrl": "https://www.klaviyo.com",
-    "legalName": "Klaviyo, Inc.",
     "headquarterAddress": "125 Summer Street, Boston, MA 02110, United States",
+    "legalName": "Klaviyo, Inc.",
+    "websiteUrl": "https://www.klaviyo.com",
     "privacyPolicyUrl": "https://www.klaviyo.com/legal/privacy/privacy-notice",
+    "serviceLevelAgreementUrl": "https://www.klaviyo.com/sla",
+    "dataProcessingAgreementUrl": "https://www.klaviyo.com/dpa",
+    "certifications": [
+      "ISO 27001"
+    ],
+    "statusPageUrl": "https://status.klaviyo.com",
+    "termsOfServiceUrl": "https://www.klaviyo.com/terms",
+    "securityPageUrl": "https://www.klaviyo.com/security",
+    "trustPageUrl": "https://www.klaviyo.com/trust",
     "domains": [
       "klaviyo.com"
     ]
@@ -3011,6 +4345,14 @@
     "privacyPolicyUrl": "https://laravel.com/privacy"
   },
   {
+    "name": "LastPass",
+    "category": "PASSWORD_MANAGEMENT",
+    "websiteUrl": "https://www.lastpass.com",
+    "domains": [
+      "lastpass.com"
+    ]
+  },
+  {
     "name": "Latitude.sh",
     "headquarterAddress": "Rua Cubatão, 929, São Paulo, 04013-043, Brazil",
     "legalName": "Latitude.sh Ltda",
@@ -3026,6 +4368,51 @@
     "termsOfServiceUrl": "https://www.latitude.sh/legal/terms",
     "domains": [
       "latitude.sh"
+    ]
+  },
+  {
+    "name": "LaunchDarkly",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "LaunchDarkly, Inc.",
+    "websiteUrl": "https://launchdarkly.com/",
+    "privacyPolicyUrl": "https://launchdarkly.com/privacy",
+    "serviceLevelAgreementUrl": "https://launchdarkly.com/sla",
+    "serviceSoftwareAgreementUrl": "https://launchdarkly.com/policies/subscription-terms-enterprise/",
+    "dataProcessingAgreementUrl": "https://launchdarkly.com/dpa",
+    "subprocessorsListUrl": "https://launchdarkly.com/policies/subprocessors/",
+    "certifications": [
+      "SOC 2 Type II",
+      "ISO 27001",
+      "ISO 27701",
+      "FedRAMP Authorized",
+      "EU‑U.S. Data Privacy Framework (DPF)",
+      "HIPAA (supports customer compliance)"
+    ],
+    "statusPageUrl": "https://status.launchdarkly.com",
+    "termsOfServiceUrl": "https://launchdarkly.com/terms",
+    "securityPageUrl": "https://launchdarkly.com/security",
+    "trustPageUrl": "https://launchdarkly.com/trust",
+    "domains": [
+      "launchdarkly.com"
+    ]
+  },
+  {
+    "name": "Lavender",
+    "category": "SALES",
+    "legalName": "Sorter, Inc.",
+    "websiteUrl": "https://www.lavender.ai",
+    "privacyPolicyUrl": "https://www.lavender.ai/privacy-policy",
+    "serviceSoftwareAgreementUrl": "https://www.lavender.ai/terms-of-service",
+    "certifications": [
+      "SOC 2 Type II",
+      "GDPR compliance"
+    ],
+    "termsOfServiceUrl": "https://www.lavender.ai/terms-of-service",
+    "securityPageUrl": "https://www.lavender.ai/privacy",
+    "trustPageUrl": "https://www.lavender.ai/privacy",
+    "domains": [
+      "lavender.ai",
+      "trylavender.com"
     ]
   },
   {
@@ -3144,6 +4531,20 @@
     "privacyPolicyUrl": "https://livehelperchat.com/privacy-policy-11a.html"
   },
   {
+    "name": "Liveblocks",
+    "legalName": "Liveblocks, Inc.",
+    "websiteUrl": "https://liveblocks.io/",
+    "privacyPolicyUrl": "https://liveblocks.io/privacy",
+    "dataProcessingAgreementUrl": "https://liveblocks.io/dpa",
+    "statusPageUrl": "https://liveblocks.statuspage.io",
+    "termsOfServiceUrl": "https://liveblocks.io/terms",
+    "securityPageUrl": "https://liveblocks.io/security",
+    "trustPageUrl": "https://liveblocks.safebase.us",
+    "domains": [
+      "liveblocks.io"
+    ]
+  },
+  {
     "name": "LiveChat",
     "category": "OTHER",
     "websiteUrl": "https://www.livechat.com",
@@ -3197,6 +4598,22 @@
     "privacyPolicyUrl": "https://www.loggly.com/about/privacy-policy/",
     "domains": [
       "loggly.com"
+    ]
+  },
+  {
+    "name": "Lokalise",
+    "headquarterAddress": "Riga, Latvia",
+    "legalName": "Lokalise, Inc.",
+    "websiteUrl": "https://lokalise.com/",
+    "privacyPolicyUrl": "https://lokalise.com/privacy-policy",
+    "serviceLevelAgreementUrl": "https://lokalise.com/service-level-agreement",
+    "dataProcessingAgreementUrl": "https://lokalise.com/data-processing-agreement",
+    "statusPageUrl": "https://status.lokalise.com",
+    "termsOfServiceUrl": "https://lokalise.com/terms-of-service",
+    "securityPageUrl": "https://lokalise.com/security",
+    "trustPageUrl": "https://lokalise.com/trust",
+    "domains": [
+      "lokalise.com"
     ]
   },
   {
@@ -3291,6 +4708,38 @@
     ]
   },
   {
+    "name": "Mailgun",
+    "headquarterAddress": "10445 W. Raintree Drive, Suite 100, Scottsdale, AZ 85255, USA",
+    "legalName": "Mailgun Technologies, Inc.",
+    "websiteUrl": "https://www.mailgun.com/",
+    "privacyPolicyUrl": "https://www.mailgun.com/privacy",
+    "serviceLevelAgreementUrl": "https://www.mailgun.com/sla",
+    "dataProcessingAgreementUrl": "https://www.mailgun.com/dpa",
+    "statusPageUrl": "https://status.mailgun.com",
+    "termsOfServiceUrl": "https://www.mailgun.com/terms",
+    "securityPageUrl": "https://www.mailgun.com/security",
+    "trustPageUrl": "https://www.mailgun.com/trust",
+    "domains": [
+      "mailgun.com"
+    ]
+  },
+  {
+    "name": "Mailjet",
+    "headquarterAddress": "Paris, France",
+    "legalName": "Mailjet SAS",
+    "websiteUrl": "https://www.mailjet.com/",
+    "privacyPolicyUrl": "https://www.mailjet.com/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://www.mailjet.com/legal/service-level-agreement/",
+    "dataProcessingAgreementUrl": "https://www.mailjet.com/legal/data-processing-agreement/",
+    "statusPageUrl": "https://status.mailjet.com/",
+    "termsOfServiceUrl": "https://www.mailjet.com/legal/terms-of-service/",
+    "securityPageUrl": "https://www.mailjet.com/security/",
+    "trustPageUrl": "https://www.mailjet.com/trust/",
+    "domains": [
+      "mailjet.com"
+    ]
+  },
+  {
     "name": "MailMunch",
     "category": "MARKETING",
     "domains": [
@@ -3300,6 +4749,34 @@
     "headquarterAddress": "San Antonio, TX, United States",
     "websiteUrl": "https://www.mailmunch.com",
     "privacyPolicyUrl": "https://www.mailmunch.com/privacy-policy"
+  },
+  {
+    "name": "Make",
+    "category": "ENGINEERING",
+    "legalName": "Celonis, Inc.",
+    "websiteUrl": "https://www.make.com",
+    "privacyPolicyUrl": "https://www.make.com/en/privacy-notice",
+    "certifications": [
+      "ISO/IEC 27001",
+      "SOC 2 Type 2",
+      "SOC 3",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.make.com",
+    "termsOfServiceUrl": "https://www.make.com/en/terms-and-conditions",
+    "securityPageUrl": "https://www.make.com/en/security",
+    "trustPageUrl": "https://trust.celonis.com",
+    "domains": [
+      "make.com"
+    ]
+  },
+  {
+    "name": "Mapbox",
+    "category": "ENGINEERING",
+    "websiteUrl": "https://www.mapbox.com",
+    "domains": [
+      "mapbox.com"
+    ]
   },
   {
     "name": "Marfeel",
@@ -3328,10 +4805,12 @@
   {
     "name": "Matomo",
     "category": "ANALYTICS",
-    "websiteUrl": "https://matomo.org",
-    "legalName": "InnoCraft Ltd.",
     "headquarterAddress": "Wellington, New Zealand",
+    "legalName": "InnoCraft Ltd.",
+    "websiteUrl": "https://matomo.org",
     "privacyPolicyUrl": "https://matomo.org/privacy-policy/",
+    "termsOfServiceUrl": "https://matomo.org/terms/",
+    "securityPageUrl": "https://matomo.org/security/",
     "domains": [
       "matomo.org",
       "matomo.cloud"
@@ -3435,15 +4914,135 @@
     ]
   },
   {
+    "name": "Metabase",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Metabase, Inc.",
+    "websiteUrl": "https://www.metabase.com/",
+    "privacyPolicyUrl": "https://www.metabase.com/privacy",
+    "termsOfServiceUrl": "https://www.metabase.com/terms",
+    "securityPageUrl": "https://www.metabase.com/security",
+    "domains": [
+      "metabase.com"
+    ]
+  },
+  {
     "name": "Microsoft",
     "category": "ANALYTICS",
+    "headquarterAddress": "One Microsoft Way, Redmond, WA 98052, United States",
+    "legalName": "Microsoft Corporation",
+    "websiteUrl": "https://www.microsoft.com",
+    "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
+    "dataProcessingAgreementUrl": "https://www.microsoft.com/licensing/docs/view/Microsoft-Products-and-Services-Data-Protection-Addendum-DPA",
+    "subprocessorsListUrl": "https://www.microsoft.com/en-us/download/details.aspx?id=50426",
+    "certifications": [
+      "CIS Benchmark",
+      "CSA-STAR",
+      "CyberGRX",
+      "ISO 20000-1:2011",
+      "ISO 22301",
+      "ISO 27001",
+      "ISO 27017",
+      "ISO 27018",
+      "ISO 27701",
+      "ISO 9001",
+      "SOC 1",
+      "SOC 2",
+      "SOC 3",
+      "WCAG",
+      "CJIS",
+      "CNSSI 1253",
+      "DFARS",
+      "DoD IL2",
+      "DoD IL5",
+      "DoE 10 CFR Part 810",
+      "EAR (US Export Administration Regulations)",
+      "FedRAMP",
+      "FIPS 140-2",
+      "IRS 1075",
+      "ITAR",
+      "NIST 800-171",
+      "NIST CSF",
+      "Section 508 VPATS",
+      "23 NYCRR Part 500",
+      "AFM + DNB (Netherlands)",
+      "APRA (Australia)",
+      "AMF and ACPR (France)",
+      "CDSA",
+      "DPP (UK)",
+      "EBA (EU)",
+      "FACT (UK)",
+      "FCA + PRA (UK)",
+      "FDA CFR Title 21 Part 11",
+      "FERPA",
+      "FFIEC (US)",
+      "FINMA (Switzerland)",
+      "FISC (Japan)",
+      "FSA (Denmark)",
+      "GLBA (US)",
+      "GSMA",
+      "GxP",
+      "HDS (France)",
+      "HIPAA / HITECH",
+      "HITRUST",
+      "KNF (Poland)",
+      "Know Your Third Party (KY3P)",
+      "MARS-E (US)",
+      "MAS + ABS (Singapore)",
+      "MPA",
+      "NBB + FSMA (Belgium)",
+      "NEN-7510 (Netherlands)",
+      "NERC",
+      "OSFI (Canada)",
+      "PCI-3DS",
+      "PCI-DSS",
+      "RBI + IRDAI (India)",
+      "SEC 17a-4",
+      "SEC 18a-6",
+      "FINRA 4511",
+      "CFTC 1.31",
+      "SEC Regulation SCI (US)",
+      "Shared Assessments",
+      "SOX",
+      "TISAX",
+      "ABS OSPAR (Singapore)",
+      "BIR 2012 (Netherlands)",
+      "C5 (Germany)",
+      "Canada Controlled Goods",
+      "Canadian Privacy Laws",
+      "CCCS Medium (Canada)",
+      "Cyber Essentials Plus (UK)",
+      "IRAP (Australia)",
+      "DJCP (China)",
+      "DORA (EU)",
+      "EN 301 549 (EU)",
+      "ENISA IAF (EU)",
+      "ENS (Spain)",
+      "EU Model Clauses",
+      "GB 18030 (China)",
+      "GDPR",
+      "G-Cloud (UK)",
+      "IDW PS 951 (Germany)",
+      "ISMAP (Japan)",
+      "ISMS (Korea)",
+      "IT-Grundschutz Workbook (Germany)",
+      "LOPD (Spain)",
+      "MeitY (India)",
+      "MTCS (Singapore)",
+      "My Number (Japan)",
+      "National Information Assurance (Qatar)",
+      "NZ CC Framework (New Zealand)",
+      "PASF (UK)",
+      "PDPA (Argentina)",
+      "Personal Data Localization (Russia)",
+      "TRUCS (China)"
+    ],
+    "statusPageUrl": "https://status.cloud.microsoft/",
+    "termsOfServiceUrl": "https://azure.microsoft.com/en-us/support/legal/",
+    "securityPageUrl": "https://www.microsoft.com/en-us/trust-center/security/secure-future-initiative",
+    "trustPageUrl": "https://www.microsoft.com/en-us/trust-center",
     "domains": [
       "clarity.ms"
-    ],
-    "websiteUrl": "https://www.microsoft.com",
-    "legalName": "Microsoft Corporation",
-    "headquarterAddress": "One Microsoft Way, Redmond, WA 98052, United States",
-    "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement"
+    ]
   },
   {
     "name": "Microsoft 365",
@@ -3735,15 +5334,72 @@
     ]
   },
   {
+    "name": "Miro",
+    "category": "COLLABORATION",
+    "headquarterAddress": "201 Spear Street, Suite 1100, San Francisco, CA 94105, United States",
+    "legalName": "RealtimeBoard, Inc. (dba Miro)",
+    "websiteUrl": "https://miro.com",
+    "privacyPolicyUrl": "https://miro.com/legal/privacy-policy/",
+    "dataProcessingAgreementUrl": "https://miro.com/legal/data-processing-addendum/",
+    "subprocessorsListUrl": "https://miro.com/legal/list-of-subprocessors/",
+    "certifications": [
+      "SOC 2 Type 2",
+      "SOC 3",
+      "ISO/IEC 27001",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "ISO/IEC 27701",
+      "GDPR",
+      "CCPA",
+      "HIPAA"
+    ],
+    "statusPageUrl": "https://status.miro.com/",
+    "termsOfServiceUrl": "https://miro.com/legal/terms-of-service/",
+    "securityPageUrl": "https://miro.com/trust/security/",
+    "trustPageUrl": "https://miro.com/trust/",
+    "domains": [
+      "miro.com"
+    ]
+  },
+  {
+    "name": "Mistral",
+    "headquarterAddress": "Paris, France",
+    "legalName": "Mistral AI",
+    "websiteUrl": "https://mistral.ai/fr",
+    "privacyPolicyUrl": "https://mistral.ai/fr/privacy-policy",
+    "dataProcessingAgreementUrl": "https://mistral.ai/terms#terms-of-service",
+    "termsOfServiceUrl": "https://mistral.ai/fr/terms-of-service",
+    "domains": [
+      "mistral.ai"
+    ]
+  },
+  {
     "name": "Mixpanel",
     "category": "ANALYTICS",
-    "websiteUrl": "https://mixpanel.com",
-    "legalName": "Mixpanel, Inc.",
     "headquarterAddress": "One Front Street, 28th Floor, San Francisco, CA 94111, United States",
+    "legalName": "Mixpanel, Inc.",
+    "websiteUrl": "https://mixpanel.com",
     "privacyPolicyUrl": "https://mixpanel.com/legal/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://mixpanel.com/legal/service-level-agreement/",
+    "dataProcessingAgreementUrl": "https://mixpanel.com/legal/data-processing-agreement/",
+    "statusPageUrl": "https://status.mixpanel.com/",
+    "termsOfServiceUrl": "https://mixpanel.com/legal/terms/",
+    "securityPageUrl": "https://mixpanel.com/security/",
+    "trustPageUrl": "https://mixpanel.com/trust/",
     "domains": [
       "mixpanel.com",
       "mxpnl.com"
+    ]
+  },
+  {
+    "name": "Modal",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Modal, Inc.",
+    "websiteUrl": "https://modal.com/",
+    "privacyPolicyUrl": "https://modal.com/privacy",
+    "termsOfServiceUrl": "https://modal.com/terms",
+    "domains": [
+      "modal.com"
     ]
   },
   {
@@ -3780,6 +5436,32 @@
     ]
   },
   {
+    "name": "MongoDB",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "headquarterAddress": "MongoDB, Inc., 1633 Broadway, 38th Floor, New York, NY 10019, United States",
+    "legalName": "MongoDB, Inc.",
+    "websiteUrl": "https://mongodb.com",
+    "privacyPolicyUrl": "https://www.mongodb.com/legal/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.mongodb.com/legal/cloud-sla",
+    "dataProcessingAgreementUrl": "https://www.mongodb.com/legal/dpa",
+    "subprocessorsListUrl": "https://www.mongodb.com/legal/approved-sub-processors",
+    "certifications": [
+      "SOC 2 Type II",
+      "ISO/IEC 27001",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "PCI DSS",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.cloud.mongodb.com",
+    "termsOfServiceUrl": "https://www.mongodb.com/legal/website-terms",
+    "securityPageUrl": "https://www.mongodb.com/trust/privacy-security",
+    "trustPageUrl": "https://www.mongodb.com/trust",
+    "domains": [
+      "mongodb.com"
+    ]
+  },
+  {
     "name": "Moove",
     "category": "OTHER",
     "domains": [
@@ -3800,6 +5482,18 @@
     "headquarterAddress": "Rotterdam, Netherlands",
     "websiteUrl": "https://mopinion.com",
     "privacyPolicyUrl": "https://mopinion.com/privacy/"
+  },
+  {
+    "name": "n8n",
+    "headquarterAddress": "Berlin, Germany",
+    "legalName": "n8n GmbH",
+    "websiteUrl": "https://n8n.io/",
+    "privacyPolicyUrl": "https://n8n.io/privacy-policy",
+    "termsOfServiceUrl": "https://n8n.io/terms",
+    "securityPageUrl": "https://n8n.io/security",
+    "domains": [
+      "n8n.io"
+    ]
   },
   {
     "name": "Namecheap",
@@ -3829,6 +5523,80 @@
     "legalName": "Nativo, Inc.",
     "headquarterAddress": "El Segundo, CA, United States",
     "privacyPolicyUrl": "https://www.nativo.com/interest-based-ads"
+  },
+  {
+    "name": "Neo4j",
+    "headquarterAddress": "San Mateo, CA, USA",
+    "legalName": "Neo4j, Inc.",
+    "websiteUrl": "https://neo4j.com/",
+    "privacyPolicyUrl": "https://neo4j.com/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://neo4j.com/sla/",
+    "dataProcessingAgreementUrl": "https://neo4j.com/dpa/",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO 27001",
+      "HIPAA",
+      "HITECH",
+      "ISO/IEC 20243:2018"
+    ],
+    "statusPageUrl": "https://status.neo4j.com/",
+    "termsOfServiceUrl": "https://neo4j.com/terms/",
+    "securityPageUrl": "https://neo4j.com/security/",
+    "trustPageUrl": "https://neo4j.com/trust/",
+    "domains": [
+      "neo4j.com"
+    ]
+  },
+  {
+    "name": "Neon",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "legalName": "Neon",
+    "websiteUrl": "https://neon.tech",
+    "privacyPolicyUrl": "https://neon.cc/privacy-policy",
+    "serviceLevelAgreementUrl": "https://neon.tech/neon-business-sla",
+    "subprocessorsListUrl": "https://neon.tech/subprocessors",
+    "statusPageUrl": "https://neonstatus.com/",
+    "termsOfServiceUrl": "https://neon.tech/terms-of-service",
+    "securityPageUrl": "https://neon.tech/security",
+    "trustPageUrl": "https://neon.tech/docs/security/compliance",
+    "domains": [
+      "neon.tech"
+    ]
+  },
+  {
+    "name": "Netlify",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Netlify, Inc.",
+    "websiteUrl": "https://www.netlify.com/",
+    "privacyPolicyUrl": "https://www.netlify.com/privacy/",
+    "serviceLevelAgreementUrl": "https://www.netlify.com/legal/service-level-agreement/",
+    "dataProcessingAgreementUrl": "https://www.netlify.com/legal/data-processing-agreement/",
+    "statusPageUrl": "https://status.netlify.com/",
+    "termsOfServiceUrl": "https://www.netlify.com/legal/terms/",
+    "securityPageUrl": "https://www.netlify.com/security/",
+    "trustPageUrl": "https://www.netlify.com/trust/",
+    "domains": [
+      "netlify.com"
+    ]
+  },
+  {
+    "name": "Netskope",
+    "category": "SECURITY",
+    "headquarterAddress": "2445 Augustine Dr, 3rd Floor, Santa Clara, CA 95054, USA",
+    "legalName": "Netskope, Inc.",
+    "websiteUrl": "https://www.netskope.com",
+    "privacyPolicyUrl": "https://www.netskope.com/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.netskope.com/support-terms",
+    "serviceSoftwareAgreementUrl": "https://www.netskope.com/subscription-terms",
+    "dataProcessingAgreementUrl": "https://www.netskope.com/resources/netskope-resources/netskope-data-processing-addendum",
+    "subprocessorsListUrl": "https://www.netskope.com/resources/netskope-resources/netskope-sub-processors",
+    "statusPageUrl": "https://trust.netskope.com/status",
+    "termsOfServiceUrl": "https://www.netskope.com/terms-of-use",
+    "securityPageUrl": "https://www.netskope.com/company/security-compliance-and-assurance",
+    "trustPageUrl": "https://trust.netskope.com/home",
+    "domains": [
+      "netskope.com"
+    ]
   },
   {
     "name": "Neustar",
@@ -3955,6 +5723,7 @@
   },
   {
     "name": "Notion",
+    "category": "DOCUMENT_MANAGEMENT",
     "headquarterAddress": "2300 Harrison St, San Francisco, CA 94110",
     "legalName": "Notion Labs, Inc.",
     "websiteUrl": "https://www.notion.com",
@@ -3962,7 +5731,6 @@
     "serviceLevelAgreementUrl": "https://www.notion.com/notion/Service-Level-Terms-6f805fa1d4ca4463b805e2832ae8ff0d",
     "businessAssociateAgreementUrl": "https://www.notion.com/notion/Business-Associate-Agreement-909d9f4ccca041b1a23d0fe6e56fa111",
     "subprocessorsListUrl": "https://www.notion.com/notion/Notion-s-List-of-Subprocessors-268fa5bcfa0f46b6bc29436b21676734",
-    "category": "DOCUMENT_MANAGEMENT",
     "certifications": [
       "SOC 2 Type 2",
       "ISO/IEC 27001:2022",
@@ -3975,6 +5743,7 @@
       "CCPA"
     ],
     "statusPageUrl": "https://status.notion.so",
+    "securityPageUrl": "https://www.notion.com/security",
     "domains": [
       "notion.com",
       "notion.so"
@@ -4000,12 +5769,13 @@
   },
   {
     "name": "Okta",
+    "category": "IDENTITY_PROVIDER",
     "headquarterAddress": "100 First Plaza, San Francisco, CA 94105, US",
     "legalName": "Okta, Inc.",
     "websiteUrl": "https://www.okta.com",
     "privacyPolicyUrl": "https://www.okta.com/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://www.okta.com/service-level-agreement/",
     "dataProcessingAgreementUrl": "https://www.okta.com/trustandcompliance/#data-processing-addendum",
-    "category": "IDENTITY_PROVIDER",
     "certifications": [
       "SOC 2 Type 2",
       "ISO/IEC 27001:2022",
@@ -4019,10 +5789,10 @@
       "PSD2",
       "FAPI"
     ],
-    "securityPageUrl": "https://www.okta.com/security-center/",
-    "trustPageUrl": "https://www.okta.com/trust-center/",
     "statusPageUrl": "https://status.auth0.com/",
     "termsOfServiceUrl": "https://www.okta.com/terms-of-service/",
+    "securityPageUrl": "https://www.okta.com/security-center/",
+    "trustPageUrl": "https://www.okta.com/trust-center/",
     "domains": [
       "oktacdn.com",
       "okta.com"
@@ -4076,6 +5846,33 @@
     "termsOfServiceUrl": "https://openai.com/policies/terms-of-use/",
     "domains": [
       "openai.com"
+    ]
+  },
+  {
+    "name": "OpenRouter",
+    "category": "ENGINEERING",
+    "headquarterAddress": "169 Madison Avenue, New York, New York, 10016,United States",
+    "legalName": "OpenRouter, Inc.",
+    "websiteUrl": "https://openrouter.ai",
+    "privacyPolicyUrl": "https://openrouter.ai/privacy",
+    "subprocessorsListUrl": "https://trust.openrouter.ai/",
+    "certifications": [
+      "SOC 2 Type II",
+      "ISO 27001"
+    ],
+    "statusPageUrl": "https://status.openrouter.ai",
+    "termsOfServiceUrl": "https://openrouter.ai/terms",
+    "securityPageUrl": "https://trust.openrouter.ai/",
+    "domains": [
+      "openrouter.ai"
+    ]
+  },
+  {
+    "name": "OpenStatus",
+    "category": "CLOUD_MONITORING",
+    "websiteUrl": "https://www.openstatus.dev",
+    "domains": [
+      "openstatus.dev"
     ]
   },
   {
@@ -4193,6 +5990,30 @@
     "privacyPolicyUrl": "https://www.outbrain.com/legal/privacy"
   },
   {
+    "name": "OVH",
+    "category": "CLOUD_PROVIDER",
+    "headquarterAddress": "Roubaix, France",
+    "legalName": "OVH Groupe SAS",
+    "websiteUrl": "https://www.ovhcloud.com",
+    "privacyPolicyUrl": "https://www.ovhcloud.com/en/support/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://www.ovhcloud.com/en/terms-and-conditions/sla/",
+    "dataProcessingAgreementUrl": "https://www.ovhcloud.com/en/support/contracts/",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27701",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "HDS (France)"
+    ],
+    "statusPageUrl": "https://status.ovhcloud.com/",
+    "termsOfServiceUrl": "https://www.ovhcloud.com/en/terms-and-conditions/",
+    "securityPageUrl": "https://www.ovhcloud.com/en/security-compliance/",
+    "trustPageUrl": "https://www.ovhcloud.com/en/security-compliance/",
+    "domains": [
+      "ovhcloud.com"
+    ]
+  },
+  {
     "name": "OVHcloud global",
     "headquarterAddress": "2 Rue Kellermann, 59100 Roubaix, France",
     "legalName": "OVH Groupe SAS",
@@ -4261,6 +6082,22 @@
     ]
   },
   {
+    "name": "PandaDoc",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "PandaDoc, Inc.",
+    "websiteUrl": "https://www.pandadoc.com/fr/",
+    "privacyPolicyUrl": "https://www.pandadoc.com/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://www.pandadoc.com/service-level-agreement/",
+    "dataProcessingAgreementUrl": "https://www.pandadoc.com/data-processing-agreement/",
+    "statusPageUrl": "https://status.pandadoc.com/",
+    "termsOfServiceUrl": "https://www.pandadoc.com/terms-of-service/",
+    "securityPageUrl": "https://www.pandadoc.com/security/",
+    "trustPageUrl": "https://www.pandadoc.com/trust/",
+    "domains": [
+      "pandadoc.com"
+    ]
+  },
+  {
     "name": "Pangle",
     "category": "MARKETING",
     "domains": [
@@ -4295,15 +6132,55 @@
     "privacyPolicyUrl": "https://partnerize.com/privacy-policy/"
   },
   {
+    "name": "Partnero",
+    "category": "MARKETING",
+    "headquarterAddress": "515 W 18th St, New York, NY 10011, United States of America",
+    "legalName": "Partnero, Inc.",
+    "websiteUrl": "https://www.partnero.com",
+    "privacyPolicyUrl": "https://www.partnero.com/legal/privacy-policy",
+    "serviceSoftwareAgreementUrl": "https://www.partnero.com/legal/terms-of-use",
+    "dataProcessingAgreementUrl": "https://www.partnero.com/legal/data-processing-addendum",
+    "certifications": [
+      "ISO 27001",
+      "GDPR Compliant"
+    ],
+    "termsOfServiceUrl": "https://www.partnero.com/legal/terms-of-use",
+    "domains": [
+      "partnero.com"
+    ]
+  },
+  {
+    "name": "Passbolt",
+    "category": "PASSWORD_MANAGEMENT",
+    "headquarterAddress": "Paris, France",
+    "legalName": "Passbolt SAS",
+    "websiteUrl": "https://www.passbolt.com",
+    "privacyPolicyUrl": "https://www.passbolt.com/privacy",
+    "termsOfServiceUrl": "https://www.passbolt.com/terms",
+    "securityPageUrl": "https://www.passbolt.com/security",
+    "domains": [
+      "passbolt.com"
+    ]
+  },
+  {
     "name": "PayPal",
     "category": "OTHER",
+    "headquarterAddress": "2211 North First Street, San Jose, CA 95131, United States",
+    "legalName": "PayPal Holdings, Inc.",
+    "websiteUrl": "https://www.paypal.com",
+    "privacyPolicyUrl": "https://www.paypal.com/us/legalhub/privacy-full",
+    "certifications": [
+      "PCI DSS",
+      "SOC 1 Type II",
+      "ISO 27001"
+    ],
+    "statusPageUrl": "https://www.paypal-status.com/product/production",
+    "termsOfServiceUrl": "https://www.paypal.com/us/legalhub/useragreement-full",
+    "securityPageUrl": "https://www.paypal.com/us/security",
+    "trustPageUrl": "https://www.paypal.com/us/trust-center",
     "domains": [
       "paypal.com"
-    ],
-    "websiteUrl": "https://www.paypal.com",
-    "legalName": "PayPal Holdings, Inc.",
-    "headquarterAddress": "2211 North First Street, San Jose, CA 95131, United States",
-    "privacyPolicyUrl": "https://www.paypal.com/us/legalhub/privacy-full"
+    ]
   },
   {
     "name": "Perfect Audience",
@@ -4408,6 +6285,27 @@
     ]
   },
   {
+    "name": "Pinecone",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "headquarterAddress": "548 Market St, PMB 60493, San Francisco, CA 94104, United States",
+    "legalName": "Pinecone Systems, Inc.",
+    "websiteUrl": "https://www.pinecone.io/",
+    "privacyPolicyUrl": "https://www.pinecone.io/privacy/",
+    "serviceLevelAgreementUrl": "https://www.pinecone.io/sla/",
+    "dataProcessingAgreementUrl": "https://www.pinecone.io/dpa/",
+    "subprocessorsListUrl": "https://www.pinecone.io/subprocessors/",
+    "certifications": [
+      "SOC 2 Type II"
+    ],
+    "statusPageUrl": "https://status.pinecone.io/",
+    "termsOfServiceUrl": "https://www.pinecone.io/terms/",
+    "securityPageUrl": "https://www.pinecone.io/security/",
+    "trustPageUrl": "https://security.pinecone.io/",
+    "domains": [
+      "pinecone.io"
+    ]
+  },
+  {
     "name": "Pinterest",
     "category": "OTHER",
     "domains": [
@@ -4475,6 +6373,27 @@
     ]
   },
   {
+    "name": "Plaid",
+    "category": "FINANCE",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Plaid Inc.",
+    "websiteUrl": "https://plaid.com",
+    "privacyPolicyUrl": "https://plaid.com/legal/privacy",
+    "serviceLevelAgreementUrl": "https://plaid.com/legal/sla",
+    "dataProcessingAgreementUrl": "https://plaid.com/legal/dpa",
+    "certifications": [
+      "SOC2",
+      "ISO27001"
+    ],
+    "statusPageUrl": "https://status.plaid.com",
+    "termsOfServiceUrl": "https://plaid.com/legal/terms",
+    "securityPageUrl": "https://plaid.com/security",
+    "trustPageUrl": "https://plaid.com/trust",
+    "domains": [
+      "plaid.com"
+    ]
+  },
+  {
     "name": "PlanetScale",
     "headquarterAddress": "535 Mission Street, 14th Floor, San Francisco, CA 94105, United States",
     "legalName": "PlanetScale, Inc.",
@@ -4530,6 +6449,15 @@
     "termsOfServiceUrl": "https://plausible.io/terms",
     "domains": [
       "plausible.io"
+    ]
+  },
+  {
+    "name": "Playwright",
+    "headquarterAddress": "One Microsoft Way, Redmond, WA 98052-6399, USA",
+    "legalName": "Microsoft Corporation",
+    "websiteUrl": "https://playwright.dev/",
+    "domains": [
+      "playwright.dev"
     ]
   },
   {
@@ -4598,6 +6526,39 @@
     "statusPageUrl": "https://status.posthog.com/",
     "domains": [
       "posthog.com"
+    ]
+  },
+  {
+    "name": "Postman",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Postman, Inc.",
+    "websiteUrl": "https://www.postman.com/",
+    "privacyPolicyUrl": "https://www.postman.com/legal/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.postman.com/legal/service-level-agreement",
+    "dataProcessingAgreementUrl": "https://www.postman.com/legal/data-processing-agreement",
+    "statusPageUrl": "https://status.postman.com",
+    "termsOfServiceUrl": "https://www.postman.com/legal/terms-of-service",
+    "securityPageUrl": "https://www.postman.com/security",
+    "trustPageUrl": "https://www.postman.com/trust",
+    "domains": [
+      "postman.com"
+    ]
+  },
+  {
+    "name": "Postmark",
+    "category": "ENGINEERING",
+    "headquarterAddress": "Chicago, IL",
+    "legalName": "Wildbit, LLC",
+    "websiteUrl": "https://postmarkapp.com/",
+    "privacyPolicyUrl": "https://postmarkapp.com/privacy",
+    "serviceLevelAgreementUrl": "https://postmarkapp.com/sla",
+    "dataProcessingAgreementUrl": "https://postmarkapp.com/dpa",
+    "statusPageUrl": "https://status.postmarkapp.com",
+    "termsOfServiceUrl": "https://postmarkapp.com/terms",
+    "securityPageUrl": "https://postmarkapp.com/security",
+    "trustPageUrl": "https://postmarkapp.com/trust",
+    "domains": [
+      "postmarkapp.com"
     ]
   },
   {
@@ -4680,6 +6641,15 @@
     "privacyPolicyUrl": "https://processwire.com/about/privacy-policy/"
   },
   {
+    "name": "Prometheus",
+    "category": "CLOUD_MONITORING",
+    "legalName": "Prometheus (CNCF Project)",
+    "websiteUrl": "https://prometheus.io",
+    "domains": [
+      "prometheus.io"
+    ]
+  },
+  {
     "name": "PubMatic",
     "category": "MARKETING",
     "domains": [
@@ -4721,6 +6691,17 @@
     "privacyPolicyUrl": "https://www.pulsepoint.com/legal/platform-privacy-policy"
   },
   {
+    "name": "Pulumi",
+    "category": "ENGINEERING",
+    "headquarterAddress": "Seattle, WA, United States",
+    "legalName": "Pulumi Corporation",
+    "websiteUrl": "https://www.pulumi.com",
+    "privacyPolicyUrl": "https://www.pulumi.com/privacy/",
+    "domains": [
+      "pulumi.com"
+    ]
+  },
+  {
     "name": "Puzzle",
     "headquarterAddress": "575 Market Street, Floor 5, San Francisco, CA 94105, USA",
     "legalName": "Puzzle Financial Inc.",
@@ -4738,6 +6719,14 @@
     "termsOfServiceUrl": "https://puzzle.io/legal/terms-of-service",
     "domains": [
       "puzzle.io"
+    ]
+  },
+  {
+    "name": "Pydantic Logfire",
+    "category": "CLOUD_MONITORING",
+    "websiteUrl": "https://pydantic.dev/logfire",
+    "domains": [
+      "pydantic.dev"
     ]
   },
   {
@@ -4761,6 +6750,16 @@
     "termsOfServiceUrl": "https://www.usepylon.com/terms",
     "domains": [
       "usepylon.com"
+    ]
+  },
+  {
+    "name": "PyPI",
+    "category": "ENGINEERING",
+    "legalName": "Python Software Foundation",
+    "websiteUrl": "https://pypi.org",
+    "termsOfServiceUrl": "https://pypi.org/policy/terms-of-use/",
+    "domains": [
+      "pypi.org"
     ]
   },
   {
@@ -4796,6 +6795,23 @@
     "privacyPolicyUrl": "https://www.quantcast.com/privacy/"
   },
   {
+    "name": "Qovery",
+    "category": "CLOUD_PROVIDER",
+    "headquarterAddress": "Paris, France",
+    "legalName": "Qovery SAS",
+    "websiteUrl": "https://www.qovery.com/",
+    "privacyPolicyUrl": "https://www.qovery.com/privacy-policy",
+    "serviceLevelAgreementUrl": "https://www.qovery.com/service-level-agreement",
+    "dataProcessingAgreementUrl": "https://www.qovery.com/data-processing-agreement",
+    "statusPageUrl": "https://status.qovery.com",
+    "termsOfServiceUrl": "https://www.qovery.com/terms-of-service",
+    "securityPageUrl": "https://www.qovery.com/security",
+    "trustPageUrl": "https://www.qovery.com/trust",
+    "domains": [
+      "qovery.com"
+    ]
+  },
+  {
     "name": "Qualaroo",
     "category": "MARKETING",
     "domains": [
@@ -4829,6 +6845,21 @@
     "privacyPolicyUrl": "https://www.quantcast.com/privacy/"
   },
   {
+    "name": "QuickBooks",
+    "category": "FINANCE",
+    "headquarterAddress": "2700 Coast Ave, Mountain View, CA 94043, USA",
+    "legalName": "Intuit Inc.",
+    "websiteUrl": "https://quickbooks.intuit.com/#",
+    "privacyPolicyUrl": "https://www.intuit.com/privacy/",
+    "statusPageUrl": "https://status.intuit.com/",
+    "termsOfServiceUrl": "https://quickbooks.intuit.com/terms/",
+    "securityPageUrl": "https://www.intuit.com/security/",
+    "trustPageUrl": "https://www.intuit.com/trust/",
+    "domains": [
+      "quickbooks.intuit.com"
+    ]
+  },
+  {
     "name": "Rack",
     "category": "OTHER",
     "domains": [
@@ -4838,6 +6869,22 @@
     "headquarterAddress": "Global (community-driven)",
     "websiteUrl": "https://rack.github.io",
     "privacyPolicyUrl": "https://github.com/rack/rack"
+  },
+  {
+    "name": "Railway",
+    "websiteUrl": "https://railway.com/",
+    "privacyPolicyUrl": "https://railway.com/legal/privacy",
+    "certifications": [
+      "SOC 2 Type II",
+      "HIPAA",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://status.railway.com/",
+    "termsOfServiceUrl": "https://railway.com/legal/terms",
+    "trustPageUrl": "https://trust.railway.com/",
+    "domains": [
+      "railway.com"
+    ]
   },
   {
     "name": "Ramp",
@@ -4876,6 +6923,24 @@
     "privacyPolicyUrl": "https://www.towerdata.com/company/privacy_policy"
   },
   {
+    "name": "RB2B",
+    "category": "MARKETING",
+    "headquarterAddress": "1401 Lavaca Street, Unit #298, Austin, TX 78701, United States",
+    "legalName": "GetEmails, LLC d/b/a RB2B",
+    "websiteUrl": "https://www.rb2b.com",
+    "privacyPolicyUrl": "https://www.rb2b.com/privacy-policy",
+    "serviceSoftwareAgreementUrl": "https://www.rb2b.com/terms-conditions",
+    "dataProcessingAgreementUrl": "https://www.rb2b.com/data-protection-addendum-dpa",
+    "subprocessorsListUrl": "https://www.rb2b.com/sub-processors-list",
+    "certifications": [
+      "SOC 2 Type II",
+      "CCPA (compliant)"
+    ],
+    "termsOfServiceUrl": "https://www.rb2b.com/terms-conditions",
+    "securityPageUrl": "https://www.rb2b.com/security",
+    "trustPageUrl": "https://retention.securitypal.com/"
+  },
+  {
     "name": "RD Station",
     "category": "MARKETING",
     "domains": [
@@ -4885,6 +6950,16 @@
     "legalName": "RD Station S.A.",
     "headquarterAddress": "Florianópolis, SC, Brazil",
     "privacyPolicyUrl": "https://legal.rdstation.com/en/privacy-policy/"
+  },
+  {
+    "name": "Recall",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Recall AI, Inc.",
+    "websiteUrl": "https://www.recall.ai/",
+    "privacyPolicyUrl": "https://www.recall.ai/privacy",
+    "domains": [
+      "recall.ai"
+    ]
   },
   {
     "name": "Reddit",
@@ -4898,6 +6973,15 @@
     "privacyPolicyUrl": "https://www.reddit.com/policies/privacy-policy"
   },
   {
+    "name": "Redis",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "websiteUrl": "https://redis.io/",
+    "termsOfServiceUrl": "https://redis.io/terms",
+    "domains": [
+      "redis.io"
+    ]
+  },
+  {
     "name": "rekmob.com",
     "category": "MARKETING",
     "domains": [
@@ -4907,6 +6991,37 @@
     "headquarterAddress": "London, United Kingdom",
     "websiteUrl": "https://rekmob.com",
     "privacyPolicyUrl": "https://rekmob.com/privacy-policy"
+  },
+  {
+    "name": "Render",
+    "headquarterAddress": "525 Brannan St., San Francisco, CA 94107",
+    "legalName": "Render Services, Inc.",
+    "websiteUrl": "https://render.com",
+    "privacyPolicyUrl": "https://render.com/privacy",
+    "serviceLevelAgreementUrl": "https://render.com/sla",
+    "dataProcessingAgreementUrl": "https://render.com/dpa",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001:2022",
+      "HIPAA",
+      "GDPR",
+      "DPF"
+    ],
+    "statusPageUrl": "https://status.render.com",
+    "termsOfServiceUrl": "https://render.com/terms",
+    "securityPageUrl": "https://render.com/security",
+    "trustPageUrl": "https://render.com/security",
+    "domains": [
+      "render.com"
+    ]
+  },
+  {
+    "name": "Replit",
+    "category": "ENGINEERING",
+    "websiteUrl": "https://replit.com",
+    "domains": [
+      "replit.com"
+    ]
   },
   {
     "name": "Resend",
@@ -4931,6 +7046,34 @@
     ]
   },
   {
+    "name": "RevenueCat",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "RevenueCat, Inc.",
+    "websiteUrl": "https://www.revenuecat.com/",
+    "privacyPolicyUrl": "https://www.revenuecat.com/privacy",
+    "statusPageUrl": "https://status.revenuecat.com",
+    "termsOfServiceUrl": "https://www.revenuecat.com/terms",
+    "securityPageUrl": "https://www.revenuecat.com/security",
+    "trustPageUrl": "https://www.revenuecat.com/trust",
+    "domains": [
+      "revenuecat.com"
+    ]
+  },
+  {
+    "name": "Revolut",
+    "headquarterAddress": "7 Westferry Circus, Canary Wharf, London, E14 4HD, United Kingdom",
+    "legalName": "Revolut Ltd.",
+    "websiteUrl": "https://www.revolut.com/fr-FR/",
+    "privacyPolicyUrl": "https://www.revolut.com/legal/privacy",
+    "statusPageUrl": "https://status.revolut.com",
+    "termsOfServiceUrl": "https://www.revolut.com/legal/terms",
+    "securityPageUrl": "https://www.revolut.com/legal/security",
+    "trustPageUrl": "https://www.revolut.com/legal/trust",
+    "domains": [
+      "revolut.com"
+    ]
+  },
+  {
     "name": "richAudience",
     "category": "MARKETING",
     "domains": [
@@ -4943,13 +7086,13 @@
   },
   {
     "name": "Rippling",
+    "category": "EMPLOYEE_MANAGEMENT",
     "headquarterAddress": "430 California Street, 11th Floor, San Francisco, CA 94104, United States",
     "legalName": "Rippling People Center, Inc.",
     "websiteUrl": "https://www.rippling.com",
     "privacyPolicyUrl": "https://app.rippling.com/legal/privacy",
     "dataProcessingAgreementUrl": "https://app.rippling.com/legal/dpa",
     "subprocessorsListUrl": "https://app.rippling.com/legal/subprocessors",
-    "category": "EMPLOYEE_MANAGEMENT",
     "certifications": [
       "SOC 1 Type 1",
       "SOC 2 Type 2",
@@ -4957,8 +7100,10 @@
       "ISO 27018",
       "CSA STAR Level 2"
     ],
-    "securityPageUrl": "https://www.rippling.com/security",
+    "statusPageUrl": "https://status.rippling.com",
     "termsOfServiceUrl": "https://app.rippling.com/legal",
+    "securityPageUrl": "https://www.rippling.com/security",
+    "trustPageUrl": "https://trust.rippling.com",
     "domains": [
       "rippling.com"
     ]
@@ -5011,10 +7156,58 @@
   {
     "name": "Salesforce",
     "category": "OTHER",
-    "websiteUrl": "https://www.salesforce.com",
-    "legalName": "Salesforce, Inc.",
     "headquarterAddress": "Salesforce Tower, 415 Mission Street, 3rd Floor, San Francisco, CA 94105, United States",
+    "legalName": "Salesforce, Inc.",
+    "websiteUrl": "https://www.salesforce.com",
     "privacyPolicyUrl": "https://www.salesforce.com/company/privacy/",
+    "serviceLevelAgreementUrl": "https://www.salesforce.com/company/terms/sla/",
+    "dataProcessingAgreementUrl": "https://www.salesforce.com/company/terms/dpa/",
+    "certifications": [
+      "SOC 2",
+      "ISO 27001",
+      "PCI DSS",
+      "EU-U.S. Privacy Shield",
+      "AICPA Trust Services Criteria",
+      "ISO 27018",
+      "CSA STAR Level 2",
+      "HIPAA",
+      "FISMA",
+      "FedRAMP",
+      "NIST",
+      "C5",
+      "IRAP",
+      "CCPA",
+      "GDPR",
+      "UK GDPR",
+      "APRA CPS 234",
+      "ISO 22301",
+      "ISO 9001",
+      "ISO 20000-1",
+      "ISO 27017",
+      "ISO 27018",
+      "ISO 27701",
+      "ISO 31000",
+      "ISO 37001",
+      "ISO 45001",
+      "ISO 50001",
+      "ISO 14001",
+      "ISO 50001",
+      "ISO 9001:2015",
+      "ISO 27001:2013",
+      "ISO 27018:2019",
+      "ISO 27701:2019",
+      "ISO 22301:2019",
+      "ISO 31000:2018",
+      "ISO 37001:2016",
+      "ISO 45001:2018",
+      "ISO 50001:2018",
+      "ISO 14001:2015",
+      "ISO 9001:2015"
+    ],
+    "statusPageUrl": "https://status.salesforce.com/",
+    "termsOfServiceUrl": "https://www.salesforce.com/company/terms/",
+    "securityPageUrl": "https://trust.salesforce.com/security/",
+    "trustPageUrl": "https://trust.salesforce.com/",
     "domains": [
       "salesforce.com",
       "force.com",
@@ -5034,22 +7227,74 @@
   },
   {
     "name": "Scaleway",
+    "category": "CLOUD_PROVIDER",
     "headquarterAddress": "8 rue de la Ville l'Evêque, 75008 Paris, France",
     "legalName": "Scaleway SAS",
     "websiteUrl": "https://www.scaleway.com/",
     "privacyPolicyUrl": "https://www.scaleway.com/en/privacy-policy/",
     "serviceLevelAgreementUrl": "https://www.scaleway.com/en/contracts/",
+    "dataProcessingAgreementUrl": "https://www.scaleway.com/en/contracts/",
     "subprocessorsListUrl": "https://www.scaleway.com/en/subprocessorlist/",
-    "category": "CLOUD_PROVIDER",
     "certifications": [
       "ISO/IEC 27001:2022",
       "HDS",
       "GDPR"
     ],
-    "securityPageUrl": "https://www.scaleway.com/en/security-and-resilience/",
     "statusPageUrl": "https://status.scaleway.com/",
+    "termsOfServiceUrl": "https://www.scaleway.com/en/contracts/",
+    "securityPageUrl": "https://www.scaleway.com/en/security-and-resilience/",
     "domains": [
       "scaleway.com"
+    ]
+  },
+  {
+    "name": "Scrapfly",
+    "category": "ENGINEERING",
+    "legalName": "Joam Intelligence, LLC",
+    "websiteUrl": "https://scrapfly.io",
+    "privacyPolicyUrl": "https://scrapfly.io/privacy-policy",
+    "dataProcessingAgreementUrl": "https://scrapfly.io/data-processing-agreement",
+    "subprocessorsListUrl": "https://scrapfly.io/data-processing-agreement#exhibit-3",
+    "certifications": [
+      "SOC 2 Type II",
+      "SOC 2 Type I",
+      "SOC 3",
+      "ISO 27001",
+      "HIPAA",
+      "GDPR",
+      "CCPA / CPRA"
+    ],
+    "statusPageUrl": "https://scrapfly.statuspage.io/",
+    "termsOfServiceUrl": "https://scrapfly.io/terms-of-service",
+    "securityPageUrl": "https://scrapfly.io/compliance",
+    "trustPageUrl": "https://trust.inc/org_695c03cda42fc2450f034183",
+    "domains": [
+      "scrapfly.io"
+    ]
+  },
+  {
+    "name": "Scribe",
+    "category": "PRODUCT_AND_DESIGN",
+    "legalName": "Colony Labs, Inc.",
+    "websiteUrl": "https://scribe.com",
+    "privacyPolicyUrl": "https://scribe.com/legal/privacy",
+    "serviceSoftwareAgreementUrl": "https://scribe.com/legal/terms",
+    "dataProcessingAgreementUrl": "https://scribe.com/legal/dpa",
+    "subprocessorsListUrl": "https://wf.scribehow.com/legal/subprocessors",
+    "certifications": [
+      "SOC 2 Type II",
+      "CCPA (compliant)",
+      "GDPR (compliant)",
+      "HIPAA (offers features to support HIPAA)",
+      "FERPA (offers features to support FERPA)"
+    ],
+    "statusPageUrl": "https://status.scribehow.com/",
+    "termsOfServiceUrl": "https://scribe.com/legal/terms",
+    "securityPageUrl": "https://scribe.com/security",
+    "trustPageUrl": "https://trust.scribehow.com/",
+    "domains": [
+      "scribe.com",
+      "scribehow.com"
     ]
   },
   {
@@ -5103,6 +7348,18 @@
     "privacyPolicyUrl": "https://www.semasio.com/privacy-policy/"
   },
   {
+    "name": "Semgrep",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "R2C, Inc.",
+    "websiteUrl": "https://semgrep.dev/",
+    "privacyPolicyUrl": "https://semgrep.dev/privacy",
+    "termsOfServiceUrl": "https://semgrep.dev/terms",
+    "securityPageUrl": "https://semgrep.dev/security",
+    "domains": [
+      "semgrep.dev"
+    ]
+  },
+  {
     "name": "Sendgrid",
     "headquarterAddress": "1801 California Street, Suite 500, Denver, CO 80202",
     "legalName": "SendGrid, Inc.",
@@ -5132,18 +7389,22 @@
   },
   {
     "name": "Sentry",
+    "category": "ENGINEERING",
     "headquarterAddress": "45 Fremont St, San Francisco, CA 94105",
     "legalName": "Sentry, Inc.",
     "websiteUrl": "https://sentry.io",
     "privacyPolicyUrl": "https://sentry.io/privacy",
     "serviceLevelAgreementUrl": "",
-    "category": "ENGINEERING",
+    "dataProcessingAgreementUrl": "https://sentry.io/legal/dpa/",
+    "subprocessorsListUrl": "https://sentry.io/legal/subprocessors/",
     "certifications": [
       "ISO/IEC 27001:2013",
       "SOC2 Type 2"
     ],
-    "securityPageUrl": "https://sentry.io/security",
     "statusPageUrl": "https://status.sentry.io/",
+    "termsOfServiceUrl": "https://sentry.io/terms/",
+    "securityPageUrl": "https://sentry.io/security",
+    "trustPageUrl": "https://sentry.io/trust/",
     "domains": [
       "sentry-cdn.com",
       "sentry.io"
@@ -5185,13 +7446,39 @@
   {
     "name": "Shopify",
     "category": "OTHER",
+    "headquarterAddress": "151 O'Connor Street, Ground Floor, Ottawa, ON K2P 2L8, Canada",
+    "legalName": "Shopify Inc.",
+    "websiteUrl": "https://www.shopify.com",
+    "privacyPolicyUrl": "https://www.shopify.com/legal/privacy",
+    "dataProcessingAgreementUrl": "https://www.shopify.com/legal/dpa",
+    "subprocessorsListUrl": "https://www.shopify.com/legal/subprocessors",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "SOC 2 Type II",
+      "PCI DSS",
+      "GDPR"
+    ],
+    "statusPageUrl": "https://www.shopifystatus.com/",
+    "termsOfServiceUrl": "https://www.shopify.com/legal/terms",
+    "securityPageUrl": "https://www.shopify.com/security",
+    "trustPageUrl": "https://www.shopify.com/trust",
     "domains": [
       "shopify.com"
-    ],
-    "websiteUrl": "https://www.shopify.com",
-    "legalName": "Shopify Inc.",
-    "headquarterAddress": "151 O'Connor Street, Ground Floor, Ottawa, ON K2P 2L8, Canada",
-    "privacyPolicyUrl": "https://www.shopify.com/legal/privacy"
+    ]
+  },
+  {
+    "name": "Shortwave",
+    "category": "COLLABORATION",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Shortwave, Inc.",
+    "websiteUrl": "https://www.shortwave.com/",
+    "privacyPolicyUrl": "https://www.shortwave.com/privacy",
+    "termsOfServiceUrl": "https://www.shortwave.com/terms",
+    "domains": [
+      "shortwave.com"
+    ]
   },
   {
     "name": "Signal",
@@ -5205,6 +7492,19 @@
     "termsOfServiceUrl": "https://signal.org/legal/#terms-of-service",
     "domains": [
       "signal.org"
+    ]
+  },
+  {
+    "name": "Signoz",
+    "category": "CLOUD_MONITORING",
+    "headquarterAddress": "Bangalore, India",
+    "legalName": "Signoz Technologies Pvt Ltd",
+    "websiteUrl": "https://signoz.io/",
+    "privacyPolicyUrl": "https://signoz.io/privacy",
+    "termsOfServiceUrl": "https://signoz.io/terms",
+    "securityPageUrl": "https://signoz.io/security",
+    "domains": [
+      "signoz.io"
     ]
   },
   {
@@ -5287,6 +7587,22 @@
     "privacyPolicyUrl": "https://smartadserver.com/company/privacy-policy/"
   },
   {
+    "name": "SMTP2GO",
+    "headquarterAddress": "Melbourne, Australia",
+    "legalName": "SMTP2GO Pty Ltd",
+    "websiteUrl": "https://www.smtp2go.com/",
+    "privacyPolicyUrl": "https://www.smtp2go.com/privacy-policy/",
+    "serviceLevelAgreementUrl": "https://www.smtp2go.com/sla/",
+    "dataProcessingAgreementUrl": "https://www.smtp2go.com/dpa/",
+    "statusPageUrl": "https://status.smtp2go.com/",
+    "termsOfServiceUrl": "https://www.smtp2go.com/terms/",
+    "securityPageUrl": "https://www.smtp2go.com/security/",
+    "trustPageUrl": "https://www.smtp2go.com/trust/",
+    "domains": [
+      "smtp2go.com"
+    ]
+  },
+  {
     "name": "Snapchat",
     "category": "MARKETING",
     "domains": [
@@ -5320,6 +7636,37 @@
     "privacyPolicyUrl": "https://snapwidget.com/privacy"
   },
   {
+    "name": "Snitcher",
+    "category": "MARKETING",
+    "headquarterAddress": "Oude Enghweg 2, 1217 JC Hilversum, Netherlands",
+    "legalName": "Snitcher B.V.",
+    "websiteUrl": "https://www.snitcher.com",
+    "privacyPolicyUrl": "https://www.snitcher.com/privacy-policy",
+    "certifications": [
+      "ISO 27001 (implementation / in progress)",
+      "GDPR-aligned data protection practices"
+    ],
+    "termsOfServiceUrl": "https://www.snitcher.com/terms-conditions",
+    "securityPageUrl": "https://trust.snitcher.com/",
+    "trustPageUrl": "https://trust.snitcher.com/",
+    "domains": [
+      "snitcher.com"
+    ]
+  },
+  {
+    "name": "Snowflake",
+    "category": "DATA_STORAGE_AND_PROCESSING",
+    "legalName": "Snowflake Inc.",
+    "websiteUrl": "https://www.snowflake.com/",
+    "privacyPolicyUrl": "https://www.snowflake.com/privacy-notice/",
+    "statusPageUrl": "https://status.snowflake.com/",
+    "termsOfServiceUrl": "https://www.snowflake.com/legal/",
+    "trustPageUrl": "https://www.snowflake.com/en/data-cloud/trust-center/",
+    "domains": [
+      "snowflake.com"
+    ]
+  },
+  {
     "name": "Snowplow",
     "category": "ANALYTICS",
     "websiteUrl": "https://snowplow.io",
@@ -5330,6 +7677,48 @@
       "snowplow.io",
       "snowplowanalytics.com"
     ]
+  },
+  {
+    "name": "Snyk",
+    "category": "SECURITY",
+    "headquarterAddress": "London, United Kingdom",
+    "legalName": "Snyk Ltd.",
+    "websiteUrl": "https://snyk.io/fr/",
+    "privacyPolicyUrl": "https://snyk.io/privacy/",
+    "statusPageUrl": "https://status.snyk.io/",
+    "termsOfServiceUrl": "https://snyk.io/terms/",
+    "securityPageUrl": "https://snyk.io/security/",
+    "trustPageUrl": "https://snyk.io/trust/",
+    "domains": [
+      "snyk.io"
+    ]
+  },
+  {
+    "name": "SolarWinds Orion",
+    "category": "CLOUD_MONITORING",
+    "headquarterAddress": "7171 Southwest Parkway, Bldg 400, Austin, Texas 78735, United States",
+    "legalName": "SolarWinds Worldwide, LLC",
+    "websiteUrl": "https://www.solarwinds.com",
+    "privacyPolicyUrl": "https://www.solarwinds.com/legal/privacy",
+    "serviceSoftwareAgreementUrl": "https://www.solarwinds.com/legal/software-services-agreement",
+    "dataProcessingAgreementUrl": "https://www.solarwinds.com/legal/legal-documents/customer-data-processing-addendum",
+    "subprocessorsListUrl": "https://www.solarwinds.com/legal/legal-documents/solarwinds-sub-processor-list",
+    "certifications": [
+      "ISO/IEC 27001:2022",
+      "SOC 2 (SOC 2 reports available on request)",
+      "GDPR / EU data protection compliance",
+      "Federal product certifications (various U.S. federal product certifications)",
+      "Sarbanes-Oxley (SOX) compliance",
+      "Common Criteria",
+      "Trade Agreement Act (TAA)",
+      "CISA Secure Software Development Attestation (SSDF)",
+      "FIPS 140",
+      "Section 508",
+      "Software Bill of Materials (SBOM)"
+    ],
+    "termsOfServiceUrl": "https://www.solarwinds.com/legal/terms",
+    "securityPageUrl": "https://www.solarwinds.com/security/security-statement",
+    "trustPageUrl": "https://www.solarwinds.com/trust-center"
   },
   {
     "name": "Sonobi",
@@ -5409,6 +7798,28 @@
     "privacyPolicyUrl": "https://www.magnite.com/legal/advertising-technology-privacy-policy/"
   },
   {
+    "name": "Sprig",
+    "category": "ANALYTICS",
+    "headquarterAddress": "71 Stevenson Street, 6th Floor, San Francisco, CA 94105, United States",
+    "legalName": "Sprig Technologies, Inc.",
+    "websiteUrl": "https://sprig.com",
+    "privacyPolicyUrl": "https://sprig.com/privacy-policy",
+    "serviceSoftwareAgreementUrl": "https://sprig.com/ssa",
+    "dataProcessingAgreementUrl": "https://sprig.com/dpa",
+    "certifications": [
+      "SOC 2 Type II",
+      "EU-U.S. Data Privacy Framework (certified)",
+      "UK Extension to the EU-U.S. Data Privacy Framework (certified)",
+      "Swiss-U.S. Data Privacy Framework (certified)"
+    ],
+    "statusPageUrl": "https://status.sprig.com/",
+    "termsOfServiceUrl": "https://sprig.com/ssa",
+    "securityPageUrl": "https://sprig.com/infosec",
+    "domains": [
+      "sprig.com"
+    ]
+  },
+  {
     "name": "Springserve",
     "category": "MARKETING",
     "domains": [
@@ -5431,6 +7842,16 @@
     "privacyPolicyUrl": "https://squeezely.tech/privacy-policy/"
   },
   {
+    "name": "Stainless",
+    "category": "ENGINEERING",
+    "legalName": "Stainless, Inc.",
+    "websiteUrl": "https://www.stainless.com",
+    "privacyPolicyUrl": "https://www.stainless.com/privacy",
+    "domains": [
+      "stainless.com"
+    ]
+  },
+  {
     "name": "Stape",
     "category": "MARKETING",
     "websiteUrl": "https://stape.io",
@@ -5439,6 +7860,28 @@
     "privacyPolicyUrl": "https://stape.io/privacy-policy",
     "domains": [
       "stape.io"
+    ]
+  },
+  {
+    "name": "Statsig",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Statsig, Inc.",
+    "websiteUrl": "https://www.statsig.com/",
+    "privacyPolicyUrl": "https://www.statsig.com/privacy",
+    "serviceSoftwareAgreementUrl": "https://www.statsig.com/terms",
+    "dataProcessingAgreementUrl": "https://www.statsig.com/legal/online-dpa",
+    "certifications": [
+      "SOC 2 Type II",
+      "EU-U.S. Data Privacy Framework (DPF) certification",
+      "UK Extension to the EU-U.S. Data Privacy Framework",
+      "Swiss-U.S. Data Privacy Framework"
+    ],
+    "statusPageUrl": "https://status.statsig.com/",
+    "termsOfServiceUrl": "https://www.statsig.com/terms",
+    "securityPageUrl": "https://www.statsig.com/trust/security",
+    "trustPageUrl": "https://www.statsig.com/trust/security",
+    "domains": [
+      "statsig.com"
     ]
   },
   {
@@ -5493,6 +7936,22 @@
     ]
   },
   {
+    "name": "Stytch",
+    "category": "IDENTITY_PROVIDER",
+    "headquarterAddress": "548 Market St, PMB 81678, San Francisco, CA 94104, United States",
+    "legalName": "Stytch, Inc.",
+    "websiteUrl": "https://stytch.com",
+    "privacyPolicyUrl": "https://stytch.com/legal/privacy-policy",
+    "dataProcessingAgreementUrl": "https://stytch.com/legal/data-processing-addendum",
+    "subprocessorsListUrl": "https://stytch.com/legal/subprocessors",
+    "statusPageUrl": "https://status.stytch.com",
+    "termsOfServiceUrl": "https://stytch.com/legal/terms-of-service",
+    "securityPageUrl": "https://stytch.com/security",
+    "domains": [
+      "stytch.com"
+    ]
+  },
+  {
     "name": "Supabase",
     "headquarterAddress": "3500 S Dupont Hwy, United States",
     "legalName": "Supabase, Inc.",
@@ -5516,14 +7975,47 @@
     ]
   },
   {
+    "name": "Superhuman",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Superhuman, Inc.",
+    "websiteUrl": "https://superhuman.com/",
+    "privacyPolicyUrl": "https://superhuman.com/privacy",
+    "termsOfServiceUrl": "https://superhuman.com/terms",
+    "domains": [
+      "superhuman.com"
+    ]
+  },
+  {
     "name": "SurveyMonkey",
     "category": "OTHER",
-    "websiteUrl": "https://www.surveymonkey.com",
-    "legalName": "Momentive Inc.",
     "headquarterAddress": "910 Park Place, Suite 300, San Mateo, CA 94403, United States",
+    "legalName": "Momentive Inc.",
+    "websiteUrl": "https://www.surveymonkey.com",
     "privacyPolicyUrl": "https://www.surveymonkey.com/mp/legal/privacy/",
+    "serviceLevelAgreementUrl": "https://www.surveymonkey.com/mp/legal/service-level-agreement/",
+    "dataProcessingAgreementUrl": "https://www.surveymonkey.com/mp/legal/data-processing-agreement/",
+    "statusPageUrl": "https://status.surveymonkey.com/",
+    "termsOfServiceUrl": "https://www.surveymonkey.com/mp/legal/terms/",
+    "securityPageUrl": "https://www.surveymonkey.com/mp/legal/security/",
+    "trustPageUrl": "https://www.surveymonkey.com/mp/legal/trust/",
     "domains": [
       "surveymonkey.com"
+    ]
+  },
+  {
+    "name": "Svix",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Svix, Inc.",
+    "websiteUrl": "https://www.svix.com/",
+    "privacyPolicyUrl": "https://www.svix.com/privacy",
+    "serviceLevelAgreementUrl": "https://www.svix.com/sla",
+    "dataProcessingAgreementUrl": "https://www.svix.com/dpa",
+    "statusPageUrl": "https://status.svix.com",
+    "termsOfServiceUrl": "https://www.svix.com/terms",
+    "securityPageUrl": "https://www.svix.com/security",
+    "trustPageUrl": "https://www.svix.com/trust",
+    "domains": [
+      "svix.com"
     ]
   },
   {
@@ -5595,6 +8087,24 @@
     "privacyPolicyUrl": "https://www.tapad.com/privacy"
   },
   {
+    "name": "Tapfiliate",
+    "category": "MARKETING",
+    "headquarterAddress": "Joop Geesinkweg 701, Rembrandt room, 1114 AB Amsterdam-Duivendrecht, the Netherlands",
+    "legalName": "Tapfiliate B.V.",
+    "websiteUrl": "https://tapfiliate.com",
+    "privacyPolicyUrl": "https://tapfiliate.com/privacy/",
+    "subprocessorsListUrl": "https://tapfiliate.com/data-processors/",
+    "certifications": [
+      "GDPR (states compliance with GDPR)"
+    ],
+    "statusPageUrl": "https://status.tapfiliate.com/",
+    "termsOfServiceUrl": "https://tapfiliate.com/terms/",
+    "securityPageUrl": "https://support.tapfiliate.com/en/articles/5897960-how-tapfiliate-keeps-your-data-safe",
+    "domains": [
+      "tapfiliate.com"
+    ]
+  },
+  {
     "name": "Tappx",
     "category": "MARKETING",
     "domains": [
@@ -5637,6 +8147,88 @@
     "legalName": "Teads SA",
     "headquarterAddress": "97 rue du Cherche-Midi, 75006 Paris, France",
     "privacyPolicyUrl": "https://www.teads.com/privacy-policy/"
+  },
+  {
+    "name": "Temporal",
+    "category": "ENGINEERING",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Temporal Technologies, Inc.",
+    "websiteUrl": "https://temporal.io/",
+    "privacyPolicyUrl": "https://temporal.io/privacy",
+    "statusPageUrl": "https://status.temporal.io",
+    "termsOfServiceUrl": "https://temporal.io/terms",
+    "securityPageUrl": "https://temporal.io/security",
+    "domains": [
+      "temporal.io"
+    ]
+  },
+  {
+    "name": "Tencent",
+    "category": "CLOUD_MONITORING",
+    "headquarterAddress": "Tencent Binhai Building, No. 33, Haitian 2nd Road, Nanshan District, Shenzhen, Guangdong Province, China, 518054",
+    "legalName": "Tencent Holdings Limited",
+    "websiteUrl": "https://www.tencent.com",
+    "privacyPolicyUrl": "https://www.tencent.com/en-us/privacy-policy.html",
+    "serviceLevelAgreementUrl": "https://www.tencentcloud.com/document/product/301/12905",
+    "serviceSoftwareAgreementUrl": "https://www.tencentcloud.com/document/product/301/9248",
+    "dataProcessingAgreementUrl": "https://intl.cloud.tencent.com/zh/document/product/1085/47312",
+    "subprocessorsListUrl": "https://intl.cloud.tencent.com/document/product/1033/32281",
+    "certifications": [
+      "ISO 27001",
+      "ISO 27017",
+      "ISO 27018",
+      "ISO 27701",
+      "ISO 29151",
+      "PCI DSS",
+      "CSA STAR",
+      "C5 Audit",
+      "MTCS T3",
+      "TISAX",
+      "HIPAA",
+      "SOC 2 Type II",
+      "K-ISMS",
+      "MPAA",
+      "OSPAR Audit"
+    ],
+    "termsOfServiceUrl": "https://www.tencent.com/en-us/service-agreement.html",
+    "securityPageUrl": "https://www.tencent.com/en-us/esg/social/data-security.html",
+    "trustPageUrl": "https://www.tencent.com/en-us/compliance.html"
+  },
+  {
+    "name": "Tencent Cloud",
+    "category": "ANALYTICS",
+    "legalName": "Tencent Cloud Computing (Beijing) Co., Ltd.",
+    "websiteUrl": "https://www.tencentcloud.com",
+    "privacyPolicyUrl": "https://www.tencentcloud.com/document/product/301/17345",
+    "serviceLevelAgreementUrl": "https://www.tencentcloud.com/document/product/301/12905",
+    "dataProcessingAgreementUrl": "https://www.tencentcloud.com/document/product/301/17347",
+    "certifications": [
+      "ISO 27001",
+      "ISO 9001",
+      "ISO 20000",
+      "ISO 29151",
+      "ISO 22301",
+      "ISO 27017",
+      "ISO 27018",
+      "ISO 27701",
+      "BS10012:2017",
+      "CSA STAR (Gold)",
+      "SOC Audit",
+      "PCI DSS",
+      "C5",
+      "MTCS",
+      "TISAX",
+      "KISMS",
+      "OSPAR",
+      "HIPAA (claimed/compliance)",
+      "NIST CSF",
+      "GxP Compliance",
+      "Data Protection Trustmark (DPTM)",
+      "CISPE Code of Conduct"
+    ],
+    "termsOfServiceUrl": "https://www.tencentcloud.com/document/product/301/9248",
+    "securityPageUrl": "https://www.tencentcloud.com/services/compliance",
+    "trustPageUrl": "https://www.tencentcloud.com/services/compliance"
   },
   {
     "name": "Termly",
@@ -5685,6 +8277,31 @@
     ]
   },
   {
+    "name": "TimescaleDB",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Timescale, Inc.",
+    "websiteUrl": "https://github.com/timescale/timescaledb",
+    "domains": [
+      "github.com"
+    ]
+  },
+  {
+    "name": "Tinybird",
+    "category": "ANALYTICS",
+    "websiteUrl": "https://www.tinybird.co",
+    "domains": [
+      "tinybird.co"
+    ]
+  },
+  {
+    "name": "Tiptap",
+    "websiteUrl": "https://tiptap.dev/",
+    "privacyPolicyUrl": "https://tiptap.dev/privacy-policy",
+    "domains": [
+      "tiptap.dev"
+    ]
+  },
+  {
     "name": "Together AI",
     "headquarterAddress": "251 Rhode Island Street, Suite 205, San Francisco, CA 94103, United States",
     "legalName": "Together Computer, Inc.",
@@ -5702,6 +8319,49 @@
     "termsOfServiceUrl": "https://www.together.ai/terms-of-service",
     "domains": [
       "together.ai"
+    ]
+  },
+  {
+    "name": "Treasure Data",
+    "category": "ANALYTICS",
+    "headquarterAddress": "2440 W El Camino Real, Suite 101, Mountain View, CA 94040, United States",
+    "legalName": "Treasure Data, Inc.",
+    "websiteUrl": "https://www.treasure.ai",
+    "privacyPolicyUrl": "https://www.treasure.ai/privacy-statement/",
+    "serviceLevelAgreementUrl": "https://www.treasure.ai/hubfs/assets/pdfs/legal/SLA-Exhibit-100725.pdf?hsLang=en",
+    "serviceSoftwareAgreementUrl": "https://www.treasure.ai/hubfs/assets/pdfs/legal/Treasure-Data-Terms-of-Service-20260506.pdf?hsLang=en",
+    "dataProcessingAgreementUrl": "https://www.treasure.ai/hubfs/assets/pdfs/legal/Treasure-Data-DPA-20260506.pdf?hsLang=en",
+    "subprocessorsListUrl": "https://www.treasure.ai/terms/sub-processors/",
+    "termsOfServiceUrl": "https://www.treasure.ai/terms/",
+    "securityPageUrl": "https://www.treasure.ai/security/",
+    "trustPageUrl": "https://trust.treasure.ai/",
+    "domains": [
+      "treasure.ai",
+      "treasuredata.co.jp",
+      "treasuredata.com"
+    ]
+  },
+  {
+    "name": "Trello",
+    "category": "COLLABORATION",
+    "headquarterAddress": "New York, NY",
+    "legalName": "Trello, Inc.",
+    "websiteUrl": "https://trello.com/fr",
+    "privacyPolicyUrl": "https://trello.com/privacy",
+    "statusPageUrl": "https://trello.status.atlassian.com",
+    "termsOfServiceUrl": "https://trello.com/terms",
+    "securityPageUrl": "https://trello.com/security",
+    "trustPageUrl": "https://trello.com/trust",
+    "domains": [
+      "trello.com"
+    ]
+  },
+  {
+    "name": "Trigger.dev",
+    "category": "ENGINEERING",
+    "websiteUrl": "https://trigger.dev",
+    "domains": [
+      "trigger.dev"
     ]
   },
   {
@@ -5750,13 +8410,14 @@
   },
   {
     "name": "Twilio",
+    "category": "COLLABORATION",
     "headquarterAddress": "101 Spear Street, Fifth Floor, San Francisco, CA 94105",
     "legalName": "Twilio, Inc.",
     "websiteUrl": "https://www.twilio.com/",
     "privacyPolicyUrl": "https://www.twilio.com/en-us/legal/privacy",
+    "serviceLevelAgreementUrl": "https://www.twilio.com/en-us/legal/service-level-agreement",
     "dataProcessingAgreementUrl": "https://www.twilio.com/en-us/legal/data-protection-addendum",
     "subprocessorsListUrl": "https://www.twilio.com/en-us/legal/sub-processors",
-    "category": "COLLABORATION",
     "certifications": [
       "SOC 2 Type 2",
       "GDPR",
@@ -5769,12 +8430,26 @@
       "PCI DSS",
       "PCI DSS v4.0.0"
     ],
-    "securityPageUrl": "https://www.twilio.com/en-us/security",
-    "trustPageUrl": "https://security.twilio.com/",
     "statusPageUrl": "https://status.twilio.com/",
     "termsOfServiceUrl": "https://www.twilio.com/en-us/legal/tos",
+    "securityPageUrl": "https://www.twilio.com/en-us/security",
+    "trustPageUrl": "https://security.twilio.com/",
     "domains": [
       "twilio.com"
+    ]
+  },
+  {
+    "name": "Twingate",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Twingate, Inc.",
+    "websiteUrl": "https://www.twingate.com",
+    "privacyPolicyUrl": "https://www.twingate.com/privacy",
+    "statusPageUrl": "https://status.twingate.com",
+    "termsOfServiceUrl": "https://www.twingate.com/terms",
+    "securityPageUrl": "https://www.twingate.com/security",
+    "trustPageUrl": "https://www.twingate.com/trust",
+    "domains": [
+      "twingate.com"
     ]
   },
   {
@@ -5791,13 +8466,15 @@
   {
     "name": "Typeform",
     "category": "OTHER",
+    "headquarterAddress": "Carrer de Bac de Roda, 163, 08018 Barcelona, Spain",
+    "legalName": "TYPEFORM S.L.",
+    "websiteUrl": "https://www.typeform.com",
+    "privacyPolicyUrl": "https://www.typeform.com/help/a/privacy-policy-8631969/",
+    "termsOfServiceUrl": "https://www.typeform.com/terms-of-service/",
+    "securityPageUrl": "https://www.typeform.com/security/",
     "domains": [
       "typeform.com"
-    ],
-    "websiteUrl": "https://www.typeform.com",
-    "legalName": "TYPEFORM S.L.",
-    "headquarterAddress": "Carrer de Bac de Roda, 163, 08018 Barcelona, Spain",
-    "privacyPolicyUrl": "https://www.typeform.com/help/a/privacy-policy-8631969/"
+    ]
   },
   {
     "name": "TYPO3",
@@ -5814,10 +8491,12 @@
   {
     "name": "Umami",
     "category": "ANALYTICS",
-    "websiteUrl": "https://umami.is",
-    "legalName": "Umami Software, Inc.",
     "headquarterAddress": "San Francisco, CA, United States",
+    "legalName": "Umami Software, Inc.",
+    "websiteUrl": "https://umami.is",
     "privacyPolicyUrl": "https://umami.is/privacy",
+    "dataProcessingAgreementUrl": "https://umami.is/dpa",
+    "termsOfServiceUrl": "https://umami.is/terms",
     "domains": [
       "umami.is"
     ]
@@ -5857,6 +8536,20 @@
     "privacyPolicyUrl": "https://unruly.co/legal/privacy/"
   },
   {
+    "name": "UpCloud",
+    "headquarterAddress": "Aleksanterinkatu 15 B, 7th floor, 00100 Helsinki, Finland",
+    "legalName": "UpCloud Oy",
+    "websiteUrl": "https://upcloud.com",
+    "privacyPolicyUrl": "https://upcloud.com/privacy-notice/",
+    "serviceLevelAgreementUrl": "https://upcloud.com/terms-of-service/#service-level-agreement",
+    "dataProcessingAgreementUrl": "https://upcloud.com/terms-of-service#data-processing-agreement",
+    "statusPageUrl": "https://status.upcloud.com",
+    "termsOfServiceUrl": "https://upcloud.com/terms-of-service/",
+    "domains": [
+      "upcloud.com"
+    ]
+  },
+  {
     "name": "Upstash",
     "headquarterAddress": "6202 Via De Adrianna, San Jose, CA 95120, United States",
     "legalName": "Upstash, Inc.",
@@ -5880,6 +8573,20 @@
     ]
   },
   {
+    "name": "UptimeRobot",
+    "category": "CLOUD_MONITORING",
+    "legalName": "Team Uptime Robot Ltd.",
+    "websiteUrl": "https://uptimerobot.com/",
+    "privacyPolicyUrl": "https://uptimerobot.com/privacy",
+    "dataProcessingAgreementUrl": "https://uptimerobot.com/dpa",
+    "statusPageUrl": "https://status.uptimerobot.com",
+    "termsOfServiceUrl": "https://uptimerobot.com/terms",
+    "securityPageUrl": "https://uptimerobot.com/security",
+    "domains": [
+      "uptimerobot.com"
+    ]
+  },
+  {
     "name": "Usabilla",
     "category": "MARKETING",
     "websiteUrl": "https://usabilla.com",
@@ -5888,6 +8595,47 @@
     "privacyPolicyUrl": "https://usabilla.com/privacy",
     "domains": [
       "usabilla.com"
+    ]
+  },
+  {
+    "name": "Usermaven",
+    "category": "ANALYTICS",
+    "headquarterAddress": "16192 Coastal Highway, Lewes, Delaware 19958, USA",
+    "legalName": "Usermaven Inc.",
+    "websiteUrl": "https://usermaven.com",
+    "privacyPolicyUrl": "https://usermaven.com/privacy",
+    "serviceSoftwareAgreementUrl": "https://usermaven.com/terms-of-service",
+    "certifications": [
+      "GDPR (EU & UK) compliance",
+      "CCPA / CPRA compliance",
+      "LGPD (Brazil) compliance",
+      "DPDP Act (India) compliance",
+      "Standard Contractual Clauses (SCCs) for international transfers"
+    ],
+    "statusPageUrl": "https://status.usermaven.com/",
+    "termsOfServiceUrl": "https://usermaven.com/terms-of-service",
+    "domains": [
+      "usermaven.com"
+    ]
+  },
+  {
+    "name": "UserWay",
+    "headquarterAddress": "1000 N. West Street, Suite 1410, Wilmington, DE 19801, USA",
+    "legalName": "UserWay Inc.",
+    "websiteUrl": "https://userway.org",
+    "privacyPolicyUrl": "https://userway.org/privacy/",
+    "serviceSoftwareAgreementUrl": "https://userway.org/terms/",
+    "certifications": [
+      "ISO 27001",
+      "SOC 2 Type II",
+      "GDPR compliance",
+      "CCPA compliance"
+    ],
+    "termsOfServiceUrl": "https://userway.org/terms/",
+    "securityPageUrl": "https://trust.levelaccess.com/",
+    "trustPageUrl": "https://help.userway.org/en/collections/17078126-userway-trust-center-powered-by-level-access",
+    "domains": [
+      "userway.org"
     ]
   },
   {
@@ -5974,6 +8722,18 @@
     "privacyPolicyUrl": "https://vimeo.com/privacy"
   },
   {
+    "name": "Visual Studio Code",
+    "headquarterAddress": "Redmond, WA, USA",
+    "legalName": "Microsoft Corporation",
+    "websiteUrl": "https://code.visualstudio.com/",
+    "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
+    "termsOfServiceUrl": "https://code.visualstudio.com/terms",
+    "securityPageUrl": "https://code.visualstudio.com/security",
+    "domains": [
+      "code.visualstudio.com"
+    ]
+  },
+  {
     "name": "Visual Website Optimizer",
     "category": "OTHER",
     "domains": [
@@ -6035,6 +8795,15 @@
     "privacyPolicyUrl": "https://www.vuble.tv/privacy-policy/"
   },
   {
+    "name": "Vultr",
+    "category": "CLOUD_PROVIDER",
+    "legalName": "The Constant Company, LLC",
+    "websiteUrl": "https://www.vultr.com/",
+    "domains": [
+      "vultr.com"
+    ]
+  },
+  {
     "name": "Webflow",
     "headquarterAddress": "398 11th Street, 2nd Floor, San Francisco, CA 94103, United States",
     "legalName": "Webflow, Inc.",
@@ -6083,13 +8852,15 @@
   {
     "name": "WhatsApp",
     "category": "OTHER",
+    "headquarterAddress": "1 Hacker Way, Menlo Park, CA 94025, United States",
+    "legalName": "WhatsApp LLC",
+    "websiteUrl": "https://www.whatsapp.com",
+    "privacyPolicyUrl": "https://www.whatsapp.com/legal/privacy-policy",
+    "termsOfServiceUrl": "https://www.whatsapp.com/legal/terms-of-service",
+    "securityPageUrl": "https://www.whatsapp.com/security",
     "domains": [
       "whatsapp.com"
-    ],
-    "websiteUrl": "https://www.whatsapp.com",
-    "legalName": "WhatsApp LLC",
-    "headquarterAddress": "1 Hacker Way, Menlo Park, CA 94025, United States",
-    "privacyPolicyUrl": "https://www.whatsapp.com/legal/privacy-policy"
+    ]
   },
   {
     "name": "Wikimedia",
@@ -6103,12 +8874,30 @@
     "privacyPolicyUrl": "https://foundation.wikimedia.org/wiki/Privacy_policy"
   },
   {
+    "name": "Wise",
+    "category": "FINANCE",
+    "headquarterAddress": "London, United Kingdom",
+    "legalName": "Wise Payments Limited",
+    "websiteUrl": "https://wise.com/fr/",
+    "privacyPolicyUrl": "https://wise.com/fr/privacy",
+    "statusPageUrl": "https://status.wise.com",
+    "termsOfServiceUrl": "https://wise.com/fr/terms",
+    "securityPageUrl": "https://wise.com/fr/security",
+    "trustPageUrl": "https://wise.com/fr/trust",
+    "domains": [
+      "wise.com"
+    ]
+  },
+  {
     "name": "Wistia",
     "category": "OTHER",
-    "websiteUrl": "https://wistia.com",
-    "legalName": "Wistia, Inc.",
     "headquarterAddress": "17 Tudor Street, Cambridge, MA 02139, United States",
+    "legalName": "Wistia, Inc.",
+    "websiteUrl": "https://wistia.com",
     "privacyPolicyUrl": "https://wistia.com/privacy",
+    "statusPageUrl": "https://wistia.statuspage.io",
+    "termsOfServiceUrl": "https://wistia.com/terms",
+    "securityPageUrl": "https://wistia.com/security",
     "domains": [
       "wistia.com",
       "wistia.net"
@@ -6160,6 +8949,30 @@
     "headquarterAddress": "60 29th Street, Suite 343, San Francisco, CA 94110, United States",
     "websiteUrl": "https://wordpress.org",
     "privacyPolicyUrl": "https://wordpress.org/about/privacy/"
+  },
+  {
+    "name": "WorkOS",
+    "category": "IDENTITY_PROVIDER",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "WorkOS, Inc.",
+    "websiteUrl": "https://workos.com/",
+    "privacyPolicyUrl": "https://workos.com/privacy",
+    "serviceLevelAgreementUrl": "https://workos.com/sla",
+    "dataProcessingAgreementUrl": "https://workos.com/dpa",
+    "subprocessorsListUrl": "https://trust.workos.com/subprocessors",
+    "certifications": [
+      "SOC 2 Type 2",
+      "HIPAA",
+      "GDPR",
+      "CCPA"
+    ],
+    "statusPageUrl": "https://status.workos.com",
+    "termsOfServiceUrl": "https://workos.com/terms",
+    "securityPageUrl": "https://workos.com/security",
+    "trustPageUrl": "https://workos.com/trust",
+    "domains": [
+      "workos.com"
+    ]
   },
   {
     "name": "WP-Glogin",
@@ -6274,6 +9087,39 @@
     "privacyPolicyUrl": "https://yithemes.com/privacy-policy/"
   },
   {
+    "name": "Yubico",
+    "category": "SECURITY",
+    "headquarterAddress": "Gävlegatan 22, 113 30 Stockholm, Sweden",
+    "legalName": "Yubico AB",
+    "websiteUrl": "https://www.yubico.com/",
+    "privacyPolicyUrl": "https://www.yubico.com/support/terms-conditions/privacy-notice/",
+    "trustPageUrl": "https://www.yubico.com/product-documentation/security-advisories/",
+    "domains": [
+      "yubico.com"
+    ]
+  },
+  {
+    "name": "Zapier",
+    "category": "ENGINEERING",
+    "headquarterAddress": "San Francisco, CA",
+    "legalName": "Zapier, Inc.",
+    "websiteUrl": "https://zapier.com",
+    "privacyPolicyUrl": "https://zapier.com/privacy",
+    "serviceLevelAgreementUrl": "https://zapier.com/terms/",
+    "dataProcessingAgreementUrl": "https://zapier.com/legal/data-processing-addendum",
+    "certifications": [
+      "SOC 2 Type 2",
+      "SOC 3"
+    ],
+    "statusPageUrl": "https://status.zapier.com/",
+    "termsOfServiceUrl": "https://zapier.com/legal/terms-of-service",
+    "securityPageUrl": "https://zapier.com/security",
+    "trustPageUrl": "https://trust.zapier.com/",
+    "domains": [
+      "zapier.com"
+    ]
+  },
+  {
     "name": "Zendesk",
     "category": "OTHER",
     "domains": [
@@ -6310,12 +9156,14 @@
   },
   {
     "name": "Zoom",
+    "category": "COLLABORATION",
     "headquarterAddress": "950 Page Mill Rd, Palo Alto, CA 94306",
     "legalName": "Zoom Video Communications, Inc.",
     "websiteUrl": "https://www.zoom.com",
     "privacyPolicyUrl": "https://zoom.us/privacy",
     "serviceLevelAgreementUrl": "https://explore.zoom.us/en/premier-support-terms/",
-    "category": "COLLABORATION",
+    "dataProcessingAgreementUrl": "https://explore.zoom.us/en/privacy/#data_processing",
+    "subprocessorsListUrl": "https://explore.zoom.us/en/subprocessors/",
     "certifications": [
       "ISO/IEC 27001:2022",
       "ISO/IEC 27017:2015",
@@ -6337,8 +9185,10 @@
       "PCI DSS",
       "GDPR"
     ],
-    "securityPageUrl": "https://zoom.us/trust/security",
     "statusPageUrl": "https://status.zoom.us/",
+    "termsOfServiceUrl": "https://explore.zoom.us/en/terms/",
+    "securityPageUrl": "https://zoom.us/trust/security",
+    "trustPageUrl": "https://explore.zoom.us/en/trust/",
     "domains": [
       "zoom.com",
       "zoom.us"

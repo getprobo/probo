@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,7 @@ type SAMLConfig struct {
 	Certificate                       string `json:"certificate"`
 	PrivateKey                        string `json:"private-key"`
 	DomainVerificationIntervalSeconds int    `json:"domain-verification-interval-seconds"`
-	DomainVerificationResolverAddr    string `json:"domain-verification-resolver-addr"`
+	DomainVerificationResolverAddr    string `json:"domain-verification-resolver-addr,omitempty"`
 }
 
 func (c SAMLConfig) SessionDurationTime() time.Duration {

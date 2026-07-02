@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,12 +23,19 @@ func NewBuiltinRegistry() *Registry {
 	r := NewRegistry()
 	for _, reg := range []*Registration{
 		anthropicRegistration(),
+		apolloRegistration(),
 		asanaRegistration(),
+		betterStackRegistration(),
 		bitbucketRegistration(),
+		brevoRegistration(),
 		brexRegistration(),
+		clerkRegistration(),
+		clickhouseRegistration(),
 		clickupRegistration(),
 		cloudflareRegistration(),
 		cursorRegistration(),
+		datadogRegistration(),
+		deepgramRegistration(),
 		docusignRegistration(),
 		grafanaRegistration(),
 		githubRegistration(),
@@ -36,24 +43,36 @@ func NewBuiltinRegistry() *Registry {
 		googleWorkspaceRegistration(),
 		herokuRegistration(),
 		hubspotRegistration(),
+		incidentioRegistration(),
 		intercomRegistration(),
+		langfuseRegistration(),
 		linearRegistration(),
+		mercuryRegistration(),
 		metabaseRegistration(),
 		microsoft365Registration(),
 		mondayRegistration(),
+		neonRegistration(),
 		netlifyRegistration(),
 		notionRegistration(),
+		oktaRegistration(),
 		onePasswordRegistration(),
 		openaiRegistration(),
+		openrouterRegistration(),
 		posthogRegistration(),
 		pagerdutyRegistration(),
+		pylonRegistration(),
+		qoveryRegistration(),
+		renderRegistration(),
 		resendRegistration(),
+		sendgridRegistration(),
 		sentryRegistration(),
+		signozRegistration(),
 		slackRegistration(),
 		supabaseRegistration(),
 		tailscaleRegistration(),
 		tallyRegistration(),
 		vercelRegistration(),
+		zendeskRegistration(),
 	} {
 		if err := r.Register(reg); err != nil {
 			panic(err)

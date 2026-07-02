@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,7 +40,7 @@ type providerOrgConfig struct {
 }
 
 // providerOrgConfigs is the single source of truth that the three
-// AccessSource picker resolvers (ProviderOrganizations,
+// AccessReviewSource picker resolvers (ProviderOrganizations,
 // SelectedOrganization, NeedsConfiguration) dispatch through. Adding a
 // provider takes one entry here, not three switch arms.
 var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
@@ -108,6 +108,14 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
+	coredata.ConnectorProviderDocuSign: {
+		ListOrgs: drivers.ListDocuSignOrganizations,
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](c)
+			return s.AccountID
+		},
+		NeedsPicker: true,
+	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
 	// (subdomain for PagerDuty, team_id or fallback /v2/user.id for
 	// Vercel). No picker UI; NeedsPicker = false.
@@ -121,6 +129,22 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.VercelConnectorSettings](c)
 			return s.TeamID
+		},
+	},
+	// Pattern 2-auto: the API domain is captured during the OAuth
+	// callback from Datadog's `domain` parameter; no picker UI.
+	coredata.ConnectorProviderDatadog: {
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](c)
+			return s.Domain
+		},
+	},
+	// Pattern 2-auto: the subdomain is collected at initiate and persisted
+	// from the signed OAuth state on the callback; no picker UI.
+	coredata.ConnectorProviderZendesk: {
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](c)
+			return s.Subdomain
 		},
 	},
 }

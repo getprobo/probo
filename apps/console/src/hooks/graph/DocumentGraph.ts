@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,6 @@ import { graphql } from "relay-runtime";
 
 import type { DocumentGraphBulkExportDocumentsMutation } from "#/__generated__/core/DocumentGraphBulkExportDocumentsMutation.graphql";
 import type { DocumentGraphDeleteMutation } from "#/__generated__/core/DocumentGraphDeleteMutation.graphql";
-import type { DocumentGraphSendSigningNotificationsMutation } from "#/__generated__/core/DocumentGraphSendSigningNotificationsMutation.graphql";
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
@@ -63,28 +62,6 @@ export function useBulkDeleteDocumentsMutation() {
     successMessage: __("Documents deleted successfully."),
     errorMessage: __("Failed to delete documents"),
   });
-}
-
-const sendSigningNotificationsMutation = graphql`
-  mutation DocumentGraphSendSigningNotificationsMutation(
-    $input: SendSigningNotificationsInput!
-  ) {
-    sendSigningNotifications(input: $input) {
-      success
-    }
-  }
-`;
-
-export function useSendSigningNotificationsMutation() {
-  const { __ } = useTranslate();
-
-  return useMutationWithToasts<DocumentGraphSendSigningNotificationsMutation>(
-    sendSigningNotificationsMutation,
-    {
-      successMessage: __("Signing notifications sent successfully."),
-      errorMessage: __("Failed to send signing notifications"),
-    },
-  );
 }
 
 const bulkExportDocumentsMutation = graphql`

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,12 +25,14 @@ import { moveToCategoryDropdownQuery } from "./MoveToCategoryDropdown";
 interface MoveToCategorySelectProps {
   currentCategoryId?: string;
   currentCategoryName?: string;
+  highlight?: boolean;
   onSelect: (categoryId: string) => void;
 }
 
 export function MoveToCategorySelect({
   currentCategoryId,
   currentCategoryName,
+  highlight = false,
   onSelect,
 }: MoveToCategorySelectProps) {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
@@ -57,7 +59,8 @@ export function MoveToCategorySelect({
 
   return (
     <Select
-      variant="ghost"
+      variant={highlight ? "editor" : "ghost"}
+      className={highlight ? undefined : "px-0"}
       placeholder={currentCategoryName ?? <span className="text-txt-tertiary">-</span>}
       onValueChange={handleValueChange}
       onOpenChange={handleOpenChange}
@@ -77,7 +80,7 @@ interface MoveToCategoryOptionsProps {
 
 function MoveToCategoryOptions({ queryRef }: MoveToCategoryOptionsProps) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(moveToCategoryDropdownQuery, queryRef);
+  const data = usePreloadedQuery<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     return null;

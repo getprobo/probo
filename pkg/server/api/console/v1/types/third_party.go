@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -86,7 +86,7 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		WebsiteURL:                    v.WebsiteURL,
 		Category:                      v.Category,
 		ShowOnTrustCenter:             v.ShowOnTrustCenter,
-		FirstLevel:                    v.FirstLevel,
+		Level:                         v.Level,
 		Countries:                     v.Countries,
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,
@@ -101,6 +101,12 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 	if v.SecurityOwnerID != nil {
 		object.SecurityOwner = &Profile{
 			ID: *v.SecurityOwnerID,
+		}
+	}
+
+	if v.ParentThirdPartyID != nil {
+		object.ParentThirdParty = &ThirdParty{
+			ID: *v.ParentThirdPartyID,
 		}
 	}
 

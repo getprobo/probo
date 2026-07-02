@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -60,7 +60,7 @@ export function SAMLSettingsPage(props: {
 
   const { __ } = useTranslate();
 
-  const { organization } = usePreloadedQuery(samlSettingsPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<SAMLSettingsPageQuery>(samlSettingsPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }

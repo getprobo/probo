@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
             kind
             cookies {
               name
+              trackerType
               maxAgeSeconds
               description
             }
@@ -58,6 +59,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
         userAgent
         sdkVersion
         regulation
+        regulationSource
         countryCode
         consentData
         createdAt
@@ -75,7 +77,7 @@ export default function CookieBannerConsentRecordPage({
 }: CookieBannerConsentRecordPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(cookieBannerConsentRecordPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerConsentRecordPageQuery>(cookieBannerConsentRecordPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieConsentRecord") {
     throw new Error("invalid type for node");
@@ -159,6 +161,11 @@ export default function CookieBannerConsentRecordPage({
             {record.regulation || "-"}
           </span>
         </PropertyRow>
+        <PropertyRow label={__("Regulation Source")}>
+          <span className="font-mono text-sm">
+            {record.regulationSource || "-"}
+          </span>
+        </PropertyRow>
         <PropertyRow label={__("Country")}>
           <span className="font-mono text-sm">
             {record.countryCode || "-"}
@@ -229,7 +236,7 @@ export default function CookieBannerConsentRecordPage({
                                     {cookie.name}
                                   </td>
                                   <td className="py-1 pr-4 text-txt-secondary">
-                                    {humanizeSeconds(cookie.maxAgeSeconds ?? null)}
+                                    {humanizeSeconds(cookie.maxAgeSeconds ?? null, cookie.trackerType)}
                                   </td>
                                   <td className="py-1 text-txt-secondary">
                                     {cookie.description}

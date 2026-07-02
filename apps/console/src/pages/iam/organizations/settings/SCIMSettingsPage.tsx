@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -72,7 +72,7 @@ export function SCIMSettingsPage(props: {
   const connectorId = searchParams.get("connector_id");
   const mutationTriggeredRef = useRef(false);
 
-  const { organization } = usePreloadedQuery(scimSettingsPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<SCIMSettingsPageQuery>(scimSettingsPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }

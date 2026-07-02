@@ -4,6 +4,63 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.199.0] - 2026-06-30
+
+### Added
+
+- `document.getSignature` now returns the document version ID alongside the signature record
+
+## [0.198.0] - 2026-06-30
+
+### Added
+
+- `document.getLatestPublishedVersionId` operation to retrieve the ID of the latest published version of a document
+
+### Fixed
+
+- `organization.getMany` failing when the organization has pending user invitations
+
+## [0.197.0] - 2026-06-22
+
+### Added
+
+- `resourceAlias` resource with `setAlias` and `removeAlias` operations on the trust center node
+
+## [0.196.0] - 2026-06-19
+
+### Changed
+
+- Internal toolchain maintenance (build/lint dependency bumps); no change to node behavior or operations
+
+## [0.195.0] - 2026-06-19
+
+### Removed
+
+- `document.sendSigningNotifications` operation (replaced by an automatic debounced notification worker on the server)
+
+## [0.194.0] - 2026-06-11
+
+### Changed
+
+- Connect org logo fields now return File download URLs
+- `document publishVersion` now requires explicit `approverIds` when publishing a major version
+- References updated to probo.com
+
+## [0.193.0] - 2026-06-10
+
+### Added
+
+- Expose `regulationSource` (`DETECTED`/`DEFAULT`) on cookie consent record operations to indicate whether the regulation came from geolocation or fell back to GDPR
+- `parentThirdPartyId` and `level` fields on third-party `create`/`getAll` operations for sub-third-party scoping under a parent
+
+## [0.192.0] - 2026-06-09
+
+### Added
+
+- Add risk assessment `boundary` resource (`create`, `get`, `getAll`, `update`, `delete`) and `boundaryId` field on node create/update to group risk assessment nodes within a scope
+- Add `cookieBanner regeneratePolicy` operation to re-trigger tracker policy generation for a banner that already has a published version
+- Expose `commonTrackerPatternId` on tracker pattern `get`/`getAll` operations to indicate whether a pattern is linked to the common tracker catalog
+
 ## [0.191.0] - 2026-06-02
 
 ### Added

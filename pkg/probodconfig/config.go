@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,22 +35,22 @@ type (
 
 	// TracingConfig contains tracing configuration.
 	TracingConfig struct {
-		Addr          string  `json:"addr"`
-		MaxBatchSize  int     `json:"max-batch-size"`
-		BatchTimeout  int     `json:"batch-timeout"`
-		ExportTimeout int     `json:"export-timeout"`
-		MaxQueueSize  int     `json:"max-queue-size"`
+		Addr          string `json:"addr,omitempty"`
+		MaxBatchSize  int    `json:"max-batch-size"`
+		BatchTimeout  int    `json:"batch-timeout"`
+		ExportTimeout int    `json:"export-timeout"`
+		MaxQueueSize  int    `json:"max-queue-size"`
 		SamplingRatio float64 `json:"sampling-ratio"`
 	}
 
 	// ESignConfig contains electronic signature configuration.
 	ESignConfig struct {
-		TSAURL string `json:"tsa-url"`
+		TSAURL string `json:"tsa-url,omitempty"`
 	}
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL           string                        `json:"base-url"`
+		BaseURL           string                        `json:"base-url,omitempty"`
 		EncryptionKey     string                        `json:"encryption-key"`
 		Pg                PgConfig                      `json:"pg"`
 		Api               APIConfig                     `json:"api"`
@@ -58,25 +58,26 @@ type (
 		TrustCenter       TrustCenterConfig             `json:"trust-center"`
 		AWS               AWSConfig                     `json:"aws"`
 		Notifications     NotificationsConfig           `json:"notifications"`
-		Connectors        []ConnectorConfig             `json:"connectors"`
+		Connectors        []ConnectorConfig             `json:"connectors,omitempty"`
 		Agents            AgentsConfig                  `json:"llm"`
 		EvidenceDescriber EvidenceDescriberConfig       `json:"evidence-describer"`
 		ThirdPartyVetting ThirdPartyVettingWorkerConfig `json:"third-party-vetting-worker"`
 
-		TrackerMappingWorker          TrackerMappingWorkerConfig          `json:"tracker-mapping-worker"`
-		CommonPatternEnrichmentWorker CommonPatternEnrichmentWorkerConfig `json:"common-pattern-enrichment-worker"`
+		TrackerMappingWorker             TrackerMappingWorkerConfig             `json:"tracker-mapping-worker"`
+		CommonPatternEnrichmentWorker    CommonPatternEnrichmentWorkerConfig    `json:"common-pattern-enrichment-worker"`
+		CommonThirdPartyEnrichmentWorker CommonThirdPartyEnrichmentWorkerConfig `json:"common-third-party-enrichment-worker"`
 
-		ChromeDPAddr  string              `json:"chrome-dp-addr"`
+		ChromeDPAddr  string              `json:"chrome-dp-addr,omitempty"`
 		CustomDomains CustomDomainsConfig `json:"custom-domains"`
 		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
-		ESign         ESignConfig         `json:"esign"`
+		ESign         ESignConfig         `json:"esign,omitzero"`
 		Branding      bool                `json:"branding"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.
 	TrustCenterConfig struct {
-		HTTPAddr      string              `json:"http-addr"`
-		HTTPSAddr     string              `json:"https-addr"`
-		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol"`
+		HTTPAddr      string              `json:"http-addr,omitempty"`
+		HTTPSAddr     string              `json:"https-addr,omitempty"`
+		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol,omitzero"`
 	}
 )

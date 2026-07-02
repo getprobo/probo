@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -110,7 +110,7 @@ export default function RisksPage(props: RisksPageProps) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
-  const queryData = usePreloadedQuery(risksPageQuery, props.queryRef);
+  const queryData = usePreloadedQuery<RisksPageQuery>(risksPageQuery, props.queryRef);
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     RisksPageRefetchQuery,
     RisksPageFragment$key

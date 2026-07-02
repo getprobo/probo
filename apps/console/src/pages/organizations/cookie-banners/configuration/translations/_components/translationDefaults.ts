@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,9 +14,18 @@
 
 export const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English" },
-  { code: "fr", label: "Français" },
   { code: "de", label: "Deutsch" },
   { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+  { code: "id", label: "Indonesian" },
+  { code: "it", label: "Italiano" },
+  { code: "ja", label: "日本語" },
+  { code: "ko", label: "한국어" },
+  { code: "pl", label: "Polski" },
+  { code: "pt", label: "Português" },
+  { code: "tr", label: "Türkçe" },
+  { code: "uk", label: "Українська" },
+  { code: "zh", label: "中文" },
 ] as const;
 
 export const BANNER_KEYS = [

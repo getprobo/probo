@@ -1,0 +1,44 @@
+---
+description: Agent prompt template structure (role/task/instructions XML style)
+globs: "**/prompts/**/*.tmpl"
+alwaysApply: false
+---
+
+# Agent prompt style
+
+See full guide: `contrib/claude/prompt-style.md`
+
+Agent prompt templates use an XML-tag structure with three top-level sections,
+in this order:
+
+```
+<role>
+One short paragraph: who the agent is and its single objective.
+</role>
+
+<task>
+What the agent is given and the fields it must return. Describe the structured
+output here as a bullet list (one bullet per field).
+</task>
+
+<instructions>
+1. A numbered list of directives, most important first.
+2. ...
+</instructions>
+```
+
+## Rules
+
+- Always use the three sections `<role>`, `<task>`, `<instructions>` in that order.
+- `<instructions>` is an ordered (numbered) list; put the most decisive rule first.
+- Keep `<role>` to one short paragraph stating the objective.
+- Describe every output field in `<task>` as a bullet, mirroring the typed result struct.
+- Never hardcode enum values or source-of-truth lists; use a `{{.Placeholder}}`
+  and substitute at runtime (see `template-files.mdc`).
+- No commentary outside the tags; the prompt body is the system instruction.
+
+## Examples
+
+- `pkg/thirdparty/prompts/disambiguation.txt.tmpl`
+- `pkg/cookiebanner/prompts/tracker_identification.txt.tmpl`
+- `pkg/thirdparty/prompts/common_third_party_company_profile.txt.tmpl`

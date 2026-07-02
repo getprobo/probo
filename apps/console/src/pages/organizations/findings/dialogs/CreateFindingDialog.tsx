@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,6 @@ import {
   formatDatetime,
   formatError,
   getStatusOptions,
-  type GraphQLError,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -171,7 +170,7 @@ export function CreateFindingDialog({
       onError(error) {
         toast({
           title: __("Error"),
-          description: formatError(__("Failed to create finding"), error as GraphQLError),
+          description: formatError(__("Failed to create finding"), error),
           variant: "error",
         });
       },

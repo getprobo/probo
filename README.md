@@ -122,16 +122,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development environment walk
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. All commits require a Developer Certificate of Origin (DCO) sign-off (`git commit -s`). No CLA required.
 
-To report a security vulnerability, email [security@getprobo.com](mailto:security@getprobo.com) rather than opening a public issue. See [SECURITY.md](SECURITY.md) for the full disclosure policy.
+To report a security vulnerability, email [security@probo.com](mailto:security@probo.com) rather than opening a public issue. See [SECURITY.md](SECURITY.md) for the full disclosure policy.
 
 ## Community
 
 - [Discord](https://discord.gg/8qfdJYfvpY) - Get help, share feedback, and talk to the team
-- [Documentation](https://www.getprobo.com/docs)
-- [Blog](https://www.getprobo.com/blog)
+- [Documentation](https://www.probo.com/docs)
+- [Blog](https://www.probo.com/blog)
 - [Twitter / X](https://twitter.com/getprobo)
 - [LinkedIn](https://www.linkedin.com/company/getprobo)
-- [Website](https://www.getprobo.com)
+- [Website](https://www.probo.com)
 
 ## License
 

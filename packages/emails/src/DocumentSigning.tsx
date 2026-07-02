@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,18 +12,26 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Button, Section, Text } from '@react-email/components';
+import { Button, Section, Text } from 'react-email';
 import * as React from 'react';
 import EmailLayout, { bodyText, button, buttonContainer, footerText } from './components/EmailLayout';
+
+const documentList = {
+  ...bodyText,
+  paddingLeft: '20px',
+};
 
 export const DocumentSigning = () => {
   return (
     <EmailLayout subject={'Action Required – Please review and sign {{.OrganizationName}} compliance documents'}>
       <Text style={bodyText}>
-        You're receiving this message because your company, <strong>{'{{.OrganizationName}}'}</strong>, has shared a new compliance document that requires your review and signature.
+        You're receiving this message because your company, <strong>{'{{.OrganizationName}}'}</strong>, has shared compliance documents that require your review and signature:
       </Text>
+
+      <ul style={documentList} dangerouslySetInnerHTML={{ __html: '{{range .Documents}}<li><a href="{{.URL}}">{{.Title}}</a> ({{.Type}})</li>{{end}}' }} />
+
       <Text style={bodyText}>
-        To stay compliant with company policies, please take a moment to review and sign the document by clicking the button below:
+        To stay compliant with company policies, please take a moment to review and sign them by clicking the button below:
       </Text>
 
       <Section style={buttonContainer}>

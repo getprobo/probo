@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -388,52 +388,4 @@ WHERE
 	}
 
 	return count, nil
-}
-
-func (t *TrustCenterFiles) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	filter *TrustCenterFileFilter,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    name,
-    category,
-    file_id,
-    trust_center_visibility,
-    created_at,
-    updated_at
-FROM
-    trust_center_files
-WHERE
-    %s
-    AND %s
-    AND organization_id = @organization_id
-ORDER BY
-    created_at DESC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query trust center files: %w", err)
-	}
-
-	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterFile])
-	if err != nil {
-		return fmt.Errorf("cannot collect trust center files: %w", err)
-	}
-
-	*t = files
-
-	return nil
 }

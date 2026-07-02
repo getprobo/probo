@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,7 @@ func NewCookieConsentRecord(r *coredata.CookieConsentRecord) *CookieConsentRecor
 		Action:                CookieConsentRecordAction(r.Action),
 		SdkVersion:            r.SdkVersion,
 		Regulation:            r.Regulation,
+		RegulationSource:      r.RegulationSource,
 		CountryCode:           r.CountryCode,
 		CreatedAt:             r.CreatedAt,
 	}

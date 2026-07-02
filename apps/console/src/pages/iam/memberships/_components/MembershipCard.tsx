@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +46,9 @@ const organizationFragment = graphql`
   fragment MembershipCard_organizationFragment on Organization {
     id
     name
-    logoUrl
+    logo {
+      downloadUrl
+    }
   }
 `;
 
@@ -101,7 +103,7 @@ export function MembershipCard(props: MembershipCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4 hover:text-primary flex-1">
           <Avatar
-            src={organization.logoUrl}
+            src={organization.logo?.downloadUrl}
             name={organization.name}
             size="l"
           />

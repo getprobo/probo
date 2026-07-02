@@ -1,0 +1,12 @@
+# Connect File is PUBLIC-ONLY: downloadUrl points at /api/files/v1/public/{id}
+# and carries no authorization. Do not expose a private file through this type
+# without adding a forceResolver + auth on downloadUrl.
+type File {
+    id: ID!
+    mimeType: String!
+    fileName: String!
+    size: BigInt!
+    downloadUrl: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 import {
 	NodeConnectionTypes,
+	NodeOperationError,
 	type IExecuteFunctions,
 	type INodeExecutionData,
 	type INodeType,
@@ -177,6 +178,11 @@ export class Probo implements INodeType {
 						description: 'Manage processing activities',
 					},
 					{
+						name: 'Resource Alias',
+						value: 'resourceAlias',
+						description: 'Manage resource aliases',
+					},
+					{
 						name: 'Rights Request',
 						value: 'rightsRequest',
 						description: 'Manage rights requests',
@@ -244,12 +250,23 @@ export class Probo implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 
 		for (let i = 0; i < items.length; i++) {
-			const resource = this.getNodeParameter('resource', i) as string;
-			const operation = this.getNodeParameter('operation', i, 'execute') as string;
+			try {
+				const resource = this.getNodeParameter('resource', i) as string;
+				const operation = this.getNodeParameter('operation', i, 'execute') as string;
 
-			const executeFunction = getExecuteFunction(resource, operation);
-			const result = await executeFunction.call(this, i);
-			returnData.push(result);
+				const executeFunction = getExecuteFunction(resource, operation);
+				const result = await executeFunction.call(this, i);
+				returnData.push(result);
+			} catch (error) {
+				if (this.continueOnFail()) {
+					returnData.push({
+						json: { error: error instanceof Error ? error.message : String(error) },
+						pairedItem: { item: i },
+					});
+					continue;
+				}
+				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
+			}
 		}
 
 		return [returnData];

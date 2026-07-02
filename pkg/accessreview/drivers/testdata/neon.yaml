@@ -1,0 +1,79 @@
+---
+# Anonymized from a real GET /api/v2/organizations/{org_id}/members recording
+# against a Neon organization (Authorization stripped by the recorder). Real
+# PII (org ID, membership/account UUIDs, email) replaced with synthetic
+# values; identifying response headers (Cf-Ray, request IDs, dates) dropped.
+# Three extra members and a second page were added to keep coverage: a
+# deactivated member with MFA disabled, an editor with has_mfa omitted and an
+# empty user_id (membership-ID fallback), an emailless member that is
+# dropped, and cursor pagination via pagination.next. The member object shape
+# ({member:{id,user_id,org_id,role,joined_at},user:{email,has_mfa,
+# deactivated_at}} + pagination) mirrors the live response.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: console.neon.tech
+        form:
+            limit:
+                - "500"
+        headers:
+            Accept:
+                - application/json
+        url: https://console.neon.tech/api/v2/organizations/org-cool-breeze-12345678/members?limit=500
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"members":[{"member":{"id":"aaaaaaaa-1111-2222-3333-000000000001","user_id":"bbbbbbbb-1111-2222-3333-000000000001","org_id":"org-cool-breeze-12345678","role":"admin","joined_at":"2025-11-12T13:26:01Z"},"user":{"email":"jane.doe@example.com","has_mfa":true}},{"member":{"id":"aaaaaaaa-1111-2222-3333-000000000002","user_id":"bbbbbbbb-1111-2222-3333-000000000002","org_id":"org-cool-breeze-12345678","role":"member","joined_at":"2025-12-01T09:00:00Z"},"user":{"email":"john.smith@example.com","has_mfa":false,"deactivated_at":"2026-03-15T10:30:00Z"}}],"pagination":{"next":"am9obi5zbWl0aA","sort_by":"joined_at","sort_order":"desc"}}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 466.274666ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: console.neon.tech
+        form:
+            cursor:
+                - am9obi5zbWl0aA
+            limit:
+                - "500"
+        headers:
+            Accept:
+                - application/json
+        url: https://console.neon.tech/api/v2/organizations/org-cool-breeze-12345678/members?cursor=am9obi5zbWl0aA&limit=500
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"members":[{"member":{"id":"aaaaaaaa-1111-2222-3333-000000000003","user_id":"","org_id":"org-cool-breeze-12345678","role":"editor","joined_at":"2026-01-20T14:45:00Z"},"user":{"email":"erin.lee@example.com"}},{"member":{"id":"aaaaaaaa-1111-2222-3333-000000000004","user_id":"bbbbbbbb-1111-2222-3333-000000000004","org_id":"org-cool-breeze-12345678","role":"viewer","joined_at":"2026-02-02T08:00:00Z"},"user":{"email":"","has_mfa":false}}],"pagination":{"sort_by":"joined_at","sort_order":"desc"}}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 412.118042ms

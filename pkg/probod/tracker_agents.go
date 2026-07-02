@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,29 +25,29 @@ import (
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-// buildTrackerAgentsConfig wires the tracker agents that share one LLM
-// client and model: the tracker-mapping agent (catalog identification),
-// the common-pattern enrichment agent (description research), and the
-// third-party disambiguation agent that the tracker-mapping worker uses
-// to promote patterns to org ThirdParties. All are opt-in: deployments
-// that do not set `llm.tracker-mapping.provider` get zero configs (nil
-// LLM client) so the workers run without agent fallback.
+// buildTrackerAgents wires the three tracker agents from the probod
+// config, each with its own LLM client and tuning: the tracker-mapping
+// agent (catalog identification), the common-pattern enrichment agent
+// (description research), and the third-party disambiguation agent. All
+// are opt-in: when `llm.tracker-mapping.provider` is empty it returns
+// zero configs (nil LLM clients) so callers run without agent fallback.
 //
-// The agents are sourced from the same `tracker-mapping` config slot
-// because they share the LLM client, model, and lifecycle. The
-// disambiguation agent has no Firecrawl/DB tools, so its config
-// surface is narrower and it lives in the cross-domain pkg/thirdparty
-// package.
-func (impl *Implm) buildTrackerAgentsConfig(
+// The enrichment and disambiguation agents fall back to the
+// tracker-mapping config when their own provider slot is empty, so a
+// deployment that configures only `tracker-mapping` keeps wiring all
+// three agents.
+func (impl *Implm) buildTrackerAgents(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) (cookiebanner.TrackerAgentsConfig, thirdparty.DisambiguationConfig, error) {
+) (cookiebanner.TrackerMappingAgentConfig, cookiebanner.TrackerEnrichmentAgentConfig, thirdparty.DisambiguationAgentConfig, error) {
 	if impl.cfg.Agents.TrackerMapping.Provider == "" {
-		return cookiebanner.TrackerAgentsConfig{}, thirdparty.DisambiguationConfig{}, nil
+		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, nil
 	}
 
-	agentCfg, llmClient, err := impl.resolveAgentClient(
+	firecrawlAPIKey := impl.cfg.Agents.Tools.FirecrawlAPIKey
+
+	mappingAgentCfg, mappingClient, err := impl.resolveAgentClient(
 		"tracker-mapping",
 		impl.cfg.Agents.TrackerMapping,
 		l,
@@ -55,38 +55,70 @@ func (impl *Implm) buildTrackerAgentsConfig(
 		r,
 	)
 	if err != nil {
-		return cookiebanner.TrackerAgentsConfig{}, thirdparty.DisambiguationConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
+		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
 	}
 
-	mappingWorkerCfg := impl.cfg.TrackerMappingWorker
-	enrichmentWorkerCfg := impl.cfg.CommonPatternEnrichmentWorker
-
-	// The mapping and enrichment agents share one config slot but run
-	// from separate workers with separate max-turns. AgentTimeout here
-	// carries the mapping worker's value (also reused by the
-	// disambiguation agent); the enrichment worker overrides it on its
-	// own copy at registration.
-	trackerAgentsCfg := cookiebanner.TrackerAgentsConfig{
-		LLMClient:          llmClient,
-		Model:              agentCfg.ModelName,
-		FirecrawlAPIKey:    impl.cfg.Agents.Tools.FirecrawlAPIKey,
-		MaxTokens:          agentCfg.MaxTokens,
-		Temperature:        agentCfg.Temperature,
-		AgentTimeout:       time.Duration(mappingWorkerCfg.AgentTimeout) * time.Second,
-		MappingMaxTurns:    mappingWorkerCfg.AgentMaxTurns,
-		EnrichmentMaxTurns: enrichmentWorkerCfg.AgentMaxTurns,
+	mappingCfg := cookiebanner.TrackerMappingAgentConfig{
+		LLMClient:       mappingClient,
+		Model:           mappingAgentCfg.ModelName,
+		FirecrawlAPIKey: firecrawlAPIKey,
+		ChromeAddr:      impl.cfg.ChromeDPAddr,
+		MaxTokens:       mappingAgentCfg.MaxTokens,
+		Temperature:     mappingAgentCfg.Temperature,
+		Timeout:         time.Duration(impl.cfg.TrackerMappingWorker.AgentTimeout) * time.Second,
+		MaxTurns:        impl.cfg.TrackerMappingWorker.AgentMaxTurns,
 	}
 
-	// The disambiguation agent emits a single id plus a short rationale,
-	// so it keeps its own smaller token budget (left unset here) rather
-	// than inheriting the mapping agent's. It shares the mapping worker's
-	// timeout.
-	disambiguationCfg := thirdparty.DisambiguationConfig{
-		LLMClient:   llmClient,
-		Model:       agentCfg.ModelName,
-		Temperature: agentCfg.Temperature,
-		Timeout:     time.Duration(mappingWorkerCfg.AgentTimeout) * time.Second,
+	enrichmentSlot := impl.cfg.Agents.TrackerEnrichment
+	if enrichmentSlot.Provider == "" {
+		enrichmentSlot = impl.cfg.Agents.TrackerMapping
 	}
 
-	return trackerAgentsCfg, disambiguationCfg, nil
+	enrichmentAgentCfg, enrichmentClient, err := impl.resolveAgentClient(
+		"tracker-enrichment",
+		enrichmentSlot,
+		l,
+		tp,
+		r,
+	)
+	if err != nil {
+		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, fmt.Errorf("cannot resolve tracker enrichment agent client: %w", err)
+	}
+
+	enrichmentCfg := cookiebanner.TrackerEnrichmentAgentConfig{
+		LLMClient:       enrichmentClient,
+		Model:           enrichmentAgentCfg.ModelName,
+		FirecrawlAPIKey: firecrawlAPIKey,
+		ChromeAddr:      impl.cfg.ChromeDPAddr,
+		MaxTokens:       enrichmentAgentCfg.MaxTokens,
+		Temperature:     enrichmentAgentCfg.Temperature,
+		Timeout:         time.Duration(impl.cfg.CommonPatternEnrichmentWorker.AgentTimeout) * time.Second,
+		MaxTurns:        impl.cfg.CommonPatternEnrichmentWorker.AgentMaxTurns,
+	}
+
+	disambiguationSlot := impl.cfg.Agents.ThirdPartyDisambiguation
+	if disambiguationSlot.Provider == "" {
+		disambiguationSlot = impl.cfg.Agents.TrackerMapping
+	}
+
+	disambiguationAgentCfg, disambiguationClient, err := impl.resolveAgentClient(
+		"third-party-disambiguation",
+		disambiguationSlot,
+		l,
+		tp,
+		r,
+	)
+	if err != nil {
+		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, fmt.Errorf("cannot resolve third party disambiguation agent client: %w", err)
+	}
+
+	disambiguationCfg := thirdparty.DisambiguationAgentConfig{
+		LLMClient:   disambiguationClient,
+		Model:       disambiguationAgentCfg.ModelName,
+		MaxTokens:   disambiguationAgentCfg.MaxTokens,
+		Temperature: disambiguationAgentCfg.Temperature,
+		Timeout:     time.Duration(impl.cfg.TrackerMappingWorker.DisambiguationAgentTimeout) * time.Second,
+	}
+
+	return mappingCfg, enrichmentCfg, disambiguationCfg, nil
 }

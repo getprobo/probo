@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,7 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
         <Tbody>
           {audits.edges.length === 0 && (
             <Tr>
-              <Td colSpan={6} className="text-center text-txt-secondary">
+              <Td colSpan={5} className="text-center text-txt-secondary">
                 {__("No audits available")}
               </Td>
             </Tr>

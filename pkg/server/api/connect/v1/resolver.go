@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 
 //go:generate go run github.com/99designs/gqlgen generate
 
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,13 +37,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 type (
@@ -52,6 +55,8 @@ type (
 		batchAuthorize authz.BatchAuthorizeFunc
 		logger         *log.Logger
 		iam            *iam.Service
+		scopeRegistry  *oauth2scope.Registry
+		fileManager    *filemanager.Service
 		baseURL        *baseurl.BaseURL
 		sessionCookie  *authn.Cookie
 	}
@@ -62,20 +67,27 @@ func NewMux(
 	svc *iam.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
+	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	isTrustCenterDomain IsTrustCenterDomainFunc,
+	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
 	r := chi.NewMux()
 
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
-	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
+	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
+	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig, graphqlLimits)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 
-	router := r.With(sessionMiddleware, apiKeyMiddleware, oauth2Middleware)
+	router := r.With(
+		sessionMiddleware,
+		apiKeyMiddleware,
+		oauth2Middleware,
+	)
 
 	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost, isTrustCenterDomain)
 
@@ -110,7 +122,7 @@ func NewMux(
 	// Session-authenticated endpoints.
 	router.Get("/oauth2/authorize", oauth2Handler.AuthorizeHandler)
 
-	requireIdentity := router.With(authn.NewIdentityPresenceMiddleware())
+	requireIdentity := router.With(identityPresenceMiddleware)
 	requireIdentity.Post("/oauth2/register", oauth2Handler.RegisterHandler)
 
 	return r

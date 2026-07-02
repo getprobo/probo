@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,13 +67,13 @@ func (d *OpenAIDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.Name,
-				Role:        openaiRole(u.Role),
+				Roles:       openaiRoles(u.Role),
 				Active:      new(!u.Disabled),
 				IsAdmin:     u.Role == "owner",
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if u.AddedAt != 0 {
@@ -134,13 +134,17 @@ func (d *OpenAIDriver) fetchUsers(ctx context.Context, after string) (*openaiUse
 	return &resp, nil
 }
 
-func openaiRole(role string) string {
+func openaiRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch role {
 	case "owner":
-		return "Owner"
+		return []string{"Owner"}
 	case "reader":
-		return "Reader"
+		return []string{"Reader"}
 	default:
-		return "Member"
+		return []string{"Member"}
 	}
 }

@@ -18,6 +18,42 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationUpdated")
     OBLIGATION_DELETED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationDeleted")
+    DOCUMENT_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentCreated")
+    DOCUMENT_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentUpdated")
+    DOCUMENT_ARCHIVED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentArchived")
+    DOCUMENT_UNARCHIVED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentUnarchived")
+    DOCUMENT_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentDeleted")
+    DOCUMENT_VERSION_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionCreated")
+    DOCUMENT_VERSION_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionUpdated")
+    DOCUMENT_VERSION_PUBLISHED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionPublished")
+    DOCUMENT_VERSION_REJECTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionRejected")
+    DOCUMENT_VERSION_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionDeleted")
+    DOCUMENT_VERSION_SIGNATURE_REQUESTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionSignatureRequested")
+    DOCUMENT_VERSION_SIGNATURE_SIGNED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionSignatureSigned")
+    DOCUMENT_VERSION_SIGNATURE_CANCELLED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionSignatureCancelled")
+    DOCUMENT_VERSION_APPROVAL_QUORUM_REQUESTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested")
+    DOCUMENT_VERSION_APPROVAL_QUORUM_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumUpdated")
+    DOCUMENT_VERSION_APPROVAL_QUORUM_APPROVED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumApproved")
+    DOCUMENT_VERSION_APPROVAL_QUORUM_REJECTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumRejected")
+    DOCUMENT_VERSION_APPROVAL_QUORUM_VOIDED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentVersionApprovalQuorumVoided")
 }
 
 enum WebhookEventStatus

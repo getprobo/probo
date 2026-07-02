@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@ package connector
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
@@ -41,6 +42,22 @@ type APIKeyConnection struct {
 	// It is mutually exclusive with Header and is populated from the
 	// provider Registration at connector creation time.
 	BasicAuth bool `json:"basic_auth,omitempty"`
+	// BasicAuthUserPass, when true, presents the API key as a complete HTTP
+	// Basic credential (`Authorization: Basic base64(<key>)`), with the
+	// stored key already holding the `username:password` pair — required
+	// by providers such as ClickHouse Cloud (keyId:keySecret) and
+	// Langfuse (publicKey:secretKey) whose Basic credential carries a real
+	// password, which BasicAuth (empty password) cannot express. It is
+	// mutually exclusive with the other modes and is populated from the
+	// provider Registration at connector creation time.
+	BasicAuthUserPass bool `json:"basic_auth_user_pass,omitempty"`
+	// Scheme selects a non-Bearer Authorization scheme: when non-empty
+	// the key is sent as `Authorization: <Scheme> <key>` instead of
+	// `Authorization: Bearer <key>` — required by providers such as Okta
+	// whose API tokens use the `SSWS` scheme. It is mutually exclusive
+	// with Header and BasicAuth and is populated from the provider
+	// Registration at connector creation time.
+	Scheme string `json:"scheme,omitempty"`
 }
 
 var _ Connection = (*APIKeyConnection)(nil)
@@ -65,11 +82,30 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 		}, nil
 	}
 
+	if c.BasicAuthUserPass {
+		return &http.Client{
+			Transport: &basicAuthUserPassTransport{
+				credential: c.APIKey,
+				underlying: underlying,
+			},
+		}, nil
+	}
+
 	if c.Header != "" {
 		return &http.Client{
 			Transport: &apiKeyHeaderTransport{
 				header:     c.Header,
 				value:      c.APIKey,
+				underlying: underlying,
+			},
+		}, nil
+	}
+
+	if c.Scheme != "" {
+		return &http.Client{
+			Transport: &schemeAuthTransport{
+				scheme:     c.Scheme,
+				token:      c.APIKey,
 				underlying: underlying,
 			},
 		}, nil
@@ -82,6 +118,24 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 			underlying: underlying,
 		},
 	}, nil
+}
+
+// schemeAuthTransport presents the API key in the Authorization header
+// under a non-Bearer scheme (`Authorization: <scheme> <token>`).
+// Providers such as Okta document the `SSWS` scheme for their API tokens
+// and reject Bearer, so neither oauth2Transport (which hardcodes Bearer)
+// nor apiKeyHeaderTransport (which sets a non-Authorization header) fits.
+type schemeAuthTransport struct {
+	scheme     string
+	token      string
+	underlying http.RoundTripper
+}
+
+func (t *schemeAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.Header.Set("Authorization", t.scheme+" "+t.token)
+
+	return t.underlying.RoundTrip(req2)
 }
 
 // apiKeyHeaderTransport injects the API key into a custom request header
@@ -114,6 +168,25 @@ type basicAuthTransport struct {
 func (t *basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
 	req2.SetBasicAuth(t.username, "")
+
+	return t.underlying.RoundTrip(req2)
+}
+
+// basicAuthUserPassTransport presents a complete HTTP Basic credential whose
+// `username:password` pair is already encoded in the stored key
+// (`Authorization: Basic base64(<credential>)`). Providers such as
+// ClickHouse Cloud (keyId:keySecret) and Langfuse (publicKey:secretKey)
+// authenticate with a real password, which basicAuthTransport's empty
+// password cannot carry; SetBasicAuth would also re-append a ":" and
+// corrupt the credential, so the value is base64-encoded verbatim.
+type basicAuthUserPassTransport struct {
+	credential string
+	underlying http.RoundTripper
+}
+
+func (t *basicAuthUserPassTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(t.credential)))
 
 	return t.underlying.RoundTrip(req2)
 }

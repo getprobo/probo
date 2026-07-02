@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,34 +27,18 @@ type (
 	OAuth2Scopes []OAuth2Scope
 )
 
-const (
-	OAuth2ScopeOpenID        OAuth2Scope = "openid"
-	OAuth2ScopeProfile       OAuth2Scope = "profile"
-	OAuth2ScopeEmail         OAuth2Scope = "email"
-	OAuth2ScopeOfflineAccess OAuth2Scope = "offline_access"
-)
-
 var (
 	_ fmt.Stringer             = OAuth2Scope("")
 	_ encoding.TextMarshaler   = OAuth2Scope("")
 	_ encoding.TextUnmarshaler = (*OAuth2Scope)(nil)
 )
 
-func (v OAuth2Scope) IsValid() bool {
-	switch v {
-	case
-		OAuth2ScopeOpenID,
-		OAuth2ScopeProfile,
-		OAuth2ScopeEmail,
-		OAuth2ScopeOfflineAccess:
-		return true
-	}
-
-	return false
-}
-
 func (v OAuth2Scope) String() string {
 	return string(v)
+}
+
+func (v OAuth2Scope) IsRead() bool {
+	return strings.HasSuffix(string(v), ":read")
 }
 
 func (v OAuth2Scope) MarshalText() ([]byte, error) {
@@ -62,12 +46,7 @@ func (v OAuth2Scope) MarshalText() ([]byte, error) {
 }
 
 func (v *OAuth2Scope) UnmarshalText(text []byte) error {
-	val := OAuth2Scope(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid OAuth2Scope value: %q", string(text))
-	}
-
-	*v = val
+	*v = OAuth2Scope(text)
 
 	return nil
 }

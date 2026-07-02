@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,8 @@ import type { CompliancePageFileListItem_fileFragment$data, CompliancePageFileLi
 import type { CompliancePageFileListItemMutation } from "#/__generated__/core/CompliancePageFileListItemMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
+import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
+
 const compliancePageFragment = graphql`
   fragment CompliancePageFileListItem_compliancePageFragment on TrustCenter {
     canUpdate: permission(action: "core:trust-center:update")
@@ -34,8 +36,13 @@ const fileFragment = graphql`
   fragment CompliancePageFileListItem_fileFragment on TrustCenterFile {
     id
     name
+    alias
+    canSetAlias: permission(action: "resourcealias:alias:set")
+    canRemoveAlias: permission(action: "resourcealias:alias:remove")
     category
-    fileUrl
+    file {
+      downloadUrl
+    }
     trustCenterVisibility
     createdAt
     canUpdate: permission(action: "core:trust-center-file:update")
@@ -101,6 +108,14 @@ export function CompliancePageFileListItem(props: {
       </Td>
       <Td>{file.category}</Td>
       <Td>{formatDate(file.createdAt)}</Td>
+      <Td noLink>
+        <CompliancePageAliasField
+          resourceId={file.id}
+          alias={file.alias}
+          canSetAlias={file.canSetAlias}
+          canRemoveAlias={file.canRemoveAlias}
+        />
+      </Td>
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
@@ -124,7 +139,7 @@ export function CompliancePageFileListItem(props: {
             variant="secondary"
             icon={IconArrowLink}
             onClick={() =>
-              window.open(file.fileUrl, "_blank", "noopener,noreferrer")}
+              window.open(file.file?.downloadUrl, "_blank", "noopener,noreferrer")}
             title={__("Download")}
           />
           {file.canUpdate && (

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,12 +15,19 @@
 import type { ComponentProps, FC } from "react";
 
 import { Anthropic } from "./Anthropic";
+import { Apollo } from "./Apollo";
 import { Asana } from "./Asana";
+import { BetterStack } from "./BetterStack";
 import { Bitbucket } from "./Bitbucket";
+import { Brevo } from "./Brevo";
 import { Brex } from "./Brex";
+import { Clerk } from "./Clerk";
+import { ClickHouse } from "./ClickHouse";
 import { ClickUp } from "./ClickUp";
 import { Cloudflare } from "./Cloudflare";
 import { Cursor } from "./Cursor";
+import { Datadog } from "./Datadog";
+import { Deepgram } from "./Deepgram";
 import { DocuSign } from "./DocuSign";
 import { Figma } from "./Figma";
 import { GitHub } from "./GitHub";
@@ -29,33 +36,52 @@ import { Google } from "./Google";
 import { Grafana } from "./Grafana";
 import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
+import { IncidentIO } from "./IncidentIO";
 import { Intercom } from "./Intercom";
+import { Langfuse } from "./Langfuse";
 import { Linear } from "./Linear";
+import { Mercury } from "./Mercury";
 import { Metabase } from "./Metabase";
 import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
+import { Neon } from "./Neon";
 import { Netlify } from "./Netlify";
 import { Notion } from "./Notion";
+import { Okta } from "./Okta";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
+import { OpenRouter } from "./OpenRouter";
 import { PagerDuty } from "./PagerDuty";
 import { PostHog } from "./PostHog";
+import { Pylon } from "./Pylon";
+import { Qovery } from "./Qovery";
+import { Render } from "./Render";
 import { Resend } from "./Resend";
+import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
+import { SigNoz } from "./SigNoz";
 import { Slack } from "./Slack";
 import { Supabase } from "./Supabase";
 import { Tailscale } from "./Tailscale";
 import { Tally } from "./Tally";
 import { Vercel } from "./Vercel";
+import { Zendesk } from "./Zendesk";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ANTHROPIC: Anthropic,
+  APOLLO: Apollo,
   ASANA: Asana,
+  BETTER_STACK: BetterStack,
   BITBUCKET: Bitbucket,
+  BREVO: Brevo,
   BREX: Brex,
+  CLERK: Clerk,
+  CLICKHOUSE: ClickHouse,
   CLICKUP: ClickUp,
   CLOUDFLARE: Cloudflare,
   CURSOR: Cursor,
+  DATADOG: Datadog,
+  DEEPGRAM: Deepgram,
   DOCUSIGN: DocuSign,
   FIGMA: Figma,
   GITHUB: GitHub,
@@ -65,26 +91,38 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   GRAFANA: Grafana,
   HEROKU: Heroku,
   HUBSPOT: HubSpot,
+  INCIDENT_IO: IncidentIO,
   INTERCOM: Intercom,
+  LANGFUSE: Langfuse,
   LINEAR: Linear,
+  MERCURY: Mercury,
   METABASE: Metabase,
   MICROSOFT: Microsoft,
   MICROSOFT_365: Microsoft,
   MONDAY: Monday,
+  NEON: Neon,
   NETLIFY: Netlify,
   NOTION: Notion,
+  OKTA: Okta,
   ONE_PASSWORD: OnePassword,
   ONEPASSWORD: OnePassword,
   OPENAI: OpenAI,
+  OPENROUTER: OpenRouter,
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,
+  PYLON: Pylon,
+  QOVERY: Qovery,
+  RENDER: Render,
   RESEND: Resend,
+  SENDGRID: SendGrid,
   SENTRY: Sentry,
+  SIGNOZ: SigNoz,
   SLACK: Slack,
   SUPABASE: Supabase,
   TAILSCALE: Tailscale,
   TALLY: Tally,
   VERCEL: Vercel,
+  ZENDESK: Zendesk,
 };
 
 type ThirdPartyLogoProps = ComponentProps<"svg"> & {

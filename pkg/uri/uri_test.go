@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -287,6 +287,37 @@ func TestExtractDomain(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 				assert.Equal(t, tt.want, ExtractDomain(tt.rawURL))
+			},
+		)
+	}
+}
+
+func TestDomainLabel(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{"bare domain", "cookiedatabase.org", "cookiedatabase"},
+		{"domain with www", "www.cookiedatabase.org", "cookiedatabase"},
+		{"full url", "https://www.cookiedatabase.org/list", "cookiedatabase"},
+		{"url with query", "https://cookifi.com/?ref=x", "cookifi"},
+		{"host with port", "cookieserve.com:8443", "cookieserve"},
+		{"co.uk tld", "https://www.cookiepedia.co.uk/list", "cookiepedia"},
+		{"uppercase", "CookieDatabase.ORG", "cookiedatabase"},
+		{"surrounding spaces", "  cookifi.com  ", "cookifi"},
+		{"bare brand no suffix", "Cookiepedia", ""},
+		{"empty string", "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.want, DomainLabel(tt.raw))
 			},
 		)
 	}

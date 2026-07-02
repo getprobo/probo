@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ export function MoveToCategoryDropdown({
   onMove,
 }: MoveToCategoryDropdownProps) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(moveToCategoryDropdownQuery, queryRef);
+  const data = usePreloadedQuery<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     return null;

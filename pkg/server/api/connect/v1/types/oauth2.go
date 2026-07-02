@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -50,7 +50,7 @@ func parseScopes(s string) (coredata.OAuth2Scopes, error) {
 
 type (
 	OAuth2AuthorizeInput struct {
-		ClientID            gid.GID
+		ClientIDRaw         string
 		RedirectURI         string
 		State               string
 		ResponseType        coredata.OAuth2ResponseType
@@ -112,9 +112,9 @@ type (
 func (in *OAuth2AuthorizeInput) DecodeQuery(q url.Values) error {
 	var err error
 
-	in.ClientID, err = requireGID(q, "client_id")
-	if err != nil {
-		return err
+	in.ClientIDRaw = q.Get("client_id")
+	if in.ClientIDRaw == "" {
+		return fmt.Errorf("missing client_id")
 	}
 
 	in.RedirectURI = q.Get("redirect_uri")
@@ -328,7 +328,7 @@ func InactiveIntrospectResponse() *OAuth2IntrospectResponse {
 	return &OAuth2IntrospectResponse{Active: false}
 }
 
-func ActiveIntrospectResponse(result *oauth2server.IntrospectResult) *OAuth2IntrospectResponse {
+func ActiveIntrospectResponse(result *oauth2.IntrospectResult) *OAuth2IntrospectResponse {
 	return &OAuth2IntrospectResponse{
 		Active:    true,
 		Scope:     result.Scopes,

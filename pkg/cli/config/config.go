@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,28 @@ const (
 	// CLIClientID is the well-known OAuth2 client ID for the Probo CLI,
 	// pre-provisioned in every Probo database via migration.
 	CLIClientID = "AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp"
+
+	// CLIClientScopes is the space-separated scope string requested at prb login.
+	// Keep in sync with iam_oauth2_clients.scopes for CLIClientID (see migrations).
+	CLIClientScopes = "openid profile email offline_access " +
+		"v1:access-review " +
+		"v1:agent " +
+		"v1:asset " +
+		"v1:audit " +
+		"v1:common-third-party " +
+		"v1:compliance-page " +
+		"v1:connector " +
+		"v1:control " +
+		"v1:datum " +
+		"v1:document " +
+		"v1:iam " +
+		"v1:org " +
+		"v1:privacy " +
+		"v1:risk " +
+		"v1:slack-connection " +
+		"v1:task " +
+		"v1:third-party " +
+		"v1:webhook"
 )
 
 type (

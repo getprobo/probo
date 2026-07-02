@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 // Use of this source code is governed by the ISC license
 // that can be found in the LICENSE file.
 
@@ -131,7 +131,7 @@ export const SlashCommandExtension = Extension.create<object, SlashCommandStorag
                   "data-empty": isEmpty
                     ? "true"
                     : "false",
-                } as Record<string, string>),
+                }),
               ]);
             } catch {
               deactivateSlashCommand(storage);

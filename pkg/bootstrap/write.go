@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 package bootstrap
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,15 +24,37 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func WriteConfig(cfg *probodconfig.FullConfig, path string) error {
+type Format string
+
+const (
+	FormatYAML Format = "yaml"
+	FormatJSON Format = "json"
+)
+
+func WriteConfig(cfg *probodconfig.FullConfig, path string, format Format) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("create directory %s: %w", dir, err)
 	}
 
-	data, err := yaml.Marshal(cfg)
-	if err != nil {
-		return fmt.Errorf("marshal config: %w", err)
+	var (
+		data []byte
+		err  error
+	)
+
+	switch format {
+	case FormatJSON:
+		data, err = json.MarshalIndent(cfg, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal config as json: %w", err)
+		}
+	case FormatYAML:
+		data, err = yaml.Marshal(cfg)
+		if err != nil {
+			return fmt.Errorf("marshal config as yaml: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported config format: %q", format)
 	}
 
 	if err := os.WriteFile(path, data, 0600); err != nil {

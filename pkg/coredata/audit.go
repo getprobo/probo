@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@ type (
 		Name                  *string               `db:"name"`
 		OrganizationID        gid.GID               `db:"organization_id"`
 		FrameworkID           gid.GID               `db:"framework_id"`
-		ReportID              *gid.GID              `db:"report_id"`
+		ReportFileID          *gid.GID              `db:"report_file_id"`
 		ValidFrom             *time.Time            `db:"valid_from"`
 		ValidUntil            *time.Time            `db:"valid_until"`
 		State                 AuditState            `db:"state"`
@@ -113,7 +113,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
+	report_file_id,
 	valid_from,
 	valid_until,
 	state,
@@ -199,7 +199,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
+	report_file_id,
 	valid_from,
 	valid_until,
 	state,
@@ -237,56 +237,6 @@ WHERE
 	return nil
 }
 
-func (a *Audits) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	filter *AuditFilter,
-) error {
-	q := `
-SELECT
-	id,
-	name,
-	organization_id,
-	framework_id,
-	report_id,
-	valid_from,
-	valid_until,
-	state,
-	trust_center_visibility,
-	created_at,
-	updated_at
-FROM
-	audits
-WHERE
-	%s
-	AND organization_id = @organization_id
-	AND %s
-ORDER BY valid_from DESC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query audits: %w", err)
-	}
-
-	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
-	if err != nil {
-		return fmt.Errorf("cannot collect audits: %w", err)
-	}
-
-	*a = audits
-
-	return nil
-}
-
 func (a *Audit) Insert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -299,7 +249,7 @@ INSERT INTO audits (
 	tenant_id,
 	organization_id,
 	framework_id,
-	report_id,
+	report_file_id,
 	valid_from,
 	valid_until,
 	state,
@@ -312,7 +262,7 @@ INSERT INTO audits (
 	@tenant_id,
 	@organization_id,
 	@framework_id,
-	@report_id,
+	@report_file_id,
 	@valid_from,
 	@valid_until,
 	@state,
@@ -328,7 +278,7 @@ INSERT INTO audits (
 		"tenant_id":               scope.GetTenantID(),
 		"organization_id":         a.OrganizationID,
 		"framework_id":            a.FrameworkID,
-		"report_id":               a.ReportID,
+		"report_file_id":          a.ReportFileID,
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
 		"state":                   a.State,
@@ -354,7 +304,7 @@ func (a *Audit) Update(
 UPDATE audits
 SET
 	name = @name,
-	report_id = @report_id,
+	report_file_id = @report_file_id,
 	valid_from = @valid_from,
 	valid_until = @valid_until,
 	state = @state,
@@ -370,7 +320,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                      a.ID,
 		"name":                    a.Name,
-		"report_id":               a.ReportID,
+		"report_file_id":          a.ReportFileID,
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
 		"state":                   a.State,
@@ -427,7 +377,7 @@ WITH audits_by_control AS (
 		a.name,
 		a.organization_id,
 		a.framework_id,
-		a.report_id,
+		a.report_file_id,
 		a.valid_from,
 		a.valid_until,
 		a.state,
@@ -446,7 +396,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
+	report_file_id,
 	valid_from,
 	valid_until,
 	state,
@@ -494,7 +444,7 @@ WITH audits_by_finding AS (
 		a.name,
 		a.organization_id,
 		a.framework_id,
-		a.report_id,
+		a.report_file_id,
 		a.valid_from,
 		a.valid_until,
 		a.state,
@@ -513,7 +463,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
+	report_file_id,
 	valid_from,
 	valid_until,
 	state,
@@ -632,11 +582,11 @@ WHERE
 	return count, nil
 }
 
-func (a *Audit) LoadByReportID(
+func (a *Audit) LoadByReportFileID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	reportID gid.GID,
+	fileID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -644,7 +594,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
+	report_file_id,
 	valid_from,
 	valid_until,
 	state,
@@ -654,12 +604,12 @@ SELECT
 FROM
 	audits
 WHERE %s
-	AND report_id = @report_id
+	AND report_file_id = @report_file_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"report_id": reportID}
+	args := pgx.StrictNamedArgs{"report_file_id": fileID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -677,6 +627,98 @@ LIMIT 1;
 	}
 
 	*a = audit
+
+	return nil
+}
+
+func (as *Audits) LoadByReportFileIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	fileIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_file_id,
+	valid_from,
+	valid_until,
+	state,
+	trust_center_visibility,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE
+	%s
+	AND report_file_id = ANY(@file_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"file_ids": fileIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits by report file IDs: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits by report file IDs: %w", err)
+	}
+
+	*as = audits
+
+	return nil
+}
+
+func (as *Audits) LoadByReportIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	reportIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_id,
+	valid_from,
+	valid_until,
+	state,
+	trust_center_visibility,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE
+	%s
+	AND report_id = ANY(@report_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"report_ids": reportIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits by report IDs: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits by report IDs: %w", err)
+	}
+
+	*as = audits
 
 	return nil
 }

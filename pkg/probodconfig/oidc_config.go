@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,11 @@
 package probodconfig
 
 type OIDCProviderConfig struct {
-	ClientID     string `json:"client-id"`
-	ClientSecret string `json:"client-secret"`
-	Enabled      bool   `json:"enabled"`
+	ClientID     string `json:"client-id,omitempty"`
+	ClientSecret string `json:"client-secret,omitempty"`
+	Enabled      bool   `json:"enabled,omitempty"`
+}
+
+func (c OIDCProviderConfig) IsZero() bool {
+	return c.ClientID == "" && c.ClientSecret == ""
 }

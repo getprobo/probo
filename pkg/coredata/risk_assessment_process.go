@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -122,49 +122,6 @@ WHERE
 	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query risk assessment processes: %w", err)
-	}
-
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentProcess])
-	if err != nil {
-		return fmt.Errorf("cannot collect risk assessment processes: %w", err)
-	}
-
-	*ps = results
-
-	return nil
-}
-
-func (ps *RiskAssessmentProcesses) LoadAllByRiskAssessmentScopeID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	riskAssessmentScopeID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	risk_assessment_scope_id,
-	source_node_id,
-	target_node_id,
-	name,
-	created_at,
-	updated_at
-FROM
-	risk_assessment_processes
-WHERE
-	%s
-	AND risk_assessment_scope_id = @risk_assessment_scope_id
-ORDER BY
-	created_at ASC, id ASC
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
-	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

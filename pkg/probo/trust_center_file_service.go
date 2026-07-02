@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -160,7 +161,7 @@ func (s TrustCenterFileService) Create(
 	filename := req.File.Filename
 	contentType := req.File.ContentType
 
-	fileSize, err := s.svc.fileManager.GetFileSize(req.File.Content)
+	fileSize, err := filemanager.GetFileSize(req.File.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get file size: %w", err)
 	}
@@ -313,7 +314,7 @@ func (s TrustCenterFileService) GenerateFileURL(
 		return "", err
 	}
 
-	fileURL, err := s.svc.fileManager.GenerateFileUrl(ctx, storedFile, duration)
+	fileURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, storedFile, duration)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -399,15 +400,16 @@ func (s TrustCenterFileService) uploadFile(
 	}
 
 	fileRecord := &coredata.File{
-		ID:         fileID,
-		BucketName: s.svc.bucket,
-		MimeType:   contentType,
-		FileName:   filename,
-		FileKey:    objectKey.String(),
-		FileSize:   fileSize,
-		Visibility: coredata.FileVisibilityPrivate,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		ID:             fileID,
+		OrganizationID: organizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       contentType,
+		FileName:       filename,
+		FileKey:        objectKey.String(),
+		FileSize:       fileSize,
+		Visibility:     coredata.FileVisibilityPrivate,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if err := fileRecord.Insert(ctx, tx, scope); err != nil {

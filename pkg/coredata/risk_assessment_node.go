@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +34,7 @@ type (
 		ID                    gid.GID                `db:"id"`
 		OrganizationID        gid.GID                `db:"organization_id"`
 		RiskAssessmentScopeID gid.GID                `db:"risk_assessment_scope_id"`
+		BoundaryID            *gid.GID               `db:"boundary_id"`
 		NodeType              RiskAssessmentNodeType `db:"node_type"`
 		Name                  string                 `db:"name"`
 		CreatedAt             time.Time              `db:"created_at"`
@@ -105,6 +106,7 @@ SELECT
 	id,
 	organization_id,
 	risk_assessment_scope_id,
+	boundary_id,
 	node_type,
 	name,
 	created_at,
@@ -120,48 +122,6 @@ WHERE
 	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query risk assessment nodes: %w", err)
-	}
-
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentNode])
-	if err != nil {
-		return fmt.Errorf("cannot collect risk assessment nodes: %w", err)
-	}
-
-	*ns = results
-
-	return nil
-}
-
-func (ns *RiskAssessmentNodes) LoadAllByRiskAssessmentScopeID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	riskAssessmentScopeID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	risk_assessment_scope_id,
-	node_type,
-	name,
-	created_at,
-	updated_at
-FROM
-	risk_assessment_nodes
-WHERE
-	%s
-	AND risk_assessment_scope_id = @risk_assessment_scope_id
-ORDER BY
-	created_at ASC, id ASC
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
-	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -212,6 +172,7 @@ SELECT
 	id,
 	organization_id,
 	risk_assessment_scope_id,
+	boundary_id,
 	node_type,
 	name,
 	created_at,
@@ -253,6 +214,7 @@ INSERT INTO risk_assessment_nodes (
 	tenant_id,
 	organization_id,
 	risk_assessment_scope_id,
+	boundary_id,
 	node_type,
 	name,
 	created_at,
@@ -262,6 +224,7 @@ INSERT INTO risk_assessment_nodes (
 	@tenant_id,
 	@organization_id,
 	@risk_assessment_scope_id,
+	@boundary_id,
 	@node_type,
 	@name,
 	@created_at,
@@ -273,6 +236,7 @@ INSERT INTO risk_assessment_nodes (
 		"tenant_id":                scope.GetTenantID(),
 		"organization_id":          n.OrganizationID,
 		"risk_assessment_scope_id": n.RiskAssessmentScopeID,
+		"boundary_id":              n.BoundaryID,
 		"node_type":                n.NodeType,
 		"name":                     n.Name,
 		"created_at":               n.CreatedAt,
@@ -295,6 +259,7 @@ func (n *RiskAssessmentNode) Update(ctx context.Context, conn pg.Tx, scope Scope
 	q := `
 UPDATE risk_assessment_nodes
 SET
+	boundary_id = @boundary_id,
 	node_type = @node_type,
 	name = @name,
 	updated_at = @updated_at
@@ -304,10 +269,11 @@ WHERE
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
-		"id":         n.ID,
-		"node_type":  n.NodeType,
-		"name":       n.Name,
-		"updated_at": n.UpdatedAt,
+		"id":          n.ID,
+		"boundary_id": n.BoundaryID,
+		"node_type":   n.NodeType,
+		"name":        n.Name,
+		"updated_at":  n.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

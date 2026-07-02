@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,10 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"os"
+	"time"
 
 	"go.gearno.de/kit/unit"
 	"go.probo.inc/probo/pkg/probod"
@@ -31,7 +35,18 @@ func main() {
 	unit := unit.NewUnit(impl, "probod", version, env)
 
 	err := unit.Run()
-	if err != nil && err != context.Canceled {
-		panic(err)
+	if err != nil && !errors.Is(err, context.Canceled) {
+		fmt.Fprintf(
+			os.Stderr,
+			`{"time": %q, "msg": %q, "version": %q, "environment": %q, "level": "ERROR", "name": "probod", "error": %q}\n`,
+			time.Now().Format(time.RFC3339),
+			"cannot run probod",
+			version,
+			env,
+			err.Error(),
+		)
+		os.Exit(1)
 	}
+
+	os.Exit(0)
 }

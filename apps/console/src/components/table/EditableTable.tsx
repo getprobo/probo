@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import { type ReactNode } from "react";
-import type { KeyType, KeyTypeData } from "react-relay/relay-hooks/helpers";
+import type { KeyType, KeyTypeData } from "react-relay/ReactRelayTypes";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
 import { z } from "zod";

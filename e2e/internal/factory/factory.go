@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -972,7 +972,7 @@ func (b *ProcessingActivityBuilder) Create() string {
 	return CreateProcessingActivity(b.client, b.attrs)
 }
 
-func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attrs) string {
+func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -981,9 +981,9 @@ func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attr
 	}
 
 	const query = `
-		mutation($input: CreateAccessSourceInput!) {
-			createAccessSource(input: $input) {
-				accessSourceEdge {
+		mutation($input: CreateAccessReviewSourceInput!) {
+			createAccessReviewSource(input: $input) {
+				accessReviewSourceEdge {
 					node { id }
 				}
 			}
@@ -992,7 +992,7 @@ func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attr
 
 	input := map[string]any{
 		"organizationId": organizationID,
-		"name":           a.getString("name", SafeName("AccessSource")),
+		"name":           a.getString("name", SafeName("AccessReviewSource")),
 	}
 	if csvData := a.getStringPtr("csvData"); csvData != nil {
 		input["csvData"] = *csvData
@@ -1003,43 +1003,43 @@ func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attr
 	}
 
 	var result struct {
-		CreateAccessSource struct {
-			AccessSourceEdge struct {
+		CreateAccessReviewSource struct {
+			AccessReviewSourceEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"accessSourceEdge"`
-		} `json:"createAccessSource"`
+			} `json:"accessReviewSourceEdge"`
+		} `json:"createAccessReviewSource"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createAccessSource mutation failed")
+	require.NoError(c.T, err, "createAccessReviewSource mutation failed")
 
-	return result.CreateAccessSource.AccessSourceEdge.Node.ID
+	return result.CreateAccessReviewSource.AccessReviewSourceEdge.Node.ID
 }
 
-type AccessSourceBuilder struct {
+type AccessReviewSourceBuilder struct {
 	client         *testutil.Client
 	organizationID string
 	attrs          Attrs
 }
 
-func NewAccessSource(c *testutil.Client, organizationID string) *AccessSourceBuilder {
-	return &AccessSourceBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
+func NewAccessReviewSource(c *testutil.Client, organizationID string) *AccessReviewSourceBuilder {
+	return &AccessReviewSourceBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
 }
 
-func (b *AccessSourceBuilder) WithName(name string) *AccessSourceBuilder {
+func (b *AccessReviewSourceBuilder) WithName(name string) *AccessReviewSourceBuilder {
 	b.attrs["name"] = name
 	return b
 }
 
-func (b *AccessSourceBuilder) WithCsvData(csvData string) *AccessSourceBuilder {
+func (b *AccessReviewSourceBuilder) WithCsvData(csvData string) *AccessReviewSourceBuilder {
 	b.attrs["csvData"] = csvData
 	return b
 }
 
-func (b *AccessSourceBuilder) Create() string {
-	return CreateAccessSource(b.client, b.organizationID, b.attrs)
+func (b *AccessReviewSourceBuilder) Create() string {
+	return CreateAccessReviewSource(b.client, b.organizationID, b.attrs)
 }
 
 func CreateAccessReviewCampaign(c *testutil.Client, organizationID string, attrs ...Attrs) string {
@@ -1065,8 +1065,8 @@ func CreateAccessReviewCampaign(c *testutil.Client, organizationID string, attrs
 		"name":           a.getString("name", SafeName("Campaign")),
 	}
 
-	if v, ok := a["accessSourceIds"]; ok {
-		input["accessSourceIds"] = v
+	if v, ok := a["accessReviewSourceIds"]; ok {
+		input["accessReviewSourceIds"] = v
 	}
 
 	var result struct {
@@ -1100,8 +1100,8 @@ func (b *AccessReviewCampaignBuilder) WithName(name string) *AccessReviewCampaig
 	return b
 }
 
-func (b *AccessReviewCampaignBuilder) WithAccessSourceIDs(ids []string) *AccessReviewCampaignBuilder {
-	b.attrs["accessSourceIds"] = ids
+func (b *AccessReviewCampaignBuilder) WithAccessReviewSourceIDs(ids []string) *AccessReviewCampaignBuilder {
+	b.attrs["accessReviewSourceIds"] = ids
 	return b
 }
 
@@ -1223,6 +1223,33 @@ func CreateOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
 	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
 	require.NoError(c.T, err, "OAuth2 client registration failed")
 	require.NotNil(c.T, resp, "OAuth2 client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
+}
+
+func CreateOAuth2ClientWithAPIScopes(c *testutil.Client, scopes string, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("OAuth2 API Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "client_secret_basic",
+		"scopes":                     scopes,
+	}
+
+	maps.Copy(input, attrs)
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "OAuth2 API client registration failed")
+	require.NotNil(c.T, resp, "OAuth2 API client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
 
 	return OAuth2ClientResult{
 		ClientID:     resp.ClientID,
@@ -1598,6 +1625,10 @@ func CreateRiskAssessmentNode(c *testutil.Client, scopeID string, attrs ...Attrs
 		"name":                  a.getString("name", SafeName("Node")),
 	}
 
+	if boundaryID := a.getString("boundaryId", ""); boundaryID != "" {
+		input["boundaryId"] = boundaryID
+	}
+
 	var result struct {
 		CreateRiskAssessmentNode struct {
 			RiskAssessmentNodeEdge struct {
@@ -1612,6 +1643,47 @@ func CreateRiskAssessmentNode(c *testutil.Client, scopeID string, attrs ...Attrs
 	require.NoError(c.T, err, "createRiskAssessmentNode mutation failed")
 
 	return result.CreateRiskAssessmentNode.RiskAssessmentNodeEdge.Node.ID
+}
+
+func CreateRiskAssessmentBoundary(c *testutil.Client, scopeID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateRiskAssessmentBoundaryInput!) {
+			createRiskAssessmentBoundary(input: $input) {
+				riskAssessmentBoundaryEdge { node { id } }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"riskAssessmentScopeId": scopeID,
+		"name":                  a.getString("name", SafeName("Boundary")),
+	}
+
+	if parentID := a.getString("parentBoundaryId", ""); parentID != "" {
+		input["parentBoundaryId"] = parentID
+	}
+
+	var result struct {
+		CreateRiskAssessmentBoundary struct {
+			RiskAssessmentBoundaryEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentBoundaryEdge"`
+		} `json:"createRiskAssessmentBoundary"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessmentBoundary mutation failed")
+
+	return result.CreateRiskAssessmentBoundary.RiskAssessmentBoundaryEdge.Node.ID
 }
 
 func CreateRiskAssessmentProcess(c *testutil.Client, scopeID, sourceNodeID, targetNodeID string, attrs ...Attrs) string {

@@ -1,5 +1,0 @@
-schema: '../../pkg/server/api/trust/v1/schema.graphql'
-extensions:
-  endpoints:
-    TrustCenter:
-      url: http://localhost:8080/api/trust/v1/graphql

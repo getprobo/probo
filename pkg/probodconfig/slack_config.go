@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,5 +16,5 @@ package probodconfig
 
 type SlackConfig struct {
 	SenderInterval int    `json:"sender-interval"`
-	SigningSecret  string `json:"signing-secret"`
+	SigningSecret  string `json:"signing-secret,omitempty"`
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -76,7 +76,7 @@ interface RiskDocumentsPageProps {
 }
 
 export default function RiskDocumentsPage(props: RiskDocumentsPageProps) {
-  const data = usePreloadedQuery(riskDocumentsPageQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskDocumentsPageQuery>(riskDocumentsPageQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }

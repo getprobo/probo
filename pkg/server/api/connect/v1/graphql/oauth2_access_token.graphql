@@ -1,0 +1,58 @@
+type OAuth2AccessToken implements Node {
+  id: ID!
+  name: String!
+  scopes: [String!]!
+  expiresAt: Datetime!
+  createdAt: Datetime!
+  permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type OAuth2AccessTokenConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.OAuth2AccessTokenConnection"
+  ) {
+  edges: [OAuth2AccessTokenEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type OAuth2AccessTokenEdge {
+  node: OAuth2AccessToken!
+  cursor: CursorKey!
+}
+
+extend type Mutation {
+  createOAuth2AccessToken(
+    input: CreateOAuth2AccessTokenInput!
+  ): CreateOAuth2AccessTokenPayload
+    @authentication(required: PRESENT)
+    @sessionOnly
+
+  revokeOAuth2AccessToken(
+    input: RevokeOAuth2AccessTokenInput!
+  ): RevokeOAuth2AccessTokenPayload
+    @authentication(required: PRESENT)
+    @sessionOnly
+}
+
+input CreateOAuth2AccessTokenInput
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.CreateOAuth2AccessTokenInput"
+  ) {
+  name: String!
+  expiresAt: Datetime!
+  scopes: [String!]!
+}
+
+input RevokeOAuth2AccessTokenInput {
+  oauth2AccessTokenId: ID!
+}
+
+type CreateOAuth2AccessTokenPayload {
+  oauth2AccessTokenEdge: OAuth2AccessTokenEdge!
+  token: String!
+}
+
+type RevokeOAuth2AccessTokenPayload {
+  oauth2AccessTokenId: ID!
+}

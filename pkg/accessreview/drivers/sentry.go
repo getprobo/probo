@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -120,7 +121,8 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				active = active && m.User.IsActive
 			}
 
-			isAdmin := m.OrgRole == "admin" || m.OrgRole == "owner"
+			role := strings.TrimSpace(m.OrgRole)
+			isAdmin := role == "admin" || role == "owner"
 
 			mfaStatus := coredata.MFAStatusUnknown
 
@@ -134,16 +136,21 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 			authMethod := sentryAuthMethod(m.Flags, m.User)
 
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       m.Email,
 				FullName:    fullName,
-				Role:        m.OrgRole,
+				Roles:       roles,
 				Active:      new(active),
 				IsAdmin:     isAdmin,
 				ExternalID:  m.ID,
 				MFAStatus:   mfaStatus,
 				AuthMethod:  authMethod,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if m.User != nil && m.User.LastLogin != "" {
@@ -216,14 +223,14 @@ func sentryNextLink(header string) string {
 	return ""
 }
 
-func sentryAuthMethod(flags map[string]bool, user *sentryUser) coredata.AccessEntryAuthMethod {
+func sentryAuthMethod(flags map[string]bool, user *sentryUser) coredata.AccessReviewEntryAuthMethod {
 	if flags["sso:linked"] {
-		return coredata.AccessEntryAuthMethodSSO
+		return coredata.AccessReviewEntryAuthMethodSSO
 	}
 
 	if user != nil && user.HasPasswordAuth {
-		return coredata.AccessEntryAuthMethodPassword
+		return coredata.AccessReviewEntryAuthMethodPassword
 	}
 
-	return coredata.AccessEntryAuthMethodUnknown
+	return coredata.AccessReviewEntryAuthMethodUnknown
 }

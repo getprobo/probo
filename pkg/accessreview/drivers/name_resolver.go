@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,12 +18,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"go.probo.inc/probo/pkg/connector"
 	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
 
@@ -87,6 +89,11 @@ func (r *googleWorkspaceNameResolver) ResolveInstanceName(ctx context.Context) (
 
 	customer, err := adminService.Customers.Get("my_customer").Context(ctx).Do()
 	if err != nil {
+		var gerr *googleapi.Error
+		if errors.As(err, &gerr) && gerr.Code == http.StatusForbidden {
+			return "", nil
+		}
+
 		return "", fmt.Errorf("cannot fetch google workspace customer: %w", err)
 	}
 
@@ -298,6 +305,170 @@ func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	return resp.Name, nil
 }
 
+// qoveryNameResolver resolves the Qovery organization name.
+type qoveryNameResolver struct {
+	httpClient     *http.Client
+	organizationID string
+}
+
+func NewQoveryNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+	return &qoveryNameResolver{
+		httpClient:     httpClient,
+		organizationID: organizationID,
+	}
+}
+
+func (r *qoveryNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.organizationID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath(qoveryAPIBaseURL, "organization", url.PathEscape(r.organizationID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build qovery organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create qovery organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute qovery organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked token, deleted org, stale ID) must not
+	// make the source-name worker retry forever. Give up gracefully and keep
+	// the generic source name; a dead token surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode qovery organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// renderNameResolver resolves the Render workspace (owner) name from
+// GET /v1/owners/{ownerId}, used to title the AccessReviewSource "Render <name>".
+type renderNameResolver struct {
+	httpClient *http.Client
+	ownerID    string
+}
+
+func NewRenderNameResolver(httpClient *http.Client, ownerID string) NameResolver {
+	return &renderNameResolver{
+		httpClient: httpClient,
+		ownerID:    ownerID,
+	}
+}
+
+func (r *renderNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.ownerID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath(renderAPIBaseURL, "owners", url.PathEscape(r.ownerID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build render owner URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create render owner request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute render owner request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked token, deleted workspace, stale ID) must
+	// not make the source-name worker retry forever. Give up gracefully and
+	// keep the generic source name; a dead token surfaces on the next
+	// ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode render owner response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// neonNameResolver resolves the Neon organization name.
+type neonNameResolver struct {
+	httpClient     *http.Client
+	organizationID string
+}
+
+func NewNeonNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+	return &neonNameResolver{
+		httpClient:     httpClient,
+		organizationID: organizationID,
+	}
+}
+
+func (r *neonNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.organizationID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath(neonAPIBaseURL, "organizations", url.PathEscape(r.organizationID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build neon organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create neon organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute neon organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked key, deleted org, stale ID) must not
+	// make the source-name worker retry forever. Give up gracefully and keep
+	// the generic source name; a dead key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode neon organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
 // hubspotNameResolver resolves the HubSpot account name.
 type hubspotNameResolver struct {
 	httpClient *http.Client
@@ -342,52 +513,34 @@ func (r *hubspotNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	return resp.AccountName, nil
 }
 
-// docusignNameResolver resolves the DocuSign account name from userinfo.
+// docusignNameResolver resolves the configured DocuSign account's name from
+// the OAuth2 userinfo endpoint, for the AccessReviewSource title.
 type docusignNameResolver struct {
 	httpClient *http.Client
+	accountID  string
 }
 
-func NewDocuSignNameResolver(httpClient *http.Client) NameResolver {
-	return &docusignNameResolver{httpClient: httpClient}
+func NewDocuSignNameResolver(httpClient *http.Client, accountID string) NameResolver {
+	return &docusignNameResolver{httpClient: httpClient, accountID: accountID}
 }
 
 func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, docusignUserInfoEndpoint, nil)
+	accounts, err := fetchDocuSignAccounts(ctx, r.httpClient)
 	if err != nil {
-		return "", fmt.Errorf("cannot create docusign userinfo request: %w", err)
+		// A dead token (non-2xx) is terminal: the source-name worker marks
+		// the source synced on ("", nil), so it stops retrying. Transient and
+		// decode failures stay errors so the worker retries.
+		if errors.Is(err, errDocuSignUserInfoStatus) {
+			return "", nil
+		}
+
+		return "", err
 	}
 
-	req.Header.Set("Accept", "application/json")
-
-	httpResp, err := r.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute docusign userinfo request: %w", err)
-	}
-
-	defer func() { _ = httpResp.Body.Close() }()
-
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch docusign userinfo: unexpected status %d", httpResp.StatusCode)
-	}
-
-	var resp struct {
-		Accounts []struct {
-			AccountName string `json:"account_name"`
-			IsDefault   bool   `json:"is_default"`
-		} `json:"accounts"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return "", fmt.Errorf("cannot decode docusign userinfo response: %w", err)
-	}
-
-	for _, account := range resp.Accounts {
-		if account.IsDefault {
+	for _, account := range accounts {
+		if account.AccountID == r.accountID {
 			return account.AccountName, nil
 		}
-	}
-
-	if len(resp.Accounts) > 0 {
-		return resp.Accounts[0].AccountName, nil
 	}
 
 	return "", nil
@@ -484,6 +637,54 @@ func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string
 	}
 
 	return resp.Name, nil
+}
+
+// sendGridNameResolver resolves the SendGrid account's company name from
+// the user profile endpoint, used as the AccessReviewSource instance label.
+type sendGridNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewSendGridNameResolver(httpClient *http.Client) NameResolver {
+	return &sendGridNameResolver{httpClient: httpClient}
+}
+
+func (r *sendGridNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.sendgrid.com/v3/user/profile",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create sendgrid profile request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute sendgrid profile request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked key, or a key without the
+	// user.profile.read scope) must not make the source-name worker retry
+	// forever. Give up gracefully and keep the generic source name; a dead
+	// key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Company string `json:"company"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode sendgrid profile response: %w", err)
+	}
+
+	return resp.Company, nil
 }
 
 // sentryNameResolver resolves the Sentry organization name.
@@ -658,6 +859,21 @@ func (r *resendNameResolver) ResolveInstanceName(_ context.Context) (string, err
 	return "Resend", nil
 }
 
+// betterStackNameResolver returns the Better Stack team name captured when
+// the API-key connector was created. The team name is the human-readable
+// instance identifier, so no HTTP call is required.
+type betterStackNameResolver struct {
+	teamName string
+}
+
+func NewBetterStackNameResolver(teamName string) NameResolver {
+	return &betterStackNameResolver{teamName: teamName}
+}
+
+func (r *betterStackNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.teamName, nil
+}
+
 // gitlabNameResolver resolves the GitLab group name.
 type gitlabNameResolver struct {
 	httpClient *http.Client
@@ -830,6 +1046,93 @@ func NewPagerDutyNameResolver(subdomain string) NameResolver {
 }
 
 func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.subdomain, nil
+}
+
+// datadogNameResolver returns the Datadog site/region label stored in
+// connector settings (e.g. "US3"), captured during the OAuth callback. No
+// HTTP call is required; the AccessReviewSource title becomes "Datadog <region>".
+// Org-name resolution is intentionally omitted to keep scopes to
+// user_access_read (the org name endpoint needs org_management).
+type datadogNameResolver struct {
+	region string
+}
+
+func NewDatadogNameResolver(region string) NameResolver {
+	return &datadogNameResolver{region: region}
+}
+
+func (r *datadogNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.region, nil
+}
+
+// oktaNameResolver resolves the Okta org name via GET /api/v1/org on the
+// configured org host. A non-2xx is terminal — a read-only API token may
+// lack org-settings read, so it returns ("", nil) to keep the generic
+// source name rather than make the source-name worker retry forever.
+type oktaNameResolver struct {
+	httpClient *http.Client
+	domain     string
+}
+
+func NewOktaNameResolver(httpClient *http.Client, domain string) NameResolver {
+	return &oktaNameResolver{httpClient: httpClient, domain: domain}
+}
+
+func (r *oktaNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.domain == "" {
+		return "", nil
+	}
+
+	endpoint := url.URL{Scheme: "https", Host: r.domain, Path: "/api/v1/org"}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create okta org request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute okta org request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		CompanyName string `json:"companyName"`
+		Subdomain   string `json:"subdomain"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode okta org response: %w", err)
+	}
+
+	if resp.CompanyName != "" {
+		return resp.CompanyName, nil
+	}
+
+	return resp.Subdomain, nil
+}
+
+// zendeskNameResolver returns the Zendesk subdomain stored in connector
+// settings (e.g. "acme" for acme.zendesk.com), captured at connect time. No
+// HTTP call is required; the AccessReviewSource title becomes "Zendesk <subdomain>".
+// Account-name resolution is intentionally omitted to keep the scope to
+// users:read (Zendesk exposes no human account name on that scope).
+type zendeskNameResolver struct {
+	subdomain string
+}
+
+func NewZendeskNameResolver(subdomain string) NameResolver {
+	return &zendeskNameResolver{subdomain: subdomain}
+}
+
+func (r *zendeskNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return r.subdomain, nil
 }
 

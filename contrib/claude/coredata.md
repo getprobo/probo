@@ -102,8 +102,8 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 | `LoadBy*(ctx, conn, scope, key)`                         | `*Entity`   | `error`                      | Single entity by unique key          |
 | `LoadBy*(ctx, conn, scope, parentID, cursor, filter)`    | `*Entities` | `error`                      | Paginated list (cursor provides limit) |
 | `Load(ctx, conn, limit, filter)`                         | `*Entities` | `error`                      | Filtered list with explicit limit    |
-| `LoadAllBy*(ctx, conn, scope, parentID)`                 | `*Entities` | `error`                      | All matching rows (never cursor/limit) |
-| `LoadAll(ctx, conn, filter)`                             | `*Entities` | `error`                      | All matching rows with filter (never cursor/limit) |
+| `LoadAllBy*(ctx, conn, scope, parentID)`                 | `*Entities` | `error`                      | Legacy unbounded loader — do not add new ones (use `LoadBy*` + `page.LoadAll`) |
+| `LoadAll(ctx, conn, filter)`                             | `*Entities` | `error`                      | Legacy unbounded loader — do not add new ones (use `LoadBy*` + `page.LoadAll`) |
 | `CountBy*(ctx, conn, scope, parentID, filter)`           | `*Entities` | `(int, error)`               | Count matching rows                  |
 | `Insert(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Insert, uses `scope.GetTenantID()`   |
 | `Update(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Update via `Exec` (no `RETURNING`)   |
@@ -115,12 +115,35 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 
 The method name signals whether the result set is bounded:
 
-- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `Assets.LoadByOrganizationID(ctx, conn, scope, orgID, cursor)`.
-- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with an explicit limit, used when cursor pagination is not needed but the caller controls the result count. Example: `CommonThirdPartyDomains.Load(ctx, conn, 1, filter)`.
-- **`LoadAllBy*`** — returns all matching rows with no limit or cursor. Use only when the full set is needed (e.g. all categories for a banner).
-- **`LoadAll`** — same as `LoadAllBy*` but without a parent key; returns all rows matching a filter. Example: `CommonThirdParties.LoadAll(ctx, conn, filter)`.
+- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `Assets.LoadByOrganizationID(ctx, conn, scope, orgID, cursor)`. This is the primary list shape; prefer it.
+- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with an explicit, hard-capped limit (e.g. `... LIMIT 20`), used when the caller controls a small bounded result count. Example: `CommonThirdPartyDomains.Load(ctx, conn, 1, filter)`.
+- **`LoadAllBy*` / `LoadAll`** — legacy unbounded loaders. **Do not add new ones.** They run one query with no ceiling, so a table that is small in dev can blow up memory and query time in production. The few that remain are deliberate exceptions: tiny per-parent sets, `[]gid.GID` / map projections, or hard-`LIMIT` search helpers.
 
-`LoadAll*` methods must **never** accept a cursor or limit parameter — the `All` suffix means the entire matching set is returned. If a bounded result is needed, use `Load*` or `LoadBy*` with a `cursor` or `limit int` instead. The codebase has some legacy `LoadAllBy*` methods that accept a cursor; do not follow that pattern — new code must use `LoadBy*` for paginated queries.
+`LoadAll*` methods must **never** accept a cursor or limit parameter — the `All` suffix means the entire matching set is returned.
+
+### Loading every row without an unbounded query
+
+When a caller genuinely needs all rows, expose a cursor-paginated `LoadBy*` and walk it with the generic `page.LoadAll` helper ([`pkg/page/load_all.go`](../../pkg/page/load_all.go)). It repeatedly fetches forward pages of `MaxCursorSize` until the result is exhausted, and returns an error past `MaxLoadAllPages` (20) pages so a genuinely unbounded set fails loudly instead of exhausting memory.
+
+```go
+things, err := page.LoadAll(
+	ctx,
+	page.OrderBy[coredata.ThingOrderField]{
+		Field:     coredata.ThingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	},
+	func(ctx context.Context, cursor *page.Cursor[coredata.ThingOrderField]) ([]*coredata.Thing, error) {
+		var batch coredata.Things
+		if err := batch.LoadByParentID(ctx, conn, scope, parentID, cursor); err != nil {
+			return nil, err
+		}
+
+		return batch, nil
+	},
+)
+```
+
+The order field passed to `page.LoadAll` must have a `CursorKey` case on the entity. `CursorKey` panics at runtime (not compile time) on an unhandled field, so add the case when introducing the order field.
 
 ## No cross-entity JOINs
 

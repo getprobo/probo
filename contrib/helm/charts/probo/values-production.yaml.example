@@ -111,6 +111,15 @@ probo:
     allowedOrigins:
       - "https://probo.example.com"
 
+  # GraphQL request-cost guards (application-layer DoS protection).
+  # Defaults are production-safe; tune only if a legitimate query is rejected
+  # or to enable complexity analysis. A value of 0 disables the guard.
+  graphql:
+    parserTokenLimit: 15000
+    complexityLimit: 2000
+    queryCacheSize: 1000
+    disableSuggestion: true
+
   # Extra HTTP headers to add to responses
   extraHeaderFields: {}
     # X-Custom-Header: "custom-value"
@@ -157,6 +166,9 @@ probo:
       user: "apikey"
       password: "CHANGE_ME_SMTP_PASSWORD"
       tlsRequired: true
+      # Set to your server's hostname when the relay requires a specific EHLO/HELO
+      # identity (e.g. Google Workspace smtp-relay.gmail.com rejects "localhost").
+      # helloName: "mail.example.com"
 
   # OpenAI integration for AI features (optional)
   openai:
@@ -182,6 +194,15 @@ probo:
   #   maxConcurrency: 1
   #   staleAfter: 1500
 
+  # Third-party disambiguation agent (optional; runs inside the tracker
+  # mapping worker to pick the best matching org third party). Falls back
+  # to trackerMapping when its provider is unset.
+  # thirdPartyDisambiguation:
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.4"
+  #   maxTokens: "4096"
+
   # Tracker mapping agent (optional, auto-links tracker patterns to vendors)
   # trackerMapping:
   #   provider: "openai"
@@ -189,8 +210,16 @@ probo:
   #   temperature: "0.1"
   #   maxTokens: "4096"
 
+  # Tracker enrichment agent (optional; researches catalog descriptions).
+  # Falls back to trackerMapping when its provider is unset.
+  # trackerEnrichment:
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.2"
+  #   maxTokens: "4096"
+
   # Tracker mapping worker tuning (optional; seconds for
-  # interval/staleAfter/agentTimeout).
+  # interval/staleAfter/agentTimeout/disambiguationAgentTimeout).
   # Keep concurrency modest to stay under OpenAI/Firecrawl limits and the DB pool.
   # trackerMappingWorker:
   #   interval: 10
@@ -198,6 +227,7 @@ probo:
   #   staleAfter: 600
   #   agentTimeout: 45
   #   agentMaxTurns: 10
+  #   disambiguationAgentTimeout: 45
 
   # Common-pattern enrichment worker tuning (optional; seconds for
   # interval/staleAfter/agentTimeout).
@@ -207,6 +237,26 @@ probo:
   #   staleAfter: 600
   #   agentTimeout: 45
   #   agentMaxTurns: 10
+
+  # Common third party enrichment agent (optional, fills common_third_parties
+  # metadata: URLs, address, certifications, logo).
+  # commonThirdPartyEnrichment:
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.1"
+  #   maxTokens: "8192"
+
+  # Common third party enrichment worker tuning (optional; seconds for
+  # interval/staleAfter/agentTimeout). confidenceThreshold is the 0-1 floor
+  # a value must clear before it is written.
+  # commonThirdPartyEnrichmentWorker:
+  #   interval: 10
+  #   maxConcurrency: 1
+  #   staleAfter: 900
+  #   agentTimeout: 90
+  #   agentMaxTurns: 12
+  #   confidenceThreshold: 0.7
+  #   maxAttempts: 3
 
   # OpenTelemetry tracing (optional)
   tracing:

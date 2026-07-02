@@ -1,0 +1,64 @@
+---
+# Hand-authored fixture for the Pylon access-review driver. The driver first
+# resolves the organization's role catalogue (GET /user-roles), then lists
+# members (GET /users) and maps each user's opaque role_id to a role name.
+# The user/role object shapes mirror the documented OpenAPI schema. Synthetic
+# IDs/emails only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.usepylon.com
+        form:
+            limit:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.usepylon.com/user-roles?limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":"role_admin","name":"Admin","slug":"admin"},{"id":"role_member","name":"Member","slug":"member"}],"pagination":{"cursor":"","has_next_page":false},"request_id":"req_roles_1"}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 120ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.usepylon.com
+        form:
+            limit:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.usepylon.com/users?limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":"user_1","email":"alice@example.com","name":"Alice Admin","role_id":"role_admin","status":"active"},{"id":"user_2","email":"bob@example.com","name":"Bob Member","role_id":"role_member","status":"active"},{"id":"user_3","email":"carol@example.com","name":"","role_id":"role_member","status":"deactivated"}],"pagination":{"cursor":"","has_next_page":false},"request_id":"req_users_1"}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 140ms

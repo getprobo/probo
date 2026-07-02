@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
@@ -71,6 +73,17 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: *input.GrafanaBaseURL})
+	case coredata.ConnectorProviderSigNoz:
+		if input.SignozBaseURL == nil || *input.SignozBaseURL == "" {
+			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl is required")
+		}
+
+		u, err := url.Parse(*input.SignozBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: *input.SignozBaseURL})
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordScimBridgeURL == nil || *input.OnePasswordScimBridgeURL == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL is required")
@@ -93,6 +106,89 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.MetabaseConnectorSettings{InstanceURL: *input.MetabaseInstanceURL})
+	case coredata.ConnectorProviderPostHog:
+		region := ""
+		if input.PosthogRegion != nil {
+			region = *input.PosthogRegion
+		}
+
+		instanceURL := ""
+		if input.PosthogInstanceURL != nil {
+			instanceURL = *input.PosthogInstanceURL
+		}
+
+		// Cloud (region) and self-hosted (instance URL) are mutually
+		// exclusive; exactly one identifies the connection's data host.
+		switch {
+		case region != "" && instanceURL != "":
+			return nil, fmt.Errorf("cannot create posthog connector: set either posthogRegion or posthogInstanceUrl, not both")
+		case region != "":
+			baseURL, ok := drivers.PostHogRegionBaseURL(region)
+			if !ok {
+				return nil, fmt.Errorf("cannot create posthog connector: posthogRegion must be US or EU")
+			}
+
+			return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: baseURL})
+		case instanceURL != "":
+			u, err := url.Parse(instanceURL)
+			if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+				return nil, fmt.Errorf("cannot create posthog connector: posthogInstanceUrl must be an http(s) URL")
+			}
+
+			return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: instanceURL})
+		default:
+			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion or posthogInstanceUrl is required")
+		}
+	case coredata.ConnectorProviderOkta:
+		if input.OktaDomain == nil || *input.OktaDomain == "" {
+			return nil, fmt.Errorf("cannot create okta connector: oktaDomain is required")
+		}
+
+		// NormalizeOktaDomain strips scheme/path and validates the host; the
+		// stored value is the bare org domain (e.g. "acme.okta.com"). Use a
+		// static error message — this string is surfaced verbatim to the
+		// client and must never echo the operator-supplied input.
+		domain, err := connector.NormalizeOktaDomain(*input.OktaDomain)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create okta connector: oktaDomain must be a valid Okta domain (e.g. acme.okta.com)")
+		}
+
+		return json.Marshal(&coredata.OktaConnectorSettings{Domain: domain})
+	case coredata.ConnectorProviderBetterStack:
+		if input.BetterStackTeamName == nil || *input.BetterStackTeamName == "" {
+			return nil, fmt.Errorf("cannot create better stack connector: betterStackTeamName is required")
+		}
+
+		return json.Marshal(&coredata.BetterStackConnectorSettings{TeamName: *input.BetterStackTeamName})
+	case coredata.ConnectorProviderQovery:
+		if input.QoveryOrganizationID == nil || *input.QoveryOrganizationID == "" {
+			return nil, fmt.Errorf("cannot create qovery connector: qoveryOrganizationId is required")
+		}
+
+		return json.Marshal(&coredata.QoveryConnectorSettings{OrganizationID: *input.QoveryOrganizationID})
+	case coredata.ConnectorProviderRender:
+		if input.RenderWorkspaceID == nil || *input.RenderWorkspaceID == "" {
+			return nil, fmt.Errorf("cannot create render connector: renderWorkspaceId is required")
+		}
+
+		return json.Marshal(&coredata.RenderConnectorSettings{OwnerID: *input.RenderWorkspaceID})
+	case coredata.ConnectorProviderNeon:
+		if input.NeonOrganizationID == nil || *input.NeonOrganizationID == "" {
+			return nil, fmt.Errorf("cannot create neon connector: neonOrganizationId is required")
+		}
+
+		return json.Marshal(&coredata.NeonConnectorSettings{OrganizationID: *input.NeonOrganizationID})
+	case coredata.ConnectorProviderLangfuse:
+		if input.LangfuseBaseURL == nil || *input.LangfuseBaseURL == "" {
+			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl is required")
+		}
+
+		u, err := url.Parse(*input.LangfuseBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.LangfuseConnectorSettings{BaseURL: *input.LangfuseBaseURL})
 	}
 
 	return nil, nil

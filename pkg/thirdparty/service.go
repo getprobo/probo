@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,18 +20,18 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type Service struct {
 	pg             *pg.Client
-	file           *file.Service
+	file           *filemanager.Service
 	vetter         Vetter
 	vettingEnabled bool
 }
 
-func NewService(pgClient *pg.Client, fileSvc *file.Service, vetter Vetter) *Service {
+func NewService(pgClient *pg.Client, fileSvc *filemanager.Service, vetter Vetter) *Service {
 	_, disabled := vetter.(DisabledVetter)
 
 	return &Service{
@@ -46,10 +46,12 @@ func (s *Service) GenerateLogoURL(
 	ctx context.Context,
 	logoFileID gid.GID,
 ) (*string, error) {
-	url, err := s.file.GenerateFileURL(ctx, logoFileID)
+	file, err := s.file.GetPublicFile(ctx, logoFileID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
+		return nil, fmt.Errorf("cannot load logo file: %w", err)
 	}
+
+	url := s.file.GenerateFileURL(file)
 
 	return &url, nil
 }

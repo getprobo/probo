@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +38,17 @@ type (
 	Tool interface {
 		ToolDescriptor
 		Execute(ctx context.Context, arguments string) (ToolResult, error)
+	}
+
+	// SuspendableTool marks tools that can safely receive the run's
+	// graceful-suspend signal and checkpoint their own progress.
+	//
+	// Leaf tools should generally not implement this interface: they are
+	// expected to run on a detached context so in-flight side effects are
+	// not aborted during shutdown.
+	SuspendableTool interface {
+		Tool
+		Suspendable()
 	}
 )
 

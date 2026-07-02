@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { formatDate, formatError, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -30,6 +30,7 @@ import {
   IconPlusLarge,
   IconRobot,
   IconTrashCan,
+  IconWarning,
   Option,
   Select,
   Tbody,
@@ -47,17 +48,19 @@ import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironmen
 import { useNavigate } from "react-router";
 import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
 
-import type { AccessEntryDecision, CampaignDetailPageBulkDecisionMutation } from "#/__generated__/core/CampaignDetailPageBulkDecisionMutation.graphql";
-import type { AccessEntryFlag, CampaignDetailPageBulkFlagMutation } from "#/__generated__/core/CampaignDetailPageBulkFlagMutation.graphql";
+import type { AccessReviewEntryDecision, CampaignDetailPageBulkDecisionMutation } from "#/__generated__/core/CampaignDetailPageBulkDecisionMutation.graphql";
+import type { AccessReviewEntryFlag, CampaignDetailPageBulkFlagMutation } from "#/__generated__/core/CampaignDetailPageBulkFlagMutation.graphql";
 import type { CampaignDetailPageCloseMutation } from "#/__generated__/core/CampaignDetailPageCloseMutation.graphql";
 import type { CampaignDetailPageDeleteMutation } from "#/__generated__/core/CampaignDetailPageDeleteMutation.graphql";
 import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetailPageQuery.graphql";
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { AccessEntryRolesCell } from "../_components/AccessEntryRolesCell";
 import {
   decisionBadgeVariant,
   decisionLabel,
+  fetchStatusBadgeVariant,
   flagBadgeVariant,
   flagGroups,
   flagLabel,
@@ -68,7 +71,7 @@ import {
 } from "../_components/accessReviewHelpers";
 import { EntryDecisionActions } from "../_components/EntryDecisionActions";
 import { EntryFlagSelect } from "../_components/EntryFlagSelect";
-import { AddCampaignScopeSourceDialog } from "../dialogs/AddCampaignScopeSourceDialog";
+import { AddCampaignSourceDialog } from "../dialogs/AddCampaignSourceDialog";
 
 const startCampaignMutation = graphql`
   mutation CampaignDetailPageStartMutation(
@@ -111,10 +114,10 @@ const deleteCampaignMutation = graphql`
 
 const bulkDecisionMutation = graphql`
   mutation CampaignDetailPageBulkDecisionMutation(
-    $input: RecordAccessEntryDecisionsInput!
+    $input: RecordAccessReviewEntryDecisionsInput!
   ) {
-    recordAccessEntryDecisions(input: $input) {
-      accessEntries {
+    recordAccessReviewEntryDecisions(input: $input) {
+      accessReviewEntries {
         id
         decision
         decisionNote
@@ -125,10 +128,10 @@ const bulkDecisionMutation = graphql`
 
 const bulkFlagMutation = graphql`
   mutation CampaignDetailPageBulkFlagMutation(
-    $input: FlagAccessEntryInput!
+    $input: FlagAccessReviewEntryInput!
   ) {
-    flagAccessEntry(input: $input) {
-      accessEntry {
+    flagAccessReviewEntry(input: $input) {
+      accessReviewEntry {
         id
         flags
         flagReasons
@@ -145,23 +148,34 @@ export const campaignDetailPageQuery = graphql`
         id
         name
         status
-        canDelete: permission(action: "core:access-review-campaign:delete")
-        scopeSources {
+        pendingEntries: entries(first: 0, filter: { decision: PENDING }) {
+          totalCount
+        }
+        canDelete: permission(action: "access-review:campaign:delete")
+        sources {
           id
           source {
             id
           }
           name
-          fetchStatus
-          fetchedAccountsCount
+          fetchAttempts(first: 1) {
+            edges {
+              node {
+                status
+                fetchedAccountsCount
+                error
+              }
+            }
+          }
           entries(first: 500) {
             edges {
               node {
                 id
                 email
                 fullName
-                role
+                ...AccessEntryRolesCell_accessEntry
                 isAdmin
+                active
                 mfaStatus
                 accountType
                 lastLogin
@@ -188,7 +202,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const environment = useRelayEnvironment();
-  const data = usePreloadedQuery(campaignDetailPageQuery, queryRef);
+  const data = usePreloadedQuery<CampaignDetailPageQuery>(campaignDetailPageQuery, queryRef);
 
   if (data.node.__typename !== "AccessReviewCampaign") {
     throw new Error("Campaign not found");
@@ -221,9 +235,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     }, 3000);
     return () => clearInterval(interval);
   }, [isInProgress, environment]);
-  const existingScopeSourceIds = useMemo(
-    () => campaign.scopeSources.flatMap(s => s.source?.id ? [s.source.id] : []),
-    [campaign.scopeSources],
+  const existingCampaignSourceIds = useMemo(
+    () => campaign.sources.flatMap(s => s.source?.id ? [s.source.id] : []),
+    [campaign.sources],
   );
 
   const confirm = useConfirm();
@@ -237,13 +251,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [deleteCampaign, isDeleting]
     = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
 
-  const allDecided = campaign.scopeSources.length > 0
-    && campaign.scopeSources.every(source =>
-      source.entries
-      && source.entries.edges.length > 0
-      && source.entries.edges.every(edge => edge.node.decision !== "PENDING")
-      && !source.entries.pageInfo.hasNextPage,
-    );
+  const canComplete = campaign.pendingEntries.totalCount === 0;
 
   const handleStart = () => {
     startCampaign({
@@ -258,7 +266,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             title: __("Error"),
             description: formatError(
               __("Failed to start campaign"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -275,7 +283,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to start campaign"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -304,7 +312,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to delete campaign"),
-                    errors as GraphQLError[],
+                    errors,
                   ),
                   variant: "error",
                 });
@@ -324,7 +332,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete campaign"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });
@@ -357,7 +365,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to complete campaign"),
-                    errors as GraphQLError[],
+                    errors,
                   ),
                   variant: "error",
                 });
@@ -376,7 +384,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to complete campaign"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });
@@ -414,7 +422,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         {isPendingActions && (
           <Button
             onClick={handleComplete}
-            disabled={!allDecided || isClosing}
+            disabled={!canComplete || isClosing}
           >
             {isClosing ? __("Completing...") : __("Complete campaign")}
           </Button>
@@ -435,16 +443,16 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       <div className="space-y-4">
         {isDraft && (
           <div className="flex items-center justify-end gap-2">
-            <AddCampaignScopeSourceDialog
+            <AddCampaignSourceDialog
               organizationId={organizationId}
               campaignId={campaign.id}
-              existingScopeSourceIds={existingScopeSourceIds}
+              existingCampaignSourceIds={existingCampaignSourceIds}
             >
               <Button icon={IconPlusLarge} variant="secondary">
                 {__("Add source")}
               </Button>
-            </AddCampaignScopeSourceDialog>
-            {campaign.scopeSources.length > 0 && (
+            </AddCampaignSourceDialog>
+            {campaign.sources.length > 0 && (
               <Button
                 onClick={handleStart}
                 disabled={isStarting}
@@ -455,15 +463,15 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           </div>
         )}
 
-        {campaign.scopeSources.map(source => (
-          <ScopeSourceCard
+        {campaign.sources.map(source => (
+          <CampaignSourceCard
             key={source.id}
             source={source}
             isPendingActions={isPendingActions}
           />
         ))}
 
-        {campaign.scopeSources.length === 0 && (
+        {campaign.sources.length === 0 && (
           <Card padded>
             <div className="text-center py-8">
               <p className="text-txt-tertiary">
@@ -477,19 +485,19 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   );
 }
 
-type ScopeSource = NonNullable<
+type CampaignSource = NonNullable<
   Extract<
     CampaignDetailPageQuery["response"]["node"],
     { readonly __typename: "AccessReviewCampaign" }
-  >["scopeSources"]
+  >["sources"]
 >[number];
 
-function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; isPendingActions: boolean }) {
+function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSource; isPendingActions: boolean }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [expanded, setExpanded] = useState(false);
   const { list: selection, toggle, clear, reset } = useList<string>([]);
-  const [bulkPendingDecision, setBulkPendingDecision] = useState<AccessEntryDecision | null>(null);
+  const [bulkPendingDecision, setBulkPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
   const [bulkNote, setBulkNote] = useState("");
   const bulkNoteRef = useDialogRef();
 
@@ -500,16 +508,20 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
 
   const entries = source.entries?.edges ?? [];
   const entryIds = entries.map(edge => edge.node.id);
+  const latestAttempt = source.fetchAttempts.edges[0]?.node;
+  const fetchStatus = latestAttempt?.status ?? "QUEUED";
+  const fetchedAccountsCount = latestAttempt?.fetchedAccountsCount ?? 0;
+  const lastError = latestAttempt?.error;
 
   const handleBulkDecision = (value: string) => {
-    const decision = value as AccessEntryDecision;
+    const decision = value as AccessReviewEntryDecision;
     if (decision === "APPROVED") {
       bulkDecide({
         variables: {
           input: {
             decisions: selection.map(id => ({
-              accessEntryId: id,
-              decision: "APPROVED" as AccessEntryDecision,
+              accessReviewEntryId: id,
+              decision: "APPROVED",
             })),
           },
         },
@@ -519,7 +531,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
               title: __("Error"),
               description: formatError(
                 __("Failed to record decisions"),
-                errors as GraphQLError[],
+                errors,
               ),
               variant: "error",
             });
@@ -537,7 +549,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
             title: __("Error"),
             description: formatError(
               __("Failed to record decisions"),
-              error as GraphQLError,
+              error,
             ),
             variant: "error",
           });
@@ -550,11 +562,11 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
     }
   };
 
-  const [bulkFlagSelection, setBulkFlagSelection] = useState<AccessEntryFlag[]>([]);
+  const [bulkFlagSelection, setBulkFlagSelection] = useState<AccessReviewEntryFlag[]>([]);
   const [bulkFlagOpen, setBulkFlagOpen] = useState(false);
-  const bulkFlagOpenedWithRef = useRef<AccessEntryFlag[]>([]);
+  const bulkFlagOpenedWithRef = useRef<AccessReviewEntryFlag[]>([]);
 
-  const toggleBulkFlag = (flagValue: AccessEntryFlag) => {
+  const toggleBulkFlag = (flagValue: AccessReviewEntryFlag) => {
     setBulkFlagSelection(prev =>
       prev.includes(flagValue)
         ? prev.filter(f => f !== flagValue)
@@ -577,7 +589,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
         bulkFlag({
           variables: {
             input: {
-              accessEntryId: entryId,
+              accessReviewEntryId: entryId,
               flags: bulkFlagSelection,
             },
           },
@@ -635,15 +647,25 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
             : <IconChevronRight className="size-4 text-txt-tertiary" />}
           <span className="font-medium">{source.name}</span>
           <Badge variant="neutral">
-            {source.fetchedAccountsCount}
+            {fetchedAccountsCount}
             {" "}
             {__("accounts")}
           </Badge>
-          <Badge variant={source.fetchStatus === "SUCCESS" ? "success" : "info"}>
-            {formatStatus(source.fetchStatus)}
+          <Badge variant={fetchStatusBadgeVariant(fetchStatus)}>
+            {formatStatus(fetchStatus)}
           </Badge>
         </div>
       </button>
+
+      {fetchStatus === "FAILED" && lastError && (
+        <div className="flex items-start gap-2 border-t bg-danger px-4 py-3 text-sm text-txt-danger">
+          <IconWarning className="mt-0.5 size-4 shrink-0" />
+          <div>
+            <p className="font-medium">{__("Fetch failed")}</p>
+            <p>{lastError}</p>
+          </div>
+        </div>
+      )}
 
       {expanded && (
         <div className="border-t">
@@ -670,6 +692,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
                         <Th>{__("Email")}</Th>
                         <Th>{__("Role")}</Th>
                         <Th>{__("Admin")}</Th>
+                        <Th>{__("Status")}</Th>
                         <Th>{__("MFA")}</Th>
                         <Th>{__("Last login")}</Th>
                         <Th>{__("Flag")}</Th>
@@ -696,8 +719,17 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
                             </span>
                           </Td>
                           <Td>{edge.node.email || <NotAvailable />}</Td>
-                          <Td>{edge.node.role || <NotAvailable />}</Td>
+                          <AccessEntryRolesCell accessEntryKey={edge.node} />
                           <Td>{edge.node.isAdmin ? __("Yes") : __("No")}</Td>
+                          <Td>
+                            {edge.node.active == null
+                              ? <NotAvailable />
+                              : (
+                                  <Badge variant={edge.node.active ? "success" : "danger"}>
+                                    {edge.node.active ? __("Active") : __("Disabled")}
+                                  </Badge>
+                                )}
+                          </Td>
                           <Td>
                             {edge.node.mfaStatus === "UNKNOWN"
                               ? <NotAvailable />
@@ -830,7 +862,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
                       variables: {
                         input: {
                           decisions: selection.map(id => ({
-                            accessEntryId: id,
+                            accessReviewEntryId: id,
                             decision: bulkPendingDecision,
                             decisionNote: bulkNote,
                           })),
@@ -842,7 +874,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
                             title: __("Error"),
                             description: formatError(
                               __("Failed to record decisions"),
-                              errors as GraphQLError[],
+                              errors,
                             ),
                             variant: "error",
                           });
@@ -863,7 +895,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
                           title: __("Error"),
                           description: formatError(
                             __("Failed to record decisions"),
-                            error as GraphQLError,
+                            error,
                           ),
                           variant: "error",
                         });

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -86,20 +86,22 @@ func (d *CursorDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			continue
 		}
 
-		// isRemoved is Cursor's only account-status signal, so Active is
+		// Cursor exposes two removal signals that are not always
+		// consistent: the isRemoved soft-delete flag and a role of
+		// "removed". Either one marks the member inactive, so Active is
 		// always populated (never nil): a removed member is reported
 		// inactive rather than dropped, per the AccountRecord contract.
-		active := !m.IsRemoved
+		active := !m.IsRemoved && m.Role != "removed"
 
 		records = append(records, AccountRecord{
 			Email:       m.Email,
 			FullName:    m.Name,
-			Role:        cursorRole(m.Role),
+			Roles:       cursorRoles(m.Role),
 			Active:      &active,
 			IsAdmin:     cursorIsAdmin(m.Role),
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			ExternalID:  m.ID,
 		})
 	}
@@ -114,15 +116,19 @@ func cursorIsAdmin(role string) bool {
 	return role == "owner" || role == "free-owner"
 }
 
-func cursorRole(role string) string {
+func cursorRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch role {
 	case "owner", "free-owner":
-		return "Owner"
+		return []string{"Owner"}
 	case "member":
-		return "Member"
+		return []string{"Member"}
 	case "removed":
-		return "Removed"
+		return []string{"Removed"}
 	default:
-		return role
+		return []string{role}
 	}
 }

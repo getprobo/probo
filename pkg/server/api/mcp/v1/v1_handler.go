@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,8 +24,10 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
@@ -36,12 +38,14 @@ import (
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
+	resourceAliasSvc *resourcealias.Service,
 	thirdPartySvc *thirdparty.Service,
 	iamSvc *iam.Service,
 	accessReviewSvc *accessreview.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	riskManagementSvc *riskmanagement.Service,
 	tokenSecret string,
+	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
@@ -50,12 +54,15 @@ func NewMux(
 
 	resolver := &Resolver{
 		proboSvc:       proboSvc,
+		resourceAlias:  resourceAliasSvc,
 		thirdPartySvc:  thirdPartySvc,
 		iamSvc:         iamSvc,
 		accessReview:   accessReviewSvc,
 		cookieBanner:   cookieBannerSvc,
 		riskManagement: riskManagementSvc,
 		logger:         logger,
+		fileManager:    fileManagerSvc,
+		baseURL:        baseURL,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
@@ -84,7 +91,8 @@ func NewMux(
 	// be chained; the OAuth middleware skips when an identity is already set.
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
-	r.Handle("/", RequireAPIKeyHandler(logger, resourceMetadataURL, protectedHandler))
+	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
+	r.Handle("/", protectedHandler)
 
 	logger.Info("MCP server initialized successfully")
 

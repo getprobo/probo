@@ -14,7 +14,7 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | `make test-short`            | Short tests only                                                                                       |
 | `make test-bench`            | Run benchmarks                                                                                         |
 | `make test-e2e`              | Run console end-to-end tests (requires `bin/probod`)                                                   |
-| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `npm-lint`                                  |
+| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `lint-js`                                   |
 | `make fmt`                   | Format Go code (`go fmt ./...`)                                                                        |
 | `make clean`                 | Remove all build artifacts, `node_modules`, generated files, and coverage                              |
 | `make help`                  | List targets with `##` doc comments                                                                    |
@@ -41,7 +41,7 @@ Individual codegen is driven by `go generate`:
 - `go generate ./pkg/server/api/mcp/v1` — MCP (mcpgen)
 - `go generate ./pkg/llm` — LLM model registry from OpenRouter (`make genmodels`)
 
-`make relay` merges split `.graphql` schema files and runs `relay-compiler`.
+`make relay` merges each service's split `.graphql` schema files into a single `schema.graphql` (via `contrib/merge-graphql-schema.sh`) and runs `relay-compiler`. The merge is required: relay-compiler's `schema` must be a single file, and `schemaExtensions` would mark the fields as client-only (emitting `text: null`), so the split files cannot be fed to Relay directly.
 
 ## Coverage
 

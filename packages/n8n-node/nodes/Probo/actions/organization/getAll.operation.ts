@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,9 +56,9 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetOrganizations($first: Int, $after: CursorKey) {
+		query GetOrganizations($first: Int, $after: CursorKey, $filter: ProfileFilter) {
 			viewer {
-				profiles(first: $first, after: $after) {
+				profiles(first: $first, after: $after, filter: $filter) {
 					edges {
 						node {
 							organization {
@@ -68,8 +68,16 @@ export async function execute(
 								websiteUrl
 								email
 								headquarterAddress
-								logoUrl
-								horizontalLogoUrl
+								logo {
+									id
+									fileName
+									downloadUrl
+								}
+								horizontalLogo {
+									id
+									fileName
+									downloadUrl
+								}
 								createdAt
 								updatedAt
 							}
@@ -87,7 +95,7 @@ export async function execute(
 	const memberships = await proboConnectApiRequestAllItems.call(
 		this,
 		query,
-		{},
+		{ filter: { state: 'ACTIVE' } },
 		(response: IDataObject) => {
 			const data = response?.data as IDataObject | undefined;
 			const viewer = data?.viewer as IDataObject | undefined;

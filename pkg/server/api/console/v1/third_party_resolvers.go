@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
@@ -31,6 +30,12 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionThirdPartyCreate)
 	if err != nil {
 		return nil, err
+	}
+
+	if input.ParentThirdPartyID != nil {
+		if _, err := r.authorize(ctx, *input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate); err != nil {
+			return nil, err
+		}
 	}
 
 	thirdParty, err := r.probo.ThirdParties.Create(
@@ -56,7 +61,7 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 			BusinessOwnerID:               input.BusinessOwnerID,
 			SecurityOwnerID:               input.SecurityOwnerID,
 			Countries:                     input.Countries,
-			FirstLevel:                    input.FirstLevel,
+			ParentThirdPartyID:            input.ParentThirdPartyID,
 		},
 	)
 	if err != nil {
@@ -75,6 +80,36 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 
 	return &types.CreateThirdPartyPayload{
 		ThirdPartyEdge: types.NewThirdPartyEdge(thirdParty, coredata.ThirdPartyOrderFieldName),
+	}, nil
+}
+
+// ImportThirdPartyFromCommon is the resolver for the importThirdPartyFromCommon field.
+func (r *mutationResolver) ImportThirdPartyFromCommon(ctx context.Context, input types.ImportThirdPartyFromCommonInput) (*types.ImportThirdPartyFromCommonPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionThirdPartyCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	thirdParty, created, err := r.probo.ThirdParties.ImportFromCommon(
+		ctx, scope,
+		probo.ImportThirdPartyFromCommonRequest{
+			OrganizationID:     input.OrganizationID,
+			CommonThirdPartyID: input.CommonThirdPartyID,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot import thirdParty from common", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ImportThirdPartyFromCommonPayload{
+		ThirdPartyEdge: types.NewThirdPartyEdge(thirdParty, coredata.ThirdPartyOrderFieldName),
+		Created:        created,
 	}, nil
 }
 
@@ -108,7 +143,6 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 			BusinessOwnerID:               gqlutils.UnwrapOmittable(input.BusinessOwnerID),
 			SecurityOwnerID:               gqlutils.UnwrapOmittable(input.SecurityOwnerID),
 			ShowOnTrustCenter:             input.ShowOnTrustCenter,
-			FirstLevel:                    input.FirstLevel,
 			Countries:                     input.Countries,
 		},
 	)
@@ -354,7 +388,7 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
-	thirdPartyBusinessAssociateAgreement, file, err := r.probo.ThirdPartyBusinessAssociateAgreements.Upload(
+	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Upload(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementCreateRequest{
@@ -375,7 +409,7 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 	}
 
 	return &types.UploadThirdPartyBusinessAssociateAgreementPayload{
-		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement, file),
+		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement),
 	}, nil
 }
 
@@ -386,7 +420,7 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
-	thirdPartyBusinessAssociateAgreement, file, err := r.probo.ThirdPartyBusinessAssociateAgreements.Update(
+	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Update(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementUpdateRequest{
@@ -405,7 +439,7 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 	}
 
 	return &types.UpdateThirdPartyBusinessAssociateAgreementPayload{
-		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement, file),
+		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement),
 	}, nil
 }
 
@@ -433,7 +467,7 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
-	thirdPartyDataPrivacyAgreement, file, err := r.probo.ThirdPartyDataPrivacyAgreements.Upload(
+	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Upload(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementCreateRequest{
@@ -454,7 +488,7 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 	}
 
 	return &types.UploadThirdPartyDataPrivacyAgreementPayload{
-		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement, file),
+		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement),
 	}, nil
 }
 
@@ -465,7 +499,7 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
-	thirdPartyDataPrivacyAgreement, file, err := r.probo.ThirdPartyDataPrivacyAgreements.Update(
+	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Update(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementUpdateRequest{
@@ -484,7 +518,7 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 	}
 
 	return &types.UpdateThirdPartyDataPrivacyAgreementPayload{
-		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement, file),
+		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement),
 	}, nil
 }
 
@@ -603,46 +637,6 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 	}, nil
 }
 
-// CreateThirdPartyThirdPartyMapping is the resolver for the linkThirdPartyThirdParty field.
-func (r *mutationResolver) CreateThirdPartyThirdPartyMapping(ctx context.Context, input types.CreateThirdPartyThirdPartyMappingInput) (*types.CreateThirdPartyThirdPartyMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate)
-	if err != nil {
-		return nil, err
-	}
-
-	childThirdParty, err := r.probo.ThirdParties.CreateThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot create third party mapping", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.CreateThirdPartyThirdPartyMappingPayload{
-		ThirdPartyEdge: types.NewThirdPartyEdge(childThirdParty, coredata.ThirdPartyOrderFieldName),
-	}, nil
-}
-
-// DeleteThirdPartyThirdPartyMapping is the resolver for the deleteThirdPartyThirdPartyMapping field.
-func (r *mutationResolver) DeleteThirdPartyThirdPartyMapping(ctx context.Context, input types.DeleteThirdPartyThirdPartyMappingInput) (*types.DeleteThirdPartyThirdPartyMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationDelete)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.probo.ThirdParties.DeleteThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete third party mapping", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.DeleteThirdPartyThirdPartyMappingPayload{
-		RemovedThirdPartyID: input.ChildThirdPartyID,
-	}, nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *thirdPartyResolver) Organization(ctx context.Context, obj *types.ThirdParty) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -702,7 +696,7 @@ func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj
 		return nil, err
 	}
 
-	thirdPartyBusinessAssociateAgreement, file, err := r.probo.ThirdPartyBusinessAssociateAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
+	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -713,7 +707,7 @@ func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement, file), nil
+	return types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement), nil
 }
 
 // DataPrivacyAgreement is the resolver for the dataPrivacyAgreement field.
@@ -723,7 +717,7 @@ func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *type
 		return nil, err
 	}
 
-	thirdPartyDataPrivacyAgreement, file, err := r.probo.ThirdPartyDataPrivacyAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
+	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -734,7 +728,7 @@ func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement, file), nil
+	return types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement), nil
 }
 
 // Contacts is the resolver for the contacts field.
@@ -913,6 +907,53 @@ func (r *thirdPartyResolver) SecurityOwner(ctx context.Context, obj *types.Third
 	return types.NewProfile(securityOwner), nil
 }
 
+// ParentThirdParty is the resolver for the parentThirdParty field.
+func (r *thirdPartyResolver) ParentThirdParty(ctx context.Context, obj *types.ThirdParty) (*types.ThirdParty, error) {
+	if obj.ParentThirdParty == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	parent, err := loaders.ThirdParty.Load(ctx, obj.ParentThirdParty.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load parent third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewThirdParty(parent), nil
+}
+
+// Ancestors is the resolver for the ancestors field.
+func (r *thirdPartyResolver) Ancestors(ctx context.Context, obj *types.ThirdParty) ([]*types.ThirdParty, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet)
+	if err != nil {
+		return nil, err
+	}
+
+	ancestors, err := r.probo.ThirdParties.GetAncestors(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load ancestors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.ThirdParty, len(ancestors))
+	for i, a := range ancestors {
+		result[i] = types.NewThirdParty(a)
+	}
+
+	return result, nil
+}
+
 // ChildThirdParties is the resolver for the childThirdParties field.
 func (r *thirdPartyResolver) ChildThirdParties(ctx context.Context, obj *types.ThirdParty, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyRelationList)
@@ -982,20 +1023,13 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 	return types.NewThirdParty(thirdParty), nil
 }
 
-// FileURL is the resolver for the fileUrl field.
-func (r *thirdPartyBusinessAssociateAgreementResolver) FileURL(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
-	if err != nil {
-		return "", err
+// File is the resolver for the file field.
+func (r *thirdPartyBusinessAssociateAgreementResolver) File(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
 	}
 
-	fileURL, err := r.probo.ThirdPartyBusinessAssociateAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
-	}
-
-	return fileURL, nil
+	return r.loadFile(ctx, obj.File.ID)
 }
 
 // Permission is the resolver for the permission field.
@@ -1052,7 +1086,7 @@ func (r *thirdPartyComplianceReportResolver) File(ctx context.Context, obj *type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFile(file), nil
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -1173,20 +1207,13 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 	return types.NewThirdParty(thirdParty), nil
 }
 
-// FileURL is the resolver for the fileUrl field.
-func (r *thirdPartyDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
-	if err != nil {
-		return "", err
+// File is the resolver for the file field.
+func (r *thirdPartyDataPrivacyAgreementResolver) File(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
 	}
 
-	fileURL, err := r.probo.ThirdPartyDataPrivacyAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
-	}
-
-	return fileURL, nil
+	return r.loadFile(ctx, obj.File.ID)
 }
 
 // Permission is the resolver for the permission field.

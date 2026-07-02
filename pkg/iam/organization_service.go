@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -137,10 +137,10 @@ var (
 		Description:          "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no thirdParty lock-in.",
 		LegalName:            "Probo Inc.",
 		HeadquarterAddress:   "490 Post St, Suite 640,San Francisco, CA 94102, United States",
-		WebsiteURL:           "https://www.getprobo.com/",
-		PrivacyPolicyURL:     "https://www.getprobo.com/privacy",
-		TermsOfServiceURL:    "https://www.getprobo.com/terms",
-		SubprocessorsListURL: "https://www.getprobo.com/subprocessors",
+		WebsiteURL:           "https://www.probo.com/",
+		PrivacyPolicyURL:     "https://www.probo.com/privacy",
+		TermsOfServiceURL:    "https://www.probo.com/terms",
+		SubprocessorsListURL: "https://www.probo.com/subprocessors",
 	}
 )
 
@@ -354,6 +354,10 @@ func (s *OrganizationService) RemoveUser(
 			}
 
 			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceInUse) {
+					return NewProfileInUseError(profileID)
+				}
+
 				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
@@ -514,7 +518,7 @@ func (s *OrganizationService) InviteUser(
 				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, profile.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, profile.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
 				ctx,
@@ -630,15 +634,16 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		logoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   req.LogoFile.Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organization.ID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       req.LogoFile.Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
@@ -667,15 +672,16 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		horizontalLogoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   req.HorizontalLogoFile.Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organization.ID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       req.HorizontalLogoFile.Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
@@ -765,6 +771,7 @@ func (s *OrganizationService) CreateOrganization(
 				TermsOfServiceURL:    &proboThirdParty.TermsOfServiceURL,
 				SubprocessorsListURL: &proboThirdParty.SubprocessorsListURL,
 				ShowOnTrustCenter:    false,
+				Level:                1,
 				CreatedAt:            now,
 				UpdatedAt:            now,
 			}
@@ -809,15 +816,16 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		)
 
 		logoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   (*req.LogoFile).Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organizationID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       (*req.LogoFile).Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
@@ -846,15 +854,16 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		)
 
 		horizontalLogoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   (*req.HorizontalLogoFile).Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organizationID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       (*req.HorizontalLogoFile).Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
@@ -1367,18 +1376,17 @@ func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, 
 	return organization, nil
 }
 
-func (s OrganizationService) GenerateLogoURL(
+func (s OrganizationService) LogoFile(
 	ctx context.Context,
 	organizationID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
+) (*coredata.File, error) {
 	var (
 		errNoLogoFile = errors.New("no logo file found")
 		scope         = coredata.NewScopeFromObjectID(organizationID)
 		file          = &coredata.File{}
 	)
 
-	err := s.pg.WithConn(
+	if err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
@@ -1396,35 +1404,28 @@ func (s OrganizationService) GenerateLogoURL(
 
 			return nil
 		},
-	)
-	if err == errNoLogoFile {
-		return nil, nil
+	); err != nil {
+		if errors.Is(err, errNoLogoFile) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load logo file: %w", err)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
-	}
-
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &presignedURL, nil
+	return file, nil
 }
 
-func (s OrganizationService) GenerateHorizontalLogoURL(
+func (s OrganizationService) HorizontalLogoFile(
 	ctx context.Context,
 	organizationID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
+) (*coredata.File, error) {
 	var (
 		errNoLogoFile = errors.New("no logo file found")
 		scope         = coredata.NewScopeFromObjectID(organizationID)
 		file          = &coredata.File{}
 	)
 
-	err := s.pg.WithConn(
+	if err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
@@ -1442,21 +1443,15 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 
 			return nil
 		},
-	)
-	if err == errNoLogoFile {
-		return nil, nil
+	); err != nil {
+		if errors.Is(err, errNoLogoFile) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load horizontal logo file: %w", err)
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &presignedURL, nil
+	return file, nil
 }
 
 func (s OrganizationService) DeleteSAMLConfiguration(
@@ -1712,11 +1707,11 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 
 			if err == nil {
 				// Bridge exists. Only delete the underlying connector if nothing
-				// else references it (e.g. access_sources). Otherwise leave it in
+				// else references it (e.g. access_review_sources). Otherwise leave it in
 				// place — the bridge's FK is ON DELETE SET NULL, so deleting the
 				// bridge alone is sufficient to unbind SCIM from the connector.
 				if bridge.ConnectorID != nil {
-					accessSources := &coredata.AccessSources{}
+					accessSources := &coredata.AccessReviewSources{}
 
 					count, err := accessSources.CountByConnectorID(ctx, tx, scope, *bridge.ConnectorID)
 					if err != nil {

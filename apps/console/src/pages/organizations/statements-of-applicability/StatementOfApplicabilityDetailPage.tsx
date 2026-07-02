@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -138,7 +138,10 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     statementOfApplicabilityId: string;
   }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(statementOfApplicabilityDetailPageQuery, props.queryRef);
+  const data = usePreloadedQuery<StatementOfApplicabilityDetailPageQuery>(
+    statementOfApplicabilityDetailPageQuery,
+    props.queryRef,
+  );
   const statementOfApplicability = data.node;
   const { __ } = useTranslate();
   const navigate = useNavigate();
@@ -244,7 +247,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to update Statement of Applicability"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -300,7 +303,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to update approvers"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

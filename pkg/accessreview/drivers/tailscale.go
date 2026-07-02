@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,10 +75,17 @@ func (d *TailscaleDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 			continue
 		}
 
+		role := strings.TrimSpace(u.Role)
+
+		roles := []string{}
+		if role != "" {
+			roles = []string{role}
+		}
+
 		record := AccountRecord{
 			Email:      email,
 			FullName:   u.DisplayName,
-			Role:       u.Role,
+			Roles:      roles,
 			Active:     tailscaleUserActive(u.Status),
 			IsAdmin:    tailscaleUserIsAdmin(u.Role),
 			ExternalID: u.ID,
@@ -86,8 +93,8 @@ func (d *TailscaleDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 			// Tailscale has no local credentials; it always delegates
 			// authentication to an upstream identity provider, so every
 			// account is SSO regardless of which IdP backs the tailnet.
-			AuthMethod:  coredata.AccessEntryAuthMethodSSO,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodSSO,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if u.Created != "" {

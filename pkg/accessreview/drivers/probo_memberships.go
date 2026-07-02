@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -61,7 +62,13 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 			}
 
 			for _, account := range accounts {
-				role := account.Role
+				role := strings.TrimSpace(account.Role)
+
+				roles := []string{}
+				if role != "" {
+					roles = []string{role}
+				}
+
 				isAdmin := role == string(coredata.MembershipRoleOwner) || role == string(coredata.MembershipRoleAdmin)
 				createdAt := account.CreatedAt
 
@@ -70,14 +77,14 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 					AccountRecord{
 						Email:       account.Email,
 						FullName:    account.FullName,
-						Role:        role,
+						Roles:       roles,
 						Active:      new(account.State == string(coredata.ProfileStateActive)),
 						IsAdmin:     isAdmin,
 						ExternalID:  account.ID.String(),
 						CreatedAt:   &createdAt,
 						MFAStatus:   coredata.MFAStatusUnknown,
-						AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-						AccountType: coredata.AccessEntryAccountTypeUser,
+						AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+						AccountType: coredata.AccessReviewEntryAccountTypeUser,
 					},
 				)
 			}

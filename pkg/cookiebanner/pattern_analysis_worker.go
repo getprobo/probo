@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,9 +27,20 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
-const patternMergeThreshold = 3
+const (
+	patternMergeThreshold = 3
+
+	// primarySeparators are the structural delimiters that always
+	// start a new token in splitTokens. `-` is intentionally excluded
+	// because it appears inside UUIDs, which splitTokens preserves as a
+	// single token; a value like "done:ecdd43d7-0193-4d24-b6ed-..."
+	// must split on ":" so the trailing UUID is isolated and collapsed
+	// to a wildcard rather than shredded into fixed hex anchors.
+	primarySeparators = "_:."
+)
 
 // durationUnits mirrors the snap table from cookie-utils.ts. The same
 // tracker observed across different clients can have jitter in its
@@ -137,16 +148,23 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(banner.ID)
 
-			var exactPatterns coredata.TrackerPatterns
-			if err := exactPatterns.LoadAllByCookieBannerID(
+			exactPatterns, err := page.LoadAll(
 				ctx,
-				tx,
-				scope,
-				banner.ID,
-				coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
-				nil,
-			); err != nil {
-				return fmt.Errorf("cannot load exact patterns: %w", err)
+				page.OrderBy[coredata.TrackerPatternOrderField]{
+					Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+					var batch coredata.TrackerPatterns
+					if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false))); err != nil {
+						return nil, fmt.Errorf("cannot load exact patterns: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
 			mergeGroups := findMergeGroups(exactPatterns, patternMergeThreshold)
@@ -220,9 +238,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 							return fmt.Errorf("cannot promote source on glob pattern %q: %w", key.template, err)
 						}
 
-						// A stronger source can unblock mapping (e.g.
-						// EXTENSION->SCRIPT lifts the creationAllowed
-						// gate), so re-arm mapping on the existing glob.
+						// A stronger source can unblock mapping (a fresh
+						// initiator domain lets matchByDomain/
+						// matchBySiblingOrigin resolve a vendor), so
+						// re-arm mapping on the existing glob.
 						if err := globPattern.SetMappingRequested(ctx, tx); err != nil {
 							return fmt.Errorf("cannot request mapping after source promotion on glob pattern %q: %w", key.template, err)
 						}
@@ -565,16 +584,16 @@ func isUUIDShape(s string) bool {
 }
 
 func splitTokens(name string) ([]string, []byte) {
-	underscoreParts := strings.Split(name, "_")
+	primaryParts, primarySeps := splitOnAny(name, primarySeparators)
 
 	var (
 		tokens []string
 		seps   []byte
 	)
 
-	for i, part := range underscoreParts {
+	for i, part := range primaryParts {
 		if i > 0 {
-			seps = append(seps, '_')
+			seps = append(seps, primarySeps[i-1])
 		}
 
 		if isUUIDShape(part) || !strings.Contains(part, "-") {
@@ -597,6 +616,29 @@ func splitTokens(name string) ([]string, []byte) {
 	return tokens, seps
 }
 
+// splitOnAny splits s on every byte found in separators, returning the
+// parts and the separator byte that preceded each part after the first.
+// len(seps) == len(parts)-1.
+func splitOnAny(s, separators string) ([]string, []byte) {
+	var (
+		parts []string
+		seps  []byte
+		start int
+	)
+
+	for i := 0; i < len(s); i++ {
+		if strings.IndexByte(separators, s[i]) >= 0 {
+			parts = append(parts, s[start:i])
+			seps = append(seps, s[i])
+			start = i + 1
+		}
+	}
+
+	parts = append(parts, s[start:])
+
+	return parts, seps
+}
+
 func joinTokens(tokens []string, seps []byte) string {
 	var b strings.Builder
 
@@ -616,10 +658,13 @@ func joinTokens(tokens []string, seps []byte) string {
 // "__*", "-*", "--*", "__*__" would merge unrelated third parties
 // (e.g. __support__, __darkreader__wasEnabledForHost,
 // __EXT_APP_REFRESH_BLACK_SUB_DOMAINS__) under a single glob, so
-// candidates without any fixed alphanumeric anchor are rejected.
+// candidates without any fixed alphanumeric anchor are rejected. The
+// separators recognised here mirror primarySeparators (plus the
+// UUID-internal "-") so a separator-only template such as ":.*" is
+// rejected too.
 func templateHasFixedAnchor(tmpl string) bool {
 	for _, ch := range tmpl {
-		if ch != '*' && ch != '_' && ch != '-' {
+		if ch != '*' && ch != '-' && !strings.ContainsRune(primarySeparators, ch) {
 			return true
 		}
 	}
@@ -659,11 +704,15 @@ func globMatch(pattern, name string) bool {
 }
 
 // sourceRank converts a CookieSource into a comparable rank that
-// reflects signal strength: SCRIPT > EXTENSION > PRE_EXISTING. HTTP
-// and nil collapse into the PRE_EXISTING rank because bestSource
-// already normalises them; if a future caller hands us either, the
-// ranking still produces a sane "no promotion" outcome against
-// PRE_EXISTING/EXTENSION/SCRIPT existing values.
+// reflects signal strength: SCRIPT > HTTP > EXTENSION > PRE_EXISTING.
+// SCRIPT is a real page tracker observed being written by page JS;
+// HTTP is a real server-set cookie (a Set-Cookie response header),
+// which is page evidence just like SCRIPT and so must outrank both
+// browser-extension state and the PRE_EXISTING catch-all — otherwise a
+// cookie first enumerated as PRE_EXISTING and later re-observed only
+// via Set-Cookie would stay PRE_EXISTING and remain agent-skipped.
+// EXTENSION is high-confidence extension state; PRE_EXISTING (and nil)
+// is the low-signal catch-all.
 func sourceRank(s *coredata.CookieSource) int {
 	if s == nil {
 		return 0
@@ -671,6 +720,8 @@ func sourceRank(s *coredata.CookieSource) int {
 
 	switch *s {
 	case coredata.CookieSourceScript:
+		return 3
+	case coredata.CookieSourceHTTP:
 		return 2
 	case coredata.CookieSourceExtension:
 		return 1
@@ -688,17 +739,19 @@ func shouldPromoteSource(existing, candidate *coredata.CookieSource) bool {
 }
 
 // bestSource rolls up the source values of a group of exact patterns
-// being merged into a single glob. Precedence is SCRIPT > EXTENSION
-// > PRE_EXISTING, mirroring both the page-script-wins rule in
-// detected_trackers and the asymmetric signal strength of each
-// bucket: SCRIPT is high-confidence page evidence (a real page
-// tracker), EXTENSION is high-confidence extension evidence, and
-// PRE_EXISTING is the catch-all that may include extension state
-// injected before SDK load. HTTP and nil collapse into PRE_EXISTING
-// here, preserving the original two-value rollup behaviour for
-// non-script values.
+// being merged into a single glob. Precedence is SCRIPT > HTTP >
+// EXTENSION > PRE_EXISTING, mirroring the asymmetric signal strength of
+// each bucket: SCRIPT is high-confidence page evidence (a real page
+// tracker), HTTP is a real server-set cookie (a Set-Cookie response
+// header) and is page evidence too, EXTENSION is high-confidence
+// extension state, and PRE_EXISTING is the catch-all that may include
+// extension state injected before SDK load. nil collapses into
+// PRE_EXISTING.
 func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
-	var hasExtension bool
+	var (
+		hasHTTP      bool
+		hasExtension bool
+	)
 
 	for _, p := range patterns {
 		if p.Source == nil {
@@ -708,19 +761,24 @@ func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 		switch *p.Source {
 		case coredata.CookieSourceScript:
 			return p.Source
+		case coredata.CookieSourceHTTP:
+			hasHTTP = true
 		case coredata.CookieSourceExtension:
 			hasExtension = true
 		}
 	}
 
-	if hasExtension {
+	switch {
+	case hasHTTP:
+		src := coredata.CookieSourceHTTP
+		return &src
+	case hasExtension:
 		src := coredata.CookieSourceExtension
 		return &src
+	default:
+		src := coredata.CookieSourcePreExisting
+		return &src
 	}
-
-	src := coredata.CookieSourcePreExisting
-
-	return &src
 }
 
 // inheritedMapping rolls up the resolved org ThirdParty of a group of
@@ -779,16 +837,23 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		return false, fmt.Errorf("cannot load uncategorised category: %w", err)
 	}
 
-	var globPatterns coredata.TrackerPatterns
-	if err := globPatterns.LoadAllByCookieBannerID(
+	globPatterns, err := page.LoadAll(
 		ctx,
-		tx,
-		scope,
-		banner.ID,
-		coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false)),
-		nil,
-	); err != nil {
-		return false, fmt.Errorf("cannot load glob patterns: %w", err)
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+			var batch coredata.TrackerPatterns
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false))); err != nil {
+				return nil, fmt.Errorf("cannot load glob patterns: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return false, err
 	}
 
 	if len(globPatterns) == 0 {
@@ -804,16 +869,23 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 
 	exactMatchType := coredata.TrackerPatternMatchTypeExact
 
-	var uncategorisedExact coredata.TrackerPatterns
-	if err := uncategorisedExact.LoadAllByCookieBannerID(
+	uncategorisedExact, err := page.LoadAll(
 		ctx,
-		tx,
-		scope,
-		banner.ID,
-		coredata.NewTrackerPatternFilter(&exactMatchType, &uncategorised.ID, new(false)),
-		nil,
-	); err != nil {
-		return false, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+			var batch coredata.TrackerPatterns
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, coredata.NewTrackerPatternFilter(&exactMatchType, &uncategorised.ID, new(false))); err != nil {
+				return nil, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return false, err
 	}
 
 	adopted := false
@@ -858,9 +930,9 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 				return false, fmt.Errorf("cannot promote source on glob pattern %q: %w", match.Pattern, err)
 			}
 
-			// A stronger source can unblock mapping (e.g.
-			// EXTENSION->SCRIPT lifts the creationAllowed gate), so
-			// re-arm mapping on the adopted glob.
+			// A stronger source can unblock mapping (a fresh
+			// initiator domain lets matchByDomain/matchBySiblingOrigin
+			// resolve a vendor), so re-arm mapping on the adopted glob.
 			if err := match.SetMappingRequested(ctx, tx); err != nil {
 				return false, fmt.Errorf("cannot request mapping after source promotion on glob pattern %q: %w", match.Pattern, err)
 			}

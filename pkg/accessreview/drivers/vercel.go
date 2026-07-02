@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -92,16 +93,23 @@ func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				fullName = m.Username
 			}
 
+			role := strings.TrimSpace(m.Role)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			confirmed := m.Confirmed
 			record := AccountRecord{
 				Email:       m.Email,
 				FullName:    fullName,
-				Role:        m.Role,
+				Roles:       roles,
 				Active:      &confirmed,
 				IsAdmin:     m.Role == "OWNER" || m.Role == "owner",
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  m.UID,
 			}
 

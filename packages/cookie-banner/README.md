@@ -45,7 +45,7 @@ registerThemedBanner();
 ></probo-cookie-banner>
 ```
 
-See [Theming](https://www.getprobo.com/docs/product/cookie-banner/theming) to customize colors, fonts, and styling with CSS custom properties.
+See [Theming](https://www.probo.com/docs/product/cookie-banner/theming) to customize colors, fonts, and styling with CSS custom properties.
 
 ### Headless Components
 
@@ -96,7 +96,7 @@ registerComponents();
 
 ## Documentation
 
-Full documentation is available at **https://www.getprobo.com/docs/product/cookie-banner/overview**
+Full documentation is available at **https://www.probo.com/docs/product/cookie-banner/overview**
 
 ## License
 

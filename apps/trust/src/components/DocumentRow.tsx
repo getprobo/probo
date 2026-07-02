@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,7 @@ const requestAccessMutation = graphql`
 const documentRowFragment = graphql`
   fragment DocumentRowFragment on Document {
     id
+    alias
     title
     isUserAuthorized
     access {
@@ -66,6 +67,7 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
   const [searchParams] = useSearchParams();
 
   const document = useFragment(documentRowFragment, props.document);
+  const documentPath = document.alias ?? document.id;
   const hasRequested = document.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
@@ -127,7 +129,7 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
               className="w-full md:w-max"
               variant="secondary"
               icon={IconArrowLink}
-              onClick={() => void navigate(`/documents/${document.id}`)}
+              onClick={() => void navigate(`/documents/${documentPath}`)}
             >
               {__("View")}
             </Button>

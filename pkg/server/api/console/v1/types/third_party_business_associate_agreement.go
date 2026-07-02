@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewThirdPartyBusinessAssociateAgreement(v *coredata.ThirdPartyBusinessAssociateAgreement, file *coredata.File) *ThirdPartyBusinessAssociateAgreement {
+func NewThirdPartyBusinessAssociateAgreement(v *coredata.ThirdPartyBusinessAssociateAgreement) *ThirdPartyBusinessAssociateAgreement {
 	return &ThirdPartyBusinessAssociateAgreement{
 		ID: v.ID,
 		ThirdParty: &ThirdParty{
@@ -26,8 +26,7 @@ func NewThirdPartyBusinessAssociateAgreement(v *coredata.ThirdPartyBusinessAssoc
 		},
 		ValidFrom:  v.ValidFrom,
 		ValidUntil: v.ValidUntil,
-		FileName:   file.FileName,
-		FileSize:   file.FileSize,
+		File:       &File{ID: v.FileID},
 		CreatedAt:  v.CreatedAt,
 		UpdatedAt:  v.UpdatedAt,
 	}

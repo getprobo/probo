@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ interface CookieBannerSettingsPageProps {
 export default function CookieBannerSettingsPage({
   queryRef,
 }: CookieBannerSettingsPageProps) {
-  const data = usePreloadedQuery(cookieBannerSettingsPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerSettingsPageQuery>(cookieBannerSettingsPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");

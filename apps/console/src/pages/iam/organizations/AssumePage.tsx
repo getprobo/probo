@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -98,7 +98,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
             search.set("organization-id", organizationId);
             search.set("continue", safeContinueUrl.toString());
 
-            void navigate({ pathname: "/auth/password-login", search: "?" + search.toString() });
+            void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
             if (!viewer.ssoLoginURL) {

@@ -130,6 +130,36 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
 }
 
+// Oauth2AccessTokens is the resolver for the oauth2AccessTokens field.
+func (r *identityResolver) Oauth2AccessTokens(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.OAuth2AccessTokenConnection, error) {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionOAuth2AccessTokenList); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.OAuth2AccessTokenConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.OAuth2AccessTokenOrderField]{
+		Field:     coredata.OAuth2AccessTokenOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	tokenPage, err := r.iam.OAuth2ServerService.ListAccessTokensByIdentityID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list oauth2 access tokens", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOAuth2AccessTokenConnection(tokenPage, r, obj.ID), nil
+}
+
 // InvitingOrganizations is the resolver for the invitingOrganizations field.
 func (r *identityResolver) InvitingOrganizations(ctx context.Context, obj *types.Identity) ([]*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, iam.ActionInvitationList, authz.WithSkipAssumptionCheck()); err != nil {

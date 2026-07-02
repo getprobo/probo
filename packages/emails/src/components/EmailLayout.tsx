@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@ import {
   Link,
   Section,
   Text,
-} from '@react-email/components';
+} from 'react-email';
 import * as React from 'react';
 import { Logo } from './Logo';
 
@@ -56,7 +56,13 @@ export const EmailLayout = ({
 
           <Section style={footerSection}>
             <Text style={footerAddress}>
-              <Link href="https://app.govrly.sa" style={{color: '#6b716a', textDecoration: 'none'}}>app.govrly.sa</Link>
+              {"{{.SenderCompanyHeadquarterAddress}}"}
+            </Text>
+            <Text style={footerAddress}>
+              <span style={{verticalAlign: "middle"}}>Powered By </span>
+              <Link style={{display: "inline-block", height: "16px", verticalAlign: "middle"}} href="https://www.probo.com">
+                <ProboLogo />
+              </Link>
             </Text>
           </Section>
         </Container>

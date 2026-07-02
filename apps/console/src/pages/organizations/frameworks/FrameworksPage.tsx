@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -69,7 +69,7 @@ type Props = {
 export default function FrameworksPage(props: Props) {
   const { __ } = useTranslate();
   usePageTitle(__("Frameworks"));
-  const data = usePreloadedQuery(frameworksQuery, props.queryRef);
+  const data = usePreloadedQuery<FrameworkGraphListQuery>(frameworksQuery, props.queryRef);
   const connectionId = data.organization.frameworks!.__id;
   const frameworks
     = data.organization.frameworks?.edges.map(edge => edge.node) ?? [];
@@ -185,8 +185,12 @@ const frameworkCardFragment = graphql`
     id
     name
     description
-    lightLogoURL
-    darkLogoURL
+    lightLogo {
+      downloadUrl
+    }
+    darkLogo {
+      downloadUrl
+    }
     canUpdate: permission(action: "core:framework:update")
     canDelete: permission(action: "core:framework:delete")
   }
@@ -218,8 +222,8 @@ function FrameworkCard(props: FrameworkCardProps) {
       <div className="flex justify-between mb-3">
         <FrameworkLogo
           name={framework.name}
-          lightLogoURL={framework.lightLogoURL}
-          darkLogoURL={framework.darkLogoURL}
+          lightLogoURL={framework.lightLogo?.downloadUrl}
+          darkLogoURL={framework.darkLogo?.downloadUrl}
         />
         {props.hasAnyAction && (
           <ActionDropdown className="z-10 relative">

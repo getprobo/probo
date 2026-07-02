@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -60,7 +60,7 @@ export default function CookieBannerTranslationsPage({
   queryRef,
 }: CookieBannerTranslationsPageProps) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(cookieBannerTranslationsPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerTranslationsPageQuery>(cookieBannerTranslationsPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -78,13 +78,13 @@ func (d *MetabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 		record := AccountRecord{
 			Email:       u.Email,
 			FullName:    metabaseFullName(u),
-			Role:        metabaseRole(u.IsSuperuser),
+			Roles:       metabaseRoles(u.IsSuperuser),
 			Active:      new(u.IsActive),
 			IsAdmin:     u.IsSuperuser,
 			ExternalID:  strconv.Itoa(u.ID),
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if t, ok := parseMetabaseTimestamp(u.LastLogin); ok {
@@ -176,12 +176,12 @@ func metabaseFullName(u metabaseUser) string {
 	return strings.TrimSpace(strings.Join([]string{u.FirstName, u.LastName}, " "))
 }
 
-func metabaseRole(isSuperuser bool) string {
+func metabaseRoles(isSuperuser bool) []string {
 	if isSuperuser {
-		return "Admin"
+		return []string{"Admin"}
 	}
 
-	return "User"
+	return []string{"User"}
 }
 
 // metabaseNameResolver resolves the Metabase site name by querying

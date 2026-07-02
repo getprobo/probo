@@ -1,6 +1,6 @@
 {
   "name": "@probo/n8n-nodes-probo",
-  "version": "0.191.0",
+  "version": "0.199.0",
   "main": "index.js",
   "scripts": {
     "build": "n8n-node build",
@@ -12,8 +12,8 @@
     "prepublishOnly": "npm run build && npm run lint"
   },
   "author": {
-    "name": "Govrly Inc",
-    "email": "hello@govrly.com"
+    "name": "Probo Inc",
+    "email": "hello@probo.com"
   },
   "files": [
     "dist"
@@ -25,7 +25,8 @@
       "dist/credentials/ProboApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Probo/Probo.node.js"
+      "dist/nodes/Probo/Probo.node.js",
+      "dist/nodes/ProboTrigger/ProboTrigger.node.js"
     ]
   },
   "license": "MIT",
@@ -55,7 +56,7 @@
     "n8n-workflow": "*"
   },
   "devDependencies": {
-    "@n8n/node-cli": "^0.24.1",
-    "eslint": "^9.39.2"
+    "@n8n/node-cli": "0.37.1",
+    "eslint": "^9.39.4"
   }
 }

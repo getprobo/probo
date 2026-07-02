@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,12 +24,15 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -37,12 +40,15 @@ import (
 
 type Resolver struct {
 	proboSvc       *probo.Service
+	resourceAlias  *resourcealias.Service
 	thirdPartySvc  *thirdparty.Service
 	iamSvc         *iam.Service
 	accessReview   *accessreview.Service
 	cookieBanner   *cookiebanner.Service
 	riskManagement *riskmanagement.Service
 	logger         *log.Logger
+	fileManager    *filemanager.Service
+	baseURL        *baseurl.BaseURL
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {
@@ -78,6 +84,10 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		return nil, fmt.Errorf("permission denied")
 	}
 
+	if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		return nil, fmt.Errorf("insufficient scope")
+	}
+
 	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
 		return nil, fmt.Errorf("assumption required")
 	}
@@ -108,6 +118,10 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
 		return nil, fmt.Errorf("permission denied")
+	}
+
+	if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		return nil, fmt.Errorf("insufficient scope")
 	}
 
 	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {

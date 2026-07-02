@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,7 +68,7 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 	}
 
 	for i, reportAccess := range utcar.ReportAccesses {
-		v.Check(reportAccess.ID, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.ReportEntityType))
+		v.Check(reportAccess.ID, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.FileEntityType))
 	}
 
 	for i, reportAccess := range utcar.TrustCenterFileAccesses {
@@ -263,7 +263,7 @@ func (s TrustCenterAccessService) Update(
 					})
 				}
 
-				if err := tcdas.MergeReportAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
+				if err := tcdas.MergeReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
 					return fmt.Errorf("cannot merge report accesses: %w", err)
 				}
 			}
@@ -364,7 +364,7 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, scope cor
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, profile.FullName)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {

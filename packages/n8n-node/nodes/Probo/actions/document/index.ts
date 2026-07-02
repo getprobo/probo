@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@ import * as deleteOp from './delete.operation';
 import * as archiveOp from './archive.operation';
 import * as unarchiveOp from './unarchive.operation';
 import * as getVersionOp from './getVersion.operation';
+import * as getLatestPublishedVersionIdOp from './getLatestPublishedVersionId.operation';
 import * as getAllVersionsOp from './getAllVersions.operation';
 import * as deleteDraftOp from './deleteDraft.operation';
 import * as publishOp from './publish.operation';
@@ -29,7 +30,6 @@ import * as getSignatureOp from './getSignature.operation';
 import * as getAllSignaturesOp from './getAllSignatures.operation';
 import * as requestSignatureOp from './requestSignature.operation';
 import * as cancelSignatureOp from './cancelSignature.operation';
-import * as sendSigningNotificationsOp from './sendSigningNotifications.operation';
 import * as getApprovalQuorumOp from './getApprovalQuorum.operation';
 import * as getAllApprovalQuorumsOp from './getAllApprovalQuorums.operation';
 import * as getApprovalDecisionOp from './getApprovalDecision.operation';
@@ -96,6 +96,12 @@ export const description: INodeProperties[] = [
 				action: 'Get an approval quorum',
 			},
 			{
+				name: 'Get Latest Published Version ID',
+				value: 'getLatestPublishedVersionId',
+				description: 'Get the latest published document version ID',
+				action: 'Get the latest published document version ID',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many documents',
@@ -150,12 +156,6 @@ export const description: INodeProperties[] = [
 				action: 'Request a document version signature',
 			},
 			{
-				name: 'Send Signing Notifications',
-				value: 'sendSigningNotifications',
-				description: 'Send signing notifications to all pending signatories',
-				action: 'Send signing notifications',
-			},
-			{
 				name: 'Unarchive',
 				value: 'unarchive',
 				description: 'Unarchive a document',
@@ -184,6 +184,7 @@ export const description: INodeProperties[] = [
 	...archiveOp.description,
 	...unarchiveOp.description,
 	...getVersionOp.description,
+	...getLatestPublishedVersionIdOp.description,
 	...getAllVersionsOp.description,
 	...deleteDraftOp.description,
 	...publishOp.description,
@@ -192,7 +193,6 @@ export const description: INodeProperties[] = [
 	...getAllSignaturesOp.description,
 	...requestSignatureOp.description,
 	...cancelSignatureOp.description,
-	...sendSigningNotificationsOp.description,
 	...getApprovalQuorumOp.description,
 	...getAllApprovalQuorumsOp.description,
 	...getApprovalDecisionOp.description,
@@ -208,6 +208,7 @@ export {
 	archiveOp as archive,
 	unarchiveOp as unarchive,
 	getVersionOp as getVersion,
+	getLatestPublishedVersionIdOp as getLatestPublishedVersionId,
 	getAllVersionsOp as getAllVersions,
 	deleteDraftOp as deleteDraft,
 	publishOp as publish,
@@ -216,7 +217,6 @@ export {
 	getAllSignaturesOp as getAllSignatures,
 	requestSignatureOp as requestSignature,
 	cancelSignatureOp as cancelSignature,
-	sendSigningNotificationsOp as sendSigningNotifications,
 	getApprovalQuorumOp as getApprovalQuorum,
 	getAllApprovalQuorumsOp as getAllApprovalQuorums,
 	getApprovalDecisionOp as getApprovalDecision,

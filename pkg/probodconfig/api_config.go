@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,16 +15,32 @@
 package probodconfig
 
 type CorsConfig struct {
-	AllowedOrigins []string `json:"allowed-origins"`
+	AllowedOrigins []string `json:"allowed-origins,omitzero,omitempty"`
+}
+
+func (c CorsConfig) IsZero() bool {
+	return len(c.AllowedOrigins) == 0
 }
 
 type ProxyProtocolConfig struct {
-	TrustedProxies []string `json:"trusted-proxies"`
+	TrustedProxies []string `json:"trusted-proxies,omitzero,omitempty"`
+}
+
+func (c ProxyProtocolConfig) IsZero() bool {
+	return len(c.TrustedProxies) == 0
+}
+
+type GraphQLConfig struct {
+	ParserTokenLimit  int  `json:"parser-token-limit"`
+	ComplexityLimit   int  `json:"complexity-limit"`
+	QueryCacheSize    int  `json:"query-cache-size"`
+	DisableSuggestion bool `json:"disable-suggestion"`
 }
 
 type APIConfig struct {
-	Addr              string              `json:"addr"`
-	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol"`
-	Cors              CorsConfig          `json:"cors"`
-	ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
+	Addr              string              `json:"addr,omitempty"`
+	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol,omitzero"`
+	Cors              CorsConfig          `json:"cors,omitzero"`
+	ExtraHeaderFields map[string]string   `json:"extra-header-fields,omitzero,omitempty"`
+	GraphQL           GraphQLConfig       `json:"graphql,omitzero"`
 }

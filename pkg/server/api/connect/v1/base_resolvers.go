@@ -16,7 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -122,6 +122,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewPersonalAPIKey(personalAPIKey), nil
 		}
+	case coredata.OAuth2AccessTokenEntityType:
+		action = iam.ActionOAuth2AccessTokenGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			accessToken, err := r.iam.OAuth2ServerService.GetAccessTokenByID(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewOAuth2AccessToken(accessToken), nil
+		}
 	case coredata.SCIMConfigurationEntityType:
 		action = iam.ActionSCIMConfigurationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
@@ -176,7 +186,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err); ok {
+		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
 			return nil, gqlutils.Invalidf(ctx, "%s", oauthErr.Description())
 		}
 
@@ -254,6 +264,11 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 // SignUpEnabled is the resolver for the signUpEnabled field.
 func (r *queryResolver) SignUpEnabled(ctx context.Context) (bool, error) {
 	return r.iam.IsSignUpEnabled(), nil
+}
+
+// Oauth2ScopesSupported is the resolver for the oauth2ScopesSupported field.
+func (r *queryResolver) Oauth2ScopesSupported(ctx context.Context) ([]coredata.OAuth2Scope, error) {
+	return r.scopeRegistry.RegisteredScopes(), nil
 }
 
 // Mutation returns schema.MutationResolver implementation.

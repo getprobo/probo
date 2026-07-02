@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -71,11 +71,39 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
 	}
 
-	// APIKeyBasicAuth and APIKeyHeader select different presentations of
-	// the same key; setting both is a programmer error with a silent
-	// winner (Client checks BasicAuth first). Reject it at startup.
-	if reg.APIKeyBasicAuth && reg.APIKeyHeader != "" {
-		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth and APIKeyHeader are mutually exclusive", reg.Provider)
+	// APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and
+	// APIKeyAuthScheme select different presentations of the same key;
+	// setting more than one is a programmer error with a silent winner
+	// (Client checks BasicAuth, then BasicAuthUserPass, then Header, then
+	// Scheme). Reject it at startup.
+	apiKeyModes := 0
+
+	if reg.APIKeyBasicAuth {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyBasicAuthUserPass {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyHeader != "" {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyAuthScheme != "" {
+		apiKeyModes++
+	}
+
+	if apiKeyModes > 1 {
+		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
+	}
+
+	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
+	// endpoint host, but from different sources (a callback param vs. the
+	// signed state). CompleteWithState checks them in order, so setting both
+	// is a programmer error with a silent winner. Reject it at startup.
+	if reg.BuildTokenURLForDomain != nil && reg.BuildTokenURLForSite != nil {
+		return fmt.Errorf("cannot register connector provider %q: BuildTokenURLForDomain and BuildTokenURLForSite are mutually exclusive", reg.Provider)
 	}
 
 	r.mu.Lock()
@@ -115,6 +143,25 @@ func (r *Registry) All() []*Registration {
 	return out
 }
 
+// PublicClients returns every Registration flagged PublicClient (CIMD,
+// no client_secret). probod uses this to auto-register their OAuth2
+// connectors with a deployment-derived client_id and state-signing key.
+// Order is not stable.
+func (r *Registry) PublicClients() []*Registration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var out []*Registration
+
+	for _, reg := range r.providers {
+		if reg.PublicClient {
+			out = append(out, reg)
+		}
+	}
+
+	return out
+}
+
 // ProviderDisplayName returns the human-readable label for the
 // provider, falling back to the raw constant string when no display
 // name is registered.
@@ -146,6 +193,32 @@ func (r *Registry) APIKeyHeader(p coredata.ConnectorProvider) string {
 func (r *Registry) APIKeyUsesBasicAuth(p coredata.ConnectorProvider) bool {
 	if reg, ok := r.Get(p); ok {
 		return reg.APIKeyBasicAuth
+	}
+
+	return false
+}
+
+// APIKeyAuthScheme returns the non-Bearer Authorization scheme an API-key
+// connection for the given provider must use to present its key (e.g.
+// "SSWS" for Okta). Empty means the default `Authorization: Bearer`
+// scheme. Returns empty for unknown providers and for providers that do
+// not customise the scheme.
+func (r *Registry) APIKeyAuthScheme(p coredata.ConnectorProvider) string {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyAuthScheme
+	}
+
+	return ""
+}
+
+// APIKeyUsesBasicAuthUserPass reports whether an API-key connection for the
+// given provider must present its key as a complete HTTP Basic credential
+// (`username:password` already encoded in the key, base64'd verbatim)
+// instead of a Bearer token. Returns false for unknown providers and for
+// providers that use the default Bearer scheme.
+func (r *Registry) APIKeyUsesBasicAuthUserPass(p coredata.ConnectorProvider) bool {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyBasicAuthUserPass
 	}
 
 	return false

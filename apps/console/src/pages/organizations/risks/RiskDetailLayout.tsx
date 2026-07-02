@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -107,7 +107,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   }
 
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(riskDetailLayoutQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskDetailLayoutQuery>(riskDetailLayoutQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }

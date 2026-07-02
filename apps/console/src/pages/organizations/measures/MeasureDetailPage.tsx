@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -137,7 +137,7 @@ type Props = {
 export default function MeasureDetailPage(props: Props) {
   const { measureId } = useParams<{ measureId: string }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(measureNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<MeasureDetailPageNodeQuery>(measureNodeQuery, props.queryRef);
   const measure = data.node;
   const { __ } = useTranslate();
   const [deleteMeasure] = useDeleteMeasureMutation();

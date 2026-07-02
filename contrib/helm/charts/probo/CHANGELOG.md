@@ -4,6 +4,94 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.10.0] - 2026-06-30
+
+### Added
+
+- `probo.api.graphql.*` Helm values to tune GraphQL request limits (parser token cap, complexity limit, query cache size) for all three endpoints
+
+### Fixed
+
+- GraphQL endpoint is now protected against alias-flooding DoS (GHSA-prh2-g8pv-m7p9)
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.222.0`
+- Bootstrap resolver now supports AWS Systems Manager Parameter Store (`awsps://` prefix)
+
+## [0.9.1] - 2026-06-25
+
+### Changed
+
+- Bump `kubernetes-ingress` (haproxy-ingress) dependency to `1.52.0`
+
+## [0.9.0] - 2026-06-24
+
+### Breaking Changes
+
+- **Bootstrap env var names now use the `PROBOD_` prefix** (e.g. `AUTH_COOKIE_SECRET` → `PROBOD_AUTH_COOKIE_SECRET`), matching probod-bootstrap v0.2.0. Existing env injection must be updated before upgrading.
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.219.0`
+
+## [0.8.0] - 2026-06-19
+
+### Added
+
+- `probo.oauth2.cimdAllowedClientIds` config slot: list of HTTPS client metadata document URLs allowed for CIMD OAuth clients (e.g. MCP connectors); leave empty to disable CIMD
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.216.0`
+
+## [0.7.0] - 2026-06-12
+
+### Added
+
+- `commonThirdPartyEnrichment` agent config slot (provider/modelName/temperature/maxTokens) for the new common third-party enricher
+- `commonThirdPartyEnrichmentWorker` config slot (interval, maxConcurrency, staleAfter, agentTimeout, agentMaxTurns, confidenceThreshold, maxAttempts) for tuning the background worker
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.209.0`
+- `commonThirdPartyEnrichmentWorker.confidenceThreshold` of `0` is now rendered correctly (was previously dropped by Helm's falsy-numeric truthiness)
+
+## [0.6.0] - 2026-06-11
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.208.0`
+- Tracker mapping config restored to support linking (not create-only)
+- References updated to probo.com
+
+### Removed
+
+- `thirdPartyDisambiguation` agent config slot and
+  `trackerMappingWorker.disambiguationAgentTimeout` removed (disambiguation
+  agent dropped upstream)
+
+## [0.5.0] - 2026-06-09
+
+### Added
+
+- Expose dedicated `thirdPartyDisambiguation` and `trackerEnrichment` agent config slots (provider/model/temperature/maxTokens), each falling back to `trackerMapping` when the provider is unset
+- `trackerMappingWorker.disambiguationAgentTimeout` to size the disambiguation sub-agent independently from the main mapping agent
+
+### Changed
+
+- Default `appVersion` to `probod v0.206.0`
+
+## [0.4.0] - 2026-06-05
+
+### Added
+
+- `SMTP_HELLO_NAME` environment variable to configure the EHLO/HELO hostname
+
+### Changed
+
+- Default `appVersion` to `probod v0.203.0`
+
 ## [0.3.0] - 2026-06-02
 
 ### Added

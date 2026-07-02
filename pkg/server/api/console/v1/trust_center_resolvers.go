@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -17,6 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -63,7 +63,7 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 		return nil, err
 	}
 
-	trustCenter, file, err := r.probo.TrustCenters.Update(
+	trustCenter, _, err := r.probo.TrustCenters.Update(
 		ctx, scope,
 		&probo.UpdateTrustCenterRequest{
 			ID:                   input.TrustCenterID,
@@ -82,7 +82,7 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 	}
 
 	return &types.UpdateTrustCenterPayload{
-		TrustCenter: types.NewTrustCenter(trustCenter, file),
+		TrustCenter: types.NewTrustCenter(trustCenter),
 	}, nil
 }
 
@@ -93,7 +93,7 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 		return nil, err
 	}
 
-	trustCenter, file, err := r.probo.TrustCenters.UploadNDA(
+	trustCenter, _, err := r.probo.TrustCenters.UploadNDA(
 		ctx, scope,
 		&probo.UploadTrustCenterNDARequest{
 			TrustCenterID: input.TrustCenterID,
@@ -112,7 +112,7 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 	}
 
 	return &types.UploadTrustCenterNDAPayload{
-		TrustCenter: types.NewTrustCenter(trustCenter, file),
+		TrustCenter: types.NewTrustCenter(trustCenter),
 	}, nil
 }
 
@@ -123,14 +123,14 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 		return nil, err
 	}
 
-	trustCenter, file, err := r.probo.TrustCenters.DeleteNDA(ctx, scope, input.TrustCenterID)
+	trustCenter, _, err := r.probo.TrustCenters.DeleteNDA(ctx, scope, input.TrustCenterID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center NDA", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteTrustCenterNDAPayload{
-		TrustCenter: types.NewTrustCenter(trustCenter, file),
+		TrustCenter: types.NewTrustCenter(trustCenter),
 	}, nil
 }
 
@@ -179,7 +179,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 		}
 	}
 
-	trustCenter, file, err := r.probo.TrustCenters.UpdateTrustCenterBrand(ctx, scope, req)
+	trustCenter, _, err := r.probo.TrustCenters.UpdateTrustCenterBrand(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -191,7 +191,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 	}
 
 	return &types.UpdateTrustCenterBrandPayload{
-		TrustCenter: types.NewTrustCenter(trustCenter, file),
+		TrustCenter: types.NewTrustCenter(trustCenter),
 	}, nil
 }
 
@@ -689,59 +689,45 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	}, nil
 }
 
-// LogoFileURL is the resolver for the logoFileUrl field.
-func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet)
-	if err != nil {
+// Logo is the resolver for the logo field.
+func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
 		return nil, err
 	}
 
-	logoURL, err := r.probo.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+	if obj.Logo == nil {
+		return nil, nil
 	}
 
-	return logoURL, nil
+	return r.loadFile(ctx, obj.Logo.ID)
 }
 
-// DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
-func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet)
-	if err != nil {
+// DarkLogo is the resolver for the darkLogo field.
+func (r *trustCenterResolver) DarkLogo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
 		return nil, err
 	}
 
-	logoURL, err := r.probo.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+	if obj.DarkLogo == nil {
+		return nil, nil
 	}
 
-	return logoURL, nil
+	return r.loadFile(ctx, obj.DarkLogo.ID)
 }
 
-// NdaFileURL is the resolver for the ndaFileUrl field.
-func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+// Nda is the resolver for the nda field.
+func (r *trustCenterResolver) Nda(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
 	hasPermission, err := r.Resolver.Permission(ctx, obj, probo.ActionTrustCenterGetNda)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if !hasPermission {
+	if !hasPermission || obj.Nda == nil {
 		return nil, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-
-	fileURL, err := r.probo.TrustCenters.GenerateNDAFileURL(ctx, scope, obj.ID, 15*time.Minute)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate NDA file URL", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return fileURL, nil
+	return r.loadFile(ctx, obj.Nda.ID)
 }
 
 // Organization is the resolver for the organization field.
@@ -1056,24 +1042,55 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 	return types.NewDocument(document), nil
 }
 
-// Report is the resolver for the report field.
-func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
-	scope, err := r.authorize(ctx, obj.TrustCenterAccessID, probo.ActionReportGet)
+// ReportFile is the resolver for the reportFile field.
+func (r *trustCenterDocumentAccessResolver) ReportFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
+	}
+
+	if obj.ReportFile == nil {
+		return nil, nil
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	file, err := loaders.File.Load(ctx, obj.ReportFile.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFile(file, r.fileManager), nil
+}
+
+// Audit is the resolver for the audit field.
+func (r *trustCenterDocumentAccessResolver) Audit(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Audit, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
 	if err != nil {
 		return nil, err
 	}
 
-	if obj.ReportID == nil {
+	if obj.ReportFileID == nil {
 		return nil, nil
 	}
 
-	report, err := r.probo.Reports.Get(ctx, scope, *obj.ReportID)
+	audit, err := r.probo.Audits.GetByReportFileID(ctx, scope, *obj.ReportFileID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load audit for report file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewReport(report), nil
+	return types.NewAudit(audit), nil
 }
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
@@ -1112,20 +1129,23 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 	return count, nil
 }
 
-// FileURL is the resolver for the fileUrl field.
-func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustCenterFile) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileGetFileUrl)
-	if err != nil {
-		return "", err
+// File is the resolver for the file field.
+func (r *trustCenterFileResolver) File(ctx context.Context, obj *types.TrustCenterFile) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileGetFileUrl); err != nil {
+		return nil, err
 	}
 
-	fileURL, err := r.probo.TrustCenterFiles.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
+	return r.loadFile(ctx, obj.File.ID)
+}
+
+// Alias is the resolver for the alias field.
+func (r *trustCenterFileResolver) Alias(ctx context.Context, obj *types.TrustCenterFile) (*string, error) {
+	scope, err := r.authorize(ctx, obj.ID, resourcealias.ActionAliasGet)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
+		return nil, err
 	}
 
-	return fileURL, nil
+	return r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
 }
 
 // Organization is the resolver for the organization field.
@@ -1176,20 +1196,13 @@ func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj 
 	return count, nil
 }
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterReferenceGetLogoUrl)
-	if err != nil {
-		return "", err
+// Logo is the resolver for the logo field.
+func (r *trustCenterReferenceResolver) Logo(ctx context.Context, obj *types.TrustCenterReference) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterReferenceGetLogoUrl); err != nil {
+		return nil, err
 	}
 
-	fileURL, err := r.probo.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
-	}
-
-	return fileURL, nil
+	return r.loadFile(ctx, obj.Logo.ID)
 }
 
 // Permission is the resolver for the permission field.

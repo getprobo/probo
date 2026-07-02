@@ -26,6 +26,6 @@ of who you are or your background.
 
 If you see someone behaving inappropriately, please contact the
 project maintainers at [report at getprobo dot
-com](mailto:report@getprobo.com). We will investigate all complaints
+com](mailto:report@probo.com). We will investigate all complaints
 and respond as we determine necessary. We may temporarily or
 permanently ban contributors who violate these rules.

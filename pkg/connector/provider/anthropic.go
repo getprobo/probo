@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,10 +35,7 @@ func anthropicRegistration() *Registration {
 		// third-party OAuth2 flow for the Admin API, so this is API-key
 		// only and takes a single admin key (sk-ant-admin...) per org.
 		APIKeyHeader: "x-api-key",
-		// ProbeURL is intentionally empty: the generic probe issues a
-		// header-less GET that cannot send the required anthropic-version
-		// header, so it would 400 regardless of token validity. A dead
-		// key surfaces on the first ListAccounts instead.
+		Probe:        probeAnthropic,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewAnthropicDriver(c), nil
 		},

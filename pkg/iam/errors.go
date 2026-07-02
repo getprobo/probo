@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@ package iam
 import (
 	"fmt"
 
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 )
@@ -28,6 +29,16 @@ func NewInvalidTokenError() error {
 }
 
 func (e ErrInvalidToken) Error() string {
+	return e.message
+}
+
+type ErrTokenAlreadyUsed struct{ message string }
+
+func NewTokenAlreadyUsedError() error {
+	return &ErrTokenAlreadyUsed{"this magic link has already been used"}
+}
+
+func (e ErrTokenAlreadyUsed) Error() string {
 	return e.message
 }
 
@@ -169,6 +180,18 @@ func (e ErrLastActiveOwner) Error() string {
 	return fmt.Sprintf("cannot remove profile %q: last active owner of the organization", e.MembershipID)
 }
 
+type ErrProfileInUse struct {
+	ProfileID gid.GID
+}
+
+func NewProfileInUseError(profileID gid.GID) error {
+	return &ErrProfileInUse{ProfileID: profileID}
+}
+
+func (e ErrProfileInUse) Error() string {
+	return fmt.Sprintf("cannot remove profile %q: referenced by other resources", e.ProfileID)
+}
+
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
 
 func NewOrganizationNotFoundError(organizationID gid.GID) error {
@@ -191,6 +214,22 @@ func NewInsufficientPermissionsError(identityID gid.GID, entityID gid.GID, actio
 
 func (e ErrInsufficientPermissions) Error() string {
 	return fmt.Sprintf("identity %q does not have sufficient permissions to perform action %s on entity %q", e.IdentityID, e.Action, e.EntityID)
+}
+
+type ErrInsufficientOAuth2Scope struct {
+	IdentityID gid.GID
+	Scopes     []coredata.OAuth2Scope
+}
+
+func NewInsufficientOAuth2ScopeError(identityID gid.GID, scopes ...coredata.OAuth2Scope) error {
+	return &ErrInsufficientOAuth2Scope{IdentityID: identityID, Scopes: scopes}
+}
+
+func (e ErrInsufficientOAuth2Scope) Error() string {
+	return fmt.Sprintf(
+		"identity %q does not have an OAuth2 scope granting the requested action",
+		e.IdentityID,
+	)
 }
 
 type ErrMixedOrganizationBatch struct {

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,7 +28,7 @@ var (
 	identityContextKey = &ctxKey{name: "identity"}
 	sessionContextKey  = &ctxKey{name: "session"}
 	apiKeyContextKey   = &ctxKey{name: "api_key"}
-	TrustCenterKey     = &ctxKey{name: "trust_center"}
+	trustCenterKey     = &ctxKey{name: "trust_center"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {

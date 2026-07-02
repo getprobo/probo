@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
@@ -55,7 +55,7 @@ const sourcesQuery = graphql`
   query CreateAccessReviewCampaignDialogSourcesQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        accessSources(first: 500) {
+        accessReviewSources(first: 500) {
           edges {
             node {
               id
@@ -118,7 +118,7 @@ export function CreateAccessReviewCampaignDialog({
           organizationId,
           name: data.name,
           description: data.description || null,
-          accessSourceIds:
+          accessReviewSourceIds:
             selectedSourceIds.length > 0 ? selectedSourceIds : null,
         },
         connections: [connectionId],
@@ -129,7 +129,7 @@ export function CreateAccessReviewCampaignDialog({
             title: __("Error"),
             description: formatError(
               __("Failed to create campaign"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -149,7 +149,7 @@ export function CreateAccessReviewCampaignDialog({
           title: __("Error"),
           description: formatError(
             __("Failed to create campaign"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -227,7 +227,7 @@ function SourceSelector({
   );
 
   const sources
-    = data?.organization?.accessSources?.edges
+    = data?.organization?.accessReviewSources?.edges
       ?.map(edge => edge.node)
       .filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
 

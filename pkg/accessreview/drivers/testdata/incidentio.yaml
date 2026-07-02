@@ -1,0 +1,71 @@
+---
+# Hand-authored fixture for GET /v2/users against an incident.io
+# organization. The user object shape (id, name, email, role, base_role,
+# custom_roles) and the {users, pagination_meta} wrapper mirror the
+# documented response. Synthetic IDs/emails only.
+#
+# Two interactions deliberately split three users across two pages, where the
+# FIRST page returns fewer than page_size rows while still handing back a
+# non-empty `after` cursor. This regression-guards the pagination terminator:
+# the driver must follow the cursor (and return all three users) rather than
+# stop early on the short first page.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.incident.io
+        form:
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.incident.io/v2/users?page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"users":[{"id":"01ABCOWNER","name":"Lisa Curtis","email":"lisa@example.com","role":"viewer","base_role":{"id":"r1","name":"Owner","slug":"owner"},"custom_roles":[],"slack_user_id":"U01"},{"id":"01DEFRESP","name":"Sam Responder","email":"sam@example.com","role":"responder","base_role":{"id":"r2","name":"Responder","slug":"responder"},"custom_roles":[{"id":"c1","name":"On-call Lead","slug":"on-call-lead"}],"slack_user_id":"U02"}],"pagination_meta":{"after":"01PAGE2CURSOR0000000000000","page_size":100,"total_record_count":3}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 150ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.incident.io
+        form:
+            after:
+                - "01PAGE2CURSOR0000000000000"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.incident.io/v2/users?after=01PAGE2CURSOR0000000000000&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"users":[{"id":"01GHIADMIN","name":"","email":"legacy-admin@example.com","role":"administrator","base_role":null,"custom_roles":[],"slack_user_id":""}],"pagination_meta":{"after":"","page_size":100,"total_record_count":3}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 140ms

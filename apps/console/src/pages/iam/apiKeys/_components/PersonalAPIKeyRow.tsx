@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
+import { formatDate, formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Spinner, Td, Tr, useConfirm, useToast } from "@probo/ui";
 import { clsx } from "clsx";
@@ -81,7 +81,7 @@ export function PersonalAPIKeyRow(props: {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to revoke API key."),
-                    errors as GraphQLError[],
+                    errors,
                   ),
                   variant: "error",
                 });

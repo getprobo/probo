@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -53,13 +53,14 @@ export function CompliancePageDocumentList(props: { fragmentRef: CompliancePageD
           <Tr>
             <Th>{__("Name")}</Th>
             <Th>{__("Type")}</Th>
+            <Th>{__("Alias")}</Th>
             <Th>{__("Visibility")}</Th>
           </Tr>
         </Thead>
         <Tbody>
           {publishedDocuments.length === 0 && (
             <Tr>
-              <Td colSpan={3} className="text-center text-txt-secondary">
+              <Td colSpan={4} className="text-center text-txt-secondary">
                 {__("No documents available")}
               </Td>
             </Tr>

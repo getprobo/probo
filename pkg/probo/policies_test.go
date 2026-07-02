@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -72,4 +72,31 @@ func TestAuditorPolicy_ProcessingActivityPageReadAccess(t *testing.T) {
 			assert.True(t, result.IsAllowed())
 		})
 	}
+}
+
+func TestAuditorPolicy_OrganizationContextReadAccess(t *testing.T) {
+	t.Parallel()
+
+	organizationID := gid.New(gid.NewTenantID(), 1)
+	evaluator := policy.NewEvaluator()
+	conditionContext := policy.ConditionContext{
+		Principal: map[string]string{
+			"organization_id": organizationID.String(),
+		},
+		Resource: map[string]string{
+			"organization_id": organizationID.String(),
+		},
+	}
+
+	result := evaluator.Evaluate(
+		policy.AuthorizationRequest{
+			Principal:        organizationID,
+			Resource:         organizationID,
+			Action:           probo.ActionOrganizationContextGet,
+			ConditionContext: conditionContext,
+		},
+		[]*policy.Policy{probo.AuditorPolicy},
+	)
+
+	assert.True(t, result.IsAllowed())
 }

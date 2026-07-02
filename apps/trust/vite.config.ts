@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,13 +14,20 @@
 
 import { fileURLToPath, URL } from "node:url";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 // https://vite.dev/config/
+// @vitejs/plugin-react@6 (Vite 8) no longer runs Babel, so the Relay tagged
+// template transform is applied via @rolldown/plugin-babel instead.
 export default defineConfig({
-  plugins: [react({ babel: { plugins: ["relay"] } }), tailwindcss()],
+  plugins: [
+    react(),
+    babel({ plugins: ["relay"] }),
+    tailwindcss(),
+  ],
   build: {
     assetsDir: "assets",
   },

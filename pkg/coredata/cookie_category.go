@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -384,58 +384,6 @@ WHERE
 	}
 
 	return count, nil
-}
-
-func (c *CookieCategories) LoadAllByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-	filter *CookieCategoryFilter,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	cookie_banner_id,
-	name,
-	slug,
-	description,
-	kind,
-	rank,
-	gcm_consent_types,
-	posthog_consent,
-	created_at,
-	updated_at
-FROM
-	cookie_categories
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND %s
-ORDER BY
-	rank ASC, id ASC;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query cookie categories: %w", err)
-	}
-
-	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
-	if err != nil {
-		return fmt.Errorf("cannot collect cookie categories: %w", err)
-	}
-
-	*c = categories
-
-	return nil
 }
 
 func (c *CookieCategory) Insert(

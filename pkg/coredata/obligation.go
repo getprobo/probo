@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -608,57 +608,6 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete obligation: %w", err)
 	}
-
-	return nil
-}
-
-func (os *Obligations) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	area,
-	source,
-	requirement,
-	actions_to_be_implemented,
-	regulator,
-	owner_profile_id,
-	last_review_date,
-	due_date,
-	status,
-	type,
-	created_at,
-	updated_at
-FROM
-	obligations
-WHERE
-	%s
-	AND organization_id = @organization_id
-ORDER BY
-	created_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query obligations: %w", err)
-	}
-
-	obligations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Obligation])
-	if err != nil {
-		return fmt.Errorf("cannot collect obligations: %w", err)
-	}
-
-	*os = obligations
 
 	return nil
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,7 @@ export class ProboApi implements ICredentialType {
 
 	icon: Icon = { light: 'file:../icons/probo-light.svg', dark: 'file:../icons/probo.svg' };
 
-	documentationUrl = 'https://app.govrly.sa//docs';
+	documentationUrl = 'https://www.probo.com/docs';
 
 	properties: INodeProperties[] = [
 		{

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -91,21 +91,21 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				continue
 			}
 
-			accountType := coredata.AccessEntryAccountTypeUser
+			accountType := coredata.AccessReviewEntryAccountTypeUser
 			if m.IsBot || m.IsAppUser {
-				accountType = coredata.AccessEntryAccountTypeServiceAccount
+				accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 			}
 
 			record := AccountRecord{
 				Email:       m.Profile.Email,
 				FullName:    m.RealName,
 				JobTitle:    m.Profile.Title,
-				Role:        slackRole(m),
+				Roles:       slackRoles(m),
 				Active:      new(!m.Deleted),
 				IsAdmin:     m.IsAdmin || m.IsOwner || m.IsPrimaryOwner,
 				ExternalID:  m.ID,
 				MFAStatus:   slackMFAStatus(m.Has2FA),
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: accountType,
 			}
 
@@ -163,20 +163,20 @@ func (d *SlackDriver) queryUsers(ctx context.Context, cursor string) (*slackUser
 	return &resp, nil
 }
 
-func slackRole(m slackMember) string {
+func slackRoles(m slackMember) []string {
 	switch {
 	case m.IsPrimaryOwner:
-		return "Primary Owner"
+		return []string{"Primary Owner"}
 	case m.IsOwner:
-		return "Owner"
+		return []string{"Owner"}
 	case m.IsAdmin:
-		return "Admin"
+		return []string{"Admin"}
 	case m.IsUltraRestricted:
-		return "Ultra Restricted"
+		return []string{"Ultra Restricted"}
 	case m.IsRestricted:
-		return "Restricted"
+		return []string{"Restricted"}
 	default:
-		return "Member"
+		return []string{"Member"}
 	}
 }
 

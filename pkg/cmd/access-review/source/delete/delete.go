@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,9 +24,9 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteAccessSourceInput!) {
-  deleteAccessSource(input: $input) {
-    deletedAccessSourceId
+mutation($input: DeleteAccessReviewSourceInput!) {
+  deleteAccessReviewSource(input: $input) {
+    deletedAccessReviewSourceId
   }
 }
 `
@@ -81,7 +81,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				deleteMutation,
 				map[string]any{
 					"input": map[string]any{
-						"accessSourceId": args[0],
+						"accessReviewSourceId": args[0],
 					},
 				},
 			)

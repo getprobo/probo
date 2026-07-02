@@ -1,0 +1,181 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { formatError } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
+  Input,
+  Spinner,
+  useDialogRef,
+  useToast,
+} from "@probo/ui";
+import { graphql, useMutation } from "react-relay";
+import { z } from "zod";
+
+import type { EditDataPrivacyAgreementDialogMutation } from "#/__generated__/core/EditDataPrivacyAgreementDialogMutation.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+
+const updateDataPrivacyAgreementMutation = graphql`
+  mutation EditDataPrivacyAgreementDialogMutation(
+    $input: UpdateThirdPartyDataPrivacyAgreementInput!
+  ) {
+    updateThirdPartyDataPrivacyAgreement(input: $input) {
+      thirdPartyDataPrivacyAgreement {
+        id
+        file {
+          downloadUrl
+        }
+        validFrom
+        validUntil
+        createdAt
+      }
+    }
+  }
+`;
+
+const schema = z.object({
+  validFrom: z.string().optional(),
+  validUntil: z.string().optional(),
+});
+
+type Props = {
+  children: React.ReactNode;
+  thirdPartyId: string;
+  agreement: {
+    validFrom?: string | null;
+    validUntil?: string | null;
+  };
+  onSuccess?: () => void;
+};
+
+export function EditDataPrivacyAgreementDialog({
+  children,
+  thirdPartyId,
+  agreement,
+  onSuccess,
+}: Props) {
+  const { __ } = useTranslate();
+  const ref = useDialogRef();
+
+  const formatDateForForm = (datetime?: string | null) => {
+    if (!datetime) return "";
+    return datetime.split("T")[0];
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+  } = useFormWithSchema(schema, {
+    defaultValues: {
+      validFrom: formatDateForForm(agreement.validFrom),
+      validUntil: formatDateForForm(agreement.validUntil),
+    },
+  });
+
+  const { toast } = useToast();
+  const [updateAgreement, isUpdating]
+    = useMutation<EditDataPrivacyAgreementDialogMutation>(
+      updateDataPrivacyAgreementMutation,
+    );
+
+  const onSubmit = (data: z.infer<typeof schema>) => {
+    const formatDatetime = (dateString?: string) => {
+      if (!dateString) return null;
+      return `${dateString}T00:00:00Z`;
+    };
+
+    updateAgreement({
+      variables: {
+        input: {
+          thirdPartyId,
+          validFrom: formatDatetime(data.validFrom),
+          validUntil: formatDatetime(data.validUntil),
+        },
+      },
+      onCompleted(_response, errors) {
+        if (errors) {
+          toast({
+            title: __("Error"),
+            description: formatError(
+              __("Failed to update Data Privacy Agreement"),
+              errors,
+            ),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Data Privacy Agreement updated successfully"),
+          variant: "success",
+        });
+        onSuccess?.();
+        ref.current?.close();
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to update Data Privacy Agreement"),
+            error,
+          ),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleClose = () => {
+    reset();
+  };
+
+  return (
+    <Dialog
+      title={__("Edit Data Privacy Agreement")}
+      ref={ref}
+      trigger={children}
+      className="max-w-lg"
+      onClose={handleClose}
+    >
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
+        <DialogContent padded className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={__("Valid from")}>
+              <Input {...register("validFrom")} type="date" />
+            </Field>
+            <Field label={__("Valid until")}>
+              <Input {...register("validUntil")} type="date" />
+            </Field>
+          </div>
+        </DialogContent>
+
+        <DialogFooter>
+          <Button
+            type="submit"
+            disabled={isUpdating}
+            icon={isUpdating ? Spinner : undefined}
+          >
+            {__("Update")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  );
+}

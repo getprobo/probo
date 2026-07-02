@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,12 +15,26 @@
 package probodconfig
 
 type NotificationsConfig struct {
-	Mailer  MailerConfig  `json:"mailer"`
-	Slack   SlackConfig   `json:"slack"`
-	Webhook WebhookConfig `json:"webhook"`
+	Mailer   MailerConfig               `json:"mailer"`
+	Slack    SlackConfig                `json:"slack"`
+	Webhook  WebhookConfig              `json:"webhook"`
+	Document DocumentNotificationConfig `json:"document"`
 }
 
 type WebhookConfig struct {
 	SenderInterval int `json:"sender-interval"`
 	CacheTTL       int `json:"cache-ttl"`
+}
+
+// DocumentNotificationConfig configures the debounced worker that batches
+// signature and approval request notifications. All durations are in seconds.
+type DocumentNotificationConfig struct {
+	// Interval is how often the worker scans for pending requests.
+	Interval int `json:"interval"`
+	// DebounceDelay is how long a request must have been pending before its
+	// first notification is sent.
+	DebounceDelay int `json:"debounce-delay"`
+	// ReminderInterval is the base reminder cadence. Reminders are sent at
+	// 1x, 2x and 3x this interval after the previous email, then stop.
+	ReminderInterval int `json:"reminder-interval"`
 }

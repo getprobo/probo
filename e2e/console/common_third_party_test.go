@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestCommonThirdParties_QueryWithLogoURL(t *testing.T) {
+func TestCommonThirdParties_QueryWithLogo(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -42,25 +42,29 @@ func TestCommonThirdParties_QueryWithLogoURL(t *testing.T) {
 			commonThirdParties(name: $name) {
 				id
 				name
-				logoUrl
+				logo {
+					downloadUrl
+				}
 			}
 		}
 	`
 
 	var result struct {
 		CommonThirdParties []struct {
-			ID      string  `json:"id"`
-			Name    string  `json:"name"`
-			LogoURL *string `json:"logoUrl"`
+			ID   string `json:"id"`
+			Name string `json:"name"`
+			Logo *struct {
+				DownloadURL string `json:"downloadUrl"`
+			} `json:"logo"`
 		} `json:"commonThirdParties"`
 	}
 
 	err := owner.Execute(query, map[string]any{"name": name}, &result)
-	require.NoError(t, err, "querying commonThirdParties.logoUrl must not surface a resource-not-found error")
+	require.NoError(t, err, "querying commonThirdParties.logo must not surface a resource-not-found error")
 	require.Len(t, result.CommonThirdParties, 1)
 	assert.Equal(t, id.String(), result.CommonThirdParties[0].ID)
 	assert.Equal(t, name, result.CommonThirdParties[0].Name)
-	assert.Nil(t, result.CommonThirdParties[0].LogoURL)
+	assert.Nil(t, result.CommonThirdParties[0].Logo)
 }
 
 func seedCommonThirdParty(t *testing.T, name string) gid.GID {
@@ -76,11 +80,11 @@ func seedCommonThirdParty(t *testing.T, name string) gid.GID {
 
 	_, err := conn.Exec(ctx, `
 		INSERT INTO common_third_parties (
-			id, name, slug, category, certifications, created_at, updated_at
+			id, name, slug, category, certifications, enrichment_attempts, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7
+			$1, $2, $3, $4, $5, $6, $7, $8
 		)
-	`, id, name, slug, "OTHER", []string{}, now, now)
+	`, id, name, slug, "OTHER", []string{}, 0, now, now)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

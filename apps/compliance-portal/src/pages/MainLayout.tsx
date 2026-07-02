@@ -1,0 +1,48 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { useTranslation } from "react-i18next";
+import type { PreloadedQuery } from "react-relay";
+import { graphql, usePreloadedQuery } from "react-relay";
+import { Outlet } from "react-router";
+
+import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
+import { TopBar } from "#/components/TopBar/TopBar";
+
+import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
+
+export const mainLayoutQuery = graphql`
+  query MainLayoutQuery {
+    ...TopBar_query
+  }
+`;
+
+interface MainLayoutProps {
+  queryRef: PreloadedQuery<MainLayoutQuery>;
+}
+
+export function MainLayout({ queryRef }: MainLayoutProps) {
+  const { t } = useTranslation();
+  const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-sand-2">
+      <TopBar queryKey={data} />
+      <div className="flex-1">
+        <Outlet />
+      </div>
+      <PoweredBy label={t("footer.poweredBy")} />
+    </div>
+  );
+}

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,29 +16,35 @@ package coredata
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	CommonTrackerPattern struct {
-		ID                    gid.GID                 `db:"id"`
-		CommonThirdPartyID    *gid.GID                `db:"common_third_party_id"`
-		TrackerType           TrackerType             `db:"tracker_type"`
-		Pattern               string                  `db:"pattern"`
-		MatchType             TrackerPatternMatchType `db:"match_type"`
-		Description           string                  `db:"description"`
-		MaxAgeSeconds         *int                    `db:"max_age_seconds"`
-		Confidence            float32                 `db:"confidence"`
-		EnrichmentRequestedAt *time.Time              `db:"enrichment_requested_at"`
-		EnrichedAt            *time.Time              `db:"enriched_at"`
-		CreatedAt             time.Time               `db:"created_at"`
-		UpdatedAt             time.Time               `db:"updated_at"`
+		ID                      gid.GID                         `db:"id"`
+		CommonThirdPartyID      *gid.GID                        `db:"common_third_party_id"`
+		TrackerType             TrackerType                     `db:"tracker_type"`
+		Pattern                 string                          `db:"pattern"`
+		MatchType               TrackerPatternMatchType         `db:"match_type"`
+		Description             string                          `db:"description"`
+		MaxAgeSeconds           *int                            `db:"max_age_seconds"`
+		Confidence              float32                         `db:"confidence"`
+		Attribution             CommonTrackerPatternAttribution `db:"attribution"`
+		EnrichmentRequestedAt   *time.Time                      `db:"enrichment_requested_at"`
+		Enrichment              json.RawMessage                 `db:"enrichment"`
+		EnrichmentAttempts      int                             `db:"enrichment_attempts"`
+		LastEnrichmentAttemptAt *time.Time                      `db:"last_enrichment_attempt_at"`
+		CreatedAt               time.Time                       `db:"created_at"`
+		UpdatedAt               time.Time                       `db:"updated_at"`
 	}
 
 	CommonTrackerPatterns []*CommonTrackerPattern
@@ -59,8 +65,11 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -108,8 +117,11 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -150,6 +162,10 @@ func (p CommonTrackerPattern) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 ) error {
+	if p.Attribution == "" {
+		p.Attribution = CommonTrackerPatternAttributionUndetermined
+	}
+
 	q := `
 INSERT INTO common_tracker_patterns (
     id,
@@ -160,8 +176,11 @@ INSERT INTO common_tracker_patterns (
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 ) VALUES (
@@ -173,26 +192,32 @@ INSERT INTO common_tracker_patterns (
     @description,
     @max_age_seconds,
     @confidence,
+    @attribution,
     @enrichment_requested_at,
-    @enriched_at,
+    @enrichment,
+    @enrichment_attempts,
+    @last_enrichment_attempt_at,
     @created_at,
     @updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                      p.ID,
-		"common_third_party_id":   p.CommonThirdPartyID,
-		"tracker_type":            p.TrackerType,
-		"pattern":                 p.Pattern,
-		"match_type":              p.MatchType,
-		"description":             p.Description,
-		"max_age_seconds":         p.MaxAgeSeconds,
-		"confidence":              p.Confidence,
-		"enrichment_requested_at": p.EnrichmentRequestedAt,
-		"enriched_at":             p.EnrichedAt,
-		"created_at":              p.CreatedAt,
-		"updated_at":              p.UpdatedAt,
+		"id":                         p.ID,
+		"common_third_party_id":      p.CommonThirdPartyID,
+		"tracker_type":               p.TrackerType,
+		"pattern":                    p.Pattern,
+		"match_type":                 p.MatchType,
+		"description":                p.Description,
+		"max_age_seconds":            p.MaxAgeSeconds,
+		"confidence":                 p.Confidence,
+		"attribution":                p.Attribution,
+		"enrichment_requested_at":    p.EnrichmentRequestedAt,
+		"enrichment":                 p.Enrichment,
+		"enrichment_attempts":        p.EnrichmentAttempts,
+		"last_enrichment_attempt_at": p.LastEnrichmentAttemptAt,
+		"created_at":                 p.CreatedAt,
+		"updated_at":                 p.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -209,10 +234,18 @@ func (p *CommonTrackerPattern) Upsert(
 ) (inserted bool, err error) {
 	// On insert, a description-less row is immediately queued for the
 	// enrichment worker (enrichment_requested_at = NOW()). On conflict the
-	// enrichment columns are left untouched, and an empty incoming
+	// enrichment columns are otherwise left untouched, and an empty incoming
 	// description never overwrites an existing one — descriptions are owned
 	// by the enrichment worker, so mapping-side upserts must not clobber a
-	// researched description with an empty string.
+	// researched description with an empty string. The one exception is a
+	// blank, unlinked row that gains a third party: it is re-armed for
+	// enrichment, and re-arming resets the attempt counter and drops the
+	// prior payload so the row reads as not-yet-completed again (see the
+	// enrichment CASE below).
+	if p.Attribution == "" {
+		p.Attribution = CommonTrackerPatternAttributionUndetermined
+	}
+
 	q := `
 INSERT INTO common_tracker_patterns (
     id,
@@ -223,8 +256,11 @@ INSERT INTO common_tracker_patterns (
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 ) VALUES (
@@ -236,38 +272,54 @@ INSERT INTO common_tracker_patterns (
     @description,
     @max_age_seconds,
     @confidence,
+    @attribution,
     CASE WHEN @description = '' THEN NOW() ELSE NULL END,
+    NULL,
+    0,
     NULL,
     @created_at,
     @updated_at
 )
 ON CONFLICT (tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO UPDATE
 SET
-    common_third_party_id = EXCLUDED.common_third_party_id,
+    common_third_party_id = CASE
+        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY' THEN NULL
+        ELSE EXCLUDED.common_third_party_id
+    END,
     match_type            = EXCLUDED.match_type,
     description           = CASE
         WHEN EXCLUDED.description = '' THEN common_tracker_patterns.description
         ELSE EXCLUDED.description
     END,
     confidence            = EXCLUDED.confidence,
-    -- A blank, unlinked catalog row that now gains a third party is
-    -- re-queued for enrichment: the enrichment agent leaves descriptions
-    -- blank when it cannot substantiate a purpose, and knowing the vendor
-    -- gives it a second, better-informed attempt. enriched_at is cleared
-    -- so the row is no longer terminal.
+    attribution           = CASE
+        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY'
+        THEN common_tracker_patterns.attribution
+        ELSE EXCLUDED.attribution
+    END,
     enrichment_requested_at = CASE
-        WHEN common_tracker_patterns.description = ''
+        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+         AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN NOW()
         ELSE common_tracker_patterns.enrichment_requested_at
     END,
-    enriched_at           = CASE
-        WHEN common_tracker_patterns.description = ''
+    enrichment_attempts   = CASE
+        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+         AND common_tracker_patterns.description = ''
+         AND common_tracker_patterns.common_third_party_id IS NULL
+         AND EXCLUDED.common_third_party_id IS NOT NULL
+        THEN 0
+        ELSE common_tracker_patterns.enrichment_attempts
+    END,
+    enrichment            = CASE
+        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+         AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN NULL
-        ELSE common_tracker_patterns.enriched_at
+        ELSE common_tracker_patterns.enrichment
     END,
     updated_at            = EXCLUDED.updated_at
 RETURNING
@@ -279,8 +331,11 @@ RETURNING
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 `
@@ -296,6 +351,7 @@ RETURNING
 		"description":           p.Description,
 		"max_age_seconds":       p.MaxAgeSeconds,
 		"confidence":            p.Confidence,
+		"attribution":           p.Attribution,
 		"created_at":            p.CreatedAt,
 		"updated_at":            p.UpdatedAt,
 	}
@@ -349,8 +405,11 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -466,8 +525,11 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -513,8 +575,11 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -546,8 +611,11 @@ LIMIT 1;
 	return nil
 }
 
-// ClearEnrichmentRequestedAt removes the row from the enrichment queue. It
-// bumps updated_at so the stale-recovery clock starts at claim time.
+// ClearEnrichmentRequestedAt removes the row from the enrichment queue and
+// records the attempt: it bumps the attempt counter and stamps
+// last_enrichment_attempt_at, which is the stale-recovery clock. The
+// attempt counter is incremented up front so a crash between claim and
+// persist still counts against the retry budget. It bumps updated_at too.
 func (p *CommonTrackerPattern) ClearEnrichmentRequestedAt(
 	ctx context.Context,
 	tx pg.Tx,
@@ -556,42 +624,57 @@ func (p *CommonTrackerPattern) ClearEnrichmentRequestedAt(
 UPDATE common_tracker_patterns
 SET
     enrichment_requested_at = NULL,
+    enrichment_attempts = enrichment_attempts + 1,
+    last_enrichment_attempt_at = NOW(),
     updated_at = NOW()
 WHERE id = @id
+RETURNING enrichment_attempts, last_enrichment_attempt_at
 `
 
 	args := pgx.StrictNamedArgs{"id": p.ID}
 
-	_, err := tx.Exec(ctx, q, args)
+	var (
+		attempts    int
+		lastAttempt *time.Time
+	)
+
+	err := tx.QueryRow(ctx, q, args).Scan(&attempts, &lastAttempt)
 	if err != nil {
 		return fmt.Errorf("cannot clear enrichment requested at: %w", err)
 	}
 
 	p.EnrichmentRequestedAt = nil
+	p.EnrichmentAttempts = attempts
+	p.LastEnrichmentAttemptAt = lastAttempt
 
 	return nil
 }
 
-// SetEnriched records the researched description and marks the row
-// enriched so the stale-recovery loop never re-queues it. An empty
-// description is allowed: the enrichment agent leaves it blank when it
-// cannot substantiate a purpose, and a later third-party link re-arms
-// enrichment for a second attempt. When thirdPartyID is non-nil it links
-// the row to that third party, but only when none is set yet
-// (COALESCE) — the enrichment worker links, it never overrides an
-// attribution the mapping pipeline already resolved.
-func (p *CommonTrackerPattern) SetEnriched(
+// UpdateEnrichment records the researched description and the per-run
+// enrichment provenance payload (named to mirror
+// CommonThirdParty.UpdateEnrichment, the sibling persist step). The
+// payload presence is what marks a row as having been through the
+// workflow, so the stale-recovery loop never re-queues it
+// (last_enrichment_attempt_at, the attempt clock, is stamped separately at
+// claim time). An empty description is allowed: the enrichment agent
+// leaves it blank when it cannot substantiate a purpose, and a later
+// third-party link re-arms enrichment for a second attempt. When
+// thirdPartyID is non-nil it links the row to that third party, but only
+// when none is set yet (COALESCE) — the enrichment worker links, it never
+// overrides an attribution the mapping pipeline already resolved.
+func (p *CommonTrackerPattern) UpdateEnrichment(
 	ctx context.Context,
 	tx pg.Tx,
 	description string,
 	thirdPartyID *gid.GID,
+	enrichment json.RawMessage,
 ) error {
 	q := `
 UPDATE common_tracker_patterns
 SET
     description = @description,
     common_third_party_id = COALESCE(common_third_party_id, @third_party_id),
-    enriched_at = NOW(),
+    enrichment = @enrichment,
     enrichment_requested_at = NULL,
     updated_at = NOW()
 WHERE id = @id
@@ -601,6 +684,7 @@ WHERE id = @id
 		"id":             p.ID,
 		"description":    description,
 		"third_party_id": thirdPartyID,
+		"enrichment":     enrichment,
 	}
 
 	result, err := tx.Exec(ctx, q, args)
@@ -613,6 +697,8 @@ WHERE id = @id
 	}
 
 	p.Description = description
+	p.Enrichment = enrichment
+	p.EnrichmentRequestedAt = nil
 
 	if p.CommonThirdPartyID == nil {
 		p.CommonThirdPartyID = thirdPartyID
@@ -622,13 +708,21 @@ WHERE id = @id
 }
 
 // ResetStaleEnrichments re-queues rows whose enrichment was claimed but
-// never completed (no enriched_at, still description-less) and have been
-// idle longer than staleAfter, so a crashed or timed-out enrichment is
-// retried.
+// never completed and have been idle longer than staleAfter, so a crashed
+// or timed-out enrichment is retried.
+//
+// A claimed row has enrichment_attempts > 0 (the claim increments it) and
+// a completed row carries a non-null enrichment payload (UpdateEnrichment
+// always writes it, even on a blank-description run), so the sweep targets
+// rows that were claimed but carry no payload yet. Curated rows that were
+// never enqueued keep enrichment_attempts = 0 and are left untouched. The
+// max-attempts ceiling stops permanently failing rows from looping
+// forever. last_enrichment_attempt_at, stamped at claim, is the idle clock.
 func ResetStaleEnrichments(
 	ctx context.Context,
 	conn pg.Querier,
 	staleAfter time.Duration,
+	maxAttempts int,
 ) error {
 	q := `
 UPDATE common_tracker_patterns
@@ -637,12 +731,16 @@ SET
     updated_at = NOW()
 WHERE
     enrichment_requested_at IS NULL
-    AND enriched_at IS NULL
-    AND description = ''
-    AND updated_at < @stale_before
+    AND enrichment IS NULL
+    AND enrichment_attempts > 0
+    AND enrichment_attempts < @max_attempts
+    AND last_enrichment_attempt_at < @stale_before
 `
 
-	args := pgx.StrictNamedArgs{"stale_before": time.Now().Add(-staleAfter)}
+	args := pgx.StrictNamedArgs{
+		"max_attempts": maxAttempts,
+		"stale_before": time.Now().Add(-staleAfter),
+	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -667,8 +765,11 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -692,4 +793,293 @@ WHERE
 	*ps = patterns
 
 	return nil
+}
+
+func (p *CommonTrackerPattern) CursorKey(field CommonTrackerPatternOrderField) page.CursorKey {
+	switch field {
+	case CommonTrackerPatternOrderFieldPattern:
+		return page.NewCursorKey(p.ID, p.Pattern)
+	case CommonTrackerPatternOrderFieldConfidence:
+		return page.NewCursorKey(p.ID, p.Confidence)
+	case CommonTrackerPatternOrderFieldCreatedAt:
+		return page.NewCursorKey(p.ID, p.CreatedAt)
+	case CommonTrackerPatternOrderFieldUpdatedAt:
+		return page.NewCursorKey(p.ID, p.UpdatedAt)
+	case CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt:
+		if p.LastEnrichmentAttemptAt == nil {
+			return page.NewCursorKey(p.ID, time.Time{})
+		}
+
+		return page.NewCursorKey(p.ID, *p.LastEnrichmentAttemptAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+// Load returns a cursor-paginated, filtered page of common tracker
+// patterns. The catalog is global (no tenant scope). The cursor supplies
+// the limit and ordering; callers wrap the result with page.NewPage.
+func (ps *CommonTrackerPatterns) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	cursor *page.Cursor[CommonTrackerPatternOrderField],
+	filter *CommonTrackerPatternFilter,
+) error {
+	q := `
+SELECT
+    id,
+    common_third_party_id,
+    tracker_type,
+    pattern,
+    match_type,
+    description,
+    max_age_seconds,
+    confidence,
+    attribution,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
+    created_at,
+    updated_at
+FROM
+    common_tracker_patterns
+WHERE
+    %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common tracker patterns: %w", err)
+	}
+
+	patterns, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonTrackerPattern])
+	if err != nil {
+		return fmt.Errorf("cannot collect common tracker patterns: %w", err)
+	}
+
+	*ps = patterns
+
+	return nil
+}
+
+// CountAll returns the number of common tracker patterns matching the
+// filter, ignoring pagination.
+func (ps *CommonTrackerPatterns) CountAll(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonTrackerPatternFilter,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(id)
+FROM
+    common_tracker_patterns
+WHERE
+    %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count common tracker patterns: %w", err)
+	}
+
+	return count, nil
+}
+
+// LoadAllIDs returns every common tracker pattern id matching the filter,
+// with no pagination. It backs bulk operations (e.g. operator-driven
+// re-enrichment) that act on the entire matching set.
+func (ps *CommonTrackerPatterns) LoadAllIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonTrackerPatternFilter,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    id
+FROM
+    common_tracker_patterns
+WHERE
+    %s
+ORDER BY pattern ASC
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common tracker pattern ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect common tracker pattern ids: %w", err)
+	}
+
+	return ids, nil
+}
+
+// RelinkCommonThirdPartyByIDs repoints the given common tracker patterns
+// at a different common third party (or unlinks them when thirdPartyID is
+// nil). Linking is a manual operator attribution - the highest-trust
+// signal - so it bumps confidence to 1 to match the curated/seed tier and
+// sets the attribution verdict to THIRD_PARTY; unlinking makes no
+// attribution, returns the verdict to UNDETERMINED so the pipeline can
+// re-probe the row, and leaves confidence untouched. It only touches the
+// catalog rows; callers re-arm enrichment and remap the org-scoped tracker
+// patterns separately. Returns the number of rows updated.
+func (ps *CommonTrackerPatterns) RelinkCommonThirdPartyByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+	thirdPartyID *gid.GID,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    common_third_party_id = @third_party_id,
+    confidence = CASE WHEN @third_party_id::text IS NOT NULL THEN 1 ELSE confidence END,
+    attribution = CASE
+        WHEN @third_party_id::text IS NOT NULL THEN 'THIRD_PARTY'::common_tracker_pattern_attribution
+        ELSE 'UNDETERMINED'::common_tracker_pattern_attribution
+    END,
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{
+		"ids":            ids,
+		"third_party_id": thirdPartyID,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot relink common tracker pattern third party: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// SetAttributionByIDs records a terminal attribution verdict on the given
+// catalog rows. It is an operator action: marking a row FIRST_PARTY (or
+// UNDETERMINED) clears any vendor link, because a non-third-party verdict
+// cannot keep a common_third_party_id. THIRD_PARTY is not a valid verdict
+// here - that attribution carries a vendor and must go through
+// RelinkCommonThirdPartyByIDs. Callers re-arm the org-scoped tracker
+// patterns separately. Returns the number of rows updated.
+func (ps *CommonTrackerPatterns) SetAttributionByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+	attribution CommonTrackerPatternAttribution,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    attribution = @attribution,
+    common_third_party_id = NULL,
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{
+		"ids":         ids,
+		"attribution": attribution,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot set common tracker pattern attribution: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// ClearDescriptionByIDs blanks the researched description on the given
+// catalog rows without re-arming enrichment or touching the enrichment
+// payload. It backs the first-party verdict: a terminal non-third-party
+// row keeps no vendor link, so a description that named the (now-cleared)
+// vendor would be stale. The verdict is terminal, so rather than re-derive
+// a description - which would re-run the mapping agent and re-link a
+// vendor - the description simply returns to empty. Returns the number of
+// rows updated.
+func (ps *CommonTrackerPatterns) ClearDescriptionByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    description = '',
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot clear common tracker pattern description: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// RequestEnrichmentByIDs arms enrichment on the given common tracker
+// patterns by stamping enrichment_requested_at, which is the only column
+// the enrichment worker claims on. It resets enrichment_attempts to 0 so
+// the re-queued rows get a fresh retry budget: the claim path bumps the
+// counter on every run, and without a reset a row near the max-attempts
+// ceiling would not be re-armed by stale recovery if a re-run crashed.
+// Already-enriched rows are re-processed too: the worker overwrites the
+// description and enrichment payload when it runs. Returns the number of
+// rows re-queued. This is the async fallback path; the synchronous
+// enricher service is preferred.
+func (ps *CommonTrackerPatterns) RequestEnrichmentByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    enrichment_requested_at = NOW(),
+    enrichment_attempts = 0,
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{
+		"ids": ids,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot request common tracker pattern enrichment: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ type Props = {
 
 export function MainLayout(props: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(currentTrustGraphQuery, props.queryRef);
+  const data = usePreloadedQuery<TrustGraphCurrentQuery>(currentTrustGraphQuery, props.queryRef);
   const trustCenter = data.currentTrustCenter;
   const isAuthenticated = data.viewer != null;
 
@@ -38,8 +38,8 @@ export function MainLayout(props: Props) {
 
   useFavicon(
     theme === "dark"
-      ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl)
-      : trustCenter?.logoFileUrl,
+      ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
+      : trustCenter?.logo?.downloadUrl,
   );
   useRequestAccessCallback();
 
@@ -60,7 +60,7 @@ export function MainLayout(props: Props) {
       </div>
 
       <a
-        href="https://app.govrly.sa//"
+        href="https://www.probo.com/"
         className="flex gap-2 text-sm font-medium text-txt-tertiary items-center w-max mx-auto my-10"
       >
         {__("Powered by")}

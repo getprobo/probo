@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,6 +75,8 @@ type (
 		result ToolResult
 		err    error
 	}
+
+	suspendSignalKey struct{}
 )
 
 func WithCheckpointer(cp Checkpointer, runID string) RunOption {
@@ -85,6 +87,40 @@ func WithCheckpointer(cp Checkpointer, runID string) RunOption {
 }
 
 func noopEvent(_ context.Context, _ StreamEvent) {}
+
+func withSuspendSignal(ctx context.Context, signal context.Context) context.Context {
+	return context.WithValue(ctx, suspendSignalKey{}, signal)
+}
+
+func suspendSignalFrom(ctx context.Context) context.Context {
+	signal, _ := ctx.Value(suspendSignalKey{}).(context.Context)
+
+	return signal
+}
+
+func withSuspendableToolContext(ctx context.Context, tool Tool) (context.Context, func()) {
+	if _, ok := tool.(SuspendableTool); !ok {
+		return ctx, func() {}
+	}
+
+	signal := suspendSignalFrom(ctx)
+	if signal == nil {
+		return ctx, func() {}
+	}
+
+	execCtx, cancel := context.WithCancelCause(ctx)
+	stop := context.AfterFunc(
+		signal,
+		func() {
+			cancel(context.Cause(signal))
+		},
+	)
+
+	return execCtx, func() {
+		stop()
+		cancel(nil)
+	}
+}
 
 func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
 	resp, err := agent.client.ChatCompletion(ctx, req)
@@ -287,6 +323,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 	// hooks, save) carries through to completion once a checkpoint is
 	// requested.
 	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+	ctx = withSuspendSignal(ctx, outerCtx)
 
 	s := &loopState{
 		agent:         startAgent,
@@ -364,6 +401,12 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 	emptyOutputRetries := 0
 
+	// forcedSynthesis records that the turn budget was exhausted while
+	// the agent was still exploring with a pending structured output, so
+	// the last turn was spent forcing the schema rather than failing
+	// outright. It guards against looping past the cap more than once.
+	forcedSynthesis := false
+
 	structuredFormat := resolveStructuredFormat(s.agent)
 
 	// When the agent has both tools and a structured output request,
@@ -403,7 +446,33 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		}
 
 		if s.turns >= s.agent.maxTurns {
-			return s.finishRun(ctx, nil, &MaxTurnsExceededError{MaxTurns: s.agent.maxTurns})
+			// The turn budget is exhausted. If the agent is still
+			// exploring with tools and owes a structured output, spend
+			// one final turn forcing the schema (ToolChoice=none) so it
+			// emits the best answer it can from what it has gathered,
+			// rather than failing with nothing. This runs at most once;
+			// the next iteration falls through to the error below.
+			if !exploring || forcedSynthesis || structuredFormat == nil || len(s.toolDefs) == 0 {
+				return s.finishRun(ctx, nil, &MaxTurnsExceededError{MaxTurns: s.agent.maxTurns})
+			}
+
+			forcedSynthesis = true
+			exploring = false
+
+			s.messages = append(
+				s.messages,
+				llm.Message{
+					Role:  llm.RoleUser,
+					Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
+				},
+			)
+
+			s.logger.WarnCtx(
+				ctx,
+				"max turns reached while exploring: forcing final synthesis turn",
+				log.Int("turn", s.turns),
+				log.Int("max_turns", s.agent.maxTurns),
+			)
 		}
 
 		fullMessages := buildFullMessages(s.systemPrompt, s.messages)
@@ -496,7 +565,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 						Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
 					},
 				)
-				s.logger.WarnCtx(
+				s.logger.DebugCtx(
 					ctx,
 					"entering synthesis turn: forcing structured output with tool_choice=none",
 					log.Int("turn", s.turns),
@@ -1151,7 +1220,10 @@ func executeSingleTool(
 		log.String("tool", tool.Name()),
 	)
 
-	result, err := tool.Execute(toolCtx, tc.Function.Arguments)
+	execCtx, cleanupExecCtx := withSuspendableToolContext(toolCtx, tool)
+	defer cleanupExecCtx()
+
+	result, err := tool.Execute(execCtx, tc.Function.Arguments)
 	if err != nil {
 		if _, ok := errors.AsType[*InterruptedError](err); ok {
 			toolSpan.SetAttributes(attribute.Bool("tool.interrupted", true))
@@ -1207,7 +1279,7 @@ func executeSingleTool(
 			content = content[:200] + "... (truncated)"
 		}
 
-		logger.WarnCtx(
+		logger.ErrorCtx(
 			ctx,
 			"tool returned error",
 			log.String("tool", tool.Name()),
@@ -1306,6 +1378,7 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 
 func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
 	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+	ctx = withSuspendSignal(ctx, outerCtx)
 
 	if interrupted.outerState != nil {
 		return resumeNested(outerCtx, interrupted, input, ro)
@@ -1470,6 +1543,7 @@ func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input Re
 
 func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
 	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+	ctx = withSuspendSignal(ctx, outerCtx)
 
 	outer := interrupted.outerState
 	logger := outer.agent.logger

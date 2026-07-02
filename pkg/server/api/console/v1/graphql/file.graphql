@@ -3,7 +3,7 @@ type File {
     mimeType: String!
     fileName: String!
     size: BigInt!
-    downloadUrl: String! @goField(forceResolver: true)
+    downloadUrl: String!
     createdAt: Datetime!
     updatedAt: Datetime!
 }

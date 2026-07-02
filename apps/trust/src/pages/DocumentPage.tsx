@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -45,12 +45,16 @@ import type { DocumentPageRequestReportAccessMutation } from "./__generated__/Do
 import type { DocumentPageRequestTrustCenterFileAccessMutation } from "./__generated__/DocumentPageRequestTrustCenterFileAccessMutation.graphql";
 
 export const documentPageQuery = graphql`
-  query DocumentPageQuery($id: ID!) {
+  query DocumentPageQuery($alias: String!) {
     currentTrustCenter {
-      logoFileUrl
-      darkLogoFileUrl
+      logo {
+        downloadUrl
+      }
+      darkLogo {
+        downloadUrl
+      }
     }
-    node(id: $id) @required(action: THROW) {
+    aliasedNode(alias: $alias) @required(action: THROW) {
       __typename
       ... on Document {
         id
@@ -70,9 +74,9 @@ export const documentPageQuery = graphql`
           status
         }
       }
-      ... on Report {
+      ... on AuditReport {
         id
-        filename
+        fileName
         isUserAuthorized
         access {
           id
@@ -149,7 +153,7 @@ const requestReportAccessMutation = graphql`
   ) {
     requestReportAccess(input: $input) {
       audit {
-        report {
+        reportFile {
           access {
             id
             status
@@ -179,24 +183,24 @@ function extractMimeType(dataUri: string): string {
   return match?.[1] ?? "application/octet-stream";
 }
 
-function getNodeTitle(node: DocumentPageQueryType["response"]["node"]): string | undefined {
+function getNodeTitle(node: DocumentPageQueryType["response"]["aliasedNode"]): string | undefined {
   switch (node.__typename) {
     case "Document":
       return node.title;
     case "TrustCenterFile":
       return node.name;
-    case "Report":
-      return node.filename;
+    case "AuditReport":
+      return node.fileName;
     default:
       return undefined;
   }
 }
 
-function getNodeId(node: DocumentPageQueryType["response"]["node"]): string | undefined {
+function getNodeId(node: DocumentPageQueryType["response"]["aliasedNode"]): string | undefined {
   switch (node.__typename) {
     case "Document":
     case "TrustCenterFile":
-    case "Report":
+    case "AuditReport":
       return node.id;
     default:
       return undefined;
@@ -214,14 +218,14 @@ export function DocumentPage({ queryRef }: Props) {
   const [fileData, setFileData] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  const data = usePreloadedQuery(documentPageQuery, queryRef);
+  const data = usePreloadedQuery<DocumentPageQueryType>(documentPageQuery, queryRef);
   const trustCenter = data.currentTrustCenter;
-  const node = data.node;
+  const node = data.aliasedNode;
 
   if (
     node.__typename !== "Document"
     && node.__typename !== "TrustCenterFile"
-    && node.__typename !== "Report"
+    && node.__typename !== "AuditReport"
   ) {
     throw new Error(`Unexpected node type: ${node.__typename}`);
   }
@@ -230,8 +234,8 @@ export function DocumentPage({ queryRef }: Props) {
   const nodeId = getNodeId(node);
 
   const logoFileUrl = theme === "dark"
-    ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl)
-    : trustCenter?.logoFileUrl;
+    ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
+    : trustCenter?.logo?.downloadUrl;
 
   const [exportDocument, isExportingDocument]
     = useMutation<DocumentPageExportDocumentMutation>(exportDocumentMutation);
@@ -296,7 +300,7 @@ export function DocumentPage({ queryRef }: Props) {
           onError,
         });
         break;
-      case "Report":
+      case "AuditReport":
         exportReport({
           variables: { input: { reportId: node.id } },
           onCompleted: (response, errors) => {
@@ -358,7 +362,7 @@ export function DocumentPage({ queryRef }: Props) {
           onError,
         });
         break;
-      case "Report":
+      case "AuditReport":
         requestReportAccess({
           variables: { input: { reportId: node.id } },
           onCompleted,
@@ -370,7 +374,7 @@ export function DocumentPage({ queryRef }: Props) {
 
   const isRequesting = isRequestingAccess || isRequestingFileAccess || isRequestingReportAccess;
   const hasRequested = node.access?.status === "REQUESTED";
-  const isPdf = node.__typename === "Document" || node.__typename === "Report" || (node.__typename === "TrustCenterFile" && pdfData !== null);
+  const isPdf = node.__typename === "Document" || node.__typename === "AuditReport" || (node.__typename === "TrustCenterFile" && pdfData !== null);
 
   const handleDownload = () => {
     if (!fileData || !nodeTitle) return;

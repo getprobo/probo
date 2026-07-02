@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@ import (
 )
 
 func NewElectronicSignature(es *coredata.ElectronicSignature) *ElectronicSignature {
-	return &ElectronicSignature{
+	signature := &ElectronicSignature{
 		ID:           es.ID,
 		Status:       es.Status,
 		DocumentType: es.DocumentType,
@@ -29,6 +29,12 @@ func NewElectronicSignature(es *coredata.ElectronicSignature) *ElectronicSignatu
 		CreatedAt:    es.CreatedAt,
 		UpdatedAt:    es.UpdatedAt,
 	}
+
+	if es.CertificateFileID != nil {
+		signature.Certificate = &File{ID: *es.CertificateFileID}
+	}
+
+	return signature
 }
 
 func NewElectronicSignatureEvent(ev *coredata.ElectronicSignatureEvent) *ElectronicSignatureEvent {

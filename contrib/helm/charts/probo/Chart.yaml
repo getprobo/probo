@@ -2,24 +2,24 @@ apiVersion: v2
 name: probo
 description: A Helm chart for deploying Govrly - Open Source Compliance Platform
 type: application
-version: 0.3.0
-appVersion: "0.201.0"
+version: 0.10.0
+appVersion: "0.222.0"
 keywords:
   - compliance
   - soc2
   - security
   - governance
-home: https://getprobo.com
+home: https://probo.com
 sources:
   - https://github.com/getprobo/probo
 maintainers:
-  - name: Govrly Team
-    email: hello@getprobo.com
+  - name: Probo Team
+    email: hello@probo.com
 icon: https://github.com/getprobo/probo/blob/main/.github/cover_v3.png
 
 dependencies:
   - name: kubernetes-ingress
     alias: haproxy-ingress
     condition: haproxy-ingress.enabled
-    version: 1.45.1
+    version: 1.52.0
     repository: https://haproxytech.github.io/helm-charts

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,7 @@ export function ConnectPage(props: {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [magicLinkSent, setMagicLinkSent] = useState<boolean>(false);
-  const interval = useRef<NodeJS.Timeout>(undefined);
+  const interval = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [timer, setTimer] = useState<number>(timerDurationSeconds);
   const safeContinueUrl = useSafeContinueUrl();
 

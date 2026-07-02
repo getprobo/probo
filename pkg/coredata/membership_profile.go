@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -566,118 +566,6 @@ WHERE
 	return nil
 }
 
-func (p *MembershipProfiles) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	filter *MembershipProfileFilter,
-) error {
-	q := `
-WITH profiles AS (
-    SELECT
-        p.id,
-        p.identity_id,
-        p.organization_id,
-        i.email_address,
-        p.source,
-        p.state,
-        p.full_name,
-        p.kind,
-        p.additional_email_addresses,
-        p.position,
-        p.contract_start_date,
-        p.contract_end_date,
-        p.user_name,
-        p.external_id,
-        p.nickname,
-        p.locale,
-        p.timezone,
-        p.profile_url,
-        p.preferred_language,
-        p.given_name,
-        p.family_name,
-        p.formatted_name,
-        p.middle_name,
-        p.honorific_prefix,
-        p.honorific_suffix,
-        p.employee_number,
-        p.department,
-        p.cost_center,
-        p.enterprise_organization,
-        p.division,
-        p.manager_value,
-        p.created_at,
-        p.updated_at
-    FROM
-        iam_membership_profiles p
-    INNER JOIN identities i ON i.id = p.identity_id
-    WHERE
-        p.%s
-        AND p.organization_id = @organization_id
-        AND %s
-)
-SELECT
-    id,
-    identity_id,
-    organization_id,
-    email_address,
-    source,
-    state,
-    full_name,
-    kind,
-    additional_email_addresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    '' AS organization_name,
-    user_name,
-    external_id,
-    nickname,
-    locale,
-    timezone,
-    profile_url,
-    preferred_language,
-    given_name,
-    family_name,
-    formatted_name,
-    middle_name,
-    honorific_prefix,
-    honorific_suffix,
-    employee_number,
-    department,
-    cost_center,
-    enterprise_organization,
-    division,
-    manager_value,
-    created_at,
-    updated_at
-FROM profiles
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.NamedArgs{
-		"organization_id": organizationID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query profiles: %w", err)
-	}
-
-	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
-	if err != nil {
-		return fmt.Errorf("cannot collect profiles: %w", err)
-	}
-
-	*p = profiles
-
-	return nil
-}
-
 func (p *MembershipProfiles) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -948,82 +836,6 @@ WHERE
 	}
 
 	return count, nil
-}
-
-func (p *MembershipProfiles) LoadAwaitingSigning(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	q := `
-WITH signatories AS (
-    SELECT
-        signed_by_profile_id
-    FROM
-        document_version_signatures
-    WHERE
-        %s
-        AND state = 'REQUESTED'
-    GROUP BY
-        signed_by_profile_id
-)
-SELECT
-    p.id,
-    p.identity_id,
-    p.organization_id,
-    p.kind,
-    p.full_name,
-    i.email_address,
-    p.source,
-    p.state,
-    p.additional_email_addresses,
-    p.position,
-    p.contract_start_date,
-    p.contract_end_date,
-    '' AS organization_name,
-    p.user_name,
-    p.external_id,
-    p.nickname,
-    p.locale,
-    p.timezone,
-    p.profile_url,
-    p.preferred_language,
-    p.given_name,
-    p.family_name,
-    p.formatted_name,
-    p.middle_name,
-    p.honorific_prefix,
-    p.honorific_suffix,
-    p.employee_number,
-    p.department,
-    p.cost_center,
-    p.enterprise_organization,
-    p.division,
-    p.manager_value,
-    p.created_at,
-    p.updated_at
-FROM
-    iam_membership_profiles p
-INNER JOIN identities i
-    ON i.id = p.identity_id
-INNER JOIN signatories ON p.id = signatories.signed_by_profile_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	rows, err := conn.Query(ctx, q, scope.SQLArguments())
-	if err != nil {
-		return fmt.Errorf("cannot query profiles: %w", err)
-	}
-
-	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
-	if err != nil {
-		return fmt.Errorf("cannot collect profiles: %w", err)
-	}
-
-	*p = profiles
-
-	return nil
 }
 
 func (p *MembershipProfiles) CountByIdentityID(
@@ -1451,7 +1263,7 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23503" {
+			if pgErr.Code == "23503" || pgErr.Code == "23001" {
 				return ErrResourceInUse
 			}
 		}

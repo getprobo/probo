@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,9 +67,9 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		}
 
 		for _, u := range resp.Results {
-			accountType := coredata.AccessEntryAccountTypeUser
+			accountType := coredata.AccessReviewEntryAccountTypeUser
 			if u.Type == "bot" {
-				accountType = coredata.AccessEntryAccountTypeServiceAccount
+				accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 			}
 
 			var email string
@@ -80,11 +80,11 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			record := AccountRecord{
 				Email:       email,
 				FullName:    u.Name,
-				Role:        "Member",
+				Roles:       []string{"Member"},
 				IsAdmin:     false,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: accountType,
 			}
 

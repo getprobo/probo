@@ -107,15 +107,12 @@ lint: lint-go lint-js
 lint-go: vet go-fmt go-fix go-lint
 
 .PHONY: lint-js
-lint-js: npm-lint
+lint-js:
+	$(NPM) run lint
 
 .PHONY: vet
 vet: generate embed
 	$(GO_VET) ./...
-
-.PHONY: npm-lint
-npm-lint:
-	$(NPM) run lint
 
 .PHONY: go-fmt
 go-fmt:
@@ -204,19 +201,37 @@ $(CFG_DEV_OAUTH2_KEY):
 cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/rootCA.pem $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
-	PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
-	AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"; \
-	AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
-	AUTH_COOKIE_SECURE=false; \
-	OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
-	API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
-	AWS_ACCESS_KEY_ID=probod; \
-	AWS_SECRET_ACCESS_KEY=thisisnotasecret; \
-	AWS_ENDPOINT=http://127.0.0.1:8333; \
-	OPENAI_API_KEY=thisisnotasecret; \
-	AGENT_THIRD_PARTY_VETTER_PROVIDER=openai; \
-	ACME_DIRECTORY=https://localhost:14000/dir; \
-	ACME_ROOT_CA="$$($(CAT) compose/pebble/certs/rootCA.pem)"; \
+	PROBOD_BASE_URL=http://localhost:8080; \
+	PROBOD_API_ADDR=:8080; \
+	PROBOD_ENCRYPTION_KEY="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
+	PROBOD_AUTH_COOKIE_NAME=SSID; \
+	PROBOD_AUTH_COOKIE_DOMAIN=localhost; \
+	PROBOD_AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"; \
+	PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
+	PROBOD_AUTH_COOKIE_SECURE=false; \
+	PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
+	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
+	PROBOD_PG_ADDR=localhost:5432; \
+	PROBOD_PG_USERNAME=postgres; \
+	PROBOD_PG_PASSWORD=postgres; \
+	PROBOD_PG_DATABASE=probod; \
+	PROBOD_TRUST_CENTER_HTTP_ADDR=:10080; \
+	PROBOD_TRUST_CENTER_HTTPS_ADDR=:10443; \
+	PROBOD_AWS_REGION=us-east-1; \
+	PROBOD_AWS_BUCKET=probod; \
+	PROBOD_AWS_ACCESS_KEY_ID=probod; \
+	PROBOD_AWS_SECRET_ACCESS_KEY=thisisnotasecret; \
+	PROBOD_AWS_ENDPOINT=http://127.0.0.1:8333; \
+	PROBOD_SMTP_ADDR=localhost:1025; \
+	PROBOD_MAILER_SENDER_EMAIL=no-reply@notification.getprobo.com; \
+	PROBOD_MAILER_SENDER_NAME=Probo; \
+	PROBOD_OPENAI_API_KEY=thisisnotasecret; \
+	PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER=openai; \
+	PROBOD_AGENT_THIRD_PARTY_VETTER_MODEL_NAME=gpt-4o; \
+	PROBOD_CHROME_DP_ADDR=localhost:9222; \
+	PROBOD_ACME_DIRECTORY=https://localhost:14000/dir; \
+	PROBOD_ACME_EMAIL=admin@probo.com; \
+	PROBOD_ACME_ROOT_CA="$$($(CAT) compose/pebble/certs/rootCA.pem)"; \
 	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \
 	set +a; \
 	./bin/probod-bootstrap -output $@
@@ -289,7 +304,7 @@ RELAY_SCHEMAS = \
 
 .PHONY: relay
 relay: $(RELAY_SCHEMAS)
-	$(NPX) relay-compiler
+	$(NPM) run relay
 
 MERGE_GRAPHQL = contrib/merge-graphql-schema.sh
 

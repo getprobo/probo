@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -115,7 +115,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
 
   usePageTitle(__("Obligations"));
 
-  const organization = usePreloadedQuery(obligationsQuery, queryRef);
+  const organization = usePreloadedQuery<ObligationGraphListQuery>(obligationsQuery, queryRef);
   const defaultApproverIds = (organization.node.obligationsDocument?.defaultApprovers ?? []).map(a => a.id);
 
   const {

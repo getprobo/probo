@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -108,9 +109,9 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			fullName = m.Login
 		}
 
-		accountType := coredata.AccessEntryAccountTypeUser
+		accountType := coredata.AccessReviewEntryAccountTypeUser
 		if m.Type == "Bot" {
-			accountType = coredata.AccessEntryAccountTypeServiceAccount
+			accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 		}
 
 		mfaStatus := coredata.MFAStatusUnknown
@@ -123,14 +124,21 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			}
 		}
 
+		role := strings.TrimSpace(membership.Role)
+
+		roles := []string{}
+		if role != "" {
+			roles = []string{role}
+		}
+
 		record := AccountRecord{
 			Email:       profile.Email,
 			FullName:    fullName,
-			Role:        membership.Role,
+			Roles:       roles,
 			Active:      new(membership.State == "active"),
 			IsAdmin:     membership.Role == "admin",
 			MFAStatus:   mfaStatus,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: accountType,
 			ExternalID:  strconv.FormatInt(m.ID, 10),
 		}

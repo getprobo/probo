@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -136,6 +136,11 @@ func NewCmdCommonTrackerPatterns(f *cmdutil.Factory) *cobra.Command {
 							continue
 						}
 
+						attribution := coredata.CommonTrackerPatternAttributionUndetermined
+						if thirdPartyID != nil {
+							attribution = coredata.CommonTrackerPatternAttributionThirdParty
+						}
+
 						pattern := coredata.CommonTrackerPattern{
 							ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
 							CommonThirdPartyID: thirdPartyID,
@@ -145,6 +150,7 @@ func NewCmdCommonTrackerPatterns(f *cmdutil.Factory) *cobra.Command {
 							Description:        p.Description,
 							MaxAgeSeconds:      p.MaxAgeSeconds,
 							Confidence:         p.Confidence,
+							Attribution:        attribution,
 							CreatedAt:          now,
 							UpdatedAt:          now,
 						}

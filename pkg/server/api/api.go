@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,16 +26,18 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/filesign"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
@@ -45,6 +47,7 @@ import (
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
@@ -55,11 +58,13 @@ type (
 		BaseURL           *baseurl.BaseURL
 		AllowedOrigins    []string
 		Probo             *probo.Service
-		FileSign          *filesign.Service
+		ResourceAlias     *resourcealias.Service
+		File              *filemanager.Service
 		IAM               *iam.Service
 		Trust             *trust.Service
 		ESign             *esign.Service
 		AccessReview      *accessreview.Service
+		AgentRun          *agentrun.Service
 		Slack             *slack.Service
 		Mailman           *mailman.Service
 		CookieBanner      *cookiebanner.Service
@@ -71,6 +76,7 @@ type (
 		ConnectorRegistry *connector.ConnectorRegistry
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
+		GraphQLLimits     gqlutils.Limits
 		Logger            *log.Logger
 	}
 
@@ -177,28 +183,35 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("trust.v1"),
 			cfg.IAM,
 			cfg.Trust,
+			cfg.ResourceAlias,
+			cfg.File,
 			cfg.ESign,
 			cfg.Mailman,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.BaseURL,
+			cfg.GraphQLLimits,
 		),
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
+			cfg.ResourceAlias,
 			cfg.IAM,
 			cfg.ESign,
 			cfg.AccessReview,
+			cfg.AgentRun,
 			cfg.Mailman,
 			cfg.CookieBanner,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,
 			cfg.ProviderRegistry,
+			cfg.File,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,
+			cfg.GraphQLLimits,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -207,17 +220,24 @@ func NewServer(cfg Config) (*Server, error) {
 		),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
-			cfg.FileSign,
+			cfg.File,
+			cfg.Probo,
+			cfg.IAM,
+			cfg.Cookie,
+			cfg.TokenSecret,
+			cfg.BaseURL,
 		),
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
+			cfg.ResourceAlias,
 			cfg.ThirdParty,
 			cfg.IAM,
 			cfg.AccessReview,
 			cfg.CookieBanner,
 			cfg.RiskManagement,
 			cfg.TokenSecret,
+			cfg.File,
 			cfg.BaseURL,
 		),
 		slackHandler: slack_v1.NewMux(
@@ -230,6 +250,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.Cookie,
 			cfg.TokenSecret,
+			cfg.File,
 			cfg.BaseURL,
 			func(ctx context.Context, host string) bool {
 				if host == cfg.BaseURL.Host() {
@@ -244,6 +265,7 @@ func NewServer(cfg Config) (*Server, error) {
 				_, err := cfg.Trust.GetByDomainName(ctx, host)
 				return err == nil
 			},
+			cfg.GraphQLLimits,
 		),
 	}, nil
 }

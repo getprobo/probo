@@ -4,6 +4,415 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.222.2] - 2026-07-01
+
+### Changed
+
+- Bootstrap config output now omits empty fields and unset LLM provider blocks, producing cleaner generated YAML
+
+## [0.222.1] - 2026-07-01
+
+### Changed
+
+- String configuration defaults now come from `probod`'s built-in values when the corresponding environment variable is unset, ensuring bootstrap-generated and directly-configured deployments use the same defaults
+
+## [0.222.0] - 2026-06-30
+
+### Added
+
+- OAuth2 loopback redirect URIs now match regardless of port, enabling native OAuth clients such as Claude Code that use ephemeral ports at authorization time (RFC 8252 section 7.3)
+- Access review campaigns can now be closed when entries are in a failed state
+
+### Changed
+
+- Third-party risk assessment vetting notes now persist the full structured breakdown (risk classification, per-category analysis, privacy and data-processing practices, AI governance, contractual clauses, professional standing) instead of a short summary only
+
+### Fixed
+
+- Deleting a user still referenced elsewhere (e.g. as an asset owner) now returns a 409 Conflict instead of an internal error
+- GraphQL endpoint is now protected against alias-flooding DoS (GHSA-prh2-g8pv-m7p9): parser token limit, field complexity cap, LRU query cache, and field suggestion suppression added to all three GraphQL handlers
+
+### Removed
+
+- Access review campaigns no longer expose a framework-controls field
+- `pendingEntryCount` field removed from access review campaigns
+
+## [0.221.0] - 2026-06-30
+
+### Added
+
+- Compliance portal home page sections
+- v2 UI component library: Text, Heading, Avatar, Button, IconButton, Badge, Callout, Dropdown menu, Card, Anchor, and Link components
+- Webhook sender now runs on the kit worker framework
+
+## [0.220.0] - 2026-06-25
+
+### Added
+
+- Four new API-key access-review connectors: Pylon, OpenRouter, incident.io, and Brevo
+
+### Fixed
+
+- Advertised scopes for OAuth2 protected resources
+
+## [0.219.0] - 2026-06-24
+
+### Added
+
+- DocuSign partner OAuth2 with PKCE: full authorization-code flow with account picker; the selected account is persisted and its data-center base URI resolved from /oauth/userinfo
+- Five new API-key access-review connectors: Mercury, Apollo.io, Deepgram, ClickHouse Cloud, and Langfuse
+- APIKeyBasicAuthUserPass auth mode for API-key connectors supporting username:password credentials
+- Read actions on all unprefixed OAuth scopes
+
+### Changed
+
+- Pending signature requests on a superseded version are moved to the newly published minor version, preserving the notification schedule
+
+### Fixed
+
+- Signature requests are now restricted to the current published version
+- Heroku connection probe sends the versioned `Accept: application/vnd.heroku+json; version=3` header, correctly detecting revoked tokens
+- Third party assessment header display
+
+## [0.218.1] - 2026-06-23
+
+### Fixed
+
+- Bump `golang.org/x/image` to v0.43.0, remediating CVE-2026-33813 (denial of service via malformed WEBP parsing) and CVE-2026-46602 (missing tile-size limit in `x/image/tiff`)
+
+## [0.218.0] - 2026-06-23
+
+### Added
+
+- RFC 6750 `WWW-Authenticate` challenges on OAuth bearer APIs (MCP, Console and Connect GraphQL, Files, OAuth2 userinfo): responses now advertise `resource_metadata`, `invalid_token`, and `insufficient_scope` with the required scopes
+
+## [0.217.0] - 2026-06-22
+
+### Added
+
+- Resource aliases: trust center entries support a custom URL slug; alias field and set/remove mutations exposed in the console API, trust API, and MCP tools, with alias-based navigation in the trust center
+
+### Changed
+
+- Agent tool JSON schemas normalize required fields for OpenAI compatibility
+
+### Fixed
+
+- Alias resolver, field blur, and sitemap URL generation
+
+## [0.216.1] - 2026-06-19
+
+### Fixed
+
+- OAuth2 scope registration for CIMD client identifiers was missing; CIMD actions are now correctly gated by their corresponding scopes
+
+## [0.216.0] - 2026-06-19
+
+### Added
+
+- OAuth2 Client ID Metadata Document (CIMD) support: MCP connectors such as ChatGPT and Claude can now register via HTTPS client_id URLs instead of pre-provisioned GIDs; metadata documents are fetched and cached, clients are upserted on first use, and CIMD is advertised in OIDC discovery when allowed URLs are configured
+
+## [0.215.1] - 2026-06-19
+
+### Fixed
+
+- Tracker-mapping no longer reprocesses sibling patterns O(N^2) times per banner; the re-enqueue now skips siblings already linked to a common third party or marked first-party, and routine mapping logs are demoted from INFO to Debug
+
+## [0.215.0] - 2026-06-19
+
+### Added
+
+- Tracker pattern category is now editable from the pattern detail page (matching the table-row behaviour)
+- Trackers page filter now offers the HTTP cookie source, and extension-sourced rows render a proper source badge
+
+### Changed
+
+- Local storage, IndexedDB, and cache-storage trackers without an expiry now display as "persistent" rather than "session"
+
+### Fixed
+
+- Fixed a deadlock between concurrent tracker-mapping workers processing sibling patterns on the same banner
+- An HTTP server-set cookie now outranks a pre-existing detection, re-arming mapping so the pattern is identified instead of being skipped
+
+## [0.214.0] - 2026-06-19
+
+### Added
+
+- OAuth2 API scope enforcement: v1:* scopes registered and advertised in OIDC discovery and protected-resource metadata, enforced in the IAM authorizer before policy evaluation
+- Identity-scoped OAuth token management: users can create, list, and revoke manual bearer tokens from `/me/oauth-tokens` and the console UI
+- Auditor role now includes the `v1:iam:read` scope
+
+### Changed
+
+- OAuth consent screen groups API scopes under an accordion
+
+### Fixed
+
+- MCP API now accepts OAuth bearer tokens (was previously rejected)
+- Notifications are skipped for inactive users
+
+## [0.213.0] - 2026-06-18
+
+### Added
+
+- Tracker-pattern catalog rows now carry a terminal attribution verdict (UNDETERMINED, THIRD_PARTY, FIRST_PARTY); FIRST_PARTY short-circuits the mapping pipeline so first-party and generic artifacts are never re-attributed
+
+### Changed
+
+- Document signing and approval emails are now batched per recipient by a debounced worker that sends one consolidated email and widening reminders, replacing the immediate per-document approval email and the manual "send signing notifications" action
+- Deterministic vendor adoption in tracker mapping is gated behind a confidence/trust bar; lower-confidence rows are reused as hints and re-confirmed by an independent agent, and attributions must cite concrete evidence
+
+### Fixed
+
+- Tracker-pattern attribution is kept consistent with the vendor link: a first-party reclassification clears the stale org vendor link, and FIRST_PARTY rows are excluded from the enrichment requeue
+
+## [0.212.0] - 2026-06-18
+
+### Added
+
+- OIDC authentication now opens a child session when assuming an organization
+
+### Fixed
+
+- OIDC organization access errors now return a 404 instead of an internal error
+
+## [0.211.2] - 2026-06-18
+
+### Fixed
+
+- Exit codes
+
+## [0.211.1] - 2026-06-18
+
+### Fixed
+
+- Missing OS exit code on error
+
+## [0.211.0] - 2026-06-18
+
+### Added
+
+- Document delete confirmation dialog in the console
+
+### Changed
+
+- Error responses during a server panic are now always serialized as JSON
+- Enrichment tracking unified with outcome-based status; enrichment state, attempts, and run outcome now recorded per field
+
+### Fixed
+
+- Enrichment re-arm and migration backfill gaps corrected
+- Google Workspace access review source-name resolution no longer loops on 403 responses
+
+## [0.210.0] - 2026-06-16
+
+### Added
+
+- Electronic signature on employee document signings: the signed PDF is generated and an esign record is created and accepted (capturing signer IP and user agent), mirroring the document approval flow; consent wording is now a single backend source of truth rendered consistently across the signing, approval, and NDA pages
+- Structured authorization decision logging: every authorizer evaluation (allow, deny, no_match, assumption error) emits a decision line with policy id and reason using opaque ids
+
+### Changed
+
+- Access review campaign sources reworked: sources are first-class with a per-campaign snapshot (name, connector) taken at start time, fetch attempts recorded as an append-only log, the unused source category removed, and the deleted-source badge dropped from the campaign detail
+- Access review roles render as up to three badges with a "+X more" popover instead of one long comma-separated string
+
+### Fixed
+
+- Access review connection status now probes all providers (static, dynamic, and custom) so bad API keys and expired OAuth tokens no longer show as Connected
+- Cursor access review driver marks an account inactive when either `isRemoved` or role `removed` is set, fixing accounts reported active despite removal
+- MCP profile output no longer fails schema validation when a profile has no additional email addresses
+
+## [0.209.0] - 2026-06-12
+
+### Added
+
+- Common third-party enricher worker that fills the global catalog (legal name, headquarters, canonical website, compliance docs, certifications, logo, owned domains) with per-field provenance and confidence thresholds; opt-in, no-ops without an agent provider
+- Tracker mapping and common-pattern enrichment agents can now open pages with a read-only headless browser (gated on Chrome endpoint) to read setters from cookie-database and policy pages
+- Discovery and persistence of common third-party owned domains, used to re-resolve previously unmapped tracker patterns
+- `Cache-Control` and `ETag` on `/api/files/v1/static` brand assets; startup validation of required assets
+
+### Changed
+
+- Tracker enrichment agent now restates source-page descriptions in its own words rather than copying them verbatim
+- Common third-party enrichment agents run in parallel after website resolution; prompts rewritten in role/task/instructions XML style with a calibrated confidence rubric
+- Oversized logo responses are rejected instead of truncated; ownership substring matching tightened with a length-ratio guard; per-agent error text sanitized and bounded before persistence
+
+### Fixed
+
+- Activate-login path
+- `find_links_matching` browser tool double-encoded its pattern, starving any agent using it
+- Worker confidence threshold of `0` no longer dropped by Helm falsy-numeric truthiness
+
+## [0.208.1] - 2026-06-12
+
+### Fixed
+
+- Trust center file creation in console
+- S3 filename header escaping
+
+## [0.208.0] - 2026-06-11
+
+### Added
+
+- `active` status field on access entries
+- Import action for catalog vendors in trackers; `importThirdPartyFromCommon`
+  mutation to pull a catalog vendor into an org
+- Catalog vendors surfaced in tracker policy documents
+- File download URLs for console file fields
+
+### Changed
+
+- Trust and MCP connector logos now use the File type
+- Third parties deduplicated by name; unique index enforced per org
+- Tracker mapping no longer auto-creates org third parties; explicit import required
+- Tracker row and category select restyled; move-to-category confirm dialog removed
+- Tracker mapping restored to link existing patterns; "create only" mode removed
+- Document major version publishing requires explicit `approver_ids`
+- References updated to probo.com
+
+### Removed
+
+- Third-party disambiguation agent and automatic matching removed
+
+### Fixed
+
+- DNS TXT lookup retried over TCP on truncated UDP response
+
+## [0.207.0] - 2026-06-10
+
+### Added
+
+- Neon access-review connector (organization members via Neon API, API-key auth)
+- Render access-review connector (workspace members, API-key + Workspace ID)
+- Qovery access-review connector (organization members, configurable `Token` Authorization scheme)
+- API-key connector providers can now declare a custom Authorization token scheme (defaults to `Bearer`)
+- `regulationSource` (`DETECTED`/`DEFAULT`) on cookie consent records, with GDPR/OPT_IN applied as the safe default when geolocation does not resolve a known regulation
+- `--keyword` scoping on the banner tracker-reset operator path: rebuilds only patterns whose pattern or display name contains the substring
+- `parent_third_party_id` foreign key on third parties for arbitrary sub-third-party nesting depth; `level` (int, 1+) replaces the `firstLevel` boolean
+
+### Changed
+
+- Tracker-mapping agent ignores cookie-database/consent-directory operators (Cookipedia, cookiedatabase.org, CookieServe, …) as vendor attributions; CMP own-cookie attributions (OneTrust, Cookiebot, …) still survive
+- Tracker-mapping agent ignores own-domain tracker attributions (patterns embedding the scanned site's own eTLD+1) with a deterministic backstop
+- Relinking a common tracker pattern to a different third party now updates the confidence on linked org patterns
+- Rename console label "Detected Count" to "Distinct Trackers Detected"
+- `proboctl common-tracker-pattern reenrich` now accepts catalog-wide filters with no selection anchor (e.g. `--without-description` re-enriches every pattern lacking a description)
+
+### Fixed
+
+- Null out stale `initiator_url`/`initiator_domain` rows on `detected_trackers` that point at the @probo/cookie-banner bundle, so genuine third-party initiators repopulate on next detection
+- Cookie-database denylist now matches domain and URL forms (e.g. `cookiedatabase.org`, `https://www.cookiepedia.co.uk/list`), not just bare brand names
+
+### Removed
+
+- `createThirdPartyThirdPartyMapping` and `deleteThirdPartyThirdPartyMapping` mutations and MCP tools; create a child third party by passing `parentThirdPartyId` on `createThirdParty`
+
+## [0.206.0] - 2026-06-09
+
+### Added
+
+- `RiskAssessmentBoundary` first-class entity to group nodes within a risk assessment scope, with self-nesting parent boundary, scope-membership validation, nested-subgraph Mermaid rendering, and dedicated IAM actions
+- `regenerateCookieBannerTrackerPolicy` mutation/MCP tool to re-trigger tracker policy generation on a banner that already has a published version, gated by a dedicated `regenerate-policy` action
+- Better Stack access-review connector (Uptime API team members + pending invitations)
+- SigNoz access-review connector (organization members, region/tenant or self-hosted base URL)
+- `commonTrackerPatternId` field on `TrackerPattern` to indicate whether a pattern is linked to the global common-tracker catalog
+- Files API: public endpoint `GET /api/files/v1/public/{fileID}` (unauthenticated, public files only) and private endpoint `GET /api/files/v1/{fileID}` (session/API key/OAuth2, `core:file:get` enforced); IAM and not-found errors both return 404
+- Static brand assets served via `/api/files/v1/static` instead of S3
+
+### Changed
+
+- Connector provider infos promoted from `Organization.connectorProviderInfos` to a root-level `accessReviewDrivers` query, listable by any authenticated identity
+- Tracker-mapping, common-pattern enrichment, and third-party disambiguation agents each get their own config (own timeout, own max-turns, own optional provider slot, with fallback to the tracker-mapping slot when unset)
+- Console: tracker pages now surface common-tracker/third-party links with a "common" badge and updated pattern properties display
+
+### Fixed
+
+- Cookie tracker pattern analysis: removed unused sync re-enrich path and tightened reset/remap scoping
+
+### Removed
+
+- `ActionFileDownloadUrl` (replaced by `ActionFileGet`) and the standalone `pkg/filesign` package (folded into `file.Service`)
+
+## [0.205.0] - 2026-06-08
+
+### Added
+
+- `submitAgentRunApproval` mutation to merge human approval decisions into an interrupted agent run and resume it
+- Suspendable agent-tool subtrees: nested agent runs can now checkpoint and restore across multi-level tool calls
+
+### Changed
+
+- Agent-run worker no longer relies on leases and heartbeats: a graceful suspend returns the run to `PENDING`, an approval interruption parks it in `AWAITING_APPROVAL`, and crashed runs are left `RUNNING` for manual recovery
+- AWS credentials now resolve through the full standard AWS SDK credential chain
+
+### Fixed
+
+- Auditors can now read the organization context and see the Context page in the console
+- NDA upload now correctly sets the organization ID
+- Logo updates no longer wipe unspecified fields on partial update
+- Cookie tracker pattern analysis now splits on `:` and `.` so UUID-bearing keys collapse to a single template
+
+## [0.204.0] - 2026-06-05
+
+### Added
+
+- Dedicated error page when a magic link has already been used
+
+### Changed
+
+- Improved error page layout and messaging
+
+## [0.203.0] - 2026-06-05
+
+### Added
+
+- Zendesk access-review connector with subdomain URL normalization
+- Okta access-review connector with API-key (SSWS) authentication
+- Clerk access-review connector
+- SendGrid access-review connector with 2FA enforcement checks
+- Datadog access-review connector with region selector and OAuth support
+- PostHog access-review connector with Cloud OAuth, self-hosted OAuth, and API-key support
+- Public-client (CIMD) OAuth support with auto-registration and client metadata document
+- `SMTP_HELLO_NAME` environment variable to configure the EHLO/HELO hostname
+- Dedicated expired magic link error page
+- Audit reports are now stored as files
+
+### Changed
+
+- Clarify trust center access rejection emails
+- Cookie banner now supports Indonesian, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Ukrainian, and Chinese
+
+### Fixed
+
+- Fix login redirect for password-only authentication flows
+
+## [0.202.2] - 2026-06-03
+
+No user-facing changes; tag-only release.
+
+## [0.202.1] - 2026-06-03
+
+No user-facing changes; tag-only release.
+
+## [0.202.0] - 2026-06-03
+
+### Added
+
+- Trigger tracker-policy document generation on banner publish; a background worker regenerates it on every snapshot
+- Show tracker type in the cookie tracking policy document
+- Include the website origin in the tracker policy title
+
+### Changed
+
+- Restrict queries and mutations to session scope
+- Move the Display tab first on the cookie banner configuration page
+- Link to the generated cookie policy document from tracker rows; revamp tracker row layout
+- Number tracker policy section titles
+
+### Fixed
+
+- Use stable API URLs for vendor logo fields
+
 ## [0.201.0] - 2026-06-02
 
 ### Added

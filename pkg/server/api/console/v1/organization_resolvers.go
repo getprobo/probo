@@ -9,9 +9,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -57,36 +58,30 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 	}, nil
 }
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl)
-	if err != nil {
+// Logo is the resolver for the logo field.
+func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl); err != nil {
 		return nil, err
 	}
 
-	logoURL, err := r.probo.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+	if obj.Logo == nil {
+		return nil, nil
 	}
 
-	return logoURL, nil
+	return r.loadFile(ctx, obj.Logo.ID)
 }
 
-// HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
-func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl)
-	if err != nil {
+// HorizontalLogo is the resolver for the horizontalLogo field.
+func (r *organizationResolver) HorizontalLogo(ctx context.Context, obj *types.Organization) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl); err != nil {
 		return nil, err
 	}
 
-	horizontalLogoURL, err := r.probo.Organizations.GenerateHorizontalLogoURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo url", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+	if obj.HorizontalLogo == nil {
+		return nil, nil
 	}
 
-	return horizontalLogoURL, nil
+	return r.loadFile(ctx, obj.HorizontalLogo.ID)
 }
 
 // Context is the resolver for the context field.
@@ -163,20 +158,20 @@ func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types
 	return categories, nil
 }
 
-// AccessSources is the resolver for the accessSources field.
-func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList)
+// AccessReviewSources is the resolver for the accessSources field.
+func (r *organizationResolver) AccessReviewSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewSourceOrder) (*types.AccessReviewSourceConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
-		Field:     coredata.AccessSourceOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.AccessReviewSourceOrderField]{
+		Field:     coredata.AccessReviewSourceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
+		pageOrderBy = page.OrderBy[coredata.AccessReviewSourceOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -184,17 +179,17 @@ func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Org
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := r.accessReview.Sources(scope).ListForOrganizationID(ctx, obj.ID, cursor)
+	p, err := r.accessReview.ListSourcesForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access sources: %w", err))
 	}
 
-	return types.NewAccessSourceConnection(p, r, obj.ID), nil
+	return types.NewAccessReviewSourceConnection(p, r, obj.ID), nil
 }
 
 // AccessReviewCampaigns is the resolver for the accessReviewCampaigns field.
 func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList)
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionCampaignList)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +208,7 @@ func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *t
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := r.accessReview.Campaigns(scope).ListForOrganizationID(ctx, obj.ID, cursor)
+	p, err := r.accessReview.ListCampaignsForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
 	}
@@ -537,48 +532,6 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 	}
 
 	return types.NewConnectors(connectors), nil
-}
-
-// ConnectorProviderInfos is the resolver for the connectorProviderInfos field.
-func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *types.Organization) ([]*types.ConnectorProviderInfo, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
-		return nil, err
-	}
-
-	var infos []*types.ConnectorProviderInfo
-
-	for _, p := range coredata.ConnectorProviders() {
-		_, oauthErr := r.connectorRegistry.Get(string(p))
-		oauthConfigured := oauthErr == nil
-		apiKeySupported := r.providerSupportsAPIKey(p)
-		clientCredentialsSupported := r.providerSupportsClientCredentials(p)
-
-		// Skip providers that cannot be connected in this deployment: no
-		// OAuth client credentials configured and no key-based fallback
-		// (API key or client credentials) supported. Surfacing them would
-		// render dead entries the operator has no way to use.
-		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported {
-			continue
-		}
-
-		scopes := r.providerRegistry.ProviderOAuth2Scopes(p)
-		if scopes == nil {
-			scopes = []string{}
-		}
-
-		info := &types.ConnectorProviderInfo{
-			Provider:                   p,
-			DisplayName:                r.providerDisplayName(p),
-			OauthConfigured:            oauthConfigured,
-			APIKeySupported:            apiKeySupported,
-			ClientCredentialsSupported: clientCredentialsSupported,
-			Oauth2Scopes:               scopes,
-			ExtraSettings:              r.providerExtraSettings(p),
-		}
-		infos = append(infos, info)
-	}
-
-	return infos, nil
 }
 
 // Controls is the resolver for the controls field.
@@ -1173,6 +1126,36 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 	return types.NewTaskConnection(page, r, obj.ID), nil
 }
 
+// AgentRuns is the resolver for the agentRuns field.
+func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AgentRunOrderBy) (*types.AgentRunConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, agentrun.ActionAgentRunList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AgentRunOrderField]{
+		Field:     coredata.AgentRunOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AgentRunOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.agentRun.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization agent runs", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAgentRunConnection(page, r, obj.ID), nil
+}
+
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet)
@@ -1186,16 +1169,7 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	var file *coredata.File
-	if trustCenter.NonDisclosureAgreementFileID != nil {
-		file, err = r.probo.Files.Get(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot get NDA file", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	return types.NewTrustCenter(trustCenter, file), nil
+	return types.NewTrustCenter(trustCenter), nil
 }
 
 // CustomDomain is the resolver for the customDomain field.
@@ -1302,15 +1276,15 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
 	var (
-		firstLevel *bool
-		query      *string
+		level *int
+		query *string
 	)
 	if filter != nil {
-		firstLevel = filter.FirstLevel
+		level = filter.Level
 		query = filter.Query
 	}
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, firstLevel, query)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, level, query)
 
 	page, err := r.probo.ThirdParties.ListForOrganizationID(ctx, scope, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {

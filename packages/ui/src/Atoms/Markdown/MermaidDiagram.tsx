@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
 
 import mermaid from "mermaid";
 import { useEffect, useId, useState } from "react";
+
+import { mermaidRenderConfig } from "../../mermaidConfig";
 
 type Props = {
   chart: string;
@@ -33,7 +35,7 @@ export function MermaidDiagram({ chart }: Props) {
 
     let cancelled = false;
 
-    mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+    mermaid.initialize(mermaidRenderConfig);
 
     mermaid
       .render(`mermaid-${id}`, source)

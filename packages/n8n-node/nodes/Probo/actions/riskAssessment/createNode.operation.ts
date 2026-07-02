@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -46,10 +46,6 @@ export const description: INodeProperties[] = [
 				value: 'ENTITY',
 			},
 			{
-				name: 'Boundary',
-				value: 'BOUNDARY',
-			},
-			{
 				name: 'Asset',
 				value: 'ASSET',
 			},
@@ -76,6 +72,19 @@ export const description: INodeProperties[] = [
 		description: 'The name of the node',
 		required: true,
 	},
+	{
+		displayName: 'Boundary ID',
+		name: 'boundaryId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['riskAssessment'],
+				operation: ['createNode'],
+			},
+		},
+		default: '',
+		description: 'The ID of the boundary that contains this node (optional)',
+	},
 ];
 
 export async function execute(
@@ -85,6 +94,7 @@ export async function execute(
 	const riskAssessmentScopeId = this.getNodeParameter('riskAssessmentScopeId', itemIndex) as string;
 	const nodeType = this.getNodeParameter('nodeType', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
+	const boundaryId = this.getNodeParameter('boundaryId', itemIndex, '') as string;
 
 	const query = `
 		mutation CreateRiskAssessmentNode($input: CreateRiskAssessmentNodeInput!) {
@@ -93,6 +103,7 @@ export async function execute(
 					node {
 						id
 						riskAssessmentScopeId
+						boundaryId
 						nodeType
 						name
 						createdAt
@@ -103,9 +114,10 @@ export async function execute(
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, {
-		input: { riskAssessmentScopeId, nodeType, name },
-	});
+	const input: Record<string, unknown> = { riskAssessmentScopeId, nodeType, name };
+	if (boundaryId) input.boundaryId = boundaryId;
+
+	const responseData = await proboApiRequest.call(this, query, { input });
 
 	return {
 		json: responseData,

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,21 +25,24 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/filesign"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
@@ -54,11 +57,13 @@ type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
-	FileSign          *filesign.Service
+	ResourceAlias     *resourcealias.Service
+	File              *filemanager.Service
 	IAM               *iam.Service
 	Trust             *trust.Service
 	ESign             *esign.Service
 	AccessReview      *accessreview.Service
+	AgentRun          *agentrun.Service
 	Slack             *slack.Service
 	Mailman           *mailman.Service
 	CookieBanner      *cookiebanner.Service
@@ -70,6 +75,7 @@ type Config struct {
 	ConnectorRegistry *connector.ConnectorRegistry
 	ProviderRegistry  *provider.Registry
 	CustomDomainCname string
+	GraphQLLimits     gqlutils.Limits
 	Logger            *log.Logger
 }
 
@@ -92,11 +98,13 @@ func NewServer(cfg Config) (*Server, error) {
 		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		FileSign:          cfg.FileSign,
+		ResourceAlias:     cfg.ResourceAlias,
+		File:              cfg.File,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,
 		AccessReview:      cfg.AccessReview,
+		AgentRun:          cfg.AgentRun,
 		Slack:             cfg.Slack,
 		Mailman:           cfg.Mailman,
 		CookieBanner:      cfg.CookieBanner,
@@ -108,6 +116,7 @@ func NewServer(cfg Config) (*Server, error) {
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		ProviderRegistry:  cfg.ProviderRegistry,
 		CustomDomainCname: cfg.CustomDomainCname,
+		GraphQLLimits:     cfg.GraphQLLimits,
 		Logger:            cfg.Logger.Named("api"),
 	}
 
@@ -152,6 +161,7 @@ func (s *Server) setupRoutes(baseURL string) {
 	// document at the issuer root under well-known paths.
 	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
+	s.router.Get("/.well-known/oauth-protected-resource", s.protectedResourceMetadataHandler)
 
 	// RFC 9728 OAuth 2.0 Protected Resource Metadata. MCP clients (e.g.
 	// Claude) discover the authorization server here after receiving a 401
@@ -186,7 +196,7 @@ func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 	api := s.baseURL + "/api/connect/v1"
 
-	endpoints := oauth2server.Endpoints{
+	endpoints := oauth2.Endpoints{
 		Authorization:       uri.URI(api + "/oauth2/authorize"),
 		Token:               uri.URI(api + "/oauth2/token"),
 		Userinfo:            uri.URI(api + "/oauth2/userinfo"),
@@ -197,7 +207,15 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 		DeviceAuthorization: uri.URI(api + "/oauth2/device"),
 	}
 
-	metadata := s.iamService.OAuth2ServerService.Metadata(endpoints)
+	metadata := s.iamService.OAuth2ServerMetadata(endpoints)
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	httpserver.RenderJSON(w, http.StatusOK, metadata)
+}
+
+func (s *Server) protectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
+	resource := uri.URI(s.baseURL)
+	metadata := s.iamService.OAuth2ProtectedResourceMetadata(resource)
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
@@ -293,7 +311,7 @@ func compliancePageHeadData(baseURL *baseurl.BaseURL, trustService *trust.Servic
 		}
 
 		if tc.LogoFileID != nil {
-			faviconURL, err := baseURL.WithPath("/api/files/v1/" + tc.LogoFileID.String()).String()
+			faviconURL, err := baseURL.WithPath("/api/files/v1/public/" + tc.LogoFileID.String()).String()
 			if err == nil {
 				headData.FaviconURL = faviconURL
 			}

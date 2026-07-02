@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,7 @@ export function getTrackerSourceBadge(source: string, __: Translator): Badge {
     case "SCRIPT": return { label: __("Script"), variant: "info" };
     case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" };
     case "HTTP": return { label: __("HTTP"), variant: "neutral" };
+    case "EXTENSION": return { label: __("Extension"), variant: "warning" };
     default: return { label: source, variant: "neutral" };
   }
 }

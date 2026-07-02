@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Package bearertoken parses Bearer tokens according to RFC 6750.
+// Package bearertoken parses Bearer tokens and builds Bearer WWW-Authenticate
+// challenges according to RFC 6750.
 //
 // The grammar is defined as:
 //
@@ -67,6 +68,15 @@ func Parse(credentials string) (string, error) {
 	}
 
 	return token, nil
+}
+
+// IsAttempt reports whether credentials use the Bearer scheme.
+func IsAttempt(credentials string) bool {
+	if len(credentials) < len(scheme) {
+		return false
+	}
+
+	return strings.EqualFold(credentials[:len(scheme)], scheme)
 }
 
 // isValidToken checks if the given string is a valid b64token.

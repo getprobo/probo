@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -240,7 +240,18 @@ func (s *Service) RenderRobotsTxt(
 }
 
 func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, orgID gid.GID) ([]string, error) {
-	var ids []string
+	seen := make(map[gid.GID]struct{})
+
+	var resourceIDs []gid.GID
+
+	appendResourceID := func(id gid.GID) {
+		if _, ok := seen[id]; ok {
+			return
+		}
+
+		seen[id] = struct{}{}
+		resourceIDs = append(resourceIDs, id)
+	}
 
 	var cursorKey *page.CursorKey
 	for {
@@ -264,7 +275,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 				continue
 			}
 
-			ids = append(ids, doc.ID.String())
+			appendResourceID(doc.ID)
 		}
 
 		if !result.Info.HasNext {
@@ -276,7 +287,100 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 		cursorKey = &ck
 	}
 
-	return ids, nil
+	cursorKey = nil
+	for {
+		cursor := page.NewCursor(
+			page.MaxCursorSize,
+			cursorKey,
+			page.Head,
+			page.OrderBy[coredata.TrustCenterFileOrderField]{
+				Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		result, err := s.TrustCenterFiles.ListForOrganizationId(
+			ctx,
+			scope,
+			orgID,
+			cursor,
+			coredata.NewTrustCenterFileFilter(),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot list trust center files: %w", err)
+		}
+
+		for _, file := range result.Data {
+			if file.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+				continue
+			}
+
+			appendResourceID(file.ID)
+		}
+
+		if !result.Info.HasNext {
+			break
+		}
+
+		last := result.Data[len(result.Data)-1]
+		ck := last.CursorKey(coredata.TrustCenterFileOrderFieldCreatedAt)
+		cursorKey = &ck
+	}
+
+	cursorKey = nil
+	for {
+		cursor := page.NewCursor(
+			page.MaxCursorSize,
+			cursorKey,
+			page.Head,
+			page.OrderBy[coredata.AuditOrderField]{
+				Field:     coredata.AuditOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		result, err := s.Audits.ListForOrganizationId(ctx, scope, orgID, cursor)
+		if err != nil {
+			return nil, fmt.Errorf("cannot list audits: %w", err)
+		}
+
+		for _, audit := range result.Data {
+			if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+				continue
+			}
+
+			if audit.ReportFileID == nil {
+				continue
+			}
+
+			appendResourceID(*audit.ReportFileID)
+		}
+
+		if !result.Info.HasNext {
+			break
+		}
+
+		last := result.Data[len(result.Data)-1]
+		ck := last.CursorKey(coredata.AuditOrderFieldCreatedAt)
+		cursorKey = &ck
+	}
+
+	aliases, err := s.resourceAlias.LoadByResourceIDs(ctx, scope, resourceIDs)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load resource aliases: %w", err)
+	}
+
+	paths := make([]string, 0, len(resourceIDs))
+	for _, resourceID := range resourceIDs {
+		if alias, ok := aliases[resourceID]; ok {
+			paths = append(paths, alias)
+			continue
+		}
+
+		paths = append(paths, resourceID.String())
+	}
+
+	return paths, nil
 }
 
 func (s *Service) fetchComplianceFrameworks(ctx context.Context, scope coredata.Scoper, trustCenterID gid.GID) ([]compliancePageFramework, error) {

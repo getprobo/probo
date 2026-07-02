@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -51,10 +51,13 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		)),
 		recorder.WithHook(func(i *cassette.Interaction) error {
 			i.Request.Headers.Del("Authorization")
-			// Providers like Anthropic authenticate via x-api-key rather
-			// than Authorization; strip it too so a re-record never
-			// persists a raw key.
+			// Providers like Anthropic (x-api-key), SigNoz
+			// (SIGNOZ-API-KEY) and Brevo (api-key) authenticate via a
+			// custom header rather than Authorization; strip those too so a
+			// re-record never persists a raw key.
 			i.Request.Headers.Del("X-Api-Key")
+			i.Request.Headers.Del("Signoz-Api-Key")
+			i.Request.Headers.Del("Api-Key")
 
 			return nil
 		}, recorder.BeforeSaveHook),
@@ -110,6 +113,20 @@ func basicAuth(username string) string {
 	}
 
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"))
+}
+
+// basicAuthUserPass returns the HTTP Basic auth header value for a credential
+// that already holds the "username:password" pair ("Basic
+// base64(<credential>)"), or "" if the credential is empty. ClickHouse
+// Cloud (keyId:keySecret) and Langfuse (publicKey:secretKey) present such
+// a credential. The matcher ignores Authorization, so this only matters
+// when re-recording.
+func basicAuthUserPass(credential string) string {
+	if credential == "" {
+		return ""
+	}
+
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(credential))
 }
 
 // newVCRClient creates an *http.Client backed by the recorder's transport,

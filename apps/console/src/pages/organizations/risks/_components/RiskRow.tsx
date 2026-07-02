@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, getTreatment, type GraphQLError, sprintf } from "@probo/helpers";
+import { formatError, getTreatment, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -95,7 +95,7 @@ export function RiskRow(props: RiskRowProps) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete risk"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });

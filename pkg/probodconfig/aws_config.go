@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,10 @@
 package probodconfig
 
 type AWSConfig struct {
-	Region          string `json:"region"`
-	Bucket          string `json:"bucket"`
-	AccessKeyID     string `json:"access-key-id"`
-	SecretAccessKey string `json:"secret-access-key"`
-	Endpoint        string `json:"endpoint"`
+	Region          string `json:"region,omitempty"`
+	Bucket          string `json:"bucket,omitempty"`
+	AccessKeyID     string `json:"access-key-id,omitempty"`
+	SecretAccessKey string `json:"secret-access-key,omitempty"`
+	Endpoint        string `json:"endpoint,omitempty"`
 	UsePathStyle    bool   `json:"use-path-style"`
 }

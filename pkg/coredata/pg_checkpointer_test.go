@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +20,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agentruntest"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
@@ -30,7 +30,7 @@ import (
 func TestPGCheckpointer(t *testing.T) {
 	t.Parallel()
 
-	client := agentruntest.PGClient(t)
+	client := test.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
 
 	t.Run(
@@ -39,7 +39,7 @@ func TestPGCheckpointer(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-			run := agentruntest.InsertPendingRun(
+			run := insertPendingRun(
 				t,
 				client,
 				"test-agent",
@@ -58,7 +58,7 @@ func TestPGCheckpointer(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-			run := agentruntest.InsertPendingRun(
+			run := insertPendingRun(
 				t,
 				client,
 				"test-agent",
@@ -100,7 +100,7 @@ func TestPGCheckpointer(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-			run := agentruntest.InsertPendingRun(
+			run := insertPendingRun(
 				t,
 				client,
 				"test-agent",
@@ -143,7 +143,7 @@ func TestPGCheckpointer(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-			run := agentruntest.InsertPendingRun(
+			run := insertPendingRun(
 				t,
 				client,
 				"test-agent",
@@ -202,7 +202,7 @@ func TestPGCheckpointer(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-			run := agentruntest.InsertPendingRun(
+			run := insertPendingRun(
 				t,
 				client,
 				"test-agent",

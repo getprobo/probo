@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -264,7 +264,7 @@ func (h *completionCertificateHandler) generateCertificate(
 		return nil, nil, fmt.Errorf("cannot resolve presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(h.fileManager, presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
+	emailPresenter := emails.NewPresenterFromConfig(presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
 
 	docName := ref.UnrefOrZero(signature.DocumentName)
 	if docName == "" {

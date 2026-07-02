@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,6 +35,7 @@ import * as organization from './organization';
 import * as organizationContext from './organizationContext';
 import * as processingActivity from './processingActivity';
 import * as rightsRequest from './rightsRequest';
+import * as resourceAlias from './resourceAlias';
 import * as riskAssessment from './riskAssessment';
 import * as user from './user';
 import * as risk from './risk';
@@ -78,6 +79,7 @@ export const resources: Record<string, ResourceModule> = {
 	organizationContext: organizationContext as ResourceModule,
 	processingActivity: processingActivity as ResourceModule,
 	rightsRequest: rightsRequest as ResourceModule,
+	resourceAlias: resourceAlias as ResourceModule,
 	riskAssessment: riskAssessment as ResourceModule,
 	user: user as ResourceModule,
 	risk: risk as ResourceModule,

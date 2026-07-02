@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -61,7 +61,7 @@ func NewFrameworkEdge(f *coredata.Framework, orderBy coredata.FrameworkOrderFiel
 }
 
 func NewFramework(f *coredata.Framework) *Framework {
-	return &Framework{
+	framework := &Framework{
 		ID:   f.ID,
 		Name: f.Name,
 		Organization: &Organization{
@@ -71,4 +71,14 @@ func NewFramework(f *coredata.Framework) *Framework {
 		CreatedAt:   f.CreatedAt,
 		UpdatedAt:   f.UpdatedAt,
 	}
+
+	if f.LightLogoFileID != nil {
+		framework.LightLogo = &File{ID: *f.LightLogoFileID}
+	}
+
+	if f.DarkLogoFileID != nil {
+		framework.DarkLogo = &File{ID: *f.DarkLogoFileID}
+	}
+
+	return framework
 }

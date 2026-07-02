@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,21 @@ export function statusBadgeVariant(status: string): BadgeVariant {
       return "danger";
     default:
       return "neutral";
+  }
+}
+
+export function fetchStatusBadgeVariant(status: string): BadgeVariant {
+  switch (status) {
+    case "SUCCESS":
+      return "success";
+    case "FAILED":
+      return "danger";
+    case "FETCHING":
+      return "info";
+    case "QUEUED":
+      return "neutral";
+    default:
+      return "info";
   }
 }
 

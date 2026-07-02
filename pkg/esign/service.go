@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -151,16 +150,7 @@ func (s *Service) CreateSignature(
 ) (*coredata.ElectronicSignature, error) {
 	consentText := req.ConsentText
 	if consentText == "" {
-		var err error
-
-		consentText, err = req.DocumentType.ConsentText()
-		if err != nil {
-			return nil, fmt.Errorf("cannot derive consent text: %w", err)
-		}
-	} else {
-		if !strings.HasSuffix(consentText, coredata.ESignProcessConsentText) {
-			consentText = consentText + " " + coredata.ESignProcessConsentText
-		}
+		return nil, fmt.Errorf("consent text is required")
 	}
 
 	emailSubject := req.EmailSubject
@@ -464,7 +454,7 @@ func (s *Service) GenerateCertificateFileURL(
 		return "", err
 	}
 
-	url, err := s.fileManager.GenerateFileUrl(ctx, &file, expiresIn)
+	url, err := s.fileManager.GeneratePresignedURL(ctx, &file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate certificate file URL: %w", err)
 	}
@@ -501,7 +491,7 @@ func (s *Service) GenerateSignatureFileURL(
 		return "", err
 	}
 
-	url, err := s.fileManager.GenerateFileUrl(ctx, &file, expiresIn)
+	url, err := s.fileManager.GeneratePresignedURL(ctx, &file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate signature file URL: %w", err)
 	}

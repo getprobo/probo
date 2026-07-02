@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,9 +24,9 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-const testCsvData = "email,full_name,role,job_title,is_admin,mfa_status,auth_method,last_login,account_created_at,external_id\njane@example.com,Jane Smith,admin,CTO,true,ENABLED,SSO,2026-01-15T00:00:00Z,2024-06-01T00:00:00Z,ext-jane"
+const testCsvData = "email,full_name,role,job_title,is_admin,active,mfa_status,auth_method,last_login,account_created_at,external_id\njane@example.com,Jane Smith,admin,CTO,true,true,ENABLED,SSO,2026-01-15T00:00:00Z,2024-06-01T00:00:00Z,ext-jane"
 
-func TestAccessSource_Create(t *testing.T) {
+func TestAccessReviewSource_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
@@ -35,9 +35,9 @@ func TestAccessSource_Create(t *testing.T) {
 		t.Parallel()
 
 		const query = `
-			mutation($input: CreateAccessSourceInput!) {
-				createAccessSource(input: $input) {
-					accessSourceEdge {
+			mutation($input: CreateAccessReviewSourceInput!) {
+				createAccessReviewSource(input: $input) {
+					accessReviewSourceEdge {
 						node {
 							id
 							name
@@ -50,16 +50,16 @@ func TestAccessSource_Create(t *testing.T) {
 		`
 
 		var result struct {
-			CreateAccessSource struct {
-				AccessSourceEdge struct {
+			CreateAccessReviewSource struct {
+				AccessReviewSourceEdge struct {
 					Node struct {
 						ID        string `json:"id"`
 						Name      string `json:"name"`
 						CreatedAt string `json:"createdAt"`
 						UpdatedAt string `json:"updatedAt"`
 					} `json:"node"`
-				} `json:"accessSourceEdge"`
-			} `json:"createAccessSource"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"createAccessReviewSource"`
 		}
 
 		err := owner.Execute(query, map[string]any{
@@ -70,7 +70,7 @@ func TestAccessSource_Create(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 
-		node := result.CreateAccessSource.AccessSourceEdge.Node
+		node := result.CreateAccessReviewSource.AccessReviewSourceEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "Slack", node.Name)
 		assert.NotEmpty(t, node.CreatedAt)
@@ -80,9 +80,9 @@ func TestAccessSource_Create(t *testing.T) {
 		t.Parallel()
 
 		const query = `
-			mutation($input: CreateAccessSourceInput!) {
-				createAccessSource(input: $input) {
-					accessSourceEdge {
+			mutation($input: CreateAccessReviewSourceInput!) {
+				createAccessReviewSource(input: $input) {
+					accessReviewSourceEdge {
 						node {
 							id
 							name
@@ -94,15 +94,15 @@ func TestAccessSource_Create(t *testing.T) {
 		`
 
 		var result struct {
-			CreateAccessSource struct {
-				AccessSourceEdge struct {
+			CreateAccessReviewSource struct {
+				AccessReviewSourceEdge struct {
 					Node struct {
 						ID      string  `json:"id"`
 						Name    string  `json:"name"`
 						CsvData *string `json:"csvData"`
 					} `json:"node"`
-				} `json:"accessSourceEdge"`
-			} `json:"createAccessSource"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"createAccessReviewSource"`
 		}
 
 		err := owner.Execute(query, map[string]any{
@@ -114,7 +114,7 @@ func TestAccessSource_Create(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 
-		node := result.CreateAccessSource.AccessSourceEdge.Node
+		node := result.CreateAccessReviewSource.AccessReviewSourceEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "CSV Import", node.Name)
 		require.NotNil(t, node.CsvData)
@@ -122,18 +122,18 @@ func TestAccessSource_Create(t *testing.T) {
 	})
 }
 
-func TestAccessSource_Update(t *testing.T) {
+func TestAccessReviewSource_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("Original Source").
 		Create()
 
 	const query = `
-		mutation($input: UpdateAccessSourceInput!) {
-			updateAccessSource(input: $input) {
-				accessSource {
+		mutation($input: UpdateAccessReviewSourceInput!) {
+			updateAccessReviewSource(input: $input) {
+				accessReviewSource {
 					id
 					name
 				}
@@ -142,71 +142,71 @@ func TestAccessSource_Update(t *testing.T) {
 	`
 
 	var result struct {
-		UpdateAccessSource struct {
-			AccessSource struct {
+		UpdateAccessReviewSource struct {
+			AccessReviewSource struct {
 				ID   string `json:"id"`
 				Name string `json:"name"`
-			} `json:"accessSource"`
-		} `json:"updateAccessSource"`
+			} `json:"accessReviewSource"`
+		} `json:"updateAccessReviewSource"`
 	}
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"accessSourceId": sourceID,
-			"name":           "Updated Source",
+			"accessReviewSourceId": sourceID,
+			"name":                 "Updated Source",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, sourceID, result.UpdateAccessSource.AccessSource.ID)
-	assert.Equal(t, "Updated Source", result.UpdateAccessSource.AccessSource.Name)
+	assert.Equal(t, sourceID, result.UpdateAccessReviewSource.AccessReviewSource.ID)
+	assert.Equal(t, "Updated Source", result.UpdateAccessReviewSource.AccessReviewSource.Name)
 }
 
-func TestAccessSource_Delete(t *testing.T) {
+func TestAccessReviewSource_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("Source to Delete").
 		Create()
 
 	const query = `
-		mutation($input: DeleteAccessSourceInput!) {
-			deleteAccessSource(input: $input) {
-				deletedAccessSourceId
+		mutation($input: DeleteAccessReviewSourceInput!) {
+			deleteAccessReviewSource(input: $input) {
+				deletedAccessReviewSourceId
 			}
 		}
 	`
 
 	var result struct {
-		DeleteAccessSource struct {
-			DeletedAccessSourceID string `json:"deletedAccessSourceId"`
-		} `json:"deleteAccessSource"`
+		DeleteAccessReviewSource struct {
+			DeletedAccessReviewSourceID string `json:"deletedAccessReviewSourceId"`
+		} `json:"deleteAccessReviewSource"`
 	}
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"accessSourceId": sourceID,
+			"accessReviewSourceId": sourceID,
 		},
 	}, &result)
 	require.NoError(t, err)
-	assert.Equal(t, sourceID, result.DeleteAccessSource.DeletedAccessSourceID)
+	assert.Equal(t, sourceID, result.DeleteAccessReviewSource.DeletedAccessReviewSourceID)
 }
 
-func TestAccessSource_List(t *testing.T) {
+func TestAccessReviewSource_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
 	for _, name := range []string{"Slack", "GitHub", "Google Workspace"} {
-		factory.NewAccessSource(owner, orgID).WithName(name).Create()
+		factory.NewAccessReviewSource(owner, orgID).WithName(name).Create()
 	}
 
 	const query = `
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					accessSources(first: 10) {
+					accessReviewSources(first: 10) {
 						edges {
 							node {
 								id
@@ -222,7 +222,7 @@ func TestAccessSource_List(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			AccessSources struct {
+			AccessReviewSources struct {
 				Edges []struct {
 					Node struct {
 						ID   string `json:"id"`
@@ -230,13 +230,13 @@ func TestAccessSource_List(t *testing.T) {
 					} `json:"node"`
 				} `json:"edges"`
 				TotalCount int `json:"totalCount"`
-			} `json:"accessSources"`
+			} `json:"accessReviewSources"`
 		} `json:"node"`
 	}
 
 	err := owner.Execute(query, map[string]any{"id": orgID}, &result)
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, result.Node.AccessSources.TotalCount, 3)
+	assert.GreaterOrEqual(t, result.Node.AccessReviewSources.TotalCount, 3)
 }
 
 func TestAccessReviewCampaign_Create(t *testing.T) {
@@ -295,10 +295,10 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 	t.Run("with access sources", func(t *testing.T) {
 		t.Parallel()
 
-		source1ID := factory.NewAccessSource(owner, orgID).
+		source1ID := factory.NewAccessReviewSource(owner, orgID).
 			WithName("Slack Source").
 			Create()
-		source2ID := factory.NewAccessSource(owner, orgID).
+		source2ID := factory.NewAccessReviewSource(owner, orgID).
 			WithName("GitHub Source").
 			Create()
 
@@ -309,7 +309,7 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 						node {
 							id
 							name
-							scopeSources {
+							sources {
 								id
 								name
 							}
@@ -323,12 +323,12 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 			CreateAccessReviewCampaign struct {
 				AccessReviewCampaignEdge struct {
 					Node struct {
-						ID           string `json:"id"`
-						Name         string `json:"name"`
-						ScopeSources []struct {
+						ID              string `json:"id"`
+						Name            string `json:"name"`
+						CampaignSources []struct {
 							ID   string `json:"id"`
 							Name string `json:"name"`
-						} `json:"scopeSources"`
+						} `json:"sources"`
 					} `json:"node"`
 				} `json:"accessReviewCampaignEdge"`
 			} `json:"createAccessReviewCampaign"`
@@ -336,9 +336,9 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"organizationId":  orgID,
-				"name":            "Campaign with Sources",
-				"accessSourceIds": []string{source1ID, source2ID},
+				"organizationId":        orgID,
+				"name":                  "Campaign with Sources",
+				"accessReviewSourceIds": []string{source1ID, source2ID},
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -346,52 +346,7 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 		node := result.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "Campaign with Sources", node.Name)
-		assert.Len(t, node.ScopeSources, 2)
-	})
-
-	t.Run("with framework controls", func(t *testing.T) {
-		t.Parallel()
-
-		const query = `
-			mutation($input: CreateAccessReviewCampaignInput!) {
-				createAccessReviewCampaign(input: $input) {
-					accessReviewCampaignEdge {
-						node {
-							id
-							name
-							frameworkControls
-						}
-					}
-				}
-			}
-		`
-
-		var result struct {
-			CreateAccessReviewCampaign struct {
-				AccessReviewCampaignEdge struct {
-					Node struct {
-						ID                string   `json:"id"`
-						Name              string   `json:"name"`
-						FrameworkControls []string `json:"frameworkControls"`
-					} `json:"node"`
-				} `json:"accessReviewCampaignEdge"`
-			} `json:"createAccessReviewCampaign"`
-		}
-
-		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{
-				"organizationId":    orgID,
-				"name":              "SOC2 Campaign",
-				"frameworkControls": []string{"CC6.1", "CC6.2"},
-			},
-		}, &result)
-		require.NoError(t, err)
-
-		node := result.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node
-		assert.NotEmpty(t, node.ID)
-		assert.Equal(t, "SOC2 Campaign", node.Name)
-		assert.Contains(t, node.FrameworkControls, "CC6.1")
-		assert.Contains(t, node.FrameworkControls, "CC6.2")
+		assert.Len(t, node.CampaignSources, 2)
 	})
 }
 
@@ -478,13 +433,13 @@ func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("Source for Delete").
 		WithCsvData(testCsvData).
 		Create()
 	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
 		WithName("Campaign to Cascade Delete").
-		WithAccessSourceIDs([]string{sourceID}).
+		WithAccessReviewSourceIDs([]string{sourceID}).
 		Create()
 
 	const deleteMutation = `
@@ -676,14 +631,14 @@ func TestAccessReviewCampaign_StartWithCsvSource(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("CSV Test Source").
 		WithCsvData(testCsvData).
 		Create()
 
 	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
 		WithName("CSV Campaign").
-		WithAccessSourceIDs([]string{sourceID}).
+		WithAccessReviewSourceIDs([]string{sourceID}).
 		Create()
 
 	const query = `
@@ -721,12 +676,12 @@ func TestAccessReviewCampaign_StartWithCsvSource(t *testing.T) {
 	assert.NotNil(t, campaign.StartedAt)
 }
 
-func TestAccessReviewCampaign_AddAndRemoveScopeSource(t *testing.T) {
+func TestAccessReviewCampaign_AddAndRemoveCampaignSource(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("Scope Source").
 		Create()
 
@@ -736,13 +691,16 @@ func TestAccessReviewCampaign_AddAndRemoveScopeSource(t *testing.T) {
 
 	t.Run("add scope source", func(t *testing.T) {
 		const query = `
-			mutation($input: AddAccessReviewCampaignScopeSourceInput!) {
-				addAccessReviewCampaignScopeSource(input: $input) {
+			mutation($input: AddAccessReviewCampaignSourceInput!) {
+				addAccessReviewCampaignSource(input: $input) {
 					accessReviewCampaign {
 						id
-						scopeSources {
+						sources {
 							id
 							name
+							source {
+								id
+							}
 						}
 					}
 				}
@@ -750,38 +708,45 @@ func TestAccessReviewCampaign_AddAndRemoveScopeSource(t *testing.T) {
 		`
 
 		var result struct {
-			AddAccessReviewCampaignScopeSource struct {
+			AddAccessReviewCampaignSource struct {
 				AccessReviewCampaign struct {
-					ID           string `json:"id"`
-					ScopeSources []struct {
-						ID   string `json:"id"`
-						Name string `json:"name"`
-					} `json:"scopeSources"`
+					ID              string `json:"id"`
+					CampaignSources []struct {
+						ID     string `json:"id"`
+						Name   string `json:"name"`
+						Source *struct {
+							ID string `json:"id"`
+						} `json:"source"`
+					} `json:"sources"`
 				} `json:"accessReviewCampaign"`
-			} `json:"addAccessReviewCampaignScopeSource"`
+			} `json:"addAccessReviewCampaignSource"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"accessReviewCampaignId": campaignID,
-				"accessSourceId":         sourceID,
+				"accessReviewSourceId":   sourceID,
 			},
 		}, &result)
 		require.NoError(t, err)
 
-		campaign := result.AddAccessReviewCampaignScopeSource.AccessReviewCampaign
+		campaign := result.AddAccessReviewCampaignSource.AccessReviewCampaign
 		assert.Equal(t, campaignID, campaign.ID)
-		assert.Len(t, campaign.ScopeSources, 1)
-		assert.Equal(t, sourceID, campaign.ScopeSources[0].ID)
+		assert.Len(t, campaign.CampaignSources, 1)
+		// The scope source id is now a per-campaign snapshot id, distinct from
+		// the live source id, which is exposed via the source link.
+		assert.NotEqual(t, sourceID, campaign.CampaignSources[0].ID)
+		require.NotNil(t, campaign.CampaignSources[0].Source)
+		assert.Equal(t, sourceID, campaign.CampaignSources[0].Source.ID)
 	})
 
 	t.Run("remove scope source", func(t *testing.T) {
 		const query = `
-			mutation($input: RemoveAccessReviewCampaignScopeSourceInput!) {
-				removeAccessReviewCampaignScopeSource(input: $input) {
+			mutation($input: RemoveAccessReviewCampaignSourceInput!) {
+				removeAccessReviewCampaignSource(input: $input) {
 					accessReviewCampaign {
 						id
-						scopeSources {
+						sources {
 							id
 						}
 					}
@@ -790,28 +755,230 @@ func TestAccessReviewCampaign_AddAndRemoveScopeSource(t *testing.T) {
 		`
 
 		var result struct {
-			RemoveAccessReviewCampaignScopeSource struct {
+			RemoveAccessReviewCampaignSource struct {
 				AccessReviewCampaign struct {
-					ID           string `json:"id"`
-					ScopeSources []struct {
+					ID              string `json:"id"`
+					CampaignSources []struct {
 						ID string `json:"id"`
-					} `json:"scopeSources"`
+					} `json:"sources"`
 				} `json:"accessReviewCampaign"`
-			} `json:"removeAccessReviewCampaignScopeSource"`
+			} `json:"removeAccessReviewCampaignSource"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"accessReviewCampaignId": campaignID,
-				"accessSourceId":         sourceID,
+				"accessReviewSourceId":   sourceID,
 			},
 		}, &result)
 		require.NoError(t, err)
 
-		campaign := result.RemoveAccessReviewCampaignScopeSource.AccessReviewCampaign
+		campaign := result.RemoveAccessReviewCampaignSource.AccessReviewCampaign
 		assert.Equal(t, campaignID, campaign.ID)
-		assert.Empty(t, campaign.ScopeSources)
+		assert.Empty(t, campaign.CampaignSources)
 	})
+}
+
+func TestAccessReviewCampaignSource_Node(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithName("Node Query Source").
+		WithCsvData(testCsvData).
+		Create()
+
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("Node Query Campaign").
+		WithAccessReviewSourceIDs([]string{sourceID}).
+		Create()
+
+	const campaignQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign {
+					sources {
+						id
+						name
+					}
+				}
+			}
+		}
+	`
+
+	var campaignResult struct {
+		Node struct {
+			Sources []struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"sources"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(campaignQuery, map[string]any{"id": campaignID}, &campaignResult)
+	require.NoError(t, err)
+	require.Len(t, campaignResult.Node.Sources, 1)
+
+	campaignSourceID := campaignResult.Node.Sources[0].ID
+
+	const startQuery = `
+		mutation($input: StartAccessReviewCampaignInput!) {
+			startAccessReviewCampaign(input: $input) {
+				accessReviewCampaign {
+					id
+					status
+				}
+			}
+		}
+	`
+
+	err = owner.Execute(startQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				__typename
+				... on AccessReviewCampaignSource {
+					id
+					campaign {
+						id
+					}
+					name
+					entries(first: 10) {
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var nodeResult struct {
+		Node struct {
+			Typename string `json:"__typename"`
+			ID       string `json:"id"`
+			Campaign struct {
+				ID string `json:"id"`
+			} `json:"campaign"`
+			Name    string `json:"name"`
+			Entries struct {
+				TotalCount int `json:"totalCount"`
+			} `json:"entries"`
+		} `json:"node"`
+	}
+
+	require.Eventually(t, func() bool {
+		err := owner.Execute(nodeQuery, map[string]any{"id": campaignSourceID}, &nodeResult)
+		if err != nil {
+			return false
+		}
+
+		return nodeResult.Node.Entries.TotalCount > 0
+	}, 60*time.Second, 1*time.Second, "campaign source should have entries after start")
+
+	assert.Equal(t, "AccessReviewCampaignSource", nodeResult.Node.Typename)
+	assert.Equal(t, campaignSourceID, nodeResult.Node.ID)
+	assert.Equal(t, campaignID, nodeResult.Node.Campaign.ID)
+	assert.Equal(t, "Node Query Source", nodeResult.Node.Name)
+	assert.Greater(t, nodeResult.Node.Entries.TotalCount, 0)
+}
+
+func TestAccessReviewCampaignSource_NameSurvivesSourceDeletion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const snapshotName = "Archived Snapshot Source"
+
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithName(snapshotName).
+		WithCsvData(testCsvData).
+		Create()
+
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("Archival Campaign").
+		WithAccessReviewSourceIDs([]string{sourceID}).
+		Create()
+
+	const sourcesQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign {
+					sources {
+						id
+						name
+						sourceId
+						source {
+							id
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var before struct {
+		Node struct {
+			Sources []struct {
+				ID       string  `json:"id"`
+				Name     string  `json:"name"`
+				SourceID *string `json:"sourceId"`
+				Source   *struct {
+					ID string `json:"id"`
+				} `json:"source"`
+			} `json:"sources"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(sourcesQuery, map[string]any{"id": campaignID}, &before)
+	require.NoError(t, err)
+	require.Len(t, before.Node.Sources, 1)
+	assert.Equal(t, snapshotName, before.Node.Sources[0].Name)
+	require.NotNil(t, before.Node.Sources[0].SourceID)
+	assert.Equal(t, sourceID, *before.Node.Sources[0].SourceID)
+	require.NotNil(t, before.Node.Sources[0].Source)
+	assert.Equal(t, sourceID, before.Node.Sources[0].Source.ID)
+
+	const deleteQuery = `
+		mutation($input: DeleteAccessReviewSourceInput!) {
+			deleteAccessReviewSource(input: $input) {
+				deletedAccessReviewSourceId
+			}
+		}
+	`
+
+	err = owner.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewSourceId": sourceID,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	var after struct {
+		Node struct {
+			Sources []struct {
+				ID       string  `json:"id"`
+				Name     string  `json:"name"`
+				SourceID *string `json:"sourceId"`
+				Source   *struct {
+					ID string `json:"id"`
+				} `json:"source"`
+			} `json:"sources"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(sourcesQuery, map[string]any{"id": campaignID}, &after)
+	require.NoError(t, err)
+	require.Len(t, after.Node.Sources, 1)
+	assert.Equal(t, before.Node.Sources[0].ID, after.Node.Sources[0].ID)
+	assert.Equal(t, snapshotName, after.Node.Sources[0].Name)
+	assert.Nil(t, after.Node.Sources[0].SourceID)
+	assert.Nil(t, after.Node.Sources[0].Source)
 }
 
 func TestAccessReviewCampaign_Cancel(t *testing.T) {
@@ -819,14 +986,14 @@ func TestAccessReviewCampaign_Cancel(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("Cancel Test Source").
 		WithCsvData(testCsvData).
 		Create()
 
 	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
 		WithName("Campaign to Cancel").
-		WithAccessSourceIDs([]string{sourceID}).
+		WithAccessReviewSourceIDs([]string{sourceID}).
 		Create()
 
 	// Start the campaign first
@@ -971,7 +1138,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	// Step 1: Create a CSV source with test data
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("Lifecycle Test Source").
 		WithCsvData(testCsvData).
 		Create()
@@ -986,7 +1153,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 						name
 						description
 						status
-						scopeSources {
+						sources {
 							id
 						}
 					}
@@ -999,13 +1166,13 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 		CreateAccessReviewCampaign struct {
 			AccessReviewCampaignEdge struct {
 				Node struct {
-					ID           string `json:"id"`
-					Name         string `json:"name"`
-					Description  string `json:"description"`
-					Status       string `json:"status"`
-					ScopeSources []struct {
+					ID              string `json:"id"`
+					Name            string `json:"name"`
+					Description     string `json:"description"`
+					Status          string `json:"status"`
+					CampaignSources []struct {
 						ID string `json:"id"`
-					} `json:"scopeSources"`
+					} `json:"sources"`
 				} `json:"node"`
 			} `json:"accessReviewCampaignEdge"`
 		} `json:"createAccessReviewCampaign"`
@@ -1013,10 +1180,10 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 
 	err := owner.Execute(createQuery, map[string]any{
 		"input": map[string]any{
-			"organizationId":  orgID,
-			"name":            "Full Lifecycle Campaign",
-			"description":     "Testing the full lifecycle",
-			"accessSourceIds": []string{sourceID},
+			"organizationId":        orgID,
+			"name":                  "Full Lifecycle Campaign",
+			"description":           "Testing the full lifecycle",
+			"accessReviewSourceIds": []string{sourceID},
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -1025,7 +1192,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	campaignID := campaignNode.ID
 	assert.Equal(t, "DRAFT", campaignNode.Status)
 	assert.Equal(t, "Testing the full lifecycle", campaignNode.Description)
-	assert.Len(t, campaignNode.ScopeSources, 1)
+	assert.Len(t, campaignNode.CampaignSources, 1)
 
 	// Step 3: Start the campaign (triggers worker to fetch CSV data)
 	const startQuery = `
@@ -1073,6 +1240,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 								id
 								email
 								fullName
+								active
 								decision
 							}
 						}
@@ -1100,6 +1268,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 						ID       string `json:"id"`
 						Email    string `json:"email"`
 						FullName string `json:"fullName"`
+						Active   *bool  `json:"active"`
 						Decision string `json:"decision"`
 					} `json:"node"`
 				} `json:"edges"`
@@ -1133,13 +1302,18 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	// All entries should be PENDING
 	for _, edge := range campaignResult.Node.Entries.Edges {
 		assert.Equal(t, "PENDING", edge.Node.Decision)
+
+		if edge.Node.Email == "jane@example.com" {
+			require.NotNil(t, edge.Node.Active)
+			assert.True(t, *edge.Node.Active)
+		}
 	}
 
 	// Step 5: Record decisions on all entries
 	const recordDecisionQuery = `
-		mutation($input: RecordAccessEntryDecisionInput!) {
-			recordAccessEntryDecision(input: $input) {
-				accessEntry {
+		mutation($input: RecordAccessReviewEntryDecisionInput!) {
+			recordAccessReviewEntryDecision(input: $input) {
+				accessReviewEntry {
 					id
 					decision
 					decidedAt
@@ -1155,8 +1329,8 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 
 	for _, edge := range campaignResult.Node.Entries.Edges {
 		var decisionResult struct {
-			RecordAccessEntryDecision struct {
-				AccessEntry struct {
+			RecordAccessReviewEntryDecision struct {
+				AccessReviewEntry struct {
 					ID              string  `json:"id"`
 					Decision        string  `json:"decision"`
 					DecidedAt       *string `json:"decidedAt"`
@@ -1164,19 +1338,19 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 						ID       string `json:"id"`
 						Decision string `json:"decision"`
 					} `json:"decisionHistory"`
-				} `json:"accessEntry"`
-			} `json:"recordAccessEntryDecision"`
+				} `json:"accessReviewEntry"`
+			} `json:"recordAccessReviewEntryDecision"`
 		}
 
 		err = owner.Execute(recordDecisionQuery, map[string]any{
 			"input": map[string]any{
-				"accessEntryId": edge.Node.ID,
-				"decision":      "APPROVED",
+				"accessReviewEntryId": edge.Node.ID,
+				"decision":            "APPROVED",
 			},
 		}, &decisionResult)
 		require.NoError(t, err)
 
-		entry := decisionResult.RecordAccessEntryDecision.AccessEntry
+		entry := decisionResult.RecordAccessReviewEntryDecision.AccessReviewEntry
 		assert.Equal(t, "APPROVED", entry.Decision)
 		assert.NotNil(t, entry.DecidedAt)
 
@@ -1225,14 +1399,14 @@ func TestAccessReviewCampaign_CloseRequiresAllDecisions(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	orgID := owner.GetOrganizationID().String()
 
-	sourceID := factory.NewAccessSource(owner, orgID).
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName("Close Guard Source").
 		WithCsvData(testCsvData).
 		Create()
 
 	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
 		WithName("Close Guard Campaign").
-		WithAccessSourceIDs([]string{sourceID}).
+		WithAccessReviewSourceIDs([]string{sourceID}).
 		Create()
 
 	// Start the campaign
@@ -1327,9 +1501,9 @@ func TestAccessReview_TenantIsolation(t *testing.T) {
 		t.Parallel()
 
 		const query = `
-			mutation($input: CreateAccessSourceInput!) {
-				createAccessSource(input: $input) {
-					accessSourceEdge {
+			mutation($input: CreateAccessReviewSourceInput!) {
+				createAccessReviewSource(input: $input) {
+					accessReviewSourceEdge {
 						node { id }
 					}
 				}

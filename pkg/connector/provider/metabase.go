@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,7 @@ func metabaseRegistration() *Registration {
 		DisplayName:    "Metabase",
 		SupportsAPIKey: true,
 		APIKeyHeader:   "x-api-key",
+		BuildProbeURL:  buildMetabaseProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "instanceUrl", Label: "Instance URL", Required: true},
 		},

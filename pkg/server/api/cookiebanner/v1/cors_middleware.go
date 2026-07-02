@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/server/jsonutil"
+	"go.probo.inc/probo/pkg/server/jsonx"
 )
 
 func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service) func(http.Handler) http.Handler {
@@ -37,32 +37,32 @@ func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service
 
 				bannerIDStr := chi.URLParam(r, "bannerID")
 				if bannerIDStr == "" {
-					jsonutil.RenderForbidden(w)
+					jsonx.RenderForbidden(w)
 					return
 				}
 
 				bannerID, err := gid.ParseGID(bannerIDStr)
 				if err != nil {
-					jsonutil.RenderForbidden(w)
+					jsonx.RenderForbidden(w)
 					return
 				}
 
 				banner, err := cookieBannerSvc.GetActiveCookieBanner(r.Context(), bannerID)
 				if err != nil {
 					if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-						jsonutil.RenderForbidden(w)
+						jsonx.RenderForbidden(w)
 						return
 					}
 
 					logger.ErrorCtx(r.Context(), "cannot load cookie banner for CORS check", log.Error(err))
-					jsonutil.RenderInternalServerError(w)
+					jsonx.RenderInternalServerError(w)
 
 					return
 				}
 
 				canonicalOrigin := cookiebanner.CanonicalizeOrigin(origin)
 				if banner.Origin != canonicalOrigin {
-					jsonutil.RenderForbidden(w)
+					jsonx.RenderForbidden(w)
 					return
 				}
 

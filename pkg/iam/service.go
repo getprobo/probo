@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,7 +33,8 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
@@ -67,8 +68,9 @@ type (
 		OIDCService           *oidc.Service
 		SCIMService           *scim.Service
 		APIKeyService         *APIKeyService
-		OAuth2ServerService   *oauth2server.Service
+		OAuth2ServerService   *oauth2.Service
 		Authorizer            *Authorizer
+		OAuth2ScopeRegistry   *oauth2scope.Registry
 
 		samlDomainVerifier *SAMLDomainVerifier
 	}
@@ -95,8 +97,9 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
-		OAuth2ServerSigningKeys        oauth2server.SigningKeys
-		OAuth2ServerOptions            []oauth2server.Option
+		OAuth2ServerSigningKeys        oauth2.SigningKeys
+		OAuth2ServerOptions            []oauth2.Option
+		OAuth2ScopeRegistry            *oauth2scope.Registry
 	}
 )
 
@@ -132,6 +135,10 @@ func NewService(
 		return nil, fmt.Errorf("encryption key is required")
 	}
 
+	if cfg.OAuth2ScopeRegistry == nil {
+		return nil, fmt.Errorf("oauth2 scope registry is required")
+	}
+
 	svc := &Service{
 		pg:                         pgClient,
 		fm:                         fm,
@@ -157,9 +164,12 @@ func NewService(
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
 
+	svc.OAuth2ScopeRegistry = cfg.OAuth2ScopeRegistry
+
 	svc.Authorizer = NewAuthorizer(
 		pgClient,
 		cfg.Logger.Named("authorizer"),
+		svc.OAuth2ScopeRegistry,
 	)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
 
@@ -194,12 +204,15 @@ func NewService(
 		},
 	)
 
-	svc.OAuth2ServerService = oauth2server.NewService(
+	svc.OAuth2ServerService = oauth2.NewService(
 		pgClient,
 		cfg.OAuth2ServerSigningKeys,
 		uri.URI(cfg.BaseURL.String()),
-		cfg.Logger.Named("oauth2server"),
-		cfg.OAuth2ServerOptions...,
+		cfg.Logger.Named("oauth2"),
+		append(
+			[]oauth2.Option{oauth2.WithRegistry(svc.OAuth2ScopeRegistry)},
+			cfg.OAuth2ServerOptions...,
+		)...,
 	)
 
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
@@ -211,6 +224,16 @@ func NewService(
 	)
 
 	return svc, nil
+}
+
+// OAuth2ServerMetadata returns the OIDC discovery document.
+func (s *Service) OAuth2ServerMetadata(endpoints oauth2.Endpoints) *oauth2.ServerMetadata {
+	return oauth2.NewMetadata(uri.URI(s.baseURL), endpoints, s.OAuth2ScopeRegistry.RegisteredScopes())
+}
+
+// OAuth2ProtectedResourceMetadata returns the RFC 9728 protected resource metadata document.
+func (s *Service) OAuth2ProtectedResourceMetadata(resource uri.URI) *oauth2.ProtectedResourceMetadata {
+	return oauth2.NewProtectedResourceMetadata(resource, resource, s.OAuth2ScopeRegistry.AllWriteScopes())
 }
 
 func (s *Service) IsSignUpEnabled() bool {

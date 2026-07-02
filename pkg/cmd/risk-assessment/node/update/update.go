@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -51,8 +51,10 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName     string
-		flagNodeType string
+		flagName          string
+		flagNodeType      string
+		flagBoundaryId    string
+		flagClearBoundary bool
 	)
 
 	cmd := &cobra.Command{
@@ -78,6 +80,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
+			if flagClearBoundary && cmd.Flags().Changed("boundary-id") {
+				return fmt.Errorf("cannot use --boundary-id and --clear-boundary together")
+			}
+
 			input := map[string]any{
 				"id": args[0],
 			}
@@ -87,11 +93,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("node-type") {
-				if err := cmdutil.ValidateEnum("node-type", flagNodeType, []string{"ENTITY", "BOUNDARY", "ASSET", "DATA"}); err != nil {
+				if err := cmdutil.ValidateEnum("node-type", flagNodeType, []string{"ENTITY", "ASSET", "DATA"}); err != nil {
 					return err
 				}
 
 				input["nodeType"] = flagNodeType
+			}
+
+			if cmd.Flags().Changed("boundary-id") {
+				input["boundaryId"] = flagBoundaryId
+			}
+
+			if flagClearBoundary {
+				input["boundaryId"] = nil
 			}
 
 			if len(input) == 1 {
@@ -124,7 +138,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Node name")
-	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, BOUNDARY, ASSET, DATA")
+	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, ASSET, DATA")
+	cmd.Flags().StringVar(&flagBoundaryId, "boundary-id", "", "Boundary ID that contains this node")
+	cmd.Flags().BoolVar(&flagClearBoundary, "clear-boundary", false, "Remove the node from its boundary (move to top level)")
 
 	return cmd
 }

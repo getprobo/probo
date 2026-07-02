@@ -8,12 +8,14 @@ package console_v1
 import (
 	"context"
 	"errors"
-	"fmt"
+	"slices"
+	"strings"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -30,7 +32,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
-		action = iam.ActionOrganizationGet
+		action = probo.ActionOrganizationGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			organization, err := r.probo.Organizations.Get(ctx, scope, id)
 			if err != nil {
@@ -169,6 +171,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewRiskAssessmentScope(s), nil
 		}
+	case coredata.RiskAssessmentBoundaryEntityType:
+		action = probo.ActionRiskAssessmentBoundaryGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			b, err := r.riskManagement.GetBoundary(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewRiskAssessmentBoundary(b), nil
+		}
 	case coredata.RiskAssessmentScenarioEntityType:
 		action = probo.ActionRiskAssessmentScenarioGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
@@ -279,16 +291,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewObligation(obligation), nil
 		}
-	case coredata.ReportEntityType:
-		action = probo.ActionReportGet
-		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			report, err := r.probo.Reports.Get(ctx, scope, id)
-			if err != nil {
-				return nil, err
-			}
-
-			return types.NewReport(report), nil
-		}
 	case coredata.ProcessingActivityEntityType:
 		action = probo.ActionProcessingActivityList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
@@ -329,15 +331,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 
-			var file *coredata.File
-			if trustCenter.NonDisclosureAgreementFileID != nil {
-				file, err = r.probo.Files.Get(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
-				if err != nil {
-					return nil, fmt.Errorf("cannot get NDA file: %w", err)
-				}
-			}
-
-			return types.NewTrustCenter(trustCenter, file), nil
+			return types.NewTrustCenter(trustCenter), nil
 		}
 	case coredata.TrustCenterAccessEntityType:
 		action = probo.ActionTrustCenterAccessGet
@@ -379,35 +373,55 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewWebhookSubscription(wc), nil
 		}
-	case coredata.AccessReviewCampaignEntityType:
-		action = probo.ActionAccessReviewCampaignGet
+	case coredata.AgentRunEntityType:
+		action = agentrun.ActionAgentRunGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			campaign, err := r.accessReview.Campaigns(scope).Get(ctx, id)
+			run, err := r.agentRun.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAgentRun(run), nil
+		}
+	case coredata.AccessReviewCampaignEntityType:
+		action = accessreview.ActionCampaignGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			campaign, err := r.accessReview.GetCampaign(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
 			return types.NewAccessReviewCampaign(campaign), nil
 		}
-	case coredata.AccessSourceEntityType:
-		action = probo.ActionAccessSourceGet
+	case coredata.AccessReviewCampaignSourceEntityType:
+		action = accessreview.ActionCampaignGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			source, err := r.accessReview.Sources(scope).Get(ctx, id)
+			campaignSource, err := r.accessReview.GetCampaignSource(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewAccessSource(source), nil
+			return types.NewAccessReviewCampaignSource(campaignSource), nil
 		}
-	case coredata.AccessEntryEntityType:
-		action = probo.ActionAccessEntryGet
+	case coredata.AccessReviewSourceEntityType:
+		action = accessreview.ActionSourceGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			entry, err := r.accessReview.Entries(scope).Get(ctx, id)
+			source, err := r.accessReview.GetSource(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewAccessEntry(entry), nil
+			return types.NewAccessReviewSource(source), nil
+		}
+	case coredata.AccessReviewEntryEntityType:
+		action = accessreview.ActionEntryGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			entry, err := r.accessReview.GetEntry(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAccessReviewEntry(entry), nil
 		}
 	case coredata.CookieBannerEntityType:
 		action = probo.ActionCookieBannerGet
@@ -526,6 +540,73 @@ func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]
 	}
 
 	return result, nil
+}
+
+// AccessReviewDrivers is the resolver for the accessReviewDrivers field.
+func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.ConnectorProviderInfo, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.authorize(ctx, identity.ID, accessreview.ActionDriverCatalogList); err != nil {
+		return nil, err
+	}
+
+	registrations := r.providerRegistry.All()
+	infos := make([]*types.ConnectorProviderInfo, 0, len(registrations))
+
+	for _, reg := range registrations {
+		if reg == nil || reg.NewDriver == nil {
+			continue
+		}
+
+		provider := reg.Provider
+		_, oauthErr := r.connectorRegistry.Get(string(provider))
+		oauthConfigured := oauthErr == nil
+		apiKeySupported := reg.SupportsAPIKey
+		clientCredentialsSupported := reg.SupportsClientCredentials
+
+		// Skip providers that cannot be connected in this deployment: no
+		// OAuth client credentials configured and no key-based fallback
+		// (API key or client credentials) supported.
+		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported {
+			continue
+		}
+
+		scopes := r.providerRegistry.ProviderOAuth2Scopes(provider)
+		if scopes == nil {
+			scopes = []string{}
+		}
+
+		extraSettings := make([]*types.ConnectorProviderSettingInfo, 0, len(reg.ExtraSettings))
+		for _, setting := range reg.ExtraSettings {
+			extraSettings = append(
+				extraSettings,
+				&types.ConnectorProviderSettingInfo{
+					Key:      setting.Key,
+					Label:    setting.Label,
+					Required: setting.Required,
+				},
+			)
+		}
+
+		infos = append(infos, &types.ConnectorProviderInfo{
+			Provider:                   provider,
+			DisplayName:                reg.DisplayName,
+			OauthConfigured:            oauthConfigured,
+			APIKeySupported:            apiKeySupported,
+			ClientCredentialsSupported: clientCredentialsSupported,
+			Oauth2Scopes:               scopes,
+			ExtraSettings:              extraSettings,
+		})
+	}
+
+	slices.SortFunc(
+		infos,
+		func(a, b *types.ConnectorProviderInfo) int {
+			return strings.Compare(a.DisplayName, b.DisplayName)
+		},
+	)
+
+	return infos, nil
 }
 
 // Mutation returns schema.MutationResolver implementation.

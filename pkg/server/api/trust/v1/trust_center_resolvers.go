@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -44,8 +43,8 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 	return types.NewFramework(framework), nil
 }
 
-// Report is the resolver for the report field.
-func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
+// ReportFile is the resolver for the reportFile field.
+func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*types.AuditReport, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
@@ -55,19 +54,110 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if audit.ReportID == nil {
+	if audit.ReportFileID == nil {
 		return nil, nil
 	}
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	report, err := trustService.Reports.Get(ctx, scope, trustCenter.OrganizationID, *audit.ReportID)
+	file, err := trustService.Reports.Get(ctx, scope, trustCenter.OrganizationID, *audit.ReportFileID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewReport(report), nil
+	return types.NewAuditReport(file), nil
+}
+
+// Alias is the resolver for the alias field.
+func (r *auditReportResolver) Alias(ctx context.Context, obj *types.AuditReport) (*string, error) {
+	return r.ResourceAliasResolver(ctx, obj.ID)
+}
+
+// IsUserAuthorized is the resolver for the isUserAuthorized field.
+func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.AuditReport) (bool, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	trustService := r.trust
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+	audit, err := trustService.Audits.GetByReportFileID(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load audit for report file", log.Error(err))
+
+		return false, gqlutils.Internal(ctx)
+	}
+
+	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return true, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
+	}
+
+	reportAccess, err := trustService.TrustCenterAccesses.GetReportFileAccess(ctx, scope,
+		trustCenter.ID,
+		identity.ID,
+		obj.ID,
+	)
+	if err != nil {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrUserInactive) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
+
+		return false, gqlutils.Internal(ctx)
+	}
+
+	return reportAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
+}
+
+// Access is the resolver for the access field.
+func (r *auditReportResolver) Access(ctx context.Context, obj *types.AuditReport) (*types.DocumentAccess, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	trustService := r.trust
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, nil
+	}
+
+	access, err := trustService.TrustCenterAccesses.GetReportFileAccess(
+		ctx, scope,
+		trustCenter.ID,
+		identity.ID,
+		obj.ID,
+	)
+	if err != nil {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return nil, nil
+		}
+
+		if errors.Is(err, trust.ErrUserInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get audit report access", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DocumentAccess{
+		ID:     access.ID,
+		Status: access.Status,
+	}, nil
 }
 
 // Framework is the resolver for the framework field on ComplianceFramework.
@@ -82,6 +172,11 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	}
 
 	return types.NewFramework(framework), nil
+}
+
+// Alias is the resolver for the alias field.
+func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
+	return r.ResourceAliasResolver(ctx, obj.ID)
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
@@ -175,20 +270,36 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 	}, nil
 }
 
-// LightLogoURL is the resolver for the lightLogoURL field.
-func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+// LightLogo is the resolver for the lightLogo field.
+func (r *frameworkResolver) LightLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
 
-	return trustService.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	framework, err := r.trust.Frameworks.Get(ctx, scope, obj.ID)
+	if err != nil {
+		return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+	}
+
+	if framework.LightLogoFileID == nil {
+		return nil, nil
+	}
+
+	return r.loadPublicFile(ctx, *framework.LightLogoFileID)
 }
 
-// DarkLogoURL is the resolver for the darkLogoURL field.
-func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+// DarkLogo is the resolver for the darkLogo field.
+func (r *frameworkResolver) DarkLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
 
-	return trustService.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	framework, err := r.trust.Frameworks.Get(ctx, scope, obj.ID)
+	if err != nil {
+		return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+	}
+
+	if framework.DarkLogoFileID == nil {
+		return nil, nil
+	}
+
+	return r.loadPublicFile(ctx, *framework.DarkLogoFileID)
 }
 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
@@ -294,7 +405,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	audit, err := trustService.Audits.GetByReportID(ctx, scope, input.ReportID)
+	audit, err := trustService.Audits.GetByReportFileID(ctx, scope, input.ReportID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -317,7 +428,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
-	reportAccess, err := trustService.TrustCenterAccesses.GetReportAccess(
+	reportAccess, err := trustService.TrustCenterAccesses.GetReportFileAccess(
 		ctx, scope,
 		trustCenter.ID,
 		identity.ID,
@@ -458,7 +569,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	audit, err := trustService.Audits.GetByReportID(ctx, scope, input.ReportID)
+	audit, err := trustService.Audits.GetByReportFileID(ctx, scope, input.ReportID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -543,87 +654,6 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 	}, nil
 }
 
-// IsUserAuthorized is the resolver for the isUserAuthorized field.
-func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-
-	audit, err := trustService.Audits.GetByReportID(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
-		return false, gqlutils.Internal(ctx)
-	}
-
-	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		return true, nil
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return false, nil
-	}
-
-	reportAccess, err := trustService.TrustCenterAccesses.GetReportAccess(ctx, scope,
-		trustCenter.ID,
-		identity.ID,
-		obj.ID,
-	)
-	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrUserInactive) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
-			return false, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
-
-		return false, gqlutils.Internal(ctx)
-	}
-
-	return reportAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
-}
-
-// Access is the resolver for the access field.
-func (r *reportResolver) Access(ctx context.Context, obj *types.Report) (*types.DocumentAccess, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, nil // User is not authenticated, so no access requested
-	}
-
-	access, err := trustService.TrustCenterAccesses.GetReportAccess(
-		ctx, scope,
-		trustCenter.ID,
-		identity.ID,
-		obj.ID,
-	)
-	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
-			return nil, nil
-		}
-
-		if errors.Is(err, trust.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get audit report access", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.DocumentAccess{
-		ID:     access.ID,
-		Status: access.Status,
-	}, nil
-}
-
 // TotalCount is the resolver for the totalCount field.
 func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *types.SubprocessorConnection) (int, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
@@ -645,20 +675,24 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	return 0, gqlutils.Internal(ctx)
 }
 
-// LogoFileURL is the resolver for the logoFileUrl field.
-func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
+// Logo is the resolver for the logo field.
+func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.LogoFileID == nil {
+		return nil, nil
+	}
 
-	return trustService.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return r.loadPublicFile(ctx, *trustCenter.LogoFileID)
 }
 
-// DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
-func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
+// DarkLogo is the resolver for the darkLogo field.
+func (r *trustCenterResolver) DarkLogo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.DarkLogoFileID == nil {
+		return nil, nil
+	}
 
-	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return r.loadPublicFile(ctx, *trustCenter.DarkLogoFileID)
 }
 
 // NonDisclosureAgreement is the resolver for the nonDisclosureAgreement field.
@@ -884,6 +918,11 @@ func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCente
 	return types.NewMailingListUpdateConnection(result), nil
 }
 
+// Alias is the resolver for the alias field.
+func (r *trustCenterFileResolver) Alias(ctx context.Context, obj *types.TrustCenterFile) (*string, error) {
+	return r.ResourceAliasResolver(ctx, obj.ID)
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
@@ -970,22 +1009,23 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 	}, nil
 }
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
+// Logo is the resolver for the logo field.
+func (r *trustCenterReferenceResolver) Logo(ctx context.Context, obj *types.TrustCenterReference) (*types.File, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
 
-	logoURL, err := trustService.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID)
+	reference, err := r.trust.TrustCenterReferences.Get(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
+		return nil, gqlutils.NotFoundf(ctx, "trust center reference %q not found", obj.ID)
 	}
 
-	return logoURL, nil
+	return r.loadPublicFile(ctx, reference.LogoFileID)
 }
 
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
+
+// AuditReport returns schema.AuditReportResolver implementation.
+func (r *Resolver) AuditReport() schema.AuditReportResolver { return &auditReportResolver{r} }
 
 // ComplianceFramework returns schema.ComplianceFrameworkResolver implementation.
 func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
@@ -997,9 +1037,6 @@ func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver
 
 // Framework returns schema.FrameworkResolver implementation.
 func (r *Resolver) Framework() schema.FrameworkResolver { return &frameworkResolver{r} }
-
-// Report returns schema.ReportResolver implementation.
-func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
 
 // SubprocessorConnection returns schema.SubprocessorConnectionResolver implementation.
 func (r *Resolver) SubprocessorConnection() schema.SubprocessorConnectionResolver {
@@ -1020,10 +1057,10 @@ func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 }
 
 type auditResolver struct{ *Resolver }
+type auditReportResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
-type reportResolver struct{ *Resolver }
 type subprocessorConnectionResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
 type trustCenterFileResolver struct{ *Resolver }

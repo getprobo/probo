@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -30,26 +30,26 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
 
+import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { AccessReviewSourcesTabFragment$key } from "#/__generated__/core/AccessReviewSourcesTabFragment.graphql";
 import type { AccessReviewSourcesTabPaginationQuery } from "#/__generated__/core/AccessReviewSourcesTabPaginationQuery.graphql";
 import type { AccessReviewSourcesTabQuery } from "#/__generated__/core/AccessReviewSourcesTabQuery.graphql";
-import type { accessSourceMutationsCreateMutation } from "#/__generated__/core/accessSourceMutationsCreateMutation.graphql";
-import type { AddAccessSourceDialogConnectorProviderInfoFragment$key } from "#/__generated__/core/AddAccessSourceDialogConnectorProviderInfoFragment.graphql";
+import type { AddAccessReviewSourceDialogConnectorProviderInfoFragment$key } from "#/__generated__/core/AddAccessReviewSourceDialogConnectorProviderInfoFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { AccessSourceRow } from "../_components/AccessSourceRow";
-import { createAccessSourceMutation } from "../dialogs/accessSourceMutations";
-import { AddAccessSourceDialog, addAccessSourceDialogConnectorProviderInfoFragment } from "../dialogs/AddAccessSourceDialog";
+import { AccessReviewSourceRow } from "../_components/AccessReviewSourceRow";
+import { createAccessReviewSourceMutation } from "../dialogs/accessReviewSourceMutations";
+import { AddAccessReviewSourceDialog, addAccessReviewSourceDialogConnectorProviderInfoFragment } from "../dialogs/AddAccessReviewSourceDialog";
 
 export const accessReviewSourcesTabQuery = graphql`
   query AccessReviewSourcesTabQuery($organizationId: ID!) {
+    accessReviewDrivers {
+      ...AddAccessReviewSourceDialogConnectorProviderInfoFragment
+    }
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        canCreateSource: permission(action: "core:access-source:create")
-        connectorProviderInfos {
-          ...AddAccessSourceDialogConnectorProviderInfoFragment
-        }
+        canCreateSource: permission(action: "access-review:source:create")
         ...AccessReviewSourcesTabFragment
       }
     }
@@ -62,20 +62,20 @@ const sourcesFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     order: {
-      type: "AccessSourceOrder"
+      type: "AccessReviewSourceOrder"
       defaultValue: { direction: DESC, field: CREATED_AT }
     }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    accessSources(
+    accessReviewSources(
       first: $first
       after: $after
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "AccessReviewSourcesTab_accessSources") {
+    ) @connection(key: "AccessReviewSourcesTab_accessReviewSources") {
       __id
       edges {
         node {
@@ -84,7 +84,7 @@ const sourcesFragment = graphql`
           connector {
             provider
           }
-          ...AccessSourceRowFragment
+          ...AccessReviewSourceRowFragment
         }
       }
     }
@@ -102,18 +102,21 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const processedConnectorIdRef = useRef<string | null>(null);
 
-  const { organization } = usePreloadedQuery(accessReviewSourcesTabQuery, queryRef);
+  const { organization, accessReviewDrivers } = usePreloadedQuery<AccessReviewSourcesTabQuery>(
+    accessReviewSourcesTabQuery,
+    queryRef,
+  );
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
 
-  const connectorProviderInfos = useFragment<AddAccessSourceDialogConnectorProviderInfoFragment$key>(
-    addAccessSourceDialogConnectorProviderInfoFragment,
-    organization.connectorProviderInfos,
+  const connectorProviderInfos = useFragment<AddAccessReviewSourceDialogConnectorProviderInfoFragment$key>(
+    addAccessReviewSourceDialogConnectorProviderInfoFragment,
+    accessReviewDrivers,
   );
 
   const {
-    data: { accessSources },
+    data: { accessReviewSources },
     loadNext,
     hasNext,
     isLoadingNext,
@@ -124,15 +127,15 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
 
   const existingSourceProviders = useMemo(
     () =>
-      accessSources.edges
+      accessReviewSources.edges
         .map(edge => edge.node.connector?.provider)
         .filter((p): p is NonNullable<typeof p> => p != null),
-    [accessSources.edges],
+    [accessReviewSources.edges],
   );
 
-  const [createAccessSource, isCreatingSource]
-    = useMutation<accessSourceMutationsCreateMutation>(
-      createAccessSourceMutation,
+  const [createAccessReviewSource, isCreatingSource]
+    = useMutation<accessReviewSourceMutationsCreateMutation>(
+      createAccessReviewSourceMutation,
     );
 
   // Handle OAuth callback: after the provider redirects back with connector_id,
@@ -140,7 +143,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   const callbackConnectorId = searchParams.get("connector_id");
   const callbackProvider = searchParams.get("provider");
   const hasSourceForCallback = !!callbackConnectorId
-    && accessSources?.edges.some(edge => edge.node.connectorId === callbackConnectorId);
+    && accessReviewSources?.edges.some(edge => edge.node.connectorId === callbackConnectorId);
 
   useEffect(() => {
     if (!callbackConnectorId) return;
@@ -164,7 +167,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
       : null;
     const sourceName = providerInfo?.displayName ?? callbackProvider ?? "Source";
 
-    createAccessSource({
+    createAccessReviewSource({
       variables: {
         input: {
           organizationId,
@@ -172,7 +175,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
           name: sourceName,
           csvData: null,
         },
-        connections: [accessSources.__id],
+        connections: [accessReviewSources.__id],
       },
       onCompleted(_, errors) {
         if (errors?.length) {
@@ -186,7 +189,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
             title: __("Error"),
             description: formatError(
               __("Failed to create access source"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -214,7 +217,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to create access source"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -225,11 +228,11 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     callbackConnectorId,
     callbackProvider,
     connectorProviderInfos,
-    createAccessSource,
+    createAccessReviewSource,
     hasSourceForCallback,
     isCreatingSource,
     organizationId,
-    accessSources.__id,
+    accessReviewSources.__id,
     setSearchParams,
     toast,
   ]);
@@ -238,20 +241,20 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-end">
         {organization.canCreateSource && (
-          <AddAccessSourceDialog
+          <AddAccessReviewSourceDialog
             organizationId={organizationId}
-            connectionId={accessSources.__id}
+            connectionId={accessReviewSources.__id}
             providerInfos={connectorProviderInfos}
             existingSourceProviders={existingSourceProviders}
           >
             <Button icon={IconPlusLarge}>
               {__("Add source")}
             </Button>
-          </AddAccessSourceDialog>
+          </AddAccessReviewSourceDialog>
         )}
       </div>
 
-      {accessSources && accessSources.edges.length > 0
+      {accessReviewSources && accessReviewSources.edges.length > 0
         ? (
             <Card>
               <Table>
@@ -266,11 +269,11 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {accessSources.edges.map(edge => (
-                    <AccessSourceRow
+                  {accessReviewSources.edges.map(edge => (
+                    <AccessReviewSourceRow
                       key={edge.node.id}
                       fKey={edge.node}
-                      connectionId={accessSources.__id}
+                      connectionId={accessReviewSources.__id}
                       organizationId={organizationId}
                     />
                   ))}

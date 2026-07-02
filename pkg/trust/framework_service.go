@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -85,7 +85,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -128,7 +128,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,23 +20,45 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-// TrackerAgentsConfig configures the tracker agents that share one LLM
-// client, model, and tool surface: the tracker-mapping agent (catalog
-// identification) and the common-pattern enrichment agent (description
-// research). Both use DB-backed search tools and may also use Firecrawl
-// for web search when an API key is supplied.
+// TrackerMappingAgentConfig configures the tracker-mapping agent
+// (catalog identification). It uses DB-backed search tools and may also
+// use Firecrawl for web search when an API key is supplied.
 //
-// MaxTokens and Temperature bound and steer each LLM call (both
-// outputs are tiny structured JSON). AgentTimeout caps a single agent
-// run, and the per-worker max-turns bound the agent reasoning loop.
-// Zero-valued tuning fields fall back to package defaults.
-type TrackerAgentsConfig struct {
-	LLMClient          *llm.Client
-	Model              string
-	FirecrawlAPIKey    string
-	MaxTokens          *int
-	Temperature        *float64
-	AgentTimeout       time.Duration
-	MappingMaxTurns    int
-	EnrichmentMaxTurns int
+// MaxTokens and Temperature bound and steer the LLM call (the output is
+// tiny structured JSON). Timeout caps a single agent run and MaxTurns
+// bounds the agent reasoning loop. Zero-valued tuning fields fall back
+// to package defaults. ChromeAddr enables the read-only browser toolset
+// (so the agent can open cookie-database and cookie-policy pages to read
+// the true setter); when empty the agent relies on web search alone.
+type TrackerMappingAgentConfig struct {
+	LLMClient       *llm.Client
+	Model           string
+	FirecrawlAPIKey string
+	ChromeAddr      string
+	MaxTokens       *int
+	Temperature     *float64
+	Timeout         time.Duration
+	MaxTurns        int
+}
+
+// TrackerEnrichmentAgentConfig configures the common-pattern enrichment
+// agent (description research). It uses DB-backed search tools and may
+// also use Firecrawl for web search when an API key is supplied.
+//
+// MaxTokens and Temperature bound and steer the LLM call (the output is
+// tiny structured JSON). Timeout caps a single agent run and MaxTurns
+// bounds the agent reasoning loop. Zero-valued tuning fields fall back
+// to package defaults. ChromeAddr enables the read-only browser toolset
+// (so the agent can open authoritative vendor and cookie-database pages
+// to ground a description); when empty the agent relies on web search
+// alone.
+type TrackerEnrichmentAgentConfig struct {
+	LLMClient       *llm.Client
+	Model           string
+	FirecrawlAPIKey string
+	ChromeAddr      string
+	MaxTokens       *int
+	Temperature     *float64
+	Timeout         time.Duration
+	MaxTurns        int
 }

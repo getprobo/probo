@@ -1,0 +1,30 @@
+type ResourceAlias {
+    resourceId: ID!
+    alias: String!
+}
+
+input SetResourceAliasInput {
+    resourceId: ID!
+    alias: String!
+}
+
+input RemoveResourceAliasInput {
+    resourceId: ID!
+}
+
+type SetResourceAliasPayload {
+    resourceAlias: ResourceAlias!
+}
+
+type RemoveResourceAliasPayload {
+    deletedResourceId: ID!
+}
+
+extend type Mutation {
+    setResourceAlias(
+        input: SetResourceAliasInput!
+    ): SetResourceAliasPayload!
+    removeResourceAlias(
+        input: RemoveResourceAliasInput!
+    ): RemoveResourceAliasPayload!
+}

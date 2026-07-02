@@ -1,0 +1,81 @@
+enum AgentRunStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AgentRunStatus") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentRunStatusPending")
+    RUNNING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentRunStatusRunning")
+    SUSPENDED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentRunStatusSuspended")
+    AWAITING_APPROVAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgentRunStatusAwaitingApproval"
+        )
+    COMPLETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentRunStatusCompleted")
+    FAILED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentRunStatusFailed")
+}
+
+enum AgentRunOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AgentRunOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgentRunOrderFieldCreatedAt"
+        )
+}
+
+input AgentRunOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgentRunOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AgentRunOrderField!
+}
+
+type AgentRun implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    agentName: String!
+    status: AgentRunStatus!
+    errorMessage: String
+    startedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AgentRunConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgentRunConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AgentRunEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AgentRunEdge {
+    cursor: CursorKey!
+    node: AgentRun!
+}
+
+extend type Mutation {
+    submitAgentRunApproval(
+        input: SubmitAgentRunApprovalInput!
+    ): SubmitAgentRunApprovalPayload!
+}
+
+input AgentRunApprovalDecisionInput {
+    toolCallId: String!
+    approved: Boolean!
+    reason: String
+}
+
+input SubmitAgentRunApprovalInput {
+    agentRunId: ID!
+    decisions: [AgentRunApprovalDecisionInput!]!
+}
+
+type SubmitAgentRunApprovalPayload {
+    agentRun: AgentRun!
+}

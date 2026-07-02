@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -104,7 +104,7 @@ export function NDAPage(props: {
   const isMobile = width < 1100;
   const isDesktop = !isMobile;
 
-  const queryData = usePreloadedQuery(ndaPageQuery, props.queryRef);
+  const queryData = usePreloadedQuery<NDAPageQueryType>(ndaPageQuery, props.queryRef);
   const trustCenter = queryData.currentTrustCenter;
   const viewer = queryData.viewer;
 
@@ -223,11 +223,7 @@ export function NDAPage(props: {
     return <Navigate to="/overview" replace />;
   }
 
-  const consentText = ndaSignature?.consentText
-    ? ndaSignature.consentText
-    : __(
-        "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@govrly.com.",
-      );
+  const consentText = ndaSignature?.consentText;
 
   return (
     <div className="bg-level-2 flex flex-col min-h-screen lg:h-screen">
@@ -297,13 +293,13 @@ export function NDAPage(props: {
                     >
                       {isFailed
                         ? __("Try again")
-                        : __("Accept")}
+                        : __("Review and sign")}
                     </Button>
                   )}
             </div>
           </div>
           <a
-            href="https://app.govrly.sa//"
+            href="https://www.probo.com/"
             className="flex gap-1 text-sm font-medium text-txt-tertiary items-center py-6"
           >
             Powered by

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/obligation"
 	"go.probo.inc/probo/pkg/cmd/org"
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
+	resourcealias "go.probo.inc/probo/pkg/cmd/resource-alias"
 	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
 	riskassessment "go.probo.inc/probo/pkg/cmd/risk-assessment"
@@ -118,6 +119,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(rightsrequest.NewCmdRightsRequest(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
 	cmd.AddCommand(riskassessment.NewCmdRiskAssessment(f))
+	cmd.AddCommand(resourcealias.NewCmdResourceAlias(f))
 	cmd.AddCommand(scim.NewCmdScim(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))

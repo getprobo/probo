@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,15 +24,12 @@ import (
 )
 
 func mondayRegistration() *Registration {
-	// Monday.com's primary API is GraphQL POST, and the auth subdomain
-	// does not expose a Bearer-protected GET userinfo endpoint, so
-	// ProbeURL is empty. The probe handler skips empty entries; an
-	// invalid token surfaces at the next /v2 query.
 	return &Registration{
 		Provider:     coredata.ConnectorProviderMonday,
 		DisplayName:  "Monday.com",
 		AuthURL:      "https://auth.monday.com/oauth2/authorize",
 		TokenURL:     "https://auth.monday.com/oauth2/token",
+		Probe:        probeMonday,
 		OAuth2Scopes: []string{"users:read", "account:read"},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewMondayDriver(c), nil

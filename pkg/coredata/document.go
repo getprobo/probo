@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -361,64 +361,6 @@ SELECT * FROM base WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query documents: %w", err)
-	}
-
-	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Document])
-	if err != nil {
-		return fmt.Errorf("cannot collect documents: %w", err)
-	}
-
-	*p = documents
-
-	return nil
-}
-
-func (p *Documents) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	filter *DocumentFilter,
-) error {
-	q := `
-WITH latest_versions AS (
-    SELECT DISTINCT ON (document_id) document_id, title, document_type
-    FROM document_versions
-    ORDER BY document_id, major DESC, minor DESC
-)
-SELECT
-	documents.id,
-    documents.organization_id,
-    documents.current_published_major,
-    documents.current_published_minor,
-    documents.write_mode,
-    documents.trust_center_visibility,
-    documents.status,
-    documents.archived_at,
-    documents.created_at,
-    documents.updated_at,
-    COALESCE(lv.title, '') AS title,
-    COALESCE(lv.document_type, 'OTHER') AS document_type
-FROM
-    documents
-LEFT JOIN latest_versions lv ON lv.document_id = documents.id
-WHERE
-    %s
-    AND documents.deleted_at IS NULL
-    AND documents.organization_id = @organization_id
-    AND %s
-ORDER BY title ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -978,7 +920,9 @@ func (p *Documents) BulkArchive(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_center_visibility = 'NONE' WHERE %s AND id = ANY(@document_ids)
+UPDATE documents
+SET status = 'ARCHIVED', archived_at = @archived_at, trust_center_visibility = 'NONE', updated_at = @updated_at
+WHERE %s AND id = ANY(@document_ids)
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -987,9 +931,11 @@ UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_cent
 		ids[i] = doc.ID
 	}
 
+	now := time.Now()
 	args := pgx.StrictNamedArgs{
 		"document_ids": ids,
-		"archived_at":  time.Now(),
+		"archived_at":  now,
+		"updated_at":   now,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1006,7 +952,7 @@ func (p *Documents) BulkUnarchive(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY(@document_ids)
+UPDATE documents SET status = 'ACTIVE', archived_at = NULL, updated_at = @updated_at WHERE %s AND id = ANY(@document_ids)
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -1017,6 +963,7 @@ UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY
 
 	args := pgx.StrictNamedArgs{
 		"document_ids": ids,
+		"updated_at":   time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 

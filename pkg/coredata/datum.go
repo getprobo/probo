@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -242,50 +242,6 @@ WHERE
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query data: %w", err)
-	}
-
-	data, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Datum])
-	if err != nil {
-		return fmt.Errorf("cannot collect data: %w", err)
-	}
-
-	*d = data
-
-	return nil
-}
-
-func (d *Data) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	name,
-	organization_id,
-	owner_profile_id,
-	data_classification,
-	created_at,
-	updated_at
-FROM
-	data
-WHERE
-	%s
-	AND organization_id = @organization_id
-ORDER BY
-	name ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

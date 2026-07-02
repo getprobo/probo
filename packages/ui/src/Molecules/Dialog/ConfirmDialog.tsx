@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,12 +38,14 @@ type State = {
   onConfirm: () => void | Promise<unknown>;
 };
 
+const initialConfirmState: State = {
+  message: null,
+  onConfirm: () => Promise.resolve(),
+};
+
 const useConfirmStore = create(
   combine(
-    {
-      message: null,
-      onConfirm: () => Promise.resolve(),
-    } as State,
+    initialConfirmState,
     set => ({
       open: (props: State) => {
         set(props);

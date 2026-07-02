@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,14 @@ func NewOrganization(o *coredata.Organization) *Organization {
 		HeadquarterAddress: o.HeadquarterAddress,
 		CreatedAt:          o.CreatedAt,
 		UpdatedAt:          o.UpdatedAt,
+	}
+
+	if o.LogoFileID != nil {
+		org.Logo = &File{ID: *o.LogoFileID}
+	}
+
+	if o.HorizontalLogoFileID != nil {
+		org.HorizontalLogo = &File{ID: *o.HorizontalLogoFileID}
 	}
 
 	if o.CustomDomainID != nil {

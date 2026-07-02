@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,7 @@ const requestAccessMutation = graphql`
   mutation AuditRow_requestAccessMutation($input: RequestReportAccessInput!) {
     requestReportAccess(input: $input) {
       audit {
-        report {
+        reportFile {
           access {
             id
             status
@@ -55,8 +55,9 @@ const requestAccessMutation = graphql`
 const auditRowFragment = graphql`
   fragment AuditRowFragment on Audit {
     name
-    report {
+    reportFile {
       id
+      alias
       isUserAuthorized
       access {
         id
@@ -66,8 +67,12 @@ const auditRowFragment = graphql`
     framework {
       id
       name
-      lightLogoURL
-      darkLogoURL
+      lightLogo {
+        downloadUrl
+      }
+      darkLogo {
+        downloadUrl
+      }
     }
   }
 `;
@@ -80,7 +85,8 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
   const navigate = useNavigate();
 
   const audit = useFragment(auditRowFragment, props.audit);
-  const hasRequested = audit.report?.access?.status === "REQUESTED";
+  const reportPath = audit.reportFile?.alias ?? audit.reportFile?.id;
+  const hasRequested = audit.reportFile?.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
     = useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);
@@ -89,7 +95,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     requestAccess({
       variables: {
         input: {
-          reportId: audit.report?.id ?? "",
+          reportId: audit.reportFile?.id ?? "",
         },
       },
       onCompleted: (_, errors) => {
@@ -110,7 +116,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
           const pathPrefix = getPathPrefix();
-          searchParams.set("request-report-id", audit.report?.id ?? "");
+          searchParams.set("request-report-id", audit.reportFile?.id ?? "");
           const urlSearchParams = new URLSearchParams([[
             "continue",
             window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
@@ -135,14 +141,14 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.name ?? audit.framework.name}
       </div>
-      {audit.report && (
-        audit.report.isUserAuthorized
+      {audit.reportFile && (
+        audit.reportFile.isUserAuthorized
           ? (
               <Button
                 className="w-full md:w-max"
                 variant="secondary"
                 icon={IconArrowLink}
-                to={`/documents/${audit.report.id}`}
+                to={reportPath ? `/documents/${reportPath}` : undefined}
               >
                 {__("View")}
               </Button>
@@ -176,8 +182,8 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
           <div className="flex flex-col gap-2 items-center w-19">
             <FrameworkLogo
               className="size-19"
-              lightLogoURL={audit.framework.lightLogoURL}
-              darkLogoURL={audit.framework.darkLogoURL}
+              lightLogoURL={audit.framework.lightLogo?.downloadUrl}
+              darkLogoURL={audit.framework.darkLogo?.downloadUrl}
               name={audit.framework.name}
             />
             <div className="txt-primary text-sm max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis">
@@ -215,8 +221,8 @@ function AuditDialog(
       <DialogContent className="p-4 lg:p-8 space-y-6">
         <FrameworkLogo
           className="size-24 mx-auto"
-          lightLogoURL={audit.framework.lightLogoURL}
-          darkLogoURL={audit.framework.darkLogoURL}
+          lightLogoURL={audit.framework.lightLogo?.downloadUrl}
+          darkLogoURL={audit.framework.darkLogo?.downloadUrl}
           name={audit.framework.name}
         />
         <h2 className="text-xl font-semibold mb-1">{audit.framework.name}</h2>

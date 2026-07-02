@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,6 @@ package accessreview
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -26,7 +25,6 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.probo.inc/probo/pkg/gid"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,8 +36,8 @@ type (
 		providerRegistry  *provider.Registry
 		logger            *log.Logger
 
-		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetch]
-		sourceNameWorker *worker.Worker[coredata.AccessSource]
+		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
+		sourceNameWorker *worker.Worker[coredata.AccessReviewSource]
 	}
 
 	Option func(*options)
@@ -100,67 +98,6 @@ func NewService(
 	)
 
 	return s
-}
-
-// Sources returns a tenant-scoped AccessSourceService.
-func (s *Service) Sources(scope coredata.Scoper) *AccessSourceService {
-	return &AccessSourceService{
-		pg:                s.pg,
-		scope:             scope,
-		encryptionKey:     s.encryptionKey,
-		connectorRegistry: s.connectorRegistry,
-		providerRegistry:  s.providerRegistry,
-	}
-}
-
-// Campaigns returns a tenant-scoped CampaignService.
-func (s *Service) Campaigns(scope coredata.Scoper) *CampaignService {
-	return NewCampaignService(s.pg, scope)
-}
-
-// Entries returns a tenant-scoped AccessEntryService.
-func (s *Service) Entries(scope coredata.Scoper) *AccessEntryService {
-	return &AccessEntryService{pg: s.pg, scope: scope}
-}
-
-// Engine returns a tenant-scoped ReviewEngine.
-func (s *Service) Engine(scope coredata.Scoper) *ReviewEngine {
-	return NewReviewEngine(
-		s.pg,
-		scope,
-		s.encryptionKey,
-		s.connectorRegistry,
-		s.providerRegistry,
-		s.logger.Named("review_engine"),
-	)
-}
-
-// ResolveEntryOrganizationID resolves the organization ID for an access entry.
-// This is unscoped because it is used by resolvers before authorization to
-// find the organization from an entry ID.
-func (s *Service) ResolveEntryOrganizationID(ctx context.Context, entryID gid.GID) (gid.GID, error) {
-	var organizationID gid.GID
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var err error
-
-			entry := &coredata.AccessEntry{}
-
-			organizationID, err = entry.LoadOrganizationID(ctx, conn, entryID)
-			if err != nil {
-				return fmt.Errorf("cannot load organization id: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return gid.GID{}, fmt.Errorf("cannot resolve organization id: %w", err)
-	}
-
-	return organizationID, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {

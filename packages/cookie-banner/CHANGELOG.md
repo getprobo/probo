@@ -4,6 +4,43 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.10.0] - 2026-06-19
+
+### Changed
+
+- Local storage, IndexedDB, and cache-storage trackers without an expiry now display a localized "persistent" duration rather than "session"
+
+## [0.9.3] - 2026-06-12
+
+### Fixed
+
+- Hold the page scroll lock on sites using JS-driven smooth-scroll libraries (e.g. Lenis, as used by Framer) that bypass `overflow: hidden`. The body is now pinned with `position: fixed` (scroll position saved and restored) to remove the viewport's scroll distance entirely, with capture-phase wheel/touch cancellation as defense-in-depth for inner scroll containers; the preference panel's own list can still scroll
+
+## [0.9.2] - 2026-06-11
+
+### Changed
+
+- References updated to probo.com
+
+## [0.9.1] - 2026-06-10
+
+### Fixed
+
+- Lock page scroll while the preference panel is open and add `overscroll-behavior: contain` to the category list, so wheel events at panel edges no longer chain to the host page
+- Exclude the SDK's own served bundle URL from tracker initiator attribution and from the resource detector, so third-party/extension writes are no longer misattributed to `cookie-banner.iife.js` when the SDK is served from a CDN distinct from the API host
+
+## [0.9.0] - 2026-06-05
+
+### Added
+
+- Support Indonesian, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Ukrainian, and Chinese
+
+## [0.8.0] - 2026-06-03
+
+### Added
+
+- Expose tracker type on `CookieItem` and render it in the headless cookie list and themed banner
+
 ## [0.7.0] - 2026-05-27
 
 ### Added

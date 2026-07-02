@@ -13,6 +13,7 @@ directive @goEnum(value: String) on ENUM_VALUE
 
 directive @nda on FIELD_DEFINITION | OBJECT
 
+scalar BigInt
 scalar CursorKey
 scalar Datetime
 scalar EmailAddr
@@ -24,6 +25,7 @@ interface Node {
 type Query {
   viewer: Identity
   node(id: ID!): Node
+  aliasedNode(alias: String!): Node
   currentTrustCenter: TrustCenter
   oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)

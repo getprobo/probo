@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,10 @@ export const reactConfigs: FlatConfig.ConfigArray = [
   {
     settings: {
       react: {
-        version: "detect",
+        // Pin an explicit version: eslint-plugin-react@7.37.5 predates ESLint 10
+        // and its "detect" path calls the removed context.getFilename(), which
+        // crashes under ESLint 10.
+        version: "19.2",
       },
     },
   },
