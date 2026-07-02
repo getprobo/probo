@@ -48,6 +48,7 @@ type (
 		SenderCompanyName               string
 		SenderCompanyWebsiteURL         string
 		SenderCompanyLogoURL            string
+		PoweredByLogoURL                string
 		SenderCompanyHeadquarterAddress string
 
 		// Other common variables
@@ -150,6 +151,7 @@ func (p *Presenter) getCommonVariables() (*CommonVariables, error) {
 		SenderCompanyName:               p.config.SenderCompanyName,
 		SenderCompanyWebsiteURL:         p.config.SenderCompanyWebsiteURL,
 		SenderCompanyLogoURL:            senderCompanyLogoURL,
+		PoweredByLogoURL:                poweredByLogoURL,
 		SenderCompanyHeadquarterAddress: p.config.SenderCompanyHeadquarterAddress,
 		RecipientFullName:               p.RecipientFullName,
 	}, nil
