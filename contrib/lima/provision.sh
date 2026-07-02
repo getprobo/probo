@@ -1,6 +1,6 @@
 #!/bin/bash
-# Copyright (c) 2025, 2026 Probo Inc.
-# SPDX-License-Identifier: ISC
+# Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+# SPDX-License-Identifier: MIT
 
 set -euo pipefail
 

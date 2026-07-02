@@ -259,6 +259,6 @@ Use `http://` explicitly — hosts without a scheme default to HTTPS. Config is 
 
 1. **Group command** — `pkg/cmd/<resource>/<resource>.go` with `NewCmd<Resource>(f)`, wiring all verb subcommands
 2. **Leaf commands** — one file per verb in `pkg/cmd/<resource>/<verb>/<verb>.go`
-3. **Each leaf file** — ISC license header, GraphQL const, unexported response struct, `NewCmd<Verb>(f)` function
+3. **Each leaf file** — MIT license header, GraphQL const, unexported response struct, `NewCmd<Verb>(f)` function
 4. **Register in root** — import and `cmd.AddCommand()` in `pkg/cmd/root/root.go`
 5. **API surface** — update GraphQL schema, MCP tools, and e2e tests

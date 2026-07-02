@@ -23,7 +23,7 @@ date -u +"%Y%m%dT%H%M%SZ.sql"
 
 ## License header
 
-Every `.sql` file starts with the ISC header (use the current year). Copy
+Every `.sql` file starts with the MIT header (use the current year). Copy
 the exact block from `contrib/claude/license.md` (SQL section).
 
 ## Content rules
