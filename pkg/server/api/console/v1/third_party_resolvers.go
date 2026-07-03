@@ -578,10 +578,20 @@ func (r *mutationResolver) VetThirdParty(ctx context.Context, input types.VetThi
 		return nil, err
 	}
 
+	// Writing identity (name/legal name) requires update permission, not
+	// vet alone.
+	if input.Name != nil || input.LegalName != nil {
+		if _, err := r.authorize(ctx, input.ID, probo.ActionThirdPartyUpdate); err != nil {
+			return nil, err
+		}
+	}
+
 	thirdParty, err := r.thirdParty.Vet(
 		ctx, scope,
 		thirdparty.VetRequest{
 			ID:         input.ID,
+			Name:       input.Name,
+			LegalName:  input.LegalName,
 			WebsiteURL: input.WebsiteURL,
 			Procedure:  input.Procedure,
 		},

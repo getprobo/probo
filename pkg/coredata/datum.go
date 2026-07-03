@@ -258,6 +258,66 @@ WHERE
 	return nil
 }
 
+func (d *Data) LoadByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+	cursor *page.Cursor[DatumOrderField],
+) error {
+	q := `
+WITH linked_data AS (
+	SELECT
+		d.id,
+		d.tenant_id,
+		d.name,
+		d.organization_id,
+		d.owner_profile_id,
+		d.data_classification,
+		d.created_at,
+		d.updated_at
+	FROM
+		data d
+	INNER JOIN
+		data_third_parties dtp ON d.id = dtp.datum_id
+	WHERE
+		dtp.third_party_id = @third_party_id
+)
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	data_classification,
+	created_at,
+	updated_at
+FROM
+	linked_data
+WHERE %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query data: %w", err)
+	}
+
+	data, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Datum])
+	if err != nil {
+		return fmt.Errorf("cannot collect data: %w", err)
+	}
+
+	*d = data
+
+	return nil
+}
+
 func (d *Datum) Insert(
 	ctx context.Context,
 	conn pg.Tx,

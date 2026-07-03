@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -31,6 +32,7 @@ import (
 
 const (
 	vettingErrorMessageMaxLen  = 512
+	vettingNameMaxLength       = 1000
 	vettingWebsiteURLMaxLength = 2048
 	vettingProcedureMaxLength  = 5000
 )
@@ -46,6 +48,8 @@ type (
 			ctx context.Context,
 			websiteURL string,
 			procedure string,
+			knownFacts *vetting.KnownFacts,
+			organizationContext string,
 			reporter agent.ProgressReporter,
 			extraTools []agent.Tool,
 		) (*vetting.Result, error)
@@ -57,6 +61,12 @@ type (
 		ID         gid.GID
 		WebsiteURL string
 		Procedure  *string
+
+		// Name and LegalName confirm the vendor identity from the vetting
+		// form. When set they update the third party's canonical identity;
+		// nil leaves the existing value untouched.
+		Name      *string
+		LegalName *string
 	}
 )
 
@@ -65,6 +75,8 @@ var _ Vetter = DisabledVetter{}
 func (DisabledVetter) Assess(
 	_ context.Context,
 	_ string,
+	_ string,
+	_ *vetting.KnownFacts,
 	_ string,
 	_ agent.ProgressReporter,
 	_ []agent.Tool,
@@ -78,6 +90,8 @@ func (req VetRequest) Validate() error {
 	v.Check(req.ID, "id", validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
 	v.Check(req.WebsiteURL, "website_url", validator.Required(), validator.SafeText(vettingWebsiteURLMaxLength))
 	v.Check(req.Procedure, "procedure", validator.SafeText(vettingProcedureMaxLength))
+	v.Check(req.Name, "name", validator.SafeTextNoNewLine(vettingNameMaxLength))
+	v.Check(req.LegalName, "legal_name", validator.SafeTextNoNewLine(vettingNameMaxLength))
 
 	return v.Error()
 }
@@ -120,6 +134,23 @@ func (s *Service) Vet(
 
 			if thirdParty.VettingStatus != nil && thirdParty.VettingStatus.IsActive() {
 				return ErrVettingInProgress
+			}
+
+			// Confirmed identity from the form updates the canonical name/
+			// legal name. The vetting website URL stays vetting-specific
+			// and never overwrites the identity website URL.
+			if req.Name != nil {
+				if name := strings.TrimSpace(*req.Name); name != "" {
+					thirdParty.Name = name
+				}
+			}
+
+			if req.LegalName != nil {
+				if legalName := strings.TrimSpace(*req.LegalName); legalName != "" {
+					thirdParty.LegalName = &legalName
+				} else {
+					thirdParty.LegalName = nil
+				}
 			}
 
 			pending := coredata.ThirdPartyVettingStatusPending

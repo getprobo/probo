@@ -34,10 +34,15 @@ type (
 		vetter     Vetter
 		logger     *log.Logger
 		staleAfter time.Duration
+		profiler   *Profiler
 	}
 
 	VettingWorkerConfig struct {
 		StaleAfter time.Duration
+
+		// Profiler runs the general-info agents to prime an assessment.
+		// Optional: when nil, only catalog-linked third parties are primed.
+		Profiler *Profiler
 	}
 )
 
@@ -63,6 +68,7 @@ func NewVettingWorker(
 		vetter:     vetter,
 		logger:     logger,
 		staleAfter: staleAfter,
+		profiler:   cfg.Profiler,
 	}
 
 	return worker.New(
@@ -160,6 +166,12 @@ func (h *vettingHandler) processThirdParty(
 		WebsiteURL:     *thirdParty.VettingWebsiteURL,
 	}
 
+	// Prime the assessment with known vendor facts; best-effort.
+	knownFacts := h.resolveKnownFacts(ctx, thirdParty)
+
+	// Make the assessment specific to this organization; best-effort.
+	organizationContext := h.buildOrganizationContext(ctx, thirdParty)
+
 	// Assessment runs outside any database transaction. Persistence tools
 	// are not passed in so the agent cannot open DB transactions during
 	// the long LLM/browser phase; results are written afterward.
@@ -167,6 +179,8 @@ func (h *vettingHandler) processThirdParty(
 		ctx,
 		*thirdParty.VettingWebsiteURL,
 		procedure,
+		knownFacts,
+		organizationContext,
 		nil,
 		nil,
 	)

@@ -441,6 +441,98 @@ WHERE
 	return nil
 }
 
+func (p *ProcessingActivities) LoadByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+	cursor *page.Cursor[ProcessingActivityOrderField],
+) error {
+	q := `
+WITH linked_processing_activities AS (
+	SELECT
+		pa.id,
+		pa.tenant_id,
+		pa.organization_id,
+		pa.name,
+		pa.purpose,
+		pa.data_subject_category,
+		pa.personal_data_category,
+		pa.special_or_criminal_data,
+		pa.consent_evidence_link,
+		pa.lawful_basis,
+		pa.recipients,
+		pa.location,
+		pa.international_transfers,
+		pa.transfer_safeguards,
+		pa.retention_period,
+		pa.security_measures,
+		pa.data_protection_impact_assessment_needed,
+		pa.transfer_impact_assessment_needed,
+		pa.last_review_date,
+		pa.next_review_date,
+		pa.role,
+		pa.dpo_profile_id,
+		pa.created_at,
+		pa.updated_at
+	FROM
+		processing_activities pa
+	INNER JOIN
+		processing_activity_third_parties patp ON pa.id = patp.processing_activity_id
+	WHERE
+		patp.third_party_id = @third_party_id
+)
+SELECT
+	id,
+	organization_id,
+	name,
+	purpose,
+	data_subject_category,
+	personal_data_category,
+	special_or_criminal_data,
+	consent_evidence_link,
+	lawful_basis,
+	recipients,
+	location,
+	international_transfers,
+	transfer_safeguards,
+	retention_period,
+	security_measures,
+	data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed,
+	last_review_date,
+	next_review_date,
+	role,
+	dpo_profile_id,
+	created_at,
+	updated_at
+FROM
+	linked_processing_activities
+WHERE %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query processing activities: %w", err)
+	}
+
+	processingActivities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ProcessingActivity])
+	if err != nil {
+		return fmt.Errorf("cannot collect processing activities: %w", err)
+	}
+
+	*p = processingActivities
+
+	return nil
+}
+
 func (p *ProcessingActivity) Insert(
 	ctx context.Context,
 	conn pg.Tx,

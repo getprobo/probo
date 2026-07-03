@@ -63,6 +63,7 @@ export const thirdPartyDetailLayoutQuery = graphql`
         vettingStatus
         canVet: permission(action: "core:thirdParty:vet")
         canDelete: permission(action: "core:thirdParty:delete")
+        ...VettingDialogFragment
         complianceReportsInfo: complianceReports(first: 100) {
           edges {
             node {
@@ -263,10 +264,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
         </div>
         <div className="flex gap-2 items-center">
           {thirdParty.canVet && !isVetting && (
-            <VettingDialog
-              thirdPartyId={thirdParty.id}
-              websiteUrl={thirdParty.websiteUrl}
-            >
+            <VettingDialog thirdParty={thirdParty}>
               <Button icon={IconPageTextLine} variant="secondary">
                 {__("Start Vetting")}
               </Button>

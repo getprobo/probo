@@ -173,7 +173,7 @@ func NewAssessor(cfg Config) *Assessor {
 	return &Assessor{cfg: cfg}
 }
 
-func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure string, reporter agent.ProgressReporter, extraTools []agent.Tool) (*Result, error) {
+func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure string, knownFacts *KnownFacts, organizationContext string, reporter agent.ProgressReporter, extraTools []agent.Tool) (*Result, error) {
 	u, err := url.Parse(websiteURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse website URL %q: %w", websiteURL, err)
@@ -205,6 +205,7 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		a.cfg.Model,
 		a.cfg.MaxTokens,
 		procedure,
+		organizationContext,
 		a.cfg.Logger,
 		webBrowser,
 		a.cfg.FirecrawlAPIKey,
@@ -215,12 +216,21 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		return nil, fmt.Errorf("cannot create orchestrator agent: %w", err)
 	}
 
+	// Seed known facts ahead of the website URL so the sub-agents skip
+	// rediscovering basics.
+	parts := make([]llm.Part, 0, 2)
+	if knownFacts != nil && !knownFacts.IsEmpty() {
+		parts = append(parts, llm.TextPart{Text: knownFacts.render()})
+	}
+
+	parts = append(parts, llm.TextPart{Text: websiteURL})
+
 	orchestratorResult, err := orchestrator.Run(
 		ctx,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,
-				Parts: []llm.Part{llm.TextPart{Text: websiteURL}},
+				Parts: parts,
 			},
 		},
 	)

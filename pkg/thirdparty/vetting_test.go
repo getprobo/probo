@@ -108,7 +108,7 @@ func TestSanitizeVettingError(t *testing.T) {
 func TestDisabledVetter_Assess(t *testing.T) {
 	t.Parallel()
 
-	_, err := DisabledVetter{}.Assess(context.Background(), "https://example.com", "", nil, nil)
+	_, err := DisabledVetter{}.Assess(context.Background(), "https://example.com", "", nil, "", nil, nil)
 	require.ErrorIs(t, err, ErrVettingDisabled)
 }
 

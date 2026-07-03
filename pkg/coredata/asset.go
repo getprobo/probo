@@ -272,6 +272,70 @@ WHERE
 	return nil
 }
 
+func (a *Assets) LoadByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+	cursor *page.Cursor[AssetOrderField],
+) error {
+	q := `
+WITH linked_assets AS (
+	SELECT
+		a.id,
+		a.tenant_id,
+		a.name,
+		a.organization_id,
+		a.owner_profile_id,
+		a.amount,
+		a.asset_type,
+		a.data_types_stored,
+		a.created_at,
+		a.updated_at
+	FROM
+		assets a
+	INNER JOIN
+		asset_third_parties atp ON a.id = atp.asset_id
+	WHERE
+		atp.third_party_id = @third_party_id
+)
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	created_at,
+	updated_at
+FROM
+	linked_assets
+WHERE %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query assets: %w", err)
+	}
+
+	assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+	if err != nil {
+		return fmt.Errorf("cannot collect assets: %w", err)
+	}
+
+	*a = assets
+
+	return nil
+}
+
 func (a *Asset) Insert(
 	ctx context.Context,
 	conn pg.Tx,

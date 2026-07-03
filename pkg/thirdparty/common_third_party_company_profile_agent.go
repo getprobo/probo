@@ -22,7 +22,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agent/tools/search"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 //go:embed prompts/common_third_party_company_profile.txt.tmpl
@@ -79,21 +78,21 @@ func buildCompanyProfileAgent(
 	return agent.New("common-third-party-company-profile", cfg.LLMClient, opts...)
 }
 
-// buildCompanyProfilePrompt renders the per-row input for Agent A. Any
-// values already on the row are passed as hints so the agent confirms or
-// corrects them rather than starting cold.
-func buildCompanyProfilePrompt(party coredata.CommonThirdParty) string {
+// buildCompanyProfilePrompt renders the input for Agent A. Any known
+// values are passed as hints so the agent confirms or corrects them
+// rather than starting cold.
+func buildCompanyProfilePrompt(in GeneralInfoInput) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "Research this company and return its profile.\n\n")
-	fmt.Fprintf(&b, "<name> %s </name>\n", party.Name)
+	fmt.Fprintf(&b, "<name> %s </name>\n", in.Name)
 
-	if party.WebsiteURL != nil && strings.TrimSpace(*party.WebsiteURL) != "" {
-		fmt.Fprintf(&b, "<known_website> %s </known_website>\n", *party.WebsiteURL)
+	if w := strings.TrimSpace(in.WebsiteURL); w != "" {
+		fmt.Fprintf(&b, "<known_website> %s </known_website>\n", w)
 	}
 
-	if party.LegalName != nil && strings.TrimSpace(*party.LegalName) != "" {
-		fmt.Fprintf(&b, "<known_legal_name> %s </known_legal_name>\n", *party.LegalName)
+	if l := strings.TrimSpace(in.LegalName); l != "" {
+		fmt.Fprintf(&b, "<known_legal_name> %s </known_legal_name>\n", l)
 	}
 
 	return b.String()

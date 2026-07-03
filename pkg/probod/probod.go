@@ -975,12 +975,23 @@ func (impl *Implm) Run(
 		},
 	)
 
+	// On-demand profiling needs the enrichment agent config, so wire the
+	// profiler only when that config is present.
+	var vettingProfiler *thirdparty.Profiler
+	if commonThirdPartyEnrichmentCfg.LLMClient != nil {
+		vettingProfiler = thirdparty.NewProfiler(
+			commonThirdPartyEnrichmentCfg,
+			l.Named("vetting-profiler"),
+		)
+	}
+
 	vettingWorker := thirdparty.NewVettingWorker(
 		pgClient,
 		thirdPartyVetter,
 		l.Named("vetting-worker"),
 		thirdparty.VettingWorkerConfig{
 			StaleAfter: time.Duration(impl.cfg.ThirdPartyVetting.StaleAfter) * time.Second,
+			Profiler:   vettingProfiler,
 		},
 		worker.WithInterval(time.Duration(impl.cfg.ThirdPartyVetting.Interval)*time.Second),
 		worker.WithMaxConcurrency(impl.cfg.ThirdPartyVetting.MaxConcurrency),

@@ -24,14 +24,26 @@ import {
   useToast,
 } from "@probo/ui";
 import type { ReactNode } from "react";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
+import type { VettingDialogFragment$key } from "#/__generated__/core/VettingDialogFragment.graphql";
 import type { VettingDialogMutation } from "#/__generated__/core/VettingDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
+const vettingDialogFragment = graphql`
+  fragment VettingDialogFragment on ThirdParty {
+    id
+    name
+    legalName
+    websiteUrl
+  }
+`;
+
 const schema = z.object({
+  name: z.string().min(1),
+  legalName: z.string().optional(),
   url: z.string().url(),
 });
 
@@ -41,6 +53,7 @@ const vetMutation = graphql`
       thirdParty {
         id
         name
+        legalName
         websiteUrl
         vettingStatus
         ...useThirdPartyFormFragment
@@ -52,31 +65,43 @@ const vetMutation = graphql`
 `;
 
 interface VettingDialogProps {
-  thirdPartyId: string;
-  websiteUrl?: string | null;
+  thirdParty: VettingDialogFragment$key;
   children: ReactNode;
 }
 
-export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDialogProps) {
+export function VettingDialog({ thirdParty: thirdPartyKey, children }: VettingDialogProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
+  const thirdParty = useFragment(vettingDialogFragment, thirdPartyKey);
   const { register, handleSubmit, reset, formState } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        url: websiteUrl ?? "",
+        name: thirdParty.name ?? "",
+        legalName: thirdParty.legalName ?? "",
+        url: thirdParty.websiteUrl ?? "",
       },
     },
   );
   const [vet, isVetting] = useMutation<VettingDialogMutation>(vetMutation);
 
   const onSubmit = (data: z.infer<typeof schema>) => {
+    const name = data.name.trim();
+    const legalName = data.legalName?.trim() ?? "";
+
+    // Only send identity when changed: writing it needs update permission,
+    // so an unchanged confirm stays vet-only. Empty legal name clears it.
+    const nameChanged = name !== (thirdParty.name ?? "");
+    const legalNameChanged = legalName !== (thirdParty.legalName ?? "");
+
     vet({
       variables: {
         input: {
-          id: thirdPartyId,
+          id: thirdParty.id,
           websiteUrl: data.url,
+          ...(nameChanged ? { name } : {}),
+          ...(legalNameChanged ? { legalName } : {}),
         },
       },
       onCompleted(_, errors) {
@@ -120,7 +145,20 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
       className="max-w-lg"
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
+        <DialogContent padded className="space-y-4">
+          <Field
+            required
+            label={__("Name")}
+            type="text"
+            {...register("name")}
+            error={formState.errors.name?.message}
+          />
+          <Field
+            label={__("Legal name")}
+            type="text"
+            {...register("legalName")}
+            error={formState.errors.legalName?.message}
+          />
           <Field
             required
             label={__("Website URL")}

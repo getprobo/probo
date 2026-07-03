@@ -62,6 +62,7 @@ func newOrchestratorAgent(
 	model string,
 	maxTokens int,
 	procedure string,
+	organizationContext string,
 	logger *log.Logger,
 	webBrowser *browser.Browser,
 	firecrawlAPIKey string,
@@ -243,7 +244,11 @@ func newOrchestratorAgent(
 		procedure = defaultProcedure
 	}
 
-	systemPrompt := strings.Replace(orchestratorBasePrompt, "{procedure}", procedure, 1)
+	// Substitute org context (system-generated) before the user-provided
+	// procedure so a procedure containing "{organization_context}" cannot
+	// inject into that slot.
+	systemPrompt := strings.Replace(orchestratorBasePrompt, "{organization_context}", organizationContext, 1)
+	systemPrompt = strings.Replace(systemPrompt, "{procedure}", procedure, 1)
 
 	opts := []agent.Option{
 		agent.WithLogger(logger),

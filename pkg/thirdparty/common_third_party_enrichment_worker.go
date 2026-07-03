@@ -28,8 +28,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
-	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agent/tools/browser"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
@@ -163,6 +161,7 @@ type enrichmentHandler struct {
 	logger     *log.Logger
 	cfg        EnrichmentConfig
 	httpClient *http.Client
+	profiler   *Profiler
 }
 
 // NewCommonThirdPartyEnrichmentWorker builds the worker that enriches
@@ -182,6 +181,7 @@ func NewCommonThirdPartyEnrichmentWorker(
 		logger:     logger,
 		cfg:        cfg,
 		httpClient: newEnrichmentHTTPClient(),
+		profiler:   NewProfiler(cfg, logger),
 	}
 
 	return worker.New(
@@ -238,7 +238,7 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 
 	// Agent A first: it resolves website_url, which Agent B and the logo
 	// step depend on.
-	company, err := h.runCompanyProfile(ctx, party)
+	company, err := h.profiler.runCompanyProfile(ctx, generalInfoInputFromParty(party))
 	if err != nil {
 		h.logger.WarnCtx(ctx, "company profile agent failed", log.Error(err), log.String("common_third_party_id", party.ID.String()))
 		runErrors = append(runErrors, "company_profile: "+sanitizeAgentError(err))
@@ -300,11 +300,11 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	var wg sync.WaitGroup
 
 	wg.Go(func() {
-		compliance, complianceErr = h.runComplianceDocs(ctx, party.Name, website, legalName)
+		compliance, complianceErr = h.profiler.runComplianceDocs(ctx, party.Name, website, legalName)
 	})
 
 	wg.Go(func() {
-		domainsResult, domainsErr = h.runDomains(ctx, party.Name, website)
+		domainsResult, domainsErr = h.profiler.runDomains(ctx, party.Name, website)
 	})
 
 	wg.Go(func() {
@@ -489,134 +489,19 @@ func (h *enrichmentHandler) RecoverStale(ctx context.Context) error {
 	)
 }
 
-// runCompanyProfile builds Agent A with a per-run browser when a Chrome
-// endpoint is configured, then runs it. The browser is closed when the
-// run returns. It is not pinned to a domain so the agent can follow a
-// product site to the legal entity's corporate domain (where the legal
-// name and headquarters address live); SSRF protection still blocks
-// non-public hosts.
-func (h *enrichmentHandler) runCompanyProfile(
-	ctx context.Context,
-	party coredata.CommonThirdParty,
-) (CompanyProfileResult, error) {
-	var browserTools []agent.Tool
+// generalInfoInputFromParty maps a catalog row to the general-info input.
+func generalInfoInputFromParty(party coredata.CommonThirdParty) GeneralInfoInput {
+	in := GeneralInfoInput{Name: party.Name}
 
-	if h.cfg.ChromeAddr != "" {
-		webBrowser := browser.NewBrowser(ctx, h.cfg.ChromeAddr)
-		defer webBrowser.Close()
-
-		browserTools = browser.NewReadOnlyToolset(webBrowser).Tools()
+	if party.WebsiteURL != nil {
+		in.WebsiteURL = strings.TrimSpace(*party.WebsiteURL)
 	}
 
-	companyAgent := buildCompanyProfileAgent(h.cfg, h.logger, browserTools)
-
-	prompt := buildCompanyProfilePrompt(party)
-
-	agentCtx, cancel := context.WithTimeout(ctx, h.cfg.AgentTimeout)
-	defer cancel()
-
-	result, err := agent.RunTyped[CompanyProfileResult](
-		agentCtx,
-		companyAgent,
-		[]llm.Message{
-			{
-				Role:  llm.RoleUser,
-				Parts: []llm.Part{llm.TextPart{Text: prompt}},
-			},
-		},
-	)
-	if err != nil {
-		return CompanyProfileResult{}, fmt.Errorf("company profile agent run failed: %w", err)
+	if party.LegalName != nil {
+		in.LegalName = strings.TrimSpace(*party.LegalName)
 	}
 
-	return result.Output, nil
-}
-
-// runComplianceDocs builds Agent B with a per-run browser when a Chrome
-// endpoint is configured, then runs it. The browser is closed when the
-// run returns. The browser is intentionally not pinned to the vendor
-// domain so the agent can follow links to hosted trust portals (Vanta,
-// SafeBase, etc.); SSRF protection still blocks non-public hosts.
-func (h *enrichmentHandler) runComplianceDocs(
-	ctx context.Context,
-	name string,
-	website string,
-	legalName string,
-) (ComplianceDocsResult, error) {
-	var browserTools []agent.Tool
-
-	if h.cfg.ChromeAddr != "" {
-		webBrowser := browser.NewBrowser(ctx, h.cfg.ChromeAddr)
-		defer webBrowser.Close()
-
-		browserTools = browser.NewReadOnlyToolset(webBrowser).Tools()
-	}
-
-	complianceAgent := buildComplianceDocsAgent(h.cfg, h.logger, browserTools)
-
-	prompt := buildComplianceDocsPrompt(name, website, legalName)
-
-	agentCtx, cancel := context.WithTimeout(ctx, h.cfg.AgentTimeout)
-	defer cancel()
-
-	result, err := agent.RunTyped[ComplianceDocsResult](
-		agentCtx,
-		complianceAgent,
-		[]llm.Message{
-			{
-				Role:  llm.RoleUser,
-				Parts: []llm.Part{llm.TextPart{Text: prompt}},
-			},
-		},
-	)
-	if err != nil {
-		return ComplianceDocsResult{}, fmt.Errorf("compliance docs agent run failed: %w", err)
-	}
-
-	return result.Output, nil
-}
-
-// runDomains builds Agent C with a per-run browser when a Chrome endpoint
-// is configured, then runs it. The browser is closed when the run
-// returns. It is not pinned to the vendor domain so the agent can follow
-// links to the vendor's other owned domains; SSRF protection still blocks
-// non-public hosts.
-func (h *enrichmentHandler) runDomains(
-	ctx context.Context,
-	name string,
-	website string,
-) (DomainsResult, error) {
-	var browserTools []agent.Tool
-
-	if h.cfg.ChromeAddr != "" {
-		webBrowser := browser.NewBrowser(ctx, h.cfg.ChromeAddr)
-		defer webBrowser.Close()
-
-		browserTools = browser.NewReadOnlyToolset(webBrowser).Tools()
-	}
-
-	domainsAgent := buildCommonThirdPartyDomainsAgent(h.cfg, h.logger, browserTools)
-
-	prompt := buildCommonThirdPartyDomainsPrompt(name, website)
-
-	agentCtx, cancel := context.WithTimeout(ctx, h.cfg.AgentTimeout)
-	defer cancel()
-
-	result, err := agent.RunTyped[DomainsResult](
-		agentCtx,
-		domainsAgent,
-		[]llm.Message{
-			{
-				Role:  llm.RoleUser,
-				Parts: []llm.Part{llm.TextPart{Text: prompt}},
-			},
-		},
-	)
-	if err != nil {
-		return DomainsResult{}, fmt.Errorf("domains agent run failed: %w", err)
-	}
-
-	return result.Output, nil
+	return in
 }
 
 // effectiveWebsiteURL is the website passed to Agent B and the logo step.

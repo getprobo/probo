@@ -671,6 +671,8 @@ input CreateThirdPartyRiskAssessmentInput {
 
 input VetThirdPartyInput {
     id: ID!
+    name: String
+    legalName: String
     websiteUrl: String!
     procedure: String
 }
