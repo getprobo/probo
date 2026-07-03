@@ -691,15 +691,33 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 // Logo is the resolver for the logo field.
 func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet)
+	if err != nil {
 		return nil, err
 	}
 
-	if obj.Logo == nil {
+	if obj.Logo != nil {
+		return r.loadFile(ctx, obj.Logo.ID)
+	}
+
+	trustCenter, err := r.probo.TrustCenters.Get(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load trust center for compliance page logo fallback", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	organization, err := r.probo.Organizations.Get(ctx, scope, trustCenter.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load organization for compliance page logo fallback", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	logoFileID := trustCenter.EffectiveLogoFileID(organization)
+	if logoFileID == nil {
 		return nil, nil
 	}
 
-	return r.loadFile(ctx, obj.Logo.ID)
+	return r.loadFile(ctx, *logoFileID)
 }
 
 // DarkLogo is the resolver for the darkLogo field.

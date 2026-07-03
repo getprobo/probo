@@ -45,6 +45,7 @@ func (s *CompliancePageService) GenerateLogoURL(
 ) (*string, error) {
 	file := &coredata.File{}
 	compliancePage := &coredata.TrustCenter{}
+	organization := &coredata.Organization{}
 
 	scope := coredata.NewScopeFromObjectID(compliancePageID)
 
@@ -55,11 +56,16 @@ func (s *CompliancePageService) GenerateLogoURL(
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if compliancePage.LogoFileID == nil {
+			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			logoFileID := compliancePage.EffectiveLogoFileID(organization)
+			if logoFileID == nil {
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *logoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -70,7 +76,8 @@ func (s *CompliancePageService) GenerateLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.LogoFileID == nil {
+	logoFileID := compliancePage.EffectiveLogoFileID(organization)
+	if logoFileID == nil {
 		return nil, nil
 	}
 
@@ -104,14 +111,14 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if compliancePage.LogoFileID != nil {
-				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
-					return fmt.Errorf("cannot load logoFile: %w", err)
-				}
-			}
-
 			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if logoFileID := compliancePage.EffectiveLogoFileID(organization); logoFileID != nil {
+				if err := logoFile.LoadByID(ctx, conn, scope, *logoFileID); err != nil {
+					return fmt.Errorf("cannot load logoFile: %w", err)
+				}
 			}
 
 			customDomain = &coredata.CustomDomain{}
@@ -147,7 +154,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 
 	emailPresenterCfg.BaseURL = baseURL.String()
 
-	if compliancePage.LogoFileID != nil {
+	if logoFileID := compliancePage.EffectiveLogoFileID(organization); logoFileID != nil {
 		if logoFile.FileKey == "" {
 			return emailPresenterCfg, nil
 		}

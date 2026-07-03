@@ -48,6 +48,18 @@ type (
 	TrustCenters []*TrustCenter
 )
 
+func (tc *TrustCenter) EffectiveLogoFileID(organization *Organization) *gid.GID {
+	if tc.LogoFileID != nil {
+		return tc.LogoFileID
+	}
+
+	if organization != nil {
+		return organization.LogoFileID
+	}
+
+	return nil
+}
+
 func (tc *TrustCenter) CursorKey(orderBy TrustCenterOrderField) page.CursorKey {
 	switch orderBy {
 	case TrustCenterOrderFieldCreatedAt:
