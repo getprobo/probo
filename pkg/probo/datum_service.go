@@ -207,6 +207,13 @@ func (s DatumService) Update(
 		}
 
 		if req.ThirdPartyIDs != nil {
+			if len(req.ThirdPartyIDs) > 0 {
+				thirdParties := &coredata.ThirdParties{}
+				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot load thirdParties: %w", err)
+				}
+			}
+
 			if err := datumThirdParties.Merge(ctx, conn, scope, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
 				return fmt.Errorf("cannot update data thirdParties: %w", err)
 			}
@@ -256,6 +263,11 @@ func (s DatumService) Create(
 			}
 
 			if len(req.ThirdPartyIDs) > 0 {
+				thirdParties := &coredata.ThirdParties{}
+				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot load thirdParties: %w", err)
+				}
+
 				if err := datumThirdParties.Insert(ctx, conn, scope, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
 					return fmt.Errorf("cannot create data thirdParties: %w", err)
 				}

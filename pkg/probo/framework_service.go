@@ -18,6 +18,7 @@ import (
 	"archive/zip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -467,7 +468,7 @@ func (s FrameworkService) GetByIDs(
 				conn,
 				scope,
 				frameworkIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load frameworks by ids: %w", err)
 			}
 

@@ -342,6 +342,11 @@ func (s StatementOfApplicabilityService) CreateApplicabilityStatement(
 				return fmt.Errorf("cannot load statement of applicability: %w", err)
 			}
 
+			control := &coredata.Control{}
+			if err := control.LoadByID(ctx, conn, scope, controlID); err != nil {
+				return fmt.Errorf("cannot load control: %w", err)
+			}
+
 			applicabilityStatement = &coredata.ApplicabilityStatement{
 				ID:                         gid.New(scope.GetTenantID(), coredata.ApplicabilityStatementEntityType),
 				StatementOfApplicabilityID: statementOfApplicabilityID,

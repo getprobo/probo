@@ -195,11 +195,23 @@ func (s *ProcessingActivityService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
+			if req.DataProtectionOfficerID != nil {
+				dpo := &coredata.MembershipProfile{}
+				if err := dpo.LoadByID(ctx, conn, scope, *req.DataProtectionOfficerID); err != nil {
+					return fmt.Errorf("cannot load data protection officer profile: %w", err)
+				}
+			}
+
 			if err := processingActivity.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert processing activity: %w", err)
 			}
 
 			if len(req.ThirdPartyIDs) > 0 {
+				thirdParties := &coredata.ThirdParties{}
+				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot load thirdParties: %w", err)
+				}
+
 				if err := processingActivityThirdParties.Insert(ctx, conn, scope, processingActivity.ID, req.OrganizationID, req.ThirdPartyIDs); err != nil {
 					return fmt.Errorf("cannot create processing activity thirdParties: %w", err)
 				}
@@ -302,6 +314,13 @@ func (s *ProcessingActivityService) Update(
 			}
 
 			if req.DataProtectionOfficerID != nil {
+				if *req.DataProtectionOfficerID != nil {
+					dpo := &coredata.MembershipProfile{}
+					if err := dpo.LoadByID(ctx, conn, scope, **req.DataProtectionOfficerID); err != nil {
+						return fmt.Errorf("cannot load data protection officer profile: %w", err)
+					}
+				}
+
 				processingActivity.DataProtectionOfficerID = *req.DataProtectionOfficerID
 			}
 
@@ -312,6 +331,13 @@ func (s *ProcessingActivityService) Update(
 			}
 
 			if req.ThirdPartyIDs != nil {
+				if len(*req.ThirdPartyIDs) > 0 {
+					thirdParties := &coredata.ThirdParties{}
+					if err := thirdParties.LoadByIDs(ctx, conn, scope, *req.ThirdPartyIDs); err != nil {
+						return fmt.Errorf("cannot load thirdParties: %w", err)
+					}
+				}
+
 				if err := processingActivityThirdParties.Merge(ctx, conn, scope, processingActivity.ID, processingActivity.OrganizationID, *req.ThirdPartyIDs); err != nil {
 					return fmt.Errorf("cannot update processing activity thirdParties: %w", err)
 				}

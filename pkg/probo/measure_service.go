@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -348,7 +349,7 @@ func (s MeasureService) GetByIDs(
 				conn,
 				scope,
 				measureIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load measures by ids: %w", err)
 			}
 

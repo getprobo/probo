@@ -173,6 +173,13 @@ func (s *FindingService) Create(
 				}
 			}
 
+			if req.RiskID != nil {
+				risk := &coredata.Risk{}
+				if err := risk.LoadByID(ctx, conn, scope, *req.RiskID); err != nil {
+					return fmt.Errorf("cannot load risk: %w", err)
+				}
+			}
+
 			if err := finding.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert finding: %w", err)
 			}
@@ -246,6 +253,13 @@ func (s *FindingService) Update(
 			}
 
 			if req.RiskID != nil {
+				if *req.RiskID != nil {
+					risk := &coredata.Risk{}
+					if err := risk.LoadByID(ctx, conn, scope, **req.RiskID); err != nil {
+						return fmt.Errorf("cannot load risk: %w", err)
+					}
+				}
+
 				finding.RiskID = *req.RiskID
 			}
 

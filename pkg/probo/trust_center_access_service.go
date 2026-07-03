@@ -242,11 +242,18 @@ func (s TrustCenterAccessService) Update(
 
 			if len(req.DocumentAccesses) > 0 {
 				var documentData []coredata.MergeTrustCenterDocumentAccessesData
+				documentIDs := make([]gid.GID, 0, len(req.DocumentAccesses))
 				for _, d := range req.DocumentAccesses {
 					documentData = append(documentData, coredata.MergeTrustCenterDocumentAccessesData{
 						ID:     d.ID,
 						Status: d.Status,
 					})
+					documentIDs = append(documentIDs, d.ID)
+				}
+
+				documents := &coredata.Documents{}
+				if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil {
+					return fmt.Errorf("cannot load documents: %w", err)
 				}
 
 				if err := tcdas.MergeDocumentAccesses(ctx, tx, scope, access.OrganizationID, access.ID, documentData); err != nil {
@@ -256,11 +263,18 @@ func (s TrustCenterAccessService) Update(
 
 			if len(req.ReportAccesses) > 0 {
 				var reportData []coredata.MergeTrustCenterDocumentAccessesData
+				reportIDs := make([]gid.GID, 0, len(req.ReportAccesses))
 				for _, d := range req.ReportAccesses {
 					reportData = append(reportData, coredata.MergeTrustCenterDocumentAccessesData{
 						ID:     d.ID,
 						Status: d.Status,
 					})
+					reportIDs = append(reportIDs, d.ID)
+				}
+
+				files := &coredata.Files{}
+				if err := files.LoadByIDs(ctx, tx, scope, reportIDs); err != nil {
+					return fmt.Errorf("cannot load report files: %w", err)
 				}
 
 				if err := tcdas.MergeReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
@@ -270,11 +284,18 @@ func (s TrustCenterAccessService) Update(
 
 			if len(req.TrustCenterFileAccesses) > 0 {
 				var fileData []coredata.MergeTrustCenterDocumentAccessesData
+				trustCenterFileIDs := make([]gid.GID, 0, len(req.TrustCenterFileAccesses))
 				for _, d := range req.TrustCenterFileAccesses {
 					fileData = append(fileData, coredata.MergeTrustCenterDocumentAccessesData{
 						ID:     d.ID,
 						Status: d.Status,
 					})
+					trustCenterFileIDs = append(trustCenterFileIDs, d.ID)
+				}
+
+				trustCenterFiles := &coredata.TrustCenterFiles{}
+				if err := trustCenterFiles.LoadByIDs(ctx, tx, scope, trustCenterFileIDs); err != nil {
+					return fmt.Errorf("cannot load trust center files: %w", err)
 				}
 
 				if err := tcdas.MergeTrustCenterFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, fileData); err != nil {

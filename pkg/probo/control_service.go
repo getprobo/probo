@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -809,7 +810,7 @@ func (s ControlService) GetByIDs(
 				conn,
 				scope,
 				controlIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load controls by ids: %w", err)
 			}
 

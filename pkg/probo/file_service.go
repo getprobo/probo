@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -85,7 +86,7 @@ func (s FileService) GetByIDs(
 				conn,
 				scope,
 				fileIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load files by ids: %w", err)
 			}
 

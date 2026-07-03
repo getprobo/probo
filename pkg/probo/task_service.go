@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -183,7 +184,7 @@ func (s TaskService) GetByIDs(
 				conn,
 				scope,
 				taskIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load tasks by ids: %w", err)
 			}
 

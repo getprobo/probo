@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -502,7 +503,7 @@ func (s RiskService) GetByIDs(
 				conn,
 				scope,
 				riskIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load risks by ids: %w", err)
 			}
 

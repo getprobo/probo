@@ -271,7 +271,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 
 	var thirdParties coredata.ThirdParties
 	if len(thirdPartyIDs) > 0 {
-		if err := thirdParties.LoadByIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
+		if err := thirdParties.LoadByIDs(ctx, conn, scope, thirdPartyIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, fmt.Errorf("cannot load third parties: %w", err)
 		}
 	}

@@ -1238,7 +1238,7 @@ func (s *OrganizationService) GetProfilesByIDs(
 				conn,
 				scope,
 				profileIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load profiles by ids: %w", err)
 			}
 

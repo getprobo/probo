@@ -220,6 +220,13 @@ func (s AssetService) Update(
 		}
 
 		if req.ThirdPartyIDs != nil {
+			if len(req.ThirdPartyIDs) > 0 {
+				thirdParties := &coredata.ThirdParties{}
+				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot load thirdParties: %w", err)
+				}
+			}
+
 			if err := assetThirdParties.Merge(ctx, conn, scope, asset.ID, asset.OrganizationID, req.ThirdPartyIDs); err != nil {
 				return fmt.Errorf("cannot update asset thirdParties: %w", err)
 			}
@@ -269,6 +276,11 @@ func (s AssetService) Create(
 		}
 
 		if len(req.ThirdPartyIDs) > 0 {
+			thirdParties := &coredata.ThirdParties{}
+			if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
+				return fmt.Errorf("cannot load thirdParties: %w", err)
+			}
+
 			if err := assetThirdParties.Insert(ctx, conn, scope, asset.ID, asset.OrganizationID, req.ThirdPartyIDs); err != nil {
 				return fmt.Errorf("cannot create asset thirdParties: %w", err)
 			}

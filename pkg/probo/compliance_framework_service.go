@@ -117,6 +117,11 @@ func (s ComplianceFrameworkService) Create(
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, tx, scope, req.FrameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
 			cf = &coredata.ComplianceFramework{
 				ID:             cfID,
 				OrganizationID: trustCenter.OrganizationID,

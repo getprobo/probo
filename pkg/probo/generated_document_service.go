@@ -183,7 +183,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 	}
 
 	var controls coredata.Controls
-	if err := controls.LoadByIDs(ctx, conn, scope, controlIDs); err != nil {
+	if err := controls.LoadByIDs(ctx, conn, scope, controlIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load controls: %w", err)
 	}
 
@@ -201,7 +201,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 	}
 
 	var frameworks coredata.Frameworks
-	if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+	if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load frameworks: %w", err)
 	}
 
@@ -475,7 +475,7 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 	}
 
 	var profiles coredata.MembershipProfiles
-	if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
+	if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return docgen.DataListData{}, fmt.Errorf("cannot load profiles: %w", err)
 	}
 
@@ -747,7 +747,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	}
 
 	var profiles coredata.MembershipProfiles
-	if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
+	if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return docgen.AssetListData{}, fmt.Errorf("cannot load profiles: %w", err)
 	}
 
@@ -1047,7 +1047,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return docgen.FindingListData{}, fmt.Errorf("cannot load profiles: %w", err)
 		}
 
@@ -1375,7 +1375,7 @@ func (s *GeneratedDocumentService) buildObligationListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return docgen.ObligationListData{}, fmt.Errorf("cannot load profiles: %w", err)
 		}
 
@@ -1674,7 +1674,7 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 
 	if len(dpoIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, dpoIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, dpoIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load DPO profiles: %w", err)
 		}
 
@@ -2057,7 +2057,7 @@ func (s *GeneratedDocumentService) buildDataProtectionImpactAssessmentListDocume
 	}
 
 	var processingActivities coredata.ProcessingActivities
-	if err := processingActivities.LoadByIDs(ctx, conn, scope, processingActivityIDs); err != nil {
+	if err := processingActivities.LoadByIDs(ctx, conn, scope, processingActivityIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return docgen.DataProtectionImpactAssessmentListData{}, fmt.Errorf("cannot load processing activities: %w", err)
 	}
 
@@ -2289,7 +2289,7 @@ func (s *GeneratedDocumentService) buildTransferImpactAssessmentListDocumentData
 	}
 
 	var processingActivities coredata.ProcessingActivities
-	if err := processingActivities.LoadByIDs(ctx, conn, scope, processingActivityIDs); err != nil {
+	if err := processingActivities.LoadByIDs(ctx, conn, scope, processingActivityIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return docgen.TransferImpactAssessmentListData{}, fmt.Errorf("cannot load processing activities: %w", err)
 	}
 
@@ -2551,7 +2551,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load owner profiles: %w", err)
 		}
 
@@ -3093,7 +3093,7 @@ func (s *GeneratedDocumentService) buildRiskListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return docgen.RiskListData{}, fmt.Errorf("cannot load profiles: %w", err)
 		}
 
@@ -3274,6 +3274,11 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	}
 
 	if len(approverIDs) > 0 {
+		profiles := &coredata.MembershipProfiles{}
+		if err := profiles.LoadByIDs(ctx, tx, scope, approverIDs); err != nil {
+			return fmt.Errorf("cannot load approver profiles: %w", err)
+		}
+
 		defaultApprovers := &coredata.DocumentDefaultApprovers{}
 		if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, document.ID, organizationID, approverIDs); err != nil {
 			return fmt.Errorf("cannot save default approvers: %w", err)

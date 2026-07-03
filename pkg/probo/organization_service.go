@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mime"
 	"net/mail"
@@ -124,7 +125,7 @@ func (s OrganizationService) GetByIDs(
 				conn,
 				scope,
 				organizationIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load organizations by ids: %w", err)
 			}
 

@@ -360,7 +360,11 @@ func (s *DocumentService) GetDefaultApprovers(
 	err = s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return profiles.LoadByIDs(ctx, conn, scope, profileIDs)
+			if err := profiles.LoadByIDs(ctx, conn, scope, profileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+				return err
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -384,7 +388,7 @@ func (s *DocumentService) GetByIDs(
 				conn,
 				scope,
 				documentIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load documents by ids: %w", err)
 			}
 
@@ -784,6 +788,11 @@ func (s *DocumentService) Create(
 			}
 
 			if len(req.DefaultApproverIDs) > 0 {
+				profiles := &coredata.MembershipProfiles{}
+				if err := profiles.LoadByIDs(ctx, conn, scope, req.DefaultApproverIDs); err != nil {
+					return fmt.Errorf("cannot load approver profiles: %w", err)
+				}
+
 				approvers := &coredata.DocumentDefaultApprovers{}
 				if err := approvers.MergeByDocumentID(ctx, conn, scope, documentID, organization.ID, req.DefaultApproverIDs); err != nil {
 					return fmt.Errorf("cannot set default approvers: %w", err)
@@ -2142,6 +2151,13 @@ func (s *DocumentService) Update(
 			}
 
 			if req.DefaultApproverIDs != nil {
+				if len(*req.DefaultApproverIDs) > 0 {
+					profiles := &coredata.MembershipProfiles{}
+					if err := profiles.LoadByIDs(ctx, tx, scope, *req.DefaultApproverIDs); err != nil {
+						return fmt.Errorf("cannot load approver profiles: %w", err)
+					}
+				}
+
 				defaultApprovers := &coredata.DocumentDefaultApprovers{}
 				if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
 					return fmt.Errorf("cannot update default approvers: %w", err)
@@ -2834,7 +2850,7 @@ func generateDocumentPDF(
 
 		if len(approverProfileIDs) > 0 {
 			approverProfiles := coredata.MembershipProfiles{}
-			if err := approverProfiles.LoadByIDs(ctx, conn, scope, approverProfileIDs); err != nil {
+			if err := approverProfiles.LoadByIDs(ctx, conn, scope, approverProfileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, fmt.Errorf("cannot load approver profiles: %w", err)
 			}
 

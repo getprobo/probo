@@ -526,7 +526,7 @@ func (s ThirdPartyService) GetByIDs(
 				conn,
 				scope,
 				thirdPartyIDs,
-			); err != nil {
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load thirdParties by ids: %w", err)
 			}
 

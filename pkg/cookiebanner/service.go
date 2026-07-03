@@ -779,7 +779,7 @@ func (s *Service) GetCookieBannersByIDs(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := banners.LoadByIDs(ctx, conn, scope, bannerIDs); err != nil {
+			if err := banners.LoadByIDs(ctx, conn, scope, bannerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load cookie banners by ids: %w", err)
 			}
 
@@ -1253,7 +1253,7 @@ func (s *Service) GetCookieCategoriesByIDs(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := categories.LoadByIDs(ctx, conn, scope, categoryIDs); err != nil {
+			if err := categories.LoadByIDs(ctx, conn, scope, categoryIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load cookie categories by ids: %w", err)
 			}
 

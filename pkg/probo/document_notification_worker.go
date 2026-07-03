@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -296,7 +297,7 @@ func (h *documentNotificationHandler) claimNextApprovalGroup(
 			scope := coredata.NewScopeFromObjectID(decisions[0].OrganizationID)
 
 			var quorums coredata.DocumentVersionApprovalQuorums
-			if err := quorums.LoadByIDs(ctx, tx, scope, quorumIDs); err != nil {
+			if err := quorums.LoadByIDs(ctx, tx, scope, quorumIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load approval quorums: %w", err)
 			}
 
@@ -343,7 +344,7 @@ func (s *DocumentService) sendNotification(
 	}
 
 	var versions coredata.DocumentVersions
-	if err := versions.LoadByIDs(ctx, tx, scope, versionIDs); err != nil {
+	if err := versions.LoadByIDs(ctx, tx, scope, versionIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot load document versions for notification: %w", err)
 	}
 
@@ -352,7 +353,7 @@ func (s *DocumentService) sendNotification(
 	}
 
 	var profiles coredata.MembershipProfiles
-	if err := profiles.LoadByIDs(ctx, tx, scope, []gid.GID{recipientID}); err != nil {
+	if err := profiles.LoadByIDs(ctx, tx, scope, []gid.GID{recipientID}); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot load notification recipient: %w", err)
 	}
 
