@@ -74,6 +74,7 @@ func TestUser_AdminCannotCreateOwner(t *testing.T) {
 			} `json:"profileEdge"`
 		} `json:"createUser"`
 	}
+
 	err = admin.ExecuteConnect(createUserMutation, newUserInput("ADMIN"), &adminCreate)
 	require.NoError(t, err)
 	assert.Equal(t, "ADMIN", adminCreate.CreateUser.ProfileEdge.Node.Membership.Role)
@@ -90,6 +91,7 @@ func TestUser_AdminCannotCreateOwner(t *testing.T) {
 			} `json:"profileEdge"`
 		} `json:"createUser"`
 	}
+
 	err = owner.ExecuteConnect(createUserMutation, newUserInput("OWNER"), &ownerCreate)
 	require.NoError(t, err)
 	assert.Equal(t, "OWNER", ownerCreate.CreateUser.ProfileEdge.Node.Membership.Role)
