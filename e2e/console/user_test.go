@@ -24,6 +24,77 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+// TestUser_AdminCannotCreateOwner is a non-regression test for the vertical
+// privilege escalation where an ADMIN could mint an OWNER membership via
+// createUser, bypassing the owner-only set-owner authorization that
+// updateMembership enforces.
+func TestUser_AdminCannotCreateOwner(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+
+	const createUserMutation = `
+		mutation($input: CreateUserInput!) {
+			createUser(input: $input) {
+				profileEdge {
+					node {
+						membership { role }
+					}
+				}
+			}
+		}
+	`
+
+	newUserInput := func(role string) map[string]any {
+		return map[string]any{
+			"input": map[string]any{
+				"organizationId":           owner.GetOrganizationID().String(),
+				"emailAddress":             factory.SafeEmail(),
+				"fullName":                 factory.SafeName("Privesc User"),
+				"role":                     role,
+				"kind":                     "EMPLOYEE",
+				"additionalEmailAddresses": []string{},
+			},
+		}
+	}
+
+	// An ADMIN must not be able to create an OWNER membership.
+	_, err := admin.DoConnect(createUserMutation, newUserInput("OWNER"))
+	testutil.RequireForbiddenError(t, err)
+
+	// The same ADMIN can still create a lower-privileged member.
+	var adminCreate struct {
+		CreateUser struct {
+			ProfileEdge struct {
+				Node struct {
+					Membership struct {
+						Role string `json:"role"`
+					} `json:"membership"`
+				} `json:"node"`
+			} `json:"profileEdge"`
+		} `json:"createUser"`
+	}
+	err = admin.ExecuteConnect(createUserMutation, newUserInput("ADMIN"), &adminCreate)
+	require.NoError(t, err)
+	assert.Equal(t, "ADMIN", adminCreate.CreateUser.ProfileEdge.Node.Membership.Role)
+
+	// An OWNER remains able to create an OWNER membership.
+	var ownerCreate struct {
+		CreateUser struct {
+			ProfileEdge struct {
+				Node struct {
+					Membership struct {
+						Role string `json:"role"`
+					} `json:"membership"`
+				} `json:"node"`
+			} `json:"profileEdge"`
+		} `json:"createUser"`
+	}
+	err = owner.ExecuteConnect(createUserMutation, newUserInput("OWNER"), &ownerCreate)
+	require.NoError(t, err)
+	assert.Equal(t, "OWNER", ownerCreate.CreateUser.ProfileEdge.Node.Membership.Role)
+}
+
 func TestUser_UpdateMembership(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

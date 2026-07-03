@@ -26,6 +26,12 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 		return nil, err
 	}
 
+	if input.Role == coredata.MembershipRoleOwner {
+		if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipRoleSetOwner); err != nil {
+			return nil, err
+		}
+	}
+
 	profile, err := r.iam.OrganizationService.CreateUser(
 		ctx,
 		&iam.CreateUserRequest{

@@ -2819,6 +2819,12 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.CreateUserOutput{}, err
 	}
 
+	if input.Role == coredata.MembershipRoleOwner {
+		if _, err := r.Authorize(ctx, input.OrganizationID, iam.ActionMembershipRoleSetOwner); err != nil {
+			return nil, types.CreateUserOutput{}, err
+		}
+	}
+
 	var contractStart, contractEnd **time.Time
 	if input.ContractStartDate != nil {
 		contractStart = &input.ContractStartDate
