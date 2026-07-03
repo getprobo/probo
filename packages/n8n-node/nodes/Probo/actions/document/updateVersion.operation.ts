@@ -58,7 +58,7 @@ export const description: INodeProperties[] = [
 					rows: 6,
 				},
 				default: '',
-				description: 'The content of the document in markdown format',
+				description: 'The content of the document as a ProseMirror document JSON string',
 			},
 			{
 				displayName: 'Classification',

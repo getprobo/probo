@@ -103,7 +103,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The content of the document in markdown format',
+		description: 'The content of the document as a ProseMirror document JSON string',
 	},
 	{
 		displayName: 'Additional Fields',

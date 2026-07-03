@@ -44,6 +44,16 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Content',
+				name: 'content',
+				type: 'string',
+				typeOptions: {
+					rows: 6,
+				},
+				default: '',
+				description: 'The body of the document as a ProseMirror document JSON string. Updating it edits the current draft version, creating one from the latest published version if none exists.',
+			},
+			{
 				displayName: 'Trust Center Visibility',
 				name: 'trustCenterVisibility',
 				type: 'options',
@@ -72,6 +82,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
+		content?: string;
 		trustCenterVisibility?: string;
 		defaultApproverIds?: string;
 	};
@@ -89,11 +100,26 @@ export async function execute(
 					createdAt
 					updatedAt
 				}
+				documentVersion {
+					id
+					title
+					major
+					minor
+					status
+					content
+					changelog
+					classification
+					documentType
+					publishedAt
+					createdAt
+					updatedAt
+				}
 			}
 		}
 	`;
 
 	const input: Record<string, unknown> = { id: documentId };
+	if (updateFields.content !== undefined) input.content = updateFields.content;
 	if (updateFields.trustCenterVisibility !== undefined) input.trustCenterVisibility = updateFields.trustCenterVisibility;
 	if (updateFields.defaultApproverIds !== undefined && updateFields.defaultApproverIds !== '') {
 		input.defaultApproverIds = updateFields.defaultApproverIds.split(',').map(id => id.trim()).filter(Boolean);

@@ -23,7 +23,6 @@ import * as unarchiveOp from './unarchive.operation';
 import * as getVersionOp from './getVersion.operation';
 import * as getLatestPublishedVersionIdOp from './getLatestPublishedVersionId.operation';
 import * as getAllVersionsOp from './getAllVersions.operation';
-import * as createDraftVersionOp from './createDraftVersion.operation';
 import * as updateVersionOp from './updateVersion.operation';
 import * as deleteDraftVersionOp from './deleteDraftVersion.operation';
 import * as publishOp from './publish.operation';
@@ -66,12 +65,6 @@ export const description: INodeProperties[] = [
 				value: 'create',
 				description: 'Create a new document',
 				action: 'Create a document',
-			},
-			{
-				name: 'Create Draft Version',
-				value: 'createDraftVersion',
-				description: 'Create a new draft version from the latest published version',
-				action: 'Create a draft document version',
 			},
 			{
 				name: 'Delete',
@@ -200,7 +193,6 @@ export const description: INodeProperties[] = [
 	...getVersionOp.description,
 	...getLatestPublishedVersionIdOp.description,
 	...getAllVersionsOp.description,
-	...createDraftVersionOp.description,
 	...updateVersionOp.description,
 	...deleteDraftVersionOp.description,
 	...publishOp.description,
@@ -226,7 +218,6 @@ export {
 	getVersionOp as getVersion,
 	getLatestPublishedVersionIdOp as getLatestPublishedVersionId,
 	getAllVersionsOp as getAllVersions,
-	createDraftVersionOp as createDraftVersion,
 	updateVersionOp as updateVersion,
 	deleteDraftVersionOp as deleteDraftVersion,
 	publishOp as publish,
