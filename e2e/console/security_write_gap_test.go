@@ -154,6 +154,7 @@ func seedTrustCenterAccess(t *testing.T, owner *testutil.Client, trustCenterID s
 			accessID.String(), tenantID.String(), owner.GetOrganizationID().String(), tcID.String(),
 			owner.GetUserID().String(), factory.SafeEmail(), "Test Access", now,
 		)
+
 		return err
 	})
 	require.NoError(t, err, "test setup: cannot seed trust_center_accesses row")

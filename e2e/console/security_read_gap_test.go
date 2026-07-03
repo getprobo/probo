@@ -257,6 +257,7 @@ func TestSecurity_ReadGap_ApplicabilityStatementControl(t *testing.T) {
 				got = edge.Node.Control
 			}
 		}
+
 		require.Nil(t, got, "must not be able to read a cross-tenant control via applicabilityStatement.control")
 	}
 }
@@ -445,6 +446,7 @@ func TestSecurity_ReadGap_DocumentVersionApprovalDecisionApprover(t *testing.T) 
 			ID       string `json:"id"`
 			FullName string `json:"fullName"`
 		}
+
 		for _, qEdge := range readResult.Node.ApprovalQuorums.Edges {
 			for _, dEdge := range qEdge.Node.Decisions.Edges {
 				if dEdge.Node.ID == decisionID {
@@ -452,6 +454,7 @@ func TestSecurity_ReadGap_DocumentVersionApprovalDecisionApprover(t *testing.T) 
 				}
 			}
 		}
+
 		require.Nil(t, got, "must not be able to read a cross-tenant profile via documentVersionApprovalDecision.approver")
 	}
 }

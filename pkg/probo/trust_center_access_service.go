@@ -242,6 +242,7 @@ func (s TrustCenterAccessService) Update(
 
 			if len(req.DocumentAccesses) > 0 {
 				var documentData []coredata.MergeTrustCenterDocumentAccessesData
+
 				documentIDs := make([]gid.GID, 0, len(req.DocumentAccesses))
 				for _, d := range req.DocumentAccesses {
 					documentData = append(documentData, coredata.MergeTrustCenterDocumentAccessesData{
@@ -263,6 +264,7 @@ func (s TrustCenterAccessService) Update(
 
 			if len(req.ReportAccesses) > 0 {
 				var reportData []coredata.MergeTrustCenterDocumentAccessesData
+
 				reportIDs := make([]gid.GID, 0, len(req.ReportAccesses))
 				for _, d := range req.ReportAccesses {
 					reportData = append(reportData, coredata.MergeTrustCenterDocumentAccessesData{
@@ -284,6 +286,7 @@ func (s TrustCenterAccessService) Update(
 
 			if len(req.TrustCenterFileAccesses) > 0 {
 				var fileData []coredata.MergeTrustCenterDocumentAccessesData
+
 				trustCenterFileIDs := make([]gid.GID, 0, len(req.TrustCenterFileAccesses))
 				for _, d := range req.TrustCenterFileAccesses {
 					fileData = append(fileData, coredata.MergeTrustCenterDocumentAccessesData{
