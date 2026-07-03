@@ -168,12 +168,12 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 
 // DataProtectionOfficer is the resolver for the dataProtectionOfficer field.
 func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, obj *types.ProcessingActivity) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
 	if obj.DataProtectionOfficer == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.DataProtectionOfficer.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)

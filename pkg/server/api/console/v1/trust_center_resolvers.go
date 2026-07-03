@@ -1044,12 +1044,12 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 // ReportFile is the resolver for the reportFile field.
 func (r *trustCenterDocumentAccessResolver) ReportFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
-		return nil, err
-	}
-
 	if obj.ReportFile == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.ReportFile.ID, probo.ActionFileGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)

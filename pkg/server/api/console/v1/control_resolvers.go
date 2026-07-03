@@ -40,7 +40,7 @@ func (r *applicabilityStatementResolver) StatementOfApplicability(ctx context.Co
 
 // Control is the resolver for the control field.
 func (r *applicabilityStatementResolver) Control(ctx context.Context, obj *types.ApplicabilityStatement) (*types.Control, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionControlGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Control.ID, probo.ActionControlGet); err != nil {
 		return nil, err
 	}
 
@@ -160,7 +160,7 @@ func (r *controlResolver) RiskAssessment(ctx context.Context, obj *types.Control
 
 // Framework is the resolver for the framework field.
 func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*types.Framework, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Framework.ID, probo.ActionFrameworkGet); err != nil {
 		return nil, err
 	}
 

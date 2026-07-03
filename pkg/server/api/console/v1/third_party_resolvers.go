@@ -857,12 +857,12 @@ func (r *thirdPartyResolver) Measures(ctx context.Context, obj *types.ThirdParty
 
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *thirdPartyResolver) BusinessOwner(ctx context.Context, obj *types.ThirdParty) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
 	if obj.BusinessOwner == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.BusinessOwner.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
@@ -883,12 +883,12 @@ func (r *thirdPartyResolver) BusinessOwner(ctx context.Context, obj *types.Third
 
 // SecurityOwner is the resolver for the securityOwner field.
 func (r *thirdPartyResolver) SecurityOwner(ctx context.Context, obj *types.ThirdParty) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
 	if obj.SecurityOwner == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.SecurityOwner.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
@@ -913,7 +913,7 @@ func (r *thirdPartyResolver) ParentThirdParty(ctx context.Context, obj *types.Th
 		return nil, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ParentThirdParty.ID, probo.ActionThirdPartyGet); err != nil {
 		return nil, err
 	}
 
@@ -1249,7 +1249,7 @@ func (r *thirdPartyRiskAssessmentResolver) Permission(ctx context.Context, obj *
 
 // ThirdParty is the resolver for the thirdParty field.
 func (r *thirdPartyServiceResolver) ThirdParty(ctx context.Context, obj *types.ThirdPartyService) (*types.ThirdParty, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ThirdParty.ID, probo.ActionThirdPartyGet); err != nil {
 		return nil, err
 	}
 

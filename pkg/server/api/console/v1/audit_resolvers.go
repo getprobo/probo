@@ -47,7 +47,7 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Framework.ID, probo.ActionFrameworkGet); err != nil {
 		return nil, err
 	}
 
@@ -69,12 +69,12 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 // ReportFile is the resolver for the reportFile field.
 func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionReportGet); err != nil {
-		return nil, err
-	}
-
 	if obj.ReportFile == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.ReportFile.ID, probo.ActionReportGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
@@ -274,7 +274,7 @@ func (r *findingResolver) Owner(ctx context.Context, obj *types.Finding) (*types
 		return nil, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Owner.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -300,7 +300,7 @@ func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.
 		return nil, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionRiskGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Risk.ID, probo.ActionRiskGet); err != nil {
 		return nil, err
 	}
 

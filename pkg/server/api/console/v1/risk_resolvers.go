@@ -259,12 +259,12 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
 	if obj.Owner == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.Owner.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)

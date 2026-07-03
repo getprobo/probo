@@ -22,12 +22,12 @@ import (
 
 // File is the resolver for the file field.
 func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
-		return nil, err
-	}
-
 	if obj.File == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.File.ID, probo.ActionFileGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
@@ -48,13 +48,13 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 
 // Task is the resolver for the task field.
 func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*types.Task, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionTaskGet); err != nil {
-		return nil, err
-	}
-
 	if obj.Task == nil {
 		r.logger.ErrorCtx(ctx, "evidence is not associated with a task")
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	if _, err := r.authorize(ctx, obj.Task.ID, probo.ActionTaskGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
@@ -75,7 +75,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 
 // Measure is the resolver for the measure field.
 func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*types.Measure, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Measure.ID, probo.ActionMeasureGet); err != nil {
 		return nil, err
 	}
 

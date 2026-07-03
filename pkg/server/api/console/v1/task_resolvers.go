@@ -117,12 +117,12 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
 	if obj.AssignedTo == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.AssignedTo.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
@@ -165,12 +165,12 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 
 // Measure is the resolver for the measure field.
 func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Measure, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
-		return nil, err
-	}
-
 	if obj.Measure == nil {
 		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.Measure.ID, probo.ActionMeasureGet); err != nil {
+		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)

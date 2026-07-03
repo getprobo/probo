@@ -5807,6 +5807,10 @@ func (r *Resolver) MoveTrackerPatternToCategoryTool(ctx context.Context, req *mc
 		return nil, types.MoveTrackerPatternToCategoryOutput{}, err
 	}
 
+	if _, err := r.Authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+		return nil, types.MoveTrackerPatternToCategoryOutput{}, err
+	}
+
 	result, err := r.cookieBanner.MoveTrackerPatternToCategory(ctx, scope, cookiebanner.MoveTrackerPatternToCategoryRequest{
 		TrackerPatternID:       input.TrackerPatternID,
 		TargetCookieCategoryID: input.TargetCookieCategoryID,
@@ -6208,6 +6212,10 @@ func (r *Resolver) DeleteTrackerResourceTool(ctx context.Context, req *mcp.CallT
 func (r *Resolver) MoveTrackerResourceToCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.MoveTrackerResourceToCategoryInput) (*mcp.CallToolResult, types.MoveTrackerResourceToCategoryOutput, error) {
 	scope, err := r.Authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate)
 	if err != nil {
+		return nil, types.MoveTrackerResourceToCategoryOutput{}, err
+	}
+
+	if _, err := r.Authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
 		return nil, types.MoveTrackerResourceToCategoryOutput{}, err
 	}
 

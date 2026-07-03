@@ -205,7 +205,7 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // Document is the resolver for the document field.
 func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Document.ID, probo.ActionDocumentGet); err != nil {
 		return nil, err
 	}
 
@@ -420,7 +420,7 @@ func (r *documentVersionApprovalDecisionResolver) DocumentVersion(ctx context.Co
 
 // Approver is the resolver for the approver field.
 func (r *documentVersionApprovalDecisionResolver) Approver(ctx context.Context, obj *types.DocumentVersionApprovalDecision) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Approver.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -621,7 +621,7 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 
 // SignedBy is the resolver for the signedBy field.
 func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.Profile, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.SignedBy.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 

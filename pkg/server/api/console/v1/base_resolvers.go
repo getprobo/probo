@@ -111,6 +111,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewControl(control), nil
 		}
+	case coredata.ApplicabilityStatementEntityType:
+		action = probo.ActionApplicabilityStatementGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			applicabilityStatement, err := r.probo.StatementsOfApplicability.GetApplicabilityStatement(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewApplicabilityStatement(applicabilityStatement), nil
+		}
 	case coredata.RiskEntityType:
 		action = probo.ActionRiskGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

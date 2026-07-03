@@ -149,7 +149,7 @@ func (r *cookieBannerResolver) PolicyDocument(ctx context.Context, obj *types.Co
 		return nil, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	if _, err := r.authorize(ctx, obj.PolicyDocument.ID, probo.ActionDocumentGet); err != nil {
 		return nil, err
 	}
 

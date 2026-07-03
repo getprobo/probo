@@ -200,7 +200,7 @@ func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMC
 		return nil, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Bridge.ID, iam.ActionSCIMConfigurationGet); err != nil {
 		return nil, err
 	}
 
