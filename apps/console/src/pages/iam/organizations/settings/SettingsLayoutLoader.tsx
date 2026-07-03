@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,16 +15,17 @@
 import { useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { PeoplePageQuery } from "#/__generated__/iam/PeoplePageQuery.graphql";
+import type { SettingsLayoutQuery } from "#/__generated__/iam/SettingsLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { PeoplePage, peoplePageQuery } from "./PeoplePage";
+import { SettingsLayout, settingsLayoutQuery } from "./SettingsLayout";
 
-function PeoplePageQueryLoader() {
+function SettingsLayoutQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery]
-    = useQueryLoader<PeoplePageQuery>(peoplePageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<SettingsLayoutQuery>(
+    settingsLayoutQuery,
+  );
 
   useEffect(() => {
     loadQuery({
@@ -36,13 +37,13 @@ function PeoplePageQueryLoader() {
     return null;
   }
 
-  return <PeoplePage queryRef={queryRef} />;
+  return <SettingsLayout queryRef={queryRef} />;
 }
 
-export default function PeoplePageLoader() {
+export default function SettingsLayoutLoader() {
   return (
     <IAMRelayProvider>
-      <PeoplePageQueryLoader />
+      <SettingsLayoutQueryLoader />
     </IAMRelayProvider>
   );
 }

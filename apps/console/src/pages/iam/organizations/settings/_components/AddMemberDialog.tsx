@@ -17,9 +17,9 @@ import { Dialog, DialogContent, useDialogRef } from "@probo/ui";
 import { type PropsWithChildren } from "react";
 import type { DataID } from "relay-runtime";
 
-import { PersonForm } from "./PersonForm";
+import { AddMemberForm } from "./AddMemberForm";
 
-export function AddPersonDialog(props: PropsWithChildren<{
+export function AddMemberDialog(props: PropsWithChildren<{
   connectionId: DataID;
 }>) {
   const { children, connectionId } = props;
@@ -28,13 +28,13 @@ export function AddPersonDialog(props: PropsWithChildren<{
 
   return (
     <Dialog
-      title={__("Add Person")}
+      title={__("Add member")}
       trigger={children}
       className="max-w-xl"
       ref={dialogRef}
     >
       <DialogContent padded>
-        <PersonForm connectionId={connectionId} onSubmit={() => dialogRef.current?.close()} />
+        <AddMemberForm connectionId={connectionId} onSubmit={() => dialogRef.current?.close()} />
       </DialogContent>
     </Dialog>
   );

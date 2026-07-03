@@ -32,14 +32,14 @@ import { use } from "react";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
-import type { PeopleListItem_inviteMutation } from "#/__generated__/iam/PeopleListItem_inviteMutation.graphql";
-import type { PeopleListItemFragment$key } from "#/__generated__/iam/PeopleListItemFragment.graphql";
+import type { MembersListItem_inviteMutation } from "#/__generated__/iam/MembersListItem_inviteMutation.graphql";
+import type { MembersListItemFragment$key } from "#/__generated__/iam/MembersListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
 const fragment = graphql`
-  fragment PeopleListItemFragment on Profile {
+  fragment MembersListItemFragment on Profile {
     id
     source
     state
@@ -52,7 +52,7 @@ const fragment = graphql`
     }
     lastInvitation: pendingInvitations(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
     @required(action: THROW)
-    @connection(key: "PeopleListItem_lastInvitation") {
+    @connection(key: "MembersListItem_lastInvitation") {
       __id
       edges {
         node {
@@ -61,15 +61,13 @@ const fragment = graphql`
         }
       }
     }
-    createdAt
-    canUpdate: permission(action: "iam:membership-profile:update")
     canInvite: permission(action: "iam:invitation:create")
     canDelete: permission(action: "iam:membership-profile:delete")
   }
 `;
 
 const inviteUserMutation = graphql`
-  mutation PeopleListItem_inviteMutation(
+  mutation MembersListItem_inviteMutation(
     $input: InviteUserInput!
     $connections: [ID!]!
   ) {
@@ -87,7 +85,7 @@ const inviteUserMutation = graphql`
 `;
 
 const updateRoleMutation = graphql`
-  mutation PeopleListItem_updateRoleMutation($input: UpdateMembershipInput!) {
+  mutation MembersListItem_updateRoleMutation($input: UpdateMembershipInput!) {
     updateMembership(input: $input) {
       membership {
         id
@@ -98,7 +96,7 @@ const updateRoleMutation = graphql`
 `;
 
 const removeUserMutation = graphql`
-  mutation PeopleListItem_removeMutation(
+  mutation MembersListItem_removeMutation(
     $input: RemoveUserInput!
     $connections: [ID!]!
   ) {
@@ -109,16 +107,16 @@ const removeUserMutation = graphql`
 `;
 
 const archiveUserMutation = graphql`
-  mutation PeopleListItem_archiveMutation($input: ArchiveUserInput!) {
+  mutation MembersListItem_archiveMutation($input: ArchiveUserInput!) {
     archiveUser(input: $input) {
       archivedProfileId
     }
   }
 `;
 
-export function PeopleListItem(props: {
+export function MembersListItem(props: {
   connectionId: DataID;
-  fKey: PeopleListItemFragment$key;
+  fKey: MembersListItemFragment$key;
   onRefetch: () => void;
 }) {
   const { fKey, connectionId, onRefetch } = props;
@@ -130,7 +128,7 @@ export function PeopleListItem(props: {
   const { role } = use(CurrentUser);
   const availableRoles = getAssignableRoles(role);
 
-  const profile = useFragment<PeopleListItemFragment$key>(fragment, fKey);
+  const profile = useFragment<MembersListItemFragment$key>(fragment, fKey);
   const lastInvitation = profile.lastInvitation.edges[0]?.node;
 
   const isInactive = profile.state === "INACTIVE";
@@ -140,7 +138,7 @@ export function PeopleListItem(props: {
   const canRemove = profile.canDelete && profile.source !== "SCIM";
 
   const [inviteUser]
-    = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
+    = useMutationWithToasts<MembersListItem_inviteMutation>(inviteUserMutation, {
       successMessage: __("Invitation sent successfully"),
       errorMessage: __("Failed to send invitation"),
     });
@@ -250,17 +248,7 @@ export function PeopleListItem(props: {
   };
 
   return (
-    <Tr to={`/organizations/${organizationId}/people/${profile.id}`}>
-      <Td className={clsx(
-        isMutating && "opacity-60 pointer-events-none",
-        isInactive && "opacity-50",
-      )}
-      >
-        <span className="font-semibold">{profile.fullName}</span>
-      </Td>
-      <Td>
-        <Badge variant={profile.state === "INACTIVE" ? "neutral" : "success"}>{profile.state}</Badge>
-      </Td>
+    <Tr>
       <Td className={clsx(
         isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",
@@ -273,7 +261,6 @@ export function PeopleListItem(props: {
       </Td>
       {availableRoles.length > 0 && (
         <Td
-          noLink
           className={clsx(
             "pr-4",
             isMutating && "opacity-60 pointer-events-none",
@@ -303,14 +290,7 @@ export function PeopleListItem(props: {
           </Select>
         </Td>
       )}
-      <Td className={clsx(
-        isMutating && "opacity-60 pointer-events-none",
-        isInactive && "opacity-50",
-      )}
-      >
-        {new Date(profile.createdAt).toLocaleDateString()}
-      </Td>
-      <Td noLink width={160} className="text-end">
+      <Td width={160} className="text-end">
         {(canSendActivationMail || canArchive || canRemove) && (
           <ActionDropdown>
             {canSendActivationMail && (

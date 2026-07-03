@@ -14,34 +14,35 @@
 
 import { useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
-import type { PersonPageQuery } from "#/__generated__/iam/PersonPageQuery.graphql";
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import type { MembersSettingsPageQuery } from "#/__generated__/iam/MembersSettingsPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { PersonPage, personPageQuery } from "./PersonPage";
+import { MembersSettingsPage, membersSettingsPageQuery } from "./MembersSettingsPage";
 
-function PersonPageQueryLoader() {
-  const { personId } = useParams();
-  if (!personId) {
-    throw new Error(":personId missing in route params");
-  }
-  const [queryRef, loadQuery] = useQueryLoader<PersonPageQuery>(personPageQuery);
+function MembersSettingsPageQueryLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<MembersSettingsPageQuery>(membersSettingsPageQuery);
 
   useEffect(() => {
-    loadQuery({ personId });
-  }, [personId, loadQuery]);
+    loadQuery({
+      organizationId,
+    });
+  }, [loadQuery, organizationId]);
 
-  if (!queryRef) return <LinkCardSkeleton />;
+  if (!queryRef) {
+    return null;
+  }
 
-  return <PersonPage queryRef={queryRef} />;
+  return <MembersSettingsPage queryRef={queryRef} />;
 }
 
-export default function PersonPageLoader() {
+export default function MembersSettingsPageLoader() {
   return (
     <IAMRelayProvider>
-      <PersonPageQueryLoader />
+      <MembersSettingsPageQueryLoader />
     </IAMRelayProvider>
   );
 }
