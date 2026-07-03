@@ -173,6 +173,10 @@ WHERE
 
 	*q = quorums
 
+	if len(quorums) != len(gid.NewSet(quorumIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

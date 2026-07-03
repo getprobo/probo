@@ -564,6 +564,10 @@ WHERE %s
 
 	*r = risks
 
+	if len(risks) != len(gid.NewSet(riskIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

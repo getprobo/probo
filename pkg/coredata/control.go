@@ -790,6 +790,10 @@ WHERE
 
 	*c = controls
 
+	if len(controls) != len(gid.NewSet(controlIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

@@ -205,6 +205,10 @@ WHERE
 
 	*t = tasks
 
+	if len(tasks) != len(gid.NewSet(taskIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

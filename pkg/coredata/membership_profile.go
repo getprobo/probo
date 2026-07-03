@@ -449,6 +449,10 @@ WHERE
 
 	*p = profiles
 
+	if len(profiles) != len(gid.NewSet(profileIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

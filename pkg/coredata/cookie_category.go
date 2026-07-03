@@ -296,6 +296,10 @@ WHERE
 
 	*c = categories
 
+	if len(categories) != len(gid.NewSet(categoryIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

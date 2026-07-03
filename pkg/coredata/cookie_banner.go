@@ -314,6 +314,10 @@ WHERE
 
 	*b = banners
 
+	if len(banners) != len(gid.NewSet(bannerIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

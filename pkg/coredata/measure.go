@@ -527,6 +527,10 @@ WHERE
 
 	*m = measures
 
+	if len(measures) != len(gid.NewSet(measureIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

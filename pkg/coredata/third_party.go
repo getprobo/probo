@@ -599,6 +599,10 @@ WHERE
 
 	*v = thirdParties
 
+	if len(thirdParties) != len(gid.NewSet(thirdPartyIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

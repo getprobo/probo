@@ -133,22 +133,6 @@ WHERE
 	return count, nil
 }
 
-func uniqueGIDs(values []gid.GID) []gid.GID {
-	set := make(map[gid.GID]struct{}, len(values))
-	unique := make([]gid.GID, 0, len(values))
-
-	for _, value := range values {
-		if _, ok := set[value]; ok {
-			continue
-		}
-
-		set[value] = struct{}{}
-		unique = append(unique, value)
-	}
-
-	return unique
-}
-
 func (f *Frameworks) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -333,6 +317,10 @@ WHERE
 	}
 
 	*f = frameworks
+
+	if len(frameworks) != len(gid.NewSet(frameworkIDs...)) {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

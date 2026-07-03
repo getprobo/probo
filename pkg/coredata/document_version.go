@@ -201,6 +201,10 @@ WHERE
 
 	*dv = documentVersions
 
+	if len(documentVersions) != len(gid.NewSet(documentVersionIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

@@ -277,6 +277,10 @@ WHERE
 
 	*p = documents
 
+	if len(documents) != len(gid.NewSet(documentIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

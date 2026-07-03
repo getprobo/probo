@@ -178,6 +178,10 @@ WHERE
 
 	*f = files
 
+	if len(files) != len(gid.NewSet(trustCenterFileIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

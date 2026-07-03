@@ -194,6 +194,10 @@ WHERE
 
 	*o = organizations
 
+	if len(organizations) != len(gid.NewSet(organizationIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

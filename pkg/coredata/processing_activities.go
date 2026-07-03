@@ -373,6 +373,10 @@ WHERE
 
 	*p = processingActivities
 
+	if len(processingActivities) != len(gid.NewSet(processingActivityIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 

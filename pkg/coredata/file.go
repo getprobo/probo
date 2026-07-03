@@ -185,6 +185,10 @@ WHERE
 
 	*f = files
 
+	if len(files) != len(gid.NewSet(fileIDs...)) {
+		return ErrResourceNotFound
+	}
+
 	return nil
 }
 
