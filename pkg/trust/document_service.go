@@ -250,7 +250,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 
 				if len(approverProfileIDs) > 0 {
 					profiles := coredata.MembershipProfiles{}
-					if err := profiles.LoadByIDs(ctx, conn, scope, approverProfileIDs); err != nil {
+					if err := profiles.LoadByIDs(ctx, conn, scope, approverProfileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 						return fmt.Errorf("cannot load approver profiles: %w", err)
 					}
 

@@ -624,7 +624,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	)
 
 	if len(documentIDs) > 0 {
-		if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil {
+		if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot load documents by IDs: %w", err)
 		}
 
@@ -644,7 +644,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 
 	var files coredata.TrustCenterFiles
 	if len(fileIDs) > 0 {
-		if err := files.LoadByIDs(ctx, tx, scope, fileIDs); err != nil {
+		if err := files.LoadByIDs(ctx, tx, scope, fileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot load files by IDs: %w", err)
 		}
 
@@ -735,7 +735,7 @@ func reportAccessLabels(
 	reportFileIDs []gid.GID,
 ) ([]string, error) {
 	var reportFiles coredata.Files
-	if err := reportFiles.LoadByIDs(ctx, conn, scope, reportFileIDs); err != nil {
+	if err := reportFiles.LoadByIDs(ctx, conn, scope, reportFileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return nil, fmt.Errorf("cannot load report files by IDs: %w", err)
 	}
 
@@ -774,7 +774,7 @@ func reportAccessLabels(
 
 	if len(frameworkIDs) > 0 {
 		var frameworks coredata.Frameworks
-		if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+		if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, fmt.Errorf("cannot load frameworks by IDs: %w", err)
 		}
 
