@@ -842,3 +842,86 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 		},
 	)
 }
+
+// TestFinding_TenantIsolation covers GHSA-c74x-79w6-63jh: a finding must not
+// be able to store a risk_id belonging to another organization, whether set
+// on create or on a later update. Before the fix, FindingService.Create/
+// Update persisted an attacker-supplied riskId with no scoped ownership
+// check, and findingResolver.Risk authorized the finding (caller's org)
+// instead of the risk, letting the caller read another org's risk through
+// the dataloader's NewScopeFromObjectID(riskID) scope.
+func TestFinding_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	org2RiskID := factory.CreateRisk(org2Owner, factory.Attrs{"name": "Org2 Confidential Risk"})
+
+	createQuery := `
+		mutation CreateFinding($input: CreateFindingInput!) {
+			createFinding(input: $input) {
+				findingEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	t.Run("cannot create finding referencing a risk from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := org1Owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": org1Owner.GetOrganizationID().String(),
+				"kind":           "OBSERVATION",
+				"status":         "OPEN",
+				"priority":       "LOW",
+				"riskId":         org2RiskID,
+			},
+		})
+		require.Error(t, err, "must not accept a riskId belonging to another organization")
+	})
+
+	t.Run("cannot update finding to reference a risk from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		var createResult struct {
+			CreateFinding struct {
+				FindingEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"findingEdge"`
+			} `json:"createFinding"`
+		}
+
+		err := org1Owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": org1Owner.GetOrganizationID().String(),
+				"kind":           "OBSERVATION",
+				"status":         "OPEN",
+				"priority":       "LOW",
+			},
+		}, &createResult)
+		require.NoError(t, err)
+
+		findingID := createResult.CreateFinding.FindingEdge.Node.ID
+
+		updateQuery := `
+			mutation UpdateFinding($input: UpdateFindingInput!) {
+				updateFinding(input: $input) {
+					finding { id }
+				}
+			}
+		`
+
+		_, err = org1Owner.Do(updateQuery, map[string]any{
+			"input": map[string]any{
+				"id":     findingID,
+				"riskId": org2RiskID,
+			},
+		})
+		require.Error(t, err, "must not accept a riskId belonging to another organization")
+	})
+}

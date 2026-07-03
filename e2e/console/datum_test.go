@@ -1353,6 +1353,46 @@ func TestDatum_TenantIsolation(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("cannot create datum referencing a thirdParty from another organization", func(t *testing.T) {
+		org2ThirdPartyID := factory.NewThirdParty(org2Owner).WithName("Org2 ThirdParty").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateDatumInput!) {
+				createDatum(input: $input) {
+					datumEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId":     org1Owner.GetOrganizationID().String(),
+				"name":               factory.SafeName("Datum"),
+				"dataClassification": "CONFIDENTIAL",
+				"ownerId":            profileID,
+				"thirdPartyIds":      []string{org2ThirdPartyID},
+			},
+		})
+		require.Error(t, err, "must not accept a thirdPartyId belonging to another organization")
+	})
+
+	t.Run("cannot update datum to reference a thirdParty from another organization", func(t *testing.T) {
+		org2ThirdPartyID := factory.NewThirdParty(org2Owner).WithName("Org2 ThirdParty for Update").Create()
+		otherDatumID := factory.NewDatum(org1Owner, profileID).WithName("Org1 Datum for ThirdPartyIDs").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateDatumInput!) {
+				updateDatum(input: $input) {
+					datum { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":            otherDatumID,
+				"thirdPartyIds": []string{org2ThirdPartyID},
+			},
+		})
+		require.Error(t, err, "must not accept a thirdPartyId belonging to another organization")
+	})
 }
 
 func TestDatum_Ordering(t *testing.T) {

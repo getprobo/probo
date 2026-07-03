@@ -362,3 +362,136 @@ func TestObligation_StatusValues(t *testing.T) {
 		})
 	}
 }
+
+func TestObligation_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	profileID := factory.CreateUser(org1Owner)
+
+	var createResult struct {
+		CreateObligation struct {
+			ObligationEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"obligationEdge"`
+		} `json:"createObligation"`
+	}
+
+	err := org1Owner.Execute(`
+		mutation($input: CreateObligationInput!) {
+			createObligation(input: $input) {
+				obligationEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": org1Owner.GetOrganizationID().String(),
+			"area":           "Risk Management",
+			"requirement":    "Org1 Obligation",
+			"ownerId":        profileID,
+			"status":         "NON_COMPLIANT",
+			"type":           "LEGAL",
+		},
+	}, &createResult)
+	require.NoError(t, err)
+
+	obligationID := createResult.CreateObligation.ObligationEdge.Node.ID
+
+	t.Run("cannot read obligation from another organization", func(t *testing.T) {
+		query := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on Obligation {
+						id
+						requirement
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node *struct {
+				ID          string `json:"id"`
+				Requirement string `json:"requirement"`
+			} `json:"node"`
+		}
+
+		err := org2Owner.Execute(query, map[string]any{"id": obligationID}, &result)
+		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "obligation")
+	})
+
+	t.Run("cannot update obligation from another organization", func(t *testing.T) {
+		_, err := org2Owner.Do(`
+			mutation($input: UpdateObligationInput!) {
+				updateObligation(input: $input) {
+					obligation { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":   obligationID,
+				"area": "Hijacked Obligation",
+			},
+		})
+		require.Error(t, err, "Should not be able to update obligation from another org")
+	})
+
+	t.Run("cannot delete obligation from another organization", func(t *testing.T) {
+		_, err := org2Owner.Do(`
+			mutation($input: DeleteObligationInput!) {
+				deleteObligation(input: $input) {
+					deletedObligationId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"obligationId": obligationID,
+			},
+		})
+		require.Error(t, err, "Should not be able to delete obligation from another org")
+	})
+
+	t.Run("cannot create obligation referencing an owner from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateObligationInput!) {
+				createObligation(input: $input) {
+					obligationEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": org1Owner.GetOrganizationID().String(),
+				"area":           "Risk Management",
+				"requirement":    factory.SafeName("Obligation"),
+				"ownerId":        org2ProfileID,
+				"status":         "NON_COMPLIANT",
+				"type":           "LEGAL",
+			},
+		})
+		require.Error(t, err, "must not accept an ownerId belonging to another organization")
+	})
+
+	t.Run("cannot update obligation to reference an owner from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateObligationInput!) {
+				updateObligation(input: $input) {
+					obligation { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":      obligationID,
+				"ownerId": org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept an ownerId belonging to another organization")
+	})
+}

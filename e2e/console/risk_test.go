@@ -1020,6 +1020,48 @@ func TestRisk_TenantIsolation(t *testing.T) {
 		})
 		require.Error(t, err, "Should not be able to delete risk from another org")
 	})
+
+	t.Run("cannot create risk referencing an owner from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateRiskInput!) {
+				createRisk(input: $input) {
+					riskEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId":     org1Owner.GetOrganizationID().String(),
+				"name":               factory.SafeName("Risk"),
+				"category":           "OPERATIONAL",
+				"treatment":          "MITIGATED",
+				"inherentLikelihood": 2,
+				"inherentImpact":     2,
+				"ownerId":            org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept an ownerId belonging to another organization")
+	})
+
+	t.Run("cannot update risk to reference an owner from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+		otherRiskID := factory.NewRisk(org1Owner).WithName("Org1 Risk for OwnerID").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateRiskInput!) {
+				updateRisk(input: $input) {
+					risk { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":      otherRiskID,
+				"ownerId": org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept an ownerId belonging to another organization")
+	})
 }
 
 func TestRisk_LikelihoodImpactValues(t *testing.T) {

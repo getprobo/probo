@@ -924,4 +924,83 @@ func TestTask_TenantIsolation(t *testing.T) {
 		})
 		require.Error(t, err, "Should not be able to delete task from another org")
 	})
+
+	t.Run("cannot create task referencing a measure from another organization", func(t *testing.T) {
+		org2MeasureID := factory.NewMeasure(org2Owner).WithName("Org2 Measure").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateTaskInput!) {
+				createTask(input: $input) {
+					taskEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": org1Owner.GetOrganizationID().String(),
+				"measureId":      org2MeasureID,
+				"name":           factory.SafeName("Task"),
+				"priority":       "MEDIUM",
+			},
+		})
+		require.Error(t, err, "must not accept a measureId belonging to another organization")
+	})
+
+	t.Run("cannot create task referencing an assignee from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateTaskInput!) {
+				createTask(input: $input) {
+					taskEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": org1Owner.GetOrganizationID().String(),
+				"measureId":      measureID,
+				"name":           factory.SafeName("Task"),
+				"priority":       "MEDIUM",
+				"assignedToId":   org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept an assignedToId belonging to another organization")
+	})
+
+	t.Run("cannot update task to reference a measure from another organization", func(t *testing.T) {
+		org2MeasureID := factory.NewMeasure(org2Owner).WithName("Org2 Measure for Update").Create()
+		otherTaskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task for MeasureID").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":    otherTaskID,
+				"measureId": org2MeasureID,
+			},
+		})
+		require.Error(t, err, "must not accept a measureId belonging to another organization")
+	})
+
+	t.Run("cannot update task to reference an assignee from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+		otherTaskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task for AssignedToID").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":       otherTaskID,
+				"assignedToId": org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept an assignedToId belonging to another organization")
+	})
 }

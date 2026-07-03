@@ -1171,4 +1171,61 @@ func TestThirdParty_TenantIsolation(t *testing.T) {
 		})
 		require.Error(t, err, "Should not be able to delete thirdParty from another org")
 	})
+
+	t.Run("cannot create thirdParty referencing a business owner from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateThirdPartyInput!) {
+				createThirdParty(input: $input) {
+					thirdPartyEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId":  org1Owner.GetOrganizationID().String(),
+				"name":            factory.SafeName("ThirdParty"),
+				"businessOwnerId": org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept a businessOwnerId belonging to another organization")
+	})
+
+	t.Run("cannot update thirdParty to reference a security owner from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+		otherThirdPartyID := factory.NewThirdParty(org1Owner).WithName("Org1 ThirdParty for SecurityOwner").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateThirdPartyInput!) {
+				updateThirdParty(input: $input) {
+					thirdParty { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":              otherThirdPartyID,
+				"securityOwnerId": org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept a securityOwnerId belonging to another organization")
+	})
+
+	t.Run("cannot create thirdParty referencing a parent thirdParty from another organization", func(t *testing.T) {
+		org2ParentID := factory.NewThirdParty(org2Owner).WithName("Org2 Parent ThirdParty").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateThirdPartyInput!) {
+				createThirdParty(input: $input) {
+					thirdPartyEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId":     org1Owner.GetOrganizationID().String(),
+				"name":               factory.SafeName("ThirdParty"),
+				"parentThirdPartyId": org2ParentID,
+			},
+		})
+		require.Error(t, err, "must not accept a parentThirdPartyId belonging to another organization")
+	})
 }

@@ -889,3 +889,67 @@ func TestControl_SubResolvers(t *testing.T) {
 		assert.GreaterOrEqual(t, len(result.Node.Measures.Edges), 1)
 	})
 }
+
+func TestControl_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	frameworkID := factory.CreateFramework(org1Owner)
+	controlID := factory.CreateControl(org1Owner, frameworkID)
+
+	t.Run("cannot read control from another organization", func(t *testing.T) {
+		query := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on Control {
+						id
+						name
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node *struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"node"`
+		}
+
+		err := org2Owner.Execute(query, map[string]any{"id": controlID}, &result)
+		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "control")
+	})
+
+	t.Run("cannot update control from another organization", func(t *testing.T) {
+		_, err := org2Owner.Do(`
+			mutation($input: UpdateControlInput!) {
+				updateControl(input: $input) {
+					control { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":   controlID,
+				"name": "Hijacked Control",
+			},
+		})
+		require.Error(t, err, "Should not be able to update control from another org")
+	})
+
+	t.Run("cannot delete control from another organization", func(t *testing.T) {
+		_, err := org2Owner.Do(`
+			mutation($input: DeleteControlInput!) {
+				deleteControl(input: $input) {
+					deletedControlId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"controlId": controlID,
+			},
+		})
+		require.Error(t, err, "Should not be able to delete control from another org")
+	})
+}

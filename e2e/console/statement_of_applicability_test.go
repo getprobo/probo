@@ -23,6 +23,46 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+// TestApplicabilityStatement_NodeQuery covers a bug found while writing
+// read-gap regression tests for GHSA-c74x-79w6-63jh: coredata.ApplicabilityStatementEntityType
+// had no case in queryResolver.Node's dispatch switch (base_resolvers.go),
+// so node(id: <applicabilityStatementId>) always failed with an empty
+// authorize action, for any caller regardless of org -- ApplicabilityStatement
+// implements Node in the schema but was unreachable through it.
+func TestApplicabilityStatement_NodeQuery(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	soaID := factory.NewStatementOfApplicability(owner).Create()
+	frameworkID := factory.CreateFramework(owner)
+	controlID := factory.CreateControl(owner, frameworkID)
+	asID := factory.CreateApplicabilityStatement(owner, soaID, controlID, true, nil)
+
+	var result struct {
+		Node *struct {
+			ID      string `json:"id"`
+			Control struct {
+				ID string `json:"id"`
+			} `json:"control"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on ApplicabilityStatement {
+					id
+					control { id }
+				}
+			}
+		}
+	`, map[string]any{"id": asID}, &result)
+	require.NoError(t, err)
+	require.NotNil(t, result.Node)
+	assert.Equal(t, asID, result.Node.ID)
+	assert.Equal(t, controlID, result.Node.Control.ID)
+}
+
 func TestStatementOfApplicability_Create(t *testing.T) {
 	t.Parallel()
 
@@ -754,6 +794,31 @@ func TestStatementOfApplicability_TenantIsolation(t *testing.T) {
 				},
 			)
 			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"cannot create applicability statement referencing a control from another organization",
+		func(t *testing.T) {
+			t.Parallel()
+
+			org2FrameworkID := factory.CreateFramework(org2Owner)
+			org2ControlID := factory.CreateControl(org2Owner, org2FrameworkID)
+
+			_, err := org1Owner.Do(`
+				mutation($input: CreateApplicabilityStatementInput!) {
+					createApplicabilityStatement(input: $input) {
+						applicabilityStatementEdge { node { id } }
+					}
+				}
+			`, map[string]any{
+				"input": map[string]any{
+					"statementOfApplicabilityId": soaID,
+					"controlId":                  org2ControlID,
+					"applicability":              true,
+				},
+			})
+			require.Error(t, err, "must not accept a controlId belonging to another organization")
 		},
 	)
 }

@@ -1146,6 +1146,108 @@ func TestProcessingActivity_TenantIsolation(t *testing.T) {
 			}
 		}
 	})
+
+	// GHSA-c74x-79w6-63jh: a processing activity must not be able to store a
+	// dataProtectionOfficerId belonging to another organization, whether set
+	// on create or on a later update. Before the fix,
+	// ProcessingActivityService.Create/Update persisted an attacker-supplied
+	// profile id with no scoped ownership check, and
+	// processingActivityResolver.DataProtectionOfficer authorized the
+	// processing activity (caller's org) instead of the profile, letting the
+	// caller read another org's member PII through the dataloader's
+	// NewScopeFromObjectID(profileID) scope.
+	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Confidential DPO"})
+
+	t.Run("cannot create processing activity referencing a data protection officer from another organization", func(t *testing.T) {
+		query := `
+			mutation CreateProcessingActivity($input: CreateProcessingActivityInput!) {
+				createProcessingActivity(input: $input) {
+					processingActivityEdge {
+						node { id }
+					}
+				}
+			}
+		`
+
+		_, err := org1Owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId":                       org1Owner.GetOrganizationID().String(),
+				"name":                                 factory.SafeName("ProcessingActivity"),
+				"specialOrCriminalData":                "NO",
+				"lawfulBasis":                          "CONSENT",
+				"internationalTransfers":               false,
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
+				"dataProtectionOfficerId":              org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept a dataProtectionOfficerId belonging to another organization")
+	})
+
+	t.Run("cannot update processing activity to reference a data protection officer from another organization", func(t *testing.T) {
+		otherPaID := factory.NewProcessingActivity(org1Owner).WithName("Org1 PA Without DPO").Create()
+
+		query := `
+			mutation UpdateProcessingActivity($input: UpdateProcessingActivityInput!) {
+				updateProcessingActivity(input: $input) {
+					processingActivity { id }
+				}
+			}
+		`
+
+		_, err := org1Owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"id":                      otherPaID,
+				"dataProtectionOfficerId": org2ProfileID,
+			},
+		})
+		require.Error(t, err, "must not accept a dataProtectionOfficerId belonging to another organization")
+	})
+
+	t.Run("cannot create processing activity referencing a thirdParty from another organization", func(t *testing.T) {
+		org2ThirdPartyID := factory.NewThirdParty(org2Owner).WithName("Org2 ThirdParty").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateProcessingActivityInput!) {
+				createProcessingActivity(input: $input) {
+					processingActivityEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId":                       org1Owner.GetOrganizationID().String(),
+				"name":                                 factory.SafeName("ProcessingActivity"),
+				"specialOrCriminalData":                "NO",
+				"lawfulBasis":                          "CONSENT",
+				"internationalTransfers":               false,
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
+				"thirdPartyIds":                        []string{org2ThirdPartyID},
+			},
+		})
+		require.Error(t, err, "must not accept a thirdPartyId belonging to another organization")
+	})
+
+	t.Run("cannot update processing activity to reference a thirdParty from another organization", func(t *testing.T) {
+		org2ThirdPartyID := factory.NewThirdParty(org2Owner).WithName("Org2 ThirdParty for Update").Create()
+		otherPaID := factory.NewProcessingActivity(org1Owner).WithName("Org1 PA Without ThirdParties").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateProcessingActivityInput!) {
+				updateProcessingActivity(input: $input) {
+					processingActivity { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":            otherPaID,
+				"thirdPartyIds": []string{org2ThirdPartyID},
+			},
+		})
+		require.Error(t, err, "must not accept a thirdPartyId belonging to another organization")
+	})
 }
 
 func TestProcessingActivity_Ordering(t *testing.T) {

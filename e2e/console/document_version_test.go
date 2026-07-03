@@ -2281,3 +2281,34 @@ func TestDocumentVersion_SignArchivedDocumentFails(t *testing.T) {
 		},
 	})
 }
+
+func TestDocumentVersion_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for Version Isolation").Create()
+	versionID := latestDocumentVersionID(t, org1Owner, docID)
+
+	t.Run("cannot read documentVersion from another organization", func(t *testing.T) {
+		query := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on DocumentVersion {
+						id
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node *struct {
+				ID string `json:"id"`
+			} `json:"node"`
+		}
+
+		err := org2Owner.Execute(query, map[string]any{"id": versionID}, &result)
+		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "documentVersion")
+	})
+}

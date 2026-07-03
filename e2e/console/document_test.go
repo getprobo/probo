@@ -1296,6 +1296,68 @@ func TestDocument_TenantIsolation(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("cannot create document referencing a default approver from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+
+		_, err := org1Owner.Do(`
+			mutation($input: CreateDocumentInput!) {
+				createDocument(input: $input) {
+					documentEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId":     org1Owner.GetOrganizationID().String(),
+				"title":              factory.SafeName("Document"),
+				"content":            testutil.ProseMirrorTextDoc("Document content"),
+				"documentType":       "POLICY",
+				"classification":     "INTERNAL",
+				"defaultApproverIds": []string{org2ProfileID},
+			},
+		})
+		require.Error(t, err, "must not accept a defaultApproverId belonging to another organization")
+	})
+
+	t.Run("cannot update document to reference a default approver from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+		otherDocumentID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for DefaultApproverIDs").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: UpdateDocumentInput!) {
+				updateDocument(input: $input) {
+					document { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":                 otherDocumentID,
+				"defaultApproverIds": []string{org2ProfileID},
+			},
+		})
+		require.Error(t, err, "must not accept a defaultApproverId belonging to another organization")
+	})
+
+	t.Run("cannot request approval referencing an approver from another organization", func(t *testing.T) {
+		org2ProfileID := factory.CreateUser(org2Owner)
+		otherDocumentID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for ApproverIDs").Create()
+
+		_, err := org1Owner.Do(`
+			mutation($input: PublishDocumentInput!) {
+				publishDocument(input: $input) {
+					approvalQuorum { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"minor":       false,
+				"documentId":  otherDocumentID,
+				"approverIds": []string{org2ProfileID},
+				"changelog":   "Test changelog",
+			},
+		})
+		require.Error(t, err, "must not accept an approverId belonging to another organization")
+	})
 }
 
 func TestDocument_Ordering(t *testing.T) {
