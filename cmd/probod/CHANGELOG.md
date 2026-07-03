@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.223.2] - 2026-07-03
+
+### Fixed
+
+- Fixed a privilege-escalation gap where an organization ADMIN could mint an OWNER membership through `createUser`, bypassing the owner-only authorization enforced elsewhere; `createUser` (both the API resolver and the MCP `CreateUserTool`) now requires set-owner authorization when the requested role is OWNER
+
 ## [0.223.1] - 2026-07-03
 
 ### Fixed
