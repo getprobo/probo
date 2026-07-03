@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.223.1] - 2026-07-03
+
+### Fixed
+
+- Fixed a cross-tenant IDOR where a Finding's linked Risk or a Processing Activity's Data Protection Officer could disclose another organization's data (GHSA-c74x-79w6-63jh): affected resolvers now authorize the referenced object itself instead of its parent, and the write paths validate the reference against the caller's organization
+
 ## [0.223.0] - 2026-07-02
 
 ### Added
