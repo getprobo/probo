@@ -81,14 +81,14 @@ func (s *Service) mailingListEmailConfig(
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if compliancePage.LogoFileID != nil {
-				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
-					return fmt.Errorf("cannot load logo file: %w", err)
-				}
-			}
-
 			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if logoFileID := compliancePage.EffectiveLogoFileID(organization); logoFileID != nil {
+				if err := logoFile.LoadByID(ctx, conn, scope, *logoFileID); err != nil {
+					return fmt.Errorf("cannot load logo file: %w", err)
+				}
 			}
 
 			customDomain = &coredata.CustomDomain{}
@@ -149,7 +149,7 @@ func (s *Service) presenterConfigFromTrustCenter(
 
 	cfg.BaseURL = compliancePageURL
 
-	if compliancePage.LogoFileID != nil && logoFile != nil && logoFile.FileKey != "" {
+	if logoFileID := compliancePage.EffectiveLogoFileID(organization); logoFileID != nil && logoFile != nil && logoFile.FileKey != "" {
 		cfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 
 		cfg.SenderCompanyName = organization.Name

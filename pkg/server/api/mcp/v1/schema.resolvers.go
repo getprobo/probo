@@ -4889,8 +4889,13 @@ func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequ
 
 	tc := types.NewTrustCenter(trustCenter)
 
-	if trustCenter.LogoFileID != nil {
-		logo, err := r.loadFile(ctx, scope, *trustCenter.LogoFileID)
+	organization, err := prb.Organizations.Get(ctx, scope, trustCenter.OrganizationID)
+	if err != nil {
+		return nil, types.GetTrustCenterOutput{}, fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	if logoFileID := trustCenter.EffectiveLogoFileID(organization); logoFileID != nil {
+		logo, err := r.loadFile(ctx, scope, *logoFileID)
 		if err != nil {
 			return nil, types.GetTrustCenterOutput{}, err
 		}

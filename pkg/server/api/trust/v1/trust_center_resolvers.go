@@ -678,11 +678,24 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 // Logo is the resolver for the logo field.
 func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	if trustCenter.LogoFileID == nil {
+	logoFileID := trustCenter.LogoFileID
+
+	if logoFileID == nil {
+		scope := coredata.NewScopeFromObjectID(obj.ID)
+		organization, err := r.trust.Organizations.Get(ctx, scope, trustCenter.OrganizationID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load organization for compliance page logo fallback", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		logoFileID = organization.LogoFileID
+	}
+
+	if logoFileID == nil {
 		return nil, nil
 	}
 
-	return r.loadPublicFile(ctx, *trustCenter.LogoFileID)
+	return r.loadPublicFile(ctx, *logoFileID)
 }
 
 // DarkLogo is the resolver for the darkLogo field.

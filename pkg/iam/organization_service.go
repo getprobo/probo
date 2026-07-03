@@ -724,7 +724,6 @@ func (s *OrganizationService) CreateOrganization(
 				}
 
 				organization.LogoFileID = &logoFile.ID
-				trustCenter.LogoFileID = &logoFile.ID
 			}
 
 			if horizontalLogoFile != nil {
@@ -802,7 +801,6 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		tenantID           = organizationID.TenantID()
 		scope              = coredata.NewScopeFromObjectID(organizationID)
 		organization       = &coredata.Organization{}
-		compliancePage     = &coredata.TrustCenter{}
 	)
 
 	// TODO: s3 upload happen before we validate the tenantID
@@ -924,20 +922,6 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				}
 
 				organization.LogoFileID = &logoFile.ID
-
-				// Auto set the compliance page org logo in case it wasn't already specified
-				if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-					return fmt.Errorf("cannot load compliance page: %w", err)
-				}
-
-				if compliancePage.LogoFileID == nil {
-					compliancePage.LogoFileID = &logoFile.ID
-					compliancePage.UpdatedAt = now
-
-					if err := compliancePage.Update(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot update compliance page: %w", err)
-					}
-				}
 			}
 
 			if horizontalLogoFile != nil {
