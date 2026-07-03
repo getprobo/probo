@@ -683,8 +683,11 @@ func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) 
 		return r.loadPublicFile(ctx, *trustCenter.LogoFileID)
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-	organization, err := r.trust.Organizations.Get(ctx, scope, trustCenter.OrganizationID)
+	organization, err := r.trust.Organizations.Get(
+		ctx,
+		coredata.NewScopeFromObjectID(obj.ID),
+		trustCenter.OrganizationID,
+	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load organization for compliance page logo fallback", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
