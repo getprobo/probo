@@ -1,0 +1,68 @@
+---
+description: Comments — rare, only for surprising behavior or context not in the code
+globs: "**/*.{go,ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# Comments
+
+Comments should be **rare**. Well-named functions, variables, and types express
+intent far better than prose that drifts out of date.
+
+Only add a comment when **both** are true:
+
+- The code is not clear by itself, and
+- The behavior is genuinely surprising, or it carries information that cannot
+  live in the code (a non-obvious trade-off, an external constraint, a spec/RFC
+  reference, a workaround for an upstream bug).
+
+Keep comments **short** — a line or two. If a comment needs a paragraph, the
+code probably needs restructuring instead.
+
+Do **not** write comments that merely restate what the code does. Prefer fixing
+unclear code (better names, smaller functions) over explaining it with a comment.
+
+This rule targets **inline explanatory comments**. It does **not** apply to:
+
+- Structured API documentation (Go doc comments on exported symbols, JSDoc/TSDoc,
+  and equivalents) — follow the usual documentation conventions there.
+- File headers (license/copyright banners, generated-file markers, etc.).
+
+```go
+// Bad — restates the call
+// load the foo from the store
+foo, err := s.loadFoo(ctx)
+
+// Bad — states a "why" that is already obvious from the code
+// use a timeout so a slow upstream can't hang the request forever
+ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+// Bad — too wordy; a comment should be one short line
+// The payment provider returns transient 503 errors during their nightly
+// maintenance window, and those calls almost always succeed if we simply
+// try again, so we retry a few times before giving up on the charge.
+retry(3, chargeCard)
+
+// Good — same point, kept short
+// Provider returns transient 503s during nightly maintenance.
+retry(3, chargeCard)
+
+// Good — explains surprising behavior the code cannot convey
+// Stripe rounds half-to-even, so we must match it here to avoid
+// off-by-one-cent reconciliation failures.
+amount := roundHalfToEven(raw)
+
+// Good — external constraint / spec reference
+// RFC 5321 caps the local part at 64 octets.
+if len(local) > 64 { ... }
+```
+
+```typescript
+// Bad — restates the code
+// map users to their ids
+const ids = users.map((u) => u.id);
+
+// Good — captures a constraint the code cannot express
+// Safari <16 fires `resize` before layout settles; defer a frame.
+requestAnimationFrame(measure);
+```
