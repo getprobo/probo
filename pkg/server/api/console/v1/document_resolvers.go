@@ -294,8 +294,8 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 			activeContract = filter.ActiveContract
 		}
 
-		if filter.State != nil {
-			profileState = filter.State
+		if filter.ProfileState != nil {
+			profileState = filter.ProfileState
 		}
 	}
 

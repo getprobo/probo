@@ -119,7 +119,7 @@ export async function execute(
 	const filter: IDataObject = {};
 	if ((filters.states as string[])?.length) filter.states = filters.states;
 	if (filters.activeContract !== undefined) filter.activeContract = filters.activeContract;
-	if (filters.state) filter.state = filters.state;
+	if (filters.state) filter.profileState = filters.state;
 
 	const hasFilter = Object.keys(filter).length > 0;
 

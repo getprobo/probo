@@ -2407,8 +2407,8 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 			activeContract = input.Filter.ActiveContract
 		}
 
-		if input.Filter.State != nil {
-			profileState = input.Filter.State
+		if input.Filter.ProfileState != nil {
+			profileState = input.Filter.ProfileState
 		}
 	}
 

@@ -22,15 +22,15 @@ type (
 	DocumentVersionSignatureFilter struct {
 		states         DocumentVersionSignatureStates
 		activeContract *bool
-		state          *ProfileState
+		profileState   *ProfileState
 	}
 )
 
-func NewDocumentVersionSignatureFilter(states []DocumentVersionSignatureState, activeContract *bool, state *ProfileState) *DocumentVersionSignatureFilter {
+func NewDocumentVersionSignatureFilter(states []DocumentVersionSignatureState, activeContract *bool, profileState *ProfileState) *DocumentVersionSignatureFilter {
 	return &DocumentVersionSignatureFilter{
 		states:         DocumentVersionSignatureStates(states),
 		activeContract: activeContract,
-		state:          state,
+		profileState:   profileState,
 	}
 }
 
@@ -38,7 +38,7 @@ func (f *DocumentVersionSignatureFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"states":          f.states,
 		"active_contract": f.activeContract,
-		"profile_state":   f.state,
+		"profile_state":   f.profileState,
 	}
 }
 

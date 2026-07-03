@@ -29,7 +29,7 @@ const versionFragment = graphql`
   @argumentDefinitions(
     count: { type: "Int", defaultValue: 1000 }
     cursor: { type: "CursorKey" }
-    signatureFilter: { type: "DocumentVersionSignatureFilter", defaultValue: { activeContract: true, state: ACTIVE } }
+    signatureFilter: { type: "DocumentVersionSignatureFilter", defaultValue: { activeContract: true, profileState: ACTIVE } }
   ) {
     ...DocumentSignaturePlaceholder_versionFragment
     signatures(first: $count, after: $cursor, filter: $signatureFilter)
@@ -104,7 +104,7 @@ export function DocumentSignatureList(props: {
 
     const filter = {
       activeContract: true,
-      state: "ACTIVE" as const,
+      profileState: "ACTIVE" as const,
       ...(selectedStates.length > 0 ? { states: selectedStates } : {}),
     };
 

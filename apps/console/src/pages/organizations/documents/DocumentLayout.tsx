@@ -40,10 +40,10 @@ export const documentLayoutQuery = graphql`
         ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_versionFragment
         ...DocumentDetailsCard_versionFragment
-        signatures(first: 0 filter: { activeContract: true, state: ACTIVE }) {
+        signatures(first: 0 filter: { activeContract: true, profileState: ACTIVE }) {
           totalCount
         }
-        signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, state: ACTIVE }) {
+        signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, profileState: ACTIVE }) {
           totalCount
         }
         approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
@@ -85,10 +85,10 @@ export const documentLayoutQuery = graphql`
               ...DocumentTitleFormFragment
               ...DocumentActionsDropdown_versionFragment
               ...DocumentDetailsCard_versionFragment
-              signatures(first: 0 filter: { activeContract: true, state: ACTIVE }) {
+              signatures(first: 0 filter: { activeContract: true, profileState: ACTIVE }) {
                 totalCount
               }
-              signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, state: ACTIVE }) {
+              signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, profileState: ACTIVE }) {
                 totalCount
               }
               approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
