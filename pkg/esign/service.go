@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -327,6 +328,10 @@ func (s *Service) AcceptSignature(ctx context.Context, scope coredata.Scoper, re
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
 
+			if !strings.EqualFold(signature.SignerEmail, req.SignerEmail.String()) {
+				return ErrSignatureAccessDenied
+			}
+
 			if signature.Status != coredata.ElectronicSignatureStatusPending &&
 				signature.Status != coredata.ElectronicSignatureStatusFailed {
 				return fmt.Errorf("cannot accept electronic signature in status %s", signature.Status)
@@ -385,6 +390,10 @@ func (s *Service) RecordEvent(ctx context.Context, scope coredata.Scoper, req *R
 				}
 
 				return fmt.Errorf("cannot load electronic signature: %w", err)
+			}
+
+			if !strings.EqualFold(signature.SignerEmail, req.ActorEmail.String()) {
+				return ErrSignatureAccessDenied
 			}
 
 			return s.recordEvent(ctx, tx, scope, req)

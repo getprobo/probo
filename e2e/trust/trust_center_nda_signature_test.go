@@ -1,0 +1,233 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package trust_test
+
+import (
+	"encoding/base64"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/testutil"
+)
+
+// minimalPDFBase64 is a minimal but structurally valid one-page PDF (no
+// visible content). Unlike a hand-rolled "%PDF-1.4 ... /Catalog" stub, it
+// has a real Pages tree, so it survives the watermark stamping that
+// ProvisionMember runs when creating a pending NDA signature.
+const minimalPDFBase64 = "JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9QYWdlcyAyIDAgUi9UeXBlL0NhdGFsb2c+PgplbmRv" +
+	"YmoKNCAwIG9iago8PC9GaWx0ZXIvRmxhdGVEZWNvZGUvTGVuZ3RoIDExPj4Kc3RyZWFtCnicAQAA" +
+	"//8AAAABZW5kc3RyZWFtCmVuZG9iagoyMyAwIG9iago8PC9GaWx0ZXIvRmxhdGVEZWNvZGUvRmly" +
+	"c3QgMTQvTGVuZ3RoIDE2Ni9OIDMvVHlwZS9PYmpTdG0+PgpzdHJlYW0KeJxczkHKwjAQBeCrzAn+" +
+	"Sdr+ugmzaEEEEUp1V7qI7SAFSaSZit5epi6UZhPem2/x/sFADtsCMrCZdQ6rGISDJCjAQIO1nzgI" +
+	"ZEtoOMV56jk5h7sYRD8Lud6IiPD8ujPW/spEzmHpE6vCPd8eLGPv8TRfRI1C++EqFl7FOQhYPIxD" +
+	"anVW0+GRh9GX8dmaP/PzYBULsyo2q6L7TktE7wAAAP//bYpDg2VuZHN0cmVhbQplbmRvYmoKNiAw" +
+	"IG9iago8PC9DcmVhdGlvbkRhdGUoRDoyMDE5MDcwNDEwMjcyOCswMicwMCcpL01vZERhdGUoRDoy" +
+	"MDE5MDcwNDEwMjcyOCswMicwMCcpL1Byb2R1Y2VyKHBkZmNwdSB2MC4xLjI1KT4+CmVuZG9iagoy" +
+	"MiAwIG9iago8PC9GaWx0ZXIvRmxhdGVEZWNvZGUvSURbPDEyNjNDMjQ4RDcyOUI5MTNGQzM5MkYy" +
+	"NjQ2MTk1NDJBPiA8MGNiOTUzNjAyNzk4NWQ1NTQ5YzNlY2ZlNmE5MjM5ZTc+XS9JbmRleFswIDIy" +
+	"IDIzIDFdL0luZm8gNiAwIFIvTGVuZ3RoIDcyL1Jvb3QgMSAwIFIvU2l6ZSAyNC9UeXBlL1hSZWYv" +
+	"V1sxIDIgMl0+PgpzdHJlYW0KeJwkzEkKgDAUBNH62TgbR7yMFxS8c6RMLx70puAsJciQuEgSwV0v" +
+	"ES//AhpppZNeBhllklmyLLLKJrsclh/4AgAA//9tzQSTZW5kc3RyZWFtCmVuZG9iagoKc3RhcnR4" +
+	"cmVmCjUxMgolJUVPRg=="
+
+// TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature is a
+// regression test for GHSA-22xj-f767-ppw6: any self-provisioned trust
+// center visitor could accept another visitor's NDA signature, or inject
+// audit-trail events into it, simply by knowing its GID.
+func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	trustCenterID := lookupTrustCenterID(t, owner)
+
+	uploadTrustCenterNDA(t, owner, trustCenterID)
+	activateTrustCenter(t, owner, trustCenterID)
+
+	victim := testutil.SelfProvisionTrustCenterVisitor(t, trustCenterID)
+	attacker := testutil.SelfProvisionTrustCenterVisitor(t, trustCenterID)
+
+	victimSignatureID, victimSignatureStatus := viewerSignature(t, victim, trustCenterID)
+	require.NotEmpty(t, victimSignatureID)
+	require.Equal(t, "PENDING", victimSignatureStatus)
+
+	const acceptMutation = `
+		mutation($input: AcceptElectronicSignatureInput!) {
+			acceptElectronicSignature(input: $input) {
+				signature { id status }
+			}
+		}
+	`
+
+	err := attacker.ExecuteTrust(trustCenterID, acceptMutation, map[string]any{
+		"input": map[string]any{"signatureId": victimSignatureID},
+	}, nil)
+	require.Error(t, err, "attacker must not be able to accept another visitor's signature")
+	assertForbidden(t, err)
+
+	const recordEventMutation = `
+		mutation($input: RecordSigningEventInput!) {
+			recordSigningEvent(input: $input) {
+				success
+			}
+		}
+	`
+
+	err = attacker.ExecuteTrust(trustCenterID, recordEventMutation, map[string]any{
+		"input": map[string]any{
+			"signatureId": victimSignatureID,
+			"eventType":   "DOCUMENT_VIEWED",
+		},
+	}, nil)
+	require.Error(t, err, "attacker must not be able to inject events into another visitor's signature")
+	assertForbidden(t, err)
+
+	_, statusAfterAttack := viewerSignature(t, victim, trustCenterID)
+	assert.Equal(t, "PENDING", statusAfterAttack, "attack attempts must not have mutated the victim's signature")
+
+	var acceptResult struct {
+		AcceptElectronicSignature struct {
+			Signature struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"signature"`
+		} `json:"acceptElectronicSignature"`
+	}
+
+	err = victim.ExecuteTrust(trustCenterID, acceptMutation, map[string]any{
+		"input": map[string]any{"signatureId": victimSignatureID},
+	}, &acceptResult)
+	require.NoError(t, err, "the legitimate signer must still be able to accept their own signature")
+	assert.Equal(t, "ACCEPTED", acceptResult.AcceptElectronicSignature.Signature.Status)
+}
+
+func lookupTrustCenterID(t *testing.T, owner *testutil.Client) string {
+	t.Helper()
+
+	const query = `
+		query($organizationId: ID!) {
+			node(id: $organizationId) {
+				... on Organization {
+					trustCenter { id }
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			TrustCenter struct {
+				ID string `json:"id"`
+			} `json:"trustCenter"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.TrustCenter.ID)
+
+	return result.Node.TrustCenter.ID
+}
+
+func uploadTrustCenterNDA(t *testing.T, owner *testutil.Client, trustCenterID string) {
+	t.Helper()
+
+	const query = `
+		mutation($input: UploadTrustCenterNDAInput!) {
+			uploadTrustCenterNDA(input: $input) {
+				trustCenter { id }
+			}
+		}
+	`
+
+	pdfContent, err := base64.StdEncoding.DecodeString(minimalPDFBase64)
+	require.NoError(t, err)
+
+	err = owner.ExecuteWithFile(query, map[string]any{
+		"input": map[string]any{
+			"trustCenterId": trustCenterID,
+			"fileName":      "nda.pdf",
+			"file":          nil,
+		},
+	}, "input.file", testutil.UploadFile{
+		Filename:    "nda.pdf",
+		ContentType: "application/pdf",
+		Content:     pdfContent,
+	}, nil)
+	require.NoError(t, err)
+}
+
+func activateTrustCenter(t *testing.T, owner *testutil.Client, trustCenterID string) {
+	t.Helper()
+
+	const query = `
+		mutation($input: UpdateTrustCenterInput!) {
+			updateTrustCenter(input: $input) {
+				trustCenter { id active }
+			}
+		}
+	`
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"trustCenterId": trustCenterID,
+			"active":        true,
+		},
+	}, nil)
+	require.NoError(t, err)
+}
+
+func viewerSignature(t *testing.T, visitor *testutil.Client, trustCenterID string) (string, string) {
+	t.Helper()
+
+	const query = `
+		query {
+			currentTrustCenter {
+				nonDisclosureAgreement {
+					viewerSignature { id status }
+				}
+			}
+		}
+	`
+
+	var result struct {
+		CurrentTrustCenter struct {
+			NonDisclosureAgreement struct {
+				ViewerSignature struct {
+					ID     string `json:"id"`
+					Status string `json:"status"`
+				} `json:"viewerSignature"`
+			} `json:"nonDisclosureAgreement"`
+		} `json:"currentTrustCenter"`
+	}
+
+	err := visitor.ExecuteTrust(trustCenterID, query, nil, &result)
+	require.NoError(t, err)
+
+	sig := result.CurrentTrustCenter.NonDisclosureAgreement.ViewerSignature
+
+	return sig.ID, sig.Status
+}
+
+func assertForbidden(t *testing.T, err error) {
+	t.Helper()
+
+	gqlErrs, ok := err.(testutil.GraphQLErrors)
+	require.True(t, ok, "expected a GraphQL error, got %T: %v", err, err)
+	require.NotEmpty(t, gqlErrs)
+	assert.Equal(t, "FORBIDDEN", gqlErrs[0].Code())
+}

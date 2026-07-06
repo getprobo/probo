@@ -48,6 +48,10 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 			return nil, gqlutils.NotFoundf(ctx, "electronic signature %q not found", input.SignatureID)
 		}
 
+		if errors.Is(err, esign.ErrSignatureAccessDenied) {
+			return nil, gqlutils.Forbiddenf(ctx, "cannot accept electronic signature")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -83,6 +87,10 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 	); err != nil {
 		if errors.Is(err, esign.ErrElectronicSignatureNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "electronic signature %q not found", input.SignatureID)
+		}
+
+		if errors.Is(err, esign.ErrSignatureAccessDenied) {
+			return nil, gqlutils.Forbiddenf(ctx, "cannot record signing event")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))

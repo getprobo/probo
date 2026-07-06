@@ -12,11 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package esign
+package trust_test
 
-import "errors"
+import (
+	"os"
+	"testing"
 
-var (
-	ErrElectronicSignatureNotFound = errors.New("electronic signature not found")
-	ErrSignatureAccessDenied       = errors.New("signature does not belong to the caller")
+	"go.probo.inc/probo/e2e/internal/testutil"
 )
+
+func TestMain(m *testing.M) {
+	testutil.Setup()
+
+	code := m.Run()
+
+	testutil.Teardown()
+	os.Exit(code)
+}

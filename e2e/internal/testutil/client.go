@@ -400,10 +400,16 @@ func (c *Client) inviteUser(profileID gid.GID) {
 }
 
 func (c *Client) getActivationToken(email string) string {
+	return c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Invitation to join\"", email))
+}
+
+// pollForLinkToken polls mailpit for a message matching searchQuery and
+// returns the first "token" query parameter found among its links.
+func (c *Client) pollForLinkToken(searchQuery string) string {
 	deadline := time.Now().Add(10 * time.Second)
 
 	for time.Now().Before(deadline) {
-		searchMails, err := c.SearchMails(fmt.Sprintf("to:%s subject:\"Invitation to join\"", email))
+		searchMails, err := c.SearchMails(searchQuery)
 		require.NoError(c.T, err, "mailpit messages search failed")
 
 		for _, msg := range searchMails.Messages {
@@ -414,9 +420,8 @@ func (c *Client) getActivationToken(email string) string {
 				linkURL, err := url.Parse(link.URL)
 				require.NoError(c.T, err, "mailpit link invalid URL")
 
-				query := linkURL.Query()
-				if query.Get("token") != "" {
-					return query.Get("token")
+				if token := linkURL.Query().Get("token"); token != "" {
+					return token
 				}
 			}
 		}
@@ -424,7 +429,7 @@ func (c *Client) getActivationToken(email string) string {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	c.T.Logf("activation token not found")
+	c.T.Logf("link token not found for query %q", searchQuery)
 	c.T.FailNow()
 
 	return ""
@@ -528,6 +533,66 @@ func NewClientWithNewSession(t testing.TB, from *Client) *Client {
 	client.signIn(client.email, client.password)
 
 	return client
+}
+
+// SelfProvisionTrustCenterVisitor signs a brand-new email up as a trust
+// center visitor through the public magic-link flow (send + verify), the
+// same path a real visitor takes. It returns a Client bound to that
+// visitor's own session and cookie jar, scoped to no organization.
+func SelfProvisionTrustCenterVisitor(t testing.TB, trustCenterID string) *Client {
+	t.Helper()
+
+	jar, err := cookiejar.New(nil)
+	require.NoError(t, err, "cannot create cookie jar")
+
+	email := fmt.Sprintf("visitor-%s@e2e.probo.test", generateUniqueID())
+
+	visitor := &Client{
+		T:              t,
+		baseURL:        GetBaseURL(),
+		mailpitBaseURL: GetMailpitBaseURL(),
+		email:          email,
+		httpClient: &http.Client{
+			Jar:     jar,
+			Timeout: 30 * time.Second,
+		},
+	}
+
+	visitor.sendMagicLink(trustCenterID, email)
+	token := visitor.pollForLinkToken(fmt.Sprintf("to:%s", email))
+	visitor.verifyMagicLink(trustCenterID, token)
+
+	return visitor
+}
+
+func (c *Client) sendMagicLink(trustCenterID, email string) {
+	const query = `
+		mutation($input: SendMagicLinkInput!) {
+			sendMagicLink(input: $input) {
+				success
+			}
+		}
+	`
+
+	err := c.ExecuteTrust(trustCenterID, query, map[string]any{
+		"input": map[string]any{"email": email},
+	}, nil)
+	require.NoError(c.T, err, "sendMagicLink mutation failed")
+}
+
+func (c *Client) verifyMagicLink(trustCenterID, token string) {
+	const query = `
+		mutation($input: VerifyMagicLinkInput!) {
+			verifyMagicLink(input: $input) {
+				continue
+			}
+		}
+	`
+
+	err := c.ExecuteTrust(trustCenterID, query, map[string]any{
+		"input": map[string]any{"token": token},
+	}, nil)
+	require.NoError(c.T, err, "verifyMagicLink mutation failed")
 }
 
 func (c *Client) GetEmail() string {
