@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
 )
 
@@ -40,7 +41,8 @@ type (
 )
 
 func FetchRobotsTxtTool() agent.Tool {
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	client.Timeout = 10 * time.Second
 
 	return agent.FunctionTool(
 		"fetch_robots_txt",

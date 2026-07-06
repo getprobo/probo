@@ -21,7 +21,9 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
 )
 
 type (
@@ -73,11 +75,20 @@ func parseCSPDirectives(raw string) []cspDirective {
 }
 
 func AnalyzeCSPTool() agent.Tool {
+	client := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	client.Timeout = 10 * time.Second
+
 	return agent.FunctionTool(
 		"analyze_csp",
 		"Analyze the Content-Security-Policy header for a URL, parsing directives and flagging unsafe patterns like unsafe-eval, unsafe-inline, and wildcard sources.",
 		func(ctx context.Context, p cspParams) (agent.ToolResult, error) {
-			client := &http.Client{Timeout: 10 * time.Second}
+			if err := netcheck.ValidatePublicURL(p.URL); err != nil {
+				return agent.ResultJSON(
+					cspResult{
+						ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
+					},
+				), nil
+			}
 
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.URL, nil)
 			if err != nil {

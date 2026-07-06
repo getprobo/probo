@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
 )
@@ -75,6 +76,15 @@ func headersFromResponse(resp *http.Response) headersResult {
 }
 
 func CheckSecurityHeadersTool() agent.Tool {
+	client := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	client.Timeout = 10 * time.Second
+	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	followClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	followClient.Timeout = 10 * time.Second
+
 	return agent.FunctionTool(
 		"check_security_headers",
 		"Check security-related HTTP headers for a URL (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cross-Origin-*-Policy). Also checks if HTTP redirects to HTTPS.",
@@ -85,13 +95,6 @@ func CheckSecurityHeadersTool() agent.Tool {
 						ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
 					},
 				), nil
-			}
-
-			client := &http.Client{
-				Timeout: 10 * time.Second,
-				CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
-					return http.ErrUseLastResponse
-				},
 			}
 
 			// First check the HTTP version to detect HTTP→HTTPS redirect.
@@ -128,8 +131,6 @@ func CheckSecurityHeadersTool() agent.Tool {
 			httpsParsed := *parsedURL
 			httpsParsed.Scheme = "https"
 			httpsURL := httpsParsed.String()
-
-			followClient := &http.Client{Timeout: 10 * time.Second}
 
 			httpsReq, err := http.NewRequestWithContext(ctx, http.MethodGet, httpsURL, nil)
 			if err != nil {

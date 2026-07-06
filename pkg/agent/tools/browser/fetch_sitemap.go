@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
 )
 
@@ -45,7 +46,8 @@ const (
 )
 
 func FetchSitemapTool() agent.Tool {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	client.Timeout = 15 * time.Second
 
 	return agent.FunctionTool(
 		"fetch_sitemap",

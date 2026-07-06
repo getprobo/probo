@@ -27,8 +27,8 @@ import (
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
 )
 
 type (
@@ -44,10 +44,8 @@ type (
 )
 
 func DownloadPDFTool() agent.Tool {
-	client := &http.Client{
-		Timeout:   30 * time.Second,
-		Transport: netcheck.NewPinnedTransport(),
-	}
+	client := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	client.Timeout = 30 * time.Second
 
 	return agent.FunctionTool(
 		"download_pdf",

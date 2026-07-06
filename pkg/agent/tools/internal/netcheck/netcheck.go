@@ -17,10 +17,8 @@
 package netcheck
 
 import (
-	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"net/url"
 )
 
@@ -87,42 +85,4 @@ func ValidatePublicDomain(domain string) error {
 	}
 
 	return nil
-}
-
-// NewPinnedTransport returns an *http.Transport with a custom DialContext that
-// resolves the target host once, validates all resolved IPs with IsPublicIP,
-// and dials the validated IP directly. This prevents DNS rebinding attacks
-// where the first lookup returns a public IP but a subsequent lookup (at
-// connection time) returns a private IP.
-func NewPinnedTransport() *http.Transport {
-	return &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			host, port, err := net.SplitHostPort(addr)
-			if err != nil {
-				return nil, fmt.Errorf("cannot parse address: %w", err)
-			}
-
-			ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
-			if err != nil {
-				return nil, fmt.Errorf("cannot resolve host: %w", err)
-			}
-
-			if len(ips) == 0 {
-				return nil, fmt.Errorf("cannot resolve host: no addresses found")
-			}
-
-			for _, ip := range ips {
-				if !IsPublicIP(ip.IP) {
-					return nil, fmt.Errorf("cannot connect to non-public IP %s", ip.IP)
-				}
-			}
-
-			// Dial the first validated IP directly to prevent DNS rebinding.
-			pinnedAddr := net.JoinHostPort(ips[0].IP.String(), port)
-
-			var d net.Dialer
-
-			return d.DialContext(ctx, network, pinnedAddr)
-		},
-	}
 }

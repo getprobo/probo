@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
 )
@@ -63,6 +64,12 @@ func splitTrimmed(s, sep string) []string {
 }
 
 func CheckCORSTool() agent.Tool {
+	client := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	client.Timeout = 10 * time.Second
+	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
 	return agent.FunctionTool(
 		"check_cors",
 		"Send a CORS preflight (OPTIONS) request to a URL with a given Origin and analyze the Access-Control-* response headers, flagging wildcard origins and origin reflection.",
@@ -73,13 +80,6 @@ func CheckCORSTool() agent.Tool {
 						ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
 					},
 				), nil
-			}
-
-			client := &http.Client{
-				Timeout: 10 * time.Second,
-				CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
-					return http.ErrUseLastResponse
-				},
 			}
 
 			req, err := http.NewRequestWithContext(
