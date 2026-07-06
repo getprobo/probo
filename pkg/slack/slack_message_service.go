@@ -354,6 +354,10 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 				return nil, nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
 
+			if doc.CurrentPublishedMajor == nil || doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+				continue
+			}
+
 			documents = append(
 				documents,
 				SlackMessageDocument{
