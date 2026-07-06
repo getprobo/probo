@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.223.3] - 2026-07-06
+
+### Fixed
+
+- Fixed IP address recording for NDA acceptance, document signing/approval events, and session creation behind a layer-7 proxy; affected endpoints now read the real client IP from `Forwarded` / `X-Forwarded-For` headers
+
 ## [0.223.2] - 2026-07-03
 
 ### Fixed
