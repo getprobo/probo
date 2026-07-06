@@ -99,7 +99,8 @@ func (p *MembershipProfile) AuthorizationAttributes(
 SELECT
     id,
     organization_id,
-    identity_id
+    identity_id,
+    source
 FROM
     iam_membership_profiles
 WHERE
@@ -123,9 +124,10 @@ WHERE
 			id             gid.GID
 			organizationID gid.GID
 			identityID     gid.GID
+			source         ProfileSource
 		)
 
-		err = rows.Scan(&id, &organizationID, &identityID)
+		err = rows.Scan(&id, &organizationID, &identityID, &source)
 		if err != nil {
 			return nil, fmt.Errorf("cannot scan profile authorization attributes: %w", err)
 		}
@@ -133,6 +135,7 @@ WHERE
 		attrsByID[id] = policy.Attributes{
 			"organization_id": organizationID.String(),
 			"identity_id":     identityID.String(),
+			"source":          source.String(),
 		}
 	}
 

@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Enforced owner-only member removal: `removeUser` (API resolver and MCP `RemoveUserTool`) now requires the owner-only `iam:membership:delete` gate instead of the weaker `iam:membership-profile:delete`, so an organization ADMIN can no longer remove members (including OWNERs)
+
+### Changed
+
+- Consolidated ownership-grant authorization into policy: granting OWNER (via `createUser` or `updateMembership`) is now restricted to organization owners through role-scoped allow policies conditioned on the assigned role, replacing the per-resolver custom checks and the now-removed `iam:membership-role:set-owner` action. The `permission` field gained an optional typed `attributes` argument so the console can refine dry-run checks (e.g. by target role) without loosening the base grants
+
 ## [0.223.3] - 2026-07-06
 
 ### Fixed

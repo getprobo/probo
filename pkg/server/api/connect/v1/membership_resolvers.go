@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -51,14 +50,13 @@ func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membersh
 
 // UpdateMembership is the resolver for the updateMembership field.
 func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
-	if _, err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
+	if _, err := r.authorize(
+		ctx,
+		input.MembershipID,
+		iam.ActionMembershipUpdate,
+		authz.WithAttr("target_role", input.Role.String()),
+	); err != nil {
 		return nil, err
-	}
-
-	if input.Role == coredata.MembershipRoleOwner {
-		if _, err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
-			return nil, err
-		}
 	}
 
 	membership, err := r.iam.OrganizationService.UpdateMembership(ctx, input.OrganizationID, input.MembershipID, input.Role)

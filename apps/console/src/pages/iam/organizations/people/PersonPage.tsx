@@ -36,6 +36,7 @@ export const personPageQuery = graphql`
         source
         state
         canDelete: permission(action: "iam:membership-profile:delete")
+        canRemoveMember: permission(action: "iam:membership:delete")
         ...PersonFormFragment
       }
     }
@@ -140,7 +141,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
   };
 
   const canArchive = person.canDelete && person.source !== "SCIM" && person.state !== "INACTIVE";
-  const canRemove = person.canDelete && person.source !== "SCIM";
+  const canRemove = person.canRemoveMember && person.source !== "SCIM";
 
   return (
     <div className="space-y-6">

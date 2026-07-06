@@ -22,18 +22,19 @@ import (
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUserInput) (*types.CreateUserPayload, error) {
-	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
+	scope, err := r.authorize(
+		ctx,
+		input.OrganizationID,
+		iam.ActionMembershipProfileCreate,
+		authz.WithAttr("target_role", input.Role.String()),
+	)
+	if err != nil {
 		return nil, err
-	}
-
-	if input.Role == coredata.MembershipRoleOwner {
-		if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipRoleSetOwner); err != nil {
-			return nil, err
-		}
 	}
 
 	profile, err := r.iam.OrganizationService.CreateUser(
 		ctx,
+		scope,
 		&iam.CreateUserRequest{
 			OrganizationID:           input.OrganizationID,
 			EmailAddress:             input.EmailAddress,
@@ -137,11 +138,12 @@ func (r *mutationResolver) ArchiveUser(ctx context.Context, input types.ArchiveU
 
 // RemoveUser is the resolver for the removeUser field.
 func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
-	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
+	err = r.iam.OrganizationService.RemoveUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be removed")

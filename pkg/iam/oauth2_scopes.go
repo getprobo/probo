@@ -85,7 +85,6 @@ var IAMOAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionInvitationDelete,
 		ActionMembershipUpdate,
 		ActionMembershipDelete,
-		ActionMembershipRoleSetOwner,
 		ActionMembershipProfileCreate,
 		ActionMembershipProfileUpdate,
 		ActionMembershipProfileDelete,

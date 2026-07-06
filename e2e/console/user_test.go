@@ -26,8 +26,8 @@ import (
 
 // TestUser_AdminCannotCreateOwner is a non-regression test for the vertical
 // privilege escalation where an ADMIN could mint an OWNER membership via
-// createUser, bypassing the owner-only set-owner authorization that
-// updateMembership enforces.
+// createUser. Granting ownership (whether by creating an OWNER member or
+// promoting one) is owner-only, enforced by policy on the target role.
 func TestUser_AdminCannotCreateOwner(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -95,6 +95,60 @@ func TestUser_AdminCannotCreateOwner(t *testing.T) {
 	err = owner.ExecuteConnect(createUserMutation, newUserInput("OWNER"), &ownerCreate)
 	require.NoError(t, err)
 	assert.Equal(t, "OWNER", ownerCreate.CreateUser.ProfileEdge.Node.Membership.Role)
+}
+
+// TestUser_AdminCannotRemoveMembers is a non-regression test for the broken
+// access control where an ADMIN could hard-remove members (including OWNERs)
+// via removeUser because the mutation only checked the weaker
+// iam:membership-profile:delete gate instead of the owner-only
+// iam:membership:delete gate. Removing members is owner-only.
+func TestUser_AdminCannotRemoveMembers(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	secondOwner := testutil.NewClientInOrg(t, testutil.RoleOwner, owner)
+
+	const removeUserMutation = `
+		mutation($input: RemoveUserInput!) {
+			removeUser(input: $input) {
+				deletedProfileId
+			}
+		}
+	`
+
+	removeInput := func(profileID string) map[string]any {
+		return map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"profileId":      profileID,
+			},
+		}
+	}
+
+	// An ADMIN must not be able to remove a lower-privileged member.
+	_, err := admin.DoConnect(removeUserMutation, removeInput(viewer.GetProfileID().String()))
+	testutil.RequireForbiddenError(t, err)
+
+	// An ADMIN must not be able to remove another ADMIN (itself).
+	_, err = admin.DoConnect(removeUserMutation, removeInput(admin.GetProfileID().String()))
+	testutil.RequireForbiddenError(t, err)
+
+	// An ADMIN must not be able to remove an OWNER, even when more than one
+	// active owner remains.
+	_, err = admin.DoConnect(removeUserMutation, removeInput(secondOwner.GetProfileID().String()))
+	testutil.RequireForbiddenError(t, err)
+
+	// An OWNER remains able to remove members.
+	var removeResult struct {
+		RemoveUser struct {
+			DeletedProfileID string `json:"deletedProfileId"`
+		} `json:"removeUser"`
+	}
+
+	err = owner.ExecuteConnect(removeUserMutation, removeInput(viewer.GetProfileID().String()), &removeResult)
+	require.NoError(t, err)
+	assert.Equal(t, viewer.GetProfileID().String(), removeResult.RemoveUser.DeletedProfileID)
 }
 
 func TestUser_UpdateMembership(t *testing.T) {

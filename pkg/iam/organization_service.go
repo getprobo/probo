@@ -309,11 +309,10 @@ func (s *OrganizationService) UpdateMembership(
 
 func (s *OrganizationService) RemoveUser(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	profileID gid.GID,
 ) error {
-	scope := coredata.NewScopeFromObjectID(organizationID)
-
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -987,13 +986,12 @@ func (s *OrganizationService) DeleteOrganization(ctx context.Context, organizati
 	)
 }
 
-func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserRequest) (*coredata.MembershipProfile, error) {
+func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Scoper, req *CreateUserRequest) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	var (
-		scope   = coredata.NewScopeFromObjectID(req.OrganizationID)
 		profile *coredata.MembershipProfile
 		now     = time.Now()
 	)

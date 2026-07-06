@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -65,17 +66,21 @@ func markdownToProseMirrorJSON(markdown string) (string, error) {
 	return string(out), nil
 }
 
-func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action) (*coredata.Scope, error) {
+func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action, opts ...authz.AuthorizeFuncOption) (*coredata.Scope, error) {
 	identity := authn.IdentityFromContext(ctx)
 
-	scope, err := r.iamSvc.Authorizer.Authorize(
-		ctx,
-		iam.AuthorizeParams{
-			Principal: identity.ID,
-			Resource:  entityID,
-			Action:    action,
-		},
-	)
+	params := iam.AuthorizeParams{
+		Principal:          identity.ID,
+		Resource:           entityID,
+		Action:             action,
+		ResourceAttributes: make(map[string]string),
+	}
+
+	for _, opt := range opts {
+		opt(&params)
+	}
+
+	scope, err := r.iamSvc.Authorizer.Authorize(ctx, params)
 	if err == nil {
 		return scope, nil
 	}

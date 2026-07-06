@@ -183,11 +183,6 @@ var IAMOwnerPolicy = policy.NewPolicy(
 			policy.NotEquals("resource.source", "SCIM"),
 		),
 
-	// Can set other members OWNER
-	policy.Allow(ActionMembershipRoleSetOwner).
-		WithSID("membership-role-owner-access").
-		When(policy.Equals("principal.organization_id", "resource.organization_id")),
-
 	// Full access to membership profiles (scoped to own organization)
 	policy.Allow(
 		ActionMembershipProfileGet,
@@ -317,6 +312,15 @@ var IAMAdminPolicy = policy.NewPolicy(
 	// Cannot remove members (only owner can)
 	policy.Deny(ActionMembershipDelete).
 		WithSID("deny-remove-member"),
+
+	// Cannot grant ownership, whether by creating an OWNER member or promoting an
+	// existing member to OWNER (only owner can grant ownership)
+	policy.Deny(ActionMembershipProfileCreate).
+		WithSID("deny-create-owner").
+		When(policy.Equals("resource.target_role", "OWNER")),
+	policy.Deny(ActionMembershipUpdate).
+		WithSID("deny-promote-owner").
+		When(policy.Equals("resource.target_role", "OWNER")),
 
 	// Cannot manage SAML configurations (only owner can)
 	policy.Deny(

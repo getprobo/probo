@@ -65,6 +65,7 @@ const fragment = graphql`
     canUpdate: permission(action: "iam:membership-profile:update")
     canInvite: permission(action: "iam:invitation:create")
     canDelete: permission(action: "iam:membership-profile:delete")
+    canRemoveMember: permission(action: "iam:membership:delete")
   }
 `;
 
@@ -137,7 +138,7 @@ export function PeopleListItem(props: {
 
   const canSendActivationMail = isInactive && profile.source !== "SCIM" && profile.canInvite;
   const canArchive = profile.canDelete && profile.source !== "SCIM" && profile.state !== "INACTIVE";
-  const canRemove = profile.canDelete && profile.source !== "SCIM";
+  const canRemove = profile.canRemoveMember && profile.source !== "SCIM";
 
   const [inviteUser]
     = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {

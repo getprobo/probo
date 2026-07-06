@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/validator"
@@ -2815,14 +2816,14 @@ func (r *Resolver) GetUserTool(ctx context.Context, req *mcp.CallToolRequest, in
 }
 
 func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateUserInput) (*mcp.CallToolResult, types.CreateUserOutput, error) {
-	if _, err := r.Authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
+	scope, err := r.Authorize(
+		ctx,
+		input.OrganizationID,
+		iam.ActionMembershipProfileCreate,
+		authz.WithAttr("target_role", input.Role.String()),
+	)
+	if err != nil {
 		return nil, types.CreateUserOutput{}, err
-	}
-
-	if input.Role == coredata.MembershipRoleOwner {
-		if _, err := r.Authorize(ctx, input.OrganizationID, iam.ActionMembershipRoleSetOwner); err != nil {
-			return nil, types.CreateUserOutput{}, err
-		}
 	}
 
 	var contractStart, contractEnd **time.Time
@@ -2834,7 +2835,7 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		contractEnd = &input.ContractEndDate
 	}
 
-	profile, err := r.iamSvc.OrganizationService.CreateUser(ctx, &iam.CreateUserRequest{
+	profile, err := r.iamSvc.OrganizationService.CreateUser(ctx, scope, &iam.CreateUserRequest{
 		OrganizationID:           input.OrganizationID,
 		EmailAddress:             input.EmailAddress,
 		Role:                     input.Role,
@@ -2921,14 +2922,13 @@ func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMembershipInput) (*mcp.CallToolResult, types.UpdateMembershipOutput, error) {
-	if _, err := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
+	if _, err := r.Authorize(
+		ctx,
+		input.MembershipID,
+		iam.ActionMembershipUpdate,
+		authz.WithAttr("target_role", input.Role.String()),
+	); err != nil {
 		return nil, types.UpdateMembershipOutput{}, err
-	}
-
-	if input.Role == coredata.MembershipRoleOwner {
-		if _, err := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
-			return nil, types.UpdateMembershipOutput{}, err
-		}
 	}
 
 	membership, err := r.iamSvc.OrganizationService.UpdateMembership(ctx, input.OrganizationID, input.MembershipID, input.Role)
@@ -2946,11 +2946,12 @@ func (r *Resolver) UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveUserInput) (*mcp.CallToolResult, types.RemoveUserOutput, error) {
-	if _, err := r.Authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
+	scope, err := r.Authorize(ctx, input.ProfileID, iam.ActionMembershipDelete)
+	if err != nil {
 		return nil, types.RemoveUserOutput{}, err
 	}
 
-	err := r.iamSvc.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
+	err = r.iamSvc.OrganizationService.RemoveUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, types.RemoveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be removed: %w", err)
