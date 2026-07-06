@@ -504,6 +504,7 @@ all_items AS (
     WHERE d.organization_id = o.organization_id
         AND d.deleted_at IS NULL
         AND d.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+        AND d.current_published_major IS NOT NULL
 
     UNION ALL
 
