@@ -922,7 +922,7 @@ func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types
 		return nil, nil
 	}
 
-	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
+	sig, err := r.esign.GetSignatureByID(ctx, scope, *access.ElectronicSignatureID)
 	if err != nil {
 		return nil, nil
 	}

@@ -7,6 +7,7 @@ package trust_v1
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -23,14 +24,17 @@ import (
 // AcceptElectronicSignature is the resolver for the acceptElectronicSignature field.
 func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error) {
 	var (
-		identity = authn.IdentityFromContext(ctx)
-		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
+		identity       = authn.IdentityFromContext(ctx)
+		httpReq        = gqlutils.HTTPRequestFromContext(ctx)
+		compliancePage = compliancepage.CompliancePageFromContext(ctx)
+		scope          = coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	)
 
 	signerIP := clientip.Extract(httpReq)
 
 	signature, err := r.esign.AcceptSignature(
 		ctx,
+		scope,
 		&esign.AcceptSignatureRequest{
 			SignatureID:    input.SignatureID,
 			SignerFullName: identity.FullName,
@@ -40,7 +44,12 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		},
 	)
 	if err != nil {
+		if errors.Is(err, esign.ErrElectronicSignatureNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "electronic signature %q not found", input.SignatureID)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -52,14 +61,17 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 // RecordSigningEvent is the resolver for the recordSigningEvent field.
 func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error) {
 	var (
-		identity = authn.IdentityFromContext(ctx)
-		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
+		identity       = authn.IdentityFromContext(ctx)
+		httpReq        = gqlutils.HTTPRequestFromContext(ctx)
+		compliancePage = compliancepage.CompliancePageFromContext(ctx)
+		scope          = coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	)
 
 	actorIP := clientip.Extract(httpReq)
 
 	if err := r.esign.RecordEvent(
 		ctx,
+		scope,
 		&esign.RecordEventRequest{
 			SignatureID: input.SignatureID,
 			EventType:   input.EventType,
@@ -69,7 +81,12 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 			ActorUA:     httpReq.UserAgent(),
 		},
 	); err != nil {
+		if errors.Is(err, esign.ErrElectronicSignatureNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "electronic signature %q not found", input.SignatureID)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -78,13 +95,13 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 
 // FileURL is the resolver for the fileUrl field.
 func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	compliancePage := compliancepage.CompliancePageFromContext(ctx)
 
 	if identity := authn.IdentityFromContext(ctx); identity != nil && r.esign != nil {
-		scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+		scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 		trustService := r.trust
 
-		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, trustCenter.ID, identity.ID)
+		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, compliancePage.ID, identity.ID)
 		if err == nil && access.ElectronicSignatureID != nil {
 			fileURL, err := r.esign.GenerateSignatureFileURL(ctx, *access.ElectronicSignatureID, 15*time.Minute)
 			if err == nil {
@@ -95,10 +112,10 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 		}
 	}
 
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	trustService := r.trust
 
-	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, scope, trustCenter.ID, 15*time.Minute)
+	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, scope, compliancePage.ID, 15*time.Minute)
 	if err != nil {
 		return "", gqlutils.Internal(ctx)
 	}
@@ -113,11 +130,11 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 		return nil, nil
 	}
 
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	trustService := r.trust
 
-	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, trustCenter.ID, identity.ID)
+	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, compliancePage.ID, identity.ID)
 	if err != nil {
 		return nil, nil
 	}
@@ -126,7 +143,7 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 		return nil, nil
 	}
 
-	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
+	sig, err := r.esign.GetSignatureByID(ctx, scope, *access.ElectronicSignatureID)
 	if err != nil {
 		return nil, nil
 	}

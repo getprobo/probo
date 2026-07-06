@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -16,7 +17,8 @@ import (
 
 // Logo is the resolver for the logo field.
 func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization) (*types.File, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 
 	organization, err := r.trust.Organizations.Get(ctx, scope, obj.ID)
 	if err != nil {

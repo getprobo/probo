@@ -54,7 +54,9 @@ func newNDADirective(
 			return next(ctx)
 		}
 
-		sig, err := esignSvc.GetSignatureByID(ctx, *membership.ElectronicSignatureID)
+		scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+
+		sig, err := esignSvc.GetSignatureByID(ctx, scope, *membership.ElectronicSignatureID)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot get NDA signature", log.Error(err))
 			return nil, gqlutils.Internal(ctx)

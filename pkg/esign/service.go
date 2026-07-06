@@ -236,6 +236,7 @@ func (s *Service) CreateAndAcceptSignature(
 	if err := s.recordEvent(
 		ctx,
 		conn,
+		scope,
 		&RecordEventRequest{
 			SignatureID: sig.ID,
 			EventType:   coredata.ElectronicSignatureEventTypeSignatureAccepted,
@@ -309,9 +310,8 @@ func (s *Service) createStampedDocument(
 	return stampedFile.ID, nil
 }
 
-func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureRequest) (*coredata.ElectronicSignature, error) {
+func (s *Service) AcceptSignature(ctx context.Context, scope coredata.Scoper, req *AcceptSignatureRequest) (*coredata.ElectronicSignature, error) {
 	var (
-		scope     = coredata.NewScopeFromObjectID(req.SignatureID)
 		now       = time.Now()
 		signature = coredata.ElectronicSignature{}
 	)
@@ -320,6 +320,10 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := signature.LoadByID(ctx, tx, scope, req.SignatureID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrElectronicSignatureNotFound
+				}
+
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
 
@@ -347,6 +351,7 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 			if err := s.recordEvent(
 				ctx,
 				tx,
+				scope,
 				&RecordEventRequest{
 					SignatureID: signature.ID,
 					EventType:   coredata.ElectronicSignatureEventTypeSignatureAccepted,
@@ -369,20 +374,26 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 	return &signature, nil
 }
 
-func (s *Service) RecordEvent(ctx context.Context, req *RecordEventRequest) error {
+func (s *Service) RecordEvent(ctx context.Context, scope coredata.Scoper, req *RecordEventRequest) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return s.recordEvent(ctx, tx, req)
+			signature := coredata.ElectronicSignature{}
+			if err := signature.LoadByID(ctx, tx, scope, req.SignatureID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrElectronicSignatureNotFound
+				}
+
+				return fmt.Errorf("cannot load electronic signature: %w", err)
+			}
+
+			return s.recordEvent(ctx, tx, scope, req)
 		},
 	)
 }
 
-func (s *Service) recordEvent(ctx context.Context, tx pg.Tx, req *RecordEventRequest) error {
-	var (
-		now   = time.Now()
-		scope = coredata.NewScopeFromObjectID(req.SignatureID)
-	)
+func (s *Service) recordEvent(ctx context.Context, tx pg.Tx, scope coredata.Scoper, req *RecordEventRequest) error {
+	now := time.Now()
 
 	event := coredata.ElectronicSignatureEvent{
 		ID:                    gid.New(scope.GetTenantID(), coredata.ElectronicSignatureEventEntityType),
@@ -403,11 +414,8 @@ func (s *Service) recordEvent(ctx context.Context, tx pg.Tx, req *RecordEventReq
 	return nil
 }
 
-func (s *Service) GetSignatureByID(ctx context.Context, id gid.GID) (*coredata.ElectronicSignature, error) {
-	var (
-		scope     = coredata.NewScopeFromObjectID(id)
-		signature = coredata.ElectronicSignature{}
-	)
+func (s *Service) GetSignatureByID(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.ElectronicSignature, error) {
+	signature := coredata.ElectronicSignature{}
 
 	err := s.pg.WithConn(
 		ctx,
