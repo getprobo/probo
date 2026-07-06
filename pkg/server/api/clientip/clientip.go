@@ -27,28 +27,38 @@ import (
 // load balancer closest to us.
 func Extract(r *http.Request) string {
 	if fwd := r.Header.Get("Forwarded"); fwd != "" {
-		if ip := parseForwardedFor(fwd); ip != "" {
+		if ip := parseForwardedFor(fwd); net.ParseIP(ip) != nil {
 			return ip
 		}
 	}
 
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if i := strings.LastIndexByte(xff, ','); i != -1 {
-			xff = xff[i+1:]
-		}
-
-		xff = strings.TrimSpace(xff)
-
-		if ip, _, err := net.SplitHostPort(xff); err == nil {
+		if ip := parseXForwardedFor(xff); net.ParseIP(ip) != nil {
 			return ip
 		}
-
-		return xff
 	}
 
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	return extractRemoteAddr(r.RemoteAddr)
+}
+
+func parseXForwardedFor(xff string) string {
+	if i := strings.LastIndexByte(xff, ','); i != -1 {
+		xff = xff[i+1:]
+	}
+
+	xff = strings.TrimSpace(xff)
+
+	if ip, _, err := net.SplitHostPort(xff); err == nil {
+		return ip
+	}
+
+	return xff
+}
+
+func extractRemoteAddr(remoteAddr string) string {
+	ip, _, err := net.SplitHostPort(remoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		return remoteAddr
 	}
 
 	return ip

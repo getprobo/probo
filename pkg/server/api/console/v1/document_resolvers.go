@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -21,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -1433,10 +1433,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	identity := authn.IdentityFromContext(ctx)
 	httpReq := gqlutils.HTTPRequestFromContext(ctx)
 
-	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
-	if signerIP == "" {
-		signerIP = httpReq.RemoteAddr
-	}
+	signerIP := clientip.Extract(httpReq)
 
 	documentVersionSignature, err := r.probo.Documents.SignDocumentVersionByIdentity(
 		ctx,
@@ -1487,10 +1484,7 @@ func (r *mutationResolver) ApproveDocumentVersion(ctx context.Context, input typ
 	identity := authn.IdentityFromContext(ctx)
 	httpReq := gqlutils.HTTPRequestFromContext(ctx)
 
-	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
-	if signerIP == "" {
-		signerIP = httpReq.RemoteAddr
-	}
+	signerIP := clientip.Extract(httpReq)
 
 	decision, err := r.probo.DocumentApprovals.Approve(ctx, scope, probo.ApproveDocumentVersionRequest{
 		DocumentVersionID: input.DocumentVersionID,

@@ -7,13 +7,13 @@ package trust_v1
 
 import (
 	"context"
-	"net"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
@@ -27,10 +27,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
 	)
 
-	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
-	if signerIP == "" {
-		signerIP = httpReq.RemoteAddr
-	}
+	signerIP := clientip.Extract(httpReq)
 
 	signature, err := r.esign.AcceptSignature(
 		ctx,
@@ -59,10 +56,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
 	)
 
-	actorIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
-	if actorIP == "" {
-		actorIP = httpReq.RemoteAddr
-	}
+	actorIP := clientip.Extract(httpReq)
 
 	if err := r.esign.RecordEvent(
 		ctx,

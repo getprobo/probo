@@ -110,6 +110,27 @@ func TestExtract(t *testing.T) {
 			headers:    map[string]string{"Forwarded": "for=198.51.100.17;proto=https;by=203.0.113.60"},
 			want:       "198.51.100.17",
 		},
+		{
+			name:       "unparseable forwarded falls back to remote addr",
+			remoteAddr: "10.0.0.1:1234",
+			headers:    map[string]string{"Forwarded": "for=unknown"},
+			want:       "10.0.0.1",
+		},
+		{
+			name:       "unparseable x-forwarded-for falls back to remote addr",
+			remoteAddr: "10.0.0.1:1234",
+			headers:    map[string]string{"X-Forwarded-For": "unknown"},
+			want:       "10.0.0.1",
+		},
+		{
+			name:       "unparseable forwarded falls through to x-forwarded-for",
+			remoteAddr: "10.0.0.1:1234",
+			headers: map[string]string{
+				"Forwarded":       "for=unknown",
+				"X-Forwarded-For": "203.0.113.50",
+			},
+			want: "203.0.113.50",
+		},
 	}
 
 	for _, tt := range tests {

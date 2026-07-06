@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
@@ -97,13 +98,7 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 				}
 
 				userAgent := r.UserAgent()
-				// TODO: will work well when no layer 7 proxy is in front of the server
-				var ipAddress net.IP
-				if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-					ipAddress = net.ParseIP(host)
-				} else {
-					ipAddress = net.ParseIP(r.RemoteAddr)
-				}
+				ipAddress := net.ParseIP(clientip.Extract(r))
 
 				err = svc.SessionService.UpdateSessionInfo(ctx, session.ID, userAgent, ipAddress)
 				if err != nil {
