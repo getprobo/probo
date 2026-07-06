@@ -73,6 +73,10 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 		coredata.ProfileStateInactive,
 	)
 	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot deactivate last active owner")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

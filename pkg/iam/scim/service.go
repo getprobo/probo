@@ -86,6 +86,41 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.bridgeRunner.Run(ctx)
 }
 
+func ensureActiveOwnerCanBeRemoved(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	profile *coredata.MembershipProfile,
+	membership *coredata.Membership,
+) error {
+	if membership == nil || membership.Role != coredata.MembershipRoleOwner || profile.State != coredata.ProfileStateActive {
+		return nil
+	}
+
+	organization := coredata.Organization{}
+	if err := organization.LockByID(ctx, tx, scope, organizationID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return scimerrors.ScimErrorResourceNotFound(organizationID.String())
+		}
+
+		return fmt.Errorf("cannot lock organization: %w", err)
+	}
+
+	profiles := coredata.MembershipProfiles{}
+
+	count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+	if err != nil {
+		return fmt.Errorf("cannot count active owners: %w", err)
+	}
+
+	if count <= 1 {
+		return scimerrors.ScimErrorBadRequest("cannot remove last active owner")
+	}
+
+	return nil
+}
+
 func HashToken(token string) []byte {
 	return hash.SHA256String(token)
 }
@@ -220,6 +255,19 @@ func (s *Service) CreateUser(
 						oldIdentityID,
 						config.OrganizationID,
 					); err == nil {
+						if !attrs.Active {
+							if err := ensureActiveOwnerCanBeRemoved(
+								ctx,
+								tx,
+								scope,
+								config.OrganizationID,
+								profile,
+								existingMembership,
+							); err != nil {
+								return err
+							}
+						}
+
 						existingMembership.IdentityID = identity.ID
 
 						existingMembership.UpdatedAt = now
@@ -266,6 +314,30 @@ func (s *Service) CreateUser(
 		} else {
 			if profile.Source == coredata.ProfileSourceSCIM {
 				return scimerrors.ScimErrorUniqueness
+			}
+
+			if !attrs.Active && profile.State == coredata.ProfileStateActive {
+				existingMembership := &coredata.Membership{}
+				if err := existingMembership.LoadByIdentityIDAndOrganizationID(
+					ctx,
+					tx,
+					scope,
+					profile.IdentityID,
+					config.OrganizationID,
+				); err != nil {
+					if !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load membership: %w", err)
+					}
+				} else if err := ensureActiveOwnerCanBeRemoved(
+					ctx,
+					tx,
+					scope,
+					config.OrganizationID,
+					profile,
+					existingMembership,
+				); err != nil {
+					return err
+				}
 			}
 
 			if externalIdPtr != nil {
@@ -513,6 +585,19 @@ func (s *Service) updateUser(
 
 			shouldReactivate := attrs.Active != nil && *attrs.Active && profile.State == coredata.ProfileStateInactive
 			shouldDeactivate := attrs.Active != nil && !*attrs.Active && profile.State == coredata.ProfileStateActive
+
+			if shouldDeactivate {
+				if err := ensureActiveOwnerCanBeRemoved(
+					ctx,
+					tx,
+					scope,
+					config.OrganizationID,
+					profile,
+					membership,
+				); err != nil {
+					return err
+				}
+			}
 
 			if attrs.FullName != "" {
 				profile.FullName = attrs.FullName
@@ -867,6 +952,17 @@ func (s *Service) DeleteUser(
 				membership = m
 			}
 
+			if err := ensureActiveOwnerCanBeRemoved(
+				ctx,
+				tx,
+				scope,
+				config.OrganizationID,
+				profile,
+				membership,
+			); err != nil {
+				return err
+			}
+
 			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceInUse) {
 					s.logger.WarnCtx(
@@ -923,6 +1019,17 @@ func (s *Service) deactivateProfileInTx(
 ) error {
 	if profile.State == coredata.ProfileStateInactive {
 		return nil
+	}
+
+	if err := ensureActiveOwnerCanBeRemoved(
+		ctx,
+		tx,
+		scope,
+		config.OrganizationID,
+		profile,
+		membership,
+	); err != nil {
+		return err
 	}
 
 	now := time.Now()

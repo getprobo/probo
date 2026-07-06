@@ -293,6 +293,29 @@ func TestUser_UpdateMembershipRejectsLastOwnerDemotion(t *testing.T) {
 	assert.Equal(t, "OWNER", membershipResult.Node.Role)
 }
 
+func TestUser_DeactivateUserRejectsLastOwner(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	err := owner.ExecuteConnect(`
+		mutation($input: DeactivateUserInput!) {
+			deactivateUser(input: $input) {
+				success
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"profileId":      owner.GetProfileID().String(),
+		},
+	}, nil)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+
+	var gqlErrors testutil.GraphQLErrors
+	require.ErrorAs(t, err, &gqlErrors)
+	assert.Equal(t, "cannot deactivate last active owner", gqlErrors[0].Message)
+}
+
 func TestUser_RemoveUser(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

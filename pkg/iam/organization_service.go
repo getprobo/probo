@@ -244,6 +244,36 @@ func NewOrganizationService(svc *Service) *OrganizationService {
 	return &OrganizationService{Service: svc}
 }
 
+func (s *OrganizationService) ensureActiveOwnerCanBeRemoved(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	resourceID gid.GID,
+) error {
+	organization := coredata.Organization{}
+	if err := organization.LockByID(ctx, tx, scope, organizationID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return NewOrganizationNotFoundError(organizationID)
+		}
+
+		return fmt.Errorf("cannot lock organization: %w", err)
+	}
+
+	profiles := coredata.MembershipProfiles{}
+
+	count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+	if err != nil {
+		return fmt.Errorf("cannot count active owners: %w", err)
+	}
+
+	if count <= 1 {
+		return NewLastActiveOwnerError(resourceID)
+	}
+
+	return nil
+}
+
 func (s *OrganizationService) UpdateMembership(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -275,15 +305,8 @@ func (s *OrganizationService) UpdateMembership(
 			}
 
 			if membership.Role == coredata.MembershipRoleOwner && role != coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
-				profiles := coredata.MembershipProfiles{}
-
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
-				if err != nil {
-					return fmt.Errorf("cannot count active owners: %w", err)
-				}
-
-				if count <= 1 {
-					return NewLastActiveOwnerError(membershipID)
+				if err := s.ensureActiveOwnerCanBeRemoved(ctx, tx, scope, organizationID, membershipID); err != nil {
+					return err
 				}
 			}
 
@@ -341,15 +364,8 @@ func (s *OrganizationService) RemoveUser(
 			}
 
 			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
-				profiles := coredata.MembershipProfiles{}
-
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, profile.OrganizationID)
-				if err != nil {
-					return fmt.Errorf("cannot count active owners: %w", err)
-				}
-
-				if count <= 1 {
-					return NewLastActiveOwnerError(profileID)
+				if err := s.ensureActiveOwnerCanBeRemoved(ctx, tx, scope, profile.OrganizationID, profileID); err != nil {
+					return err
 				}
 			}
 
@@ -397,21 +413,18 @@ func (s *OrganizationService) ArchiveUser(
 				return NewUserManagedBySCIMError(profileID)
 			}
 
+			if profile.OrganizationID != organizationID {
+				return NewProfileNotFoundError(profileID)
+			}
+
 			membership := &coredata.Membership{}
 			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
-				profiles := coredata.MembershipProfiles{}
-
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
-				if err != nil {
-					return fmt.Errorf("cannot count active owners: %w", err)
-				}
-
-				if count <= 1 {
-					return NewLastActiveOwnerError(profileID)
+				if err := s.ensureActiveOwnerCanBeRemoved(ctx, tx, scope, profile.OrganizationID, profileID); err != nil {
+					return err
 				}
 			}
 
@@ -1173,6 +1186,19 @@ func (s *OrganizationService) UpdateUserState(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := profile.LoadByID(ctx, tx, scope, userID); err != nil {
 				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if state == coredata.ProfileStateInactive && profile.State == coredata.ProfileStateActive {
+				membership := &coredata.Membership{}
+				if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
+				if membership.Role == coredata.MembershipRoleOwner {
+					if err := s.ensureActiveOwnerCanBeRemoved(ctx, tx, scope, profile.OrganizationID, profile.ID); err != nil {
+						return err
+					}
+				}
 			}
 
 			profile.State = state

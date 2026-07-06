@@ -150,6 +150,59 @@ LIMIT 1;
 	return nil
 }
 
+func (o *Organization) LockByID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    tenant_id,
+    id,
+    name,
+    logo_file_id,
+    horizontal_logo_file_id,
+    description,
+    website_url,
+    email,
+    headquarter_address,
+    custom_domain_id,
+    created_at,
+    updated_at
+FROM
+    organizations
+WHERE
+    %s
+    AND id = @organization_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organization, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Organization])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect organization: %w", err)
+	}
+
+	*o = organization
+
+	return nil
+}
+
 func (o *Organizations) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
