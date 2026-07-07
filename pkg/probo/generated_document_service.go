@@ -3209,7 +3209,8 @@ func formatRiskTreatment(t coredata.RiskTreatment) string {
 // minor is false a non-empty approverIDs triggers an approval request at
 // (currentMajor+1).0; otherwise the version is published at (currentMajor+1).0.
 func (s *GeneratedDocumentService) publishOrRequestApproval(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	tx pg.Tx,
 	document *coredata.Document,
 	version *coredata.DocumentVersion,
@@ -3290,18 +3291,18 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 			return fmt.Errorf("cannot save default approvers: %w", err)
 		}
 
-		quorum, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, scope, tx, document, version, approverIDs, nil)
+		quorum, err := s.svc.DocumentApprovals.RequestApproval(ctx, scope, tx, document, version, approverIDs, nil)
 		if err != nil {
 			return fmt.Errorf("cannot request approval: %w", err)
 		}
 
 		if isFirstVersion {
-			if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
+			if err := s.svc.Documents.emitDocumentEvent(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document created webhook: %w", err)
 			}
 		}
 
-		if err := s.svc.Documents.emitDocumentEventInTx(
+		if err := s.svc.Documents.emitDocumentEvent(
 			ctx,
 			scope,
 			tx,
@@ -3333,12 +3334,12 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	}
 
 	if isFirstVersion {
-		if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
+		if err := s.svc.Documents.emitDocumentEvent(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
 			return fmt.Errorf("cannot emit document created webhook: %w", err)
 		}
 	}
 
-	if err := s.svc.Documents.emitDocumentEventInTx(
+	if err := s.svc.Documents.emitDocumentEvent(
 		ctx,
 		scope,
 		tx,

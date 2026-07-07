@@ -75,8 +75,9 @@ func (e ErrApprovalDecisionAlreadyMade) Error() string {
 	return "approval decision has already been made"
 }
 
-func (s *DocumentApprovalService) RequestApprovalInTx(
-	ctx context.Context, scope coredata.Scoper,
+func (s *DocumentApprovalService) RequestApproval(
+	ctx context.Context,
+	scope coredata.Scoper,
 	tx pg.Tx,
 	document *coredata.Document,
 	documentVersion *coredata.DocumentVersion,
@@ -134,7 +135,8 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 // an approval is requested for it; otherwise it is published as a major
 // bump. Documents with no draft (or already pending approval) are skipped.
 func (s *DocumentApprovalService) BulkPublishVersions(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	req BulkPublishVersionsRequest,
 ) ([]*coredata.DocumentVersion, []*coredata.Document, error) {
 	var (
@@ -183,7 +185,14 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 				if req.Minor {
 					var err error
 
-					document, dv, err = s.svc.Documents.publishMinorVersionInTx(ctx, scope, tx, documentID, &req.Changelog, true)
+					document, dv, err = s.svc.Documents.publishMinor(
+						ctx,
+						scope,
+						tx,
+						documentID,
+						&req.Changelog,
+						true,
+					)
 					if err != nil {
 						return fmt.Errorf("cannot publish document %q: %w", documentID, err)
 					}
@@ -199,7 +208,15 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 							approverIDs[i] = a.ApproverProfileID
 						}
 
-						quorum, err := s.RequestApprovalInTx(ctx, scope, tx, document, dv, approverIDs, &req.Changelog)
+						quorum, err := s.RequestApproval(
+							ctx,
+							scope,
+							tx,
+							document,
+							dv,
+							approverIDs,
+							&req.Changelog,
+						)
 						if err != nil {
 							return fmt.Errorf("cannot request approval for %q: %w", documentID, err)
 						}
@@ -208,7 +225,14 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 					} else {
 						var err error
 
-						document, dv, err = s.svc.Documents.publishMajorVersionInTx(ctx, scope, tx, documentID, &req.Changelog, true)
+						document, dv, err = s.svc.Documents.publishMajor(
+							ctx,
+							scope,
+							tx,
+							documentID,
+							&req.Changelog,
+							true,
+						)
 						if err != nil {
 							return fmt.Errorf("cannot publish document %q: %w", documentID, err)
 						}
@@ -218,8 +242,11 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 				publishedVersions = append(publishedVersions, dv)
 				updatedDocuments = append(updatedDocuments, document)
 
+				// A direct publish emits the version-published webhook inside
+				// publishMinor/publishMajor; only the approval-quorum case needs
+				// its event emitted here.
 				if requestedQuorum != nil {
-					if err := s.svc.Documents.emitDocumentEventInTx(
+					if err := s.svc.Documents.emitDocumentEvent(
 						ctx,
 						scope,
 						tx,
@@ -231,20 +258,6 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 						nil,
 					); err != nil {
 						return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
-					}
-				} else {
-					if err := s.svc.Documents.emitDocumentEventInTx(
-						ctx,
-						scope,
-						tx,
-						dv.DocumentID,
-						coredata.WebhookEventTypeDocumentVersionPublished,
-						dv,
-						nil,
-						nil,
-						nil,
-					); err != nil {
-						return fmt.Errorf("cannot emit version published webhook: %w", err)
 					}
 				}
 			}
@@ -453,7 +466,7 @@ func (s *DocumentApprovalService) Approve(
 				return nil
 			}
 
-			if err := s.svc.Documents.emitDocumentEventInTx(
+			if err := s.svc.Documents.emitDocumentEvent(
 				ctx,
 				scope,
 				tx,
@@ -552,7 +565,7 @@ func (s *DocumentApprovalService) Reject(
 				return fmt.Errorf("cannot update document version status: %w", err)
 			}
 
-			if err := s.svc.Documents.emitDocumentEventInTx(
+			if err := s.svc.Documents.emitDocumentEvent(
 				ctx,
 				scope,
 				tx,
@@ -566,7 +579,7 @@ func (s *DocumentApprovalService) Reject(
 				return fmt.Errorf("cannot emit approval quorum rejected webhook: %w", err)
 			}
 
-			if err := s.svc.Documents.emitDocumentEventInTx(
+			if err := s.svc.Documents.emitDocumentEvent(
 				ctx,
 				scope,
 				tx,
@@ -658,7 +671,7 @@ func (s *DocumentApprovalService) VoidApproval(
 				return fmt.Errorf("cannot update document version status: %w", err)
 			}
 
-			if err := s.svc.Documents.emitDocumentEventInTx(
+			if err := s.svc.Documents.emitDocumentEvent(
 				ctx,
 				scope,
 				tx,
@@ -1022,7 +1035,7 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 		return fmt.Errorf("cannot publish version: %w", err)
 	}
 
-	if err := s.svc.Documents.emitDocumentEventInTx(
+	if err := s.svc.Documents.emitDocumentEvent(
 		ctx,
 		scope,
 		tx,
@@ -1036,7 +1049,7 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 		return fmt.Errorf("cannot emit approval quorum approved webhook: %w", err)
 	}
 
-	if err := s.svc.Documents.emitDocumentEventInTx(
+	if err := s.svc.Documents.emitDocumentEvent(
 		ctx,
 		scope,
 		tx,

@@ -6084,23 +6084,17 @@ func (r *Resolver) ListSCIMEventsTool(ctx context.Context, req *mcp.CallToolRequ
 }
 
 func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishDocumentInput) (*mcp.CallToolResult, types.PublishDocumentOutput, error) {
-	action := probo.ActionDocumentVersionPublish
-	if !input.Minor && len(input.ApproverIds) > 0 {
-		action = probo.ActionDocumentVersionRequestApproval
-	}
-
-	scope, err := r.Authorize(ctx, input.DocumentID, action)
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish)
 	if err != nil {
 		return nil, types.PublishDocumentOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	result, err := svc.Documents.PublishVersion(ctx, scope, probo.PublishDocumentRequest{
-		DocumentID:  input.DocumentID,
-		Minor:       input.Minor,
-		ApproverIDs: input.ApproverIds,
-		Changelog:   input.Changelog,
+	result, err := svc.Documents.PublishVersionWithDefaultApprovers(ctx, scope, probo.PublishDocumentRequest{
+		DocumentID: input.DocumentID,
+		Minor:      input.Minor,
+		Changelog:  input.Changelog,
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot publish document: %w", err))

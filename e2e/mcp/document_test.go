@@ -93,3 +93,71 @@ func TestMCP_Document_CRUD(t *testing.T) {
 	}, &deleteResult)
 	assert.Equal(t, addResult.Document.ID, deleteResult.DeletedDocumentID)
 }
+
+func TestMCP_Document_PublishUsesDefaultApprovers(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	approverID := owner.GetProfileID().String()
+
+	addDocument := func(defaultApproverIDs []string) string {
+		input := map[string]any{
+			"organizationId": orgID,
+			"title":          factory.SafeName("Document"),
+			"content":        "Body content",
+			"classification": "INTERNAL",
+			"documentType":   "POLICY",
+		}
+		if defaultApproverIDs != nil {
+			input["defaultApproverIds"] = defaultApproverIDs
+		}
+
+		var addResult struct {
+			Document struct {
+				ID string `json:"id"`
+			} `json:"document"`
+		}
+		mc.CallToolInto("addDocument", input, &addResult)
+		require.NotEmpty(t, addResult.Document.ID)
+
+		return addResult.Document.ID
+	}
+
+	type publishResult struct {
+		DocumentVersion struct {
+			Status string `json:"status"`
+		} `json:"documentVersion"`
+		ApprovalQuorum *struct {
+			ID string `json:"id"`
+		} `json:"approvalQuorum"`
+	}
+
+	t.Run("requests approval from default approvers", func(t *testing.T) {
+		docID := addDocument([]string{approverID})
+
+		var result publishResult
+		mc.CallToolInto("publishDocument", map[string]any{
+			"documentId": docID,
+			"minor":      false,
+			"changelog":  "Initial major",
+		}, &result)
+
+		require.NotNil(t, result.ApprovalQuorum)
+		assert.Equal(t, "PENDING_APPROVAL", result.DocumentVersion.Status)
+	})
+
+	t.Run("publishes directly without default approvers", func(t *testing.T) {
+		docID := addDocument(nil)
+
+		var result publishResult
+		mc.CallToolInto("publishDocument", map[string]any{
+			"documentId": docID,
+			"minor":      false,
+			"changelog":  "Initial major",
+		}, &result)
+
+		assert.Nil(t, result.ApprovalQuorum)
+		assert.Equal(t, "PUBLISHED", result.DocumentVersion.Status)
+	})
+}

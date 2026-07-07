@@ -1688,6 +1688,45 @@ func TestDocument_DefaultApprovers(t *testing.T) {
 
 		assert.Empty(t, result.UpdateDocument.Document.DefaultApprovers)
 	})
+
+	t.Run("major publish with explicit approvers updates default approvers, even when empty", func(t *testing.T) {
+		t.Parallel()
+
+		docID := createTestDocumentWithApprovers(t, owner, []string{approverID})
+
+		var result struct {
+			PublishDocument struct {
+				Document struct {
+					DefaultApprovers []struct {
+						ID string `json:"id"`
+					} `json:"defaultApprovers"`
+				} `json:"document"`
+				DocumentVersion struct {
+					Status string `json:"status"`
+				} `json:"documentVersion"`
+			} `json:"publishDocument"`
+		}
+
+		err := owner.Execute(`
+			mutation($input: PublishDocumentInput!) {
+				publishDocument(input: $input) {
+					document { defaultApprovers { id } }
+					documentVersion { status }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"minor":       false,
+				"documentId":  docID,
+				"approverIds": []string{},
+				"changelog":   "Direct publish clearing approvers",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		assert.Equal(t, "PUBLISHED", result.PublishDocument.DocumentVersion.Status)
+		assert.Empty(t, result.PublishDocument.Document.DefaultApprovers)
+	})
 }
 
 func TestDocumentVersion_DeleteDraft(t *testing.T) {

@@ -1036,12 +1036,7 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 
 // PublishDocument is the resolver for the publishDocument field.
 func (r *mutationResolver) PublishDocument(ctx context.Context, input types.PublishDocumentInput) (*types.PublishDocumentPayload, error) {
-	action := probo.ActionDocumentVersionPublish
-	if !input.Minor && len(input.ApproverIds) > 0 {
-		action = probo.ActionDocumentVersionRequestApproval
-	}
-
-	scope, err := r.authorize(ctx, input.DocumentID, action)
+	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish)
 	if err != nil {
 		return nil, err
 	}

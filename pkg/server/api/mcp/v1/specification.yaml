@@ -6305,12 +6305,7 @@ components:
           description: Document ID
         minor:
           type: boolean
-          description: When true, publish the draft as a minor version; approver_ids must be omitted. When false, publish as a new major version; approver_ids is required (a non-empty list requests approval, an empty list publishes directly without approval).
-        approver_ids:
-          type: array
-          items:
-            $ref: "#/components/schemas/GID"
-          description: "Approver profile IDs. Required when minor is false: pass a non-empty list to request approval (approvers receive an email notification), or an empty list to publish directly without approval. Must be omitted when minor is true."
+          description: When true, publish the draft as a minor version (the document must already have a published major version). When false, publish a new major version using the document's default approvers; if the document has default approvers an approval is requested from them (they receive an email notification), otherwise the version is published directly. Configure a document's default approvers with updateDocument.
         changelog:
           type: string
           description: Changelog for this version
@@ -6328,7 +6323,7 @@ components:
           $ref: "#/components/schemas/DocumentVersion"
         approval_quorum:
           $ref: "#/components/schemas/DocumentVersionApprovalQuorum"
-          description: Set when an approval was requested instead of publishing.
+          description: Set when an approval was requested from the document's default approvers instead of publishing directly.
 
     DeleteDocumentInput:
       type: object
