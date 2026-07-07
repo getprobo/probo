@@ -44,6 +44,19 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Classification',
+				name: 'classification',
+				type: 'options',
+				options: [
+					{ name: 'Confidential', value: 'CONFIDENTIAL' },
+					{ name: 'Internal', value: 'INTERNAL' },
+					{ name: 'Public', value: 'PUBLIC' },
+					{ name: 'Secret', value: 'SECRET' },
+				],
+				default: 'INTERNAL',
+				description: 'The classification of the document. Updating it edits the current draft version, creating one from the latest published version if none exists.',
+			},
+			{
 				displayName: 'Content',
 				name: 'content',
 				type: 'string',
@@ -52,6 +65,38 @@ export const description: INodeProperties[] = [
 				},
 				default: '',
 				description: 'The body of the document as a ProseMirror document JSON string. Updating it edits the current draft version, creating one from the latest published version if none exists.',
+			},
+			{
+				displayName: 'Default Approver IDs',
+				name: 'defaultApproverIds',
+				type: 'string',
+				default: '',
+				description: 'Comma-separated list of default approver profile IDs',
+			},
+			{
+				displayName: 'Document Type',
+				name: 'documentType',
+				type: 'options',
+				options: [
+					{ name: 'Governance', value: 'GOVERNANCE' },
+					{ name: 'Other', value: 'OTHER' },
+					{ name: 'Plan', value: 'PLAN' },
+					{ name: 'Policy', value: 'POLICY' },
+					{ name: 'Procedure', value: 'PROCEDURE' },
+					{ name: 'Record', value: 'RECORD' },
+					{ name: 'Register', value: 'REGISTER' },
+					{ name: 'Report', value: 'REPORT' },
+					{ name: 'Template', value: 'TEMPLATE' },
+				],
+				default: 'POLICY',
+				description: 'The type of the document. Updating it edits the current draft version, creating one from the latest published version if none exists.',
+			},
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				description: 'The title of the document. Updating it edits the current draft version, creating one from the latest published version if none exists.',
 			},
 			{
 				displayName: 'Trust Center Visibility',
@@ -65,13 +110,6 @@ export const description: INodeProperties[] = [
 				default: 'NONE',
 				description: 'The trust center visibility of the document',
 			},
-			{
-				displayName: 'Default Approver IDs',
-				name: 'defaultApproverIds',
-				type: 'string',
-				default: '',
-				description: 'Comma-separated list of default approver profile IDs',
-			},
 		],
 	},
 ];
@@ -82,7 +120,10 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
+		title?: string;
 		content?: string;
+		classification?: string;
+		documentType?: string;
 		trustCenterVisibility?: string;
 		defaultApproverIds?: string;
 	};
@@ -119,7 +160,10 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = { id: documentId };
-	if (updateFields.content !== undefined) input.content = updateFields.content;
+	if (updateFields.title !== undefined && updateFields.title !== '') input.title = updateFields.title;
+	if (updateFields.content !== undefined && updateFields.content !== '') input.content = updateFields.content;
+	if (updateFields.classification !== undefined) input.classification = updateFields.classification;
+	if (updateFields.documentType !== undefined) input.documentType = updateFields.documentType;
 	if (updateFields.trustCenterVisibility !== undefined) input.trustCenterVisibility = updateFields.trustCenterVisibility;
 	if (updateFields.defaultApproverIds !== undefined && updateFields.defaultApproverIds !== '') {
 		input.defaultApproverIds = updateFields.defaultApproverIds.split(',').map(id => id.trim()).filter(Boolean);
