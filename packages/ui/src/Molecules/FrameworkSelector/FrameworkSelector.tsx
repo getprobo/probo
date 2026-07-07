@@ -19,6 +19,7 @@ import { Dropdown, DropdownItem } from "../../Atoms/Dropdown/Dropdown";
 import { TwentyOneCFRPart11 } from "../../Atoms/Frameworks/21CFRPart11";
 import { CCPA } from "../../Atoms/Frameworks/CCPA";
 import { DORA } from "../../Atoms/Frameworks/DORA";
+import { FERPA } from "../../Atoms/Frameworks/FERPA";
 import { GDPR } from "../../Atoms/Frameworks/GDPR";
 import { HDS } from "../../Atoms/Frameworks/HDS";
 import { HIPAA } from "../../Atoms/Frameworks/HIPAA";
@@ -26,6 +27,7 @@ import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
 import { ISO27701 } from "../../Atoms/Frameworks/ISO27701";
 import { ISO42001 } from "../../Atoms/Frameworks/ISO42001";
 import { NIS2 } from "../../Atoms/Frameworks/NIS2";
+import { PCIDSS } from "../../Atoms/Frameworks/PCIDSS";
 import { SOC2 } from "../../Atoms/Frameworks/SOC2";
 import { IconChevronDown, IconPlusLarge } from "../../Atoms/Icons";
 
@@ -97,6 +99,18 @@ const availableFrameworks = [
     name: "HDS",
     logo: <HDS className="size-8" />,
     description: "Hébergement de Données de Santé",
+  },
+  {
+    id: "FERPA",
+    name: "FERPA",
+    logo: <FERPA className="size-8" />,
+    description: "Family Educational Rights and Privacy Act",
+  },
+  {
+    id: "PCI-DSS",
+    name: "PCI DSS",
+    logo: <PCIDSS className="size-8" />,
+    description: "Payment Card Industry Data Security Standard",
   },
 ];
 
