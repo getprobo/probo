@@ -39,7 +39,8 @@
         "Duration": "string",
         "BigInt": "number",
         "EmailAddr": "string",
-        "OAuth2Scope": "string"
+        "OAuth2Scope": "string",
+        "Map": "Record<string, string>"
       }
     },
     "trust": {

@@ -17,6 +17,7 @@ scalar Datetime
 scalar Upload
 scalar EmailAddr
 scalar OAuth2Scope
+scalar Map
 
 interface Node {
   id: ID!

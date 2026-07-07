@@ -48,7 +48,7 @@ const fragment = graphql`
     membership @required(action: THROW) {
       id
       role
-      canUpdate: permission(action: "iam:membership:update")
+      canUpdate: permission(action: "iam:membership:update", attributes: { target_role: "VIEWER" })
     }
     lastInvitation: pendingInvitations(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
     @required(action: THROW)
@@ -133,6 +133,10 @@ export function PeopleListItem(props: {
 
   const profile = useFragment<PeopleListItemFragment$key>(fragment, fKey);
   const lastInvitation = profile.lastInvitation.edges[0]?.node;
+
+  const roleOptions = availableRoles.includes(profile.membership.role)
+    ? availableRoles
+    : [...availableRoles, profile.membership.role];
 
   const isInactive = profile.state === "INACTIVE";
 
@@ -286,19 +290,19 @@ export function PeopleListItem(props: {
             value={profile.membership.role}
             onValueChange={role => void handleUpdateRole(role)}
           >
-            {availableRoles.includes("OWNER") && (
+            {roleOptions.includes("OWNER") && (
               <Option value="OWNER">{__("Owner")}</Option>
             )}
-            {availableRoles.includes("ADMIN") && (
+            {roleOptions.includes("ADMIN") && (
               <Option value="ADMIN">{__("Admin")}</Option>
             )}
-            {availableRoles.includes("VIEWER") && (
+            {roleOptions.includes("VIEWER") && (
               <Option value="VIEWER">{__("Viewer")}</Option>
             )}
-            {availableRoles.includes("AUDITOR") && (
+            {roleOptions.includes("AUDITOR") && (
               <Option value="AUDITOR">{__("Auditor")}</Option>
             )}
-            {availableRoles.includes("EMPLOYEE") && (
+            {roleOptions.includes("EMPLOYEE") && (
               <Option value="EMPLOYEE">{__("Employee")}</Option>
             )}
           </Select>

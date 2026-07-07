@@ -10,7 +10,7 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Changed
 
-- Consolidated ownership-grant authorization into policy: granting OWNER (via `createUser` or `updateMembership`) is now restricted to organization owners through role-scoped allow policies conditioned on the assigned role, replacing the per-resolver custom checks and the now-removed `iam:membership-role:set-owner` action. The `permission` field gained an optional typed `attributes` argument so the console can refine dry-run checks (e.g. by target role) without loosening the base grants
+- Consolidated ownership-grant authorization into policy: granting OWNER (via `createUser` or `updateMembership`) is now restricted to organization owners through role-scoped allow policies conditioned on the assigned role, replacing the per-resolver custom checks and the now-removed `iam:membership-role:set-owner` action. The `permission` field gained an optional generic `attributes` key/value argument so the console can refine dry-run checks (e.g. by target role) without loosening the base grants
 
 ## [0.223.3] - 2026-07-06
 

@@ -97,6 +97,92 @@ func TestUser_AdminCannotCreateOwner(t *testing.T) {
 	assert.Equal(t, "OWNER", ownerCreate.CreateUser.ProfileEdge.Node.Membership.Role)
 }
 
+// TestUser_AdminCannotPromoteToOwner is a non-regression test that an ADMIN
+// cannot grant ownership by promoting an existing member to OWNER via
+// updateMembership. Granting ownership is owner-only, enforced by policy on the
+// assigned (target) role; an ADMIN may still change members between non-owner
+// roles.
+func TestUser_AdminCannotPromoteToOwner(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	const membershipQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Profile {
+					membership { id }
+				}
+			}
+		}
+	`
+
+	var viewerMembership struct {
+		Node struct {
+			Membership struct {
+				ID string `json:"id"`
+			} `json:"membership"`
+		} `json:"node"`
+	}
+
+	err := owner.ExecuteConnect(membershipQuery, map[string]any{
+		"id": viewer.GetProfileID().String(),
+	}, &viewerMembership)
+	require.NoError(t, err)
+	require.NotEmpty(t, viewerMembership.Node.Membership.ID)
+
+	membershipID := viewerMembership.Node.Membership.ID
+
+	const updateMembershipMutation = `
+		mutation($input: UpdateMembershipInput!) {
+			updateMembership(input: $input) {
+				membership { role }
+			}
+		}
+	`
+
+	updateInput := func(role string) map[string]any {
+		return map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"membershipId":   membershipID,
+				"role":           role,
+			},
+		}
+	}
+
+	// An ADMIN must not be able to promote a member to OWNER.
+	_, err = admin.DoConnect(updateMembershipMutation, updateInput("OWNER"))
+	testutil.RequireForbiddenError(t, err)
+
+	// The same ADMIN can still change a member between non-owner roles.
+	var adminUpdate struct {
+		UpdateMembership struct {
+			Membership struct {
+				Role string `json:"role"`
+			} `json:"membership"`
+		} `json:"updateMembership"`
+	}
+
+	err = admin.ExecuteConnect(updateMembershipMutation, updateInput("ADMIN"), &adminUpdate)
+	require.NoError(t, err)
+	assert.Equal(t, "ADMIN", adminUpdate.UpdateMembership.Membership.Role)
+
+	// An OWNER remains able to promote a member to OWNER.
+	var ownerUpdate struct {
+		UpdateMembership struct {
+			Membership struct {
+				Role string `json:"role"`
+			} `json:"membership"`
+		} `json:"updateMembership"`
+	}
+
+	err = owner.ExecuteConnect(updateMembershipMutation, updateInput("OWNER"), &ownerUpdate)
+	require.NoError(t, err)
+	assert.Equal(t, "OWNER", ownerUpdate.UpdateMembership.Membership.Role)
+}
+
 // TestUser_AdminCannotRemoveMembers is a non-regression test for the broken
 // access control where an ADMIN could hard-remove members (including OWNERs)
 // via removeUser because the mutation only checked the weaker

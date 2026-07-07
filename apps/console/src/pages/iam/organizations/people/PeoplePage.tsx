@@ -29,7 +29,7 @@ export const peoplePageQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        canCreateUser: permission(action: "iam:membership-profile:create")
+        canCreateUser: permission(action: "iam:membership-profile:create", attributes: { target_role: "VIEWER" })
         ...PeopleListFragment
           @arguments(first: 20, order: { direction: ASC, field: FULL_NAME })
       }

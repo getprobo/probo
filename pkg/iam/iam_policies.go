@@ -265,6 +265,9 @@ var IAMAdminPolicy = policy.NewPolicy(
 		WithSID("membership-admin-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
+	// Can update memberships, but neither of an existing owner (resource.role)
+	// nor to grant ownership (resource.target_role); only owner can grant
+	// ownership.
 	policy.Allow(
 		ActionMembershipUpdate,
 	).
@@ -272,13 +275,13 @@ var IAMAdminPolicy = policy.NewPolicy(
 		When(
 			policy.Equals("principal.organization_id", "resource.organization_id"),
 			policy.NotEquals("resource.role", "OWNER"),
+			policy.NotEquals("resource.target_role", "OWNER"),
 		),
 
-	// Can view membership profiles (scoped to own organization)
+	// Can view and manage membership profiles (scoped to own organization)
 	policy.Allow(
 		ActionMembershipProfileGet,
 		ActionMembershipProfileList,
-		ActionMembershipProfileCreate,
 		ActionMembershipProfileUpdate,
 		ActionMembershipProfileDelete,
 		ActionMembershipProfileActivate,
@@ -286,6 +289,15 @@ var IAMAdminPolicy = policy.NewPolicy(
 	).
 		WithSID("membership-profile-admin-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Can create members, but not with the OWNER role (resource.target_role);
+	// only owner can grant ownership.
+	policy.Allow(ActionMembershipProfileCreate).
+		WithSID("membership-profile-admin-create").
+		When(
+			policy.Equals("principal.organization_id", "resource.organization_id"),
+			policy.NotEquals("resource.target_role", "OWNER"),
+		),
 
 	// Can view identities of members in the same organization
 	policy.Allow(ActionIdentityGet).
@@ -312,15 +324,6 @@ var IAMAdminPolicy = policy.NewPolicy(
 	// Cannot remove members (only owner can)
 	policy.Deny(ActionMembershipDelete).
 		WithSID("deny-remove-member"),
-
-	// Cannot grant ownership, whether by creating an OWNER member or promoting an
-	// existing member to OWNER (only owner can grant ownership)
-	policy.Deny(ActionMembershipProfileCreate).
-		WithSID("deny-create-owner").
-		When(policy.Equals("resource.target_role", "OWNER")),
-	policy.Deny(ActionMembershipUpdate).
-		WithSID("deny-promote-owner").
-		When(policy.Equals("resource.target_role", "OWNER")),
 
 	// Cannot manage SAML configurations (only owner can)
 	policy.Deny(

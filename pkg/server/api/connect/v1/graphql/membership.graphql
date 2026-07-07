@@ -16,7 +16,7 @@ type Membership implements Node {
 
   lastSession: Session @goField(forceResolver: true)
 
-  permission(action: String!): Boolean!
+  permission(action: String!, attributes: Map): Boolean!
     @goField(forceResolver: true)
     @authentication(required: PRESENT)
 }

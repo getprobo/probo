@@ -129,7 +129,18 @@ func NewMux(
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
-	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
+	return r.permission(ctx, obj, action, nil)
+}
+
+func (r *Resolver) permission(ctx context.Context, obj types.Node, action string, attributes map[string]any) (bool, error) {
+	opts := []authz.AuthorizeFuncOption{authz.WithDryRun()}
+	for key, value := range attributes {
+		if s, ok := value.(string); ok {
+			opts = append(opts, authz.WithAttr(key, s))
+		}
+	}
+
+	_, err := r.authorize(ctx, obj.GetID(), action, opts...)
 	return err == nil, nil
 }
 
