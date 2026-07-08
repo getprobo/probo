@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery, useRefetchableFragment } from "react-relay";
@@ -74,16 +74,21 @@ export function SubprocessorsPage({ queryRef }: SubprocessorsPageProps) {
 
   const filters = useSubprocessorFilters();
   const { query, category, country } = filters;
+  const [isRefetching, startTransition] = useTransition();
 
   // The initial query already loaded with the URL's filter values; only refetch
-  // on subsequent filter changes.
+  // on subsequent filter changes. Refetch inside a transition so the toolbar and
+  // current results stay mounted (no whole-page Suspense fallback) while the
+  // filtered results load — the results are just dimmed via `isRefetching`.
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    refetch(toQueryVariables({ query, category, country }), { fetchPolicy: "store-or-network" });
+    startTransition(() => {
+      refetch(toQueryVariables({ query, category, country }), { fetchPolicy: "store-or-network" });
+    });
   }, [refetch, query, category, country]);
 
   const { subprocessors } = data.currentTrustCenter;
@@ -96,7 +101,10 @@ export function SubprocessorsPage({ queryRef }: SubprocessorsPageProps) {
         <SubprocessorsToolbar queryKey={root} />
       </PageHeader>
       <div className="flex w-full flex-col items-center px-8 py-8">
-        <div className="flex w-full max-w-5xl flex-col gap-8">
+        <div
+          aria-busy={isRefetching}
+          className={`flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150 ${isRefetching ? "opacity-60" : ""}`}
+        >
           {groups.length === 0
             ? <SubprocessorsEmpty />
             : groups.map(group => (

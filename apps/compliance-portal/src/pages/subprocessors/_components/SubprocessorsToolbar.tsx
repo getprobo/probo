@@ -23,6 +23,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { useCountryLabel } from "../_lib/useCountryLabel";
 import { useSubprocessorFilters } from "../_lib/useSubprocessorFilters";
+import { useSubprocessorSearch } from "../_lib/useSubprocessorSearch";
 
 import type { SubprocessorsToolbar_query$key } from "./__generated__/SubprocessorsToolbar_query.graphql";
 
@@ -55,7 +56,8 @@ export function SubprocessorsToolbar({ queryKey }: SubprocessorsToolbarProps) {
   const { t } = useTranslation("subprocessors");
   const data = useFragment(subprocessorsToolbarFragment, queryKey);
   const countryLabel = useCountryLabel();
-  const { queryInput, category, country, setQueryInput, setCategory, setCountry } = useSubprocessorFilters();
+  const { category, country, setCategory, setCountry } = useSubprocessorFilters();
+  const [queryInput, setQueryInput] = useSubprocessorSearch();
 
   const nodes = data.currentTrustCenter.allSubprocessors.edges.map(edge => edge.node);
 
