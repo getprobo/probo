@@ -15,11 +15,11 @@
 import { useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 
-import { SubprocessorsPage, subprocessorsPageQuery } from "./SubprocessorsPage";
-import { SubprocessorsPageSkeleton } from "./SubprocessorsPageSkeleton";
+import type { SubprocessorsPageQuery } from "./__generated__/SubprocessorsPageQuery.graphql";
 import { toQueryVariables } from "./_lib/toQueryVariables";
 import { useSubprocessorFilters } from "./_lib/useSubprocessorFilters";
-import type { SubprocessorsPageQuery } from "./__generated__/SubprocessorsPageQuery.graphql";
+import { SubprocessorsPage, subprocessorsPageQuery } from "./SubprocessorsPage";
+import { SubprocessorsPageSkeleton } from "./SubprocessorsPageSkeleton";
 
 export default function SubprocessorsPageLoader() {
   const filters = useSubprocessorFilters();

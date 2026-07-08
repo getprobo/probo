@@ -831,6 +831,34 @@ func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.Trus
 	return types.NewSubprocessorConnection(thirdPartyPage, r, obj.ID, thirdPartyFilter), nil
 }
 
+// SubprocessorCategories is the resolver for the subprocessorCategories field.
+func (r *trustCenterResolver) SubprocessorCategories(ctx context.Context, obj *types.TrustCenter) ([]coredata.ThirdPartyCategory, error) {
+	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+
+	categories, err := r.trust.ThirdParties.ListDistinctTrustCenterCategoriesForOrganizationID(ctx, scope, obj.Organization.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list subprocessor categories", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return categories, nil
+}
+
+// SubprocessorCountries is the resolver for the subprocessorCountries field.
+func (r *trustCenterResolver) SubprocessorCountries(ctx context.Context, obj *types.TrustCenter) ([]coredata.CountryCode, error) {
+	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+
+	countries, err := r.trust.ThirdParties.ListDistinctTrustCenterCountriesForOrganizationID(ctx, scope, obj.Organization.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list subprocessor countries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return countries, nil
+}
+
 // References is the resolver for the references field.
 func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterReferenceConnection, error) {
 	compliancePage := compliancepage.CompliancePageFromContext(ctx)

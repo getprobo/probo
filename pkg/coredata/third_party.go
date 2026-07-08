@@ -780,6 +780,78 @@ WHERE
 	return count, nil
 }
 
+func (v *ThirdParties) LoadDistinctTrustCenterCategoriesByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) ([]ThirdPartyCategory, error) {
+	q := `
+SELECT DISTINCT
+    category
+FROM
+    third_parties
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND show_on_trust_center = true
+ORDER BY
+    category ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query thirdParty categories: %w", err)
+	}
+
+	categories, err := pgx.CollectRows(rows, pgx.RowTo[ThirdPartyCategory])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect thirdParty categories: %w", err)
+	}
+
+	return categories, nil
+}
+
+func (v *ThirdParties) LoadDistinctTrustCenterCountriesByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) ([]CountryCode, error) {
+	q := `
+SELECT DISTINCT
+    unnest(countries) AS country
+FROM
+    third_parties
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND show_on_trust_center = true
+ORDER BY
+    country ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query thirdParty countries: %w", err)
+	}
+
+	countries, err := pgx.CollectRows(rows, pgx.RowTo[CountryCode])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect thirdParty countries: %w", err)
+	}
+
+	return countries, nil
+}
+
 func (v *ThirdParties) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

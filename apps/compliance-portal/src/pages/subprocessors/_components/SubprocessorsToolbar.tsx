@@ -12,11 +12,11 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -27,21 +27,14 @@ import { useSubprocessorSearch } from "../_lib/useSubprocessorSearch";
 
 import type { SubprocessorsToolbar_query$key } from "./__generated__/SubprocessorsToolbar_query.graphql";
 
-// Unfiltered facet data: the distinct categories and countries actually present,
-// used to populate the filter dropdowns (aliased so it does not collide with the
-// filtered list selection on the same trust center).
+// Facet data: the distinct categories and countries actually present across the
+// trust center's published subprocessors, used to populate the filter dropdowns
+// (server-computed so the options never dead-end on an empty result).
 const subprocessorsToolbarFragment = graphql`
   fragment SubprocessorsToolbar_query on Query {
     currentTrustCenter @required(action: THROW) {
-      allSubprocessors: subprocessors(first: 250) {
-        edges {
-          node {
-            id
-            category
-            countries
-          }
-        }
-      }
+      subprocessorCategories
+      subprocessorCountries
     }
   }
 `;
@@ -59,17 +52,15 @@ export function SubprocessorsToolbar({ queryKey }: SubprocessorsToolbarProps) {
   const { category, country, setCategory, setCountry } = useSubprocessorFilters();
   const [queryInput, setQueryInput] = useSubprocessorSearch();
 
-  const nodes = data.currentTrustCenter.allSubprocessors.edges.map(edge => edge.node);
+  const { subprocessorCategories, subprocessorCountries } = data.currentTrustCenter;
 
   const categoryOptions = useMemo(() => {
-    const present = [...new Set(nodes.map(node => node.category))];
-    return present.sort((a, b) => t(`categories.${a}.label`).localeCompare(t(`categories.${b}.label`)));
-  }, [nodes, t]);
+    return [...subprocessorCategories].sort((a, b) => t(`categories.${a}.label`).localeCompare(t(`categories.${b}.label`)));
+  }, [subprocessorCategories, t]);
 
   const countryOptions = useMemo(() => {
-    const present = [...new Set(nodes.flatMap(node => node.countries))];
-    return present.sort((a, b) => countryLabel(a).localeCompare(countryLabel(b)));
-  }, [nodes, countryLabel]);
+    return [...subprocessorCountries].sort((a, b) => countryLabel(a).localeCompare(countryLabel(b)));
+  }, [subprocessorCountries, countryLabel]);
 
   return (
     <div className="flex flex-wrap items-center gap-3">

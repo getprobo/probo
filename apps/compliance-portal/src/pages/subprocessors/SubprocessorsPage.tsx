@@ -19,16 +19,16 @@ import { graphql, usePreloadedQuery, useRefetchableFragment } from "react-relay"
 
 import { PageHeader } from "#/components/PageHeader/PageHeader";
 
-import { SubprocessorCategorySection } from "./_components/SubprocessorCategorySection";
+import type { SubprocessorsPage_query$key } from "./__generated__/SubprocessorsPage_query.graphql";
+import type { SubprocessorsPageQuery } from "./__generated__/SubprocessorsPageQuery.graphql";
+import type { SubprocessorsPageRefetchQuery } from "./__generated__/SubprocessorsPageRefetchQuery.graphql";
 import type { SubprocessorNode } from "./_components/SubprocessorCategorySection";
+import { SubprocessorCategorySection } from "./_components/SubprocessorCategorySection";
 import { SubprocessorsEmpty } from "./_components/SubprocessorsEmpty";
 import { SubprocessorsToolbar } from "./_components/SubprocessorsToolbar";
 import { groupByCategory } from "./_lib/groupByCategory";
 import { toQueryVariables } from "./_lib/toQueryVariables";
 import { useSubprocessorFilters } from "./_lib/useSubprocessorFilters";
-import type { SubprocessorsPageQuery } from "./__generated__/SubprocessorsPageQuery.graphql";
-import type { SubprocessorsPageRefetchQuery } from "./__generated__/SubprocessorsPageRefetchQuery.graphql";
-import type { SubprocessorsPage_query$key } from "./__generated__/SubprocessorsPage_query.graphql";
 
 export const subprocessorsPageQuery = graphql`
   query SubprocessorsPageQuery($query: String, $category: SubprocessorCategory, $country: CountryCode) {

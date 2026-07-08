@@ -80,6 +80,64 @@ func (s ThirdPartyService) ListForOrganizationId(
 	return page.NewPage(thirdParties, cursor), nil
 }
 
+func (s ThirdPartyService) ListDistinctTrustCenterCategoriesForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) ([]coredata.ThirdPartyCategory, error) {
+	var categories []coredata.ThirdPartyCategory
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			thirdParties := &coredata.ThirdParties{}
+
+			result, err := thirdParties.LoadDistinctTrustCenterCategoriesByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load thirdParty categories: %w", err)
+			}
+
+			categories = result
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+
+func (s ThirdPartyService) ListDistinctTrustCenterCountriesForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) ([]coredata.CountryCode, error) {
+	var countries []coredata.CountryCode
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			thirdParties := &coredata.ThirdParties{}
+
+			result, err := thirdParties.LoadDistinctTrustCenterCountriesByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load thirdParty countries: %w", err)
+			}
+
+			countries = result
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return countries, nil
+}
+
 func (s ThirdPartyService) CountForTrustCenterId(
 	ctx context.Context,
 	scope coredata.Scoper,

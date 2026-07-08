@@ -33,6 +33,11 @@ type TrustCenter implements Node {
     filter: SubprocessorFilter
   ): SubprocessorConnection! @goField(forceResolver: true)
 
+  subprocessorCategories: [SubprocessorCategory!]!
+    @goField(forceResolver: true)
+
+  subprocessorCountries: [CountryCode!]! @goField(forceResolver: true)
+
   references(
     first: Int
     after: CursorKey
