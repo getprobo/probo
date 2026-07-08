@@ -14,13 +14,15 @@
 
 import { BuildingsIcon, MapPinSimpleIcon } from "@phosphor-icons/react";
 import { faviconUrl } from "@probo/helpers";
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useFragment } from "react-relay";
+
+import { BackdropCard } from "#/components/BackdropCard/BackdropCard";
 
 import { useCountryLabel } from "../_lib/useCountryLabel";
 
 import type { SubprocessorListItem_subprocessor$key } from "./__generated__/SubprocessorListItem_subprocessor.graphql";
+import { subprocessorListItem } from "./variants";
 
 const subprocessorListItemFragment = graphql`
   fragment SubprocessorListItem_subprocessor on Subprocessor {
@@ -42,43 +44,35 @@ export function SubprocessorListItem({ subprocessorKey }: SubprocessorListItemPr
   const countryLabel = useCountryLabel();
   const logoUrl = faviconUrl(subprocessor.websiteUrl);
   const countries = subprocessor.countries.map(countryLabel).join(", ");
+  const slots = subprocessorListItem();
 
   return (
-    <Card variant="soft" size={3} padding="none">
-      <div className="relative flex items-center overflow-hidden p-8">
-        {logoUrl != null && (
-          <img
-            src={logoUrl}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 size-full scale-150 object-cover opacity-10 blur-lg"
-          />
-        )}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1" />
-        <div className="relative z-10 flex size-10 items-center justify-center overflow-hidden rounded-2 bg-sand-1">
+    <BackdropCard
+      backdropSrc={logoUrl ?? undefined}
+      media={(
+        <div className={slots.logo()}>
           {logoUrl != null
-            ? <img src={logoUrl} alt="" className="size-full object-cover" />
-            : <BuildingsIcon size={24} weight="duotone" className="text-sand-9" />}
+            ? <img src={logoUrl} alt="" className={slots.logoImage()} />
+            : <BuildingsIcon size={24} weight="duotone" className={slots.logoFallbackIcon()} />}
         </div>
-      </div>
-      <div className="flex flex-col gap-2 px-8 pb-8">
-        <Text size={4} weight="medium" color="neutral" highContrast>
-          {subprocessor.name}
+      )}
+    >
+      <Text size={4} weight="medium" color="neutral" highContrast>
+        {subprocessor.name}
+      </Text>
+      {subprocessor.description != null && subprocessor.description !== "" && (
+        <Text size={2} color="neutral">
+          {subprocessor.description}
         </Text>
-        {subprocessor.description != null && subprocessor.description !== "" && (
-          <Text size={2} color="neutral">
-            {subprocessor.description}
+      )}
+      {countries !== "" && (
+        <div className={slots.region()}>
+          <MapPinSimpleIcon className={slots.regionIcon()} />
+          <Text size={1} color="gold">
+            {countries}
           </Text>
-        )}
-        {countries !== "" && (
-          <div className="flex items-start gap-1">
-            <MapPinSimpleIcon className="mt-0.5 size-4 shrink-0 text-gold-11" />
-            <Text size={1} color="gold">
-              {countries}
-            </Text>
-          </div>
-        )}
-      </div>
-    </Card>
+        </div>
+      )}
+    </BackdropCard>
   );
 }

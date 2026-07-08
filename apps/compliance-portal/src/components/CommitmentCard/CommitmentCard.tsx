@@ -12,10 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import type { ReactNode } from "react";
 
-import { dotPatternStyle } from "#/components/MediaTile/variants";
+import { BackdropCard } from "#/components/BackdropCard/BackdropCard";
 
 import { commitmentCard } from "./variants";
 
@@ -30,24 +29,18 @@ export interface CommitmentCardProps {
   description: ReactNode;
 }
 
-// Commitment card, composing the soft Card surface. Region props are placed into
-// the layout slots; the consumer supplies typography (Text). Purely
-// presentational, so it doubles as the layout for its skeleton.
+// Commitment card, composing the shared BackdropCard frame over its dotted
+// backdrop. Region props are placed into the body; the consumer supplies
+// typography (Text). Purely presentational, so it doubles as the layout for its
+// skeleton.
 export function CommitmentCard({ icon, eyebrow, title, description }: CommitmentCardProps) {
-  const slots = commitmentCard();
+  const { icon: iconSlot } = commitmentCard();
 
   return (
-    <Card variant="soft" size={3} padding="none">
-      <div className={slots.icon()}>
-        <div className={slots.backdrop()} style={dotPatternStyle} />
-        <div className={slots.backdropFade()} />
-        <div className={slots.iconContent()}>{icon}</div>
-      </div>
-      <div className={slots.body()}>
-        {eyebrow}
-        {title}
-        {description}
-      </div>
-    </Card>
+    <BackdropCard media={<div className={iconSlot()}>{icon}</div>}>
+      {eyebrow}
+      {title}
+      {description}
+    </BackdropCard>
   );
 }

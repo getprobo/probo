@@ -14,11 +14,15 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Commitment card (Figma "Commitment Card"): the leading icon box placed over
-// the BackdropCard header. The card frame and dotted backdrop live in
-// BackdropCard; this slot only styles the icon container.
-export const commitmentCard = tv({
+// Soft Card frame shared by the commitment / subprocessor cards: a header with a
+// decorative backdrop (dotted texture or a blurred, magnified logo) faded toward
+// the card surface, with centered media on top, above a left-aligned body.
+export const backdropCard = tv({
   slots: {
-    icon: "relative z-10 flex size-8 items-center justify-center text-gold-9",
+    header: "relative flex w-full items-center overflow-hidden p-8",
+    blurBackdrop: "pointer-events-none absolute inset-0 size-full scale-150 object-cover opacity-10 blur-lg",
+    backdrop: "pointer-events-none absolute inset-0",
+    backdropFade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
+    body: "flex flex-col gap-2 px-8 pb-8",
   },
 });

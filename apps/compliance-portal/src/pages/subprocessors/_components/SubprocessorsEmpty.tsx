@@ -14,8 +14,9 @@
 
 import { ArrowCounterClockwiseIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
+
+import { EmptyState } from "#/components/EmptyState/EmptyState";
 
 import { useSubprocessorFilters } from "../_lib/useSubprocessorFilters";
 
@@ -26,17 +27,11 @@ export function SubprocessorsEmpty() {
   const { hasActiveFilters, clear } = useSubprocessorFilters();
 
   return (
-    <div className="flex flex-col items-center gap-5 py-8 text-center">
-      <MagnifyingGlassIcon className="size-6 text-sand-a8" />
-      <div className="flex max-w-xs flex-col items-center gap-2">
-        <Text size={2} weight="medium" color="faint">
-          {hasActiveFilters ? t("empty.filteredTitle") : t("empty.title")}
-        </Text>
-        <Text size={2} color="faint">
-          {hasActiveFilters ? t("empty.filteredDescription") : t("empty.description")}
-        </Text>
-      </div>
-      {hasActiveFilters && (
+    <EmptyState
+      icon={<MagnifyingGlassIcon />}
+      title={hasActiveFilters ? t("empty.filteredTitle") : t("empty.title")}
+      description={hasActiveFilters ? t("empty.filteredDescription") : t("empty.description")}
+      action={hasActiveFilters && (
         <Button
           variant="soft"
           color="neutral"
@@ -46,6 +41,6 @@ export function SubprocessorsEmpty() {
           {t("empty.clearFilters")}
         </Button>
       )}
-    </div>
+    />
   );
 }

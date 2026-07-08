@@ -14,11 +14,13 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Commitment card (Figma "Commitment Card"): the leading icon box placed over
-// the BackdropCard header. The card frame and dotted backdrop live in
-// BackdropCard; this slot only styles the icon container.
-export const commitmentCard = tv({
+// Empty-state placeholder: a faint icon above a centered title / description
+// and an optional call to action. The icon slot tones and sizes any phosphor
+// icon passed in, so consumers hand in a bare icon element.
+export const emptyState = tv({
   slots: {
-    icon: "relative z-10 flex size-8 items-center justify-center text-gold-9",
+    root: "flex flex-col items-center gap-5 py-8 text-center",
+    icon: "text-sand-a8 [&_svg]:size-6",
+    body: "flex max-w-xs flex-col items-center gap-2",
   },
 });

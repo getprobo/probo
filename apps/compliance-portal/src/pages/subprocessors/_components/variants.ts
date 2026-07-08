@@ -14,11 +14,15 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Commitment card (Figma "Commitment Card"): the leading icon box placed over
-// the BackdropCard header. The card frame and dotted backdrop live in
-// BackdropCard; this slot only styles the icon container.
-export const commitmentCard = tv({
+// Subprocessor card: the logo box placed over the BackdropCard header (backed by
+// a blurred, magnified copy of the logo) and the hosting-regions row shown in
+// the body. The card frame and backdrop live in BackdropCard.
+export const subprocessorListItem = tv({
   slots: {
-    icon: "relative z-10 flex size-8 items-center justify-center text-gold-9",
+    logo: "relative z-10 flex size-10 items-center justify-center overflow-hidden rounded-2 bg-sand-1",
+    logoImage: "size-full object-cover",
+    logoFallbackIcon: "text-sand-9",
+    region: "flex items-start gap-1",
+    regionIcon: "mt-0.5 size-4 shrink-0 text-gold-11",
   },
 });
