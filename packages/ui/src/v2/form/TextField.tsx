@@ -23,6 +23,8 @@ export type TextFieldProps
       // Applied to the bordered container (the top-level element).
       className?: string;
       size?: 1 | 2;
+      // Surface treatment (defaults to "surface").
+      variant?: "classic" | "surface" | "soft";
       // Leading icon slot (e.g. a MagnifyingGlassIcon for search).
       icon?: ReactNode;
     };
@@ -31,8 +33,8 @@ export type TextFieldProps
 // node; all native input props spread onto the inner control. Controlled with
 // Base UI's `value` / `onValueChange` (or native `value` / `onChange`).
 export function TextField(props: TextFieldProps) {
-  const { className, size, icon, ...inputProps } = props;
-  const { root, icon: iconSlot, input } = textField({ size });
+  const { className, size, variant, icon, ...inputProps } = props;
+  const { root, icon: iconSlot, input } = textField({ size, variant });
 
   return (
     <div className={root({ className })}>

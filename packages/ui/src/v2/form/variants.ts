@@ -19,7 +19,7 @@ import { tv } from "tailwind-variants/lite";
 export const textField = tv({
   slots: {
     root: [
-      "flex items-center gap-2 rounded-2 border border-sand-a5 bg-sand-1 text-2 text-sand-12 transition-colors",
+      "flex items-center gap-2 rounded-2 text-2 text-sand-12 transition-colors",
       "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
       "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
     ],
@@ -31,9 +31,17 @@ export const textField = tv({
       1: { root: "h-7 px-2" },
       2: { root: "h-8 px-2" },
     },
+    // Surface treatment. Only the accent (gold) color ships, matching Figma;
+    // classic adds a recessed inset shadow, soft drops the border for a tint.
+    variant: {
+      classic: { root: "border border-sand-a5 bg-sand-1 inset-shadow-2" },
+      surface: { root: "border border-sand-a5 bg-sand-1" },
+      soft: { root: "bg-gold-3" },
+    },
   },
   defaultVariants: {
     size: 2,
+    variant: "surface",
   },
 });
 

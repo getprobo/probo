@@ -48,6 +48,27 @@ export function Default() {
   );
 }
 
+export function Variants() {
+  return (
+    <div className="flex flex-col gap-3">
+      {(["classic", "surface", "soft", "ghost"] as const).map(variant => (
+        <div key={variant} className="w-40">
+          <Select>
+            <SelectTrigger variant={variant} placeholder={variant}>
+              {(value: string | null) => (value ? fruits[value] : null)}
+            </SelectTrigger>
+            <SelectPopup>
+              {Object.entries(fruits).map(([value, label]) => (
+                <SelectItem key={value} value={value}>{label}</SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function Controlled() {
   const [value, setValue] = useState<string | null>(null);
   return (

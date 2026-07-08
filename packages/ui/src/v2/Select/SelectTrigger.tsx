@@ -23,6 +23,8 @@ export type SelectTriggerProps
     & {
       className?: string;
       size?: 1 | 2;
+      // Surface treatment (defaults to "surface").
+      variant?: "classic" | "surface" | "soft" | "ghost";
       // Shown when no value is selected.
       placeholder?: ReactNode;
       // Renders the selected value; pass a function to map a value to its label.
@@ -32,8 +34,8 @@ export type SelectTriggerProps
 // The bordered surface button that opens the popup, showing the selected value
 // (or placeholder) and a trailing chevron.
 export function SelectTrigger(props: SelectTriggerProps) {
-  const { className, size, placeholder, children, ...rest } = props;
-  const { trigger, value, icon } = selectTrigger({ size });
+  const { className, size, variant, placeholder, children, ...rest } = props;
+  const { trigger, value, icon } = selectTrigger({ size, variant });
 
   return (
     <BaseSelect.Trigger className={trigger({ className })} {...rest}>

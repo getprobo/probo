@@ -39,6 +39,16 @@ export function WithIcon() {
   );
 }
 
+export function Variants() {
+  return (
+    <div className="flex w-60 flex-col gap-3">
+      <TextField variant="classic" icon={<MagnifyingGlassIcon />} placeholder="Classic" />
+      <TextField variant="surface" icon={<MagnifyingGlassIcon />} placeholder="Surface" />
+      <TextField variant="soft" icon={<MagnifyingGlassIcon />} placeholder="Soft" />
+    </div>
+  );
+}
+
 export function Controlled() {
   const [value, setValue] = useState("");
   return (

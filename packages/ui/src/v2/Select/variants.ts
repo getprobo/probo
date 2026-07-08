@@ -20,8 +20,8 @@ import { tv } from "tailwind-variants/lite";
 export const selectTrigger = tv({
   slots: {
     trigger: [
-      "flex w-full items-center justify-between gap-2 rounded-2 border border-sand-a7 bg-sand-1 text-2 text-sand-12",
-      "cursor-pointer outline-none transition-colors hover:bg-sand-2",
+      "flex w-full items-center justify-between gap-2 rounded-2 text-2 text-sand-12",
+      "cursor-pointer outline-none transition-colors",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
       "data-disabled:pointer-events-none data-disabled:opacity-50 data-placeholder:text-sand-a10",
     ],
@@ -33,9 +33,19 @@ export const selectTrigger = tv({
       1: { trigger: "h-7 px-2" },
       2: { trigger: "h-8 px-3" },
     },
+    // Surface treatment. Only the accent (gold) color ships, matching Figma;
+    // classic adds a recessed inset shadow (Figma can't express its gradient),
+    // soft drops the border for a tint, ghost is transparent until hover.
+    variant: {
+      classic: { trigger: "border border-sand-a7 bg-sand-1 inset-shadow-2 hover:bg-sand-2" },
+      surface: { trigger: "border border-sand-a7 bg-sand-1 hover:bg-sand-2" },
+      soft: { trigger: "bg-gold-3 hover:bg-gold-4" },
+      ghost: { trigger: "hover:bg-sand-2" },
+    },
   },
   defaultVariants: {
     size: 2,
+    variant: "surface",
   },
 });
 
