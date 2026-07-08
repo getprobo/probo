@@ -1,0 +1,117 @@
+---
+description: Structure list filtering — a pure URL-state hook, a single-owner debounced search input, and refetch inside a transition (no whole-page Suspense fallback)
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# List filtering (URL state, debounced search, transition refetch)
+
+Filterable lists (a toolbar of selects + a search field driving a server-side
+query) have three recurring traps. Follow all three rules.
+
+## 1. The URL-filter hook is pure — no local state, no effects
+
+Filter values (category, status, sort, search term) live in the URL
+(`useSearchParams`). The hook that exposes them must be **pure**: read the
+params, return values + setters, and nothing else. No `useState`, no
+`useEffect`. A pure hook can be called by any number of components (page,
+loader, toolbar, empty state) that all read the same source of truth.
+
+The moment a URL-filter hook holds its own `useState` mirror **and** an effect
+that writes that mirror back to the URL, every component that calls the hook
+runs its own copy of that effect. Only one of them updates the mirror (the
+input), so the others keep a **stale** mirror and fight the real writer —
+producing an infinite loop that flips the list between filtered and unfiltered.
+
+```ts
+// BAD — hook owns a mirror + write-back effect; N callers = N fighting writers
+export function useListFilters() {
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") ?? "";
+  const [input, setInput] = useState(query);           // per-instance state
+  useEffect(() => {                                     // per-instance effect
+    if (input !== query) setParams(/* write q=input */, { replace: true });
+  }, [input, query, setParams]);
+  return { query, input, setInput /* … */ };
+}
+```
+
+```ts
+// GOOD — pure URL state; safe to call from many components
+export function useListFilters() {
+  const [params, setParams] = useSearchParams();
+  const setParam = useCallback((k: string, v: string) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (v) next.set(k, v); else next.delete(k);
+      return next;
+    }, { replace: true });
+  }, [setParams]);
+  return {
+    query: params.get("q") ?? "",
+    category: params.get("category") ?? "",
+    setQuery: (v: string) => setParam("q", v),
+    setCategory: (v: string) => setParam("category", v),
+    clear: () => setParams({}, { replace: true }),
+  };
+}
+```
+
+## 2. The debounced search input is a single-owner hook
+
+The one piece of local state a filter needs is the free-text search box (typed
+immediately, committed to the URL after a debounce). Put it in a **separate**
+hook mounted in **exactly one** component (the toolbar) — it is the single
+writer of the `q` param. Guard the URL→input sync with a ref so the hook's own
+debounced writes are not echoed back onto the input (which would drop in-flight
+keystrokes); only *external* changes (a Clear button, back/forward) sync.
+
+```ts
+// GOOD — single-owner debounced input; ref distinguishes own writes from external
+export function useListSearch(): [string, (v: string) => void] {
+  const { query, setQuery } = useListFilters();
+  const [input, setInput] = useState(query);
+  const lastCommitted = useRef(query);
+
+  useEffect(() => {                          // debounce: input → URL
+    if (input === query) return;
+    const h = setTimeout(() => { lastCommitted.current = input; setQuery(input); }, 300);
+    return () => clearTimeout(h);
+  }, [input, query, setQuery]);
+
+  useEffect(() => {                          // sync URL → input for EXTERNAL changes only
+    if (query !== lastCommitted.current) { lastCommitted.current = query; setInput(query); }
+  }, [query]);
+
+  return [input, setInput];
+}
+```
+
+## 3. Refetch inside a transition — scope the loading state
+
+When a filter changes, refetch inside `startTransition` (React `useTransition`).
+Relay's `refetch` (and `loadQuery`/`usePaginationFragment`) suspends, and the
+nearest boundary is usually the **route-level `Suspense`** whose fallback is the
+whole-page skeleton — so without a transition the toolbar and results blank out
+on every keystroke. A transition keeps the current UI mounted and exposes
+`isPending`; dim only the results container (or show a scoped inline spinner),
+never the whole tree.
+
+```tsx
+// BAD — refetch suspends to the route skeleton; toolbar + results flash on every change
+useEffect(() => { refetch(vars); }, [refetch, vars]);
+```
+
+```tsx
+// GOOD — transition keeps the toolbar/results mounted; only the results dim
+const [isPending, startTransition] = useTransition();
+useEffect(() => {
+  startTransition(() => refetch(vars, { fetchPolicy: "store-or-network" }));
+}, [refetch, vars]);
+
+// results container only:
+<div aria-busy={isPending} className={`… transition-opacity ${isPending ? "opacity-60" : ""}`}>
+```
+
+See [`contrib/claude/state-management.md`](../../contrib/claude/state-management.md#filtering-a-list)
+and [`contrib/claude/relay.md`](../../contrib/claude/relay.md#refetch-inside-a-transition).

@@ -65,6 +65,87 @@ useFilterStore();   // global singleton for a local concern
 
 `zustand` is available (it's a `@probo/ui` dependency) — use it deliberately for app-wide ephemeral state, not as a shortcut around prop-passing or the URL.
 
+## Filtering a list
+
+A filterable list (a toolbar of selects + a search box driving a server-side
+query) combines several of the rules above. Three points matter, in order:
+
+1. **The filter values live in the URL** (rule 2): category, status, sort, and
+   the search term go in `useSearchParams`. Expose them through a hook that is
+   **pure** — it reads the params and returns values + setters, with **no
+   `useState` and no `useEffect`**. A pure hook is safe to call from every
+   component that needs the filters (page, loader, toolbar, empty state); they
+   all read one source of truth.
+
+   The failure mode: a URL-filter hook that keeps its own `useState` mirror
+   **and** an effect writing that mirror back to the URL. Every caller runs its
+   own copy of that effect, but only one (the input) updates the mirror — the
+   rest keep a **stale** mirror and fight the real writer, flipping the list
+   between filtered and unfiltered in an infinite loop.
+
+2. **The debounced search input is the one piece of local state** — and it lives
+   in a **separate, single-owner hook** mounted in exactly one component (the
+   toolbar), the single writer of the search param. It holds the immediate input
+   value and commits it to the URL after a debounce. Guard the URL→input sync
+   with a `ref` tracking your own writes, so a debounced commit isn't echoed
+   back onto the input (which would drop in-flight keystrokes); only *external*
+   changes (a Clear button, back/forward) sync.
+
+3. **Refetch on change inside a transition** so the loading state is scoped to
+   the results, not the whole page — see
+   [`relay.md`](relay.md#refetch-inside-a-transition).
+
+```ts
+// Bad — URL-filter hook with a per-instance mirror + write-back effect.
+// Called by the page, loader, toolbar and empty state → four fighting writers.
+export function useThirdPartyFilters() {
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") ?? "";
+  const [input, setInput] = useState(query);
+  useEffect(() => {
+    if (input !== query) setParams(/* write q=input */, { replace: true });
+  }, [input, query, setParams]);
+  return { query, input, setInput /* … */ };
+}
+```
+
+```ts
+// Good — pure URL-state hook (no state/effects); safe to call anywhere
+export function useThirdPartyFilters() {
+  const [params, setParams] = useSearchParams();
+  const setParam = useCallback((k: string, v: string) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (v) next.set(k, v); else next.delete(k);
+      return next;
+    }, { replace: true });
+  }, [setParams]);
+  return {
+    query: params.get("q") ?? "",
+    category: params.get("category") ?? "",
+    setQuery: (v: string) => setParam("q", v),
+    setCategory: (v: string) => setParam("category", v),
+    clear: () => setParams({}, { replace: true }),
+  };
+}
+
+// Good — debounced search input in its own single-owner hook (used by the toolbar)
+export function useThirdPartySearch(): [string, (v: string) => void] {
+  const { query, setQuery } = useThirdPartyFilters();
+  const [input, setInput] = useState(query);
+  const lastCommitted = useRef(query);
+  useEffect(() => {                          // debounce input → URL
+    if (input === query) return;
+    const h = setTimeout(() => { lastCommitted.current = input; setQuery(input); }, 300);
+    return () => clearTimeout(h);
+  }, [input, query, setQuery]);
+  useEffect(() => {                          // sync URL → input for external changes only
+    if (query !== lastCommitted.current) { lastCommitted.current = query; setInput(query); }
+  }, [query]);
+  return [input, setInput];
+}
+```
+
 ## Anti-patterns to avoid
 
 - **Prop-drilling data** that a child could read from Relay (`useFragment`) or the router (`useParams`) itself.

@@ -297,6 +297,44 @@ const [data, refetch] = useRefetchableFragment(thirdPartyContactsFragment, third
 const connectionId = data.contacts.__id;
 ```
 
+## Refetch inside a transition
+
+`refetch` (and `loadQuery` / `usePaginationFragment`) **suspends** while the new
+data loads. The nearest `Suspense` boundary is usually the **route-level** one,
+whose fallback is the whole-page skeleton — so a bare `refetch` (e.g. re-running
+a list query when a filter changes) blanks the entire page, toolbar included, on
+every change.
+
+Wrap the refetch in `startTransition` (React `useTransition`). A transition keeps
+the current UI mounted instead of falling back to the boundary, and exposes
+`isPending` so you can scope the loading affordance to just the results — a dim,
+an inline spinner, or a small placeholder — never the whole tree. This is the
+default for filter/sort refetches; prefer a scoped transition over a page-level
+Suspense fallback.
+
+```tsx
+// Bad — refetch suspends to the route skeleton; the toolbar and results flash
+useEffect(() => { refetch(variables); }, [refetch, variables]);
+```
+
+```tsx
+// Good — transition keeps the toolbar + current results mounted; only results dim
+const [isPending, startTransition] = useTransition();
+useEffect(() => {
+  startTransition(() => {
+    refetch(variables, { fetchPolicy: "store-or-network" });
+  });
+}, [refetch, variables]);
+
+// scope the loading state to the results container:
+<div aria-busy={isPending} className={`… transition-opacity ${isPending ? "opacity-60" : ""}`}>
+  {/* list */}
+</div>
+```
+
+See [`state-management.md`](state-management.md#filtering-a-list) for the full
+list-filtering pattern (pure URL-state hook + single-owner debounced search).
+
 ## Pagination
 
 Use `usePaginationFragment` for cursor-based Relay pagination:
