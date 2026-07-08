@@ -134,6 +134,7 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 
 func (r *Resolver) permission(ctx context.Context, obj types.Node, action string, attributes map[string]any) (bool, error) {
 	opts := []authz.AuthorizeFuncOption{authz.WithDryRun()}
+
 	for key, value := range attributes {
 		if s, ok := value.(string); ok {
 			opts = append(opts, authz.WithAttr(key, s))
@@ -141,6 +142,7 @@ func (r *Resolver) permission(ctx context.Context, obj types.Node, action string
 	}
 
 	_, err := r.authorize(ctx, obj.GetID(), action, opts...)
+
 	return err == nil, nil
 }
 

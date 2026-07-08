@@ -359,7 +359,7 @@ func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organizati
 
 // Permission is the resolver for the permission field.
 func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string, attributes map[string]any) (bool, error) {
-	return r.Resolver.permission(ctx, obj, action, attributes)
+	return r.permission(ctx, obj, action, attributes)
 }
 
 // Organization returns schema.OrganizationResolver implementation.

@@ -45,7 +45,7 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 
 // Permission is the resolver for the permission field.
 func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membership, action string, attributes map[string]any) (bool, error) {
-	return r.Resolver.permission(ctx, obj, action, attributes)
+	return r.permission(ctx, obj, action, attributes)
 }
 
 // UpdateMembership is the resolver for the updateMembership field.
