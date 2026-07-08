@@ -148,6 +148,7 @@ func querySubprocessors(
 	`
 
 	var result subprocessorsResult
+
 	err := owner.ExecuteTrust(trustCenterID, query, map[string]any{"filter": filter}, &result)
 	require.NoError(t, err)
 

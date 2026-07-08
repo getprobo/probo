@@ -64,7 +64,10 @@ export function Controlled() {
           </SelectPopup>
         </Select>
       </div>
-      <span className="text-2 text-sand-11">Selected: {value ?? "none"}</span>
+      <span className="text-2 text-sand-11">
+        Selected:
+        {value ?? "none"}
+      </span>
     </div>
   );
 }

@@ -46,7 +46,10 @@ export function Controlled() {
       <div className="w-60">
         <TextField value={value} onValueChange={setValue} placeholder="Type here" />
       </div>
-      <span className="text-2 text-sand-11">Value: {value || "(empty)"}</span>
+      <span className="text-2 text-sand-11">
+        Value:
+        {value || "(empty)"}
+      </span>
     </div>
   );
 }
