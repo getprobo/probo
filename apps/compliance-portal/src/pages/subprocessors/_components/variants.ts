@@ -23,6 +23,6 @@ export const subprocessorListItem = tv({
     logoImage: "size-full object-cover",
     logoFallbackIcon: "text-sand-9",
     region: "flex items-start gap-1",
-    regionIcon: "mt-0.5 size-4 shrink-0 text-gold-11",
+    regionIcon: "size-4 shrink-0 text-gold-11",
   },
 });
