@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.224.1] - 2026-07-09
+
+### Fixed
+
+- Built with Go 1.26.5 (up from 1.26.4) to pick up the standard-library security fixes for CVE-2026-42505 (ECH handshake de-anonymization) and CVE-2026-39822 (`os.Root` symlink following on Unix)
+
 ## [0.224.0] - 2026-07-09
 
 ### Added
