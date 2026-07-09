@@ -4,6 +4,21 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.201.0] - 2026-07-09
+
+### Added
+
+- `document.update` can now edit the current draft version's body, title, classification, and document type, creating a draft from the latest published version when none exists (empty fields are skipped)
+
+### Changed
+
+- Renamed the document-signature filter `state` field to `profileState`, matching the API rename and disambiguating it from the signature `states` field
+- Corrected the document operation help text to note the content/body field expects a ProseMirror document JSON string, not markdown
+
+### Removed
+
+- `document.createDraftVersion` operation — editing the body via `document.update` now covers draft creation
+
 ## [0.200.0] - 2026-07-02
 
 ### Added
