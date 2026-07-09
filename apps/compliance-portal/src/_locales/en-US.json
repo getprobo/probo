@@ -27,10 +27,6 @@
   "documents": {
     "title": "Documents"
   },
-  "updates": {
-    "title": "Updates",
-    "subscribe": "Subscribe to updates"
-  },
   "requests": {
     "title": "Data Requests",
     "newRequest": "New Request"

@@ -15,6 +15,7 @@
 import { NewspaperIcon } from "@phosphor-icons/react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
+import { Link } from "react-router";
 
 import { ComplianceArticleItem } from "#/components/ComplianceArticleItem/ComplianceArticleItem";
 import { formatRelativeTime } from "#/lib/datetime/relativeTime";
@@ -23,6 +24,7 @@ import type { MailingListUpdateListItem_update$key } from "./__generated__/Maili
 
 const mailingListUpdateListItemFragment = graphql`
   fragment MailingListUpdateListItem_update on MailingListUpdate {
+    id
     title
     updatedAt
   }
@@ -32,17 +34,19 @@ interface MailingListUpdateListItemProps {
   updateKey: MailingListUpdateListItem_update$key;
 }
 
-// A single "Recent updates" row. The schema has no category, so we show the
-// title and relative date with a single generic icon.
+// A single mailing-list update row, linking to its detail page. The schema has
+// no category, so we show the title and relative date with a generic icon.
 export function MailingListUpdateListItem({ updateKey }: MailingListUpdateListItemProps) {
   const { i18n } = useTranslation();
   const update = useFragment(mailingListUpdateListItemFragment, updateKey);
 
   return (
-    <ComplianceArticleItem
-      icon={<NewspaperIcon weight="light" />}
-      title={update.title}
-      meta={formatRelativeTime(update.updatedAt, i18n.language)}
-    />
+    <Link to={`/updates/${update.id}`} className="block transition-colors hover:bg-sand-a2">
+      <ComplianceArticleItem
+        icon={<NewspaperIcon weight="light" />}
+        title={update.title}
+        meta={formatRelativeTime(update.updatedAt, i18n.language)}
+      />
+    </Link>
   );
 }

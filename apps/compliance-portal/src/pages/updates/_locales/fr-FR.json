@@ -1,0 +1,13 @@
+{
+  "title": "Mises à jour",
+  "subscribe": "S'abonner aux mises à jour",
+  "backToUpdates": "Toutes les mises à jour",
+  "empty": {
+    "title": "Aucune mise à jour pour le moment.",
+    "description": "Abonnez-vous pour être informé lors de la publication de nouvelles mises à jour."
+  },
+  "pagination": {
+    "previous": "Page précédente",
+    "next": "Page suivante"
+  }
+}

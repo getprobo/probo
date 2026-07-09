@@ -12,22 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { lazy } from "@probo/react-lazy";
+import type { AppRoute } from "@probo/routes";
 
-import { complianceArticleItem } from "./variants";
+import { UpdateDetailPageSkeleton } from "./UpdateDetailPageSkeleton";
+import { UpdatesPageSkeleton } from "./UpdatesPageSkeleton";
 
-// Loading placeholder paired with ComplianceArticleItem: same row layout with
-// a pulse icon and skeleton text.
-export function ComplianceArticleItemSkeleton() {
-  const slots = complianceArticleItem();
-
-  return (
-    <div className={slots.root()} aria-hidden>
-      <div className={slots.iconPlaceholder()} />
-      <div className={slots.content()}>
-        <TextSkeleton size={2} className="w-48" />
-      </div>
-      <TextSkeleton size={1} className="w-20 shrink-0" />
-    </div>
-  );
-}
+export const updateRoutes = [
+  {
+    path: "updates",
+    Fallback: UpdatesPageSkeleton,
+    Component: lazy(() => import("./UpdatesPageLoader")),
+  },
+  {
+    path: "updates/:updateId",
+    Fallback: UpdateDetailPageSkeleton,
+    Component: lazy(() => import("./UpdateDetailPageLoader")),
+  },
+] satisfies AppRoute[];

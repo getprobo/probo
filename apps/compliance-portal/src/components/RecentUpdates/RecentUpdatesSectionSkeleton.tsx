@@ -30,7 +30,7 @@ export function RecentUpdatesSectionSkeleton() {
       <div className="relative overflow-hidden rounded-5 border border-sand-3 bg-sand-1">
         <div aria-hidden className="pointer-events-none absolute inset-0" style={dotPatternStyle} />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-r from-sand-1/0 to-sand-1 to-[96px]" />
-        <div className="relative">
+        <div className="relative divide-y divide-sand-a2">
           {Array.from({ length: 5 }, (_, index) => (
             <ComplianceArticleItemSkeleton key={index} />
           ))}

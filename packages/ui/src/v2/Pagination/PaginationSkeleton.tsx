@@ -12,22 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { BellIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
-import { useTranslation } from "react-i18next";
+import { pagination } from "./variants";
 
-import { PageHeader } from "#/components/PageHeader/PageHeader";
+// Loading placeholder paired with Pagination: two pulse arrow blocks.
+export function PaginationSkeleton() {
+  const { root, buttonPlaceholder } = pagination();
 
-export default function UpdatesPage() {
-  const { t } = useTranslation();
   return (
-    <PageHeader
-      title={t("updates.title")}
-      actions={(
-        <Button variant="soft" color="neutral" highContrast iconStart={<BellIcon />}>
-          {t("updates.subscribe")}
-        </Button>
-      )}
-    />
+    <div className={root()} aria-hidden>
+      <div className={buttonPlaceholder()} />
+      <div className={buttonPlaceholder()} />
+    </div>
   );
 }

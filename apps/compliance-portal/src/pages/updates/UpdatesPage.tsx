@@ -1,0 +1,122 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
+import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import type { PreloadedQuery } from "react-relay";
+import { graphql, usePreloadedQuery, useRefetchableFragment } from "react-relay";
+
+import { MailingListUpdateListItem } from "#/components/MailingListUpdateListItem/MailingListUpdateListItem";
+import { PageHeader } from "#/components/PageHeader/PageHeader";
+
+import type { UpdatesPage_query$key } from "./__generated__/UpdatesPage_query.graphql";
+import type { UpdatesPageQuery } from "./__generated__/UpdatesPageQuery.graphql";
+import type { UpdatesPageRefetchQuery } from "./__generated__/UpdatesPageRefetchQuery.graphql";
+import { UpdatesEmpty } from "./_components/UpdatesEmpty";
+import { UpdatesSubscribeButton } from "./_components/UpdatesSubscribeButton";
+import type { UpdatesPaginationVariables } from "./_lib/useUpdatesPagination";
+import { useUpdatesPagination } from "./_lib/useUpdatesPagination";
+
+export const updatesPageQuery = graphql`
+  query UpdatesPageQuery($first: Int, $after: CursorKey, $last: Int, $before: CursorKey) {
+    ...UpdatesPage_query @arguments(first: $first, after: $after, last: $last, before: $before)
+  }
+`;
+
+const updatesPageFragment = graphql`
+  fragment UpdatesPage_query on Query
+  @refetchable(queryName: "UpdatesPageRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int" }
+    after: { type: "CursorKey" }
+    last: { type: "Int" }
+    before: { type: "CursorKey" }
+  ) {
+    currentTrustCenter @required(action: THROW) {
+      updates(first: $first, after: $after, last: $last, before: $before) {
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+        edges {
+          node {
+            id
+            ...MailingListUpdateListItem_update
+          }
+        }
+      }
+    }
+  }
+`;
+
+interface UpdatesPageProps {
+  queryRef: PreloadedQuery<UpdatesPageQuery>;
+}
+
+export function UpdatesPage({ queryRef }: UpdatesPageProps) {
+  const { t } = useTranslation("updates");
+  const root = usePreloadedQuery<UpdatesPageQuery>(updatesPageQuery, queryRef);
+  const [data, refetch] = useRefetchableFragment<UpdatesPageRefetchQuery, UpdatesPage_query$key>(
+    updatesPageFragment,
+    root,
+  );
+
+  const refetchUpdates = useCallback((variables: UpdatesPaginationVariables) => {
+    refetch(variables, { fetchPolicy: "store-or-network" });
+  }, [refetch]);
+
+  const { updates } = data.currentTrustCenter;
+  const { pageInfo } = updates;
+  const { isPending, goPrevious, goNext } = useUpdatesPagination(refetchUpdates, pageInfo);
+
+  const nodes = updates.edges.map(edge => edge.node);
+  const isEmpty = nodes.length === 0;
+
+  return (
+    <>
+      <PageHeader title={t("title")} actions={isEmpty ? undefined : <UpdatesSubscribeButton />} />
+      <div className="flex w-full flex-col items-center px-8 py-8">
+        <div className="w-full max-w-5xl">
+          {isEmpty
+            ? <UpdatesEmpty />
+            : (
+                <div className="flex flex-col gap-8">
+                  <div
+                    aria-busy={isPending}
+                    className={`overflow-hidden rounded-5 border border-sand-3 bg-sand-1 transition-opacity duration-150 ${isPending ? "opacity-60" : ""}`}
+                  >
+                    <div className="divide-y divide-sand-a2">
+                      {nodes.map(node => (
+                        <MailingListUpdateListItem key={node.id} updateKey={node} />
+                      ))}
+                    </div>
+                  </div>
+                  <Pagination
+                    hasPrevious={pageInfo.hasPreviousPage}
+                    hasNext={pageInfo.hasNextPage}
+                    previousLabel={t("pagination.previous")}
+                    nextLabel={t("pagination.next")}
+                    onPrevious={goPrevious}
+                    onNext={goNext}
+                  />
+                </div>
+              )}
+        </div>
+      </div>
+    </>
+  );
+}

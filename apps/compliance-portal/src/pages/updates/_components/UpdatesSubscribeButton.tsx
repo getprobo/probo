@@ -12,22 +12,18 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { BellIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useTranslation } from "react-i18next";
 
-import { complianceArticleItem } from "./variants";
-
-// Loading placeholder paired with ComplianceArticleItem: same row layout with
-// a pulse icon and skeleton text.
-export function ComplianceArticleItemSkeleton() {
-  const slots = complianceArticleItem();
+// "Subscribe to updates" call to action shared by the list header and the
+// detail toolbar. Mailing-list subscription wiring is not implemented yet.
+export function UpdatesSubscribeButton() {
+  const { t } = useTranslation("updates");
 
   return (
-    <div className={slots.root()} aria-hidden>
-      <div className={slots.iconPlaceholder()} />
-      <div className={slots.content()}>
-        <TextSkeleton size={2} className="w-48" />
-      </div>
-      <TextSkeleton size={1} className="w-20 shrink-0" />
-    </div>
+    <Button variant="soft" color="neutral" highContrast iconStart={<BellIcon />}>
+      {t("subscribe")}
+    </Button>
   );
 }

@@ -12,22 +12,15 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { tv } from "tailwind-variants/lite";
 
-import { complianceArticleItem } from "./variants";
-
-// Loading placeholder paired with ComplianceArticleItem: same row layout with
-// a pulse icon and skeleton text.
-export function ComplianceArticleItemSkeleton() {
-  const slots = complianceArticleItem();
-
-  return (
-    <div className={slots.root()} aria-hidden>
-      <div className={slots.iconPlaceholder()} />
-      <div className={slots.content()}>
-        <TextSkeleton size={2} className="w-48" />
-      </div>
-      <TextSkeleton size={1} className="w-20 shrink-0" />
-    </div>
-  );
-}
+// Prev/Next pager (Figma "Pagination"). A centered row with a previous button,
+// a current-position label, and a next button. Slots are shared by the pager
+// and its skeleton so the loading placeholder matches the real layout.
+export const pagination = tv({
+  slots: {
+    root: "flex items-center justify-center gap-2",
+    label: "min-w-16 text-center",
+    buttonPlaceholder: "size-8 shrink-0 animate-pulse rounded-2 bg-sand-3",
+  },
+});

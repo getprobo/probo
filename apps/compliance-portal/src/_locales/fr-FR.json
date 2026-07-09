@@ -27,10 +27,6 @@
   "documents": {
     "title": "Documents"
   },
-  "updates": {
-    "title": "Mises à jour",
-    "subscribe": "S'abonner aux mises à jour"
-  },
   "requests": {
     "title": "Demandes de données",
     "newRequest": "Nouvelle demande"

@@ -17,10 +17,10 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { HomeSection } from "#/components/HomeSection/HomeSection";
+import { MailingListUpdateListItem } from "#/components/MailingListUpdateListItem/MailingListUpdateListItem";
 import { dotPatternStyle } from "#/components/MediaTile/variants";
 
 import type { RecentUpdatesSection_trustCenter$key } from "./__generated__/RecentUpdatesSection_trustCenter.graphql";
-import { MailingListUpdateListItem } from "./MailingListUpdateListItem";
 
 const recentUpdatesSectionFragment = graphql`
   fragment RecentUpdatesSection_trustCenter on TrustCenter {
@@ -62,7 +62,7 @@ export function RecentUpdatesSection({ trustCenterKey }: RecentUpdatesSectionPro
       <div className="relative overflow-hidden rounded-5 border border-sand-3 bg-sand-1">
         <div aria-hidden className="pointer-events-none absolute inset-0" style={dotPatternStyle} />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-r from-sand-1/0 to-sand-1 to-[96px]" />
-        <div className="relative">
+        <div className="relative divide-y divide-sand-a2">
           {updates.map(update => (
             <MailingListUpdateListItem key={update.id} updateKey={update} />
           ))}

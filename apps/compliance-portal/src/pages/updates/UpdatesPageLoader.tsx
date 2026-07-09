@@ -12,22 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { complianceArticleItem } from "./variants";
+import type { UpdatesPageQuery } from "./__generated__/UpdatesPageQuery.graphql";
+import { UPDATES_PAGE_SIZE } from "./_lib/useUpdatesPagination";
+import { UpdatesPage, updatesPageQuery } from "./UpdatesPage";
+import { UpdatesPageSkeleton } from "./UpdatesPageSkeleton";
 
-// Loading placeholder paired with ComplianceArticleItem: same row layout with
-// a pulse icon and skeleton text.
-export function ComplianceArticleItemSkeleton() {
-  const slots = complianceArticleItem();
+export default function UpdatesPageLoader() {
+  const [queryRef, loadQuery] = useQueryLoader<UpdatesPageQuery>(updatesPageQuery);
 
-  return (
-    <div className={slots.root()} aria-hidden>
-      <div className={slots.iconPlaceholder()} />
-      <div className={slots.content()}>
-        <TextSkeleton size={2} className="w-48" />
-      </div>
-      <TextSkeleton size={1} className="w-20 shrink-0" />
-    </div>
-  );
+  useEffect(() => {
+    loadQuery({ first: UPDATES_PAGE_SIZE });
+  }, [loadQuery]);
+
+  if (!queryRef) {
+    return <UpdatesPageSkeleton />;
+  }
+
+  return <UpdatesPage queryRef={queryRef} />;
 }

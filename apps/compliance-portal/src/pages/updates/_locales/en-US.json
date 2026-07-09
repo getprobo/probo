@@ -1,0 +1,13 @@
+{
+  "title": "Updates",
+  "subscribe": "Subscribe to updates",
+  "backToUpdates": "All updates",
+  "empty": {
+    "title": "No updates yet.",
+    "description": "Subscribe to get notified when new updates are published."
+  },
+  "pagination": {
+    "previous": "Previous page",
+    "next": "Next page"
+  }
+}

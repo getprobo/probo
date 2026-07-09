@@ -13,6 +13,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -198,6 +199,35 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewTrustCenterFile(trustCenterFile), nil
+
+	case coredata.MailingListUpdateEntityType:
+		update, err := r.mailman.GetMailingListUpdate(ctx, id)
+		if err != nil {
+			if errors.Is(err, mailman.ErrMailingListUpdateNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot get mailing list update", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		if update.Status != coredata.MailingListUpdateStatusSent {
+			return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+		}
+
+		trustCenter, err := trustService.TrustCenters.Get(ctx, scope, compliancePage.ID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		if trustCenter.MailingListID == nil || *trustCenter.MailingListID != update.MailingListID {
+			return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+		}
+
+		return types.NewMailingListUpdate(update), nil
 
 	default:
 		return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)

@@ -12,22 +12,15 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+// Locale-aware long date formatting via Intl.DateTimeFormat, e.g.
+// "August 6, 2026". The locale must be the active i18next language so the output
+// follows the UI.
+export function formatDate(date: Date | string | number, locale: string): string {
+  const target = date instanceof Date ? date : new Date(date);
 
-import { complianceArticleItem } from "./variants";
-
-// Loading placeholder paired with ComplianceArticleItem: same row layout with
-// a pulse icon and skeleton text.
-export function ComplianceArticleItemSkeleton() {
-  const slots = complianceArticleItem();
-
-  return (
-    <div className={slots.root()} aria-hidden>
-      <div className={slots.iconPlaceholder()} />
-      <div className={slots.content()}>
-        <TextSkeleton size={2} className="w-48" />
-      </div>
-      <TextSkeleton size={1} className="w-20 shrink-0" />
-    </div>
-  );
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(target);
 }

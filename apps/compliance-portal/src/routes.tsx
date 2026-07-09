@@ -20,6 +20,7 @@ import { getPathPrefix } from "#/lib/http/pathPrefix";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
 import { subprocessorRoutes } from "#/pages/subprocessors/routes";
+import { updateRoutes } from "#/pages/updates/routes";
 
 const routes = [
   {
@@ -37,10 +38,7 @@ const routes = [
         Component: lazy(() => import("#/pages/DocumentsPage")),
       },
       ...subprocessorRoutes,
-      {
-        path: "updates",
-        Component: lazy(() => import("#/pages/UpdatesPage")),
-      },
+      ...updateRoutes,
       {
         path: "requests",
         Component: lazy(() => import("#/pages/RequestsPage")),
