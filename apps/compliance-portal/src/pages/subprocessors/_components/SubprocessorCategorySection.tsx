@@ -38,7 +38,7 @@ export function SubprocessorCategorySection({ category, subprocessors }: Subproc
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <Text size={3} weight="medium" color="neutral" highContrast>
+        <Text size={3} weight="medium" color="neutral" highContrast role="heading" aria-level={2}>
           {t(`categories.${category}.label`)}
         </Text>
         <Text size={2} color="neutral">

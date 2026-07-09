@@ -819,6 +819,14 @@ func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.Trus
 		country = filter.Country
 	}
 
+	if category != nil && !category.IsValid() {
+		return nil, gqlutils.Invalidf(ctx, "invalid subprocessor category filter: %q", string(*category))
+	}
+
+	if country != nil && !country.IsValid() {
+		return nil, gqlutils.Invalidf(ctx, "invalid subprocessor country filter: %q", string(*country))
+	}
+
 	showOnTrustCenter := true
 	thirdPartyFilter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, query, category, country)
 

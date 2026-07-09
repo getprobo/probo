@@ -60,6 +60,10 @@ func (s ThirdPartyService) ListForOrganizationId(
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 	filter *coredata.ThirdPartyFilter,
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
+	if filter == nil {
+		filter = coredata.NewThirdPartyFilter(nil, nil, nil, nil, nil)
+	}
+
 	var thirdParties coredata.ThirdParties
 
 	err := s.svc.pg.WithConn(

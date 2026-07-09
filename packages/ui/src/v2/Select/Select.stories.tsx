@@ -87,6 +87,7 @@ export function Controlled() {
       </div>
       <span className="text-2 text-sand-11">
         Selected:
+        {" "}
         {value ?? "none"}
       </span>
     </div>
