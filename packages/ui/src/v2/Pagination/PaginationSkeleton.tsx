@@ -12,14 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import type { ComponentProps } from "react";
+
 import { pagination } from "./variants";
 
+export type PaginationSkeletonProps = Omit<ComponentProps<"div">, "children">;
+
 // Loading placeholder paired with Pagination: two pulse arrow blocks.
-export function PaginationSkeleton() {
+export function PaginationSkeleton(props: PaginationSkeletonProps) {
+  const { className, ...rest } = props;
   const { root, buttonPlaceholder } = pagination();
 
   return (
-    <div className={root()} aria-hidden>
+    <div className={root({ className })} {...rest} aria-hidden>
       <div className={buttonPlaceholder()} />
       <div className={buttonPlaceholder()} />
     </div>

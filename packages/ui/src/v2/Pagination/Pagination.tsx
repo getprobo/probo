@@ -71,7 +71,7 @@ export function Pagination(props: PaginationProps) {
         variant="ghost"
         color="neutral"
         size={2}
-        iconStart={<CaretRightIcon />}
+        iconEnd={<CaretRightIcon />}
         aria-label={nextLabel}
         className={hasNext ? undefined : "invisible"}
         onClick={onNext}

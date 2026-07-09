@@ -19,8 +19,7 @@ import { ComplianceArticleItemSkeleton } from "#/components/ComplianceArticleIte
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
 import { updatesList } from "./_components/variants";
-
-const ROW_COUNT = 10;
+import { UPDATES_PAGE_SIZE } from "./_lib/constants";
 
 export function UpdatesPageSkeleton() {
   const { card, rows } = updatesList();
@@ -36,7 +35,7 @@ export function UpdatesPageSkeleton() {
         <div className="flex w-full max-w-5xl flex-col gap-8">
           <div className={card()} aria-hidden>
             <div className={rows()}>
-              {Array.from({ length: ROW_COUNT }, (_, index) => (
+              {Array.from({ length: UPDATES_PAGE_SIZE }, (_, index) => (
                 <ComplianceArticleItemSkeleton key={index} />
               ))}
             </div>

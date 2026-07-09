@@ -22,13 +22,16 @@ import { UpdateDetailPageSkeleton } from "./UpdateDetailPageSkeleton";
 
 export default function UpdateDetailPageLoader() {
   const { updateId } = useParams<{ updateId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<UpdateDetailPageQuery>(updateDetailPageQuery);
+  const [queryRef, loadQuery, disposeQuery] = useQueryLoader<UpdateDetailPageQuery>(updateDetailPageQuery);
 
+  // Dispose on updateId change so navigating between updates shows the skeleton
+  // during the transition instead of the previous update's content.
   useEffect(() => {
     if (updateId) {
       loadQuery({ updateId });
     }
-  }, [loadQuery, updateId]);
+    return () => disposeQuery();
+  }, [loadQuery, disposeQuery, updateId]);
 
   if (!queryRef) {
     return <UpdateDetailPageSkeleton />;
