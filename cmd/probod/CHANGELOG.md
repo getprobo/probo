@@ -4,13 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
-### Fixed
+## [0.224.0] - 2026-07-09
 
-- Enforced owner-only member removal: `removeUser` (API resolver and MCP `RemoveUserTool`) now requires the owner-only `iam:membership:delete` gate instead of the weaker `iam:membership-profile:delete`, so an organization ADMIN can no longer remove members (including OWNERs)
+### Added
+
+- Added FERPA and PCI DSS framework datasets (controls and logos), selectable in the framework import selector alongside the existing frameworks
 
 ### Changed
 
 - Consolidated ownership-grant authorization into policy: granting OWNER (via `createUser` or `updateMembership`) is now restricted to organization owners through role-scoped allow policies conditioned on the assigned role, replacing the per-resolver custom checks and the now-removed `iam:membership-role:set-owner` action. The `permission` field gained an optional generic `attributes` key/value argument so the console can refine dry-run checks (e.g. by target role) without loosening the base grants
+- Renamed the `DocumentVersionSignatureFilter` `state` field to `profileState` (GraphQL) / `profile_state` (MCP) to disambiguate it from the signature `states` field, since it filters on the signatory's profile state
+
+### Fixed
+
+- Enforced owner-only member removal: `removeUser` (API resolver and MCP `RemoveUserTool`) now requires the owner-only `iam:membership:delete` gate instead of the weaker `iam:membership-profile:delete`, so an organization ADMIN can no longer remove members (including OWNERs)
+- Fixed a hole (GHSA-22xj-f767-ppw6) where a self-provisioned trust center visitor could accept or inject audit-trail events into another visitor's NDA signature by supplying its ID; esign now verifies signature ownership against the verified session identity in the accept and record-event flows
+- Confined all public trust API reads and electronic-signature operations to the requesting compliance page's tenant, closing a cross-tenant access gap where a visitor could resolve nodes, export audit-report PDFs, and read or mutate signatures belonging to another organization
+- Guarded the third-party vetting agent's HTTP tools against SSRF: outbound requests now route through an SSRF-protected client that rejects loopback, private, CGNAT, link-local, and reserved addresses on every redirect hop
+- Excluded documents with no published version from the trust center "Grant All" available-access list so it matches the request-all filter and Slack notification
+- Hid draft and hidden documents from the trust center access-request Slack notification so it only lists documents a requester could actually be granted
+- Fixed Anthropic thinking budgets so `budget_tokens` stays below `max_tokens`; thinking is now omitted when the configured budget is too small to meet Anthropic's minimum
 
 ## [0.223.3] - 2026-07-06
 
