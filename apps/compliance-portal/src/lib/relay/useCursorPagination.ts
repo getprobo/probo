@@ -14,33 +14,36 @@
 
 import { useCallback, useTransition } from "react";
 
-// Page size for the cursor-paginated updates list. Matches the Figma list frame.
-export const UPDATES_PAGE_SIZE = 10;
-
-export interface UpdatesPageInfo {
+// The `pageInfo` shape a Relay connection exposes for bidirectional cursor
+// pagination. Structurally compatible with generated connection page info.
+export interface CursorPageInfo {
   hasPreviousPage: boolean;
   hasNextPage: boolean;
   startCursor: string | null | undefined;
   endCursor: string | null | undefined;
 }
 
-export interface UpdatesPaginationVariables {
+// The connection pagination arguments passed to a refetch.
+export interface CursorPaginationVariables {
   first?: number | null;
   after?: string | null;
   last?: number | null;
   before?: string | null;
 }
 
-type RefetchUpdates = (variables: UpdatesPaginationVariables) => void;
+type CursorRefetch = (variables: CursorPaginationVariables) => void;
 
-// Cursor-based Prev/Next pagination for the updates list. Drives the connection
-// refetch inside a transition so the current page stays mounted (dimmed) while
-// the next one loads. Enabled/disabled state comes from the server `pageInfo`,
-// which stays correct however the page is reached. No page-number counter:
-// cursor pagination encodes a position, not an ordinal, so a reliable page
-// index (deep-linkable or refresh-safe) would need offset + totalCount, which
-// this API does not expose.
-export function useUpdatesPagination(refetch: RefetchUpdates, pageInfo: UpdatesPageInfo) {
+// Prev/Next pagination for a Relay cursor connection. Drives the refetch inside
+// a transition so the current page stays mounted (dimmed) while the next one
+// loads; Prev/Next availability comes from the server `pageInfo`, so it stays
+// correct however the page is reached. There is no page-number counter: cursor
+// pagination encodes a position, not an ordinal, so a reliable page index
+// (deep-linkable or refresh-safe) would need offset + totalCount.
+export function useCursorPagination(
+  refetch: CursorRefetch,
+  pageInfo: CursorPageInfo,
+  pageSize: number,
+) {
   const [isPending, startTransition] = useTransition();
 
   const goNext = useCallback(() => {
@@ -48,18 +51,18 @@ export function useUpdatesPagination(refetch: RefetchUpdates, pageInfo: UpdatesP
       return;
     }
     startTransition(() => {
-      refetch({ first: UPDATES_PAGE_SIZE, after: pageInfo.endCursor, last: null, before: null });
+      refetch({ first: pageSize, after: pageInfo.endCursor, last: null, before: null });
     });
-  }, [refetch, pageInfo.hasNextPage, pageInfo.endCursor]);
+  }, [refetch, pageSize, pageInfo.hasNextPage, pageInfo.endCursor]);
 
   const goPrevious = useCallback(() => {
     if (!pageInfo.hasPreviousPage || pageInfo.startCursor == null) {
       return;
     }
     startTransition(() => {
-      refetch({ first: null, after: null, last: UPDATES_PAGE_SIZE, before: pageInfo.startCursor });
+      refetch({ first: null, after: null, last: pageSize, before: pageInfo.startCursor });
     });
-  }, [refetch, pageInfo.hasPreviousPage, pageInfo.startCursor]);
+  }, [refetch, pageSize, pageInfo.hasPreviousPage, pageInfo.startCursor]);
 
   return { isPending, goPrevious, goNext };
 }

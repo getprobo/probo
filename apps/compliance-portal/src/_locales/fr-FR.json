@@ -38,5 +38,9 @@
   },
   "footer": {
     "poweredBy": "Propulsé par"
+  },
+  "pagination": {
+    "previous": "Page précédente",
+    "next": "Page suivante"
   }
 }

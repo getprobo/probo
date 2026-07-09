@@ -18,9 +18,13 @@ import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { ComplianceArticleItemSkeleton } from "#/components/ComplianceArticleItem/ComplianceArticleItemSkeleton";
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
-const ROW_PLACEHOLDERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+import { updatesList } from "./_components/variants";
+
+const ROW_COUNT = 10;
 
 export function UpdatesPageSkeleton() {
+  const { card, rows } = updatesList();
+
   return (
     <>
       <HeaderBand>
@@ -30,10 +34,10 @@ export function UpdatesPageSkeleton() {
       </HeaderBand>
       <div className="flex w-full flex-col items-center px-8 py-8">
         <div className="flex w-full max-w-5xl flex-col gap-8">
-          <div className="overflow-hidden rounded-5 border border-sand-3 bg-sand-1" aria-hidden>
-            <div className="divide-y divide-sand-a2">
-              {ROW_PLACEHOLDERS.map(placeholder => (
-                <ComplianceArticleItemSkeleton key={placeholder} />
+          <div className={card()} aria-hidden>
+            <div className={rows()}>
+              {Array.from({ length: ROW_COUNT }, (_, index) => (
+                <ComplianceArticleItemSkeleton key={index} />
               ))}
             </div>
           </div>

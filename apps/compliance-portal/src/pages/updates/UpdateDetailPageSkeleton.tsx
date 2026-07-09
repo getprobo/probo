@@ -18,24 +18,28 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
-const BODY_PLACEHOLDERS = ["a", "b", "c", "d", "e"];
+import { updateArticle } from "./_components/variants";
+
+const BODY_LINE_COUNT = 5;
 
 export function UpdateDetailPageSkeleton() {
+  const { toolbar, content, article } = updateArticle();
+
   return (
     <>
       <HeaderBand>
-        <div className="flex w-full items-center justify-between gap-4">
+        <div className={toolbar()}>
           <ButtonSkeleton size={2} />
           <ButtonSkeleton size={2} />
         </div>
       </HeaderBand>
-      <div className="flex w-full flex-col items-center px-8 py-8">
-        <div className="flex w-full max-w-2xl flex-col gap-4" aria-hidden>
+      <div className={content()}>
+        <div className={article()} aria-hidden>
           <TextSkeleton size={1} className="w-28" />
           <HeadingSkeleton size={7} className="w-96" />
           <div className="flex flex-col gap-2">
-            {BODY_PLACEHOLDERS.map(placeholder => (
-              <TextSkeleton key={placeholder} size={3} className="w-full" />
+            {Array.from({ length: BODY_LINE_COUNT }, (_, index) => (
+              <TextSkeleton key={index} size={3} className="w-full" />
             ))}
           </div>
         </div>

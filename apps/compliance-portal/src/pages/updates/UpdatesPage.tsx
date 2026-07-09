@@ -20,14 +20,16 @@ import { graphql, usePreloadedQuery, useRefetchableFragment } from "react-relay"
 
 import { MailingListUpdateListItem } from "#/components/MailingListUpdateListItem/MailingListUpdateListItem";
 import { PageHeader } from "#/components/PageHeader/PageHeader";
+import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
+import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import type { UpdatesPage_query$key } from "./__generated__/UpdatesPage_query.graphql";
 import type { UpdatesPageQuery } from "./__generated__/UpdatesPageQuery.graphql";
 import type { UpdatesPageRefetchQuery } from "./__generated__/UpdatesPageRefetchQuery.graphql";
 import { UpdatesEmpty } from "./_components/UpdatesEmpty";
+import { UpdatesList } from "./_components/UpdatesList";
 import { UpdatesSubscribeButton } from "./_components/UpdatesSubscribeButton";
-import type { UpdatesPaginationVariables } from "./_lib/useUpdatesPagination";
-import { useUpdatesPagination } from "./_lib/useUpdatesPagination";
+import { UPDATES_PAGE_SIZE } from "./_lib/constants";
 
 export const updatesPageQuery = graphql`
   query UpdatesPageQuery($first: Int, $after: CursorKey, $last: Int, $before: CursorKey) {
@@ -69,19 +71,20 @@ interface UpdatesPageProps {
 
 export function UpdatesPage({ queryRef }: UpdatesPageProps) {
   const { t } = useTranslation("updates");
+  const { t: tCommon } = useTranslation();
   const root = usePreloadedQuery<UpdatesPageQuery>(updatesPageQuery, queryRef);
   const [data, refetch] = useRefetchableFragment<UpdatesPageRefetchQuery, UpdatesPage_query$key>(
     updatesPageFragment,
     root,
   );
 
-  const refetchUpdates = useCallback((variables: UpdatesPaginationVariables) => {
+  const refetchUpdates = useCallback((variables: CursorPaginationVariables) => {
     refetch(variables, { fetchPolicy: "store-or-network" });
   }, [refetch]);
 
   const { updates } = data.currentTrustCenter;
   const { pageInfo } = updates;
-  const { isPending, goPrevious, goNext } = useUpdatesPagination(refetchUpdates, pageInfo);
+  const { isPending, goPrevious, goNext } = useCursorPagination(refetchUpdates, pageInfo, UPDATES_PAGE_SIZE);
 
   const nodes = updates.edges.map(edge => edge.node);
   const isEmpty = nodes.length === 0;
@@ -95,21 +98,16 @@ export function UpdatesPage({ queryRef }: UpdatesPageProps) {
             ? <UpdatesEmpty />
             : (
                 <div className="flex flex-col gap-8">
-                  <div
-                    aria-busy={isPending}
-                    className={`overflow-hidden rounded-5 border border-sand-3 bg-sand-1 transition-opacity duration-150 ${isPending ? "opacity-60" : ""}`}
-                  >
-                    <div className="divide-y divide-sand-a2">
-                      {nodes.map(node => (
-                        <MailingListUpdateListItem key={node.id} updateKey={node} />
-                      ))}
-                    </div>
-                  </div>
+                  <UpdatesList busy={isPending}>
+                    {nodes.map(node => (
+                      <MailingListUpdateListItem key={node.id} updateKey={node} />
+                    ))}
+                  </UpdatesList>
                   <Pagination
                     hasPrevious={pageInfo.hasPreviousPage}
                     hasNext={pageInfo.hasNextPage}
-                    previousLabel={t("pagination.previous")}
-                    nextLabel={t("pagination.next")}
+                    previousLabel={tCommon("pagination.previous")}
+                    nextLabel={tCommon("pagination.next")}
                     onPrevious={goPrevious}
                     onNext={goNext}
                   />

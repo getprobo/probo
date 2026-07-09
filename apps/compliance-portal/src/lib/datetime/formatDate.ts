@@ -12,15 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Locale-aware long date formatting via Intl.DateTimeFormat, e.g.
-// "August 6, 2026". The locale must be the active i18next language so the output
-// follows the UI.
-export function formatDate(date: Date | string | number, locale: string): string {
+// Long-date defaults, e.g. "August 6, 2026". Callers can override or extend any
+// of these through the `options` argument.
+const DEFAULT_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+};
+
+// Locale-aware date formatting via Intl.DateTimeFormat. The locale must be the
+// active i18next language so the output follows the UI. `options` are merged
+// over the long-date defaults, exposing the full Intl.DateTimeFormat surface.
+export function formatDate(
+  date: Date | string | number,
+  locale: string,
+  options?: Intl.DateTimeFormatOptions,
+): string {
   const target = date instanceof Date ? date : new Date(date);
 
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(target);
+  return new Intl.DateTimeFormat(locale, { ...DEFAULT_OPTIONS, ...options }).format(target);
 }

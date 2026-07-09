@@ -25,6 +25,7 @@ import { formatDate } from "#/lib/datetime/formatDate";
 
 import type { UpdateDetailPageQuery } from "./__generated__/UpdateDetailPageQuery.graphql";
 import { UpdatesSubscribeButton } from "./_components/UpdatesSubscribeButton";
+import { updateArticle } from "./_components/variants";
 
 export const updateDetailPageQuery = graphql`
   query UpdateDetailPageQuery($updateId: ID!) {
@@ -52,20 +53,22 @@ export function UpdateDetailPage({ queryRef }: UpdateDetailPageProps) {
   }
   const update = data.node;
 
+  const { toolbar, content, article, meta, metaIcon, body } = updateArticle();
+
   return (
     <>
       <HeaderBand>
-        <div className="flex w-full items-center justify-between gap-4">
+        <div className={toolbar()}>
           <Link to="/updates" variant="soft" color="neutral" highContrast iconStart={<CaretLeftIcon />}>
             {t("backToUpdates")}
           </Link>
           <UpdatesSubscribeButton />
         </div>
       </HeaderBand>
-      <div className="flex w-full flex-col items-center px-8 py-8">
-        <article className="flex w-full max-w-2xl flex-col gap-4">
-          <div className="flex items-center gap-1.5">
-            <NewspaperIcon weight="light" className="size-4 text-gold-9" />
+      <div className={content()}>
+        <article className={article()}>
+          <div className={meta()}>
+            <NewspaperIcon weight="light" className={metaIcon()} />
             <Text size={1} color="gold">
               {formatDate(update.updatedAt, i18n.language)}
             </Text>
@@ -73,7 +76,7 @@ export function UpdateDetailPage({ queryRef }: UpdateDetailPageProps) {
           <Heading level={1} size={7} weight="medium" highContrast>
             {update.title}
           </Heading>
-          <Text size={3} className="block whitespace-pre-wrap">
+          <Text size={3} className={body()}>
             {update.body}
           </Text>
         </article>

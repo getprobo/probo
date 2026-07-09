@@ -12,24 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import type { ReactNode } from "react";
 
-import type { UpdatesPageQuery } from "./__generated__/UpdatesPageQuery.graphql";
-import { UPDATES_PAGE_SIZE } from "./_lib/constants";
-import { UpdatesPage, updatesPageQuery } from "./UpdatesPage";
-import { UpdatesPageSkeleton } from "./UpdatesPageSkeleton";
+import { updatesList } from "./variants";
 
-export default function UpdatesPageLoader() {
-  const [queryRef, loadQuery] = useQueryLoader<UpdatesPageQuery>(updatesPageQuery);
+interface UpdatesListProps {
+  // Dims the list while a page change is loading.
+  busy?: boolean;
+  // The rendered update rows.
+  children: ReactNode;
+}
 
-  useEffect(() => {
-    loadQuery({ first: UPDATES_PAGE_SIZE });
-  }, [loadQuery]);
+// White card surface holding divider-separated update rows.
+export function UpdatesList({ busy = false, children }: UpdatesListProps) {
+  const { card, rows } = updatesList();
 
-  if (!queryRef) {
-    return <UpdatesPageSkeleton />;
-  }
-
-  return <UpdatesPage queryRef={queryRef} />;
+  return (
+    <div className={card({ busy })} aria-busy={busy || undefined}>
+      <div className={rows()}>{children}</div>
+    </div>
+  );
 }

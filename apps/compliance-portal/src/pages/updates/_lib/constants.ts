@@ -12,24 +12,5 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-
-import type { UpdatesPageQuery } from "./__generated__/UpdatesPageQuery.graphql";
-import { UPDATES_PAGE_SIZE } from "./_lib/constants";
-import { UpdatesPage, updatesPageQuery } from "./UpdatesPage";
-import { UpdatesPageSkeleton } from "./UpdatesPageSkeleton";
-
-export default function UpdatesPageLoader() {
-  const [queryRef, loadQuery] = useQueryLoader<UpdatesPageQuery>(updatesPageQuery);
-
-  useEffect(() => {
-    loadQuery({ first: UPDATES_PAGE_SIZE });
-  }, [loadQuery]);
-
-  if (!queryRef) {
-    return <UpdatesPageSkeleton />;
-  }
-
-  return <UpdatesPage queryRef={queryRef} />;
-}
+// Page size for the cursor-paginated updates list.
+export const UPDATES_PAGE_SIZE = 25;
