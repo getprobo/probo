@@ -188,47 +188,8 @@ func setupPublicAuditReport(t *testing.T, owner *testutil.Client) (trustCenterID
 	}, nil)
 	require.NoError(t, err)
 
-	const trustCenterQuery = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					trustCenter { id }
-				}
-			}
-		}
-	`
-
-	var trustCenterLookup struct {
-		Node struct {
-			TrustCenter struct {
-				ID string `json:"id"`
-			} `json:"trustCenter"`
-		} `json:"node"`
-	}
-
-	err = owner.Execute(trustCenterQuery, map[string]any{
-		"organizationId": owner.GetOrganizationID().String(),
-	}, &trustCenterLookup)
-	require.NoError(t, err)
-
-	trustCenterID = trustCenterLookup.Node.TrustCenter.ID
-	require.NotEmpty(t, trustCenterID)
-
-	const activateMutation = `
-		mutation($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter { id active }
-			}
-		}
-	`
-
-	err = owner.Execute(activateMutation, map[string]any{
-		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"active":        true,
-		},
-	}, nil)
-	require.NoError(t, err)
+	trustCenterID = lookupTrustCenterID(t, owner)
+	activateTrustCenter(t, owner, trustCenterID)
 
 	return trustCenterID, reportID
 }

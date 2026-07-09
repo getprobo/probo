@@ -113,36 +113,6 @@ func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testin
 	assert.Equal(t, "ACCEPTED", acceptResult.AcceptElectronicSignature.Signature.Status)
 }
 
-func lookupTrustCenterID(t *testing.T, owner *testutil.Client) string {
-	t.Helper()
-
-	const query = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					trustCenter { id }
-				}
-			}
-		}
-	`
-
-	var result struct {
-		Node struct {
-			TrustCenter struct {
-				ID string `json:"id"`
-			} `json:"trustCenter"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(query, map[string]any{
-		"organizationId": owner.GetOrganizationID().String(),
-	}, &result)
-	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.TrustCenter.ID)
-
-	return result.Node.TrustCenter.ID
-}
-
 func uploadTrustCenterNDA(t *testing.T, owner *testutil.Client, trustCenterID string) {
 	t.Helper()
 
@@ -167,26 +137,6 @@ func uploadTrustCenterNDA(t *testing.T, owner *testutil.Client, trustCenterID st
 		Filename:    "nda.pdf",
 		ContentType: "application/pdf",
 		Content:     pdfContent,
-	}, nil)
-	require.NoError(t, err)
-}
-
-func activateTrustCenter(t *testing.T, owner *testutil.Client, trustCenterID string) {
-	t.Helper()
-
-	const query = `
-		mutation($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter { id active }
-			}
-		}
-	`
-
-	err := owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"active":        true,
-		},
 	}, nil)
 	require.NoError(t, err)
 }

@@ -30,54 +30,8 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	organizationID := owner.GetOrganizationID().String()
-
-	const trustCenterQuery = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					trustCenter {
-						id
-					}
-				}
-			}
-		}
-	`
-
-	var trustCenterLookup struct {
-		Node struct {
-			TrustCenter struct {
-				ID string `json:"id"`
-			} `json:"trustCenter"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(trustCenterQuery, map[string]any{
-		"organizationId": organizationID,
-	}, &trustCenterLookup)
-	require.NoError(t, err)
-	require.NotEmpty(t, trustCenterLookup.Node.TrustCenter.ID)
-
-	trustCenterID := trustCenterLookup.Node.TrustCenter.ID
-
-	const activateMutation = `
-		mutation($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter {
-					id
-					active
-				}
-			}
-		}
-	`
-
-	err = owner.Execute(activateMutation, map[string]any{
-		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"active":        true,
-		},
-	}, nil)
-	require.NoError(t, err)
+	trustCenterID := lookupTrustCenterID(t, owner)
+	activateTrustCenter(t, owner, trustCenterID)
 
 	const uploadMutation = `
 		mutation UpdateTrustCenterBrand($input: UpdateTrustCenterBrandInput!) {
@@ -119,7 +73,7 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 		} `json:"updateTrustCenterBrand"`
 	}
 
-	err = owner.ExecuteWithFile(uploadMutation, map[string]any{
+	err := owner.ExecuteWithFile(uploadMutation, map[string]any{
 		"input": map[string]any{
 			"trustCenterId": trustCenterID,
 			"logoFile":      nil,

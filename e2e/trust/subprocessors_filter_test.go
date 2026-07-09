@@ -27,7 +27,8 @@ func TestTrustCenter_SubprocessorsFilter(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	trustCenterID := activateTrustCenter(t, owner)
+	trustCenterID := lookupTrustCenterID(t, owner)
+	activateTrustCenter(t, owner, trustCenterID)
 
 	awsName := factory.SafeName("AWS")
 	awsID := factory.NewThirdParty(owner).WithName(awsName).WithCategory("CLOUD_PROVIDER").Create()
@@ -153,52 +154,6 @@ func querySubprocessors(
 	require.NoError(t, err)
 
 	return result
-}
-
-func activateTrustCenter(t *testing.T, owner *testutil.Client) string {
-	t.Helper()
-
-	const trustCenterQuery = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					trustCenter { id }
-				}
-			}
-		}
-	`
-
-	var lookup struct {
-		Node struct {
-			TrustCenter struct {
-				ID string `json:"id"`
-			} `json:"trustCenter"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(trustCenterQuery, map[string]any{
-		"organizationId": owner.GetOrganizationID().String(),
-	}, &lookup)
-	require.NoError(t, err)
-	require.NotEmpty(t, lookup.Node.TrustCenter.ID)
-
-	const activateMutation = `
-		mutation($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter { id active }
-			}
-		}
-	`
-
-	err = owner.Execute(activateMutation, map[string]any{
-		"input": map[string]any{
-			"trustCenterId": lookup.Node.TrustCenter.ID,
-			"active":        true,
-		},
-	}, nil)
-	require.NoError(t, err)
-
-	return lookup.Node.TrustCenter.ID
 }
 
 func publishSubprocessor(t *testing.T, owner *testutil.Client, thirdPartyID string, countries []string) {
