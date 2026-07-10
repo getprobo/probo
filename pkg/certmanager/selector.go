@@ -123,42 +123,42 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 }
 
 func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domain string) error {
-	var customDomain coredata.CustomDomain
-	if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
-		return fmt.Errorf("cannot load domain: %w", err)
+	var certificate coredata.Certificate
+	if err := certificate.LoadByHostname(ctx, conn, coredata.NewNoScope(), domain); err != nil {
+		return fmt.Errorf("cannot load certificate: %w", err)
 	}
 
-	if customDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
-		return fmt.Errorf("domain does not have active SSL certificate")
+	if certificate.Status != coredata.CertificateStatusActive {
+		return fmt.Errorf("hostname does not have active SSL certificate")
 	}
 
-	if err := customDomain.ParseCertificate(s.encryptionKey); err != nil {
+	if err := certificate.ParseCertificate(s.encryptionKey); err != nil {
 		return fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
-	if len(customDomain.SSLCertificatePEM) == 0 {
-		return fmt.Errorf("domain has no certificate PEM data")
+	if len(certificate.SSLCertificatePEM) == 0 {
+		return fmt.Errorf("certificate has no certificate PEM data")
 	}
 
-	if len(customDomain.EncryptedSSLPrivateKey) == 0 {
-		return fmt.Errorf("domain has no encrypted private key data")
+	if len(certificate.EncryptedSSLPrivateKey) == 0 {
+		return fmt.Errorf("certificate has no encrypted private key data")
 	}
 
-	privateKeyPEM, err := customDomain.DecryptPrivateKey(s.encryptionKey)
+	privateKeyPEM, err := certificate.DecryptPrivateKey(s.encryptionKey)
 	if err != nil {
 		return fmt.Errorf("cannot decrypt private key: %w", err)
 	}
 
-	s.cache.Store(domain, customDomain.SSLCertificate)
+	s.cache.Store(domain, certificate.SSLCertificate)
 
 	cache := &coredata.CachedCertificate{
-		Domain:           customDomain.Domain,
-		CertificatePEM:   string(customDomain.SSLCertificatePEM),
+		Domain:           certificate.Hostname,
+		CertificatePEM:   string(certificate.SSLCertificatePEM),
 		PrivateKeyPEM:    string(privateKeyPEM),
-		CertificateChain: customDomain.SSLCertificateChain,
-		ExpiresAt:        *customDomain.SSLExpiresAt,
+		CertificateChain: certificate.SSLCertificateChain,
+		ExpiresAt:        *certificate.SSLExpiresAt,
 		CachedAt:         time.Now(),
-		CustomDomainID:   customDomain.ID,
+		CertificateID:    certificate.ID,
 	}
 
 	if err := cache.Upsert(ctx, conn); err != nil {

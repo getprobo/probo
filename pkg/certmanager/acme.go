@@ -27,7 +27,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/httpclient"
@@ -183,7 +185,7 @@ func (s *ACMEService) CompleteHTTPChallenge(
 		Token: challenge0.Token,
 	}
 
-	if _, err := s.client.Accept(ctx, challenge1); err != nil {
+	if _, err := s.client.Accept(ctx, challenge1); err != nil && !isChallengeAlreadyValid(err) {
 		return nil, fmt.Errorf("cannot accept challenge: %w", err)
 	}
 
@@ -202,7 +204,7 @@ func (s *ACMEService) CompleteHTTPChallenge(
 		return nil, fmt.Errorf("cannot create CSR: %w", err)
 	}
 
-	der, _, err := s.client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
+	der, err := s.issueOrderCertificate(ctx, order, challenge0.OrderURL, csr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create certificate: %w", err)
 	}
@@ -236,6 +238,134 @@ func (s *ACMEService) CompleteHTTPChallenge(
 
 func (s *ACMEService) CheckRenewalNeeded(expiresAt time.Time, threshold time.Duration) bool {
 	return time.Until(expiresAt) <= threshold
+}
+
+func isChallengeAlreadyValid(err error) bool {
+	acmeErr, ok := errors.AsType[*acme.Error](err)
+	if !ok {
+		return false
+	}
+
+	return acmeErr.ProblemType == "urn:ietf:params:acme:error:malformed" &&
+		strings.Contains(acmeErr.Detail, "status valid")
+}
+
+func (s *ACMEService) issueOrderCertificate(
+	ctx context.Context,
+	order *acme.Order,
+	orderURL string,
+	csr []byte,
+) ([][]byte, error) {
+	pollURL := acmeOrderURL(order, orderURL)
+
+	switch order.Status {
+	case acme.StatusValid:
+		return s.fetchOrderCertificate(ctx, pollURL, order)
+	case acme.StatusReady:
+		if order.FinalizeURL == "" {
+			return nil, fmt.Errorf("order is ready but finalize URL is missing")
+		}
+
+		der, _, err := s.client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
+		if err == nil {
+			return der, nil
+		}
+
+		// CreateOrderCert finalizes the order but may fail to download the
+		// certificate when the CA marks the order valid before the certificate
+		// URL is populated. Poll the order using the known order URL because
+		// some CAs (including Pebble) omit the Location header on poll
+		// responses, leaving order.URI empty.
+		return s.fetchOrderCertificateAfterFinalize(ctx, pollURL, err)
+	default:
+		return nil, fmt.Errorf("order is in unexpected status %q", order.Status)
+	}
+}
+
+func acmeOrderURL(order *acme.Order, orderURL string) string {
+	if order.URI != "" {
+		return order.URI
+	}
+
+	return orderURL
+}
+
+func (s *ACMEService) fetchOrderCertificateAfterFinalize(
+	ctx context.Context,
+	orderURL string,
+	finalizeErr error,
+) ([][]byte, error) {
+	refreshed, err := s.client.GetOrder(ctx, orderURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot refresh order after finalize: %w", err)
+	}
+
+	if refreshed.Status != acme.StatusValid {
+		refreshed, err = s.client.WaitOrder(ctx, orderURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot wait for order after finalize: %w", err)
+		}
+	}
+
+	der, err := s.fetchOrderCertificate(ctx, orderURL, refreshed)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch certificate after finalize: %w: %w", finalizeErr, err)
+	}
+
+	return der, nil
+}
+
+func (s *ACMEService) fetchOrderCertificate(
+	ctx context.Context,
+	orderURL string,
+	order *acme.Order,
+) ([][]byte, error) {
+	orderWithCertURL, err := s.waitForCertificateURL(ctx, orderURL, order)
+	if err != nil {
+		return nil, err
+	}
+
+	der, err := s.client.FetchCert(ctx, orderWithCertURL.CertURL, true)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch certificate: %w", err)
+	}
+
+	return der, nil
+}
+
+func (s *ACMEService) waitForCertificateURL(
+	ctx context.Context,
+	orderURL string,
+	order *acme.Order,
+) (*acme.Order, error) {
+	if order.CertURL != "" {
+		return order, nil
+	}
+
+	deadline := time.Now().Add(30 * time.Second)
+
+	for time.Now().Before(deadline) {
+		refreshed, err := s.client.GetOrder(ctx, orderURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot refresh order: %w", err)
+		}
+
+		if refreshed.CertURL != "" {
+			return refreshed, nil
+		}
+
+		if refreshed.Status != acme.StatusValid {
+			return nil, fmt.Errorf("order left valid state while waiting for certificate URL")
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(500 * time.Millisecond):
+		}
+	}
+
+	return nil, fmt.Errorf("timed out waiting for certificate URL")
 }
 
 func createCSR(domain string, key crypto.Signer) ([]byte, error) {

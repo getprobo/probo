@@ -59,35 +59,35 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 	err := w.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			domains := coredata.CustomDomains{}
-			if err := domains.LoadActiveCertificates(ctx, conn, coredata.NewNoScope()); err != nil {
+			certificates := coredata.Certificates{}
+			if err := certificates.LoadActive(ctx, conn, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot load active certificates: %w", err)
 			}
 
-			if len(domains) == 0 {
+			if len(certificates) == 0 {
 				w.logger.InfoCtx(ctx, "no active certificates to warm")
 				return nil
 			}
 
-			w.logger.InfoCtx(ctx, "found active certificates to cache", log.Int("count", len(domains)))
+			w.logger.InfoCtx(ctx, "found active certificates to cache", log.Int("count", len(certificates)))
 
 			successCount := 0
 
-			for _, domain := range domains {
+			for _, certificate := range certificates {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				default:
 				}
 
-				if err := w.warmDomain(ctx, conn, domain); err != nil {
-					w.logger.ErrorCtx(ctx, "cannot warm certificate cache for domain", log.String("domain", domain.Domain), log.Error(err))
+				if err := w.warmCertificate(ctx, conn, certificate); err != nil {
+					w.logger.ErrorCtx(ctx, "cannot warm certificate cache for hostname", log.String("hostname", certificate.Hostname), log.Error(err))
 				} else {
 					successCount++
 				}
 			}
 
-			w.logger.InfoCtx(ctx, "successfully warmed cache", log.Int("success_count", successCount), log.Int("total_count", len(domains)))
+			w.logger.InfoCtx(ctx, "successfully warmed cache", log.Int("success_count", successCount), log.Int("total_count", len(certificates)))
 
 			return nil
 		},
@@ -101,45 +101,45 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 	return nil
 }
 
-func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Querier, domain *coredata.CustomDomain) error {
-	var loadedDomain coredata.CustomDomain
-	if err := loadedDomain.LoadByID(ctx, conn, coredata.NewNoScope(), domain.ID); err != nil {
-		return fmt.Errorf("cannot load domain with decrypted values: %w", err)
+func (w *CacheStore) warmCertificate(ctx context.Context, conn pg.Querier, certificate *coredata.Certificate) error {
+	var loadedCertificate coredata.Certificate
+	if err := loadedCertificate.LoadByID(ctx, conn, coredata.NewNoScope(), certificate.ID); err != nil {
+		return fmt.Errorf("cannot load certificate with decrypted values: %w", err)
 	}
 
-	if err := loadedDomain.ParseCertificate(w.encryptionKey); err != nil {
+	if err := loadedCertificate.ParseCertificate(w.encryptionKey); err != nil {
 		return fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
-	if len(loadedDomain.SSLCertificatePEM) == 0 {
-		return fmt.Errorf("domain has no certificate PEM")
+	if len(loadedCertificate.SSLCertificatePEM) == 0 {
+		return fmt.Errorf("certificate has no certificate PEM")
 	}
 
-	privateKeyPEM, err := loadedDomain.DecryptPrivateKey(w.encryptionKey)
+	privateKeyPEM, err := loadedCertificate.DecryptPrivateKey(w.encryptionKey)
 	if err != nil {
 		return fmt.Errorf("cannot decrypt private key: %w", err)
 	}
 
 	if len(privateKeyPEM) == 0 {
-		return fmt.Errorf("domain has no private key PEM")
+		return fmt.Errorf("certificate has no private key PEM")
 	}
 
-	if loadedDomain.SSLExpiresAt == nil {
-		return fmt.Errorf("domain certificate has no expiry date")
+	if loadedCertificate.SSLExpiresAt == nil {
+		return fmt.Errorf("certificate has no expiry date")
 	}
 
-	if time.Now().After(*loadedDomain.SSLExpiresAt) {
+	if time.Now().After(*loadedCertificate.SSLExpiresAt) {
 		return fmt.Errorf("certificate has expired")
 	}
 
 	cache := &coredata.CachedCertificate{
-		Domain:           loadedDomain.Domain,
-		CertificatePEM:   string(loadedDomain.SSLCertificatePEM),
+		Domain:           loadedCertificate.Hostname,
+		CertificatePEM:   string(loadedCertificate.SSLCertificatePEM),
 		PrivateKeyPEM:    string(privateKeyPEM),
-		CertificateChain: loadedDomain.SSLCertificateChain,
-		ExpiresAt:        *loadedDomain.SSLExpiresAt,
+		CertificateChain: loadedCertificate.SSLCertificateChain,
+		ExpiresAt:        *loadedCertificate.SSLExpiresAt,
 		CachedAt:         time.Now(),
-		CustomDomainID:   loadedDomain.ID,
+		CertificateID:    loadedCertificate.ID,
 	}
 
 	if err := cache.Upsert(ctx, conn); err != nil {

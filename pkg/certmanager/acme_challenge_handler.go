@@ -84,16 +84,16 @@ func (h *ACMEChallengeHandler) getKeyAuthForToken(ctx context.Context, token str
 	err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			domain := &coredata.CustomDomain{}
-			if err := domain.LoadByHTTPChallengeToken(ctx, conn, coredata.NewNoScope(), token); err != nil {
+			certificate := &coredata.Certificate{}
+			if err := certificate.LoadByHTTPChallengeToken(ctx, conn, coredata.NewNoScope(), token); err != nil {
 				return err
 			}
 
-			if domain.HTTPChallengeKeyAuth == nil {
+			if certificate.HTTPChallengeKeyAuth == nil {
 				return http.ErrNotSupported
 			}
 
-			keyAuth = *domain.HTTPChallengeKeyAuth
+			keyAuth = *certificate.HTTPChallengeKeyAuth
 
 			return nil
 		},
