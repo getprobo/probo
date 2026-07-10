@@ -22,10 +22,13 @@ package testutil
 
 import (
 	"bytes"
+	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/textproto"
 	"testing"
@@ -33,6 +36,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+// trustCenterHTTPSAddr is the loopback address of the dedicated trust-center
+// HTTPS listener started by the e2e probod (see generateConfig). Compliance
+// pages are served here exclusively, routed by TLS SNI / Host header.
+const trustCenterHTTPSAddr = "127.0.0.1:10443"
 
 type GraphQLRequest struct {
 	Query     string         `json:"query"`
@@ -206,8 +214,76 @@ func ConsoleGraphQLWithAccessToken(
 	return &gqlResp, nil
 }
 
-func (c *Client) DoTrust(trustCenterID string, query string, variables map[string]any) (*GraphQLResponse, error) {
-	return c.doWithEndpoint(fmt.Sprintf("/trust/%s/api/trust/v1/graphql", trustCenterID), query, variables)
+// trustHTTPClient builds an HTTP client that always dials the dedicated
+// trust-center HTTPS listener on loopback while presenting the compliance
+// page's host as TLS SNI. Certificates are Pebble-issued for e2e, so
+// verification is skipped.
+func trustHTTPClient(serverName string) *http.Client {
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
+
+	return &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return dialer.DialContext(ctx, "tcp", trustCenterHTTPSAddr)
+			},
+			TLSClientConfig: &tls.Config{
+				ServerName:         serverName,
+				InsecureSkipVerify: true, //nolint:gosec // e2e talks to Pebble-issued certs on loopback.
+			},
+		},
+	}
+}
+
+// DoTrust posts a GraphQL query to a compliance page served on the dedicated
+// listener. host is the page's serving domain (a customer custom domain or a
+// managed {slug}.probopage.localhost subdomain).
+func (c *Client) DoTrust(host string, query string, variables map[string]any) (*GraphQLResponse, error) {
+	reqBody := GraphQLRequest{
+		Query:     query,
+		Variables: variables,
+	}
+
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal request: %w", err)
+	}
+
+	endpoint := fmt.Sprintf("https://%s/api/trust/v1/graphql", host)
+
+	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("cannot create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := trustHTTPClient(host).Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var gqlResp GraphQLResponse
+	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
+		return nil, fmt.Errorf("cannot decode response: %w", err)
+	}
+
+	if len(gqlResp.Errors) > 0 {
+		return &gqlResp, GraphQLErrors(gqlResp.Errors)
+	}
+
+	return &gqlResp, nil
 }
 
 func (c *Client) Execute(query string, variables map[string]any, result any) error {
@@ -240,8 +316,8 @@ func (c *Client) ExecuteConnect(query string, variables map[string]any, result a
 	return nil
 }
 
-func (c *Client) ExecuteTrust(trustCenterID string, query string, variables map[string]any, result any) error {
-	resp, err := c.DoTrust(trustCenterID, query, variables)
+func (c *Client) ExecuteTrust(host string, query string, variables map[string]any, result any) error {
+	resp, err := c.DoTrust(host, query, variables)
 	if err != nil {
 		return err
 	}

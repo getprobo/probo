@@ -49,7 +49,7 @@ type trustCenterReference struct {
 	Order int    `json:"order"`
 }
 
-type complianceExternalURL struct {
+type complianceCustomLink struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	URL  string `json:"url"`
@@ -174,17 +174,31 @@ func TestMCP_UpdateTrustCenter(t *testing.T) {
 
 	// Update
 	var updateResult struct {
-		TrustCenter trustCenter `json:"trustCenter"`
+		TrustCenter struct {
+			ID                 string  `json:"id"`
+			Description        *string `json:"description"`
+			WebsiteURL         *string `json:"website_url"`
+			Email              *string `json:"email"`
+			HeadquarterAddress *string `json:"headquarter_address"`
+		} `json:"trustCenter"`
 	}
 	mc.CallToolInto("updateTrustCenter", map[string]any{
-		"id":          getResult.TrustCenter.ID,
-		"companyName": "Updated Company",
-		"pageTitle":   "Updated Trust Center",
+		"trust_center_id":     getResult.TrustCenter.ID,
+		"description":         "We keep your data safe.",
+		"website_url":         "https://example.com",
+		"email":               "security@example.com",
+		"headquarter_address": "123 Main St, San Francisco, CA 94102",
 	}, &updateResult)
 
 	assert.Equal(t, getResult.TrustCenter.ID, updateResult.TrustCenter.ID)
-	assert.Equal(t, "Updated Company", updateResult.TrustCenter.CompanyName)
-	assert.Equal(t, "Updated Trust Center", updateResult.TrustCenter.PageTitle)
+	require.NotNil(t, updateResult.TrustCenter.Description)
+	assert.Equal(t, "We keep your data safe.", *updateResult.TrustCenter.Description)
+	require.NotNil(t, updateResult.TrustCenter.WebsiteURL)
+	assert.Equal(t, "https://example.com", *updateResult.TrustCenter.WebsiteURL)
+	require.NotNil(t, updateResult.TrustCenter.Email)
+	assert.Equal(t, "security@example.com", *updateResult.TrustCenter.Email)
+	require.NotNil(t, updateResult.TrustCenter.HeadquarterAddress)
+	assert.Equal(t, "123 Main St, San Francisco, CA 94102", *updateResult.TrustCenter.HeadquarterAddress)
 }
 
 func TestMCP_AddTrustCenterReference(t *testing.T) {
@@ -363,7 +377,7 @@ func TestMCP_ListTrustCenterFiles(t *testing.T) {
 	assert.NotNil(t, listResult.TrustCenterFiles)
 }
 
-func TestMCP_AddComplianceExternalURL(t *testing.T) {
+func TestMCP_AddComplianceCustomLink(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
@@ -379,19 +393,19 @@ func TestMCP_AddComplianceExternalURL(t *testing.T) {
 	tcID := getResult.TrustCenter.ID
 
 	var result struct {
-		ComplianceExternalURL complianceExternalURL `json:"complianceExternalUrl"`
+		ComplianceCustomLink complianceCustomLink `json:"complianceCustomLink"`
 	}
-	mc.CallToolInto("addComplianceExternalURL", map[string]any{
+	mc.CallToolInto("addComplianceCustomLink", map[string]any{
 		"trustCenterId": tcID,
 		"name":          "ISO 27001 Certificate",
 		"url":           "https://example.com/iso27001",
 	}, &result)
 
-	assert.NotEmpty(t, result.ComplianceExternalURL.ID)
-	assert.Equal(t, "ISO 27001 Certificate", result.ComplianceExternalURL.Name)
+	assert.NotEmpty(t, result.ComplianceCustomLink.ID)
+	assert.Equal(t, "ISO 27001 Certificate", result.ComplianceCustomLink.Name)
 }
 
-func TestMCP_UpdateComplianceExternalURL(t *testing.T) {
+func TestMCP_UpdateComplianceCustomLink(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
@@ -408,30 +422,30 @@ func TestMCP_UpdateComplianceExternalURL(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		ComplianceExternalURL complianceExternalURL `json:"complianceExternalUrl"`
+		ComplianceCustomLink complianceCustomLink `json:"complianceCustomLink"`
 	}
-	mc.CallToolInto("addComplianceExternalURL", map[string]any{
+	mc.CallToolInto("addComplianceCustomLink", map[string]any{
 		"trustCenterId": tcID,
 		"name":          "Original URL",
 		"url":           "https://example.com/original",
 	}, &addResult)
-	require.NotEmpty(t, addResult.ComplianceExternalURL.ID)
+	require.NotEmpty(t, addResult.ComplianceCustomLink.ID)
 
 	// Update
 	var updateResult struct {
-		ComplianceExternalURL complianceExternalURL `json:"complianceExternalUrl"`
+		ComplianceCustomLink complianceCustomLink `json:"complianceCustomLink"`
 	}
-	mc.CallToolInto("updateComplianceExternalURL", map[string]any{
-		"id":   addResult.ComplianceExternalURL.ID,
+	mc.CallToolInto("updateComplianceCustomLink", map[string]any{
+		"id":   addResult.ComplianceCustomLink.ID,
 		"name": "Updated URL",
 		"url":  "https://example.com/updated",
 	}, &updateResult)
 
-	assert.Equal(t, addResult.ComplianceExternalURL.ID, updateResult.ComplianceExternalURL.ID)
-	assert.Equal(t, "Updated URL", updateResult.ComplianceExternalURL.Name)
+	assert.Equal(t, addResult.ComplianceCustomLink.ID, updateResult.ComplianceCustomLink.ID)
+	assert.Equal(t, "Updated URL", updateResult.ComplianceCustomLink.Name)
 }
 
-func TestMCP_DeleteComplianceExternalURL(t *testing.T) {
+func TestMCP_DeleteComplianceCustomLink(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
@@ -448,27 +462,27 @@ func TestMCP_DeleteComplianceExternalURL(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		ComplianceExternalURL complianceExternalURL `json:"complianceExternalUrl"`
+		ComplianceCustomLink complianceCustomLink `json:"complianceCustomLink"`
 	}
-	mc.CallToolInto("addComplianceExternalURL", map[string]any{
+	mc.CallToolInto("addComplianceCustomLink", map[string]any{
 		"trustCenterId": tcID,
 		"name":          "URL to delete",
 		"url":           "https://example.com/delete",
 	}, &addResult)
-	require.NotEmpty(t, addResult.ComplianceExternalURL.ID)
+	require.NotEmpty(t, addResult.ComplianceCustomLink.ID)
 
 	// Delete
 	var deleteResult struct {
-		DeletedComplianceExternalURLID string `json:"deletedComplianceExternalUrlId"`
+		DeletedComplianceCustomLinkID string `json:"deletedComplianceCustomLinkId"`
 	}
-	mc.CallToolInto("deleteComplianceExternalURL", map[string]any{
-		"id": addResult.ComplianceExternalURL.ID,
+	mc.CallToolInto("deleteComplianceCustomLink", map[string]any{
+		"id": addResult.ComplianceCustomLink.ID,
 	}, &deleteResult)
 
-	assert.Equal(t, addResult.ComplianceExternalURL.ID, deleteResult.DeletedComplianceExternalURLID)
+	assert.Equal(t, addResult.ComplianceCustomLink.ID, deleteResult.DeletedComplianceCustomLinkID)
 }
 
-func TestMCP_ListComplianceExternalURLs(t *testing.T) {
+func TestMCP_ListComplianceCustomLinks(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
@@ -486,25 +500,25 @@ func TestMCP_ListComplianceExternalURLs(t *testing.T) {
 	// Create URLs
 	for i := range 2 {
 		var result struct {
-			ComplianceExternalURL complianceExternalURL `json:"complianceExternalUrl"`
+			ComplianceCustomLink complianceCustomLink `json:"complianceCustomLink"`
 		}
-		mc.CallToolInto("addComplianceExternalURL", map[string]any{
+		mc.CallToolInto("addComplianceCustomLink", map[string]any{
 			"trustCenterId": tcID,
 			"name":          factory.SafeName("URL"),
 			"url":           "https://example.com/" + factory.SafeName("path"),
 		}, &result)
-		require.NotEmpty(t, result.ComplianceExternalURL.ID)
+		require.NotEmpty(t, result.ComplianceCustomLink.ID)
 
 		_ = i
 	}
 
 	// List
 	var listResult struct {
-		ComplianceExternalURLs []complianceExternalURL `json:"complianceExternalUrls"`
+		ComplianceCustomLinks []complianceCustomLink `json:"complianceCustomLinks"`
 	}
-	mc.CallToolInto("listComplianceExternalURLs", map[string]any{
+	mc.CallToolInto("listComplianceCustomLinks", map[string]any{
 		"trustCenterId": tcID,
 	}, &listResult)
 
-	assert.GreaterOrEqual(t, len(listResult.ComplianceExternalURLs), 2)
+	assert.GreaterOrEqual(t, len(listResult.ComplianceCustomLinks), 2)
 }

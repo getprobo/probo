@@ -23,6 +23,7 @@ package trust_test
 import (
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -36,8 +37,76 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	trustCenterID := lookupTrustCenterID(t, owner)
-	activateTrustCenter(t, owner, trustCenterID)
+	organizationID := owner.GetOrganizationID().String()
+
+	const trustCenterQuery = `
+		query($organizationId: ID!) {
+			node(id: $organizationId) {
+				... on Organization {
+					trustCenter {
+						id
+					}
+				}
+			}
+		}
+	`
+
+	var trustCenterLookup struct {
+		Node struct {
+			TrustCenter struct {
+				ID string `json:"id"`
+			} `json:"trustCenter"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(trustCenterQuery, map[string]any{
+		"organizationId": organizationID,
+	}, &trustCenterLookup)
+	require.NoError(t, err)
+	require.NotEmpty(t, trustCenterLookup.Node.TrustCenter.ID)
+
+	trustCenterID := trustCenterLookup.Node.TrustCenter.ID
+
+	const activateMutation = `
+		mutation($input: UpdateTrustCenterInput!) {
+			updateTrustCenter(input: $input) {
+				trustCenter {
+					id
+					active
+					publicUrl
+				}
+			}
+		}
+	`
+
+	var activateResult struct {
+		UpdateTrustCenter struct {
+			TrustCenter struct {
+				ID        string `json:"id"`
+				Active    bool   `json:"active"`
+				PublicURL string `json:"publicUrl"`
+			} `json:"trustCenter"`
+		} `json:"updateTrustCenter"`
+	}
+
+	err = owner.Execute(activateMutation, map[string]any{
+		"input": map[string]any{
+			"trustCenterId": trustCenterID,
+			"active":        true,
+		},
+	}, &activateResult)
+	require.NoError(t, err)
+
+	// Publishing the page provisions a managed {slug}.probopage.localhost
+	// domain; the effective public URL resolves to it while no customer
+	// custom domain is primary.
+	require.NotEmpty(t, activateResult.UpdateTrustCenter.TrustCenter.PublicURL)
+
+	publicURL, err := url.Parse(activateResult.UpdateTrustCenter.TrustCenter.PublicURL)
+	require.NoError(t, err)
+
+	trustHost := publicURL.Host
+	require.NotEmpty(t, trustHost)
 
 	const uploadMutation = `
 		mutation UpdateTrustCenterBrand($input: UpdateTrustCenterBrandInput!) {
@@ -79,7 +148,7 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 		} `json:"updateTrustCenterBrand"`
 	}
 
-	err := owner.ExecuteWithFile(uploadMutation, map[string]any{
+	err = owner.ExecuteWithFile(uploadMutation, map[string]any{
 		"input": map[string]any{
 			"trustCenterId": trustCenterID,
 			"logoFile":      nil,
@@ -114,8 +183,18 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 		} `json:"currentTrustCenter"`
 	}
 
-	err = owner.ExecuteTrust(trustCenterID, trustGraphQLQuery, nil, &trustResult)
-	require.NoError(t, err)
+	// The dedicated HTTPS listener only serves the page once the managed
+	// domain's certificate has been provisioned (async, ~1s poll in e2e), so
+	// retry until the TLS handshake and query succeed.
+	require.Eventually(t, func() bool {
+		trustResult.CurrentTrustCenter.Logo = nil
+		if err := owner.ExecuteTrust(trustHost, trustGraphQLQuery, nil, &trustResult); err != nil {
+			return false
+		}
+
+		return trustResult.CurrentTrustCenter.Logo != nil
+	}, 30*time.Second, 500*time.Millisecond, "trust center did not become servable on the dedicated listener")
+
 	require.NotNil(t, trustResult.CurrentTrustCenter.Logo)
 	assert.Equal(t, uploadResult.UpdateTrustCenterBrand.TrustCenter.Logo.ID, trustResult.CurrentTrustCenter.Logo.ID)
 

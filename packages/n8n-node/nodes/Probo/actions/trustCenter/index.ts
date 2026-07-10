@@ -26,8 +26,8 @@ import * as createReferenceOp from './createReference.operation';
 import * as deleteReferenceOp from './deleteReference.operation';
 import * as getAllFilesOp from './getAllFiles.operation';
 import * as deleteFileOp from './deleteFile.operation';
-import * as createExternalUrlOp from './createExternalUrl.operation';
-import * as deleteExternalUrlOp from './deleteExternalUrl.operation';
+import * as createCustomLinkOp from './createCustomLink.operation';
+import * as deleteCustomLinkOp from './deleteCustomLink.operation';
 import * as getAllCommitmentGroupsOp from './getAllCommitmentGroups.operation';
 import * as createCommitmentGroupOp from './createCommitmentGroup.operation';
 import * as updateCommitmentGroupOp from './updateCommitmentGroup.operation';
@@ -62,10 +62,10 @@ export const description: INodeProperties[] = [
 				action: 'Create a compliance portal commitment group',
 			},
 			{
-				name: 'Create External URL',
-				value: 'createExternalUrl',
-				description: 'Create a new compliance external URL',
-				action: 'Create a compliance external URL',
+				name: 'Create Custom Link',
+				value: 'createCustomLink',
+				description: 'Create a new compliance custom link',
+				action: 'Create a compliance custom link',
 			},
 			{
 				name: 'Create Reference',
@@ -86,10 +86,10 @@ export const description: INodeProperties[] = [
 				action: 'Delete a compliance portal commitment group',
 			},
 			{
-				name: 'Delete External URL',
-				value: 'deleteExternalUrl',
-				description: 'Delete a compliance external URL',
-				action: 'Delete a compliance external URL',
+				name: 'Delete Custom Link',
+				value: 'deleteCustomLink',
+				description: 'Delete a compliance custom link',
+				action: 'Delete a compliance custom link',
 			},
 			{
 				name: 'Delete File',
@@ -161,8 +161,8 @@ export const description: INodeProperties[] = [
 	...deleteReferenceOp.description,
 	...getAllFilesOp.description,
 	...deleteFileOp.description,
-	...createExternalUrlOp.description,
-	...deleteExternalUrlOp.description,
+	...createCustomLinkOp.description,
+	...deleteCustomLinkOp.description,
 	...getAllCommitmentGroupsOp.description,
 	...createCommitmentGroupOp.description,
 	...updateCommitmentGroupOp.description,
@@ -181,8 +181,8 @@ export {
 	deleteReferenceOp as deleteReference,
 	getAllFilesOp as getAllFiles,
 	deleteFileOp as deleteFile,
-	createExternalUrlOp as createExternalUrl,
-	deleteExternalUrlOp as deleteExternalUrl,
+	createCustomLinkOp as createCustomLink,
+	deleteCustomLinkOp as deleteCustomLink,
 	getAllCommitmentGroupsOp as getAllCommitmentGroups,
 	createCommitmentGroupOp as createCommitmentGroup,
 	updateCommitmentGroupOp as updateCommitmentGroup,

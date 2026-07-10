@@ -23,17 +23,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Compliance External URL ID',
-		name: 'complianceExternalUrlId',
+		displayName: 'Compliance Custom Link ID',
+		name: 'complianceCustomLinkId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['trustCenter'],
-				operation: ['deleteExternalUrl'],
+				operation: ['deleteCustomLink'],
 			},
 		},
 		default: '',
-		description: 'The ID of the compliance external URL to delete',
+		description: 'The ID of the compliance custom link to delete',
 		required: true,
 	},
 ];
@@ -42,17 +42,17 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const complianceExternalUrlId = this.getNodeParameter('complianceExternalUrlId', itemIndex) as string;
+	const complianceCustomLinkId = this.getNodeParameter('complianceCustomLinkId', itemIndex) as string;
 
 	const query = `
-		mutation DeleteComplianceExternalURL($input: DeleteComplianceExternalURLInput!) {
-			deleteComplianceExternalURL(input: $input) {
-				deletedComplianceExternalURLId
+		mutation DeleteComplianceCustomLink($input: DeleteComplianceCustomLinkInput!) {
+			deleteComplianceCustomLink(input: $input) {
+				deletedComplianceCustomLinkId
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { input: { id: complianceExternalUrlId } });
+	const responseData = await proboApiRequest.call(this, query, { input: { id: complianceCustomLinkId } });
 
 	return {
 		json: responseData,

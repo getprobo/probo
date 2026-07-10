@@ -76,6 +76,59 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'Whether search engines should index the trust center',
 	},
+	{
+		displayName: 'Description',
+		name: 'description',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The description shown on the compliance page',
+	},
+	{
+		displayName: 'Website URL',
+		name: 'websiteUrl',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The website URL shown on the compliance page',
+	},
+	{
+		displayName: 'Email',
+		name: 'email',
+		type: 'string',
+		placeholder: 'name@example.com',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The contact email shown on the compliance page',
+	},
+	{
+		displayName: 'Headquarter Address',
+		name: 'headquarterAddress',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The headquarter address shown on the compliance page',
+	},
 ];
 
 export async function execute(
@@ -85,6 +138,10 @@ export async function execute(
 	const trustCenterId = this.getNodeParameter('trustCenterId', itemIndex) as string;
 	const active = this.getNodeParameter('active', itemIndex) as boolean | undefined;
 	const searchEngineIndexing = this.getNodeParameter('searchEngineIndexing', itemIndex, '') as string;
+	const description = this.getNodeParameter('description', itemIndex, '') as string;
+	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
+	const email = this.getNodeParameter('email', itemIndex, '') as string;
+	const headquarterAddress = this.getNodeParameter('headquarterAddress', itemIndex, '') as string;
 
 	const query = `
 		mutation UpdateTrustCenter($input: UpdateTrustCenterInput!) {
@@ -93,6 +150,10 @@ export async function execute(
 					id
 					active
 					searchEngineIndexing
+					description
+					websiteUrl
+					email
+					headquarterAddress
 					createdAt
 					updatedAt
 				}
@@ -103,6 +164,10 @@ export async function execute(
 	const input: Record<string, unknown> = { trustCenterId };
 	if (active !== undefined) input.active = active;
 	if (searchEngineIndexing) input.searchEngineIndexing = searchEngineIndexing;
+	if (description) input.description = description;
+	if (websiteUrl) input.websiteUrl = websiteUrl;
+	if (email) input.email = email;
+	if (headquarterAddress) input.headquarterAddress = headquarterAddress;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

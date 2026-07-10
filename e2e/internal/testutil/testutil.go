@@ -293,9 +293,17 @@ func generateConfig() (string, error) {
 		"PROBOD_OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION": "5",
 		"PROBOD_OAUTH2_SERVER_DEVICE_CODE_DURATION":        "15",
 
-		// Trust center.
-		"PROBOD_TRUST_CENTER_HTTP_ADDR":  ":10080",
-		"PROBOD_TRUST_CENTER_HTTPS_ADDR": ":10443",
+		// Trust center. Compliance pages are served exclusively over this
+		// dedicated listener, addressed by Host/SNI. The managed base domain
+		// yields {slug}.probopage.localhost subdomains for pages without a
+		// customer custom domain.
+		"PROBOD_TRUST_CENTER_HTTP_ADDR":   ":10080",
+		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  ":10443",
+		"PROBOD_TRUST_CENTER_BASE_DOMAIN": "probopage.localhost",
+
+		// Keep certificate provisioning snappy so trust-center e2e flows do not
+		// wait on the default 30s poll (Pebble runs with PEBBLE_VA_ALWAYS_VALID).
+		"PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL": "1",
 
 		// AWS / S3 (SeaweedFS).
 		"PROBOD_AWS_BUCKET":            "probod-test",

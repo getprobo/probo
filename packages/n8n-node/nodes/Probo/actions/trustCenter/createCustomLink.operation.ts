@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['trustCenter'],
-				operation: ['createExternalUrl'],
+				operation: ['createCustomLink'],
 			},
 		},
 		default: '',
@@ -43,11 +43,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['trustCenter'],
-				operation: ['createExternalUrl'],
+				operation: ['createCustomLink'],
 			},
 		},
 		default: '',
-		description: 'The name of the external URL',
+		description: 'The name of the custom link',
 		required: true,
 	},
 	{
@@ -57,11 +57,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['trustCenter'],
-				operation: ['createExternalUrl'],
+				operation: ['createCustomLink'],
 			},
 		},
 		default: '',
-		description: 'The external URL',
+		description: 'The custom link',
 		required: true,
 	},
 ];
@@ -75,9 +75,9 @@ export async function execute(
 	const url = this.getNodeParameter('url', itemIndex) as string;
 
 	const query = `
-		mutation CreateComplianceExternalURL($input: CreateComplianceExternalURLInput!) {
-			createComplianceExternalURL(input: $input) {
-				complianceExternalURLEdge {
+		mutation CreateComplianceCustomLink($input: CreateComplianceCustomLinkInput!) {
+			createComplianceCustomLink(input: $input) {
+				complianceCustomLinkEdge {
 					node {
 						id
 						name

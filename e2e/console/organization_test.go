@@ -34,7 +34,7 @@ func TestOrganization_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	t.Run("update name and description", func(t *testing.T) {
+	t.Run("update name", func(t *testing.T) {
 		newName := fmt.Sprintf("Updated Org %d", time.Now().UnixNano())
 
 		query := `
@@ -43,7 +43,6 @@ func TestOrganization_Update(t *testing.T) {
 					organization {
 						id
 						name
-						description
 					}
 				}
 			}
@@ -52,9 +51,8 @@ func TestOrganization_Update(t *testing.T) {
 		var result struct {
 			UpdateOrganization struct {
 				Organization struct {
-					ID          string `json:"id"`
-					Name        string `json:"name"`
-					Description string `json:"description"`
+					ID   string `json:"id"`
+					Name string `json:"name"`
 				} `json:"organization"`
 			} `json:"updateOrganization"`
 		}
@@ -63,82 +61,12 @@ func TestOrganization_Update(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"name":           newName,
-				"description":    "Updated organization description",
 			},
 		}, &result)
 		require.NoError(t, err)
 
 		assert.Equal(t, owner.GetOrganizationID().String(), result.UpdateOrganization.Organization.ID)
 		assert.Equal(t, newName, result.UpdateOrganization.Organization.Name)
-		assert.Equal(t, "Updated organization description", result.UpdateOrganization.Organization.Description)
-	})
-
-	t.Run("update website and email", func(t *testing.T) {
-		query := `
-			mutation UpdateOrganization($input: UpdateOrganizationInput!) {
-				updateOrganization(input: $input) {
-					organization {
-						id
-						websiteUrl
-						email
-					}
-				}
-			}
-		`
-
-		var result struct {
-			UpdateOrganization struct {
-				Organization struct {
-					ID         string `json:"id"`
-					WebsiteUrl string `json:"websiteUrl"`
-					Email      string `json:"email"`
-				} `json:"organization"`
-			} `json:"updateOrganization"`
-		}
-
-		err := owner.ExecuteConnect(query, map[string]any{
-			"input": map[string]any{
-				"organizationId": owner.GetOrganizationID().String(),
-				"websiteUrl":     "https://example.com",
-				"email":          "contact@example.com",
-			},
-		}, &result)
-		require.NoError(t, err)
-
-		assert.Equal(t, "https://example.com", result.UpdateOrganization.Organization.WebsiteUrl)
-		assert.Equal(t, "contact@example.com", result.UpdateOrganization.Organization.Email)
-	})
-
-	t.Run("update headquarter address", func(t *testing.T) {
-		query := `
-			mutation UpdateOrganization($input: UpdateOrganizationInput!) {
-				updateOrganization(input: $input) {
-					organization {
-						id
-						headquarterAddress
-					}
-				}
-			}
-		`
-
-		var result struct {
-			UpdateOrganization struct {
-				Organization struct {
-					ID                 string `json:"id"`
-					HeadquarterAddress string `json:"headquarterAddress"`
-				} `json:"organization"`
-			} `json:"updateOrganization"`
-		}
-
-		err := owner.ExecuteConnect(query, map[string]any{
-			"input": map[string]any{
-				"organizationId":     owner.GetOrganizationID().String(),
-				"headquarterAddress": "123 Main St, Suite 100, San Francisco, CA 94102",
-			},
-		}, &result)
-		require.NoError(t, err)
-
-		assert.Equal(t, "123 Main St, Suite 100, San Francisco, CA 94102", result.UpdateOrganization.Organization.HeadquarterAddress)
 	})
 }
 
@@ -200,10 +128,6 @@ func TestOrganization_Get(t *testing.T) {
 				... on Organization {
 					id
 					name
-					description
-					websiteUrl
-					email
-					headquarterAddress
 				}
 			}
 		}
@@ -211,12 +135,8 @@ func TestOrganization_Get(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			ID                 string `json:"id"`
-			Name               string `json:"name"`
-			Description        string `json:"description"`
-			WebsiteUrl         string `json:"websiteUrl"`
-			Email              string `json:"email"`
-			HeadquarterAddress string `json:"headquarterAddress"`
+			ID   string `json:"id"`
+			Name string `json:"name"`
 		} `json:"node"`
 	}
 

@@ -1324,7 +1324,7 @@ func TestRBAC(t *testing.T) {
 			client: owner,
 			query:  updateOrganizationMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "description": factory.SafeName("Updated Desc")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Updated Org")}}
 			},
 			shouldAllow: true,
 			useConnect:  true,
@@ -1335,7 +1335,7 @@ func TestRBAC(t *testing.T) {
 			client: admin,
 			query:  updateOrganizationMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "description": factory.SafeName("Updated Desc")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Updated Org")}}
 			},
 			shouldAllow: true,
 			useConnect:  true,
@@ -1346,7 +1346,7 @@ func TestRBAC(t *testing.T) {
 			client: viewer,
 			query:  updateOrganizationMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "description": factory.SafeName("Updated Desc")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Updated Org")}}
 			},
 			shouldAllow: false,
 			useConnect:  true,
