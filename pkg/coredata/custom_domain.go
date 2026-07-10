@@ -22,55 +22,52 @@ package coredata
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"maps"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
+	// CustomDomain is a domain owned by an organization used to serve its
+	// compliance portal. Its TLS certificate lifecycle is owned by the generic
+	// certificates table, referenced through CertificateID.
 	CustomDomain struct {
-		ID                     gid.GID               `db:"id"`
-		OrganizationID         gid.GID               `db:"organization_id"`
-		Domain                 string                `db:"domain"`
-		HTTPChallengeToken     *string               `db:"http_challenge_token"`
-		HTTPChallengeKeyAuth   *string               `db:"http_challenge_key_auth"`
-		HTTPChallengeURL       *string               `db:"http_challenge_url"`
-		HTTPOrderURL           *string               `db:"http_order_url"`
-		SSLCertificate         *tls.Certificate      `db:"-"`
-		SSLCertificatePEM      []byte                `db:"ssl_certificate"`
-		EncryptedSSLPrivateKey []byte                `db:"encrypted_ssl_private_key"`
-		SSLCertificateChain    *string               `db:"ssl_certificate_chain"`
-		SSLStatus              CustomDomainSSLStatus `db:"ssl_status"`
-		SSLExpiresAt           *time.Time            `db:"ssl_expires_at"`
-		SSLRetryCount          int                   `db:"ssl_retry_count"`
-		SSLLastAttemptAt       *time.Time            `db:"ssl_last_attempt_at"`
-		ProvisioningError      *string               `db:"provisioning_error"`
-		CreatedAt              time.Time             `db:"created_at"`
-		UpdatedAt              time.Time             `db:"updated_at"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		Domain         string    `db:"domain"`
+		Managed        bool      `db:"managed"`
+		CertificateID  *gid.GID  `db:"certificate_id"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	CustomDomains []*CustomDomain
 )
 
-func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
+func NewCustomDomain(
+	tenantID gid.TenantID,
+	organizationID gid.GID,
+	domain string,
+	managed bool,
+) *CustomDomain {
 	now := time.Now()
 
 	return &CustomDomain{
-		ID:        gid.New(tenantID, CustomDomainEntityType),
-		SSLStatus: CustomDomainSSLStatusPending,
-		Domain:    domain,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:             gid.New(tenantID, CustomDomainEntityType),
+		OrganizationID: organizationID,
+		Domain:         domain,
+		Managed:        managed,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 }
 
@@ -80,7 +77,7 @@ func (cd *CustomDomain) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM custom_domains WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id, managed FROM custom_domains WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -96,14 +93,18 @@ func (cd *CustomDomain) AuthorizationAttributes(
 	attrsByID := make(policy.AttributesByID)
 
 	for rows.Next() {
-		var id, organizationID gid.GID
+		var (
+			id, organizationID gid.GID
+			managed            bool
+		)
 
-		if err := rows.Scan(&id, &organizationID); err != nil {
+		if err := rows.Scan(&id, &organizationID, &managed); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
 		attrsByID[id] = policy.Attributes{
 			"organization_id": organizationID.String(),
+			"managed":         strconv.FormatBool(managed),
 		}
 	}
 
@@ -127,64 +128,6 @@ func (cd *CustomDomain) CursorKey(field CustomDomainOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (cd *CustomDomain) DecryptPrivateKey(encryptionKey cipher.EncryptionKey) ([]byte, error) {
-	if len(cd.EncryptedSSLPrivateKey) == 0 {
-		return nil, nil
-	}
-
-	decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
-	if err != nil {
-		return nil, fmt.Errorf("cannot decrypt SSL private key: %w", err)
-	}
-
-	return decrypted, nil
-}
-
-func (cd *CustomDomain) EncryptPrivateKey(privateKeyPEM []byte, encryptionKey cipher.EncryptionKey) error {
-	if len(privateKeyPEM) == 0 {
-		cd.EncryptedSSLPrivateKey = nil
-		return nil
-	}
-
-	encrypted, err := cipher.Encrypt(privateKeyPEM, encryptionKey)
-	if err != nil {
-		return fmt.Errorf("cannot encrypt SSL private key: %w", err)
-	}
-
-	cd.EncryptedSSLPrivateKey = encrypted
-
-	return nil
-}
-
-func (cd *CustomDomain) ParseCertificate(encryptionKey cipher.EncryptionKey) error {
-	if len(cd.SSLCertificatePEM) == 0 {
-		return fmt.Errorf("no certificate PEM data")
-	}
-
-	privateKeyPEM, err := cd.DecryptPrivateKey(encryptionKey)
-	if err != nil {
-		return fmt.Errorf("cannot decrypt private key: %w", err)
-	}
-
-	if len(privateKeyPEM) == 0 {
-		return fmt.Errorf("no private key data")
-	}
-
-	fullCertPEM := string(cd.SSLCertificatePEM)
-	if cd.SSLCertificateChain != nil && *cd.SSLCertificateChain != "" {
-		fullCertPEM += "\n" + *cd.SSLCertificateChain
-	}
-
-	tlsCert, err := tls.X509KeyPair([]byte(fullCertPEM), privateKeyPEM)
-	if err != nil {
-		return fmt.Errorf("cannot parse certificate and key: %w", err)
-	}
-
-	cd.SSLCertificate = &tlsCert
-
-	return nil
-}
-
 func (cd *CustomDomain) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -196,18 +139,8 @@ SELECT
 	id,
 	organization_id,
 	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
+	managed,
+	certificate_id,
 	created_at,
 	updated_at
 FROM
@@ -242,63 +175,6 @@ LIMIT 1
 	return nil
 }
 
-func (cd *CustomDomain) LoadByIDForUpdateSkipLocked(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	domainID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
-	created_at,
-	updated_at
-FROM
-	custom_domains
-WHERE
-	%s
-	AND id = @id
-LIMIT 1
-FOR UPDATE SKIP LOCKED
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"id": domainID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query custom domain for update: %w", err)
-	}
-
-	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect custom domain: %w", err)
-	}
-
-	*cd = customDomain
-
-	return nil
-}
-
 func (cd *CustomDomain) LoadByDomain(
 	ctx context.Context,
 	conn pg.Querier,
@@ -310,18 +186,8 @@ SELECT
 	id,
 	organization_id,
 	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
+	managed,
+	certificate_id,
 	created_at,
 	updated_at
 FROM
@@ -356,59 +222,44 @@ LIMIT 1
 	return nil
 }
 
-func (cd *CustomDomain) LoadByOrganizationID(
+func (domains *CustomDomains) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
+	ids []gid.GID,
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
 	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
+	managed,
+	certificate_id,
 	created_at,
 	updated_at
 FROM
 	custom_domains
 WHERE
 	%s
-	AND organization_id = @organization_id
-LIMIT 1
+	AND id = ANY(@ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"organization_id": organizationID}
+	args := pgx.NamedArgs{"ids": ids}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query custom domain: %w", err)
+		return fmt.Errorf("cannot query custom domains: %w", err)
 	}
 
-	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect custom domain: %w", err)
+		return fmt.Errorf("cannot collect custom domains: %w", err)
 	}
 
-	*cd = customDomain
+	*domains = result
 
 	return nil
 }
@@ -417,31 +268,15 @@ func (cd *CustomDomain) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 ) error {
-	var encryptedKey []byte
-	if len(cd.EncryptedSSLPrivateKey) > 0 {
-		encryptedKey = cd.EncryptedSSLPrivateKey
-	}
-
 	q := `
 INSERT INTO custom_domains (
 	id,
 	tenant_id,
 	organization_id,
 	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
+	managed,
+	certificate_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -449,42 +284,22 @@ INSERT INTO custom_domains (
 	@tenant_id,
 	@organization_id,
 	@domain,
-	@http_challenge_token,
-	@http_challenge_key_auth,
-	@http_challenge_url,
-	@http_order_url,
-	@ssl_certificate,
-	@encrypted_ssl_private_key,
-	@ssl_certificate_chain,
-	@ssl_status,
-	@ssl_expires_at,
-	@ssl_retry_count,
-	@ssl_last_attempt_at,
-	@provisioning_error,
+	@managed,
+	@certificate_id,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.NamedArgs{
-		"id":                        cd.ID,
-		"tenant_id":                 scope.GetTenantID(),
-		"organization_id":           cd.OrganizationID,
-		"domain":                    cd.Domain,
-		"http_challenge_token":      cd.HTTPChallengeToken,
-		"http_challenge_key_auth":   cd.HTTPChallengeKeyAuth,
-		"http_challenge_url":        cd.HTTPChallengeURL,
-		"http_order_url":            cd.HTTPOrderURL,
-		"ssl_certificate":           cd.SSLCertificatePEM,
-		"encrypted_ssl_private_key": encryptedKey,
-		"ssl_certificate_chain":     cd.SSLCertificateChain,
-		"ssl_status":                cd.SSLStatus,
-		"ssl_expires_at":            cd.SSLExpiresAt,
-		"ssl_retry_count":           cd.SSLRetryCount,
-		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
-		"provisioning_error":        cd.ProvisioningError,
-		"created_at":                cd.CreatedAt,
-		"updated_at":                cd.UpdatedAt,
+		"id":              cd.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": cd.OrganizationID,
+		"domain":          cd.Domain,
+		"managed":         cd.Managed,
+		"certificate_id":  cd.CertificateID,
+		"created_at":      cd.CreatedAt,
+		"updated_at":      cd.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -498,8 +313,6 @@ INSERT INTO custom_domains (
 		return fmt.Errorf("cannot insert custom domain: %w", err)
 	}
 
-	cd.EncryptedSSLPrivateKey = encryptedKey
-
 	return nil
 }
 
@@ -508,27 +321,13 @@ func (cd *CustomDomain) Update(
 	conn pg.Tx,
 	scope Scoper,
 ) error {
-	var encryptedKey []byte
-	if len(cd.EncryptedSSLPrivateKey) > 0 {
-		encryptedKey = cd.EncryptedSSLPrivateKey
-	}
-
 	q := `
 UPDATE
 	custom_domains
 SET
-	http_challenge_token = @http_challenge_token,
-	http_challenge_key_auth = @http_challenge_key_auth,
-	http_challenge_url = @http_challenge_url,
-	http_order_url = @http_order_url,
-	ssl_certificate = @ssl_certificate,
-	encrypted_ssl_private_key = @encrypted_ssl_private_key,
-	ssl_certificate_chain = @ssl_certificate_chain,
-	ssl_status = @ssl_status,
-	ssl_expires_at = @ssl_expires_at,
-	ssl_retry_count = @ssl_retry_count,
-	ssl_last_attempt_at = @ssl_last_attempt_at,
-	provisioning_error = @provisioning_error,
+	domain = @domain,
+	managed = @managed,
+	certificate_id = @certificate_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -538,20 +337,11 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"id":                        cd.ID,
-		"http_challenge_token":      cd.HTTPChallengeToken,
-		"http_challenge_key_auth":   cd.HTTPChallengeKeyAuth,
-		"http_challenge_url":        cd.HTTPChallengeURL,
-		"http_order_url":            cd.HTTPOrderURL,
-		"ssl_certificate":           cd.SSLCertificatePEM,
-		"encrypted_ssl_private_key": encryptedKey,
-		"ssl_certificate_chain":     cd.SSLCertificateChain,
-		"ssl_status":                cd.SSLStatus,
-		"ssl_expires_at":            cd.SSLExpiresAt,
-		"ssl_retry_count":           cd.SSLRetryCount,
-		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
-		"provisioning_error":        cd.ProvisioningError,
-		"updated_at":                time.Now(),
+		"id":             cd.ID,
+		"domain":         cd.Domain,
+		"managed":        cd.Managed,
+		"certificate_id": cd.CertificateID,
+		"updated_at":     time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -559,8 +349,6 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update custom domain: %w", err)
 	}
-
-	cd.EncryptedSSLPrivateKey = encryptedKey
 
 	return nil
 }
@@ -586,284 +374,6 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete custom domain: %w", err)
 	}
-
-	return nil
-}
-
-func (cd *CustomDomain) LoadByHTTPChallengeToken(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	token string,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
-	created_at,
-	updated_at
-FROM
-	custom_domains
-WHERE
-	%s
-	AND http_challenge_token = @token
-LIMIT 1
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"token": token}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query custom domain: %w", err)
-	}
-
-	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
-	if err != nil {
-		return fmt.Errorf("cannot collect custom domain: %w", err)
-	}
-
-	*cd = customDomain
-
-	return nil
-}
-
-func (domains *CustomDomains) ListDomainsForRenewal(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
-	created_at,
-	updated_at
-FROM
-	custom_domains
-WHERE
-	%s
-	AND ssl_status = @status
-	AND ssl_expires_at <= CURRENT_TIMESTAMP + INTERVAL '30 days'
-ORDER BY
-	ssl_expires_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"status": string(CustomDomainSSLStatusActive)}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query custom domains for renewal: %w", err)
-	}
-
-	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
-	if err != nil {
-		return fmt.Errorf("cannot collect custom domains: %w", err)
-	}
-
-	*domains = result
-
-	return nil
-}
-
-func (domains *CustomDomains) ListDomainsWithPendingHTTPChallenges(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
-	created_at,
-	updated_at
-FROM
-	custom_domains
-WHERE
-	%s
-	AND ssl_status = ANY(@statuses)
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{
-		"statuses": []string{
-			string(CustomDomainSSLStatusPending),
-			string(CustomDomainSSLStatusProvisioning),
-			string(CustomDomainSSLStatusRenewing),
-		},
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query custom domains with pending challenges: %w", err)
-	}
-
-	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
-	if err != nil {
-		return fmt.Errorf("cannot collect custom domains: %w", err)
-	}
-
-	*domains = result
-
-	return nil
-}
-
-func (domains *CustomDomains) LoadActiveCertificates(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
-	created_at,
-	updated_at
-FROM
-	custom_domains
-WHERE
-	%s
-	AND ssl_status = @status
-	AND ssl_certificate IS NOT NULL
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"status": string(CustomDomainSSLStatusActive)}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query active certificates: %w", err)
-	}
-
-	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
-	if err != nil {
-		return fmt.Errorf("cannot collect custom domains: %w", err)
-	}
-
-	*domains = result
-
-	return nil
-}
-
-func (domains *CustomDomains) ListStaleProvisioningDomains(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	ssl_retry_count,
-	ssl_last_attempt_at,
-	provisioning_error,
-	created_at,
-	updated_at
-FROM
-	custom_domains
-WHERE
-	%s
-	AND (
-		(ssl_status IN (@provisioning_status, @renewing_status) AND updated_at < CURRENT_TIMESTAMP - INTERVAL '4 hours')
-		OR
-		(ssl_retry_count > 0 AND ssl_last_attempt_at < CURRENT_TIMESTAMP - INTERVAL '24 hours')
-	)
-	AND ssl_status != @failed_status
-	AND ssl_status != @active_status
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{
-		"provisioning_status": string(CustomDomainSSLStatusProvisioning),
-		"renewing_status":     string(CustomDomainSSLStatusRenewing),
-		"failed_status":       string(CustomDomainSSLStatusFailed),
-		"active_status":       string(CustomDomainSSLStatusActive),
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query stale provisioning domains: %w", err)
-	}
-
-	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
-	if err != nil {
-		return fmt.Errorf("cannot collect stale provisioning domains: %w", err)
-	}
-
-	*domains = result
 
 	return nil
 }

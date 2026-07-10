@@ -39,7 +39,7 @@ type (
 		CertificateChain *string   `db:"certificate_chain"`
 		ExpiresAt        time.Time `db:"expires_at"`
 		CachedAt         time.Time `db:"cached_at"`
-		CustomDomainID   gid.GID   `db:"custom_domain_id"`
+		CertificateID    gid.GID   `db:"certificate_id"`
 	}
 
 	CachedCertificates []*CachedCertificate
@@ -54,7 +54,7 @@ SELECT
 	certificate_chain,
 	expires_at,
 	cached_at,
-	custom_domain_id
+	certificate_id
 FROM
 	cached_certificates
 WHERE
@@ -91,7 +91,7 @@ INSERT INTO cached_certificates (
 	certificate_chain,
 	expires_at,
 	cached_at,
-	custom_domain_id
+	certificate_id
 ) VALUES (
 	@domain,
 	@certificate_pem,
@@ -99,7 +99,7 @@ INSERT INTO cached_certificates (
 	@certificate_chain,
 	@expires_at,
 	@cached_at,
-	@custom_domain_id
+	@certificate_id
 )
 ON CONFLICT (domain) DO UPDATE SET
 	certificate_pem = EXCLUDED.certificate_pem,
@@ -107,7 +107,7 @@ ON CONFLICT (domain) DO UPDATE SET
 	certificate_chain = EXCLUDED.certificate_chain,
 	expires_at = EXCLUDED.expires_at,
 	cached_at = NOW(),
-	custom_domain_id = EXCLUDED.custom_domain_id
+	certificate_id = EXCLUDED.certificate_id
 `
 
 	args := pgx.NamedArgs{
@@ -117,7 +117,7 @@ ON CONFLICT (domain) DO UPDATE SET
 		"certificate_chain": cc.CertificateChain,
 		"expires_at":        cc.ExpiresAt,
 		"cached_at":         cc.CachedAt,
-		"custom_domain_id":  cc.CustomDomainID,
+		"certificate_id":    cc.CertificateID,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -170,36 +170,36 @@ WHERE
 	return nil
 }
 
-func (cc *CachedCertificate) RefreshFromDomain(ctx context.Context, conn pg.Querier, domain *CustomDomain, encryptionKey cipher.EncryptionKey) error {
-	if domain.SSLCertificate == nil {
-		return fmt.Errorf("domain has no parsed certificate")
+func (cc *CachedCertificate) RefreshFromCertificate(ctx context.Context, conn pg.Querier, certificate *Certificate, encryptionKey cipher.EncryptionKey) error {
+	if certificate.SSLCertificate == nil {
+		return fmt.Errorf("certificate has no parsed certificate")
 	}
 
-	if len(domain.SSLCertificatePEM) == 0 {
-		return fmt.Errorf("domain has no certificate PEM")
+	if len(certificate.SSLCertificatePEM) == 0 {
+		return fmt.Errorf("certificate has no certificate PEM")
 	}
 
-	privateKeyPEM, err := domain.DecryptPrivateKey(encryptionKey)
+	privateKeyPEM, err := certificate.DecryptPrivateKey(encryptionKey)
 	if err != nil {
 		return fmt.Errorf("cannot decrypt private key: %w", err)
 	}
 
 	if len(privateKeyPEM) == 0 {
-		return fmt.Errorf("domain has no private key PEM")
+		return fmt.Errorf("certificate has no private key PEM")
 	}
 
-	if domain.SSLExpiresAt == nil {
-		return fmt.Errorf("domain certificate has no expiry date")
+	if certificate.SSLExpiresAt == nil {
+		return fmt.Errorf("certificate has no expiry date")
 	}
 
 	cache := &CachedCertificate{
-		Domain:           domain.Domain,
-		CertificatePEM:   string(domain.SSLCertificatePEM),
+		Domain:           certificate.Hostname,
+		CertificatePEM:   string(certificate.SSLCertificatePEM),
 		PrivateKeyPEM:    string(privateKeyPEM),
-		CertificateChain: domain.SSLCertificateChain,
-		ExpiresAt:        *domain.SSLExpiresAt,
+		CertificateChain: certificate.SSLCertificateChain,
+		ExpiresAt:        *certificate.SSLExpiresAt,
 		CachedAt:         time.Now(),
-		CustomDomainID:   domain.ID,
+		CertificateID:    certificate.ID,
 	}
 
 	return cache.Upsert(ctx, conn)

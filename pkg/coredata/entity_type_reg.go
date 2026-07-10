@@ -92,7 +92,7 @@ const (
 	ElectronicSignatureEventEntityType               uint16 = 60
 	EmailAttachmentEntityType                        uint16 = 61
 	ComplianceFrameworkEntityType                    uint16 = 62
-	ComplianceExternalURLEntityType                  uint16 = 63
+	ComplianceCustomLinkEntityType                   uint16 = 63
 	MailingListEntityType                            uint16 = 64
 	MailingListSubscriberEntityType                  uint16 = 65
 	MailingListUpdateEntityType                      uint16 = 66
@@ -135,6 +135,7 @@ const (
 	AccessReviewCampaignSourceFetchAttemptEntityType uint16 = 103
 	CompliancePortalCommitmentGroupEntityType        uint16 = 104
 	CompliancePortalCommitmentEntityType             uint16 = 105
+	CertificateEntityType                            uint16 = 106
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -253,8 +254,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &EmailAttachment{ID: id}, true
 	case ComplianceFrameworkEntityType:
 		return &ComplianceFramework{ID: id}, true
-	case ComplianceExternalURLEntityType:
-		return &ComplianceExternalURL{ID: id}, true
+	case ComplianceCustomLinkEntityType:
+		return &ComplianceCustomLink{ID: id}, true
 	case MailingListEntityType:
 		return &MailingList{ID: id}, true
 	case MailingListSubscriberEntityType:
@@ -333,6 +334,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CompliancePortalCommitmentGroup{ID: id}, true
 	case CompliancePortalCommitmentEntityType:
 		return &CompliancePortalCommitment{ID: id}, true
+	case CertificateEntityType:
+		return &Certificate{ID: id}, true
 	default:
 		return nil, false
 	}
