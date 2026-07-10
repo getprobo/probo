@@ -64,6 +64,10 @@ type (
 		// the email_verified claim does not need to be present in
 		// the ID token.
 		trustProviderEmail bool
+
+		// requireEmailDomainOwnerVerified requires the "xms_edov"
+		// claim (nOAuth mitigation).
+		requireEmailDomainOwnerVerified bool
 	}
 
 	UserInfo struct {
@@ -112,6 +116,9 @@ type (
 		EmailVerified any     `json:"email_verified"`
 		Name          string  `json:"name"`
 		HostedDomain  string  `json:"hd"`
+
+		// EmailDomainOwnerVerified is Microsoft's "xms_edov" domain-ownership claim.
+		EmailDomainOwnerVerified any `json:"xms_edov"`
 	}
 )
 
@@ -132,6 +139,17 @@ func (c *idTokenClaims) hasAudience(clientID string) bool {
 
 func (c *idTokenClaims) isEmailVerified() bool {
 	switch v := c.EmailVerified.(type) {
+	case bool:
+		return v
+	case string:
+		return strings.EqualFold(v, "true")
+	}
+
+	return false
+}
+
+func (c *idTokenClaims) isEmailDomainOwnerVerified() bool {
+	switch v := c.EmailDomainOwnerVerified.(type) {
 	case bool:
 		return v
 	case string:
@@ -208,8 +226,9 @@ func NewService(
 				RedirectURL:  baseURL + "/api/connect/v1/oidc/microsoft/callback",
 				Scopes:       []string{"openid", "email", "profile"},
 			},
-			jwksURL:            microsoftJWKSURL,
-			trustProviderEmail: true,
+			jwksURL:                         microsoftJWKSURL,
+			trustProviderEmail:              false,
+			requireEmailDomainOwnerVerified: true,
 			issuerValidator: func(iss string) bool {
 				return strings.HasPrefix(iss, "https://login.microsoftonline.com/") &&
 					strings.HasSuffix(iss, "/v2.0")
@@ -401,6 +420,10 @@ func (s *Service) HandleCallback(
 	}
 
 	if !info.trustProviderEmail && !claims.isEmailVerified() {
+		return nil, "", nil, NewEmailNotVerifiedError()
+	}
+
+	if info.requireEmailDomainOwnerVerified && !claims.isEmailDomainOwnerVerified() {
 		return nil, "", nil, NewEmailNotVerifiedError()
 	}
 
