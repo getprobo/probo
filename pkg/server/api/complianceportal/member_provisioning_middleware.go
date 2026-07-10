@@ -18,74 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package compliancepage
+package complianceportal
 
 import (
-	"context"
-	"errors"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/gid"
+	"go.gearno.de/kit/log"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/trust"
 )
 
-func NewIDMiddleware(trustSvc *trust.Service, baseURL string) func(next http.Handler) http.Handler {
+func NewMemberProvisioningMiddleware(trustSvc *trust.Service, logger *log.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
-				// TODO: remove slug support
-				value := chi.URLParam(r, "slugOrId")
 
-				if id, err := gid.ParseGID(value); err == nil {
-					compliancePage, err := trustSvc.Get(ctx, id)
-					if err != nil {
-						if errors.Is(err, trust.ErrPageNotFound) {
-							next.ServeHTTP(w, r)
-							return
-						}
-
-						httpserver.RenderJSON(
-							w,
-							http.StatusInternalServerError,
-							&graphql.Response{
-								Errors: gqlerror.List{
-									gqlutils.Internal(ctx),
-								},
-							},
-						)
-
-						return
-					}
-
-					baseURL := baseurl.MustParse(baseURL).AppendPath("/trust/" + id.String()).MustString()
-					ctx = context.WithValue(ctx, compliancePageBaseURLKey, &baseURL)
-					r = r.WithContext(ctx)
-
-					if !compliancePage.Active {
-						next.ServeHTTP(w, r)
-						return
-					}
-
-					ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
-					next.ServeHTTP(w, r.WithContext(ctx))
-
+				identity := authn.IdentityFromContext(ctx)
+				if identity == nil {
+					next.ServeHTTP(w, r)
 					return
 				}
 
-				compliancePage, err := trustSvc.GetBySlug(ctx, value)
-				if err != nil {
-					if errors.Is(err, trust.ErrPageNotFound) {
-						next.ServeHTTP(w, r)
-						return
-					}
+				compliancePage := CompliancePageFromContext(r.Context())
 
+				if _, err := trustSvc.ProvisionPortalMember(ctx, compliancePage.ID, identity.ID); err != nil {
+					logger.ErrorCtx(ctx, "cannot provision member", log.Error(err))
 					httpserver.RenderJSON(
 						w,
 						http.StatusInternalServerError,
@@ -95,17 +57,6 @@ func NewIDMiddleware(trustSvc *trust.Service, baseURL string) func(next http.Han
 							},
 						},
 					)
-
-					return
-				}
-
-				baseURL := baseurl.MustParse(baseURL).AppendPath("/trust/" + value).MustString()
-				ctx = context.WithValue(ctx, compliancePageBaseURLKey, &baseURL)
-				r = r.WithContext(ctx)
-
-				if compliancePage.Active {
-					ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
-					next.ServeHTTP(w, r.WithContext(ctx))
 
 					return
 				}

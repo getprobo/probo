@@ -18,51 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package compliancepage
+package complianceportal
 
 import (
-	"net/http"
+	"context"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/v2/gqlerror"
-	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewMemberProvisioningMiddleware(trustSvc *trust.Service, logger *log.Logger) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				ctx := r.Context()
+type ctxKey struct{ name string }
 
-				identity := authn.IdentityFromContext(ctx)
-				if identity == nil {
-					next.ServeHTTP(w, r)
-					return
-				}
+var (
+	compliancePageKey        = &ctxKey{name: "compliance_page"}
+	compliancePageBaseURLKey = &ctxKey{name: "compliance_page_base_url"}
+)
 
-				compliancePage := CompliancePageFromContext(r.Context())
+func CompliancePageFromContext(ctx context.Context) *coredata.TrustCenter {
+	page, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
+	return page
+}
 
-				if _, err := trustSvc.ProvisionMember(ctx, compliancePage.ID, identity.ID); err != nil {
-					logger.ErrorCtx(ctx, "cannot provision member", log.Error(err))
-					httpserver.RenderJSON(
-						w,
-						http.StatusInternalServerError,
-						&graphql.Response{
-							Errors: gqlerror.List{
-								gqlutils.Internal(ctx),
-							},
-						},
-					)
-
-					return
-				}
-
-				next.ServeHTTP(w, r)
-			},
-		)
-	}
+func CompliancePageBaseURLFromContext(ctx context.Context) *string {
+	page, _ := ctx.Value(compliancePageBaseURLKey).(*string)
+	return page
 }

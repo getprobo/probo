@@ -18,27 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package compliancepage
+package complianceportal
 
 import (
-	"context"
+	"net/http"
 
-	"go.probo.inc/probo/pkg/coredata"
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-type ctxKey struct{ name string }
+func NewCompliancePagePresenceMiddleware() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				compliancePage := CompliancePageFromContext(r.Context())
 
-var (
-	compliancePageKey        = &ctxKey{name: "compliance_page"}
-	compliancePageBaseURLKey = &ctxKey{name: "compliance_page_base_url"}
-)
+				if compliancePage == nil {
+					httpserver.RenderJSON(
+						w,
+						http.StatusNotFound,
+						&graphql.Response{
+							Errors: gqlerror.List{
+								gqlutils.NotFoundf(
+									r.Context(),
+									"compliance page not found",
+								),
+							},
+						},
+					)
 
-func CompliancePageFromContext(ctx context.Context) *coredata.TrustCenter {
-	page, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
-	return page
-}
+					return
+				}
 
-func CompliancePageBaseURLFromContext(ctx context.Context) *string {
-	page, _ := ctx.Value(compliancePageBaseURLKey).(*string)
-	return page
+				next.ServeHTTP(w, r)
+			},
+		)
+	}
 }

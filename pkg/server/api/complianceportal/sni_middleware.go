@@ -18,19 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package compliancepage
+package complianceportal
 
 import (
 	"context"
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handler {
@@ -43,7 +44,7 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 				return
 			}
 
-			compliancePage, err := trustSvc.GetByDomainName(ctx, r.TLS.ServerName)
+			compliancePage, err := trustSvc.GetPortalByDomainName(ctx, r.TLS.ServerName)
 			if err != nil {
 				if errors.Is(err, trust.ErrPageNotFound) {
 					next.ServeHTTP(w, r)
@@ -63,16 +64,50 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 				return
 			}
 
+			// Redirect secondary domains to the canonical host so a compliance
+			// page is only ever served under a single origin. ACME HTTP-01
+			// challenges are handled upstream and never reach this middleware.
+			if !strings.HasPrefix(r.URL.Path, "/.well-known/") {
+				canonicalHost, err := trustSvc.GetPortalEffectiveCanonicalHost(ctx, compliancePage.ID)
+				if err != nil {
+					httpserver.RenderJSON(
+						w,
+						http.StatusInternalServerError,
+						&graphql.Response{
+							Errors: gqlerror.List{
+								gqlutils.Internal(ctx),
+							},
+						},
+					)
+
+					return
+				}
+
+				if canonicalHost != "" && canonicalHost != r.Host {
+					target := &url.URL{
+						Scheme:   "https",
+						Host:     canonicalHost,
+						Path:     r.URL.Path,
+						RawQuery: r.URL.RawQuery,
+					}
+
+					http.Redirect(w, r, target.String(), http.StatusMovedPermanently)
+
+					return
+				}
+			}
+
 			baseURL := &url.URL{
 				Host:   r.Host,
 				Path:   r.URL.Path,
 				Scheme: "https",
 			}
+			baseURLString := baseURL.String()
 
 			ctx = context.WithValue(
 				ctx,
 				compliancePageBaseURLKey,
-				new(baseURL.String()),
+				&baseURLString,
 			)
 			r = r.WithContext(ctx)
 

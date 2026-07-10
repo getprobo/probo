@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package compliancepage
+package complianceportal
 
 import (
 	"net/http"
 
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 type Handler struct {
