@@ -19,9 +19,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -273,8 +276,19 @@ func (c *Client) doUploadRequest(
 		return nil, fmt.Errorf("cannot write map field: %w", err)
 	}
 
-	// Part 3: file
-	part, err := writer.CreateFormFile("0", filename)
+	// Part 3: file. Detect the content type from the filename: the server's
+	// file validator rejects the application/octet-stream that
+	// CreateFormFile would send.
+	contentType := mime.TypeByExtension(filepath.Ext(filename))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	partHeader := textproto.MIMEHeader{}
+	partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="0"; filename=%q`, filename))
+	partHeader.Set("Content-Type", contentType)
+
+	part, err := writer.CreatePart(partHeader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create form file: %w", err)
 	}
