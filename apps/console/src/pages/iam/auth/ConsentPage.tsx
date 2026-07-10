@@ -351,7 +351,7 @@ export default function ConsentPage(props: {
           variant="secondary"
           className="flex-1 h-10"
           disabled={pendingAction !== null}
-          loading={pendingAction === "deny"}
+          icon={pendingAction === "deny" ? Spinner : undefined}
           onClick={() => handleAction(false)}
         >
           {__("Deny")}
@@ -359,7 +359,7 @@ export default function ConsentPage(props: {
         <Button
           className="flex-1 h-10"
           disabled={pendingAction !== null}
-          loading={pendingAction === "allow"}
+          icon={pendingAction === "allow" ? Spinner : undefined}
           onClick={() => handleAction(true)}
         >
           {__("Allow")}
