@@ -23,9 +23,23 @@ import { RisksPageSkeleton } from "#/components/skeletons/RisksPageSkeleton";
 
 export const riskRoutes = [
   {
-    path: "risks",
-    Fallback: RisksPageSkeleton,
-    Component: lazy(() => import("./RisksPageLoader")),
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("./RisksLayoutLoader")),
+    children: [
+      {
+        path: "risks",
+        Fallback: RisksPageSkeleton,
+        Component: lazy(() => import("./RisksPageLoader")),
+      },
+      {
+        path: "risk-assessments",
+        Fallback: PageSkeleton,
+        Component: lazy(
+          () =>
+            import("./risk-assessments/RiskAssessmentsPageLoader"),
+        ),
+      },
+    ],
   },
   {
     path: "risks/:riskId",
@@ -71,5 +85,13 @@ export const riskRoutes = [
         Component: lazy(() => import("./scenarios/RiskScenariosPageLoader")),
       },
     ],
+  },
+  {
+    path: "risk-assessments/:riskAssessmentId",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () =>
+        import("./risk-assessments/RiskAssessmentDetailPageLoader"),
+    ),
   },
 ] satisfies AppRoute[];
