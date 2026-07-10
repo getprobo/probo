@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { safeOpenUrl } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, IconBell2, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconShield, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
@@ -33,12 +34,10 @@ export const compliancePageLayoutQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        customDomain {
-          domain
-        }
         compliancePage: trustCenter {
           id
           active
+          publicUrl
         }
       }
     }
@@ -58,11 +57,7 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
     throw new Error("invalid type for node");
   }
 
-  const compliancePageUrl = organization.compliancePage?.id
-    ? organization.customDomain?.domain
-      ? `https://${organization.customDomain.domain}`
-      : `${window.location.origin}/trust/${organization.compliancePage.id}`
-    : null;
+  const compliancePageUrl = organization.compliancePage?.publicUrl || null;
 
   return (
     <div className="space-y-6">
@@ -78,12 +73,7 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
         {organization.compliancePage?.active && compliancePageUrl && (
           <Button
             variant="secondary"
-            onClick={() =>
-              window.open(
-                compliancePageUrl,
-                "_blank",
-                "noopener,noreferrer",
-              )}
+            onClick={() => safeOpenUrl(compliancePageUrl)}
           >
             {__("Open")}
           </Button>
@@ -98,10 +88,6 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
         <TabLink to={`/organizations/${organizationId}/compliance-page/brand`}>
           <IconPencil className="size-4" />
           {__("Brand")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/compliance-page/domain`}>
-          <IconStore className="size-4" />
-          {__("Domain")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/references`}>
           <IconCheckmark1 className="size-4" />

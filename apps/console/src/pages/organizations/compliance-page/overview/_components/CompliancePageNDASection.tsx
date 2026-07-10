@@ -19,12 +19,15 @@
 // SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { Button, Dropzone, IconTrashCan, Spinner, useToast } from "@probo/ui";
+import { Button, IconChevronRight, useConfirm, useToast } from "@probo/ui";
+import { type ChangeEventHandler, useRef } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageNDASectionFragment$key } from "#/__generated__/core/CompliancePageNDASectionFragment.graphql";
-import { useDeleteTrustCenterNDAMutation, useUploadTrustCenterNDAMutation } from "#/hooks/graph/TrustCenterGraph";
+import { useDeleteCompliancePageNDAMutation, useUploadCompliancePageNDAMutation } from "#/hooks/graph/CompliancePageGraph";
+
+import { CompliancePageNDACard } from "./CompliancePageNDACard";
 
 const fragment = graphql`
   fragment CompliancePageNDASectionFragment on Organization {
@@ -32,26 +35,31 @@ const fragment = graphql`
       id
       nda {
         fileName
-        downloadUrl
       }
-      canUploadNDA: permission(action: "core:trust-center:upload-nda")
-      canDeleteNDA: permission(action: "core:trust-center:delete-nda")
+      canUploadNDA: permission(action: "compliance-portal:portal:upload-nda")
+      ...CompliancePageNDACard_compliancePage
     }
   }
 `;
 
-export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDASectionFragment$key }) {
+export interface CompliancePageNDASectionProps {
+  fragmentRef: CompliancePageNDASectionFragment$key;
+}
+
+export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
   const { fragmentRef } = props;
 
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const confirm = useConfirm();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const organization = useFragment<CompliancePageNDASectionFragment$key>(fragment, fragmentRef);
 
-  const [uploadNDA, isUploadingNDA] = useUploadTrustCenterNDAMutation();
-  const [deleteNDA, isDeletingNDA] = useDeleteTrustCenterNDAMutation();
+  const [uploadNDA, isUploadingNDA] = useUploadCompliancePageNDAMutation();
+  const [deleteNDA, isDeletingNDA] = useDeleteCompliancePageNDAMutation();
 
-  const handleNDAUpload = async (files: File[]) => {
+  const handleNDAUpload = async (file: File) => {
     if (!organization.compliancePage?.id) {
       toast({
         title: __("Error"),
@@ -60,10 +68,6 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
       });
       return;
     }
-
-    if (files.length === 0) return;
-
-    const file = files[0];
 
     await uploadNDA({
       variables: {
@@ -79,8 +83,36 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
     });
   };
 
-  const handleNDADelete = async () => {
-    if (!organization.compliancePage?.id) {
+  const handleNDAFileChange: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      toast({
+        title: __("Unsupported file type"),
+        description: __("Please upload a PDF file."),
+        variant: "error",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: __("File size too large"),
+        description: __("Please upload a file smaller than 10MB."),
+        variant: "error",
+      });
+      return;
+    }
+
+    void handleNDAUpload(file);
+  };
+
+  const handleNDADelete = () => {
+    const trustCenterId = organization.compliancePage?.id;
+    if (!trustCenterId) {
       toast({
         title: __("Error"),
         description: __("Compliance page not found"),
@@ -89,107 +121,76 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
       return;
     }
 
-    if (!confirm(__("Are you sure you want to delete the NDA file?"))) {
-      return;
-    }
-
-    await deleteNDA({
-      variables: {
-        input: {
-          trustCenterId: organization.compliancePage.id,
-        },
+    confirm(
+      () => deleteNDA({ variables: { input: { trustCenterId } } }),
+      {
+        title: __("Delete NDA"),
+        message: __("Are you sure you want to delete the NDA file? This action cannot be undone."),
+        label: __("Delete"),
+        variant: "danger",
       },
-    });
+    );
   };
 
+  const compliancePage = organization.compliancePage;
+  const hasNDA = !!compliancePage?.nda?.fileName;
+  const canUploadNDA = compliancePage?.canUploadNDA;
+  const isBusy = isUploadingNDA || isDeletingNDA;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <section className="space-y-4">
+      <div>
         <h2 className="text-base font-medium">
           {__("Non-Disclosure Agreement")}
         </h2>
-        {(isUploadingNDA || isDeletingNDA) && <Spinner />}
+        <p className="text-sm text-txt-tertiary">
+          {__(
+            "Require visitors to accept a Non-Disclosure Agreement before accessing your compliance page.",
+          )}
+        </p>
       </div>
-      <div className="space-y-2">
-        {!organization.compliancePage?.nda?.fileName
-          && organization.compliancePage?.canUploadNDA
+
+      <div className="space-y-3">
+        {hasNDA && compliancePage
           ? (
-              <p className="text-sm text-txt-tertiary">
-                {__(
-                  "Upload a Non-Disclosure Agreement that visitors must accept before accessing your compliance page",
-                )}
-              </p>
+              <CompliancePageNDACard
+                compliancePageKey={compliancePage}
+                isBusy={isBusy}
+                isUploading={isUploadingNDA}
+                onFileChange={handleNDAFileChange}
+                onDelete={handleNDADelete}
+              />
             )
-          : (
-              <></>
-            )}
-        {organization.compliancePage?.nda?.fileName
-          ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">
-                        {organization.compliancePage.nda?.fileName
-                          || __("Non-Disclosure Agreement")}
-                      </p>
-                    </div>
-                    <p className="text-xs text-txt-tertiary">
-                      {__(
-                        "Visitors will need to accept this NDA before accessing your compliance page",
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => {
-                        if (organization.compliancePage?.nda?.downloadUrl) {
-                          window.open(
-                            organization.compliancePage.nda.downloadUrl,
-                            "_blank",
-                            "noopener,noreferrer",
-                          );
-                        }
-                      }}
-                    >
-                      {__("Download PDF")}
-                    </Button>
-                    {organization.compliancePage?.canDeleteNDA && (
-                      <Button
-                        variant="quaternary"
-                        icon={IconTrashCan}
-                        onClick={() => void handleNDADelete()}
-                        disabled={isDeletingNDA}
-                      />
+          : canUploadNDA
+            ? (
+                <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-solid px-4 py-8">
+                  <p className="max-w-md text-center text-sm text-txt-tertiary">
+                    {__(
+                      "Upload a PDF that visitors must accept before they can access your compliance page.",
                     )}
-                  </div>
+                  </p>
+                  <Button
+                    iconAfter={IconChevronRight}
+                    disabled={isBusy}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {isUploadingNDA ? __("Uploading...") : __("Upload NDA")}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    accept="application/pdf,.pdf"
+                    onChange={handleNDAFileChange}
+                  />
                 </div>
-              </div>
-            )
-          : (
-              <>
-                {organization.compliancePage?.canUploadNDA
-                  ? (
-                      <Dropzone
-                        description={__("Upload PDF files up to 10MB")}
-                        isUploading={isUploadingNDA}
-                        onDrop={files => void handleNDAUpload(files)}
-                        accept={{
-                          "application/pdf": [".pdf"],
-                        }}
-                        maxSize={10}
-                      />
-                    )
-                  : (
-                      <p className="text-sm text-txt-tertiary">
-                        {__("No NDA file uploaded")}
-                      </p>
-                    )}
-              </>
-            )}
+              )
+            : (
+                <p className="text-sm text-txt-tertiary">
+                  {__("No NDA file uploaded")}
+                </p>
+              )}
       </div>
-    </div>
+    </section>
   );
 }

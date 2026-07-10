@@ -24,7 +24,7 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageStatusSectionFragment$key } from "#/__generated__/core/CompliancePageStatusSectionFragment.graphql";
-import { useUpdateTrustCenterMutation } from "#/hooks/graph/TrustCenterGraph";
+import { useUpdateCompliancePageMutation } from "#/hooks/graph/CompliancePageGraph";
 
 const fragment = graphql`
   fragment CompliancePageStatusSectionFragment on Organization {
@@ -32,7 +32,7 @@ const fragment = graphql`
       id
       active
       searchEngineIndexing
-      canUpdate: permission(action: "core:trust-center:update")
+      canUpdate: permission(action: "compliance-portal:portal:update")
     }
   }
 `;
@@ -50,7 +50,7 @@ export function CompliancePageStatusSection(props: {
     fragmentRef,
   );
 
-  const [updateCompliancePage, isUpdating] = useUpdateTrustCenterMutation();
+  const [updateCompliancePage, isUpdating] = useUpdateCompliancePageMutation();
 
   const handleToggleActive = async (active: boolean) => {
     if (!organization.compliancePage?.id) {

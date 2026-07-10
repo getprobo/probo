@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { lazy } from "@probo/react-lazy";
+import { redirect } from "react-router";
 
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
@@ -36,11 +37,9 @@ export const compliancePageRoutes = [
       },
       {
         path: "domain",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () =>
-            import("#/pages/organizations/compliance-page/domain/CompliancePageDomainPageLoader"),
-        ),
+        loader: () => {
+          throw redirect("brand");
+        },
       },
       {
         path: "brand",

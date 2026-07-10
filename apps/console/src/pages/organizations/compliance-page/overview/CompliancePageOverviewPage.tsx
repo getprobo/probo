@@ -23,6 +23,7 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePageOverviewPageQuery } from "#/__generated__/core/CompliancePageOverviewPageQuery.graphql";
 
+import { CompliancePageFrameworksSection } from "./_components/CompliancePageFrameworksSection";
 import { CompliancePageNDASection } from "./_components/CompliancePageNDASection";
 import { CompliancePageSlackSection } from "./_components/CompliancePageSlackSection";
 import { CompliancePageStatusSection } from "./_components/CompliancePageStatusSection";
@@ -32,10 +33,11 @@ export const compliancePageOverviewPageQuery = graphql`
     organization: node(id: $organizationId) {
       ... on Organization {
         compliancePage: trustCenter {
-          canGetNDA: permission(action: "core:trust-center:get-nda")
+          canGetNDA: permission(action: "compliance-portal:portal:get-nda")
         }
       }
       ...CompliancePageStatusSectionFragment
+      ...CompliancePageFrameworksSectionFragment
       ...CompliancePageNDASectionFragment
       ...CompliancePageSlackSectionFragment
     }
@@ -53,6 +55,8 @@ export function CompliancePageOverviewPage(props: { queryRef: PreloadedQuery<Com
   return (
     <div className="space-y-6">
       <CompliancePageStatusSection fragmentRef={organization} />
+
+      <CompliancePageFrameworksSection fragmentRef={organization} />
 
       {organization.compliancePage?.canGetNDA && (
         <CompliancePageNDASection fragmentRef={organization} />

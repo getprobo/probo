@@ -34,54 +34,62 @@ import { DeleteCompliancePageDomainDialog } from "./DeleteCompliancePageDomainDi
 
 const fragment = graphql`
   fragment CompliancePageDomainCardFragment on CustomDomain {
+    id
     domain
+    managed
     sslStatus
     provisioningError
-    canDelete: permission(action: "core:custom-domain:delete")
+    canDelete: permission(action: "compliance-portal:custom-domain:delete")
     ...CompliancePageDomainDialogFragment
   }
 `;
 
-export function CompliancePageDomainCard(props: { fKey: CompliancePageDomainCardFragment$key }) {
-  const { fKey } = props;
+export function CompliancePageDomainCard(props: {
+  fKey: CompliancePageDomainCardFragment$key;
+  compliancePageId: string;
+}) {
+  const { fKey, compliancePageId } = props;
 
   const { __ } = useTranslate();
 
   const domain = useFragment<CompliancePageDomainCardFragment$key>(fragment, fKey);
 
   return (
-    <Card>
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <div className="font-medium mb-1">{domain.domain}</div>
-              <div className="text-sm text-txt-secondary">
-                {domain.sslStatus === "ACTIVE"
-                  ? __("Verified")
-                  : domain.provisioningError
-                    ? domain.provisioningError
-                    : __("Pending verification")}
-              </div>
-            </div>
-            <Badge
-              variant={getCustomDomainStatusBadgeVariant(domain.sslStatus)}
-            >
+    <Card padded>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{domain.domain}</span>
+            {domain.managed && (
+              <Badge variant="neutral">{__("Managed")}</Badge>
+            )}
+            <Badge variant={getCustomDomainStatusBadgeVariant(domain.sslStatus)}>
               {getCustomDomainStatusBadgeLabel(domain.sslStatus, __)}
             </Badge>
           </div>
+          <p className="text-sm text-txt-secondary">
+            {domain.sslStatus === "ACTIVE"
+              ? __("Verified and serving traffic")
+              : domain.provisioningError
+                ? domain.provisioningError
+                : __("Pending DNS verification")}
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <CompliancePageDomainDialog fKey={domain}>
-              <Button variant="secondary">{__("View Details")}</Button>
-            </CompliancePageDomainDialog>
+        <div className="flex shrink-0 items-center gap-2">
+          <CompliancePageDomainDialog fKey={domain}>
+            <Button variant="secondary">{__("View details")}</Button>
+          </CompliancePageDomainDialog>
 
-            {domain.canDelete && (
-              <DeleteCompliancePageDomainDialog domain={domain.domain}>
-                <Button variant="danger">{__("Delete")}</Button>
-              </DeleteCompliancePageDomainDialog>
-            )}
-          </div>
+          {domain.canDelete && (
+            <DeleteCompliancePageDomainDialog
+              domain={domain.domain}
+              customDomainId={domain.id}
+              compliancePageId={compliancePageId}
+            >
+              <Button variant="danger">{__("Delete")}</Button>
+            </DeleteCompliancePageDomainDialog>
+          )}
         </div>
       </div>
     </Card>
