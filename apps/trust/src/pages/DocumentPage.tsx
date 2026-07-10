@@ -40,7 +40,6 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { PDFPreview } from "#/components/PDFPreview";
-import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { DocumentPageExportDocumentMutation } from "./__generated__/DocumentPageExportDocumentMutation.graphql";
 import type { DocumentPageExportReportMutation } from "./__generated__/DocumentPageExportReportMutation.graphql";
@@ -322,10 +321,9 @@ export function DocumentPage({ queryRef }: Props) {
   const handleRequestAccess = () => {
     const onError = (error: Error) => {
       if (error instanceof UnAuthenticatedError) {
-        const pathPrefix = getPathPrefix();
         const urlSearchParams = new URLSearchParams([[
           "continue",
-          window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
+          window.location.origin + location.pathname + "?" + searchParams.toString(),
         ]]);
         void navigate(`/connect?${urlSearchParams.toString()}`);
         return;

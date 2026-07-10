@@ -29,7 +29,6 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { FullNamePageMutation } from "./__generated__/FullNamePageMutation.graphql";
 
@@ -57,16 +56,16 @@ export default function FullNamePage() {
   if (continueUrlParam) {
     try {
       const continueUrl = new URL(continueUrlParam, window.location.origin);
-      if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith(`${getPathPrefix()}/`)) {
+      if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith("/")) {
         safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
       } else {
-        safeContinueUrl = window.location.origin + getPathPrefix();
+        safeContinueUrl = window.location.origin;
       }
     } catch {
-      safeContinueUrl = window.location.origin + getPathPrefix();
+      safeContinueUrl = window.location.origin;
     }
   } else {
-    safeContinueUrl = window.location.origin + getPathPrefix();
+    safeContinueUrl = window.location.origin;
   }
 
   const {
@@ -94,7 +93,7 @@ export default function FullNamePage() {
         if (errors) {
           for (const err of errors) {
             if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
-              window.location.href = getPathPrefix() || "/";
+              window.location.href = "/";
               return;
             }
           }

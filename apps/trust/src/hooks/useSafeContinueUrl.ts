@@ -21,14 +21,11 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-import { getPathPrefix } from "#/utils/pathPrefix";
-
 export function useSafeContinueUrl(): URL {
   const [searchParams] = useSearchParams();
 
   const continueUrlParam = searchParams.get("continue");
-  const prefix = getPathPrefix();
-  const fallback = window.location.origin + (prefix || "/");
+  const fallback = window.location.origin + "/";
 
   const safeContinueUrl = useMemo(() => {
     if (continueUrlParam) {
@@ -40,7 +37,7 @@ export function useSafeContinueUrl(): URL {
       }
       if (
         continueUrl.origin === window.location.origin
-        && continueUrl.pathname.startsWith(`${prefix}/`)
+        && continueUrl.pathname.startsWith("/")
       ) {
         return new URL(
           continueUrl.pathname + continueUrl.search,
@@ -50,7 +47,7 @@ export function useSafeContinueUrl(): URL {
       return new URL(fallback, window.location.origin);
     }
     return new URL(fallback, window.location.origin);
-  }, [continueUrlParam, fallback, prefix]);
+  }, [continueUrlParam, fallback]);
 
   return safeContinueUrl;
 }

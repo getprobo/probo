@@ -173,15 +173,4 @@ const routes = [
   },
 ] satisfies AppRoute[];
 
-// Detect basename from current URL path
-// If URL starts with /trust/{slug}, extract that as the basename
-// Otherwise, use "/" for custom domains
-function getBasename(): string {
-  const path = window.location.pathname;
-  const trustMatch = path.match(/^\/trust\/[^/]+/);
-  return trustMatch ? trustMatch[0] : "/";
-}
-
-export const router = createBrowserRouter(routes.map(routeFromAppRoute), {
-  basename: getBasename(),
-});
+export const router = createBrowserRouter(routes.map(routeFromAppRoute), {});

@@ -32,8 +32,6 @@ import { useFragment, useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import { getPathPrefix } from "#/utils/pathPrefix";
-
 import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
 import type { DocumentRowFragment$key } from "./__generated__/DocumentRowFragment.graphql";
 
@@ -103,11 +101,10 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
-          const pathPrefix = getPathPrefix();
           searchParams.set("request-document-id", document.id);
           const urlSearchParams = new URLSearchParams([[
             "continue",
-            window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
+            window.location.origin + location.pathname + "?" + searchParams.toString(),
           ]]);
           void navigate(`/connect?${urlSearchParams.toString()}`);
 

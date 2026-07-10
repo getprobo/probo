@@ -28,8 +28,6 @@ import {
   Store,
 } from "relay-runtime";
 
-import { getPathPrefix } from "#/utils/pathPrefix";
-
 export function buildEndpoint(): string {
   let host = import.meta.env.VITE_API_URL;
 
@@ -44,15 +42,8 @@ export function buildEndpoint(): string {
 
   const url = new URL(formattedHost);
 
-  const prefix = getPathPrefix();
-  let path: string;
-  if (prefix) {
-    path = `${prefix}/api/trust/v1/graphql`;
-  } else {
-    path = `/api/trust/v1/graphql`;
-  }
-
-  url.pathname = path;
+  // Compliance pages are always served at the root of a dedicated host.
+  url.pathname = `/api/trust/v1/graphql`;
 
   return url.toString();
 }

@@ -33,7 +33,6 @@ import { graphql } from "relay-runtime";
 import { useWindowSize } from "usehooks-ts";
 
 import { PDFPreview } from "#/components/PDFPreview";
-import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { NDAPageAcceptElectronicSignatureMutation } from "./__generated__/NDAPageAcceptElectronicSignatureMutation.graphql";
 import type { NDAPageFragment$key } from "./__generated__/NDAPageFragment.graphql";
@@ -125,16 +124,16 @@ export function NDAPage(props: {
   if (continueUrlParam) {
     try {
       const continueUrl = new URL(continueUrlParam, window.location.origin);
-      if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith(`${getPathPrefix()}/`)) {
+      if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith("/")) {
         safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
       } else {
-        safeContinueUrl = window.location.origin + getPathPrefix();
+        safeContinueUrl = window.location.origin;
       }
     } catch {
-      safeContinueUrl = window.location.origin + getPathPrefix();
+      safeContinueUrl = window.location.origin;
     }
   } else {
-    safeContinueUrl = window.location.origin + getPathPrefix();
+    safeContinueUrl = window.location.origin;
   }
 
   const [acceptSignature, isAccepting] = useMutation<NDAPageAcceptElectronicSignatureMutation>(

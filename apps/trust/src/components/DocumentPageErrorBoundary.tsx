@@ -27,8 +27,6 @@ import {
 import { Button, IconChevronLeft, IconPageCross } from "@probo/ui";
 import { Link, Navigate, useLocation, useRouteError } from "react-router";
 
-import { getPathPrefix } from "#/utils/pathPrefix";
-
 export function DocumentPageErrorBoundary() {
   const error = useRouteError();
   const location = useLocation();
@@ -36,7 +34,7 @@ export function DocumentPageErrorBoundary() {
 
   const search = new URLSearchParams();
 
-  if (location.pathname !== (getPathPrefix() || "/") || location.search !== "") {
+  if (location.pathname !== "/" || location.search !== "") {
     search.set("continue", window.location.href);
   }
 

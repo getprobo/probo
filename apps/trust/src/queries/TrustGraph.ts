@@ -31,6 +31,10 @@ export const currentTrustGraphQuery = graphql`
     currentTrustCenter @required(action: THROW) {
       id
       slug
+      description
+      websiteUrl
+      email
+      headquarterAddress
       viewerSubscription {
         id
         email
@@ -52,12 +56,8 @@ export const currentTrustGraphQuery = graphql`
       }
       organization {
         name
-        description
-        websiteUrl
-        email
-        headquarterAddress
       }
-      externalUrls(first: 20) {
+      customLinks(first: 20) {
         edges {
           node {
             id

@@ -38,7 +38,6 @@ import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
-import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
 import type { OrganizationSidebar_subscribeToMailingListMutation } from "./__generated__/OrganizationSidebar_subscribeToMailingListMutation.graphql";
@@ -132,11 +131,10 @@ export function OrganizationSidebar({
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
-          const pathPrefix = getPathPrefix();
           searchParams.set("request-all", "true");
           const urlSearchParams = new URLSearchParams([[
             "continue",
-            window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
+            window.location.origin + location.pathname + "?" + searchParams.toString(),
           ]]);
           void navigate(`/connect?${urlSearchParams.toString()}`);
 
@@ -237,7 +235,7 @@ export function OrganizationSidebar({
           )}
       <h1 className="text-2xl mt-6">{trustCenter.organization.name}</h1>
       <p className="text-sm text-txt-secondary mt-1">
-        {trustCenter.organization.description}
+        {trustCenter.description}
       </p>
 
       <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
@@ -248,32 +246,32 @@ export function OrganizationSidebar({
           <IconBlock size={16} />
           {__("Business information")}
         </h2>
-        {trustCenter.organization.websiteUrl && (
+        {trustCenter.websiteUrl && (
           <BusinessInfo label={__("Website")}>
-            <a {...externalLinkProps(trustCenter.organization.websiteUrl)}>
+            <a {...externalLinkProps(trustCenter.websiteUrl)}>
               <span className="text-txt-info hover:underline ">
-                {new URL(trustCenter.organization.websiteUrl).host}
+                {new URL(trustCenter.websiteUrl).host}
               </span>
             </a>
           </BusinessInfo>
         )}
-        {trustCenter.organization.email && (
+        {trustCenter.email && (
           <BusinessInfo label={__("Contact")}>
-            <a href={`mailto:${trustCenter.organization.email}`}>
+            <a href={`mailto:${trustCenter.email}`}>
               <span className="text-txt-info hover:underline ">
-                {trustCenter.organization.email}
+                {trustCenter.email}
               </span>
             </a>
           </BusinessInfo>
         )}
-        {trustCenter.organization.headquarterAddress && (
+        {trustCenter.headquarterAddress && (
           <BusinessInfo label={__("HQ address")}>
-            {trustCenter.organization.headquarterAddress}
+            {trustCenter.headquarterAddress}
           </BusinessInfo>
         )}
-        {trustCenter.externalUrls.edges.length > 0 && (
+        {trustCenter.customLinks.edges.length > 0 && (
           <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {trustCenter.externalUrls.edges.map(({ node }) => (
+            {trustCenter.customLinks.edges.map(({ node }) => (
               <a
                 key={node.id}
                 {...externalLinkProps(node.url)}
