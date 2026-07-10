@@ -25,15 +25,15 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ComplianceExternalURLOrderBy = OrderBy[coredata.ComplianceExternalURLOrderField]
+type ComplianceCustomLinkOrderBy = OrderBy[coredata.ComplianceCustomLinkOrderField]
 
-type ComplianceExternalURLConnection struct {
-	Edges    []*ComplianceExternalURLEdge `json:"edges"`
-	PageInfo *PageInfo                    `json:"pageInfo"`
+type ComplianceCustomLinkConnection struct {
+	Edges    []*ComplianceCustomLinkEdge `json:"edges"`
+	PageInfo *PageInfo                   `json:"pageInfo"`
 }
 
-func NewComplianceExternalURL(c *coredata.ComplianceExternalURL) *ComplianceExternalURL {
-	return &ComplianceExternalURL{
+func NewComplianceCustomLink(c *coredata.ComplianceCustomLink) *ComplianceCustomLink {
+	return &ComplianceCustomLink{
 		ID:        c.ID,
 		Name:      c.Name,
 		URL:       c.URL,
@@ -43,23 +43,23 @@ func NewComplianceExternalURL(c *coredata.ComplianceExternalURL) *ComplianceExte
 	}
 }
 
-func NewComplianceExternalURLConnection(
-	p *page.Page[*coredata.ComplianceExternalURL, coredata.ComplianceExternalURLOrderField],
-) *ComplianceExternalURLConnection {
-	edges := make([]*ComplianceExternalURLEdge, len(p.Data))
+func NewComplianceCustomLinkConnection(
+	p *page.Page[*coredata.ComplianceCustomLink, coredata.ComplianceCustomLinkOrderField],
+) *ComplianceCustomLinkConnection {
+	edges := make([]*ComplianceCustomLinkEdge, len(p.Data))
 	for i := range edges {
-		edges[i] = NewComplianceExternalURLEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewComplianceCustomLinkEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &ComplianceExternalURLConnection{
+	return &ComplianceCustomLinkConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
 	}
 }
 
-func NewComplianceExternalURLEdge(c *coredata.ComplianceExternalURL, orderBy coredata.ComplianceExternalURLOrderField) *ComplianceExternalURLEdge {
-	return &ComplianceExternalURLEdge{
+func NewComplianceCustomLinkEdge(c *coredata.ComplianceCustomLink, orderBy coredata.ComplianceCustomLinkOrderField) *ComplianceCustomLinkEdge {
+	return &ComplianceCustomLinkEdge{
 		Cursor: c.CursorKey(orderBy),
-		Node:   NewComplianceExternalURL(c),
+		Node:   NewComplianceCustomLink(c),
 	}
 }

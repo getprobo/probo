@@ -7,15 +7,14 @@ package trust_v1
 
 import (
 	"context"
-	"errors"
+	"net"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/clientip"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -24,17 +23,17 @@ import (
 // AcceptElectronicSignature is the resolver for the acceptElectronicSignature field.
 func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error) {
 	var (
-		identity       = authn.IdentityFromContext(ctx)
-		httpReq        = gqlutils.HTTPRequestFromContext(ctx)
-		compliancePage = compliancepage.CompliancePageFromContext(ctx)
-		scope          = coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+		identity = authn.IdentityFromContext(ctx)
+		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
 	)
 
-	signerIP := clientip.Extract(httpReq)
+	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
+	if signerIP == "" {
+		signerIP = httpReq.RemoteAddr
+	}
 
 	signature, err := r.esign.AcceptSignature(
 		ctx,
-		scope,
 		&esign.AcceptSignatureRequest{
 			SignatureID:    input.SignatureID,
 			SignerFullName: identity.FullName,
@@ -44,16 +43,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		},
 	)
 	if err != nil {
-		if errors.Is(err, esign.ErrElectronicSignatureNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "electronic signature %q not found", input.SignatureID)
-		}
-
-		if errors.Is(err, esign.ErrSignatureAccessDenied) {
-			return nil, gqlutils.Forbiddenf(ctx, "cannot accept electronic signature")
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
-
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -65,17 +55,17 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 // RecordSigningEvent is the resolver for the recordSigningEvent field.
 func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error) {
 	var (
-		identity       = authn.IdentityFromContext(ctx)
-		httpReq        = gqlutils.HTTPRequestFromContext(ctx)
-		compliancePage = compliancepage.CompliancePageFromContext(ctx)
-		scope          = coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+		identity = authn.IdentityFromContext(ctx)
+		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
 	)
 
-	actorIP := clientip.Extract(httpReq)
+	actorIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
+	if actorIP == "" {
+		actorIP = httpReq.RemoteAddr
+	}
 
 	if err := r.esign.RecordEvent(
 		ctx,
-		scope,
 		&esign.RecordEventRequest{
 			SignatureID: input.SignatureID,
 			EventType:   input.EventType,
@@ -85,16 +75,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 			ActorUA:     httpReq.UserAgent(),
 		},
 	); err != nil {
-		if errors.Is(err, esign.ErrElectronicSignatureNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "electronic signature %q not found", input.SignatureID)
-		}
-
-		if errors.Is(err, esign.ErrSignatureAccessDenied) {
-			return nil, gqlutils.Forbiddenf(ctx, "cannot record signing event")
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))
-
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -103,13 +84,13 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 
 // FileURL is the resolver for the fileUrl field.
 func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error) {
-	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 
 	if identity := authn.IdentityFromContext(ctx); identity != nil && r.esign != nil {
-		scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+		scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 		trustService := r.trust
 
-		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, compliancePage.ID, identity.ID)
+		access, err := trustService.GetPortalAccess(ctx, scope, trustCenter.ID, identity.ID)
 		if err == nil && access.ElectronicSignatureID != nil {
 			fileURL, err := r.esign.GenerateSignatureFileURL(ctx, *access.ElectronicSignatureID, 15*time.Minute)
 			if err == nil {
@@ -120,10 +101,10 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 		}
 	}
 
-	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, scope, compliancePage.ID, 15*time.Minute)
+	fileURL, err := trustService.GeneratePortalNDAFileURL(ctx, scope, trustCenter.ID, 15*time.Minute)
 	if err != nil {
 		return "", gqlutils.Internal(ctx)
 	}
@@ -138,11 +119,11 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 		return nil, nil
 	}
 
-	compliancePage := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, compliancePage.ID, identity.ID)
+	access, err := trustService.GetPortalAccess(ctx, scope, trustCenter.ID, identity.ID)
 	if err != nil {
 		return nil, nil
 	}
@@ -151,7 +132,7 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 		return nil, nil
 	}
 
-	sig, err := r.esign.GetSignatureByID(ctx, scope, *access.ElectronicSignatureID)
+	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
 	if err != nil {
 		return nil, nil
 	}

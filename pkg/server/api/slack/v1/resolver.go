@@ -23,8 +23,8 @@ package slack_v1
 import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/slack"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 func NewMux(

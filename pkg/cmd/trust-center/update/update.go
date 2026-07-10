@@ -49,6 +49,10 @@ mutation($input: UpdateTrustCenterInput!) {
       id
       active
       searchEngineIndexing
+      description
+      websiteUrl
+      email
+      headquarterAddress
     }
   }
 }
@@ -66,9 +70,13 @@ type trustCenterQueryResponse struct {
 type updateResponse struct {
 	UpdateTrustCenter struct {
 		TrustCenter struct {
-			ID                   string `json:"id"`
-			Active               bool   `json:"active"`
-			SearchEngineIndexing string `json:"searchEngineIndexing"`
+			ID                   string  `json:"id"`
+			Active               bool    `json:"active"`
+			SearchEngineIndexing string  `json:"searchEngineIndexing"`
+			Description          *string `json:"description"`
+			WebsiteURL           *string `json:"websiteUrl"`
+			Email                *string `json:"email"`
+			HeadquarterAddress   *string `json:"headquarterAddress"`
 		} `json:"trustCenter"`
 	} `json:"updateTrustCenter"`
 }
@@ -78,6 +86,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagOrg                  string
 		flagActive               bool
 		flagSearchEngineIndexing string
+		flagDescription          string
+		flagWebsiteURL           string
+		flagEmail                string
+		flagHeadquarterAddress   string
 	)
 
 	cmd := &cobra.Command{
@@ -158,6 +170,22 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["searchEngineIndexing"] = flagSearchEngineIndexing
 			}
 
+			if cmd.Flags().Changed("description") {
+				input["description"] = flagDescription
+			}
+
+			if cmd.Flags().Changed("website-url") {
+				input["websiteUrl"] = flagWebsiteURL
+			}
+
+			if cmd.Flags().Changed("email") {
+				input["email"] = flagEmail
+			}
+
+			if cmd.Flags().Changed("headquarter-address") {
+				input["headquarterAddress"] = flagHeadquarterAddress
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -189,6 +217,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().BoolVar(&flagActive, "active", false, "Enable or disable the trust center")
 	cmd.Flags().StringVar(&flagSearchEngineIndexing, "search-engine-indexing", "", "Search engine indexing: INDEXABLE, NOT_INDEXABLE")
+	cmd.Flags().StringVar(&flagDescription, "description", "", "Compliance page description")
+	cmd.Flags().StringVar(&flagWebsiteURL, "website-url", "", "Compliance page website URL")
+	cmd.Flags().StringVar(&flagEmail, "email", "", "Compliance page contact email")
+	cmd.Flags().StringVar(&flagHeadquarterAddress, "headquarter-address", "", "Compliance page headquarter address")
 
 	return cmd
 }

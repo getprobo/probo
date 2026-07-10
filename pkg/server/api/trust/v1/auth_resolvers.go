@@ -15,16 +15,16 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 // SendMagicLink is the resolver for the sendMagicLink field.
 func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 
-	baseURL := compliancepage.CompliancePageBaseURLFromContext(ctx)
+	baseURL := complianceportal.CompliancePageBaseURLFromContext(ctx)
 
 	safeRedirect := saferedirect.New(saferedirect.StaticHosts(baseurl.MustParse(*baseURL).Host()))
 
@@ -123,9 +123,9 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 		}
 	}
 
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 
-	if _, err := r.trust.ProvisionMember(ctx, trustCenter.ID, identity.ID); err != nil {
+	if _, err := r.trust.ProvisionPortalMember(ctx, trustCenter.ID, identity.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot provision member", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -157,7 +157,7 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	compliancePage := complianceportal.CompliancePageFromContext(ctx)
 
 	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, compliancePage.OrganizationID)
 	if err != nil {

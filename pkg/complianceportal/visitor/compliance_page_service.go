@@ -584,7 +584,7 @@ func (s *Service) fetchThirdParties(
 			},
 		)
 
-		result, err := s.ListThirdPartiesForOrganizationID(ctx, scope, orgID, cursor)
+		result, err := s.ListThirdPartiesForOrganizationID(ctx, scope, orgID, cursor, nil)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list thirdParties: %w", err)
 		}

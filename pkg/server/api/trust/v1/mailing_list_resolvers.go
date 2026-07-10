@@ -12,7 +12,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/validator"
@@ -20,7 +20,7 @@ import (
 
 // SubscribeToMailingList is the resolver for the subscribeToMailingList field.
 func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.SubscribeToMailingListPayload, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	if trustCenter.MailingListID == nil {
 		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
 	}
@@ -56,7 +56,7 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 
 // UnsubscribeFromMailingList is the resolver for the unsubscribeFromMailingList field.
 func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*types.UnsubscribeFromMailingListPayload, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	if trustCenter.MailingListID == nil {
 		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
 	}

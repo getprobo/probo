@@ -24,14 +24,24 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewCustomDomain(d *coredata.CustomDomain) *CustomDomain {
-	return &CustomDomain{
+// NewCustomDomain builds the MCP CustomDomain type. The TLS lifecycle now lives
+// on the linked certificate; when cert is nil (certificate not yet created) the
+// domain reports a pending SSL status.
+func NewCustomDomain(d *coredata.CustomDomain, cert *coredata.Certificate) *CustomDomain {
+	result := &CustomDomain{
 		ID:             d.ID,
 		OrganizationID: d.OrganizationID,
 		Domain:         d.Domain,
-		SslStatus:      d.SSLStatus,
-		SslExpiresAt:   d.SSLExpiresAt,
+		Managed:        d.Managed,
+		SslStatus:      coredata.CustomDomainSSLStatusPending,
 		CreatedAt:      d.CreatedAt,
 		UpdatedAt:      d.UpdatedAt,
 	}
+
+	if cert != nil {
+		result.SslStatus = coredata.CustomDomainSSLStatus(cert.Status)
+		result.SslExpiresAt = cert.SSLExpiresAt
+	}
+
+	return result
 }

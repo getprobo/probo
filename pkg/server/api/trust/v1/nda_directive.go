@@ -25,12 +25,12 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 func newNDADirective(
@@ -44,13 +44,13 @@ func newNDADirective(
 			return next(ctx)
 		}
 
-		compliancePage := compliancepage.CompliancePageFromContext(ctx)
+		compliancePage := complianceportal.CompliancePageFromContext(ctx)
 		if compliancePage == nil {
 			logger.ErrorCtx(ctx, "cannot get compliance page from context")
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		membership, err := trustSvc.GetMembershipByCompliancePageIDAndIdentityID(ctx, compliancePage.ID, identity.ID)
+		membership, err := trustSvc.GetPortalMembership(ctx, compliancePage.ID, identity.ID)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot get compliance page membership", log.Error(err))
 			return nil, gqlutils.Internal(ctx)

@@ -616,7 +616,6 @@ components:
       required:
         - id
         - name
-        - description
         - created_at
         - updated_at
       properties:
@@ -626,11 +625,6 @@ components:
         name:
           type: string
           description: Organization name
-        description:
-          type:
-            - string
-            - "null"
-          description: Organization description
         created_at:
           type: string
           format: date-time
@@ -8784,21 +8778,21 @@ components:
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    ComplianceExternalURLOrderField:
+    ComplianceCustomLinkOrderField:
       type: string
       enum:
         - CREATED_AT
         - RANK
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ComplianceCustomLinkOrderField
 
-    ComplianceExternalURLOrderBy:
+    ComplianceCustomLinkOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/ComplianceExternalURLOrderField"
+          $ref: "#/components/schemas/ComplianceCustomLinkOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
@@ -8855,6 +8849,26 @@ components:
           $ref: "#/components/schemas/File"
         nda:
           $ref: "#/components/schemas/File"
+        description:
+          type:
+            - string
+            - "null"
+          description: Compliance page description
+        website_url:
+          type:
+            - string
+            - "null"
+          description: Compliance page website URL
+        email:
+          type:
+            - string
+            - "null"
+          description: Compliance page contact email
+        headquarter_address:
+          type:
+            - string
+            - "null"
+          description: Compliance page headquarter address
         created_at:
           type: string
           format: date-time
@@ -8925,7 +8939,7 @@ components:
           type: string
           format: date-time
 
-    ComplianceExternalURL:
+    ComplianceCustomLink:
       type: object
       required:
         - id
@@ -8956,6 +8970,7 @@ components:
         - id
         - organization_id
         - domain
+        - managed
         - ssl_status
         - created_at
         - updated_at
@@ -8966,6 +8981,9 @@ components:
           $ref: "#/components/schemas/GID"
         domain:
           type: string
+        managed:
+          type: boolean
+          description: Whether this domain is a Probo-managed probopage subdomain
         ssl_status:
           $ref: "#/components/schemas/SSLStatus"
         ssl_expires_at:
@@ -9016,6 +9034,30 @@ components:
             - $ref: "#/components/schemas/SearchEngineIndexing"
             - type: "null"
           description: Search engine indexing setting
+          go.probo.inc/mcpgen/omittable: true
+        description:
+          type:
+            - string
+            - "null"
+          description: Compliance page description
+          go.probo.inc/mcpgen/omittable: true
+        website_url:
+          type:
+            - string
+            - "null"
+          description: Compliance page website URL
+          go.probo.inc/mcpgen/omittable: true
+        email:
+          type:
+            - string
+            - "null"
+          description: Compliance page contact email
+          go.probo.inc/mcpgen/omittable: true
+        headquarter_address:
+          type:
+            - string
+            - "null"
+          description: Compliance page headquarter address
           go.probo.inc/mcpgen/omittable: true
 
     UpdateTrustCenterOutput:
@@ -9604,7 +9646,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted trust center file ID
 
-    ListComplianceExternalURLsInput:
+    ListComplianceCustomLinksInput:
       type: object
       required:
         - trust_center_id
@@ -9613,8 +9655,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Trust center ID
         order_by:
-          $ref: "#/components/schemas/ComplianceExternalURLOrderBy"
-          description: Compliance external URL order by
+          $ref: "#/components/schemas/ComplianceCustomLinkOrderBy"
+          description: Compliance custom link order by
         size:
           type: integer
           description: Page size
@@ -9622,20 +9664,20 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListComplianceExternalURLsOutput:
+    ListComplianceCustomLinksOutput:
       type: object
       required:
-        - compliance_external_urls
+        - compliance_custom_links
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        compliance_external_urls:
+        compliance_custom_links:
           type: array
           items:
-            $ref: "#/components/schemas/ComplianceExternalURL"
+            $ref: "#/components/schemas/ComplianceCustomLink"
 
-    AddComplianceExternalURLInput:
+    AddComplianceCustomLinkInput:
       type: object
       required:
         - trust_center_id
@@ -9647,81 +9689,81 @@ components:
           description: Trust center ID
         name:
           type: string
-          description: External URL name
+          description: Custom Link name
         url:
           type: string
-          description: External URL
+          description: Custom Link
 
-    AddComplianceExternalURLOutput:
+    AddComplianceCustomLinkOutput:
       type: object
       required:
-        - compliance_external_url
+        - compliance_custom_link
       properties:
-        compliance_external_url:
-          $ref: "#/components/schemas/ComplianceExternalURL"
+        compliance_custom_link:
+          $ref: "#/components/schemas/ComplianceCustomLink"
 
-    UpdateComplianceExternalURLInput:
+    UpdateComplianceCustomLinkInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Compliance external URL ID
+          description: Compliance custom link ID
         name:
           type:
             - string
             - "null"
-          description: External URL name
+          description: Custom Link name
           go.probo.inc/mcpgen/omittable: true
         url:
           type:
             - string
             - "null"
-          description: External URL
+          description: Custom Link
           go.probo.inc/mcpgen/omittable: true
         rank:
           type:
             - integer
             - "null"
-          description: External URL rank
+          description: Custom Link rank
           go.probo.inc/mcpgen/omittable: true
 
-    UpdateComplianceExternalURLOutput:
+    UpdateComplianceCustomLinkOutput:
       type: object
       required:
-        - compliance_external_url
+        - compliance_custom_link
       properties:
-        compliance_external_url:
-          $ref: "#/components/schemas/ComplianceExternalURL"
+        compliance_custom_link:
+          $ref: "#/components/schemas/ComplianceCustomLink"
 
-    DeleteComplianceExternalURLInput:
+    DeleteComplianceCustomLinkInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Compliance external URL ID
+          description: Compliance custom link ID
 
-    DeleteComplianceExternalURLOutput:
+    DeleteComplianceCustomLinkOutput:
       type: object
       required:
-        - deleted_compliance_external_url_id
+        - deleted_compliance_custom_link_id
       properties:
-        deleted_compliance_external_url_id:
+        deleted_compliance_custom_link_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted compliance external URL ID
+          description: Deleted compliance custom link ID
 
     CreateCustomDomainInput:
       type: object
       required:
-        - organization_id
+        - trust_center_id
         - domain
       properties:
-        organization_id:
+        trust_center_id:
           $ref: "#/components/schemas/GID"
-          description: Organization ID
+          description: Compliance page (trust center) ID
         domain:
           type: string
           description: Custom domain name
@@ -9737,11 +9779,11 @@ components:
     DeleteCustomDomainInput:
       type: object
       required:
-        - organization_id
+        - trust_center_id
       properties:
-        organization_id:
+        trust_center_id:
           $ref: "#/components/schemas/GID"
-          description: Organization ID
+          description: Compliance page (trust center) ID
 
     DeleteCustomDomainOutput:
       type: object
@@ -14122,42 +14164,42 @@ tools:
       $ref: "#/components/schemas/DeleteTrustCenterFileInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTrustCenterFileOutput"
-  - name: listComplianceExternalURLs
-    description: List all compliance external URLs for a trust center
+  - name: listComplianceCustomLinks
+    description: List all compliance custom links for a trust center
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListComplianceExternalURLsInput"
+      $ref: "#/components/schemas/ListComplianceCustomLinksInput"
     outputSchema:
-      $ref: "#/components/schemas/ListComplianceExternalURLsOutput"
-  - name: addComplianceExternalURL
-    description: Add a new compliance external URL to a trust center
+      $ref: "#/components/schemas/ListComplianceCustomLinksOutput"
+  - name: addComplianceCustomLink
+    description: Add a new compliance custom link to a trust center
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddComplianceExternalURLInput"
+      $ref: "#/components/schemas/AddComplianceCustomLinkInput"
     outputSchema:
-      $ref: "#/components/schemas/AddComplianceExternalURLOutput"
-  - name: updateComplianceExternalURL
-    description: Update an existing compliance external URL
+      $ref: "#/components/schemas/AddComplianceCustomLinkOutput"
+  - name: updateComplianceCustomLink
+    description: Update an existing compliance custom link
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateComplianceExternalURLInput"
+      $ref: "#/components/schemas/UpdateComplianceCustomLinkInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateComplianceExternalURLOutput"
-  - name: deleteComplianceExternalURL
-    description: Delete a compliance external URL
+      $ref: "#/components/schemas/UpdateComplianceCustomLinkOutput"
+  - name: deleteComplianceCustomLink
+    description: Delete a compliance custom link
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteComplianceExternalURLInput"
+      $ref: "#/components/schemas/DeleteComplianceCustomLinkInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteComplianceExternalURLOutput"
+      $ref: "#/components/schemas/DeleteComplianceCustomLinkOutput"
   - name: createCustomDomain
-    description: Create a custom domain for an organization
+    description: Create a custom domain for a compliance page
     hints:
       readonly: false
     inputSchema:
@@ -14165,7 +14207,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CreateCustomDomainOutput"
   - name: deleteCustomDomain
-    description: Delete the custom domain for an organization
+    description: Delete the custom domain of a compliance page
     hints:
       readonly: false
       destructive: true

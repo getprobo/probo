@@ -24,18 +24,26 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewCustomDomain(d *coredata.CustomDomain, cnameTarget string) *CustomDomain {
+// NewCustomDomain builds the GraphQL CustomDomain type. The TLS lifecycle now
+// lives on the linked certificate; when cert is nil (certificate not yet
+// created) the domain reports a pending SSL status.
+func NewCustomDomain(d *coredata.CustomDomain, cert *coredata.Certificate, cnameTarget string) *CustomDomain {
 	result := &CustomDomain{
 		ID: d.ID,
 		Organization: &Organization{
 			ID: d.OrganizationID,
 		},
-		Domain:            d.Domain,
-		SslStatus:         d.SSLStatus,
-		CreatedAt:         d.CreatedAt,
-		UpdatedAt:         d.UpdatedAt,
-		SslExpiresAt:      d.SSLExpiresAt,
-		ProvisioningError: d.ProvisioningError,
+		Domain:    d.Domain,
+		Managed:   d.Managed,
+		SslStatus: coredata.CustomDomainSSLStatusPending,
+		CreatedAt: d.CreatedAt,
+		UpdatedAt: d.UpdatedAt,
+	}
+
+	if cert != nil {
+		result.SslStatus = coredata.CustomDomainSSLStatus(cert.Status)
+		result.SslExpiresAt = cert.SSLExpiresAt
+		result.ProvisioningError = cert.ProvisioningError
 	}
 
 	// Convert DNS records

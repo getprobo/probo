@@ -93,10 +93,6 @@ type Organization implements Node {
     logo: File @goField(forceResolver: true)
     horizontalLogo: File @goField(forceResolver: true)
 
-    description: String
-    websiteUrl: String
-    email: String
-    headquarterAddress: String
     context: OrganizationContext @goField(forceResolver: true)
 
     profiles(
@@ -319,7 +315,6 @@ type Organization implements Node {
     ): AgentRunConnection! @goField(forceResolver: true)
 
     trustCenter: TrustCenter @goField(forceResolver: true)
-    customDomain: CustomDomain @goField(forceResolver: true)
     trustCenterFiles(
         first: Int
         after: CursorKey

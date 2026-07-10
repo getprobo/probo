@@ -31,6 +31,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -47,6 +48,7 @@ import (
 
 type Resolver struct {
 	proboSvc       *probo.Service
+	management     *management.Service
 	resourceAlias  *resourcealias.Service
 	thirdPartySvc  *thirdparty.Service
 	iamSvc         *iam.Service

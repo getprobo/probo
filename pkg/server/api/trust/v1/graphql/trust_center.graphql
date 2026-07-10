@@ -5,6 +5,11 @@ type TrustCenter implements Node {
   logo: File @goField(forceResolver: true)
   darkLogo: File @goField(forceResolver: true)
 
+  description: String
+  websiteUrl: String
+  email: String
+  headquarterAddress: String
+
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
   viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
@@ -69,12 +74,12 @@ type TrustCenter implements Node {
     before: CursorKey
   ): ComplianceFrameworkConnection! @goField(forceResolver: true)
 
-  externalUrls(
+  customLinks(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): ComplianceExternalURLConnection! @goField(forceResolver: true)
+  ): ComplianceCustomLinkConnection! @goField(forceResolver: true)
 
   updates(
     first: Int
@@ -415,21 +420,21 @@ type TrustCenterFileEdge @nda {
   node: TrustCenterFile!
 }
 
-type ComplianceExternalURL implements Node {
+type ComplianceCustomLink implements Node {
   id: ID!
   name: String!
   url: String!
   rank: Int!
 }
 
-type ComplianceExternalURLConnection {
-  edges: [ComplianceExternalURLEdge!]!
+type ComplianceCustomLinkConnection {
+  edges: [ComplianceCustomLinkEdge!]!
   pageInfo: PageInfo!
 }
 
-type ComplianceExternalURLEdge {
+type ComplianceCustomLinkEdge {
   cursor: CursorKey!
-  node: ComplianceExternalURL!
+  node: ComplianceCustomLink!
 }
 
 type TrustCenterAccess implements Node {

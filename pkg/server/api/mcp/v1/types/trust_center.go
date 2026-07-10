@@ -31,6 +31,10 @@ func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 		OrganizationID:       tc.OrganizationID,
 		Active:               tc.Active,
 		SearchEngineIndexing: tc.SearchEngineIndexing,
+		Description:          tc.Description,
+		WebsiteURL:           tc.WebsiteURL,
+		Email:                tc.Email,
+		HeadquarterAddress:   tc.HeadquarterAddress,
 		CreatedAt:            tc.CreatedAt,
 		UpdatedAt:            tc.UpdatedAt,
 	}

@@ -13,6 +13,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -1158,12 +1159,12 @@ func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organiz
 
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet)
+	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalGet)
 	if err != nil {
 		return nil, err
 	}
 
-	trustCenter, err := r.probo.TrustCenters.GetByOrganizationID(ctx, scope, obj.ID)
+	trustCenter, err := r.management.GetByOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1172,29 +1173,9 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 	return types.NewTrustCenter(trustCenter), nil
 }
 
-// CustomDomain is the resolver for the customDomain field.
-func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionCustomDomainGet)
-	if err != nil {
-		return nil, err
-	}
-
-	domain, err := r.probo.CustomDomains.GetOrganizationCustomDomain(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if domain == nil {
-		return nil, nil
-	}
-
-	return types.NewCustomDomain(domain, r.customDomainCname), nil
-}
-
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileList)
+	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalFileList)
 	if err != nil {
 		return nil, err
 	}
@@ -1213,7 +1194,7 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := r.probo.TrustCenterFiles.ListForOrganizationID(ctx, scope, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
+	pageResult, err := r.management.ListFilesForOrganizationID(ctx, scope, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization trust center files", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

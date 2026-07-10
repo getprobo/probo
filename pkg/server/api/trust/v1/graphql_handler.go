@@ -25,6 +25,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
@@ -36,7 +37,6 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/authentication"
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 func NewGraphQLHandler(

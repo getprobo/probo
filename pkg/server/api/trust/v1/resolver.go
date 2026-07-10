@@ -50,6 +50,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
@@ -57,9 +58,8 @@ import (
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 type (
@@ -102,13 +102,13 @@ func NewMux(
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
+	r.Use(complianceportal.NewCompliancePagePresenceMiddleware())
 
 	sessionTransferHandler := NewSessionTransferHandler(
 		iamSvc,
 		cookieConfig,
 		func(ctx context.Context, host string) bool {
-			_, err := trustSvc.GetByDomainName(ctx, host)
+			_, err := trustSvc.GetPortalByDomainName(ctx, host)
 			return err == nil
 		},
 		logger,
@@ -132,7 +132,7 @@ func NewMux(
 	r.Group(
 		func(r chi.Router) {
 			r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-			r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
+			r.Use(complianceportal.NewMemberProvisioningMiddleware(trustSvc, logger))
 			r.Handle("/graphql", graphqlHandler)
 		},
 	)

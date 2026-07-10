@@ -3,10 +3,6 @@ type Organization implements Node {
   name: String!
   logo: File @goField(forceResolver: true)
   horizontalLogo: File @goField(forceResolver: true)
-  email: String
-  description: String
-  websiteUrl: String
-  headquarterAddress: String
   createdAt: Datetime!
   updatedAt: Datetime!
 
@@ -70,10 +66,6 @@ input UpdateOrganizationInput {
   name: String
   logoFile: Upload
   horizontalLogoFile: Upload
-  description: String @goField(omittable: true)
-  websiteUrl: String @goField(omittable: true)
-  email: String @goField(omittable: true)
-  headquarterAddress: String @goField(omittable: true)
 }
 
 input DeleteOrganizationInput {

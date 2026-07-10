@@ -25,8 +25,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewComplianceExternalURL(c *coredata.ComplianceExternalURL) *ComplianceExternalURL {
-	return &ComplianceExternalURL{
+func NewComplianceCustomLink(c *coredata.ComplianceCustomLink) *ComplianceCustomLink {
+	return &ComplianceCustomLink{
 		ID:   c.ID,
 		Name: c.Name,
 		URL:  c.URL,
@@ -34,24 +34,24 @@ func NewComplianceExternalURL(c *coredata.ComplianceExternalURL) *ComplianceExte
 	}
 }
 
-func NewComplianceExternalURLConnection(
-	p *page.Page[*coredata.ComplianceExternalURL, coredata.ComplianceExternalURLOrderField],
-) *ComplianceExternalURLConnection {
-	edges := make([]*ComplianceExternalURLEdge, len(p.Data))
+func NewComplianceCustomLinkConnection(
+	p *page.Page[*coredata.ComplianceCustomLink, coredata.ComplianceCustomLinkOrderField],
+) *ComplianceCustomLinkConnection {
+	edges := make([]*ComplianceCustomLinkEdge, len(p.Data))
 
 	for i, item := range p.Data {
-		edges[i] = NewComplianceExternalURLEdge(item, p.Cursor.OrderBy.Field)
+		edges[i] = NewComplianceCustomLinkEdge(item, p.Cursor.OrderBy.Field)
 	}
 
-	return &ComplianceExternalURLConnection{
+	return &ComplianceCustomLinkConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
 	}
 }
 
-func NewComplianceExternalURLEdge(c *coredata.ComplianceExternalURL, orderBy coredata.ComplianceExternalURLOrderField) *ComplianceExternalURLEdge {
-	return &ComplianceExternalURLEdge{
+func NewComplianceCustomLinkEdge(c *coredata.ComplianceCustomLink, orderBy coredata.ComplianceCustomLinkOrderField) *ComplianceCustomLinkEdge {
+	return &ComplianceCustomLinkEdge{
 		Cursor: c.CursorKey(orderBy),
-		Node:   NewComplianceExternalURL(c),
+		Node:   NewComplianceCustomLink(c),
 	}
 }

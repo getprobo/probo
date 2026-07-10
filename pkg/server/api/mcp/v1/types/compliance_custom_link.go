@@ -25,8 +25,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewComplianceExternalURL(c *coredata.ComplianceExternalURL) *ComplianceExternalURL {
-	return &ComplianceExternalURL{
+func NewComplianceCustomLink(c *coredata.ComplianceCustomLink) *ComplianceCustomLink {
+	return &ComplianceCustomLink{
 		ID:        c.ID,
 		Name:      c.Name,
 		URL:       c.URL,
@@ -36,10 +36,10 @@ func NewComplianceExternalURL(c *coredata.ComplianceExternalURL) *ComplianceExte
 	}
 }
 
-func NewListComplianceExternalURLsOutput(p *page.Page[*coredata.ComplianceExternalURL, coredata.ComplianceExternalURLOrderField]) ListComplianceExternalURLsOutput {
-	urls := make([]*ComplianceExternalURL, 0, len(p.Data))
+func NewListComplianceCustomLinksOutput(p *page.Page[*coredata.ComplianceCustomLink, coredata.ComplianceCustomLinkOrderField]) ListComplianceCustomLinksOutput {
+	urls := make([]*ComplianceCustomLink, 0, len(p.Data))
 	for _, c := range p.Data {
-		urls = append(urls, NewComplianceExternalURL(c))
+		urls = append(urls, NewComplianceCustomLink(c))
 	}
 
 	var nextCursor *page.CursorKey
@@ -49,8 +49,8 @@ func NewListComplianceExternalURLsOutput(p *page.Page[*coredata.ComplianceExtern
 		nextCursor = &cursorKey
 	}
 
-	return ListComplianceExternalURLsOutput{
-		NextCursor:             nextCursor,
-		ComplianceExternalUrls: urls,
+	return ListComplianceCustomLinksOutput{
+		NextCursor:            nextCursor,
+		ComplianceCustomLinks: urls,
 	}
 }

@@ -87,11 +87,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 	}
 
 	req := &iam.UpdateOrganizationRequest{
-		Name:               input.Name,
-		Description:        gqlutils.UnwrapOmittable(input.Description),
-		WebsiteURL:         gqlutils.UnwrapOmittable(input.WebsiteURL),
-		Email:              gqlutils.UnwrapOmittable(input.Email),
-		HeadquarterAddress: gqlutils.UnwrapOmittable(input.HeadquarterAddress),
+		Name: input.Name,
 	}
 
 	if input.LogoFile != nil {
@@ -124,14 +120,10 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 	return &types.UpdateOrganizationPayload{
 		Organization: &types.Organization{
-			ID:                 organization.ID,
-			Name:               organization.Name,
-			Description:        organization.Description,
-			WebsiteURL:         organization.WebsiteURL,
-			Email:              organization.Email,
-			HeadquarterAddress: organization.HeadquarterAddress,
-			CreatedAt:          organization.CreatedAt,
-			UpdatedAt:          organization.UpdatedAt,
+			ID:        organization.ID,
+			Name:      organization.Name,
+			CreatedAt: organization.CreatedAt,
+			UpdatedAt: organization.UpdatedAt,
 		},
 	}, nil
 }

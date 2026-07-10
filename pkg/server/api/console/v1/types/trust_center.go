@@ -28,21 +28,25 @@ import (
 )
 
 type TrustCenter struct {
-	ID                   gid.GID                          `json:"id"`
-	Active               bool                             `json:"active"`
-	SearchEngineIndexing coredata.SearchEngineIndexing    `json:"searchEngineIndexing"`
-	Logo                 *File                            `json:"logo,omitempty"`
-	DarkLogo             *File                            `json:"darkLogo,omitempty"`
-	Nda                  *File                            `json:"nda,omitempty"`
-	CreatedAt            time.Time                        `json:"createdAt"`
-	UpdatedAt            time.Time                        `json:"updatedAt"`
-	Organization         *Organization                    `json:"organization"`
-	Accesses             *TrustCenterAccessConnection     `json:"accesses"`
-	References           *TrustCenterReferenceConnection  `json:"references"`
-	ComplianceFrameworks *ComplianceFrameworkConnection   `json:"complianceFrameworks"`
-	ExternalUrls         *ComplianceExternalURLConnection `json:"externalUrls"`
-	MailingList          *MailingList                     `json:"mailingList,omitempty"`
-	Permission           bool                             `json:"permission"`
+	ID                   gid.GID                         `json:"id"`
+	Active               bool                            `json:"active"`
+	SearchEngineIndexing coredata.SearchEngineIndexing   `json:"searchEngineIndexing"`
+	Logo                 *File                           `json:"logo,omitempty"`
+	DarkLogo             *File                           `json:"darkLogo,omitempty"`
+	Nda                  *File                           `json:"nda,omitempty"`
+	Description          *string                         `json:"description,omitempty"`
+	WebsiteURL           *string                         `json:"websiteUrl,omitempty"`
+	Email                *string                         `json:"email,omitempty"`
+	HeadquarterAddress   *string                         `json:"headquarterAddress,omitempty"`
+	CreatedAt            time.Time                       `json:"createdAt"`
+	UpdatedAt            time.Time                       `json:"updatedAt"`
+	Organization         *Organization                   `json:"organization"`
+	Accesses             *TrustCenterAccessConnection    `json:"accesses"`
+	References           *TrustCenterReferenceConnection `json:"references"`
+	ComplianceFrameworks *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
+	CustomLinks          *ComplianceCustomLinkConnection `json:"customLinks"`
+	MailingList          *MailingList                    `json:"mailingList,omitempty"`
+	Permission           bool                            `json:"permission"`
 }
 
 func (TrustCenter) IsNode()          {}
@@ -56,6 +60,10 @@ func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 		},
 		Active:               tc.Active,
 		SearchEngineIndexing: tc.SearchEngineIndexing,
+		Description:          tc.Description,
+		WebsiteURL:           tc.WebsiteURL,
+		Email:                tc.Email,
+		HeadquarterAddress:   tc.HeadquarterAddress,
 		CreatedAt:            tc.CreatedAt,
 		UpdatedAt:            tc.UpdatedAt,
 	}

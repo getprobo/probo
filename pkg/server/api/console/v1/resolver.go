@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -65,6 +66,7 @@ type (
 		resourceAlias     *resourcealias.Service
 		iam               *iam.Service
 		esign             *esign.Service
+		management        *management.Service
 		accessReview      *accessreview.Service
 		agentRun          *agentrun.Service
 		mailman           *mailman.Service
@@ -81,12 +83,29 @@ type (
 	}
 )
 
+// newCustomDomainType loads the domain's certificate (when present) and builds
+// the GraphQL CustomDomain type with its certificate-backed SSL fields.
+func (r *Resolver) newCustomDomainType(
+	ctx context.Context,
+	scope coredata.Scoper,
+	domain *coredata.CustomDomain,
+) (*types.CustomDomain, error) {
+	cert, err := r.management.GetCertificate(ctx, scope, domain)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load certificate", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCustomDomain(domain, cert, r.customDomainCname), nil
+}
+
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	resourceAliasSvc *resourcealias.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
+	managementSvc *management.Service,
 	accessReviewSvc *accessreview.Service,
 	agentRunSvc *agentrun.Service,
 	mailmanSvc *mailman.Service,
@@ -111,6 +130,7 @@ func NewMux(
 		proboSvc,
 		resourceAliasSvc,
 		esignSvc,
+		managementSvc,
 		accessReviewSvc,
 		agentRunSvc,
 		mailmanSvc,

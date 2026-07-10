@@ -26,7 +26,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
@@ -34,8 +34,8 @@ func (r *Resolver) ResourceAliasResolver(
 	ctx context.Context,
 	storageResourceID gid.GID,
 ) (*string, error) {
-	compliancePage := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 
 	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, storageResourceID)
 	if err != nil {
