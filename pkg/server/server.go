@@ -23,8 +23,6 @@ package server
 import (
 	"errors"
 	"net/http"
-	"path"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -33,6 +31,8 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/complianceportal/management"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -47,14 +47,13 @@ import (
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
-	"go.probo.inc/probo/pkg/trust"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -68,6 +67,7 @@ type Config struct {
 	IAM               *iam.Service
 	Trust             *trust.Service
 	ESign             *esign.Service
+	CustomDomain      *management.Service
 	AccessReview      *accessreview.Service
 	AgentRun          *agentrun.Service
 	Slack             *slack.Service
@@ -109,6 +109,7 @@ func NewServer(cfg Config) (*Server, error) {
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,
+		CustomDomain:      cfg.CustomDomain,
 		AccessReview:      cfg.AccessReview,
 		AgentRun:          cfg.AgentRun,
 		Slack:             cfg.Slack,
@@ -157,12 +158,12 @@ func NewServer(cfg Config) (*Server, error) {
 		logger:             cfg.Logger,
 	}
 
-	server.setupRoutes(cfg.BaseURL.String())
+	server.setupRoutes()
 
 	return server, nil
 }
 
-func (s *Server) setupRoutes(baseURL string) {
+func (s *Server) setupRoutes() {
 	// OIDC Discovery 1.0 §4 and RFC 8414 §3 both require the metadata
 	// document at the issuer root under well-known paths.
 	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
@@ -171,12 +172,6 @@ func (s *Server) setupRoutes(baseURL string) {
 
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
-
-	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
-		r.Use(compliancepage.NewIDMiddleware(s.trustService, baseURL))
-		r.Use(s.stripTrustPrefix)
-		r.Mount("/", s.trustCenterRouter())
-	})
 
 	s.router.Mount("/", s.consoleWebServer)
 }
@@ -224,31 +219,10 @@ func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
 }
 
-func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slugOrId := chi.URLParam(r, "slugOrId")
-		prefix := "/trust/" + slugOrId
-
-		if r.URL.Path == prefix {
-			cleanPath := path.Clean(prefix) + "/"
-			http.Redirect(w, r, cleanPath, http.StatusMovedPermanently)
-
-			return
-		}
-
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, prefix)
-		if r.URL.Path == "" {
-			r.URL.Path = "/"
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (s *Server) trustCenterRouter() chi.Router {
 	r := chi.NewRouter()
 
-	h := compliancepage.NewHandler(s.trustService)
+	h := complianceportal.NewHandler(s.trustService)
 
 	r.Mount("/api/trust/v1", s.apiServer.CompliancePageHandler())
 	r.Get("/llms.txt", h.HandleLLMsTxt)
@@ -262,7 +236,7 @@ func (s *Server) trustCenterRouter() chi.Router {
 func (s *Server) TrustCenterHandler() http.Handler {
 	r := chi.NewRouter()
 
-	r.Use(compliancepage.NewSNIMiddleware(s.trustService))
+	r.Use(complianceportal.NewSNIMiddleware(s.trustService))
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000; preload")
@@ -280,21 +254,26 @@ func (s *Server) TrustCenterHandler() http.Handler {
 
 func compliancePageHeadData(baseURL *baseurl.BaseURL, trustService *trust.Service) trust_web.HeadDataFunc {
 	return func(r *http.Request) trust_web.HeadData {
-		tc := compliancepage.CompliancePageFromContext(r.Context())
+		tc := complianceportal.CompliancePageFromContext(r.Context())
 		if tc == nil {
 			return trust_web.HeadData{Title: "Compliance Page"}
 		}
 
-		org, err := trustService.GetOrganizationByTrustCenterID(r.Context(), tc.ID)
+		org, err := trustService.GetPortalOrganization(r.Context(), tc.ID)
 		if err != nil || org == nil {
 			return trust_web.HeadData{Title: "Compliance Page"}
 		}
 
-		compliancePageBaseURL := compliancepage.CompliancePageBaseURLFromContext(r.Context())
+		compliancePageBaseURL := complianceportal.CompliancePageBaseURLFromContext(r.Context())
+
+		description := org.Name + " Compliance Page"
+		if tc.Description != nil && *tc.Description != "" {
+			description = *tc.Description
+		}
 
 		headData := trust_web.HeadData{
 			Title:       org.Name + " — Compliance",
-			Description: org.Name + " Compliance Page",
+			Description: description,
 			OGURL:       ref.UnrefOrZero(compliancePageBaseURL),
 		}
 

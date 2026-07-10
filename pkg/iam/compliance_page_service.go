@@ -22,14 +22,13 @@ package iam
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/url"
 	"path/filepath"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/complianceportal/resolver"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -96,7 +95,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 	var (
 		compliancePage    = &coredata.TrustCenter{}
 		organization      = &coredata.Organization{}
-		customDomain      *coredata.CustomDomain
+		compliancePageURL string
 		logoFile          = &coredata.File{}
 		emailPresenterCfg = emails.DefaultPresenterConfig(s.baseURL)
 	)
@@ -120,12 +119,18 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load custom domain: %w", err)
-				}
+			publicURL, err := resolver.PublicURLForTrustCenter(
+				ctx,
+				conn,
+				scope,
+				compliancePage,
+				s.trustCenterBaseDomain,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot resolve compliance page URL: %w", err)
 			}
+
+			compliancePageURL = publicURL
 
 			return nil
 		},
@@ -134,24 +139,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		return emailPresenterCfg, err
 	}
 
-	parsedBaseURL, err := url.Parse(s.baseURL)
-	if err != nil {
-		return emailPresenterCfg, fmt.Errorf("cannot parse base URL: %w", err)
-	}
-
-	baseURL := url.URL{
-		Scheme: parsedBaseURL.Scheme,
-		Host:   parsedBaseURL.Host,
-		Path:   "/trust/" + compliancePage.Slug,
-	}
-
-	if customDomain != nil && customDomain.SSLStatus == coredata.CustomDomainSSLStatusActive {
-		baseURL.Host = customDomain.Domain
-		baseURL.Scheme = "https"
-		baseURL.Path = ""
-	}
-
-	emailPresenterCfg.BaseURL = baseURL.String()
+	emailPresenterCfg.BaseURL = compliancePageURL
 
 	if compliancePage.LogoFileID != nil {
 		if logoFile.FileKey == "" {
@@ -162,12 +150,12 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
-		if organization.WebsiteURL != nil {
-			emailPresenterCfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		if compliancePage.WebsiteURL != nil {
+			emailPresenterCfg.SenderCompanyWebsiteURL = *compliancePage.WebsiteURL
 		}
 
-		if organization.HeadquarterAddress != nil {
-			emailPresenterCfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		if compliancePage.HeadquarterAddress != nil {
+			emailPresenterCfg.SenderCompanyHeadquarterAddress = *compliancePage.HeadquarterAddress
 		}
 	}
 

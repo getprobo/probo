@@ -51,17 +51,36 @@ const (
 )
 
 type Service struct {
-	pg            *pg.Client
-	fm            *filemanager.Service
-	tokenSecret   string
-	apiBaseURL    *baseurl.BaseURL
-	bucket        string
-	encryptionKey cipher.EncryptionKey
-	logger        *log.Logger
+	pg                    *pg.Client
+	fm                    *filemanager.Service
+	tokenSecret           string
+	apiBaseURL            *baseurl.BaseURL
+	trustCenterBaseDomain string
+	bucket                string
+	encryptionKey         cipher.EncryptionKey
+	logger                *log.Logger
 }
 
-func NewService(pgClient *pg.Client, fm *filemanager.Service, tokenSecret string, apiBaseURL *baseurl.BaseURL, bucket string, encryptionKey cipher.EncryptionKey, logger *log.Logger) *Service {
-	return &Service{pg: pgClient, fm: fm, tokenSecret: tokenSecret, apiBaseURL: apiBaseURL, bucket: bucket, encryptionKey: encryptionKey, logger: logger}
+func NewService(
+	pgClient *pg.Client,
+	fm *filemanager.Service,
+	tokenSecret string,
+	apiBaseURL *baseurl.BaseURL,
+	trustCenterBaseDomain string,
+	bucket string,
+	encryptionKey cipher.EncryptionKey,
+	logger *log.Logger,
+) *Service {
+	return &Service{
+		pg:                    pgClient,
+		fm:                    fm,
+		tokenSecret:           tokenSecret,
+		apiBaseURL:            apiBaseURL,
+		trustCenterBaseDomain: trustCenterBaseDomain,
+		bucket:                bucket,
+		encryptionKey:         encryptionKey,
+		logger:                logger,
+	}
 }
 
 type (

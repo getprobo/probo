@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/complianceportal/resolver"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -62,12 +63,12 @@ func (s *Service) mailingListEmailConfig(
 	mailingListID gid.GID,
 ) (emails.PresenterConfig, string, string, *mail.Addr, error) {
 	var (
-		mailingList    = &coredata.MailingList{}
-		compliancePage = &coredata.TrustCenter{}
-		organization   = &coredata.Organization{}
-		customDomain   *coredata.CustomDomain
-		logoFile       = &coredata.File{}
-		defaultCfg     = emails.DefaultPresenterConfig(s.apiBaseURL.String())
+		mailingList       = &coredata.MailingList{}
+		compliancePage    = &coredata.TrustCenter{}
+		organization      = &coredata.Organization{}
+		compliancePageURL string
+		logoFile          = &coredata.File{}
+		defaultCfg        = emails.DefaultPresenterConfig(s.apiBaseURL.String())
 	)
 
 	scope := coredata.NewScopeFromObjectID(mailingListID)
@@ -97,12 +98,18 @@ func (s *Service) mailingListEmailConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load custom domain: %w", err)
-				}
+			publicURL, err := resolver.PublicURLForTrustCenter(
+				ctx,
+				conn,
+				scope,
+				compliancePage,
+				s.trustCenterBaseDomain,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot resolve compliance page URL: %w", err)
 			}
+
+			compliancePageURL = publicURL
 
 			return nil
 		},
@@ -111,7 +118,7 @@ func (s *Service) mailingListEmailConfig(
 		return defaultCfg, "", "", nil, err
 	}
 
-	cfg, compliancePageURL, err := s.presenterConfigFromTrustCenter(compliancePage, organization, customDomain, logoFile)
+	cfg, err := s.presenterConfigFromTrustCenter(compliancePage, organization, compliancePageURL, logoFile)
 	if err != nil {
 		return defaultCfg, "", "", nil, err
 	}
@@ -132,41 +139,24 @@ func (s *Service) mailingListEmailConfig(
 func (s *Service) presenterConfigFromTrustCenter(
 	compliancePage *coredata.TrustCenter,
 	organization *coredata.Organization,
-	customDomain *coredata.CustomDomain,
+	compliancePageURL string,
 	logoFile *coredata.File,
-) (emails.PresenterConfig, string, error) {
+) (emails.PresenterConfig, error) {
 	cfg := emails.DefaultPresenterConfig(s.apiBaseURL.String())
-
-	compliancePageBase := s.apiBaseURL.WithPath("/trust/" + compliancePage.ID.String())
-
-	if customDomain != nil && customDomain.SSLStatus == coredata.CustomDomainSSLStatusActive {
-		customBase, err := baseurl.Parse("https://" + customDomain.Domain)
-		if err != nil {
-			return cfg, "", fmt.Errorf("cannot parse custom domain URL: %w", err)
-		}
-
-		compliancePageBase = customBase.WithPath("")
-	}
-
-	compliancePageURL, err := compliancePageBase.String()
-	if err != nil {
-		return cfg, "", fmt.Errorf("cannot build compliance page URL: %w", err)
-	}
-
 	cfg.BaseURL = compliancePageURL
 
 	if compliancePage.LogoFileID != nil && logoFile != nil && logoFile.FileKey != "" {
 		cfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 
 		cfg.SenderCompanyName = organization.Name
-		if organization.WebsiteURL != nil {
-			cfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		if compliancePage.WebsiteURL != nil {
+			cfg.SenderCompanyWebsiteURL = *compliancePage.WebsiteURL
 		}
 
-		if organization.HeadquarterAddress != nil {
-			cfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		if compliancePage.HeadquarterAddress != nil {
+			cfg.SenderCompanyHeadquarterAddress = *compliancePage.HeadquarterAddress
 		}
 	}
 
-	return cfg, compliancePageURL, nil
+	return cfg, nil
 }
