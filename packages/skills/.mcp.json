@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "probo": {
+      "type": "http",
+      "url": "${PROBO_BASE_URL}/mcp/v1"
+    }
+  }
+}

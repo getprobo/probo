@@ -1,0 +1,30 @@
+{
+  "name": "probo",
+  "interface": {
+    "displayName": "Probo"
+  },
+  "plugins": [
+    {
+      "name": "probo",
+      "description": "Open-source compliance workflows powered by Probo MCP",
+      "source": {
+        "source": "local",
+        "path": "./packages/skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity",
+      "homepage": "https://github.com/getprobo/probo/tree/main/packages/skills",
+      "repository": "https://github.com/getprobo/probo",
+      "license": "MIT",
+      "keywords": [
+        "probo",
+        "compliance",
+        "grc",
+        "mcp"
+      ]
+    }
+  ]
+}

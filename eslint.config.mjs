@@ -17,6 +17,7 @@ export default defineConfig([
     "pkg/**",
     "packages/coredata/**",
     "packages/cookie-banner/**",
+    "packages/skills/**",
     "packages/emails/**",
     "packages/eslint-relay-plugin-types/**",
     "packages/helpers/**",
