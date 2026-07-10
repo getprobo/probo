@@ -40,11 +40,32 @@ const requiredPaths = [
 
 let failed = false;
 
+function fail(message) {
+  console.error(message);
+  failed = true;
+}
+
+function readJson(label, path) {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch (error) {
+    fail(`${label} is not valid JSON: ${error.message}`);
+    return null;
+  }
+}
+
+function requireNonEmptyString(label, field, value) {
+  if (typeof value !== "string" || value.length === 0) {
+    fail(`${label}: ${field} must be a non-empty string`);
+    return false;
+  }
+  return true;
+}
+
 for (const relativePath of requiredPaths) {
   const absolutePath = join(root, relativePath);
   if (!existsSync(absolutePath)) {
-    console.error(`missing required file: ${relativePath}`);
-    failed = true;
+    fail(`missing required file: ${relativePath}`);
   }
 }
 
@@ -58,44 +79,144 @@ for (const [label, path] of [
   if (!existsSync(path)) {
     continue;
   }
-  try {
-    const manifest = JSON.parse(readFileSync(path, "utf8"));
-    if (typeof manifest.name !== "string" || manifest.name.length === 0) {
-      console.error(`${label}: name must be a non-empty string`);
-      failed = true;
-    }
-    if (manifest.repository != null && typeof manifest.repository !== "string") {
-      console.error(
-        `${label}: repository must be a string URL, not an object`,
-      );
-      failed = true;
-    }
-    if (manifest.bugs != null && typeof manifest.bugs !== "string") {
-      console.error(`${label}: bugs must be a string URL, not an object`);
-      failed = true;
-    }
-  } catch (error) {
-    console.error(`${label} is not valid JSON: ${error.message}`);
-    failed = true;
+  const manifest = readJson(label, path);
+  if (manifest == null) {
+    continue;
+  }
+  requireNonEmptyString(label, "name", manifest.name);
+  if (manifest.repository != null && typeof manifest.repository !== "string") {
+    fail(`${label}: repository must be a string URL, not an object`);
+  }
+  if (manifest.bugs != null && typeof manifest.bugs !== "string") {
+    fail(`${label}: bugs must be a string URL, not an object`);
   }
 }
 
+const packageJsonPath = join(root, "package.json");
+const packageName = existsSync(packageJsonPath)
+  ? readJson("package.json", packageJsonPath)?.name
+  : null;
+
+function validateClaudeMarketplace(label, path) {
+  if (!existsSync(path)) {
+    return;
+  }
+
+  const marketplace = readJson(label, path);
+  if (marketplace == null) {
+    return;
+  }
+
+  requireNonEmptyString(label, "name", marketplace.name);
+
+  if (!Array.isArray(marketplace.plugins) || marketplace.plugins.length === 0) {
+    fail(`${label}: plugins must be a non-empty array`);
+    return;
+  }
+
+  for (const [index, plugin] of marketplace.plugins.entries()) {
+    const pluginLabel = `${label} plugins[${index}]`;
+    requireNonEmptyString(pluginLabel, "name", plugin?.name);
+
+    const source = plugin?.source;
+    if (typeof source === "string") {
+      if (!source.startsWith("./")) {
+        fail(`${pluginLabel}: source path must start with "./"`);
+      }
+      continue;
+    }
+
+    if (source == null || typeof source !== "object") {
+      fail(`${pluginLabel}: source must be a path string or npm source object`);
+      continue;
+    }
+
+    if (source.source === "npm") {
+      requireNonEmptyString(pluginLabel, "source.package", source.package);
+      if (packageName != null && source.package !== packageName) {
+        fail(
+          `${pluginLabel}: source.package must match package.json name (${packageName})`,
+        );
+      }
+      continue;
+    }
+
+    fail(
+      `${pluginLabel}: source.source must be "npm" or use a "./" path string`,
+    );
+  }
+}
+
+function validateCodexMarketplace(label, path) {
+  if (!existsSync(path)) {
+    return;
+  }
+
+  const marketplace = readJson(label, path);
+  if (marketplace == null) {
+    return;
+  }
+
+  requireNonEmptyString(label, "name", marketplace.name);
+
+  if (!Array.isArray(marketplace.plugins) || marketplace.plugins.length === 0) {
+    fail(`${label}: plugins must be a non-empty array`);
+    return;
+  }
+
+  for (const [index, plugin] of marketplace.plugins.entries()) {
+    const pluginLabel = `${label} plugins[${index}]`;
+    requireNonEmptyString(pluginLabel, "name", plugin?.name);
+
+    const source = plugin?.source;
+    if (source == null || typeof source !== "object") {
+      fail(`${pluginLabel}: source must be an object`);
+      continue;
+    }
+
+    if (source.source !== "local") {
+      fail(`${pluginLabel}: source.source must be "local"`);
+    }
+
+    if (typeof source.path !== "string" || !source.path.startsWith("./")) {
+      fail(`${pluginLabel}: source.path must be a "./"-prefixed string`);
+    }
+
+    const policy = plugin?.policy;
+    if (policy == null || typeof policy !== "object") {
+      fail(`${pluginLabel}: policy must be an object`);
+      continue;
+    }
+
+    requireNonEmptyString(pluginLabel, "policy.installation", policy.installation);
+    requireNonEmptyString(
+      pluginLabel,
+      "policy.authentication",
+      policy.authentication,
+    );
+    requireNonEmptyString(pluginLabel, "category", plugin.category);
+  }
+}
+
+validateClaudeMarketplace(
+  ".claude-plugin/marketplace.json",
+  join(root, ".claude-plugin/marketplace.json"),
+);
+validateCodexMarketplace(
+  ".agents/plugins/marketplace.json",
+  join(root, ".agents/plugins/marketplace.json"),
+);
+
 const mcpPath = join(root, ".mcp.json");
 if (existsSync(mcpPath)) {
-  try {
-    const mcpConfig = JSON.parse(readFileSync(mcpPath, "utf8"));
+  const mcpConfig = readJson(".mcp.json", mcpPath);
+  if (mcpConfig != null) {
     const servers = mcpConfig.mcpServers ?? {};
     for (const [name, config] of Object.entries(servers)) {
       if (config?.headers?.Authorization != null) {
-        console.error(
-          `.mcp.json: ${name} must use OAuth 2.0, not headers.Authorization`,
-        );
-        failed = true;
+        fail(`.mcp.json: ${name} must use OAuth 2.0, not headers.Authorization`);
       }
     }
-  } catch (error) {
-    console.error(`.mcp.json is not valid JSON: ${error.message}`);
-    failed = true;
   }
 }
 
