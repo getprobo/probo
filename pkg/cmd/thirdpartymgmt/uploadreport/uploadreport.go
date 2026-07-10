@@ -78,9 +78,9 @@ func NewCmdUploadReport(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "upload-report <file>",
-		Short: "Upload a compliance report for a thirdParty",
+		Short: "Upload a compliance report for a third party",
 		Example: `  # Upload a SOC 2 report for a third party
-  prb thirdParty upload-report ./soc2.pdf \
+  prb third-party upload-report ./soc2.pdf \
     --third-party <third-party-id> \
     --name "Acme Corp - SOC 2 Type 2 - 2026-03-31" \
     --report-date 2026-03-31 \
