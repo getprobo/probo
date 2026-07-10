@@ -63,12 +63,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new thirdParty",
-		Example: `  # Create a third_party interactively
-  prb thirdParty create
+		Short: "Create a new third party",
+		Example: `  # Create a third party interactively
+  prb third-party create
 
-  # Create a third_party non-interactively
-  prb thirdParty create --name "Acme Corp" --category CLOUD_PROVIDER`,
+  # Create a third party non-interactively
+  prb third-party create --name "Acme Corp" --category CLOUD_PROVIDER`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -188,7 +188,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			v := resp.CreateThirdParty.ThirdPartyEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Created thirdParty %s (%s)\n",
+				"Created third party %s (%s)\n",
 				v.ID,
 				v.Name,
 			)

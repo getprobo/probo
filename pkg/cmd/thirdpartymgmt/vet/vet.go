@@ -51,7 +51,7 @@ func NewCmdVet(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "vet <thirdParty-id> --url <website-url>",
+		Use:   "vet <third-party-id> --url <website-url>",
 		Short: "Start AI vetting of a third party from its website",
 		Long:  "Queue a vetting job that crawls a third party's website using AI agents to extract security, compliance, and business information.",
 		Example: `  # Vet a third party by website URL

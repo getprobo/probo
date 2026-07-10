@@ -57,7 +57,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
-		Short: "Update a thirdParty",
+		Short: "Update a third party",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -126,7 +126,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			v := resp.UpdateThirdParty.ThirdParty
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Updated thirdParty %s (%s)\n",
+				"Updated third party %s (%s)\n",
 				v.ID,
 				v.Name,
 			)

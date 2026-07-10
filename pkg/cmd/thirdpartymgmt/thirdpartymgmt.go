@@ -28,8 +28,8 @@ import (
 
 func NewCmdThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "thirdParty <command>",
-		Short: "Manage thirdParties",
+		Use:   "third-party <command>",
+		Short: "Manage third parties",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))

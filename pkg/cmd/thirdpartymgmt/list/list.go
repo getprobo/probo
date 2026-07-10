@@ -65,13 +65,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List thirdParties in an organization",
+		Short:   "List third parties in an organization",
 		Aliases: []string{"ls"},
-		Example: `  # List third_parties in the default organization
-  prb thirdParty list
+		Example: `  # List third parties in the default organization
+  prb third-party list
 
-  # List third_parties sorted by name
-  prb thirdParty ls --order-by NAME --json`,
+  # List third parties sorted by name
+  prb third-party ls --order-by NAME --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -165,7 +165,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(thirdParties) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No thirdParties found.")
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No third parties found.")
 				return nil
 			}
 
@@ -185,7 +185,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if totalCount > len(thirdParties) {
 				_, _ = fmt.Fprintf(
 					f.IOStreams.ErrOut,
-					"\nShowing %d of %d thirdParties\n",
+					"\nShowing %d of %d third parties\n",
 					len(thirdParties),
 					totalCount,
 				)
@@ -196,7 +196,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of thirdParties to list")
+	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of third parties to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (NAME, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().IntVar(&flagLevel, "level", 0, "Filter by third party level (1 = direct, 2+ = indirect)")
