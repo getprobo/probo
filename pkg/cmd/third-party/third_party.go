@@ -12,24 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package thirdpartymgmt
+package thirdparty
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/create"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/delete"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/list"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/publish"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/update"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/vet"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/view"
+	"go.probo.inc/probo/pkg/cmd/third-party/create"
+	"go.probo.inc/probo/pkg/cmd/third-party/delete"
+	"go.probo.inc/probo/pkg/cmd/third-party/list"
+	"go.probo.inc/probo/pkg/cmd/third-party/publish"
+	"go.probo.inc/probo/pkg/cmd/third-party/update"
+	"go.probo.inc/probo/pkg/cmd/third-party/vet"
+	"go.probo.inc/probo/pkg/cmd/third-party/view"
 )
 
 func NewCmdThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "thirdParty <command>",
-		Short: "Manage thirdParties",
+		Use:   "third-party <command>",
+		Short: "Manage third parties",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))
