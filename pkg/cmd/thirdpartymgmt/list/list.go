@@ -28,7 +28,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ThirdPartyOrder, $filt
   node(id: $id) {
     __typename
     ... on Organization {
-      third_parties(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+      thirdParties(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -138,7 +138,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					var resp struct {
 						Node *struct {
 							Typename     string                     `json:"__typename"`
-							ThirdParties api.Connection[thirdParty] `json:"third_parties"`
+							ThirdParties api.Connection[thirdParty] `json:"thirdParties"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
