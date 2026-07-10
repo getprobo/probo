@@ -102,17 +102,6 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionRiskAssessmentScenarioGet, ActionRiskAssessmentScenarioList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
-	policy.Allow(
-		ActionTrustCenterGet,
-		ActionTrustCenterAccessGet, ActionTrustCenterAccessList,
-		ActionTrustCenterDocumentAccessList,
-		ActionTrustCenterFileGet, ActionTrustCenterFileList, ActionTrustCenterFileGetFileUrl,
-		ActionTrustCenterReferenceList, ActionTrustCenterReferenceGetLogoUrl,
-		ActionCompliancePortalCommitmentGroupList, ActionCompliancePortalCommitmentList,
-		ActionComplianceFrameworkList,
-	).WithSID("trust-center-read-access").When(organizationCondition),
-
-	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read").When(organizationCondition),
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
 	policy.Allow(
 		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,

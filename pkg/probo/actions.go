@@ -33,76 +33,6 @@ const (
 	ActionOrganizationContextGet    = "core:organization-context:get"
 	ActionOrganizationContextUpdate = "core:organization-context:update"
 
-	// TrustCenter actions
-	ActionTrustCenterGet                          = "core:trust-center:get"
-	ActionTrustCenterUpdate                       = "core:trust-center:update"
-	ActionTrustCenterGetNda                       = "core:trust-center:get-nda"
-	ActionTrustCenterNonDisclosureAgreementUpload = "core:trust-center:upload-nda"
-	ActionTrustCenterNonDisclosureAgreementDelete = "core:trust-center:delete-nda"
-
-	// TrustCenterAccess actions
-	ActionTrustCenterAccessGet    = "core:trust-center-access:get"
-	ActionTrustCenterAccessList   = "core:trust-center-access:list"
-	ActionTrustCenterAccessCreate = "core:trust-center-access:create"
-	ActionTrustCenterAccessUpdate = "core:trust-center-access:update"
-	ActionTrustCenterAccessDelete = "core:trust-center-access:delete"
-
-	// MailingListUpdate actions
-	ActionMailingListUpdateList   = "core:mailing-list-update:list"
-	ActionMailingListUpdateCreate = "core:mailing-list-update:create"
-	ActionMailingListUpdateUpdate = "core:mailing-list-update:update"
-	ActionMailingListUpdateSend   = "core:mailing-list-update:send"
-	ActionMailingListUpdateDelete = "core:mailing-list-update:delete"
-
-	// MailingList actions
-	ActionMailingListUpdate = "core:mailing-list:update"
-
-	// MailingListSubscriber actions
-	ActionMailingListSubscriberList   = "core:mailing-list-subscriber:list"
-	ActionMailingListSubscriberCreate = "core:mailing-list-subscriber:create"
-	ActionMailingListSubscriberDelete = "core:mailing-list-subscriber:delete"
-
-	// TrustCenterReference actions
-	ActionTrustCenterReferenceList       = "core:trust-center-reference:list"
-	ActionTrustCenterReferenceGetLogoUrl = "core:trust-center-reference:get-logo-url"
-	ActionTrustCenterReferenceCreate     = "core:trust-center-reference:create"
-	ActionTrustCenterReferenceUpdate     = "core:trust-center-reference:update"
-	ActionTrustCenterReferenceDelete     = "core:trust-center-reference:delete"
-
-	// CompliancePortalCommitmentGroup actions
-	ActionCompliancePortalCommitmentGroupList       = "core:compliance-portal-commitment-group:list"
-	ActionCompliancePortalCommitmentGroupCreate     = "core:compliance-portal-commitment-group:create"
-	ActionCompliancePortalCommitmentGroupUpdate     = "core:compliance-portal-commitment-group:update"
-	ActionCompliancePortalCommitmentGroupUpdateRank = "core:compliance-portal-commitment-group:update-rank"
-	ActionCompliancePortalCommitmentGroupDelete     = "core:compliance-portal-commitment-group:delete"
-
-	// CompliancePortalCommitment actions
-	ActionCompliancePortalCommitmentList       = "core:compliance-portal-commitment:list"
-	ActionCompliancePortalCommitmentCreate     = "core:compliance-portal-commitment:create"
-	ActionCompliancePortalCommitmentUpdate     = "core:compliance-portal-commitment:update"
-	ActionCompliancePortalCommitmentUpdateRank = "core:compliance-portal-commitment:update-rank"
-	ActionCompliancePortalCommitmentDelete     = "core:compliance-portal-commitment:delete"
-
-	// ComplianceFramework actions
-	ActionComplianceFrameworkList       = "core:compliance-framework:list"
-	ActionComplianceFrameworkCreate     = "core:compliance-framework:create"
-	ActionComplianceFrameworkDelete     = "core:compliance-framework:delete"
-	ActionComplianceFrameworkUpdateRank = "core:compliance-framework:update-rank"
-
-	// ComplianceExternalURL actions
-	ActionComplianceExternalURLList   = "core:compliance-external-url:list"
-	ActionComplianceExternalURLCreate = "core:compliance-external-url:create"
-	ActionComplianceExternalURLUpdate = "core:compliance-external-url:update"
-	ActionComplianceExternalURLDelete = "core:compliance-external-url:delete"
-
-	// TrustCenterFile actions
-	ActionTrustCenterFileGet        = "core:trust-center-file:get"
-	ActionTrustCenterFileList       = "core:trust-center-file:list"
-	ActionTrustCenterFileGetFileUrl = "core:trust-center-file:get-file-url"
-	ActionTrustCenterFileUpdate     = "core:trust-center-file:update"
-	ActionTrustCenterFileDelete     = "core:trust-center-file:delete"
-	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
-
 	// ThirdParty actions
 	ActionThirdPartyList    = "core:thirdParty:list"
 	ActionThirdPartyGet     = "core:thirdParty:get"
@@ -214,16 +144,17 @@ const (
 	ActionDocumentDeleteDraft       = "core:document:delete-draft"
 
 	// DocumentVersion actions
-	ActionDocumentVersionGet          = "core:document-version:get"
-	ActionDocumentVersionList         = "core:document-version:list"
-	ActionDocumentVersionExportPDF    = "core:document-version:export-pdf"
-	ActionDocumentVersionSign         = "core:document-version:sign"
-	ActionDocumentVersionVoidApproval = "core:document-version:void-approval"
-	ActionDocumentVersionApprove      = "core:document-version:approve"
-	ActionDocumentVersionReject       = "core:document-version:reject"
-	ActionDocumentVersionApprovalList = "core:document-version:approval-list"
-	ActionDocumentVersionPublish      = "core:document-version:publish"
-	ActionDocumentVersionExport       = "core:document-version:export"
+	ActionDocumentVersionGet             = "core:document-version:get"
+	ActionDocumentVersionList            = "core:document-version:list"
+	ActionDocumentVersionExportPDF       = "core:document-version:export-pdf"
+	ActionDocumentVersionSign            = "core:document-version:sign"
+	ActionDocumentVersionRequestApproval = "core:document-version:request-approval"
+	ActionDocumentVersionVoidApproval    = "core:document-version:void-approval"
+	ActionDocumentVersionApprove         = "core:document-version:approve"
+	ActionDocumentVersionReject          = "core:document-version:reject"
+	ActionDocumentVersionApprovalList    = "core:document-version:approval-list"
+	ActionDocumentVersionPublish         = "core:document-version:publish"
+	ActionDocumentVersionExport          = "core:document-version:export"
 
 	// EmployeeDocument actions
 	ActionEmployeeDocumentGet              = "core:employee-document:get"
@@ -306,11 +237,6 @@ const (
 	ActionProcessingActivityDelete  = "core:processing-activity:delete"
 	ActionProcessingActivityPublish = "core:processing-activity:publish"
 
-	// CustomDomain actions
-	ActionCustomDomainGet    = "core:custom-domain:get"
-	ActionCustomDomainCreate = "core:custom-domain:create"
-	ActionCustomDomainDelete = "core:custom-domain:delete"
-
 	// File actions
 	ActionFileGet = "core:file:get"
 
@@ -341,9 +267,6 @@ const (
 	ActionTransferImpactAssessmentUpdate  = "core:transfer-impact-assessment:update"
 	ActionTransferImpactAssessmentDelete  = "core:transfer-impact-assessment:delete"
 	ActionTransferImpactAssessmentPublish = "core:transfer-impact-assessment:publish"
-
-	// TrustCenterDocumentAccess actions
-	ActionTrustCenterDocumentAccessList = "core:trust-center-document-access:list"
 
 	// RightsRequest actions
 	ActionRightsRequestList   = "core:rights-request:list"

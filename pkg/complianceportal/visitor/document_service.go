@@ -1,0 +1,346 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package visitor
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/docgen"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/pdfutils"
+)
+
+type ErrDocumentArchived struct{}
+
+func (e ErrDocumentArchived) Error() string {
+	return "cannot access an archived document"
+}
+
+func (s *Service) ListDocumentsForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.DocumentOrderField],
+	filter *coredata.DocumentFilter,
+) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
+	var documents coredata.Documents
+
+	if filter == nil {
+		filter = coredata.NewDocumentTrustCenterFilter()
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := documents.LoadPublishedByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load published documents: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(documents, cursor), nil
+}
+
+func (s *Service) ExportDocumentPDF(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	email mail.Addr,
+) ([]byte, error) {
+	pdfData, err := s.exportDocumentPDFData(ctx, scope, documentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot export document PDF: %w", err)
+	}
+
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+	}
+
+	return watermarkedPDF, nil
+}
+
+func (s *Service) ExportDocumentPDFWithoutWatermark(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) ([]byte, error) {
+	return s.exportDocumentPDFData(ctx, scope, documentID)
+}
+
+func (s *Service) GetDocument(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			err := document.LoadByID(ctx, conn, scope, documentID)
+			if err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if document.OrganizationID != organizationID {
+		return nil, ErrDocumentNotFound
+	}
+
+	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+		return nil, ErrDocumentNotVisible
+	}
+
+	return document, nil
+}
+
+func (s *Service) exportDocumentPDFData(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) ([]byte, error) {
+	document := &coredata.Document{}
+	version := &coredata.DocumentVersion{}
+	fileRecord := &coredata.File{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+				return fmt.Errorf("document not visible on trust center")
+			}
+
+			if err := version.LoadLatestPublishedVersion(ctx, conn, scope, documentID); err != nil {
+				return fmt.Errorf("cannot load latest published document version: %w", err)
+			}
+
+			if version.FileID == nil {
+				return nil
+			}
+
+			if err := fileRecord.LoadByID(ctx, conn, scope, *version.FileID); err != nil {
+				return fmt.Errorf("cannot load document version file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if version.FileID != nil {
+		pdfData, err := s.fileManager.GetFileBytes(ctx, fileRecord)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch document PDF file: %w", err)
+		}
+
+		return pdfData, nil
+	}
+
+	// TODO: remove on-the-fly fallback once all published versions have a stored PDF.
+	pdfData, err := s.generateDocumentPDFOnTheFly(ctx, scope, document, version)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate PDF on the fly: %w", err)
+	}
+
+	return pdfData, nil
+}
+
+// generatePDFOnTheFly generates a PDF from scratch for versions that don't have
+// a stored file yet. Can be removed once all published versions have been
+// processed by the document PDF worker.
+func (s *Service) generateDocumentPDFOnTheFly(
+	ctx context.Context,
+	scope coredata.Scoper,
+	document *coredata.Document,
+	version *coredata.DocumentVersion,
+) ([]byte, error) {
+	organization := &coredata.Organization{}
+
+	var approverNames []string
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			lastQuorum := &coredata.DocumentVersionApprovalQuorum{}
+			if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, scope, version.ID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load last approval quorum: %w", err)
+				}
+			} else if lastQuorum.Status == coredata.DocumentVersionApprovalQuorumStatusApproved {
+				approvedDecisions := &coredata.DocumentVersionApprovalDecisions{}
+
+				approvedFilter := coredata.NewDocumentVersionApprovalDecisionFilter(
+					coredata.DocumentVersionApprovalDecisionStates{coredata.DocumentVersionApprovalDecisionStateApproved},
+				)
+				if err := approvedDecisions.LoadByQuorumID(
+					ctx,
+					conn,
+					scope,
+					lastQuorum.ID,
+					page.NewCursor(
+						100,
+						nil,
+						page.Head,
+						page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+							Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+							Direction: page.OrderDirectionAsc,
+						},
+					),
+					approvedFilter,
+				); err != nil {
+					return fmt.Errorf("cannot load approved decisions: %w", err)
+				}
+
+				approverProfileIDs := make([]gid.GID, 0, len(*approvedDecisions))
+				for _, d := range *approvedDecisions {
+					approverProfileIDs = append(approverProfileIDs, d.ApproverID)
+				}
+
+				if len(approverProfileIDs) > 0 {
+					profiles := coredata.MembershipProfiles{}
+					if err := profiles.LoadByIDs(ctx, conn, scope, approverProfileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load approver profiles: %w", err)
+					}
+
+					for _, p := range profiles {
+						approverNames = append(approverNames, p.FullName)
+					}
+				}
+			}
+
+			if err := organization.LoadByID(ctx, conn, scope, document.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	classification := docgen.ClassificationSecret
+
+	switch version.Classification {
+	case coredata.DocumentClassificationPublic:
+		classification = docgen.ClassificationPublic
+	case coredata.DocumentClassificationInternal:
+		classification = docgen.ClassificationInternal
+	case coredata.DocumentClassificationConfidential:
+		classification = docgen.ClassificationConfidential
+	}
+
+	horizontalLogoBase64 := ""
+
+	if organization.HorizontalLogoFileID != nil {
+		fileRecord := &coredata.File{}
+
+		fileErr := s.pg.WithConn(
+
+			ctx,
+
+			func(ctx context.Context, conn pg.Querier) error {
+				return fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID)
+			})
+
+		if fileErr == nil {
+			base64Data, mimeType, logoErr := s.fileManager.GetFileBase64(ctx, fileRecord)
+			if logoErr == nil {
+				horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+			}
+		}
+	}
+
+	docData := docgen.DocumentData{
+		Title:                       version.Title,
+		Content:                     json.RawMessage([]byte(version.Content)),
+		Major:                       version.Major,
+		Minor:                       version.Minor,
+		Classification:              classification,
+		Approvers:                   approverNames,
+		PublishedAt:                 version.PublishedAt,
+		CompanyHorizontalLogoBase64: horizontalLogoBase64,
+	}
+
+	htmlContent, err := docgen.RenderHTML(docData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate HTML: %w", err)
+	}
+
+	cfg := html2pdf.RenderConfig{
+		PageFormat:      html2pdf.PageFormatA4,
+		Orientation:     html2pdf.OrientationPortrait,
+		MarginTop:       html2pdf.NewMarginInches(1.0),
+		MarginBottom:    html2pdf.NewMarginInches(1.0),
+		MarginLeft:      html2pdf.NewMarginInches(1.0),
+		MarginRight:     html2pdf.NewMarginInches(1.0),
+		PrintBackground: true,
+		Scale:           1.0,
+	}
+
+	pdfReader, err := s.html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate PDF: %w", err)
+	}
+
+	pdfData, err := io.ReadAll(pdfReader)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read PDF data: %w", err)
+	}
+
+	return pdfData, nil
+}

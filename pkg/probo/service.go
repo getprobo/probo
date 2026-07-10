@@ -28,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -83,7 +82,6 @@ type (
 		llmClient                             *llm.Client
 		llmConfig                             LLMConfig
 		html2pdfConverter                     *html2pdf.Converter
-		acmeService                           *certmanager.ACMEService
 		fileManager                           *filemanager.Service
 		logger                                *log.Logger
 		slack                                 *slack.Service
@@ -110,14 +108,6 @@ type (
 		Data                                  *DatumService
 		Audits                                *AuditService
 		WebhookSubscriptions                  *WebhookSubscriptionService
-		TrustCenters                          *TrustCenterService
-		TrustCenterAccesses                   *TrustCenterAccessService
-		TrustCenterReferences                 *TrustCenterReferenceService
-		CompliancePortalCommitmentGroups      *CompliancePortalCommitmentGroupService
-		CompliancePortalCommitments           *CompliancePortalCommitmentService
-		TrustCenterFiles                      *TrustCenterFileService
-		ComplianceFrameworks                  *ComplianceFrameworkService
-		ComplianceExternalURLs                *ComplianceExternalURLService
 		Findings                              *FindingService
 		Obligations                           *ObligationService
 		RightsRequests                        *RightsRequestService
@@ -127,7 +117,6 @@ type (
 		StatementsOfApplicability             *StatementOfApplicabilityService
 		GeneratedDocuments                    *GeneratedDocumentService
 		Files                                 *FileService
-		CustomDomains                         *CustomDomainService
 		SlackMessages                         *slack.Service
 	}
 )
@@ -143,7 +132,6 @@ func NewService(
 	llmClient *llm.Client,
 	llmConfig LLMConfig,
 	html2pdfConverter *html2pdf.Converter,
-	acmeService *certmanager.ACMEService,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	slackService *slack.Service,
@@ -168,7 +156,6 @@ func NewService(
 		llmClient:               llmClient,
 		llmConfig:               llmConfig,
 		html2pdfConverter:       html2pdfConverter,
-		acmeService:             acmeService,
 		fileManager:             fileManagerService,
 		logger:                  logger,
 		slack:                   slackService,
@@ -234,27 +221,6 @@ func NewService(
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}
 	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}
-	svc.TrustCenters = &TrustCenterService{svc: svc}
-	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc}
-	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}
-	svc.CompliancePortalCommitmentGroups = &CompliancePortalCommitmentGroupService{svc: svc}
-	svc.CompliancePortalCommitments = &CompliancePortalCommitmentService{svc: svc}
-	svc.ComplianceFrameworks = &ComplianceFrameworkService{svc: svc}
-	svc.ComplianceExternalURLs = &ComplianceExternalURLService{svc: svc}
-	svc.TrustCenterFiles = &TrustCenterFileService{
-		svc: svc,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(
-				filevalidation.CategoryData,
-				filevalidation.CategoryDocument,
-				filevalidation.CategoryImage,
-				filevalidation.CategoryPresentation,
-				filevalidation.CategorySpreadsheet,
-				filevalidation.CategoryText,
-			),
-			filevalidation.WithMaxFileSize(10*1024*1024), // 10MB
-		),
-	}
 	svc.Findings = &FindingService{svc: svc}
 	svc.Obligations = &ObligationService{svc: svc}
 	svc.RightsRequests = &RightsRequestService{svc: svc}
@@ -264,12 +230,6 @@ func NewService(
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}
 	svc.GeneratedDocuments = &GeneratedDocumentService{svc: svc}
 	svc.Files = &FileService{svc: svc}
-	svc.CustomDomains = &CustomDomainService{
-		svc:           svc,
-		encryptionKey: encryptionKey,
-		acmeService:   acmeService,
-		logger:        logger.Named("custom_domains"),
-	}
 	svc.SlackMessages = slackService
 
 	return svc, nil
@@ -405,29 +365,4 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 			return nil
 		},
 	)
-}
-
-func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (gid.GID, error) {
-	var organizationID gid.GID
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var customDomain coredata.CustomDomain
-			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
-				return fmt.Errorf("cannot load custom domain: %w", err)
-			}
-
-			var org coredata.Organization
-			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			organizationID = org.ID
-
-			return nil
-		},
-	)
-
-	return organizationID, err
 }
