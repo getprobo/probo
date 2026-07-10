@@ -26,7 +26,7 @@ import (
 const updateMutation = `
 mutation($input: UpdateThirdPartyInput!) {
   updateThirdParty(input: $input) {
-    third_party {
+    thirdParty {
       id
       name
       category
@@ -41,7 +41,7 @@ type updateResponse struct {
 			ID       string `json:"id"`
 			Name     string `json:"name"`
 			Category string `json:"category"`
-		} `json:"third_party"`
+		} `json:"thirdParty"`
 	} `json:"updateThirdParty"`
 }
 

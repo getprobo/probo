@@ -78,10 +78,10 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 		Use:   "publish",
 		Short: "Publish the thirdParty register as a document version",
 		Example: `  # Publish the third_party register
-  prb third_party publish --org ORG_ID
+  prb thirdParty publish --org ORG_ID
 
   # Publish with approvers
-  prb third_party publish --org ORG_ID --approver PROFILE_ID1 --approver PROFILE_ID2`,
+  prb thirdParty publish --org ORG_ID --approver PROFILE_ID1 --approver PROFILE_ID2`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

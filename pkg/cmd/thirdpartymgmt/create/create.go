@@ -65,10 +65,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new thirdParty",
 		Example: `  # Create a third_party interactively
-  prb third_party create
+  prb thirdParty create
 
   # Create a third_party non-interactively
-  prb third_party create --name "Acme Corp" --category CLOUD_PROVIDER`,
+  prb thirdParty create --name "Acme Corp" --category CLOUD_PROVIDER`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

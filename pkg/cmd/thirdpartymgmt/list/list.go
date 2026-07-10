@@ -68,10 +68,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List thirdParties in an organization",
 		Aliases: []string{"ls"},
 		Example: `  # List third_parties in the default organization
-  prb third_party list
+  prb thirdParty list
 
   # List third_parties sorted by name
-  prb third_party ls --order-by NAME --json`,
+  prb thirdParty ls --order-by NAME --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
