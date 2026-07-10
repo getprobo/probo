@@ -22,6 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/list"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/publish"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/update"
+	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/uploadreport"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/vet"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/view"
 )
@@ -37,6 +38,7 @@ func NewCmdThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(uploadreport.NewCmdUploadReport(f))
 	cmd.AddCommand(vet.NewCmdVet(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
 
