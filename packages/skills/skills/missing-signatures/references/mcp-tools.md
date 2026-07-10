@@ -16,7 +16,7 @@ Resolve profile display fields. `users[]` entries are `Profile` objects.
 
 | Field | Usage |
 | --- | --- |
-| `organization_id` | Organization GID |
+| `organization_id` | Required — organization GID |
 | `size` | Page size; use `100` when prefetching is helpful |
 | `cursor` | Pagination |
 

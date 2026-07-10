@@ -27,3 +27,7 @@ this file.
 
 - Package published as `@probo/skills` in `packages/skills/` (multi-agent
   scope, not Claude-specific)
+- Access-review skill records entry notes only after successful API writes
+- Release checksums derived from `npm pack` tarball contents
+- Validation enforces `.claude-plugin/marketplace.json`; `package.json` files
+  list trimmed to paths that exist

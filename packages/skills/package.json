@@ -18,9 +18,6 @@
     ".agents",
     "skills",
     "commands",
-    "agents",
-    "hooks",
-    "bin",
     ".mcp.json",
     "README.md",
     "COMPATIBILITY.md"

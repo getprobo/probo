@@ -40,7 +40,7 @@ updated_at: <ISO-8601 UTC>
 | --- | --- |
 | `last_cursor` | Empty on fresh run. Set to `listAccessEntries` `next_cursor` after each successful batch. Clear when null (pagination done). |
 | `updated_at` | Update on every file write |
-| `auto` column | `yes` if written via semi-auto rubric; `no` if user confirmed |
+| `auto` column | `yes` after a successful API write via semi-auto rubric; `no` if user confirmed |
 | Session log | Append-only; one line per batch or major event |
 | Ambiguous table | Remove rows after user confirms and decision is recorded |
 
@@ -51,7 +51,7 @@ updated_at: <ISO-8601 UTC>
 3. Continue `listAccessEntries` from `last_cursor` if set; otherwise start from
    the first pending page.
 4. Do not duplicate entry notes for IDs already in the table with a final
-   decision.
+   decision recorded after a successful API write.
 
 ## Git
 

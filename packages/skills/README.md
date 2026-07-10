@@ -76,8 +76,6 @@ claude --plugin-dir ./packages/skills
 | MCP | `.mcp.json` | Probo API connection |
 | Skills | `skills/` | Compliance workflows |
 | Commands | `commands/` | `access-review`, `missing-signatures` — semi-auto workflows |
-| Agents | `agents/` | Reserved |
-| Hooks | `hooks/` | Reserved |
 
 Skills: `/probo:<skill-name>` (e.g. `/probo:open-source-compliance`, `/probo:missing-signatures`).
 

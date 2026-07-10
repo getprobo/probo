@@ -20,6 +20,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const requiredPaths = [
   ".claude-plugin/plugin.json",
+  ".claude-plugin/marketplace.json",
   ".codex-plugin/plugin.json",
   ".agents/plugins/marketplace.json",
   ".mcp.json",

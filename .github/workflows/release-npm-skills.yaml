@@ -51,11 +51,15 @@ jobs:
       - name: "Generate checksums for published files"
         run: |
           cd packages/skills
-          find .claude-plugin skills commands agents hooks bin -type f 2>/dev/null \
+          PACKFILE=$(npm pack --silent)
+          tar -tzf "$PACKFILE" \
+            | grep -v '/$' \
             | sort \
             | while read -r file; do
-              echo "$(sha256sum "$file" | head -c 64)  $file"
-            done > checksums.txt
+                hash=$(tar -xOf "$PACKFILE" "$file" | sha256sum | head -c 64)
+                echo "$hash  $file"
+              done > checksums.txt
+          rm -f "$PACKFILE"
           test -s checksums.txt
       - run: "npm --workspace @probo/skills publish --access public --dry-run"
       - run: "npm --workspace @probo/skills publish --access public"

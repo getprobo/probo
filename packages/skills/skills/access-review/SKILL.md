@@ -54,15 +54,18 @@ Apply `references/decision-rubric.md`:
 | --- | --- |
 | **Auto** | Queue for `recordAccessReviewEntryDecisions` |
 | **Ambiguous** | Present to user; do not write yet |
-| **Skip** | Log in notes only |
+| **Skip** | Log in notes only (no API write) |
 
-Append each auto decision to the notes file before writing.
+Hold auto decisions in memory until step 4 succeeds — do not append them to the
+notes file yet.
 
 ### 4. Write auto decisions
 
 - Batch via `recordAccessReviewEntryDecisions` when possible.
 - Non-`APPROVED` decisions **must** include `decision_note`.
-- On MCP error, stop and do not advance `last_cursor`.
+- On MCP error, stop and do not advance `last_cursor` or update entry notes.
+- After a successful API response, append each recorded auto decision to the
+  notes file `## Entry notes` table.
 
 ### 5. Present ambiguous entries
 
