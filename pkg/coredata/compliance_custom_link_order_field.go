@@ -28,51 +28,51 @@ import (
 )
 
 type (
-	ComplianceExternalURLOrderField string
+	ComplianceCustomLinkOrderField string
 )
 
 const (
-	ComplianceExternalURLOrderFieldCreatedAt ComplianceExternalURLOrderField = "CREATED_AT"
-	ComplianceExternalURLOrderFieldRank      ComplianceExternalURLOrderField = "RANK"
+	ComplianceCustomLinkOrderFieldCreatedAt ComplianceCustomLinkOrderField = "CREATED_AT"
+	ComplianceCustomLinkOrderFieldRank      ComplianceCustomLinkOrderField = "RANK"
 )
 
 var (
-	_ page.OrderField          = ComplianceExternalURLOrderField("")
-	_ fmt.Stringer             = ComplianceExternalURLOrderField("")
-	_ encoding.TextMarshaler   = ComplianceExternalURLOrderField("")
-	_ encoding.TextUnmarshaler = (*ComplianceExternalURLOrderField)(nil)
+	_ page.OrderField          = ComplianceCustomLinkOrderField("")
+	_ fmt.Stringer             = ComplianceCustomLinkOrderField("")
+	_ encoding.TextMarshaler   = ComplianceCustomLinkOrderField("")
+	_ encoding.TextUnmarshaler = (*ComplianceCustomLinkOrderField)(nil)
 )
 
-func ComplianceExternalURLOrderFields() []ComplianceExternalURLOrderField {
-	return []ComplianceExternalURLOrderField{
-		ComplianceExternalURLOrderFieldCreatedAt,
-		ComplianceExternalURLOrderFieldRank,
+func ComplianceCustomLinkOrderFields() []ComplianceCustomLinkOrderField {
+	return []ComplianceCustomLinkOrderField{
+		ComplianceCustomLinkOrderFieldCreatedAt,
+		ComplianceCustomLinkOrderFieldRank,
 	}
 }
 
-func (v ComplianceExternalURLOrderField) IsValid() bool {
+func (v ComplianceCustomLinkOrderField) IsValid() bool {
 	switch v {
 	case
-		ComplianceExternalURLOrderFieldCreatedAt,
-		ComplianceExternalURLOrderFieldRank:
+		ComplianceCustomLinkOrderFieldCreatedAt,
+		ComplianceCustomLinkOrderFieldRank:
 		return true
 	}
 
 	return false
 }
 
-func (v ComplianceExternalURLOrderField) String() string {
+func (v ComplianceCustomLinkOrderField) String() string {
 	return string(v)
 }
 
-func (v ComplianceExternalURLOrderField) MarshalText() ([]byte, error) {
+func (v ComplianceCustomLinkOrderField) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *ComplianceExternalURLOrderField) UnmarshalText(text []byte) error {
-	val := ComplianceExternalURLOrderField(text)
+func (v *ComplianceCustomLinkOrderField) UnmarshalText(text []byte) error {
+	val := ComplianceCustomLinkOrderField(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid ComplianceExternalURLOrderField value: %q", string(text))
+		return fmt.Errorf("invalid ComplianceCustomLinkOrderField value: %q", string(text))
 	}
 
 	*v = val
@@ -80,11 +80,11 @@ func (v *ComplianceExternalURLOrderField) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (p ComplianceExternalURLOrderField) Column() string {
+func (p ComplianceCustomLinkOrderField) Column() string {
 	switch p {
-	case ComplianceExternalURLOrderFieldCreatedAt:
+	case ComplianceCustomLinkOrderFieldCreatedAt:
 		return "created_at"
-	case ComplianceExternalURLOrderFieldRank:
+	case ComplianceCustomLinkOrderFieldRank:
 		return "rank"
 	default:
 		return string(p)

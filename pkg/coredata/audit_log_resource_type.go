@@ -105,8 +105,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "WebhookSubscription"
 	case ComplianceFrameworkEntityType:
 		return "ComplianceFramework"
-	case ComplianceExternalURLEntityType:
-		return "ComplianceExternalURL"
+	case ComplianceCustomLinkEntityType:
+		return "ComplianceCustomLink"
 	case MailingListEntityType:
 		return "MailingList"
 	case MailingListSubscriberEntityType:

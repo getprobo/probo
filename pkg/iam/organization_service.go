@@ -69,10 +69,6 @@ type (
 		Name               *string
 		LogoFile           *UploadedFile
 		HorizontalLogoFile *UploadedFile
-		Description        **string
-		WebsiteURL         **string
-		Email              **string
-		HeadquarterAddress **string
 	}
 
 	CreateSAMLConfigurationRequest struct {
@@ -191,10 +187,6 @@ func (req UpdateOrganizationRequest) Validate() error {
 	fv := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryImage))
 
 	v.Check(req.Name, "name", validator.SafeTextNoNewLine(255))
-	v.Check(req.Description, "description", validator.SafeText(ContentMaxLength))
-	v.Check(req.WebsiteURL, "website_url", validator.SafeText(2048))
-	v.Check(req.Email, "email", validator.SafeText(255))
-	v.Check(req.HeadquarterAddress, "headquarter_address", validator.SafeText(2048))
 	v.Check(req.LogoFile, "logo_file", validator.NotEmpty())
 
 	if req.LogoFile != nil {
@@ -763,6 +755,28 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert mailing list: %w", err)
 			}
 
+			defaultDomainHostname := trustCenter.Slug + "." + s.trustCenterBaseDomain
+
+			defaultDomain := coredata.NewCustomDomain(
+				tenantID,
+				organization.ID,
+				defaultDomainHostname,
+				true,
+			)
+
+			certificate, err := s.certManager.EnsureCertificate(ctx, tx, scope, defaultDomainHostname)
+			if err != nil {
+				return fmt.Errorf("cannot ensure certificate for default custom domain: %w", err)
+			}
+
+			defaultDomain.CertificateID = &certificate.ID
+
+			if err := defaultDomain.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert default custom domain: %w", err)
+			}
+
+			trustCenter.DefaultDomainID = &defaultDomain.ID
+
 			if err := trustCenter.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert trust center: %w", err)
 			}
@@ -903,28 +917,6 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 
 			if req.Name != nil {
 				organization.Name = *req.Name
-			}
-
-			if req.Description != nil {
-				organization.Description = *req.Description
-			}
-
-			if req.WebsiteURL != nil {
-				organization.WebsiteURL = *req.WebsiteURL
-			}
-
-			if req.Email != nil {
-				if *req.Email != nil {
-					if _, err := mail.ParseAddr(**req.Email); err != nil {
-						return fmt.Errorf("invalid email address: %w", err)
-					}
-				}
-
-				organization.Email = *req.Email
-			}
-
-			if req.HeadquarterAddress != nil {
-				organization.HeadquarterAddress = *req.HeadquarterAddress
 			}
 
 			if logoFile != nil {

@@ -35,7 +35,7 @@ import (
 )
 
 type (
-	ComplianceExternalURL struct {
+	ComplianceCustomLink struct {
 		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		TrustCenterID  gid.GID   `db:"trust_center_id"`
@@ -46,26 +46,26 @@ type (
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
-	ComplianceExternalURLs []*ComplianceExternalURL
+	ComplianceCustomLinks []*ComplianceCustomLink
 )
 
-func (c ComplianceExternalURL) CursorKey(orderBy ComplianceExternalURLOrderField) page.CursorKey {
+func (c ComplianceCustomLink) CursorKey(orderBy ComplianceCustomLinkOrderField) page.CursorKey {
 	switch orderBy {
-	case ComplianceExternalURLOrderFieldCreatedAt:
+	case ComplianceCustomLinkOrderFieldCreatedAt:
 		return page.NewCursorKey(c.ID, c.CreatedAt)
-	case ComplianceExternalURLOrderFieldRank:
+	case ComplianceCustomLinkOrderFieldRank:
 		return page.NewCursorKey(c.ID, c.Rank)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *ComplianceExternalURL) AuthorizationAttributes(
+func (c *ComplianceCustomLink) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM compliance_external_urls WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM compliance_custom_links WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -99,7 +99,7 @@ func (c *ComplianceExternalURL) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (c *ComplianceExternalURL) LoadByID(
+func (c *ComplianceCustomLink) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -116,7 +116,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    compliance_external_urls
+    compliance_custom_links
 WHERE
     %s
     AND id = @id
@@ -129,16 +129,16 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query compliance_external_urls: %w", err)
+		return fmt.Errorf("cannot query compliance_custom_links: %w", err)
 	}
 
-	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ComplianceExternalURL])
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ComplianceCustomLink])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect compliance external URL: %w", err)
+		return fmt.Errorf("cannot collect compliance custom link: %w", err)
 	}
 
 	*c = result
@@ -146,14 +146,14 @@ LIMIT 1;
 	return nil
 }
 
-func (c *ComplianceExternalURL) Insert(
+func (c *ComplianceCustomLink) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    compliance_external_urls (
+    compliance_custom_links (
         id,
         tenant_id,
         organization_id,
@@ -171,7 +171,7 @@ VALUES (
     @trust_center_id,
     @name,
     @url,
-    (SELECT COALESCE(MAX(rank), 0) + 1 FROM compliance_external_urls WHERE trust_center_id = @trust_center_id),
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM compliance_custom_links WHERE trust_center_id = @trust_center_id),
     @created_at,
     @updated_at
 )
@@ -190,19 +190,19 @@ RETURNING rank;
 	}
 
 	if err := conn.QueryRow(ctx, q, args).Scan(&c.Rank); err != nil {
-		return fmt.Errorf("cannot insert compliance external URL: %w", err)
+		return fmt.Errorf("cannot insert compliance custom link: %w", err)
 	}
 
 	return nil
 }
 
-func (c *ComplianceExternalURL) Update(
+func (c *ComplianceCustomLink) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
-UPDATE compliance_external_urls
+UPDATE compliance_custom_links
 SET
     name = @name,
     url = @url,
@@ -223,13 +223,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update compliance external URL: %w", err)
+		return fmt.Errorf("cannot update compliance custom link: %w", err)
 	}
 
 	return nil
 }
 
-func (c *ComplianceExternalURL) UpdateRank(
+func (c *ComplianceCustomLink) UpdateRank(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -238,11 +238,11 @@ func (c *ComplianceExternalURL) UpdateRank(
 WITH old AS (
   SELECT
     rank AS old_rank
-  FROM compliance_external_urls
+  FROM compliance_custom_links
   WHERE %s AND id = @id AND trust_center_id = @trust_center_id
 )
 
-UPDATE compliance_external_urls
+UPDATE compliance_custom_links
 SET
     rank = CASE
         WHEN id = @id THEN @new_rank
@@ -274,20 +274,20 @@ WHERE %s
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update compliance external URL rank: %w", err)
+		return fmt.Errorf("cannot update compliance custom link rank: %w", err)
 	}
 
 	return nil
 }
 
-func (c *ComplianceExternalURL) Delete(
+func (c *ComplianceCustomLink) Delete(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 DELETE FROM
-    compliance_external_urls
+    compliance_custom_links
 WHERE
     %s
     AND id = @id;
@@ -299,18 +299,18 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete compliance external URL: %w", err)
+		return fmt.Errorf("cannot delete compliance custom link: %w", err)
 	}
 
 	return nil
 }
 
-func (c *ComplianceExternalURLs) LoadByTrustCenterID(
+func (c *ComplianceCustomLinks) LoadByTrustCenterID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	trustCenterID gid.GID,
-	cursor *page.Cursor[ComplianceExternalURLOrderField],
+	cursor *page.Cursor[ComplianceCustomLinkOrderField],
 ) error {
 	q := `
 SELECT
@@ -323,7 +323,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    compliance_external_urls
+    compliance_custom_links
 WHERE
     %s
     AND trust_center_id = @trust_center_id
@@ -337,12 +337,12 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query compliance_external_urls: %w", err)
+		return fmt.Errorf("cannot query compliance_custom_links: %w", err)
 	}
 
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ComplianceExternalURL])
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ComplianceCustomLink])
 	if err != nil {
-		return fmt.Errorf("cannot collect compliance external URLs: %w", err)
+		return fmt.Errorf("cannot collect compliance custom links: %w", err)
 	}
 
 	*c = results
