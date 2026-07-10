@@ -30,4 +30,4 @@ this file.
 - Access-review skill records entry notes only after successful API writes
 - Release checksums derived from `npm pack` tarball contents
 - Validation enforces `.claude-plugin/marketplace.json` structure and Codex
-  marketplace shape; `package.json` files list trimmed to paths that exist
+  marketplace shape; rejects non-object JSON roots in catalog files

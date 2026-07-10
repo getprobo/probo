@@ -45,13 +45,21 @@ function fail(message) {
   failed = true;
 }
 
-function readJson(label, path) {
+function readJsonObject(label, path) {
+  let value;
   try {
-    return JSON.parse(readFileSync(path, "utf8"));
+    value = JSON.parse(readFileSync(path, "utf8"));
   } catch (error) {
     fail(`${label} is not valid JSON: ${error.message}`);
-    return null;
+    return undefined;
   }
+
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    fail(`${label}: root must be a JSON object`);
+    return undefined;
+  }
+
+  return value;
 }
 
 function requireNonEmptyString(label, field, value) {
@@ -79,8 +87,8 @@ for (const [label, path] of [
   if (!existsSync(path)) {
     continue;
   }
-  const manifest = readJson(label, path);
-  if (manifest == null) {
+  const manifest = readJsonObject(label, path);
+  if (manifest === undefined) {
     continue;
   }
   requireNonEmptyString(label, "name", manifest.name);
@@ -94,7 +102,7 @@ for (const [label, path] of [
 
 const packageJsonPath = join(root, "package.json");
 const packageName = existsSync(packageJsonPath)
-  ? readJson("package.json", packageJsonPath)?.name
+  ? readJsonObject("package.json", packageJsonPath)?.name
   : null;
 
 function validateClaudeMarketplace(label, path) {
@@ -102,8 +110,8 @@ function validateClaudeMarketplace(label, path) {
     return;
   }
 
-  const marketplace = readJson(label, path);
-  if (marketplace == null) {
+  const marketplace = readJsonObject(label, path);
+  if (marketplace === undefined) {
     return;
   }
 
@@ -152,8 +160,8 @@ function validateCodexMarketplace(label, path) {
     return;
   }
 
-  const marketplace = readJson(label, path);
-  if (marketplace == null) {
+  const marketplace = readJsonObject(label, path);
+  if (marketplace === undefined) {
     return;
   }
 
@@ -209,8 +217,8 @@ validateCodexMarketplace(
 
 const mcpPath = join(root, ".mcp.json");
 if (existsSync(mcpPath)) {
-  const mcpConfig = readJson(".mcp.json", mcpPath);
-  if (mcpConfig != null) {
+  const mcpConfig = readJsonObject(".mcp.json", mcpPath);
+  if (mcpConfig !== undefined) {
     const servers = mcpConfig.mcpServers ?? {};
     for (const [name, config] of Object.entries(servers)) {
       if (config?.headers?.Authorization != null) {
