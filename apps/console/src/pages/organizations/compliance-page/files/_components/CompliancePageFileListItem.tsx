@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, getTrustCenterVisibilityOptions } from "@probo/helpers";
+import { formatDate, getCompliancePageVisibilityOptions } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Field, IconArrowLink, IconPencil, IconTrashCan, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
@@ -28,13 +28,13 @@ import { graphql } from "relay-runtime";
 import type { CompliancePageFileListItem_compliancePageFragment$key } from "#/__generated__/core/CompliancePageFileListItem_compliancePageFragment.graphql";
 import type { CompliancePageFileListItem_fileFragment$data, CompliancePageFileListItem_fileFragment$key } from "#/__generated__/core/CompliancePageFileListItem_fileFragment.graphql";
 import type { CompliancePageFileListItemMutation } from "#/__generated__/core/CompliancePageFileListItemMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
 
 const compliancePageFragment = graphql`
   fragment CompliancePageFileListItem_compliancePageFragment on TrustCenter {
-    canUpdate: permission(action: "core:trust-center:update")
+    canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
 
@@ -49,10 +49,10 @@ const fileFragment = graphql`
     file {
       downloadUrl
     }
-    trustCenterVisibility
+    compliancePageVisibility: trustCenterVisibility
     createdAt
-    canUpdate: permission(action: "core:trust-center-file:update")
-    canDelete: permission(action: "core:trust-center-file:delete")
+    canUpdate: permission(action: "compliance-portal:portal-file:update")
+    canDelete: permission(action: "compliance-portal:portal-file:delete")
   }
 `;
 
@@ -75,7 +75,7 @@ export function CompliancePageFileListItem(props: {
   const { compliancePageFragmentRef, fileFragmentRef, onEdit, onDelete } = props;
 
   const { __ } = useTranslate();
-  const visibilityOptions = getTrustCenterVisibilityOptions(__);
+  const visibilityOptions = getCompliancePageVisibilityOptions(__);
 
   const compliancePage = useFragment<CompliancePageFileListItem_compliancePageFragment$key>(
     compliancePageFragment,
@@ -83,11 +83,11 @@ export function CompliancePageFileListItem(props: {
   );
   const file = useFragment<CompliancePageFileListItem_fileFragment$key>(fileFragment, fileFragmentRef);
 
-  const [updateFile, isUpdating] = useMutationWithToasts<CompliancePageFileListItemMutation>(
+  const [updateFile, isUpdating] = useMutation<CompliancePageFileListItemMutation>(
     updateCompliancePageFileMutation,
     {
       successMessage: "File updated successfully",
-      errorMessage: "Failed to update file",
+      errorToast: "Failed to update file",
     },
   );
 
@@ -125,7 +125,7 @@ export function CompliancePageFileListItem(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={file.trustCenterVisibility}
+          value={file.compliancePageVisibility}
           onValueChange={value => void handleValueChange(value)}
           disabled={isUpdating || !compliancePage.canUpdate}
           className="w-[105px]"

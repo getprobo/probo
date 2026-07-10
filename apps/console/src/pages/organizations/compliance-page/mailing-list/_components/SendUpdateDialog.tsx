@@ -23,7 +23,7 @@ import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, IconSend, 
 import { graphql } from "relay-runtime";
 
 import type { SendUpdateDialogMutation } from "#/__generated__/core/SendUpdateDialogMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import type { UpdateNode } from "./CompliancePageUpdatesList";
 
@@ -50,9 +50,9 @@ type Props = {
 export function SendUpdateDialog({ ref, update, onSent }: Props) {
   const { __ } = useTranslate();
 
-  const [sendUpdate, isSending] = useMutationWithToasts<SendUpdateDialogMutation>(sendMutation, {
+  const [sendUpdate, isSending] = useMutation<SendUpdateDialogMutation>(sendMutation, {
     successMessage: __("Update enqueued for delivery"),
-    errorMessage: __("Failed to enqueue update for delivery"),
+    errorToast: __("Failed to enqueue update for delivery"),
   });
 
   const handleSend = async () => {

@@ -26,7 +26,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePageMailingListDeleteMutation } from "#/__generated__/core/CompliancePageMailingListDeleteMutation.graphql";
 import type { CompliancePageMailingListFragment$key } from "#/__generated__/core/CompliancePageMailingListFragment.graphql";
 import type { CompliancePageMailingListQuery } from "#/__generated__/core/CompliancePageMailingListQuery.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const deleteMutation = graphql`
   mutation CompliancePageMailingListDeleteMutation(
@@ -89,11 +89,11 @@ export function CompliancePageMailingList(props: {
 
   const subscribers = data.mailingList?.subscribers;
 
-  const [deleteSubscriber, isDeleting] = useMutationWithToasts<CompliancePageMailingListDeleteMutation>(
+  const [deleteSubscriber, isDeleting] = useMutation<CompliancePageMailingListDeleteMutation>(
     deleteMutation,
     {
       successMessage: __("Subscriber removed successfully"),
-      errorMessage: __("Failed to delete subscriber"),
+      errorToast: __("Failed to delete subscriber"),
     },
   );
 

@@ -27,7 +27,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePageUpdatesListDeleteMutation } from "#/__generated__/core/CompliancePageUpdatesListDeleteMutation.graphql";
 import type { CompliancePageUpdatesListFragment$data, CompliancePageUpdatesListFragment$key } from "#/__generated__/core/CompliancePageUpdatesListFragment.graphql";
 import type { CompliancePageUpdatesListQuery } from "#/__generated__/core/CompliancePageUpdatesListQuery.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { SendUpdateDialog } from "./SendUpdateDialog";
 
@@ -92,9 +92,9 @@ export function CompliancePageUpdatesList(props: {
   const connection = data.updates;
 
   const [deleteUpdate, isDeleting]
-    = useMutationWithToasts<CompliancePageUpdatesListDeleteMutation>(deleteMutation, {
+    = useMutation<CompliancePageUpdatesListDeleteMutation>(deleteMutation, {
       successMessage: __("Update deleted successfully"),
-      errorMessage: __("Failed to delete update"),
+      errorToast: __("Failed to delete update"),
     });
 
   const handleDelete = (id: string) => {

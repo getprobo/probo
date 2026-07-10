@@ -20,34 +20,40 @@
 
 import { graphql } from "relay-runtime";
 
-import type { TrustCenterGraphUpdateMutation } from "#/__generated__/core/TrustCenterGraphUpdateMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import type { CompliancePageGraphDeleteNDAMutation } from "#/__generated__/core/CompliancePageGraphDeleteNDAMutation.graphql";
+import type { CompliancePageGraphUpdateMutation } from "#/__generated__/core/CompliancePageGraphUpdateMutation.graphql";
+import type { CompliancePageGraphUploadNDAMutation } from "#/__generated__/core/CompliancePageGraphUploadNDAMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
-const updateTrustCenterMutation = graphql`
-  mutation TrustCenterGraphUpdateMutation($input: UpdateTrustCenterInput!) {
+const updateCompliancePageMutation = graphql`
+  mutation CompliancePageGraphUpdateMutation($input: UpdateTrustCenterInput!) {
     updateTrustCenter(input: $input) {
       trustCenter {
         id
         active
         searchEngineIndexing
+        description
+        websiteUrl
+        email
+        headquarterAddress
         updatedAt
       }
     }
   }
 `;
 
-export function useUpdateTrustCenterMutation() {
-  return useMutationWithToasts<TrustCenterGraphUpdateMutation>(
-    updateTrustCenterMutation,
+export function useUpdateCompliancePageMutation() {
+  return useMutation<CompliancePageGraphUpdateMutation>(
+    updateCompliancePageMutation,
     {
       successMessage: "Compliance Page updated successfully",
-      errorMessage: "Failed to update compliance page",
+      errorToast: "Failed to update compliance page",
     },
   );
 }
 
-const uploadTrustCenterNDAMutation = graphql`
-  mutation TrustCenterGraphUploadNDAMutation(
+const uploadCompliancePageNDAMutation = graphql`
+  mutation CompliancePageGraphUploadNDAMutation(
     $input: UploadTrustCenterNDAInput!
   ) {
     uploadTrustCenterNDA(input: $input) {
@@ -63,15 +69,15 @@ const uploadTrustCenterNDAMutation = graphql`
   }
 `;
 
-export function useUploadTrustCenterNDAMutation() {
-  return useMutationWithToasts(uploadTrustCenterNDAMutation, {
+export function useUploadCompliancePageNDAMutation() {
+  return useMutation<CompliancePageGraphUploadNDAMutation>(uploadCompliancePageNDAMutation, {
     successMessage: "NDA uploaded successfully",
-    errorMessage: "Failed to upload NDA",
+    errorToast: "Failed to upload NDA",
   });
 }
 
-const deleteTrustCenterNDAMutation = graphql`
-  mutation TrustCenterGraphDeleteNDAMutation(
+const deleteCompliancePageNDAMutation = graphql`
+  mutation CompliancePageGraphDeleteNDAMutation(
     $input: DeleteTrustCenterNDAInput!
   ) {
     deleteTrustCenterNDA(input: $input) {
@@ -87,9 +93,9 @@ const deleteTrustCenterNDAMutation = graphql`
   }
 `;
 
-export function useDeleteTrustCenterNDAMutation() {
-  return useMutationWithToasts(deleteTrustCenterNDAMutation, {
+export function useDeleteCompliancePageNDAMutation() {
+  return useMutation<CompliancePageGraphDeleteNDAMutation>(deleteCompliancePageNDAMutation, {
     successMessage: "NDA deleted successfully",
-    errorMessage: "Failed to delete NDA",
+    errorToast: "Failed to delete NDA",
   });
 }

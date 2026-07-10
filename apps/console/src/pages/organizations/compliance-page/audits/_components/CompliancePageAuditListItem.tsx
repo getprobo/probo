@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, getAuditStateLabel, getAuditStateVariant, getTrustCenterVisibilityOptions } from "@probo/helpers";
+import { formatDate, getAuditStateLabel, getAuditStateVariant, getCompliancePageVisibilityOptions } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Field, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
@@ -28,12 +28,12 @@ import { graphql } from "relay-runtime";
 import type { CompliancePageAuditListItem_auditFragment$key } from "#/__generated__/core/CompliancePageAuditListItem_auditFragment.graphql";
 import type { CompliancePageAuditListItem_compliancePageFragment$key } from "#/__generated__/core/CompliancePageAuditListItem_compliancePageFragment.graphql";
 import type { CompliancePageAuditListItem_updateAuditVisibilityMutation } from "#/__generated__/core/CompliancePageAuditListItem_updateAuditVisibilityMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const compliancePageFragment = graphql`
   fragment CompliancePageAuditListItem_compliancePageFragment on TrustCenter {
-    canUpdate: permission(action: "core:trust-center:update")
+    canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
 
@@ -46,7 +46,7 @@ const auditFragment = graphql`
     }
     validUntil
     state
-    trustCenterVisibility
+    compliancePageVisibility: trustCenterVisibility
   }
 `;
 
@@ -75,13 +75,13 @@ export function CompliancePageAuditListItem(props: {
   );
   const audit = useFragment<CompliancePageAuditListItem_auditFragment$key>(auditFragment, auditFragmentRef);
 
-  const [updateAuditVisibility, isUpdatingAuditVisibility] = useMutationWithToasts<
+  const [updateAuditVisibility, isUpdatingAuditVisibility] = useMutation<
     CompliancePageAuditListItem_updateAuditVisibilityMutation
   >(
     updateAuditVisibilityMutation,
     {
       successMessage: __("Audit visibility updated successfully."),
-      errorMessage: __("Failed to update audit visibility"),
+      errorToast: __("Failed to update audit visibility"),
     },
   );
   const handleVisibilityChange = useCallback(
@@ -100,7 +100,7 @@ export function CompliancePageAuditListItem(props: {
     [audit.id, updateAuditVisibility],
   );
 
-  const visibilityOptions = getTrustCenterVisibilityOptions(__);
+  const visibilityOptions = getCompliancePageVisibilityOptions(__);
   const validUntilFormatted = audit.validUntil
     ? formatDate(audit.validUntil)
     : __("No expiry");
@@ -120,7 +120,7 @@ export function CompliancePageAuditListItem(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={audit.trustCenterVisibility}
+          value={audit.compliancePageVisibility}
           onValueChange={value => void handleVisibilityChange(value)}
           disabled={isUpdatingAuditVisibility || !compliancePage.canUpdate}
           className="w-[105px]"

@@ -68,7 +68,7 @@ const fragment = graphql`
             action: "core:processing-activity:list"
         )
         canListRightsRequests: permission(action: "core:rights-request:list")
-        canGetTrustCenter: permission(action: "core:trust-center:get")
+        canGetCompliancePage: permission(action: "compliance-portal:portal:get")
         canListCookieBanners: permission(action: "core:cookie-banner:list")
         canUpdateOrganization: permission(action: "iam:organization:update")
         canListStatementsOfApplicability: permission(
@@ -212,7 +212,7 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/access-reviews`}
         />
       )}
-      {organization.canGetTrustCenter && (
+      {organization.canGetCompliancePage && (
         <SidebarItem
           label={__("Compliance Page")}
           icon={IconShield}

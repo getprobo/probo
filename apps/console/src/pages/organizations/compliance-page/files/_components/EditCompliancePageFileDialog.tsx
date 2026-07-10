@@ -26,7 +26,7 @@ import { z } from "zod";
 import type { CompliancePageFileListItem_fileFragment$data } from "#/__generated__/core/CompliancePageFileListItem_fileFragment.graphql";
 import type { EditCompliancePageFileDialogMutation } from "#/__generated__/core/EditCompliancePageFileDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const updateCompliancePageFileMutation = graphql`
   mutation EditCompliancePageFileDialogMutation($input: UpdateTrustCenterFileInput!) {
@@ -54,11 +54,11 @@ export function EditCompliancePageFileDialog(props: {
     defaultValues: { name: file.name, category: file.category },
   });
 
-  const [updateFile, isUpdating] = useMutationWithToasts<EditCompliancePageFileDialogMutation>(
+  const [updateFile, isUpdating] = useMutation<EditCompliancePageFileDialogMutation>(
     updateCompliancePageFileMutation,
     {
       successMessage: "File updated successfully",
-      errorMessage: "Failed to update file",
+      errorToast: "Failed to update file",
     },
   );
 
@@ -71,10 +71,9 @@ export function EditCompliancePageFileDialog(props: {
           category: data.category,
         },
       },
-      onSuccess: () => {
-        onClose();
-      },
     });
+
+    onClose();
   };
 
   return (

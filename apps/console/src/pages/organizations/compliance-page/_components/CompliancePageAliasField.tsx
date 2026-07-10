@@ -23,7 +23,9 @@ import { Field } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { graphql } from "relay-runtime";
 
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import type { CompliancePageAliasField_removeResourceAliasMutation } from "#/__generated__/core/CompliancePageAliasField_removeResourceAliasMutation.graphql";
+import type { CompliancePageAliasField_setResourceAliasMutation } from "#/__generated__/core/CompliancePageAliasField_setResourceAliasMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const setResourceAliasMutation = graphql`
   mutation CompliancePageAliasField_setResourceAliasMutation(
@@ -65,18 +67,18 @@ export function CompliancePageAliasField(props: {
     setValue(alias ?? "");
   }
 
-  const [setResourceAlias, isSettingAlias] = useMutationWithToasts(
+  const [setResourceAlias, isSettingAlias] = useMutation<CompliancePageAliasField_setResourceAliasMutation>(
     setResourceAliasMutation,
     {
       successMessage: __("Alias updated successfully."),
-      errorMessage: __("Failed to update alias"),
+      errorToast: __("Failed to update alias"),
     },
   );
-  const [removeResourceAlias, isRemovingAlias] = useMutationWithToasts(
+  const [removeResourceAlias, isRemovingAlias] = useMutation<CompliancePageAliasField_removeResourceAliasMutation>(
     removeResourceAliasMutation,
     {
       successMessage: __("Alias removed successfully."),
-      errorMessage: __("Failed to remove alias"),
+      errorToast: __("Failed to remove alias"),
     },
   );
 
@@ -117,7 +119,7 @@ export function CompliancePageAliasField(props: {
         },
       });
     } catch {
-      // useMutationWithToasts already shows an error toast.
+      // useMutation already shows an error toast.
     }
   }, [alias, canRemoveAlias, canSetAlias, removeResourceAlias, resourceId, setResourceAlias, value]);
 

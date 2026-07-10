@@ -24,7 +24,7 @@ import { useCallback } from "react";
 import { type DataID, graphql } from "relay-runtime";
 
 import type { DeleteCompliancePageFileDialogMutation } from "#/__generated__/core/DeleteCompliancePageFileDialogMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const deleteCompliancePageFileMutation = graphql`
   mutation DeleteCompliancePageFileDialogMutation(
@@ -47,11 +47,11 @@ export function DeleteCompliancePageFileDialog(props: {
 
   const { __ } = useTranslate();
 
-  const [deleteFile, isDeleting] = useMutationWithToasts<DeleteCompliancePageFileDialogMutation>(
+  const [deleteFile, isDeleting] = useMutation<DeleteCompliancePageFileDialogMutation>(
     deleteCompliancePageFileMutation,
     {
       successMessage: "File deleted successfully",
-      errorMessage: "Failed to delete file",
+      errorToast: "Failed to delete file",
     },
   );
 
@@ -65,11 +65,10 @@ export function DeleteCompliancePageFileDialog(props: {
         input: { id: fileId },
         connections: connectionId ? [connectionId] : [],
       },
-      onSuccess: () => {
-        ref.current?.close();
-        onDelete();
-      },
     });
+
+    ref.current?.close();
+    onDelete();
   }, [fileId, deleteFile, ref, connectionId, onDelete]);
 
   return (

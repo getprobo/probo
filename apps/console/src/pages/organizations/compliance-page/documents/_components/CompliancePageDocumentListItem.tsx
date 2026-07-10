@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getTrustCenterVisibilityOptions } from "@probo/helpers";
+import { getCompliancePageVisibilityOptions } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, DocumentTypeBadge, Field, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
@@ -27,14 +27,15 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePageDocumentListItem_compliancePageFragment$key } from "#/__generated__/core/CompliancePageDocumentListItem_compliancePageFragment.graphql";
 import type { CompliancePageDocumentListItem_documentFragment$key } from "#/__generated__/core/CompliancePageDocumentListItem_documentFragment.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import type { CompliancePageDocumentListItem_updateVisibilityMutation } from "#/__generated__/core/CompliancePageDocumentListItem_updateVisibilityMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
 
 const compliancePageFragment = graphql`
   fragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {
-    canUpdate: permission(action: "core:trust-center:update")
+    canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
 
@@ -44,7 +45,7 @@ const documentFragment = graphql`
     alias
     canSetAlias: permission(action: "resourcealias:alias:set")
     canRemoveAlias: permission(action: "resourcealias:alias:remove")
-    trustCenterVisibility
+    compliancePageVisibility: trustCenterVisibility
     latestPublishedVersion: versions(
       first: 1
       orderBy: { field: CREATED_AT, direction: DESC }
@@ -80,7 +81,7 @@ export function CompliancePageDocumentListItem(props: {
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const visibilityOptions = getTrustCenterVisibilityOptions(__);
+  const visibilityOptions = getCompliancePageVisibilityOptions(__);
 
   const compliancePage = useFragment<CompliancePageDocumentListItem_compliancePageFragment$key>(
     compliancePageFragment,
@@ -90,13 +91,14 @@ export function CompliancePageDocumentListItem(props: {
     documentFragment,
     documentFragmentRef,
   );
-  const [updateDocumentVisibility, isUpdatingDocumentVisibility] = useMutationWithToasts(
-    updateDocumentVisibilityMutation,
-    {
-      successMessage: __("Document visibility updated successfully."),
-      errorMessage: __("Failed to update document visibility"),
-    },
-  );
+  const [updateDocumentVisibility, isUpdatingDocumentVisibility]
+    = useMutation<CompliancePageDocumentListItem_updateVisibilityMutation>(
+      updateDocumentVisibilityMutation,
+      {
+        successMessage: __("Document visibility updated successfully."),
+        errorToast: __("Failed to update document visibility"),
+      },
+    );
   const handleVsibilityChange = useCallback(
     async (value: string) => {
       const stringValue = typeof value === "string" ? value : "";
@@ -135,7 +137,7 @@ export function CompliancePageDocumentListItem(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={document.trustCenterVisibility}
+          value={document.compliancePageVisibility}
           onValueChange={value => void handleVsibilityChange(value)}
           disabled={isUpdatingDocumentVisibility || !compliancePage.canUpdate}
           className="w-[105px]"

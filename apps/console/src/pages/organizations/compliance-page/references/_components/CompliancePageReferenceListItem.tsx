@@ -25,7 +25,7 @@ import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
 import type { CompliancePageReferenceListItemFragment$data, CompliancePageReferenceListItemFragment$key } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
-import { DeleteTrustCenterReferenceDialog } from "#/components/trustCenter/DeleteTrustCenterReferenceDialog";
+import { DeleteCompliancePageReferenceDialog } from "#/components/compliancePage/DeleteCompliancePageReferenceDialog";
 
 const fragment = graphql`
   fragment CompliancePageReferenceListItemFragment on TrustCenterReference {
@@ -36,8 +36,8 @@ const fragment = graphql`
     name
     description
     websiteUrl
-    canUpdate: permission(action: "core:trust-center-reference:update")
-    canDelete: permission(action: "core:trust-center-reference:delete")
+    canUpdate: permission(action: "compliance-portal:portal-reference:update")
+    canDelete: permission(action: "compliance-portal:portal-reference:delete")
   }
 `;
 
@@ -109,13 +109,13 @@ export function CompliancePageReferenceListItem(props: {
             <Button variant="secondary" icon={IconPencil} onClick={() => onEdit(reference)} />
           )}
           {reference.canDelete && (
-            <DeleteTrustCenterReferenceDialog
+            <DeleteCompliancePageReferenceDialog
               referenceId={reference.id}
               referenceName={reference.name}
               connectionId={connectionId}
             >
               <Button variant="danger" icon={IconTrashCan} />
-            </DeleteTrustCenterReferenceDialog>
+            </DeleteCompliancePageReferenceDialog>
           )}
         </div>
       </Td>

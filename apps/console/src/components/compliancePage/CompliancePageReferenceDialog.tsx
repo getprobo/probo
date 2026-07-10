@@ -36,9 +36,9 @@ import { z } from "zod";
 
 import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
 import {
-  useCreateTrustCenterReferenceMutation,
-  useUpdateTrustCenterReferenceMutation,
-} from "#/hooks/graph/TrustCenterReferenceGraph";
+  useCreateCompliancePageReferenceMutation,
+  useUpdateCompliancePageReferenceMutation,
+} from "#/hooks/graph/CompliancePageReferenceGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const referenceSchema = z.object({
@@ -50,23 +50,23 @@ const referenceSchema = z.object({
 
 type ReferenceFormData = z.infer<typeof referenceSchema>;
 
-export type TrustCenterReferenceDialogRef = {
-  openCreate: (trustCenterId: string, connectionId: string) => void;
+export type CompliancePageReferenceDialogRef = {
+  openCreate: (compliancePageId: string, connectionId: string) => void;
   openEdit: (reference: CompliancePageReferenceListItemFragment$data, rank: number) => void;
 };
 
-export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogRef, { children?: ReactNode }>(
-  function TrustCenterReferenceDialog({ children }, ref) {
+export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceDialogRef, { children?: ReactNode }>(
+  function CompliancePageReferenceDialog({ children }, ref) {
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();
     const [mode, setMode] = useState<"create" | "edit">("create");
-    const [trustCenterId, setTrustCenterId] = useState<string>("");
+    const [compliancePageId, setCompliancePageId] = useState<string>("");
     const [connectionId, setConnectionId] = useState<string>("");
     const [editReference, setEditReference] = useState<CompliancePageReferenceListItemFragment$data | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
-    const [createReference, isCreating] = useCreateTrustCenterReferenceMutation();
-    const [updateReference, isUpdating] = useUpdateTrustCenterReferenceMutation();
+    const [createReference, isCreating] = useCreateCompliancePageReferenceMutation();
+    const [updateReference, isUpdating] = useUpdateCompliancePageReferenceMutation();
 
     const { register, handleSubmit, formState: { errors }, reset } = useFormWithSchema(
       referenceSchema,
@@ -80,9 +80,9 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
     );
 
     useImperativeHandle(ref, () => ({
-      openCreate: (tId: string, cId: string) => {
+      openCreate: (pageId: string, cId: string) => {
         setMode("create");
-        setTrustCenterId(tId);
+        setCompliancePageId(pageId);
         setConnectionId(cId);
         setEditReference(null);
         setUploadedFile(null);
@@ -123,7 +123,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
         await createReference({
           variables: {
             input: {
-              trustCenterId,
+              trustCenterId: compliancePageId,
               name: data.name,
               description: data.description || null,
               websiteUrl: data.websiteUrl,
@@ -134,12 +134,11 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           uploadables: {
             "input.logoFile": uploadedFile,
           },
-          onSuccess: () => {
-            reset();
-            setUploadedFile(null);
-            dialogRef.current?.close();
-          },
         });
+
+        reset();
+        setUploadedFile(null);
+        dialogRef.current?.close();
       } else if (editReference) {
         const input: {
           id: string;
@@ -169,12 +168,11 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
         await updateReference({
           variables: { input },
           uploadables: Object.keys(uploadables).length > 0 ? uploadables : undefined,
-          onSuccess: () => {
-            reset();
-            setUploadedFile(null);
-            dialogRef.current?.close();
-          },
         });
+
+        reset();
+        setUploadedFile(null);
+        dialogRef.current?.close();
       }
     };
 

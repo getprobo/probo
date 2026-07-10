@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
-import type { TrustCenterDocumentAccessInfo } from "@probo/helpers";
+import type { CompliancePageDocumentAccessInfo } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -40,7 +40,7 @@ import type { CompliancePageAccessEditDialogDocumentAccessFragment$data, Complia
 import type { CompliancePageAccessEditDialogQuery as CompliancePageAccessEditDialogQueryType } from "#/__generated__/core/CompliancePageAccessEditDialogQuery.graphql";
 import type { CompliancePageAccessEditDialogUpdateMutation } from "#/__generated__/core/CompliancePageAccessEditDialogUpdateMutation.graphql";
 import type { CompliancePageAccessListItemFragment$data } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 import { CompliancePageDocumentAccessList } from "#/pages/organizations/compliance-page/access/_components/CompliancePageDocumentAccessList";
 import { ElectronicSignatureSection } from "#/pages/organizations/compliance-page/access/_components/ElectronicSignatureSection";
 
@@ -76,10 +76,10 @@ const documentAccessFragment = graphql`
   }
 `;
 
-function getTrustCenterDocumentAccessInfo(
+function getCompliancePageDocumentAccessInfo(
   fragmentRef: CompliancePageAccessEditDialogDocumentAccessFragment$key,
   __: (key: string) => string,
-): TrustCenterDocumentAccessInfo {
+): CompliancePageDocumentAccessInfo {
   const node = readInlineData(documentAccessFragment, fragmentRef);
   return toDocumentAccessInfo(node, __);
 }
@@ -87,7 +87,7 @@ function getTrustCenterDocumentAccessInfo(
 function toDocumentAccessInfo(
   node: CompliancePageAccessEditDialogDocumentAccessFragment$data,
   __: (key: string) => string,
-): TrustCenterDocumentAccessInfo {
+): CompliancePageDocumentAccessInfo {
   if (node.document) {
     return {
       persisted: node.id !== node.document.id,
@@ -124,7 +124,7 @@ function toDocumentAccessInfo(
       status: node.status,
     };
   }
-  throw new Error("Unknown trust center access document type");
+  throw new Error("Unknown compliance page access document type");
 }
 
 const compliancePageAccessEditDialogQuery = graphql`
@@ -221,7 +221,7 @@ function CompliancePageAccessEditForm(props: {
 
   const initialDocumentAccesses
     = data.node.availableDocumentAccesses?.edges.map(edge =>
-      getTrustCenterDocumentAccessInfo(edge.node, __),
+      getCompliancePageDocumentAccessInfo(edge.node, __),
     ) ?? [];
   const initialStatusByID = initialDocumentAccesses.reduce<
     Record<string, TrustCenterDocumentAccessStatus>
@@ -230,12 +230,12 @@ function CompliancePageAccessEditForm(props: {
     return acc;
   }, {});
   const [documentAccesses, setDocumentAccesses] = useState<
-    TrustCenterDocumentAccessInfo[]
+    CompliancePageDocumentAccessInfo[]
   >(initialDocumentAccesses);
 
   const handleUpdateDocumentAccessStatus = useCallback(
     (
-      documentAccess: TrustCenterDocumentAccessInfo,
+      documentAccess: CompliancePageDocumentAccessInfo,
       status: TrustCenterDocumentAccessStatus,
     ) => {
       setDocumentAccesses((prev) => {
@@ -269,11 +269,11 @@ function CompliancePageAccessEditForm(props: {
     );
   }, [initialStatusByID]);
 
-  const [updateTrustCenterAccess, isUpdating] = useMutationWithToasts<CompliancePageAccessEditDialogUpdateMutation>(
+  const [updateCompliancePageAccess, isUpdating] = useMutation<CompliancePageAccessEditDialogUpdateMutation>(
     updateAccessMutation,
     {
       successMessage: __("Access updated successfully"),
-      errorMessage: __("Failed to update access"),
+      errorToast: __("Failed to update access"),
     },
   );
 
@@ -282,7 +282,7 @@ function CompliancePageAccessEditForm(props: {
       = [];
     const reports: { id: string; status: TrustCenterDocumentAccessStatus }[]
       = [];
-    const trustCenterFiles: {
+    const compliancePageFiles: {
       id: string;
       status: TrustCenterDocumentAccessStatus;
     }[] = [];
@@ -297,7 +297,7 @@ function CompliancePageAccessEditForm(props: {
             reports.push({ id: docAccess.id, status: docAccess.status });
             break;
           case "file":
-            trustCenterFiles.push({
+            compliancePageFiles.push({
               id: docAccess.id,
               status: docAccess.status,
             });
@@ -306,17 +306,18 @@ function CompliancePageAccessEditForm(props: {
       }
     }
 
-    await updateTrustCenterAccess({
+    await updateCompliancePageAccess({
       variables: {
         input: {
           id: access.id,
           documents,
           reports,
-          trustCenterFiles,
+          trustCenterFiles: compliancePageFiles,
         },
       },
-      onSuccess: onSubmit,
     });
+
+    onSubmit();
   };
 
   return (

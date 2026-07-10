@@ -27,7 +27,7 @@ import { z } from "zod";
 import type { ComplianceUpdateFormDialogCreateMutation } from "#/__generated__/core/ComplianceUpdateFormDialogCreateMutation.graphql";
 import type { ComplianceUpdateFormDialogUpdateMutation } from "#/__generated__/core/ComplianceUpdateFormDialogUpdateMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import type { UpdateNode } from "./CompliancePageUpdatesList";
 
@@ -104,19 +104,19 @@ export function ComplianceUpdateFormDialog(props: Props) {
     }
   }, [update, form]);
 
-  const [createUpdate, isCreating] = useMutationWithToasts<ComplianceUpdateFormDialogCreateMutation>(
+  const [createUpdate, isCreating] = useMutation<ComplianceUpdateFormDialogCreateMutation>(
     createMutation,
     {
       successMessage: __("Update created successfully"),
-      errorMessage: __("Failed to create update"),
+      errorToast: __("Failed to create update"),
     },
   );
 
-  const [saveUpdate, isSaving] = useMutationWithToasts<ComplianceUpdateFormDialogUpdateMutation>(
+  const [saveUpdate, isSaving] = useMutation<ComplianceUpdateFormDialogUpdateMutation>(
     updateMutation,
     {
       successMessage: __("Update saved successfully"),
-      errorMessage: __("Failed to save update"),
+      errorToast: __("Failed to save update"),
     },
   );
 

@@ -25,15 +25,15 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePageThirdPartyListItem_thirdPartyFragment$key } from "#/__generated__/core/CompliancePageThirdPartyListItem_thirdPartyFragment.graphql";
 import type { CompliancePageThirdPartyListItemMutation } from "#/__generated__/core/CompliancePageThirdPartyListItemMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const thirdPartyFragment = graphql`
   fragment CompliancePageThirdPartyListItem_thirdPartyFragment on ThirdParty {
     id
     category
     name
-    showOnTrustCenter
+    showOnCompliancePage: showOnTrustCenter
     canUpdate: permission(action: "core:thirdParty:update")
   }
 `;
@@ -62,13 +62,13 @@ export function CompliancePageThirdPartyListItem(props: {
     thirdPartyFragment,
     thirdPartyFragmentRef,
   );
-  const [updateThirdPartyVisibility, isUpadtingThirdPartyVisibility] = useMutationWithToasts<
+  const [updateThirdPartyVisibility, isUpadtingThirdPartyVisibility] = useMutation<
     CompliancePageThirdPartyListItemMutation
   >(
     updateThirdPartyVisibilityMutation,
     {
       successMessage: __("Subprocessor visibility updated successfully."),
-      errorMessage: __("Failed to update subprocessor visibility"),
+      errorToast: __("Failed to update subprocessor visibility"),
     },
   );
 
@@ -81,8 +81,8 @@ export function CompliancePageThirdPartyListItem(props: {
         <Badge variant="neutral">{thirdParty.category}</Badge>
       </Td>
       <Td>
-        <Badge variant={thirdParty.showOnTrustCenter ? "success" : "danger"}>
-          {thirdParty.showOnTrustCenter ? __("Visible") : __("None")}
+        <Badge variant={thirdParty.showOnCompliancePage ? "success" : "danger"}>
+          {thirdParty.showOnCompliancePage ? __("Visible") : __("None")}
         </Badge>
       </Td>
       <Td noLink width={100} className="text-end">
@@ -94,14 +94,14 @@ export function CompliancePageThirdPartyListItem(props: {
                 variables: {
                   input: {
                     id: thirdParty.id,
-                    showOnTrustCenter: !thirdParty.showOnTrustCenter,
+                    showOnTrustCenter: !thirdParty.showOnCompliancePage,
                   },
                 },
               })}
-            icon={thirdParty.showOnTrustCenter ? IconCrossLargeX : IconCheckmark1}
+            icon={thirdParty.showOnCompliancePage ? IconCrossLargeX : IconCheckmark1}
             disabled={isUpadtingThirdPartyVisibility}
           >
-            {thirdParty.showOnTrustCenter ? __("Hide") : __("Show")}
+            {thirdParty.showOnCompliancePage ? __("Hide") : __("Show")}
           </Button>
         )}
       </Td>

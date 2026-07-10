@@ -30,8 +30,9 @@ import {
   useDialogRef,
 } from "@probo/ui";
 
-import { deleteTrustCenterReferenceMutation } from "#/hooks/graph/TrustCenterReferenceGraph";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import type { CompliancePageReferenceGraphDeleteMutation } from "#/__generated__/core/CompliancePageReferenceGraphDeleteMutation.graphql";
+import { deleteCompliancePageReferenceMutation } from "#/hooks/graph/CompliancePageReferenceGraph";
+import { useMutation } from "#/lib/relay/useMutation";
 
 type Props = {
   children: React.ReactNode;
@@ -41,7 +42,7 @@ type Props = {
   onSuccess?: () => void;
 };
 
-export function DeleteTrustCenterReferenceDialog({
+export function DeleteCompliancePageReferenceDialog({
   children,
   referenceId,
   referenceName,
@@ -51,10 +52,13 @@ export function DeleteTrustCenterReferenceDialog({
   const { __ } = useTranslate();
   const ref = useDialogRef();
 
-  const [mutate, isDeleting] = useMutationWithToasts(deleteTrustCenterReferenceMutation, {
-    successMessage: __("Reference deleted successfully"),
-    errorMessage: __("Failed to delete reference"),
-  });
+  const [mutate, isDeleting] = useMutation<CompliancePageReferenceGraphDeleteMutation>(
+    deleteCompliancePageReferenceMutation,
+    {
+      successMessage: __("Reference deleted successfully"),
+      errorToast: __("Failed to delete reference"),
+    },
+  );
 
   const handleDelete = async () => {
     await mutate({

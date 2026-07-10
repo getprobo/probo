@@ -26,7 +26,7 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { CompliancePageMailingListPage_updateMailingListMutation } from "#/__generated__/core/CompliancePageMailingListPage_updateMailingListMutation.graphql";
 import type { CompliancePageMailingListPageQuery } from "#/__generated__/core/CompliancePageMailingListPageQuery.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { CompliancePageMailingList } from "./_components/CompliancePageMailingList";
 import { CompliancePageUpdatesList, type UpdateNode } from "./_components/CompliancePageUpdatesList";
@@ -101,11 +101,11 @@ export function CompliancePageMailingListPage(props: {
   const [replyTo, setReplyTo] = useState(mailingList?.replyTo ?? "");
 
   const [updateMailingList, isUpdating]
-    = useMutationWithToasts<CompliancePageMailingListPage_updateMailingListMutation>(
+    = useMutation<CompliancePageMailingListPage_updateMailingListMutation>(
       updateMailingListMutation,
       {
         successMessage: __("Mailing list updated successfully"),
-        errorMessage: __("Failed to update mailing list"),
+        errorToast: __("Failed to update mailing list"),
       },
     );
 

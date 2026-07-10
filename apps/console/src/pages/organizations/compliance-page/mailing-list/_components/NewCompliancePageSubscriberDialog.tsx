@@ -25,7 +25,7 @@ import { z } from "zod";
 
 import type { NewCompliancePageSubscriberDialogMutation } from "#/__generated__/core/NewCompliancePageSubscriberDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const createSubscriberMutation = graphql`
   mutation NewCompliancePageSubscriberDialogMutation(
@@ -69,11 +69,11 @@ export function NewCompliancePageSubscriberDialog(props: {
     defaultValues: { fullName: "", email: "", confirmed: false },
   });
 
-  const [createSubscriber, isCreating] = useMutationWithToasts<NewCompliancePageSubscriberDialogMutation>(
+  const [createSubscriber, isCreating] = useMutation<NewCompliancePageSubscriberDialogMutation>(
     createSubscriberMutation,
     {
       successMessage: __("Subscriber added successfully"),
-      errorMessage: __("Failed to add subscriber"),
+      errorToast: __("Failed to add subscriber"),
     },
   );
 
