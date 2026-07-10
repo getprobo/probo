@@ -5,6 +5,8 @@ this file.
 
 ## Unreleased
 
+## [0.1.0] - 2026-07-10
+
 ### Added
 
 - `@probo/skills` npm package with multi-agent manifests (`.claude-plugin/`,
