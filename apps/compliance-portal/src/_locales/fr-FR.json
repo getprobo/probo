@@ -36,6 +36,32 @@
     "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "backHome": "Retour à l'accueil"
   },
+  "errors": {
+    "notFound": {
+      "title": "Page introuvable",
+      "description": "La page que vous recherchez n'existe pas ou a été déplacée."
+    },
+    "forbidden": {
+      "title": "Accès refusé",
+      "description": "Vous n'avez pas l'autorisation de consulter cette page."
+    },
+    "serverError": {
+      "title": "Une erreur est survenue",
+      "description": "Une erreur inattendue s'est produite. Veuillez réessayer dans un instant."
+    },
+    "generic": {
+      "title": "Une erreur est survenue",
+      "description": "Une erreur inattendue s'est produite. Veuillez réessayer dans un instant."
+    },
+    "actions": {
+      "backToTrustCenter": "Retour au trust center",
+      "tryAgain": "Réessayer"
+    },
+    "inline": {
+      "message": "Impossible de charger le contenu",
+      "retry": "Réessayer"
+    }
+  },
   "footer": {
     "poweredBy": "Propulsé par"
   },

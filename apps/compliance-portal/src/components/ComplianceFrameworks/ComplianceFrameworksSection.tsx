@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { InlineError } from "@probo/ui/src/v2/InlineError/InlineError";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -26,8 +28,11 @@ import { HomeSection } from "#/components/HomeSection/HomeSection";
 import type { ComplianceFrameworksSection_trustCenter$key } from "./__generated__/ComplianceFrameworksSection_trustCenter.graphql";
 import { ComplianceFrameworkListItem } from "./ComplianceFrameworkListItem";
 
+// @throwOnFieldError makes a field error in this fragment throw at the read
+// below, where the section's ErrorBoundary contains it. See
+// contrib/claude/error-handling.md.
 const complianceFrameworksSectionFragment = graphql`
-  fragment ComplianceFrameworksSection_trustCenter on TrustCenter {
+  fragment ComplianceFrameworksSection_trustCenter on TrustCenter @throwOnFieldError {
     complianceFrameworks(first: 8) {
       edges {
         node {
@@ -44,8 +49,29 @@ interface ComplianceFrameworksSectionProps {
 }
 
 // "Compliance" section: the grid of certification frameworks the trust center
-// covers.
+// covers. Wraps its data-reading content in a boundary so a load failure
+// degrades to an inline error instead of taking down the page.
 export function ComplianceFrameworksSection({ trustCenterKey }: ComplianceFrameworksSectionProps) {
+  const { t } = useTranslation();
+
+  return (
+    <ErrorBoundary
+      fallback={(_, reset) => (
+        <HomeSection title={t("home.sections.compliance")}>
+          <InlineError
+            message={t("errors.inline.message")}
+            retryLabel={t("errors.inline.retry")}
+            onRetry={reset}
+          />
+        </HomeSection>
+      )}
+    >
+      <ComplianceFrameworksSectionContent trustCenterKey={trustCenterKey} />
+    </ErrorBoundary>
+  );
+}
+
+function ComplianceFrameworksSectionContent({ trustCenterKey }: ComplianceFrameworksSectionProps) {
   const { t } = useTranslation();
   const data = useFragment(complianceFrameworksSectionFragment, trustCenterKey);
   const frameworks = data.complianceFrameworks.edges.map(edge => edge.node);

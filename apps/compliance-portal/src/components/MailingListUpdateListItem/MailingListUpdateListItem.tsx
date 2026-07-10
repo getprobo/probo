@@ -29,7 +29,7 @@ import { formatRelativeTime } from "#/lib/datetime/relativeTime";
 import type { MailingListUpdateListItem_update$key } from "./__generated__/MailingListUpdateListItem_update.graphql";
 
 const mailingListUpdateListItemFragment = graphql`
-  fragment MailingListUpdateListItem_update on MailingListUpdate {
+  fragment MailingListUpdateListItem_update on MailingListUpdate @throwOnFieldError {
     id
     title
     updatedAt

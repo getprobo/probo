@@ -261,6 +261,52 @@ const logoUrl = organization.logo?.downloadUrl ?? undefined; // logo stays optio
 
 Do **not** reach for `@required` to silence nullability on fields that are *genuinely* optional (an avatar, a logo, a description that may be empty). Those keep their nullable type and get a real empty/fallback state. Likewise, never select a field, mark it `@required(action: THROW)`, and rely on the throw as control flow for an expected-empty case — that is an error path, not a branch. And there is no need to annotate fields the schema already declares non-null (`String!`, `Organization!`).
 
+### Node type guards
+
+A `node(id:)` query resolves to an interface (`Node`), so the page must narrow it
+to the concrete type before use. When the `__typename` is not what the view
+expects, throw a **typed** error the nearest error boundary can map to the right
+state (a not-found page), not a bare `Error`:
+
+```tsx
+// Good — NotFoundError is mapped to the 404 state by the boundary
+import { NotFoundError } from "#/lib/relay/errors";
+
+const data = usePreloadedQuery<UpdateDetailPageQuery>(updateDetailPageQuery, queryRef);
+if (data.node?.__typename !== "MailingListUpdate") {
+  throw new NotFoundError("Update not found");
+}
+const update = data.node; // narrowed to MailingListUpdate
+```
+
+```tsx
+// Bad — an untyped error only renders a generic failure
+if (data.node?.__typename !== "MailingListUpdate") {
+  throw new Error("Update not found");
+}
+```
+
+This is a client-side invariant, distinct from server field errors (which flow
+through `@throwOnFieldError`; see below). See
+[`error-handling.md`](error-handling.md).
+
+### Field errors (`@throwOnFieldError`)
+
+To contain a **partial** GraphQL failure (data present, one field errored) to the
+component that reads the bad field, annotate the query or fragment with
+`@throwOnFieldError`. The field error then throws at the read site
+(`usePreloadedQuery` / `useFragment`) and is caught by the nearest `ErrorBoundary`
+— on a **fragment** to isolate a section/row, on a **query** for page-level
+fields. This only works when the network layer leaves field-level errors in the
+response (see the portal fetch in [`error-handling.md`](error-handling.md)).
+
+```graphql
+# Good — a field error in this fragment throws at the section's useFragment
+fragment RecentUpdatesSection_trustCenter on TrustCenter @throwOnFieldError {
+  updates(first: 5) { edges { node { id ...MailingListUpdateListItem_update } } }
+}
+```
+
 ### Refetchable fragments
 
 For lists that support sorting and pagination, use `@refetchable` with `@argumentDefinitions`:

@@ -19,6 +19,8 @@
 // SOFTWARE.
 
 import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { InlineError } from "@probo/ui/src/v2/InlineError/InlineError";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -28,8 +30,10 @@ import { dotPatternStyle } from "#/components/MediaTile/variants";
 
 import type { RecentUpdatesSection_trustCenter$key } from "./__generated__/RecentUpdatesSection_trustCenter.graphql";
 
+// @throwOnFieldError surfaces a field error at the read below so the section
+// ErrorBoundary contains it. See contrib/claude/error-handling.md.
 const recentUpdatesSectionFragment = graphql`
-  fragment RecentUpdatesSection_trustCenter on TrustCenter {
+  fragment RecentUpdatesSection_trustCenter on TrustCenter @throwOnFieldError {
     updates(first: 5) {
       edges {
         node {
@@ -46,8 +50,28 @@ interface RecentUpdatesSectionProps {
 }
 
 // "Recent updates" section: the latest mailing-list updates as a list, with a
-// link to the full updates page.
+// link to the full updates page. A load failure degrades to an inline error.
 export function RecentUpdatesSection({ trustCenterKey }: RecentUpdatesSectionProps) {
+  const { t } = useTranslation();
+
+  return (
+    <ErrorBoundary
+      fallback={(_, reset) => (
+        <HomeSection title={t("home.sections.recentUpdates")}>
+          <InlineError
+            message={t("errors.inline.message")}
+            retryLabel={t("errors.inline.retry")}
+            onRetry={reset}
+          />
+        </HomeSection>
+      )}
+    >
+      <RecentUpdatesSectionContent trustCenterKey={trustCenterKey} />
+    </ErrorBoundary>
+  );
+}
+
+function RecentUpdatesSectionContent({ trustCenterKey }: RecentUpdatesSectionProps) {
   const { t } = useTranslation();
   const data = useFragment(recentUpdatesSectionFragment, trustCenterKey);
   const updates = data.updates.edges.map(edge => edge.node);
@@ -70,7 +94,22 @@ export function RecentUpdatesSection({ trustCenterKey }: RecentUpdatesSectionPro
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-r from-sand-1/0 to-sand-1 to-[96px]" />
         <div className="relative divide-y divide-sand-a2">
           {updates.map(update => (
-            <MailingListUpdateListItem key={update.id} updateKey={update} />
+            // A single failing row degrades to a compact horizontal inline error.
+            <ErrorBoundary
+              key={update.id}
+              fallback={(_, reset) => (
+                <div className="px-6 py-4">
+                  <InlineError
+                    layout="horizontal"
+                    message={t("errors.inline.message")}
+                    retryLabel={t("errors.inline.retry")}
+                    onRetry={reset}
+                  />
+                </div>
+              )}
+            >
+              <MailingListUpdateListItem updateKey={update} />
+            </ErrorBoundary>
           ))}
         </div>
       </div>

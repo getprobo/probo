@@ -156,6 +156,93 @@ function PublishButton() {
 
 For Relay mutations, prefer the built-in `onCompleted` / `onError` callbacks (see [`relay.md`](relay.md)) over a manual `try`/`catch`; use `try`/`catch` for non-Relay async work (fetch, parsing, third-party SDKs).
 
+## Relay field errors and fragment-level boundaries
+
+A GraphQL response can be **partial**: `data` is present but one field carries an
+error (with a `path`). To contain such a failure to the component that reads the
+bad field — instead of collapsing the whole page — two pieces cooperate:
+
+1. **The fetch layer only throws request-level errors.** A request-level error
+   has **no `path`** (auth, malformed request, transport) and applies to the
+   whole operation, so it throws and propagates to the nearest boundary.
+   Field-level errors (those with a `path`) are **left in the response** so Relay
+   can attribute them to the reading field.
+
+   The compliance-portal wires this in its own
+   [`apps/compliance-portal/src/lib/relay/fetch.ts`](../../apps/compliance-portal/src/lib/relay/fetch.ts)
+   (it does **not** use `@probo/relay`'s `makeFetchQuery`, which throws for the
+   whole operation on any known code).
+
+2. **`@throwOnFieldError` on the query/fragment that reads the field.** With the
+   directive set, a field error throws **at the read site** (`usePreloadedQuery`
+   for a query, `useFragment` for a fragment). Put it on the **fragment** to
+   isolate a section/row, and on the **query** to route page-level field errors
+   to the route boundary.
+
+Because `useFragment` throws in the component body (not in a child), the boundary
+must be an **ancestor**. Split the component into a thin wrapper (holds the
+`ErrorBoundary`) and a `*Content` child (reads the fragment):
+
+```tsx
+export function RecentUpdatesSection({ trustCenterKey }: Props) {
+  const { t } = useTranslation();
+  return (
+    <ErrorBoundary
+      fallback={(_, reset) => (
+        <InlineError message={t("errors.inline.message")} onRetry={reset} retryLabel={t("errors.inline.retry")} />
+      )}
+    >
+      <RecentUpdatesSectionContent trustCenterKey={trustCenterKey} />
+    </ErrorBoundary>
+  );
+}
+
+function RecentUpdatesSectionContent({ trustCenterKey }: Props) {
+  const data = useFragment(fragment, trustCenterKey); // throws here on a field error
+  // ...
+}
+
+const fragment = graphql`
+  fragment RecentUpdatesSection_trustCenter on TrustCenter @throwOnFieldError { ... }
+`;
+```
+
+The portal ships three fallback tiers, all backed by the same `ErrorBoundary`:
+
+| Tier | Placement | Fallback |
+|------|-----------|----------|
+| Global (bootstrap) | around `RouterProvider` in `App.tsx`, and the root route | `ErrorState` full page (standalone) |
+| Page | pathless child route inside the layout | `ErrorState` inside the shell (TopBar/footer survive) |
+| Section / row | around a fragment-reading subtree | `InlineError` (vertical for sections, horizontal for rows) with a retry |
+
+`ErrorState` and `InlineError` are presentational v2 kit components (see
+[`ui.md`](ui.md)); the app maps the caught error to copy/actions and passes them
+in.
+
+## Custom errors for node-type mismatches
+
+When a page fetches `node(id:)` and the resolved `__typename` is not the type the
+view expects, throw a dedicated error, not a bare `Error`, so the boundary can
+render the correct state (404):
+
+```tsx
+// Good — a typed error the boundary maps to the not-found page
+import { NotFoundError } from "#/lib/relay/errors";
+
+if (data.node?.__typename !== "MailingListUpdate") {
+  throw new NotFoundError("Update not found");
+}
+```
+
+```tsx
+// Bad — an untyped error the boundary can only show as a generic failure
+if (data.node?.__typename !== "MailingListUpdate") {
+  throw new Error("Update not found");
+}
+```
+
+See [`relay.md`](relay.md) (Node type guards).
+
 ## Placement guidance
 
 - **Route root** — one boundary so an unhandled failure shows a full-page error instead of a blank screen.

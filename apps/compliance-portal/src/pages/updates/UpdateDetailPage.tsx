@@ -28,13 +28,14 @@ import { graphql, usePreloadedQuery } from "react-relay";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 import { formatDate } from "#/lib/datetime/formatDate";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import type { UpdateDetailPageQuery } from "./__generated__/UpdateDetailPageQuery.graphql";
 import { UpdatesSubscribeButton } from "./_components/UpdatesSubscribeButton";
 import { updateArticle } from "./_components/variants";
 
 export const updateDetailPageQuery = graphql`
-  query UpdateDetailPageQuery($updateId: ID!) {
+  query UpdateDetailPageQuery($updateId: ID!) @throwOnFieldError {
     node(id: $updateId) {
       __typename
       ... on MailingListUpdate {
@@ -55,7 +56,7 @@ export function UpdateDetailPage({ queryRef }: UpdateDetailPageProps) {
   const data = usePreloadedQuery<UpdateDetailPageQuery>(updateDetailPageQuery, queryRef);
 
   if (data.node?.__typename !== "MailingListUpdate") {
-    throw new Error("Update not found");
+    throw new NotFoundError("Update not found");
   }
   const update = data.node;
 

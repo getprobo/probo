@@ -32,7 +32,7 @@ import { TrustedBySection } from "#/components/TrustedBy/TrustedBySection";
 import type { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
 
 export const homePageQuery = graphql`
-  query HomePageQuery {
+  query HomePageQuery @throwOnFieldError {
     currentTrustCenter @required(action: THROW) {
       organization {
         name

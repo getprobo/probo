@@ -22,6 +22,8 @@ import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { createBrowserRouter } from "react-router";
 
+import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
+import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { getPathPrefix } from "#/lib/http/pathPrefix";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
@@ -33,25 +35,34 @@ const routes = [
     path: "/",
     Fallback: MainLayoutSkeleton,
     Component: lazy(() => import("#/pages/MainLayoutLoader")),
+    // A layout failure takes down the shell, so it shows a standalone full page.
+    ErrorBoundary: RootErrorBoundary,
     children: [
       {
-        index: true,
-        Fallback: HomePageSkeleton,
-        Component: lazy(() => import("#/pages/HomePageLoader")),
-      },
-      {
-        path: "documents",
-        Component: lazy(() => import("#/pages/DocumentsPage")),
-      },
-      ...subprocessorRoutes,
-      ...updateRoutes,
-      {
-        path: "requests",
-        Component: lazy(() => import("#/pages/RequestsPage")),
-      },
-      {
-        path: "*",
-        Component: lazy(() => import("#/pages/NotFoundPage")),
+        // Pathless layout route: page failures bubble here and render inside the
+        // MainLayout Outlet, keeping the TopBar and footer chrome.
+        ErrorBoundary: PageErrorBoundary,
+        children: [
+          {
+            index: true,
+            Fallback: HomePageSkeleton,
+            Component: lazy(() => import("#/pages/HomePageLoader")),
+          },
+          {
+            path: "documents",
+            Component: lazy(() => import("#/pages/DocumentsPage")),
+          },
+          ...subprocessorRoutes,
+          ...updateRoutes,
+          {
+            path: "requests",
+            Component: lazy(() => import("#/pages/RequestsPage")),
+          },
+          {
+            path: "*",
+            Component: lazy(() => import("#/pages/NotFoundPage")),
+          },
+        ],
       },
     ],
   },

@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { makeFetchQuery } from "@probo/relay";
 import { Environment, Network, RecordSource, Store } from "relay-runtime";
 
 import { buildEndpoint } from "#/lib/http/endpoint";
+import { makeFetchQuery } from "#/lib/relay/fetch";
 
 const store = new Store(new RecordSource(), {
   queryCacheExpirationTime: 1 * 60 * 1000,

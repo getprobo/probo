@@ -36,6 +36,32 @@
     "description": "The page you are looking for does not exist or has moved.",
     "backHome": "Back to home"
   },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you're looking for doesn't exist or may have been moved."
+    },
+    "forbidden": {
+      "title": "Access denied",
+      "description": "You don't have permission to view this page."
+    },
+    "serverError": {
+      "title": "Something went wrong",
+      "description": "We hit an unexpected error. Please try again in a moment."
+    },
+    "generic": {
+      "title": "Something went wrong",
+      "description": "We hit an unexpected error. Please try again in a moment."
+    },
+    "actions": {
+      "backToTrustCenter": "Back to trust center",
+      "tryAgain": "Try again"
+    },
+    "inline": {
+      "message": "Unable to load content",
+      "retry": "Retry"
+    }
+  },
   "footer": {
     "poweredBy": "Powered by"
   },
