@@ -47,6 +47,12 @@ type (
 		LogoFileID                   *gid.GID             `db:"logo_file_id"`
 		DarkLogoFileID               *gid.GID             `db:"dark_logo_file_id"`
 		NonDisclosureAgreementFileID *gid.GID             `db:"non_disclosure_agreement_file_id"`
+		DefaultDomainID              *gid.GID             `db:"default_domain_id"`
+		CustomDomainID               *gid.GID             `db:"custom_domain_id"`
+		Description                  *string              `db:"description"`
+		WebsiteURL                   *string              `db:"website_url"`
+		Email                        *string              `db:"email"`
+		HeadquarterAddress           *string              `db:"headquarter_address"`
 		CreatedAt                    time.Time            `db:"created_at"`
 		UpdatedAt                    time.Time            `db:"updated_at"`
 	}
@@ -120,6 +126,12 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	default_domain_id,
+	custom_domain_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -172,6 +184,12 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	default_domain_id,
+	custom_domain_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -224,6 +242,12 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	default_domain_id,
+	custom_domain_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -276,6 +300,12 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	default_domain_id,
+	custom_domain_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -290,6 +320,65 @@ LIMIT 1;
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query trust center: %w", err)
+	}
+
+	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect trust center: %w", err)
+	}
+
+	*tc = trustCenter
+
+	return nil
+}
+
+// LoadByDomainID loads the compliance page that references the given custom
+// domain in either of its two slots (default or custom). It powers the
+// reverse SNI lookup: a served host resolves to a custom domain, which resolves
+// back to its page. Tenant scope is not applied because SNI resolution happens
+// across all tenants for public access.
+func (tc *TrustCenter) LoadByDomainID(
+	ctx context.Context,
+	conn pg.Querier,
+	domainID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	mailing_list_id,
+	logo_file_id,
+	dark_logo_file_id,
+	active,
+	slug,
+	search_engine_indexing,
+	non_disclosure_agreement_file_id,
+	default_domain_id,
+	custom_domain_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
+	created_at,
+	updated_at
+FROM
+	trust_centers
+WHERE
+	default_domain_id = @domain_id
+	OR custom_domain_id = @domain_id
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"domain_id": domainID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query trust center by domain id: %w", err)
 	}
 
 	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
@@ -323,6 +412,12 @@ INSERT INTO trust_centers (
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	default_domain_id,
+	custom_domain_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 ) VALUES (
@@ -336,6 +431,12 @@ INSERT INTO trust_centers (
 	@slug,
 	@search_engine_indexing,
 	@non_disclosure_agreement_file_id,
+	@default_domain_id,
+	@custom_domain_id,
+	@description,
+	@website_url,
+	@email,
+	@headquarter_address,
 	@created_at,
 	@updated_at
 )
@@ -352,6 +453,12 @@ INSERT INTO trust_centers (
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
+		"default_domain_id":                tc.DefaultDomainID,
+		"custom_domain_id":                 tc.CustomDomainID,
+		"description":                      tc.Description,
+		"website_url":                      tc.WebsiteURL,
+		"email":                            tc.Email,
+		"headquarter_address":              tc.HeadquarterAddress,
 		"created_at":                       tc.CreatedAt,
 		"updated_at":                       tc.UpdatedAt,
 	}
@@ -384,6 +491,12 @@ SET
 	logo_file_id = @logo_file_id,
 	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
+	default_domain_id = @default_domain_id,
+	custom_domain_id = @custom_domain_id,
+	description = @description,
+	website_url = @website_url,
+	email = @email,
+	headquarter_address = @headquarter_address,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -400,6 +513,12 @@ WHERE
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
+		"default_domain_id":                tc.DefaultDomainID,
+		"custom_domain_id":                 tc.CustomDomainID,
+		"description":                      tc.Description,
+		"website_url":                      tc.WebsiteURL,
+		"email":                            tc.Email,
+		"headquarter_address":              tc.HeadquarterAddress,
 		"updated_at":                       tc.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
