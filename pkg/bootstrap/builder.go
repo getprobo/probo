@@ -156,8 +156,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				},
 			},
 			TrustCenter: probodconfig.TrustCenterConfig{
-				HTTPAddr:  b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
-				HTTPSAddr: b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
+				HTTPAddr:   b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
+				HTTPSAddr:  b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
+				BaseDomain: b.resolver.getEnv("PROBOD_TRUST_CENTER_BASE_DOMAIN"),
 				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.resolver.getEnv("PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},

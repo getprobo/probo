@@ -83,6 +83,7 @@ type (
 	TrustCenterConfig struct {
 		HTTPAddr      string              `json:"http-addr,omitempty"`
 		HTTPSAddr     string              `json:"https-addr,omitempty"`
+		BaseDomain    string              `json:"base-domain,omitempty"`
 		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol,omitzero"`
 	}
 )

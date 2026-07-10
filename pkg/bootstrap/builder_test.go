@@ -190,6 +190,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	// Trust center config
 	assert.Empty(t, cfg.Probod.TrustCenter.HTTPAddr)
 	assert.Empty(t, cfg.Probod.TrustCenter.HTTPSAddr)
+	assert.Empty(t, cfg.Probod.TrustCenter.BaseDomain)
 	assert.Nil(t, cfg.Probod.TrustCenter.ProxyProtocol.TrustedProxies)
 
 	// AWS config
@@ -335,6 +336,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Trust center
 	env["PROBOD_TRUST_CENTER_HTTP_ADDR"] = ":8080"
 	env["PROBOD_TRUST_CENTER_HTTPS_ADDR"] = ":8443"
+	env["PROBOD_TRUST_CENTER_BASE_DOMAIN"] = "probopage.example.com"
 	env["PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES"] = "10.0.1.1,10.0.1.2"
 	// AWS
 	env["PROBOD_AWS_REGION"] = "eu-west-1"
@@ -469,6 +471,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Trust center
 	assert.Equal(t, ":8080", cfg.Probod.TrustCenter.HTTPAddr)
 	assert.Equal(t, ":8443", cfg.Probod.TrustCenter.HTTPSAddr)
+	assert.Equal(t, "probopage.example.com", cfg.Probod.TrustCenter.BaseDomain)
 	assert.Equal(t, []string{"10.0.1.1", "10.0.1.2"}, cfg.Probod.TrustCenter.ProxyProtocol.TrustedProxies)
 	// AWS
 	assert.Equal(t, "eu-west-1", cfg.Probod.AWS.Region)
