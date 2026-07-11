@@ -365,3 +365,84 @@ func TestCreateAPIKeyConnector_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create connector")
 	})
 }
+
+// TestCrispVerificationCode exercises the crispVerificationCode query end to end
+// through the live schema and authorization stack. The code is a deterministic
+// HMAC bound to (organization, website), so the query needs only the managed
+// token secret (always set) and organization authorization — no Crisp
+// credentials — and asserts the code's shape, determinism, org-binding, and the
+// INVALID / FORBIDDEN error paths.
+func TestCrispVerificationCode(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const query = `
+		query($organizationId: ID!, $websiteId: String!) {
+			crispVerificationCode(organizationId: $organizationId, websiteId: $websiteId)
+		}
+	`
+
+	getCode := func(t *testing.T, client *testutil.Client, org, website string) string {
+		t.Helper()
+
+		var result struct {
+			CrispVerificationCode string `json:"crispVerificationCode"`
+		}
+
+		err := client.Execute(query, map[string]any{
+			"organizationId": org,
+			"websiteId":      website,
+		}, &result)
+		require.NoError(t, err)
+
+		return result.CrispVerificationCode
+	}
+
+	const website = "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+
+	t.Run("owner gets a 12-char base32 code, deterministic per input", func(t *testing.T) {
+		t.Parallel()
+
+		code := getCode(t, owner, orgID, website)
+		assert.Regexp(t, "^[A-Z2-7]{12}$", code)
+
+		// The same inputs re-derive the same code; nothing is stored.
+		assert.Equal(t, code, getCode(t, owner, orgID, website))
+
+		// A different website under the same organization yields a different code.
+		assert.NotEqual(t, code, getCode(t, owner, orgID, "99999999-0000-0000-0000-000000000000"))
+	})
+
+	t.Run("code is organization-bound", func(t *testing.T) {
+		t.Parallel()
+
+		otherOwner := testutil.NewClient(t, testutil.RoleOwner)
+
+		mine := getCode(t, owner, orgID, website)
+		theirs := getCode(t, otherOwner, otherOwner.GetOrganizationID().String(), website)
+		assert.NotEqual(t, mine, theirs, "same website under different organizations must not share a code")
+	})
+
+	t.Run("blank websiteId is rejected as INVALID", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(query, map[string]any{
+			"organizationId": orgID,
+			"websiteId":      "   ",
+		})
+		testutil.RequireErrorCode(t, err, "INVALID", "blank websiteId must return INVALID not INTERNAL")
+	})
+
+	t.Run("viewer cannot read the verification code", func(t *testing.T) {
+		t.Parallel()
+
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+		_, err := viewer.Do(query, map[string]any{
+			"organizationId": viewer.GetOrganizationID().String(),
+			"websiteId":      website,
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to read the crisp verification code")
+	})
+}

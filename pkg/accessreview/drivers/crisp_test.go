@@ -45,6 +45,10 @@ func TestCrispDriver(t *testing.T) {
 	assert.True(t, owner.IsAdmin)
 	assert.Equal(t, "Founder", owner.JobTitle)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
+	// Crisp's operators/list exposes no MFA or account-status signal, so the
+	// driver hardcodes MFA Unknown and leaves Active nil for every record.
+	assert.Equal(t, coredata.MFAStatusUnknown, owner.MFAStatus)
+	assert.Nil(t, owner.Active)
 
 	member := records[1]
 	assert.Equal(t, "9a1f3c2e-6b4d-4f8a-bc11-7d2e9f0a1b22", member.ExternalID)
@@ -52,4 +56,6 @@ func TestCrispDriver(t *testing.T) {
 	assert.Equal(t, []string{"Member"}, member.Roles)
 	assert.False(t, member.IsAdmin)
 	assert.Equal(t, "Support Agent", member.JobTitle)
+	assert.Equal(t, coredata.MFAStatusUnknown, member.MFAStatus)
+	assert.Nil(t, member.Active)
 }

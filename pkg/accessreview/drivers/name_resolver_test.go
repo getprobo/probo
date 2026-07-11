@@ -580,6 +580,147 @@ func TestGitHubNameResolver(t *testing.T) {
 	}
 }
 
+func TestRailwayNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   string
+	}{
+		{
+			name:   "single workspace names the source",
+			status: http.StatusOK,
+			body:   `{"data":{"me":{"name":"Jane Doe","workspaces":[{"id":"w1","name":"Acme Workspace"}]}}}`,
+			want:   "Acme Workspace",
+		},
+		{
+			name:   "multiple workspaces fall back to account holder",
+			status: http.StatusOK,
+			body:   `{"data":{"me":{"name":"Jane Doe","workspaces":[{"id":"w1","name":"Acme"},{"id":"w2","name":"Beta"}]}}}`,
+			want:   "Jane Doe",
+		},
+		{
+			name:   "no workspaces fall back to account holder",
+			status: http.StatusOK,
+			body:   `{"data":{"me":{"name":"Jane Doe","workspaces":[]}}}`,
+			want:   "Jane Doe",
+		},
+		{
+			name:   "graphql error body is terminal (no name)",
+			status: http.StatusOK,
+			body:   `{"data":{"me":null},"errors":[{"message":"unauthorized"}]}`,
+			want:   "",
+		},
+		{
+			name:   "null me is terminal (no name)",
+			status: http.StatusOK,
+			body:   `{"data":{"me":null}}`,
+			want:   "",
+		},
+		{
+			name:   "non-2xx is terminal (no name)",
+			status: http.StatusInternalServerError,
+			body:   `{"message":"boom"}`,
+			want:   "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodPost, r.Method)
+				assert.Equal(t, "/graphql/v2", r.URL.Path)
+				assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewRailwayNameResolver(client).ResolveInstanceName(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestCrispNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty website id returns nothing without HTTP call", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatalf("resolver should not make an HTTP call for an empty website id")
+			return nil, nil
+		})}
+
+		got, err := NewCrispNameResolver(client, "").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   string
+	}{
+		{
+			name:   "200 returns website name",
+			status: http.StatusOK,
+			body:   `{"data":{"name":"Acme Support"}}`,
+			want:   "Acme Support",
+		},
+		{
+			name:   "401 is terminal (no name)",
+			status: http.StatusUnauthorized,
+			body:   `{"error":true,"reason":"not_allowed"}`,
+			want:   "",
+		},
+		{
+			name:   "404 is terminal (no name)",
+			status: http.StatusNotFound,
+			body:   `{"error":true,"reason":"website_not_found"}`,
+			want:   "",
+		},
+		{
+			name:   "500 is terminal (no name)",
+			status: http.StatusInternalServerError,
+			body:   `{"error":true,"reason":"boom"}`,
+			want:   "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/v1/website/1a2b3c4d", r.URL.Path)
+				assert.Equal(t, crispTierValue, r.Header.Get(crispTierHeader))
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewCrispNameResolver(client, "1a2b3c4d").ResolveInstanceName(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
 // roundTripperFunc adapts a function into an http.RoundTripper, useful for
 // asserting that a resolver short-circuits before making any HTTP call.
 type roundTripperFunc func(*http.Request) (*http.Response, error)
