@@ -60,32 +60,36 @@ const (
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
 	// ConnectorProviderClerk is disabled (unregistered) but kept in IsValid
 	// and the GraphQL enum so existing stored CLERK rows still validate.
-	ConnectorProviderClerk      ConnectorProvider = "CLERK"
-	ConnectorProviderVercel     ConnectorProvider = "VERCEL"
-	ConnectorProviderMonday     ConnectorProvider = "MONDAY"
-	ConnectorProviderMetabase   ConnectorProvider = "METABASE"
-	ConnectorProviderTailscale  ConnectorProvider = "TAILSCALE"
-	ConnectorProviderAnthropic  ConnectorProvider = "ANTHROPIC"
-	ConnectorProviderCursor     ConnectorProvider = "CURSOR"
-	ConnectorProviderDatadog    ConnectorProvider = "DATADOG"
-	ConnectorProviderOkta       ConnectorProvider = "OKTA"
-	ConnectorProviderZendesk    ConnectorProvider = "ZENDESK"
-	ConnectorProviderQovery     ConnectorProvider = "QOVERY"
-	ConnectorProviderRender     ConnectorProvider = "RENDER"
-	ConnectorProviderNeon       ConnectorProvider = "NEON"
-	ConnectorProviderMercury    ConnectorProvider = "MERCURY"
-	ConnectorProviderApollo     ConnectorProvider = "APOLLO"
-	ConnectorProviderDeepgram   ConnectorProvider = "DEEPGRAM"
-	ConnectorProviderClickHouse ConnectorProvider = "CLICKHOUSE"
-	ConnectorProviderLangfuse   ConnectorProvider = "LANGFUSE"
-	ConnectorProviderPylon      ConnectorProvider = "PYLON"
-	ConnectorProviderOpenRouter ConnectorProvider = "OPENROUTER"
-	ConnectorProviderIncidentIO ConnectorProvider = "INCIDENT_IO"
-	ConnectorProviderBrevo      ConnectorProvider = "BREVO"
-	ConnectorProviderScaleway   ConnectorProvider = "SCALEWAY"
-	ConnectorProviderYousign    ConnectorProvider = "YOUSIGN"
-	ConnectorProviderRailway    ConnectorProvider = "RAILWAY"
-	ConnectorProviderCrisp      ConnectorProvider = "CRISP"
+	ConnectorProviderClerk           ConnectorProvider = "CLERK"
+	ConnectorProviderVercel          ConnectorProvider = "VERCEL"
+	ConnectorProviderMonday          ConnectorProvider = "MONDAY"
+	ConnectorProviderMetabase        ConnectorProvider = "METABASE"
+	ConnectorProviderTailscale       ConnectorProvider = "TAILSCALE"
+	ConnectorProviderAnthropic       ConnectorProvider = "ANTHROPIC"
+	ConnectorProviderCursor          ConnectorProvider = "CURSOR"
+	ConnectorProviderDatadog         ConnectorProvider = "DATADOG"
+	ConnectorProviderOkta            ConnectorProvider = "OKTA"
+	ConnectorProviderZendesk         ConnectorProvider = "ZENDESK"
+	ConnectorProviderQovery          ConnectorProvider = "QOVERY"
+	ConnectorProviderRender          ConnectorProvider = "RENDER"
+	ConnectorProviderNeon            ConnectorProvider = "NEON"
+	ConnectorProviderMercury         ConnectorProvider = "MERCURY"
+	ConnectorProviderApollo          ConnectorProvider = "APOLLO"
+	ConnectorProviderDeepgram        ConnectorProvider = "DEEPGRAM"
+	ConnectorProviderClickHouse      ConnectorProvider = "CLICKHOUSE"
+	ConnectorProviderLangfuse        ConnectorProvider = "LANGFUSE"
+	ConnectorProviderPylon           ConnectorProvider = "PYLON"
+	ConnectorProviderOpenRouter      ConnectorProvider = "OPENROUTER"
+	ConnectorProviderIncidentIO      ConnectorProvider = "INCIDENT_IO"
+	ConnectorProviderBrevo           ConnectorProvider = "BREVO"
+	ConnectorProviderScaleway        ConnectorProvider = "SCALEWAY"
+	ConnectorProviderYousign         ConnectorProvider = "YOUSIGN"
+	ConnectorProviderRailway         ConnectorProvider = "RAILWAY"
+	ConnectorProviderCrisp           ConnectorProvider = "CRISP"
+	ConnectorProviderDotfile         ConnectorProvider = "DOTFILE"
+	ConnectorProviderSegment         ConnectorProvider = "SEGMENT"
+	ConnectorProviderSquare          ConnectorProvider = "SQUARE"
+	ConnectorProviderGoogleAnalytics ConnectorProvider = "GOOGLE_ANALYTICS"
 )
 
 var (
@@ -150,6 +154,10 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderYousign,
 		ConnectorProviderRailway,
 		ConnectorProviderCrisp,
+		ConnectorProviderDotfile,
+		ConnectorProviderSegment,
+		ConnectorProviderSquare,
+		ConnectorProviderGoogleAnalytics,
 	}
 }
 
@@ -210,7 +218,11 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderScaleway,
 		ConnectorProviderYousign,
 		ConnectorProviderRailway,
-		ConnectorProviderCrisp:
+		ConnectorProviderCrisp,
+		ConnectorProviderDotfile,
+		ConnectorProviderSegment,
+		ConnectorProviderSquare,
+		ConnectorProviderGoogleAnalytics:
 		return true
 	}
 

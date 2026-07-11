@@ -1,0 +1,116 @@
+---
+# Hand-authored cassette for the Segment Public API (US host; Bearer token
+# stripped by the recorder). GET /users returns members without roles, so each
+# member's roles are fetched via GET /users/{id} (the N+1); GET /invites adds a
+# pending invite as an inactive member. Two synthetic users cover the
+# Workspace Owner (admin) and a resource-scoped read-only role; the envelope
+# (data.users / data.user.permissions / data.invites, data.pagination.next) and
+# the UserV1 / PermissionV1 shapes mirror the live API.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.segmentapis.com
+        form:
+            pagination.count:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.segmentapis.com/users?pagination.count=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":{"users":[{"id":"sgJDWk3K21k6LE3tLU9nRK","name":"","email":"papi@example.com"},{"id":"i2VTJURQprNfqdwjLFPWYx","name":"Sloth","email":"sloth@example.com"}],"pagination":{"current":"MA=="}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.segmentapis.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.segmentapis.com/users/sgJDWk3K21k6LE3tLU9nRK
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":{"user":{"id":"sgJDWk3K21k6LE3tLU9nRK","name":"","email":"papi@example.com","permissions":[{"roleId":"1WDUuRLxv84rrfCNUwvkrRtkxnS","roleName":"Workspace Owner","resources":[{"id":"9aQ1Lj62S4bomZKLF4DPqW","type":"WORKSPACE","labels":[]}]}]}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.segmentapis.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.segmentapis.com/users/i2VTJURQprNfqdwjLFPWYx
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":{"user":{"id":"i2VTJURQprNfqdwjLFPWYx","name":"Sloth","email":"sloth@example.com","permissions":[{"roleId":"2ABxYz84rrfCNUwvkrRtkxnT","roleName":"Source Read-only","resources":[{"id":"src_1a2b3c","type":"SOURCE","labels":[]}]}]}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.segmentapis.com
+        form:
+            pagination.count:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.segmentapis.com/invites?pagination.count=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":{"invites":["foo@example.com"],"pagination":{"current":"MA=="}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
