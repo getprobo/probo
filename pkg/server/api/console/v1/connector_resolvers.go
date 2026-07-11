@@ -36,17 +36,16 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		return nil, err
 	}
 
+	apiKey, err := r.resolveAPIKeyConnectorCredential(input.Provider, input.APIKey)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolAPIKey,
-		Connection: &connector.APIKeyConnection{
-			APIKey:            input.APIKey,
-			Header:            r.providerRegistry.APIKeyHeader(input.Provider),
-			BasicAuth:         r.providerRegistry.APIKeyUsesBasicAuth(input.Provider),
-			BasicAuthUserPass: r.providerRegistry.APIKeyUsesBasicAuthUserPass(input.Provider),
-			Scheme:            r.providerRegistry.APIKeyAuthScheme(input.Provider),
-		},
+		Connection:     r.newAPIKeyConnection(input.Provider, apiKey),
 	}
 
 	raw, err := apiKeyConnectorSettings(input)
@@ -55,6 +54,16 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 	}
 
 	req.RawSettings = raw
+
+	// Crisp (ManagedAPIKey) requires proof the organization controls the Crisp
+	// website before the connection is created; every other API-key provider is
+	// unaffected. Runs after settings validation and before any write, so a
+	// failed check leaves no row.
+	if input.Provider == coredata.ConnectorProviderCrisp {
+		if err := r.verifyCrispOwnership(ctx, input); err != nil {
+			return nil, err
+		}
+	}
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {

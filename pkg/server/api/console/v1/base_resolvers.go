@@ -574,10 +574,16 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		apiKeySupported := reg.SupportsAPIKey
 		clientCredentialsSupported := reg.SupportsClientCredentials
 
+		// ManagedAPIKey (Model B, e.g. Crisp) providers are connectable only
+		// once the operator configures the Probo-held key; until then they
+		// stay hidden, so such a provider ships deactivated.
+		_, hasManaged := r.providerRegistry.ManagedAPIKey(provider)
+		apiKeyManaged := reg.ManagedAPIKey && hasManaged
+
 		// Skip providers that cannot be connected in this deployment: no
 		// OAuth client credentials configured and no key-based fallback
-		// (API key or client credentials) supported.
-		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported {
+		// (API key, managed API key, or client credentials) supported.
+		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported && !apiKeyManaged {
 			continue
 		}
 
@@ -603,6 +609,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			DisplayName:                reg.DisplayName,
 			OauthConfigured:            oauthConfigured,
 			APIKeySupported:            apiKeySupported,
+			APIKeyManaged:              apiKeyManaged,
 			ClientCredentialsSupported: clientCredentialsSupported,
 			Oauth2Scopes:               scopes,
 			ExtraSettings:              extraSettings,
@@ -617,6 +624,25 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 	)
 
 	return infos, nil
+}
+
+// CrispVerificationCode is the resolver for the crispVerificationCode field. It
+// returns the deterministic ownership-verification code the customer must paste
+// into the Probo plugin's per-website settings in their Crisp dashboard before
+// connecting that website. Authorized against the organization with the same
+// action as the create mutation because the code is organization-bound. This is
+// a UI-only helper; MCP/CLI/n8n are intentionally not extended.
+func (r *queryResolver) CrispVerificationCode(ctx context.Context, organizationID gid.GID, websiteID string) (string, error) {
+	if _, err := r.authorize(ctx, organizationID, probo.ActionConnectorCreate); err != nil {
+		return "", err
+	}
+
+	websiteID = strings.TrimSpace(websiteID)
+	if websiteID == "" {
+		return "", gqlutils.Invalidf(ctx, "websiteId is required")
+	}
+
+	return computeCrispVerificationCode(r.tokenSecret, organizationID.String(), websiteID), nil
 }
 
 // Mutation returns schema.MutationResolver implementation.

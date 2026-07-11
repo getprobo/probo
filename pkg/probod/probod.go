@@ -318,6 +318,26 @@ func (impl *Implm) Run(
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
+		// ManagedAPIKey (Model B) connectors carry a Probo-held API key
+		// instead of an OAuth2 client; register it on the provider registry
+		// and skip the OAuth-only connector registry. Fail loudly on a
+		// provider that is not a managed-api-key connector (e.g. a typo)
+		// rather than silently swallowing the key, mirroring how the OAuth2
+		// path surfaces misconfiguration at startup.
+		if connectorCfg.Protocol == connector.ProtocolAPIKey {
+			p := coredata.ConnectorProvider(connectorCfg.Provider)
+
+			reg, ok := providerRegistry.Get(p)
+			if !ok || !reg.ManagedAPIKey {
+				return fmt.Errorf("cannot configure api_key connector %q: not a managed-api-key provider", connectorCfg.Provider)
+			}
+
+			providerRegistry.SetManagedAPIKey(p, connectorCfg.APIKey)
+			providerRegistry.SetManagedResourceID(p, connectorCfg.ResourceID)
+
+			continue
+		}
+
 		if oauth2c, ok := connectorCfg.Config.(*connector.OAuth2Connector); ok {
 			if err := providerRegistry.ApplyOAuth2Defaults(connectorCfg.Provider, redirectURI, oauth2c); err != nil {
 				return fmt.Errorf("cannot apply oauth2 defaults: %w", err)

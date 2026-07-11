@@ -27,6 +27,8 @@ type Query {
     viewer: Viewer!
     commonThirdParties(name: String!): [CommonThirdParty!]!
     accessReviewDrivers: [ConnectorProviderInfo!]! @goField(forceResolver: true)
+    crispVerificationCode(organizationId: ID!, websiteId: String!): String!
+        @goField(forceResolver: true)
 }
 
 type Mutation

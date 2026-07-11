@@ -236,6 +236,12 @@ func (s *Service) connectorHTTPClient(
 		return s.oauthClient(ctx, oauth2Conn, dbConnector.Provider)
 	}
 
+	// Inject the Probo-held key for ManagedAPIKey providers (no-op otherwise),
+	// resolving it fresh at use time rather than from the connection row.
+	if err := s.providerRegistry.ApplyManagedAPIKey(dbConnector); err != nil {
+		return nil, err
+	}
+
 	return dbConnector.Connection.Client(ctx)
 }
 

@@ -364,6 +364,13 @@ func (s *Service) ConnectorHTTPClient(
 	}
 
 	if httpClient == nil {
+		// Inject the Probo-held key for ManagedAPIKey providers (no-op
+		// otherwise), resolving it fresh at use time rather than from the
+		// connection row.
+		if err := s.providerRegistry.ApplyManagedAPIKey(&dbConnector); err != nil {
+			return nil, nil, err
+		}
+
 		var err error
 
 		httpClient, err = dbConnector.Connection.Client(ctx)

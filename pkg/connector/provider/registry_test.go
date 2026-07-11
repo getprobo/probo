@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -209,4 +210,118 @@ func TestRegistry_ProbeURL(t *testing.T) {
 	r := provider.NewBuiltinRegistry()
 	assert.NotEmpty(t, r.ProbeURL("SLACK"))
 	assert.Empty(t, r.ProbeURL("UNKNOWN"))
+}
+
+// TestRegistry_ManagedAPIKey covers the deactivated default (no key
+// configured), a configured key, and that an empty key is a no-op so
+// the provider stays deactivated.
+func TestRegistry_ManagedAPIKey(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewRegistry()
+
+	key, ok := r.ManagedAPIKey(coredata.ConnectorProviderCrisp)
+	assert.False(t, ok)
+	assert.Empty(t, key)
+
+	r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "")
+	_, ok = r.ManagedAPIKey(coredata.ConnectorProviderCrisp)
+	assert.False(t, ok, "empty key must not configure the provider")
+
+	r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
+	key, ok = r.ManagedAPIKey(coredata.ConnectorProviderCrisp)
+	assert.True(t, ok)
+	assert.Equal(t, "identifier:secret", key)
+}
+
+func TestRegistry_ManagedResourceID(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewRegistry()
+
+	id, ok := r.ManagedResourceID(coredata.ConnectorProviderCrisp)
+	assert.False(t, ok)
+	assert.Empty(t, id)
+
+	r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "")
+	_, ok = r.ManagedResourceID(coredata.ConnectorProviderCrisp)
+	assert.False(t, ok, "empty resource id must not configure the provider")
+
+	r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "plugin-id")
+	id, ok = r.ManagedResourceID(coredata.ConnectorProviderCrisp)
+	assert.True(t, ok)
+	assert.Equal(t, "plugin-id", id)
+}
+
+// TestCrispIsManagedAPIKey pins Crisp's Model B shape: it is a managed
+// API-key provider that does not accept a customer-pasted key, so the
+// driver catalog hides it until the operator configures the plugin
+// token.
+func TestCrispIsManagedAPIKey(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderCrisp)
+	require.True(t, ok)
+	assert.True(t, reg.ManagedAPIKey)
+	assert.False(t, reg.SupportsAPIKey)
+	assert.True(t, reg.APIKeyBasicAuthUserPass)
+}
+
+// TestRegistry_RejectsManagedPlusCustomerCredential pins that a
+// ManagedAPIKey registration cannot also advertise a customer-supplied
+// credential path, whose value would be silently discarded.
+func TestRegistry_RejectsManagedPlusCustomerCredential(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewRegistry()
+	err := r.Register(&provider.Registration{
+		Provider:       coredata.ConnectorProviderCrisp,
+		DisplayName:    "Crisp",
+		ManagedAPIKey:  true,
+		SupportsAPIKey: true,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "mutually exclusive")
+}
+
+// TestRegistry_ApplyManagedAPIKey verifies the key is injected fresh into a
+// managed provider's connection (so rotation propagates and the key is not
+// persisted), while non-managed providers are left untouched.
+func TestRegistry_ApplyManagedAPIKey(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
+
+	managed := &coredata.Connector{
+		Provider:   coredata.ConnectorProviderCrisp,
+		Connection: &connector.APIKeyConnection{BasicAuthUserPass: true},
+	}
+	require.NoError(t, r.ApplyManagedAPIKey(managed))
+	assert.Equal(t, "identifier:secret", managed.Connection.(*connector.APIKeyConnection).APIKey)
+
+	// Non-managed provider: the connection is left untouched.
+	other := &coredata.Connector{
+		Provider:   coredata.ConnectorProviderSlack,
+		Connection: &connector.APIKeyConnection{APIKey: "customer-key"},
+	}
+	require.NoError(t, r.ApplyManagedAPIKey(other))
+	assert.Equal(t, "customer-key", other.Connection.(*connector.APIKeyConnection).APIKey)
+}
+
+// TestRegistry_ApplyManagedAPIKey_Unconfigured verifies that a managed
+// provider whose key was never configured (deactivated) errors rather than
+// silently building a keyless client.
+func TestRegistry_ApplyManagedAPIKey_Unconfigured(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	managed := &coredata.Connector{
+		Provider:   coredata.ConnectorProviderCrisp,
+		Connection: &connector.APIKeyConnection{BasicAuthUserPass: true},
+	}
+	err := r.ApplyManagedAPIKey(managed)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not configured")
 }

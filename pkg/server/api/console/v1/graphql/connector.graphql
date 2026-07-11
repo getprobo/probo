@@ -106,6 +106,14 @@ type ConnectorProviderInfo {
     displayName: String!
     oauthConfigured: Boolean!
     apiKeySupported: Boolean!
+    """
+    apiKeyManaged is true when the provider connects with a Probo-supplied
+    API key (Model B, e.g. Crisp's marketplace plugin token) that the
+    operator has configured. The customer supplies only the extra settings
+    (e.g. a Website ID), not the key. False until the key is configured,
+    which keeps such a provider out of the catalog.
+    """
+    apiKeyManaged: Boolean!
     clientCredentialsSupported: Boolean!
     oauth2Scopes: [String!]!
     extraSettings: [ConnectorProviderSettingInfo!]!
@@ -164,7 +172,13 @@ extend type Mutation {
 input CreateAPIKeyConnectorInput {
     organizationId: ID!
     provider: ConnectorProvider!
-    apiKey: String!
+    """
+    apiKey is the customer-supplied credential. It is null for
+    ManagedAPIKey (Model B) providers such as Crisp, where the server
+    injects Probo's own key and the customer provides only the extra
+    settings.
+    """
+    apiKey: String
     tallyOrganizationId: String
     sentryOrganizationSlug: String
     supabaseOrganizationSlug: String

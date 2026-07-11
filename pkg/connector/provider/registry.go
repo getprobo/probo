@@ -42,6 +42,18 @@ import (
 type Registry struct {
 	mu        sync.RWMutex
 	providers map[coredata.ConnectorProvider]*Registration
+	// managedAPIKeys holds the Probo-supplied API key for providers with
+	// ManagedAPIKey registrations (e.g. Crisp's marketplace plugin token).
+	// Populated by probod from bootstrap config via SetManagedAPIKey; empty
+	// until the operator configures the credential.
+	managedAPIKeys map[coredata.ConnectorProvider]string
+	// managedResourceIDs holds an optional Probo-supplied resource identifier
+	// for a ManagedAPIKey provider, distinct from the credential. Crisp needs
+	// it: the plugin token's Basic identifier is not the plugin ID, yet the
+	// per-website plugin API (used for ownership verification) requires the
+	// plugin ID in the path. Populated by probod via SetManagedResourceID;
+	// empty for providers that need no such identifier.
+	managedResourceIDs map[coredata.ConnectorProvider]string
 }
 
 // NewRegistry returns an empty *Registry. Production code uses
@@ -49,7 +61,9 @@ type Registry struct {
 // empty Registry and register only the providers they need.
 func NewRegistry() *Registry {
 	return &Registry{
-		providers: make(map[coredata.ConnectorProvider]*Registration),
+		providers:          make(map[coredata.ConnectorProvider]*Registration),
+		managedAPIKeys:     make(map[coredata.ConnectorProvider]string),
+		managedResourceIDs: make(map[coredata.ConnectorProvider]string),
 	}
 }
 
@@ -96,6 +110,14 @@ func (r *Registry) Register(reg *Registration) error {
 
 	if apiKeyModes > 1 {
 		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
+	}
+
+	// ManagedAPIKey injects a Probo-held key and ignores any customer
+	// credential, so pairing it with SupportsAPIKey/SupportsClientCredentials
+	// would advertise a credential field whose value is silently discarded —
+	// the same silent-winner class rejected above. Reject it at startup.
+	if reg.ManagedAPIKey && (reg.SupportsAPIKey || reg.SupportsClientCredentials) {
+		return fmt.Errorf("cannot register connector provider %q: ManagedAPIKey is mutually exclusive with SupportsAPIKey and SupportsClientCredentials", reg.Provider)
 	}
 
 	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
@@ -222,6 +244,64 @@ func (r *Registry) APIKeyUsesBasicAuthUserPass(p coredata.ConnectorProvider) boo
 	}
 
 	return false
+}
+
+// SetManagedAPIKey records the Probo-supplied API key for a
+// ManagedAPIKey provider (e.g. Crisp). probod calls this from bootstrap
+// config so the create-connector resolver can inject the key and the
+// driver catalog can surface the provider. An empty key is treated as
+// "not configured": it is not stored, keeping the provider hidden.
+func (r *Registry) SetManagedAPIKey(p coredata.ConnectorProvider, key string) {
+	if key == "" {
+		return
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.managedAPIKeys[p] = key
+}
+
+// ManagedAPIKey returns the Probo-supplied API key configured for a
+// ManagedAPIKey provider and whether one is set. The boolean is false
+// (and the string empty) until the operator configures the credential
+// via bootstrap, which is what keeps such a provider deactivated.
+func (r *Registry) ManagedAPIKey(p coredata.ConnectorProvider) (string, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	key, ok := r.managedAPIKeys[p]
+
+	return key, ok
+}
+
+// SetManagedResourceID records an optional Probo-supplied resource
+// identifier for a ManagedAPIKey provider (e.g. the Crisp plugin ID used
+// by the per-website plugin API). probod calls this from bootstrap config
+// alongside SetManagedAPIKey. An empty id is treated as "not configured":
+// it is not stored.
+func (r *Registry) SetManagedResourceID(p coredata.ConnectorProvider, id string) {
+	if id == "" {
+		return
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.managedResourceIDs[p] = id
+}
+
+// ManagedResourceID returns the Probo-supplied resource identifier
+// configured for a ManagedAPIKey provider and whether one is set. The
+// boolean is false (and the string empty) until the operator configures it
+// via bootstrap.
+func (r *Registry) ManagedResourceID(p coredata.ConnectorProvider) (string, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	id, ok := r.managedResourceIDs[p]
+
+	return id, ok
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review

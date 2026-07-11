@@ -112,6 +112,17 @@ type Registration struct {
 	// exclusive with the other API-key auth modes. Consumed when the
 	// create-connector resolver builds the APIKeyConnection.
 	APIKeyBasicAuthUserPass bool
+	// ManagedAPIKey marks a provider whose API key is supplied by Probo
+	// from bootstrap config (a single, Probo-held credential shared across
+	// all connections) rather than pasted per-connection by the customer.
+	// The connection carries only the ExtraSettings (e.g. a Crisp Website
+	// ID); the create-connector resolver injects the managed key registered
+	// via (*Registry).SetManagedAPIKey. Such a provider stays hidden from
+	// the driver catalog until the operator configures the key, so it ships
+	// deactivated and activates with no code change. Orthogonal to the
+	// APIKey*/SupportsAPIKey auth-mode flags, which still select how the
+	// injected key is presented on the wire.
+	ManagedAPIKey bool
 
 	// BuildProbeURL derives a per-connector probe URL when the API host or
 	// path depends on connector settings (e.g. a customer subdomain or

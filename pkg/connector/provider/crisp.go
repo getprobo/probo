@@ -26,11 +26,19 @@ import (
 
 func crispRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderCrisp,
-		DisplayName:    "Crisp",
-		SupportsAPIKey: true,
-		// Crisp authenticates with a plugin token presented as HTTP Basic, the
-		// credential being the verbatim "identifier:key" pair.
+		Provider:    coredata.ConnectorProviderCrisp,
+		DisplayName: "Crisp",
+		// Model B: the plugin token is Probo's own Crisp Marketplace plugin
+		// credential, held server-side in bootstrap config, not pasted by
+		// the customer. ManagedAPIKey injects it at connect time; the
+		// customer supplies only the Website ID. SupportsAPIKey stays false
+		// so the provider is hidden from the driver catalog until the
+		// operator configures PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN — it ships
+		// deactivated until Crisp validates the production plugin and
+		// activates with no code change once the token is set.
+		ManagedAPIKey: true,
+		// Crisp authenticates with the plugin token presented as HTTP Basic,
+		// the credential being the verbatim "identifier:key" pair.
 		// APIKeyBasicAuthUserPass base64-encodes it (the empty-password
 		// APIKeyBasicAuth cannot carry the key). A plugin token can serve
 		// several websites, so the reviewed website is captured via

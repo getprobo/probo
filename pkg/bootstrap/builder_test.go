@@ -687,6 +687,61 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", rawSettings["signing-secret"])
 }
 
+func TestBuilder_Build_CrispConnector(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN"] = "plugin-identifier:plugin-key"
+	env["PROBOD_CONNECTOR_CRISP_PLUGIN_ID"] = "e979a1c3-2c41-4e93-a8ed-410ace27318e"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	connector := cfg.Probod.Connectors[0]
+	assert.Equal(t, "CRISP", connector.Provider)
+	assert.Equal(t, "api_key", string(connector.Protocol))
+	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigAPIKey)
+	assert.Equal(t, "plugin-identifier:plugin-key", rawConfig.APIKey)
+	assert.Equal(t, "e979a1c3-2c41-4e93-a8ed-410ace27318e", rawConfig.ResourceID)
+}
+
+func TestBuilder_Build_CrispConnectorAbsentWithoutToken(t *testing.T) {
+	// Without the plugin token the connector must not be configured, which
+	// is what keeps Crisp deactivated until Crisp validates the plugin.
+	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	for _, c := range cfg.Probod.Connectors {
+		assert.NotEqual(t, "CRISP", c.Provider)
+	}
+}
+
+func TestBuilder_Build_CrispConnectorAbsentWithoutPluginID(t *testing.T) {
+	// The plugin token alone is not enough: the per-website plugin API needs
+	// the plugin ID to verify website ownership, so a half-configured Crisp
+	// connector stays hidden rather than activating in a broken state.
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN"] = "plugin-identifier:plugin-key"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	for _, c := range cfg.Probod.Connectors {
+		assert.NotEqual(t, "CRISP", c.Provider)
+	}
+}
+
 func TestBuilder_Build_SAMLAutoGeneration(t *testing.T) {
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 

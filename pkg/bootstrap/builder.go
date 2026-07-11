@@ -513,6 +513,32 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		)
 	}
 
+	// Crisp is a ManagedAPIKey (Model B) connector: Probo holds one
+	// Marketplace plugin token (the verbatim "identifier:key" pair) shared
+	// across all customer connections, and each connection carries only a
+	// Website ID. The plugin ID is a separate value (the token's Basic
+	// identifier is not the plugin ID) required by the per-website plugin API
+	// that verifies website ownership at connect time. Both must be set to
+	// activate the connector; until then it stays hidden from the driver
+	// catalog, so it ships deactivated and activates the moment Crisp
+	// validates the production plugin and both values are configured.
+	crispPluginToken := b.resolver.getEnv("PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN")
+
+	crispPluginID := b.resolver.getEnv("PROBOD_CONNECTOR_CRISP_PLUGIN_ID")
+	if crispPluginToken != "" && crispPluginID != "" {
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "CRISP",
+				Protocol: "api_key",
+				RawConfig: probodconfig.ConnectorConfigAPIKey{
+					APIKey:     crispPluginToken,
+					ResourceID: crispPluginID,
+				},
+			},
+		)
+	}
+
 	if b.resolver.Err() != nil {
 		return nil, b.resolver.Err()
 	}

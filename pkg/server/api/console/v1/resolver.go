@@ -71,6 +71,7 @@ type (
 		fileManager       *filemanager.Service
 		baseURL           *baseurl.BaseURL
 		customDomainCname string
+		tokenSecret       string
 	}
 )
 
@@ -111,6 +112,7 @@ func NewMux(
 		connectorRegistry,
 		providerRegistry,
 		customDomainCname,
+		tokenSecret,
 		logger,
 		thirdPartySvc,
 		riskManagementSvc,

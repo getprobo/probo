@@ -30,6 +30,17 @@ type ConnectorConfig struct {
 	RawConfig   any                    `json:"config,omitempty"`
 	Settings    any                    `json:"-"`
 	RawSettings any                    `json:"settings,omitempty"`
+	// APIKey holds the Probo-supplied credential for an api_key-protocol
+	// connector (ManagedAPIKey providers such as Crisp). It is resolved
+	// from RawConfig by UnmarshalJSON and registered on the provider
+	// Registry by probod. Empty for OAuth2 connectors.
+	APIKey string `json:"-"`
+	// ResourceID holds an optional Probo-supplied resource identifier for an
+	// api_key-protocol connector, distinct from the credential (e.g. the
+	// Crisp plugin ID required by the per-website plugin API). Resolved from
+	// RawConfig by UnmarshalJSON and registered on the provider Registry by
+	// probod. Empty for connectors that need no such identifier.
+	ResourceID string `json:"-"`
 }
 
 type ConnectorConfigOAuth2 struct {
@@ -40,6 +51,17 @@ type ConnectorConfigOAuth2 struct {
 	// integrations). It is propagated onto OAuth2Connector.IntegrationSlug
 	// and resolved by (*provider.Registry).ApplyOAuth2Defaults.
 	IntegrationSlug string `json:"integration-slug,omitempty"`
+}
+
+// ConnectorConfigAPIKey carries the Probo-held API key for a
+// ManagedAPIKey connector (e.g. Crisp's marketplace plugin token). The
+// operator supplies it via bootstrap env; probod registers it on the
+// provider Registry so the create-connector resolver can inject it.
+// ResourceID is an optional companion identifier (e.g. the Crisp plugin
+// ID) some managed connectors need beyond the credential.
+type ConnectorConfigAPIKey struct {
+	APIKey     string `json:"api-key"`
+	ResourceID string `json:"resource-id,omitempty"`
 }
 
 func (c *Config) GetSlackSigningSecret() string {
@@ -99,6 +121,14 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 		oauth2Connector.IntegrationSlug = config.IntegrationSlug
 
 		c.Config = &oauth2Connector
+	case connector.ProtocolAPIKey:
+		var config ConnectorConfigAPIKey
+		if err := json.NewDecoder(bytes.NewReader(tmp.RawConfig)).Decode(&config); err != nil {
+			return fmt.Errorf("cannot unmarshal api key connector config: %w", err)
+		}
+
+		c.APIKey = config.APIKey
+		c.ResourceID = config.ResourceID
 	default:
 		return fmt.Errorf("unknown connector protocol: %q", c.Protocol)
 	}

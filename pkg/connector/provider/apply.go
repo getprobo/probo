@@ -72,6 +72,36 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 	return nil
 }
 
+// ApplyManagedAPIKey injects the Probo-held API key into a freshly loaded
+// ManagedAPIKey connector's connection, so the credential is resolved at
+// use time — surviving key rotation and never persisted on the connection
+// row (only the extra settings, e.g. a Crisp Website ID, are stored). It is
+// a no-op for every non-managed provider, so callers may invoke it
+// unconditionally before building a connection's HTTP client. It errors
+// when a managed provider's key is unconfigured (the connector was
+// deactivated after the connection was created) or when the connection is
+// not an API-key connection.
+func (r *Registry) ApplyManagedAPIKey(dbConnector *coredata.Connector) error {
+	reg, ok := r.Get(dbConnector.Provider)
+	if !ok || !reg.ManagedAPIKey {
+		return nil
+	}
+
+	apiKeyConn, ok := dbConnector.Connection.(*connector.APIKeyConnection)
+	if !ok {
+		return fmt.Errorf("cannot apply managed api key for provider %q: connection is not an api-key connection", dbConnector.Provider)
+	}
+
+	key, ok := r.ManagedAPIKey(dbConnector.Provider)
+	if !ok {
+		return fmt.Errorf("cannot apply managed api key for provider %q: not configured", dbConnector.Provider)
+	}
+
+	apiKeyConn.APIKey = key
+
+	return nil
+}
+
 // ProbeURL returns the registered probe URL for provider p, or the
 // empty string if no probe URL is configured.
 func (r *Registry) ProbeURL(p string) string {
