@@ -30,10 +30,12 @@ import { Cursor } from "./Cursor";
 import { Datadog } from "./Datadog";
 import { Deepgram } from "./Deepgram";
 import { DocuSign } from "./DocuSign";
+import { Dotfile } from "./Dotfile";
 import { Figma } from "./Figma";
 import { GitHub } from "./GitHub";
 import { GitLab } from "./GitLab";
 import { Google } from "./Google";
+import { GoogleAnalytics } from "./GoogleAnalytics";
 import { Grafana } from "./Grafana";
 import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
@@ -60,10 +62,12 @@ import { Railway } from "./Railway";
 import { Render } from "./Render";
 import { Resend } from "./Resend";
 import { Scaleway } from "./Scaleway";
+import { Segment } from "./Segment";
 import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
 import { SigNoz } from "./SigNoz";
 import { Slack } from "./Slack";
+import { Square } from "./Square";
 import { Supabase } from "./Supabase";
 import { Tailscale } from "./Tailscale";
 import { Tally } from "./Tally";
@@ -88,10 +92,12 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   DATADOG: Datadog,
   DEEPGRAM: Deepgram,
   DOCUSIGN: DocuSign,
+  DOTFILE: Dotfile,
   FIGMA: Figma,
   GITHUB: GitHub,
   GITLAB: GitLab,
   GOOGLE: Google,
+  GOOGLE_ANALYTICS: GoogleAnalytics,
   GOOGLE_WORKSPACE: Google,
   GRAFANA: Grafana,
   HEROKU: Heroku,
@@ -121,10 +127,12 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   RENDER: Render,
   RESEND: Resend,
   SCALEWAY: Scaleway,
+  SEGMENT: Segment,
   SENDGRID: SendGrid,
   SENTRY: Sentry,
   SIGNOZ: SigNoz,
   SLACK: Slack,
+  SQUARE: Square,
   SUPABASE: Supabase,
   TAILSCALE: Tailscale,
   TALLY: Tally,
