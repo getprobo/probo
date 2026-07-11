@@ -140,7 +140,7 @@ func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			FullName:    crispFullName(details, email),
 			Roles:       crispRoles(details.Role),
 			JobTitle:    strings.TrimSpace(details.Title),
-			IsAdmin:     strings.EqualFold(strings.TrimSpace(details.Role), "owner"),
+			IsAdmin:     crispIsAdmin(details.Role),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -234,4 +234,10 @@ func crispRoles(role string) []string {
 
 		return []string{}
 	}
+}
+
+// crispIsAdmin reports whether a Crisp operator role grants administrative
+// access. Only the website owner is an administrator; members are not.
+func crispIsAdmin(role string) bool {
+	return strings.EqualFold(strings.TrimSpace(role), "owner")
 }
