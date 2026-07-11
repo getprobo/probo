@@ -642,50 +642,7 @@ func (s *DocumentApprovalService) VoidApproval(
 				return &ErrDocumentVersionNotPendingApproval{}
 			}
 
-			now := time.Now()
-
-			quorum.Status = coredata.DocumentVersionApprovalQuorumStatusVoided
-			quorum.UpdatedAt = now
-
-			if err := quorum.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update approval quorum: %w", err)
-			}
-
-			decisions := &coredata.DocumentVersionApprovalDecisions{}
-			if err := decisions.VoidPendingByQuorumID(ctx, tx, scope, quorum.ID, now); err != nil {
-				return fmt.Errorf("cannot void pending decisions: %w", err)
-			}
-
-			documentVersion.Status = coredata.DocumentVersionStatusDraft
-			if document.CurrentPublishedMajor != nil {
-				documentVersion.Major = *document.CurrentPublishedMajor
-				documentVersion.Minor = *document.CurrentPublishedMinor + 1
-			} else {
-				documentVersion.Major = 0
-				documentVersion.Minor = 1
-			}
-
-			documentVersion.UpdatedAt = now
-
-			if err := documentVersion.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update document version status: %w", err)
-			}
-
-			if err := s.svc.Documents.emitDocumentEvent(
-				ctx,
-				scope,
-				tx,
-				documentVersion.DocumentID,
-				coredata.WebhookEventTypeDocumentVersionApprovalQuorumVoided,
-				documentVersion,
-				nil,
-				&quorum.ID,
-				nil,
-			); err != nil {
-				return fmt.Errorf("cannot emit approval quorum voided webhook: %w", err)
-			}
-
-			return nil
+			return s.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum)
 		},
 	)
 	if err != nil {
@@ -693,6 +650,59 @@ func (s *DocumentApprovalService) VoidApproval(
 	}
 
 	return quorum, documentVersion, nil
+}
+
+func (s *DocumentApprovalService) voidApprovalInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+	documentVersion *coredata.DocumentVersion,
+	quorum *coredata.DocumentVersionApprovalQuorum,
+) error {
+	now := time.Now()
+
+	quorum.Status = coredata.DocumentVersionApprovalQuorumStatusVoided
+	quorum.UpdatedAt = now
+
+	if err := quorum.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot update approval quorum: %w", err)
+	}
+
+	decisions := &coredata.DocumentVersionApprovalDecisions{}
+	if err := decisions.VoidPendingByQuorumID(ctx, tx, scope, quorum.ID, now); err != nil {
+		return fmt.Errorf("cannot void pending decisions: %w", err)
+	}
+
+	documentVersion.Status = coredata.DocumentVersionStatusDraft
+	if document.CurrentPublishedMajor != nil {
+		documentVersion.Major = *document.CurrentPublishedMajor
+		documentVersion.Minor = *document.CurrentPublishedMinor + 1
+	} else {
+		documentVersion.Major = 0
+		documentVersion.Minor = 1
+	}
+
+	documentVersion.UpdatedAt = now
+
+	if err := documentVersion.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot update document version status: %w", err)
+	}
+
+	if err := s.svc.Documents.emitDocumentEvent(
+		ctx,
+		scope,
+		tx,
+		documentVersion.DocumentID,
+		coredata.WebhookEventTypeDocumentVersionApprovalQuorumVoided,
+		documentVersion,
+		nil,
+		&quorum.ID,
+		nil,
+	); err != nil {
+		return fmt.Errorf("cannot emit approval quorum voided webhook: %w", err)
+	}
+
+	return nil
 }
 
 func (s *DocumentApprovalService) GetQuorum(

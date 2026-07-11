@@ -811,6 +811,89 @@ WHERE
 	return nil
 }
 
+func (pvss *DocumentVersionSignatures) LoadRequestedByDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+	document_version_signatures.id,
+	document_version_signatures.organization_id,
+	document_version_signatures.document_version_id,
+	document_version_signatures.state,
+	document_version_signatures.signed_by_profile_id,
+	document_version_signatures.signed_at,
+	document_version_signatures.requested_at,
+	document_version_signatures.electronic_signature_id,
+	document_version_signatures.created_at,
+	document_version_signatures.updated_at
+FROM
+	document_version_signatures
+INNER JOIN document_versions ON document_versions.id = document_version_signatures.document_version_id
+WHERE
+	%s
+	AND document_versions.document_id = @document_id
+	AND document_version_signatures.state = @state
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"state":       DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query requested document version signatures: %w", err)
+	}
+
+	documentVersionSignatures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionSignature])
+	if err != nil {
+		return fmt.Errorf("cannot collect requested document version signatures: %w", err)
+	}
+
+	*pvss = documentVersionSignatures
+
+	return nil
+}
+
+func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND state = @state
+	AND document_version_id IN (
+		SELECT id
+		FROM document_versions
+		WHERE document_id = @document_id
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"state":       DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
+	}
+
+	return nil
+}
+
 func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeople(
 	ctx context.Context,
 	conn pg.Querier,

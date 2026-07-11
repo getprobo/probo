@@ -1646,6 +1646,12 @@ func (s *DocumentService) BulkArchive(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			for _, documentID := range documentIDs {
+				if err := s.teardownDocumentWorkflowsInTx(ctx, scope, tx, documentID); err != nil {
+					return err
+				}
+			}
+
 			controlDocument := coredata.ControlDocument{}
 			if err := controlDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
 				return fmt.Errorf("cannot delete control mappings: %w", err)
@@ -1691,6 +1697,12 @@ func (s *DocumentService) BulkUnarchive(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			for _, documentID := range documentIDs {
+				if err := s.ensureDraftReadyOnUnarchiveInTx(ctx, scope, tx, documentID); err != nil {
+					return err
+				}
+			}
+
 			if err := documents.BulkUnarchive(ctx, tx, scope); err != nil {
 				return err
 			}
@@ -1739,6 +1751,102 @@ func (s *DocumentService) clearDocumentReferences(
 	}
 
 	return nil
+}
+
+func (s *DocumentService) teardownDocumentWorkflowsInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+) error {
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load document %q: %w", documentID, err)
+	}
+
+	documentVersion := &coredata.DocumentVersion{}
+	if err := documentVersion.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load latest document version: %w", err)
+	}
+
+	if documentVersion.Status == coredata.DocumentVersionStatusPendingApproval {
+		quorum := &coredata.DocumentVersionApprovalQuorum{}
+		if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersion.ID); err != nil {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load approval quorum: %w", err)
+			}
+		} else if quorum.Status == coredata.DocumentVersionApprovalQuorumStatusPending {
+			if err := s.svc.DocumentApprovals.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum); err != nil {
+				return err
+			}
+		}
+	}
+
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.LoadRequestedByDocumentID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load requested document version signatures: %w", err)
+	}
+
+	for _, signature := range *signatures {
+		version := &coredata.DocumentVersion{}
+		if err := version.LoadByID(ctx, tx, scope, signature.DocumentVersionID); err != nil {
+			return fmt.Errorf("cannot load document version: %w", err)
+		}
+
+		if err := signature.Delete(ctx, tx, scope, signature.ID); err != nil {
+			return fmt.Errorf("cannot delete document version signature: %w", err)
+		}
+
+		if err := s.emitDocumentEvent(
+			ctx,
+			scope,
+			tx,
+			documentID,
+			coredata.WebhookEventTypeDocumentVersionSignatureCancelled,
+			version,
+			signature,
+			nil,
+			nil,
+		); err != nil {
+			return fmt.Errorf("cannot emit document version signature cancelled webhook: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *DocumentService) ensureDraftReadyOnUnarchiveInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+) error {
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load document %q: %w", documentID, err)
+	}
+
+	documentVersion := &coredata.DocumentVersion{}
+	if err := documentVersion.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load latest document version: %w", err)
+	}
+
+	if documentVersion.Status != coredata.DocumentVersionStatusPendingApproval {
+		return nil
+	}
+
+	quorum := &coredata.DocumentVersionApprovalQuorum{}
+	if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersion.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot load approval quorum: %w", err)
+	}
+
+	if quorum.Status != coredata.DocumentVersionApprovalQuorumStatusPending {
+		return nil
+	}
+
+	return s.svc.DocumentApprovals.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum)
 }
 
 func (s *DocumentService) RequestExport(
@@ -2408,6 +2516,10 @@ func (s *DocumentService) Archive(
 				return &ErrDocumentArchived{}
 			}
 
+			if err := s.teardownDocumentWorkflowsInTx(ctx, scope, tx, documentID); err != nil {
+				return err
+			}
+
 			controlDocument := coredata.ControlDocument{}
 			if err := controlDocument.DeleteByDocumentIDs(ctx, tx, scope, []gid.GID{documentID}); err != nil {
 				return fmt.Errorf("cannot delete control mappings: %w", err)
@@ -2466,6 +2578,10 @@ func (s *DocumentService) Unarchive(
 
 			if document.ArchivedAt == nil {
 				return &ErrDocumentNotArchived{}
+			}
+
+			if err := s.ensureDraftReadyOnUnarchiveInTx(ctx, scope, tx, documentID); err != nil {
+				return err
 			}
 
 			document.Status = coredata.DocumentStatusActive

@@ -2218,6 +2218,40 @@ func signDocumentVersion(t *testing.T, signer *testutil.Client, versionID string
 		result.SignDocument.DocumentVersionSignature.SignedAt
 }
 
+func archiveDocument(t *testing.T, owner *testutil.Client, docID string) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: ArchiveDocumentInput!) {
+			archiveDocument(input: $input) {
+				document { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId": docID,
+		},
+	})
+	require.NoError(t, err)
+}
+
+func unarchiveDocument(t *testing.T, owner *testutil.Client, docID string) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: UnarchiveDocumentInput!) {
+			unarchiveDocument(input: $input) {
+				document { id status }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId": docID,
+		},
+	})
+	require.NoError(t, err)
+}
+
 // signDocumentVersionMutation is the raw mutation used by the negative-path
 // signing tests so they can assert the request is rejected.
 const signDocumentVersionMutation = `
@@ -2291,6 +2325,171 @@ func TestDocumentVersion_SignDocumentTwiceFails(t *testing.T) {
 	})
 }
 
+func TestDocumentVersion_ArchiveVoidsPendingQuorum(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
+
+	archiveDocument(t, owner, docID)
+
+	var result struct {
+		Node struct {
+			Status   string `json:"status"`
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						Status          string `json:"status"`
+						Major           int    `json:"major"`
+						Minor           int    `json:"minor"`
+						ApprovalQuorums struct {
+							Edges []struct {
+								Node struct {
+									Status    string `json:"status"`
+									Decisions struct {
+										Edges []struct {
+											Node struct {
+												State string `json:"state"`
+											} `json:"node"`
+										} `json:"edges"`
+									} `json:"decisions"`
+								} `json:"node"`
+							} `json:"edges"`
+						} `json:"approvalQuorums"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					status
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges {
+							node {
+								status
+								major
+								minor
+								approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+									edges {
+										node {
+											status
+											decisions(first: 10) {
+												edges { node { state } }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": docID}, &result)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.Versions.Edges)
+
+	version := result.Node.Versions.Edges[0].Node
+	assert.Equal(t, "ARCHIVED", result.Node.Status)
+	assert.Equal(t, "DRAFT", version.Status)
+	assert.Equal(t, 0, version.Major)
+	assert.Equal(t, 1, version.Minor)
+	require.NotEmpty(t, version.ApprovalQuorums.Edges)
+	assert.Equal(t, "VOIDED", version.ApprovalQuorums.Edges[0].Node.Status)
+
+	for _, edge := range version.ApprovalQuorums.Edges[0].Node.Decisions.Edges {
+		assert.Equal(t, "VOIDED", edge.Node.State)
+	}
+}
+
+func TestDocumentVersion_ArchiveCancelsPendingSignatures(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
+	requestDocumentSignature(t, owner, publishedVersionID, getOwnerProfileID(t, owner))
+
+	archiveDocument(t, owner, docID)
+
+	var result struct {
+		Node struct {
+			Signatures struct {
+				Edges []struct {
+					Node struct {
+						State string `json:"state"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"signatures"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on DocumentVersion {
+					signatures(first: 10) {
+						edges { node { state } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": publishedVersionID}, &result)
+	require.NoError(t, err)
+	assert.Empty(t, result.Node.Signatures.Edges)
+}
+
+func TestDocumentVersion_UnarchiveRestoresEditableDraft(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
+
+	archiveDocument(t, owner, docID)
+	unarchiveDocument(t, owner, docID)
+
+	var result struct {
+		Node struct {
+			Status   string `json:"status"`
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						Status string `json:"status"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					status
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges { node { status } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": docID}, &result)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.Versions.Edges)
+
+	assert.Equal(t, "ACTIVE", result.Node.Status)
+	assert.Equal(t, "DRAFT", result.Node.Versions.Edges[0].Node.Status)
+
+	updateDocumentContent(t, owner, docID, "Updated after unarchive")
+}
+
 // TestDocumentVersion_SignArchivedDocumentFails verifies that a document
 // archived after its signature was requested can no longer be signed. This
 // guards the archived/published preconditions that are re-validated inside the
@@ -2307,18 +2506,33 @@ func TestDocumentVersion_SignArchivedDocumentFails(t *testing.T) {
 
 	requestDocumentSignature(t, owner, publishedVersionID, ownerProfileID)
 
-	_, err := owner.Do(`
-		mutation($input: ArchiveDocumentInput!) {
-			archiveDocument(input: $input) {
-				document { id }
+	archiveDocument(t, owner, docID)
+
+	var signatureResult struct {
+		Node struct {
+			Signatures struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"signatures"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on DocumentVersion {
+					signatures(first: 10) {
+						edges { node { id } }
+					}
+				}
 			}
 		}
-	`, map[string]any{
-		"input": map[string]any{
-			"documentId": docID,
-		},
-	})
+	`, map[string]any{"id": publishedVersionID}, &signatureResult)
 	require.NoError(t, err)
+	assert.Empty(t, signatureResult.Node.Signatures.Edges)
 
 	_ = owner.ExecuteShouldFail(signDocumentVersionMutation, map[string]any{
 		"input": map[string]any{
