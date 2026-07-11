@@ -1,4 +1,11 @@
 ---
+# Anonymized from a real POST /graphql/v2 { me { ... workspaces { members } } }
+# recording against a live Railway account (token stripped by the recorder).
+# The live response carried a single ADMIN member (self) with
+# twoFactorAuthEnabled=false; PII (account/member/workspace IDs, names, emails,
+# workspace name) was replaced with synthetic values, and a second MEMBER plus
+# the admin's MFA-enabled flag are synthetic to keep role/MFA coverage. The
+# me/workspaces/members object shape mirrors the live response.
 version: 2
 interactions:
     - id: 0

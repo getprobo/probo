@@ -1,4 +1,13 @@
 ---
+# Anonymized from a real GET /iam/v1alpha1/users recording against a live
+# Scaleway Organization (secret key stripped by the recorder). The live
+# response carried a single "owner" user with two_factor_enabled=false; PII
+# (organization_id, user/account-root IDs, names, email, username) was replaced
+# with synthetic values, and a second "member" user plus the owner's MFA-enabled
+# flag are synthetic to keep owner/member + activated/invitation_pending + MFA
+# coverage. The user object shape (id, email, username, names, created/updated,
+# last_login_at, type, status, two_factor_enabled, mfa, locked, ...) mirrors the
+# live response.
 version: 2
 interactions:
     - id: 0
@@ -28,7 +37,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"users":[{"id":"8a3f1b2c-9d4e-4a5f-8b6c-1d2e3f4a5b6c","email":"alice.martin@example.com","username":"alice.martin@example.com","first_name":"Alice","last_name":"Martin","created_at":"2023-04-12T09:15:42.123456Z","organization_id":"11111111-2222-3333-4444-555555555555","last_login_at":"2025-06-20T08:01:33.000000Z","type":"owner","two_factor_enabled":true,"status":"activated","mfa":true,"locked":false},{"id":"c7e2a9d4-5f6b-4c3a-9e8d-2b1c0a9f8e7d","email":"bob.dupont@example.com","username":"bob.dupont@example.com","first_name":"Bob","last_name":"Dupont","created_at":"2024-01-20T16:45:10.000000Z","organization_id":"11111111-2222-3333-4444-555555555555","last_login_at":null,"type":"member","two_factor_enabled":false,"status":"invitation_pending","mfa":false,"locked":false}],"total_count":2}'
+        body: '{"users":[{"id":"8a3f1b2c-9d4e-4a5f-8b6c-1d2e3f4a5b6c","email":"alice.martin@example.com","username":"alice.martin","first_name":"Alice","last_name":"Martin","phone_number":"","locale":"en_US","created_at":"2023-04-12T09:15:42.123456Z","updated_at":"2025-06-20T08:01:33.000000Z","organization_id":"11111111-2222-3333-4444-555555555555","deletable":false,"last_login_at":"2025-06-20T08:01:33.000000Z","type":"owner","two_factor_enabled":true,"status":"activated","mfa":true,"account_root_user_id":"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d","tags":[],"locked":false},{"id":"c7e2a9d4-5f6b-4c3a-9e8d-2b1c0a9f8e7d","email":"bob.dupont@example.com","username":"bob.dupont","first_name":"Bob","last_name":"Dupont","phone_number":"","locale":"fr_FR","created_at":"2024-01-20T16:45:10.000000Z","updated_at":"2024-01-20T16:45:10.000000Z","organization_id":"11111111-2222-3333-4444-555555555555","deletable":true,"last_login_at":null,"type":"member","two_factor_enabled":false,"status":"invitation_pending","mfa":false,"account_root_user_id":"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d","tags":[],"locked":false}],"total_count":2}'
         headers:
             Content-Type:
                 - application/json
