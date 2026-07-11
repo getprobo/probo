@@ -349,22 +349,37 @@ export function APIKeyConnectorDialog({
                           type="button"
                           variant="secondary"
                           onClick={() => {
+                            const onCopyFailure = () =>
+                              toast({
+                                title: __("Copy failed"),
+                                description: __("Copy the verification code manually."),
+                                variant: "error",
+                              });
+
+                            // navigator.clipboard is undefined in an insecure
+                            // context or unsupported embedded browser, where
+                            // writeText throws synchronously before .then; guard
+                            // so the manual-copy toast still shows.
+                            if (!navigator.clipboard?.writeText) {
+                              onCopyFailure();
+                              return;
+                            }
+
                             // Copying feeds the Crisp connect flow, so only
                             // claim success once the write actually resolves.
-                            navigator.clipboard.writeText(crispCodeState.code).then(
-                              () =>
-                                toast({
-                                  title: __("Copied to clipboard"),
-                                  description: __("Verification code"),
-                                  variant: "success",
-                                }),
-                              () =>
-                                toast({
-                                  title: __("Copy failed"),
-                                  description: __("Copy the verification code manually."),
-                                  variant: "error",
-                                }),
-                            );
+                            try {
+                              navigator.clipboard.writeText(crispCodeState.code).then(
+                                () =>
+                                  toast({
+                                    title: __("Copied to clipboard"),
+                                    description: __("Verification code"),
+                                    variant: "success",
+                                  }),
+                                onCopyFailure,
+                              );
+                            } catch {
+                              onCopyFailure();
+                            }
                           }}
                         >
                           {__("Copy")}
