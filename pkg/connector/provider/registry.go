@@ -120,6 +120,14 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: ManagedAPIKey is mutually exclusive with SupportsAPIKey and SupportsClientCredentials", reg.Provider)
 	}
 
+	// RequiresManagedResourceID only has meaning for a ManagedAPIKey provider:
+	// ManagedConnectorReady consults it exclusively on that path, so setting it
+	// on a non-managed provider is a silently ineffective flag. Reject it at
+	// startup rather than let the requirement quietly do nothing.
+	if reg.RequiresManagedResourceID && !reg.ManagedAPIKey {
+		return fmt.Errorf("cannot register connector provider %q: RequiresManagedResourceID requires ManagedAPIKey", reg.Provider)
+	}
+
 	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
 	// endpoint host, but from different sources (a callback param vs. the
 	// signed state). CompleteWithState checks them in order, so setting both

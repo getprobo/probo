@@ -138,6 +138,19 @@ func TestRegistry_Register(t *testing.T) {
 		assert.Contains(t, err.Error(), "mutually exclusive")
 	})
 
+	t.Run("RequiresManagedResourceID requires ManagedAPIKey", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:                  coredata.ConnectorProviderSlack,
+			DisplayName:               "Slack",
+			RequiresManagedResourceID: true,
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "RequiresManagedResourceID requires ManagedAPIKey")
+	})
+
 	t.Run("duplicate registration", func(t *testing.T) {
 		t.Parallel()
 
