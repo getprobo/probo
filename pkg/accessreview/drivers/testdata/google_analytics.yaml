@@ -1,0 +1,96 @@
+---
+# Hand-authored cassette for the GA4 Admin API v1alpha (Bearer token stripped by
+# the recorder). The driver lists account-level accessBindings, then the
+# properties beneath the account, then each property's accessBindings, merging a
+# user's roles across levels by email. alice appears at both levels (admin +
+# viewer) to exercise the merge; carol appears only at the property level. The
+# AccessBinding shape (name, user, roles[]) and property list shape mirror the
+# live API.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: analyticsadmin.googleapis.com
+        form:
+            pageSize:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://analyticsadmin.googleapis.com/v1alpha/accounts/123456/accessBindings?pageSize=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"accessBindings":[{"name":"accounts/123456/accessBindings/abc123","user":"alice@example.com","roles":["predefinedRoles/admin"]},{"name":"accounts/123456/accessBindings/def456","user":"bob@example.com","roles":["predefinedRoles/analyst"]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: analyticsadmin.googleapis.com
+        form:
+            filter:
+                - parent:accounts/123456
+            pageSize:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://analyticsadmin.googleapis.com/v1alpha/properties?filter=parent%3Aaccounts%2F123456&pageSize=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"properties":[{"name":"properties/67890","displayName":"Acme Website","parent":"accounts/123456"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: analyticsadmin.googleapis.com
+        form:
+            pageSize:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://analyticsadmin.googleapis.com/v1alpha/properties/67890/accessBindings?pageSize=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"accessBindings":[{"name":"properties/67890/accessBindings/ghi789","user":"alice@example.com","roles":["predefinedRoles/viewer"]},{"name":"properties/67890/accessBindings/jkl012","user":"carol@example.com","roles":["predefinedRoles/analyst"]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms

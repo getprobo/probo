@@ -43,6 +43,8 @@ const (
 	crispAPIBaseURL           = "https://api.crisp.chat/v1"
 	crispTierHeader           = "X-Crisp-Tier"
 	crispTierValue            = "plugin"
+	squareVersion             = "2026-05-20"
+	squareMerchantProbeURL    = "https://connect.squareup.com/v2/merchants/me"
 )
 
 // ProbeConnection verifies that the connector credential is accepted by the
@@ -631,4 +633,48 @@ func probePostHog(
 	}
 
 	return fmt.Errorf("credential rejected: no posthog region accepted the connection")
+}
+
+// buildSegmentProbeURL builds the Segment users probe URL from the connector's
+// stored base URL (the region-resolved host). GET /users returns 401 on a dead
+// or under-scoped Public API token.
+func buildSegmentProbeURL(conn *coredata.Connector) (string, error) {
+	s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read segment connector settings: %w", err)
+	}
+
+	if s.BaseURL == "" {
+		return "", fmt.Errorf("missing segment base URL")
+	}
+
+	u, err := url.Parse(s.BaseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse segment base URL: %w", err)
+	}
+
+	u.Path = "/users"
+	u.RawQuery = "pagination.count=1"
+
+	return u.String(), nil
+}
+
+// probeSquare checks a Square credential (OAuth Bearer token or Personal Access
+// Token) with a GET /v2/merchants/me, sending the required Square-Version
+// header. The endpoint returns 401 on a dead token and works for both OAuth and
+// PAT connections, which are always scoped to a single merchant.
+func probeSquare(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, squareMerchantProbeURL, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Square-Version", squareVersion)
+
+	return doProbeRequest(httpClient, req)
 }

@@ -1,0 +1,39 @@
+---
+# Hand-authored cassette for POST /v2/team-members/search (Square, Bearer token
+# stripped by the recorder). No query filter is sent, so the request body is the
+# minimal {"limit":200}; an absent response cursor terminates pagination. Three
+# synthetic team members cover owner/non-owner and ACTIVE/INACTIVE. The
+# team_member shape (id, is_owner, status, given_name, family_name,
+# email_address, created_at) mirrors the SearchTeamMembers response.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 13
+        host: connect.squareup.com
+        body: '{"limit":200}'
+        headers:
+            Accept:
+                - application/json
+            Content-Type:
+                - application/json
+            Square-Version:
+                - "2026-05-20"
+        url: https://connect.squareup.com/v2/team-members/search
+        method: POST
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"team_members":[{"id":"-3oZQKPKVk6gUXU_V5Qa","is_owner":false,"status":"ACTIVE","given_name":"Sherlock","family_name":"Holmes","email_address":"sherlock.holmes@example.com","created_at":"2020-03-24T18:14:26Z"},{"id":"Pw67AzUomYUdF04AN17i","is_owner":true,"status":"ACTIVE","given_name":"John","family_name":"Watson","email_address":"john.watson@example.com","created_at":"2020-03-24T18:14:26Z"},{"id":"Xk92LmQ0pRsTuvWxYz01","is_owner":false,"status":"INACTIVE","given_name":"Martha","family_name":"Hudson","email_address":"martha.hudson@example.com","created_at":"2021-06-10T09:00:00Z"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms

@@ -322,6 +322,27 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.ScalewayConnectorSettings{OrganizationID: *input.ScalewayOrganizationID})
+	case coredata.ConnectorProviderSegment:
+		region := ""
+		if input.SegmentRegion != nil {
+			region = strings.ToUpper(strings.TrimSpace(*input.SegmentRegion))
+		}
+
+		// The region selects the API host and is not discoverable from the
+		// token; resolve it to a base URL against a fixed allow-list so an
+		// unexpected value cannot reach the driver.
+		var baseURL string
+
+		switch region {
+		case "US":
+			baseURL = "https://api.segmentapis.com"
+		case "EU":
+			baseURL = "https://eu1.api.segmentapis.com"
+		default:
+			return nil, fmt.Errorf("cannot create segment connector: segmentRegion must be US or EU")
+		}
+
+		return json.Marshal(&coredata.SegmentConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderCrisp:
 		websiteID := ""
 		if input.CrispWebsiteID != nil {

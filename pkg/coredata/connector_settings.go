@@ -188,6 +188,25 @@ type (
 	CrispConnectorSettings struct {
 		WebsiteID string `json:"website_id"`
 	}
+
+	// SegmentConnectorSettings stores the Twilio Segment Public API base URL.
+	// A Public API token is bound to one workspace, but the workspace's region
+	// is not discoverable from the token and selects the API host
+	// (api.segmentapis.com for US, eu1.api.segmentapis.com for EU). The region
+	// the customer picks is resolved to this base URL up front, so the driver
+	// and probe read a single host with no region logic.
+	SegmentConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
+	// GoogleAnalyticsConnectorSettings stores the selected GA4 account ID
+	// (the numeric portion of the `accounts/{account}` resource name). A
+	// Google OAuth token can reach many GA4 accounts, so the reviewed account
+	// is picked after authorization; the driver then lists the account's
+	// access bindings plus the bindings of every property beneath it.
+	GoogleAnalyticsConnectorSettings struct {
+		AccountID string `json:"account_id"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's
