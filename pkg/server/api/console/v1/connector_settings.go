@@ -113,6 +113,8 @@ func (r *Resolver) verifyCrispOwnershipWith(ctx context.Context, input types.Cre
 	// here; treat its absence as an internal error rather than client input.
 	managedKey, ok := r.providerRegistry.ManagedAPIKey(input.Provider)
 	if !ok {
+		r.logger.ErrorCtx(ctx, "crisp managed api key not configured")
+
 		return gqlutils.Internal(ctx)
 	}
 
