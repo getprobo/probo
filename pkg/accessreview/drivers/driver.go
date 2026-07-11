@@ -106,3 +106,28 @@ func activeFromStatus(status string) *bool {
 		return &inactive
 	}
 }
+
+// ownerMemberRoles maps a provider role to a display label for providers whose
+// role model is exactly owner/member (e.g. Crisp operators, Scaleway org user
+// types): "owner" → Owner, "member" → Member. An unknown future value is passed
+// through verbatim and no role yields an empty slice.
+func ownerMemberRoles(role string) []string {
+	switch strings.ToLower(strings.TrimSpace(role)) {
+	case "owner":
+		return []string{"Owner"}
+	case "member":
+		return []string{"Member"}
+	default:
+		if r := strings.TrimSpace(role); r != "" {
+			return []string{r}
+		}
+
+		return []string{}
+	}
+}
+
+// isOwnerRole reports whether a provider role is the owner, the only role in the
+// owner/member model that grants administrative access.
+func isOwnerRole(role string) bool {
+	return strings.EqualFold(strings.TrimSpace(role), "owner")
+}

@@ -1546,28 +1546,9 @@ func NewRailwayNameResolver(httpClient *http.Client) NameResolver {
 }
 
 func (r *railwayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	body := struct {
-		Query string `json:"query"`
-	}{
-		Query: `query { me { name workspaces { id name } } }`,
-	}
-
-	payload, err := json.Marshal(body)
+	httpResp, err := railwayPost(ctx, r.httpClient, "account", `query { me { name workspaces { id name } } }`)
 	if err != nil {
-		return "", fmt.Errorf("cannot marshal railway account query: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, railwayGraphQLEndpoint, bytes.NewReader(payload))
-	if err != nil {
-		return "", fmt.Errorf("cannot create railway account request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	httpResp, err := r.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute railway account request: %w", err)
+		return "", err
 	}
 
 	defer func() { _ = httpResp.Body.Close() }()
@@ -1628,22 +1609,9 @@ func (r *crispNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath(crispAPIBaseURL, "website", url.PathEscape(r.websiteID))
+	httpResp, err := crispGet(ctx, r.httpClient, "website", "website", url.PathEscape(r.websiteID))
 	if err != nil {
-		return "", fmt.Errorf("cannot build crisp website URL: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return "", fmt.Errorf("cannot create crisp website request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set(crispTierHeader, crispTierValue)
-
-	httpResp, err := r.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute crisp website request: %w", err)
+		return "", err
 	}
 
 	defer func() { _ = httpResp.Body.Close() }()

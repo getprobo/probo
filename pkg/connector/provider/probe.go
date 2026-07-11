@@ -40,6 +40,9 @@ const (
 	posthogOrganizationPath   = "/api/organizations/@current/"
 	posthogUSBaseURL          = "https://us.posthog.com"
 	posthogEUBaseURL          = "https://eu.posthog.com"
+	crispAPIBaseURL           = "https://api.crisp.chat/v1"
+	crispTierHeader           = "X-Crisp-Tier"
+	crispTierValue            = "plugin"
 )
 
 // ProbeConnection verifies that the connector credential is accepted by the
@@ -505,7 +508,7 @@ func probeCrisp(
 		return fmt.Errorf("missing crisp website_id")
 	}
 
-	endpoint, err := url.JoinPath("https://api.crisp.chat/v1", "website", url.PathEscape(s.WebsiteID), "operators", "list")
+	endpoint, err := url.JoinPath(crispAPIBaseURL, "website", url.PathEscape(s.WebsiteID), "operators", "list")
 	if err != nil {
 		return fmt.Errorf("cannot build crisp probe URL: %w", err)
 	}
@@ -516,7 +519,7 @@ func probeCrisp(
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Crisp-Tier", "plugin")
+	req.Header.Set(crispTierHeader, crispTierValue)
 
 	return doProbeRequest(httpClient, req, http.StatusNotFound)
 }

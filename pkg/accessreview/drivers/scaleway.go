@@ -96,9 +96,9 @@ func (d *ScalewayDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			record := AccountRecord{
 				Email:       email,
 				FullName:    scalewayFullName(u, email),
-				Roles:       scalewayRoles(u.Type),
+				Roles:       ownerMemberRoles(u.Type),
 				Active:      scalewayActive(u.Status, u.Locked),
-				IsAdmin:     scalewayIsAdmin(u.Type),
+				IsAdmin:     isOwnerRole(u.Type),
 				MFAStatus:   scalewayMFAStatus(u),
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -174,30 +174,6 @@ func scalewayFullName(u scalewayUser, fallback string) string {
 	}
 
 	return fallback
-}
-
-// scalewayRoles maps the Scaleway org-level user type to a display label. The
-// users endpoint exposes only owner/member; an unknown future value is passed
-// through verbatim and no type yields an empty slice.
-func scalewayRoles(userType string) []string {
-	switch strings.ToLower(strings.TrimSpace(userType)) {
-	case "owner":
-		return []string{"Owner"}
-	case "member":
-		return []string{"Member"}
-	default:
-		if t := strings.TrimSpace(userType); t != "" {
-			return []string{t}
-		}
-
-		return []string{}
-	}
-}
-
-// scalewayIsAdmin reports whether a Scaleway user type grants administrative
-// access. Only the organization owner is an administrator; members are not.
-func scalewayIsAdmin(userType string) bool {
-	return strings.EqualFold(strings.TrimSpace(userType), "owner")
 }
 
 // scalewayActive maps the Scaleway user status to the three-valued Active

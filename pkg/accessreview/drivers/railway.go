@@ -189,28 +189,9 @@ func railwayRecords(me *railwayMe) []AccountRecord {
 }
 
 func (d *RailwayDriver) queryMe(ctx context.Context) (*railwayMe, error) {
-	body := struct {
-		Query string `json:"query"`
-	}{
-		Query: railwayMembersQuery,
-	}
-
-	payload, err := json.Marshal(body)
+	httpResp, err := railwayPost(ctx, d.httpClient, "members", railwayMembersQuery)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal railway members query: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, railwayGraphQLEndpoint, bytes.NewReader(payload))
-	if err != nil {
-		return nil, fmt.Errorf("cannot create railway members request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	httpResp, err := d.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot execute railway members request: %w", err)
+		return nil, err
 	}
 
 	defer func() { _ = httpResp.Body.Close() }()
@@ -236,6 +217,38 @@ func (d *RailwayDriver) queryMe(ctx context.Context) (*railwayMe, error) {
 	}
 
 	return resp.Data.Me, nil
+}
+
+// railwayPost issues a GraphQL POST carrying query to Railway's endpoint,
+// setting the Content-Type and Accept headers; the Bearer credential is attached
+// by the connection transport. The caller owns status handling and must close
+// the returned response body. label names the request in wrapped errors.
+func railwayPost(ctx context.Context, httpClient *http.Client, label, query string) (*http.Response, error) {
+	body := struct {
+		Query string `json:"query"`
+	}{
+		Query: query,
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal railway %s query: %w", label, err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, railwayGraphQLEndpoint, bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("cannot create railway %s request: %w", label, err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute railway %s request: %w", label, err)
+	}
+
+	return httpResp, nil
 }
 
 func railwayFullName(m railwayMember, fallback string) string {

@@ -96,22 +96,9 @@ func NewCrispDriver(httpClient *http.Client, websiteID string) *CrispDriver {
 }
 
 func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	endpoint, err := url.JoinPath(crispAPIBaseURL, "website", url.PathEscape(d.websiteID), "operators", "list")
+	httpResp, err := crispGet(ctx, d.httpClient, "operators", "website", url.PathEscape(d.websiteID), "operators", "list")
 	if err != nil {
-		return nil, fmt.Errorf("cannot build crisp operators URL: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create crisp operators request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set(crispTierHeader, crispTierValue)
-
-	httpResp, err := d.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot execute crisp operators request: %w", err)
+		return nil, err
 	}
 
 	defer func() { _ = httpResp.Body.Close() }()
@@ -138,9 +125,9 @@ func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 		records = append(records, AccountRecord{
 			Email:       email,
 			FullName:    crispFullName(details, email),
-			Roles:       crispRoles(details.Role),
+			Roles:       ownerMemberRoles(details.Role),
 			JobTitle:    strings.TrimSpace(details.Title),
-			IsAdmin:     crispIsAdmin(details.Role),
+			IsAdmin:     isOwnerRole(details.Role),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -164,28 +151,17 @@ func GetCrispSubscriptionSettings(
 	websiteID string,
 	pluginID string,
 ) (*CrispSubscriptionSettings, error) {
-	endpoint, err := url.JoinPath(
-		crispAPIBaseURL,
+	httpResp, err := crispGet(
+		ctx,
+		httpClient,
+		"subscription settings",
 		"plugins", "subscription",
 		url.PathEscape(websiteID),
 		url.PathEscape(pluginID),
 		"settings",
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot build crisp subscription settings URL: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create crisp subscription settings request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set(crispTierHeader, crispTierValue)
-
-	httpResp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot execute crisp subscription settings request: %w", err)
+		return nil, err
 	}
 
 	defer func() { _ = httpResp.Body.Close() }()
@@ -210,34 +186,37 @@ func GetCrispSubscriptionSettings(
 	return &resp.Data.Settings, nil
 }
 
+// crispGet issues an authenticated GET against the Crisp API for the given path
+// segments (joined onto crispAPIBaseURL), setting the Accept and X-Crisp-Tier
+// headers every Crisp request needs; the Basic plugin credential is attached by
+// the connection transport. The caller owns status-code handling and must close
+// the returned response body. label names the request in wrapped errors.
+func crispGet(ctx context.Context, httpClient *http.Client, label string, path ...string) (*http.Response, error) {
+	endpoint, err := url.JoinPath(crispAPIBaseURL, path...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build crisp %s URL: %w", label, err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create crisp %s request: %w", label, err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set(crispTierHeader, crispTierValue)
+
+	httpResp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute crisp %s request: %w", label, err)
+	}
+
+	return httpResp, nil
+}
+
 func crispFullName(details crispOperatorDetails, fallback string) string {
 	if name := strings.TrimSpace(details.FirstName + " " + details.LastName); name != "" {
 		return name
 	}
 
 	return fallback
-}
-
-// crispRoles maps a Crisp operator role to a display label. Documented roles
-// are owner/member; an unknown future value is passed through verbatim and no
-// role yields an empty slice.
-func crispRoles(role string) []string {
-	switch strings.ToLower(strings.TrimSpace(role)) {
-	case "owner":
-		return []string{"Owner"}
-	case "member":
-		return []string{"Member"}
-	default:
-		if r := strings.TrimSpace(role); r != "" {
-			return []string{r}
-		}
-
-		return []string{}
-	}
-}
-
-// crispIsAdmin reports whether a Crisp operator role grants administrative
-// access. Only the website owner is an administrator; members are not.
-func crispIsAdmin(role string) bool {
-	return strings.EqualFold(strings.TrimSpace(role), "owner")
 }
