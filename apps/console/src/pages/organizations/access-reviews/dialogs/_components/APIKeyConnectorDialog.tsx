@@ -227,7 +227,12 @@ export function APIKeyConnectorDialog({
         setIsConnectingAPIKey(false);
         toast({
           title: __("Connection failed"),
-          description: __("Failed to connect provider. Please check your API key and try again."),
+          // Managed providers (e.g. Crisp) never show an API key field, so
+          // pointing the user at their key would be misleading; send them to
+          // the settings and verification step instead.
+          description: provider.apiKeyManaged
+            ? __("Failed to connect provider. Please check your settings and verification code, then try again.")
+            : __("Failed to connect provider. Please check your API key and try again."),
           variant: "error",
         });
       },
@@ -344,12 +349,22 @@ export function APIKeyConnectorDialog({
                           type="button"
                           variant="secondary"
                           onClick={() => {
-                            void navigator.clipboard.writeText(crispCodeState.code);
-                            toast({
-                              title: __("Copied to clipboard"),
-                              description: __("Verification code"),
-                              variant: "success",
-                            });
+                            // Copying feeds the Crisp connect flow, so only
+                            // claim success once the write actually resolves.
+                            navigator.clipboard.writeText(crispCodeState.code).then(
+                              () =>
+                                toast({
+                                  title: __("Copied to clipboard"),
+                                  description: __("Verification code"),
+                                  variant: "success",
+                                }),
+                              () =>
+                                toast({
+                                  title: __("Copy failed"),
+                                  description: __("Copy the verification code manually."),
+                                  variant: "error",
+                                }),
+                            );
                           }}
                         >
                           {__("Copy")}
