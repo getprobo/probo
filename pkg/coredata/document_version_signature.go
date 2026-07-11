@@ -831,11 +831,14 @@ SELECT
 	document_version_signatures.updated_at
 FROM
 	document_version_signatures
-INNER JOIN document_versions ON document_versions.id = document_version_signatures.document_version_id
 WHERE
 	%s
-	AND document_versions.document_id = @document_id
-	AND document_version_signatures.state = @state
+	AND state = @state
+	AND document_version_id IN (
+		SELECT id
+		FROM document_versions
+		WHERE document_id = @document_id
+	)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
