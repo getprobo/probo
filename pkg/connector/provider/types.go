@@ -124,6 +124,15 @@ type Registration struct {
 	// injected key is presented on the wire.
 	ManagedAPIKey bool
 
+	// RequiresManagedResourceID marks a ManagedAPIKey provider that also needs
+	// a Probo-supplied resource ID (Crisp's plugin ID, registered via
+	// (*Registry).SetManagedResourceID) before a connection can succeed. Such a
+	// provider stays out of the driver catalog until BOTH the managed key and
+	// the resource ID are configured, so the operator never sees it as
+	// connectable while a connect attempt would fail at verify time. See
+	// (*Registry).ManagedConnectorReady.
+	RequiresManagedResourceID bool
+
 	// BuildProbeURL derives a per-connector probe URL when the API host or
 	// path depends on connector settings (e.g. a customer subdomain or
 	// instance URL). Nil for providers with a static ProbeURL.

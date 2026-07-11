@@ -266,6 +266,35 @@ func TestCrispIsManagedAPIKey(t *testing.T) {
 	assert.True(t, reg.ManagedAPIKey)
 	assert.False(t, reg.SupportsAPIKey)
 	assert.True(t, reg.APIKeyBasicAuthUserPass)
+	assert.True(t, reg.RequiresManagedResourceID, "crisp needs the plugin ID before it can connect")
+}
+
+// TestRegistry_ManagedConnectorReady pins that a provider requiring a resource
+// ID (Crisp's plugin ID) is reported ready, and thus surfaced in the catalog,
+// only once BOTH the managed key and the resource ID are configured.
+func TestRegistry_ManagedConnectorReady(t *testing.T) {
+	t.Parallel()
+
+	t.Run("crisp needs both key and resource id", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewBuiltinRegistry()
+		assert.False(t, r.ManagedConnectorReady(coredata.ConnectorProviderCrisp), "unconfigured")
+
+		r.SetManagedAPIKey(coredata.ConnectorProviderCrisp, "identifier:secret")
+		assert.False(t, r.ManagedConnectorReady(coredata.ConnectorProviderCrisp), "key set but plugin id missing")
+
+		r.SetManagedResourceID(coredata.ConnectorProviderCrisp, "plugin-id")
+		assert.True(t, r.ManagedConnectorReady(coredata.ConnectorProviderCrisp), "key and plugin id set")
+	})
+
+	t.Run("non-managed provider is never ready", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewBuiltinRegistry()
+		r.SetManagedAPIKey(coredata.ConnectorProviderTally, "some-key")
+		assert.False(t, r.ManagedConnectorReady(coredata.ConnectorProviderTally))
+	})
 }
 
 // TestRegistry_RejectsManagedPlusCustomerCredential pins that a

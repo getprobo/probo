@@ -575,10 +575,12 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		clientCredentialsSupported := reg.SupportsClientCredentials
 
 		// ManagedAPIKey (Model B, e.g. Crisp) providers are connectable only
-		// once the operator configures the Probo-held key; until then they
-		// stay hidden, so such a provider ships deactivated.
-		_, hasManaged := r.providerRegistry.ManagedAPIKey(provider)
-		apiKeyManaged := reg.ManagedAPIKey && hasManaged
+		// once the operator configures the Probo-held key (and any required
+		// resource ID, e.g. Crisp's plugin ID); until then they stay hidden, so
+		// such a provider ships deactivated. Gating on full readiness keeps a
+		// half-configured provider out of the catalog rather than surfacing it
+		// and failing at connect time.
+		apiKeyManaged := r.providerRegistry.ManagedConnectorReady(provider)
 
 		// Skip providers that cannot be connected in this deployment: no
 		// OAuth client credentials configured and no key-based fallback

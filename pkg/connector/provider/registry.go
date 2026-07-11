@@ -304,6 +304,31 @@ func (r *Registry) ManagedResourceID(p coredata.ConnectorProvider) (string, bool
 	return id, ok
 }
 
+// ManagedConnectorReady reports whether a ManagedAPIKey provider is fully
+// configured for this deployment: its Probo-held key is set and, when the
+// provider also requires a resource ID (RequiresManagedResourceID, e.g. the
+// Crisp plugin ID), that is set too. A provider that is not ready is kept out
+// of the driver catalog, since connecting it would fail at verify time. It is
+// false for non-managed and unregistered providers.
+func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
+	reg, ok := r.Get(p)
+	if !ok || !reg.ManagedAPIKey {
+		return false
+	}
+
+	if _, ok := r.ManagedAPIKey(p); !ok {
+		return false
+	}
+
+	if reg.RequiresManagedResourceID {
+		if _, ok := r.ManagedResourceID(p); !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review
 // driver for the given provider needs to list user accounts. Returns
 // nil for providers that do not need any scopes (Notion, Intercom)

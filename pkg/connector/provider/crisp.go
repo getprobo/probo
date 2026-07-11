@@ -37,6 +37,11 @@ func crispRegistration() *Registration {
 		// deactivated until Crisp validates the production plugin and
 		// activates with no code change once the token is set.
 		ManagedAPIKey: true,
+		// The per-website plugin API also needs the plugin ID (a distinct value
+		// from the token identifier), supplied via bootstrap alongside the
+		// token. Require it so Crisp stays hidden until both are configured
+		// rather than surfacing as connectable and failing at connect time.
+		RequiresManagedResourceID: true,
 		// Crisp authenticates with the plugin token presented as HTTP Basic,
 		// the credential being the verbatim "identifier:key" pair.
 		// APIKeyBasicAuthUserPass base64-encodes it (the empty-password
