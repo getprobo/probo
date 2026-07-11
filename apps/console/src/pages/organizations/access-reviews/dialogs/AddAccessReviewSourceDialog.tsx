@@ -12,7 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -24,29 +23,23 @@ import {
   DialogContent,
   DialogFooter,
   DropdownItem,
-  Field,
   Input,
-  Option,
-  Select,
   ThirdPartyLogo,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
 import { type ReactNode, useMemo, useState } from "react";
-import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { AddAccessReviewSourceDialogConnectorProviderInfoFragment$data } from "#/__generated__/core/AddAccessReviewSourceDialogConnectorProviderInfoFragment.graphql";
-import type { AddAccessReviewSourceDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/AddAccessReviewSourceDialogCreateAPIKeyConnectorMutation.graphql";
-import type { AddAccessReviewSourceDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/AddAccessReviewSourceDialogCreateClientCredentialsConnectorMutation.graphql";
 
-import { createAccessReviewSourceMutation } from "./accessReviewSourceMutations";
+import { APIKeyConnectorDialog } from "./_components/APIKeyConnectorDialog";
+import { ClientCredentialsConnectorDialog } from "./_components/ClientCredentialsConnectorDialog";
 import {
-  isPostHogDeploymentSelected,
-  PostHogDeploymentField,
-} from "./PostHogDeploymentField";
+  DatadogConnectDialog,
+  ZendeskConnectDialog,
+} from "./_components/OAuthExtraDialog";
+import { connectOAuthProvider } from "./_lib/connectorSettings";
 
 export const addAccessReviewSourceDialogConnectorProviderInfoFragment = graphql`
   fragment AddAccessReviewSourceDialogConnectorProviderInfoFragment on ConnectorProviderInfo @relay(plural: true) {
@@ -54,6 +47,7 @@ export const addAccessReviewSourceDialogConnectorProviderInfoFragment = graphql`
     displayName
     oauthConfigured
     apiKeySupported
+    apiKeyManaged
     clientCredentialsSupported
     oauth2Scopes
     extraSettings {
@@ -66,18 +60,6 @@ export const addAccessReviewSourceDialogConnectorProviderInfoFragment = graphql`
 
 export type ProviderInfo = AddAccessReviewSourceDialogConnectorProviderInfoFragment$data[number];
 
-// DATADOG_SITES labels are technical identifiers (region code + hostname),
-// intentionally not wrapped in __(). The dialog's prose strings are.
-const DATADOG_SITES: { value: string; label: string }[] = [
-  { value: "US1", label: "US1 (app.datadoghq.com)" },
-  { value: "US3", label: "US3 (us3.datadoghq.com)" },
-  { value: "US5", label: "US5 (us5.datadoghq.com)" },
-  { value: "EU1", label: "EU1 (app.datadoghq.eu)" },
-  { value: "AP1", label: "AP1 (ap1.datadoghq.com)" },
-  { value: "AP2", label: "AP2 (ap2.datadoghq.com)" },
-  { value: "US1-FED", label: "US1-FED (app.ddog-gov.com)" },
-];
-
 type Props = {
   children: ReactNode;
   organizationId: string;
@@ -85,125 +67,6 @@ type Props = {
   providerInfos: ReadonlyArray<ProviderInfo>;
   existingSourceProviders: ReadonlyArray<string>;
 };
-
-const createAPIKeyConnectorMutation = graphql`
-  mutation AddAccessReviewSourceDialogCreateAPIKeyConnectorMutation(
-    $input: CreateAPIKeyConnectorInput!
-  ) {
-    createAPIKeyConnector(input: $input) {
-      connector {
-        id
-        provider
-      }
-    }
-  }
-`;
-
-const createClientCredentialsConnectorMutation = graphql`
-  mutation AddAccessReviewSourceDialogCreateClientCredentialsConnectorMutation(
-    $input: CreateClientCredentialsConnectorInput!
-  ) {
-    createClientCredentialsConnector(input: $input) {
-      connector {
-        id
-        provider
-      }
-    }
-  }
-`;
-
-function mapAPIKeyExtraSettingToField(
-  provider: string,
-  settingKey: string,
-): string | null {
-  switch (provider) {
-    case "TALLY":
-      if (settingKey === "organizationId") return "tallyOrganizationId";
-      break;
-    case "SENTRY":
-      if (settingKey === "organizationSlug") return "sentryOrganizationSlug";
-      break;
-    case "SUPABASE":
-      if (settingKey === "organizationSlug") return "supabaseOrganizationSlug";
-      break;
-    case "GITHUB":
-      if (settingKey === "organization") return "githubOrganization";
-      break;
-    case "GRAFANA":
-      if (settingKey === "baseUrl") return "grafanaBaseUrl";
-      break;
-    case "SIGNOZ":
-      if (settingKey === "baseUrl") return "signozBaseUrl";
-      break;
-    case "ONE_PASSWORD":
-      if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
-      break;
-    case "METABASE":
-      if (settingKey === "instanceUrl") return "metabaseInstanceUrl";
-      break;
-    case "POSTHOG":
-      if (settingKey === "region") return "posthogRegion";
-      if (settingKey === "instanceUrl") return "posthogInstanceUrl";
-      break;
-    case "OKTA":
-      if (settingKey === "domain") return "oktaDomain";
-      break;
-    case "BETTER_STACK":
-      if (settingKey === "teamName") return "betterStackTeamName";
-      break;
-    case "QOVERY":
-      if (settingKey === "organizationId") return "qoveryOrganizationId";
-      break;
-    case "RENDER":
-      if (settingKey === "workspaceId") return "renderWorkspaceId";
-      break;
-    case "NEON":
-      if (settingKey === "organizationId") return "neonOrganizationId";
-      break;
-    case "SCALEWAY":
-      if (settingKey === "organizationId") return "scalewayOrganizationId";
-      break;
-    case "CRISP":
-      if (settingKey === "websiteId") return "crispWebsiteId";
-      break;
-  }
-  return null;
-}
-
-function mapClientCredentialsExtraSettingToField(
-  provider: string,
-  settingKey: string,
-): string | null {
-  switch (provider) {
-    case "ONE_PASSWORD":
-      if (settingKey === "accountId") return "onePasswordAccountId";
-      if (settingKey === "region") return "onePasswordRegion";
-      break;
-  }
-  return null;
-}
-
-function hasRequiredExtraSettings(
-  settings: ReadonlyArray<{ readonly key: string; readonly required: boolean }>,
-  values: Record<string, string>,
-): boolean {
-  return settings
-    .filter(s => s.required)
-    .every(s => values[s.key]?.trim());
-}
-
-// Accepts either a bare subdomain ("acme") or a pasted host
-// ("https://acme.zendesk.com/") and reduces it to the bare subdomain the
-// backend expects as the `site` query param.
-function cleanZendeskSubdomain(raw: string): string {
-  let value = raw.trim();
-  value = value.replace(/^https?:\/\//i, "");
-  // Drop any path, query, or fragment from a pasted URL/host so only the
-  // host label survives (e.g. "acme.zendesk.com/agent?x=1" -> "acme").
-  value = value.replace(/[/?#].*$/, "");
-  value = value.replace(/\.zendesk\.com$/i, "");
-  return value.trim();
-}
 
 export function AddAccessReviewSourceDialog({
   children,
@@ -213,32 +76,14 @@ export function AddAccessReviewSourceDialog({
   existingSourceProviders,
 }: Props) {
   const { __ } = useTranslate();
-  const { toast } = useToast();
   const dialogRef = useDialogRef();
-  const apiKeyDialogRef = useDialogRef();
-  const clientCredentialsDialogRef = useDialogRef();
-  const datadogDialogRef = useDialogRef();
-  const zendeskDialogRef = useDialogRef();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeProvider, setActiveProvider] = useState<ProviderInfo | null>(null);
 
-  const [datadogSite, setDatadogSite] = useState<string>("US1");
-  const [datadogProvider, setDatadogProvider] = useState<ProviderInfo | null>(null);
-
-  const [zendeskSubdomain, setZendeskSubdomain] = useState<string>("");
-  const [zendeskProvider, setZendeskProvider] = useState<ProviderInfo | null>(null);
-
-  const [apiKeyValue, setApiKeyValue] = useState("");
-  const [extraSettingValues, setExtraSettingValues] = useState<Record<string, string>>({});
-  const [isConnectingAPIKey, setIsConnectingAPIKey] = useState(false);
-
-  const [clientId, setClientId] = useState("");
-  const [clientSecret, setClientSecret] = useState("");
-  const [tokenUrl, setTokenUrl] = useState("");
-  const [scope, setScope] = useState("");
-  const [clientCredentialsExtraValues, setClientCredentialsExtraValues] = useState<Record<string, string>>({});
-  const [isConnectingClientCredentials, setIsConnectingClientCredentials] = useState(false);
+  const [activeAPIKeyProvider, setActiveAPIKeyProvider] = useState<ProviderInfo | null>(null);
+  const [activeClientCredsProvider, setActiveClientCredsProvider] = useState<ProviderInfo | null>(null);
+  const [activeDatadogProvider, setActiveDatadogProvider] = useState<ProviderInfo | null>(null);
+  const [activeZendeskProvider, setActiveZendeskProvider] = useState<ProviderInfo | null>(null);
 
   const filteredProviders = useMemo(() => {
     const sorted = [...providerInfos].sort((a, b) =>
@@ -256,253 +101,6 @@ export function AddAccessReviewSourceDialog({
     [existingSourceProviders],
   );
 
-  const [createAccessReviewSource]
-    = useMutation<accessReviewSourceMutationsCreateMutation>(
-      createAccessReviewSourceMutation,
-    );
-  const [createAPIKeyConnector]
-    = useMutation<AddAccessReviewSourceDialogCreateAPIKeyConnectorMutation>(
-      createAPIKeyConnectorMutation,
-    );
-  const [createClientCredentialsConnector]
-    = useMutation<AddAccessReviewSourceDialogCreateClientCredentialsConnectorMutation>(
-      createClientCredentialsConnectorMutation,
-    );
-
-  const connectOAuthProvider = (
-    info: ProviderInfo,
-    extras?: Record<string, string>,
-  ) => {
-    const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
-    const url = new URL("/api/console/v1/connectors/initiate", baseURL);
-    url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", info.provider);
-    for (const scope of info.oauth2Scopes) {
-      url.searchParams.append("scope", scope);
-    }
-    if (extras) {
-      for (const [k, v] of Object.entries(extras)) {
-        url.searchParams.append(k, v);
-      }
-    }
-    url.searchParams.append(
-      "continue",
-      `/organizations/${organizationId}/access-reviews/sources`,
-    );
-    window.location.assign(url.toString());
-  };
-
-  const openAPIKeyDialog = (info: ProviderInfo) => {
-    setActiveProvider(info);
-    setApiKeyValue("");
-    setExtraSettingValues({});
-    apiKeyDialogRef.current?.open();
-  };
-
-  const openClientCredentialsDialog = (info: ProviderInfo) => {
-    setActiveProvider(info);
-    setClientId("");
-    setClientSecret("");
-    setTokenUrl("");
-    setScope("");
-    setClientCredentialsExtraValues({});
-    clientCredentialsDialogRef.current?.open();
-  };
-
-  const openDatadogDialog = (info: ProviderInfo) => {
-    setDatadogProvider(info);
-    setDatadogSite("US1");
-    datadogDialogRef.current?.open();
-  };
-
-  const openZendeskDialog = (info: ProviderInfo) => {
-    setZendeskProvider(info);
-    setZendeskSubdomain("");
-    zendeskDialogRef.current?.open();
-  };
-
-  const createSourceAfterConnector = (
-    connectorId: string,
-    displayName: string,
-    onDone: () => void,
-  ) => {
-    createAccessReviewSource({
-      variables: {
-        input: {
-          organizationId,
-          connectorId,
-          name: displayName,
-          csvData: null,
-        },
-        connections: [connectionId],
-      },
-      onCompleted(_, errors) {
-        onDone();
-        if (errors?.length) {
-          toast({
-            title: __("Error"),
-            description: formatError(
-              __("Failed to create access source"),
-              errors,
-            ),
-            variant: "error",
-          });
-          return;
-        }
-        toast({
-          title: __("Success"),
-          description: __("Access source created successfully."),
-          variant: "success",
-        });
-        dialogRef.current?.close();
-      },
-      onError(error) {
-        onDone();
-        toast({
-          title: __("Error"),
-          description: formatError(
-            __("Failed to create access source"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
-    });
-  };
-
-  const connectAPIKeyProvider = () => {
-    if (!activeProvider || !apiKeyValue.trim()) {
-      return;
-    }
-
-    const requiredSettings = activeProvider.extraSettings.filter(s => s.required);
-    if (!hasRequiredExtraSettings(requiredSettings, extraSettingValues)) {
-      return;
-    }
-
-    setIsConnectingAPIKey(true);
-
-    const extraFields: Record<string, string> = {};
-    for (const setting of activeProvider.extraSettings) {
-      const value = extraSettingValues[setting.key]?.trim();
-      if (value) {
-        const fieldName = mapAPIKeyExtraSettingToField(activeProvider.provider, setting.key);
-        if (fieldName) {
-          extraFields[fieldName] = value;
-        }
-      }
-    }
-
-    createAPIKeyConnector({
-      variables: {
-        input: {
-          organizationId,
-          provider: activeProvider.provider,
-          apiKey: apiKeyValue.trim(),
-          ...extraFields,
-        },
-      },
-      onCompleted: (response) => {
-        const connectorId = response.createAPIKeyConnector.connector.id;
-        createSourceAfterConnector(
-          connectorId,
-          activeProvider.displayName,
-          () => {
-            setIsConnectingAPIKey(false);
-            setApiKeyValue("");
-            setExtraSettingValues({});
-            setActiveProvider(null);
-            apiKeyDialogRef.current?.close();
-          },
-        );
-      },
-      onError: () => {
-        setIsConnectingAPIKey(false);
-        toast({
-          title: __("Connection failed"),
-          description: __("Failed to connect provider. Please check your API key and try again."),
-          variant: "error",
-        });
-      },
-    });
-  };
-
-  const connectClientCredentialsProvider = () => {
-    if (!activeProvider || !clientId.trim() || !clientSecret.trim() || !tokenUrl.trim()) {
-      return;
-    }
-
-    const requiredSettings = activeProvider.extraSettings.filter(s => s.required);
-    if (!hasRequiredExtraSettings(requiredSettings, clientCredentialsExtraValues)) {
-      return;
-    }
-
-    setIsConnectingClientCredentials(true);
-
-    const extraFields: Record<string, string> = {};
-    for (const setting of activeProvider.extraSettings) {
-      const value = clientCredentialsExtraValues[setting.key]?.trim();
-      if (value) {
-        const fieldName = mapClientCredentialsExtraSettingToField(
-          activeProvider.provider,
-          setting.key,
-        );
-        if (fieldName) {
-          extraFields[fieldName] = value;
-        }
-      }
-    }
-
-    createClientCredentialsConnector({
-      variables: {
-        input: {
-          organizationId,
-          provider: activeProvider.provider,
-          clientId: clientId.trim(),
-          clientSecret: clientSecret.trim(),
-          tokenUrl: tokenUrl.trim(),
-          scope: scope.trim() || null,
-          ...extraFields,
-        },
-      },
-      onCompleted: (response) => {
-        const connector = response.createClientCredentialsConnector?.connector;
-        if (!connector) {
-          setIsConnectingClientCredentials(false);
-          toast({
-            title: __("Connection failed"),
-            description: __("Failed to connect provider. Please check your credentials and try again."),
-            variant: "error",
-          });
-          return;
-        }
-
-        createSourceAfterConnector(
-          connector.id,
-          activeProvider.displayName,
-          () => {
-            setIsConnectingClientCredentials(false);
-            setClientId("");
-            setClientSecret("");
-            setTokenUrl("");
-            setScope("");
-            setClientCredentialsExtraValues({});
-            setActiveProvider(null);
-            clientCredentialsDialogRef.current?.close();
-          },
-        );
-      },
-      onError: () => {
-        setIsConnectingClientCredentials(false);
-        toast({
-          title: __("Connection failed"),
-          description: __("Failed to connect provider. Please check your credentials and try again."),
-          variant: "error",
-        });
-      },
-    });
-  };
-
   const renderProviderCard = (info: ProviderInfo) => {
     const isConnected = connectedProviders.has(info.provider);
 
@@ -516,11 +114,11 @@ export function AddAccessReviewSourceDialog({
             variant="secondary"
             onClick={() => {
               if (info.provider === "DATADOG") {
-                openDatadogDialog(info);
+                setActiveDatadogProvider(info);
               } else if (info.provider === "ZENDESK") {
-                openZendeskDialog(info);
+                setActiveZendeskProvider(info);
               } else {
-                connectOAuthProvider(info);
+                connectOAuthProvider(organizationId, info);
               }
             }}
           >
@@ -528,13 +126,13 @@ export function AddAccessReviewSourceDialog({
           </Button>
         );
       }
-      if (info.apiKeySupported) {
+      if (info.apiKeySupported || info.apiKeyManaged) {
         return (
           <Button
             variant="secondary"
-            onClick={() => openAPIKeyDialog(info)}
+            onClick={() => setActiveAPIKeyProvider(info)}
           >
-            {__("API Key")}
+            {info.apiKeyManaged ? __("Connect") : __("API Key")}
           </Button>
         );
       }
@@ -542,7 +140,7 @@ export function AddAccessReviewSourceDialog({
         return (
           <Button
             variant="secondary"
-            onClick={() => openClientCredentialsDialog(info)}
+            onClick={() => setActiveClientCredsProvider(info)}
           >
             {__("Client Credentials")}
           </Button>
@@ -570,14 +168,14 @@ export function AddAccessReviewSourceDialog({
                   <ActionDropdown variant="secondary">
                     {info.apiKeySupported && (
                       <DropdownItem
-                        onSelect={() => openAPIKeyDialog(info)}
+                        onSelect={() => setActiveAPIKeyProvider(info)}
                       >
                         {__("Connect with API Key")}
                       </DropdownItem>
                     )}
                     {info.clientCredentialsSupported && (
                       <DropdownItem
-                        onSelect={() => openClientCredentialsDialog(info)}
+                        onSelect={() => setActiveClientCredsProvider(info)}
                       >
                         {__("Connect with Client Credentials")}
                       </DropdownItem>
@@ -589,51 +187,6 @@ export function AddAccessReviewSourceDialog({
       </Card>
     );
   };
-
-  // PostHog renders a dedicated deployment selector (Cloud region or
-  // self-hosted URL); every other provider falls back to generic fields.
-  const renderAPIKeyExtraSettings = () => {
-    if (!activeProvider) {
-      return null;
-    }
-
-    if (activeProvider.provider === "POSTHOG") {
-      return (
-        <PostHogDeploymentField
-          values={extraSettingValues}
-          onChange={setExtraSettingValues}
-        />
-      );
-    }
-
-    return activeProvider.extraSettings.map((setting) => {
-      const value = extraSettingValues[setting.key] ?? "";
-      return (
-        <Field
-          key={setting.key}
-          label={__(setting.label)}
-          value={value}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setExtraSettingValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
-          required={setting.required}
-        />
-      );
-    });
-  };
-
-  // PostHog's extra settings are individually optional (region OR instance
-  // URL), so the generic required-field check can't gate it.
-  const postHogAPIKeyValid
-    = activeProvider?.provider !== "POSTHOG"
-      || isPostHogDeploymentSelected(extraSettingValues);
-
-  const apiKeyExtraSettingsValid = activeProvider
-    ? hasRequiredExtraSettings(activeProvider.extraSettings, extraSettingValues)
-    : true;
-
-  const clientCredentialsExtraSettingsValid = activeProvider
-    ? hasRequiredExtraSettings(activeProvider.extraSettings, clientCredentialsExtraValues)
-    : true;
 
   return (
     <>
@@ -683,217 +236,33 @@ export function AddAccessReviewSourceDialog({
         <DialogFooter exitLabel={__("Close")} />
       </Dialog>
 
-      <Dialog
-        ref={apiKeyDialogRef}
-        title={activeProvider
-          ? sprintf(__("Connect %s"), activeProvider.displayName)
-          : __("Connect provider")}
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            connectAPIKeyProvider();
-          }}
-        >
-          <DialogContent padded className="space-y-4">
-            <p className="text-txt-secondary text-sm">
-              {sprintf(
-                __("Enter the API key for %s to connect it as an access source."),
-                activeProvider?.displayName ?? "",
-              )}
-            </p>
-            <Field
-              label={__("API Key")}
-              type="password"
-              value={apiKeyValue}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKeyValue(e.target.value)}
-              required
-              autoFocus
-            />
-            {renderAPIKeyExtraSettings()}
-          </DialogContent>
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={
-                isConnectingAPIKey
-                || !apiKeyValue.trim()
-                || !apiKeyExtraSettingsValid
-                || !postHogAPIKeyValid
-              }
-            >
-              {isConnectingAPIKey ? __("Connecting...") : __("Connect")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
+      <APIKeyConnectorDialog
+        provider={activeAPIKeyProvider}
+        organizationId={organizationId}
+        connectionId={connectionId}
+        onClose={() => setActiveAPIKeyProvider(null)}
+        onSuccess={() => dialogRef.current?.close()}
+      />
 
-      <Dialog
-        ref={clientCredentialsDialogRef}
-        title={activeProvider
-          ? sprintf(__("Connect %s"), activeProvider.displayName)
-          : __("Connect provider")}
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            connectClientCredentialsProvider();
-          }}
-        >
-          <DialogContent padded className="space-y-4">
-            <p className="text-txt-secondary text-sm">
-              {sprintf(
-                __("Enter the client credentials for %s to connect it as an access source."),
-                activeProvider?.displayName ?? "",
-              )}
-            </p>
-            <Field
-              label={__("Client ID")}
-              value={clientId}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientId(e.target.value)}
-              required
-              autoFocus
-            />
-            <Field
-              label={__("Client Secret")}
-              type="password"
-              value={clientSecret}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientSecret(e.target.value)}
-              required
-            />
-            <Field
-              label={__("Token URL")}
-              value={tokenUrl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTokenUrl(e.target.value)}
-              required
-            />
-            <Field
-              label={__("Scope")}
-              value={scope}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScope(e.target.value)}
-            />
-            {activeProvider?.extraSettings.map(setting =>
-              setting.key === "region"
-                ? (
-                    <div key={setting.key} className="space-y-1.5">
-                      <label className="text-sm font-medium">{__(setting.label)}</label>
-                      <Select
-                        value={clientCredentialsExtraValues[setting.key] ?? ""}
-                        onValueChange={(val: string) =>
-                          setClientCredentialsExtraValues(prev => ({
-                            ...prev,
-                            [setting.key]: val,
-                          }))}
-                        placeholder={__("Select a region")}
-                      >
-                        <Option value="US">United States (US)</Option>
-                        <Option value="CA">Canada (CA)</Option>
-                        <Option value="EU">Europe (EU)</Option>
-                      </Select>
-                    </div>
-                  )
-                : (
-                    <Field
-                      key={setting.key}
-                      label={__(setting.label)}
-                      value={clientCredentialsExtraValues[setting.key] ?? ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setClientCredentialsExtraValues(prev => ({
-                          ...prev,
-                          [setting.key]: e.target.value,
-                        }))}
-                      required={setting.required}
-                    />
-                  ),
-            )}
-          </DialogContent>
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={
-                isConnectingClientCredentials
-                || !clientId.trim()
-                || !clientSecret.trim()
-                || !tokenUrl.trim()
-                || !clientCredentialsExtraSettingsValid
-              }
-            >
-              {isConnectingClientCredentials ? __("Connecting...") : __("Connect")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
+      <ClientCredentialsConnectorDialog
+        provider={activeClientCredsProvider}
+        organizationId={organizationId}
+        connectionId={connectionId}
+        onClose={() => setActiveClientCredsProvider(null)}
+        onSuccess={() => dialogRef.current?.close()}
+      />
 
-      <Dialog ref={datadogDialogRef} title={__("Connect Datadog")}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (datadogProvider) {
-              connectOAuthProvider(datadogProvider, { site: datadogSite });
-            }
-          }}
-        >
-          <DialogContent padded className="space-y-4">
-            <p className="text-txt-secondary text-sm">
-              {__("Select your Datadog site, then continue to authorize access.")}
-            </p>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">{__("Datadog site")}</label>
-              <Select
-                value={datadogSite}
-                onValueChange={setDatadogSite}
-                placeholder={__("Select a site")}
-              >
-                {DATADOG_SITES.map(s => (
-                  <Option key={s.value} value={s.value}>
-                    {s.label}
-                  </Option>
-                ))}
-              </Select>
-            </div>
-          </DialogContent>
-          <DialogFooter>
-            <Button type="submit">{__("Continue")}</Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
+      <DatadogConnectDialog
+        provider={activeDatadogProvider}
+        organizationId={organizationId}
+        onClose={() => setActiveDatadogProvider(null)}
+      />
 
-      <Dialog ref={zendeskDialogRef} title={__("Connect Zendesk")}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (zendeskProvider) {
-              const site = cleanZendeskSubdomain(zendeskSubdomain);
-              if (site) {
-                connectOAuthProvider(zendeskProvider, { site });
-              }
-            }
-          }}
-        >
-          <DialogContent padded className="space-y-4">
-            <p className="text-txt-secondary text-sm">
-              {__("Enter your Zendesk subdomain, then continue to authorize access.")}
-            </p>
-            <Field
-              label={__("Zendesk subdomain")}
-              placeholder={__("acme")}
-              value={zendeskSubdomain}
-              onValueChange={setZendeskSubdomain}
-              help={__("The <subdomain> part of <subdomain>.zendesk.com")}
-              required
-              autoFocus
-            />
-          </DialogContent>
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={!cleanZendeskSubdomain(zendeskSubdomain)}
-            >
-              {__("Continue")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
+      <ZendeskConnectDialog
+        provider={activeZendeskProvider}
+        organizationId={organizationId}
+        onClose={() => setActiveZendeskProvider(null)}
+      />
     </>
   );
 }
