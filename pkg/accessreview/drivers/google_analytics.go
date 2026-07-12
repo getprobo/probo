@@ -270,7 +270,9 @@ func addGoogleAnalyticsBinding(members map[string]*googleAnalyticsMember, user s
 }
 
 // googleAnalyticsRecords turns the merged member map into a deterministically
-// ordered slice of AccountRecords. Active is left nil: GA4 access bindings
+// ordered slice of AccountRecords. GA4 access bindings identify a user only by
+// email — there is no stable per-user ID and no display name exposed — so the
+// email is used as both ExternalID and FullName. Active is left nil: bindings
 // carry no account-status signal.
 func googleAnalyticsRecords(members map[string]*googleAnalyticsMember) []AccountRecord {
 	emails := make([]string, 0, len(members))
