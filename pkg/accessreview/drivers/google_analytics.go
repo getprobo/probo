@@ -94,7 +94,7 @@ func (d *GoogleAnalyticsDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	members := make(map[string]*googleAnalyticsMember)
 
 	// Account-level bindings.
-	if err := d.collectBindings(ctx, members, "v1alpha", "accounts", d.accountID, "accessBindings"); err != nil {
+	if err := d.collectBindings(ctx, members, "v1alpha", "accounts", url.PathEscape(d.accountID), "accessBindings"); err != nil {
 		return nil, err
 	}
 
@@ -105,7 +105,7 @@ func (d *GoogleAnalyticsDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	}
 
 	for _, propertyID := range propertyIDs {
-		if err := d.collectBindings(ctx, members, "v1alpha", "properties", propertyID, "accessBindings"); err != nil {
+		if err := d.collectBindings(ctx, members, "v1alpha", "properties", url.PathEscape(propertyID), "accessBindings"); err != nil {
 			return nil, err
 		}
 	}
