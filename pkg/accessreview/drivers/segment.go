@@ -204,12 +204,13 @@ func (d *SegmentDriver) listUsers(ctx context.Context, base *url.URL) ([]segment
 }
 
 func (d *SegmentDriver) userPermissions(ctx context.Context, base *url.URL, userID string) ([]segmentPermission, error) {
-	endpoint := *base
-	// Path holds the decoded value; endpoint.String() escapes the id once.
-	endpoint.Path = "/users/" + userID
+	endpoint, err := url.JoinPath(base.String(), "users", url.PathEscape(userID))
+	if err != nil {
+		return nil, fmt.Errorf("cannot build segment user URL: %w", err)
+	}
 
 	var resp segmentUserResponse
-	if err := d.getJSON(ctx, endpoint.String(), &resp); err != nil {
+	if err := d.getJSON(ctx, endpoint, &resp); err != nil {
 		return nil, err
 	}
 
