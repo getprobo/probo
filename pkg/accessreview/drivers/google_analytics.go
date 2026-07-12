@@ -143,13 +143,16 @@ func (d *GoogleAnalyticsDriver) collectBindings(ctx context.Context, members map
 	return fmt.Errorf("cannot list all google analytics access bindings: %w", ErrPaginationLimitReached)
 }
 
-// listProperties returns the numeric IDs of every property directly beneath the
-// account.
+// listProperties returns the numeric IDs of every property under the account,
+// including subproperties and roll-up properties. The ancestor filter walks the
+// whole account hierarchy (parent: would return only properties whose direct
+// parent is the account, silently dropping subproperties parented to another
+// property, and with them any subproperty-only members).
 func (d *GoogleAnalyticsDriver) listProperties(ctx context.Context) ([]string, error) {
 	var propertyIDs []string
 
 	pageToken := ""
-	filter := url.Values{"filter": {"parent:accounts/" + d.accountID}}
+	filter := url.Values{"filter": {"ancestor:accounts/" + d.accountID}}
 
 	for range maxPaginationPages {
 		endpoint, err := googleAnalyticsURL(pageToken, filter, "v1alpha", "properties")
