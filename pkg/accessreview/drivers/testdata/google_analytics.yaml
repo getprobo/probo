@@ -45,13 +45,13 @@ interactions:
         host: analyticsadmin.googleapis.com
         form:
             filter:
-                - parent:accounts/123456
+                - ancestor:accounts/123456
             pageSize:
                 - "200"
         headers:
             Accept:
                 - application/json
-        url: https://analyticsadmin.googleapis.com/v1alpha/properties?filter=parent%3Aaccounts%2F123456&pageSize=200
+        url: https://analyticsadmin.googleapis.com/v1alpha/properties?filter=ancestor%3Aaccounts%2F123456&pageSize=200
         method: GET
       response:
         proto: HTTP/2.0
