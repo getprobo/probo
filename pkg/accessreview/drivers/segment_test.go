@@ -41,8 +41,9 @@ func TestSegmentDriver(t *testing.T) {
 	assert.Equal(t, "papi@example.com", owner.FullName)
 	assert.True(t, owner.IsAdmin)
 	assert.Equal(t, []string{"Workspace Owner"}, owner.Roles)
-	require.NotNil(t, owner.Active)
-	assert.True(t, *owner.Active)
+	// Segment exposes no active/suspended status, so confirmed members carry
+	// no Active signal (nil), unlike pending invites below.
+	assert.Nil(t, owner.Active)
 
 	// Second user: named; resource-scoped read-only role ⇒ not admin.
 	member := records[1]
@@ -50,8 +51,7 @@ func TestSegmentDriver(t *testing.T) {
 	assert.Equal(t, "Sloth", member.FullName)
 	assert.False(t, member.IsAdmin)
 	assert.Equal(t, []string{"Source Read-only"}, member.Roles)
-	require.NotNil(t, member.Active)
-	assert.True(t, *member.Active)
+	assert.Nil(t, member.Active)
 
 	// Pending invite: inactive, no roles, keyed by email.
 	invite := records[2]
