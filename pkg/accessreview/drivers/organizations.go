@@ -502,6 +502,12 @@ func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Clie
 			return nil, fmt.Errorf("cannot fetch google analytics accounts: %w", err)
 		}
 
+		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
+
+			return nil, fmt.Errorf("cannot fetch google analytics accounts: unexpected status %d", resp.StatusCode)
+		}
+
 		var out struct {
 			Accounts []struct {
 				Name        string `json:"name"`
@@ -511,12 +517,7 @@ func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Clie
 		}
 
 		decodeErr := json.NewDecoder(resp.Body).Decode(&out)
-		status := resp.StatusCode
 		_ = resp.Body.Close()
-
-		if status != http.StatusOK {
-			return nil, fmt.Errorf("cannot fetch google analytics accounts: unexpected status %d", status)
-		}
 
 		if decodeErr != nil {
 			return nil, fmt.Errorf("cannot decode google analytics accounts response: %w", decodeErr)
