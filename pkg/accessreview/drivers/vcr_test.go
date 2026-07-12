@@ -60,6 +60,9 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 			i.Request.Headers.Del("Api-Key")
 			// Scaleway authenticates with the secret key in X-Auth-Token.
 			i.Request.Headers.Del("X-Auth-Token")
+			// Dotfile authenticates with the key in X-DOTFILE-API-KEY
+			// (canonicalized to X-Dotfile-Api-Key).
+			i.Request.Headers.Del("X-Dotfile-Api-Key")
 
 			return nil
 		}, recorder.BeforeSaveHook),
