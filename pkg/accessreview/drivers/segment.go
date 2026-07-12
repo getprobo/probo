@@ -123,13 +123,15 @@ func (d *SegmentDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		}
 
 		roles, isAdmin := segmentRolesAndAdmin(perms)
-		active := true
 
+		// Segment's user API exposes no active/suspended status field, so
+		// leave Active nil (unknown) rather than fabricate a value, per the
+		// AccountRecord contract.
 		records = append(records, AccountRecord{
 			Email:       email,
 			FullName:    segmentFullName(u.Name, email),
 			Roles:       roles,
-			Active:      &active,
+			Active:      nil,
 			IsAdmin:     isAdmin,
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
