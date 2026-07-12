@@ -65,7 +65,14 @@ type dotfileUsersResponse struct {
 }
 
 func NewDotfileDriver(httpClient *http.Client) *DotfileDriver {
-	return &DotfileDriver{httpClient: httpClient}
+	return &DotfileDriver{
+		httpClient: &http.Client{
+			Transport: &retryRoundTripper{
+				next:       httpClient.Transport,
+				maxRetries: 3,
+			},
+		},
+	}
 }
 
 func (d *DotfileDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
