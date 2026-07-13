@@ -411,7 +411,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 		},
 		{
 			name:        MeasureRepoPRCICoverage,
-			description: "Workflows run on pull request events.",
+			description: "CI check runs are observed on recent merged pull requests.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
@@ -423,7 +423,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 		},
 		{
 			name:        MeasureRepoCodeQLEnabledCoverage,
-			description: "Repositories run CodeQL or equivalent code scanning in CI.",
+			description: "Repositories show CodeQL or equivalent code scanning check runs.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
@@ -435,19 +435,19 @@ func defaultMeasurePlanRules() []measurePlanRule {
 		},
 		{
 			name:        MeasureRepoDependencyReviewCoverage,
-			description: "Repositories run dependency review on pull requests.",
+			description: "Repositories show dependency review check runs on recent commits.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
 			name:        MeasureRepoSASTInCICoverage,
-			description: "Repositories run static analysis security testing in CI.",
+			description: "Repositories show static analysis security testing check runs.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
 			name:        MeasureRepoDepScanInCICoverage,
-			description: "Repositories scan dependencies in CI pipelines.",
+			description: "Repositories show dependency scanning check runs in CI.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},

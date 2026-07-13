@@ -24,6 +24,9 @@ type (
 	pullRequestItem struct {
 		Number   int     `json:"number"`
 		MergedAt *string `json:"merged_at"`
+		Head     struct {
+			SHA string `json:"sha"`
+		} `json:"head"`
 	}
 
 	pullReviewItem struct {
@@ -117,4 +120,40 @@ func (s *discoveryScanner) pullRequestHasApproval(
 	}
 
 	return false
+}
+
+func (s *discoveryScanner) fetchRecentMergedPRHeadSHA(
+	ctx context.Context,
+	repo repoListItem,
+) (string, bool) {
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "pulls")
+	if err != nil {
+		return "", false
+	}
+
+	endpoint, err = withPerPage(endpoint, 20)
+	if err != nil {
+		return "", false
+	}
+
+	endpoint, err = appendQuery(endpoint, "state", "closed")
+	if err != nil {
+		return "", false
+	}
+
+	var pulls []pullRequestItem
+
+	if _, err := s.api.getJSON(ctx, endpoint, &pulls); err != nil {
+		return "", false
+	}
+
+	for _, pull := range pulls {
+		if pull.MergedAt == nil || *pull.MergedAt == "" || pull.Head.SHA == "" {
+			continue
+		}
+
+		return pull.Head.SHA, true
+	}
+
+	return "", false
 }

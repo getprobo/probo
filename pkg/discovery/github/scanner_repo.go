@@ -273,7 +273,10 @@ func (s *discoveryScanner) scanRepo(
 	}
 
 	signals := s.analyzeRepoWorkflows(ctx, repo, fileIndex)
-	mergeWorkflowSignalsIntoAggregate(&signals, agg)
+	mergeWorkflowRiskSignalsIntoAggregate(&signals, agg)
+
+	running := s.collectWorkflowRunSignals(ctx, repo)
+	mergeWorkflowRunSignalsIntoAggregate(&running, agg)
 
 	if class, ok := s.repoClassifications[repo.Name]; ok {
 		if class.ProductionLikely {
@@ -435,36 +438,6 @@ func (s *discoveryScanner) applyBranchProtectionSignals(
 			len(protection.Restrictions.Teams) > 0 ||
 			len(protection.Restrictions.Apps) > 0) {
 		agg.WithBypassRestrictions++
-	}
-}
-
-func mergeWorkflowSignalsIntoAggregate(signals *workflowSignals, agg *repoScanAggregate) {
-	if signals.RunsOnPullRequest {
-		agg.WithPRWorkflow++
-	}
-
-	if signals.UsesPullRequestTarget {
-		agg.WithPullRequestTargetRisk++
-	}
-
-	if signals.UsesCodeQL {
-		agg.WithCodeQL++
-	}
-
-	if signals.UsesDependencyReview {
-		agg.WithDependencyReview++
-	}
-
-	if signals.UsesThirdPartySAST {
-		agg.WithSASTInCI++
-	}
-
-	if signals.UsesDepScanInCI {
-		agg.WithDepScanInCI++
-	}
-
-	if signals.UsesWorkflowSecrets {
-		agg.WithWorkflowSecrets++
 	}
 }
 
@@ -770,13 +743,13 @@ func repoAggregateFacts(agg *repoScanAggregate) []Fact {
 		coverageFact(MeasureRepoRequiredStatusChecksCoverage, agg.WithRequiredStatusChecks, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
 		coverageFact(MeasureRepoBypassActorRestrictionsCoverage, agg.WithBypassRestrictions, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
 		coverageFact(MeasureRepoWorkflowCoverage, agg.WithWorkflows, agg.ScannedRepos, "GET /repos/{owner}/{repo}/actions/workflows"),
-		coverageFact(MeasureRepoPRCICoverage, agg.WithPRWorkflow, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact(MeasureRepoPRCICoverage, agg.WithPRWorkflow, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits/{sha}/check-runs"),
 		coverageFact(MeasureRepoPullRequestTargetRisk, agg.WithPullRequestTargetRisk, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
-		coverageFact(MeasureRepoCodeQLEnabledCoverage, agg.WithCodeQL, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact(MeasureRepoCodeQLEnabledCoverage, agg.WithCodeQL, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits/{sha}/check-runs"),
 		coverageFact(MeasureRepoCodeQLDefaultSetupCoverage, agg.WithCodeQLDefaultSetup, agg.ScannedRepos, "GET /repos/{owner}/{repo}/code-scanning/default-setup"),
-		coverageFact(MeasureRepoDependencyReviewCoverage, agg.WithDependencyReview, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
-		coverageFact(MeasureRepoSASTInCICoverage, agg.WithSASTInCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
-		coverageFact(MeasureRepoDepScanInCICoverage, agg.WithDepScanInCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact(MeasureRepoDependencyReviewCoverage, agg.WithDependencyReview, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits/{sha}/check-runs"),
+		coverageFact(MeasureRepoSASTInCICoverage, agg.WithSASTInCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits/{sha}/check-runs"),
+		coverageFact(MeasureRepoDepScanInCICoverage, agg.WithDepScanInCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits/{sha}/check-runs"),
 		coverageFact(MeasureRepoSecurityMDCoverage, agg.WithSecurityMD, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/SECURITY.md"),
 		coverageFact(MeasureRepoContributingMDCoverage, agg.WithContributingMD, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/CONTRIBUTING.md"),
 		coverageFact(MeasureRepoDevelopmentGuideCoverage, agg.WithDevGuide, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents"),

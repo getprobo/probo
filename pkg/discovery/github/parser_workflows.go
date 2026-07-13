@@ -17,50 +17,191 @@ package github
 import (
 	"encoding/base64"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type workflowSignals struct {
-	RunsOnPullRequest     bool
-	UsesPullRequestTarget bool
-	UsesCodeQL            bool
-	UsesDependencyReview  bool
-	UsesThirdPartySAST    bool
-	UsesDepScanInCI       bool
-	UsesWorkflowSecrets   bool
+	ConfiguredPullRequest       bool
+	ConfiguredPullRequestTarget bool
+	ConfiguredCodeQL            bool
+	ConfiguredDependencyReview  bool
+	ConfiguredThirdPartySAST    bool
+	ConfiguredDepScanInCI       bool
+	ConfiguredWorkflowSecrets   bool
+}
+
+type workflowRunSignals struct {
+	RanOnPullRequest    bool
+	RanCodeQL           bool
+	RanDependencyReview bool
+	RanThirdPartySAST   bool
+	RanDepScanInCI      bool
+}
+
+type workflowYAML struct {
+	On   any                        `yaml:"on"`
+	Jobs map[string]workflowYAMLJob `yaml:"jobs"`
+}
+
+type workflowYAMLJob struct {
+	Uses  string             `yaml:"uses"`
+	Steps []workflowYAMLStep `yaml:"steps"`
+}
+
+type workflowYAMLStep struct {
+	Uses string `yaml:"uses"`
 }
 
 func analyzeWorkflowYAML(content string) workflowSignals {
-	lower := strings.ToLower(content)
+	var doc workflowYAML
+
+	if err := yaml.Unmarshal([]byte(content), &doc); err != nil {
+		return workflowSignals{}
+	}
+
+	uses := collectWorkflowUses(doc)
+	events := parseWorkflowEvents(doc.On)
 
 	signals := workflowSignals{
-		RunsOnPullRequest: strings.Contains(lower, "pull_request:") ||
-			strings.Contains(lower, "pull_request ]"),
-		UsesPullRequestTarget: strings.Contains(lower, "pull_request_target"),
-		UsesCodeQL: strings.Contains(lower, "github/codeql-action") ||
-			strings.Contains(lower, "codeql-analysis"),
-		UsesDependencyReview: strings.Contains(lower, "dependency-review-action"),
-		UsesThirdPartySAST: strings.Contains(lower, "snyk/actions") ||
-			strings.Contains(lower, "semgrep") ||
-			strings.Contains(lower, "sonarqube"),
-		UsesDepScanInCI: strings.Contains(lower, "trivy-action") ||
-			strings.Contains(lower, "osv-scanner") ||
-			strings.Contains(lower, "dependency-check") ||
-			strings.Contains(lower, "aquasecurity/trivy"),
-		UsesWorkflowSecrets: strings.Contains(lower, "${{ secrets.") ||
-			strings.Contains(lower, "secrets:"),
+		ConfiguredPullRequest: hasWorkflowEvent(events, "pull_request"),
+		ConfiguredPullRequestTarget: hasWorkflowEvent(
+			events,
+			"pull_request_target",
+		),
+		ConfiguredWorkflowSecrets: strings.Contains(
+			strings.ToLower(content),
+			"${{ secrets.",
+		) || strings.Contains(strings.ToLower(content), "secrets:"),
+	}
+
+	for _, action := range uses {
+		lower := strings.ToLower(action)
+
+		if matchesAny(lower, "github/codeql-action", "codeql-analysis") {
+			signals.ConfiguredCodeQL = true
+		}
+
+		if strings.Contains(lower, "dependency-review-action") {
+			signals.ConfiguredDependencyReview = true
+		}
+
+		if matchesAny(lower, "snyk/actions", "semgrep", "sonarqube", "sonarsource/") {
+			signals.ConfiguredThirdPartySAST = true
+		}
+
+		if matchesAny(
+			lower,
+			"trivy-action",
+			"osv-scanner",
+			"dependency-check",
+			"aquasecurity/trivy",
+			"anchore/scan-action",
+		) {
+			signals.ConfiguredDepScanInCI = true
+		}
 	}
 
 	return signals
 }
 
 func mergeWorkflowSignals(dst *workflowSignals, src workflowSignals) {
-	dst.RunsOnPullRequest = dst.RunsOnPullRequest || src.RunsOnPullRequest
-	dst.UsesPullRequestTarget = dst.UsesPullRequestTarget || src.UsesPullRequestTarget
-	dst.UsesCodeQL = dst.UsesCodeQL || src.UsesCodeQL
-	dst.UsesDependencyReview = dst.UsesDependencyReview || src.UsesDependencyReview
-	dst.UsesThirdPartySAST = dst.UsesThirdPartySAST || src.UsesThirdPartySAST
-	dst.UsesDepScanInCI = dst.UsesDepScanInCI || src.UsesDepScanInCI
-	dst.UsesWorkflowSecrets = dst.UsesWorkflowSecrets || src.UsesWorkflowSecrets
+	dst.ConfiguredPullRequest = dst.ConfiguredPullRequest || src.ConfiguredPullRequest
+	dst.ConfiguredPullRequestTarget = dst.ConfiguredPullRequestTarget ||
+		src.ConfiguredPullRequestTarget
+	dst.ConfiguredCodeQL = dst.ConfiguredCodeQL || src.ConfiguredCodeQL
+	dst.ConfiguredDependencyReview = dst.ConfiguredDependencyReview ||
+		src.ConfiguredDependencyReview
+	dst.ConfiguredThirdPartySAST = dst.ConfiguredThirdPartySAST ||
+		src.ConfiguredThirdPartySAST
+	dst.ConfiguredDepScanInCI = dst.ConfiguredDepScanInCI || src.ConfiguredDepScanInCI
+	dst.ConfiguredWorkflowSecrets = dst.ConfiguredWorkflowSecrets ||
+		src.ConfiguredWorkflowSecrets
+}
+
+func mergeWorkflowRunSignals(dst *workflowRunSignals, src workflowRunSignals) {
+	dst.RanOnPullRequest = dst.RanOnPullRequest || src.RanOnPullRequest
+	dst.RanCodeQL = dst.RanCodeQL || src.RanCodeQL
+	dst.RanDependencyReview = dst.RanDependencyReview || src.RanDependencyReview
+	dst.RanThirdPartySAST = dst.RanThirdPartySAST || src.RanThirdPartySAST
+	dst.RanDepScanInCI = dst.RanDepScanInCI || src.RanDepScanInCI
+}
+
+func parseWorkflowEvents(on any) []string {
+	if on == nil {
+		return nil
+	}
+
+	switch typed := on.(type) {
+	case string:
+		return []string{normalizeWorkflowEvent(typed)}
+	case []any:
+		events := make([]string, 0, len(typed))
+
+		for _, item := range typed {
+			events = append(events, parseWorkflowEvents(item)...)
+		}
+
+		return events
+	case map[string]any:
+		events := make([]string, 0, len(typed))
+
+		for key := range typed {
+			events = append(events, normalizeWorkflowEvent(key))
+		}
+
+		return events
+	default:
+		return nil
+	}
+}
+
+func normalizeWorkflowEvent(event string) string {
+	event = strings.TrimSpace(strings.ToLower(event))
+
+	if before, _, ok := strings.Cut(event, "["); ok {
+		event = strings.TrimSpace(before)
+	}
+
+	return event
+}
+
+func hasWorkflowEvent(events []string, want string) bool {
+	for _, event := range events {
+		if event == want {
+			return true
+		}
+	}
+
+	return false
+}
+
+func collectWorkflowUses(doc workflowYAML) []string {
+	uses := make([]string, 0, 8)
+
+	for _, job := range doc.Jobs {
+		if job.Uses != "" {
+			uses = append(uses, job.Uses)
+		}
+
+		for _, step := range job.Steps {
+			if step.Uses != "" {
+				uses = append(uses, step.Uses)
+			}
+		}
+	}
+
+	return uses
+}
+
+func matchesAny(value string, patterns ...string) bool {
+	for _, pattern := range patterns {
+		if strings.Contains(value, pattern) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func decodeGitHubContent(encoding, content string) (string, bool) {

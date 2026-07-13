@@ -29,14 +29,71 @@ on:
   pull_request:
 jobs:
   scan:
-    uses: github/codeql-action/analyze@v3
-    secrets: inherit
+    steps:
+      - uses: github/codeql-action/analyze@v3
+        with:
+          secrets: inherit
 `)
 
-	assert.True(t, signals.RunsOnPullRequest)
-	assert.True(t, signals.UsesCodeQL)
-	assert.True(t, signals.UsesWorkflowSecrets)
-	assert.False(t, signals.UsesPullRequestTarget)
+	assert.True(t, signals.ConfiguredPullRequest)
+	assert.True(t, signals.ConfiguredCodeQL)
+	assert.True(t, signals.ConfiguredWorkflowSecrets)
+	assert.False(t, signals.ConfiguredPullRequestTarget)
+}
+
+func TestAnalyzeWorkflowYAML_ReusableWorkflowUses(t *testing.T) {
+	t.Parallel()
+
+	signals := analyzeWorkflowYAML(`
+name: security
+on: [push, pull_request_target]
+jobs:
+  sast:
+    uses: snyk/actions/node@master
+`)
+
+	assert.True(t, signals.ConfiguredPullRequestTarget)
+	assert.True(t, signals.ConfiguredThirdPartySAST)
+}
+
+func TestAnalyzeWorkflowYAML_ListTrigger(t *testing.T) {
+	t.Parallel()
+
+	signals := analyzeWorkflowYAML(`
+name: ci
+on: [workflow_dispatch, pull_request]
+jobs:
+  scan:
+    steps:
+      - uses: aquasecurity/trivy-action@master
+`)
+
+	assert.True(t, signals.ConfiguredPullRequest)
+	assert.True(t, signals.ConfiguredDepScanInCI)
+}
+
+func TestDetectToolRunSignals(t *testing.T) {
+	t.Parallel()
+
+	signals := detectToolRunSignals([]checkRunObservation{
+		{Name: "CodeQL", AppSlug: "github-code-scanning"},
+		{Name: "dependency-review", AppSlug: "github-actions"},
+	})
+
+	assert.True(t, signals.RanCodeQL)
+	assert.True(t, signals.RanDependencyReview)
+	assert.False(t, signals.RanOnPullRequest)
+}
+
+func TestDetectPRWorkflowRan(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, detectPRWorkflowRan([]checkRunObservation{
+		{Name: "build", AppSlug: "github-actions"},
+	}))
+	assert.False(t, detectPRWorkflowRan([]checkRunObservation{
+		{Name: "ci/circleci", AppSlug: "circleci"},
+	}))
 }
 
 func TestIsLikelyProductionRepo(t *testing.T) {
