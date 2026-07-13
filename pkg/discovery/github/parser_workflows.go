@@ -16,6 +16,7 @@ package github
 
 import (
 	"encoding/base64"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -167,13 +168,7 @@ func normalizeWorkflowEvent(event string) string {
 }
 
 func hasWorkflowEvent(events []string, want string) bool {
-	for _, event := range events {
-		if event == want {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(events, want)
 }
 
 func collectWorkflowUses(doc workflowYAML) []string {
