@@ -25,8 +25,9 @@ import (
 
 type (
 	githubFS struct {
-		api *apiClient
-		org string
+		api      *apiClient
+		org      string
+		resolver GlobQueryResolver
 	}
 
 	contentsDirItem struct {
@@ -35,8 +36,12 @@ type (
 	}
 )
 
-func newGitHubFS(api *apiClient, org string) *githubFS {
-	return &githubFS{api: api, org: org}
+func newGitHubFS(api *apiClient, org string, resolver GlobQueryResolver) *githubFS {
+	if resolver == nil {
+		resolver = DefaultGlobQueryResolver()
+	}
+
+	return &githubFS{api: api, org: org, resolver: resolver}
 }
 
 func (f *githubFS) Read(ctx context.Context, path string) ([]byte, error) {
@@ -118,7 +123,7 @@ func (f *githubFS) ReadDir(ctx context.Context, dir string) ([]vfs.Entry, error)
 }
 
 func (f *githubFS) Glob(ctx context.Context, pattern string) ([]string, error) {
-	query, ok := globToCodeSearch(f.org, pattern)
+	query, ok := f.resolver.Query(f.org, pattern)
 	if !ok {
 		return nil, nil
 	}

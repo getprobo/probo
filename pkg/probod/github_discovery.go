@@ -22,6 +22,38 @@ import (
 	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 )
 
+func (impl *Implm) buildGitHubDiscoveryGlobQueryResolver(
+	l *log.Logger,
+	tp trace.TracerProvider,
+	r prometheus.Registerer,
+) ghdiscovery.GlobQueryResolver {
+	agentCfg, llmClient, err := impl.resolveAgentClient(
+		"github-discovery",
+		impl.cfg.Agents.GitHubDiscovery,
+		l,
+		tp,
+		r,
+	)
+	if err != nil {
+		l.Warn("github discovery LLM glob code search disabled", log.Error(err))
+
+		return ghdiscovery.DefaultGlobQueryResolver()
+	}
+
+	maxTokens := 4096
+	if agentCfg.MaxTokens != nil {
+		maxTokens = *agentCfg.MaxTokens
+	}
+
+	return ghdiscovery.NewLLMGlobQueryResolver(
+		llmClient,
+		agentCfg.ModelName,
+		ref.UnrefOrZero(agentCfg.Temperature),
+		maxTokens,
+		l.Named("github-discovery-glob-code-search"),
+	)
+}
+
 func (impl *Implm) buildGitHubDiscoveryRepoClassifier(
 	l *log.Logger,
 	tp trace.TracerProvider,

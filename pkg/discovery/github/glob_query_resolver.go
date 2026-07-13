@@ -14,10 +14,20 @@
 
 package github
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
-// discoveryGlobQueries maps vfs discovery glob patterns to GitHub code search queries.
-var discoveryGlobQueries = map[string]string{
+// GlobQueryResolver maps vfs discovery glob patterns to GitHub code search queries.
+type GlobQueryResolver interface {
+	Warm(ctx context.Context, org string, patterns []string) []string
+	Query(org, pattern string) (string, bool)
+}
+
+// staticDiscoveryGlobQueries maps known discovery glob patterns to GitHub code
+// search query fragments (without the org: qualifier).
+var staticDiscoveryGlobQueries = map[string]string{
 	"*/.github/workflows/*.yml":   "path:.github/workflows extension:yml",
 	"*/.github/workflows/*.yaml":  "path:.github/workflows extension:yaml",
 	"*/SECURITY.md":               "filename:SECURITY.md",
@@ -47,11 +57,30 @@ var discoveryGlobQueries = map[string]string{
 	"*/.gitlab-ci.yml":            "filename:.gitlab-ci.yml",
 }
 
-func globToCodeSearch(org, pattern string) (string, bool) {
-	query, ok := discoveryGlobQueries[pattern]
+type staticGlobQueryResolver struct{}
+
+func (staticGlobQueryResolver) Warm(context.Context, string, []string) []string {
+	return nil
+}
+
+func (staticGlobQueryResolver) Query(org, pattern string) (string, bool) {
+	fragment, ok := staticDiscoveryGlobQueries[pattern]
 	if !ok {
 		return "", false
 	}
 
-	return "org:" + org + " " + strings.ReplaceAll(query, " ", "+"), true
+	return formatCodeSearchQuery(org, fragment), true
+}
+
+// DefaultGlobQueryResolver returns the built-in static glob-to-query map.
+func DefaultGlobQueryResolver() GlobQueryResolver {
+	return staticGlobQueryResolver{}
+}
+
+func formatCodeSearchQuery(org, fragment string) string {
+	fragment = strings.TrimSpace(fragment)
+	fragment = strings.TrimPrefix(fragment, "org:"+org)
+	fragment = strings.TrimSpace(fragment)
+
+	return "org:" + org + " " + strings.ReplaceAll(fragment, " ", "+")
 }

@@ -31,6 +31,7 @@ type discoveryScanner struct {
 	logger              *log.Logger
 	scopes              scopeSet
 	repoClassifier      RepoClassifier
+	globResolver        GlobQueryResolver
 	repoClassifications map[string]RepoClassification
 }
 
@@ -40,6 +41,7 @@ func newDiscoveryScanner(
 	conn connector.Connection,
 	logger *log.Logger,
 	repoClassifier RepoClassifier,
+	globResolver GlobQueryResolver,
 ) *discoveryScanner {
 	api := newAPIClient(httpClient)
 
@@ -47,14 +49,19 @@ func newDiscoveryScanner(
 		repoClassifier = DefaultRepoClassifier()
 	}
 
+	if globResolver == nil {
+		globResolver = DefaultGlobQueryResolver()
+	}
+
 	return &discoveryScanner{
 		api:            api,
-		fs:             newGitHubFS(api, org),
+		fs:             newGitHubFS(api, org, globResolver),
 		org:            org,
 		conn:           conn,
 		logger:         logger,
 		scopes:         newScopeSet(conn),
 		repoClassifier: repoClassifier,
+		globResolver:   globResolver,
 	}
 }
 

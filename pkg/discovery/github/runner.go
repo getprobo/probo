@@ -36,6 +36,7 @@ type Runner struct {
 	providerRegistry  *provider.Registry
 	synthesizer       Synthesizer
 	repoClassifier    RepoClassifier
+	globResolver      GlobQueryResolver
 	logger            *log.Logger
 	httpClientOpts    []httpclient.Option
 }
@@ -45,6 +46,12 @@ type RunnerOption func(*Runner)
 func WithHTTPClientOptions(opts ...httpclient.Option) RunnerOption {
 	return func(r *Runner) {
 		r.httpClientOpts = append(r.httpClientOpts, opts...)
+	}
+}
+
+func WithGlobQueryResolver(resolver GlobQueryResolver) RunnerOption {
+	return func(r *Runner) {
+		r.globResolver = resolver
 	}
 }
 
@@ -73,11 +80,16 @@ func NewRunner(
 		providerRegistry:  providerRegistry,
 		synthesizer:       synthesizer,
 		repoClassifier:    repoClassifier,
+		globResolver:      DefaultGlobQueryResolver(),
 		logger:            logger,
 	}
 
 	for _, opt := range opts {
 		opt(r)
+	}
+
+	if r.globResolver == nil {
+		r.globResolver = DefaultGlobQueryResolver()
 	}
 
 	return r
@@ -116,6 +128,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 		connector.Connection,
 		r.logger,
 		r.repoClassifier,
+		r.globResolver,
 	).scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot scan github organization: %w", err)
