@@ -109,17 +109,20 @@ func classifyRepoHeuristic(repo repoListItem, probe repoProbeSignals) RepoClassi
 
 	if matched := matchProductionNameHint(name); matched != "" {
 		score += 5
+
 		reasons = append(reasons, "name hint "+matched)
 	}
 
 	switch strings.ToLower(repo.DefaultBranch) {
 	case "main", "master", "production":
 		score += 2
+
 		reasons = append(reasons, "production-like default branch")
 	}
 
 	if repo.Private {
 		score += 2
+
 		reasons = append(reasons, "private repository")
 	} else {
 		score++
@@ -127,6 +130,7 @@ func classifyRepoHeuristic(repo repoListItem, probe repoProbeSignals) RepoClassi
 
 	if repoPushedRecently(repo.PushedAt, 90*24*time.Hour) {
 		score += 2
+
 		reasons = append(reasons, "recent pushes")
 	}
 
@@ -136,6 +140,7 @@ func classifyRepoHeuristic(repo repoListItem, probe repoProbeSignals) RepoClassi
 
 	if repo.StargazersCount >= 20 {
 		score += 2
+
 		reasons = append(reasons, "community interest")
 	} else if repo.StargazersCount >= 5 {
 		score++
@@ -143,48 +148,57 @@ func classifyRepoHeuristic(repo repoListItem, probe repoProbeSignals) RepoClassi
 
 	if repo.ForksCount >= 3 {
 		score++
+
 		reasons = append(reasons, "fork activity")
 	}
 
 	if repo.OpenIssuesCount > 0 && repo.OpenIssuesCount < 500 {
 		score++
+
 		reasons = append(reasons, "active issue tracker")
 	}
 
 	if topic := matchProductionTopic(repo.Topics); topic != "" {
 		score += 3
+
 		reasons = append(reasons, "topic "+topic)
 	}
 
 	if hint := matchProductionDescription(repo.Description); hint != "" {
 		score += 2
+
 		reasons = append(reasons, "description mentions "+hint)
 	}
 
 	if language := strings.ToLower(strings.TrimSpace(repo.Language)); language != "" {
 		if _, ok := productionLanguages[language]; ok {
 			score++
+
 			reasons = append(reasons, "application language "+language)
 		}
 	}
 
 	if probe.BranchProtected {
 		score += 5
+
 		reasons = append(reasons, "branch protection enabled")
 	}
 
 	if probe.HasWorkflows {
 		score += 4
+
 		reasons = append(reasons, "github actions workflows")
 	}
 
 	if probe.WorkflowCount > 2 {
 		score++
+
 		reasons = append(reasons, "multiple workflows")
 	}
 
 	if isLowPriorityRepoName(name) {
 		score -= 6
+
 		reasons = append(reasons, "low-priority name pattern")
 	}
 
@@ -194,6 +208,7 @@ func classifyRepoHeuristic(repo repoListItem, probe repoProbeSignals) RepoClassi
 			(probe.BranchProtected || probe.HasWorkflows || repo.StargazersCount >= 10))
 
 	confidence := classificationConfidenceMedium
+
 	switch {
 	case score >= 10 || score <= 0:
 		confidence = classificationConfidenceHigh

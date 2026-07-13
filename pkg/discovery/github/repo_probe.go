@@ -61,6 +61,7 @@ func reposForProbe(repos []repoListItem) []repoListItem {
 	sort.Slice(ranked, func(i, j int) bool {
 		left := classifyRepoHeuristic(ranked[i], repoProbeSignals{}).CloneScore
 		right := classifyRepoHeuristic(ranked[j], repoProbeSignals{}).CloneScore
+
 		if left != right {
 			return left > right
 		}

@@ -191,6 +191,7 @@ func (s *discoveryScanner) scanRepos(ctx context.Context, sheet *FactSheet) {
 	probeSignals := s.collectRepoProbeSignals(ctx, eligible)
 	classifications, classLimitations := s.repoClassifier.Classify(ctx, eligible, probeSignals)
 	s.repoClassifications = classifications
+
 	sheet.Limitations = append(sheet.Limitations, classLimitations...)
 
 	if len(eligible) > 0 {

@@ -676,6 +676,7 @@ func (impl *Implm) Run(
 		ghdiscovery.StartAgentName,
 		ghdiscovery.NewRunHandler(githubDiscoveryRunner),
 	)
+
 	agentRunCheckpointer := coredata.NewPGCheckpointer(pgClient)
 	agentRunWorker := agentrun.NewWorker(
 		pgClient,
