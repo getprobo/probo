@@ -74,7 +74,7 @@ func (s *discoveryScanner) scanOutsideCollaborators(ctx context.Context, sheet *
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check: CheckOrgOutsideCollaborators,
+		Name:  MeasureOrgOutsideCollaborators,
 		Scope: "org",
 		Value: map[string]int{
 			"count": len(collaborators),
@@ -103,7 +103,7 @@ func (s *discoveryScanner) scanActionsPermissions(ctx context.Context, sheet *Fa
 		strings.EqualFold(perms.AllowedActions, "local_only")
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check: CheckOrgActionsRestricted,
+		Name:  MeasureOrgActionsRestricted,
 		Scope: "org",
 		Value: map[string]any{
 			"restricted":                       restricted,
@@ -116,7 +116,7 @@ func (s *discoveryScanner) scanActionsPermissions(ctx context.Context, sheet *Fa
 	})
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check:  CheckOrgForkPRApprovalRequired,
+		Name:   MeasureOrgForkPRApprovalRequired,
 		Scope:  "org",
 		Value:  !perms.CanApprovePullRequestReviews,
 		APIRef: "GET /orgs/{org}/actions/permissions",
@@ -140,7 +140,7 @@ func (s *discoveryScanner) scanGitHubApps(ctx context.Context, sheet *FactSheet)
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check: CheckOrgGitHubApps,
+		Name:  MeasureOrgGitHubApps,
 		Scope: "org",
 		Value: map[string]int{
 			"installations": page.TotalCount,
@@ -177,7 +177,7 @@ func (s *discoveryScanner) scanAuditLogAccess(ctx context.Context, sheet *FactSh
 
 	if _, err := s.api.getJSON(ctx, endpoint, &events); err != nil {
 		sheet.Facts = append(sheet.Facts, Fact{
-			Check:  CheckOrgAuditLogAccessible,
+			Name:   MeasureOrgAuditLogAccessible,
 			Scope:  "org",
 			Value:  false,
 			APIRef: "GET /organizations/{org}/audit-log",
@@ -187,7 +187,7 @@ func (s *discoveryScanner) scanAuditLogAccess(ctx context.Context, sheet *FactSh
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check:  CheckOrgAuditLogAccessible,
+		Name:   MeasureOrgAuditLogAccessible,
 		Scope:  "org",
 		Value:  true,
 		APIRef: "GET /organizations/{org}/audit-log",
@@ -215,7 +215,7 @@ func (s *discoveryScanner) scanEnterpriseAccess(ctx context.Context, sheet *Fact
 
 	if _, err := s.api.getJSON(ctx, endpoint, &enterprises); err != nil {
 		sheet.Facts = append(sheet.Facts, Fact{
-			Check:  CheckOrgEnterpriseAccessible,
+			Name:   MeasureOrgEnterpriseAccessible,
 			Scope:  "org",
 			Value:  false,
 			APIRef: "GET /enterprise",
@@ -225,7 +225,7 @@ func (s *discoveryScanner) scanEnterpriseAccess(ctx context.Context, sheet *Fact
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check:  CheckOrgEnterpriseAccessible,
+		Name:   MeasureOrgEnterpriseAccessible,
 		Scope:  "org",
 		Value:  len(enterprises) > 0,
 		APIRef: "GET /enterprise",

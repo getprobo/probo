@@ -42,7 +42,7 @@ func (s *discoveryScanner) scanOrgSettings(ctx context.Context, sheet *FactSheet
 		sheet.Limitations = append(sheet.Limitations, "cannot list 2FA-disabled members")
 	} else {
 		sheet.Facts = append(sheet.Facts, newFact(
-			CheckOrgNo2FAMembers,
+			MeasureOrgNo2FAMembers,
 			"org",
 			disabled2FA,
 			"GET /orgs/{org}/members?filter=2fa_disabled",
@@ -54,7 +54,7 @@ func (s *discoveryScanner) scanOrgSettings(ctx context.Context, sheet *FactSheet
 		sheet.Limitations = append(sheet.Limitations, "cannot count org admins")
 	} else {
 		sheet.Facts = append(sheet.Facts, newFact(
-			CheckOrgAdminMinimization,
+			MeasureOrgAdminMinimization,
 			"org",
 			map[string]int{
 				"admins":  adminCount,
@@ -72,7 +72,7 @@ func orgFacts(org *githubOrganization) []Fact {
 
 	if org.TwoFactorRequirementEnabled != nil {
 		facts = append(facts, newFact(
-			CheckOrgMFARequired,
+			MeasureOrgMFARequired,
 			"org",
 			*org.TwoFactorRequirementEnabled,
 			"GET /orgs/{org}",
@@ -81,7 +81,7 @@ func orgFacts(org *githubOrganization) []Fact {
 
 	if org.DefaultRepositoryPermission != "" {
 		facts = append(facts, newFact(
-			CheckOrgBasePermissions,
+			MeasureOrgBasePermissions,
 			"org",
 			org.DefaultRepositoryPermission,
 			"GET /orgs/{org}",
@@ -90,7 +90,7 @@ func orgFacts(org *githubOrganization) []Fact {
 
 	if org.MembersCanCreatePublicRepositories != nil {
 		facts = append(facts, newFact(
-			CheckOrgNoPublicRepoCreation,
+			MeasureOrgNoPublicRepoCreation,
 			"org",
 			!*org.MembersCanCreatePublicRepositories,
 			"GET /orgs/{org}",
@@ -99,7 +99,7 @@ func orgFacts(org *githubOrganization) []Fact {
 
 	if org.MembersCanChangeRepoVisibility != nil {
 		facts = append(facts, newFact(
-			CheckOrgNoVisibilityChange,
+			MeasureOrgNoVisibilityChange,
 			"org",
 			!*org.MembersCanChangeRepoVisibility,
 			"GET /orgs/{org}",

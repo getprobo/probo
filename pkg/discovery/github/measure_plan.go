@@ -15,7 +15,6 @@
 package github
 
 import (
-	"fmt"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -23,7 +22,6 @@ import (
 
 type (
 	measurePlanRule struct {
-		check       Check
 		name        string
 		description string
 		category    string
@@ -36,10 +34,10 @@ type (
 // buildMeasurePlanFromFacts maps collected facts to creates/updates without an LLM.
 func buildMeasurePlanFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*MeasurePlan, error) {
 	rules := defaultMeasurePlanRules()
-	byCheck := map[Check]Fact{}
+	byName := map[string]Fact{}
 
 	for _, fact := range sheet.Facts {
-		byCheck[fact.Check] = fact
+		byName[fact.Name] = fact
 	}
 
 	plan := &MeasurePlan{
@@ -49,20 +47,19 @@ func buildMeasurePlanFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*M
 	used := map[gidKey]struct{}{}
 
 	for _, rule := range rules {
-		fact, ok := byCheck[rule.check]
+		fact, ok := byName[rule.name]
 		if !ok {
 			continue
 		}
 
 		state := rule.evaluate(fact)
-		summary := fmt.Sprintf("%s (check %s)", rule.description, fact.Check)
+		summary := rule.description
 
 		if match := findMeasureByName(existing, rule.name); match != nil {
 			plan.Updates = append(plan.Updates, MeasurePlanUpdate{
 				MeasureID:       match.ID,
 				State:           state,
 				EvidenceSummary: summary,
-				CheckRefs:       []Check{fact.Check},
 			})
 			used[gidKey(match.ID.String())] = struct{}{}
 
@@ -79,7 +76,6 @@ func buildMeasurePlanFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*M
 			Category:        rule.category,
 			State:           state,
 			EvidenceSummary: summary,
-			CheckRefs:       []Check{fact.Check},
 		})
 	}
 
@@ -112,8 +108,7 @@ func findMeasureByName(existing []ExistingMeasure, name string) *ExistingMeasure
 func defaultMeasurePlanRules() []measurePlanRule {
 	rules := []measurePlanRule{
 		{
-			check:       CheckOrgMFARequired,
-			name:        "Org-wide MFA enforcement",
+			name:        MeasureOrgMFARequired,
 			description: "Organization requires two-factor authentication for all members.",
 			category:    "access",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -125,8 +120,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgNo2FAMembers,
-			name:        "Members without 2FA",
+			name:        MeasureOrgNo2FAMembers,
 			description: "No organization members lack two-factor authentication.",
 			category:    "access",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -143,8 +137,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgBasePermissions,
-			name:        "Minimal default repository permissions",
+			name:        MeasureOrgBasePermissions,
 			description: "Default repository permission is read or none.",
 			category:    "access",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -162,8 +155,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgNoPublicRepoCreation,
-			name:        "Restrict public repository creation",
+			name:        MeasureOrgNoPublicRepoCreation,
 			description: "Members cannot create public repositories.",
 			category:    "exposure",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -175,8 +167,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgAdminMinimization,
-			name:        "Admin account minimization",
+			name:        MeasureOrgAdminMinimization,
 			description: "Organization admin accounts are limited.",
 			category:    "access",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -184,8 +175,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgPublicRepos,
-			name:        "Public repository exposure",
+			name:        MeasureOrgPublicRepos,
 			description: "Unexpected public repositories are controlled.",
 			category:    "exposure",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -202,8 +192,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgNoVisibilityChange,
-			name:        "Restrict repository visibility changes",
+			name:        MeasureOrgNoVisibilityChange,
 			description: "Members cannot change repository visibility.",
 			category:    "exposure",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -215,8 +204,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgOutsideCollaborators,
-			name:        "Outside collaborator inventory",
+			name:        MeasureOrgOutsideCollaborators,
 			description: "Outside collaborators are inventoried for review.",
 			category:    "access",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -229,8 +217,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgActionsRestricted,
-			name:        "GitHub Actions usage restricted",
+			name:        MeasureOrgActionsRestricted,
 			description: "Organization restricts which actions and workflows may run.",
 			category:    "ci_cd",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -247,8 +234,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgGitHubApps,
-			name:        "GitHub App inventory",
+			name:        MeasureOrgGitHubApps,
 			description: "Installed GitHub Apps are inventoried for review.",
 			category:    "integrations",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -261,8 +247,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgAuditLogAccessible,
-			name:        "Audit log accessible",
+			name:        MeasureOrgAuditLogAccessible,
 			description: "Organization audit log is accessible for review.",
 			category:    "audit",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -278,57 +263,49 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckRepoBranchProtectionCoverage,
-			name:        "Default branch protection",
+			name:        MeasureRepoBranchProtectionCoverage,
 			description: "Default branches are protected across scanned repositories.",
 			category:    "code_review",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			check:       CheckRepoPRReviewsRequiredCoverage,
-			name:        "Pull request reviews required",
+			name:        MeasureRepoPRReviewsRequiredCoverage,
 			description: "Default branches require pull request reviews.",
 			category:    "code_review",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			check:       CheckRepoSignedCommitsRequiredCoverage,
-			name:        "Signed commits required",
+			name:        MeasureRepoSignedCommitsRequiredCoverage,
 			description: "Default branches require signed commits.",
 			category:    "code_integrity",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			check:       CheckRepoWorkflowCoverage,
-			name:        "CI/CD workflows present",
+			name:        MeasureRepoWorkflowCoverage,
 			description: "Repositories run automated workflows.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoSecurityMDCoverage,
-			name:        "Security disclosure policy",
+			name:        MeasureRepoSecurityMDCoverage,
 			description: "Repositories publish a SECURITY.md disclosure policy.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoContributingMDCoverage,
-			name:        "Contributing guidelines documented",
+			name:        MeasureRepoContributingMDCoverage,
 			description: "Repositories publish CONTRIBUTING.md guidance.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoDependabotConfigCoverage,
-			name:        "Dependabot configuration",
+			name:        MeasureRepoDependabotConfigCoverage,
 			description: "Repositories configure Dependabot update automation.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoDependabotCriticalOpen,
-			name:        "Critical Dependabot alerts resolved",
+			name:        MeasureRepoDependabotCriticalOpen,
 			description: "No open critical Dependabot alerts in scanned repositories.",
 			category:    "dependencies",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -345,8 +322,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckRepoSecretScanningAlertsOpen,
-			name:        "Secret scanning alerts resolved",
+			name:        MeasureRepoSecretScanningAlertsOpen,
 			description: "No open secret scanning alerts in scanned repositories.",
 			category:    "secrets",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -363,8 +339,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckRepoCodeScanningCriticalOpen,
-			name:        "Critical code scanning alerts resolved",
+			name:        MeasureRepoCodeScanningCriticalOpen,
 			description: "No open critical code scanning alerts in scanned repositories.",
 			category:    "code_scanning",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -381,8 +356,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgForkPRApprovalRequired,
-			name:        "Fork pull request approval required",
+			name:        MeasureOrgForkPRApprovalRequired,
 			description: "Workflows from fork pull requests require approval before running.",
 			category:    "ci_cd",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -394,8 +368,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgEnterpriseAccessible,
-			name:        "Enterprise settings accessible",
+			name:        MeasureOrgEnterpriseAccessible,
 			description: "Enterprise configuration is accessible for governance review.",
 			category:    "audit",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -407,127 +380,109 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckRepoProductionClassification,
-			name:        "Production repository classification",
+			name:        MeasureRepoProductionClassification,
 			description: "Likely production repositories are identified for deeper checks.",
 			category:    "governance",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoSignedCommitsPracticeCoverage,
-			name:        "Signed commits in practice",
+			name:        MeasureRepoSignedCommitsPracticeCoverage,
 			description: "Recent commits on default branches are cryptographically signed.",
 			category:    "code_integrity",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoForcePushDisabledCoverage,
-			name:        "Force push disabled on default branch",
+			name:        MeasureRepoForcePushDisabledCoverage,
 			description: "Default branches disallow force pushes.",
 			category:    "code_review",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			check:       CheckRepoRequiredStatusChecksCoverage,
-			name:        "Required status checks on default branch",
+			name:        MeasureRepoRequiredStatusChecksCoverage,
 			description: "Default branches require status checks before merge.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoBypassActorRestrictionsCoverage,
-			name:        "Branch protection bypass restrictions",
+			name:        MeasureRepoBypassActorRestrictionsCoverage,
 			description: "Branch protection limits who can bypass required checks.",
 			category:    "code_review",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoPRCICoverage,
-			name:        "CI runs on pull requests",
+			name:        MeasureRepoPRCICoverage,
 			description: "Workflows run on pull request events.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoPullRequestTargetRisk,
-			name:        "No pull_request_target workflow risk",
+			name:        MeasureRepoPullRequestTargetRisk,
 			description: "Scanned repositories avoid dangerous pull_request_target workflows.",
 			category:    "ci_cd",
 			evaluate:    evaluateCoverageRiskAbsent,
 		},
 		{
-			check:       CheckRepoCodeQLEnabledCoverage,
-			name:        "CodeQL analysis in CI",
+			name:        MeasureRepoCodeQLEnabledCoverage,
 			description: "Repositories run CodeQL or equivalent code scanning in CI.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoCodeQLDefaultSetupCoverage,
-			name:        "CodeQL default setup enabled",
+			name:        MeasureRepoCodeQLDefaultSetupCoverage,
 			description: "Repositories enable GitHub code scanning default setup.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoDependencyReviewCoverage,
-			name:        "Dependency review in CI",
+			name:        MeasureRepoDependencyReviewCoverage,
 			description: "Repositories run dependency review on pull requests.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoSASTInCICoverage,
-			name:        "SAST in CI",
+			name:        MeasureRepoSASTInCICoverage,
 			description: "Repositories run static analysis security testing in CI.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoDepScanInCICoverage,
-			name:        "Dependency scanning in CI",
+			name:        MeasureRepoDepScanInCICoverage,
 			description: "Repositories scan dependencies in CI pipelines.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoDevelopmentGuideCoverage,
-			name:        "Development guide documented",
+			name:        MeasureRepoDevelopmentGuideCoverage,
 			description: "Repositories publish engineering development guidance.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoCodeReviewGuideCoverage,
-			name:        "Code review guide documented",
+			name:        MeasureRepoCodeReviewGuideCoverage,
 			description: "Repositories publish code review guidance.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoRenovateConfigCoverage,
-			name:        "Renovate dependency automation",
+			name:        MeasureRepoRenovateConfigCoverage,
 			description: "Repositories configure Renovate or equivalent update automation.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoLockfileCoverage,
-			name:        "Dependency lock files maintained",
+			name:        MeasureRepoLockfileCoverage,
 			description: "Repositories maintain dependency lock files.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoSecretScanningPushProtection,
-			name:        "Secret scanning push protection",
+			name:        MeasureRepoSecretScanningPushProtection,
 			description: "Repositories enable secret scanning push protection.",
 			category:    "secrets",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoEnvOnDefaultBranch,
-			name:        "No secrets committed to default branch",
+			name:        MeasureRepoEnvOnDefaultBranch,
 			description: "Default branches do not contain .env files.",
 			category:    "secrets",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -535,8 +490,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckRepoDeployKeysWriteAccess,
-			name:        "Deploy keys with write access controlled",
+			name:        MeasureRepoDeployKeysWriteAccess,
 			description: "Write-capable deploy keys are limited across scanned repositories.",
 			category:    "secrets",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -544,22 +498,19 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckRepoCommitStatusCICoverage,
-			name:        "CI detected via commit statuses",
+			name:        MeasureRepoCommitStatusCICoverage,
 			description: "Repositories report CI results via commit statuses or check runs.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoExternalCICoverage,
-			name:        "External CI providers detected",
+			name:        MeasureRepoExternalCICoverage,
 			description: "Repositories use external CI providers such as CircleCI or Jenkins.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoCIProviders,
-			name:        "CI provider inventory",
+			name:        MeasureRepoCIProviders,
 			description: "CI providers are inventoried from commit statuses and check runs.",
 			category:    "ci_cd",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -572,36 +523,31 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckRepoSecurityContactCoverage,
-			name:        "Security contact in SECURITY.md",
+			name:        MeasureRepoSecurityContactCoverage,
 			description: "Repositories publish a reachable security contact in SECURITY.md.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoIncidentResponseDocCoverage,
-			name:        "Incident response documentation",
+			name:        MeasureRepoIncidentResponseDocCoverage,
 			description: "Repositories document incident response procedures.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoIssueTemplatesCoverage,
-			name:        "Issue templates configured",
+			name:        MeasureRepoIssueTemplatesCoverage,
 			description: "Repositories provide GitHub issue templates.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoDeFactoPRReviewCoverage,
-			name:        "Pull requests reviewed in practice",
+			name:        MeasureRepoDeFactoPRReviewCoverage,
 			description: "Merged pull requests receive approvals in practice.",
 			category:    "code_review",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			check:       CheckRepoPRApprovalRate,
-			name:        "Pull request approval rate",
+			name:        MeasureRepoPRApprovalRate,
 			description: "Merged pull requests are approved before merge.",
 			category:    "code_review",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -609,8 +555,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgProfileSecurityMD,
-			name:        "Organization security disclosure policy",
+			name:        MeasureOrgProfileSecurityMD,
 			description: "The organization profile repository publishes SECURITY.md.",
 			category:    "documentation",
 			evaluate: func(f Fact) coredata.MeasureState {
@@ -618,8 +563,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			check:       CheckOrgProfileContributingMD,
-			name:        "Organization contributing guidelines",
+			name:        MeasureOrgProfileContributingMD,
 			description: "The organization profile repository publishes CONTRIBUTING.md.",
 			category:    "documentation",
 			evaluate: func(f Fact) coredata.MeasureState {

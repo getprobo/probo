@@ -55,7 +55,7 @@ func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet)
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check: CheckOrgProfileSecurityMD,
+		Name:  MeasureOrgProfileSecurityMD,
 		Scope: "org",
 		Value: map[string]any{
 			"present":          hasSecurity,
@@ -65,7 +65,7 @@ func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet)
 	})
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		Check:  CheckOrgProfileContributingMD,
+		Name:   MeasureOrgProfileContributingMD,
 		Scope:  "org",
 		Value:  hasContributing,
 		APIRef: "GET /repos/{org}/.github/contents/CONTRIBUTING.md",

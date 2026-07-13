@@ -238,7 +238,7 @@ func ciProviderFact(ciAgg *ciProviderAggregate, reposScanned int) Fact {
 	maps.Copy(providers, ciAgg.Providers)
 
 	return Fact{
-		Check: CheckRepoCIProviders,
+		Name:  MeasureRepoCIProviders,
 		Scope: "org",
 		Value: map[string]any{
 			"providers":                providers,

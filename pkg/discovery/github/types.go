@@ -36,9 +36,9 @@ type (
 		RunKind        string  `json:"run_kind"`
 	}
 
-	// Fact is a deterministic scanner observation passed to synthesis.
+	// Fact is a scanner observation for a target measure (by title).
 	Fact struct {
-		Check  Check  `json:"check"`
+		Name   string `json:"name"`
 		Scope  string `json:"scope"`
 		Value  any    `json:"value"`
 		APIRef string `json:"api_ref,omitempty"`
@@ -67,7 +67,6 @@ type (
 		MeasureID       gid.GID               `json:"measure_id"`
 		State           coredata.MeasureState `json:"state"`
 		EvidenceSummary string                `json:"evidence_summary"`
-		CheckRefs       []Check               `json:"check_refs"`
 	}
 
 	// MeasurePlanCreate creates a new measure for GitHub posture.
@@ -77,7 +76,6 @@ type (
 		Category        string                `json:"category"`
 		State           coredata.MeasureState `json:"state"`
 		EvidenceSummary string                `json:"evidence_summary"`
-		CheckRefs       []Check               `json:"check_refs"`
 	}
 
 	// MeasurePlanUnchanged records measures left as-is.

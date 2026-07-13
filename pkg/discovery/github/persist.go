@@ -52,10 +52,10 @@ func applyMeasurePlan(
 		return nil, fmt.Errorf("cannot apply measure plan: plan is required")
 	}
 
-	factsByCheck := map[Check]Fact{}
+	factsByName := map[string]Fact{}
 
 	for _, fact := range input.factSheet.Facts {
-		factsByCheck[fact.Check] = fact
+		factsByName[fact.Name] = fact
 	}
 
 	stats := &persistStats{summary: map[string]int{}}
@@ -72,7 +72,7 @@ func applyMeasurePlan(
 					scope,
 					input,
 					update,
-					factsByCheck,
+					factsByName,
 					now,
 				); err != nil {
 					return err
@@ -89,7 +89,7 @@ func applyMeasurePlan(
 					scope,
 					input,
 					create,
-					factsByCheck,
+					factsByName,
 					now,
 				); err != nil {
 					return err
@@ -115,7 +115,7 @@ func persistMeasureUpdate(
 	scope coredata.Scoper,
 	input persistInput,
 	update MeasurePlanUpdate,
-	factsByCheck map[Check]Fact,
+	factsByName map[string]Fact,
 	now time.Time,
 ) error {
 	measure := &coredata.Measure{}
@@ -143,8 +143,8 @@ func persistMeasureUpdate(
 		measure.ID,
 		input.agentRunID,
 		update.EvidenceSummary,
-		update.CheckRefs,
-		factsByCheck,
+		measure.Name,
+		factsByName,
 		now,
 	)
 }
@@ -155,7 +155,7 @@ func persistMeasureCreate(
 	scope coredata.Scoper,
 	input persistInput,
 	create MeasurePlanCreate,
-	factsByCheck map[Check]Fact,
+	factsByName map[string]Fact,
 	now time.Time,
 ) error {
 	referenceID, err := uuid.NewV4()
@@ -191,8 +191,8 @@ func persistMeasureCreate(
 		measure.ID,
 		input.agentRunID,
 		create.EvidenceSummary,
-		create.CheckRefs,
-		factsByCheck,
+		create.Name,
+		factsByName,
 		now,
 	)
 }
@@ -226,8 +226,8 @@ func insertDiscoveryEvidence(
 	measureID gid.GID,
 	agentRunID gid.GID,
 	summary string,
-	checkRefs []Check,
-	factsByCheck map[Check]Fact,
+	measureName string,
+	factsByName map[string]Fact,
 	now time.Time,
 ) error {
 	referenceID, err := uuid.NewV4()
@@ -235,7 +235,7 @@ func insertDiscoveryEvidence(
 		return fmt.Errorf("cannot generate evidence reference id: %w", err)
 	}
 
-	evidenceURL, err := discoveryEvidenceURL(checkRefs, factsByCheck)
+	evidenceURL, err := discoveryEvidenceURL(measureName, factsByName)
 	if err != nil {
 		return fmt.Errorf("cannot build discovery evidence URL: %w", err)
 	}
@@ -266,42 +266,38 @@ func insertDiscoveryEvidence(
 	return nil
 }
 
-func discoveryEvidenceURL(checkRefs []Check, factsByCheck map[Check]Fact) (string, error) {
+func discoveryEvidenceURL(measureName string, factsByName map[string]Fact) (string, error) {
 	const fallback = "https://github.com"
 
-	for _, ref := range checkRefs {
-		fact, ok := factsByCheck[ref]
-		if !ok || fact.APIRef == "" {
-			continue
-		}
-
-		rest := strings.TrimSpace(strings.TrimPrefix(fact.APIRef, "GET "))
-		if rest == "" {
-			continue
-		}
-
-		u, err := url.Parse("https://api.github.com")
-		if err != nil {
-			return "", fmt.Errorf("cannot parse github api base URL: %w", err)
-		}
-
-		if path, query, ok := strings.Cut(rest, "?"); ok {
-			u.Path = path
-
-			q, err := url.ParseQuery(query)
-			if err != nil {
-				return "", fmt.Errorf("cannot parse github api evidence query: %w", err)
-			}
-
-			u.RawQuery = q.Encode()
-		} else {
-			u.Path = rest
-		}
-
-		return u.String(), nil
+	fact, ok := factsByName[measureName]
+	if !ok || fact.APIRef == "" {
+		return fallback, nil
 	}
 
-	return fallback, nil
+	rest := strings.TrimSpace(strings.TrimPrefix(fact.APIRef, "GET "))
+	if rest == "" {
+		return fallback, nil
+	}
+
+	u, err := url.Parse("https://api.github.com")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse github api base URL: %w", err)
+	}
+
+	if path, query, ok := strings.Cut(rest, "?"); ok {
+		u.Path = path
+
+		q, err := url.ParseQuery(query)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse github api evidence query: %w", err)
+		}
+
+		u.RawQuery = q.Encode()
+	} else {
+		u.Path = rest
+	}
+
+	return u.String(), nil
 }
 
 func stringPtr(value string) *string {

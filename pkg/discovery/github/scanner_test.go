@@ -141,18 +141,18 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, sheet)
 
-	keys := checkKeys(sheet.Facts)
+	names := factNames(sheet.Facts)
 
-	assert.Contains(t, keys, "org_mfa_required")
-	assert.Contains(t, keys, "org_outside_collaborators")
-	assert.Contains(t, keys, "org_actions_restricted")
-	assert.Contains(t, keys, "repo_branch_protection_coverage")
-	assert.Contains(t, keys, "repo_dependabot_critical_open")
-	assert.Contains(t, keys, "repo_commit_status_ci_coverage")
-	assert.Contains(t, keys, "repo_ci_providers")
-	assert.Contains(t, keys, "repo_de_facto_pr_review_coverage")
-	assert.Contains(t, keys, "repo_security_contact_coverage")
-	assert.Contains(t, keys, "org_profile_security_md")
+	assert.Contains(t, names, MeasureOrgMFARequired)
+	assert.Contains(t, names, MeasureOrgOutsideCollaborators)
+	assert.Contains(t, names, MeasureOrgActionsRestricted)
+	assert.Contains(t, names, MeasureRepoBranchProtectionCoverage)
+	assert.Contains(t, names, MeasureRepoDependabotCriticalOpen)
+	assert.Contains(t, names, MeasureRepoCommitStatusCICoverage)
+	assert.Contains(t, names, MeasureRepoCIProviders)
+	assert.Contains(t, names, MeasureRepoDeFactoPRReviewCoverage)
+	assert.Contains(t, names, MeasureRepoSecurityContactCoverage)
+	assert.Contains(t, names, MeasureOrgProfileSecurityMD)
 	assert.Equal(t, 1, sheet.ReposScanned)
 }
 
@@ -163,14 +163,14 @@ func TestBuildMeasurePlanFromFacts_IncludesRepoCoverageMeasures(t *testing.T) {
 		GitHubOrg: "acme",
 		Facts: []Fact{
 			{
-				Check: CheckRepoBranchProtectionCoverage,
+				Name: MeasureRepoBranchProtectionCoverage,
 				Value: map[string]int{
 					"matched": 2,
 					"total":   2,
 				},
 			},
 			{
-				Check: CheckRepoSecretScanningAlertsOpen,
+				Name: MeasureRepoSecretScanningAlertsOpen,
 				Value: map[string]int{
 					"open": 1,
 				},
@@ -192,14 +192,14 @@ func TestBuildMeasurePlanFromFacts_IncludesRepoCoverageMeasures(t *testing.T) {
 	assert.Equal(t, coredata.MeasureStateNotImplemented, findCreateState(plan, "Secret scanning alerts resolved"))
 }
 
-func checkKeys(facts []Fact) []string {
-	keys := make([]string, 0, len(facts))
+func factNames(facts []Fact) []string {
+	names := make([]string, 0, len(facts))
 
 	for _, fact := range facts {
-		keys = append(keys, string(fact.Check))
+		names = append(names, fact.Name)
 	}
 
-	return keys
+	return names
 }
 
 func findCreateState(plan *MeasurePlan, name string) coredata.MeasureState {
