@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
+	ghintegration "go.probo.inc/probo/pkg/integration/github"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -53,6 +54,7 @@ func NewGraphQLHandler(
 	tokenSecret string,
 	logger *log.Logger,
 	thirdPartySvc *thirdparty.Service,
+	githubDiscoverySvc *ghintegration.Service,
 	riskManagementSvc *riskmanagement.Service,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
@@ -74,6 +76,7 @@ func NewGraphQLHandler(
 			providerRegistry:  providerRegistry,
 			riskManagement:    riskManagementSvc,
 			thirdParty:        thirdPartySvc,
+			githubDiscovery:   githubDiscoverySvc,
 			customDomainCname: customDomainCname,
 			tokenSecret:       tokenSecret,
 			fileManager:       fileManagerSvc,

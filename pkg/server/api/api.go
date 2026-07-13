@@ -210,6 +210,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
+			cfg.GitHubDiscovery,
 			cfg.RiskManagement,
 			cfg.GraphQLLimits,
 		),

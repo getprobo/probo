@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	ghintegration "go.probo.inc/probo/pkg/integration/github"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -67,6 +68,7 @@ type (
 		providerRegistry  *provider.Registry
 		riskManagement    *riskmanagement.Service
 		thirdParty        *thirdparty.Service
+		githubDiscovery   *ghintegration.Service
 		logger            *log.Logger
 		fileManager       *filemanager.Service
 		baseURL           *baseurl.BaseURL
@@ -93,6 +95,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
+	githubDiscoverySvc *ghintegration.Service,
 	riskManagementSvc *riskmanagement.Service,
 	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
@@ -115,6 +118,7 @@ func NewMux(
 		tokenSecret,
 		logger,
 		thirdPartySvc,
+		githubDiscoverySvc,
 		riskManagementSvc,
 		fileManagerSvc,
 		baseURL,

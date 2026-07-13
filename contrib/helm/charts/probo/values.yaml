@@ -303,6 +303,19 @@ probo:
     maxConcurrency: 1
     staleAfter: 1500
 
+  # GitHub discovery synthesis agent (optional; falls back to deterministic
+  # materialization when unset).
+  githubDiscovery:
+    provider: ""
+    modelName: ""
+    temperature: ""
+    maxTokens: ""
+
+  # GitHub discovery background worker tuning (optional).
+  githubDiscoveryWorker:
+    interval: 10
+    maxConcurrency: 1
+
   # Third-party disambiguation agent (optional; runs inside the tracker
   # mapping worker to pick the best matching org third party). Falls back
   # to trackerMapping when its provider is unset.

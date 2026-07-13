@@ -13,10 +13,12 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
+	ghintegration "go.probo.inc/probo/pkg/integration/github"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
@@ -159,6 +161,41 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 
 	return &types.DeleteSlackConnectionPayload{
 		DeletedSlackConnectionID: input.SlackConnectionID,
+	}, nil
+}
+
+// RunGitHubDiscovery is the resolver for the runGitHubDiscovery field.
+func (r *mutationResolver) RunGitHubDiscovery(ctx context.Context, input types.RunGitHubDiscoveryInput) (*types.RunGitHubDiscoveryPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorRunGitHubDiscovery)
+	if err != nil {
+		return nil, err
+	}
+
+	run, err := r.githubDiscovery.Run(
+		ctx,
+		scope,
+		ghintegration.RunRequest{ConnectorID: input.ConnectorID},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, ghintegration.ErrDiscoveryInProgress) {
+			return nil, gqlutils.Conflict(ctx, ghintegration.ErrDiscoveryInProgress)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot run github discovery", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RunGitHubDiscoveryPayload{
+		AgentRun: types.NewAgentRun(run),
 	}, nil
 }
 

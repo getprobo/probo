@@ -63,6 +63,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
+	ghintegration "go.probo.inc/probo/pkg/integration/github"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -193,6 +194,10 @@ func New() *Implm {
 			ThirdPartyVetting: ThirdPartyVettingWorkerConfig{
 				Interval:       10,
 				StaleAfter:     1500,
+				MaxConcurrency: 1,
+			},
+			GitHubDiscovery: GitHubDiscoveryWorkerConfig{
+				Interval:       10,
 				MaxConcurrency: 1,
 			},
 			CommonThirdPartyEnrichmentWorker: CommonThirdPartyEnrichmentWorkerConfig{
@@ -645,6 +650,16 @@ func (impl *Implm) Run(
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
+	githubDiscoveryService := ghintegration.NewService(pgClient)
+	githubDiscoverySynthesizer := impl.buildGitHubDiscoverySynthesizer(l, tp, r)
+	githubDiscoveryRunner := ghintegration.NewRunner(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		providerRegistry,
+		githubDiscoverySynthesizer,
+		l.Named("github-discovery"),
+	)
 
 	serverHandler, err := server.NewServer(
 		server.Config{
@@ -662,6 +677,7 @@ func (impl *Implm) Run(
 			CookieBanner:      cookieBannerService,
 			Geoloc:            geolocService,
 			ThirdParty:        thirdPartyService,
+			GitHubDiscovery:   githubDiscoveryService,
 			RiskManagement:    riskManagementService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
@@ -1015,6 +1031,23 @@ func (impl *Implm) Run(
 		},
 	)
 
+	githubDiscoveryWorker := ghintegration.NewDiscoveryWorker(
+		pgClient,
+		githubDiscoveryRunner,
+		l.Named("github-discovery-worker"),
+		worker.WithInterval(time.Duration(impl.cfg.GitHubDiscovery.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.GitHubDiscovery.MaxConcurrency),
+	)
+	githubDiscoveryWorkerCtx, stopGitHubDiscoveryWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := githubDiscoveryWorker.Run(githubDiscoveryWorkerCtx); err != nil {
+				cancel(fmt.Errorf("github discovery worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 
@@ -1049,6 +1082,7 @@ func (impl *Implm) Run(
 	stopCommonThirdPartyEnrichmentWorker()
 	stopMailingListWorker()
 	stopVettingWorker()
+	stopGitHubDiscoveryWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentNotification()

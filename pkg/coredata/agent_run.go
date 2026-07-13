@@ -637,6 +637,56 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
+func (e *AgentRun) LoadNextPendingGitHubDiscoveryForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	start_agent_name,
+	status,
+	checkpoint,
+	input_messages,
+	result,
+	error_message,
+	started_at,
+	created_at,
+	updated_at
+FROM
+	agent_runs
+WHERE
+	status = 'PENDING'
+	AND start_agent_name = @start_agent_name
+ORDER BY created_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+`
+
+	rows, err := tx.Query(
+		ctx,
+		q,
+		map[string]any{"start_agent_name": "github-discovery"},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot query pending github discovery run: %w", err)
+	}
+
+	entity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AgentRun])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot load pending github discovery run: %w", err)
+	}
+
+	*e = entity
+
+	return nil
+}
+
 // PGCheckpointer implements agent.Checkpointer backed by the
 // agent_runs table checkpoint column. The runID is validated as a GID
 // up front so malformed identifiers fail closed; rows are then scoped

@@ -49,6 +49,14 @@ type (
 		MaxConcurrency int `json:"max-concurrency"`
 	}
 
+	// GitHubDiscoveryWorkerConfig holds worker-side tuning for the GitHub
+	// discovery background worker. LLM parameters for synthesis live under
+	// AgentsConfig.GitHubDiscovery.
+	GitHubDiscoveryWorkerConfig struct {
+		Interval       int `json:"interval"` // seconds between polls
+		MaxConcurrency int `json:"max-concurrency"`
+	}
+
 	// TrackerMappingWorkerConfig holds worker-side tuning for the
 	// tracker-mapping background worker. LLM parameters for the mapping
 	// agent it runs live under AgentsConfig.TrackerMapping. AgentTimeout
@@ -107,6 +115,7 @@ type (
 		Probo                      LLMAgentConfig               `json:"probo,omitzero"`
 		EvidenceDescriber          LLMAgentConfig               `json:"evidence-describer,omitzero"`
 		ThirdPartyVetter           LLMAgentConfig               `json:"third-party-vetter,omitzero"`
+		GitHubDiscovery            LLMAgentConfig               `json:"github-discovery,omitzero"`
 		ThirdPartyDisambiguation   LLMAgentConfig               `json:"third-party-disambiguation,omitzero"`
 		TrackerMapping             LLMAgentConfig               `json:"tracker-mapping,omitzero"`
 		TrackerEnrichment          LLMAgentConfig               `json:"tracker-enrichment,omitzero"`

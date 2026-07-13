@@ -1,0 +1,283 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package github
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"time"
+
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+)
+
+type persistInput struct {
+	plan           *MeasurePlan
+	factSheet      *FactSheet
+	thirdPartyID   gid.GID
+	organizationID gid.GID
+	agentRunID     gid.GID
+}
+
+type persistStats struct {
+	upserted int
+	summary  map[string]int
+}
+
+func applyMeasurePlan(
+	ctx context.Context,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	input persistInput,
+) (*persistStats, error) {
+	if input.plan == nil {
+		return nil, fmt.Errorf("cannot apply measure plan: plan is required")
+	}
+
+	factsByID := map[string]Fact{}
+
+	for _, fact := range input.factSheet.Facts {
+		factsByID[fact.FactID] = fact
+	}
+
+	stats := &persistStats{summary: map[string]int{}}
+
+	err := pgClient.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			now := time.Now()
+
+			for _, update := range input.plan.Updates {
+				if err := persistMeasureUpdate(
+					ctx,
+					tx,
+					scope,
+					input,
+					update,
+					factsByID,
+					now,
+				); err != nil {
+					return err
+				}
+
+				stats.upserted++
+				stats.summary[string(update.State)]++
+			}
+
+			for _, create := range input.plan.Creates {
+				if err := persistMeasureCreate(
+					ctx,
+					tx,
+					scope,
+					input,
+					create,
+					factsByID,
+					now,
+				); err != nil {
+					return err
+				}
+
+				stats.upserted++
+				stats.summary[string(create.State)]++
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
+}
+
+func persistMeasureUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	input persistInput,
+	update MeasurePlanUpdate,
+	factsByID map[string]Fact,
+	now time.Time,
+) error {
+	measure := &coredata.Measure{}
+
+	if err := measure.LoadByID(ctx, tx, scope, update.MeasureID); err != nil {
+		return fmt.Errorf("cannot load measure %q: %w", update.MeasureID, err)
+	}
+
+	measure.State = update.State
+	measure.UpdatedAt = now
+
+	if err := measure.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot update measure %q: %w", update.MeasureID, err)
+	}
+
+	if err := linkMeasureThirdParty(ctx, tx, scope, measure.ID, input.thirdPartyID, now); err != nil {
+		return err
+	}
+
+	return insertDiscoveryEvidence(
+		ctx,
+		tx,
+		scope,
+		measure.OrganizationID,
+		measure.ID,
+		input.agentRunID,
+		update.EvidenceSummary,
+		update.FactRefs,
+		factsByID,
+		now,
+	)
+}
+
+func persistMeasureCreate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	input persistInput,
+	create MeasurePlanCreate,
+	factsByID map[string]Fact,
+	now time.Time,
+) error {
+	referenceID, err := uuid.NewV4()
+	if err != nil {
+		return fmt.Errorf("cannot generate measure reference id: %w", err)
+	}
+
+	measure := &coredata.Measure{
+		ID:             gid.New(scope.GetTenantID(), coredata.MeasureEntityType),
+		OrganizationID: input.organizationID,
+		Name:           create.Name,
+		Description:    stringPtr(create.Description),
+		Category:       create.Category,
+		ReferenceID:    "github-discovery-" + referenceID.String(),
+		State:          create.State,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	if err := measure.Insert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert measure: %w", err)
+	}
+
+	if err := linkMeasureThirdParty(ctx, tx, scope, measure.ID, input.thirdPartyID, now); err != nil {
+		return err
+	}
+
+	return insertDiscoveryEvidence(
+		ctx,
+		tx,
+		scope,
+		measure.OrganizationID,
+		measure.ID,
+		input.agentRunID,
+		create.EvidenceSummary,
+		create.FactRefs,
+		factsByID,
+		now,
+	)
+}
+
+func linkMeasureThirdParty(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	measureID gid.GID,
+	thirdPartyID gid.GID,
+	now time.Time,
+) error {
+	mapping := coredata.MeasureThirdParty{
+		MeasureID:    measureID,
+		ThirdPartyID: thirdPartyID,
+		CreatedAt:    now,
+	}
+
+	if err := mapping.Upsert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot link measure to github third party: %w", err)
+	}
+
+	return nil
+}
+
+func insertDiscoveryEvidence(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	measureID gid.GID,
+	agentRunID gid.GID,
+	summary string,
+	factRefs []string,
+	factsByID map[string]Fact,
+	now time.Time,
+) error {
+	referenceID, err := uuid.NewV4()
+	if err != nil {
+		return fmt.Errorf("cannot generate evidence reference id: %w", err)
+	}
+
+	url := discoveryEvidenceURL(factRefs, factsByID)
+	description := strings.TrimSpace(summary)
+	if description == "" {
+		description = "GitHub discovery evidence"
+	}
+
+	evidence := &coredata.Evidence{
+		ID:                gid.New(scope.GetTenantID(), coredata.EvidenceEntityType),
+		OrganizationID:    organizationID,
+		MeasureID:         measureID,
+		State:             coredata.EvidenceStateFulfilled,
+		ReferenceID:       fmt.Sprintf("github-discovery-%s-%s", agentRunID.String(), referenceID.String()),
+		Type:              coredata.EvidenceTypeLink,
+		URL:               url,
+		Description:       &description,
+		DescriptionStatus: coredata.EvidenceDescriptionStatusCompleted,
+		CreatedAt:         now,
+		UpdatedAt:         now,
+	}
+
+	if err := evidence.Insert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert discovery evidence: %w", err)
+	}
+
+	return nil
+}
+
+func discoveryEvidenceURL(factRefs []string, factsByID map[string]Fact) string {
+	for _, ref := range factRefs {
+		fact, ok := factsByID[ref]
+		if !ok || fact.APIRef == "" {
+			continue
+		}
+
+		return "https://api.github.com" + strings.TrimPrefix(fact.APIRef, "GET ")
+	}
+
+	return "https://github.com"
+}
+
+func stringPtr(value string) *string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+
+	v := value
+
+	return &v
+}

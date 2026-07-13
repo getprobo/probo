@@ -220,6 +220,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
 						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
 					},
+					GitHubDiscovery: probodconfig.LLMAgentConfig{
+						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_GITHUB_DISCOVERY_PROVIDER", ""),
+						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_GITHUB_DISCOVERY_MODEL_NAME", ""),
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_GITHUB_DISCOVERY_TEMPERATURE"),
+						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_GITHUB_DISCOVERY_MAX_TOKENS"),
+					},
 					ThirdPartyDisambiguation: probodconfig.LLMAgentConfig{
 						Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER", ""),
 						ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME", ""),
@@ -293,6 +299,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Interval:       b.resolver.getEnvIntOrDefault("PROBOD_THIRD_PARTY_VETTING_INTERVAL", 10),
 				StaleAfter:     b.resolver.getEnvIntOrDefault("PROBOD_THIRD_PARTY_VETTING_STALE_AFTER", 1500),
 				MaxConcurrency: b.resolver.getEnvIntOrDefault("PROBOD_THIRD_PARTY_VETTING_MAX_CONCURRENCY", 1),
+			},
+			GitHubDiscovery: probodconfig.GitHubDiscoveryWorkerConfig{
+				Interval:       b.resolver.getEnvIntOrDefault("PROBOD_GITHUB_DISCOVERY_INTERVAL", 10),
+				MaxConcurrency: b.resolver.getEnvIntOrDefault("PROBOD_GITHUB_DISCOVERY_MAX_CONCURRENCY", 1),
 			},
 			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
 				Interval:                   b.resolver.getEnvIntOrDefault("PROBOD_TRACKER_MAPPING_INTERVAL", 10),

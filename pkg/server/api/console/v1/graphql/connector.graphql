@@ -167,6 +167,9 @@ extend type Mutation {
     deleteSlackConnection(
         input: DeleteSlackConnectionInput!
     ): DeleteSlackConnectionPayload!
+    runGitHubDiscovery(
+        input: RunGitHubDiscoveryInput!
+    ): RunGitHubDiscoveryPayload!
 }
 
 input CreateAPIKeyConnectorInput {
@@ -232,4 +235,12 @@ input DeleteSlackConnectionInput {
 
 type DeleteSlackConnectionPayload {
     deletedSlackConnectionId: ID!
+}
+
+input RunGitHubDiscoveryInput {
+    connectorId: ID!
+}
+
+type RunGitHubDiscoveryPayload {
+    agentRun: AgentRun!
 }
