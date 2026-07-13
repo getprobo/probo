@@ -23,19 +23,18 @@ import (
 var ErrNotFound = errors.New("vfs: file not found")
 
 type (
-	// FS is a read-only workspace filesystem. Paths are rooted at the workspace,
-	// for example "api/SECURITY.md" or ".github/CONTRIBUTING.md".
-	FS interface {
-		Exists(ctx context.Context, path string) (bool, error)
-		Read(ctx context.Context, path string) ([]byte, error)
-		Search(ctx context.Context, query SearchQuery) ([]string, error)
+	// Entry is a single directory listing item.
+	Entry struct {
+		Name  string
+		IsDir bool
 	}
 
-	// SearchQuery describes a workspace file search pattern.
-	SearchQuery struct {
-		Filename  string
-		Path      string
-		Extension string
+	// FS is a read-only workspace filesystem aligned with io/fs semantics.
+	// Paths are workspace-rooted, for example "api/SECURITY.md".
+	FS interface {
+		Read(ctx context.Context, path string) ([]byte, error)
+		ReadDir(ctx context.Context, dir string) ([]Entry, error)
+		Glob(ctx context.Context, pattern string) ([]string, error)
 	}
 
 	// FileIndex caches discovered workspace file paths.
@@ -72,6 +71,22 @@ func SplitRepoPath(path string) (repoName string, filePath string, ok bool) {
 	}
 
 	return parts[0], parts[1], true
+}
+
+// HasPath reports whether a file or non-empty directory exists at path.
+func HasPath(ctx context.Context, fs FS, path string) bool {
+	_, err := fs.Read(ctx, path)
+	if err == nil {
+		return true
+	}
+
+	if !errors.Is(err, ErrNotFound) {
+		return false
+	}
+
+	entries, err := fs.ReadDir(ctx, path)
+
+	return err == nil && len(entries) > 0
 }
 
 func NewFileIndex() *FileIndex {
@@ -128,47 +143,47 @@ func (idx *FileIndex) RepoFiles(repoName string) []string {
 	return out
 }
 
-// DiscoveryCatalog returns workspace search patterns used by discovery scanners.
-func DiscoveryCatalog() []SearchQuery {
-	return []SearchQuery{
-		{Path: ".github/workflows", Extension: "yml"},
-		{Path: ".github/workflows", Extension: "yaml"},
-		{Filename: "SECURITY.md"},
-		{Filename: "CONTRIBUTING.md"},
-		{Path: ".github", Filename: "dependabot.yml"},
-		{Filename: "renovate.json"},
-		{Path: ".github", Filename: "renovate.json"},
-		{Filename: "package-lock.json"},
-		{Filename: "yarn.lock"},
-		{Filename: "pnpm-lock.yaml"},
-		{Filename: "go.sum"},
-		{Filename: "Gemfile.lock"},
-		{Filename: "poetry.lock"},
-		{Filename: "Cargo.lock"},
-		{Filename: ".env"},
-		{Filename: ".env.production"},
-		{Filename: ".env.local"},
-		{Filename: "DEVELOPMENT.md"},
-		{Path: "docs", Filename: "development.md"},
-		{Path: "docs", Filename: "code-review.md"},
-		{Path: "docs", Filename: "incident-response.md"},
-		{Path: "docs/security", Filename: "README.md"},
-		{Filename: "SECURITY_GUIDELINES.md"},
-		{Path: ".github/ISSUE_TEMPLATE"},
-		{Filename: "Jenkinsfile"},
-		{Path: ".circleci", Filename: "config.yml"},
-		{Filename: ".gitlab-ci.yml"},
+// DiscoveryGlobCatalog returns glob patterns used to index discovery files.
+func DiscoveryGlobCatalog() []string {
+	return []string{
+		"*/.github/workflows/*.yml",
+		"*/.github/workflows/*.yaml",
+		"*/SECURITY.md",
+		"*/CONTRIBUTING.md",
+		"*/.github/dependabot.yml",
+		"*/renovate.json",
+		"*/.github/renovate.json",
+		"*/package-lock.json",
+		"*/yarn.lock",
+		"*/pnpm-lock.yaml",
+		"*/go.sum",
+		"*/Gemfile.lock",
+		"*/poetry.lock",
+		"*/Cargo.lock",
+		"*/.env",
+		"*/.env.production",
+		"*/.env.local",
+		"*/DEVELOPMENT.md",
+		"*/docs/development.md",
+		"*/docs/code-review.md",
+		"*/docs/incident-response.md",
+		"*/docs/security/README.md",
+		"*/SECURITY_GUIDELINES.md",
+		"*/.github/ISSUE_TEMPLATE/*",
+		"*/Jenkinsfile",
+		"*/.circleci/config.yml",
+		"*/.gitlab-ci.yml",
 	}
 }
 
-// BuildDiscoveryIndex runs catalog searches and merges results into a FileIndex.
+// BuildDiscoveryIndex globs discovery patterns and merges results into a FileIndex.
 func BuildDiscoveryIndex(ctx context.Context, fs FS) (*FileIndex, error) {
 	index := NewFileIndex()
 
 	var firstErr error
 
-	for _, query := range DiscoveryCatalog() {
-		paths, err := fs.Search(ctx, query)
+	for _, pattern := range DiscoveryGlobCatalog() {
+		paths, err := fs.Glob(ctx, pattern)
 		if err != nil {
 			if firstErr == nil {
 				firstErr = err

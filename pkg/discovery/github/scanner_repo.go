@@ -395,9 +395,7 @@ func (s *discoveryScanner) repoHasFile(
 		return true
 	}
 
-	exists, err := s.fs.Exists(ctx, vfs.RepoPath(repoName, path))
-
-	return err == nil && exists
+	return vfs.HasPath(ctx, s.fs, vfs.RepoPath(repoName, path))
 }
 
 func (s *discoveryScanner) readRepoFile(

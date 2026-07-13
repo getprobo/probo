@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMemoryFS_ReadAndSearch(t *testing.T) {
+func TestMemoryFS_ReadDirAndGlob(t *testing.T) {
 	t.Parallel()
 
 	fs := NewMemoryFS(map[string][]byte{
@@ -30,22 +30,37 @@ func TestMemoryFS_ReadAndSearch(t *testing.T) {
 		"api/.github/workflows/ci.yml":  []byte("on: pull_request"),
 		"api/.github/dependabot.yml":    []byte("version: 2"),
 		"api/docs/incident-response.md": []byte("incident response"),
+		"web/README.md":                 []byte("hello"),
 	})
 
-	exists, err := fs.Exists(context.Background(), "api/SECURITY.md")
+	content, err := fs.Read(context.Background(), "api/SECURITY.md")
 	require.NoError(t, err)
-	assert.True(t, exists)
+	assert.Contains(t, string(content), "security@")
 
-	content, err := fs.Read(context.Background(), "api/.github/workflows/ci.yml")
+	entries, err := fs.ReadDir(context.Background(), "api")
 	require.NoError(t, err)
-	assert.Contains(t, string(content), "pull_request")
+	assert.NotEmpty(t, entries)
+
+	matches, err := fs.Glob(context.Background(), "*/SECURITY.md")
+	require.NoError(t, err)
+	assert.Contains(t, matches, "api/SECURITY.md")
 
 	index, err := BuildDiscoveryIndex(context.Background(), fs)
 	require.NoError(t, err)
 
 	assert.True(t, index.HasRepoFile("api", "SECURITY.md"))
 	assert.True(t, index.HasRepoPrefix("api", ".github/workflows"))
-	assert.True(t, index.HasRepoFile("api", ".github/dependabot.yml"))
+}
+
+func TestHasPath(t *testing.T) {
+	t.Parallel()
+
+	fs := NewMemoryFS(map[string][]byte{
+		"api/SECURITY.md": []byte("x"),
+	})
+
+	assert.True(t, HasPath(context.Background(), fs, "api/SECURITY.md"))
+	assert.False(t, HasPath(context.Background(), fs, "api/missing.md"))
 }
 
 func TestRepoPathHelpers(t *testing.T) {
@@ -57,4 +72,12 @@ func TestRepoPathHelpers(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "api", repo)
 	assert.Equal(t, ".github/workflows/ci.yml", file)
+}
+
+func TestMatchGlob(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, MatchGlob("*/SECURITY.md", "api/SECURITY.md"))
+	assert.True(t, MatchGlob("*/.github/workflows/*.yml", "api/.github/workflows/ci.yml"))
+	assert.False(t, MatchGlob("*/SECURITY.md", "api/docs/SECURITY.md"))
 }

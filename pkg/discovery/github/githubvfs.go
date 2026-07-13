@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"go.probo.inc/probo/pkg/discovery/vfs"
@@ -44,37 +45,15 @@ type (
 			Name string `json:"name"`
 		} `json:"repository"`
 	}
+
+	contentsDirItem struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	}
 )
 
 func newGitHubFS(api *apiClient, org string) *githubFS {
 	return &githubFS{api: api, org: org}
-}
-
-func (f *githubFS) Exists(ctx context.Context, path string) (bool, error) {
-	path = vfs.NormalizePath(path)
-	if path == "" {
-		return false, nil
-	}
-
-	repoName, filePath, ok := vfs.SplitRepoPath(path)
-	if !ok || filePath == "" {
-		return false, nil
-	}
-
-	segments := append([]string{"contents"}, splitContentPath(filePath)...)
-
-	endpoint, err := f.api.repoEndpoint(f.org, repoName, segments...)
-	if err != nil {
-		return false, fmt.Errorf("cannot build github contents URL: %w", err)
-	}
-
-	var payload map[string]any
-
-	if _, err := f.api.getJSON(ctx, endpoint, &payload); err != nil {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 func (f *githubFS) Read(ctx context.Context, path string) ([]byte, error) {
@@ -109,26 +88,73 @@ func (f *githubFS) Read(ctx context.Context, path string) ([]byte, error) {
 	return []byte(content), nil
 }
 
-func (f *githubFS) Search(ctx context.Context, query vfs.SearchQuery) ([]string, error) {
-	return f.api.searchCode(ctx, f.buildSearchQuery(query))
+func (f *githubFS) ReadDir(ctx context.Context, dir string) ([]vfs.Entry, error) {
+	dir = vfs.NormalizePath(dir)
+	if dir == "" {
+		return nil, vfs.ErrNotFound
+	}
+
+	repoName, dirPath, ok := vfs.SplitRepoPath(dir)
+	if !ok {
+		return nil, vfs.ErrNotFound
+	}
+
+	segments := []string{"contents"}
+	if dirPath != "" {
+		segments = append(segments, splitContentPath(dirPath)...)
+	}
+
+	endpoint, err := f.api.repoEndpoint(f.org, repoName, segments...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github contents URL: %w", err)
+	}
+
+	var items []contentsDirItem
+
+	if _, err := f.api.getJSON(ctx, endpoint, &items); err != nil {
+		return nil, vfs.ErrNotFound
+	}
+
+	entries := make([]vfs.Entry, 0, len(items))
+	for _, item := range items {
+		entries = append(entries, vfs.Entry{
+			Name:  item.Name,
+			IsDir: strings.EqualFold(item.Type, "dir"),
+		})
+	}
+
+	if len(entries) == 0 {
+		return nil, vfs.ErrNotFound
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Name < entries[j].Name
+	})
+
+	return entries, nil
 }
 
-func (f *githubFS) buildSearchQuery(query vfs.SearchQuery) string {
-	parts := []string{"org:" + f.org}
-
-	if query.Path != "" {
-		parts = append(parts, "path:"+query.Path)
+func (f *githubFS) Glob(ctx context.Context, pattern string) ([]string, error) {
+	query, ok := globToCodeSearch(f.org, pattern)
+	if !ok {
+		return nil, nil
 	}
 
-	if query.Filename != "" {
-		parts = append(parts, "filename:"+query.Filename)
+	paths, err := f.api.searchCode(ctx, query)
+	if err != nil {
+		return nil, err
 	}
 
-	if query.Extension != "" {
-		parts = append(parts, "extension:"+query.Extension)
+	filtered := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if vfs.MatchGlob(pattern, path) {
+			filtered = append(filtered, path)
+		}
 	}
 
-	return strings.Join(parts, "+")
+	sort.Strings(filtered)
+
+	return filtered, nil
 }
 
 func (c *apiClient) searchCode(ctx context.Context, query string) ([]string, error) {

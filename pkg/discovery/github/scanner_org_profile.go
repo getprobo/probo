@@ -45,8 +45,8 @@ func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet)
 		return
 	}
 
-	hasSecurity, _ := s.fs.Exists(ctx, vfs.RepoPath(".github", "SECURITY.md"))
-	hasContributing, _ := s.fs.Exists(ctx, vfs.RepoPath(".github", "CONTRIBUTING.md"))
+	hasSecurity := vfs.HasPath(ctx, s.fs, vfs.RepoPath(".github", "SECURITY.md"))
+	hasContributing := vfs.HasPath(ctx, s.fs, vfs.RepoPath(".github", "CONTRIBUTING.md"))
 
 	securityContact := false
 

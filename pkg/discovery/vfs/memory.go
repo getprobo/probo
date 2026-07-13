@@ -16,6 +16,7 @@ package vfs
 
 import (
 	"context"
+	"sort"
 	"strings"
 )
 
@@ -30,19 +31,11 @@ func NewMemoryFS(files map[string][]byte) *MemoryFS {
 	}
 
 	normalized := make(map[string][]byte, len(files))
-	for path, content := range files {
-		normalized[NormalizePath(path)] = content
+	for filePath, content := range files {
+		normalized[NormalizePath(filePath)] = content
 	}
 
 	return &MemoryFS{files: normalized}
-}
-
-func (f *MemoryFS) Exists(ctx context.Context, path string) (bool, error) {
-	_ = ctx
-
-	_, ok := f.files[NormalizePath(path)]
-
-	return ok, nil
 }
 
 func (f *MemoryFS) Read(ctx context.Context, path string) ([]byte, error) {
@@ -56,54 +49,70 @@ func (f *MemoryFS) Read(ctx context.Context, path string) ([]byte, error) {
 	return append([]byte(nil), content...), nil
 }
 
-func (f *MemoryFS) Search(ctx context.Context, query SearchQuery) ([]string, error) {
+func (f *MemoryFS) ReadDir(ctx context.Context, dir string) ([]Entry, error) {
+	_ = ctx
+
+	dir = NormalizePath(dir)
+
+	prefix := dir
+	if prefix != "" {
+		prefix += "/"
+	}
+
+	children := map[string]Entry{}
+
+	for filePath := range f.files {
+		if dir != "" && !strings.HasPrefix(filePath, prefix) {
+			continue
+		}
+
+		rest := filePath
+		if dir != "" {
+			rest = strings.TrimPrefix(filePath, prefix)
+		}
+
+		if rest == "" {
+			continue
+		}
+
+		parts := strings.SplitN(rest, "/", 2)
+		name := parts[0]
+		isDir := len(parts) > 1
+
+		entry := children[name]
+		entry.Name = name
+		entry.IsDir = entry.IsDir || isDir
+		children[name] = entry
+	}
+
+	if len(children) == 0 {
+		return nil, ErrNotFound
+	}
+
+	out := make([]Entry, 0, len(children))
+	for _, entry := range children {
+		out = append(out, entry)
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Name < out[j].Name
+	})
+
+	return out, nil
+}
+
+func (f *MemoryFS) Glob(ctx context.Context, pattern string) ([]string, error) {
 	_ = ctx
 
 	var matches []string
 
-	for path := range f.files {
-		repoName, filePath, ok := SplitRepoPath(path)
-		if !ok {
-			continue
+	for filePath := range f.files {
+		if MatchGlob(pattern, filePath) {
+			matches = append(matches, filePath)
 		}
-
-		if !memoryQueryMatches(query, repoName, filePath) {
-			continue
-		}
-
-		matches = append(matches, path)
 	}
+
+	sort.Strings(matches)
 
 	return matches, nil
-}
-
-func memoryQueryMatches(query SearchQuery, repoName, filePath string) bool {
-	_ = repoName
-
-	path := NormalizePath(filePath)
-	base := path
-
-	if idx := strings.LastIndex(path, "/"); idx >= 0 {
-		base = path[idx+1:]
-	}
-
-	if query.Filename != "" && base != query.Filename {
-		return false
-	}
-
-	if query.Path != "" {
-		prefix := NormalizePath(query.Path)
-		if path != prefix && !strings.HasPrefix(path, prefix+"/") {
-			return false
-		}
-	}
-
-	if query.Extension != "" {
-		ext := strings.ToLower(query.Extension)
-		if !strings.HasSuffix(strings.ToLower(base), "."+ext) {
-			return false
-		}
-	}
-
-	return true
 }
