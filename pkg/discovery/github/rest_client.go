@@ -46,7 +46,7 @@ func (c *restClient) listOrgRepositories(ctx context.Context, org string) ([]rep
 
 	repos := make([]repoListItem, 0, 100)
 
-	for page := 0; page < maxPagesPerList; page++ {
+	for range maxPagesPerList {
 		ghRepos, resp, err := c.gh.Repositories.ListByOrg(ctx, org, opts)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list github repos: %w", err)
@@ -111,7 +111,7 @@ func (c *restClient) searchCodePaths(ctx context.Context, query string) ([]strin
 
 	var paths []string
 
-	for page := 0; page < maxPagesPerList; page++ {
+	for range maxPagesPerList {
 		result, resp, err := c.gh.Search.Code(ctx, query, opts)
 		if err != nil {
 			if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnprocessableEntity) {
