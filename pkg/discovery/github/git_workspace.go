@@ -100,7 +100,7 @@ func (s *discoveryScanner) buildWorkspace(
 }
 
 func (s *discoveryScanner) apiFallbackFS() vfs.FS {
-	return newGitHubFS(s.api, s.org, s.globResolver)
+	return newGitHubFS(s.api, s.org)
 }
 
 func oauthAccessToken(conn connector.Connection) (string, bool) {

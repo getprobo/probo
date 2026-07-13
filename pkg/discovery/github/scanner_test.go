@@ -137,7 +137,7 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 	logger := log.NewLogger(log.WithOutput(io.Discard))
 	conn := &connector.OAuth2Connection{Scope: "read:org repo security_events"}
 
-	sheet, err := newDiscoveryScanner(client, "acme", conn, logger, DefaultRepoClassifier(), DefaultGlobQueryResolver()).scan(context.Background())
+	sheet, err := newDiscoveryScanner(client, "acme", conn, logger, DefaultRepoClassifier()).scan(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, sheet)
 

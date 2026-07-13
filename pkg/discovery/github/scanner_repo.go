@@ -230,16 +230,14 @@ func filterEligibleRepos(repos []repoListItem) []repoListItem {
 }
 
 func (s *discoveryScanner) buildFileIndex(ctx context.Context) (*vfs.FileIndex, []string) {
-	limitations := s.globResolver.Warm(ctx, s.org, vfs.DiscoveryGlobCatalog())
-
 	index, err := vfs.BuildDiscoveryIndex(ctx, s.fs)
 	if err == nil {
-		return index, limitations
+		return index, nil
 	}
 
-	return index, append(limitations,
+	return index, []string{
 		"org-wide file search partially unavailable; falling back to per-repository file reads",
-	)
+	}
 }
 
 func aggregateRepoList(repos []repoListItem) *repoScanAggregate {

@@ -653,7 +653,6 @@ func (impl *Implm) Run(
 	githubDiscoveryService := ghdiscovery.NewService(pgClient, encryptionKey)
 	githubDiscoverySynthesizer := impl.buildGitHubDiscoverySynthesizer(l, tp, r)
 	githubDiscoveryRepoClassifier := impl.buildGitHubDiscoveryRepoClassifier(l, tp, r)
-	githubDiscoveryGlobResolver := impl.buildGitHubDiscoveryGlobQueryResolver(l, tp, r)
 	githubDiscoveryRunner := ghdiscovery.NewRunner(
 		pgClient,
 		encryptionKey,
@@ -668,7 +667,6 @@ func (impl *Implm) Run(
 			httpclient.WithRegisterer(r),
 			httpclient.WithSSRFProtection(),
 		),
-		ghdiscovery.WithGlobQueryResolver(githubDiscoveryGlobResolver),
 	)
 
 	agentRunRegistry := agentrun.NewRegistry()

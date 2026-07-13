@@ -25,9 +25,8 @@ import (
 
 type (
 	githubFS struct {
-		api      *apiClient
-		org      string
-		resolver GlobQueryResolver
+		api *apiClient
+		org string
 	}
 
 	contentsDirItem struct {
@@ -36,12 +35,40 @@ type (
 	}
 )
 
-func newGitHubFS(api *apiClient, org string, resolver GlobQueryResolver) *githubFS {
-	if resolver == nil {
-		resolver = DefaultGlobQueryResolver()
-	}
+// discoveryGlobQueries maps vfs discovery glob patterns to GitHub code search
+// query fragments (without the org: qualifier).
+var discoveryGlobQueries = map[string]string{
+	"*/.github/workflows/*.yml":   "path:.github/workflows extension:yml",
+	"*/.github/workflows/*.yaml":  "path:.github/workflows extension:yaml",
+	"*/SECURITY.md":               "filename:SECURITY.md",
+	"*/CONTRIBUTING.md":           "filename:CONTRIBUTING.md",
+	"*/.github/dependabot.yml":    "path:.github filename:dependabot.yml",
+	"*/renovate.json":             "filename:renovate.json",
+	"*/.github/renovate.json":     "path:.github filename:renovate.json",
+	"*/package-lock.json":         "filename:package-lock.json",
+	"*/yarn.lock":                 "filename:yarn.lock",
+	"*/pnpm-lock.yaml":            "filename:pnpm-lock.yaml",
+	"*/go.sum":                    "filename:go.sum",
+	"*/Gemfile.lock":              "filename:Gemfile.lock",
+	"*/poetry.lock":               "filename:poetry.lock",
+	"*/Cargo.lock":                "filename:Cargo.lock",
+	"*/.env":                      "filename:.env",
+	"*/.env.production":           "filename:.env.production",
+	"*/.env.local":                "filename:.env.local",
+	"*/DEVELOPMENT.md":            "filename:DEVELOPMENT.md",
+	"*/docs/development.md":       "path:docs filename:development.md",
+	"*/docs/code-review.md":       "path:docs filename:code-review.md",
+	"*/docs/incident-response.md": "path:docs filename:incident-response.md",
+	"*/docs/security/README.md":   "path:docs/security filename:README.md",
+	"*/SECURITY_GUIDELINES.md":    "filename:SECURITY_GUIDELINES.md",
+	"*/.github/ISSUE_TEMPLATE/*":  "path:.github/ISSUE_TEMPLATE",
+	"*/Jenkinsfile":               "filename:Jenkinsfile",
+	"*/.circleci/config.yml":      "path:.circleci filename:config.yml",
+	"*/.gitlab-ci.yml":            "filename:.gitlab-ci.yml",
+}
 
-	return &githubFS{api: api, org: org, resolver: resolver}
+func newGitHubFS(api *apiClient, org string) *githubFS {
+	return &githubFS{api: api, org: org}
 }
 
 func (f *githubFS) Read(ctx context.Context, path string) ([]byte, error) {
@@ -123,7 +150,7 @@ func (f *githubFS) ReadDir(ctx context.Context, dir string) ([]vfs.Entry, error)
 }
 
 func (f *githubFS) Glob(ctx context.Context, pattern string) ([]string, error) {
-	query, ok := f.resolver.Query(f.org, pattern)
+	query, ok := codeSearchQueryForGlob(f.org, pattern)
 	if !ok {
 		return nil, nil
 	}
@@ -162,4 +189,21 @@ func (c *apiClient) searchCode(ctx context.Context, query string) ([]string, err
 	}
 
 	return paths, nil
+}
+
+func codeSearchQueryForGlob(org, pattern string) (string, bool) {
+	fragment, ok := discoveryGlobQueries[pattern]
+	if !ok {
+		return "", false
+	}
+
+	return formatCodeSearchQuery(org, fragment), true
+}
+
+func formatCodeSearchQuery(org, fragment string) string {
+	fragment = strings.TrimSpace(fragment)
+	fragment = strings.TrimPrefix(fragment, "org:"+org)
+	fragment = strings.TrimSpace(fragment)
+
+	return "org:" + org + " " + strings.ReplaceAll(fragment, " ", "+")
 }

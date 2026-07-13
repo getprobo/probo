@@ -21,49 +21,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStaticGlobQueryResolver_KnownPatterns(t *testing.T) {
+func TestCodeSearchQueryForGlob_KnownPatterns(t *testing.T) {
 	t.Parallel()
 
-	resolver := DefaultGlobQueryResolver()
-
-	query, ok := resolver.Query("acme", "*/SECURITY.md")
+	query, ok := codeSearchQueryForGlob("acme", "*/SECURITY.md")
 	require.True(t, ok)
 	assert.Equal(t, "org:acme filename:SECURITY.md", query)
 
-	query, ok = resolver.Query("acme", "*/.github/workflows/*.yml")
+	query, ok = codeSearchQueryForGlob("acme", "*/.github/workflows/*.yml")
 	require.True(t, ok)
 	assert.Equal(t, "org:acme path:.github/workflows+extension:yml", query)
 }
 
-func TestLLMGlobQueryResolver_UsesCacheBeforeStatic(t *testing.T) {
+func TestCodeSearchQueryForGlob_UnknownPattern(t *testing.T) {
 	t.Parallel()
 
-	resolver := &LLMGlobQueryResolver{
-		cache: map[string]string{
-			"*/SECURITY.md": "filename:SECURITY_POLICY.md",
-		},
-	}
-
-	query, ok := resolver.Query("acme", "*/SECURITY.md")
-	require.True(t, ok)
-	assert.Equal(t, "org:acme filename:SECURITY_POLICY.md", query)
-}
-
-func TestStaticGlobQueryResolver_UnknownPattern(t *testing.T) {
-	t.Parallel()
-
-	resolver := DefaultGlobQueryResolver()
-
-	_, ok := resolver.Query("acme", "*/README.md")
+	_, ok := codeSearchQueryForGlob("acme", "*/README.md")
 	assert.False(t, ok)
-}
-
-func TestLLMGlobQueryResolver_FallsBackToStatic(t *testing.T) {
-	t.Parallel()
-
-	resolver := &LLMGlobQueryResolver{cache: map[string]string{}}
-
-	query, ok := resolver.Query("acme", "*/SECURITY.md")
-	require.True(t, ok)
-	assert.Equal(t, "org:acme filename:SECURITY.md", query)
 }
