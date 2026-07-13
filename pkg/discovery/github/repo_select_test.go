@@ -64,6 +64,32 @@ func TestScoreRepoForClone(t *testing.T) {
 	assert.Equal(t, 0, scoreRepoForClone(repoListItem{Name: "forked", Fork: true}))
 }
 
+func TestSelectReposForClone_SkipsOversizedRepos(t *testing.T) {
+	t.Parallel()
+
+	repos := []repoListItem{
+		{Name: "api", DefaultBranch: "main", Private: true, Size: 1024},
+		{Name: "monorepo", DefaultBranch: "main", Private: true, Size: maxRepoCloneSizeKB + 1},
+		{Name: ".github", DefaultBranch: "main", Private: true, Size: maxRepoCloneSizeKB + 1},
+	}
+
+	selected, limitation := selectReposForClone(repos)
+	names := repoNames(selected)
+
+	assert.Contains(t, names, "api")
+	assert.NotContains(t, names, "monorepo")
+	assert.NotContains(t, names, ".github")
+	assert.Contains(t, limitation, "skipped 2 oversized")
+}
+
+func TestRepoTooLargeForClone(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, repoTooLargeForClone(repoListItem{Size: 0}))
+	assert.False(t, repoTooLargeForClone(repoListItem{Size: maxRepoCloneSizeKB}))
+	assert.True(t, repoTooLargeForClone(repoListItem{Size: maxRepoCloneSizeKB + 1}))
+}
+
 func repoNames(repos []repoListItem) []string {
 	names := make([]string, 0, len(repos))
 	for _, repo := range repos {

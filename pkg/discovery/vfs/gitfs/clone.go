@@ -28,8 +28,13 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
-// CloneRepo performs a shallow single-branch clone into memory and returns the
-// repository worktree filesystem.
+const (
+	// ShallowCloneDepth limits fetched history to the default-branch tip only.
+	ShallowCloneDepth = 1
+)
+
+// CloneRepo performs a minimum shallow single-branch clone into memory and
+// returns the repository worktree filesystem.
 func CloneRepo(
 	ctx context.Context,
 	repoURL string,
@@ -42,24 +47,33 @@ func CloneRepo(
 
 	fs := memfs.New()
 
+	_, err := git.Clone(memory.NewStorage(), fs, minimumCloneOptions(repoURL, auth, branch))
+	if err != nil {
+		return nil, fmt.Errorf("cannot clone repository %s: %w", repoURL, err)
+	}
+
+	return fs, nil
+}
+
+func minimumCloneOptions(
+	repoURL string,
+	auth transport.AuthMethod,
+	branch string,
+) *git.CloneOptions {
 	opts := &git.CloneOptions{
-		URL:          repoURL,
-		Auth:         auth,
-		Depth:        1,
-		SingleBranch: true,
-		Tags:         git.NoTags,
+		URL:               repoURL,
+		Auth:              auth,
+		Depth:             ShallowCloneDepth,
+		SingleBranch:      true,
+		Tags:              git.NoTags,
+		RecurseSubmodules: git.NoRecurseSubmodules,
 	}
 
 	if branch != "" {
 		opts.ReferenceName = plumbing.NewBranchReferenceName(branch)
 	}
 
-	_, err := git.Clone(memory.NewStorage(), fs, opts)
-	if err != nil {
-		return nil, fmt.Errorf("cannot clone repository %s: %w", repoURL, err)
-	}
-
-	return fs, nil
+	return opts
 }
 
 // WalkFiles invokes fn for every file in fs, passing repo-relative paths.

@@ -59,6 +59,7 @@ type (
 		Disabled      bool   `json:"disabled"`
 		Fork          bool   `json:"fork"`
 		PushedAt      string `json:"pushed_at"`
+		Size          int    `json:"size"`
 	}
 
 	branchProtection struct {
