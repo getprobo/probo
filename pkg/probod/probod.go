@@ -54,6 +54,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -63,7 +64,6 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
-	ghintegration "go.probo.inc/probo/pkg/integration/github"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -650,9 +650,9 @@ func (impl *Implm) Run(
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
-	githubDiscoveryService := ghintegration.NewService(pgClient, encryptionKey)
+	githubDiscoveryService := ghdiscovery.NewService(pgClient, encryptionKey)
 	githubDiscoverySynthesizer := impl.buildGitHubDiscoverySynthesizer(l, tp, r)
-	githubDiscoveryRunner := ghintegration.NewRunner(
+	githubDiscoveryRunner := ghdiscovery.NewRunner(
 		pgClient,
 		encryptionKey,
 		defaultConnectorRegistry,
@@ -1031,7 +1031,7 @@ func (impl *Implm) Run(
 		},
 	)
 
-	githubDiscoveryWorker := ghintegration.NewDiscoveryWorker(
+	githubDiscoveryWorker := ghdiscovery.NewDiscoveryWorker(
 		pgClient,
 		githubDiscoveryRunner,
 		l.Named("github-discovery-worker"),

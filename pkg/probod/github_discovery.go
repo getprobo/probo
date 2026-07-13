@@ -19,14 +19,14 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
-	ghintegration "go.probo.inc/probo/pkg/integration/github"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 )
 
 func (impl *Implm) buildGitHubDiscoverySynthesizer(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) ghintegration.Synthesizer {
+) ghdiscovery.Synthesizer {
 	agentCfg, llmClient, err := impl.resolveAgentClient(
 		"github-discovery",
 		impl.cfg.Agents.GitHubDiscovery,
@@ -37,7 +37,7 @@ func (impl *Implm) buildGitHubDiscoverySynthesizer(
 	if err != nil {
 		l.Warn("github discovery LLM synthesis disabled", log.Error(err))
 
-		return ghintegration.DeterministicSynthesizer{}
+		return ghdiscovery.DeterministicSynthesizer{}
 	}
 
 	maxTokens := 4096
@@ -45,7 +45,7 @@ func (impl *Implm) buildGitHubDiscoverySynthesizer(
 		maxTokens = *agentCfg.MaxTokens
 	}
 
-	return ghintegration.NewLLMSynthesizer(
+	return ghdiscovery.NewLLMSynthesizer(
 		llmClient,
 		agentCfg.ModelName,
 		ref.UnrefOrZero(agentCfg.Temperature),

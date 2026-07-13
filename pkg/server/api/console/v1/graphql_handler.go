@@ -24,10 +24,10 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
-	ghintegration "go.probo.inc/probo/pkg/integration/github"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -54,7 +54,7 @@ func NewGraphQLHandler(
 	tokenSecret string,
 	logger *log.Logger,
 	thirdPartySvc *thirdparty.Service,
-	githubDiscoverySvc *ghintegration.Service,
+	githubDiscoverySvc *ghdiscovery.Service,
 	riskManagementSvc *riskmanagement.Service,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,

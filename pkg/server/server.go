@@ -30,12 +30,12 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
-	ghintegration "go.probo.inc/probo/pkg/integration/github"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -70,7 +70,7 @@ type Config struct {
 	CookieBanner      *cookiebanner.Service
 	Geoloc            *geoloc.Service
 	ThirdParty        *thirdparty.Service
-	GitHubDiscovery   *ghintegration.Service
+	GitHubDiscovery   *ghdiscovery.Service
 	RiskManagement    *riskmanagement.Service
 	Cookie            securecookie.Config
 	TokenSecret       string

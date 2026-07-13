@@ -525,7 +525,7 @@ non-conformity.
 
 Full per-check definitions (pass/fail criteria, APIs) live in planning
 discussions; implementation should codify scanner hints in
-`pkg/integration/github/checks.json` (advisory catalog of `fact_key` values,
+`pkg/discovery/github/checks.json` (advisory catalog of `fact_key` values,
 evaluation modes, and tiers — not measure DB keys).
 
 ---
@@ -681,7 +681,7 @@ Probe default branch (and org `.github` repo) for:
 ### 16.1 Proposed package layout
 
 ```text
-pkg/integration/github/
+pkg/discovery/github/
   checks.json               # advisory catalog: fact_key, mode, scope, tier
   scanner_org.go            # org-level API facts
   scanner_repo.go           # per-repo API facts
@@ -775,7 +775,7 @@ Please confirm or adjust before implementation:
 | 3 | Org vs per-repo measures | Synthesis agent clusters repo facts into org-level measures; repo detail in evidence |
 | 4 | First PR wave scope | Waves 1–3 (full P0) vs Wave 1–2 only |
 | 5 | `agent_runs` | Use for run tracking; synthesis step is the main LLM call |
-| 6 | Package location | `pkg/integration/github/` |
+| 6 | Package location | `pkg/discovery/github/` |
 | 7 | Check catalog format | `checks.json` — advisory `fact_key` list for scanner + prompts |
 | 8 | Re-discovery behavior | Synthesis returns `updates` by `measure_id`; append evidence; new `agent_run` each time |
 | 9 | Optional `source` on measures | Defer — use ThirdParty linkage for filtering |

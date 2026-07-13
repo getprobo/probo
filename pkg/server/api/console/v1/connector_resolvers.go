@@ -15,7 +15,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
-	ghintegration "go.probo.inc/probo/pkg/integration/github"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -186,7 +186,7 @@ func (r *mutationResolver) RunGitHubDiscovery(ctx context.Context, input types.R
 	run, err := r.githubDiscovery.Run(
 		ctx,
 		scope,
-		ghintegration.RunRequest{ConnectorID: input.ConnectorID},
+		ghdiscovery.RunRequest{ConnectorID: input.ConnectorID},
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -197,11 +197,11 @@ func (r *mutationResolver) RunGitHubDiscovery(ctx context.Context, input types.R
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.Is(err, ghintegration.ErrDiscoveryInProgress) {
-			return nil, gqlutils.Conflict(ctx, ghintegration.ErrDiscoveryInProgress)
+		if errors.Is(err, ghdiscovery.ErrDiscoveryInProgress) {
+			return nil, gqlutils.Conflict(ctx, ghdiscovery.ErrDiscoveryInProgress)
 		}
 
-		var scopeErr *ghintegration.InsufficientScopesError
+		var scopeErr *ghdiscovery.InsufficientScopesError
 		if errors.As(err, &scopeErr) {
 			return nil, &gqlerror.Error{
 				Message: scopeErr.Error(),
@@ -210,7 +210,7 @@ func (r *mutationResolver) RunGitHubDiscovery(ctx context.Context, input types.R
 					"code":            "INVALID",
 					"cause":           "INSUFFICIENT_OAUTH_SCOPES",
 					"missingScopes":   scopeErr.Missing,
-					"reconnectScopes": ghintegration.DiscoveryReconnectScopes(),
+					"reconnectScopes": ghdiscovery.DiscoveryReconnectScopes(),
 				},
 			}
 		}
