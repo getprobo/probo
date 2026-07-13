@@ -47,11 +47,13 @@ func DiscoveryReconnectScopes() []string {
 	return connector.UnionScopes(RequiredDiscoveryScopes(), EscalationDiscoveryScopes())
 }
 
-// InsufficientScopesError is returned when a GitHub connector lacks the
-// scopes required to start discovery.
-type InsufficientScopesError struct {
-	Missing []string
-}
+type (
+	// InsufficientScopesError is returned when a GitHub connector lacks the
+	// scopes required to start discovery.
+	InsufficientScopesError struct {
+		Missing []string
+	}
+)
 
 func (e *InsufficientScopesError) Error() string {
 	return fmt.Sprintf(

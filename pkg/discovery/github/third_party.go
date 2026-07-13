@@ -42,19 +42,18 @@ func resolveGitHubThirdParty(
 		return nil, fmt.Errorf("third party %q exists but is not level 1", thirdPartyName)
 	}
 
-	if err != nil && !isNotFound(err) {
+	if !isNotFound(err) {
 		return nil, fmt.Errorf("cannot load github third party: %w", err)
 	}
 
 	now := time.Now()
-	website := "https://github.com"
 
 	thirdParty = &coredata.ThirdParty{
 		ID:             gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
 		OrganizationID: organizationID,
 		Name:           thirdPartyName,
 		Category:       coredata.ThirdPartyCategoryVersionControl,
-		WebsiteURL:     &website,
+		WebsiteURL:     new("https://github.com"),
 		Level:          1,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -128,7 +127,7 @@ func EnsureThirdParty(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot ensure github third party: %w", err)
 	}
 
 	return thirdParty, nil

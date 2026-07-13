@@ -21,13 +21,17 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-type materializeRule struct {
-	factKey     string
-	name        string
-	description string
-	category    string
-	evaluate    func(Fact) coredata.MeasureState
-}
+type (
+	materializeRule struct {
+		factKey     string
+		name        string
+		description string
+		category    string
+		evaluate    func(Fact) coredata.MeasureState
+	}
+
+	gidKey string
+)
 
 // MaterializeFromFacts builds a measure plan without an LLM (tests and fallback).
 func MaterializeFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*MeasurePlan, error) {
@@ -92,8 +96,6 @@ func MaterializeFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*Measur
 
 	return plan, nil
 }
-
-type gidKey string
 
 func findMeasureByName(existing []ExistingMeasure, name string) *ExistingMeasure {
 	target := strings.ToLower(strings.TrimSpace(name))

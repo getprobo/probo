@@ -28,11 +28,24 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-type orgScanner struct {
-	httpClient *http.Client
-	org        string
-	logger     *log.Logger
-}
+type (
+	orgScanner struct {
+		httpClient *http.Client
+		org        string
+		logger     *log.Logger
+	}
+
+	githubOrganization struct {
+		TwoFactorRequirementEnabled        *bool  `json:"two_factor_requirement_enabled"`
+		DefaultRepositoryPermission        string `json:"default_repository_permission"`
+		MembersCanCreatePublicRepositories *bool  `json:"members_can_create_public_repositories"`
+		MembersCanChangeRepoVisibility     *bool  `json:"members_can_change_repo_visibility"`
+	}
+
+	repoPageItem struct {
+		Private bool `json:"private"`
+	}
+)
 
 func newOrgScanner(httpClient *http.Client, org string, logger *log.Logger) *orgScanner {
 	return &orgScanner{
@@ -40,13 +53,6 @@ func newOrgScanner(httpClient *http.Client, org string, logger *log.Logger) *org
 		org:        org,
 		logger:     logger,
 	}
-}
-
-type githubOrganization struct {
-	TwoFactorRequirementEnabled        *bool  `json:"two_factor_requirement_enabled"`
-	DefaultRepositoryPermission        string `json:"default_repository_permission"`
-	MembersCanCreatePublicRepositories *bool  `json:"members_can_create_public_repositories"`
-	MembersCanChangeRepoVisibility     *bool  `json:"members_can_change_repo_visibility"`
 }
 
 func (s *orgScanner) scan(ctx context.Context) (*FactSheet, error) {
@@ -195,7 +201,7 @@ func (s *orgScanner) count2FADisabled(ctx context.Context) (int, error) {
 
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("cannot list github accounts for 2fa check: %w", err)
 	}
 
 	count := 0
@@ -214,7 +220,7 @@ func (s *orgScanner) countAdmins(ctx context.Context) (int, int, error) {
 
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("cannot list github accounts for admin count: %w", err)
 	}
 
 	admins := 0
@@ -226,10 +232,6 @@ func (s *orgScanner) countAdmins(ctx context.Context) (int, int, error) {
 	}
 
 	return admins, len(records), nil
-}
-
-type repoPageItem struct {
-	Private bool `json:"private"`
 }
 
 func (s *orgScanner) countPublicRepos(ctx context.Context) (int, int, error) {

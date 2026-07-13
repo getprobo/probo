@@ -67,7 +67,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 
 	scope := coredata.NewScope(run.OrganizationID.TenantID())
 
-	httpClient, connector, err := ConnectorHTTPClient(
+	httpClient, connector, err := connectorHTTPClient(
 		ctx,
 		r.pg,
 		scope,
@@ -77,7 +77,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 		input.ConnectorID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot build github connector HTTP client: %w", err)
 	}
 
 	githubOrg, err := githubOrganizationFromConnector(connector)
@@ -92,7 +92,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 
 	thirdParty, err := EnsureThirdParty(ctx, r.pg, scope, run.OrganizationID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot ensure github third party: %w", err)
 	}
 
 	var existing []ExistingMeasure
@@ -111,7 +111,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot load github-linked measures: %w", err)
 	}
 
 	plan, err := r.synthesizer.Synthesize(ctx, sheet, existing)
@@ -120,7 +120,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 
 		plan, err = MaterializeFromFacts(sheet, existing)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot materialize measure plan: %w", err)
 		}
 	}
 
@@ -137,7 +137,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot apply measure plan: %w", err)
 	}
 
 	return &RunResult{

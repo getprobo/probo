@@ -46,8 +46,10 @@ type (
 	}
 )
 
-var _ Synthesizer = DeterministicSynthesizer{}
-var _ Synthesizer = (*LLMSynthesizer)(nil)
+var (
+	_ Synthesizer = DeterministicSynthesizer{}
+	_ Synthesizer = (*LLMSynthesizer)(nil)
+)
 
 func (DeterministicSynthesizer) Synthesize(
 	_ context.Context,
@@ -57,7 +59,13 @@ func (DeterministicSynthesizer) Synthesize(
 	return MaterializeFromFacts(sheet, existing)
 }
 
-func NewLLMSynthesizer(client *llm.Client, model string, temperature float64, maxTokens int, logger *log.Logger) *LLMSynthesizer {
+func NewLLMSynthesizer(
+	client *llm.Client,
+	model string,
+	temperature float64,
+	maxTokens int,
+	logger *log.Logger,
+) *LLMSynthesizer {
 	return &LLMSynthesizer{
 		agent: agent.New(
 			"github-discovery-synthesis",
@@ -118,11 +126,14 @@ func renderSynthesisPrompt(sheet *FactSheet, existing []ExistingMeasure) (string
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, map[string]string{
-		"FactsJSON":    string(factsJSON),
-		"ExistingJSON": string(existingJSON),
-		"MaxCreates":   fmt.Sprintf("%d", maxMeasureCreatesPerRun),
-	}); err != nil {
+	if err := tmpl.Execute(
+		&buf,
+		map[string]string{
+			"FactsJSON":    string(factsJSON),
+			"ExistingJSON": string(existingJSON),
+			"MaxCreates":   fmt.Sprintf("%d", maxMeasureCreatesPerRun),
+		},
+	); err != nil {
 		return "", fmt.Errorf("cannot render synthesis prompt: %w", err)
 	}
 

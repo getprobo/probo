@@ -46,8 +46,8 @@ func TestValidateDiscoveryScopes(t *testing.T) {
 		)
 		require.Error(t, err)
 
-		var scopeErr *InsufficientScopesError
-		require.True(t, errors.As(err, &scopeErr))
+		scopeErr, ok := errors.AsType[*InsufficientScopesError](err)
+		require.True(t, ok)
 		assert.Equal(t, []string{"read:org"}, scopeErr.Missing)
 	})
 

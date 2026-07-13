@@ -28,8 +28,8 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// ConnectorHTTPClient loads a connector and returns an authenticated HTTP client.
-func ConnectorHTTPClient(
+// connectorHTTPClient loads a connector and returns an authenticated HTTP client.
+func connectorHTTPClient(
 	ctx context.Context,
 	pgClient *pg.Client,
 	scope coredata.Scoper,
@@ -79,7 +79,7 @@ func ConnectorHTTPClient(
 
 	if httpClient == nil {
 		if err := providerRegistry.ApplyManagedAPIKey(&dbConnector); err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("cannot apply managed API key: %w", err)
 		}
 
 		httpClient, err = dbConnector.Connection.Client(ctx)

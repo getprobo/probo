@@ -17,6 +17,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -26,18 +27,20 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type persistInput struct {
-	plan           *MeasurePlan
-	factSheet      *FactSheet
-	thirdPartyID   gid.GID
-	organizationID gid.GID
-	agentRunID     gid.GID
-}
+type (
+	persistInput struct {
+		plan           *MeasurePlan
+		factSheet      *FactSheet
+		thirdPartyID   gid.GID
+		organizationID gid.GID
+		agentRunID     gid.GID
+	}
 
-type persistStats struct {
-	upserted int
-	summary  map[string]int
-}
+	persistStats struct {
+		upserted int
+		summary  map[string]int
+	}
+)
 
 func applyMeasurePlan(
 	ctx context.Context,
@@ -100,7 +103,7 @@ func applyMeasurePlan(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot apply measure plan transaction: %w", err)
 	}
 
 	return stats, nil
@@ -232,7 +235,10 @@ func insertDiscoveryEvidence(
 		return fmt.Errorf("cannot generate evidence reference id: %w", err)
 	}
 
-	url := discoveryEvidenceURL(factRefs, factsByID)
+	evidenceURL, err := discoveryEvidenceURL(factRefs, factsByID)
+	if err != nil {
+		return fmt.Errorf("cannot build discovery evidence URL: %w", err)
+	}
 
 	description := strings.TrimSpace(summary)
 	if description == "" {
@@ -246,7 +252,7 @@ func insertDiscoveryEvidence(
 		State:             coredata.EvidenceStateFulfilled,
 		ReferenceID:       fmt.Sprintf("github-discovery-%s-%s", agentRunID.String(), referenceID.String()),
 		Type:              coredata.EvidenceTypeLink,
-		URL:               url,
+		URL:               evidenceURL,
 		Description:       &description,
 		DescriptionStatus: coredata.EvidenceDescriptionStatusCompleted,
 		CreatedAt:         now,
@@ -260,17 +266,42 @@ func insertDiscoveryEvidence(
 	return nil
 }
 
-func discoveryEvidenceURL(factRefs []string, factsByID map[string]Fact) string {
+func discoveryEvidenceURL(factRefs []string, factsByID map[string]Fact) (string, error) {
+	const fallback = "https://github.com"
+
 	for _, ref := range factRefs {
 		fact, ok := factsByID[ref]
 		if !ok || fact.APIRef == "" {
 			continue
 		}
 
-		return "https://api.github.com" + strings.TrimPrefix(fact.APIRef, "GET ")
+		rest := strings.TrimSpace(strings.TrimPrefix(fact.APIRef, "GET "))
+		if rest == "" {
+			continue
+		}
+
+		u, err := url.Parse("https://api.github.com")
+		if err != nil {
+			return "", fmt.Errorf("cannot parse github api base URL: %w", err)
+		}
+
+		if path, query, ok := strings.Cut(rest, "?"); ok {
+			u.Path = path
+
+			q, err := url.ParseQuery(query)
+			if err != nil {
+				return "", fmt.Errorf("cannot parse github api evidence query: %w", err)
+			}
+
+			u.RawQuery = q.Encode()
+		} else {
+			u.Path = rest
+		}
+
+		return u.String(), nil
 	}
 
-	return "https://github.com"
+	return fallback, nil
 }
 
 func stringPtr(value string) *string {
@@ -278,7 +309,5 @@ func stringPtr(value string) *string {
 		return nil
 	}
 
-	v := value
-
-	return &v
+	return new(value)
 }
