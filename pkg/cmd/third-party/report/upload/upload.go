@@ -100,15 +100,25 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 				flagReportName = filepath.Base(filePath)
 			}
 
+			reportDate, err := cmdutil.NormalizeDatetime(flagReportDate)
+			if err != nil {
+				return fmt.Errorf("invalid --report-date: %w", err)
+			}
+
 			input := map[string]any{
 				"thirdPartyId": flagThirdParty,
-				"reportDate":   flagReportDate,
+				"reportDate":   reportDate,
 				"reportName":   flagReportName,
 				"file":         nil,
 			}
 
 			if flagValidUntil != "" {
-				input["validUntil"] = flagValidUntil
+				validUntil, err := cmdutil.NormalizeDatetime(flagValidUntil)
+				if err != nil {
+					return fmt.Errorf("invalid --valid-until: %w", err)
+				}
+
+				input["validUntil"] = validUntil
 			}
 
 			data, err := client.DoUpload(
