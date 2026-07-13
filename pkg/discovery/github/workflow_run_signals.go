@@ -19,21 +19,26 @@ import (
 	"strings"
 )
 
-type checkRunObservation struct {
-	Name       string
-	AppSlug    string
-	DetailsURL string
+// ciRunObservation normalizes check runs and legacy commit statuses.
+type ciRunObservation struct {
+	Label  string
+	Source string
+	URL    string
 }
 
-func detectToolRunSignals(observations []checkRunObservation) workflowRunSignals {
+func ciRunObservationText(item ciRunObservation) string {
+	return strings.ToLower(strings.Join([]string{
+		item.Label,
+		item.Source,
+		item.URL,
+	}, " "))
+}
+
+func detectToolRunSignals(observations []ciRunObservation) workflowRunSignals {
 	signals := workflowRunSignals{}
 
 	for _, item := range observations {
-		combined := strings.ToLower(strings.Join([]string{
-			item.Name,
-			item.AppSlug,
-			item.DetailsURL,
-		}, " "))
+		combined := ciRunObservationText(item)
 
 		if matchesAny(
 			combined,
@@ -74,15 +79,15 @@ func detectToolRunSignals(observations []checkRunObservation) workflowRunSignals
 	return signals
 }
 
-func detectPRWorkflowRan(observations []checkRunObservation) bool {
+func detectPRWorkflowRan(observations []ciRunObservation) bool {
 	for _, item := range observations {
-		combined := strings.ToLower(strings.Join([]string{
-			item.Name,
-			item.AppSlug,
-			item.DetailsURL,
-		}, " "))
+		combined := ciRunObservationText(item)
 
 		if matchesAny(combined, "github-actions", "github actions") {
+			return true
+		}
+
+		if len(detectCIProviders(item.Label, item.Source, item.URL)) > 0 {
 			return true
 		}
 	}
@@ -97,12 +102,12 @@ func (s *discoveryScanner) collectWorkflowRunSignals(
 	combined := workflowRunSignals{}
 
 	if sha, ok := s.fetchDefaultBranchSHA(ctx, repo); ok {
-		observations := s.fetchCheckRunObservations(ctx, repo, sha)
+		observations := s.fetchCIRunObservations(ctx, repo, sha)
 		mergeWorkflowRunSignals(&combined, detectToolRunSignals(observations))
 	}
 
 	if sha, ok := s.fetchRecentMergedPRHeadSHA(ctx, repo); ok {
-		observations := s.fetchCheckRunObservations(ctx, repo, sha)
+		observations := s.fetchCIRunObservations(ctx, repo, sha)
 		mergeWorkflowRunSignals(&combined, detectToolRunSignals(observations))
 
 		if detectPRWorkflowRan(observations) {
@@ -113,11 +118,22 @@ func (s *discoveryScanner) collectWorkflowRunSignals(
 	return combined
 }
 
+func (s *discoveryScanner) fetchCIRunObservations(
+	ctx context.Context,
+	repo repoListItem,
+	sha string,
+) []ciRunObservation {
+	observations := s.fetchCheckRunObservations(ctx, repo, sha)
+	observations = append(observations, s.fetchCommitStatusObservations(ctx, repo, sha)...)
+
+	return observations
+}
+
 func (s *discoveryScanner) fetchCheckRunObservations(
 	ctx context.Context,
 	repo repoListItem,
 	sha string,
-) []checkRunObservation {
+) []ciRunObservation {
 	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "commits", sha, "check-runs")
 	if err != nil {
 		return nil
@@ -134,13 +150,41 @@ func (s *discoveryScanner) fetchCheckRunObservations(
 		return nil
 	}
 
-	observations := make([]checkRunObservation, 0, len(runs.CheckRuns))
+	observations := make([]ciRunObservation, 0, len(runs.CheckRuns))
 
 	for _, run := range runs.CheckRuns {
-		observations = append(observations, checkRunObservation{
-			Name:       run.Name,
-			AppSlug:    run.App.Slug,
-			DetailsURL: run.DetailsURL,
+		observations = append(observations, ciRunObservation{
+			Label:  run.Name,
+			Source: run.App.Slug,
+			URL:    run.DetailsURL,
+		})
+	}
+
+	return observations
+}
+
+func (s *discoveryScanner) fetchCommitStatusObservations(
+	ctx context.Context,
+	repo repoListItem,
+	sha string,
+) []ciRunObservation {
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "commits", sha, "status")
+	if err != nil {
+		return nil
+	}
+
+	var status combinedStatusResponse
+
+	if _, err := s.api.getJSON(ctx, endpoint, &status); err != nil {
+		return nil
+	}
+
+	observations := make([]ciRunObservation, 0, len(status.Statuses))
+
+	for _, item := range status.Statuses {
+		observations = append(observations, ciRunObservation{
+			Label: item.Context,
+			URL:   item.TargetURL,
 		})
 	}
 

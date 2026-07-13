@@ -75,9 +75,9 @@ jobs:
 func TestDetectToolRunSignals(t *testing.T) {
 	t.Parallel()
 
-	signals := detectToolRunSignals([]checkRunObservation{
-		{Name: "CodeQL", AppSlug: "github-code-scanning"},
-		{Name: "dependency-review", AppSlug: "github-actions"},
+	signals := detectToolRunSignals([]ciRunObservation{
+		{Label: "CodeQL", Source: "github-code-scanning"},
+		{Label: "dependency-review", Source: "github-actions"},
 	})
 
 	assert.True(t, signals.RanCodeQL)
@@ -85,14 +85,29 @@ func TestDetectToolRunSignals(t *testing.T) {
 	assert.False(t, signals.RanOnPullRequest)
 }
 
+func TestDetectToolRunSignals_FromCommitStatus(t *testing.T) {
+	t.Parallel()
+
+	signals := detectToolRunSignals([]ciRunObservation{
+		{Label: "ci/circleci", URL: "https://circleci.com/gh/acme/api/42"},
+		{Label: "security/snyk", URL: "https://snyk.io"},
+	})
+
+	assert.True(t, signals.RanThirdPartySAST)
+	assert.False(t, signals.RanCodeQL)
+}
+
 func TestDetectPRWorkflowRan(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, detectPRWorkflowRan([]checkRunObservation{
-		{Name: "build", AppSlug: "github-actions"},
+	assert.True(t, detectPRWorkflowRan([]ciRunObservation{
+		{Label: "build", Source: "github-actions"},
 	}))
-	assert.False(t, detectPRWorkflowRan([]checkRunObservation{
-		{Name: "ci/circleci", AppSlug: "circleci"},
+	assert.True(t, detectPRWorkflowRan([]ciRunObservation{
+		{Label: "ci/circleci", URL: "https://circleci.com/gh/acme/api/1"},
+	}))
+	assert.False(t, detectPRWorkflowRan([]ciRunObservation{
+		{Label: "unrelated/context"},
 	}))
 }
 
