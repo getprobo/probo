@@ -1,0 +1,156 @@
+[
+  {
+    "fact_key": "org_mfa_required",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "enforced",
+    "description": "Organization requires two-factor authentication for all members."
+  },
+  {
+    "fact_key": "org_no_2fa_members",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "in_practice",
+    "description": "No organization members lack two-factor authentication."
+  },
+  {
+    "fact_key": "org_admin_minimization",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "in_practice",
+    "description": "Organization admin accounts are limited."
+  },
+  {
+    "fact_key": "org_base_permissions",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "enforced",
+    "description": "Default repository permission is read or none."
+  },
+  {
+    "fact_key": "org_no_public_repo_creation",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "enforced",
+    "description": "Members cannot create public repositories."
+  },
+  {
+    "fact_key": "org_no_visibility_change",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "enforced",
+    "description": "Members cannot change repository visibility."
+  },
+  {
+    "fact_key": "org_public_repos",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "in_practice",
+    "description": "Public repository exposure is controlled."
+  },
+  {
+    "fact_key": "org_outside_collaborators",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "informational",
+    "description": "Outside collaborators are inventoried."
+  },
+  {
+    "fact_key": "org_actions_restricted",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "enforced",
+    "description": "GitHub Actions usage is restricted at the organization level."
+  },
+  {
+    "fact_key": "org_github_apps",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "informational",
+    "description": "Installed GitHub Apps are inventoried."
+  },
+  {
+    "fact_key": "org_audit_log_accessible",
+    "tier": "P0",
+    "scope": "org",
+    "mode": "informational",
+    "description": "Audit log is accessible when enterprise features are enabled."
+  },
+  {
+    "fact_key": "org_enterprise_accessible",
+    "tier": "P2",
+    "scope": "org",
+    "mode": "informational",
+    "description": "Enterprise settings are accessible when the org belongs to an enterprise."
+  },
+  {
+    "fact_key": "repo_branch_protection_coverage",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "enforced",
+    "description": "Default branches are protected."
+  },
+  {
+    "fact_key": "repo_pr_reviews_required_coverage",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "enforced",
+    "description": "Default branches require pull request reviews."
+  },
+  {
+    "fact_key": "repo_signed_commits_required_coverage",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "enforced",
+    "description": "Default branches require signed commits."
+  },
+  {
+    "fact_key": "repo_workflow_coverage",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "presence",
+    "description": "Repositories run CI/CD workflows."
+  },
+  {
+    "fact_key": "repo_security_md_coverage",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "documented",
+    "description": "Repositories publish SECURITY.md."
+  },
+  {
+    "fact_key": "repo_contributing_md_coverage",
+    "tier": "P1",
+    "scope": "repo",
+    "mode": "documented",
+    "description": "Repositories publish CONTRIBUTING.md."
+  },
+  {
+    "fact_key": "repo_dependabot_config_coverage",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "automation",
+    "description": "Repositories configure Dependabot."
+  },
+  {
+    "fact_key": "repo_dependabot_critical_open",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "in_practice",
+    "description": "No open critical Dependabot alerts."
+  },
+  {
+    "fact_key": "repo_secret_scanning_alerts_open",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "in_practice",
+    "description": "No open secret scanning alerts."
+  },
+  {
+    "fact_key": "repo_code_scanning_critical_open",
+    "tier": "P0",
+    "scope": "repo",
+    "mode": "in_practice",
+    "description": "No open critical code scanning alerts."
+  }
+]

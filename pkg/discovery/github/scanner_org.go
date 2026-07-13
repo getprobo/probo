@@ -16,53 +16,23 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-type (
-	orgScanner struct {
-		httpClient *http.Client
-		org        string
-		logger     *log.Logger
-	}
-
-	githubOrganization struct {
-		TwoFactorRequirementEnabled        *bool  `json:"two_factor_requirement_enabled"`
-		DefaultRepositoryPermission        string `json:"default_repository_permission"`
-		MembersCanCreatePublicRepositories *bool  `json:"members_can_create_public_repositories"`
-		MembersCanChangeRepoVisibility     *bool  `json:"members_can_change_repo_visibility"`
-	}
-
-	repoPageItem struct {
-		Private bool `json:"private"`
-	}
-)
-
-func newOrgScanner(httpClient *http.Client, org string, logger *log.Logger) *orgScanner {
-	return &orgScanner{
-		httpClient: httpClient,
-		org:        org,
-		logger:     logger,
-	}
+type githubOrganization struct {
+	TwoFactorRequirementEnabled        *bool  `json:"two_factor_requirement_enabled"`
+	DefaultRepositoryPermission        string `json:"default_repository_permission"`
+	MembersCanCreatePublicRepositories *bool  `json:"members_can_create_public_repositories"`
+	MembersCanChangeRepoVisibility     *bool  `json:"members_can_change_repo_visibility"`
 }
 
-func (s *orgScanner) scan(ctx context.Context) (*FactSheet, error) {
-	sheet := &FactSheet{
-		GitHubOrg: s.org,
-	}
-
+func (s *discoveryScanner) scanOrgSettings(ctx context.Context, sheet *FactSheet) error {
 	org, err := s.fetchOrganization(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	sheet.Facts = append(sheet.Facts, orgFacts(org)...)
@@ -96,24 +66,7 @@ func (s *orgScanner) scan(ctx context.Context) (*FactSheet, error) {
 		})
 	}
 
-	publicRepos, totalRepos, err := s.countPublicRepos(ctx)
-	if err != nil {
-		sheet.Limitations = append(sheet.Limitations, "cannot list organization repositories")
-	} else {
-		sheet.ReposScanned = totalRepos
-		sheet.Facts = append(sheet.Facts, Fact{
-			FactID:  "f-public-repos",
-			FactKey: "org_public_repos",
-			Scope:   "org",
-			Value: map[string]int{
-				"public": publicRepos,
-				"total":  totalRepos,
-			},
-			APIRef: "GET /orgs/{org}/repos",
-		})
-	}
-
-	return sheet, nil
+	return nil
 }
 
 func orgFacts(org *githubOrganization) []Fact {
@@ -162,42 +115,23 @@ func orgFacts(org *githubOrganization) []Fact {
 	return facts
 }
 
-func (s *orgScanner) fetchOrganization(ctx context.Context) (*githubOrganization, error) {
-	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(s.org))
+func (s *discoveryScanner) fetchOrganization(ctx context.Context) (*githubOrganization, error) {
+	endpoint, err := s.api.orgEndpoint(s.org)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github org URL: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create github org request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/vnd.github+json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot execute github org request: %w", err)
-	}
-
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot fetch github organization: unexpected status %d", resp.StatusCode)
-	}
-
 	var org githubOrganization
-	if err := json.NewDecoder(resp.Body).Decode(&org); err != nil {
-		return nil, fmt.Errorf("cannot decode github organization response: %w", err)
+
+	if _, err := s.api.getJSON(ctx, endpoint, &org); err != nil {
+		return nil, fmt.Errorf("cannot fetch github organization: %w", err)
 	}
 
 	return &org, nil
 }
 
-func (s *orgScanner) count2FADisabled(ctx context.Context) (int, error) {
-	driver := drivers.NewGitHubDriver(s.httpClient, s.org, s.logger)
+func (s *discoveryScanner) count2FADisabled(ctx context.Context) (int, error) {
+	driver := drivers.NewGitHubDriver(s.api.httpClient, s.org, s.logger)
 
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {
@@ -215,8 +149,8 @@ func (s *orgScanner) count2FADisabled(ctx context.Context) (int, error) {
 	return count, nil
 }
 
-func (s *orgScanner) countAdmins(ctx context.Context) (int, int, error) {
-	driver := drivers.NewGitHubDriver(s.httpClient, s.org, s.logger)
+func (s *discoveryScanner) countAdmins(ctx context.Context) (int, int, error) {
+	driver := drivers.NewGitHubDriver(s.api.httpClient, s.org, s.logger)
 
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {
@@ -232,89 +166,6 @@ func (s *orgScanner) countAdmins(ctx context.Context) (int, int, error) {
 	}
 
 	return admins, len(records), nil
-}
-
-func (s *orgScanner) countPublicRepos(ctx context.Context) (int, int, error) {
-	public := 0
-	total := 0
-
-	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(s.org), "repos")
-	if err != nil {
-		return 0, 0, fmt.Errorf("cannot build github repos URL: %w", err)
-	}
-
-	parsed, err := url.Parse(endpoint)
-	if err != nil {
-		return 0, 0, fmt.Errorf("cannot parse github repos URL: %w", err)
-	}
-
-	q := parsed.Query()
-	q.Set("per_page", "100")
-	parsed.RawQuery = q.Encode()
-	next := parsed.String()
-
-	for page := 0; page < 10 && next != ""; page++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, next, nil)
-		if err != nil {
-			return 0, 0, fmt.Errorf("cannot create github repos request: %w", err)
-		}
-
-		req.Header.Set("Accept", "application/vnd.github+json")
-
-		resp, err := s.httpClient.Do(req)
-		if err != nil {
-			return 0, 0, fmt.Errorf("cannot execute github repos request: %w", err)
-		}
-
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			_ = resp.Body.Close()
-
-			return 0, 0, fmt.Errorf("cannot fetch github repos: unexpected status %d", resp.StatusCode)
-		}
-
-		var repos []repoPageItem
-		if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
-			_ = resp.Body.Close()
-
-			return 0, 0, fmt.Errorf("cannot decode github repos response: %w", err)
-		}
-
-		_ = resp.Body.Close()
-
-		for _, repo := range repos {
-			total++
-
-			if !repo.Private {
-				public++
-			}
-		}
-
-		next = parseLinkNext(resp.Header.Get("Link"))
-	}
-
-	return public, total, nil
-}
-
-func parseLinkNext(linkHeader string) string {
-	if linkHeader == "" {
-		return ""
-	}
-
-	for part := range strings.SplitSeq(linkHeader, ",") {
-		part = strings.TrimSpace(part)
-		if !strings.Contains(part, `rel="next"`) {
-			continue
-		}
-
-		start := strings.Index(part, "<")
-		end := strings.Index(part, ">")
-
-		if start >= 0 && end > start {
-			return part[start+1 : end]
-		}
-	}
-
-	return ""
 }
 
 // evaluateAdminMinimization returns measure state for admin ratio fact.
@@ -350,14 +201,6 @@ func toInt(v any) (int, bool) {
 		return int(n), true
 	case float64:
 		return int(n), true
-	case json.Number:
-		i, err := n.Int64()
-
-		return int(i), err == nil
-	case string:
-		i, err := strconv.Atoi(n)
-
-		return i, err == nil
 	default:
 		return 0, false
 	}

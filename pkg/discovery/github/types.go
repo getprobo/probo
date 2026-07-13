@@ -25,7 +25,7 @@ const (
 
 	thirdPartyName = "GitHub"
 
-	maxMeasureCreatesPerRun = 20
+	maxMeasureCreatesPerRun = 35
 )
 
 type (

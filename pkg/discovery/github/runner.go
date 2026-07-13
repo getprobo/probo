@@ -85,7 +85,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 		return nil, err
 	}
 
-	sheet, err := newOrgScanner(httpClient, githubOrg, r.logger).scan(ctx)
+	sheet, err := newDiscoveryScanner(httpClient, githubOrg, connector.Connection, r.logger).scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot scan github organization: %w", err)
 	}

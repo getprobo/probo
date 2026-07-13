@@ -201,6 +201,185 @@ func defaultMaterializeRules() []materializeRule {
 				return coredata.MeasureStateNotImplemented
 			},
 		},
+		{
+			factKey:     "org_no_visibility_change",
+			name:        "Restrict repository visibility changes",
+			description: "Members cannot change repository visibility.",
+			category:    "exposure",
+			evaluate: func(f Fact) coredata.MeasureState {
+				if b, ok := f.Value.(bool); ok && b {
+					return coredata.MeasureStateImplemented
+				}
+
+				return coredata.MeasureStateNotImplemented
+			},
+		},
+		{
+			factKey:     "org_outside_collaborators",
+			name:        "Outside collaborator inventory",
+			description: "Outside collaborators are inventoried for review.",
+			category:    "access",
+			evaluate: func(f Fact) coredata.MeasureState {
+				_, ok := factCountValue(f.Value, "count")
+				if !ok {
+					return coredata.MeasureStateUnknown
+				}
+
+				return coredata.MeasureStateImplemented
+			},
+		},
+		{
+			factKey:     "org_actions_restricted",
+			name:        "GitHub Actions usage restricted",
+			description: "Organization restricts which actions and workflows may run.",
+			category:    "ci_cd",
+			evaluate: func(f Fact) coredata.MeasureState {
+				restricted, ok := factBoolField(f.Value, "restricted")
+				if !ok {
+					return coredata.MeasureStateUnknown
+				}
+
+				if restricted {
+					return coredata.MeasureStateImplemented
+				}
+
+				return coredata.MeasureStateNotImplemented
+			},
+		},
+		{
+			factKey:     "org_github_apps",
+			name:        "GitHub App inventory",
+			description: "Installed GitHub Apps are inventoried for review.",
+			category:    "integrations",
+			evaluate: func(f Fact) coredata.MeasureState {
+				_, ok := factCountValue(f.Value, "installations")
+				if !ok {
+					return coredata.MeasureStateUnknown
+				}
+
+				return coredata.MeasureStateImplemented
+			},
+		},
+		{
+			factKey:     "org_audit_log_accessible",
+			name:        "Audit log accessible",
+			description: "Organization audit log is accessible for review.",
+			category:    "audit",
+			evaluate: func(f Fact) coredata.MeasureState {
+				if b, ok := f.Value.(bool); ok && b {
+					return coredata.MeasureStateImplemented
+				}
+
+				if b, ok := f.Value.(bool); ok && !b {
+					return coredata.MeasureStateNotApplicable
+				}
+
+				return coredata.MeasureStateUnknown
+			},
+		},
+		{
+			factKey:     "repo_branch_protection_coverage",
+			name:        "Default branch protection",
+			description: "Default branches are protected across scanned repositories.",
+			category:    "code_review",
+			evaluate:    evaluateFullCoverage,
+		},
+		{
+			factKey:     "repo_pr_reviews_required_coverage",
+			name:        "Pull request reviews required",
+			description: "Default branches require pull request reviews.",
+			category:    "code_review",
+			evaluate:    evaluateFullCoverage,
+		},
+		{
+			factKey:     "repo_signed_commits_required_coverage",
+			name:        "Signed commits required",
+			description: "Default branches require signed commits.",
+			category:    "code_integrity",
+			evaluate:    evaluateFullCoverage,
+		},
+		{
+			factKey:     "repo_workflow_coverage",
+			name:        "CI/CD workflows present",
+			description: "Repositories run automated workflows.",
+			category:    "ci_cd",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_security_md_coverage",
+			name:        "Security disclosure policy",
+			description: "Repositories publish a SECURITY.md disclosure policy.",
+			category:    "documentation",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_contributing_md_coverage",
+			name:        "Contributing guidelines documented",
+			description: "Repositories publish CONTRIBUTING.md guidance.",
+			category:    "documentation",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_dependabot_config_coverage",
+			name:        "Dependabot configuration",
+			description: "Repositories configure Dependabot update automation.",
+			category:    "dependencies",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_dependabot_critical_open",
+			name:        "Critical Dependabot alerts resolved",
+			description: "No open critical Dependabot alerts in scanned repositories.",
+			category:    "dependencies",
+			evaluate: func(f Fact) coredata.MeasureState {
+				count, ok := factCountValue(f.Value, "open_critical")
+				if !ok {
+					return coredata.MeasureStateUnknown
+				}
+
+				if count == 0 {
+					return coredata.MeasureStateImplemented
+				}
+
+				return coredata.MeasureStateNotImplemented
+			},
+		},
+		{
+			factKey:     "repo_secret_scanning_alerts_open",
+			name:        "Secret scanning alerts resolved",
+			description: "No open secret scanning alerts in scanned repositories.",
+			category:    "secrets",
+			evaluate: func(f Fact) coredata.MeasureState {
+				count, ok := factCountValue(f.Value, "open")
+				if !ok {
+					return coredata.MeasureStateUnknown
+				}
+
+				if count == 0 {
+					return coredata.MeasureStateImplemented
+				}
+
+				return coredata.MeasureStateNotImplemented
+			},
+		},
+		{
+			factKey:     "repo_code_scanning_critical_open",
+			name:        "Critical code scanning alerts resolved",
+			description: "No open critical code scanning alerts in scanned repositories.",
+			category:    "code_scanning",
+			evaluate: func(f Fact) coredata.MeasureState {
+				count, ok := factCountValue(f.Value, "open_critical")
+				if !ok {
+					return coredata.MeasureStateUnknown
+				}
+
+				if count == 0 {
+					return coredata.MeasureStateImplemented
+				}
+
+				return coredata.MeasureStateNotImplemented
+			},
+		},
 	}
 }
 
@@ -229,4 +408,72 @@ func factCountPair(value any) (int, int, bool) {
 	default:
 		return 0, 0, false
 	}
+}
+
+func factCoveragePair(value any) (int, int, bool) {
+	switch m := value.(type) {
+	case map[string]int:
+		return m["matched"], m["total"], m["total"] > 0
+	case map[string]any:
+		matched, ok1 := toInt(m["matched"])
+		total, ok2 := toInt(m["total"])
+
+		return matched, total, ok1 && ok2 && total > 0
+	default:
+		return 0, 0, false
+	}
+}
+
+func factCountValue(value any, key string) (int, bool) {
+	switch m := value.(type) {
+	case map[string]int:
+		v, ok := m[key]
+
+		return v, ok
+	case map[string]any:
+		return toInt(m[key])
+	default:
+		return 0, false
+	}
+}
+
+func factBoolField(value any, key string) (bool, bool) {
+	m, ok := value.(map[string]any)
+	if !ok {
+		return false, false
+	}
+
+	v, ok := m[key].(bool)
+
+	return v, ok
+}
+
+func evaluateFullCoverage(f Fact) coredata.MeasureState {
+	matched, total, ok := factCoveragePair(f.Value)
+	if !ok {
+		return coredata.MeasureStateUnknown
+	}
+
+	if matched == total {
+		return coredata.MeasureStateImplemented
+	}
+
+	if matched == 0 {
+		return coredata.MeasureStateNotImplemented
+	}
+
+	return coredata.MeasureStateNotImplemented
+}
+
+func evaluateAnyCoverage(f Fact) coredata.MeasureState {
+	matched, _, ok := factCoveragePair(f.Value)
+	if !ok {
+		return coredata.MeasureStateUnknown
+	}
+
+	if matched > 0 {
+		return coredata.MeasureStateImplemented
+	}
+
+	return coredata.MeasureStateNotImplemented
 }
