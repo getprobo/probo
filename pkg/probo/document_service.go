@@ -3398,10 +3398,29 @@ func (s *DocumentService) cancelRequestedSignaturesForDocumentInTx(
 		return fmt.Errorf("cannot load requested document version signatures: %w", err)
 	}
 
+	if len(*signatures) == 0 {
+		return nil
+	}
+
+	versionIDs := make([]gid.GID, len(*signatures))
+	for i, signature := range *signatures {
+		versionIDs[i] = signature.DocumentVersionID
+	}
+
+	versions := &coredata.DocumentVersions{}
+	if err := versions.LoadByIDs(ctx, tx, scope, versionIDs); err != nil {
+		return fmt.Errorf("cannot load document versions: %w", err)
+	}
+
+	versionsByID := make(map[gid.GID]*coredata.DocumentVersion, len(*versions))
+	for _, version := range *versions {
+		versionsByID[version.ID] = version
+	}
+
 	for _, signature := range *signatures {
-		version := &coredata.DocumentVersion{}
-		if err := version.LoadByID(ctx, tx, scope, signature.DocumentVersionID); err != nil {
-			return fmt.Errorf("cannot load document version: %w", err)
+		version, ok := versionsByID[signature.DocumentVersionID]
+		if !ok {
+			return fmt.Errorf("cannot load document version %q: %w", signature.DocumentVersionID, coredata.ErrResourceNotFound)
 		}
 
 		if err := signature.Delete(ctx, tx, scope, signature.ID); err != nil {
