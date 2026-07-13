@@ -176,26 +176,22 @@ func DiscoveryGlobCatalog() []string {
 	}
 }
 
-// BuildDiscoveryIndex globs discovery patterns and merges results into a FileIndex.
+// BuildDiscoveryIndex walks the workspace once and indexes discovery catalog matches.
 func BuildDiscoveryIndex(ctx context.Context, fs FS) (*FileIndex, error) {
 	index := NewFileIndex()
+	patterns := DiscoveryGlobCatalog()
 
-	var firstErr error
+	err := Walk(ctx, fs, func(path string) error {
+		for _, pattern := range patterns {
+			if MatchGlob(pattern, path) {
+				index.Add(path)
 
-	for _, pattern := range DiscoveryGlobCatalog() {
-		paths, err := fs.Glob(ctx, pattern)
-		if err != nil {
-			if firstErr == nil {
-				firstErr = err
+				break
 			}
-
-			continue
 		}
 
-		for _, path := range paths {
-			index.Add(path)
-		}
-	}
+		return nil
+	})
 
-	return index, firstErr
+	return index, err
 }

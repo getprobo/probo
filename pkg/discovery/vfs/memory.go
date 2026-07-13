@@ -102,17 +102,5 @@ func (f *MemoryFS) ReadDir(ctx context.Context, dir string) ([]Entry, error) {
 }
 
 func (f *MemoryFS) Glob(ctx context.Context, pattern string) ([]string, error) {
-	_ = ctx
-
-	var matches []string
-
-	for filePath := range f.files {
-		if MatchGlob(pattern, filePath) {
-			matches = append(matches, filePath)
-		}
-	}
-
-	sort.Strings(matches)
-
-	return matches, nil
+	return GlobFS(ctx, f, pattern)
 }

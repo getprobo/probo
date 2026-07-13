@@ -236,7 +236,7 @@ func (s *discoveryScanner) buildFileIndex(ctx context.Context) (*vfs.FileIndex, 
 	}
 
 	return index, []string{
-		"org-wide file search partially unavailable; falling back to per-repository file reads",
+		"worktree file indexing partially unavailable; falling back to per-repository file reads",
 	}
 }
 

@@ -97,27 +97,7 @@ func (w *Workspace) ReadDir(ctx context.Context, dir string) ([]vfs.Entry, error
 }
 
 func (w *Workspace) Glob(ctx context.Context, pattern string) ([]string, error) {
-	_ = ctx
-
-	var matches []string
-
-	for repoName, repoFS := range w.repos {
-		err := WalkFiles(repoFS, func(path string) error {
-			fullPath := vfs.RepoPath(repoName, path)
-			if vfs.MatchGlob(pattern, fullPath) {
-				matches = append(matches, fullPath)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return matches, err
-		}
-	}
-
-	sort.Strings(matches)
-
-	return matches, nil
+	return vfs.GlobFS(ctx, w, pattern)
 }
 
 func (w *Workspace) readWorkspaceRoot() ([]vfs.Entry, error) {

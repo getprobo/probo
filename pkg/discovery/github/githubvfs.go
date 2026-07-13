@@ -35,38 +35,6 @@ type (
 	}
 )
 
-// discoveryGlobQueries maps vfs discovery glob patterns to GitHub code search
-// query fragments (without the org: qualifier).
-var discoveryGlobQueries = map[string]string{
-	"*/.github/workflows/*.yml":   "path:.github/workflows extension:yml",
-	"*/.github/workflows/*.yaml":  "path:.github/workflows extension:yaml",
-	"*/SECURITY.md":               "filename:SECURITY.md",
-	"*/CONTRIBUTING.md":           "filename:CONTRIBUTING.md",
-	"*/.github/dependabot.yml":    "path:.github filename:dependabot.yml",
-	"*/renovate.json":             "filename:renovate.json",
-	"*/.github/renovate.json":     "path:.github filename:renovate.json",
-	"*/package-lock.json":         "filename:package-lock.json",
-	"*/yarn.lock":                 "filename:yarn.lock",
-	"*/pnpm-lock.yaml":            "filename:pnpm-lock.yaml",
-	"*/go.sum":                    "filename:go.sum",
-	"*/Gemfile.lock":              "filename:Gemfile.lock",
-	"*/poetry.lock":               "filename:poetry.lock",
-	"*/Cargo.lock":                "filename:Cargo.lock",
-	"*/.env":                      "filename:.env",
-	"*/.env.production":           "filename:.env.production",
-	"*/.env.local":                "filename:.env.local",
-	"*/DEVELOPMENT.md":            "filename:DEVELOPMENT.md",
-	"*/docs/development.md":       "path:docs filename:development.md",
-	"*/docs/code-review.md":       "path:docs filename:code-review.md",
-	"*/docs/incident-response.md": "path:docs filename:incident-response.md",
-	"*/docs/security/README.md":   "path:docs/security filename:README.md",
-	"*/SECURITY_GUIDELINES.md":    "filename:SECURITY_GUIDELINES.md",
-	"*/.github/ISSUE_TEMPLATE/*":  "path:.github/ISSUE_TEMPLATE",
-	"*/Jenkinsfile":               "filename:Jenkinsfile",
-	"*/.circleci/config.yml":      "path:.circleci filename:config.yml",
-	"*/.gitlab-ci.yml":            "filename:.gitlab-ci.yml",
-}
-
 func newGitHubFS(api *apiClient, org string) *githubFS {
 	return &githubFS{api: api, org: org}
 }
@@ -149,61 +117,11 @@ func (f *githubFS) ReadDir(ctx context.Context, dir string) ([]vfs.Entry, error)
 	return entries, nil
 }
 
+// Glob is unsupported on the API-backed filesystem. Discovery indexing runs
+// against cloned worktrees; this FS only serves per-path Read fallbacks.
 func (f *githubFS) Glob(ctx context.Context, pattern string) ([]string, error) {
-	query, ok := codeSearchQueryForGlob(f.org, pattern)
-	if !ok {
-		return nil, nil
-	}
+	_ = ctx
+	_ = pattern
 
-	paths, err := f.api.searchCode(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	filtered := make([]string, 0, len(paths))
-	for _, path := range paths {
-		if vfs.MatchGlob(pattern, path) {
-			filtered = append(filtered, path)
-		}
-	}
-
-	sort.Strings(filtered)
-
-	return filtered, nil
-}
-
-func (c *apiClient) searchCode(ctx context.Context, query string) ([]string, error) {
-	rawPaths, err := c.searchCodePaths(ctx, strings.ReplaceAll(query, "+", " "))
-	if err != nil {
-		return nil, err
-	}
-
-	paths := make([]string, 0, len(rawPaths))
-	for _, path := range rawPaths {
-		parts := strings.SplitN(path, "/", 2)
-		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-			continue
-		}
-
-		paths = append(paths, vfs.RepoPath(parts[0], parts[1]))
-	}
-
-	return paths, nil
-}
-
-func codeSearchQueryForGlob(org, pattern string) (string, bool) {
-	fragment, ok := discoveryGlobQueries[pattern]
-	if !ok {
-		return "", false
-	}
-
-	return formatCodeSearchQuery(org, fragment), true
-}
-
-func formatCodeSearchQuery(org, fragment string) string {
-	fragment = strings.TrimSpace(fragment)
-	fragment = strings.TrimPrefix(fragment, "org:"+org)
-	fragment = strings.TrimSpace(fragment)
-
-	return "org:" + org + " " + strings.ReplaceAll(fragment, " ", "+")
+	return nil, nil
 }

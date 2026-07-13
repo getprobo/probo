@@ -106,39 +106,6 @@ func (c *restClient) listWorkflowCount(ctx context.Context, owner, repo string) 
 	return page.GetTotalCount(), page.GetTotalCount() > 0
 }
 
-func (c *restClient) searchCodePaths(ctx context.Context, query string) ([]string, error) {
-	opts := &github.SearchOptions{ListOptions: github.ListOptions{PerPage: 100}}
-
-	var paths []string
-
-	for range maxPagesPerList {
-		result, resp, err := c.gh.Search.Code(ctx, query, opts)
-		if err != nil {
-			if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnprocessableEntity) {
-				return paths, fmt.Errorf("github code search unavailable: %w", err)
-			}
-
-			return paths, fmt.Errorf("cannot search github code: %w", err)
-		}
-
-		for _, item := range result.CodeResults {
-			if item.Repository == nil || item.Path == nil {
-				continue
-			}
-
-			paths = append(paths, fmt.Sprintf("%s/%s", item.Repository.GetName(), item.GetPath()))
-		}
-
-		if resp == nil || resp.NextPage == 0 {
-			break
-		}
-
-		opts.Page = resp.NextPage
-	}
-
-	return paths, nil
-}
-
 func repoFromGitHub(repo *github.Repository) repoListItem {
 	if repo == nil {
 		return repoListItem{}
