@@ -62,7 +62,7 @@ func TestWorker_PicksUpAndCompletes(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"echo-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"echo-agent": ag}),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -126,7 +126,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"worker-agent": ag}),
 	)
 
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 15*time.Second)
@@ -185,7 +185,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 	// shutdown, so a fresh worker must pick it up and resume on its own.
 	runWorker2 := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"worker-agent": ag}),
 	)
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 15*time.Second)
@@ -253,7 +253,7 @@ func TestWorker_AwaitsApprovalDoesNotFail(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"approval-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"approval-agent": ag}),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -339,7 +339,7 @@ func TestWorker_ApprovalApprovedResumesAndCompletes(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"approval-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"approval-agent": ag}),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -429,7 +429,7 @@ func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"approval-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"approval-agent": ag}),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -524,12 +524,10 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 		agent.WithHandoffs(childAgent),
 	)
 
-	registry := &simpleRegistry{
-		agents: map[string]*agent.Agent{
-			"root-agent":  rootAgent,
-			"child-agent": childAgent,
-		},
-	}
+	registry := newTestRegistry(map[string]*agent.Agent{
+		"root-agent":  rootAgent,
+		"child-agent": childAgent,
+	})
 
 	run := insertPendingRun(
 		t,
@@ -657,12 +655,10 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 		innerAgent.AsTool("call_inner", "Call inner"),
 	)
 
-	registry := &simpleRegistry{
-		agents: map[string]*agent.Agent{
-			"outer-agent": outerAgent,
-			"inner-agent": innerAgent,
-		},
-	}
+	registry := newTestRegistry(map[string]*agent.Agent{
+		"outer-agent": outerAgent,
+		"inner-agent": innerAgent,
+	})
 
 	run := insertPendingRun(
 		t,
@@ -805,13 +801,11 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 		childAgent.AsTool("call_child", "Call child"),
 	)
 
-	registry := &simpleRegistry{
-		agents: map[string]*agent.Agent{
-			"outer-agent":      outerAgent,
-			"child-agent":      childAgent,
-			"grandchild-agent": grandchildAgent,
-		},
-	}
+	registry := newTestRegistry(map[string]*agent.Agent{
+		"outer-agent":      outerAgent,
+		"child-agent":      childAgent,
+		"grandchild-agent": grandchildAgent,
+	})
 
 	run := insertPendingRun(
 		t,
@@ -947,7 +941,7 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 
 	runWorkerA := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"worker-agent": ag}),
 		agentrun.WithWorkerMaxConcurrency(1),
 	)
 
@@ -966,7 +960,7 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 
 	runWorkerB := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"worker-agent": ag}),
 		agentrun.WithWorkerMaxConcurrency(1),
 	)
 
@@ -1030,7 +1024,7 @@ func TestWorker_UnknownAgentFails(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{}},
+		newTestRegistry(map[string]*agent.Agent{}),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -1074,7 +1068,7 @@ func TestWorker_InvalidInputMessagesFails(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"worker-agent": ag}),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -1190,7 +1184,7 @@ func runSIGTERMSubprocess(t *testing.T) {
 
 	runWorker := newTestWorker(
 		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"battle-agent": ag}},
+		newTestRegistry(map[string]*agent.Agent{"battle-agent": ag}),
 		agentrun.WithWorkerInterval(150*time.Millisecond),
 		agentrun.WithWorkerMaxConcurrency(1),
 	)

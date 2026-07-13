@@ -32,13 +32,20 @@ import (
 
 func githubRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderGitHub,
-		DisplayName:    "GitHub",
-		AuthURL:        "https://github.com/login/oauth/authorize",
-		TokenURL:       "https://github.com/login/oauth/access_token",
-		ProbeURL:       "https://api.github.com/user",
-		OAuth2Scopes:   []string{"read:org"},
-		SupportsAPIKey: true,
+		Provider:     coredata.ConnectorProviderGitHub,
+		DisplayName:  "GitHub",
+		AuthURL:      "https://github.com/login/oauth/authorize",
+		TokenURL:     "https://github.com/login/oauth/access_token",
+		ProbeURL:     "https://api.github.com/user",
+		OAuth2Scopes: []string{"read:org"},
+		DiscoveryOAuth2Scopes: []string{
+			"repo",
+			"security_events",
+			"read:enterprise",
+			"read:audit_log",
+		},
+		SupportsIncrementalAuth: true,
+		SupportsAPIKey:          true,
 		ExtraSettings: []ExtraSetting{
 			{Key: "organization", Label: "Organization", Required: true},
 		},

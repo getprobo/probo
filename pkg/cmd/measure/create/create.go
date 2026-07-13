@@ -60,10 +60,11 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg         string
-		flagName        string
-		flagCategory    string
-		flagDescription string
+		flagOrg           string
+		flagName          string
+		flagCategory      string
+		flagDescription   string
+		flagThirdPartyIDs []string
 	)
 
 	cmd := &cobra.Command{
@@ -141,6 +142,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["description"] = flagDescription
 			}
 
+			if len(flagThirdPartyIDs) > 0 {
+				input["thirdPartyIds"] = flagThirdPartyIDs
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -170,6 +175,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Measure name (required)")
 	cmd.Flags().StringVar(&flagCategory, "category", "", "Measure category (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Measure description")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "ThirdParty IDs to link (comma-separated)")
 
 	return cmd
 }

@@ -36,6 +36,7 @@ import (
 	"slices"
 	"sync"
 
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -352,6 +353,29 @@ func (r *Registry) ProviderOAuth2Scopes(p coredata.ConnectorProvider) []string {
 		// Return a copy so callers cannot mutate the shared, concurrently
 		// read registration slice held by this long-lived registry.
 		return slices.Clone(reg.OAuth2Scopes)
+	}
+
+	return nil
+}
+
+// ProviderDiscoveryOAuth2Scopes returns the additional OAuth2 scopes a
+// provider may request when escalating an existing connector for
+// discovery. Returns nil when the provider has no discovery scopes.
+func (r *Registry) ProviderDiscoveryOAuth2Scopes(p coredata.ConnectorProvider) []string {
+	if reg, ok := r.Get(p); ok {
+		return slices.Clone(reg.DiscoveryOAuth2Scopes)
+	}
+
+	return nil
+}
+
+// ProviderOAuth2ScopesForDiscovery returns the OAuth2 scopes to request
+// when reconnecting a connector for discovery: the union of the
+// provider's access-review baseline scopes and discovery escalation
+// scopes.
+func (r *Registry) ProviderOAuth2ScopesForDiscovery(p coredata.ConnectorProvider) []string {
+	if reg, ok := r.Get(p); ok {
+		return connector.UnionScopes(reg.OAuth2Scopes, reg.DiscoveryOAuth2Scopes)
 	}
 
 	return nil

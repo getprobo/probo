@@ -191,7 +191,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVar(&flagAmount, "amount", 0, "Asset amount")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
 	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored")
-	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "ThirdParty IDs (comma-separated)")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "ThirdParty IDs (comma-separated)")
 
 	return cmd
 }

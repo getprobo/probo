@@ -47,7 +47,11 @@ type Registration struct {
 	TokenEndpointAuth       string // "post-form" (default), "basic-form", or "basic-json"
 	SupportsIncrementalAuth bool
 	OAuth2Scopes            []string
-	ProbeURL                string
+	// DiscoveryOAuth2Scopes lists additional OAuth2 scopes requested when
+	// escalating an existing GitHub connector for discovery. They are unioned
+	// with OAuth2Scopes on reconnect; access review keeps the base scopes only.
+	DiscoveryOAuth2Scopes []string
+	ProbeURL              string
 	// RequiresPKCE enables RFC 7636 PKCE (S256) on the authorization
 	// request and replays the verifier on the token exchange. Default
 	// false; non-PKCE providers are unaffected.

@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
@@ -76,6 +77,7 @@ type (
 		CookieBanner      *cookiebanner.Service
 		Geoloc            *geoloc.Service
 		ThirdParty        *thirdparty.Service
+		GitHubDiscovery   *ghdiscovery.Service
 		RiskManagement    *riskmanagement.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
@@ -216,6 +218,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
+			cfg.GitHubDiscovery,
 			cfg.RiskManagement,
 			cfg.GraphQLLimits,
 		),
@@ -242,6 +245,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.AccessReview,
 			cfg.CookieBanner,
 			cfg.RiskManagement,
+			cfg.GitHubDiscovery,
 			cfg.TokenSecret,
 			cfg.File,
 			cfg.BaseURL,

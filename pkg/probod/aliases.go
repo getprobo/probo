@@ -48,6 +48,7 @@ type (
 	LLMAgentConfig                = probodconfig.LLMAgentConfig
 	EvidenceDescriberConfig       = probodconfig.EvidenceDescriberConfig
 	ThirdPartyVettingWorkerConfig = probodconfig.ThirdPartyVettingWorkerConfig
+	GitHubDiscoveryWorkerConfig   = probodconfig.GitHubDiscoveryWorkerConfig
 	AgentsConfig                  = probodconfig.AgentsConfig
 
 	TrackerMappingWorkerConfig             = probodconfig.TrackerMappingWorkerConfig

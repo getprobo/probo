@@ -293,6 +293,32 @@ spec:
             - name: PROBOD_THIRD_PARTY_VETTING_STALE_AFTER
               value: {{ .Values.probo.thirdPartyVettingWorker.staleAfter | quote }}
             {{- end }}
+            # GitHub Discovery Agent
+            {{- if .Values.probo.githubDiscovery.provider }}
+            - name: PROBOD_AGENT_GITHUB_DISCOVERY_PROVIDER
+              value: {{ .Values.probo.githubDiscovery.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.githubDiscovery.modelName }}
+            - name: PROBOD_AGENT_GITHUB_DISCOVERY_MODEL_NAME
+              value: {{ .Values.probo.githubDiscovery.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.githubDiscovery.temperature }}
+            - name: PROBOD_AGENT_GITHUB_DISCOVERY_TEMPERATURE
+              value: {{ .Values.probo.githubDiscovery.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.githubDiscovery.maxTokens }}
+            - name: PROBOD_AGENT_GITHUB_DISCOVERY_MAX_TOKENS
+              value: {{ .Values.probo.githubDiscovery.maxTokens | quote }}
+            {{- end }}
+            # GitHub Discovery Worker
+            {{- if .Values.probo.githubDiscoveryWorker.interval }}
+            - name: PROBOD_GITHUB_DISCOVERY_INTERVAL
+              value: {{ .Values.probo.githubDiscoveryWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.githubDiscoveryWorker.maxConcurrency }}
+            - name: PROBOD_GITHUB_DISCOVERY_MAX_CONCURRENCY
+              value: {{ .Values.probo.githubDiscoveryWorker.maxConcurrency | quote }}
+            {{- end }}
             # Third-party Disambiguation Agent
             {{- if .Values.probo.thirdPartyDisambiguation.provider }}
             - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER

@@ -60,6 +60,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -199,6 +200,10 @@ func New() *Implm {
 			ThirdPartyVetting: ThirdPartyVettingWorkerConfig{
 				Interval:       10,
 				StaleAfter:     1500,
+				MaxConcurrency: 1,
+			},
+			GitHubDiscovery: GitHubDiscoveryWorkerConfig{
+				Interval:       10,
 				MaxConcurrency: 1,
 			},
 			CommonThirdPartyEnrichmentWorker: CommonThirdPartyEnrichmentWorkerConfig{
@@ -651,6 +656,40 @@ func (impl *Implm) Run(
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
+	githubDiscoveryService := ghdiscovery.NewService(pgClient, encryptionKey)
+	githubDiscoverySynthesizer := impl.buildGitHubDiscoverySynthesizer(l, tp, r)
+	githubDiscoveryRepoClassifier := impl.buildGitHubDiscoveryRepoClassifier(l, tp, r)
+	githubDiscoveryRunner := ghdiscovery.NewRunner(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		providerRegistry,
+		githubDiscoverySynthesizer,
+		githubDiscoveryRepoClassifier,
+		l.Named("github-discovery"),
+		ghdiscovery.WithHTTPClientOptions(
+			httpclient.WithLogger(l.Named("github-discovery-http")),
+			httpclient.WithTracerProvider(tp),
+			httpclient.WithRegisterer(r),
+			httpclient.WithSSRFProtection(),
+		),
+	)
+
+	agentRunRegistry := agentrun.NewRegistry()
+	agentRunRegistry.RegisterRunHandler(
+		ghdiscovery.StartAgentName,
+		ghdiscovery.NewRunHandler(githubDiscoveryRunner),
+	)
+
+	agentRunCheckpointer := coredata.NewPGCheckpointer(pgClient)
+	agentRunWorker := agentrun.NewWorker(
+		pgClient,
+		agentRunCheckpointer,
+		agentRunRegistry,
+		l.Named("agent-run-worker"),
+		agentrun.WithWorkerInterval(time.Duration(impl.cfg.GitHubDiscovery.Interval)*time.Second),
+		agentrun.WithWorkerMaxConcurrency(impl.cfg.GitHubDiscovery.MaxConcurrency),
+	)
 
 	serverHandler, err := server.NewServer(
 		server.Config{
@@ -668,6 +707,7 @@ func (impl *Implm) Run(
 			CookieBanner:      cookieBannerService,
 			Geoloc:            geolocService,
 			ThirdParty:        thirdPartyService,
+			GitHubDiscovery:   githubDiscoveryService,
 			RiskManagement:    riskManagementService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
@@ -1021,6 +1061,16 @@ func (impl *Implm) Run(
 		},
 	)
 
+	agentRunWorkerCtx, stopAgentRunWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := agentRunWorker.Run(agentRunWorkerCtx); err != nil {
+				cancel(fmt.Errorf("agent run worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 
@@ -1055,6 +1105,7 @@ func (impl *Implm) Run(
 	stopCommonThirdPartyEnrichmentWorker()
 	stopMailingListWorker()
 	stopVettingWorker()
+	stopAgentRunWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentNotification()

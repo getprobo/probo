@@ -220,6 +220,45 @@ func TestRegistry_ProviderOAuth2Scopes(t *testing.T) {
 	assert.Nil(t, r.ProviderOAuth2Scopes(coredata.ConnectorProvider("UNKNOWN")))
 }
 
+// TestRegistry_ProviderDiscoveryOAuth2Scopes returns escalation scopes for
+// GitHub and nil for providers without discovery scopes.
+func TestRegistry_ProviderDiscoveryOAuth2Scopes(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+
+	githubScopes := r.ProviderDiscoveryOAuth2Scopes(coredata.ConnectorProviderGitHub)
+	assert.Equal(
+		t,
+		[]string{"repo", "security_events", "read:enterprise", "read:audit_log"},
+		githubScopes,
+	)
+	assert.Nil(t, r.ProviderDiscoveryOAuth2Scopes(coredata.ConnectorProviderSlack))
+	assert.Nil(t, r.ProviderDiscoveryOAuth2Scopes(coredata.ConnectorProvider("UNKNOWN")))
+}
+
+// TestRegistry_ProviderOAuth2ScopesForDiscovery unions baseline and escalation
+// scopes for GitHub.
+func TestRegistry_ProviderOAuth2ScopesForDiscovery(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+
+	scopes := r.ProviderOAuth2ScopesForDiscovery(coredata.ConnectorProviderGitHub)
+	assert.Equal(
+		t,
+		[]string{
+			"read:audit_log",
+			"read:enterprise",
+			"read:org",
+			"repo",
+			"security_events",
+		},
+		scopes,
+	)
+	assert.Nil(t, r.ProviderOAuth2ScopesForDiscovery(coredata.ConnectorProvider("UNKNOWN")))
+}
+
 // TestRegistry_ProbeURL covers the registered and unregistered paths.
 // Slack ships a probe URL in its Registration; an unknown provider
 // returns the empty string.

@@ -1,0 +1,127 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package github
+
+import (
+	"context"
+	"fmt"
+	"sort"
+	"strings"
+
+	"go.probo.inc/probo/pkg/discovery/vfs"
+)
+
+type (
+	githubFS struct {
+		api *apiClient
+		org string
+	}
+
+	contentsDirItem struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	}
+)
+
+func newGitHubFS(api *apiClient, org string) *githubFS {
+	return &githubFS{api: api, org: org}
+}
+
+func (f *githubFS) Read(ctx context.Context, path string) ([]byte, error) {
+	path = vfs.NormalizePath(path)
+	if path == "" {
+		return nil, vfs.ErrNotFound
+	}
+
+	repoName, filePath, ok := vfs.SplitRepoPath(path)
+	if !ok || filePath == "" {
+		return nil, vfs.ErrNotFound
+	}
+
+	segments := append([]string{"contents"}, splitContentPath(filePath)...)
+
+	endpoint, err := f.api.repoEndpoint(f.org, repoName, segments...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github contents URL: %w", err)
+	}
+
+	var payload contentResponse
+
+	if _, err := f.api.getJSON(ctx, endpoint, &payload); err != nil {
+		return nil, vfs.ErrNotFound
+	}
+
+	content, ok := decodeGitHubContent(payload.Encoding, payload.Content)
+	if !ok {
+		return nil, fmt.Errorf("cannot decode github file content")
+	}
+
+	return []byte(content), nil
+}
+
+func (f *githubFS) ReadDir(ctx context.Context, dir string) ([]vfs.Entry, error) {
+	dir = vfs.NormalizePath(dir)
+	if dir == "" {
+		return nil, vfs.ErrNotFound
+	}
+
+	repoName, dirPath, ok := vfs.SplitRepoPath(dir)
+	if !ok {
+		return nil, vfs.ErrNotFound
+	}
+
+	segments := []string{"contents"}
+	if dirPath != "" {
+		segments = append(segments, splitContentPath(dirPath)...)
+	}
+
+	endpoint, err := f.api.repoEndpoint(f.org, repoName, segments...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github contents URL: %w", err)
+	}
+
+	var items []contentsDirItem
+
+	if _, err := f.api.getJSON(ctx, endpoint, &items); err != nil {
+		return nil, vfs.ErrNotFound
+	}
+
+	entries := make([]vfs.Entry, 0, len(items))
+	for _, item := range items {
+		entries = append(entries, vfs.Entry{
+			Name:  item.Name,
+			IsDir: strings.EqualFold(item.Type, "dir"),
+		})
+	}
+
+	if len(entries) == 0 {
+		return nil, vfs.ErrNotFound
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Name < entries[j].Name
+	})
+
+	return entries, nil
+}
+
+// Glob is unsupported on the API-backed filesystem. Discovery indexing runs
+// against cloned worktrees; this FS only serves per-path Read fallbacks.
+func (f *githubFS) Glob(ctx context.Context, pattern string) ([]string, error) {
+	_ = ctx
+	_ = pattern
+
+	return nil, nil
+}

@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
@@ -73,6 +74,7 @@ type (
 		providerRegistry  *provider.Registry
 		riskManagement    *riskmanagement.Service
 		thirdParty        *thirdparty.Service
+		githubDiscovery   *ghdiscovery.Service
 		logger            *log.Logger
 		fileManager       *filemanager.Service
 		baseURL           *baseurl.BaseURL
@@ -99,6 +101,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
+	githubDiscoverySvc *ghdiscovery.Service,
 	riskManagementSvc *riskmanagement.Service,
 	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
@@ -121,6 +124,7 @@ func NewMux(
 		tokenSecret,
 		logger,
 		thirdPartySvc,
+		githubDiscoverySvc,
 		riskManagementSvc,
 		fileManagerSvc,
 		baseURL,

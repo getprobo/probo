@@ -36,6 +36,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
@@ -75,6 +76,7 @@ type Config struct {
 	CookieBanner      *cookiebanner.Service
 	Geoloc            *geoloc.Service
 	ThirdParty        *thirdparty.Service
+	GitHubDiscovery   *ghdiscovery.Service
 	RiskManagement    *riskmanagement.Service
 	Cookie            securecookie.Config
 	TokenSecret       string

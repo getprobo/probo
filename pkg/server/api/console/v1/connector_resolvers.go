@@ -10,18 +10,32 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
 func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
 	scopes := r.providerRegistry.ProviderOAuth2Scopes(obj.Provider)
+	if scopes == nil {
+		return []string{}, nil
+	}
+
+	return scopes, nil
+}
+
+// DiscoveryOauth2Scopes is the resolver for the discoveryOauth2Scopes field.
+func (r *connectorResolver) DiscoveryOauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
+	scopes := r.providerRegistry.ProviderDiscoveryOAuth2Scopes(obj.Provider)
 	if scopes == nil {
 		return []string{}, nil
 	}
@@ -159,6 +173,55 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 
 	return &types.DeleteSlackConnectionPayload{
 		DeletedSlackConnectionID: input.SlackConnectionID,
+	}, nil
+}
+
+// RunGitHubDiscovery is the resolver for the runGitHubDiscovery field.
+func (r *mutationResolver) RunGitHubDiscovery(ctx context.Context, input types.RunGitHubDiscoveryInput) (*types.RunGitHubDiscoveryPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorRunGitHubDiscovery)
+	if err != nil {
+		return nil, err
+	}
+
+	run, err := r.githubDiscovery.Run(
+		ctx,
+		scope,
+		ghdiscovery.RunRequest{ConnectorID: input.ConnectorID},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, ghdiscovery.ErrDiscoveryInProgress) {
+			return nil, gqlutils.Conflict(ctx, ghdiscovery.ErrDiscoveryInProgress)
+		}
+
+		var scopeErr *ghdiscovery.InsufficientScopesError
+		if errors.As(err, &scopeErr) {
+			return nil, &gqlerror.Error{
+				Message: scopeErr.Error(),
+				Path:    graphql.GetPath(ctx),
+				Extensions: map[string]any{
+					"code":            "INVALID",
+					"cause":           "INSUFFICIENT_OAUTH_SCOPES",
+					"missingScopes":   scopeErr.Missing,
+					"reconnectScopes": ghdiscovery.DiscoveryReconnectScopes(),
+				},
+			}
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot run github discovery", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RunGitHubDiscoveryPayload{
+		AgentRun: types.NewAgentRun(run),
 	}, nil
 }
 

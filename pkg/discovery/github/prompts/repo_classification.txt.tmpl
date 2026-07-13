@@ -1,0 +1,35 @@
+You are classifying GitHub repositories for a compliance discovery scan.
+
+For each repository candidate below, decide:
+- whether it is likely a production/customer-facing service or application repository
+- how strongly we should shallow-clone it for security file discovery
+
+Use all provided metadata:
+- name, description, topics, language
+- visibility, default branch, activity signals (stars, forks, issues, pushed_at)
+- branch protection and GitHub Actions workflows
+- the existing heuristic score and reason as a hint, not a final answer
+
+Return JSON only with this shape:
+{
+  "repositories": [
+    {
+      "name": "repo-name",
+      "production_likely": true,
+      "clone_priority": "high",
+      "confidence": 0.82,
+      "rationale": "one short sentence"
+    }
+  ]
+}
+
+Rules:
+- clone_priority must be one of: high, medium, low, skip
+- confidence is 0.0 to 1.0; below 0.55 means uncertain
+- prefer skip for sandboxes, demos, archived experiments, docs-only repos, and personal playgrounds
+- prefer high for core services, APIs, apps, and repos with branch protection plus CI workflows
+- docs/internal tooling can be medium when they support production operations
+- do not invent repositories; only classify names from the input list
+
+Candidates:
+{{.CandidatesJSON}}

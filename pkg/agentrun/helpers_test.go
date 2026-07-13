@@ -24,7 +24,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -92,7 +91,7 @@ func newDummyAgent(name string, responses []*llm.ChatCompletionResponse, tools .
 
 func newTestWorker(
 	client *pg.Client,
-	registry agent.AgentRegistry,
+	registry *agentrun.Registry,
 	opts ...agentrun.WorkerOption,
 ) *agentrun.Worker {
 	store := coredata.NewPGCheckpointer(client)
@@ -136,17 +135,13 @@ func toolCallResponse(toolCalls ...llm.ToolCall) *llm.ChatCompletionResponse {
 	}
 }
 
-type simpleRegistry struct {
-	agents map[string]*agent.Agent
-}
-
-func (r *simpleRegistry) Agent(name string) (*agent.Agent, error) {
-	a, ok := r.agents[name]
-	if !ok {
-		return nil, fmt.Errorf("agent %q not found", name)
+func newTestRegistry(agents map[string]*agent.Agent) *agentrun.Registry {
+	reg := agentrun.NewRegistry()
+	for name, ag := range agents {
+		reg.RegisterAgent(name, ag)
 	}
 
-	return a, nil
+	return reg
 }
 
 func insertTestOrganization(t *testing.T, client *pg.Client) gid.GID {

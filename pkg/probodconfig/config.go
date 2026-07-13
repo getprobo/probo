@@ -67,6 +67,7 @@ type (
 		Agents            AgentsConfig                  `json:"llm"`
 		EvidenceDescriber EvidenceDescriberConfig       `json:"evidence-describer"`
 		ThirdPartyVetting ThirdPartyVettingWorkerConfig `json:"third-party-vetting-worker"`
+		GitHubDiscovery   GitHubDiscoveryWorkerConfig   `json:"github-discovery-worker"`
 
 		TrackerMappingWorker             TrackerMappingWorkerConfig             `json:"tracker-mapping-worker"`
 		CommonPatternEnrichmentWorker    CommonPatternEnrichmentWorkerConfig    `json:"common-pattern-enrichment-worker"`
