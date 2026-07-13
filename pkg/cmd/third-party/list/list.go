@@ -71,7 +71,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb third-party list
 
   # List third parties sorted by name
-  prb third-party ls --order-by NAME --json`,
+  prb third-party ls --order-by NAME -o json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
