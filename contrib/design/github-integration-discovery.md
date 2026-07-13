@@ -482,6 +482,13 @@ reconnecting the same connector with additional scopes.
   `missingScopes`, and `reconnectScopes` when the connector lacks required
   baseline scopes.
 
+**Measure creation**
+
+Discovery persists measures and links them to the GitHub ThirdParty in one
+transaction (`persist.go`). For agents creating measures via MCP/API,
+`addMeasure` / `createMeasure` accept optional `third_party_ids` so linking
+does not require a separate `linkMeasure` call.
+
 Graceful degradation: if an escalation scope or plan is insufficient mid-run →
 `UNKNOWN` or `NOT_APPLICABLE` with `limitations[]` in run result — never a false
 non-conformity.

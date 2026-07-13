@@ -38,6 +38,7 @@ type (
 		Name           string
 		Description    *string
 		Category       string
+		ThirdPartyIDs  []gid.GID
 	}
 
 	UpdateMeasureRequest struct {
@@ -78,6 +79,9 @@ func (cmr *CreateMeasureRequest) Validate() error {
 	v.Check(cmr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cmr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(cmr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.CheckEach(cmr.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
+	})
 
 	return v.Error()
 }
@@ -577,6 +581,25 @@ func (s MeasureService) Create(
 
 			if err := measure.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert measure: %w", err)
+			}
+
+			if len(req.ThirdPartyIDs) > 0 {
+				thirdParties := &coredata.ThirdParties{}
+				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot load third parties: %w", err)
+				}
+
+				for _, thirdPartyID := range req.ThirdPartyIDs {
+					mapping := coredata.MeasureThirdParty{
+						MeasureID:    measure.ID,
+						ThirdPartyID: thirdPartyID,
+						CreatedAt:    now,
+					}
+
+					if err := mapping.Upsert(ctx, conn, scope); err != nil {
+						return fmt.Errorf("cannot link measure to third party: %w", err)
+					}
+				}
 			}
 
 			return nil

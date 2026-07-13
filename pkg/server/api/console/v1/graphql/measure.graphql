@@ -147,6 +147,7 @@ input CreateMeasureInput {
     name: String!
     description: String
     category: String!
+    thirdPartyIds: [ID!]
 }
 
 input UpdateMeasureInput {

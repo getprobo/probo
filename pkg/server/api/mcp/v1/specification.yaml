@@ -2437,6 +2437,11 @@ components:
         category:
           type: string
           description: Measure category
+        third_party_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: ThirdParty IDs to link on creation
 
     AddMeasureOutput:
       type: object

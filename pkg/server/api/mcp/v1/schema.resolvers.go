@@ -461,6 +461,7 @@ func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 			Name:           input.Name,
 			Description:    input.Description,
 			Category:       input.Category,
+			ThirdPartyIDs:  input.ThirdPartyIds,
 		},
 	)
 	if err != nil {

@@ -283,6 +283,7 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 			Name:           input.Name,
 			Description:    input.Description,
 			Category:       input.Category,
+			ThirdPartyIDs:  input.ThirdPartyIds,
 		},
 	)
 	if err != nil {

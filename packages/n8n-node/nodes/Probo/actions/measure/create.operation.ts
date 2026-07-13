@@ -71,6 +71,19 @@ export const description: INodeProperties[] = [
 		description: 'The category of the measure',
 		required: true,
 	},
+	{
+		displayName: 'Third Party IDs',
+		name: 'thirdPartyIds',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['measure'],
+				operation: ['create'],
+			},
+		},
+		default: '',
+		description: 'Comma-separated ThirdParty IDs to link on creation',
+	},
 ];
 
 export async function execute(
@@ -81,6 +94,11 @@ export async function execute(
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const category = this.getNodeParameter('category', itemIndex) as string;
+	const thirdPartyIdsRaw = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;
+	const thirdPartyIds = thirdPartyIdsRaw
+		.split(',')
+		.map((id) => id.trim())
+		.filter((id) => id.length > 0);
 
 	const query = `
 		mutation CreateMeasure($input: CreateMeasureInput!) {
@@ -106,6 +124,7 @@ export async function execute(
 			name,
 			...(description && { description }),
 			category,
+			...(thirdPartyIds.length > 0 && { thirdPartyIds }),
 		},
 	};
 
