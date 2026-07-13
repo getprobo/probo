@@ -49,9 +49,9 @@ type (
 		MaxConcurrency int `json:"max-concurrency"`
 	}
 
-	// GitHubDiscoveryWorkerConfig holds worker-side tuning for the GitHub
-	// discovery background worker. LLM parameters for synthesis live under
-	// AgentsConfig.GitHubDiscovery.
+	// GitHubDiscoveryWorkerConfig tunes the shared agent-run worker that
+	// schedules github-discovery and other agent_runs jobs. LLM parameters
+	// for synthesis live under AgentsConfig.GitHubDiscovery.
 	GitHubDiscoveryWorkerConfig struct {
 		Interval       int `json:"interval"` // seconds between polls
 		MaxConcurrency int `json:"max-concurrency"`

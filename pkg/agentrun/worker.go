@@ -21,7 +21,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
-	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -58,7 +57,7 @@ func WithWorkerMaxConcurrency(n int) WorkerOption {
 func NewWorker(
 	pgClient *pg.Client,
 	store *coredata.PGCheckpointer,
-	registry agent.AgentRegistry,
+	registry *Registry,
 	logger *log.Logger,
 	opts ...WorkerOption,
 ) *Worker {

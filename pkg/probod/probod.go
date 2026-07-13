@@ -661,6 +661,21 @@ func (impl *Implm) Run(
 		l.Named("github-discovery"),
 	)
 
+	agentRunRegistry := agentrun.NewRegistry()
+	agentRunRegistry.RegisterRunHandler(
+		ghdiscovery.StartAgentName,
+		ghdiscovery.NewRunHandler(githubDiscoveryRunner),
+	)
+	agentRunCheckpointer := coredata.NewPGCheckpointer(pgClient)
+	agentRunWorker := agentrun.NewWorker(
+		pgClient,
+		agentRunCheckpointer,
+		agentRunRegistry,
+		l.Named("agent-run-worker"),
+		agentrun.WithWorkerInterval(time.Duration(impl.cfg.GitHubDiscovery.Interval)*time.Second),
+		agentrun.WithWorkerMaxConcurrency(impl.cfg.GitHubDiscovery.MaxConcurrency),
+	)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
@@ -1031,19 +1046,12 @@ func (impl *Implm) Run(
 		},
 	)
 
-	githubDiscoveryWorker := ghdiscovery.NewDiscoveryWorker(
-		pgClient,
-		githubDiscoveryRunner,
-		l.Named("github-discovery-worker"),
-		worker.WithInterval(time.Duration(impl.cfg.GitHubDiscovery.Interval)*time.Second),
-		worker.WithMaxConcurrency(impl.cfg.GitHubDiscovery.MaxConcurrency),
-	)
-	githubDiscoveryWorkerCtx, stopGitHubDiscoveryWorker := context.WithCancel(context.Background())
+	agentRunWorkerCtx, stopAgentRunWorker := context.WithCancel(context.Background())
 
 	wg.Go(
 		func() {
-			if err := githubDiscoveryWorker.Run(githubDiscoveryWorkerCtx); err != nil {
-				cancel(fmt.Errorf("github discovery worker crashed: %w", err))
+			if err := agentRunWorker.Run(agentRunWorkerCtx); err != nil {
+				cancel(fmt.Errorf("agent run worker crashed: %w", err))
 			}
 		},
 	)
@@ -1082,7 +1090,7 @@ func (impl *Implm) Run(
 	stopCommonThirdPartyEnrichmentWorker()
 	stopMailingListWorker()
 	stopVettingWorker()
-	stopGitHubDiscoveryWorker()
+	stopAgentRunWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentNotification()

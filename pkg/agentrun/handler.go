@@ -34,7 +34,7 @@ import (
 type handler struct {
 	pg           *pg.Client
 	store        *coredata.PGCheckpointer
-	registry     agent.AgentRegistry
+	registry     *Registry
 	logger       *log.Logger
 	shutdownCh   chan struct{}
 	shutdownOnce sync.Once
@@ -141,6 +141,10 @@ func sanitizeError(err error) string {
 }
 
 func (h *handler) executeRun(ctx context.Context, run *coredata.AgentRun) error {
+	if handler, ok := h.registry.RunHandler(run.StartAgentName); ok {
+		return h.executeRunHandler(ctx, run, handler)
+	}
+
 	runID := run.ID.String()
 
 	var (
@@ -217,6 +221,90 @@ func (h *handler) executeRun(ctx context.Context, run *coredata.AgentRun) error 
 		}
 	}
 
+	return h.commitRunResult(ctx, run, runErr)
+}
+
+func (h *handler) executeRunHandler(
+	ctx context.Context,
+	run *coredata.AgentRun,
+	runHandler RunHandler,
+) error {
+	runID := run.ID.String()
+
+	if run.Checkpoint != nil {
+		return h.commitRunHandlerFailure(
+			ctx,
+			run,
+			fmt.Errorf("run handler %q does not support checkpoints", run.StartAgentName),
+		)
+	}
+
+	h.logger.InfoCtx(
+		ctx,
+		"starting run handler",
+		log.String("run_id", runID),
+		log.String("agent", run.StartAgentName),
+	)
+
+	resultJSON, runErr := runHandler.Run(ctx, run)
+
+	now := time.Now()
+	run.UpdatedAt = now
+	run.StartedAt = nil
+	run.Result = nil
+	run.ErrorMessage = nil
+
+	if runErr == nil {
+		run.Status = coredata.AgentRunStatusCompleted
+		run.Result = resultJSON
+	} else {
+		run.Status = coredata.AgentRunStatusFailed
+
+		h.logger.ErrorCtx(
+			context.WithoutCancel(ctx),
+			"run handler failed",
+			log.String("run_id", runID),
+			log.String("agent", run.StartAgentName),
+			log.Error(runErr),
+		)
+
+		msg := sanitizeError(runErr)
+		run.ErrorMessage = &msg
+	}
+
+	return h.commitRunResult(ctx, run, runErr)
+}
+
+func (h *handler) commitRunHandlerFailure(
+	ctx context.Context,
+	run *coredata.AgentRun,
+	runErr error,
+) error {
+	now := time.Now()
+	run.UpdatedAt = now
+	run.StartedAt = nil
+	run.Result = nil
+	run.Status = coredata.AgentRunStatusFailed
+
+	msg := sanitizeError(runErr)
+	run.ErrorMessage = &msg
+
+	h.logger.ErrorCtx(
+		context.WithoutCancel(ctx),
+		"run handler failed",
+		log.String("run_id", run.ID.String()),
+		log.String("agent", run.StartAgentName),
+		log.Error(runErr),
+	)
+
+	return h.commitRunResult(ctx, run, runErr)
+}
+
+func (h *handler) commitRunResult(
+	ctx context.Context,
+	run *coredata.AgentRun,
+	runErr error,
+) error {
 	commitCtx := context.WithoutCancel(ctx)
 
 	if err := h.pg.WithTx(
@@ -231,7 +319,7 @@ func (h *handler) executeRun(ctx context.Context, run *coredata.AgentRun) error 
 				h.logger.WarnCtx(
 					ctx,
 					"agent run no longer RUNNING at commit; discarding result",
-					log.String("run_id", runID),
+					log.String("run_id", run.ID.String()),
 				)
 
 				return nil
