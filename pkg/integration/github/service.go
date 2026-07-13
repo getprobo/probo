@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -34,7 +35,8 @@ var (
 
 type (
 	Service struct {
-		pg *pg.Client
+		pg            *pg.Client
+		encryptionKey cipher.EncryptionKey
 	}
 
 	RunRequest struct {
@@ -42,8 +44,11 @@ type (
 	}
 )
 
-func NewService(pgClient *pg.Client) *Service {
-	return &Service{pg: pgClient}
+func NewService(pgClient *pg.Client, encryptionKey cipher.EncryptionKey) *Service {
+	return &Service{
+		pg:            pgClient,
+		encryptionKey: encryptionKey,
+	}
 }
 
 func (req RunRequest) Validate() error {
@@ -70,12 +75,16 @@ func (s *Service) Run(
 		func(ctx context.Context, tx pg.Tx) error {
 			connector := &coredata.Connector{}
 
-			if err := connector.LoadMetadataByID(ctx, tx, scope, req.ConnectorID); err != nil {
+			if err := connector.LoadByID(ctx, tx, scope, req.ConnectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
 			if connector.Provider != coredata.ConnectorProviderGitHub {
 				return fmt.Errorf("connector provider is %s, expected GITHUB", connector.Provider)
+			}
+
+			if err := validateDiscoveryScopes(connector.Protocol, connector.Connection); err != nil {
+				return err
 			}
 
 			if err := assertNoActiveDiscoveryRun(ctx, tx, req.ConnectorID); err != nil {

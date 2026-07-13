@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -24,6 +26,16 @@ import (
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
 func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
 	scopes := r.providerRegistry.ProviderOAuth2Scopes(obj.Provider)
+	if scopes == nil {
+		return []string{}, nil
+	}
+
+	return scopes, nil
+}
+
+// DiscoveryOauth2Scopes is the resolver for the discoveryOauth2Scopes field.
+func (r *connectorResolver) DiscoveryOauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
+	scopes := r.providerRegistry.ProviderDiscoveryOAuth2Scopes(obj.Provider)
 	if scopes == nil {
 		return []string{}, nil
 	}
@@ -187,6 +199,20 @@ func (r *mutationResolver) RunGitHubDiscovery(ctx context.Context, input types.R
 
 		if errors.Is(err, ghintegration.ErrDiscoveryInProgress) {
 			return nil, gqlutils.Conflict(ctx, ghintegration.ErrDiscoveryInProgress)
+		}
+
+		var scopeErr *ghintegration.InsufficientScopesError
+		if errors.As(err, &scopeErr) {
+			return nil, &gqlerror.Error{
+				Message: scopeErr.Error(),
+				Path:    graphql.GetPath(ctx),
+				Extensions: map[string]any{
+					"code":            "INVALID",
+					"cause":           "INSUFFICIENT_OAUTH_SCOPES",
+					"missingScopes":   scopeErr.Missing,
+					"reconnectScopes": ghintegration.DiscoveryReconnectScopes(),
+				},
+			}
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot run github discovery", log.Error(err))

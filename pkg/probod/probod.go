@@ -650,7 +650,7 @@ func (impl *Implm) Run(
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
-	githubDiscoveryService := ghintegration.NewService(pgClient)
+	githubDiscoveryService := ghintegration.NewService(pgClient, encryptionKey)
 	githubDiscoverySynthesizer := impl.buildGitHubDiscoverySynthesizer(l, tp, r)
 	githubDiscoveryRunner := ghintegration.NewRunner(
 		pgClient,

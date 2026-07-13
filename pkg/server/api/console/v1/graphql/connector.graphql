@@ -133,6 +133,12 @@ type Connector {
     id: ID!
     provider: ConnectorProvider!
     oauth2Scopes: [String!]! @goField(forceResolver: true)
+    """
+    discoveryOauth2Scopes lists additional OAuth2 scopes the provider may
+  request when reconnecting this connector for discovery. Empty for
+  providers without discovery escalation scopes.
+    """
+    discoveryOauth2Scopes: [String!]! @goField(forceResolver: true)
     createdAt: Datetime!
 }
 

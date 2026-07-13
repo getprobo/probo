@@ -447,16 +447,43 @@ pass**. Evidence lists failing repos.
 
 ## 8. OAuth scopes
 
+Discovery reuses the **existing GitHub connector** (`ConnectorProviderGitHub`).
+It does not introduce a new provider type. Access review keeps the provider's
+baseline OAuth scopes (`read:org`); discovery may **escalate privileges** by
+reconnecting the same connector with additional scopes.
+
 | Scope | Needed for |
 |-------|------------|
-| `read:org` | Org settings, members (existing) |
+| `read:org` | Org settings, members (required baseline; existing access review scope) |
 | `repo` (read) | Repos, branches, workflows, commits, statuses, environments, contents |
 | `security_events` | Dependabot, secret scanning, code scanning alerts |
 | `read:enterprise` | Enterprise settings |
 | `read:audit_log` | Audit log practices (Enterprise) |
 
-Graceful degradation: if scope or plan insufficient → `UNKNOWN` or
-`NOT_APPLICABLE` with `limitations[]` in run result — never a false
+**Scope model**
+
+- **Baseline** (`OAuth2Scopes` on the GitHub provider registration): `read:org`.
+  Required to start a discovery run on an OAuth2 connector.
+- **Escalation** (`DiscoveryOAuth2Scopes`): `repo`, `security_events`,
+  `read:enterprise`, `read:audit_log`. Requested through the existing connector
+  reconnect flow when deeper checks need them.
+- **Reconnect union**: `ProviderOAuth2ScopesForDiscovery` unions baseline and
+  escalation scopes. The initiate handler unions stored scopes with requested
+  scopes and sets `include_granted_scopes=true` (GitHub supports incremental
+  auth).
+- **API key connectors**: scope validation is skipped; PAT permissions are
+  implicit and the scanner degrades gracefully when they are insufficient.
+
+**GraphQL**
+
+- `Connector.oauth2Scopes` — baseline scopes (access review reconnect).
+- `Connector.discoveryOauth2Scopes` — escalation scopes for discovery reconnect.
+- `runGitHubDiscovery` returns `INVALID` with `cause: INSUFFICIENT_OAUTH_SCOPES`,
+  `missingScopes`, and `reconnectScopes` when the connector lacks required
+  baseline scopes.
+
+Graceful degradation: if an escalation scope or plan is insufficient mid-run →
+`UNKNOWN` or `NOT_APPLICABLE` with `limitations[]` in run result — never a false
 non-conformity.
 
 ---
