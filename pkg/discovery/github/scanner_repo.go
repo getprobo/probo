@@ -195,10 +195,17 @@ func (s *discoveryScanner) scanRepos(ctx context.Context, sheet *FactSheet) {
 
 	ciAgg := &ciProviderAggregate{Providers: map[string]int{}}
 
+	eligible := filterEligibleRepos(repos)
+
+	if len(eligible) > 0 {
+		workspace, workspaceLimitations := s.buildWorkspace(ctx, eligible)
+		s.fs = workspace
+
+		sheet.Limitations = append(sheet.Limitations, workspaceLimitations...)
+	}
+
 	fileIndex, indexLimitations := s.buildFileIndex(ctx)
 	sheet.Limitations = append(sheet.Limitations, indexLimitations...)
-
-	eligible := filterEligibleRepos(repos)
 
 	for _, repo := range eligible {
 		s.scanRepo(ctx, repo, fileIndex, agg, ciAgg)

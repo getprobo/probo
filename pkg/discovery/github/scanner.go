@@ -27,6 +27,7 @@ type discoveryScanner struct {
 	api    *apiClient
 	fs     vfs.FS
 	org    string
+	conn   connector.Connection
 	logger *log.Logger
 	scopes scopeSet
 }
@@ -43,6 +44,7 @@ func newDiscoveryScanner(
 		api:    api,
 		fs:     newGitHubFS(api, org),
 		org:    org,
+		conn:   conn,
 		logger: logger,
 		scopes: newScopeSet(conn),
 	}
