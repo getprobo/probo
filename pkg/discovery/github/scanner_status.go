@@ -16,6 +16,8 @@ package github
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -111,13 +113,9 @@ func (s *discoveryScanner) scanRepoCIStatuses(
 		ciAgg.Providers[provider]++
 	}
 
-	for _, provider := range providers {
-		if isExternalCIProvider(provider) {
-			agg.WithExternalCI++
-			ciAgg.ReposWithExternalCI++
-
-			break
-		}
+	if slices.ContainsFunc(providers, isExternalCIProvider) {
+		agg.WithExternalCI++
+		ciAgg.ReposWithExternalCI++
 	}
 }
 
@@ -237,9 +235,7 @@ func mapKeys(m map[string]struct{}) []string {
 
 func ciProviderFact(ciAgg *ciProviderAggregate, reposScanned int) Fact {
 	providers := make(map[string]int, len(ciAgg.Providers))
-	for name, count := range ciAgg.Providers {
-		providers[name] = count
-	}
+	maps.Copy(providers, ciAgg.Providers)
 
 	return Fact{
 		FactID:  "f-ci-providers",
