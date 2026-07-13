@@ -181,7 +181,157 @@ func p0MaterializeRules() []materializeRule {
 				return evaluateCountRiskAbsent(f.Value, "write_keys")
 			},
 		},
+		{
+			factKey:     "repo_commit_status_ci_coverage",
+			name:        "CI detected via commit statuses",
+			description: "Repositories report CI results via commit statuses or check runs.",
+			category:    "ci_cd",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_external_ci_coverage",
+			name:        "External CI providers detected",
+			description: "Repositories use external CI providers such as CircleCI or Jenkins.",
+			category:    "ci_cd",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_ci_providers",
+			name:        "CI provider inventory",
+			description: "CI providers are inventoried from commit statuses and check runs.",
+			category:    "ci_cd",
+			evaluate: func(f Fact) coredata.MeasureState {
+				providers, ok := factProviderMap(f.Value)
+				if !ok || len(providers) == 0 {
+					return coredata.MeasureStateNotImplemented
+				}
+
+				return coredata.MeasureStateImplemented
+			},
+		},
+		{
+			factKey:     "repo_security_contact_coverage",
+			name:        "Security contact in SECURITY.md",
+			description: "Repositories publish a reachable security contact in SECURITY.md.",
+			category:    "documentation",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_incident_response_doc_coverage",
+			name:        "Incident response documentation",
+			description: "Repositories document incident response procedures.",
+			category:    "documentation",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_issue_templates_coverage",
+			name:        "Issue templates configured",
+			description: "Repositories provide GitHub issue templates.",
+			category:    "documentation",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_de_facto_pr_review_coverage",
+			name:        "Pull requests reviewed in practice",
+			description: "Merged pull requests receive approvals in practice.",
+			category:    "code_review",
+			evaluate:    evaluateAnyCoverage,
+		},
+		{
+			factKey:     "repo_pr_approval_rate",
+			name:        "Pull request approval rate",
+			description: "Merged pull requests are approved before merge.",
+			category:    "code_review",
+			evaluate: func(f Fact) coredata.MeasureState {
+				return evaluatePRApprovalRate(f.Value)
+			},
+		},
+		{
+			factKey:     "org_profile_security_md",
+			name:        "Organization security disclosure policy",
+			description: "The organization profile repository publishes SECURITY.md.",
+			category:    "documentation",
+			evaluate: func(f Fact) coredata.MeasureState {
+				return evaluateOrgProfileSecurityMD(f.Value)
+			},
+		},
+		{
+			factKey:     "org_profile_contributing_md",
+			name:        "Organization contributing guidelines",
+			description: "The organization profile repository publishes CONTRIBUTING.md.",
+			category:    "documentation",
+			evaluate: func(f Fact) coredata.MeasureState {
+				if b, ok := f.Value.(bool); ok && b {
+					return coredata.MeasureStateImplemented
+				}
+
+				return coredata.MeasureStateNotImplemented
+			},
+		},
 	}
+}
+
+func factProviderMap(value any) (map[string]int, bool) {
+	m, ok := value.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+
+	raw, ok := m["providers"].(map[string]int)
+	if ok {
+		return raw, true
+	}
+
+	rawAny, ok := m["providers"].(map[string]any)
+	if !ok {
+		return nil, false
+	}
+
+	out := make(map[string]int, len(rawAny))
+	for key, val := range rawAny {
+		count, ok := toInt(val)
+		if !ok {
+			continue
+		}
+
+		out[key] = count
+	}
+
+	return out, len(out) > 0
+}
+
+func evaluatePRApprovalRate(value any) coredata.MeasureState {
+	reviewed, ok1 := factCountValue(value, "reviewed")
+
+	sampled, ok2 := factCountValue(value, "sampled")
+	if !ok1 || !ok2 || sampled == 0 {
+		return coredata.MeasureStateUnknown
+	}
+
+	if reviewed*100/sampled >= 80 {
+		return coredata.MeasureStateImplemented
+	}
+
+	return coredata.MeasureStateNotImplemented
+}
+
+func evaluateOrgProfileSecurityMD(value any) coredata.MeasureState {
+	m, ok := value.(map[string]any)
+	if !ok {
+		return coredata.MeasureStateUnknown
+	}
+
+	present, ok := m["present"].(bool)
+	if !ok || !present {
+		return coredata.MeasureStateNotImplemented
+	}
+
+	contact, ok := m["security_contact"].(bool)
+	if ok && contact {
+		return coredata.MeasureStateImplemented
+	}
+
+	return coredata.MeasureStateNotImplemented
 }
 
 func evaluateCoverageRiskAbsent(f Fact) coredata.MeasureState {

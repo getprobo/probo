@@ -37,6 +37,7 @@ var (
 		{"docs", "development.md"},
 		{"docs", "code-review.md"},
 		{"docs", "security", "README.md"},
+		{"docs", "incident-response.md"},
 		{"SECURITY_GUIDELINES.md"},
 	}
 
@@ -148,6 +149,14 @@ type (
 		DependabotCriticalOpen    int
 		SecretScanningOpen        int
 		CodeScanningCriticalOpen  int
+		WithCommitStatusCI        int
+		WithExternalCI            int
+		WithSecurityContact       int
+		WithIncidentResponseDoc   int
+		WithIssueTemplates        int
+		WithDeFactoPRReview       int
+		PRSampled                 int
+		PRReviewed                int
 	}
 )
 
@@ -182,11 +191,14 @@ func (s *discoveryScanner) scanRepos(ctx context.Context, sheet *FactSheet) {
 		return
 	}
 
+	ciAgg := &ciProviderAggregate{Providers: map[string]int{}}
+
 	for _, repo := range selectReposToScan(repos) {
-		s.scanRepo(ctx, repo, agg)
+		s.scanRepo(ctx, repo, agg, ciAgg)
 	}
 
 	sheet.Facts = append(sheet.Facts, repoAggregateFacts(agg)...)
+	sheet.Facts = append(sheet.Facts, ciProviderFact(ciAgg, agg.ScannedRepos))
 }
 
 func (s *discoveryScanner) listOrgRepos(ctx context.Context) ([]repoListItem, error) {
@@ -239,7 +251,12 @@ func aggregateRepoList(repos []repoListItem) *repoScanAggregate {
 	return agg
 }
 
-func (s *discoveryScanner) scanRepo(ctx context.Context, repo repoListItem, agg *repoScanAggregate) {
+func (s *discoveryScanner) scanRepo(
+	ctx context.Context,
+	repo repoListItem,
+	agg *repoScanAggregate,
+	ciAgg *ciProviderAggregate,
+) {
 	agg.ScannedRepos++
 
 	protection, protected := s.fetchBranchProtection(ctx, repo)
@@ -260,7 +277,16 @@ func (s *discoveryScanner) scanRepo(ctx context.Context, repo repoListItem, agg 
 		agg.ProductionLikely++
 	}
 
-	if s.probeRepoFile(ctx, repo, "SECURITY.md") {
+	s.scanRepoCIStatuses(ctx, repo, agg, ciAgg)
+	s.scanRepoPullRequestPractice(ctx, repo, agg)
+
+	if content, ok := s.fetchRepoFileContent(ctx, repo, "SECURITY.md"); ok {
+		agg.WithSecurityMD++
+
+		if securityContactInMarkdown(content) {
+			agg.WithSecurityContact++
+		}
+	} else if s.probeRepoFile(ctx, repo, "SECURITY.md") {
 		agg.WithSecurityMD++
 	}
 
@@ -269,18 +295,31 @@ func (s *discoveryScanner) scanRepo(ctx context.Context, repo repoListItem, agg 
 	}
 
 	for _, path := range docPaths {
-		if s.probeRepoFile(ctx, repo, path...) {
-			switch path[0] {
-			case "docs":
-				if len(path) > 1 && path[1] == "code-review.md" {
-					agg.WithCodeReviewGuide++
-				} else {
-					agg.WithDevGuide++
+		if len(path) > 1 && path[1] == "incident-response.md" {
+			if content, ok := s.fetchRepoFileContent(ctx, repo, strings.Join(path, "/")); ok {
+				if incidentResponseInMarkdown(content) {
+					agg.WithIncidentResponseDoc++
 				}
+			} else if s.probeRepoFile(ctx, repo, path...) {
+				agg.WithIncidentResponseDoc++
+			}
+
+			continue
+		}
+
+		if s.probeRepoFile(ctx, repo, path...) {
+			switch {
+			case len(path) > 1 && path[1] == "code-review.md":
+				agg.WithCodeReviewGuide++
 			default:
 				agg.WithDevGuide++
 			}
 		}
+	}
+
+	if s.probeRepoFile(ctx, repo, ".github", "ISSUE_TEMPLATE") ||
+		s.probeRepoFile(ctx, repo, ".github", "ISSUE_TEMPLATE.md") {
+		agg.WithIssueTemplates++
 	}
 
 	if s.probeRepoFile(ctx, repo, ".github", "dependabot.yml") {
@@ -783,6 +822,23 @@ func repoAggregateFacts(agg *repoScanAggregate) []Fact {
 				"repos_scanned": agg.ScannedRepos,
 			},
 			APIRef: "GET /repos/{owner}/{repo}/code-scanning/alerts?severity=critical&state=open",
+		},
+		coverageFact("f-commit-status-ci", "repo_commit_status_ci_coverage", agg.WithCommitStatusCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits/{sha}/status"),
+		coverageFact("f-external-ci", "repo_external_ci_coverage", agg.WithExternalCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits/{sha}/status"),
+		coverageFact("f-security-contact", "repo_security_contact_coverage", agg.WithSecurityContact, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/SECURITY.md"),
+		coverageFact("f-incident-response-doc", "repo_incident_response_doc_coverage", agg.WithIncidentResponseDoc, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/docs/incident-response.md"),
+		coverageFact("f-issue-templates", "repo_issue_templates_coverage", agg.WithIssueTemplates, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE"),
+		coverageFact("f-de-facto-pr-review", "repo_de_facto_pr_review_coverage", agg.WithDeFactoPRReview, agg.ScannedRepos, "GET /repos/{owner}/{repo}/pulls"),
+		{
+			FactID:  "f-pr-approval-rate",
+			FactKey: "repo_pr_approval_rate",
+			Scope:   "org",
+			Value: map[string]int{
+				"reviewed":      agg.PRReviewed,
+				"sampled":       agg.PRSampled,
+				"repos_scanned": agg.ScannedRepos,
+			},
+			APIRef: "GET /repos/{owner}/{repo}/pulls; GET /repos/{owner}/{repo}/pulls/{number}/reviews",
 		},
 	}
 

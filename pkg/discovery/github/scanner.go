@@ -53,6 +53,7 @@ func (s *discoveryScanner) scan(ctx context.Context) (*FactSheet, error) {
 	}
 
 	s.scanGovernance(ctx, sheet)
+	s.scanOrgProfile(ctx, sheet)
 	s.scanRepos(ctx, sheet)
 
 	return sheet, nil

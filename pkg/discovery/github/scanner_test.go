@@ -62,6 +62,21 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 					"disabled": false
 				}
 			]`))
+		case r.URL.Path == "/repos/acme/.github":
+			_, _ = w.Write([]byte(`{"name": ".github", "default_branch": "main"}`))
+		case strings.HasSuffix(r.URL.Path, "/branches/main"):
+			_, _ = w.Write([]byte(`{"commit": {"sha": "abc123"}}`))
+		case strings.HasSuffix(r.URL.Path, "/commits/abc123/status"):
+			_, _ = w.Write([]byte(`{"statuses": [{"context": "ci/circleci", "target_url": "https://circleci.com/gh/acme/api/1"}]}`))
+		case strings.HasSuffix(r.URL.Path, "/commits/abc123/check-runs"):
+			_, _ = w.Write([]byte(`{"check_runs": []}`))
+		case strings.HasSuffix(r.URL.Path, "/pulls") && !strings.Contains(r.URL.Path, "/pulls/"):
+			_, _ = w.Write([]byte(`[
+				{"number": 42, "merged_at": "2026-01-01T00:00:00Z"},
+				{"number": 41, "merged_at": null}
+			]`))
+		case strings.HasSuffix(r.URL.Path, "/pulls/42/reviews"):
+			_, _ = w.Write([]byte(`[{"state": "APPROVED"}]`))
 		case strings.HasSuffix(r.URL.Path, "/branches/main/protection"):
 			_, _ = w.Write([]byte(`{
 				"required_pull_request_reviews": {"required_approving_review_count": 1},
@@ -71,7 +86,15 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 		case strings.HasSuffix(r.URL.Path, "/actions/workflows"):
 			_, _ = w.Write([]byte(`{"total_count": 1}`))
 		case strings.HasSuffix(r.URL.Path, "/contents/SECURITY.md"):
+			_, _ = w.Write([]byte(`{
+				"name": "SECURITY.md",
+				"encoding": "base64",
+				"content": "UmVwb3J0IHZ1bG5lcmFiaWxpdGllcyB0byBzZWN1cml0eUBleGFtcGxlLmNvbQ=="
+			}`))
+		case strings.HasSuffix(r.URL.Path, "/repos/acme/.github/contents/SECURITY.md"):
 			_, _ = w.Write([]byte(`{"name": "SECURITY.md"}`))
+		case strings.HasSuffix(r.URL.Path, "/repos/acme/.github/contents/CONTRIBUTING.md"):
+			_, _ = w.Write([]byte(`{"name": "CONTRIBUTING.md"}`))
 		case strings.HasSuffix(r.URL.Path, "/contents/CONTRIBUTING.md"):
 			http.NotFound(w, r)
 		case strings.HasSuffix(r.URL.Path, "/contents/.github/dependabot.yml"):
@@ -108,6 +131,11 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 	assert.Contains(t, keys, "org_actions_restricted")
 	assert.Contains(t, keys, "repo_branch_protection_coverage")
 	assert.Contains(t, keys, "repo_dependabot_critical_open")
+	assert.Contains(t, keys, "repo_commit_status_ci_coverage")
+	assert.Contains(t, keys, "repo_ci_providers")
+	assert.Contains(t, keys, "repo_de_facto_pr_review_coverage")
+	assert.Contains(t, keys, "repo_security_contact_coverage")
+	assert.Contains(t, keys, "org_profile_security_md")
 	assert.Equal(t, 1, sheet.ReposScanned)
 }
 

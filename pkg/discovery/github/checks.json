@@ -41,5 +41,15 @@
   {"fact_key": "repo_deploy_keys_write_access", "tier": "P0", "scope": "repo", "mode": "risk", "description": "Write-capable deploy keys are controlled."},
   {"fact_key": "repo_dependabot_critical_open", "tier": "P0", "scope": "repo", "mode": "in_practice", "description": "No open critical Dependabot alerts."},
   {"fact_key": "repo_secret_scanning_alerts_open", "tier": "P0", "scope": "repo", "mode": "in_practice", "description": "No open secret scanning alerts."},
-  {"fact_key": "repo_code_scanning_critical_open", "tier": "P0", "scope": "repo", "mode": "in_practice", "description": "No open critical code scanning alerts."}
+  {"fact_key": "repo_code_scanning_critical_open", "tier": "P0", "scope": "repo", "mode": "in_practice", "description": "No open critical code scanning alerts."},
+  {"fact_key": "repo_commit_status_ci_coverage", "tier": "P0", "scope": "repo", "mode": "presence", "description": "CI is detected via commit statuses or check runs."},
+  {"fact_key": "repo_external_ci_coverage", "tier": "P0", "scope": "repo", "mode": "informational", "description": "External CI providers are detected via commit statuses."},
+  {"fact_key": "repo_ci_providers", "tier": "P0", "scope": "repo", "mode": "informational", "description": "CI providers are inventoried from commit statuses and check runs."},
+  {"fact_key": "repo_security_contact_coverage", "tier": "P0", "scope": "repo", "mode": "documented", "description": "SECURITY.md includes a security contact."},
+  {"fact_key": "repo_incident_response_doc_coverage", "tier": "P0", "scope": "repo", "mode": "documented", "description": "Repositories document incident response procedures."},
+  {"fact_key": "repo_issue_templates_coverage", "tier": "P0", "scope": "repo", "mode": "documented", "description": "Repositories provide issue templates."},
+  {"fact_key": "repo_de_facto_pr_review_coverage", "tier": "P0", "scope": "repo", "mode": "in_practice", "description": "Merged pull requests receive approvals in practice."},
+  {"fact_key": "repo_pr_approval_rate", "tier": "P0", "scope": "repo", "mode": "in_practice", "description": "Pull request approval rate across sampled merges."},
+  {"fact_key": "org_profile_security_md", "tier": "P0", "scope": "org", "mode": "documented", "description": "Organization profile repository publishes SECURITY.md with security contact."},
+  {"fact_key": "org_profile_contributing_md", "tier": "P0", "scope": "org", "mode": "documented", "description": "Organization profile repository publishes CONTRIBUTING.md."}
 ]
