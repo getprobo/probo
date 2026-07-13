@@ -4,6 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.225.0] - 2026-07-13
+
+### Added
+
+- Added managed access-review connectors for Scaleway, Yousign, Railway, and Crisp, including provider logos and website/ownership verification before a connection is established; managed connectors stay hidden until they are fully configured
+- Added server-side filtering for trust center subprocessors, exposing facet-driven filters through the trust API
+- Added trust center Updates list and detail pages with pagination and a mailing-list subscribe action
+- Added a Risk Assessments tab to the risks list page in the console
+
+### Changed
+
+- The OAuth2 consent page now shows a submit loader and a redirect screen after the user grants consent
+
+### Fixed
+
+- Microsoft OIDC sign-in now requires verified domain ownership before linking an account
+
 ## [0.224.1] - 2026-07-09
 
 ### Fixed
