@@ -105,6 +105,23 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 			_, _ = w.Write([]byte(`[]`))
 		case strings.Contains(r.URL.Path, "/code-scanning/alerts"):
 			_, _ = w.Write([]byte(`[]`))
+		case r.URL.Path == "/search/code":
+			_, _ = w.Write([]byte(`{
+				"total_count": 2,
+				"incomplete_results": false,
+				"items": [
+					{
+						"name": "ci.yml",
+						"path": ".github/workflows/ci.yml",
+						"repository": {"name": "api"}
+					},
+					{
+						"name": "dependabot.yml",
+						"path": ".github/dependabot.yml",
+						"repository": {"name": "api"}
+					}
+				]
+			}`))
 		default:
 			http.NotFound(w, r)
 		}

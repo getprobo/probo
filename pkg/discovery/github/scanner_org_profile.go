@@ -14,7 +14,11 @@
 
 package github
 
-import "context"
+import (
+	"context"
+
+	"go.probo.inc/probo/pkg/discovery/vfs"
+)
 
 func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet) {
 	if !s.scopes.hasRepoRead() {
@@ -26,7 +30,8 @@ func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet)
 		return
 	}
 
-	repo := repoListItem{Name: ".github"}
+	repo := vfs.Repo{Owner: s.org, Name: ".github"}
+	repoFS := s.orgFS.Open(repo)
 
 	endpoint, err := s.api.repoEndpoint(s.org, ".github")
 	if err != nil {
@@ -43,18 +48,13 @@ func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet)
 		return
 	}
 
-	repo.DefaultBranch = meta.DefaultBranch
-	if repo.DefaultBranch == "" {
-		repo.DefaultBranch = "main"
-	}
-
-	hasSecurity := s.probeRepoFile(ctx, repo, "SECURITY.md")
-	hasContributing := s.probeRepoFile(ctx, repo, "CONTRIBUTING.md")
+	hasSecurity, _ := repoFS.Exists(ctx, "SECURITY.md")
+	hasContributing, _ := repoFS.Exists(ctx, "CONTRIBUTING.md")
 
 	securityContact := false
 
-	if content, ok := s.fetchRepoFileContent(ctx, repo, "SECURITY.md"); ok {
-		securityContact = securityContactInMarkdown(content)
+	if content, ok := s.readRepoFile(ctx, repoFS, "SECURITY.md"); ok {
+		securityContact = securityContactInMarkdown(string(content))
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{

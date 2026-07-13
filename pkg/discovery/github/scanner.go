@@ -24,6 +24,7 @@ import (
 
 type discoveryScanner struct {
 	api    *apiClient
+	orgFS  *githubOrgFS
 	org    string
 	logger *log.Logger
 	scopes scopeSet
@@ -35,8 +36,11 @@ func newDiscoveryScanner(
 	conn connector.Connection,
 	logger *log.Logger,
 ) *discoveryScanner {
+	api := newAPIClient(httpClient)
+
 	return &discoveryScanner{
-		api:    newAPIClient(httpClient),
+		api:    api,
+		orgFS:  newGitHubOrgFS(api, org),
 		org:    org,
 		logger: logger,
 		scopes: newScopeSet(conn),

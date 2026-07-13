@@ -26,7 +26,6 @@ import (
 
 const (
 	githubAPIBase   = "https://api.github.com"
-	maxReposToScan  = 30
 	maxPagesPerList = 10
 )
 

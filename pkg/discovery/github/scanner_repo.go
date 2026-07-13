@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"go.probo.inc/probo/pkg/discovery/vfs"
 )
 
 var (
@@ -193,8 +195,14 @@ func (s *discoveryScanner) scanRepos(ctx context.Context, sheet *FactSheet) {
 
 	ciAgg := &ciProviderAggregate{Providers: map[string]int{}}
 
-	for _, repo := range selectReposToScan(repos) {
-		s.scanRepo(ctx, repo, agg, ciAgg)
+	fileIndex, indexLimitations := s.buildFileIndex(ctx)
+	sheet.Limitations = append(sheet.Limitations, indexLimitations...)
+
+	eligible := filterEligibleRepos(repos)
+
+	for _, repo := range eligible {
+		repoFS := s.orgFS.Open(vfs.Repo{Owner: s.org, Name: repo.Name})
+		s.scanRepo(ctx, repo, repoFS, fileIndex, agg, ciAgg)
 	}
 
 	sheet.Facts = append(sheet.Facts, repoAggregateFacts(agg)...)
@@ -221,22 +229,29 @@ func (s *discoveryScanner) listOrgRepos(ctx context.Context) ([]repoListItem, er
 	return repos, nil
 }
 
-func selectReposToScan(repos []repoListItem) []repoListItem {
-	selected := make([]repoListItem, 0, maxReposToScan)
+func filterEligibleRepos(repos []repoListItem) []repoListItem {
+	eligible := make([]repoListItem, 0, len(repos))
 
 	for _, repo := range repos {
 		if repo.Archived || repo.Disabled || repo.DefaultBranch == "" {
 			continue
 		}
 
-		selected = append(selected, repo)
-
-		if len(selected) >= maxReposToScan {
-			break
-		}
+		eligible = append(eligible, repo)
 	}
 
-	return selected
+	return eligible
+}
+
+func (s *discoveryScanner) buildFileIndex(ctx context.Context) (*vfs.FileIndex, []string) {
+	index, err := s.orgFS.IndexFiles(ctx)
+	if err == nil {
+		return index, nil
+	}
+
+	return index, []string{
+		"org-wide file search partially unavailable; falling back to per-repository file reads",
+	}
 }
 
 func aggregateRepoList(repos []repoListItem) *repoScanAggregate {
@@ -254,6 +269,8 @@ func aggregateRepoList(repos []repoListItem) *repoScanAggregate {
 func (s *discoveryScanner) scanRepo(
 	ctx context.Context,
 	repo repoListItem,
+	repoFS vfs.RepositoryFS,
+	fileIndex *vfs.FileIndex,
 	agg *repoScanAggregate,
 	ciAgg *ciProviderAggregate,
 ) {
@@ -265,12 +282,12 @@ func (s *discoveryScanner) scanRepo(
 		s.applyBranchProtectionSignals(protection, agg)
 	}
 
-	hasWorkflows := s.probeWorkflows(ctx, repo)
+	hasWorkflows := fileIndex.HasPrefix(repo.Name, ".github/workflows") || s.probeWorkflows(ctx, repo)
 	if hasWorkflows {
 		agg.WithWorkflows++
 	}
 
-	signals := s.analyzeRepoWorkflows(ctx, repo)
+	signals := s.analyzeRepoWorkflows(ctx, repo, repoFS, fileIndex)
 	mergeWorkflowSignalsIntoAggregate(&signals, agg)
 
 	if isLikelyProductionRepo(repo, protected, hasWorkflows) {
@@ -280,34 +297,36 @@ func (s *discoveryScanner) scanRepo(
 	s.scanRepoCIStatuses(ctx, repo, agg, ciAgg)
 	s.scanRepoPullRequestPractice(ctx, repo, agg)
 
-	if content, ok := s.fetchRepoFileContent(ctx, repo, "SECURITY.md"); ok {
+	if content, ok := s.readRepoFile(ctx, repoFS, "SECURITY.md"); ok {
 		agg.WithSecurityMD++
 
-		if securityContactInMarkdown(content) {
+		if securityContactInMarkdown(string(content)) {
 			agg.WithSecurityContact++
 		}
-	} else if s.probeRepoFile(ctx, repo, "SECURITY.md") {
+	} else if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, "SECURITY.md") {
 		agg.WithSecurityMD++
 	}
 
-	if s.probeRepoFile(ctx, repo, "CONTRIBUTING.md") {
+	if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, "CONTRIBUTING.md") {
 		agg.WithContributingMD++
 	}
 
 	for _, path := range docPaths {
+		fullPath := strings.Join(path, "/")
+
 		if len(path) > 1 && path[1] == "incident-response.md" {
-			if content, ok := s.fetchRepoFileContent(ctx, repo, strings.Join(path, "/")); ok {
-				if incidentResponseInMarkdown(content) {
+			if content, ok := s.readRepoFile(ctx, repoFS, fullPath); ok {
+				if incidentResponseInMarkdown(string(content)) {
 					agg.WithIncidentResponseDoc++
 				}
-			} else if s.probeRepoFile(ctx, repo, path...) {
+			} else if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, fullPath) {
 				agg.WithIncidentResponseDoc++
 			}
 
 			continue
 		}
 
-		if s.probeRepoFile(ctx, repo, path...) {
+		if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, fullPath) {
 			switch {
 			case len(path) > 1 && path[1] == "code-review.md":
 				agg.WithCodeReviewGuide++
@@ -317,22 +336,22 @@ func (s *discoveryScanner) scanRepo(
 		}
 	}
 
-	if s.probeRepoFile(ctx, repo, ".github", "ISSUE_TEMPLATE") ||
-		s.probeRepoFile(ctx, repo, ".github", "ISSUE_TEMPLATE.md") {
+	if fileIndex.HasPrefix(repo.Name, ".github/ISSUE_TEMPLATE") ||
+		s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, ".github/ISSUE_TEMPLATE.md") {
 		agg.WithIssueTemplates++
 	}
 
-	if s.probeRepoFile(ctx, repo, ".github", "dependabot.yml") {
+	if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, ".github/dependabot.yml") {
 		agg.WithDependabotConfig++
 	}
 
-	if s.probeRepoFile(ctx, repo, "renovate.json") ||
-		s.probeRepoFile(ctx, repo, ".github", "renovate.json") {
+	if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, "renovate.json") ||
+		s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, ".github/renovate.json") {
 		agg.WithRenovateConfig++
 	}
 
 	for _, path := range lockfilePaths {
-		if s.probeRepoFile(ctx, repo, path...) {
+		if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, strings.Join(path, "/")) {
 			agg.WithLockfile++
 
 			break
@@ -340,7 +359,7 @@ func (s *discoveryScanner) scanRepo(
 	}
 
 	for _, path := range envPaths {
-		if s.probeRepoFile(ctx, repo, path...) {
+		if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, strings.Join(path, "/")) {
 			agg.WithEnvOnDefaultBranch++
 
 			break
@@ -366,6 +385,35 @@ func (s *discoveryScanner) scanRepo(
 		agg.SecretScanningOpen += s.countSecretScanningOpen(ctx, repo)
 		agg.CodeScanningCriticalOpen += s.countCodeScanningCritical(ctx, repo)
 	}
+}
+
+func (s *discoveryScanner) repoHasFile(
+	ctx context.Context,
+	repoFS vfs.RepositoryFS,
+	fileIndex *vfs.FileIndex,
+	repoName string,
+	path string,
+) bool {
+	if fileIndex.Has(repoName, path) {
+		return true
+	}
+
+	exists, err := repoFS.Exists(ctx, path)
+
+	return err == nil && exists
+}
+
+func (s *discoveryScanner) readRepoFile(
+	ctx context.Context,
+	repoFS vfs.RepositoryFS,
+	path string,
+) ([]byte, bool) {
+	content, err := repoFS.Read(ctx, path)
+	if err != nil {
+		return nil, false
+	}
+
+	return content, true
 }
 
 func (s *discoveryScanner) fetchBranchProtection(
@@ -451,7 +499,52 @@ func mergeWorkflowSignalsIntoAggregate(signals *workflowSignals, agg *repoScanAg
 	}
 }
 
-func (s *discoveryScanner) analyzeRepoWorkflows(ctx context.Context, repo repoListItem) workflowSignals {
+func (s *discoveryScanner) analyzeRepoWorkflows(
+	ctx context.Context,
+	repo repoListItem,
+	repoFS vfs.RepositoryFS,
+	fileIndex *vfs.FileIndex,
+) workflowSignals {
+	combined := workflowSignals{}
+	workflowPaths := workflowPathsFromIndex(fileIndex, repo.Name)
+
+	if len(workflowPaths) == 0 {
+		return s.analyzeRepoWorkflowsFromAPI(ctx, repo, repoFS)
+	}
+
+	for i, path := range workflowPaths {
+		if i >= 5 {
+			break
+		}
+
+		content, ok := s.readRepoFile(ctx, repoFS, path)
+		if !ok {
+			continue
+		}
+
+		mergeWorkflowSignals(&combined, analyzeWorkflowYAML(string(content)))
+	}
+
+	return combined
+}
+
+func workflowPathsFromIndex(fileIndex *vfs.FileIndex, repoName string) []string {
+	var paths []string
+
+	for _, path := range fileIndex.Paths(repoName) {
+		if strings.HasPrefix(path, ".github/workflows/") {
+			paths = append(paths, path)
+		}
+	}
+
+	return paths
+}
+
+func (s *discoveryScanner) analyzeRepoWorkflowsFromAPI(
+	ctx context.Context,
+	repo repoListItem,
+	repoFS vfs.RepositoryFS,
+) workflowSignals {
 	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "actions", "workflows")
 	if err != nil {
 		return workflowSignals{}
@@ -474,45 +567,15 @@ func (s *discoveryScanner) analyzeRepoWorkflows(ctx context.Context, repo repoLi
 			continue
 		}
 
-		content, ok := s.fetchRepoFileContent(ctx, repo, workflow.Path)
+		content, ok := s.readRepoFile(ctx, repoFS, workflow.Path)
 		if !ok {
 			continue
 		}
 
-		mergeWorkflowSignals(&combined, analyzeWorkflowYAML(content))
+		mergeWorkflowSignals(&combined, analyzeWorkflowYAML(string(content)))
 	}
 
 	return combined
-}
-
-func (s *discoveryScanner) fetchRepoFileContent(
-	ctx context.Context,
-	repo repoListItem,
-	path string,
-) (string, bool) {
-	segments := append([]string{"contents"}, splitContentPath(path)...)
-
-	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, segments...)
-	if err != nil {
-		return "", false
-	}
-
-	var payload contentResponse
-
-	if _, err := s.api.getJSON(ctx, endpoint, &payload); err != nil {
-		return "", false
-	}
-
-	return decodeGitHubContent(payload.Encoding, payload.Content)
-}
-
-func splitContentPath(path string) []string {
-	path = strings.Trim(path, "/")
-	if path == "" {
-		return nil
-	}
-
-	return strings.Split(path, "/")
 }
 
 func (s *discoveryScanner) probeWorkflows(ctx context.Context, repo repoListItem) bool {
@@ -530,21 +593,13 @@ func (s *discoveryScanner) probeWorkflows(ctx context.Context, repo repoListItem
 	return page.TotalCount > 0
 }
 
-func (s *discoveryScanner) probeRepoFile(ctx context.Context, repo repoListItem, parts ...string) bool {
-	segments := append([]string{"contents"}, parts...)
-
-	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, segments...)
-	if err != nil {
-		return false
+func splitContentPath(path string) []string {
+	path = strings.Trim(path, "/")
+	if path == "" {
+		return nil
 	}
 
-	var payload map[string]any
-
-	if _, err := s.api.getJSON(ctx, endpoint, &payload); err != nil {
-		return false
-	}
-
-	return true
+	return strings.Split(path, "/")
 }
 
 func (s *discoveryScanner) probePushProtection(ctx context.Context, repo repoListItem) bool {
