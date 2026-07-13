@@ -1,5 +1,0 @@
-type Organization implements Node {
-  id: ID!
-  name: String!
-  logo: File @goField(forceResolver: true)
-}

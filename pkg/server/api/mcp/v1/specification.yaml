@@ -8832,6 +8832,7 @@ components:
         - organization_id
         - active
         - search_engine_indexing
+        - title
         - created_at
         - updated_at
       properties:
@@ -8869,6 +8870,9 @@ components:
             - string
             - "null"
           description: Compliance page headquarter address
+        title:
+          type: string
+          description: Public compliance page title
         created_at:
           type: string
           format: date-time
@@ -9058,6 +9062,12 @@ components:
             - string
             - "null"
           description: Compliance page headquarter address
+          go.probo.inc/mcpgen/omittable: true
+        title:
+          type:
+            - string
+            - "null"
+          description: Public compliance page title
           go.probo.inc/mcpgen/omittable: true
 
     UpdateTrustCenterOutput:

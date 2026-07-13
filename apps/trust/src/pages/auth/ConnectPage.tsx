@@ -38,9 +38,7 @@ import { OIDCButton } from "./_components/OIDCButton";
 export const connectPageQuery = graphql`
   query ConnectPageQuery {
     currentTrustCenter @required(action: THROW) {
-      organization @required(action: THROW) {
-        name
-      }
+      title
     }
     oidcProviders {
       ...OIDCButtonFragment
@@ -77,7 +75,7 @@ export function ConnectPage(props: {
   const safeContinueUrl = useSafeContinueUrl();
 
   const {
-    currentTrustCenter: { organization },
+    currentTrustCenter: { title },
     oidcProviders,
   } = usePreloadedQuery<ConnectPageQuery>(connectPageQuery, queryRef);
 
@@ -98,7 +96,7 @@ export function ConnectPage(props: {
     };
   }, [magicLinkSent]);
 
-  usePageTitle(__(`Connect to ${organization.name}'s Compliance Page`));
+  usePageTitle(__(`Connect to ${title}'s Compliance Page`));
 
   const {
     handleSubmit: handleSubmitWrapper,
@@ -164,7 +162,7 @@ export function ConnectPage(props: {
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">
-          {__(`Connect to ${organization.name}'s Compliance Page`)}
+          {__(`Connect to ${title}'s Compliance Page`)}
         </h1>
         <p className="text-txt-tertiary">
           {__(

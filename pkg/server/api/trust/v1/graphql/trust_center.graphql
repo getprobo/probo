@@ -9,12 +9,11 @@ type TrustCenter implements Node {
   websiteUrl: String
   email: String
   headquarterAddress: String
+  title: String!
 
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
   viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
-
-  organization: Organization! @goField(forceResolver: true)
 
   documents(
     first: Int

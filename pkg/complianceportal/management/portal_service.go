@@ -47,6 +47,7 @@ type (
 		Slug                         *string
 		SearchEngineIndexing         *coredata.SearchEngineIndexing
 		NonDisclosureAgreementFileID *gid.GID
+		Title                        *string
 		Description                  **string
 		WebsiteURL                   **string
 		Email                        **string
@@ -74,6 +75,10 @@ func (utcr *UpdateRequest) Validate() error {
 	v.Check(utcr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
 	v.Check(utcr.Slug, "slug", validator.SafeText(NameMaxLength))
 	v.Check(utcr.NonDisclosureAgreementFileID, "non_disclosure_agreement_file_id", validator.GID(coredata.FileEntityType))
+
+	if utcr.Title != nil {
+		v.Check(*utcr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(NameMaxLength))
+	}
 
 	if utcr.Description != nil {
 		v.Check(*utcr.Description, "description", validator.SafeText(ContentMaxLength))
@@ -208,6 +213,10 @@ func (s *Service) Update(
 
 			if req.SearchEngineIndexing != nil {
 				trustCenter.SearchEngineIndexing = *req.SearchEngineIndexing
+			}
+
+			if req.Title != nil {
+				trustCenter.Title = *req.Title
 			}
 
 			if req.Description != nil {

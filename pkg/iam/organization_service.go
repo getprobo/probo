@@ -614,6 +614,7 @@ func (s *OrganizationService) CreateOrganization(
 			TenantID:             organization.TenantID,
 			Active:               false,
 			Slug:                 slug.Make(organization.Name),
+			Title:                organization.Name,
 			SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
 			MailingListID:        &mailingList.ID,
 			CreatedAt:            now,

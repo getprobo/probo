@@ -46,15 +46,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	trustService := r.trust
 
 	switch id.EntityType() {
-	case coredata.OrganizationEntityType:
-		organization, err := trustService.GetOrganization(ctx, scope, id)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		return types.NewOrganization(organization), nil
-
 	case coredata.DocumentEntityType:
 		trustCenter := complianceportal.CompliancePageFromContext(ctx)
 
@@ -190,11 +181,7 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	org, err := trustService.GetOrganization(ctx, scope, trustCenter.OrganizationID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
+	var err error
 
 	trustCenter, err = trustService.GetPortal(ctx, scope, trustCenter.ID)
 	if err != nil {
@@ -202,10 +189,7 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	response := types.NewTrustCenter(trustCenter)
-	response.Organization = types.NewOrganization(org)
-
-	return response, nil
+	return types.NewTrustCenter(trustCenter), nil
 }
 
 // OidcProviders is the resolver for the oidcProviders field.

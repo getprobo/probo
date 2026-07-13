@@ -36,8 +36,7 @@ type mcpFile struct {
 
 type trustCenter struct {
 	ID                 string   `json:"id"`
-	CompanyName        string   `json:"companyName"`
-	PageTitle          string   `json:"pageTitle"`
+	Title              string   `json:"title"`
 	TrustCenterVisible bool     `json:"trustCenterVisible"`
 	Logo               *mcpFile `json:"logo,omitempty"`
 }
@@ -176,6 +175,7 @@ func TestMCP_UpdateTrustCenter(t *testing.T) {
 	var updateResult struct {
 		TrustCenter struct {
 			ID                 string  `json:"id"`
+			Title              string  `json:"title"`
 			Description        *string `json:"description"`
 			WebsiteURL         *string `json:"website_url"`
 			Email              *string `json:"email"`
@@ -184,6 +184,7 @@ func TestMCP_UpdateTrustCenter(t *testing.T) {
 	}
 	mc.CallToolInto("updateTrustCenter", map[string]any{
 		"trust_center_id":     getResult.TrustCenter.ID,
+		"title":               "Acme Security",
 		"description":         "We keep your data safe.",
 		"website_url":         "https://example.com",
 		"email":               "security@example.com",
@@ -191,6 +192,7 @@ func TestMCP_UpdateTrustCenter(t *testing.T) {
 	}, &updateResult)
 
 	assert.Equal(t, getResult.TrustCenter.ID, updateResult.TrustCenter.ID)
+	assert.Equal(t, "Acme Security", updateResult.TrustCenter.Title)
 	require.NotNil(t, updateResult.TrustCenter.Description)
 	assert.Equal(t, "We keep your data safe.", *updateResult.TrustCenter.Description)
 	require.NotNil(t, updateResult.TrustCenter.WebsiteURL)

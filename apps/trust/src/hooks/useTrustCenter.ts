@@ -24,7 +24,7 @@ import { TrustCenterContext } from "#/providers/TrustCenterProvider";
 
 export function useTrustCenter(): {
   id: string;
-  organization: { name: string };
+  title: string;
 } {
   const context = useContext(TrustCenterContext);
   if (!context) {

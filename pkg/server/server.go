@@ -137,7 +137,7 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	trustWebServer, err := trust_web.NewServer(compliancePageHeadData(cfg.BaseURL, cfg.Trust))
+	trustWebServer, err := trust_web.NewServer(compliancePageHeadData(cfg.BaseURL))
 	if err != nil {
 		return nil, err
 	}
@@ -252,27 +252,22 @@ func (s *Server) TrustCenterHandler() http.Handler {
 	return r
 }
 
-func compliancePageHeadData(baseURL *baseurl.BaseURL, trustService *trust.Service) trust_web.HeadDataFunc {
+func compliancePageHeadData(baseURL *baseurl.BaseURL) trust_web.HeadDataFunc {
 	return func(r *http.Request) trust_web.HeadData {
 		tc := complianceportal.CompliancePageFromContext(r.Context())
 		if tc == nil {
 			return trust_web.HeadData{Title: "Compliance Page"}
 		}
 
-		org, err := trustService.GetPortalOrganization(r.Context(), tc.ID)
-		if err != nil || org == nil {
-			return trust_web.HeadData{Title: "Compliance Page"}
-		}
-
 		compliancePageBaseURL := complianceportal.CompliancePageBaseURLFromContext(r.Context())
 
-		description := org.Name + " Compliance Page"
+		description := tc.Title + " Compliance Page"
 		if tc.Description != nil && *tc.Description != "" {
 			description = *tc.Description
 		}
 
 		headData := trust_web.HeadData{
-			Title:       org.Name + " — Compliance",
+			Title:       tc.Title,
 			Description: description,
 			OGURL:       ref.UnrefOrZero(compliancePageBaseURL),
 		}

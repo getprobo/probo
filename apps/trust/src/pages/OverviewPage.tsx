@@ -107,7 +107,7 @@ export function OverviewPage() {
         url={getTrustCenterUrl("documents")}
       />
       <Subprocessors
-        organizationName={trustCenter.organization.name}
+        title={trustCenter.title}
         subprocessors={fragment.subprocessors.edges}
         url={getTrustCenterUrl("subprocessors")}
       />
@@ -187,11 +187,11 @@ function Documents({
 function Subprocessors({
   subprocessors,
   url,
-  organizationName,
+  title,
 }: {
   subprocessors: OverviewPageFragment$data["subprocessors"]["edges"];
   url: string;
-  organizationName: string;
+  title: string;
 }) {
   const { __ } = useTranslate();
   if (subprocessors.length === 0) {
@@ -209,7 +209,7 @@ function Subprocessors({
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          organizationName,
+          title,
         )}
       </p>
       <Rows className="mb-8 *:py-5">

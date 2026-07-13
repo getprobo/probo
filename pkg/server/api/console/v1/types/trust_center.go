@@ -38,6 +38,7 @@ type TrustCenter struct {
 	WebsiteURL           *string                         `json:"websiteUrl,omitempty"`
 	Email                *string                         `json:"email,omitempty"`
 	HeadquarterAddress   *string                         `json:"headquarterAddress,omitempty"`
+	Title                string                          `json:"title"`
 	CreatedAt            time.Time                       `json:"createdAt"`
 	UpdatedAt            time.Time                       `json:"updatedAt"`
 	Organization         *Organization                   `json:"organization"`
@@ -64,6 +65,7 @@ func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 		WebsiteURL:           tc.WebsiteURL,
 		Email:                tc.Email,
 		HeadquarterAddress:   tc.HeadquarterAddress,
+		Title:                tc.Title,
 		CreatedAt:            tc.CreatedAt,
 		UpdatedAt:            tc.UpdatedAt,
 	}

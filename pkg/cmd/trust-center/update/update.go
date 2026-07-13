@@ -49,6 +49,7 @@ mutation($input: UpdateTrustCenterInput!) {
       id
       active
       searchEngineIndexing
+      title
       description
       websiteUrl
       email
@@ -73,6 +74,7 @@ type updateResponse struct {
 			ID                   string  `json:"id"`
 			Active               bool    `json:"active"`
 			SearchEngineIndexing string  `json:"searchEngineIndexing"`
+			Title                string  `json:"title"`
 			Description          *string `json:"description"`
 			WebsiteURL           *string `json:"websiteUrl"`
 			Email                *string `json:"email"`
@@ -90,6 +92,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagWebsiteURL           string
 		flagEmail                string
 		flagHeadquarterAddress   string
+		flagTitle                string
 	)
 
 	cmd := &cobra.Command{
@@ -186,6 +189,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["headquarterAddress"] = flagHeadquarterAddress
 			}
 
+			if cmd.Flags().Changed("title") {
+				input["title"] = flagTitle
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -221,6 +228,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagWebsiteURL, "website-url", "", "Compliance page website URL")
 	cmd.Flags().StringVar(&flagEmail, "email", "", "Compliance page contact email")
 	cmd.Flags().StringVar(&flagHeadquarterAddress, "headquarter-address", "", "Compliance page headquarter address")
+	cmd.Flags().StringVar(&flagTitle, "title", "", "Public compliance page title")
 
 	return cmd
 }

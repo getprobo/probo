@@ -75,6 +75,7 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 			WebsiteURL:           gqlutils.UnwrapOmittable(input.WebsiteURL),
 			Email:                gqlutils.UnwrapOmittable(input.Email),
 			HeadquarterAddress:   gqlutils.UnwrapOmittable(input.HeadquarterAddress),
+			Title:                input.Title,
 		},
 	)
 	if err != nil {

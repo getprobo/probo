@@ -31,6 +31,7 @@ export const currentTrustGraphQuery = graphql`
     currentTrustCenter @required(action: THROW) {
       id
       slug
+      title
       description
       websiteUrl
       email
@@ -53,9 +54,6 @@ export const currentTrustGraphQuery = graphql`
         viewerSignature {
           status
         }
-      }
-      organization {
-        name
       }
       customLinks(first: 20) {
         edges {
@@ -96,9 +94,7 @@ export const currentTrustDocumentsQuery = graphql`
   query TrustGraphCurrentDocumentsQuery {
     currentTrustCenter {
       id
-      organization {
-        name
-      }
+      title
       documents(first: 50) {
         edges {
           node {
@@ -125,9 +121,7 @@ export const currentTrustSubprocessorsQuery = graphql`
   query TrustGraphCurrentSubprocessorsQuery {
     currentTrustCenter {
       id
-      organization {
-        name
-      }
+      title
       subprocessors(first: 50) {
         edges {
           node {

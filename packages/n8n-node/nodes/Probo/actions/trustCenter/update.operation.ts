@@ -77,6 +77,19 @@ export const description: INodeProperties[] = [
 		description: 'Whether search engines should index the trust center',
 	},
 	{
+		displayName: 'Title',
+		name: 'title',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The title shown on the public compliance page',
+	},
+	{
 		displayName: 'Description',
 		name: 'description',
 		type: 'string',
@@ -142,6 +155,7 @@ export async function execute(
 	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
 	const email = this.getNodeParameter('email', itemIndex, '') as string;
 	const headquarterAddress = this.getNodeParameter('headquarterAddress', itemIndex, '') as string;
+	const title = this.getNodeParameter('title', itemIndex, '') as string;
 
 	const query = `
 		mutation UpdateTrustCenter($input: UpdateTrustCenterInput!) {
@@ -150,6 +164,7 @@ export async function execute(
 					id
 					active
 					searchEngineIndexing
+					title
 					description
 					websiteUrl
 					email
@@ -168,6 +183,7 @@ export async function execute(
 	if (websiteUrl) input.websiteUrl = websiteUrl;
 	if (email) input.email = email;
 	if (headquarterAddress) input.headquarterAddress = headquarterAddress;
+	if (title) input.title = title;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

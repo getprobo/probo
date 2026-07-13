@@ -389,10 +389,7 @@ WITH combined AS (
         COALESCE(cf.organization_id, tc.organization_id) AS organization_id,
         COALESCE(cf.trust_center_id, tc.id) AS trust_center_id,
         f.id AS framework_id,
-        CASE
-            WHEN cf.id IS NOT NULL THEN cf.rank
-            ELSE COALESCE(MAX(cf.rank) OVER (), 0) + ROW_NUMBER() OVER (PARTITION BY (cf.id IS NULL) ORDER BY f.created_at)
-        END AS rank,
+        ROW_NUMBER() OVER (ORDER BY f.created_at, f.id) AS rank,
         CASE WHEN cf.id IS NULL THEN 'NONE' ELSE 'PUBLIC' END AS visibility,
         COALESCE(cf.created_at, f.created_at) AS created_at,
         COALESCE(cf.updated_at, f.updated_at) AS updated_at

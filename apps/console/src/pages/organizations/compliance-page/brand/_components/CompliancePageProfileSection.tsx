@@ -25,6 +25,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 const compliancePageFragment = graphql`
   fragment CompliancePageProfileSection_compliancePageFragment on TrustCenter {
     id
+    title
     description
     websiteUrl
     email
@@ -34,6 +35,7 @@ const compliancePageFragment = graphql`
 `;
 
 const profileSchema = z.object({
+  title: z.string().min(1),
   description: z.string().optional(),
   websiteUrl: z.string().optional(),
   email: z.string().optional(),
@@ -56,6 +58,7 @@ export function CompliancePageProfileSection(props: {
 
   const { formState, handleSubmit, register } = useFormWithSchema(profileSchema, {
     defaultValues: {
+      title: compliancePage.title,
       description: compliancePage.description || "",
       websiteUrl: compliancePage.websiteUrl || "",
       email: compliancePage.email || "",
@@ -70,6 +73,7 @@ export function CompliancePageProfileSection(props: {
       variables: {
         input: {
           trustCenterId: compliancePage.id,
+          title: data.title,
           description: data.description || null,
           websiteUrl: data.websiteUrl || null,
           email: data.email || null,
@@ -91,6 +95,13 @@ export function CompliancePageProfileSection(props: {
         {formState.isSubmitting && <Spinner />}
       </div>
       <Card padded className="space-y-4">
+        <Field
+          {...register("title")}
+          readOnly={readOnly}
+          name="title"
+          label={__("Title")}
+          placeholder={__("Your company or product name")}
+        />
         <div>
           <Label>{__("Description")}</Label>
           <Textarea

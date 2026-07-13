@@ -61,6 +61,7 @@ func TestTrustCenter_UpdateProfile(t *testing.T) {
 			updateTrustCenter(input: $input) {
 				trustCenter {
 					id
+					title
 					description
 					websiteUrl
 					email
@@ -74,6 +75,7 @@ func TestTrustCenter_UpdateProfile(t *testing.T) {
 		UpdateTrustCenter struct {
 			TrustCenter struct {
 				ID                 string  `json:"id"`
+				Title              string  `json:"title"`
 				Description        *string `json:"description"`
 				WebsiteURL         *string `json:"websiteUrl"`
 				Email              *string `json:"email"`
@@ -85,6 +87,7 @@ func TestTrustCenter_UpdateProfile(t *testing.T) {
 	err = owner.Execute(updateMutation, map[string]any{
 		"input": map[string]any{
 			"trustCenterId":      trustCenterID,
+			"title":              "Acme Security",
 			"description":        "We keep your data safe.",
 			"websiteUrl":         "https://example.com",
 			"email":              "security@example.com",
@@ -95,6 +98,7 @@ func TestTrustCenter_UpdateProfile(t *testing.T) {
 
 	tc := result.UpdateTrustCenter.TrustCenter
 	assert.Equal(t, trustCenterID, tc.ID)
+	assert.Equal(t, "Acme Security", tc.Title)
 	require.NotNil(t, tc.Description)
 	assert.Equal(t, "We keep your data safe.", *tc.Description)
 	require.NotNil(t, tc.WebsiteURL)

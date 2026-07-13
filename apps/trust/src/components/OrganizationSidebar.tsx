@@ -233,7 +233,7 @@ export function OrganizationSidebar({
         : (
             <div className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1" />
           )}
-      <h1 className="text-2xl mt-6">{trustCenter.organization.name}</h1>
+      <h1 className="text-2xl mt-6">{trustCenter.title}</h1>
       <p className="text-sm text-txt-secondary mt-1">
         {trustCenter.description}
       </p>

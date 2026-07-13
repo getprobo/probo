@@ -34,9 +34,7 @@ import type { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
 export const homePageQuery = graphql`
   query HomePageQuery @throwOnFieldError {
     currentTrustCenter @required(action: THROW) {
-      organization {
-        name
-      }
+      title
       ...TrustCenterContactInfo_trustCenter
       ...ComplianceFrameworksSection_trustCenter
       ...SecurityCommitmentsSection_trustCenter
@@ -54,12 +52,12 @@ export function HomePage({ queryRef }: HomePageProps) {
   const { t } = useTranslation();
   const data = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
   const { currentTrustCenter } = data;
-  const { organization } = currentTrustCenter;
+  const { title } = currentTrustCenter;
 
   return (
     <>
       <Hero
-        title={t("home.heroTitle", { name: organization.name })}
+        title={t("home.heroTitle", { name: title })}
         description={t("home.heroDescription")}
       >
         <TrustCenterContactInfo trustCenterKey={currentTrustCenter} />

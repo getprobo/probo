@@ -185,7 +185,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
         <div>
           <h2 className="text-base font-medium">{__("Visual identity")}</h2>
           <p className="text-sm text-txt-tertiary">
-            {__("Logos displayed on your public compliance page.")}
+            {__("Square logos displayed on your public compliance page.")}
           </p>
         </div>
         {isUpdating && <Spinner />}
@@ -196,7 +196,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
           <div className="flex-1">
             <Label>{__("Logo")}</Label>
             <p className="text-sm text-txt-tertiary mb-3">
-              {__("This logo will be displayed on your public compliance page.")}
+              {__("Upload a square logo for your public compliance page.")}
             </p>
 
             <div className="flex items-center gap-4">
@@ -211,7 +211,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                     </div>
                   )
                 : (
-                    <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-surface-secondary text-xs text-txt-tertiary">
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-surface-secondary text-xs text-txt-tertiary">
                       {__("No logo")}
                     </div>
                   )}
@@ -230,7 +230,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                 </FileButton>
                 {!currentLogoUrl && (
                   <p className="text-xs text-txt-tertiary">
-                    {__("PNG, JPG, SVG, or WEBP up to 5MB")}
+                    {__("Square format. PNG, JPG, SVG, or WEBP up to 5MB")}
                   </p>
                 )}
               </div>
@@ -250,7 +250,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
           <div className="flex-1">
             <Label>{__("Dark mode logo")}</Label>
             <p className="text-sm text-txt-tertiary mb-3">
-              {__("This logo will be used when dark mode is enabled.")}
+              {__("Upload a square logo for use when dark mode is enabled.")}
             </p>
 
             <div className="flex items-center gap-4">
@@ -265,7 +265,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                     </div>
                   )
                 : (
-                    <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-gray-900 text-xs text-txt-tertiary">
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-gray-900 text-xs text-txt-tertiary">
                       {__("No logo")}
                     </div>
                   )}
@@ -284,7 +284,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                 </FileButton>
                 {!currentDarkLogoUrl && (
                   <p className="text-xs text-txt-tertiary">
-                    {__("PNG, JPG, SVG, or WEBP up to 5MB")}
+                    {__("Square format. PNG, JPG, SVG, or WEBP up to 5MB")}
                   </p>
                 )}
               </div>

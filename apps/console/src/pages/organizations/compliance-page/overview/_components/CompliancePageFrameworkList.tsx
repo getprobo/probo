@@ -42,6 +42,9 @@ const compliancePageFragment = graphql`
       edges {
         node {
           id
+          framework {
+            id
+          }
           ...CompliancePageFrameworkListItem_complianceFramework
         }
       }
@@ -82,7 +85,7 @@ export function CompliancePageFrameworkList(props: CompliancePageFrameworkListPr
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
       {edges.map(edge => (
         <CompliancePageFrameworkListItem
-          key={edge.node.id}
+          key={edge.node.framework.id}
           complianceFrameworkKey={edge.node}
           compliancePageKey={compliancePage}
           onRefetch={handleRefetch}

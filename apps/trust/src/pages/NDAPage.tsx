@@ -47,9 +47,7 @@ export const ndaPageQuery = graphql`
       id
     }
     currentTrustCenter @required(action: THROW) {
-      organization {
-        name
-      }
+      title
       nonDisclosureAgreement {
         fileName
         fileUrl
@@ -246,7 +244,7 @@ export function NDAPage(props: {
                 __(
                   "%s requires you to sign an NDA before accessing compliance documents.",
                 ),
-                trustCenter.organization.name,
+                trustCenter.title,
               )}
             </p>
             {isMobile && nda?.fileUrl && (

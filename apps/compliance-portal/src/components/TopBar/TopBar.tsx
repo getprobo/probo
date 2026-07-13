@@ -44,9 +44,7 @@ const topBarFragment = graphql`
     }
     currentTrustCenter @required(action: THROW) {
       themedLogoUrl
-      organization {
-        name
-      }
+      title
     }
   }
 `;
@@ -66,7 +64,7 @@ export function TopBar({ queryKey }: TopBarProps) {
   const { openSignIn } = useSignInDialog();
 
   const { currentTrustCenter } = data;
-  const organizationName = currentTrustCenter.organization.name;
+  const title = currentTrustCenter.title;
   const logoUrl = currentTrustCenter.themedLogoUrl ?? undefined;
 
   const slots = topBar();
@@ -81,11 +79,11 @@ export function TopBar({ queryKey }: TopBarProps) {
             color="neutral"
             radius="small"
             src={logoUrl}
-            fallback={organizationName.charAt(0) || "?"}
+            fallback={title.charAt(0) || "?"}
             className={slots.logo()}
           />
           <Text size={2} weight="medium" color="neutral" highContrast className={slots.brandName()}>
-            {organizationName}
+            {title}
           </Text>
           <Text size={2} color="neutral" className={slots.tagline()}>
             {t("topBar.tagline")}
