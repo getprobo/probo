@@ -15,6 +15,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -22,6 +23,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func testRepoClassifications(t *testing.T, repos []repoListItem) map[string]RepoClassification {
+	t.Helper()
+
+	classifications, _ := HeuristicRepoClassifier{}.Classify(context.Background(), repos, nil)
+
+	return classifications
+}
 
 func TestSelectReposForClone_PrioritizesRelevantRepos(t *testing.T) {
 	t.Parallel()
@@ -41,7 +50,7 @@ func TestSelectReposForClone_PrioritizesRelevantRepos(t *testing.T) {
 		repoListItem{Name: ".github", DefaultBranch: "main", Private: true},
 	)
 
-	selected, limitation := selectReposForClone(repos)
+	selected, limitation := selectReposForClone(repos, testRepoClassifications(t, repos))
 	require.NotEmpty(t, limitation)
 	require.LessOrEqual(t, len(selected), maxReposToClone)
 
@@ -51,17 +60,26 @@ func TestSelectReposForClone_PrioritizesRelevantRepos(t *testing.T) {
 	assert.NotContains(t, names, "sandbox-playground")
 }
 
-func TestScoreRepoForClone(t *testing.T) {
+func TestCloneScoreForRepo_UsesMetadataSignals(t *testing.T) {
 	t.Parallel()
 
-	assert.GreaterOrEqual(t, scoreRepoForClone(repoListItem{
-		Name:          "payments-api",
-		DefaultBranch: "main",
-		Private:       false,
-		PushedAt:      time.Now().UTC().Format(time.RFC3339),
-	}), minRepoCloneScore)
-	assert.Less(t, scoreRepoForClone(repoListItem{Name: "sandbox-playground"}), minRepoCloneScore)
-	assert.Equal(t, 0, scoreRepoForClone(repoListItem{Name: "forked", Fork: true}))
+	classifications := testRepoClassifications(t, []repoListItem{
+		{
+			Name:            "payments-api",
+			DefaultBranch:   "main",
+			Private:         false,
+			PushedAt:        time.Now().UTC().Format(time.RFC3339),
+			Description:     "Primary customer-facing API",
+			Topics:          []string{"microservice"},
+			StargazersCount: 42,
+		},
+		{Name: "sandbox-playground"},
+		{Name: "forked", Fork: true},
+	})
+
+	assert.GreaterOrEqual(t, classifications["payments-api"].CloneScore, minRepoCloneScore)
+	assert.Less(t, classifications["sandbox-playground"].CloneScore, minRepoCloneScore)
+	assert.Equal(t, 0, classifications["forked"].CloneScore)
 }
 
 func TestSelectReposForClone_IncludesLargeRepos(t *testing.T) {
@@ -73,7 +91,7 @@ func TestSelectReposForClone_IncludesLargeRepos(t *testing.T) {
 		{Name: ".github", DefaultBranch: "main", Private: true},
 	}
 
-	selected, limitation := selectReposForClone(repos)
+	selected, limitation := selectReposForClone(repos, testRepoClassifications(t, repos))
 	names := repoNames(selected)
 
 	assert.Contains(t, names, "api")

@@ -43,6 +43,10 @@ func TestIsLikelyProductionRepo(t *testing.T) {
 	t.Parallel()
 
 	assert.True(t, isLikelyProductionRepo(repoListItem{Name: "docs"}, true, true))
-	assert.True(t, isLikelyProductionRepo(repoListItem{Name: "payments-api"}, false, false))
+	assert.True(t, isLikelyProductionRepo(repoListItem{
+		Name:            "payments-api",
+		DefaultBranch:   "main",
+		StargazersCount: 10,
+	}, false, false))
 	assert.False(t, isLikelyProductionRepo(repoListItem{Name: "sandbox-playground"}, false, false))
 }

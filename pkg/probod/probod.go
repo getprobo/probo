@@ -652,12 +652,14 @@ func (impl *Implm) Run(
 	riskManagementService := riskmanagement.NewService(pgClient)
 	githubDiscoveryService := ghdiscovery.NewService(pgClient, encryptionKey)
 	githubDiscoverySynthesizer := impl.buildGitHubDiscoverySynthesizer(l, tp, r)
+	githubDiscoveryRepoClassifier := impl.buildGitHubDiscoveryRepoClassifier(l, tp, r)
 	githubDiscoveryRunner := ghdiscovery.NewRunner(
 		pgClient,
 		encryptionKey,
 		defaultConnectorRegistry,
 		providerRegistry,
 		githubDiscoverySynthesizer,
+		githubDiscoveryRepoClassifier,
 		l.Named("github-discovery"),
 	)
 

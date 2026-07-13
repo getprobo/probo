@@ -34,6 +34,7 @@ type Runner struct {
 	connectorRegistry *connector.ConnectorRegistry
 	providerRegistry  *provider.Registry
 	synthesizer       Synthesizer
+	repoClassifier    RepoClassifier
 	logger            *log.Logger
 }
 
@@ -43,10 +44,15 @@ func NewRunner(
 	connectorRegistry *connector.ConnectorRegistry,
 	providerRegistry *provider.Registry,
 	synthesizer Synthesizer,
+	repoClassifier RepoClassifier,
 	logger *log.Logger,
 ) *Runner {
 	if synthesizer == nil {
 		synthesizer = DeterministicSynthesizer{}
+	}
+
+	if repoClassifier == nil {
+		repoClassifier = DefaultRepoClassifier()
 	}
 
 	return &Runner{
@@ -55,6 +61,7 @@ func NewRunner(
 		connectorRegistry: connectorRegistry,
 		providerRegistry:  providerRegistry,
 		synthesizer:       synthesizer,
+		repoClassifier:    repoClassifier,
 		logger:            logger,
 	}
 }
@@ -85,7 +92,13 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 		return nil, err
 	}
 
-	sheet, err := newDiscoveryScanner(httpClient, githubOrg, connector.Connection, r.logger).scan(ctx)
+	sheet, err := newDiscoveryScanner(
+		httpClient,
+		githubOrg,
+		connector.Connection,
+		r.logger,
+		r.repoClassifier,
+	).scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot scan github organization: %w", err)
 	}

@@ -14,16 +14,18 @@
 
 package github
 
-// isLikelyProductionRepo applies repository classification heuristics for E01.
-func isLikelyProductionRepo(
-	repo repoListItem,
-	protected bool,
-	hasWorkflows bool,
-) bool {
-	class := classifyRepoHeuristic(repo, repoProbeSignals{
-		BranchProtected: protected,
-		HasWorkflows:    hasWorkflows,
-	})
+import "context"
 
-	return class.ProductionLikely
+// RepoClassifier scores repositories for clone priority and production likelihood.
+type RepoClassifier interface {
+	Classify(
+		ctx context.Context,
+		repos []repoListItem,
+		probes map[string]repoProbeSignals,
+	) (map[string]RepoClassification, []string)
+}
+
+// DefaultRepoClassifier returns deterministic metadata and probe scoring.
+func DefaultRepoClassifier() RepoClassifier {
+	return HeuristicRepoClassifier{}
 }

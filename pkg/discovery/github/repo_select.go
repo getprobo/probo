@@ -17,8 +17,6 @@ package github
 import (
 	"fmt"
 	"sort"
-	"strings"
-	"time"
 )
 
 const (
@@ -34,11 +32,14 @@ type repoCloneCandidate struct {
 }
 
 // selectReposForClone ranks repositories and returns the subset worth cloning.
-func selectReposForClone(repos []repoListItem) ([]repoListItem, string) {
+func selectReposForClone(
+	repos []repoListItem,
+	classifications map[string]RepoClassification,
+) ([]repoListItem, string) {
 	candidates := make([]repoCloneCandidate, 0, len(repos))
 
 	for _, repo := range repos {
-		score := scoreRepoForClone(repo)
+		score := cloneScoreForRepo(repo, classifications)
 		if score < minRepoCloneScore && repo.Name != orgProfileRepo {
 			continue
 		}
@@ -77,79 +78,13 @@ func selectReposForClone(repos []repoListItem) ([]repoListItem, string) {
 	return selected, limitation
 }
 
-func scoreRepoForClone(repo repoListItem) int {
-	if repo.Name == orgProfileRepo {
-		return 1000
+func cloneScoreForRepo(
+	repo repoListItem,
+	classifications map[string]RepoClassification,
+) int {
+	if class, ok := classifications[repo.Name]; ok {
+		return class.CloneScore
 	}
 
-	if repo.Fork {
-		return 0
-	}
-
-	score := 0
-	name := strings.ToLower(repo.Name)
-
-	for _, hint := range productionRepoNameHints {
-		if strings.Contains(name, hint) {
-			score += 5
-
-			break
-		}
-	}
-
-	switch strings.ToLower(repo.DefaultBranch) {
-	case "main", "master", "production":
-		score += 2
-	}
-
-	if !repo.Private {
-		score += 3
-	}
-
-	if repoPushedRecently(repo.PushedAt, 90*24*time.Hour) {
-		score += 2
-	}
-
-	if isLowPriorityRepoName(name) {
-		score -= 6
-	}
-
-	return score
-}
-
-func isLowPriorityRepoName(name string) bool {
-	lowPriorityHints := []string{
-		"sandbox",
-		"playground",
-		"experiment",
-		"demo",
-		"sample",
-		"test-",
-		"-test",
-		"tmp",
-		"scratch",
-		"deprecated",
-		"archive",
-	}
-
-	for _, hint := range lowPriorityHints {
-		if strings.Contains(name, hint) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func repoPushedRecently(pushedAt string, maxAge time.Duration) bool {
-	if pushedAt == "" {
-		return false
-	}
-
-	parsed, err := time.Parse(time.RFC3339, pushedAt)
-	if err != nil {
-		return false
-	}
-
-	return time.Since(parsed) <= maxAge
+	return classifyRepoHeuristic(repo, repoProbeSignals{}).CloneScore
 }

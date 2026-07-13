@@ -22,6 +22,38 @@ import (
 	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 )
 
+func (impl *Implm) buildGitHubDiscoveryRepoClassifier(
+	l *log.Logger,
+	tp trace.TracerProvider,
+	r prometheus.Registerer,
+) ghdiscovery.RepoClassifier {
+	agentCfg, llmClient, err := impl.resolveAgentClient(
+		"github-discovery",
+		impl.cfg.Agents.GitHubDiscovery,
+		l,
+		tp,
+		r,
+	)
+	if err != nil {
+		l.Warn("github discovery LLM repo classification disabled", log.Error(err))
+
+		return ghdiscovery.DefaultRepoClassifier()
+	}
+
+	maxTokens := 4096
+	if agentCfg.MaxTokens != nil {
+		maxTokens = *agentCfg.MaxTokens
+	}
+
+	return ghdiscovery.NewLLMRepoClassifier(
+		llmClient,
+		agentCfg.ModelName,
+		ref.UnrefOrZero(agentCfg.Temperature),
+		maxTokens,
+		l.Named("github-discovery-repo-classification"),
+	)
+}
+
 func (impl *Implm) buildGitHubDiscoverySynthesizer(
 	l *log.Logger,
 	tp trace.TracerProvider,

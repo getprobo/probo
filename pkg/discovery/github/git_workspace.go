@@ -28,10 +28,11 @@ import (
 func (s *discoveryScanner) buildWorkspace(
 	ctx context.Context,
 	repos []repoListItem,
+	classifications map[string]RepoClassification,
 ) (vfs.FS, []string) {
 	fallback := s.apiFallbackFS()
 
-	selected, selectLimitation := selectReposForClone(repos)
+	selected, selectLimitation := selectReposForClone(repos, classifications)
 	if len(selected) == 0 {
 		return fallback, []string{selectLimitation}
 	}

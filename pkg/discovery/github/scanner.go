@@ -24,12 +24,14 @@ import (
 )
 
 type discoveryScanner struct {
-	api    *apiClient
-	fs     vfs.FS
-	org    string
-	conn   connector.Connection
-	logger *log.Logger
-	scopes scopeSet
+	api                 *apiClient
+	fs                  vfs.FS
+	org                 string
+	conn                connector.Connection
+	logger              *log.Logger
+	scopes              scopeSet
+	repoClassifier      RepoClassifier
+	repoClassifications map[string]RepoClassification
 }
 
 func newDiscoveryScanner(
@@ -37,16 +39,22 @@ func newDiscoveryScanner(
 	org string,
 	conn connector.Connection,
 	logger *log.Logger,
+	repoClassifier RepoClassifier,
 ) *discoveryScanner {
 	api := newAPIClient(httpClient)
 
+	if repoClassifier == nil {
+		repoClassifier = DefaultRepoClassifier()
+	}
+
 	return &discoveryScanner{
-		api:    api,
-		fs:     newGitHubFS(api, org),
-		org:    org,
-		conn:   conn,
-		logger: logger,
-		scopes: newScopeSet(conn),
+		api:            api,
+		fs:             newGitHubFS(api, org),
+		org:            org,
+		conn:           conn,
+		logger:         logger,
+		scopes:         newScopeSet(conn),
+		repoClassifier: repoClassifier,
 	}
 }
 

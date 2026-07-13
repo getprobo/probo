@@ -51,17 +51,6 @@ var (
 )
 
 type (
-	repoListItem struct {
-		Name          string `json:"name"`
-		DefaultBranch string `json:"default_branch"`
-		Private       bool   `json:"private"`
-		Archived      bool   `json:"archived"`
-		Disabled      bool   `json:"disabled"`
-		Fork          bool   `json:"fork"`
-		PushedAt      string `json:"pushed_at"`
-		Size          int    `json:"size"`
-	}
-
 	branchProtection struct {
 		RequiredPullRequestReviews *struct {
 			RequiredApprovingReviewCount int  `json:"required_approving_review_count"`
@@ -199,9 +188,13 @@ func (s *discoveryScanner) scanRepos(ctx context.Context, sheet *FactSheet) {
 	ciAgg := &ciProviderAggregate{Providers: map[string]int{}}
 
 	eligible := filterEligibleRepos(repos)
+	probeSignals := s.collectRepoProbeSignals(ctx, eligible)
+	classifications, classLimitations := s.repoClassifier.Classify(ctx, eligible, probeSignals)
+	s.repoClassifications = classifications
+	sheet.Limitations = append(sheet.Limitations, classLimitations...)
 
 	if len(eligible) > 0 {
-		workspace, workspaceLimitations := s.buildWorkspace(ctx, eligible)
+		workspace, workspaceLimitations := s.buildWorkspace(ctx, eligible, classifications)
 		s.fs = workspace
 
 		sheet.Limitations = append(sheet.Limitations, workspaceLimitations...)
@@ -298,7 +291,11 @@ func (s *discoveryScanner) scanRepo(
 	signals := s.analyzeRepoWorkflows(ctx, repo, fileIndex)
 	mergeWorkflowSignalsIntoAggregate(&signals, agg)
 
-	if isLikelyProductionRepo(repo, protected, hasWorkflows) {
+	if class, ok := s.repoClassifications[repo.Name]; ok {
+		if class.ProductionLikely {
+			agg.ProductionLikely++
+		}
+	} else if isLikelyProductionRepo(repo, protected, hasWorkflows) {
 		agg.ProductionLikely++
 	}
 
