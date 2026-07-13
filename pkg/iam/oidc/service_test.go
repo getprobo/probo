@@ -35,9 +35,11 @@ func newTestService(t *testing.T) *Service {
 	)
 }
 
-// TestMicrosoftRequiresDomainOwnerVerified pins the nOAuth mitigation: the
-// Microsoft provider must not trust the email claim on email_verified alone and
-// must require the xms_edov domain-ownership claim.
+// TestMicrosoftRequiresDomainOwnerVerified pins the nOAuth mitigation.
+// Microsoft never emits the standard email_verified claim, so trustProviderEmail
+// must be true (the email_verified check is skipped); email verification is
+// instead enforced through the xms_edov domain-ownership claim, which
+// requireEmailDomainOwnerVerified pins.
 func TestMicrosoftRequiresDomainOwnerVerified(t *testing.T) {
 	t.Parallel()
 
@@ -45,7 +47,7 @@ func TestMicrosoftRequiresDomainOwnerVerified(t *testing.T) {
 
 	microsoft := s.providers[coredata.OIDCProviderMicrosoft]
 	require.NotNil(t, microsoft)
-	assert.False(t, microsoft.trustProviderEmail, "Microsoft email must not be trusted unconditionally")
+	assert.True(t, microsoft.trustProviderEmail, "Microsoft does not emit email_verified; rely on xms_edov")
 	assert.True(t, microsoft.requireEmailDomainOwnerVerified, "Microsoft must require xms_edov")
 
 	google := s.providers[coredata.OIDCProviderGoogle]

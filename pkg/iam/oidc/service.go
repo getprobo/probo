@@ -226,8 +226,10 @@ func NewService(
 				RedirectURL:  baseURL + "/api/connect/v1/oidc/microsoft/callback",
 				Scopes:       []string{"openid", "email", "profile"},
 			},
-			jwksURL:                         microsoftJWKSURL,
-			trustProviderEmail:              false,
+			jwksURL: microsoftJWKSURL,
+			// Microsoft never emits email_verified; nOAuth is
+			// mitigated by the required xms_edov claim below.
+			trustProviderEmail:              true,
 			requireEmailDomainOwnerVerified: true,
 			issuerValidator: func(iss string) bool {
 				return strings.HasPrefix(iss, "https://login.microsoftonline.com/") &&
