@@ -156,7 +156,7 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 	assert.Equal(t, 1, sheet.ReposScanned)
 }
 
-func TestMaterializeFromFacts_IncludesRepoCoverageMeasures(t *testing.T) {
+func TestBuildMeasurePlanFromFacts_IncludesRepoCoverageMeasures(t *testing.T) {
 	t.Parallel()
 
 	sheet := &FactSheet{
@@ -180,7 +180,7 @@ func TestMaterializeFromFacts_IncludesRepoCoverageMeasures(t *testing.T) {
 		},
 	}
 
-	plan, err := MaterializeFromFacts(sheet, nil)
+	plan, err := buildMeasurePlanFromFacts(sheet, nil)
 	require.NoError(t, err)
 
 	names := make([]string, 0, len(plan.Creates))

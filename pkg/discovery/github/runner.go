@@ -160,11 +160,11 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 
 	plan, err := r.synthesizer.Synthesize(ctx, sheet, existing)
 	if err != nil {
-		r.logger.WarnCtx(ctx, "llm synthesis failed, falling back to deterministic materialization", log.Error(err))
+		r.logger.WarnCtx(ctx, "llm synthesis failed, falling back to deterministic synthesis", log.Error(err))
 
-		plan, err = MaterializeFromFacts(sheet, existing)
+		plan, err = DeterministicSynthesizer{}.Synthesize(ctx, sheet, existing)
 		if err != nil {
-			return nil, fmt.Errorf("cannot materialize measure plan: %w", err)
+			return nil, fmt.Errorf("cannot build measure plan: %w", err)
 		}
 	}
 

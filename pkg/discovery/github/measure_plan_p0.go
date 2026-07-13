@@ -16,8 +16,8 @@ package github
 
 import "go.probo.inc/probo/pkg/coredata"
 
-func p0MaterializeRules() []materializeRule {
-	return []materializeRule{
+func p0MeasurePlanRules() []measurePlanRule {
+	return []measurePlanRule{
 		{
 			factKey:     "org_fork_pr_approval_required",
 			name:        "Fork pull request approval required",

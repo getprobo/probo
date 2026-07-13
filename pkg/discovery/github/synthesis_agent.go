@@ -56,7 +56,7 @@ func (DeterministicSynthesizer) Synthesize(
 	sheet *FactSheet,
 	existing []ExistingMeasure,
 ) (*MeasurePlan, error) {
-	return MaterializeFromFacts(sheet, existing)
+	return buildMeasurePlanFromFacts(sheet, existing)
 }
 
 func NewLLMSynthesizer(

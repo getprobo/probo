@@ -22,7 +22,7 @@ import (
 )
 
 type (
-	materializeRule struct {
+	measurePlanRule struct {
 		factKey     string
 		name        string
 		description string
@@ -33,9 +33,9 @@ type (
 	gidKey string
 )
 
-// MaterializeFromFacts builds a measure plan without an LLM (tests and fallback).
-func MaterializeFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*MeasurePlan, error) {
-	rules := defaultMaterializeRules()
+// buildMeasurePlanFromFacts maps collected facts to creates/updates without an LLM.
+func buildMeasurePlanFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*MeasurePlan, error) {
+	rules := defaultMeasurePlanRules()
 	byKey := map[string]Fact{}
 
 	for _, fact := range sheet.Facts {
@@ -109,8 +109,8 @@ func findMeasureByName(existing []ExistingMeasure, name string) *ExistingMeasure
 	return nil
 }
 
-func defaultMaterializeRules() []materializeRule {
-	rules := []materializeRule{
+func defaultMeasurePlanRules() []measurePlanRule {
+	rules := []measurePlanRule{
 		{
 			factKey:     "org_mfa_required",
 			name:        "Org-wide MFA enforcement",
@@ -382,7 +382,7 @@ func defaultMaterializeRules() []materializeRule {
 		},
 	}
 
-	return append(rules, p0MaterializeRules()...)
+	return append(rules, p0MeasurePlanRules()...)
 }
 
 func factIntValue(value any) (int, bool) {

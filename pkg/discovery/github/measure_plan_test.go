@@ -23,7 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestMaterializeFromFactsCreatesOrgMeasures(t *testing.T) {
+func TestBuildMeasurePlanFromFactsCreatesOrgMeasures(t *testing.T) {
 	t.Parallel()
 
 	sheet := &FactSheet{
@@ -35,7 +35,7 @@ func TestMaterializeFromFactsCreatesOrgMeasures(t *testing.T) {
 		},
 	}
 
-	plan, err := MaterializeFromFacts(sheet, nil)
+	plan, err := buildMeasurePlanFromFacts(sheet, nil)
 	require.NoError(t, err)
 	require.NotNil(t, plan)
 	assert.Len(t, plan.Creates, 3)
@@ -46,7 +46,7 @@ func TestMaterializeFromFactsCreatesOrgMeasures(t *testing.T) {
 	}
 }
 
-func TestMaterializeFromFactsUpdatesExistingMeasures(t *testing.T) {
+func TestBuildMeasurePlanFromFactsUpdatesExistingMeasures(t *testing.T) {
 	t.Parallel()
 
 	measureID := mustGID(t, coredata.MeasureEntityType)
@@ -67,7 +67,7 @@ func TestMaterializeFromFactsUpdatesExistingMeasures(t *testing.T) {
 		},
 	}
 
-	plan, err := MaterializeFromFacts(sheet, existing)
+	plan, err := buildMeasurePlanFromFacts(sheet, existing)
 	require.NoError(t, err)
 	require.Len(t, plan.Updates, 1)
 	assert.Equal(t, measureID, plan.Updates[0].MeasureID)
