@@ -12,33 +12,25 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package thirdpartymgmt
+package report
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/create"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/delete"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/list"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/publish"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/update"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/vet"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/view"
+	"go.probo.inc/probo/pkg/cmd/third-party/report/delete"
+	"go.probo.inc/probo/pkg/cmd/third-party/report/list"
+	"go.probo.inc/probo/pkg/cmd/third-party/report/upload"
 )
 
-func NewCmdThirdParty(f *cmdutil.Factory) *cobra.Command {
+func NewCmdReport(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "thirdParty <command>",
-		Short: "Manage thirdParties",
+		Use:   "report <command>",
+		Short: "Manage third-party compliance reports",
 	}
 
+	cmd.AddCommand(upload.NewCmdUpload(f))
 	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(vet.NewCmdVet(f))
-	cmd.AddCommand(publish.NewCmdPublish(f))
 
 	return cmd
 }

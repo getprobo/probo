@@ -52,9 +52,9 @@ prb risk list
 prb measure create --name "MFA enforced on all production systems"
 prb evidence create --measure <id> --file screenshot.png
 
-# Manage vendor compliance
-prb thirdpartymgmt vendor list
-prb thirdpartymgmt risk-assessment create --vendor <id>
+# Manage third-party compliance
+prb third-party list
+prb third-party report upload ./soc2.pdf --third-party <id> --report-date 2026-01-01
 ```
 
 Run `prb help` for the full command reference.

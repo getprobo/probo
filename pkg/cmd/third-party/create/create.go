@@ -63,12 +63,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new thirdParty",
-		Example: `  # Create a third_party interactively
-  prb third_party create
+		Short: "Create a new third party",
+		Example: `  # Create a third party interactively
+  prb third-party create
 
-  # Create a third_party non-interactively
-  prb third_party create --name "Acme Corp" --category CLOUD_PROVIDER`,
+  # Create a third party non-interactively
+  prb third-party create --name "Acme Corp" --category CLOUD_PROVIDER`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -99,7 +99,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if f.IOStreams.IsInteractive() {
 				if flagName == "" {
 					err := huh.NewInput().
-						Title("ThirdParty name").
+						Title("Third party name").
 						Value(&flagName).
 						Run()
 					if err != nil {
@@ -109,7 +109,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 				if flagCategory == "" {
 					err := huh.NewSelect[string]().
-						Title("ThirdParty category").
+						Title("Third party category").
 						Options(
 							huh.NewOption("Analytics", "ANALYTICS"),
 							huh.NewOption("Cloud Monitoring", "CLOUD_MONITORING"),
@@ -188,7 +188,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			v := resp.CreateThirdParty.ThirdPartyEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Created thirdParty %s (%s)\n",
+				"Created third party %s (%s)\n",
 				v.ID,
 				v.Name,
 			)
@@ -198,9 +198,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().StringVar(&flagName, "name", "", "ThirdParty name (required)")
-	cmd.Flags().StringVar(&flagCategory, "category", "", "ThirdParty category (required)")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "ThirdParty description")
+	cmd.Flags().StringVar(&flagName, "name", "", "Third party name (required)")
+	cmd.Flags().StringVar(&flagCategory, "category", "", "Third party category (required)")
+	cmd.Flags().StringVar(&flagDescription, "description", "", "Third party description")
 	cmd.Flags().StringVar(&flagLegalName, "legal-name", "", "Legal name")
 	cmd.Flags().StringVar(&flagAddress, "address", "", "Headquarter address")
 	cmd.Flags().StringVar(&flagWebsite, "website", "", "Website URL")

@@ -28,10 +28,12 @@ import (
 const uploadMutation = `
 mutation($input: UploadMeasureEvidenceInput!) {
   uploadMeasureEvidence(input: $input) {
-    evidence {
-      id
-      state
-      type
+    evidenceEdge {
+      node {
+        id
+        state
+        type
+      }
     }
   }
 }
@@ -39,11 +41,13 @@ mutation($input: UploadMeasureEvidenceInput!) {
 
 type uploadResponse struct {
 	UploadMeasureEvidence struct {
-		Evidence struct {
-			ID    string `json:"id"`
-			State string `json:"state"`
-			Type  string `json:"type"`
-		} `json:"evidence"`
+		EvidenceEdge struct {
+			Node struct {
+				ID    string `json:"id"`
+				State string `json:"state"`
+				Type  string `json:"type"`
+			} `json:"node"`
+		} `json:"evidenceEdge"`
 	} `json:"uploadMeasureEvidence"`
 }
 
@@ -107,7 +111,7 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Uploaded evidence %s\n", resp.UploadMeasureEvidence.Evidence.ID)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Uploaded evidence %s\n", resp.UploadMeasureEvidence.EvidenceEdge.Node.ID)
 
 			return nil
 		},

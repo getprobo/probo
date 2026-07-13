@@ -63,7 +63,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
-		Short: "View a thirdParty",
+		Short: "View a third party",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -102,7 +102,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if resp.Node == nil {
-				return fmt.Errorf("thirdParty %s not found", args[0])
+				return fmt.Errorf("third party %s not found", args[0])
 			}
 
 			if resp.Node.Typename != "ThirdParty" {

@@ -14,7 +14,10 @@
 
 package cmdutil
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // FormatTime parses an RFC3339 timestamp and returns a human-friendly
 // local representation. If parsing fails it returns the raw string.
@@ -25,4 +28,23 @@ func FormatTime(raw string) string {
 	}
 
 	return t.Local().Format("Jan 02, 2006 15:04 MST")
+}
+
+// NormalizeDatetime converts a user-supplied date or datetime into the RFC3339
+// format expected by the GraphQL Datetime scalar. A full RFC3339 timestamp is
+// returned unchanged; a date-only value (YYYY-MM-DD) is anchored to midnight
+// UTC. Any other format returns an error.
+func NormalizeDatetime(raw string) (string, error) {
+	if _, err := time.Parse(time.RFC3339, raw); err == nil {
+		return raw, nil
+	}
+
+	if t, err := time.Parse(time.DateOnly, raw); err == nil {
+		return t.Format(time.RFC3339), nil
+	}
+
+	return "", fmt.Errorf(
+		"invalid date %q: expected YYYY-MM-DD or RFC3339 (e.g. 2026-01-02 or 2026-01-02T15:04:05Z)",
+		raw,
+	)
 }

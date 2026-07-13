@@ -19,9 +19,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -273,8 +276,17 @@ func (c *Client) doUploadRequest(
 		return nil, fmt.Errorf("cannot write map field: %w", err)
 	}
 
-	// Part 3: file
-	part, err := writer.CreateFormFile("0", filename)
+	// Part 3: file. CreateFormFile would hardcode the part Content-Type to
+	// application/octet-stream, which the server's file validators reject.
+	// Derive the real content type from the file extension instead.
+	partHeader := make(textproto.MIMEHeader)
+	partHeader.Set(
+		"Content-Disposition",
+		fmt.Sprintf(`form-data; name="0"; filename="%s"`, escapeQuotes(filename)),
+	)
+	partHeader.Set("Content-Type", contentTypeForFilename(filename))
+
+	part, err := writer.CreatePart(partHeader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create form file: %w", err)
 	}
@@ -334,6 +346,30 @@ func (c *Client) doUploadRequest(
 	}
 
 	return respBody, nil
+}
+
+// contentTypeForFilename resolves the MIME type of an upload from its file
+// extension, so multipart parts declare a type the server's file validators
+// accept (e.g. application/pdf) rather than the application/octet-stream that
+// multipart.CreateFormFile would otherwise force.
+func contentTypeForFilename(filename string) string {
+	ct := mime.TypeByExtension(strings.ToLower(filepath.Ext(filename)))
+	if ct == "" {
+		return "application/octet-stream"
+	}
+
+	// Drop any "; charset=..." parameter — validators match the bare type.
+	if i := strings.IndexByte(ct, ';'); i >= 0 {
+		ct = strings.TrimSpace(ct[:i])
+	}
+
+	return ct
+}
+
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func escapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
 }
 
 func (c *Client) tryRefreshToken() error {

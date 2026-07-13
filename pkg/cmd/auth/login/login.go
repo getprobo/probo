@@ -75,6 +75,7 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagHost         string
 		flagOrganization string
+		flagToken        string
 	)
 
 	cmd := &cobra.Command{
@@ -90,7 +91,10 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
   prb auth login --hostname us.probo.com
 
   # Login to a self-hosted instance
-  prb auth login --hostname probo.example.com`,
+  prb auth login --hostname probo.example.com
+
+  # Login with a personal API key (non-interactive)
+  prb auth login --hostname eu.probo.com --token YOUR_TOKEN --org YOUR_ORG_ID`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if f.IOStreams.IsInteractive() && flagHost == "" {
 				var region string
@@ -134,6 +138,11 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			baseURL := normalizeHostToURL(flagHost)
+
+			if flagToken != "" {
+				return loginWithToken(f, baseURL, flagHost, flagToken, flagOrganization)
+			}
+
 			httpClient := &http.Client{Timeout: 30 * time.Second}
 
 			_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Discovering OAuth2 endpoints on %s...\n", flagHost)
@@ -187,35 +196,11 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintln(f.IOStreams.ErrOut, "Loading organizations...")
 				orgs, orgsErr := fetchOrganizations(baseURL, token.AccessToken)
 
-				if orgsErr == nil && len(orgs) > 0 {
-					selected := orgs[0].ID
-
-					options := make([]huh.Option[string], 0, len(orgs)+1)
-					for _, org := range orgs {
-						options = append(
-							options,
-							huh.NewOption(
-								fmt.Sprintf("%s (%s)", org.Name, org.ID),
-								org.ID,
-							),
-						)
-					}
-
-					options = append(
-						options,
-						huh.NewOption("Skip (no default)", ""),
-					)
-
-					err = huh.NewSelect[string]().
-						Title("Default organization").
-						Value(&selected).
-						Options(options...).
-						Run()
+				if orgsErr == nil {
+					flagOrganization, err = selectOrganization(orgs)
 					if err != nil {
 						return err
 					}
-
-					flagOrganization = selected
 				}
 			}
 
@@ -253,8 +238,90 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 		"",
 		"Default organization ID",
 	)
+	cmd.Flags().StringVar(
+		&flagToken,
+		"token",
+		"",
+		"Authentication token (personal API key); skips browser login",
+	)
 
 	return cmd
+}
+
+func loginWithToken(
+	f *cmdutil.Factory,
+	baseURL string,
+	host string,
+	token string,
+	organization string,
+) error {
+	cfg, err := f.Config()
+	if err != nil {
+		return err
+	}
+
+	_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Validating token on %s...\n", host)
+
+	orgs, err := fetchOrganizations(baseURL, token)
+	if err != nil {
+		return fmt.Errorf("cannot authenticate with token: %w", err)
+	}
+
+	if f.IOStreams.IsInteractive() && organization == "" {
+		organization, err = selectOrganization(orgs)
+		if err != nil {
+			return err
+		}
+	}
+
+	cfg.Hosts[host] = &config.HostConfig{
+		Token:        token,
+		Organization: organization,
+	}
+	cfg.ActiveHost = host
+
+	if err := cfg.Save(); err != nil {
+		return err
+	}
+
+	_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Logged in to %s\n", host)
+
+	return nil
+}
+
+func selectOrganization(orgs []viewerOrganization) (string, error) {
+	if len(orgs) == 0 {
+		return "", nil
+	}
+
+	selected := orgs[0].ID
+
+	options := make([]huh.Option[string], 0, len(orgs)+1)
+	for _, org := range orgs {
+		options = append(
+			options,
+			huh.NewOption(
+				fmt.Sprintf("%s (%s)", org.Name, org.ID),
+				org.ID,
+			),
+		)
+	}
+
+	options = append(
+		options,
+		huh.NewOption("Skip (no default)", ""),
+	)
+
+	err := huh.NewSelect[string]().
+		Title("Default organization").
+		Value(&selected).
+		Options(options...).
+		Run()
+	if err != nil {
+		return "", err
+	}
+
+	return selected, nil
 }
 
 func normalizeHostToURL(host string) string {

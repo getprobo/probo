@@ -36,18 +36,18 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "delete <id>",
-		Short: "Delete a thirdParty",
+		Short: "Delete a third party",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {
 				if !f.IOStreams.IsInteractive() {
-					return fmt.Errorf("cannot delete thirdParty: confirmation required, use --yes to confirm")
+					return fmt.Errorf("cannot delete third party: confirmation required, use --yes to confirm")
 				}
 
 				var confirmed bool
 
 				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Delete thirdParty %s?", args[0])).
+					Title(fmt.Sprintf("Delete third party %s?", args[0])).
 					Value(&confirmed).
 					Run()
 				if err != nil {
@@ -91,7 +91,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Deleted thirdParty %s\n",
+				"Deleted third party %s\n",
 				args[0],
 			)
 
