@@ -705,6 +705,36 @@ func (s *DocumentApprovalService) voidApprovalInTx(
 	return nil
 }
 
+func (s *DocumentApprovalService) voidPendingApprovalForLatestVersionInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+	documentVersion *coredata.DocumentVersion,
+) error {
+	if documentVersion.Status != coredata.DocumentVersionStatusPendingApproval {
+		return nil
+	}
+
+	quorum := &coredata.DocumentVersionApprovalQuorum{}
+	if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersion.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot load approval quorum: %w", err)
+	}
+
+	if quorum.Status != coredata.DocumentVersionApprovalQuorumStatusPending {
+		return nil
+	}
+
+	if err := s.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum); err != nil {
+		return fmt.Errorf("cannot void pending approval: %w", err)
+	}
+
+	return nil
+}
+
 func (s *DocumentApprovalService) GetQuorum(
 	ctx context.Context, scope coredata.Scoper,
 	quorumID gid.GID,

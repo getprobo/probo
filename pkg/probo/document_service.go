@@ -1753,102 +1753,6 @@ func (s *DocumentService) clearDocumentReferences(
 	return nil
 }
 
-func (s *DocumentService) teardownDocumentWorkflowsInTx(
-	ctx context.Context, scope coredata.Scoper,
-	tx pg.Tx,
-	documentID gid.GID,
-) error {
-	document := &coredata.Document{}
-	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-		return fmt.Errorf("cannot load document %q: %w", documentID, err)
-	}
-
-	documentVersion := &coredata.DocumentVersion{}
-	if err := documentVersion.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
-		return fmt.Errorf("cannot load latest document version: %w", err)
-	}
-
-	if documentVersion.Status == coredata.DocumentVersionStatusPendingApproval {
-		quorum := &coredata.DocumentVersionApprovalQuorum{}
-		if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersion.ID); err != nil {
-			if !errors.Is(err, coredata.ErrResourceNotFound) {
-				return fmt.Errorf("cannot load approval quorum: %w", err)
-			}
-		} else if quorum.Status == coredata.DocumentVersionApprovalQuorumStatusPending {
-			if err := s.svc.DocumentApprovals.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum); err != nil {
-				return err
-			}
-		}
-	}
-
-	signatures := &coredata.DocumentVersionSignatures{}
-	if err := signatures.LoadRequestedByDocumentID(ctx, tx, scope, documentID); err != nil {
-		return fmt.Errorf("cannot load requested document version signatures: %w", err)
-	}
-
-	for _, signature := range *signatures {
-		version := &coredata.DocumentVersion{}
-		if err := version.LoadByID(ctx, tx, scope, signature.DocumentVersionID); err != nil {
-			return fmt.Errorf("cannot load document version: %w", err)
-		}
-
-		if err := signature.Delete(ctx, tx, scope, signature.ID); err != nil {
-			return fmt.Errorf("cannot delete document version signature: %w", err)
-		}
-
-		if err := s.emitDocumentEvent(
-			ctx,
-			scope,
-			tx,
-			documentID,
-			coredata.WebhookEventTypeDocumentVersionSignatureCancelled,
-			version,
-			signature,
-			nil,
-			nil,
-		); err != nil {
-			return fmt.Errorf("cannot emit document version signature cancelled webhook: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func (s *DocumentService) ensureDraftReadyOnUnarchiveInTx(
-	ctx context.Context, scope coredata.Scoper,
-	tx pg.Tx,
-	documentID gid.GID,
-) error {
-	document := &coredata.Document{}
-	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-		return fmt.Errorf("cannot load document %q: %w", documentID, err)
-	}
-
-	documentVersion := &coredata.DocumentVersion{}
-	if err := documentVersion.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
-		return fmt.Errorf("cannot load latest document version: %w", err)
-	}
-
-	if documentVersion.Status != coredata.DocumentVersionStatusPendingApproval {
-		return nil
-	}
-
-	quorum := &coredata.DocumentVersionApprovalQuorum{}
-	if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersion.ID); err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil
-		}
-
-		return fmt.Errorf("cannot load approval quorum: %w", err)
-	}
-
-	if quorum.Status != coredata.DocumentVersionApprovalQuorumStatusPending {
-		return nil
-	}
-
-	return s.svc.DocumentApprovals.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum)
-}
-
 func (s *DocumentService) RequestExport(
 	ctx context.Context, scope coredata.Scoper,
 	documentIDs []gid.GID,
@@ -2496,6 +2400,58 @@ func (s *DocumentService) DeleteDraft(
 	}
 
 	return document, nil
+}
+
+func (s *DocumentService) teardownDocumentWorkflowsInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+) error {
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load document %q: %w", documentID, err)
+	}
+
+	documentVersion := &coredata.DocumentVersion{}
+	if err := documentVersion.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load latest document version: %w", err)
+	}
+
+	if err := s.svc.DocumentApprovals.voidPendingApprovalForLatestVersionInTx(
+		ctx,
+		scope,
+		tx,
+		document,
+		documentVersion,
+	); err != nil {
+		return err
+	}
+
+	return s.cancelRequestedSignaturesForDocumentInTx(ctx, scope, tx, documentID)
+}
+
+func (s *DocumentService) ensureDraftReadyOnUnarchiveInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+) error {
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load document %q: %w", documentID, err)
+	}
+
+	documentVersion := &coredata.DocumentVersion{}
+	if err := documentVersion.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load latest document version: %w", err)
+	}
+
+	return s.svc.DocumentApprovals.voidPendingApprovalForLatestVersionInTx(
+		ctx,
+		scope,
+		tx,
+		document,
+		documentVersion,
+	)
 }
 
 func (s *DocumentService) Archive(
@@ -3432,6 +3388,44 @@ func (s *DocumentService) publishMajor(
 // major supersedes the signing obligations of older majors, so their
 // REQUESTED signatures must not linger. SIGNED signatures are left untouched
 // to preserve the audit trail.
+func (s *DocumentService) cancelRequestedSignaturesForDocumentInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+) error {
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.LoadRequestedByDocumentID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load requested document version signatures: %w", err)
+	}
+
+	for _, signature := range *signatures {
+		version := &coredata.DocumentVersion{}
+		if err := version.LoadByID(ctx, tx, scope, signature.DocumentVersionID); err != nil {
+			return fmt.Errorf("cannot load document version: %w", err)
+		}
+
+		if err := signature.Delete(ctx, tx, scope, signature.ID); err != nil {
+			return fmt.Errorf("cannot delete document version signature: %w", err)
+		}
+
+		if err := s.emitDocumentEvent(
+			ctx,
+			scope,
+			tx,
+			documentID,
+			coredata.WebhookEventTypeDocumentVersionSignatureCancelled,
+			version,
+			signature,
+			nil,
+			nil,
+		); err != nil {
+			return fmt.Errorf("cannot emit document version signature cancelled webhook: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (s *DocumentService) cancelPreviousMajorSignatureRequestsInTx(
 	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
