@@ -19,55 +19,25 @@ import (
 	"strings"
 )
 
-type (
-	// MemoryOrgFS is an in-memory OrgFS for tests and local git clones.
-	MemoryOrgFS struct {
-		repos []Repo
-		files map[string]map[string][]byte
-	}
+// MemoryFS is an in-memory FS for tests and local git workspaces.
+type MemoryFS struct {
+	files map[string][]byte
+}
 
-	memoryRepoFS struct {
-		files map[string][]byte
-	}
-)
-
-func NewMemoryOrgFS(repos []Repo, files map[string]map[string][]byte) *MemoryOrgFS {
+func NewMemoryFS(files map[string][]byte) *MemoryFS {
 	if files == nil {
-		files = map[string]map[string][]byte{}
+		files = map[string][]byte{}
 	}
 
-	return &MemoryOrgFS{repos: repos, files: files}
-}
-
-func (f *MemoryOrgFS) Repositories(ctx context.Context) ([]Repo, error) {
-	_ = ctx
-
-	return append([]Repo(nil), f.repos...), nil
-}
-
-func (f *MemoryOrgFS) Open(repo Repo) RepositoryFS {
-	return &memoryRepoFS{files: f.files[repo.Name]}
-}
-
-func (f *MemoryOrgFS) SearchFiles(ctx context.Context, query SearchQuery) ([]FileRef, error) {
-	_ = ctx
-
-	var matches []FileRef
-
-	for _, repo := range f.repos {
-		for path := range f.files[repo.Name] {
-			if !memoryQueryMatches(query, path) {
-				continue
-			}
-
-			matches = append(matches, FileRef{Repo: repo, Path: path})
-		}
+	normalized := make(map[string][]byte, len(files))
+	for path, content := range files {
+		normalized[NormalizePath(path)] = content
 	}
 
-	return matches, nil
+	return &MemoryFS{files: normalized}
 }
 
-func (f *memoryRepoFS) Exists(ctx context.Context, path string) (bool, error) {
+func (f *MemoryFS) Exists(ctx context.Context, path string) (bool, error) {
 	_ = ctx
 
 	_, ok := f.files[NormalizePath(path)]
@@ -75,7 +45,7 @@ func (f *memoryRepoFS) Exists(ctx context.Context, path string) (bool, error) {
 	return ok, nil
 }
 
-func (f *memoryRepoFS) Read(ctx context.Context, path string) ([]byte, error) {
+func (f *MemoryFS) Read(ctx context.Context, path string) ([]byte, error) {
 	_ = ctx
 
 	content, ok := f.files[NormalizePath(path)]
@@ -86,8 +56,31 @@ func (f *memoryRepoFS) Read(ctx context.Context, path string) ([]byte, error) {
 	return append([]byte(nil), content...), nil
 }
 
-func memoryQueryMatches(query SearchQuery, path string) bool {
-	path = NormalizePath(path)
+func (f *MemoryFS) Search(ctx context.Context, query SearchQuery) ([]string, error) {
+	_ = ctx
+
+	var matches []string
+
+	for path := range f.files {
+		repoName, filePath, ok := SplitRepoPath(path)
+		if !ok {
+			continue
+		}
+
+		if !memoryQueryMatches(query, repoName, filePath) {
+			continue
+		}
+
+		matches = append(matches, path)
+	}
+
+	return matches, nil
+}
+
+func memoryQueryMatches(query SearchQuery, repoName, filePath string) bool {
+	_ = repoName
+
+	path := NormalizePath(filePath)
 	base := path
 
 	if idx := strings.LastIndex(path, "/"); idx >= 0 {

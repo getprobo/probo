@@ -20,11 +20,12 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/discovery/vfs"
 )
 
 type discoveryScanner struct {
 	api    *apiClient
-	orgFS  *githubOrgFS
+	fs     vfs.FS
 	org    string
 	logger *log.Logger
 	scopes scopeSet
@@ -40,7 +41,7 @@ func newDiscoveryScanner(
 
 	return &discoveryScanner{
 		api:    api,
-		orgFS:  newGitHubOrgFS(api, org),
+		fs:     newGitHubFS(api, org),
 		org:    org,
 		logger: logger,
 		scopes: newScopeSet(conn),

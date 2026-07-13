@@ -201,8 +201,7 @@ func (s *discoveryScanner) scanRepos(ctx context.Context, sheet *FactSheet) {
 	eligible := filterEligibleRepos(repos)
 
 	for _, repo := range eligible {
-		repoFS := s.orgFS.Open(vfs.Repo{Owner: s.org, Name: repo.Name})
-		s.scanRepo(ctx, repo, repoFS, fileIndex, agg, ciAgg)
+		s.scanRepo(ctx, repo, fileIndex, agg, ciAgg)
 	}
 
 	sheet.Facts = append(sheet.Facts, repoAggregateFacts(agg)...)
@@ -244,7 +243,7 @@ func filterEligibleRepos(repos []repoListItem) []repoListItem {
 }
 
 func (s *discoveryScanner) buildFileIndex(ctx context.Context) (*vfs.FileIndex, []string) {
-	index, err := s.orgFS.IndexFiles(ctx)
+	index, err := vfs.BuildDiscoveryIndex(ctx, s.fs)
 	if err == nil {
 		return index, nil
 	}
@@ -269,7 +268,6 @@ func aggregateRepoList(repos []repoListItem) *repoScanAggregate {
 func (s *discoveryScanner) scanRepo(
 	ctx context.Context,
 	repo repoListItem,
-	repoFS vfs.RepositoryFS,
 	fileIndex *vfs.FileIndex,
 	agg *repoScanAggregate,
 	ciAgg *ciProviderAggregate,
@@ -282,12 +280,12 @@ func (s *discoveryScanner) scanRepo(
 		s.applyBranchProtectionSignals(protection, agg)
 	}
 
-	hasWorkflows := fileIndex.HasPrefix(repo.Name, ".github/workflows") || s.probeWorkflows(ctx, repo)
+	hasWorkflows := fileIndex.HasRepoPrefix(repo.Name, ".github/workflows") || s.probeWorkflows(ctx, repo)
 	if hasWorkflows {
 		agg.WithWorkflows++
 	}
 
-	signals := s.analyzeRepoWorkflows(ctx, repo, repoFS, fileIndex)
+	signals := s.analyzeRepoWorkflows(ctx, repo, fileIndex)
 	mergeWorkflowSignalsIntoAggregate(&signals, agg)
 
 	if isLikelyProductionRepo(repo, protected, hasWorkflows) {
@@ -297,17 +295,17 @@ func (s *discoveryScanner) scanRepo(
 	s.scanRepoCIStatuses(ctx, repo, agg, ciAgg)
 	s.scanRepoPullRequestPractice(ctx, repo, agg)
 
-	if content, ok := s.readRepoFile(ctx, repoFS, "SECURITY.md"); ok {
+	if content, ok := s.readRepoFile(ctx, repo.Name, "SECURITY.md"); ok {
 		agg.WithSecurityMD++
 
 		if securityContactInMarkdown(string(content)) {
 			agg.WithSecurityContact++
 		}
-	} else if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, "SECURITY.md") {
+	} else if s.repoHasFile(ctx, fileIndex, repo.Name, "SECURITY.md") {
 		agg.WithSecurityMD++
 	}
 
-	if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, "CONTRIBUTING.md") {
+	if s.repoHasFile(ctx, fileIndex, repo.Name, "CONTRIBUTING.md") {
 		agg.WithContributingMD++
 	}
 
@@ -315,18 +313,18 @@ func (s *discoveryScanner) scanRepo(
 		fullPath := strings.Join(path, "/")
 
 		if len(path) > 1 && path[1] == "incident-response.md" {
-			if content, ok := s.readRepoFile(ctx, repoFS, fullPath); ok {
+			if content, ok := s.readRepoFile(ctx, repo.Name, fullPath); ok {
 				if incidentResponseInMarkdown(string(content)) {
 					agg.WithIncidentResponseDoc++
 				}
-			} else if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, fullPath) {
+			} else if s.repoHasFile(ctx, fileIndex, repo.Name, fullPath) {
 				agg.WithIncidentResponseDoc++
 			}
 
 			continue
 		}
 
-		if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, fullPath) {
+		if s.repoHasFile(ctx, fileIndex, repo.Name, fullPath) {
 			switch {
 			case len(path) > 1 && path[1] == "code-review.md":
 				agg.WithCodeReviewGuide++
@@ -336,22 +334,22 @@ func (s *discoveryScanner) scanRepo(
 		}
 	}
 
-	if fileIndex.HasPrefix(repo.Name, ".github/ISSUE_TEMPLATE") ||
-		s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, ".github/ISSUE_TEMPLATE.md") {
+	if fileIndex.HasRepoPrefix(repo.Name, ".github/ISSUE_TEMPLATE") ||
+		s.repoHasFile(ctx, fileIndex, repo.Name, ".github/ISSUE_TEMPLATE.md") {
 		agg.WithIssueTemplates++
 	}
 
-	if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, ".github/dependabot.yml") {
+	if s.repoHasFile(ctx, fileIndex, repo.Name, ".github/dependabot.yml") {
 		agg.WithDependabotConfig++
 	}
 
-	if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, "renovate.json") ||
-		s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, ".github/renovate.json") {
+	if s.repoHasFile(ctx, fileIndex, repo.Name, "renovate.json") ||
+		s.repoHasFile(ctx, fileIndex, repo.Name, ".github/renovate.json") {
 		agg.WithRenovateConfig++
 	}
 
 	for _, path := range lockfilePaths {
-		if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, strings.Join(path, "/")) {
+		if s.repoHasFile(ctx, fileIndex, repo.Name, strings.Join(path, "/")) {
 			agg.WithLockfile++
 
 			break
@@ -359,7 +357,7 @@ func (s *discoveryScanner) scanRepo(
 	}
 
 	for _, path := range envPaths {
-		if s.repoHasFile(ctx, repoFS, fileIndex, repo.Name, strings.Join(path, "/")) {
+		if s.repoHasFile(ctx, fileIndex, repo.Name, strings.Join(path, "/")) {
 			agg.WithEnvOnDefaultBranch++
 
 			break
@@ -389,26 +387,25 @@ func (s *discoveryScanner) scanRepo(
 
 func (s *discoveryScanner) repoHasFile(
 	ctx context.Context,
-	repoFS vfs.RepositoryFS,
 	fileIndex *vfs.FileIndex,
 	repoName string,
 	path string,
 ) bool {
-	if fileIndex.Has(repoName, path) {
+	if fileIndex.HasRepoFile(repoName, path) {
 		return true
 	}
 
-	exists, err := repoFS.Exists(ctx, path)
+	exists, err := s.fs.Exists(ctx, vfs.RepoPath(repoName, path))
 
 	return err == nil && exists
 }
 
 func (s *discoveryScanner) readRepoFile(
 	ctx context.Context,
-	repoFS vfs.RepositoryFS,
+	repoName string,
 	path string,
 ) ([]byte, bool) {
-	content, err := repoFS.Read(ctx, path)
+	content, err := s.fs.Read(ctx, vfs.RepoPath(repoName, path))
 	if err != nil {
 		return nil, false
 	}
@@ -502,14 +499,13 @@ func mergeWorkflowSignalsIntoAggregate(signals *workflowSignals, agg *repoScanAg
 func (s *discoveryScanner) analyzeRepoWorkflows(
 	ctx context.Context,
 	repo repoListItem,
-	repoFS vfs.RepositoryFS,
 	fileIndex *vfs.FileIndex,
 ) workflowSignals {
 	combined := workflowSignals{}
 	workflowPaths := workflowPathsFromIndex(fileIndex, repo.Name)
 
 	if len(workflowPaths) == 0 {
-		return s.analyzeRepoWorkflowsFromAPI(ctx, repo, repoFS)
+		return s.analyzeRepoWorkflowsFromAPI(ctx, repo)
 	}
 
 	for i, path := range workflowPaths {
@@ -517,7 +513,7 @@ func (s *discoveryScanner) analyzeRepoWorkflows(
 			break
 		}
 
-		content, ok := s.readRepoFile(ctx, repoFS, path)
+		content, ok := s.readRepoFile(ctx, repo.Name, path)
 		if !ok {
 			continue
 		}
@@ -531,7 +527,7 @@ func (s *discoveryScanner) analyzeRepoWorkflows(
 func workflowPathsFromIndex(fileIndex *vfs.FileIndex, repoName string) []string {
 	var paths []string
 
-	for _, path := range fileIndex.Paths(repoName) {
+	for _, path := range fileIndex.RepoFiles(repoName) {
 		if strings.HasPrefix(path, ".github/workflows/") {
 			paths = append(paths, path)
 		}
@@ -543,7 +539,6 @@ func workflowPathsFromIndex(fileIndex *vfs.FileIndex, repoName string) []string 
 func (s *discoveryScanner) analyzeRepoWorkflowsFromAPI(
 	ctx context.Context,
 	repo repoListItem,
-	repoFS vfs.RepositoryFS,
 ) workflowSignals {
 	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "actions", "workflows")
 	if err != nil {
@@ -567,7 +562,7 @@ func (s *discoveryScanner) analyzeRepoWorkflowsFromAPI(
 			continue
 		}
 
-		content, ok := s.readRepoFile(ctx, repoFS, workflow.Path)
+		content, ok := s.readRepoFile(ctx, repo.Name, workflow.Path)
 		if !ok {
 			continue
 		}

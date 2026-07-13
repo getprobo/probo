@@ -26,17 +26,9 @@ import (
 )
 
 type (
-	githubOrgFS struct {
-		api   *apiClient
-		org   string
-		index *vfs.FileIndex
-	}
-
-	githubRepoFS struct {
-		api   *apiClient
-		org   string
-		repo  string
-		index *vfs.FileIndex
+	githubFS struct {
+		api *apiClient
+		org string
 	}
 
 	codeSearchResponse struct {
@@ -54,64 +46,74 @@ type (
 	}
 )
 
-func newGitHubOrgFS(api *apiClient, org string) *githubOrgFS {
-	return &githubOrgFS{api: api, org: org}
+func newGitHubFS(api *apiClient, org string) *githubFS {
+	return &githubFS{api: api, org: org}
 }
 
-func (f *githubOrgFS) Repositories(ctx context.Context) ([]vfs.Repo, error) {
-	repos, err := f.listRepos(ctx)
+func (f *githubFS) Exists(ctx context.Context, path string) (bool, error) {
+	path = vfs.NormalizePath(path)
+	if path == "" {
+		return false, nil
+	}
+
+	repoName, filePath, ok := vfs.SplitRepoPath(path)
+	if !ok || filePath == "" {
+		return false, nil
+	}
+
+	segments := append([]string{"contents"}, splitContentPath(filePath)...)
+
+	endpoint, err := f.api.repoEndpoint(f.org, repoName, segments...)
 	if err != nil {
-		return nil, err
+		return false, fmt.Errorf("cannot build github contents URL: %w", err)
 	}
 
-	out := make([]vfs.Repo, 0, len(repos))
-	for _, repo := range repos {
-		out = append(out, vfs.Repo{Owner: f.org, Name: repo.Name})
+	var payload map[string]any
+
+	if _, err := f.api.getJSON(ctx, endpoint, &payload); err != nil {
+		return false, nil
 	}
 
-	return out, nil
+	return true, nil
 }
 
-func (f *githubOrgFS) Open(repo vfs.Repo) vfs.RepositoryFS {
-	return &githubRepoFS{
-		api:   f.api,
-		org:   f.org,
-		repo:  repo.Name,
-		index: f.index,
+func (f *githubFS) Read(ctx context.Context, path string) ([]byte, error) {
+	path = vfs.NormalizePath(path)
+	if path == "" {
+		return nil, vfs.ErrNotFound
 	}
+
+	repoName, filePath, ok := vfs.SplitRepoPath(path)
+	if !ok || filePath == "" {
+		return nil, vfs.ErrNotFound
+	}
+
+	segments := append([]string{"contents"}, splitContentPath(filePath)...)
+
+	endpoint, err := f.api.repoEndpoint(f.org, repoName, segments...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github contents URL: %w", err)
+	}
+
+	var payload contentResponse
+
+	if _, err := f.api.getJSON(ctx, endpoint, &payload); err != nil {
+		return nil, vfs.ErrNotFound
+	}
+
+	content, ok := decodeGitHubContent(payload.Encoding, payload.Content)
+	if !ok {
+		return nil, fmt.Errorf("cannot decode github file content")
+	}
+
+	return []byte(content), nil
 }
 
-func (f *githubOrgFS) SearchFiles(ctx context.Context, query vfs.SearchQuery) ([]vfs.FileRef, error) {
+func (f *githubFS) Search(ctx context.Context, query vfs.SearchQuery) ([]string, error) {
 	return f.api.searchCode(ctx, f.buildSearchQuery(query))
 }
 
-func (f *githubOrgFS) IndexFiles(ctx context.Context) (*vfs.FileIndex, error) {
-	index := vfs.NewFileIndex()
-
-	var firstErr error
-
-	for _, query := range vfs.DiscoveryCatalog() {
-		files, err := f.SearchFiles(ctx, query)
-		if err != nil {
-			if firstErr == nil {
-				firstErr = err
-			}
-
-			continue
-		}
-
-		for _, file := range files {
-			file.Repo.Owner = f.org
-			index.Add(file)
-		}
-	}
-
-	f.index = index
-
-	return index, firstErr
-}
-
-func (f *githubOrgFS) buildSearchQuery(query vfs.SearchQuery) string {
+func (f *githubFS) buildSearchQuery(query vfs.SearchQuery) string {
 	parts := []string{"org:" + f.org}
 
 	if query.Path != "" {
@@ -129,80 +131,7 @@ func (f *githubOrgFS) buildSearchQuery(query vfs.SearchQuery) string {
 	return strings.Join(parts, "+")
 }
 
-func (f *githubOrgFS) listRepos(ctx context.Context) ([]repoListItem, error) {
-	endpoint, err := f.api.orgEndpoint(f.org, "repos")
-	if err != nil {
-		return nil, fmt.Errorf("cannot build github repos URL: %w", err)
-	}
-
-	endpoint, err = withPerPage(endpoint, 100)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build github repos URL: %w", err)
-	}
-
-	var repos []repoListItem
-
-	if _, err := f.api.getPaginated(ctx, endpoint, &repos); err != nil {
-		return nil, fmt.Errorf("cannot list github repos: %w", err)
-	}
-
-	return repos, nil
-}
-
-func (r *githubRepoFS) Exists(ctx context.Context, path string) (bool, error) {
-	path = vfs.NormalizePath(path)
-	if path == "" {
-		return false, nil
-	}
-
-	if r.index != nil && r.index.Has(r.repo, path) {
-		return true, nil
-	}
-
-	segments := append([]string{"contents"}, splitContentPath(path)...)
-
-	endpoint, err := r.api.repoEndpoint(r.org, r.repo, segments...)
-	if err != nil {
-		return false, fmt.Errorf("cannot build github contents URL: %w", err)
-	}
-
-	var payload map[string]any
-
-	if _, err := r.api.getJSON(ctx, endpoint, &payload); err != nil {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-func (r *githubRepoFS) Read(ctx context.Context, path string) ([]byte, error) {
-	path = vfs.NormalizePath(path)
-	if path == "" {
-		return nil, vfs.ErrNotFound
-	}
-
-	segments := append([]string{"contents"}, splitContentPath(path)...)
-
-	endpoint, err := r.api.repoEndpoint(r.org, r.repo, segments...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build github contents URL: %w", err)
-	}
-
-	var payload contentResponse
-
-	if _, err := r.api.getJSON(ctx, endpoint, &payload); err != nil {
-		return nil, vfs.ErrNotFound
-	}
-
-	content, ok := decodeGitHubContent(payload.Encoding, payload.Content)
-	if !ok {
-		return nil, fmt.Errorf("cannot decode github file content")
-	}
-
-	return []byte(content), nil
-}
-
-func (c *apiClient) searchCode(ctx context.Context, query string) ([]vfs.FileRef, error) {
+func (c *apiClient) searchCode(ctx context.Context, query string) ([]string, error) {
 	endpoint, err := url.Parse(githubAPIBase + "/search/code")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github search URL: %w", err)
@@ -214,31 +143,31 @@ func (c *apiClient) searchCode(ctx context.Context, query string) ([]vfs.FileRef
 	endpoint.RawQuery = q.Encode()
 
 	var (
-		refs []vfs.FileRef
-		next = endpoint.String()
+		paths []string
+		next  = endpoint.String()
 	)
 
 	for page := 0; page < maxPagesPerList && next != ""; page++ {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, next, nil)
 		if err != nil {
-			return refs, fmt.Errorf("cannot create github search request: %w", err)
+			return paths, fmt.Errorf("cannot create github search request: %w", err)
 		}
 
 		req.Header.Set("Accept", "application/vnd.github+json")
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
-			return refs, fmt.Errorf("cannot execute github search request: %w", err)
+			return paths, fmt.Errorf("cannot execute github search request: %w", err)
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			_ = resp.Body.Close()
 
 			if resp.StatusCode == 403 || resp.StatusCode == 422 {
-				return refs, fmt.Errorf("github code search unavailable: unexpected status %d", resp.StatusCode)
+				return paths, fmt.Errorf("github code search unavailable: unexpected status %d", resp.StatusCode)
 			}
 
-			return refs, fmt.Errorf("unexpected status %d", resp.StatusCode)
+			return paths, fmt.Errorf("unexpected status %d", resp.StatusCode)
 		}
 
 		var pageResp codeSearchResponse
@@ -246,7 +175,7 @@ func (c *apiClient) searchCode(ctx context.Context, query string) ([]vfs.FileRef
 		if err := json.NewDecoder(resp.Body).Decode(&pageResp); err != nil {
 			_ = resp.Body.Close()
 
-			return refs, fmt.Errorf("cannot decode github search response: %w", err)
+			return paths, fmt.Errorf("cannot decode github search response: %w", err)
 		}
 
 		next = parseLinkNext(resp.Header.Get("Link"))
@@ -261,12 +190,9 @@ func (c *apiClient) searchCode(ctx context.Context, query string) ([]vfs.FileRef
 				continue
 			}
 
-			refs = append(refs, vfs.FileRef{
-				Repo: vfs.Repo{Name: item.Repository.Name},
-				Path: item.Path,
-			})
+			paths = append(paths, vfs.RepoPath(item.Repository.Name, item.Path))
 		}
 	}
 
-	return refs, nil
+	return paths, nil
 }

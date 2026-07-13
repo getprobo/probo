@@ -22,36 +22,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMemoryOrgFS_ReadAndSearch(t *testing.T) {
+func TestMemoryFS_ReadAndSearch(t *testing.T) {
 	t.Parallel()
 
-	repo := Repo{Owner: "acme", Name: "api"}
-	orgFS := NewMemoryOrgFS(
-		[]Repo{repo},
-		map[string]map[string][]byte{
-			"api": {
-				"SECURITY.md":               []byte("security@example.com"),
-				".github/workflows/ci.yml":  []byte("on: pull_request"),
-				".github/dependabot.yml":    []byte("version: 2"),
-				"docs/incident-response.md": []byte("incident response"),
-			},
-		},
-	)
+	fs := NewMemoryFS(map[string][]byte{
+		"api/SECURITY.md":               []byte("security@example.com"),
+		"api/.github/workflows/ci.yml":  []byte("on: pull_request"),
+		"api/.github/dependabot.yml":    []byte("version: 2"),
+		"api/docs/incident-response.md": []byte("incident response"),
+	})
 
-	repoFS := orgFS.Open(repo)
-
-	exists, err := repoFS.Exists(context.Background(), "SECURITY.md")
+	exists, err := fs.Exists(context.Background(), "api/SECURITY.md")
 	require.NoError(t, err)
 	assert.True(t, exists)
 
-	content, err := repoFS.Read(context.Background(), ".github/workflows/ci.yml")
+	content, err := fs.Read(context.Background(), "api/.github/workflows/ci.yml")
 	require.NoError(t, err)
 	assert.Contains(t, string(content), "pull_request")
 
-	index, err := BuildIndex(context.Background(), orgFS)
+	index, err := BuildDiscoveryIndex(context.Background(), fs)
 	require.NoError(t, err)
 
-	assert.True(t, index.Has("api", "SECURITY.md"))
-	assert.True(t, index.HasPrefix("api", ".github/workflows"))
-	assert.True(t, index.Has("api", ".github/dependabot.yml"))
+	assert.True(t, index.HasRepoFile("api", "SECURITY.md"))
+	assert.True(t, index.HasRepoPrefix("api", ".github/workflows"))
+	assert.True(t, index.HasRepoFile("api", ".github/dependabot.yml"))
+}
+
+func TestRepoPathHelpers(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "api/SECURITY.md", RepoPath("api", "SECURITY.md"))
+
+	repo, file, ok := SplitRepoPath("api/.github/workflows/ci.yml")
+	assert.True(t, ok)
+	assert.Equal(t, "api", repo)
+	assert.Equal(t, ".github/workflows/ci.yml", file)
 }

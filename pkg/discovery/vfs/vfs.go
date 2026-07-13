@@ -23,47 +23,26 @@ import (
 var ErrNotFound = errors.New("vfs: file not found")
 
 type (
-	// Repo identifies a repository in an organization or workspace.
-	Repo struct {
-		Owner string
-		Name  string
+	// FS is a read-only workspace filesystem. Paths are rooted at the workspace,
+	// for example "api/SECURITY.md" or ".github/CONTRIBUTING.md".
+	FS interface {
+		Exists(ctx context.Context, path string) (bool, error)
+		Read(ctx context.Context, path string) ([]byte, error)
+		Search(ctx context.Context, query SearchQuery) ([]string, error)
 	}
 
-	// FileRef is a file path inside a repository.
-	FileRef struct {
-		Repo Repo
-		Path string
-	}
-
-	// SearchQuery describes an org-wide file search pattern.
+	// SearchQuery describes a workspace file search pattern.
 	SearchQuery struct {
 		Filename  string
 		Path      string
 		Extension string
 	}
 
-	// RepositoryFS reads files from a single repository.
-	RepositoryFS interface {
-		Exists(ctx context.Context, path string) (bool, error)
-		Read(ctx context.Context, path string) ([]byte, error)
-	}
-
-	// OrgFS lists repositories and resolves per-repo filesystems.
-	OrgFS interface {
-		Repositories(ctx context.Context) ([]Repo, error)
-		Open(repo Repo) RepositoryFS
-		SearchFiles(ctx context.Context, query SearchQuery) ([]FileRef, error)
-	}
-
-	// FileIndex caches org-wide file paths keyed by repository name.
+	// FileIndex caches discovered workspace file paths.
 	FileIndex struct {
-		byRepo map[string]map[string]struct{}
+		paths map[string]struct{}
 	}
 )
-
-func (r Repo) Key() string {
-	return r.Owner + "/" + r.Name
-}
 
 func NormalizePath(path string) string {
 	path = strings.TrimSpace(path)
@@ -72,42 +51,59 @@ func NormalizePath(path string) string {
 	return path
 }
 
-func NewFileIndex() *FileIndex {
-	return &FileIndex{byRepo: map[string]map[string]struct{}{}}
+func RepoPath(repoName, filePath string) string {
+	filePath = NormalizePath(filePath)
+	if filePath == "" {
+		return NormalizePath(repoName)
+	}
+
+	return NormalizePath(repoName + "/" + filePath)
 }
 
-func (idx *FileIndex) Add(ref FileRef) {
-	path := NormalizePath(ref.Path)
+func SplitRepoPath(path string) (repoName string, filePath string, ok bool) {
+	path = NormalizePath(path)
+	if path == "" {
+		return "", "", false
+	}
+
+	parts := strings.SplitN(path, "/", 2)
+	if len(parts) == 1 {
+		return parts[0], "", true
+	}
+
+	return parts[0], parts[1], true
+}
+
+func NewFileIndex() *FileIndex {
+	return &FileIndex{paths: map[string]struct{}{}}
+}
+
+func (idx *FileIndex) Add(path string) {
+	path = NormalizePath(path)
 	if path == "" {
 		return
 	}
 
-	repo := ref.Repo.Name
-	if idx.byRepo[repo] == nil {
-		idx.byRepo[repo] = map[string]struct{}{}
-	}
-
-	idx.byRepo[repo][path] = struct{}{}
+	idx.paths[path] = struct{}{}
 }
 
-func (idx *FileIndex) Has(repoName, path string) bool {
-	paths, ok := idx.byRepo[repoName]
-	if !ok {
-		return false
-	}
-
-	_, ok = paths[NormalizePath(path)]
+func (idx *FileIndex) Has(path string) bool {
+	_, ok := idx.paths[NormalizePath(path)]
 
 	return ok
 }
 
-func (idx *FileIndex) HasPrefix(repoName, prefix string) bool {
-	prefix = NormalizePath(prefix)
+func (idx *FileIndex) HasRepoFile(repoName, filePath string) bool {
+	return idx.Has(RepoPath(repoName, filePath))
+}
+
+func (idx *FileIndex) HasRepoPrefix(repoName, prefix string) bool {
+	prefix = RepoPath(repoName, prefix)
 	if prefix == "" {
 		return false
 	}
 
-	for path := range idx.byRepo[repoName] {
+	for path := range idx.paths {
 		if path == prefix || strings.HasPrefix(path, prefix+"/") {
 			return true
 		}
@@ -116,37 +112,23 @@ func (idx *FileIndex) HasPrefix(repoName, prefix string) bool {
 	return false
 }
 
-func (idx *FileIndex) Paths(repoName string) []string {
-	paths := idx.byRepo[repoName]
-	if len(paths) == 0 {
-		return nil
-	}
+func (idx *FileIndex) RepoFiles(repoName string) []string {
+	prefix := NormalizePath(repoName) + "/"
 
-	out := make([]string, 0, len(paths))
-	for path := range paths {
-		out = append(out, path)
+	var out []string
+
+	for path := range idx.paths {
+		if !strings.HasPrefix(path, prefix) {
+			continue
+		}
+
+		out = append(out, strings.TrimPrefix(path, prefix))
 	}
 
 	return out
 }
 
-func (idx *FileIndex) HasAny(repoName string, candidates ...string) bool {
-	for _, candidate := range candidates {
-		if idx.Has(repoName, candidate) {
-			return true
-		}
-	}
-
-	for _, candidate := range candidates {
-		if idx.HasPrefix(repoName, candidate) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// DiscoveryCatalog returns org-wide search patterns used by discovery scanners.
+// DiscoveryCatalog returns workspace search patterns used by discovery scanners.
 func DiscoveryCatalog() []SearchQuery {
 	return []SearchQuery{
 		{Path: ".github/workflows", Extension: "yml"},
@@ -179,20 +161,26 @@ func DiscoveryCatalog() []SearchQuery {
 	}
 }
 
-// BuildIndex runs catalog searches and merges results into a FileIndex.
-func BuildIndex(ctx context.Context, orgFS OrgFS) (*FileIndex, error) {
+// BuildDiscoveryIndex runs catalog searches and merges results into a FileIndex.
+func BuildDiscoveryIndex(ctx context.Context, fs FS) (*FileIndex, error) {
 	index := NewFileIndex()
 
+	var firstErr error
+
 	for _, query := range DiscoveryCatalog() {
-		files, err := orgFS.SearchFiles(ctx, query)
+		paths, err := fs.Search(ctx, query)
 		if err != nil {
-			return index, err
+			if firstErr == nil {
+				firstErr = err
+			}
+
+			continue
 		}
 
-		for _, file := range files {
-			index.Add(file)
+		for _, path := range paths {
+			index.Add(path)
 		}
 	}
 
-	return index, nil
+	return index, firstErr
 }

@@ -30,9 +30,6 @@ func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet)
 		return
 	}
 
-	repo := vfs.Repo{Owner: s.org, Name: ".github"}
-	repoFS := s.orgFS.Open(repo)
-
 	endpoint, err := s.api.repoEndpoint(s.org, ".github")
 	if err != nil {
 		sheet.Limitations = append(sheet.Limitations, "cannot build org profile repository URL")
@@ -48,12 +45,12 @@ func (s *discoveryScanner) scanOrgProfile(ctx context.Context, sheet *FactSheet)
 		return
 	}
 
-	hasSecurity, _ := repoFS.Exists(ctx, "SECURITY.md")
-	hasContributing, _ := repoFS.Exists(ctx, "CONTRIBUTING.md")
+	hasSecurity, _ := s.fs.Exists(ctx, vfs.RepoPath(".github", "SECURITY.md"))
+	hasContributing, _ := s.fs.Exists(ctx, vfs.RepoPath(".github", "CONTRIBUTING.md"))
 
 	securityContact := false
 
-	if content, ok := s.readRepoFile(ctx, repoFS, "SECURITY.md"); ok {
+	if content, ok := s.readRepoFile(ctx, ".github", "SECURITY.md"); ok {
 		securityContact = securityContactInMarkdown(string(content))
 	}
 
