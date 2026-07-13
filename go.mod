@@ -113,6 +113,8 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
 	github.com/google/go-containerregistry v0.21.6 // indirect
+	github.com/google/go-github/v69 v69.2.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/in-toto/attestation v1.2.0 // indirect
 	github.com/in-toto/in-toto-golang v0.11.0 // indirect

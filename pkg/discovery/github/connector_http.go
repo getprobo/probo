@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -37,6 +38,7 @@ func connectorHTTPClient(
 	connectorRegistry *connector.ConnectorRegistry,
 	providerRegistry *provider.Registry,
 	connectorID gid.GID,
+	httpOpts ...httpclient.Option,
 ) (*http.Client, *coredata.Connector, error) {
 	var dbConnector coredata.Connector
 
@@ -70,7 +72,7 @@ func connectorHTTPClient(
 	if isOAuth2 && connectorRegistry != nil {
 		refreshCfg := connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
 		if refreshCfg != nil {
-			httpClient, err = oauth2Conn.RefreshableClient(ctx, *refreshCfg)
+			httpClient, err = oauth2Conn.RefreshableClient(ctx, *refreshCfg, httpOpts...)
 			if err != nil {
 				return nil, nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
 			}
@@ -82,7 +84,12 @@ func connectorHTTPClient(
 			return nil, nil, fmt.Errorf("cannot apply managed API key: %w", err)
 		}
 
-		httpClient, err = dbConnector.Connection.Client(ctx)
+		if oauthConn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
+			httpClient, err = oauthConn.ClientWithOptions(ctx, httpOpts...)
+		} else {
+			httpClient, err = dbConnector.Connection.Client(ctx)
+		}
+
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot create HTTP client: %w", err)
 		}

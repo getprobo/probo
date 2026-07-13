@@ -212,23 +212,7 @@ func (s *discoveryScanner) scanRepos(ctx context.Context, sheet *FactSheet) {
 }
 
 func (s *discoveryScanner) listOrgRepos(ctx context.Context) ([]repoListItem, error) {
-	endpoint, err := s.api.orgEndpoint(s.org, "repos")
-	if err != nil {
-		return nil, fmt.Errorf("cannot build github repos URL: %w", err)
-	}
-
-	endpoint, err = withPerPage(endpoint, 100)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build github repos URL: %w", err)
-	}
-
-	var repos []repoListItem
-
-	if _, err := s.api.getPaginated(ctx, endpoint, &repos); err != nil {
-		return nil, fmt.Errorf("cannot list github repos: %w", err)
-	}
-
-	return repos, nil
+	return s.api.listOrgRepositories(ctx, s.org)
 }
 
 func filterEligibleRepos(repos []repoListItem) []repoListItem {
@@ -422,24 +406,7 @@ func (s *discoveryScanner) fetchBranchProtection(
 	ctx context.Context,
 	repo repoListItem,
 ) (*branchProtection, bool) {
-	endpoint, err := s.api.repoEndpoint(
-		s.org,
-		repo.Name,
-		"branches",
-		repo.DefaultBranch,
-		"protection",
-	)
-	if err != nil {
-		return nil, false
-	}
-
-	var protection branchProtection
-
-	if _, err := s.api.getJSON(ctx, endpoint, &protection); err != nil {
-		return nil, false
-	}
-
-	return &protection, true
+	return s.api.getBranchProtection(ctx, s.org, repo.Name, repo.DefaultBranch)
 }
 
 func (s *discoveryScanner) applyBranchProtectionSignals(
@@ -579,18 +546,9 @@ func (s *discoveryScanner) analyzeRepoWorkflowsFromAPI(
 }
 
 func (s *discoveryScanner) probeWorkflows(ctx context.Context, repo repoListItem) bool {
-	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "actions", "workflows")
-	if err != nil {
-		return false
-	}
+	_, hasWorkflows := s.api.listWorkflowCount(ctx, s.org, repo.Name)
 
-	var page workflowsListResponse
-
-	if _, err := s.api.getJSON(ctx, endpoint, &page); err != nil {
-		return false
-	}
-
-	return page.TotalCount > 0
+	return hasWorkflows
 }
 
 func splitContentPath(path string) []string {

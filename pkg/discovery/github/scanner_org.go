@@ -116,22 +116,11 @@ func orgFacts(org *githubOrganization) []Fact {
 }
 
 func (s *discoveryScanner) fetchOrganization(ctx context.Context) (*githubOrganization, error) {
-	endpoint, err := s.api.orgEndpoint(s.org)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build github org URL: %w", err)
-	}
-
-	var org githubOrganization
-
-	if _, err := s.api.getJSON(ctx, endpoint, &org); err != nil {
-		return nil, fmt.Errorf("cannot fetch github organization: %w", err)
-	}
-
-	return &org, nil
+	return s.api.getOrganization(ctx, s.org)
 }
 
 func (s *discoveryScanner) count2FADisabled(ctx context.Context) (int, error) {
-	driver := drivers.NewGitHubDriver(s.api.httpClient, s.org, s.logger)
+	driver := drivers.NewGitHubDriver(s.api.HTTPClient(), s.org, s.logger)
 
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {
@@ -150,7 +139,7 @@ func (s *discoveryScanner) count2FADisabled(ctx context.Context) (int, error) {
 }
 
 func (s *discoveryScanner) countAdmins(ctx context.Context) (int, int, error) {
-	driver := drivers.NewGitHubDriver(s.api.httpClient, s.org, s.logger)
+	driver := drivers.NewGitHubDriver(s.api.HTTPClient(), s.org, s.logger)
 
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {

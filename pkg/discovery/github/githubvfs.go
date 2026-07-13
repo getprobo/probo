@@ -16,10 +16,7 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
 	"sort"
 	"strings"
 
@@ -30,20 +27,6 @@ type (
 	githubFS struct {
 		api *apiClient
 		org string
-	}
-
-	codeSearchResponse struct {
-		TotalCount        int              `json:"total_count"`
-		IncompleteResults bool             `json:"incomplete_results"`
-		Items             []codeSearchItem `json:"items"`
-	}
-
-	codeSearchItem struct {
-		Name       string `json:"name"`
-		Path       string `json:"path"`
-		Repository struct {
-			Name string `json:"name"`
-		} `json:"repository"`
 	}
 
 	contentsDirItem struct {
@@ -158,66 +141,19 @@ func (f *githubFS) Glob(ctx context.Context, pattern string) ([]string, error) {
 }
 
 func (c *apiClient) searchCode(ctx context.Context, query string) ([]string, error) {
-	endpoint, err := url.Parse(githubAPIBase + "/search/code")
+	rawPaths, err := c.searchCodePaths(ctx, strings.ReplaceAll(query, "+", " "))
 	if err != nil {
-		return nil, fmt.Errorf("cannot build github search URL: %w", err)
+		return nil, err
 	}
 
-	q := endpoint.Query()
-	q.Set("q", strings.ReplaceAll(query, "+", " "))
-	q.Set("per_page", "100")
-	endpoint.RawQuery = q.Encode()
-
-	var (
-		paths []string
-		next  = endpoint.String()
-	)
-
-	for page := 0; page < maxPagesPerList && next != ""; page++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, next, nil)
-		if err != nil {
-			return paths, fmt.Errorf("cannot create github search request: %w", err)
+	paths := make([]string, 0, len(rawPaths))
+	for _, path := range rawPaths {
+		parts := strings.SplitN(path, "/", 2)
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			continue
 		}
 
-		req.Header.Set("Accept", "application/vnd.github+json")
-
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			return paths, fmt.Errorf("cannot execute github search request: %w", err)
-		}
-
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			_ = resp.Body.Close()
-
-			if resp.StatusCode == 403 || resp.StatusCode == 422 {
-				return paths, fmt.Errorf("github code search unavailable: unexpected status %d", resp.StatusCode)
-			}
-
-			return paths, fmt.Errorf("unexpected status %d", resp.StatusCode)
-		}
-
-		var pageResp codeSearchResponse
-
-		if err := json.NewDecoder(resp.Body).Decode(&pageResp); err != nil {
-			_ = resp.Body.Close()
-
-			return paths, fmt.Errorf("cannot decode github search response: %w", err)
-		}
-
-		next = parseLinkNext(resp.Header.Get("Link"))
-		_ = resp.Body.Close()
-
-		if len(pageResp.Items) == 0 {
-			break
-		}
-
-		for _, item := range pageResp.Items {
-			if item.Path == "" || item.Repository.Name == "" {
-				continue
-			}
-
-			paths = append(paths, vfs.RepoPath(item.Repository.Name, item.Path))
-		}
+		paths = append(paths, vfs.RepoPath(parts[0], parts[1]))
 	}
 
 	return paths, nil

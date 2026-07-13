@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
@@ -36,6 +37,15 @@ type Runner struct {
 	synthesizer       Synthesizer
 	repoClassifier    RepoClassifier
 	logger            *log.Logger
+	httpClientOpts    []httpclient.Option
+}
+
+type RunnerOption func(*Runner)
+
+func WithHTTPClientOptions(opts ...httpclient.Option) RunnerOption {
+	return func(r *Runner) {
+		r.httpClientOpts = append(r.httpClientOpts, opts...)
+	}
 }
 
 func NewRunner(
@@ -46,6 +56,7 @@ func NewRunner(
 	synthesizer Synthesizer,
 	repoClassifier RepoClassifier,
 	logger *log.Logger,
+	opts ...RunnerOption,
 ) *Runner {
 	if synthesizer == nil {
 		synthesizer = DeterministicSynthesizer{}
@@ -55,7 +66,7 @@ func NewRunner(
 		repoClassifier = DefaultRepoClassifier()
 	}
 
-	return &Runner{
+	r := &Runner{
 		pg:                pgClient,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
@@ -64,6 +75,12 @@ func NewRunner(
 		repoClassifier:    repoClassifier,
 		logger:            logger,
 	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	return r
 }
 
 func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, error) {
@@ -82,6 +99,7 @@ func (r *Runner) Run(ctx context.Context, run *coredata.AgentRun) (*RunResult, e
 		r.connectorRegistry,
 		r.providerRegistry,
 		input.ConnectorID,
+		r.httpClientOpts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github connector HTTP client: %w", err)

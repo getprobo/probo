@@ -75,16 +75,5 @@ func (s *discoveryScanner) probeWorkflowSignals(
 	ctx context.Context,
 	repo repoListItem,
 ) (count int, hasWorkflows bool) {
-	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "actions", "workflows")
-	if err != nil {
-		return 0, false
-	}
-
-	var page workflowsListResponse
-
-	if _, err := s.api.getJSON(ctx, endpoint, &page); err != nil {
-		return 0, false
-	}
-
-	return page.TotalCount, page.TotalCount > 0
+	return s.api.listWorkflowCount(ctx, s.org, repo.Name)
 }

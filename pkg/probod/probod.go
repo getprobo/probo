@@ -661,6 +661,12 @@ func (impl *Implm) Run(
 		githubDiscoverySynthesizer,
 		githubDiscoveryRepoClassifier,
 		l.Named("github-discovery"),
+		ghdiscovery.WithHTTPClientOptions(
+			httpclient.WithLogger(l.Named("github-discovery-http")),
+			httpclient.WithTracerProvider(tp),
+			httpclient.WithRegisterer(r),
+			httpclient.WithSSRFProtection(),
+		),
 	)
 
 	agentRunRegistry := agentrun.NewRegistry()

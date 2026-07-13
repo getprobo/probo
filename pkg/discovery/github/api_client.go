@@ -29,12 +29,10 @@ const (
 	maxPagesPerList = 10
 )
 
-type apiClient struct {
-	httpClient *http.Client
-}
+type apiClient = restClient
 
 func newAPIClient(httpClient *http.Client) *apiClient {
-	return &apiClient{httpClient: httpClient}
+	return newRESTClient(httpClient)
 }
 
 func (c *apiClient) getJSON(
