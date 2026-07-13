@@ -110,7 +110,7 @@ func findMeasureByName(existing []ExistingMeasure, name string) *ExistingMeasure
 }
 
 func defaultMaterializeRules() []materializeRule {
-	return []materializeRule{
+	rules := []materializeRule{
 		{
 			factKey:     "org_mfa_required",
 			name:        "Org-wide MFA enforcement",
@@ -381,6 +381,8 @@ func defaultMaterializeRules() []materializeRule {
 			},
 		},
 	}
+
+	return append(rules, p0MaterializeRules()...)
 }
 
 func factIntValue(value any) (int, bool) {

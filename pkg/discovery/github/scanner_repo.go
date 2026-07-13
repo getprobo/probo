@@ -18,6 +18,33 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
+)
+
+var (
+	lockfilePaths = [][]string{
+		{"package-lock.json"},
+		{"yarn.lock"},
+		{"pnpm-lock.yaml"},
+		{"go.sum"},
+		{"Gemfile.lock"},
+		{"poetry.lock"},
+		{"Cargo.lock"},
+	}
+
+	docPaths = [][]string{
+		{"DEVELOPMENT.md"},
+		{"docs", "development.md"},
+		{"docs", "code-review.md"},
+		{"docs", "security", "README.md"},
+		{"SECURITY_GUIDELINES.md"},
+	}
+
+	envPaths = [][]string{
+		{".env"},
+		{".env.production"},
+		{".env.local"},
+	}
 )
 
 type (
@@ -31,7 +58,8 @@ type (
 
 	branchProtection struct {
 		RequiredPullRequestReviews *struct {
-			RequiredApprovingReviewCount int `json:"required_approving_review_count"`
+			RequiredApprovingReviewCount int  `json:"required_approving_review_count"`
+			DismissStaleReviews          bool `json:"dismiss_stale_reviews"`
 		} `json:"required_pull_request_reviews"`
 		RequiredSignatures *struct {
 			Enabled bool `json:"enabled"`
@@ -39,30 +67,87 @@ type (
 		AllowForcePushes *struct {
 			Enabled bool `json:"enabled"`
 		} `json:"allow_force_pushes"`
+		RequiredStatusChecks *struct {
+			Strict   bool     `json:"strict"`
+			Contexts []string `json:"contexts"`
+		} `json:"required_status_checks"`
+		EnforceAdmins *struct {
+			Enabled bool `json:"enabled"`
+		} `json:"enforce_admins"`
+		Restrictions *struct {
+			Users []any `json:"users"`
+			Teams []any `json:"teams"`
+			Apps  []any `json:"apps"`
+		} `json:"restrictions"`
 	}
 
-	workflowsPage struct {
+	workflowsListResponse struct {
 		TotalCount int `json:"total_count"`
+		Workflows  []struct {
+			Path  string `json:"path"`
+			State string `json:"state"`
+		} `json:"workflows"`
 	}
 
-	alertPage struct {
-		TotalCount int `json:"total_count"`
+	contentResponse struct {
+		Content  string `json:"content"`
+		Encoding string `json:"encoding"`
+	}
+
+	pushProtectionResponse struct {
+		Status string `json:"status"`
+	}
+
+	codeScanningDefaultSetup struct {
+		State string `json:"state"`
+	}
+
+	deployKey struct {
+		ReadOnly bool `json:"read_only"`
+	}
+
+	commitItem struct {
+		Commit struct {
+			Verification struct {
+				Verified bool `json:"verified"`
+			} `json:"verification"`
+		} `json:"commit"`
 	}
 
 	repoScanAggregate struct {
-		TotalRepos               int
-		PublicRepos              int
-		ScannedRepos             int
-		WithBranchProtection     int
-		WithRequiredReviews      int
-		WithSignedCommits        int
-		WithWorkflows            int
-		WithSecurityMD           int
-		WithContributingMD       int
-		WithDependabotConfig     int
-		DependabotCriticalOpen   int
-		SecretScanningOpen       int
-		CodeScanningCriticalOpen int
+		TotalRepos                int
+		PublicRepos               int
+		ScannedRepos              int
+		ProductionLikely          int
+		WithBranchProtection      int
+		WithRequiredReviews       int
+		WithSignedCommitsRequired int
+		WithSignedCommitsPractice int
+		ForcePushDisabled         int
+		WithRequiredStatusChecks  int
+		WithBypassRestrictions    int
+		WithWorkflows             int
+		WithPRWorkflow            int
+		WithPullRequestTargetRisk int
+		WithCodeQL                int
+		WithCodeQLDefaultSetup    int
+		WithDependencyReview      int
+		WithSASTInCI              int
+		WithDepScanInCI           int
+		WithWorkflowSecrets       int
+		WithSecurityMD            int
+		WithContributingMD        int
+		WithDevGuide              int
+		WithCodeReviewGuide       int
+		WithDependabotConfig      int
+		WithRenovateConfig        int
+		WithLockfile              int
+		WithEnvOnDefaultBranch    int
+		WithPushProtection        int
+		DeployKeysWrite           int
+		DependabotCriticalOpen    int
+		SecretScanningOpen        int
+		CodeScanningCriticalOpen  int
 	}
 )
 
@@ -157,20 +242,22 @@ func aggregateRepoList(repos []repoListItem) *repoScanAggregate {
 func (s *discoveryScanner) scanRepo(ctx context.Context, repo repoListItem, agg *repoScanAggregate) {
 	agg.ScannedRepos++
 
-	if s.probeBranchProtection(ctx, repo) {
+	protection, protected := s.fetchBranchProtection(ctx, repo)
+	if protected {
 		agg.WithBranchProtection++
+		s.applyBranchProtectionSignals(protection, agg)
 	}
 
-	if s.probeRequiredReviews(ctx, repo) {
-		agg.WithRequiredReviews++
-	}
-
-	if s.probeSignedCommitsRequired(ctx, repo) {
-		agg.WithSignedCommits++
-	}
-
-	if s.probeWorkflows(ctx, repo) {
+	hasWorkflows := s.probeWorkflows(ctx, repo)
+	if hasWorkflows {
 		agg.WithWorkflows++
+	}
+
+	signals := s.analyzeRepoWorkflows(ctx, repo)
+	mergeWorkflowSignalsIntoAggregate(&signals, agg)
+
+	if isLikelyProductionRepo(repo, protected, hasWorkflows) {
+		agg.ProductionLikely++
 	}
 
 	if s.probeRepoFile(ctx, repo, "SECURITY.md") {
@@ -181,8 +268,58 @@ func (s *discoveryScanner) scanRepo(ctx context.Context, repo repoListItem, agg 
 		agg.WithContributingMD++
 	}
 
+	for _, path := range docPaths {
+		if s.probeRepoFile(ctx, repo, path...) {
+			switch path[0] {
+			case "docs":
+				if len(path) > 1 && path[1] == "code-review.md" {
+					agg.WithCodeReviewGuide++
+				} else {
+					agg.WithDevGuide++
+				}
+			default:
+				agg.WithDevGuide++
+			}
+		}
+	}
+
 	if s.probeRepoFile(ctx, repo, ".github", "dependabot.yml") {
 		agg.WithDependabotConfig++
+	}
+
+	if s.probeRepoFile(ctx, repo, "renovate.json") ||
+		s.probeRepoFile(ctx, repo, ".github", "renovate.json") {
+		agg.WithRenovateConfig++
+	}
+
+	for _, path := range lockfilePaths {
+		if s.probeRepoFile(ctx, repo, path...) {
+			agg.WithLockfile++
+
+			break
+		}
+	}
+
+	for _, path := range envPaths {
+		if s.probeRepoFile(ctx, repo, path...) {
+			agg.WithEnvOnDefaultBranch++
+
+			break
+		}
+	}
+
+	if s.probePushProtection(ctx, repo) {
+		agg.WithPushProtection++
+	}
+
+	if s.probeCodeQLDefaultSetup(ctx, repo) {
+		agg.WithCodeQLDefaultSetup++
+	}
+
+	agg.DeployKeysWrite += s.countWriteDeployKeys(ctx, repo)
+
+	if verified, total := s.sampleCommitSignatures(ctx, repo); total > 0 && verified > 0 {
+		agg.WithSignedCommitsPractice++
 	}
 
 	if s.scopes.hasSecurityEvents() {
@@ -192,7 +329,10 @@ func (s *discoveryScanner) scanRepo(ctx context.Context, repo repoListItem, agg 
 	}
 }
 
-func (s *discoveryScanner) probeBranchProtection(ctx context.Context, repo repoListItem) bool {
+func (s *discoveryScanner) fetchBranchProtection(
+	ctx context.Context,
+	repo repoListItem,
+) (*branchProtection, bool) {
 	endpoint, err := s.api.repoEndpoint(
 		s.org,
 		repo.Name,
@@ -201,59 +341,139 @@ func (s *discoveryScanner) probeBranchProtection(ctx context.Context, repo repoL
 		"protection",
 	)
 	if err != nil {
-		return false
+		return nil, false
 	}
 
 	var protection branchProtection
 
 	if _, err := s.api.getJSON(ctx, endpoint, &protection); err != nil {
-		return false
+		return nil, false
 	}
 
-	return true
+	return &protection, true
 }
 
-func (s *discoveryScanner) probeRequiredReviews(ctx context.Context, repo repoListItem) bool {
-	endpoint, err := s.api.repoEndpoint(
-		s.org,
-		repo.Name,
-		"branches",
-		repo.DefaultBranch,
-		"protection",
-	)
-	if err != nil {
-		return false
+func (s *discoveryScanner) applyBranchProtectionSignals(
+	protection *branchProtection,
+	agg *repoScanAggregate,
+) {
+	if protection.RequiredPullRequestReviews != nil &&
+		protection.RequiredPullRequestReviews.RequiredApprovingReviewCount > 0 {
+		agg.WithRequiredReviews++
 	}
 
-	var protection branchProtection
-
-	if _, err := s.api.getJSON(ctx, endpoint, &protection); err != nil {
-		return false
+	if protection.RequiredSignatures != nil && protection.RequiredSignatures.Enabled {
+		agg.WithSignedCommitsRequired++
 	}
 
-	return protection.RequiredPullRequestReviews != nil &&
-		protection.RequiredPullRequestReviews.RequiredApprovingReviewCount > 0
+	if protection.AllowForcePushes == nil || !protection.AllowForcePushes.Enabled {
+		agg.ForcePushDisabled++
+	}
+
+	if protection.RequiredStatusChecks != nil && len(protection.RequiredStatusChecks.Contexts) > 0 {
+		agg.WithRequiredStatusChecks++
+	}
+
+	if protection.Restrictions != nil &&
+		(len(protection.Restrictions.Users) > 0 ||
+			len(protection.Restrictions.Teams) > 0 ||
+			len(protection.Restrictions.Apps) > 0) {
+		agg.WithBypassRestrictions++
+	}
 }
 
-func (s *discoveryScanner) probeSignedCommitsRequired(ctx context.Context, repo repoListItem) bool {
-	endpoint, err := s.api.repoEndpoint(
-		s.org,
-		repo.Name,
-		"branches",
-		repo.DefaultBranch,
-		"protection",
-	)
+func mergeWorkflowSignalsIntoAggregate(signals *workflowSignals, agg *repoScanAggregate) {
+	if signals.RunsOnPullRequest {
+		agg.WithPRWorkflow++
+	}
+
+	if signals.UsesPullRequestTarget {
+		agg.WithPullRequestTargetRisk++
+	}
+
+	if signals.UsesCodeQL {
+		agg.WithCodeQL++
+	}
+
+	if signals.UsesDependencyReview {
+		agg.WithDependencyReview++
+	}
+
+	if signals.UsesThirdPartySAST {
+		agg.WithSASTInCI++
+	}
+
+	if signals.UsesDepScanInCI {
+		agg.WithDepScanInCI++
+	}
+
+	if signals.UsesWorkflowSecrets {
+		agg.WithWorkflowSecrets++
+	}
+}
+
+func (s *discoveryScanner) analyzeRepoWorkflows(ctx context.Context, repo repoListItem) workflowSignals {
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "actions", "workflows")
 	if err != nil {
-		return false
+		return workflowSignals{}
 	}
 
-	var protection branchProtection
+	var page workflowsListResponse
 
-	if _, err := s.api.getJSON(ctx, endpoint, &protection); err != nil {
-		return false
+	if _, err := s.api.getJSON(ctx, endpoint, &page); err != nil {
+		return workflowSignals{}
 	}
 
-	return protection.RequiredSignatures != nil && protection.RequiredSignatures.Enabled
+	combined := workflowSignals{}
+
+	for i, workflow := range page.Workflows {
+		if i >= 5 {
+			break
+		}
+
+		if workflow.Path == "" {
+			continue
+		}
+
+		content, ok := s.fetchRepoFileContent(ctx, repo, workflow.Path)
+		if !ok {
+			continue
+		}
+
+		mergeWorkflowSignals(&combined, analyzeWorkflowYAML(content))
+	}
+
+	return combined
+}
+
+func (s *discoveryScanner) fetchRepoFileContent(
+	ctx context.Context,
+	repo repoListItem,
+	path string,
+) (string, bool) {
+	segments := append([]string{"contents"}, splitContentPath(path)...)
+
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, segments...)
+	if err != nil {
+		return "", false
+	}
+
+	var payload contentResponse
+
+	if _, err := s.api.getJSON(ctx, endpoint, &payload); err != nil {
+		return "", false
+	}
+
+	return decodeGitHubContent(payload.Encoding, payload.Content)
+}
+
+func splitContentPath(path string) []string {
+	path = strings.Trim(path, "/")
+	if path == "" {
+		return nil
+	}
+
+	return strings.Split(path, "/")
 }
 
 func (s *discoveryScanner) probeWorkflows(ctx context.Context, repo repoListItem) bool {
@@ -262,7 +482,7 @@ func (s *discoveryScanner) probeWorkflows(ctx context.Context, repo repoListItem
 		return false
 	}
 
-	var page workflowsPage
+	var page workflowsListResponse
 
 	if _, err := s.api.getJSON(ctx, endpoint, &page); err != nil {
 		return false
@@ -286,6 +506,95 @@ func (s *discoveryScanner) probeRepoFile(ctx context.Context, repo repoListItem,
 	}
 
 	return true
+}
+
+func (s *discoveryScanner) probePushProtection(ctx context.Context, repo repoListItem) bool {
+	if !s.scopes.hasSecurityEvents() {
+		return false
+	}
+
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "secret-scanning", "push-protection")
+	if err != nil {
+		return false
+	}
+
+	var resp pushProtectionResponse
+
+	if _, err := s.api.getJSON(ctx, endpoint, &resp); err != nil {
+		return false
+	}
+
+	return stringsEqualFold(resp.Status, "enabled")
+}
+
+func (s *discoveryScanner) probeCodeQLDefaultSetup(ctx context.Context, repo repoListItem) bool {
+	if !s.scopes.hasSecurityEvents() {
+		return false
+	}
+
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "code-scanning", "default-setup")
+	if err != nil {
+		return false
+	}
+
+	var setup codeScanningDefaultSetup
+
+	if _, err := s.api.getJSON(ctx, endpoint, &setup); err != nil {
+		return false
+	}
+
+	return stringsEqualFold(setup.State, "configured")
+}
+
+func (s *discoveryScanner) countWriteDeployKeys(ctx context.Context, repo repoListItem) int {
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "keys")
+	if err != nil {
+		return 0
+	}
+
+	var keys []deployKey
+
+	if _, err := s.api.getJSON(ctx, endpoint, &keys); err != nil {
+		return 0
+	}
+
+	count := 0
+
+	for _, key := range keys {
+		if !key.ReadOnly {
+			count++
+		}
+	}
+
+	return count
+}
+
+func (s *discoveryScanner) sampleCommitSignatures(ctx context.Context, repo repoListItem) (int, int) {
+	endpoint, err := s.api.repoEndpoint(s.org, repo.Name, "commits")
+	if err != nil {
+		return 0, 0
+	}
+
+	endpoint, err = withPerPage(endpoint, 20)
+	if err != nil {
+		return 0, 0
+	}
+
+	var commits []commitItem
+
+	if _, err := s.api.getJSON(ctx, endpoint, &commits); err != nil {
+		return 0, 0
+	}
+
+	verified := 0
+
+	for _, commit := range commits {
+		if commit.Commit.Verification.Verified {
+			verified++
+		}
+	}
+
+	return verified, len(commits)
 }
 
 func (s *discoveryScanner) countDependabotCritical(ctx context.Context, repo repoListItem) int {
@@ -386,61 +695,65 @@ func appendQuery(endpoint, key, value string) (string, error) {
 	return parsed.String(), nil
 }
 
+func stringsEqualFold(a, b string) bool {
+	return stringsFold(a) == stringsFold(b)
+}
+
+func stringsFold(s string) string {
+	return strings.ToLower(strings.TrimSpace(s))
+}
+
 func repoAggregateFacts(agg *repoScanAggregate) []Fact {
 	if agg.ScannedRepos == 0 {
 		return nil
 	}
 
-	return []Fact{
-		coverageFact(
-			"f-branch-protection-coverage",
-			"repo_branch_protection_coverage",
-			agg.WithBranchProtection,
-			agg.ScannedRepos,
-			"GET /repos/{owner}/{repo}/branches/{branch}/protection",
-		),
-		coverageFact(
-			"f-pr-review-coverage",
-			"repo_pr_reviews_required_coverage",
-			agg.WithRequiredReviews,
-			agg.ScannedRepos,
-			"GET /repos/{owner}/{repo}/branches/{branch}/protection",
-		),
-		coverageFact(
-			"f-signed-commits-coverage",
-			"repo_signed_commits_required_coverage",
-			agg.WithSignedCommits,
-			agg.ScannedRepos,
-			"GET /repos/{owner}/{repo}/branches/{branch}/protection",
-		),
-		coverageFact(
-			"f-workflow-coverage",
-			"repo_workflow_coverage",
-			agg.WithWorkflows,
-			agg.ScannedRepos,
-			"GET /repos/{owner}/{repo}/actions/workflows",
-		),
-		coverageFact(
-			"f-security-md-coverage",
-			"repo_security_md_coverage",
-			agg.WithSecurityMD,
-			agg.ScannedRepos,
-			"GET /repos/{owner}/{repo}/contents/SECURITY.md",
-		),
-		coverageFact(
-			"f-contributing-md-coverage",
-			"repo_contributing_md_coverage",
-			agg.WithContributingMD,
-			agg.ScannedRepos,
-			"GET /repos/{owner}/{repo}/contents/CONTRIBUTING.md",
-		),
-		coverageFact(
-			"f-dependabot-config-coverage",
-			"repo_dependabot_config_coverage",
-			agg.WithDependabotConfig,
-			agg.ScannedRepos,
-			"GET /repos/{owner}/{repo}/contents/.github/dependabot.yml",
-		),
+	facts := []Fact{
+		coverageFact("f-production-classification", "repo_production_classification", agg.ProductionLikely, agg.ScannedRepos, "heuristic"),
+		coverageFact("f-branch-protection-coverage", "repo_branch_protection_coverage", agg.WithBranchProtection, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
+		coverageFact("f-pr-review-coverage", "repo_pr_reviews_required_coverage", agg.WithRequiredReviews, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
+		coverageFact("f-signed-commits-coverage", "repo_signed_commits_required_coverage", agg.WithSignedCommitsRequired, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
+		coverageFact("f-signed-commits-practice", "repo_signed_commits_practice_coverage", agg.WithSignedCommitsPractice, agg.ScannedRepos, "GET /repos/{owner}/{repo}/commits"),
+		coverageFact("f-force-push-disabled", "repo_force_push_disabled_coverage", agg.ForcePushDisabled, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
+		coverageFact("f-required-checks", "repo_required_status_checks_coverage", agg.WithRequiredStatusChecks, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
+		coverageFact("f-bypass-restrictions", "repo_bypass_actor_restrictions_coverage", agg.WithBypassRestrictions, agg.ScannedRepos, "GET /repos/{owner}/{repo}/branches/{branch}/protection"),
+		coverageFact("f-workflow-coverage", "repo_workflow_coverage", agg.WithWorkflows, agg.ScannedRepos, "GET /repos/{owner}/{repo}/actions/workflows"),
+		coverageFact("f-pr-ci-coverage", "repo_pr_ci_coverage", agg.WithPRWorkflow, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact("f-pull-request-target-risk", "repo_pull_request_target_risk", agg.WithPullRequestTargetRisk, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact("f-codeql-ci", "repo_codeql_enabled_coverage", agg.WithCodeQL, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact("f-codeql-default-setup", "repo_codeql_default_setup_coverage", agg.WithCodeQLDefaultSetup, agg.ScannedRepos, "GET /repos/{owner}/{repo}/code-scanning/default-setup"),
+		coverageFact("f-dependency-review", "repo_dependency_review_coverage", agg.WithDependencyReview, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact("f-sast-ci", "repo_sast_in_ci_coverage", agg.WithSASTInCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact("f-dep-scan-ci", "repo_dep_scan_in_ci_coverage", agg.WithDepScanInCI, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact("f-workflow-secrets", "repo_workflow_secrets_usage", agg.WithWorkflowSecrets, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/workflows"),
+		coverageFact("f-security-md-coverage", "repo_security_md_coverage", agg.WithSecurityMD, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/SECURITY.md"),
+		coverageFact("f-contributing-md-coverage", "repo_contributing_md_coverage", agg.WithContributingMD, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/CONTRIBUTING.md"),
+		coverageFact("f-dev-guide-coverage", "repo_development_guide_coverage", agg.WithDevGuide, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents"),
+		coverageFact("f-code-review-guide", "repo_code_review_guide_coverage", agg.WithCodeReviewGuide, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/docs/code-review.md"),
+		coverageFact("f-dependabot-config-coverage", "repo_dependabot_config_coverage", agg.WithDependabotConfig, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/.github/dependabot.yml"),
+		coverageFact("f-renovate-config-coverage", "repo_renovate_config_coverage", agg.WithRenovateConfig, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents/renovate.json"),
+		coverageFact("f-lockfile-coverage", "repo_lockfile_coverage", agg.WithLockfile, agg.ScannedRepos, "GET /repos/{owner}/{repo}/contents"),
+		coverageFact("f-push-protection-coverage", "repo_secret_scanning_push_protection_coverage", agg.WithPushProtection, agg.ScannedRepos, "GET /repos/{owner}/{repo}/secret-scanning/push-protection"),
+		{
+			FactID:  "f-env-on-default-branch",
+			FactKey: "repo_env_on_default_branch",
+			Scope:   "org",
+			Value: map[string]int{
+				"repos_with_env": agg.WithEnvOnDefaultBranch,
+				"repos_scanned":  agg.ScannedRepos,
+			},
+			APIRef: "GET /repos/{owner}/{repo}/contents/.env",
+		},
+		{
+			FactID:  "f-deploy-keys-write",
+			FactKey: "repo_deploy_keys_write_access",
+			Scope:   "org",
+			Value: map[string]int{
+				"write_keys":    agg.DeployKeysWrite,
+				"repos_scanned": agg.ScannedRepos,
+			},
+			APIRef: "GET /repos/{owner}/{repo}/keys",
+		},
 		{
 			FactID:  "f-dependabot-critical-open",
 			FactKey: "repo_dependabot_critical_open",
@@ -472,6 +785,8 @@ func repoAggregateFacts(agg *repoScanAggregate) []Fact {
 			APIRef: "GET /repos/{owner}/{repo}/code-scanning/alerts?severity=critical&state=open",
 		},
 	}
+
+	return facts
 }
 
 func coverageFact(id, key string, matched, total int, apiRef string) Fact {

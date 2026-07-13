@@ -116,6 +116,14 @@ func (s *discoveryScanner) scanActionsPermissions(ctx context.Context, sheet *Fa
 		},
 		APIRef: "GET /orgs/{org}/actions/permissions",
 	})
+
+	sheet.Facts = append(sheet.Facts, Fact{
+		FactID:  "f-fork-pr-approval",
+		FactKey: "org_fork_pr_approval_required",
+		Scope:   "org",
+		Value:   !perms.CanApprovePullRequestReviews,
+		APIRef:  "GET /orgs/{org}/actions/permissions",
+	})
 }
 
 func (s *discoveryScanner) scanGitHubApps(ctx context.Context, sheet *FactSheet) {
