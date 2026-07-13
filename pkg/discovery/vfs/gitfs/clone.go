@@ -34,7 +34,8 @@ const (
 )
 
 // CloneRepo performs a minimum shallow single-branch clone into memory and
-// returns the repository worktree filesystem.
+// returns the repository worktree filesystem. Repository size does not change
+// clone depth: only the default-branch tip is fetched, never full history.
 func CloneRepo(
 	ctx context.Context,
 	repoURL string,

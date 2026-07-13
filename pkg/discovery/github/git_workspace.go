@@ -54,19 +54,6 @@ func (s *discoveryScanner) buildWorkspace(
 			return fallback, append(limitations, "git clone interrupted")
 		}
 
-		if repoTooLargeForClone(repo) {
-			limitations = append(
-				limitations,
-				fmt.Sprintf(
-					"skipped git clone for repository %s: exceeds %d MiB GitHub size threshold",
-					repo.Name,
-					maxRepoCloneSizeKB/1024,
-				),
-			)
-
-			continue
-		}
-
 		repoURL, err := githubCloneURL(s.org, repo.Name)
 		if err != nil {
 			limitations = append(

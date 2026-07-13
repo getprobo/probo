@@ -22,11 +22,10 @@ import (
 )
 
 const (
-	maxReposToClone    = 50
-	minRepoCloneScore  = 2
-	orgProfileRepo     = ".github"
-	maxRepoCloneSizeKB = 100_000 // 100 MiB per GitHub repository size metric
-	shallowCloneDepth  = 1
+	maxReposToClone   = 50
+	minRepoCloneScore = 2
+	orgProfileRepo    = ".github"
+	shallowCloneDepth = 1
 )
 
 type repoCloneCandidate struct {
@@ -37,15 +36,8 @@ type repoCloneCandidate struct {
 // selectReposForClone ranks repositories and returns the subset worth cloning.
 func selectReposForClone(repos []repoListItem) ([]repoListItem, string) {
 	candidates := make([]repoCloneCandidate, 0, len(repos))
-	skippedOversized := 0
 
 	for _, repo := range repos {
-		if repoTooLargeForClone(repo) {
-			skippedOversized++
-
-			continue
-		}
-
 		score := scoreRepoForClone(repo)
 		if score < minRepoCloneScore && repo.Name != orgProfileRepo {
 			continue
@@ -55,14 +47,6 @@ func selectReposForClone(repos []repoListItem) ([]repoListItem, string) {
 	}
 
 	if len(candidates) == 0 {
-		if skippedOversized > 0 {
-			return nil, fmt.Sprintf(
-				"no repositories selected for shallow git clone; skipped %d oversized repositories (>%d MiB); using API file reads",
-				skippedOversized,
-				maxRepoCloneSizeKB/1024,
-			)
-		}
-
 		return nil, "no repositories met git clone relevance heuristics; using API file reads"
 	}
 
@@ -89,23 +73,8 @@ func selectReposForClone(repos []repoListItem) ([]repoListItem, string) {
 		len(repos),
 		shallowCloneDepth,
 	)
-	if skippedOversized > 0 {
-		limitation += fmt.Sprintf(
-			"; skipped %d oversized repositories (>%d MiB)",
-			skippedOversized,
-			maxRepoCloneSizeKB/1024,
-		)
-	}
 
 	return selected, limitation
-}
-
-func repoTooLargeForClone(repo repoListItem) bool {
-	if repo.Size <= 0 {
-		return false
-	}
-
-	return repo.Size > maxRepoCloneSizeKB
 }
 
 func scoreRepoForClone(repo repoListItem) int {
