@@ -233,6 +233,7 @@ func insertDiscoveryEvidence(
 	}
 
 	url := discoveryEvidenceURL(factRefs, factsByID)
+
 	description := strings.TrimSpace(summary)
 	if description == "" {
 		description = "GitHub discovery evidence"

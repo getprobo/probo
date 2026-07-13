@@ -192,6 +192,7 @@ func (s *orgScanner) fetchOrganization(ctx context.Context) (*githubOrganization
 
 func (s *orgScanner) count2FADisabled(ctx context.Context) (int, error) {
 	driver := drivers.NewGitHubDriver(s.httpClient, s.org, s.logger)
+
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {
 		return 0, err
@@ -210,6 +211,7 @@ func (s *orgScanner) count2FADisabled(ctx context.Context) (int, error) {
 
 func (s *orgScanner) countAdmins(ctx context.Context) (int, int, error) {
 	driver := drivers.NewGitHubDriver(s.httpClient, s.org, s.logger)
+
 	records, err := driver.ListAccounts(ctx)
 	if err != nil {
 		return 0, 0, err
