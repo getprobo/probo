@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -44,6 +45,7 @@ func NewMux(
 	accessReviewSvc *accessreview.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	riskManagementSvc *riskmanagement.Service,
+	githubDiscoverySvc *ghdiscovery.Service,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
@@ -53,16 +55,17 @@ func NewMux(
 	logger.Info("initializing MCP server")
 
 	resolver := &Resolver{
-		proboSvc:       proboSvc,
-		resourceAlias:  resourceAliasSvc,
-		thirdPartySvc:  thirdPartySvc,
-		iamSvc:         iamSvc,
-		accessReview:   accessReviewSvc,
-		cookieBanner:   cookieBannerSvc,
-		riskManagement: riskManagementSvc,
-		logger:         logger,
-		fileManager:    fileManagerSvc,
-		baseURL:        baseURL,
+		proboSvc:        proboSvc,
+		resourceAlias:   resourceAliasSvc,
+		thirdPartySvc:   thirdPartySvc,
+		iamSvc:          iamSvc,
+		accessReview:    accessReviewSvc,
+		cookieBanner:    cookieBannerSvc,
+		riskManagement:  riskManagementSvc,
+		githubDiscovery: githubDiscoverySvc,
+		logger:          logger,
+		fileManager:     fileManagerSvc,
+		baseURL:         baseURL,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))

@@ -723,8 +723,15 @@ Recommendation: ship Waves 1–3 as first PR if scope allows; otherwise Wave 1
 
 ### 16.4 Console & API
 
-- GraphQL mutation: `runGitHubDiscovery(input: { connectorId })`
-- Poll `agent_runs` or subscription for status
+Agents and skills trigger discovery through **Probo MCP** (`runGitHubDiscovery`
+on `/mcp/v1`), mirroring how SCIM bridge provisioning uses MCP tools with a
+`connector_id` rather than custom agent tooling. The MCP tool enqueues an
+`agent_run` and returns it for polling until completion.
+
+- **MCP tool:** `runGitHubDiscovery(input: { connector_id })` → `agent_run`
+- **Console GraphQL:** `runGitHubDiscovery(input: { connectorId })` — same
+  service layer for the UI
+- Poll `agent_runs` for status
 - Measures list filterable by discovery origin (category or evidence URL
   pattern until optional `source` column exists)
 - Integration detail page: last run summary + measure breakdown
@@ -842,7 +849,6 @@ Structured pass to ensure nothing critical is missing before implementation.
 |------|------|
 | Gap agent + auto-findings | Phase 2 PR |
 | `connectors.third_party_id` | Optional enhancement |
-| MCP `runGitHubDiscovery` tool | After Console stable |
 | Scheduled / webhook-triggered discovery | After on-demand works |
 | Multi-integration discovery (AWS, GitLab) | After GitHub pattern proven |
 | Measure `source` column | Use ThirdParty filter instead |
@@ -892,6 +898,8 @@ alerts/CI.
 ## 22. References
 
 - Existing GitHub connector: `pkg/connector/provider/github.go`
+- Discovery package: `pkg/discovery/github/`
+- MCP trigger: `runGitHubDiscovery` in `pkg/server/api/mcp/v1/specification.yaml`
 - Access review driver: `pkg/accessreview/drivers/github.go`
 - Agent framework: `pkg/agent/`, `contrib/claude/agent.md`
 - Agent runs: `pkg/coredata/agent_run.go`, `pkg/agentrun/`

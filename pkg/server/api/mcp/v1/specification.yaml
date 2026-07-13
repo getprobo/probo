@@ -10819,6 +10819,80 @@ components:
           items:
             $ref: "#/components/schemas/SCIMEvent"
 
+    AgentRunStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - SUSPENDED
+        - AWAITING_APPROVAL
+        - COMPLETED
+        - FAILED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AgentRunStatus
+
+    AgentRun:
+      type: object
+      required:
+        - id
+        - organization_id
+        - agent_name
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Agent run ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        agent_name:
+          type: string
+          description: Start agent name (e.g. github-discovery)
+        status:
+          $ref: "#/components/schemas/AgentRunStatus"
+          description: Run status
+        error_message:
+          type:
+            - string
+            - "null"
+          description: Error message when status is FAILED
+        started_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: When the run started executing
+        created_at:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: When the run was enqueued
+        updated_at:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: When the run was last updated
+
+    RunGitHubDiscoveryInput:
+      type: object
+      required:
+        - connector_id
+      properties:
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: GitHub connector ID to scan
+
+    RunGitHubDiscoveryOutput:
+      type: object
+      required:
+        - agent_run
+      properties:
+        agent_run:
+          $ref: "#/components/schemas/AgentRun"
+          description: Enqueued discovery agent run
+
     RiskAssessmentNodeType:
       type: string
       enum:
@@ -14066,6 +14140,18 @@ tools:
       $ref: "#/components/schemas/ListSCIMEventsInput"
     outputSchema:
       $ref: "#/components/schemas/ListSCIMEventsOutput"
+  - name: runGitHubDiscovery
+    description: >-
+      Start a read-only GitHub org discovery run for an existing GitHub
+      connector. Returns an agent run to poll until completion. Reconnect the
+      connector with discovery OAuth scopes when the tool reports missing
+      scopes.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RunGitHubDiscoveryInput"
+    outputSchema:
+      $ref: "#/components/schemas/RunGitHubDiscoveryOutput"
   - name: listRiskAssessments
     description: List all risk assessments for an organization
     hints:

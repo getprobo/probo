@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -40,16 +41,17 @@ import (
 )
 
 type Resolver struct {
-	proboSvc       *probo.Service
-	resourceAlias  *resourcealias.Service
-	thirdPartySvc  *thirdparty.Service
-	iamSvc         *iam.Service
-	accessReview   *accessreview.Service
-	cookieBanner   *cookiebanner.Service
-	riskManagement *riskmanagement.Service
-	logger         *log.Logger
-	fileManager    *filemanager.Service
-	baseURL        *baseurl.BaseURL
+	proboSvc        *probo.Service
+	resourceAlias   *resourcealias.Service
+	thirdPartySvc   *thirdparty.Service
+	iamSvc          *iam.Service
+	accessReview    *accessreview.Service
+	cookieBanner    *cookiebanner.Service
+	riskManagement  *riskmanagement.Service
+	githubDiscovery *ghdiscovery.Service
+	logger          *log.Logger
+	fileManager     *filemanager.Service
+	baseURL         *baseurl.BaseURL
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -16,6 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	ghdiscovery "go.probo.inc/probo/pkg/discovery/github"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
@@ -7087,5 +7089,48 @@ func (r *Resolver) RemoveResourceAliasTool(ctx context.Context, req *mcp.CallToo
 
 	return nil, types.RemoveResourceAliasOutput{
 		DeletedResourceID: input.ResourceID,
+	}, nil
+}
+
+func (r *Resolver) RunGitHubDiscoveryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RunGitHubDiscoveryInput) (*mcp.CallToolResult, types.RunGitHubDiscoveryOutput, error) {
+	scope, err := r.Authorize(ctx, input.ConnectorID, probo.ActionConnectorRunGitHubDiscovery)
+	if err != nil {
+		return nil, types.RunGitHubDiscoveryOutput{}, err
+	}
+
+	run, err := r.githubDiscovery.Run(
+		ctx,
+		scope,
+		ghdiscovery.RunRequest{ConnectorID: input.ConnectorID},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.RunGitHubDiscoveryOutput{}, fmt.Errorf("invalid input: %s", validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.RunGitHubDiscoveryOutput{}, fmt.Errorf("connector not found")
+		}
+
+		if errors.Is(err, ghdiscovery.ErrDiscoveryInProgress) {
+			return nil, types.RunGitHubDiscoveryOutput{}, fmt.Errorf("a github discovery run is already in progress for this connector")
+		}
+
+		var scopeErr *ghdiscovery.InsufficientScopesError
+		if errors.As(err, &scopeErr) {
+			return nil, types.RunGitHubDiscoveryOutput{}, fmt.Errorf(
+				"github connector is missing required oauth scopes (%s); reconnect with scopes: %s",
+				strings.Join(scopeErr.Missing, ", "),
+				strings.Join(ghdiscovery.DiscoveryReconnectScopes(), ", "),
+			)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot run github discovery", log.Error(err))
+
+		return nil, types.RunGitHubDiscoveryOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.RunGitHubDiscoveryOutput{
+		AgentRun: types.NewAgentRun(run),
 	}, nil
 }
