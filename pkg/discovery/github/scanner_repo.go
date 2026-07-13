@@ -57,6 +57,8 @@ type (
 		Private       bool   `json:"private"`
 		Archived      bool   `json:"archived"`
 		Disabled      bool   `json:"disabled"`
+		Fork          bool   `json:"fork"`
+		PushedAt      string `json:"pushed_at"`
 	}
 
 	branchProtection struct {

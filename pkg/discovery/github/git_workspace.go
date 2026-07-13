@@ -29,9 +29,17 @@ func (s *discoveryScanner) buildWorkspace(
 	ctx context.Context,
 	repos []repoListItem,
 ) (vfs.FS, []string) {
+	fallback := s.apiFallbackFS()
+
+	selected, selectLimitation := selectReposForClone(repos)
+	if len(selected) == 0 {
+		return fallback, []string{selectLimitation}
+	}
+
 	token, ok := oauthAccessToken(s.conn)
 	if !ok {
-		return s.apiFallbackFS(), []string{
+		return fallback, []string{
+			selectLimitation,
 			"git clone unavailable without oauth access token; falling back to github API file reads",
 		}
 	}
@@ -39,11 +47,11 @@ func (s *discoveryScanner) buildWorkspace(
 	workspace := gitfs.NewWorkspace()
 	auth := &http.BasicAuth{Username: "x-access-token", Password: token}
 
-	var limitations []string
+	limitations := []string{selectLimitation}
 
-	for _, repo := range repos {
+	for _, repo := range selected {
 		if err := ctx.Err(); err != nil {
-			return s.apiFallbackFS(), append(limitations, "git clone interrupted")
+			return fallback, append(limitations, "git clone interrupted")
 		}
 
 		repoURL, err := githubCloneURL(s.org, repo.Name)
@@ -70,24 +78,24 @@ func (s *discoveryScanner) buildWorkspace(
 	}
 
 	if workspace.RepoCount() == 0 {
-		return s.apiFallbackFS(), append(
+		return fallback, append(
 			limitations,
 			"no repositories cloned via git; falling back to github API file reads",
 		)
 	}
 
-	if workspace.RepoCount() < len(repos) {
+	if workspace.RepoCount() < len(selected) {
 		limitations = append(
 			limitations,
 			fmt.Sprintf(
-				"cloned %d of %d repositories via git; remaining repos use API fallbacks only",
+				"cloned %d of %d selected repositories via git",
 				workspace.RepoCount(),
-				len(repos),
+				len(selected),
 			),
 		)
 	}
 
-	return workspace, limitations
+	return newLayeredFS(workspace, fallback), limitations
 }
 
 func (s *discoveryScanner) apiFallbackFS() vfs.FS {
