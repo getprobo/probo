@@ -41,29 +41,27 @@ func (s *discoveryScanner) scanOrgSettings(ctx context.Context, sheet *FactSheet
 	if err != nil {
 		sheet.Limitations = append(sheet.Limitations, "cannot list 2FA-disabled members")
 	} else {
-		sheet.Facts = append(sheet.Facts, Fact{
-			FactID:  "f-members-without-2fa",
-			FactKey: "org_no_2fa_members",
-			Scope:   "org",
-			Value:   disabled2FA,
-			APIRef:  "GET /orgs/{org}/members?filter=2fa_disabled",
-		})
+		sheet.Facts = append(sheet.Facts, newFact(
+			CheckOrgNo2FAMembers,
+			"org",
+			disabled2FA,
+			"GET /orgs/{org}/members?filter=2fa_disabled",
+		))
 	}
 
 	adminCount, memberCount, err := s.countAdmins(ctx)
 	if err != nil {
 		sheet.Limitations = append(sheet.Limitations, "cannot count org admins")
 	} else {
-		sheet.Facts = append(sheet.Facts, Fact{
-			FactID:  "f-admin-ratio",
-			FactKey: "org_admin_minimization",
-			Scope:   "org",
-			Value: map[string]int{
+		sheet.Facts = append(sheet.Facts, newFact(
+			CheckOrgAdminMinimization,
+			"org",
+			map[string]int{
 				"admins":  adminCount,
 				"members": memberCount,
 			},
-			APIRef: "GET /orgs/{org}/members + memberships",
-		})
+			"GET /orgs/{org}/members + memberships",
+		))
 	}
 
 	return nil
@@ -73,43 +71,39 @@ func orgFacts(org *githubOrganization) []Fact {
 	facts := make([]Fact, 0, 4)
 
 	if org.TwoFactorRequirementEnabled != nil {
-		facts = append(facts, Fact{
-			FactID:  "f-org-mfa-required",
-			FactKey: "org_mfa_required",
-			Scope:   "org",
-			Value:   *org.TwoFactorRequirementEnabled,
-			APIRef:  "GET /orgs/{org}",
-		})
+		facts = append(facts, newFact(
+			CheckOrgMFARequired,
+			"org",
+			*org.TwoFactorRequirementEnabled,
+			"GET /orgs/{org}",
+		))
 	}
 
 	if org.DefaultRepositoryPermission != "" {
-		facts = append(facts, Fact{
-			FactID:  "f-base-permissions",
-			FactKey: "org_base_permissions",
-			Scope:   "org",
-			Value:   org.DefaultRepositoryPermission,
-			APIRef:  "GET /orgs/{org}",
-		})
+		facts = append(facts, newFact(
+			CheckOrgBasePermissions,
+			"org",
+			org.DefaultRepositoryPermission,
+			"GET /orgs/{org}",
+		))
 	}
 
 	if org.MembersCanCreatePublicRepositories != nil {
-		facts = append(facts, Fact{
-			FactID:  "f-no-public-repo-creation",
-			FactKey: "org_no_public_repo_creation",
-			Scope:   "org",
-			Value:   !*org.MembersCanCreatePublicRepositories,
-			APIRef:  "GET /orgs/{org}",
-		})
+		facts = append(facts, newFact(
+			CheckOrgNoPublicRepoCreation,
+			"org",
+			!*org.MembersCanCreatePublicRepositories,
+			"GET /orgs/{org}",
+		))
 	}
 
 	if org.MembersCanChangeRepoVisibility != nil {
-		facts = append(facts, Fact{
-			FactID:  "f-no-visibility-change",
-			FactKey: "org_no_visibility_change",
-			Scope:   "org",
-			Value:   !*org.MembersCanChangeRepoVisibility,
-			APIRef:  "GET /orgs/{org}",
-		})
+		facts = append(facts, newFact(
+			CheckOrgNoVisibilityChange,
+			"org",
+			!*org.MembersCanChangeRepoVisibility,
+			"GET /orgs/{org}",
+		))
 	}
 
 	return facts

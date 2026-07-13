@@ -74,9 +74,8 @@ func (s *discoveryScanner) scanOutsideCollaborators(ctx context.Context, sheet *
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		FactID:  "f-outside-collaborators",
-		FactKey: "org_outside_collaborators",
-		Scope:   "org",
+		Check: CheckOrgOutsideCollaborators,
+		Scope: "org",
 		Value: map[string]int{
 			"count": len(collaborators),
 		},
@@ -104,9 +103,8 @@ func (s *discoveryScanner) scanActionsPermissions(ctx context.Context, sheet *Fa
 		strings.EqualFold(perms.AllowedActions, "local_only")
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		FactID:  "f-actions-restricted",
-		FactKey: "org_actions_restricted",
-		Scope:   "org",
+		Check: CheckOrgActionsRestricted,
+		Scope: "org",
 		Value: map[string]any{
 			"restricted":                       restricted,
 			"allowed_actions":                  perms.AllowedActions,
@@ -118,11 +116,10 @@ func (s *discoveryScanner) scanActionsPermissions(ctx context.Context, sheet *Fa
 	})
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		FactID:  "f-fork-pr-approval",
-		FactKey: "org_fork_pr_approval_required",
-		Scope:   "org",
-		Value:   !perms.CanApprovePullRequestReviews,
-		APIRef:  "GET /orgs/{org}/actions/permissions",
+		Check:  CheckOrgForkPRApprovalRequired,
+		Scope:  "org",
+		Value:  !perms.CanApprovePullRequestReviews,
+		APIRef: "GET /orgs/{org}/actions/permissions",
 	})
 }
 
@@ -143,9 +140,8 @@ func (s *discoveryScanner) scanGitHubApps(ctx context.Context, sheet *FactSheet)
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		FactID:  "f-github-apps",
-		FactKey: "org_github_apps",
-		Scope:   "org",
+		Check: CheckOrgGitHubApps,
+		Scope: "org",
 		Value: map[string]int{
 			"installations": page.TotalCount,
 		},
@@ -181,22 +177,20 @@ func (s *discoveryScanner) scanAuditLogAccess(ctx context.Context, sheet *FactSh
 
 	if _, err := s.api.getJSON(ctx, endpoint, &events); err != nil {
 		sheet.Facts = append(sheet.Facts, Fact{
-			FactID:  "f-audit-log",
-			FactKey: "org_audit_log_accessible",
-			Scope:   "org",
-			Value:   false,
-			APIRef:  "GET /organizations/{org}/audit-log",
+			Check:  CheckOrgAuditLogAccessible,
+			Scope:  "org",
+			Value:  false,
+			APIRef: "GET /organizations/{org}/audit-log",
 		})
 
 		return
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		FactID:  "f-audit-log",
-		FactKey: "org_audit_log_accessible",
-		Scope:   "org",
-		Value:   true,
-		APIRef:  "GET /organizations/{org}/audit-log",
+		Check:  CheckOrgAuditLogAccessible,
+		Scope:  "org",
+		Value:  true,
+		APIRef: "GET /organizations/{org}/audit-log",
 	})
 }
 
@@ -221,21 +215,19 @@ func (s *discoveryScanner) scanEnterpriseAccess(ctx context.Context, sheet *Fact
 
 	if _, err := s.api.getJSON(ctx, endpoint, &enterprises); err != nil {
 		sheet.Facts = append(sheet.Facts, Fact{
-			FactID:  "f-enterprise",
-			FactKey: "org_enterprise_accessible",
-			Scope:   "org",
-			Value:   false,
-			APIRef:  "GET /enterprise",
+			Check:  CheckOrgEnterpriseAccessible,
+			Scope:  "org",
+			Value:  false,
+			APIRef: "GET /enterprise",
 		})
 
 		return
 	}
 
 	sheet.Facts = append(sheet.Facts, Fact{
-		FactID:  "f-enterprise",
-		FactKey: "org_enterprise_accessible",
-		Scope:   "org",
-		Value:   len(enterprises) > 0,
-		APIRef:  "GET /enterprise",
+		Check:  CheckOrgEnterpriseAccessible,
+		Scope:  "org",
+		Value:  len(enterprises) > 0,
+		APIRef: "GET /enterprise",
 	})
 }

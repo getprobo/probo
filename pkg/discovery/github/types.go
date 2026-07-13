@@ -38,12 +38,11 @@ type (
 
 	// Fact is a deterministic scanner observation passed to synthesis.
 	Fact struct {
-		FactID  string `json:"fact_id"`
-		FactKey string `json:"fact_key"`
-		Scope   string `json:"scope"`
-		Value   any    `json:"value"`
-		APIRef  string `json:"api_ref,omitempty"`
-		Repo    string `json:"repo,omitempty"`
+		Check  Check  `json:"check"`
+		Scope  string `json:"scope"`
+		Value  any    `json:"value"`
+		APIRef string `json:"api_ref,omitempty"`
+		Repo   string `json:"repo,omitempty"`
 	}
 
 	// FactSheet is the full scanner output for one discovery run.
@@ -68,7 +67,7 @@ type (
 		MeasureID       gid.GID               `json:"measure_id"`
 		State           coredata.MeasureState `json:"state"`
 		EvidenceSummary string                `json:"evidence_summary"`
-		FactRefs        []string              `json:"fact_refs"`
+		CheckRefs       []Check               `json:"check_refs"`
 	}
 
 	// MeasurePlanCreate creates a new measure for GitHub posture.
@@ -78,7 +77,7 @@ type (
 		Category        string                `json:"category"`
 		State           coredata.MeasureState `json:"state"`
 		EvidenceSummary string                `json:"evidence_summary"`
-		FactRefs        []string              `json:"fact_refs"`
+		CheckRefs       []Check               `json:"check_refs"`
 	}
 
 	// MeasurePlanUnchanged records measures left as-is.

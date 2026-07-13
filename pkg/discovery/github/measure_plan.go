@@ -23,7 +23,7 @@ import (
 
 type (
 	measurePlanRule struct {
-		factKey     string
+		check       Check
 		name        string
 		description string
 		category    string
@@ -36,10 +36,10 @@ type (
 // buildMeasurePlanFromFacts maps collected facts to creates/updates without an LLM.
 func buildMeasurePlanFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*MeasurePlan, error) {
 	rules := defaultMeasurePlanRules()
-	byKey := map[string]Fact{}
+	byCheck := map[Check]Fact{}
 
 	for _, fact := range sheet.Facts {
-		byKey[fact.FactKey] = fact
+		byCheck[fact.Check] = fact
 	}
 
 	plan := &MeasurePlan{
@@ -49,20 +49,20 @@ func buildMeasurePlanFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*M
 	used := map[gidKey]struct{}{}
 
 	for _, rule := range rules {
-		fact, ok := byKey[rule.factKey]
+		fact, ok := byCheck[rule.check]
 		if !ok {
 			continue
 		}
 
 		state := rule.evaluate(fact)
-		summary := fmt.Sprintf("%s (fact %s)", rule.description, fact.FactID)
+		summary := fmt.Sprintf("%s (check %s)", rule.description, fact.Check)
 
 		if match := findMeasureByName(existing, rule.name); match != nil {
 			plan.Updates = append(plan.Updates, MeasurePlanUpdate{
 				MeasureID:       match.ID,
 				State:           state,
 				EvidenceSummary: summary,
-				FactRefs:        []string{fact.FactID},
+				CheckRefs:       []Check{fact.Check},
 			})
 			used[gidKey(match.ID.String())] = struct{}{}
 
@@ -79,7 +79,7 @@ func buildMeasurePlanFromFacts(sheet *FactSheet, existing []ExistingMeasure) (*M
 			Category:        rule.category,
 			State:           state,
 			EvidenceSummary: summary,
-			FactRefs:        []string{fact.FactID},
+			CheckRefs:       []Check{fact.Check},
 		})
 	}
 
@@ -112,7 +112,7 @@ func findMeasureByName(existing []ExistingMeasure, name string) *ExistingMeasure
 func defaultMeasurePlanRules() []measurePlanRule {
 	rules := []measurePlanRule{
 		{
-			factKey:     "org_mfa_required",
+			check:       CheckOrgMFARequired,
 			name:        "Org-wide MFA enforcement",
 			description: "Organization requires two-factor authentication for all members.",
 			category:    "access",
@@ -125,7 +125,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_no_2fa_members",
+			check:       CheckOrgNo2FAMembers,
 			name:        "Members without 2FA",
 			description: "No organization members lack two-factor authentication.",
 			category:    "access",
@@ -143,7 +143,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_base_permissions",
+			check:       CheckOrgBasePermissions,
 			name:        "Minimal default repository permissions",
 			description: "Default repository permission is read or none.",
 			category:    "access",
@@ -162,7 +162,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_no_public_repo_creation",
+			check:       CheckOrgNoPublicRepoCreation,
 			name:        "Restrict public repository creation",
 			description: "Members cannot create public repositories.",
 			category:    "exposure",
@@ -175,7 +175,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_admin_minimization",
+			check:       CheckOrgAdminMinimization,
 			name:        "Admin account minimization",
 			description: "Organization admin accounts are limited.",
 			category:    "access",
@@ -184,7 +184,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_public_repos",
+			check:       CheckOrgPublicRepos,
 			name:        "Public repository exposure",
 			description: "Unexpected public repositories are controlled.",
 			category:    "exposure",
@@ -202,7 +202,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_no_visibility_change",
+			check:       CheckOrgNoVisibilityChange,
 			name:        "Restrict repository visibility changes",
 			description: "Members cannot change repository visibility.",
 			category:    "exposure",
@@ -215,7 +215,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_outside_collaborators",
+			check:       CheckOrgOutsideCollaborators,
 			name:        "Outside collaborator inventory",
 			description: "Outside collaborators are inventoried for review.",
 			category:    "access",
@@ -229,7 +229,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_actions_restricted",
+			check:       CheckOrgActionsRestricted,
 			name:        "GitHub Actions usage restricted",
 			description: "Organization restricts which actions and workflows may run.",
 			category:    "ci_cd",
@@ -247,7 +247,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_github_apps",
+			check:       CheckOrgGitHubApps,
 			name:        "GitHub App inventory",
 			description: "Installed GitHub Apps are inventoried for review.",
 			category:    "integrations",
@@ -261,7 +261,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_audit_log_accessible",
+			check:       CheckOrgAuditLogAccessible,
 			name:        "Audit log accessible",
 			description: "Organization audit log is accessible for review.",
 			category:    "audit",
@@ -278,56 +278,56 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "repo_branch_protection_coverage",
+			check:       CheckRepoBranchProtectionCoverage,
 			name:        "Default branch protection",
 			description: "Default branches are protected across scanned repositories.",
 			category:    "code_review",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			factKey:     "repo_pr_reviews_required_coverage",
+			check:       CheckRepoPRReviewsRequiredCoverage,
 			name:        "Pull request reviews required",
 			description: "Default branches require pull request reviews.",
 			category:    "code_review",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			factKey:     "repo_signed_commits_required_coverage",
+			check:       CheckRepoSignedCommitsRequiredCoverage,
 			name:        "Signed commits required",
 			description: "Default branches require signed commits.",
 			category:    "code_integrity",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			factKey:     "repo_workflow_coverage",
+			check:       CheckRepoWorkflowCoverage,
 			name:        "CI/CD workflows present",
 			description: "Repositories run automated workflows.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_security_md_coverage",
+			check:       CheckRepoSecurityMDCoverage,
 			name:        "Security disclosure policy",
 			description: "Repositories publish a SECURITY.md disclosure policy.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_contributing_md_coverage",
+			check:       CheckRepoContributingMDCoverage,
 			name:        "Contributing guidelines documented",
 			description: "Repositories publish CONTRIBUTING.md guidance.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_dependabot_config_coverage",
+			check:       CheckRepoDependabotConfigCoverage,
 			name:        "Dependabot configuration",
 			description: "Repositories configure Dependabot update automation.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_dependabot_critical_open",
+			check:       CheckRepoDependabotCriticalOpen,
 			name:        "Critical Dependabot alerts resolved",
 			description: "No open critical Dependabot alerts in scanned repositories.",
 			category:    "dependencies",
@@ -345,7 +345,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "repo_secret_scanning_alerts_open",
+			check:       CheckRepoSecretScanningAlertsOpen,
 			name:        "Secret scanning alerts resolved",
 			description: "No open secret scanning alerts in scanned repositories.",
 			category:    "secrets",
@@ -363,7 +363,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "repo_code_scanning_critical_open",
+			check:       CheckRepoCodeScanningCriticalOpen,
 			name:        "Critical code scanning alerts resolved",
 			description: "No open critical code scanning alerts in scanned repositories.",
 			category:    "code_scanning",
@@ -381,7 +381,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_fork_pr_approval_required",
+			check:       CheckOrgForkPRApprovalRequired,
 			name:        "Fork pull request approval required",
 			description: "Workflows from fork pull requests require approval before running.",
 			category:    "ci_cd",
@@ -394,7 +394,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_enterprise_accessible",
+			check:       CheckOrgEnterpriseAccessible,
 			name:        "Enterprise settings accessible",
 			description: "Enterprise configuration is accessible for governance review.",
 			category:    "audit",
@@ -407,126 +407,126 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "repo_production_classification",
+			check:       CheckRepoProductionClassification,
 			name:        "Production repository classification",
 			description: "Likely production repositories are identified for deeper checks.",
 			category:    "governance",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_signed_commits_practice_coverage",
+			check:       CheckRepoSignedCommitsPracticeCoverage,
 			name:        "Signed commits in practice",
 			description: "Recent commits on default branches are cryptographically signed.",
 			category:    "code_integrity",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_force_push_disabled_coverage",
+			check:       CheckRepoForcePushDisabledCoverage,
 			name:        "Force push disabled on default branch",
 			description: "Default branches disallow force pushes.",
 			category:    "code_review",
 			evaluate:    evaluateFullCoverage,
 		},
 		{
-			factKey:     "repo_required_status_checks_coverage",
+			check:       CheckRepoRequiredStatusChecksCoverage,
 			name:        "Required status checks on default branch",
 			description: "Default branches require status checks before merge.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_bypass_actor_restrictions_coverage",
+			check:       CheckRepoBypassActorRestrictionsCoverage,
 			name:        "Branch protection bypass restrictions",
 			description: "Branch protection limits who can bypass required checks.",
 			category:    "code_review",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_pr_ci_coverage",
+			check:       CheckRepoPRCICoverage,
 			name:        "CI runs on pull requests",
 			description: "Workflows run on pull request events.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_pull_request_target_risk",
+			check:       CheckRepoPullRequestTargetRisk,
 			name:        "No pull_request_target workflow risk",
 			description: "Scanned repositories avoid dangerous pull_request_target workflows.",
 			category:    "ci_cd",
 			evaluate:    evaluateCoverageRiskAbsent,
 		},
 		{
-			factKey:     "repo_codeql_enabled_coverage",
+			check:       CheckRepoCodeQLEnabledCoverage,
 			name:        "CodeQL analysis in CI",
 			description: "Repositories run CodeQL or equivalent code scanning in CI.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_codeql_default_setup_coverage",
+			check:       CheckRepoCodeQLDefaultSetupCoverage,
 			name:        "CodeQL default setup enabled",
 			description: "Repositories enable GitHub code scanning default setup.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_dependency_review_coverage",
+			check:       CheckRepoDependencyReviewCoverage,
 			name:        "Dependency review in CI",
 			description: "Repositories run dependency review on pull requests.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_sast_in_ci_coverage",
+			check:       CheckRepoSASTInCICoverage,
 			name:        "SAST in CI",
 			description: "Repositories run static analysis security testing in CI.",
 			category:    "code_scanning",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_dep_scan_in_ci_coverage",
+			check:       CheckRepoDepScanInCICoverage,
 			name:        "Dependency scanning in CI",
 			description: "Repositories scan dependencies in CI pipelines.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_development_guide_coverage",
+			check:       CheckRepoDevelopmentGuideCoverage,
 			name:        "Development guide documented",
 			description: "Repositories publish engineering development guidance.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_code_review_guide_coverage",
+			check:       CheckRepoCodeReviewGuideCoverage,
 			name:        "Code review guide documented",
 			description: "Repositories publish code review guidance.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_renovate_config_coverage",
+			check:       CheckRepoRenovateConfigCoverage,
 			name:        "Renovate dependency automation",
 			description: "Repositories configure Renovate or equivalent update automation.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_lockfile_coverage",
+			check:       CheckRepoLockfileCoverage,
 			name:        "Dependency lock files maintained",
 			description: "Repositories maintain dependency lock files.",
 			category:    "dependencies",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_secret_scanning_push_protection_coverage",
+			check:       CheckRepoSecretScanningPushProtection,
 			name:        "Secret scanning push protection",
 			description: "Repositories enable secret scanning push protection.",
 			category:    "secrets",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_env_on_default_branch",
+			check:       CheckRepoEnvOnDefaultBranch,
 			name:        "No secrets committed to default branch",
 			description: "Default branches do not contain .env files.",
 			category:    "secrets",
@@ -535,7 +535,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "repo_deploy_keys_write_access",
+			check:       CheckRepoDeployKeysWriteAccess,
 			name:        "Deploy keys with write access controlled",
 			description: "Write-capable deploy keys are limited across scanned repositories.",
 			category:    "secrets",
@@ -544,21 +544,21 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "repo_commit_status_ci_coverage",
+			check:       CheckRepoCommitStatusCICoverage,
 			name:        "CI detected via commit statuses",
 			description: "Repositories report CI results via commit statuses or check runs.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_external_ci_coverage",
+			check:       CheckRepoExternalCICoverage,
 			name:        "External CI providers detected",
 			description: "Repositories use external CI providers such as CircleCI or Jenkins.",
 			category:    "ci_cd",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_ci_providers",
+			check:       CheckRepoCIProviders,
 			name:        "CI provider inventory",
 			description: "CI providers are inventoried from commit statuses and check runs.",
 			category:    "ci_cd",
@@ -572,35 +572,35 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "repo_security_contact_coverage",
+			check:       CheckRepoSecurityContactCoverage,
 			name:        "Security contact in SECURITY.md",
 			description: "Repositories publish a reachable security contact in SECURITY.md.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_incident_response_doc_coverage",
+			check:       CheckRepoIncidentResponseDocCoverage,
 			name:        "Incident response documentation",
 			description: "Repositories document incident response procedures.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_issue_templates_coverage",
+			check:       CheckRepoIssueTemplatesCoverage,
 			name:        "Issue templates configured",
 			description: "Repositories provide GitHub issue templates.",
 			category:    "documentation",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_de_facto_pr_review_coverage",
+			check:       CheckRepoDeFactoPRReviewCoverage,
 			name:        "Pull requests reviewed in practice",
 			description: "Merged pull requests receive approvals in practice.",
 			category:    "code_review",
 			evaluate:    evaluateAnyCoverage,
 		},
 		{
-			factKey:     "repo_pr_approval_rate",
+			check:       CheckRepoPRApprovalRate,
 			name:        "Pull request approval rate",
 			description: "Merged pull requests are approved before merge.",
 			category:    "code_review",
@@ -609,7 +609,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_profile_security_md",
+			check:       CheckOrgProfileSecurityMD,
 			name:        "Organization security disclosure policy",
 			description: "The organization profile repository publishes SECURITY.md.",
 			category:    "documentation",
@@ -618,7 +618,7 @@ func defaultMeasurePlanRules() []measurePlanRule {
 			},
 		},
 		{
-			factKey:     "org_profile_contributing_md",
+			check:       CheckOrgProfileContributingMD,
 			name:        "Organization contributing guidelines",
 			description: "The organization profile repository publishes CONTRIBUTING.md.",
 			category:    "documentation",

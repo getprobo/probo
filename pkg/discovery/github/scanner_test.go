@@ -141,7 +141,7 @@ func TestDiscoveryScanner_CollectsOrgAndRepoFacts(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, sheet)
 
-	keys := factKeys(sheet.Facts)
+	keys := checkKeys(sheet.Facts)
 
 	assert.Contains(t, keys, "org_mfa_required")
 	assert.Contains(t, keys, "org_outside_collaborators")
@@ -163,16 +163,14 @@ func TestBuildMeasurePlanFromFacts_IncludesRepoCoverageMeasures(t *testing.T) {
 		GitHubOrg: "acme",
 		Facts: []Fact{
 			{
-				FactID:  "f-branch-protection-coverage",
-				FactKey: "repo_branch_protection_coverage",
+				Check: CheckRepoBranchProtectionCoverage,
 				Value: map[string]int{
 					"matched": 2,
 					"total":   2,
 				},
 			},
 			{
-				FactID:  "f-secret-scanning-open",
-				FactKey: "repo_secret_scanning_alerts_open",
+				Check: CheckRepoSecretScanningAlertsOpen,
 				Value: map[string]int{
 					"open": 1,
 				},
@@ -194,11 +192,11 @@ func TestBuildMeasurePlanFromFacts_IncludesRepoCoverageMeasures(t *testing.T) {
 	assert.Equal(t, coredata.MeasureStateNotImplemented, findCreateState(plan, "Secret scanning alerts resolved"))
 }
 
-func factKeys(facts []Fact) []string {
+func checkKeys(facts []Fact) []string {
 	keys := make([]string, 0, len(facts))
 
 	for _, fact := range facts {
-		keys = append(keys, fact.FactKey)
+		keys = append(keys, string(fact.Check))
 	}
 
 	return keys

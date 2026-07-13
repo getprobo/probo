@@ -52,10 +52,10 @@ func applyMeasurePlan(
 		return nil, fmt.Errorf("cannot apply measure plan: plan is required")
 	}
 
-	factsByID := map[string]Fact{}
+	factsByCheck := map[Check]Fact{}
 
 	for _, fact := range input.factSheet.Facts {
-		factsByID[fact.FactID] = fact
+		factsByCheck[fact.Check] = fact
 	}
 
 	stats := &persistStats{summary: map[string]int{}}
@@ -72,7 +72,7 @@ func applyMeasurePlan(
 					scope,
 					input,
 					update,
-					factsByID,
+					factsByCheck,
 					now,
 				); err != nil {
 					return err
@@ -89,7 +89,7 @@ func applyMeasurePlan(
 					scope,
 					input,
 					create,
-					factsByID,
+					factsByCheck,
 					now,
 				); err != nil {
 					return err
@@ -115,7 +115,7 @@ func persistMeasureUpdate(
 	scope coredata.Scoper,
 	input persistInput,
 	update MeasurePlanUpdate,
-	factsByID map[string]Fact,
+	factsByCheck map[Check]Fact,
 	now time.Time,
 ) error {
 	measure := &coredata.Measure{}
@@ -143,8 +143,8 @@ func persistMeasureUpdate(
 		measure.ID,
 		input.agentRunID,
 		update.EvidenceSummary,
-		update.FactRefs,
-		factsByID,
+		update.CheckRefs,
+		factsByCheck,
 		now,
 	)
 }
@@ -155,7 +155,7 @@ func persistMeasureCreate(
 	scope coredata.Scoper,
 	input persistInput,
 	create MeasurePlanCreate,
-	factsByID map[string]Fact,
+	factsByCheck map[Check]Fact,
 	now time.Time,
 ) error {
 	referenceID, err := uuid.NewV4()
@@ -191,8 +191,8 @@ func persistMeasureCreate(
 		measure.ID,
 		input.agentRunID,
 		create.EvidenceSummary,
-		create.FactRefs,
-		factsByID,
+		create.CheckRefs,
+		factsByCheck,
 		now,
 	)
 }
@@ -226,8 +226,8 @@ func insertDiscoveryEvidence(
 	measureID gid.GID,
 	agentRunID gid.GID,
 	summary string,
-	factRefs []string,
-	factsByID map[string]Fact,
+	checkRefs []Check,
+	factsByCheck map[Check]Fact,
 	now time.Time,
 ) error {
 	referenceID, err := uuid.NewV4()
@@ -235,7 +235,7 @@ func insertDiscoveryEvidence(
 		return fmt.Errorf("cannot generate evidence reference id: %w", err)
 	}
 
-	evidenceURL, err := discoveryEvidenceURL(factRefs, factsByID)
+	evidenceURL, err := discoveryEvidenceURL(checkRefs, factsByCheck)
 	if err != nil {
 		return fmt.Errorf("cannot build discovery evidence URL: %w", err)
 	}
@@ -266,11 +266,11 @@ func insertDiscoveryEvidence(
 	return nil
 }
 
-func discoveryEvidenceURL(factRefs []string, factsByID map[string]Fact) (string, error) {
+func discoveryEvidenceURL(checkRefs []Check, factsByCheck map[Check]Fact) (string, error) {
 	const fallback = "https://github.com"
 
-	for _, ref := range factRefs {
-		fact, ok := factsByID[ref]
+	for _, ref := range checkRefs {
+		fact, ok := factsByCheck[ref]
 		if !ok || fact.APIRef == "" {
 			continue
 		}

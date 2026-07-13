@@ -238,9 +238,8 @@ func ciProviderFact(ciAgg *ciProviderAggregate, reposScanned int) Fact {
 	maps.Copy(providers, ciAgg.Providers)
 
 	return Fact{
-		FactID:  "f-ci-providers",
-		FactKey: "repo_ci_providers",
-		Scope:   "org",
+		Check: CheckRepoCIProviders,
+		Scope: "org",
 		Value: map[string]any{
 			"providers":                providers,
 			"repos_with_commit_status": ciAgg.ReposWithCommitStatusCI,

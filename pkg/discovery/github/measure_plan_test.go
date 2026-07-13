@@ -29,9 +29,9 @@ func TestBuildMeasurePlanFromFactsCreatesOrgMeasures(t *testing.T) {
 	sheet := &FactSheet{
 		GitHubOrg: "acme",
 		Facts: []Fact{
-			{FactID: "f-org-mfa-required", FactKey: "org_mfa_required", Value: true},
-			{FactID: "f-members-without-2fa", FactKey: "org_no_2fa_members", Value: 0},
-			{FactID: "f-base-permissions", FactKey: "org_base_permissions", Value: "read"},
+			{Check: CheckOrgMFARequired, Value: true},
+			{Check: CheckOrgNo2FAMembers, Value: 0},
+			{Check: CheckOrgBasePermissions, Value: "read"},
 		},
 	}
 
@@ -54,7 +54,7 @@ func TestBuildMeasurePlanFromFactsUpdatesExistingMeasures(t *testing.T) {
 	sheet := &FactSheet{
 		GitHubOrg: "acme",
 		Facts: []Fact{
-			{FactID: "f-org-mfa-required", FactKey: "org_mfa_required", Value: false},
+			{Check: CheckOrgMFARequired, Value: false},
 		},
 	}
 
