@@ -31,7 +31,8 @@ import (
 // KeyFileName stores the device API key on disk.
 const KeyFileName = "agent.key"
 
-// ErrKeyNotFound is returned when no key file exists.
+// ErrKeyNotFound is returned when no usable key is on disk (missing,
+// empty, or whitespace-only file).
 var ErrKeyNotFound = errors.New("agent key not found")
 
 // KeyPath returns the absolute path of the device API key file.
@@ -72,7 +73,12 @@ func LoadAPIKey(dir string) (string, error) {
 		return "", fmt.Errorf("cannot read agent key: %w", err)
 	}
 
-	return strings.TrimSpace(string(data)), nil
+	key := strings.TrimSpace(string(data))
+	if key == "" {
+		return "", ErrKeyNotFound
+	}
+
+	return key, nil
 }
 
 // DeleteAPIKey removes the API key file.

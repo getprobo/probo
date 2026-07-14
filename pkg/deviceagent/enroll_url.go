@@ -18,21 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package checks
+package deviceagent
 
-var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
-}
+import (
+	"errors"
+	"fmt"
+	"net/url"
+	"strings"
+)
 
-func commandCandidates(cmd string) []string {
-	return darwinCommandPaths[cmd]
+func ParseEnrollURL(raw string) (serverURL string, enrollmentToken string, err error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", "", errors.New("enrollment URL is required")
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot parse enrollment URL: %w", err)
+	}
+
+	if parsed.Scheme != "probo" {
+		return "", "", errors.New("enrollment URL must use probo scheme")
+	}
+
+	if parsed.Host != "enroll" {
+		return "", "", errors.New("enrollment URL must be probo://enroll")
+	}
+
+	query := parsed.Query()
+
+	serverURL, err = NormalizeServerURL(query.Get("server"))
+	if err != nil {
+		return "", "", fmt.Errorf("invalid server in enrollment URL: %w", err)
+	}
+
+	enrollmentToken = strings.TrimSpace(query.Get("token"))
+	if enrollmentToken == "" {
+		return "", "", errors.New("enrollment token is missing")
+	}
+
+	return serverURL, enrollmentToken, nil
 }

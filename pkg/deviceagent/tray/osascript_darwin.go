@@ -18,21 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package checks
+//go:build darwin
 
-var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
-}
+package tray
 
-func commandCandidates(cmd string) []string {
-	return darwinCommandPaths[cmd]
+import "go.probo.inc/probo/pkg/deviceagent/checks"
+
+func osascriptPath() (string, bool) {
+	candidates := checks.CommandCandidates("osascript")
+	if len(candidates) == 0 {
+		return "", false
+	}
+
+	return candidates[0], true
 }

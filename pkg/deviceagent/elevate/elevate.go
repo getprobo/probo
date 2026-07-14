@@ -18,21 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package checks
+package elevate
 
-var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
+import (
+	"fmt"
+	"strings"
+)
+
+// InstallOptions configures an elevated probo-agent install invocation.
+type InstallOptions struct {
+	ExePath   string
+	ServerURL string
+	ConfigDir string // agent config / keystore dir (--dir)
 }
 
-func commandCandidates(cmd string) []string {
-	return darwinCommandPaths[cmd]
+func commandError(out []byte, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	msg := strings.TrimSpace(string(out))
+	if msg == "" {
+		return err
+	}
+
+	return fmt.Errorf("%s: %w", msg, err)
 }

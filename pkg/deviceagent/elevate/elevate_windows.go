@@ -18,21 +18,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package checks
+//go:build windows
 
-var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
-}
+package elevate
 
-func commandCandidates(cmd string) []string {
-	return darwinCommandPaths[cmd]
+import (
+	"fmt"
+	"os/exec"
+	"strings"
+
+	"go.probo.inc/probo/pkg/deviceagent/checks"
+)
+
+func runElevatedInstall(opts InstallOptions, enrollmentToken string) error {
+	args := []string{
+		"install",
+		"--server",
+		opts.ServerURL,
+		"--enrollment-token",
+		enrollmentToken,
+	}
+	if opts.ConfigDir != "" {
+		args = append(args, "--dir", opts.ConfigDir)
+	}
+
+	argList := make([]string, len(args))
+	for i, arg := range args {
+		argList[i] = "'" + escapePowerShellSingleQuoted(arg) + "'"
+	}
+
+	script := fmt.Sprintf(
+		`$p = Start-Process -FilePath %s -ArgumentList @(%s) -Verb RunAs -Wait -PassThru; if ($p.ExitCode -ne 0) { exit $p.ExitCode }`,
+		"'"+escapePowerShellSingleQuoted(opts.ExePath)+"'",
+		strings.Join(argList, ","),
+	)
+
+	candidates := checks.CommandCandidates("powershell.exe")
+	if len(candidates) == 0 {
+		return fmt.Errorf("command %q not available at expected absolute path", "powershell.exe")
+	}
+
+	out, err := exec.Command(
+		candidates[0],
+		"-NoProfile",
+		"-NonInteractive",
+		"-Command",
+		script,
+	).CombinedOutput()
+
+	return commandError(out, err)
 }

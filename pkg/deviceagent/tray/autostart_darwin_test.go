@@ -18,21 +18,70 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package checks
+//go:build darwin
 
-var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
-}
+package tray
 
-func commandCandidates(cmd string) []string {
-	return darwinCommandPaths[cmd]
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestParseLoggedInUsernames(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		output string
+		want   []string
+	}{
+		{
+			name:   "empty output",
+			output: "",
+			want:   []string{},
+		},
+		{
+			name:   "single user",
+			output: "alice\n",
+			want:   []string{"alice"},
+		},
+		{
+			name:   "multiple users",
+			output: "alice bob\n",
+			want:   []string{"alice", "bob"},
+		},
+		{
+			name:   "duplicate users",
+			output: "alice alice bob\n",
+			want:   []string{"alice", "bob"},
+		},
+		{
+			name:   "skips root and loginwindow",
+			output: "root loginwindow alice\n",
+			want:   []string{"alice"},
+		},
+		{
+			name:   "whitespace only",
+			output: "   \n",
+			want:   []string{},
+		},
+		{
+			name:   "extra whitespace between names",
+			output: "  alice   bob  \n",
+			want:   []string{"alice", "bob"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				got := parseLoggedInUsernames(tt.output)
+				assert.Equal(t, tt.want, got)
+			},
+		)
+	}
 }

@@ -94,36 +94,33 @@ func New(dir, version string, logger *log.Logger) *Agent {
 	}
 }
 
-// EnrollNewDevice enrolls and persists local config and key state.
-func (a *Agent) EnrollNewDevice(
+// ConfigureDevice persists local credentials and performs the first
+// heartbeat that activates the device on the server.
+func (a *Agent) ConfigureDevice(
 	ctx context.Context,
-	serverURL, enrollmentToken string,
-) (*EnrollResponse, error) {
+	serverURL, apiKey string,
+) (*HeartbeatResponse, error) {
 	if serverURL == "" {
 		return nil, errors.New("server URL is required")
 	}
 
-	if enrollmentToken == "" {
-		return nil, errors.New("enrollment token is required")
+	if apiKey == "" {
+		return nil, errors.New("api key is required")
+	}
+
+	if err := SaveAPIKey(a.Dir, apiKey); err != nil {
+		return nil, fmt.Errorf("cannot save api key: %w", err)
 	}
 
 	host := a.currentHostInfo(time.Now())
-	client := NewClient(serverURL, "", a.UserAgent)
+	client := NewClient(serverURL, apiKey, a.UserAgent)
 
-	resp, err := client.Enroll(
+	resp, err := client.Heartbeat(
 		ctx,
-		EnrollRequest{
-			EnrollmentToken: enrollmentToken,
-			HardwareUUID:    host.HardwareUUID,
-			SerialNumber:    host.SerialNumber,
-			Hostname:        host.Hostname,
-			Platform:        host.Platform,
-			OSVersion:       host.OSVersion,
-			AgentVersion:    a.Version,
-		},
+		a.heartbeatRequest(host),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot enroll device: %w", err)
+		return nil, fmt.Errorf("cannot activate device: %w", err)
 	}
 
 	cfg := &Config{
@@ -136,16 +133,16 @@ func (a *Agent) EnrollNewDevice(
 		return nil, fmt.Errorf("cannot save config: %w", err)
 	}
 
-	if err := SaveAPIKey(a.Dir, resp.APIKey); err != nil {
-		return nil, fmt.Errorf("cannot save api key: %w", err)
+	if err := MarkEnrolled(EnrollmentRunDir(a.Dir)); err != nil {
+		return nil, fmt.Errorf("cannot mark device enrolled: %w", err)
 	}
 
 	if err := clearPendingPostureBatches(a.Dir); err != nil {
-		a.Logger.Warn("cannot clear pending posture queue after enrollment", log.Error(err))
+		a.Logger.Warn("cannot clear pending posture queue after configuration", log.Error(err))
 	}
 
 	a.cfg = cfg
-	a.client = NewClient(serverURL, resp.APIKey, a.UserAgent)
+	a.client = NewClient(serverURL, apiKey, a.UserAgent)
 
 	return resp, nil
 }
@@ -180,6 +177,10 @@ func (a *Agent) Run(ctx context.Context) error {
 		if err := a.LoadLocalState(); err != nil {
 			return fmt.Errorf("cannot load agent state: %w", err)
 		}
+	}
+
+	if err := MarkEnrolled(EnrollmentRunDir(a.Dir)); err != nil {
+		return fmt.Errorf("cannot sync enrollment marker: %w", err)
 	}
 
 	a.Logger = a.Logger.With(log.String("device_id", a.cfg.DeviceID))
@@ -354,6 +355,10 @@ func (a *Agent) Unenroll(ctx context.Context) error {
 		return err
 	}
 
+	if err := ClearEnrollmentMarker(EnrollmentRunDir(a.Dir)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -369,11 +374,7 @@ func (a *Agent) doHeartbeat(ctx context.Context) (bool, bool) {
 
 	resp, err := a.client.Heartbeat(
 		ctx,
-		HeartbeatRequest{
-			AgentVersion: a.Version,
-			Hostname:     host.Hostname,
-			OSVersion:    host.OSVersion,
-		},
+		a.heartbeatRequest(host),
 	)
 	if err != nil {
 		a.Logger.ErrorCtx(ctx, "heartbeat failed", log.Error(err))
@@ -643,5 +644,20 @@ func (a *Agent) handleUnauthorized() {
 		a.Logger.Error("cannot delete pending posture queue after 401", log.Error(err))
 	}
 
+	if err := ClearEnrollmentMarker(EnrollmentRunDir(a.Dir)); err != nil {
+		a.Logger.Error("cannot clear enrollment marker after 401", log.Error(err))
+	}
+
 	a.resetPendingFlushRetry()
+}
+
+func (a *Agent) heartbeatRequest(host HostInfo) HeartbeatRequest {
+	return HeartbeatRequest{
+		HardwareUUID: host.HardwareUUID,
+		SerialNumber: host.SerialNumber,
+		Hostname:     host.Hostname,
+		Platform:     host.Platform,
+		OSVersion:    host.OSVersion,
+		AgentVersion: a.Version,
+	}
 }

@@ -18,21 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package checks
+//go:build darwin
 
-var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
-}
+package tray
 
-func commandCandidates(cmd string) []string {
-	return darwinCommandPaths[cmd]
+import (
+	"fmt"
+	"os/exec"
+)
+
+func showAbout(version string) {
+	path, ok := osascriptPath()
+	if !ok {
+		return
+	}
+
+	script := fmt.Sprintf(
+		`display alert "Probo Device Posture Agent" message %q buttons {"OK"} default button "OK"`,
+		fmt.Sprintf("Version %s\n\nReports device posture to your Probo workspace.", version),
+	)
+	_ = exec.Command(path, "-e", script).Run()
 }

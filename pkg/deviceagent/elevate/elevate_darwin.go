@@ -18,21 +18,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package checks
+//go:build darwin
 
-var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
+package elevate
+
+import (
+	"fmt"
+	"os/exec"
+	"strings"
+
+	"go.probo.inc/probo/pkg/deviceagent/checks"
+)
+
+func runElevatedInstall(opts InstallOptions, enrollmentToken string) error {
+	parts := []string{
+		shellQuote(opts.ExePath),
+		"install",
+		"--server",
+		shellQuote(opts.ServerURL),
+		"--enrollment-token",
+		shellQuote(enrollmentToken),
+	}
+	if opts.ConfigDir != "" {
+		parts = append(parts, "--dir", shellQuote(opts.ConfigDir))
+	}
+
+	shellCmd := strings.Join(parts, " ")
+
+	script := fmt.Sprintf(
+		`do shell script %s with administrator privileges`,
+		applescriptQuote(shellCmd),
+	)
+
+	candidates := checks.CommandCandidates("osascript")
+	if len(candidates) == 0 {
+		return fmt.Errorf("command %q not available at expected absolute path", "osascript")
+	}
+
+	out, err := exec.Command(candidates[0], "-e", script).CombinedOutput()
+
+	return commandError(out, err)
 }
 
-func commandCandidates(cmd string) []string {
-	return darwinCommandPaths[cmd]
+func shellQuote(v string) string {
+	return "'" + strings.ReplaceAll(v, "'", `'"'"'`) + "'"
+}
+
+func applescriptQuote(v string) string {
+	v = strings.ReplaceAll(v, `\`, `\\`)
+	v = strings.ReplaceAll(v, `"`, `\"`)
+
+	return `"` + v + `"`
 }
