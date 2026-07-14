@@ -509,6 +509,17 @@ json.Unmarshal(plaintext, &c.Connection)
 - **Return plaintext tokens once.** For SHA-256-hashed tokens, return the raw token to the caller at creation time only. After that, the application only ever sees the hash.
 - **Migration columns.** When adding a new sensitive column, always use `BYTEA`. Never add `DEFAULT` on sensitive columns.
 
+## Resource ownership
+
+Org-scoped owners are stored as `owner_profile_id` → `iam_membership_profiles`,
+not identity GIDs. GraphQL uses `ownerId`; resolvers load `owner: Profile` via
+dataloader. Employee self-service resolves identity → profile at the API
+boundary; IAM may bridge profile storage back to identity in
+`AuthorizationAttributes`.
+
+See [`ownership.md`](ownership.md) for the full pattern (provisional — pending
+team review).
+
 ## New entity checklist
 
 1. **Entity file** (`entity.go`) — struct with `db` tags, slice type alias, `LoadByID`, `Insert`, `Update`, `Delete`, `CursorKey`, `AuthorizationAttributes`
