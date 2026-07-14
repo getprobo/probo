@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+import type { EmployeeDevicesPageQuery } from "#/__generated__/core/EmployeeDevicesPageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import {
+  EmployeeDevicesPage,
+  employeeDevicesPageQuery,
+} from "./EmployeeDevicesPage";
+
+function EmployeeDevicesPageQueryLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery] = useQueryLoader<EmployeeDevicesPageQuery>(
+    employeeDevicesPageQuery,
+  );
+
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
+
+  return <EmployeeDevicesPage queryRef={queryRef} />;
+}
+
+export default function EmployeeDevicesPageLoader() {
   return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
+    <Suspense fallback={<PageSkeleton />}>
+      <EmployeeDevicesPageQueryLoader />
+    </Suspense>
   );
 }

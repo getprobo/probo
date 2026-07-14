@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+type Translator = (s: string) => string;
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+const checkKeyLabels: Record<string, string> = {
+  DISK_ENCRYPTION: "Disk encryption",
+  SCREEN_LOCK: "Screen lock",
+  FIREWALL_ENABLED: "Firewall enabled",
+  TIME_SYNC: "Time sync",
+  OS_VERSION: "OS version",
+  AUTO_UPDATE: "Auto update",
+  PASSWORD_POLICY: "Password policy",
+  REMOTE_LOGIN: "Remote login",
+  MALWARE_PROTECTION: "Malware protection",
+};
 
-  return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
-  );
+export function getPostureCheckLabel(__: Translator, checkKey: string) {
+  const label = checkKeyLabels[checkKey];
+  return label ? __(label) : checkKey;
 }

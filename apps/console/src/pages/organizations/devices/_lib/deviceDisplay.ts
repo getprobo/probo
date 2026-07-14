@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+export function displayValue(
+  value: string | null | undefined,
+  pendingLabel: string,
+) {
+  return value && value.length > 0 ? value : pendingLabel;
+}
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+export function stateVariant(
+  state: string,
+): "success" | "danger" | "warning" | "info" {
+  switch (state) {
+    case "ACTIVE":
+      return "success";
+    case "REVOKED":
+      return "danger";
+    default:
+      return "warning";
+  }
+}
 
-  return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
-  );
+export function statusVariant(
+  status: string,
+): "success" | "danger" | "warning" | "info" {
+  switch (status) {
+    case "PASS":
+      return "success";
+    case "FAIL":
+      return "danger";
+    case "NOT_APPLICABLE":
+      return "info";
+    default:
+      return "warning";
+  }
 }

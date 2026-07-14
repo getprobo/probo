@@ -18,28 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+import type { EnrollDevicePageQuery } from "#/__generated__/iam/EnrollDevicePageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
+import {
+  EnrollDevicePage,
+  enrollDevicePageQuery,
+} from "./EnrollDevicePage";
+
+function EnrollDevicePageQueryLoader() {
+  const [queryRef, loadQuery] = useQueryLoader<EnrollDevicePageQuery>(
+    enrollDevicePageQuery,
+  );
+
+  useEffect(() => {
+    loadQuery({});
+  }, [loadQuery]);
+
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
+
+  return <EnrollDevicePage queryRef={queryRef} />;
+}
+
+export default function EnrollDevicePageLoader() {
   return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
+    <IAMRelayProvider>
+      <Suspense fallback={<PageSkeleton />}>
+        <EnrollDevicePageQueryLoader />
+      </Suspense>
+    </IAMRelayProvider>
   );
 }

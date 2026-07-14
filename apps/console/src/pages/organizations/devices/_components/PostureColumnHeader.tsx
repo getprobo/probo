@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,27 +19,39 @@
 // SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+import { IconCircleInfo } from "@probo/ui";
+import * as Popover from "@radix-ui/react-popover";
 
-export default function EmployeeTabsLayout() {
+export function PostureColumnHeader() {
   const { __ } = useTranslate();
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
+    <span className="inline-flex items-center gap-1">
+      {__("Posture")}
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            className="inline-flex text-txt-tertiary hover:text-txt-secondary"
+            aria-label={__("How posture summary is calculated")}
+          >
+            <IconCircleInfo size={14} />
+          </button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content
+            className="z-50 max-w-xs rounded-md border bg-level-0 p-3 text-xs font-normal text-txt-secondary shadow-md"
+            sideOffset={4}
+            align="start"
+          >
+            <p>
+              {__(
+                "Shown as pass / fail / total.",
+              )}
+            </p>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    </span>
   );
 }

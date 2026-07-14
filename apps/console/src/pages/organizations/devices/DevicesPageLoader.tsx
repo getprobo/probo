@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+import type { DevicesPageQuery } from "#/__generated__/core/DevicesPageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import { DevicesPage, devicesPageQuery } from "./DevicesPage";
+
+export default function DevicesPageLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<DevicesPageQuery>(devicesPageQuery);
+
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
+    <Suspense fallback={<PageSkeleton />}>
+      <DevicesPage queryRef={queryRef} />
+    </Suspense>
   );
 }

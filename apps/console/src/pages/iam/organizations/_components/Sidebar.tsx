@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CookieIcon } from "@phosphor-icons/react";
+import { CookieIcon, LaptopIcon } from "@phosphor-icons/react";
 import { useTranslate } from "@probo/i18n";
 import {
   IconBank,
@@ -60,6 +60,7 @@ const fragment = graphql`
         canListThirdParties: permission(action: "core:thirdParty:list")
         canListDocuments: permission(action: "core:document:list")
         canListAssets: permission(action: "core:asset:list")
+        canListDevices: permission(action: "itam:device:list")
         canListData: permission(action: "core:datum:list")
         canListAudits: permission(action: "core:audit:list")
         canListFindings: permission(action: "core:finding:list")
@@ -154,6 +155,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Assets")}
           icon={IconBox}
           to={`${prefix}/assets`}
+        />
+      )}
+      {organization.canListDevices && (
+        <SidebarItem
+          label={__("Devices")}
+          icon={LaptopIcon}
+          to={`${prefix}/devices`}
         />
       )}
       {organization.canListData && (

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql } from "relay-runtime";
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+import type { DevicePosturesPageQuery } from "#/__generated__/core/DevicePosturesPageQuery.graphql";
 
-  return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
+import { DevicePostureList } from "./_components/DevicePostureList";
+
+export const devicePosturesPageQuery = graphql`
+  query DevicePosturesPageQuery($deviceId: ID!) {
+    device: node(id: $deviceId) @required(action: THROW) {
+      __typename
+      ... on Device {
+        ...DevicePostureList_deviceFragment
+      }
+    }
+  }
+`;
+
+interface DevicePosturesPageProps {
+  queryRef: PreloadedQuery<DevicePosturesPageQuery>;
+}
+
+export function DevicePosturesPage({ queryRef }: DevicePosturesPageProps) {
+  const { device } = usePreloadedQuery<DevicePosturesPageQuery>(
+    devicePosturesPageQuery,
+    queryRef,
   );
+  if (device.__typename !== "Device") {
+    throw new Error("invalid type for device node");
+  }
+
+  return <DevicePostureList deviceFragmentRef={device} />;
 }

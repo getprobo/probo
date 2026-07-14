@@ -32,6 +32,7 @@ import {
   Value,
   Viewport,
 } from "@radix-ui/react-select";
+import { clsx } from "clsx";
 import {
   Children,
   type ComponentProps,
@@ -211,12 +212,21 @@ export function Select<T>({
   );
 }
 
-export function Option({ children, ...props }: ComponentProps<typeof Item>) {
+export function Option({
+  children,
+  className,
+  ...props
+}: ComponentProps<typeof Item>) {
   const hasSingleChildren = Children.count(children) <= 1;
   return (
     <Item
       {...props}
-      className="flex gap-2 items-center min-h-8 py-1 text-sm font-medium text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer px-[10px] text-start"
+      className={clsx(
+        "flex gap-2 items-center min-h-8 py-1 text-sm font-medium text-txt-primary outline-none cursor-pointer px-[10px] text-start",
+        "data-[highlighted]:bg-tertiary-hover data-[highlighted]:outline-none",
+        "active:bg-tertiary-pressed",
+        className,
+      )}
     >
       <ItemText asChild>
         <span

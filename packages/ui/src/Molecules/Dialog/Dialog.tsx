@@ -72,6 +72,7 @@ type Props = {
   className?: string;
   ref?: DialogRef;
   onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   closable?: boolean;
 };
 
@@ -89,6 +90,7 @@ export function Dialog({
   ref,
   defaultOpen,
   onClose,
+  onOpenChange: onOpenChangeProp,
   closable = true,
 }: Props) {
   const { overlay, content, header, title: titleClassname } = dialog();
@@ -100,9 +102,11 @@ export function Dialog({
       ref.current = {
         open() {
           setOpen(true);
+          onOpenChangeProp?.(true);
         },
         close() {
           setOpen(false);
+          onOpenChangeProp?.(false);
         },
       };
     }
@@ -113,6 +117,7 @@ export function Dialog({
       return;
     }
     setOpen(open);
+    onOpenChangeProp?.(open);
     if (!open) {
       onClose?.();
     }

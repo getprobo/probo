@@ -19,27 +19,44 @@
 // SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
 
-export default function EmployeeTabsLayout() {
+interface OrganizationOption {
+  id: string;
+  name: string;
+}
+
+interface EnrollOrganizationPickerProps {
+  organizations: OrganizationOption[];
+  selectedOrganizationId: string | null;
+  onChange: (organizationID: string) => void;
+}
+
+export function EnrollOrganizationPicker(
+  {
+    organizations,
+    selectedOrganizationId,
+    onChange,
+  }: EnrollOrganizationPickerProps,
+) {
   const { __ } = useTranslate();
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
+    <section className="space-y-4">
+      <label htmlFor="organization-select" className="space-y-2 text-xs font-medium text-txt-secondary">
+        <span>{__("Organization")}</span>
+        <select
+          id="organization-select"
+          value={selectedOrganizationId ?? ""}
+          onChange={event => onChange(event.target.value)}
+          className="w-full rounded-lg border border-border-low bg-level-1 px-3 py-2 text-sm text-txt-primary outline-none transition-colors focus:border-border-solid"
+        >
+          {organizations.map(organization => (
+            <option key={organization.id} value={organization.id}>
+              {organization.name}
+            </option>
+          ))}
+        </select>
+      </label>
+    </section>
   );
 }
