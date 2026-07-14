@@ -22,4 +22,13 @@ type Viewer {
     ): EmployeeDocumentConnection! @goField(forceResolver: true)
 
     approvableDocument(id: ID!): EmployeeDocument @goField(forceResolver: true)
+
+    enrolledDevices(
+        organizationId: ID!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DeviceOrder
+    ): DeviceConnection! @goField(forceResolver: true)
 }

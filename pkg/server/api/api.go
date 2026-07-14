@@ -44,11 +44,13 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
+	agent_v1 "go.probo.inc/probo/pkg/server/api/agent/v1"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
@@ -80,6 +82,7 @@ type (
 		Geoloc            *geoloc.Service
 		ThirdParty        *thirdparty.Service
 		RiskManagement    *riskmanagement.Service
+		ITAM              *itam.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -104,6 +107,7 @@ type (
 		mcpHandler          http.Handler
 		slackHandler        http.Handler
 		connectHandler      http.Handler
+		agentHandler        http.Handler
 	}
 )
 
@@ -111,6 +115,7 @@ var (
 	ErrMissingProboService = errors.New("server configuration requires a valid probo.Service instance")
 	ErrMissingIAMService   = errors.New("server configuration requires a valid iam.Service instance")
 	ErrMissingSlackService = errors.New("server configuration requires a valid slack.Service instance")
+	ErrMissingITAMService  = errors.New("server configuration requires a valid itam.Service instance")
 )
 
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +153,10 @@ func NewServer(cfg Config) (*Server, error) {
 
 	if cfg.Slack == nil {
 		return nil, ErrMissingSlackService
+	}
+
+	if cfg.ITAM == nil {
+		return nil, ErrMissingITAMService
 	}
 
 	csrf := http.NewCrossOriginProtection()
@@ -209,6 +218,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ThirdParty,
 			cfg.RiskManagement,
 			cfg.GraphQLLimits,
+			cfg.ITAM,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -261,6 +271,10 @@ func NewServer(cfg Config) (*Server, error) {
 			},
 			cfg.GraphQLLimits,
 		),
+		agentHandler: agent_v1.NewMux(
+			cfg.Logger.Named("agent.v1"),
+			cfg.ITAM,
+		),
 	}, nil
 }
 
@@ -292,6 +306,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// customer websites are not swallowed by the stricter AllowedOrigins
 	// list that applies to console/connect routes.
 	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
+
+	// Agent API should never be called from a browser; mount it outside
+	// to avoid CORS headers being set on it.
+	router.Mount("/agent/v1", http.StripPrefix("/agent/v1", s.agentHandler))
 
 	router.Group(func(r chi.Router) {
 		r.Use(cors.Handler(corsOpts))

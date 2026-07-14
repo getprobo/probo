@@ -155,6 +155,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					),
 				},
 			},
+			ITAM: probodconfig.ITAMConfig{
+				DeviceEnrollmentTokenValidity: b.resolver.getEnvIntOrDefault(
+					"PROBOD_ITAM_DEVICE_ENROLLMENT_TOKEN_VALIDITY",
+					604800,
+				),
+			},
 			CompliancePortal: probodconfig.CompliancePortalConfig{
 				HTTPAddr:   b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
 				HTTPSAddr:  b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),

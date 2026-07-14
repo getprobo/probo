@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,31 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package jsonx
+package agent_v1
 
 import (
-	"fmt"
-	"net/http"
+	"context"
 
-	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func RenderForbidden(w http.ResponseWriter) {
-	httpserver.RenderError(w, http.StatusForbidden, fmt.Errorf("forbidden"))
-}
-
-func RenderInternalServerError(w http.ResponseWriter) {
-	httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal server error"))
-}
-
-func RenderNotFound(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusNotFound, err)
-}
-
-func RenderBadRequest(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusBadRequest, err)
-}
-
-func RenderUnauthorized(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusUnauthorized, err)
+func contextWithDevice(ctx context.Context, device *coredata.Device) context.Context {
+	return context.WithValue(ctx, deviceContextKey, device)
 }

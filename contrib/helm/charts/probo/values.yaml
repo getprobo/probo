@@ -234,6 +234,11 @@ probo:
     passwordPepper: ""
     passwordIterations: 1000000
 
+  # ITAM / device agent configuration
+  itam:
+    # One-shot enrollment token validity in seconds (default: 604800 = 7 days)
+    deviceEnrollmentTokenValidity: 604800
+
   # SAML authentication (optional)
   saml:
     # Enable SAML authentication

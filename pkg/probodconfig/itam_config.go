@@ -18,31 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package jsonx
+package probodconfig
 
-import (
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/httpserver"
-)
-
-func RenderForbidden(w http.ResponseWriter) {
-	httpserver.RenderError(w, http.StatusForbidden, fmt.Errorf("forbidden"))
-}
-
-func RenderInternalServerError(w http.ResponseWriter) {
-	httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal server error"))
-}
-
-func RenderNotFound(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusNotFound, err)
-}
-
-func RenderBadRequest(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusBadRequest, err)
-}
-
-func RenderUnauthorized(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusUnauthorized, err)
+type ITAMConfig struct {
+	DeviceEnrollmentTokenValidity int `json:"device-enrollment-token-validity"`
 }

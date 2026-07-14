@@ -4,6 +4,7 @@ go 1.26.5
 
 require (
 	codeberg.org/miekg/dns v0.6.84
+	fyne.io/systray v1.12.2
 	github.com/99designs/gqlgen v0.17.94
 	github.com/anthropics/anthropic-sdk-go v1.58.1
 	github.com/aws/aws-sdk-go-v2 v1.43.0
@@ -110,6 +111,7 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.27.3 // indirect
 	github.com/go-openapi/validate v0.26.1 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
 	github.com/google/go-containerregistry v0.21.7 // indirect
@@ -248,7 +250,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/mod v0.38.0
 	golang.org/x/net v0.57.0
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.47.0
 	golang.org/x/term v0.45.0
 	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect

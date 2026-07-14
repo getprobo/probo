@@ -187,6 +187,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 60, cfg.Probod.Auth.SAML.DomainVerificationIntervalSeconds)
 	assert.Empty(t, cfg.Probod.Auth.SAML.DomainVerificationResolverAddr)
 
+	// ITAM config
+	assert.Equal(t, 604800, cfg.Probod.ITAM.DeviceEnrollmentTokenValidity)
+
 	// Trust center config
 	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPAddr)
 	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPSAddr)

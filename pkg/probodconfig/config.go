@@ -60,6 +60,7 @@ type (
 		Pg                PgConfig                      `json:"pg"`
 		Api               APIConfig                     `json:"api"`
 		Auth              AuthConfig                    `json:"auth"`
+		ITAM              ITAMConfig                    `json:"itam"`
 		CompliancePortal  CompliancePortalConfig        `json:"trust-center"`
 		AWS               AWSConfig                     `json:"aws"`
 		Notifications     NotificationsConfig           `json:"notifications"`

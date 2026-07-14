@@ -1,0 +1,165 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+enum DevicePlatform
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DevicePlatform") {
+    DARWIN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformDarwin")
+    LINUX
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformLinux")
+    FREEBSD
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformFreeBSD")
+    WINDOWS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformWindows")
+}
+
+enum DeviceState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DeviceState") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceStatePending")
+    ACTIVE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceStateActive")
+    REVOKED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceStateRevoked")
+}
+
+enum DevicePostureStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DevicePostureStatus"
+    ) {
+    PASS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusPass")
+    FAIL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusFail")
+    UNKNOWN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusUnknown")
+    NOT_APPLICABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureStatusNotApplicable"
+        )
+}
+
+enum DeviceOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DeviceOrderField") {
+    CREATED_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldCreatedAt")
+    UPDATED_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldUpdatedAt")
+    HOSTNAME
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldHostname")
+    LAST_SEEN_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DeviceOrderFieldLastSeenAt"
+        )
+}
+
+input DeviceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DeviceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DeviceOrderField!
+}
+
+type Device implements Node {
+    id: ID!
+    state: DeviceState!
+    hostname: String
+    serialNumber: String
+    hardwareUuid: String
+    platform: DevicePlatform
+    osVersion: String
+    agentVersion: String
+    enrolledAt: Datetime
+    lastSeenAt: Datetime
+    revokedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    owner: Profile @goField(forceResolver: true)
+    latestPostures: [DevicePosture!]! @goField(forceResolver: true)
+}
+
+type DevicePosture implements Node {
+    id: ID!
+    deviceId: ID!
+    checkKey: String!
+    status: DevicePostureStatus!
+    observedAt: Datetime!
+}
+
+type DeviceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DeviceConnection"
+    ) {
+    edges: [DeviceEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type DeviceEdge {
+    cursor: CursorKey!
+    node: Device!
+}
+
+type CreateDevicePayload {
+    device: Device!
+    # enrollmentToken is shown ONCE; exchange via agent REST /enroll.
+    enrollmentToken: String!
+    # serverUrl is the public API origin for agent --server / deep-link server=.
+    serverUrl: String!
+    # enrollmentUrl is probo://enroll?server=...&token=... for the desktop agent.
+    enrollmentUrl: String!
+}
+
+type RevokeDevicePayload {
+    device: Device!
+}
+
+type SetDeviceOwnerPayload {
+    device: Device!
+}
+
+input EnrollDeviceInput {
+    organizationId: ID!
+}
+
+input CreateDeviceInput {
+    organizationId: ID!
+    ownerId: ID
+}
+
+input RevokeDeviceInput {
+    deviceId: ID!
+}
+
+input SetDeviceOwnerInput {
+    deviceId: ID!
+    ownerId: ID
+}
+
+extend type Mutation {
+    enrollDevice(input: EnrollDeviceInput!): CreateDevicePayload!
+    createDevice(input: CreateDeviceInput!): CreateDevicePayload!
+    revokeDevice(input: RevokeDeviceInput!): RevokeDevicePayload!
+    setDeviceOwner(
+        input: SetDeviceOwnerInput!
+    ): SetDeviceOwnerPayload!
+}

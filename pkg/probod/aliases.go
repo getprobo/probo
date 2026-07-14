@@ -64,5 +64,6 @@ type (
 	PgConfig                   = probodconfig.PgConfig
 	SAMLConfig                 = probodconfig.SAMLConfig
 	SCIMBridgeConfig           = probodconfig.SCIMBridgeConfig
+	ITAMConfig                 = probodconfig.ITAMConfig
 	SlackConfig                = probodconfig.SlackConfig
 )

@@ -19,18 +19,18 @@ By default every error returned to the end user **must be an opaque internal err
 
 | Category | GraphQL helper | HTTP helper | When to use |
 |---|---|---|---|
-| Not found | `gqlutils.NotFound` / `NotFoundf` | `jsonutil.RenderNotFound` | Resource does not exist or is not visible to the caller |
-| Forbidden | `gqlutils.Forbidden` / `Forbiddenf` | `jsonutil.RenderForbidden` | Caller lacks permission (after authentication) |
-| Invalid | `gqlutils.Invalid` / `Invalidf` / `InvalidValidationErrors` | `jsonutil.RenderBadRequest` | Validation failure on user-supplied input |
+| Not found | `gqlutils.NotFound` / `NotFoundf` | `jsonx.RenderNotFound` | Resource does not exist or is not visible to the caller |
+| Forbidden | `gqlutils.Forbidden` / `Forbiddenf` | `jsonx.RenderForbidden` | Caller lacks permission (after authentication) |
+| Invalid | `gqlutils.Invalid` / `Invalidf` / `InvalidValidationErrors` | `jsonx.RenderBadRequest` | Validation failure on user-supplied input |
 | Conflict | `gqlutils.Conflict` / `Conflictf` | — | Unique constraint or state conflict |
-| Unauthenticated | `gqlutils.Unauthenticated` / `Unauthenticatedf` | — | Missing or expired credentials |
+| Unauthenticated | `gqlutils.Unauthenticated` / `Unauthenticatedf` | `jsonx.RenderUnauthorized` | Missing or expired credentials |
 
 ### Catch-all is always internal
 
 Any error that does **not** match one of the categories above must be returned as:
 
 - **GraphQL** — `gqlutils.Internal(ctx)` (fixed generic message, no error details)
-- **HTTP** — `jsonutil.RenderInternalServerError(w)` (fixed 500 body, no error details)
+- **HTTP** — `jsonx.RenderInternalServerError(w)` (fixed 500 body, no error details)
 - **MCP** — return a generic "internal error" string; never forward `err.Error()`
 
 Log the original error server-side (with request/trace IDs) so it can be investigated, but **never include it in the response**.

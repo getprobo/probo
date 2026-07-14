@@ -18,31 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package jsonx
+package console_v1
 
 import (
 	"fmt"
-	"net/http"
+	"net/url"
 
-	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/baseurl"
 )
 
-func RenderForbidden(w http.ResponseWriter) {
-	httpserver.RenderError(w, http.StatusForbidden, fmt.Errorf("forbidden"))
+// enrollmentURLs holds the public API origin and probo:// deep link issued
+// when a device enrollment token is created.
+type enrollmentURLs struct {
+	ServerURL     string
+	EnrollmentURL string
 }
 
-func RenderInternalServerError(w http.ResponseWriter) {
-	httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal server error"))
-}
+// buildEnrollmentURLs derives the agent server origin and deep link from the
+// deployment base URL and a one-shot enrollment token.
+func buildEnrollmentURLs(baseURL *baseurl.BaseURL, enrollmentToken string) (enrollmentURLs, error) {
+	if baseURL == nil {
+		return enrollmentURLs{}, fmt.Errorf("base URL is required")
+	}
 
-func RenderNotFound(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusNotFound, err)
-}
+	if enrollmentToken == "" {
+		return enrollmentURLs{}, fmt.Errorf("enrollment token is required")
+	}
 
-func RenderBadRequest(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusBadRequest, err)
-}
+	serverURL := (&url.URL{
+		Scheme: baseURL.Scheme(),
+		Host:   baseURL.Host(),
+	}).String()
 
-func RenderUnauthorized(w http.ResponseWriter, err error) {
-	httpserver.RenderError(w, http.StatusUnauthorized, err)
+	enrollURL := &url.URL{
+		Scheme: "probo",
+		Host:   "enroll",
+	}
+	query := enrollURL.Query()
+	query.Set("server", serverURL)
+	query.Set("token", enrollmentToken)
+	enrollURL.RawQuery = query.Encode()
+
+	return enrollmentURLs{
+		ServerURL:     serverURL,
+		EnrollmentURL: enrollURL.String(),
+	}, nil
 }
