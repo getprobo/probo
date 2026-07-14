@@ -16,7 +16,9 @@
 # script; consumers can chain `productsign` and `xcrun notarytool`
 # afterwards.
 #
-# Must run on macOS: pkgbuild and productbuild are Apple-only tools.
+# Must run on macOS: pkgbuild, productbuild, and swift build are
+# Apple-only tools. The build also compiles Probo Agent.app (the
+# probo:// URL handler) from enroll-ui/.
 
 set -euo pipefail
 
@@ -67,6 +69,10 @@ if ! command -v pkgbuild >/dev/null 2>&1 || ! command -v productbuild >/dev/null
     echo "error: pkgbuild and productbuild are required (run on macOS)" >&2
     exit 1
 fi
+if ! command -v swift >/dev/null 2>&1; then
+    echo "error: swift is required to build Probo Agent.app (run on macOS)" >&2
+    exit 1
+fi
 
 STAGE="$(mktemp -d -t probo-agent-pkg)"
 trap 'rm -rf "${STAGE}"' EXIT
@@ -77,6 +83,12 @@ RESOURCES="${STAGE}/Resources"
 mkdir -p "${PAYLOAD}/usr/local/bin" "${SCRIPTS}" "${RESOURCES}"
 
 install -m 0755 "${BINARY}" "${PAYLOAD}/usr/local/bin/probo-agent"
+
+mkdir -p "${PAYLOAD}/Applications"
+"${SCRIPT_DIR}/enroll-ui/build-app.sh" \
+    --arch "${ARCH}" \
+    --version "${VERSION}" \
+    --output "${PAYLOAD}/Applications"
 
 install -m 0755 "${SCRIPT_DIR}/scripts/postinstall" "${SCRIPTS}/postinstall"
 

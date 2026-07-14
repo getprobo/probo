@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# probo-agent macOS PKG preinstall script.
+#
+# Enrollment is handled by the menu bar helper after installation.
+# MDM may still pre-stage /tmp/probo-agent.conf for unattended
+# enrollment in postinstall.
+
+exit 0

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Info.plist for the Probo Agent URL handler app bundle.
+
+  Placeholders are substituted by build-app.sh:
+
+    @@VERSION@@   agent version, e.g. 0.1.0
+-->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>probo-agent-url-handler</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.getprobo.agent.url-handler</string>
+    <key>CFBundleName</key>
+    <string>Probo Agent</string>
+    <key>CFBundleDisplayName</key>
+    <string>Probo Agent</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@@VERSION@@</string>
+    <key>CFBundleVersion</key>
+    <string>@@VERSION@@</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>11.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>Probo Enrollment</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>probo</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

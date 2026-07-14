@@ -45,7 +45,7 @@ jobs:
           if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
 
           go build -ldflags "-s -w -X 'main.version=${VERSION}'" \
-            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent/main.go
+            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent
       - name: "Create archive"
         env:
           GOOS: "${{ matrix.goos }}"
@@ -106,6 +106,33 @@ jobs:
           cd archives
           sha256sum *.tar.gz *.zip > checksums.txt
           cosign sign-blob --bundle="checksums.txt.bundle" checksums.txt --yes
+      - name: "Inject release checksums into install.sh"
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          cp cmd/probo-agent/installer/install.sh archives/install.sh
+          sed -i "s|^RELEASE_TAG=\"__PROBO_AGENT_RELEASE_TAG__\"|RELEASE_TAG=\"${TAG}\"|" archives/install.sh
+          grep 'probo-agent_.*\.tar\.gz' archives/checksums.txt > archives/probo-agent-checksums.txt
+          awk '
+            /# __PROBO_AGENT_CHECKSUMS_BEGIN__/ {
+              print
+              while ((getline line < "archives/probo-agent-checksums.txt") > 0) print line
+              skip = 1
+              next
+            }
+            /# __PROBO_AGENT_CHECKSUMS_END__/ {
+              skip = 0
+              print
+              next
+            }
+            !skip { print }
+            END {
+              if (skip) {
+                print "install.sh injection failed: missing # __PROBO_AGENT_CHECKSUMS_END__ marker" > "/dev/stderr"
+                exit 1
+              }
+            }
+          ' archives/install.sh > archives/install.sh.tmp
+          mv archives/install.sh.tmp archives/install.sh
       - name: "Generate SBOM"
         uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
         with:

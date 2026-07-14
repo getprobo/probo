@@ -25,26 +25,37 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
+        @media (prefers-color-scheme: dark) {
+            body { color: #f5f5f7; }
+            code, pre {
+                background: #3a3a3c;
+                color: #f5f5f7;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Installation complete</h1>
 
     <p>
-        The <code>probo-agent</code> binary is installed and the launchd
-        unit is loaded. If the installer found a pre-staged
-        configuration file at <code>/tmp/probo-agent.conf</code>, the
-        device is already enrolled and the agent is running.
+        The <code>probo-agent</code> binary is installed. The Probo icon should
+        appear in the menu bar (or at your next login). To enroll, open the menu
+        and choose <strong>Enroll via…</strong>, then pick
+        <strong>United States</strong>, <strong>European Union</strong>, or
+        <strong>Self hosted…</strong>. Finish enrollment in your browser; when
+        it succeeds, the menu shows <strong>Connected</strong> and the agent
+        service starts automatically.
     </p>
 
-    <h2>Enroll this device manually</h2>
     <p>
-        If you installed without a pre-staged configuration, finish the
-        setup from a Terminal:
+        If MDM already enrolled the device during installation, the menu bar
+        helper should already show <strong>Connected</strong>.
     </p>
+
+    <p>Administrators can also finish setup from a Terminal:</p>
     <pre>sudo probo-agent install \
-    --server https://app.getprobo.com \
-    --enrollment-token &lt;TOKEN&gt;</pre>
+    --server https://your-probo-host.example.com \
+    --enrollment-token &lt;ENROLLMENT_TOKEN&gt;</pre>
 
     <h2>Inspect the agent</h2>
     <pre>sudo probo-agent status

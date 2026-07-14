@@ -331,32 +331,20 @@ func (a *Agent) CollectOnce(ctx context.Context) []checks.Result {
 	return results
 }
 
-// Unenroll revokes server state best-effort and clears local credentials.
+// Unenroll asks the server to revoke this device. Local wipe is left to
+// RemoveLocalState (called by uninstall after service/tray teardown).
+// Missing credentials or server failures are logged and ignored so
+// uninstall can continue.
 func (a *Agent) Unenroll(ctx context.Context) error {
 	if a.cfg == nil || a.client == nil {
 		if err := a.LoadLocalState(); err != nil {
-			return err
+			a.Logger.WarnCtx(ctx, "cannot load local state for unenroll", log.Error(err))
+			return nil
 		}
 	}
 
 	if err := a.client.Unenroll(ctx); err != nil {
-		a.Logger.WarnCtx(
-			ctx,
-			"unenroll server-side revocation failed, continuing with local wipe",
-			log.Error(err),
-		)
-	}
-
-	if err := DeleteAPIKey(a.Dir); err != nil {
-		return err
-	}
-
-	if err := clearPendingPostureBatches(a.Dir); err != nil {
-		return err
-	}
-
-	if err := ClearEnrollmentMarker(EnrollmentRunDir(a.Dir)); err != nil {
-		return err
+		a.Logger.WarnCtx(ctx, "unenroll server-side revocation failed", log.Error(err))
 	}
 
 	return nil

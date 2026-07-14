@@ -143,7 +143,7 @@ jobs:
           if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
 
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
-            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent/main.go
+            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent
 
   # ── Snapshot: build Docker images (matrix by architecture) ─────────
   build-snapshot-docker:
@@ -281,12 +281,18 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+      - name: "Lint install.sh"
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          sh -n cmd/probo-agent/installer/install.sh
+          shellcheck cmd/probo-agent/installer/install.sh
       - name: "Build probo-agent"
         env:
           CGO_ENABLED: "0"
         run: |
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
-            -gcflags="-e" -o bin/probo-agent ./cmd/probo-agent/main.go
+            -gcflags="-e" -o bin/probo-agent ./cmd/probo-agent
 
   lint-go:
     name: "lint-go"
