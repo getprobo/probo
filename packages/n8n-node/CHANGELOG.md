@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.202.1] - 2026-07-15
+
+### Fixed
+
+- Probo Trigger now logs webhook subscription delete failures instead of silently swallowing them
+- Corrected the Probo Trigger codex node identifier and replaced unsupported marketplace categories to satisfy the n8n community-node review
+
 ## [0.202.0] - 2026-07-15
 
 ### Added
