@@ -25,6 +25,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -36,13 +37,22 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 )
 
-func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, fileManagerSvc *filemanager.Service, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config, limits gqlutils.Limits) http.Handler {
+func NewGraphQLHandler(
+	svc *iam.Service,
+	trustSvc *trust.Service,
+	logger *log.Logger,
+	fileManagerSvc *filemanager.Service,
+	baseURL *baseurl.BaseURL,
+	cookieConfig securecookie.Config,
+	limits gqlutils.Limits,
+) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			authorize:      authz.NewAuthorizeFunc(svc, logger),
 			batchAuthorize: authz.NewBatchAuthorizeFunc(svc, logger),
 			logger:         logger,
 			iam:            svc,
+			trust:          trustSvc,
 			scopeRegistry:  svc.OAuth2ScopeRegistry,
 			fileManager:    fileManagerSvc,
 			baseURL:        baseURL,

@@ -62,13 +62,16 @@ type (
 	}
 
 	SendMagicLinkRequest struct {
-		Email          mail.Addr
-		URLPath        string
-		OrganizationID gid.GID
-		Continue       *string
+		Email    mail.Addr
+		URLPath  string
+		Continue *string
 		// If users tries to connect to compliance page, we must brand the emails accordingly
 		CompliancePageID *gid.GID
-		MagicLinkBaseURL *string
+		// OrganizationID brands compliance portal magic-link emails.
+		OrganizationID *gid.GID
+		// OAuth2ClientIDRaw brands connect authorize magic-link emails.
+		OAuth2ClientIDRaw *string
+		MagicLinkBaseURL  *string
 	}
 
 	PasswordResetData struct {
@@ -85,6 +88,8 @@ const (
 	TokenTypeOrganizationInvitation = "organization_invitation"
 	TokenTypePasswordReset          = "password_reset"
 	TokenTypeMagicLink              = "magic_link"
+
+	magicLinkDefaultSenderName = "Probo"
 )
 
 func NewAuthService(svc *Service) *AuthService {
@@ -595,7 +600,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 
 			fullName := req.Email.Username()
 			identity := &coredata.Identity{}
-			organization := &coredata.Organization{}
+			senderName := magicLinkDefaultSenderName
 
 			if err := identity.LoadByEmail(ctx, tx, req.Email); err == nil {
 				if identity.FullName != "" {
@@ -607,8 +612,23 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				}
 			}
 
-			if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), req.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			if req.OAuth2ClientIDRaw != nil && *req.OAuth2ClientIDRaw != "" {
+				branding, err := s.OAuth2ServerService.ClientBranding(ctx, *req.OAuth2ClientIDRaw)
+				if err != nil {
+					return fmt.Errorf("cannot load oauth2 client branding: %w", err)
+				}
+
+				if branding != nil {
+					senderName = branding.Name
+				}
+			} else if req.OrganizationID != nil {
+				organization := &coredata.Organization{}
+
+				if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), *req.OrganizationID); err != nil {
+					return fmt.Errorf("cannot load organization: %w", err)
+				}
+
+				senderName = organization.Name
 			}
 
 			emailPresenterCfg := emails.DefaultPresenterConfig(s.baseURL)
@@ -633,7 +653,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				req.URLPath,
 				tokenString,
 				s.magicLinkTokenValidity,
-				organization.Name,
+				senderName,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render magic link email: %w", err)
@@ -642,7 +662,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 			var emailOpts *coredata.EmailOptions
 			if req.CompliancePageID != nil {
 				emailOpts = &coredata.EmailOptions{
-					SenderName: new(organization.Name),
+					SenderName: &senderName,
 				}
 			}
 

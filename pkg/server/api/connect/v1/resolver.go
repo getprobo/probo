@@ -68,6 +68,7 @@ type (
 		batchAuthorize authz.BatchAuthorizeFunc
 		logger         *log.Logger
 		iam            *iam.Service
+		trust          *trust.Service
 		scopeRegistry  *oauth2scope.Registry
 		fileManager    *filemanager.Service
 		baseURL        *baseurl.BaseURL
@@ -92,7 +93,7 @@ func NewMux(
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
-	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig, graphqlLimits)
+	graphqlHandler := NewGraphQLHandler(svc, trustSvc, logger, fileManagerSvc, baseURL, cookieConfig, graphqlLimits)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 
@@ -106,18 +107,16 @@ func NewMux(
 
 	magicLinkHandler := NewMagicLinkHandler(
 		svc,
-		trustSvc,
 		baseURL,
 		cookieConfig,
 		logger,
+		allowedRedirectHost,
 	)
 
 	oauth2Handler := NewOAuth2Handler(
 		svc,
-		trustSvc,
 		cookieConfig,
 		baseURL,
-		"/auth/portal-login",
 		logger,
 	)
 

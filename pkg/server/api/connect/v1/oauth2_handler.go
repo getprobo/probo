@@ -32,7 +32,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
@@ -43,29 +42,23 @@ import (
 )
 
 type OAuth2Handler struct {
-	iam             *iam.Service
-	trust           *trust.Service
-	sessionCookie   *authn.Cookie
-	baseURL         *baseurl.BaseURL
-	portalLoginPath string
-	logger          *log.Logger
+	iam           *iam.Service
+	sessionCookie *authn.Cookie
+	baseURL       *baseurl.BaseURL
+	logger        *log.Logger
 }
 
 func NewOAuth2Handler(
 	svc *iam.Service,
-	trustSvc *trust.Service,
 	cookieConfig securecookie.Config,
 	baseURL *baseurl.BaseURL,
-	portalLoginPath string,
 	logger *log.Logger,
 ) *OAuth2Handler {
 	return &OAuth2Handler{
-		iam:             svc,
-		trust:           trustSvc,
-		sessionCookie:   authn.NewCookie(&cookieConfig),
-		baseURL:         baseURL,
-		portalLoginPath: portalLoginPath,
-		logger:          logger.Named("oauth2"),
+		iam:           svc,
+		sessionCookie: authn.NewCookie(&cookieConfig),
+		baseURL:       baseURL,
+		logger:        logger.Named("oauth2"),
 	}
 }
 
@@ -146,16 +139,6 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		if err != nil {
 			h.logger.ErrorCtx(r.Context(), "cannot build authorization continue URL", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
-
-			return
-		}
-
-		clientID := r.URL.Query().Get("client_id")
-		if _, err := portalFromCIMDClientID(r.Context(), h.trust, clientID); err == nil {
-			q := url.Values{}
-			q.Set("authorize", r.URL.Query().Encode())
-			loginURL := h.baseURL.WithPath(h.portalLoginPath).WithQueryValues(q).MustString()
-			http.Redirect(w, r, loginURL, http.StatusFound)
 
 			return
 		}

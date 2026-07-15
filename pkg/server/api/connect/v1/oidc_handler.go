@@ -21,21 +21,17 @@
 package connect_v1
 
 import (
-	"context"
 	"errors"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -221,7 +217,6 @@ func parseOIDCProvider(s string) (coredata.OIDCProvider, error) {
 
 type MagicLinkHandler struct {
 	iam           *iam.Service
-	trust         *trust.Service
 	proboBaseURL  *baseurl.BaseURL
 	sessionCookie *authn.Cookie
 	safeRedirect  *saferedirect.SafeRedirect
@@ -230,17 +225,16 @@ type MagicLinkHandler struct {
 
 func NewMagicLinkHandler(
 	iamSvc *iam.Service,
-	trustSvc *trust.Service,
 	proboBaseURL *baseurl.BaseURL,
 	cookieConfig securecookie.Config,
 	logger *log.Logger,
+	allowedHost saferedirect.AllowedHostFunc,
 ) *MagicLinkHandler {
 	return &MagicLinkHandler{
 		iam:           iamSvc,
-		trust:         trustSvc,
 		proboBaseURL:  proboBaseURL,
 		sessionCookie: authn.NewCookie(&cookieConfig),
-		safeRedirect:  saferedirect.New(nil),
+		safeRedirect:  saferedirect.New(allowedHost),
 		logger:        logger,
 	}
 }
@@ -259,17 +253,15 @@ func (h *MagicLinkHandler) SendHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authorizeContinue := h.authorizeContinueURL(r.FormValue("authorize"))
-	if authorizeContinue == "" {
-		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid authorize parameters"))
+	continueParam := r.FormValue("continue")
+	if continueParam == "" {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid magic link parameters"))
 		return
 	}
 
-	compliancePageID, organizationID, err := h.portalIDsFromAuthorize(ctx, r.FormValue("authorize"))
-	if err != nil {
-		h.logger.WarnCtx(ctx, "cannot resolve compliance portal from authorize params", log.Error(err))
-		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid authorize parameters"))
-
+	safeContinue, ok := h.safeRedirect.Validate(ctx, continueParam)
+	if !ok {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid continue URL"))
 		return
 	}
 
@@ -277,11 +269,13 @@ func (h *MagicLinkHandler) SendHandler(w http.ResponseWriter, r *http.Request) {
 
 	req := &iam.SendMagicLinkRequest{
 		Email:            emailAddr,
-		CompliancePageID: compliancePageID,
-		OrganizationID:   organizationID,
 		URLPath:          "/api/connect/v1/magic-link/verify",
-		Continue:         &authorizeContinue,
 		MagicLinkBaseURL: &proboURL,
+		Continue:         &safeContinue,
+	}
+
+	if clientID := oauth2ClientIDFromContinueURL(safeContinue); clientID != "" {
+		req.OAuth2ClientIDRaw = &clientID
 	}
 
 	if err := h.iam.AuthService.SendMagicLink(ctx, req); err != nil {
@@ -341,62 +335,4 @@ func (h *MagicLinkHandler) VerifyHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	http.Redirect(w, r, redirectURL, http.StatusFound)
-}
-
-func (h *MagicLinkHandler) authorizeContinueURL(encodedAuthorize string) string {
-	if encodedAuthorize == "" {
-		return ""
-	}
-
-	values, err := url.ParseQuery(encodedAuthorize)
-	if err != nil {
-		return ""
-	}
-
-	metadata := OAuth2ServerMetadata(
-		h.proboBaseURL,
-		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
-	)
-
-	continueURL, err := oauth2.AuthorizationURLWithQuery(metadata.AuthorizationEndpoint, values)
-	if err != nil {
-		return ""
-	}
-
-	return continueURL
-}
-
-func portalFromCIMDClientID(
-	ctx context.Context,
-	trustSvc *trust.Service,
-	clientID string,
-) (*coredata.TrustCenter, error) {
-	host, ok := oauth2.CIMDClientIDHost(clientID)
-	if !ok {
-		return nil, errors.New("invalid cimd client_id")
-	}
-
-	portal, err := trustSvc.GetPortalByDomainName(ctx, host)
-	if err != nil {
-		return nil, err
-	}
-
-	return portal, nil
-}
-
-func (h *MagicLinkHandler) portalIDsFromAuthorize(
-	ctx context.Context,
-	encodedAuthorize string,
-) (*gid.GID, gid.GID, error) {
-	values, err := url.ParseQuery(encodedAuthorize)
-	if err != nil {
-		return nil, gid.GID{}, err
-	}
-
-	portal, err := portalFromCIMDClientID(ctx, h.trust, values.Get("client_id"))
-	if err != nil {
-		return nil, gid.GID{}, err
-	}
-
-	return &portal.ID, portal.OrganizationID, nil
 }

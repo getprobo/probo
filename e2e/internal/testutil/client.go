@@ -592,13 +592,15 @@ func (c *Client) connectViaCIMD(email string) {
 	authorizeURL := c.redirectLocation(c.trustClient, initiateURL)
 	require.NotEmpty(c.T, authorizeURL, "oauth initiate must redirect to authorize")
 
-	portalLoginURL := c.redirectLocation(c.proboHTTPClient, authorizeURL)
-	require.Contains(c.T, portalLoginURL, "/auth/portal-login", "unauthenticated authorize must redirect to portal login")
+	loginURL := c.redirectLocation(c.proboHTTPClient, authorizeURL)
+	require.Contains(c.T, loginURL, "/auth/login", "unauthenticated authorize must redirect to login")
+	require.Contains(c.T, loginURL, "continue=", "login redirect must preserve continue URL")
 
-	authorizeParam := extractAuthorizeQueryParam(portalLoginURL)
-	require.NotEmpty(c.T, authorizeParam)
+	continueURL := extractContinueQueryParam(loginURL)
+	require.NotEmpty(c.T, continueURL)
+	require.Contains(c.T, continueURL, "/api/connect/v1/oauth2/authorize")
 
-	c.postConnectMagicLink(email, authorizeParam)
+	c.postConnectMagicLink(email, continueURL)
 
 	token := c.pollForLinkToken(fmt.Sprintf("to:%s", email))
 	verifyURL := c.baseURL + "/api/connect/v1/magic-link/verify?token=" + url.QueryEscape(token)
@@ -629,12 +631,12 @@ func (c *Client) connectViaCIMD(email string) {
 	)
 }
 
-func (c *Client) postConnectMagicLink(email, authorizeParam string) {
+func (c *Client) postConnectMagicLink(email, continueURL string) {
 	c.T.Helper()
 
 	body := url.Values{}
 	body.Set("email", email)
-	body.Set("authorize", authorizeParam)
+	body.Set("continue", continueURL)
 
 	req, err := http.NewRequest(
 		"POST",
@@ -719,13 +721,13 @@ func resolveRedirectURL(baseURL, location string) string {
 	return base.ResolveReference(locURL).String()
 }
 
-func extractAuthorizeQueryParam(portalLoginURL string) string {
-	parsed, err := url.Parse(portalLoginURL)
+func extractContinueQueryParam(loginURL string) string {
+	parsed, err := url.Parse(loginURL)
 	if err != nil {
 		return ""
 	}
 
-	return parsed.Query().Get("authorize")
+	return parsed.Query().Get("continue")
 }
 
 func (c *Client) GetEmail() string {
