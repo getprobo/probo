@@ -19,11 +19,12 @@
 // SOFTWARE.
 
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery, useRefetchableFragment } from "react-relay";
 
+import { ListErrorBoundary } from "#/components/errors/ListErrorBoundary";
 import { MailingListUpdateListItem } from "#/components/MailingListUpdateListItem/MailingListUpdateListItem";
 import { PageHeader } from "#/components/PageHeader/PageHeader";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
@@ -88,6 +89,13 @@ export function UpdatesPage({ queryRef }: UpdatesPageProps) {
     refetch(variables, { fetchPolicy: "store-or-network" });
   }, [refetch]);
 
+  const [, startRetry] = useTransition();
+  const retryUpdates = useCallback((done: () => void) => {
+    startRetry(() => {
+      refetch({ first: UPDATES_PAGE_SIZE }, { fetchPolicy: "network-only", onComplete: done });
+    });
+  }, [refetch]);
+
   const { updates } = data.currentTrustCenter;
   const { pageInfo } = updates;
   const { isPending, goPrevious, goNext } = useCursorPagination(refetchUpdates, pageInfo, UPDATES_PAGE_SIZE);
@@ -104,11 +112,13 @@ export function UpdatesPage({ queryRef }: UpdatesPageProps) {
             ? <UpdatesEmpty />
             : (
                 <div className="flex flex-col gap-8">
-                  <UpdatesList busy={isPending}>
-                    {nodes.map(node => (
-                      <MailingListUpdateListItem key={node.id} updateKey={node} />
-                    ))}
-                  </UpdatesList>
+                  <ListErrorBoundary onRetry={retryUpdates}>
+                    <UpdatesList busy={isPending}>
+                      {nodes.map(node => (
+                        <MailingListUpdateListItem key={node.id} updateKey={node} />
+                      ))}
+                    </UpdatesList>
+                  </ListErrorBoundary>
                   <Pagination
                     hasPrevious={pageInfo.hasPreviousPage}
                     hasNext={pageInfo.hasNextPage}

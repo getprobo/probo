@@ -56,12 +56,14 @@ export function RecentUpdatesSection({ trustCenterKey }: RecentUpdatesSectionPro
 
   return (
     <ErrorBoundary
-      fallback={(_, reset) => (
+      fallback={(
+        // The data comes from the preloaded HomePageQuery, so there is no local
+        // refetch to clear a field error — reload the page to recover.
         <HomeSection title={t("home.sections.recentUpdates")}>
           <InlineError
             message={t("errors.inline.message")}
             retryLabel={t("errors.inline.retry")}
-            onRetry={reset}
+            onRetry={() => window.location.reload()}
           />
         </HomeSection>
       )}

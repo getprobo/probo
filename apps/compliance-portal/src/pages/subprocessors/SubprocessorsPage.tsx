@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery, useRefetchableFragment } from "react-relay";
 
+import { ListErrorBoundary } from "#/components/errors/ListErrorBoundary";
 import { PageHeader } from "#/components/PageHeader/PageHeader";
 
 import type { SubprocessorsPage_query$key } from "./__generated__/SubprocessorsPage_query.graphql";
@@ -111,15 +112,24 @@ export function SubprocessorsPage({ queryRef }: SubprocessorsPageProps) {
           aria-busy={isRefetching}
           className={`flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150 ${isRefetching ? "opacity-60" : ""}`}
         >
-          {groups.length === 0
-            ? <SubprocessorsEmpty />
-            : groups.map(group => (
-                <SubprocessorCategorySection
-                  key={group.category}
-                  category={group.category}
-                  subprocessors={group.nodes}
-                />
-              ))}
+          <ListErrorBoundary
+            onRetry={done => startTransition(() => {
+              refetch(
+                toQueryVariables({ query, category, country }),
+                { fetchPolicy: "network-only", onComplete: done },
+              );
+            })}
+          >
+            {groups.length === 0
+              ? <SubprocessorsEmpty />
+              : groups.map(group => (
+                  <SubprocessorCategorySection
+                    key={group.category}
+                    category={group.category}
+                    subprocessors={group.nodes}
+                  />
+                ))}
+          </ListErrorBoundary>
         </div>
       </div>
     </>

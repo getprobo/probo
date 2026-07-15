@@ -31,7 +31,7 @@ import type { SubprocessorListItem_subprocessor$key } from "./__generated__/Subp
 import { subprocessorListItem } from "./variants";
 
 const subprocessorListItemFragment = graphql`
-  fragment SubprocessorListItem_subprocessor on Subprocessor {
+  fragment SubprocessorListItem_subprocessor on Subprocessor @throwOnFieldError {
     name
     description
     websiteUrl

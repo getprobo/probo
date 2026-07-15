@@ -219,6 +219,48 @@ The portal ships three fallback tiers, all backed by the same `ErrorBoundary`:
 [`ui.md`](ui.md)); the app maps the caught error to copy/actions and passes them
 in.
 
+### Retrying: reset vs refetch vs reload
+
+A boundary's `reset` alone does **not** clear a Relay field error — at **any**
+level, not just lists. `reset` only re-renders the subtree; the read hits the
+**same errored record** still cached in the store and throws again. `reset` is
+therefore only a real recovery for *transient render errors* (e.g. a non-Relay
+render crash). To recover a Relay field error you must go back to the network
+first, then clear the boundary. Pick the mechanism by what owns the data:
+
+| Context | Recovery |
+|---------|----------|
+| Route / page boundary | `window.location.reload()` (or router revalidation) |
+| Refetchable list/section (`useRefetchableFragment`) | `refetch(..., { fetchPolicy: "network-only" })`, then reset the boundary once it settles |
+| Section reading a preloaded query (no local refetch) | reload the owning query via the loader's `loadQuery(..., { fetchPolicy: "network-only" })`, or fall back to `window.location.reload()` |
+| Transient / non-Relay render error | `reset` |
+
+In all the network cases, reset the boundary **after** the fetch settles (not
+before), or the remount races the in-flight request straight back into the same
+error.
+
+`ListErrorBoundary` encapsulates the refetchable-list case: it owns a reset key
+and exposes `onRetry(done)`, where the caller (which holds `refetch`, above the
+boundary) refetches `network-only` and passes the `onComplete` callback as
+`done`.
+
+```tsx
+// The page owns refetch; item fragments carry @throwOnFieldError, so a row's
+// field error throws below the boundary while refetch survives above it.
+<ListErrorBoundary
+  onRetry={done => startTransition(() => {
+    refetch(variables, { fetchPolicy: "network-only", onComplete: done });
+  })}
+>
+  {rows}
+</ListErrorBoundary>
+```
+
+Because `useRefetchableFragment` throws at its own read site, put
+`@throwOnFieldError` on the **item** fragments (so the throw lands below the
+boundary), not on the refetchable list fragment (whose read is above it — a
+whole-connection failure there is a page-level error via `@required`).
+
 ## Custom errors for node-type mismatches
 
 When a page fetches `node(id:)` and the resolved `__typename` is not the type the
