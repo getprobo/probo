@@ -60,7 +60,11 @@ async function deleteSubscription(this: IHookFunctions, subscriptionId: string):
 		await proboApiRequest.call(this, query, {
 			input: { webhookSubscriptionId: subscriptionId },
 		});
-	} catch {
+	} catch (error) {
+		this.logger.error(`Failed to delete Probo webhook subscription "${subscriptionId}"`, {
+			subscriptionId,
+			error,
+		});
 		return false;
 	}
 
