@@ -25,11 +25,12 @@ interface ListErrorBoundaryProps {
   children: ReactNode;
 }
 
-// Contains a list/section field error to an inline fallback with a working
-// retry. The boundary only resets *after* the caller's refetch settles (via the
-// `done` callback bumping its key), so remounting reads the refreshed store
-// instead of racing the in-flight request back into the same error. See
-// contrib/claude/error-handling.md.
+// Contains a list field error to an inline fallback with a working retry. A
+// standalone list page has no section framing, so the fallback is a bare
+// InlineError (no card). The boundary only resets *after* the caller's refetch
+// settles (via the `done` callback bumping its key), so remounting reads the
+// refreshed store instead of racing the in-flight request back into the same
+// error. See contrib/claude/error-handling.md.
 export function ListErrorBoundary({ onRetry, children }: ListErrorBoundaryProps) {
   const { t } = useTranslation();
   const [resetToken, setResetToken] = useState(0);

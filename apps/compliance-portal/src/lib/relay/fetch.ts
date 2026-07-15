@@ -26,6 +26,8 @@ import { type FetchFunction, type GraphQLResponse } from "relay-runtime";
 const isRequestLevel = (error: GraphQLError) =>
   error.path === undefined || error.path === null || error.path.length === 0;
 
+type ErrorResponse = GraphQLResponse & { errors?: GraphQLError[] };
+
 // The portal fetch only throws for request-level failures. Everything else
 // (field-level errors) flows through to Relay untouched.
 export const makeFetchQuery = (endpoint: string): FetchFunction => {
@@ -82,9 +84,7 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
       throw new InternalServerError();
     }
 
-    const json = (await response.json()) as GraphQLResponse & {
-      errors?: GraphQLError[];
-    };
+    const json = (await response.json()) as ErrorResponse;
 
     if (json.errors) {
       // An unauthenticated session is always a global concern: the backend

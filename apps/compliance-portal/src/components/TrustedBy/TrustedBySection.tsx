@@ -19,10 +19,10 @@
 // SOFTWARE.
 
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
-import { InlineError } from "@probo/ui/src/v2/InlineError/InlineError";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 import { HomeSection } from "#/components/HomeSection/HomeSection";
 
 import type { TrustedBySection_trustCenter$key } from "./__generated__/TrustedBySection_trustCenter.graphql";
@@ -58,11 +58,7 @@ export function TrustedBySection({ trustCenterKey }: TrustedBySectionProps) {
         // The data comes from the preloaded HomePageQuery, so there is no local
         // refetch to clear a field error — reload the page to recover.
         <HomeSection title={t("home.sections.trustedBy")}>
-          <InlineError
-            message={t("errors.inline.message")}
-            retryLabel={t("errors.inline.retry")}
-            onRetry={() => window.location.reload()}
-          />
+          <InlineErrorCard onRetry={() => window.location.reload()} />
         </HomeSection>
       )}
     >

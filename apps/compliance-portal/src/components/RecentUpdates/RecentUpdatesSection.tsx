@@ -20,10 +20,10 @@
 
 import { Link } from "@probo/ui/src/v2/Button/Link";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
-import { InlineError } from "@probo/ui/src/v2/InlineError/InlineError";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 import { HomeSection } from "#/components/HomeSection/HomeSection";
 import { MailingListUpdateListItem } from "#/components/MailingListUpdateListItem/MailingListUpdateListItem";
 import { dotPatternStyle } from "#/components/MediaTile/variants";
@@ -60,11 +60,7 @@ export function RecentUpdatesSection({ trustCenterKey }: RecentUpdatesSectionPro
         // The data comes from the preloaded HomePageQuery, so there is no local
         // refetch to clear a field error — reload the page to recover.
         <HomeSection title={t("home.sections.recentUpdates")}>
-          <InlineError
-            message={t("errors.inline.message")}
-            retryLabel={t("errors.inline.retry")}
-            onRetry={() => window.location.reload()}
-          />
+          <InlineErrorCard onRetry={() => window.location.reload()} />
         </HomeSection>
       )}
     >
