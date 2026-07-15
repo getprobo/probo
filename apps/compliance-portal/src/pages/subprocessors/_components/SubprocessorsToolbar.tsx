@@ -69,7 +69,7 @@ export function SubprocessorsToolbar({ queryKey }: SubprocessorsToolbarProps) {
   }, [subprocessorCountries, countryLabel]);
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex min-h-16 flex-wrap items-center gap-3">
       <div className="w-40">
         <Select value={category || null} onValueChange={value => setCategory(value ?? "")}>
           <SelectTrigger placeholder={t("filters.allCategories")}>

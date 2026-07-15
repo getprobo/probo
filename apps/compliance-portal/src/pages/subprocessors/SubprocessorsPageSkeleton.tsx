@@ -28,9 +28,14 @@ const CARD_PLACEHOLDERS = ["a", "b", "c", "d", "e", "f"];
 export function SubprocessorsPageSkeleton() {
   return (
     <>
-      <HeaderBand>
+      <HeaderBand flushBottomSpace>
         <div className="flex w-full flex-col gap-2">
           <HeadingSkeleton size={7} className="w-64" />
+          <div className="flex min-h-16 items-center gap-3">
+            <div className="h-8 w-40 animate-pulse rounded-2 bg-sand-3" />
+            <div className="h-8 w-40 animate-pulse rounded-2 bg-sand-3" />
+            <div className="h-8 w-60 animate-pulse rounded-2 bg-sand-3" />
+          </div>
         </div>
       </HeaderBand>
       <div className="flex w-full flex-col items-center px-8 py-8">

@@ -104,7 +104,7 @@ export function SubprocessorsPage({ queryRef }: SubprocessorsPageProps) {
 
   return (
     <>
-      <PageHeader title={t("title")} count={subprocessors.totalCount}>
+      <PageHeader title={t("title")} count={subprocessors.totalCount} flushBottomSpace>
         <SubprocessorsToolbar queryKey={root} />
       </PageHeader>
       <div className="flex w-full flex-col items-center px-8 py-8">
