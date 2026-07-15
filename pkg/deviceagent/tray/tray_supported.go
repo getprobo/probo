@@ -3,7 +3,7 @@
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// to use, copy, modify, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
@@ -23,7 +23,6 @@
 package tray
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -87,25 +86,35 @@ func (m enrollmentMenu) hide() {
 
 func onReady(opts Options, done <-chan struct{}) {
 	setTrayIcons()
-
-	systray.SetTitle("Probo")
-
-	enrollMenu := setupEnrollmentMenu(opts, done)
+	setTrayTitle()
 
 	connectedItem := systray.AddMenuItem("Connected", "Device is enrolled and reporting")
+	connectedItem.SetIcon(statusConnectedIconData)
 	connectedItem.Disable()
+	connectedItem.Hide()
+
+	enrollmentRequiredItem := systray.AddMenuItem(
+		"Enrollment required",
+		"Device is not enrolled yet",
+	)
+	enrollmentRequiredItem.SetIcon(statusEnrollmentIconData)
+	enrollmentRequiredItem.Disable()
+	enrollmentRequiredItem.Hide()
 
 	statusUnavailableItem := systray.AddMenuItem(
 		"Status unavailable",
 		"Cannot read enrollment status",
 	)
+	statusUnavailableItem.SetIcon(statusUnavailableIconData)
 	statusUnavailableItem.Disable()
 	statusUnavailableItem.Hide()
 
 	systray.AddSeparator()
 
+	enrollMenu := setupEnrollmentMenu(opts, done)
+
 	aboutItem := systray.AddMenuItem(
-		fmt.Sprintf("About probo-agent %s", opts.Version),
+		"About Probo Device Posture Agent…",
 		"Probo device posture agent",
 	)
 
@@ -114,6 +123,7 @@ func onReady(opts Options, done <-chan struct{}) {
 		if err != nil {
 			enrollMenu.hide()
 			connectedItem.Hide()
+			enrollmentRequiredItem.Hide()
 			statusUnavailableItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Status unavailable")
 
@@ -124,11 +134,13 @@ func onReady(opts Options, done <-chan struct{}) {
 
 		if enrolled {
 			enrollMenu.hide()
+			enrollmentRequiredItem.Hide()
 			connectedItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Connected")
 		} else {
 			enrollMenu.show()
 			connectedItem.Hide()
+			enrollmentRequiredItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Enrollment required")
 		}
 	}
@@ -173,7 +185,7 @@ func setupEnrollmentMenu(opts Options, done <-chan struct{}) enrollmentMenu {
 		return enrollmentMenu{items: []*systray.MenuItem{enrollItem}}
 	}
 
-	enrollRoot := systray.AddMenuItem("Enroll in browser", enrollTooltip)
+	enrollRoot := systray.AddMenuItem("Enroll via…", enrollTooltip)
 
 	usItem := enrollRoot.AddSubMenuItem(
 		"United States (us.probo.com)",

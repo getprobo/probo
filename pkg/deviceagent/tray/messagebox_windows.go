@@ -31,6 +31,7 @@ import (
 const (
 	mbOK              = 0x00000000
 	mbIconInformation = 0x00000040
+	mbIconError       = 0x00000010
 )
 
 var (

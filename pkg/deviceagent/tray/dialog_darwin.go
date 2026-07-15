@@ -39,3 +39,16 @@ func showAbout(version string) {
 	)
 	_ = exec.Command(path, "-e", script).Run()
 }
+
+func showEnrollmentError(message string) {
+	path, ok := osascriptPath()
+	if !ok {
+		return
+	}
+
+	script := fmt.Sprintf(
+		`display alert "Probo Device Posture Agent" message %q buttons {"OK"} default button "OK"`,
+		message,
+	)
+	_ = exec.Command(path, "-e", script).Run()
+}

@@ -18,22 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build windows
+//go:build darwin && cgo
 
 package tray
 
-import (
-	"fmt"
-)
+import "fyne.io/systray"
 
-func showAbout(version string) {
-	message := fmt.Sprintf(
-		"Version %s\r\n\r\nReports device posture to your Probo workspace.",
-		version,
-	)
-	nativeMessageBox("Probo Device Posture Agent", message, mbOK|mbIconInformation)
-}
-
-func showEnrollmentError(message string) {
-	nativeMessageBox("Probo Device Posture Agent", message, mbOK|mbIconError)
+func setTrayTitle() {
+	systray.SetTitle("")
 }

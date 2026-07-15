@@ -29,3 +29,12 @@ var iconData []byte
 
 //go:embed iconTemplate.png
 var iconTemplateData []byte
+
+//go:embed status_connected.png
+var statusConnectedIconData []byte
+
+//go:embed status_unavailable.png
+var statusUnavailableIconData []byte
+
+//go:embed status_enrollment.png
+var statusEnrollmentIconData []byte

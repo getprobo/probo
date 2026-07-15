@@ -24,7 +24,6 @@ package tray
 
 import (
 	"fmt"
-	"os"
 
 	"go.probo.inc/probo/pkg/deviceagent"
 )
@@ -32,12 +31,12 @@ import (
 func openConsoleEnroll(serverURL string) {
 	enrollURL, err := deviceagent.ConsoleEnrollURL(serverURL)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot open enrollment page: %v\n", err)
+		showEnrollmentError(fmt.Sprintf("Cannot open enrollment page: %v", err))
 		return
 	}
 
 	if err := openBrowser(enrollURL); err != nil {
-		fmt.Fprintf(os.Stderr, "cannot open browser: %v\n", err)
+		showEnrollmentError(fmt.Sprintf("Cannot open browser: %v", err))
 	}
 }
 
@@ -49,7 +48,7 @@ func openSelfHostedEnroll() {
 
 	normalized, err := deviceagent.NormalizeServerURL(hostname)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "invalid hostname: %v\n", err)
+		showEnrollmentError(fmt.Sprintf("Invalid hostname: %v", err))
 		return
 	}
 
