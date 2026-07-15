@@ -30,6 +30,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SSOSignInPageQuery } from "#/__generated__/iam/SSOSignInPageQuery.graphql";
+import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
 
 const ssoAvailabilityQuery = graphql`
   query SSOSignInPageQuery($email: EmailAddr!) {
@@ -103,6 +104,7 @@ export default function SSOSignInPage() {
         <NavigateToSSOLoginURL
           onSSOAvailabilityCheck={setChecking}
           queryRef={queryRef}
+          loginSearch={location.search}
         />
       )}
     </>
@@ -112,13 +114,15 @@ export default function SSOSignInPage() {
 function NavigateToSSOLoginURL(props: {
   queryRef: PreloadedQuery<SSOSignInPageQuery>;
   onSSOAvailabilityCheck: (checking: boolean) => void;
+  loginSearch: string;
 }) {
-  const { queryRef } = props;
+  const { queryRef, loginSearch } = props;
 
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
   const { ssoLoginURL } = usePreloadedQuery<SSOSignInPageQuery>(
     ssoAvailabilityQuery,
@@ -136,7 +140,7 @@ function NavigateToSSOLoginURL(props: {
         variant: "error",
       });
 
-      void navigate("/auth/login");
+      void navigate({ pathname: "/auth/login", search: loginSearch });
       return;
     }
 
@@ -150,10 +154,15 @@ function NavigateToSSOLoginURL(props: {
     }
 
     const url = new URL(ssoLoginURL.value);
-    url.search = searchParams.toString();
+    url.searchParams.set("continue", postAuthRedirectUrl);
+    for (const [key, value] of searchParams.entries()) {
+      if (key !== "continue") {
+        url.searchParams.set(key, value);
+      }
+    }
 
     window.location.href = url.toString();
-  }, [__, navigate, ssoLoginURL, toast, searchParams]);
+  }, [__, loginSearch, navigate, postAuthRedirectUrl, searchParams, ssoLoginURL, toast]);
 
   return null;
 }

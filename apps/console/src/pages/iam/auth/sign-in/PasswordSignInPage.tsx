@@ -27,7 +27,7 @@ import { Link, matchPath, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
-import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
+import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
 
 const signInMutation = graphql`
   mutation PasswordSignInPageMutation($input: SignInInput!) {
@@ -41,7 +41,7 @@ const signInMutation = graphql`
 
 export default function PasswordSignInPage() {
   const location = useLocation();
-  const safeContinueUrl = useSafeContinueUrl();
+  const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -59,7 +59,7 @@ export default function PasswordSignInPage() {
 
     const match = matchPath(
       { path: "/organizations/:organizationId", caseSensitive: false, end: false },
-      safeContinueUrl.pathname,
+      new URL(postAuthRedirectUrl, window.location.origin).pathname,
     );
 
     signIn({
@@ -84,7 +84,7 @@ export default function PasswordSignInPage() {
           return;
         }
 
-        window.location.href = safeContinueUrl.href;
+        window.location.href = postAuthRedirectUrl;
       },
       onError: (e) => {
         toast({
@@ -107,7 +107,7 @@ export default function PasswordSignInPage() {
       </Link>
 
       <h1 className="text-center text-2xl font-bold">
-        {__("Login with Email")}
+        {__("Sign in with password")}
       </h1>
       <p className="text-center text-txt-tertiary mt-1 mb-6">
         {__("Enter your email and password")}

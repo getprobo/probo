@@ -45,8 +45,10 @@ const providerIcons: Record<
 
 export function OIDCButton({
   providerRef,
+  continueURL,
 }: {
   providerRef: OIDCButtonFragment$key;
+  continueURL?: string;
 }) {
   const { __ } = useTranslate();
   const [searchParams] = useSearchParams();
@@ -54,6 +56,7 @@ export function OIDCButton({
   const provider = useFragment(fragment, providerRef);
   const Icon = providerIcons[provider.name];
   const organizationId = searchParams.get("organization-id");
+  const targetContinue = continueURL ?? safeContinueUrl.toString();
 
   return (
     <Button
@@ -61,7 +64,7 @@ export function OIDCButton({
       className="w-full h-10"
       onClick={() => {
         const loginURL = new URL(provider.loginURL, window.location.origin);
-        loginURL.searchParams.set("continue", safeContinueUrl.toString());
+        loginURL.searchParams.set("continue", targetContinue);
         if (organizationId) {
           loginURL.searchParams.set("organization_id", organizationId);
         }

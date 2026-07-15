@@ -18,21 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
+import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
+import { isOAuthAuthorizeContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 
 import { Divider } from "./_components/Divider";
+import { MagicLinkForm } from "./_components/MagicLinkForm";
+import { OAuthClientBrandingSection } from "./_components/OAuthClientBrandingSection";
 import { OIDCButton } from "./_components/OIDCButton";
 
 export const signInPageQuery = graphql`
-  query SignInPageQuery {
+  query SignInPageQuery($clientId: String) {
     oidcProviders {
       ...OIDCButtonFragment
+    }
+    oauthClientBranding(clientId: $clientId) {
+      name
+      clientURL
+      logo {
+        downloadUrl
+      }
     }
   }
 `;
@@ -44,19 +56,67 @@ type Props = {
 export default function SignInPage(props: Props) {
   const { __ } = useTranslate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const postAuthRedirectUrl = usePostAuthRedirectUrl();
+
+  const continueParam = searchParams.get("continue");
+  const isAuthorizeFlow = isOAuthAuthorizeContinueUrl(continueParam);
 
   const data = usePreloadedQuery<SignInPageQuery>(signInPageQuery, props.queryRef);
 
-  return (
-    <div className="w-full max-w-sm mx-auto pt-8">
-      <h1 className="text-2xl font-bold">
-        {__("Sign in to your account")}
-      </h1>
+  const clientBranding = data.oauthClientBranding;
+  const authorizeHeading = clientBranding?.name
+    ? __("Sign in")
+    : __("Sign in to continue");
 
-      <div className="mt-6 space-y-4">
+  usePageTitle(
+    isAuthorizeFlow
+      ? clientBranding?.name
+        ? `${__("Sign in to")} ${clientBranding.name}`
+        : authorizeHeading
+      : __("Sign in to your account"),
+  );
+
+  const oidcContinueURL = isAuthorizeFlow ? postAuthRedirectUrl : undefined;
+
+  return (
+    <div className="w-full max-w-sm mx-auto pt-8 space-y-6">
+      {isAuthorizeFlow && clientBranding && (
+        <>
+          <OAuthClientBrandingSection
+            name={clientBranding.name}
+            logoDownloadUrl={clientBranding.logo?.downloadUrl}
+            clientURL={clientBranding.clientURL}
+          />
+          <div className="w-full border-t border-t-border-mid" />
+        </>
+      )}
+
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-bold">
+          {isAuthorizeFlow
+            ? authorizeHeading
+            : __("Sign in to your account")}
+        </h1>
+        {isAuthorizeFlow && (
+          <p className="text-txt-tertiary">
+            {__("Use your email or a connected account to continue")}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-4">
         {data.oidcProviders.map((providerRef, index) => (
-          <OIDCButton key={index} providerRef={providerRef} />
+          <OIDCButton
+            key={index}
+            providerRef={providerRef}
+            continueURL={oidcContinueURL}
+          />
         ))}
+
+        <MagicLinkForm />
+
+        <Divider>{__("Or")}</Divider>
 
         <Button
           variant="secondary"
@@ -66,18 +126,16 @@ export default function SignInPage(props: Props) {
           {__("Sign in with SSO")}
         </Button>
 
-        <Divider>{__("Or")}</Divider>
-
         <Button
           variant="secondary"
           className="w-full h-10"
           to={{ pathname: "/auth/password-login", search: location.search }}
         >
-          {__("Sign in with email")}
+          {__("Sign in with password")}
         </Button>
       </div>
 
-      <p className="mt-8 text-center text-sm text-txt-secondary">
+      <p className="text-center text-sm text-txt-secondary">
         {__("New to Probo?")}
         {" "}
         <Link

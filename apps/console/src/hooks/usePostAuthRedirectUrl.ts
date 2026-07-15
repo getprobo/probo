@@ -18,34 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useMemo } from "react";
-import { useQueryLoader } from "react-relay";
-import { useSearchParams } from "react-router";
+import { useSafeContinueUrl } from "./useSafeContinueUrl";
 
-import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
-import { clientIdFromContinueUrl } from "#/lib/buildAuthorizeContinueURL";
+export function usePostAuthRedirectUrl(): string {
+  const safeContinueUrl = useSafeContinueUrl();
 
-import SignInPage, { signInPageQuery } from "./SignInPage";
-
-function SignInPageQueryLoader() {
-  const [searchParams] = useSearchParams();
-  const clientId = useMemo(
-    () => clientIdFromContinueUrl(searchParams.get("continue")),
-    [searchParams],
-  );
-
-  const [queryRef, loadQuery]
-    = useQueryLoader<SignInPageQuery>(signInPageQuery);
-
-  useEffect(() => {
-    loadQuery({ clientId });
-  }, [clientId, loadQuery]);
-
-  if (!queryRef) return null;
-
-  return <SignInPage queryRef={queryRef} />;
-}
-
-export default function SignInPageLoader() {
-  return <SignInPageQueryLoader />;
+  return safeContinueUrl.href;
 }

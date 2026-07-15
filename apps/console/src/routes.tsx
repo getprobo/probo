@@ -119,10 +119,6 @@ const routes = [
         ),
       },
       {
-        path: "portal-login",
-        Component: lazy(() => import("./pages/iam/auth/PortalLoginPage")),
-      },
-      {
         path: "magic-link-expired",
         Component: lazy(() => import("./pages/iam/auth/MagicLinkExpiredPage")),
       },
