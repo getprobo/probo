@@ -68,6 +68,7 @@ type (
 		Continue       *string
 		// If users tries to connect to compliance page, we must brand the emails accordingly
 		CompliancePageID *gid.GID
+		MagicLinkBaseURL *string
 	}
 
 	PasswordResetData struct {
@@ -460,12 +461,22 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID
 }
 
 func (s AuthService) OpenSessionWithOIDC(ctx context.Context, identityID gid.GID, authMethod coredata.AuthMethod) (*coredata.Session, error) {
+	return s.OpenRootSession(ctx, identityID, authMethod, coredata.SessionData{})
+}
+
+func (s AuthService) OpenRootSession(
+	ctx context.Context,
+	identityID gid.GID,
+	authMethod coredata.AuthMethod,
+	data coredata.SessionData,
+) (*coredata.Session, error) {
 	session := &coredata.Session{}
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) (err error) {
 			session = coredata.NewRootSession(identityID, authMethod, s.sessionDuration)
+			session.Data = data
 
 			err = session.Insert(ctx, conn)
 			if err != nil {
@@ -609,6 +620,10 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				if err != nil {
 					return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 				}
+			}
+
+			if req.MagicLinkBaseURL != nil {
+				emailPresenterCfg.BaseURL = *req.MagicLinkBaseURL
 			}
 
 			emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
