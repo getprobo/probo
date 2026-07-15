@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.226.1] - 2026-07-15
+
+### Fixed
+
+- Updated `golang.org/x/text` to v0.39.0 to remediate CVE-2026-56852
+
 ## [0.226.0] - 2026-07-15
 
 ### Added
