@@ -23,9 +23,7 @@ package files_v1
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -111,90 +109,20 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := h.fileSvc.GetPublicFile(r.Context(), fileID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
-			return
-		}
+	err = h.fileSvc.ServePublicFile(r.Context(), w, r, fileID)
+	if errors.Is(err, filemanager.ErrPublicFileNotFound) {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
 
+	if err != nil {
 		h.logger.ErrorCtx(
 			r.Context(),
-			"cannot get public file URL",
+			"cannot serve public file",
 			log.Error(err),
 			log.String("file_id", fileIDStr),
 		)
 		jsonx.RenderInternalServerError(w)
-
-		return
-	}
-
-	conds := filemanager.FileConditions{
-		IfNoneMatch: r.Header.Get("If-None-Match"),
-		IfRange:     r.Header.Get("If-Range"),
-		Range:       r.Header.Get("Range"),
-	}
-	if ifModifiedSince := r.Header.Get("If-Modified-Since"); ifModifiedSince != "" {
-		if t, parseErr := http.ParseTime(ifModifiedSince); parseErr == nil {
-			conds.IfModifiedSince = t
-		}
-	}
-
-	obj, err := h.fileSvc.OpenFile(r.Context(), file, conds)
-	if err != nil {
-		h.logger.ErrorCtx(
-			r.Context(),
-			"cannot open public file",
-			log.Error(err),
-			log.String("file_id", fileIDStr),
-		)
-		jsonx.RenderInternalServerError(w)
-
-		return
-	}
-
-	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-	w.Header().Set("Accept-Ranges", "bytes")
-
-	if obj.ETag != "" {
-		w.Header().Set("ETag", obj.ETag)
-	}
-
-	if obj.NotModified {
-		w.WriteHeader(http.StatusNotModified)
-		return
-	}
-
-	if obj.RangeNotSatisfiable {
-		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.FileSize))
-		w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
-
-		return
-	}
-
-	defer func() { _ = obj.Body.Close() }()
-
-	w.Header().Set("Content-Type", file.MimeType)
-	w.Header().Set("Content-Length", strconv.FormatInt(obj.ContentLength, 10))
-
-	if !obj.LastModified.IsZero() {
-		w.Header().Set("Last-Modified", obj.LastModified.UTC().Format(http.TimeFormat))
-	}
-
-	if obj.PartialContent {
-		w.Header().Set("Content-Range", obj.ContentRange)
-		w.WriteHeader(http.StatusPartialContent)
-	}
-
-	if _, err := io.Copy(w, obj.Body); err != nil {
-		h.logger.ErrorCtx(
-			r.Context(),
-			"cannot stream public file",
-			log.Error(err),
-			log.String("file_id", fileIDStr),
-		)
-
-		return
 	}
 }
 
