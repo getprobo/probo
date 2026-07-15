@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -135,18 +136,41 @@ func ParseIDTokenClaims(raw string) (*IDTokenClaims, error) {
 	return &claims, nil
 }
 
-func ParseIDTokenIdentity(raw string, expectedNonce string) (gid.GID, error) {
+func ParseIDTokenIdentity(
+	raw string,
+	jwks *jose.JWKS,
+	expectedNonce string,
+	expectedIssuer uri.URI,
+	expectedAudience string,
+) (gid.GID, error) {
 	if raw == "" {
 		return gid.GID{}, fmt.Errorf("cannot parse id token: missing token")
 	}
 
-	claims, err := ParseIDTokenClaims(raw)
+	payload, err := jose.VerifyJWTWithJWKS(raw, jwks)
 	if err != nil {
-		return gid.GID{}, err
+		return gid.GID{}, fmt.Errorf("cannot verify id token: %w", err)
+	}
+
+	var claims IDTokenClaims
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return gid.GID{}, fmt.Errorf("cannot decode id token claims: %w", err)
+	}
+
+	if claims.Issuer != expectedIssuer {
+		return gid.GID{}, fmt.Errorf("cannot validate issuer: unexpected issuer %q", claims.Issuer)
+	}
+
+	if claims.Audience != expectedAudience {
+		return gid.GID{}, fmt.Errorf("cannot validate audience: mismatch")
 	}
 
 	if claims.Nonce != expectedNonce {
 		return gid.GID{}, fmt.Errorf("cannot validate nonce: mismatch")
+	}
+
+	if time.Now().After(time.Unix(claims.ExpiresAt, 0)) {
+		return gid.GID{}, fmt.Errorf("cannot validate id token: token has expired")
 	}
 
 	identityID, err := gid.ParseGID(claims.Subject)

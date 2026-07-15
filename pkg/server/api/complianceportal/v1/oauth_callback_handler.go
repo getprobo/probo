@@ -128,7 +128,13 @@ func (h *OAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	identityID, err := oauth2.ParseIDTokenIdentity(tokenResult.IDToken, state.Nonce)
+	identityID, err := oauth2.ParseIDTokenIdentity(
+		tokenResult.IDToken,
+		h.iam.OAuth2ServerService.JWKS(),
+		state.Nonce,
+		h.iam.OAuth2ServerService.Issuer(),
+		tokenResult.ClientID.String(),
+	)
 	if err != nil {
 		h.logger.WarnCtx(ctx, "cannot validate id token", log.Error(err))
 		httpserver.RenderError(w, http.StatusBadRequest, errInvalidOAuthRequest)

@@ -297,3 +297,266 @@ func TestJWTHeader_JSON(t *testing.T) {
 		},
 	)
 }
+
+func TestRSAPublicKeyFromJWK(t *testing.T) {
+	t.Parallel()
+
+	key := testRSAKey(t)
+	jwk := jose.RSAPublicKeyToJWK(&key.PublicKey, "kid-1")
+
+	t.Run(
+		"round trips rsa public key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			pubKey, err := jose.RSAPublicKeyFromJWK(jwk)
+			require.NoError(t, err)
+			assert.Equal(t, key.N, pubKey.N)
+			assert.Equal(t, key.E, pubKey.E)
+		},
+	)
+
+	t.Run(
+		"rejects unsupported key type",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := jose.RSAPublicKeyFromJWK(jose.JWK{KeyType: "EC"})
+			require.Error(t, err)
+		},
+	)
+}
+
+func TestPublicKeyFromJWKS(t *testing.T) {
+	t.Parallel()
+
+	key := testRSAKey(t)
+	jwks := &jose.JWKS{
+		Keys: []jose.JWK{
+			jose.RSAPublicKeyToJWK(&key.PublicKey, "kid-1"),
+			jose.RSAPublicKeyToJWK(&key.PublicKey, "kid-2"),
+		},
+	}
+
+	t.Run(
+		"finds matching key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			pubKey, err := jose.PublicKeyFromJWKS(jwks, "kid-2")
+			require.NoError(t, err)
+			assert.Equal(t, key.E, pubKey.E)
+		},
+	)
+
+	t.Run(
+		"errors when kid is missing",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := jose.PublicKeyFromJWKS(jwks, "missing")
+			require.Error(t, err)
+		},
+	)
+}
+
+func TestVerifyJWT(t *testing.T) {
+	t.Parallel()
+
+	key := testRSAKey(t)
+
+	t.Run(
+		"verifies signed jwt",
+		func(t *testing.T) {
+			t.Parallel()
+
+			claims := map[string]string{"sub": "test"}
+
+			token, err := jose.SignJWT(key, "kid-1", claims)
+			require.NoError(t, err)
+
+			payload, err := jose.VerifyJWT(token, &key.PublicKey)
+			require.NoError(t, err)
+
+			var decoded map[string]string
+
+			err = json.Unmarshal(payload, &decoded)
+			require.NoError(t, err)
+			assert.Equal(t, "test", decoded["sub"])
+		},
+	)
+
+	t.Run(
+		"rejects malformed jwt",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := jose.VerifyJWT("", &key.PublicKey)
+			require.Error(t, err)
+
+			_, err = jose.VerifyJWT("only-one-part", &key.PublicKey)
+			require.Error(t, err)
+
+			_, err = jose.VerifyJWT("two.parts", &key.PublicKey)
+			require.Error(t, err)
+
+			_, err = jose.VerifyJWT("too.many.parts.here", &key.PublicKey)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects tampered payload",
+		func(t *testing.T) {
+			t.Parallel()
+
+			token, err := jose.SignJWT(key, "kid-1", map[string]string{"sub": "test"})
+			require.NoError(t, err)
+
+			parts := strings.Split(token, ".")
+			parts[1] = base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"evil"}`))
+			tampered := strings.Join(parts, ".")
+
+			_, err = jose.VerifyJWT(tampered, &key.PublicKey)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects tampered header",
+		func(t *testing.T) {
+			t.Parallel()
+
+			token, err := jose.SignJWT(key, "kid-1", map[string]string{"sub": "test"})
+			require.NoError(t, err)
+
+			parts := strings.Split(token, ".")
+			parts[0] = base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT","kid":"kid-1"}`))
+			tampered := strings.Join(parts, ".")
+
+			_, err = jose.VerifyJWT(tampered, &key.PublicKey)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects unsupported algorithm",
+		func(t *testing.T) {
+			t.Parallel()
+
+			cases := []struct {
+				name string
+				alg  string
+			}{
+				{name: "hs256", alg: "HS256"},
+				{name: "none", alg: "none"},
+				{name: "lowercase rs256", alg: "rs256"},
+			}
+
+			for _, tc := range cases {
+				t.Run(
+					tc.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						header := base64.RawURLEncoding.EncodeToString(
+							[]byte(`{"alg":"` + tc.alg + `","typ":"JWT","kid":"kid-1"}`),
+						)
+						payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"test"}`))
+						token := header + "." + payload + ".c2ln"
+
+						_, err := jose.VerifyJWT(token, &key.PublicKey)
+						require.Error(t, err)
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"rejects signature from different key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			otherKey := testRSAKey(t)
+
+			token, err := jose.SignJWT(otherKey, "kid-1", map[string]string{"sub": "test"})
+			require.NoError(t, err)
+
+			_, err = jose.VerifyJWT(token, &key.PublicKey)
+			require.Error(t, err)
+		},
+	)
+}
+
+func TestVerifyJWTWithJWKS(t *testing.T) {
+	t.Parallel()
+
+	key := testRSAKey(t)
+	jwks := &jose.JWKS{
+		Keys: []jose.JWK{
+			jose.RSAPublicKeyToJWK(&key.PublicKey, "kid-1"),
+		},
+	}
+
+	t.Run(
+		"verifies signed jwt",
+		func(t *testing.T) {
+			t.Parallel()
+
+			token, err := jose.SignJWT(key, "kid-1", map[string]string{"sub": "test"})
+			require.NoError(t, err)
+
+			payload, err := jose.VerifyJWTWithJWKS(token, jwks)
+			require.NoError(t, err)
+
+			var decoded map[string]string
+
+			err = json.Unmarshal(payload, &decoded)
+			require.NoError(t, err)
+			assert.Equal(t, "test", decoded["sub"])
+		},
+	)
+
+	t.Run(
+		"rejects missing key id",
+		func(t *testing.T) {
+			t.Parallel()
+
+			header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
+			payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"test"}`))
+			token := header + "." + payload + ".c2ln"
+
+			_, err := jose.VerifyJWTWithJWKS(token, jwks)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects unknown key id",
+		func(t *testing.T) {
+			t.Parallel()
+
+			token, err := jose.SignJWT(key, "unknown-kid", map[string]string{"sub": "test"})
+			require.NoError(t, err)
+
+			_, err = jose.VerifyJWTWithJWKS(token, jwks)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects token signed with key outside jwks",
+		func(t *testing.T) {
+			t.Parallel()
+
+			otherKey := testRSAKey(t)
+
+			token, err := jose.SignJWT(otherKey, "kid-1", map[string]string{"sub": "test"})
+			require.NoError(t, err)
+
+			_, err = jose.VerifyJWTWithJWKS(token, jwks)
+			require.Error(t, err)
+		},
+	)
+}

@@ -122,6 +122,7 @@ type (
 		RefreshToken string
 		IDToken      string
 		Scope        string
+		ClientID     gid.GID
 	}
 
 	IntrospectResult struct {
@@ -244,6 +245,11 @@ func (s *Service) JWKS() *jose.JWKS {
 	}
 
 	return jwks
+}
+
+// Issuer returns the OAuth2 issuer URI embedded in ID tokens.
+func (s *Service) Issuer() uri.URI {
+	return s.baseURL
 }
 
 func (s *Service) CreateAccessToken(
@@ -496,6 +502,7 @@ func (s *Service) ExchangeAuthorizationCode(
 		RefreshToken: refreshTokenValue,
 		Scope:        code.Scopes.String(),
 		IDToken:      idToken,
+		ClientID:     client.ID,
 	}, nil
 }
 
@@ -684,6 +691,7 @@ func (s *Service) RefreshToken(
 		RefreshToken: refreshTokenValueNew,
 		Scope:        previousRefreshToken.Scopes.String(),
 		IDToken:      idToken,
+		ClientID:     client.ID,
 	}, nil
 }
 
@@ -959,6 +967,7 @@ func (s *Service) PollDeviceCode(
 		RefreshToken: refreshTokenValue,
 		Scope:        deviceCode.Scopes.String(),
 		IDToken:      idToken,
+		ClientID:     client.ID,
 	}, nil
 }
 

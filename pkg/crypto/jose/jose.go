@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 )
 
 type (
@@ -102,4 +103,107 @@ func SignJWT(privateKey *rsa.PrivateKey, kid string, claims any) (string, error)
 	signatureB64 := base64.RawURLEncoding.EncodeToString(signature)
 
 	return signingInput + "." + signatureB64, nil
+}
+
+// RSAPublicKeyFromJWK reconstructs an RSA public key from a JWK.
+func RSAPublicKeyFromJWK(jwk JWK) (*rsa.PublicKey, error) {
+	if jwk.KeyType != "RSA" {
+		return nil, fmt.Errorf("cannot convert jwk to rsa public key: unsupported key type %q", jwk.KeyType)
+	}
+
+	nBytes, err := base64.RawURLEncoding.DecodeString(jwk.N)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode rsa modulus: %w", err)
+	}
+
+	eBytes, err := base64.RawURLEncoding.DecodeString(jwk.E)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode rsa exponent: %w", err)
+	}
+
+	return &rsa.PublicKey{
+		N: new(big.Int).SetBytes(nBytes),
+		E: int(new(big.Int).SetBytes(eBytes).Int64()),
+	}, nil
+}
+
+// PublicKeyFromJWKS returns the RSA public key matching the given key ID.
+func PublicKeyFromJWKS(jwks *JWKS, kid string) (*rsa.PublicKey, error) {
+	for _, key := range jwks.Keys {
+		if key.KeyID == kid {
+			return RSAPublicKeyFromJWK(key)
+		}
+	}
+
+	return nil, fmt.Errorf("cannot find signing key %q in jwks", kid)
+}
+
+// VerifyJWT verifies an RS256 JWT signature and returns the decoded payload.
+func VerifyJWT(raw string, pubKey *rsa.PublicKey) ([]byte, error) {
+	parts := strings.Split(raw, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("cannot verify jwt: invalid format")
+	}
+
+	headerJSON, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode jwt header: %w", err)
+	}
+
+	var header JWTHeader
+	if err := json.Unmarshal(headerJSON, &header); err != nil {
+		return nil, fmt.Errorf("cannot parse jwt header: %w", err)
+	}
+
+	if header.Algorithm != "RS256" {
+		return nil, fmt.Errorf("cannot verify jwt: unsupported algorithm %q", header.Algorithm)
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode jwt payload: %w", err)
+	}
+
+	signature, err := base64.RawURLEncoding.DecodeString(parts[2])
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode jwt signature: %w", err)
+	}
+
+	signedContent := parts[0] + "." + parts[1]
+	hash := sha256.Sum256([]byte(signedContent))
+
+	if err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, hash[:], signature); err != nil {
+		return nil, fmt.Errorf("cannot verify jwt signature: %w", err)
+	}
+
+	return payload, nil
+}
+
+// VerifyJWTWithJWKS verifies an RS256 JWT using the matching key from a JWKS.
+func VerifyJWTWithJWKS(raw string, jwks *JWKS) ([]byte, error) {
+	parts := strings.Split(raw, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("cannot verify jwt: invalid format")
+	}
+
+	headerJSON, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode jwt header: %w", err)
+	}
+
+	var header JWTHeader
+	if err := json.Unmarshal(headerJSON, &header); err != nil {
+		return nil, fmt.Errorf("cannot parse jwt header: %w", err)
+	}
+
+	if header.KeyID == "" {
+		return nil, fmt.Errorf("cannot verify jwt: missing key id")
+	}
+
+	pubKey, err := PublicKeyFromJWKS(jwks, header.KeyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return VerifyJWT(raw, pubKey)
 }
