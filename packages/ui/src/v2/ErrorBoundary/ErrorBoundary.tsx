@@ -16,37 +16,40 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
-  // A node, or a render function that receives the caught error + a reset fn.
-  fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
-  onError?: (error: Error, info: ErrorInfo) => void;
+  // A node, or a render function that receives the caught value + a reset fn.
+  // The value is `unknown` because anything can be thrown, not just an Error.
+  fallback?: ReactNode | ((error: unknown, reset: () => void) => ReactNode);
+  onError?: (error: unknown, info: ErrorInfo) => void;
 }
 
 interface ErrorBoundaryState {
-  error: Error | null;
+  // Tracked separately from `error` so a falsy thrown value (null, 0, "") still
+  // renders the fallback instead of looping back into the failing subtree.
+  hasError: boolean;
+  error: unknown;
 }
 
 // The single reusable error boundary primitive (the sanctioned use of a class).
 // Generic — works at bootstrap, route, section, or component level; only the
 // placement and the `fallback` differ. See contrib/claude/error-handling.md.
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { error: null };
+  state: ErrorBoundaryState = { hasError: false, error: null };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { error };
+  static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  componentDidCatch(error: unknown, info: ErrorInfo) {
     this.props.onError?.(error, info);
   }
 
-  reset = () => this.setState({ error: null });
+  reset = () => this.setState({ hasError: false, error: null });
 
   render() {
-    const { error } = this.state;
-    if (error) {
+    if (this.state.hasError) {
       const { fallback } = this.props;
       if (typeof fallback === "function") {
-        return fallback(error, this.reset);
+        return fallback(this.state.error, this.reset);
       }
       return fallback ?? null;
     }

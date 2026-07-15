@@ -33,34 +33,37 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
-  // A node, or a render function that receives the caught error + a reset fn.
-  fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
-  onError?: (error: Error, info: ErrorInfo) => void;
+  // A node, or a render function that receives the caught value + a reset fn.
+  // `unknown` because anything can be thrown, not just an Error.
+  fallback?: ReactNode | ((error: unknown, reset: () => void) => ReactNode);
+  onError?: (error: unknown, info: ErrorInfo) => void;
 }
 
 interface ErrorBoundaryState {
-  error: Error | null;
+  // Tracked separately from `error` so a falsy thrown value (null, 0, "") still
+  // renders the fallback instead of looping back into the failing subtree.
+  hasError: boolean;
+  error: unknown;
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { error: null };
+  state: ErrorBoundaryState = { hasError: false, error: null };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { error };
+  static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  componentDidCatch(error: unknown, info: ErrorInfo) {
     this.props.onError?.(error, info);
   }
 
-  reset = () => this.setState({ error: null });
+  reset = () => this.setState({ hasError: false, error: null });
 
   render() {
-    const { error } = this.state;
-    if (error) {
+    if (this.state.hasError) {
       const { fallback } = this.props;
       if (typeof fallback === "function") {
-        return fallback(error, this.reset);
+        return fallback(this.state.error, this.reset);
       }
       return fallback ?? null;
     }
@@ -188,8 +191,15 @@ export function RecentUpdatesSection({ trustCenterKey }: Props) {
   const { t } = useTranslation();
   return (
     <ErrorBoundary
-      fallback={(_, reset) => (
-        <InlineError message={t("errors.inline.message")} onRetry={reset} retryLabel={t("errors.inline.retry")} />
+      // This section reads a field of the preloaded page query — there is no
+      // local refetch, so recover with a reload, not the boundary's `reset`
+      // (see "Retrying: reset vs refetch vs reload" below).
+      fallback={(
+        <InlineError
+          message={t("errors.inline.message")}
+          retryLabel={t("errors.inline.retry")}
+          onRetry={() => window.location.reload()}
+        />
       )}
     >
       <RecentUpdatesSectionContent trustCenterKey={trustCenterKey} />

@@ -39,7 +39,7 @@ export function ErrorState({ code, title, description, actions, fullPage, classN
   const slots = errorState({ fullPage });
 
   return (
-    <div className={slots.root({ className })}>
+    <div role="alert" className={slots.root({ className })}>
       <div className={slots.block()}>
         <div className={slots.content()}>
           {code && (

@@ -35,7 +35,7 @@ export function InlineError({ layout, message, onRetry, retryLabel = "Retry", cl
   const slots = inlineError({ layout });
 
   return (
-    <div className={slots.root({ className })}>
+    <div role="alert" className={slots.root({ className })}>
       <Text size={2} color="neutral" className={slots.message()}>{message}</Text>
       {onRetry && (
         <Button size={2} variant="soft" color="neutral" onClick={onRetry}>
