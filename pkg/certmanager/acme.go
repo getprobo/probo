@@ -274,8 +274,7 @@ func (s *ACMEService) issueOrderCertificate(
 		// CreateOrderCert finalizes the order but may fail to download the
 		// certificate when the CA marks the order valid before the certificate
 		// URL is populated. Poll the order using the known order URL because
-		// some CAs (including Pebble) omit the Location header on poll
-		// responses, leaving order.URI empty.
+		// some CAs omit the Location header on poll responses, leaving order.URI empty.
 		return s.fetchOrderCertificateAfterFinalize(ctx, pollURL, err)
 	default:
 		return nil, fmt.Errorf("order is in unexpected status %q", order.Status)

@@ -96,7 +96,7 @@ VM_IP=$(ip -4 -j addr show dev lima0 | jq -r '.[0].addr_info[0].local')
 
 su - "${LIMA_USER}" -c "export PATH=/usr/local/go/bin:\$HOME/go/bin:\$PATH && cd /workspace && make bin/probod-bootstrap"
 
-make -C /workspace compose/pebble/certs/rootCA.pem compose/keycloak/probo-realm.json
+make -C /workspace compose/step-ca/certs/root_ca.crt compose/keycloak/probo-realm.json
 
 mkdir -p /etc/probod
 
@@ -125,10 +125,10 @@ PROBOD_AWS_ENDPOINT="http://127.0.0.1:8333" \
 PROBOD_AWS_ACCESS_KEY_ID="probod" \
 PROBOD_AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
 PROBOD_AWS_USE_PATH_STYLE=true \
-PROBOD_ACME_DIRECTORY="https://127.0.0.1:14000/dir" \
+PROBOD_ACME_DIRECTORY="https://127.0.0.1:9000/acme/acme/directory" \
 PROBOD_ACME_EMAIL="admin@probo.com" \
 PROBOD_ACME_KEY_TYPE="EC256" \
-PROBOD_ACME_ROOT_CA="$(cat /workspace/compose/pebble/certs/rootCA.pem)" \
+PROBOD_ACME_ROOT_CA="$(cat /workspace/compose/step-ca/certs/root_ca.crt)" \
     /workspace/bin/probod-bootstrap -output /etc/probod/config.yml
 
 # probod runs as ${LIMA_USER} but bootstrap writes config.yml as root with 0600

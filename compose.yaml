@@ -122,28 +122,34 @@ services:
       - "--disable-background-timer-throttling"
       - "--disable-extensions"
 
-  pebble:
-    image: "ghcr.io/letsencrypt/pebble:2.10.0@sha256:68cf1ec8a8db96f64244d5f559c448bc8e54f2934e0dd53a414eabffda7a6f22"
+  # step-ca validates HTTP-01 on port 80; probod serves challenges on :10080.
+  # step-ca shares this service's network so loopback :80 hits Caddy, not an
+  # isolated container namespace (where *.localhost would miss the proxy).
+  acme-http-01-proxy:
+    image: "caddy:2.10.2@sha256:c3d7ee5d2b11f9dc54f947f68a734c84e9c9666c92c88a7f30b9cba5da182adb"
     pull_policy: missing
     ports:
-      - "14000:14000" # ACME server
-      - "15000:15000" # Management interface
-    environment:
-      PEBBLE_VA_NOSLEEP: "1" # Don't sleep during validation for faster testing
-      PEBBLE_WFE_NONCEREJECT: "0" # Don't reject reused nonces
-      PEBBLE_VA_ALWAYS_VALID: "1" # Skip actual HTTP/DNS validation for local dev
-    command: -config /test/config/pebble-config.json -dnsserver 127.0.0.1:8053
+      - "80:80"
+      - "9000:9000" # step-ca ACME API (network_mode: service:… below)
     volumes:
-      - "./compose/pebble:/test/config:ro"
+      - "./compose/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-  pebble-challtestsrv:
-    image: "ghcr.io/letsencrypt/pebble-challtestsrv:2.10.0@sha256:df85447c39114cd2b3da971e751682ad2db19a996034b47d5392cd4a0f43406a"
+  step-ca:
+    image: "smallstep/step-ca:0.28.4@sha256:0f88382ac5af5c6b7bbba0c6e8fcefef52aee6f22ea364df8e02a09ffd0d22f3"
     pull_policy: missing
-    ports:
-      - "8055:8055" # HTTP-01 challenge test server
-      - "8053:8053" # DNS server
-      - "8056:8056" # Management API
-    command: -dnsserver ":8053" -http01 ":8055" -management ":8056"
+    network_mode: "service:acme-http-01-proxy"
+    depends_on:
+      - acme-http-01-proxy
+    environment:
+      DOCKER_STEPCA_INIT_NAME: "Probo Local CA"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "localhost,127.0.0.1,step-ca"
+      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
+      DOCKER_STEPCA_INIT_ACME: "true"
+      DOCKER_STEPCA_INIT_PASSWORD: "probod-local-dev-ca"
+    volumes:
+      - "./compose/step-ca:/home/step:rw"
 
   keycloak:
     image: "quay.io/keycloak/keycloak:26.6.1@sha256:26ae26445475f7fac5f90ee138b1bdb64324f5815fb16133ffdbdb122d97c4d8"

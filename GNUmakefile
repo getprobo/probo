@@ -199,7 +199,7 @@ $(CFG_DEV_OAUTH2_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) genrsa -out $@ 2048
 
-cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/rootCA.pem $(wildcard $(DEV_ENV))
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
 	PROBOD_BASE_URL=http://localhost:8080; \
@@ -217,7 +217,8 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/ro
 	PROBOD_PG_PASSWORD=postgres; \
 	PROBOD_PG_DATABASE=probod; \
 	PROBOD_TRUST_CENTER_HTTP_ADDR=:10080; \
-	PROBOD_TRUST_CENTER_HTTPS_ADDR=:10443; \
+	PROBOD_TRUST_CENTER_HTTPS_ADDR=:443; \
+	PROBOD_TRUST_CENTER_BASE_DOMAIN=probopage.localhost; \
 	PROBOD_AWS_REGION=us-east-1; \
 	PROBOD_AWS_BUCKET=probod; \
 	PROBOD_AWS_ACCESS_KEY_ID=probod; \
@@ -230,9 +231,9 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/ro
 	PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER=openai; \
 	PROBOD_AGENT_THIRD_PARTY_VETTER_MODEL_NAME=gpt-4o; \
 	PROBOD_CHROME_DP_ADDR=localhost:9222; \
-	PROBOD_ACME_DIRECTORY=https://localhost:14000/dir; \
+	PROBOD_ACME_DIRECTORY=https://localhost:9000/acme/acme/directory; \
 	PROBOD_ACME_EMAIL=admin@probo.com; \
-	PROBOD_ACME_ROOT_CA="$$($(CAT) compose/pebble/certs/rootCA.pem)"; \
+	PROBOD_ACME_ROOT_CA="$$($(CAT) compose/step-ca/certs/root_ca.crt)"; \
 	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \
 	set +a; \
 	./bin/probod-bootstrap -output $@
@@ -407,7 +408,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	find apps -type d -name __generated__ -exec $(RM) -rf {} +
 
 .PHONY: stack-up
-stack-up: compose/pebble/certs/rootCA.pem compose/keycloak/probo-realm.json ## Start the docker stack as a deamon
+stack-up: compose/step-ca/certs/root_ca.crt compose/keycloak/probo-realm.json ## Start the docker stack as a deamon
 	$(DOCKER_COMPOSE) up -d
 
 .PHONY: stack-down
@@ -422,13 +423,15 @@ stack-ps: ## List the docker stack containers
 psql: ## Open a psql shell to the postgres container
 	$(DOCKER_COMPOSE) exec postgres psql -U probod -d probod
 
-compose/pebble/certs/rootCA.pem:
-	@$(MKDIR) compose/pebble/certs
-	$(MKCERT) -cert-file compose/pebble/certs/pebble.crt \
-		-key-file compose/pebble/certs/pebble.key \
-		localhost 127.0.0.1 ::1 pebble
-	$(CP) "$$($(MKCERT) -CAROOT)/rootCA.pem" compose/pebble/certs/rootCA.pem
-	$(CP) "$$($(MKCERT) -CAROOT)/rootCA-key.pem" compose/pebble/certs/rootCA-key.pem
+compose/step-ca/certs/root_ca.crt:
+	@$(MKDIR) compose/step-ca/secrets
+	$(DOCKER_COMPOSE) up -d acme-http-01-proxy step-ca
+	@i=0; \
+	while [ ! -f $@ ] && [ $$i -lt 60 ]; do \
+		sleep 1; \
+		i=$$((i + 1)); \
+	done
+	@test -f $@ || (echo "step-ca root CA not ready; check: docker compose logs step-ca" >&2; exit 1)
 
 compose/keycloak/certs/cert.pem:
 	$(MKDIR) ./compose/keycloak/certs

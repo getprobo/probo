@@ -1,0 +1,5 @@
+# Proxies ACME HTTP-01 validation (port 80) to probod's trust-center HTTP
+# listener on the host (:10080 by default).
+:80 {
+	reverse_proxy host.docker.internal:10080
+}
