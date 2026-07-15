@@ -27,7 +27,7 @@ import { MediaTile } from "#/components/MediaTile/MediaTile";
 import type { ComplianceFrameworkListItem_complianceFramework$key } from "./__generated__/ComplianceFrameworkListItem_complianceFramework.graphql";
 
 const complianceFrameworkListItemFragment = graphql`
-  fragment ComplianceFrameworkListItem_complianceFramework on ComplianceFramework {
+  fragment ComplianceFrameworkListItem_complianceFramework on ComplianceFramework @throwOnFieldError {
     framework {
       name
       themedLogoUrl

@@ -27,7 +27,7 @@ import { externalHref } from "#/lib/url/hostname";
 import type { TrustCenterReferenceListItem_reference$key } from "./__generated__/TrustCenterReferenceListItem_reference.graphql";
 
 const trustCenterReferenceListItemFragment = graphql`
-  fragment TrustCenterReferenceListItem_reference on TrustCenterReference {
+  fragment TrustCenterReferenceListItem_reference on TrustCenterReference @throwOnFieldError {
     name
     websiteUrl
     logo {

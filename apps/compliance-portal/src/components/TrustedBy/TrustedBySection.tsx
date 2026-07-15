@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { InlineError } from "@probo/ui/src/v2/InlineError/InlineError";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -26,8 +28,10 @@ import { HomeSection } from "#/components/HomeSection/HomeSection";
 import type { TrustedBySection_trustCenter$key } from "./__generated__/TrustedBySection_trustCenter.graphql";
 import { TrustCenterReferenceListItem } from "./TrustCenterReferenceListItem";
 
+// @throwOnFieldError surfaces a field error at the read below so the section
+// ErrorBoundary contains it. See contrib/claude/error-handling.md.
 const trustedBySectionFragment = graphql`
-  fragment TrustedBySection_trustCenter on TrustCenter {
+  fragment TrustedBySection_trustCenter on TrustCenter @throwOnFieldError {
     references(first: 12) {
       edges {
         node {
@@ -43,8 +47,31 @@ interface TrustedBySectionProps {
   trustCenterKey: TrustedBySection_trustCenter$key;
 }
 
-// "Trusted by" section: a grid of customer / reference logos.
+// "Trusted by" section: a grid of customer / reference logos. A load failure
+// degrades to an inline error instead of taking down the page.
 export function TrustedBySection({ trustCenterKey }: TrustedBySectionProps) {
+  const { t } = useTranslation();
+
+  return (
+    <ErrorBoundary
+      fallback={(
+        // The data comes from the preloaded HomePageQuery, so there is no local
+        // refetch to clear a field error — reload the page to recover.
+        <HomeSection title={t("home.sections.trustedBy")}>
+          <InlineError
+            message={t("errors.inline.message")}
+            retryLabel={t("errors.inline.retry")}
+            onRetry={() => window.location.reload()}
+          />
+        </HomeSection>
+      )}
+    >
+      <TrustedBySectionContent trustCenterKey={trustCenterKey} />
+    </ErrorBoundary>
+  );
+}
+
+function TrustedBySectionContent({ trustCenterKey }: TrustedBySectionProps) {
   const { t } = useTranslation();
   const data = useFragment(trustedBySectionFragment, trustCenterKey);
   const references = data.references.edges.map(edge => edge.node);
