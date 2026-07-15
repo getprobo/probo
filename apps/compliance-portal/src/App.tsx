@@ -18,19 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { RouterProvider } from "react-router";
 
-import { BootstrapError } from "#/components/errors/BootstrapError";
 import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { router } from "#/routes";
 
 export function App() {
   return (
-    <ErrorBoundary fallback={<BootstrapError />}>
-      <RelayProvider>
-        <RouterProvider router={router} />
-      </RelayProvider>
-    </ErrorBoundary>
+    <RelayProvider>
+      <RouterProvider router={router} />
+    </RelayProvider>
   );
 }

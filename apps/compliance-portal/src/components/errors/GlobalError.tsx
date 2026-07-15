@@ -61,7 +61,7 @@ interface GlobalErrorProps {
 }
 
 // Page-level error fallback: renders the v2 ErrorState with portal copy and
-// actions. Used by the bootstrap boundary and the route boundaries.
+// actions. Used by the route boundaries (root + page).
 export function GlobalError({ error, onRetry, fullPage = false }: GlobalErrorProps) {
   const { t } = useTranslation();
   const { code, titleKey, descriptionKey } = resolveContent(error);

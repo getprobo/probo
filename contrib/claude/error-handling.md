@@ -211,7 +211,7 @@ The portal ships three fallback tiers, all backed by the same `ErrorBoundary`:
 
 | Tier | Placement | Fallback |
 |------|-----------|----------|
-| Global (bootstrap) | around `RouterProvider` in `App.tsx`, and the root route | `ErrorState` full page (standalone) |
+| Global | root route (`RootErrorBoundary`) | `ErrorState` full page (standalone) |
 | Page | pathless child route inside the layout | `ErrorState` inside the shell (TopBar/footer survive) |
 | Section / row | around a fragment-reading subtree | `InlineError` (vertical for sections, horizontal for rows) with a retry |
 
