@@ -4,9 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.226.0] - 2026-07-15
+
 ### Added
 
+- Added a v2 `ErrorBoundary` component (with companion `ErrorState` and `InlineError` primitives) to `@probo/ui` for graceful React error handling
 - Webhook deliveries for `*:updated` events now include a top-level `updatedFrom` field alongside `data`, carrying a full snapshot of the entity as it was before the update (e.g. the prior membership role on `user:updated`). The field is omitted for non-update events
+
+### Fixed
+
+- SCIM user provisioning: deleting a user whose profile is still referenced (e.g. by signed document versions) now archives the user instead of returning a 500 and disabling the connector
 
 ## [0.225.0] - 2026-07-13
 
