@@ -3296,7 +3296,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		}
 
 		if isFirstVersion {
-			if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+			if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document created webhook: %w", err)
 			}
 		}
@@ -3310,6 +3310,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 			version,
 			nil,
 			&quorum.ID,
+			nil,
 		); err != nil {
 			return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
 		}
@@ -3332,7 +3333,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	}
 
 	if isFirstVersion {
-		if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+		if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
 			return fmt.Errorf("cannot emit document created webhook: %w", err)
 		}
 	}
@@ -3344,6 +3345,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		version.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionPublished,
 		version,
+		nil,
 		nil,
 		nil,
 	); err != nil {

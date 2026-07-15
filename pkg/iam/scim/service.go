@@ -190,6 +190,8 @@ func (s *Service) CreateUser(
 		eventType := coredata.WebhookEventTypeUserUpdated
 		profile = &coredata.MembershipProfile{}
 
+		var previousProfile *coredata.MembershipProfile
+
 		if err := profile.LoadByIdentityIDAndOrganizationID(
 			ctx,
 			tx,
@@ -214,6 +216,9 @@ func (s *Service) CreateUser(
 					*externalIdPtr,
 					config.OrganizationID,
 				); err == nil {
+					snapshot := *profile
+					previousProfile = &snapshot
+
 					// Migrate the existing membership to the new identity
 					// so the user's role is preserved.
 					oldIdentityID := profile.IdentityID
@@ -270,6 +275,11 @@ func (s *Service) CreateUser(
 				eventType = coredata.WebhookEventTypeUserCreated
 			}
 		} else {
+			if previousProfile == nil {
+				snapshot := *profile
+				previousProfile = &snapshot
+			}
+
 			if profile.Source == coredata.ProfileSourceSCIM {
 				return scimerrors.ScimErrorUniqueness
 			}
@@ -340,7 +350,12 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership)); err != nil {
+		var previousUser any
+		if eventType == coredata.WebhookEventTypeUserUpdated && previousProfile != nil {
+			previousUser = webhooktypes.NewUser(previousProfile, membership)
+		}
+
+		if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
 
@@ -516,6 +531,10 @@ func (s *Service) updateUser(
 			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
+
+			previousProfile := *profile
+			previousMembership := *membership
+			previousUser := webhooktypes.NewUser(&previousProfile, &previousMembership)
 
 			shouldReactivate := attrs.Active != nil && *attrs.Active && profile.State == coredata.ProfileStateInactive
 			shouldDeactivate := attrs.Active != nil && !*attrs.Active && profile.State == coredata.ProfileStateActive
@@ -785,7 +804,7 @@ func (s *Service) updateUser(
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+			if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -931,6 +950,8 @@ func (s *Service) deactivateProfileInTx(
 		return nil
 	}
 
+	previousUser := webhooktypes.NewUser(profile, membership)
+
 	now := time.Now()
 	profile.State = coredata.ProfileStateInactive
 	profile.UpdatedAt = now
@@ -964,7 +985,7 @@ func (s *Service) deactivateProfileInTx(
 		}
 	}
 
-	if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+	if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 		return fmt.Errorf("cannot insert webhook event: %w", err)
 	}
 

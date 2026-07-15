@@ -39,6 +39,7 @@ type (
 		OrganizationID gid.GID          `db:"organization_id"`
 		EventType      WebhookEventType `db:"event_type"`
 		Data           json.RawMessage  `db:"data"`
+		UpdatedFrom    json.RawMessage  `db:"updated_from"`
 		CreatedAt      time.Time        `db:"created_at"`
 		ProcessedAt    *time.Time       `db:"processed_at"`
 	}
@@ -58,6 +59,7 @@ INSERT INTO webhook_data (
     organization_id,
     event_type,
     data,
+    updated_from,
     created_at
 )
 VALUES (
@@ -66,6 +68,7 @@ VALUES (
     @organization_id,
     @event_type,
     @data,
+    @updated_from,
     @created_at
 )
 `
@@ -76,6 +79,7 @@ VALUES (
 		"organization_id": w.OrganizationID,
 		"event_type":      w.EventType,
 		"data":            w.Data,
+		"updated_from":    w.UpdatedFrom,
 		"created_at":      w.CreatedAt,
 	}
 
@@ -97,6 +101,7 @@ SELECT
     organization_id,
     event_type,
     data,
+    updated_from,
     created_at,
     processed_at
 FROM webhook_data

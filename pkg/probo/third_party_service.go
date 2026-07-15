@@ -368,6 +368,8 @@ func (s ThirdPartyService) Update(
 				return fmt.Errorf("cannot load thirdParty %q: %w", req.ID, err)
 			}
 
+			previousThirdParty := webhooktypes.NewThirdParty(thirdParty)
+
 			if req.Name != nil {
 				thirdParty.Name = *req.Name
 			}
@@ -478,13 +480,14 @@ func (s ThirdPartyService) Update(
 				return fmt.Errorf("cannot update thirdParty: %w", err)
 			}
 
-			if err := webhook.InsertData(
+			if err := webhook.InsertUpdateData(
 				ctx,
 				conn,
 				scope,
 				thirdParty.OrganizationID,
 				coredata.WebhookEventTypeThirdPartyUpdated,
 				webhooktypes.NewThirdParty(thirdParty),
+				previousThirdParty,
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}

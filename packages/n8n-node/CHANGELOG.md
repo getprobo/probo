@@ -4,6 +4,10 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Probo Trigger output for `*:updated` events now includes an `updatedFrom` object alongside `data`, holding the entity snapshot from before the update so workflows can diff old vs new values (for example `{{ $json.updatedFrom.membership.role }}` vs `{{ $json.data.membership.role }}`)
+
 ## [0.201.0] - 2026-07-09
 
 ### Added

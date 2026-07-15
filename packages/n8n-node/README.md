@@ -103,6 +103,15 @@ Probo Trigger  →  Slack
 
 4. **Activate the workflow.** n8n registers a webhook subscription in Probo. When a document version is published, Probo delivers the event and the Slack message is sent.
 
+### Update events carry the previous state
+
+For `*:updated` events, the payload includes an `updatedFrom` object next to `data`, holding a full snapshot of the entity as it was before the update. This lets a workflow react to what actually changed — for example, only notify when a user's role changes:
+
+- **Condition:** `{{ $json.data.membership.role !== $json.updatedFrom.membership.role }}`
+- **Text:** `Role changed from {{ $json.updatedFrom.membership.role }} to {{ $json.data.membership.role }}`
+
+`updatedFrom` is present only on update events; it is absent for created, deleted, and other lifecycle events.
+
 ### Alternative: list open tasks on a schedule
 
 Use the **Probo** action node without a trigger:

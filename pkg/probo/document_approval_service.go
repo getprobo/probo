@@ -228,6 +228,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 						dv,
 						nil,
 						&requestedQuorum.ID,
+						nil,
 					); err != nil {
 						return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
 					}
@@ -239,6 +240,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 						dv.DocumentID,
 						coredata.WebhookEventTypeDocumentVersionPublished,
 						dv,
+						nil,
 						nil,
 						nil,
 					); err != nil {
@@ -398,6 +400,33 @@ func (s *DocumentApprovalService) Approve(
 				return fmt.Errorf("cannot create electronic signature: %w", err)
 			}
 
+			// Snapshot the quorum before mutating it, but only when a
+			// subscriber can actually receive the resulting
+			// `...:updated` event. Otherwise the emitter short-circuits
+			// on the same subscription check and this extra load would
+			// be wasted work that could still fail the approval.
+			var updatedFromQuorum any
+
+			subscriptions := coredata.WebhookSubscriptions{}
+
+			hasSubscription, err := subscriptions.ExistsByOrganizationIDAndEventType(
+				ctx,
+				tx,
+				scope,
+				document.OrganizationID,
+				coredata.WebhookEventTypeDocumentVersionApprovalQuorumUpdated,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot check webhook subscriptions for approval quorum: %w", err)
+			}
+
+			if hasSubscription {
+				updatedFromQuorum, err = s.svc.Documents.loadDocumentApprovalQuorumForWebhook(ctx, scope, tx, quorum.ID, documentVersion, document)
+				if err != nil {
+					return fmt.Errorf("cannot load approval quorum snapshot for webhook: %w", err)
+				}
+			}
+
 			decision.State = coredata.DocumentVersionApprovalDecisionStateApproved
 			decision.Comment = req.Comment
 			decision.ElectronicSignatureID = &esig.ID
@@ -433,6 +462,7 @@ func (s *DocumentApprovalService) Approve(
 				documentVersion,
 				nil,
 				&quorum.ID,
+				updatedFromQuorum,
 			); err != nil {
 				return fmt.Errorf("cannot emit approval quorum updated webhook: %w", err)
 			}
@@ -531,6 +561,7 @@ func (s *DocumentApprovalService) Reject(
 				documentVersion,
 				nil,
 				&quorum.ID,
+				nil,
 			); err != nil {
 				return fmt.Errorf("cannot emit approval quorum rejected webhook: %w", err)
 			}
@@ -542,6 +573,7 @@ func (s *DocumentApprovalService) Reject(
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionRejected,
 				documentVersion,
+				nil,
 				nil,
 				nil,
 			); err != nil {
@@ -635,6 +667,7 @@ func (s *DocumentApprovalService) VoidApproval(
 				documentVersion,
 				nil,
 				&quorum.ID,
+				nil,
 			); err != nil {
 				return fmt.Errorf("cannot emit approval quorum voided webhook: %w", err)
 			}
@@ -998,6 +1031,7 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 		version,
 		nil,
 		&quorum.ID,
+		nil,
 	); err != nil {
 		return fmt.Errorf("cannot emit approval quorum approved webhook: %w", err)
 	}
@@ -1009,6 +1043,7 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 		version.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionPublished,
 		version,
+		nil,
 		nil,
 		nil,
 	); err != nil {

@@ -198,6 +198,8 @@ func (s *ObligationService) Update(
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
 
+			previousObligation := webhooktypes.NewObligation(obligation)
+
 			if req.Area != nil {
 				obligation.Area = *req.Area
 			}
@@ -249,7 +251,7 @@ func (s *ObligationService) Update(
 				return fmt.Errorf("cannot update obligation: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationUpdated, webhooktypes.NewObligation(obligation)); err != nil {
+			if err := webhook.InsertUpdateData(ctx, conn, scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationUpdated, webhooktypes.NewObligation(obligation), previousObligation); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 

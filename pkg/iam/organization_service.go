@@ -293,6 +293,8 @@ func (s *OrganizationService) UpdateMembership(
 				}
 			}
 
+			previousUser := webhooktypes.NewUser(profile, &membership)
+
 			membership.Role = role
 			membership.UpdatedAt = time.Now()
 
@@ -300,7 +302,7 @@ func (s *OrganizationService) UpdateMembership(
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, &membership)); err != nil {
+			if err := webhook.InsertUpdateData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, &membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -439,6 +441,8 @@ func (s *OrganizationService) ArchiveUser(
 				return fmt.Errorf("cannot delete requested signatures: %w", err)
 			}
 
+			previousUser := webhooktypes.NewUser(&profile, membership)
+
 			now := time.Now()
 
 			if profile.State != coredata.ProfileStateInactive {
@@ -455,7 +459,7 @@ func (s *OrganizationService) ArchiveUser(
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership)); err != nil {
+			if err := webhook.InsertUpdateData(ctx, tx, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -1099,6 +1103,8 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
+			previousProfile := *profile
+
 			if profile.Source != coredata.ProfileSourceSCIM {
 				profile.FullName = req.FullName
 				profile.Kind = req.Kind
@@ -1130,7 +1136,10 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 
 			membership := &coredata.Membership{}
 
-			var webhookPayload *webhooktypes.User
+			var (
+				webhookPayload *webhooktypes.User
+				previousUser   *webhooktypes.User
+			)
 
 			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -1138,16 +1147,20 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				}
 
 				webhookPayload = webhooktypes.NewUser(profile, nil)
+				previousUser = webhooktypes.NewUser(&previousProfile, nil)
 			} else {
 				webhookPayload = webhooktypes.NewUser(profile, membership)
+				previousUser = webhooktypes.NewUser(&previousProfile, membership)
 			}
 
-			if err := webhook.InsertData(ctx,
+			if err := webhook.InsertUpdateData(
+				ctx,
 				conn,
 				scope,
 				profile.OrganizationID,
 				coredata.WebhookEventTypeUserUpdated,
 				webhookPayload,
+				previousUser,
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}

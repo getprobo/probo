@@ -321,6 +321,7 @@ func (h *webhookHandler) doHTTPCall(
 		EventType:      webhookData.EventType.String(),
 		CreatedAt:      webhookData.CreatedAt,
 		Data:           webhookData.Data,
+		UpdatedFrom:    webhookData.UpdatedFrom,
 	}
 
 	body, err := json.Marshal(payload)

@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- Webhook deliveries for `*:updated` events now include a top-level `updatedFrom` field alongside `data`, carrying a full snapshot of the entity as it was before the update (e.g. the prior membership role on `user:updated`). The field is omitted for non-update events
+
 ## [0.225.0] - 2026-07-13
 
 ### Added

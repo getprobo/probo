@@ -38,6 +38,7 @@ type Payload struct {
 	EventType      string          `json:"eventType"`
 	CreatedAt      time.Time       `json:"createdAt"`
 	Data           json.RawMessage `json:"data"`
+	UpdatedFrom    json.RawMessage `json:"updatedFrom,omitempty"`
 }
 
 func InsertData(
@@ -47,6 +48,22 @@ func InsertData(
 	organizationID gid.GID,
 	eventType coredata.WebhookEventType,
 	data any,
+) error {
+	if err := InsertUpdateData(ctx, tx, scope, organizationID, eventType, data, nil); err != nil {
+		return fmt.Errorf("cannot insert webhook data: %w", err)
+	}
+
+	return nil
+}
+
+func InsertUpdateData(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	eventType coredata.WebhookEventType,
+	data any,
+	updatedFrom any,
 ) error {
 	var configs coredata.WebhookSubscriptions
 
@@ -64,11 +81,20 @@ func InsertData(
 		return fmt.Errorf("cannot marshal webhook event data: %w", err)
 	}
 
+	var updatedFromRaw json.RawMessage
+	if updatedFrom != nil {
+		updatedFromRaw, err = json.Marshal(updatedFrom)
+		if err != nil {
+			return fmt.Errorf("cannot marshal webhook event updated-from data: %w", err)
+		}
+	}
+
 	webhookData := &coredata.WebhookData{
 		ID:             gid.New(scope.GetTenantID(), coredata.WebhookDataEntityType),
 		OrganizationID: organizationID,
 		EventType:      eventType,
 		Data:           raw,
+		UpdatedFrom:    updatedFromRaw,
 		CreatedAt:      time.Now(),
 	}
 
