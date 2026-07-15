@@ -152,7 +152,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/trust"
+	complianceportal_v1 "go.probo.inc/probo/pkg/server/api/complianceportal/v1"
 )
 ```
 

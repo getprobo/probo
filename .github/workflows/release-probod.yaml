@@ -75,7 +75,7 @@ jobs:
         run: |
           go generate ./pkg/server/api/connect/v1
           go generate ./pkg/server/api/console/v1
-          go generate ./pkg/server/api/trust/v1
+          go generate ./pkg/server/api/complianceportal/v1
           go generate ./pkg/server/api/mcp/v1
       - name: "Build binaries"
         env:

@@ -37,7 +37,7 @@ Individual codegen is driven by `go generate`:
 
 - `go generate ./pkg/server/api/console/v1` — Console GraphQL (gqlgen)
 - `go generate ./pkg/server/api/connect/v1` — Connect GraphQL (gqlgen)
-- `go generate ./pkg/server/api/trust/v1` — Trust GraphQL (gqlgen)
+- `go generate ./pkg/server/api/complianceportal/v1` — Compliance portal GraphQL (gqlgen)
 - `go generate ./pkg/server/api/mcp/v1` — MCP (mcpgen)
 - `go generate ./pkg/llm` — LLM model registry from OpenRouter (`make genmodels`)
 

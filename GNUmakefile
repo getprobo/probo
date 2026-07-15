@@ -65,8 +65,8 @@ GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/connect/v1/types/types.go \
 	pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/console/v1/types/types.go \
-	pkg/server/api/trust/v1/schema/schema.go \
-	pkg/server/api/trust/v1/types/types.go \
+	pkg/server/api/complianceportal/v1/schema/schema.go \
+	pkg/server/api/complianceportal/v1/types/types.go \
 	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go
 
@@ -301,7 +301,7 @@ $(PROBO_AGENT_BIN):
 RELAY_SCHEMAS = \
 	pkg/server/api/connect/v1/schema.graphql \
 	pkg/server/api/console/v1/schema.graphql \
-	pkg/server/api/trust/v1/schema.graphql
+	pkg/server/api/complianceportal/v1/schema.graphql
 
 .PHONY: relay
 relay: $(RELAY_SCHEMAS)
@@ -311,7 +311,7 @@ MERGE_GRAPHQL = contrib/merge-graphql-schema.sh
 
 CONNECT_GQL = $(wildcard pkg/server/api/connect/v1/graphql/*.graphql)
 CONSOLE_GQL = $(wildcard pkg/server/api/console/v1/graphql/*.graphql)
-TRUST_GQL   = $(wildcard pkg/server/api/trust/v1/graphql/*.graphql)
+COMPLIANCEPORTAL_GQL = $(wildcard pkg/server/api/complianceportal/v1/graphql/*.graphql)
 
 pkg/server/api/connect/v1/schema.graphql: pkg/server/api/connect/v1/graphql $(CONNECT_GQL)
 	$(MERGE_GRAPHQL) $@ pkg/server/api/connect/v1/graphql
@@ -319,8 +319,8 @@ pkg/server/api/connect/v1/schema.graphql: pkg/server/api/connect/v1/graphql $(CO
 pkg/server/api/console/v1/schema.graphql: pkg/server/api/console/v1/graphql $(CONSOLE_GQL)
 	$(MERGE_GRAPHQL) $@ pkg/server/api/console/v1/graphql
 
-pkg/server/api/trust/v1/schema.graphql: pkg/server/api/trust/v1/graphql $(TRUST_GQL)
-	$(MERGE_GRAPHQL) $@ pkg/server/api/trust/v1/graphql
+pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL)
+	$(MERGE_GRAPHQL) $@ pkg/server/api/complianceportal/v1/graphql
 
 .PHONY: @probo/console
 @probo/console: NODE_ENV=production
@@ -356,9 +356,9 @@ pkg/server/api/console/v1/schema/schema.go \
 pkg/server/api/console/v1/types/types.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/graphql $(CONSOLE_GQL) | pkg/server/api/connect/v1/types/types.go
 	$(GO_GENERATE) ./pkg/server/api/console/v1
 
-pkg/server/api/trust/v1/schema/schema.go \
-pkg/server/api/trust/v1/types/types.go: pkg/server/api/trust/v1/gqlgen.yaml pkg/server/api/trust/v1/graphql $(TRUST_GQL) | pkg/server/api/console/v1/types/types.go
-	$(GO_GENERATE) ./pkg/server/api/trust/v1
+pkg/server/api/complianceportal/v1/schema/schema.go \
+pkg/server/api/complianceportal/v1/types/types.go: pkg/server/api/complianceportal/v1/gqlgen.yaml pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL) | pkg/server/api/console/v1/types/types.go
+	$(GO_GENERATE) ./pkg/server/api/complianceportal/v1
 
 pkg/server/api/mcp/v1/server/server.go \
 pkg/server/api/mcp/v1/types/types.go: pkg/server/api/mcp/v1/specification.yaml pkg/server/api/mcp/v1/mcpgen.yaml
@@ -392,7 +392,7 @@ fmt-go: ## Format Go code
 clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf bin/*
 	$(RM) -rf node_modules
-	$(RM) -rf apps/{console,trust,compliance-portal}/{dist,node_modules}
+	$(RM) -rf apps/{console,compliance-portal,trust}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
 	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
@@ -400,7 +400,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf compose/keycloak/certs/cert.pem compose/keycloak/certs/private-key.pem compose/keycloak/probo-realm.json
 	$(RM) -f pkg/server/api/connect/v1/schema/schema.go pkg/server/api/connect/v1/types/types.go
 	$(RM) -f pkg/server/api/console/v1/schema/schema.go pkg/server/api/console/v1/types/types.go
-	$(RM) -f pkg/server/api/trust/v1/schema/schema.go pkg/server/api/trust/v1/types/types.go
+	$(RM) -f pkg/server/api/complianceportal/v1/schema/schema.go pkg/server/api/complianceportal/v1/types/types.go
 	$(RM) -f pkg/server/api/mcp/v1/server/server.go pkg/server/api/mcp/v1/types/types.go
 	$(RM) -f $(RELAY_SCHEMAS)
 	$(RM) -f pkg/llm/registry_gen.go
