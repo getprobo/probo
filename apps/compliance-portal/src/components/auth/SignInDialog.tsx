@@ -25,7 +25,7 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { useTranslation } from "react-i18next";
 
-import { LoginForm } from "./LoginForm";
+import { SignInForm } from "./SignInForm";
 
 interface SignInDialogProps {
   open: boolean;
@@ -35,7 +35,7 @@ interface SignInDialogProps {
 }
 
 // The reusable "Login Dialog" from the design: a modal sign-in gate composed of
-// the kit Dialog plus the magic-link / SSO login form.
+// the kit Dialog plus the magic-link / SSO sign-in form.
 export function SignInDialog({ open, onOpenChange, continueTo }: SignInDialogProps) {
   const { t } = useTranslation();
 
@@ -46,7 +46,7 @@ export function SignInDialog({ open, onOpenChange, continueTo }: SignInDialogPro
           <DialogTitle>{t("auth.signIn.title")}</DialogTitle>
           <DialogDescription>{t("auth.signIn.description")}</DialogDescription>
         </DialogHeader>
-        <LoginForm continueTo={continueTo} onCancel={() => onOpenChange(false)} />
+        <SignInForm continueTo={continueTo} onCancel={() => onOpenChange(false)} />
       </DialogPopup>
     </Dialog>
   );

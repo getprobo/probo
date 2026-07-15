@@ -34,20 +34,20 @@ import { graphql } from "relay-runtime";
 import { getSafeContinueUrl } from "#/lib/auth/continueUrl";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import type { LoginFormMutation } from "./__generated__/LoginFormMutation.graphql";
+import type { SignInFormMutation } from "./__generated__/SignInFormMutation.graphql";
 import { OIDCProviders } from "./OIDCProviders";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
 const sendMagicLinkMutation = graphql`
-  mutation LoginFormMutation($input: SendMagicLinkInput!) {
+  mutation SignInFormMutation($input: SendMagicLinkInput!) {
     sendMagicLink(input: $input) {
       success
     }
   }
 `;
 
-interface LoginFormProps {
+interface SignInFormProps {
   // Absolute URL to return to after authentication (carries the request-all
   // marker so an access request resumes once signed in).
   continueTo: string;
@@ -56,14 +56,14 @@ interface LoginFormProps {
 
 // Sign-in form used inside the dialog: SSO providers, then a magic-link email
 // flow. On success it flips to a "check your email" state with a resend timer.
-export function LoginForm({ continueTo, onCancel }: LoginFormProps) {
+export function SignInForm({ continueTo, onCancel }: SignInFormProps) {
   const { t } = useTranslation();
   const toast = Toast.useToastManager();
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN_SECONDS);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
-  const [sendMagicLink, isSending] = useMutation<LoginFormMutation>(
+  const [sendMagicLink, isSending] = useMutation<SignInFormMutation>(
     sendMagicLinkMutation,
     { errorToast: false },
   );
