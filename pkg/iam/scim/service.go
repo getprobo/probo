@@ -892,8 +892,18 @@ func (s *Service) DeleteUser(
 				membership = m
 			}
 
-			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
-				if errors.Is(err, coredata.ErrResourceInUse) {
+			deleteErr := tx.Savepoint(
+				ctx,
+				func(ctx context.Context, sp pg.Tx) error {
+					if err := profile.Delete(ctx, sp, scope, profile.ID); err != nil {
+						return fmt.Errorf("cannot delete profile: %w", err)
+					}
+
+					return nil
+				},
+			)
+			if deleteErr != nil {
+				if errors.Is(deleteErr, coredata.ErrResourceInUse) {
 					s.logger.WarnCtx(
 						ctx,
 						"SCIM user delete skipped, profile is in use",
@@ -907,7 +917,7 @@ func (s *Service) DeleteUser(
 					return nil
 				}
 
-				return fmt.Errorf("cannot delete profile: %w", err)
+				return fmt.Errorf("cannot delete profile in savepoint: %w", deleteErr)
 			}
 
 			invitations := &coredata.Invitations{}

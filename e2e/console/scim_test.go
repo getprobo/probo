@@ -270,6 +270,53 @@ func TestSCIM_DeleteUser(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, status)
 }
 
+// TestSCIM_DeleteUser_ArchivesWhenProfileInUse verifies that deleting a SCIM
+// user whose profile is still referenced by a completed document version
+// signature archives the profile (state INACTIVE) instead of failing. The
+// signature's RESTRICT foreign key makes the hard delete fail; the service must
+// fall back to deactivation and return 204, not surface an opaque 500.
+func TestSCIM_DeleteUser_ArchivesWhenProfileInUse(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	sc := newSCIMClient(t, owner)
+
+	// The signer signs a published document version, creating a completed
+	// signature that references the signer's profile via a RESTRICT FK.
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+	versionID := latestDocumentVersionID(t, owner, docID)
+
+	requestDocumentSignature(t, owner, versionID, signer.GetProfileID().String())
+
+	_, state, _ := signDocumentVersion(t, signer, versionID)
+	require.Equal(t, "SIGNED", state)
+
+	// Enroll the signer's existing profile into SCIM so it becomes SCIM-managed
+	// (same underlying profile ID, source flipped to SCIM).
+	body, status := sc.createUser(signer.GetEmail(), "Signer User", "ext-signed-1", true)
+	require.Equal(t, http.StatusCreated, status, body)
+
+	var enrolled map[string]any
+	require.NoError(t, json.Unmarshal([]byte(body), &enrolled))
+	scimUserID := enrolled["id"].(string)
+	require.Equal(t, signer.GetProfileID().String(), scimUserID)
+
+	// Deleting the in-use profile must archive it, not 500.
+	body, status = sc.deleteUser(scimUserID)
+	require.Equal(t, http.StatusNoContent, status, body)
+
+	// The profile is archived (deactivated), not hard-deleted: it is still
+	// present but inactive, and the completed signature is preserved.
+	body, status = sc.getUser(scimUserID)
+	require.Equal(t, http.StatusOK, status, body)
+
+	var fetched map[string]any
+	require.NoError(t, json.Unmarshal([]byte(body), &fetched))
+	assert.Equal(t, false, fetched["active"], "profile should be archived (inactive), not deleted")
+}
+
 func TestSCIM_Unauthorized(t *testing.T) {
 	t.Parallel()
 

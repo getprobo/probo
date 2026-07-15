@@ -141,6 +141,9 @@ func (c *Client) SetupTestUserInOrg(ownerClient *Client) {
 	password := "TestPassword123!"
 	fullName := fmt.Sprintf("Test User %s", uniqueID)
 
+	c.email = email
+	c.password = password
+
 	// Owner invites user to organization
 	profileID, identityID := ownerClient.createUser(email, fullName, coredata.MembershipRole(c.role))
 	c.userID = identityID

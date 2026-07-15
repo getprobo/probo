@@ -370,6 +370,12 @@ WHERE
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23503" || pgErr.Code == "23001" {
+				return ErrResourceInUse
+			}
+		}
+
 		return fmt.Errorf("cannot delete membership: %w", err)
 	}
 
