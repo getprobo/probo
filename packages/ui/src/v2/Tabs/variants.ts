@@ -20,24 +20,35 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// The white header band that sits over the grey body: full-width surface with a
-// bottom border and a centered max-w-5xl content column. Shared by the landing
-// Hero and the page headers so the band is defined once.
-export const headerBand = tv({
+// Tabs (Radix "Tabs" over Base UI's Tabs). An underlined tab bar whose active
+// item is tracked by a sliding indicator positioned from Base UI's
+// `--active-tab-*` CSS variables.
+
+export const tabsList = tv({
+  base: "relative flex items-center gap-1 border-b border-sand-a3",
+});
+
+export const tabsTab = tv({
+  base: [
+    "relative flex h-full cursor-pointer items-center justify-center gap-2 px-2 py-4 text-2 text-sand-a11",
+    "select-none outline-none transition-colors",
+    "hover:text-sand-12",
+    "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+    "data-active:font-medium data-active:text-sand-12",
+    "data-disabled:pointer-events-none data-disabled:opacity-50",
+  ],
+});
+
+export const tabsIndicator = tv({
+  base: [
+    "absolute bottom-0 left-0 h-[2px] w-(--active-tab-width) rounded-1 bg-sand-12",
+    "translate-x-(--active-tab-left) transition-all duration-200 ease-out",
+  ],
+});
+
+export const tabsSkeleton = tv({
   slots: {
-    band: "flex w-full flex-col items-center border-b border-sand-a3 bg-sand-1 px-8",
-    inner: "w-full max-w-5xl",
-  },
-  variants: {
-    // Drops the bottom padding and pulls the content down 1px so a trailing
-    // toolbar's own bottom border (e.g. an underlined tab bar) overlaps — and
-    // paints over — the band's bottom border instead of stacking below it.
-    flushBottomSpace: {
-      true: { band: "pt-8", inner: "-mb-px" },
-      false: { band: "py-8" },
-    },
-  },
-  defaultVariants: {
-    flushBottomSpace: false,
+    root: "flex items-center gap-4 border-b border-sand-a3",
+    item: "my-4 h-5 animate-pulse rounded-1 bg-sand-3",
   },
 });

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+import type { DocumentsPageQuery$variables } from "../__generated__/DocumentsPageQuery.graphql";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+import type { DocumentTab } from "./useDocumentTab";
 
-export function App() {
-  return (
-    <RelayProvider>
-      <Toast.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
-  );
+// Maps the active tab to the typed GraphQL visibility variable. "All" omits the
+// filter (both public and private); the other tabs pin a single visibility so
+// the server returns just that slice.
+export function toQueryVariables(tab: DocumentTab): DocumentsPageQuery$variables {
+  switch (tab) {
+    case "public":
+      return { visibility: "PUBLIC" };
+    case "private":
+      return { visibility: "PRIVATE" };
+    default:
+      return { visibility: null };
+  }
 }

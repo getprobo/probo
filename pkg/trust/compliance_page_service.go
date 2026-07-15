@@ -271,7 +271,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 			},
 		)
 
-		result, err := s.Documents.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.Documents.ListForOrganizationId(ctx, scope, orgID, cursor, nil)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list documents: %w", err)
 		}
@@ -345,7 +345,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 			},
 		)
 
-		result, err := s.Audits.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.Audits.ListForOrganizationId(ctx, scope, orgID, cursor, nil)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list audits: %w", err)
 		}
@@ -454,7 +454,7 @@ func (s *Service) fetchDocuments(ctx context.Context, scope coredata.Scoper, org
 			},
 		)
 
-		result, err := s.Documents.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.Documents.ListForOrganizationId(ctx, scope, orgID, cursor, nil)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list documents: %w", err)
 		}
@@ -500,7 +500,7 @@ func (s *Service) fetchAudits(ctx context.Context, scope coredata.Scoper, orgID 
 			},
 		)
 
-		result, err := s.Audits.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.Audits.ListForOrganizationId(ctx, scope, orgID, cursor, nil)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list audits: %w", err)
 		}

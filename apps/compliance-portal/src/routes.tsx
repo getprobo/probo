@@ -25,6 +25,7 @@ import { createBrowserRouter } from "react-router";
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { getPathPrefix } from "#/lib/http/pathPrefix";
+import { documentRoutes } from "#/pages/documents/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
 import { subprocessorRoutes } from "#/pages/subprocessors/routes";
@@ -48,10 +49,7 @@ const routes = [
             Fallback: HomePageSkeleton,
             Component: lazy(() => import("#/pages/HomePageLoader")),
           },
-          {
-            path: "documents",
-            Component: lazy(() => import("#/pages/DocumentsPage")),
-          },
+          ...documentRoutes,
           ...subprocessorRoutes,
           ...updateRoutes,
           {

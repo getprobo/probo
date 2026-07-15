@@ -1,4 +1,7 @@
 {
+  "common": {
+    "error": "Une erreur est survenue"
+  },
   "topBar": {
     "tagline": "Portail de conformité",
     "getAccess": "Obtenir l'accès",
@@ -23,9 +26,6 @@
     "recentUpdates": {
       "viewAll": "Voir tout"
     }
-  },
-  "documents": {
-    "title": "Documents"
   },
   "requests": {
     "title": "Demandes de données",

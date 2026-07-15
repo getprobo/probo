@@ -22,12 +22,16 @@ import type { PropsWithChildren } from "react";
 
 import { headerBand } from "./variants";
 
-export type HeaderBandProps = PropsWithChildren;
+export type HeaderBandProps = PropsWithChildren<{
+  // Drop the band's bottom padding so trailing content (e.g. a tab bar) aligns
+  // with the band's bottom border.
+  flushBottomSpace?: boolean;
+}>;
 
 // Pure layout shell: the white band + centered content column. Consumers (Hero,
 // PageHeader) supply a single content column and own its internal spacing.
-export function HeaderBand({ children }: HeaderBandProps) {
-  const { band, inner } = headerBand();
+export function HeaderBand({ children, flushBottomSpace }: HeaderBandProps) {
+  const { band, inner } = headerBand({ flushBottomSpace });
 
   return (
     <header className={band()}>

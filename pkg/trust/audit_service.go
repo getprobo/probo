@@ -88,14 +88,17 @@ func (s AuditService) ListForOrganizationId(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
+	filter *coredata.AuditFilter,
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
 	var audits coredata.Audits
+
+	if filter == nil {
+		filter = coredata.NewAuditTrustCenterFilter()
+	}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			filter := coredata.NewAuditTrustCenterFilter()
-
 			err := audits.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)

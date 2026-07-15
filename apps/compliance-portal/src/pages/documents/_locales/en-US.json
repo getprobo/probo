@@ -1,0 +1,34 @@
+{
+  "title": "Documents",
+  "tabs": {
+    "all": "All",
+    "public": "Public",
+    "private": "Private"
+  },
+  "sections": {
+    "reports": "Compliance reports"
+  },
+  "types": {
+    "OTHER": "Other",
+    "GOVERNANCE": "Governance",
+    "POLICY": "Policies",
+    "PROCEDURE": "Procedures",
+    "PLAN": "Plans",
+    "REGISTER": "Registers",
+    "RECORD": "Records",
+    "REPORT": "Reports",
+    "TEMPLATE": "Templates",
+    "STATEMENT_OF_APPLICABILITY": "Statement of Applicability"
+  },
+  "actions": {
+    "view": "View",
+    "getAccess": "Get Access",
+    "requested": "Access requested"
+  },
+  "empty": {
+    "title": "No documents available",
+    "description": "This trust center has not published any documents yet.",
+    "filteredTitle": "No documents match this filter",
+    "filteredDescription": "Try a different tab to see available documents."
+  }
+}

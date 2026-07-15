@@ -18,13 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslation } from "react-i18next";
+import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 
-import { PageHeader } from "#/components/PageHeader/PageHeader";
+// Root of the tabs (Radix "Tabs"). Controlled the same way as Base UI's Tabs:
+// `value` / `onValueChange`, or left uncontrolled. See contrib/claude/ui.md.
+export type TabsProps = BaseTabs.Root.Props;
 
-// Toolbar (All/Public/Private tabs, framework filter, search) and the document
-// count are deferred until the v2 Tabs/Select/TextField components exist.
-export default function DocumentsPage() {
-  const { t } = useTranslation();
-  return <PageHeader title={t("documents.title")} />;
+export function Tabs(props: TabsProps) {
+  return <BaseTabs.Root {...props} />;
 }

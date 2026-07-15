@@ -758,7 +758,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 }
 
 // Documents is the resolver for the documents field.
-func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error) {
+func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterVisibilityFilter) (*types.DocumentConnection, error) {
 	compliancePage := compliancepage.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	trustService := r.trust
@@ -768,7 +768,12 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	documentPage, err := trustService.Documents.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor)
+	documentFilter := coredata.NewDocumentTrustCenterFilter()
+	if filter != nil && filter.Visibility != nil {
+		documentFilter = documentFilter.WithTrustCenterVisibilities(*filter.Visibility)
+	}
+
+	documentPage, err := trustService.Documents.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -778,7 +783,7 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 }
 
 // Audits is the resolver for the audits field.
-func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error) {
+func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterVisibilityFilter) (*types.AuditConnection, error) {
 	compliancePage := compliancepage.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	trustService := r.trust
@@ -788,7 +793,12 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	auditPage, err := trustService.Audits.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor)
+	auditFilter := coredata.NewAuditTrustCenterFilter()
+	if filter != nil && filter.Visibility != nil {
+		auditFilter = auditFilter.WithTrustCenterVisibilities(*filter.Visibility)
+	}
+
+	auditPage, err := trustService.Audits.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor, auditFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -888,7 +898,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 }
 
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
-func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error) {
+func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterVisibilityFilter) (*types.TrustCenterFileConnection, error) {
 	compliancePage := compliancepage.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	trustService := r.trust
@@ -898,14 +908,19 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	filter := coredata.NewTrustCenterFileFilter(
-		coredata.WithTrustCenterFileVisibilities(
-			coredata.TrustCenterVisibilityPublic,
-			coredata.TrustCenterVisibilityPrivate,
-		),
+	visibilities := []coredata.TrustCenterVisibility{
+		coredata.TrustCenterVisibilityPublic,
+		coredata.TrustCenterVisibilityPrivate,
+	}
+	if filter != nil && filter.Visibility != nil {
+		visibilities = []coredata.TrustCenterVisibility{*filter.Visibility}
+	}
+
+	fileFilter := coredata.NewTrustCenterFileFilter(
+		coredata.WithTrustCenterFileVisibilities(visibilities...),
 	)
 
-	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor, filter)
+	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor, fileFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public trust center files", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

@@ -33,15 +33,18 @@ export interface PageHeaderProps {
   actions?: ReactNode;
   // Optional toolbar (tabs / filters / search) rendered below the title.
   children?: ReactNode;
+  // Sit the toolbar flush on the band's bottom border (e.g. an underlined tab
+  // bar whose divider doubles as the header divider).
+  flushBottomSpace?: boolean;
 }
 
 // Page header for the Trust Center nav pages: a size-7 title in the shared white
 // band, with an optional count, inline actions, and a toolbar slot below.
-export function PageHeader({ title, count, actions, children }: PageHeaderProps) {
+export function PageHeader({ title, count, actions, children, flushBottomSpace }: PageHeaderProps) {
   const { content, titleRow, count: countSlot } = pageHeader();
 
   return (
-    <HeaderBand>
+    <HeaderBand flushBottomSpace={flushBottomSpace}>
       <div className={content()}>
         <div className={titleRow()}>
           <Heading level={1} size={7} weight="medium" highContrast>

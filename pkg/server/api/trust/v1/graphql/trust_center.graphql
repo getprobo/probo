@@ -16,6 +16,7 @@ type TrustCenter implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    filter: TrustCenterVisibilityFilter
   ): DocumentConnection! @goField(forceResolver: true)
 
   audits(
@@ -23,6 +24,7 @@ type TrustCenter implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    filter: TrustCenterVisibilityFilter
   ): AuditConnection! @goField(forceResolver: true)
 
   subprocessors(
@@ -50,6 +52,7 @@ type TrustCenter implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    filter: TrustCenterVisibilityFilter
   ): TrustCenterFileConnection! @goField(forceResolver: true)
 
   complianceFrameworks(
@@ -93,6 +96,18 @@ enum DocumentType
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DocumentTypeStatementOfApplicability"
     )
+}
+
+enum TrustCenterVisibility
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibility") {
+  PRIVATE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPrivate")
+  PUBLIC
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPublic")
+}
+
+input TrustCenterVisibilityFilter {
+  visibility: TrustCenterVisibility
 }
 
 type Document implements Node @nda {

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+import { useEffect, useRef } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+import type { DocumentsPageQuery } from "./__generated__/DocumentsPageQuery.graphql";
+import { toQueryVariables } from "./_lib/toQueryVariables";
+import { useDocumentTab } from "./_lib/useDocumentTab";
+import { DocumentsPage, documentsPageQuery } from "./DocumentsPage";
+import { DocumentsPageSkeleton } from "./DocumentsPageSkeleton";
 
-export function App() {
-  return (
-    <RelayProvider>
-      <Toast.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
-  );
+export default function DocumentsPageLoader() {
+  const { tab } = useDocumentTab();
+  const [queryRef, loadQuery] = useQueryLoader<DocumentsPageQuery>(documentsPageQuery);
+
+  // Seed the first fetch with the URL's tab; later changes are handled by the
+  // page's refetch.
+  const initialVariables = useRef(toQueryVariables(tab));
+
+  useEffect(() => {
+    loadQuery(initialVariables.current);
+  }, [loadQuery]);
+
+  if (!queryRef) {
+    return <DocumentsPageSkeleton />;
+  }
+
+  return <DocumentsPage queryRef={queryRef} />;
 }

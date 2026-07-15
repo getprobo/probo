@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+import type { ComponentProps } from "react";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+import { tabsSkeleton } from "./variants";
 
-export function App() {
+export type TabsSkeletonProps = Omit<ComponentProps<"div">, "children"> & {
+  // Number of placeholder tabs to render (defaults to 3).
+  count?: number;
+};
+
+// Loading placeholder paired with the tab bar: a row of pulse blocks over the
+// shared bottom border.
+export function TabsSkeleton(props: TabsSkeletonProps) {
+  const { count = 3, className, ...rest } = props;
+  const { root, item } = tabsSkeleton();
+
   return (
-    <RelayProvider>
-      <Toast.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
+    <div className={root({ className })} aria-hidden {...rest}>
+      {Array.from({ length: count }, (_, index) => (
+        <span key={index} className={item()} style={{ width: `${64 + (index % 3) * 16}px` }} />
+      ))}
+    </div>
   );
 }

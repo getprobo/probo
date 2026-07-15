@@ -1,4 +1,7 @@
 {
+  "common": {
+    "error": "Something went wrong"
+  },
   "topBar": {
     "tagline": "Compliance Portal",
     "getAccess": "Get Access",
@@ -23,9 +26,6 @@
     "recentUpdates": {
       "viewAll": "View all"
     }
-  },
-  "documents": {
-    "title": "Documents"
   },
   "requests": {
     "title": "Data Requests",

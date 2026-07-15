@@ -43,6 +43,11 @@ func NewAuditTrustCenterFilter() *AuditFilter {
 	}
 }
 
+func (f *AuditFilter) WithTrustCenterVisibilities(visibilities ...TrustCenterVisibility) *AuditFilter {
+	f.trustCenterVisibilities = visibilities
+	return f
+}
+
 func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 	args := pgx.NamedArgs{}
 

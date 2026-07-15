@@ -55,14 +55,17 @@ func (s *DocumentService) ListForOrganizationId(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DocumentOrderField],
+	filter *coredata.DocumentFilter,
 ) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
 	var documents coredata.Documents
+
+	if filter == nil {
+		filter = coredata.NewDocumentTrustCenterFilter()
+	}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			filter := coredata.NewDocumentTrustCenterFilter()
-
 			if err := documents.LoadPublishedByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load published documents: %w", err)
 			}

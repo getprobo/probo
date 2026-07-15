@@ -1,0 +1,34 @@
+{
+  "title": "Documents",
+  "tabs": {
+    "all": "Tous",
+    "public": "Public",
+    "private": "Privé"
+  },
+  "sections": {
+    "reports": "Rapports de conformité"
+  },
+  "types": {
+    "OTHER": "Autres",
+    "GOVERNANCE": "Gouvernance",
+    "POLICY": "Politiques",
+    "PROCEDURE": "Procédures",
+    "PLAN": "Plans",
+    "REGISTER": "Registres",
+    "RECORD": "Enregistrements",
+    "REPORT": "Rapports",
+    "TEMPLATE": "Modèles",
+    "STATEMENT_OF_APPLICABILITY": "Déclaration d'applicabilité"
+  },
+  "actions": {
+    "view": "Consulter",
+    "getAccess": "Obtenir l'accès",
+    "requested": "Accès demandé"
+  },
+  "empty": {
+    "title": "Aucun document disponible",
+    "description": "Ce trust center n'a pas encore publié de documents.",
+    "filteredTitle": "Aucun document ne correspond à ce filtre",
+    "filteredDescription": "Essayez un autre onglet pour voir les documents disponibles."
+  }
+}

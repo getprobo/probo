@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+import { FileTextIcon } from "@phosphor-icons/react";
+import { useTranslation } from "react-i18next";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+import { EmptyState } from "#/components/EmptyState/EmptyState";
 
-export function App() {
+import { useDocumentTab } from "../_lib/useDocumentTab";
+
+// Empty state for the documents list. When a Public/Private tab is active it
+// notes the filter; otherwise it states the trust center publishes no documents.
+export function DocumentsEmpty() {
+  const { t } = useTranslation("documents");
+  const { tab } = useDocumentTab();
+  const filtered = tab !== "all";
+
   return (
-    <RelayProvider>
-      <Toast.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
+    <EmptyState
+      icon={<FileTextIcon />}
+      title={filtered ? t("empty.filteredTitle") : t("empty.title")}
+      description={filtered ? t("empty.filteredDescription") : t("empty.description")}
+    />
   );
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+export interface FieldGroup<T> {
+  key: string;
+  nodes: T[];
+}
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+// Groups nodes by a derived string key, preserving first-seen order of the
+// keys. Presentational only — the server already applied the visibility filter.
+export function groupByField<T>(
+  nodes: readonly T[],
+  getKey: (node: T) => string,
+): FieldGroup<T>[] {
+  const groups = new Map<string, T[]>();
 
-export function App() {
-  return (
-    <RelayProvider>
-      <Toast.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
-  );
+  for (const node of nodes) {
+    const key = getKey(node);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.push(node);
+    } else {
+      groups.set(key, [node]);
+    }
+  }
+
+  return [...groups.entries()].map(([key, groupNodes]) => ({ key, nodes: groupNodes }));
 }

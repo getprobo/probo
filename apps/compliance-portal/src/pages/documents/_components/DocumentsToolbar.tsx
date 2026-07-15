@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+import { Tabs } from "@probo/ui/src/v2/Tabs/Tabs";
+import { TabsIndicator } from "@probo/ui/src/v2/Tabs/TabsIndicator";
+import { TabsList } from "@probo/ui/src/v2/Tabs/TabsList";
+import { TabsTab } from "@probo/ui/src/v2/Tabs/TabsTab";
+import { useTranslation } from "react-i18next";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+import type { DocumentTab } from "../_lib/useDocumentTab";
+import { DOCUMENT_TABS, useDocumentTab } from "../_lib/useDocumentTab";
 
-export function App() {
+// Access filter for the documents page: All / Public / Private tabs. Writes the
+// active tab to the URL; the page reacts and refetches the matching slice.
+export function DocumentsToolbar() {
+  const { t } = useTranslation("documents");
+  const { tab, setTab } = useDocumentTab();
+
   return (
-    <RelayProvider>
-      <Toast.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
+    <Tabs value={tab} onValueChange={value => setTab(value as DocumentTab)}>
+      <TabsList>
+        {DOCUMENT_TABS.map(value => (
+          <TabsTab key={value} value={value}>
+            {t(`tabs.${value}`)}
+          </TabsTab>
+        ))}
+        <TabsIndicator />
+      </TabsList>
+    </Tabs>
   );
 }

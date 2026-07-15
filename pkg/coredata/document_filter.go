@@ -63,6 +63,11 @@ func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
 	return f
 }
 
+func (f *DocumentFilter) WithTrustCenterVisibilities(visibilities ...TrustCenterVisibility) *DocumentFilter {
+	f.trustCenterVisibilities = visibilities
+	return f
+}
+
 func (f *DocumentFilter) WithEmployeeIdentityID(identityID *gid.GID, modes ...EmployeeFilterMode) *DocumentFilter {
 	f.employeeIdentityID = identityID
 	f.employeeFilterModes = modes

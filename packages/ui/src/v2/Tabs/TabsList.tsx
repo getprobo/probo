@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
+import { Tabs as BaseTabs } from "@base-ui/react/tabs";
+import type { ComponentProps } from "react";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+import { tabsList } from "./variants";
 
-export function App() {
-  return (
-    <RelayProvider>
-      <Toast.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
-  );
+export type TabsListProps = Omit<ComponentProps<typeof BaseTabs.List>, "className"> & {
+  className?: string;
+};
+
+// The tab bar: holds the tab triggers and (optionally) the sliding indicator.
+export function TabsList(props: TabsListProps) {
+  const { className, ...rest } = props;
+
+  return <BaseTabs.List className={tabsList({ className })} {...rest} />;
 }
