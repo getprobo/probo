@@ -30,6 +30,31 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func (s *Service) GetComplianceFramework(
+	ctx context.Context,
+	scope coredata.Scoper,
+	complianceFrameworkID gid.GID,
+) (*coredata.ComplianceFramework, error) {
+	cf := &coredata.ComplianceFramework{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			err := cf.LoadByID(ctx, conn, scope, complianceFrameworkID)
+			if err != nil {
+				return fmt.Errorf("cannot load compliance framework: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return cf, nil
+}
+
 func (s *Service) ListComplianceFrameworksByPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,

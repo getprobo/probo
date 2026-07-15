@@ -23,6 +23,8 @@ package visitor
 import "errors"
 
 var (
+	ErrOAuthStateNotFound        = errors.New("oauth state not found")
+	ErrOAuthStateExpired         = errors.New("oauth state expired")
 	ErrPageNotFound              = errors.New("page not found")
 	ErrMembershipNotFound        = errors.New("membership not found")
 	ErrUserNotFound              = errors.New("user not found")
