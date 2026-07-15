@@ -27,11 +27,11 @@ import { router } from "#/routes";
 
 export function App() {
   return (
-    <RelayProvider>
-      <Toast.Provider>
+    <Toast.Provider>
+      <RelayProvider>
         <RouterProvider router={router} />
-        <Toaster />
-      </Toast.Provider>
-    </RelayProvider>
+      </RelayProvider>
+      <Toaster />
+    </Toast.Provider>
   );
 }

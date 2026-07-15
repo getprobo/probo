@@ -19,18 +19,37 @@
 // SOFTWARE.
 
 import { Toast } from "@base-ui/react/toast";
-import { XIcon } from "@phosphor-icons/react";
+import {
+  CheckCircleIcon,
+  InfoIcon,
+  WarningCircleIcon,
+  WarningIcon,
+  XIcon,
+} from "@phosphor-icons/react";
+import type { ReactNode } from "react";
 
 import { toaster } from "./variants";
 
-type ToastType = "success" | "error" | "neutral";
+type ToastType = "neutral" | "success" | "error" | "warning" | "info";
 
 function resolveType(type: string | undefined): ToastType {
-  return type === "success" || type === "error" ? type : "neutral";
+  if (type === "success" || type === "error" || type === "warning" || type === "info") {
+    return type;
+  }
+  return "neutral";
 }
 
-// Renders the active toasts from the Base UI toast manager. Mount once at the
-// app root, inside a `<Toast.Provider>`.
+const typeIcons: Record<ToastType, ReactNode> = {
+  neutral: <InfoIcon weight="fill" />,
+  success: <CheckCircleIcon weight="fill" />,
+  error: <WarningCircleIcon weight="fill" />,
+  warning: <WarningIcon weight="fill" />,
+  info: <InfoIcon weight="fill" />,
+};
+
+// Styled Base UI toast viewport. Mount once at the app root inside a
+// `Toast.Provider`; queue toasts through `Toast.useToastManager()`. See
+// contrib/claude/ui.md.
 export function Toaster() {
   const { toasts } = Toast.useToastManager();
   const slots = toaster();
@@ -39,15 +58,21 @@ export function Toaster() {
     <Toast.Portal>
       <Toast.Viewport className={slots.viewport()}>
         {toasts.map((toast) => {
-          const variant = { type: resolveType(toast.type) };
+          const type = resolveType(toast.type);
+          const typed = toaster({ type });
 
           return (
-            <Toast.Root key={toast.id} toast={toast} className={slots.toast(variant)}>
-              <div className={slots.content()}>
-                <Toast.Title className={slots.title(variant)} />
-                <Toast.Description className={slots.description()} />
+            <Toast.Root key={toast.id} toast={toast} className={typed.root()}>
+              <span aria-hidden className={typed.icon()}>
+                {typeIcons[type]}
+              </span>
+              <div className={typed.content()}>
+                <Toast.Title className={typed.title()} />
+                {toast.description != null && (
+                  <Toast.Description className={typed.description()} />
+                )}
               </div>
-              <Toast.Close className={slots.close()} aria-label="Close">
+              <Toast.Close className={typed.close()} aria-label="Close">
                 <XIcon />
               </Toast.Close>
             </Toast.Root>
