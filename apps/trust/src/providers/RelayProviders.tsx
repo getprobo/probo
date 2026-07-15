@@ -43,7 +43,7 @@ export function buildEndpoint(): string {
   const url = new URL(formattedHost);
 
   // Compliance pages are always served at the root of a dedicated host.
-  url.pathname = `/api/trust/v1/graphql`;
+  url.pathname = "/graphql";
 
   return url.toString();
 }
