@@ -45,9 +45,11 @@ func NewOAuthInitiateHandler(
 		proboBaseURL: proboBaseURL,
 		visitor:      visitorSvc,
 		safeRedirect: saferedirect.New(allowedHost),
+		// proboBaseURL is server config, not user input — loopback is expected in dev.
 		httpClient: httpclient.DefaultClient(
 			httpclient.WithLogger(logger),
 			httpclient.WithSSRFProtection(),
+			httpclient.WithSSRFAllowLoopback(),
 		),
 		logger: logger,
 	}
