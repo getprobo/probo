@@ -28,8 +28,9 @@ import (
 type OIDCProvider string
 
 const (
-	OIDCProviderGoogle    OIDCProvider = "GOOGLE"
-	OIDCProviderMicrosoft OIDCProvider = "MICROSOFT"
+	OIDCProviderGoogle           OIDCProvider = "GOOGLE"
+	OIDCProviderMicrosoft        OIDCProvider = "MICROSOFT"
+	OIDCProviderCompliancePortal OIDCProvider = "COMPLIANCE_PORTAL"
 )
 
 var (
@@ -42,6 +43,7 @@ func OIDCProviders() []OIDCProvider {
 	return []OIDCProvider{
 		OIDCProviderGoogle,
 		OIDCProviderMicrosoft,
+		OIDCProviderCompliancePortal,
 	}
 }
 
@@ -49,7 +51,8 @@ func (v OIDCProvider) IsValid() bool {
 	switch v {
 	case
 		OIDCProviderGoogle,
-		OIDCProviderMicrosoft:
+		OIDCProviderMicrosoft,
+		OIDCProviderCompliancePortal:
 		return true
 	}
 

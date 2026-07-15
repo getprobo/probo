@@ -479,6 +479,7 @@ INSERT INTO iam_oauth2_clients (
 ON CONFLICT (external_client_id) WHERE external_client_id IS NOT NULL DO UPDATE SET
 	client_name = EXCLUDED.client_name,
 	redirect_uris = EXCLUDED.redirect_uris,
+	scopes = EXCLUDED.scopes,
 	grant_types = EXCLUDED.grant_types,
 	response_types = EXCLUDED.response_types,
 	token_endpoint_auth_method = EXCLUDED.token_endpoint_auth_method,
