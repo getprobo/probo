@@ -97,9 +97,11 @@ export function Controlled() {
   );
 }
 
+// Shown over a simulated backdrop, matching how the dialog actually appears —
+// the frame's elevation only reads correctly against the dimmed overlay.
 export function Skeleton() {
   return (
-    <div className="flex justify-center">
+    <div className="flex min-h-[420px] items-center justify-center rounded-4 bg-sand-12/40 p-8">
       <DialogSkeleton />
     </div>
   );
