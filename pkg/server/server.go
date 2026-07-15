@@ -21,13 +21,11 @@
 package server
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -40,17 +38,15 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
-	"go.probo.inc/probo/pkg/server/api/complianceportal"
+	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/mailactions"
-	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -86,16 +82,15 @@ type Config struct {
 }
 
 type Server struct {
+	cfg                Config
 	apiServer          *api.Server
 	mailActionsHandler http.Handler
 	consoleWebServer   *console_web.Server
-	trustWebServer     *trust_web.Server
 	router             *chi.Mux
 	extraHeaderFields  map[string]string
 	baseURL            string
 	proboService       *probo.Service
 	iamService         *iam.Service
-	trustService       *trust.Service
 	logger             *log.Logger
 }
 
@@ -137,24 +132,18 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	trustWebServer, err := trust_web.NewServer(compliancePageHeadData(cfg.BaseURL))
-	if err != nil {
-		return nil, err
-	}
-
 	router := chi.NewRouter()
 
 	server := &Server{
+		cfg:                cfg,
 		apiServer:          apiServer,
 		mailActionsHandler: mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
 		consoleWebServer:   consoleWebServer,
-		trustWebServer:     trustWebServer,
 		router:             router,
 		extraHeaderFields:  cfg.ExtraHeaderFields,
 		baseURL:            cfg.BaseURL.String(),
 		proboService:       cfg.Probo,
 		iamService:         cfg.IAM,
-		trustService:       cfg.Trust,
 		logger:             cfg.Logger,
 	}
 
@@ -182,26 +171,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) setExtraHeaders(w http.ResponseWriter) {
-	for key, value := range s.extraHeaderFields {
-		w.Header().Set(key, value)
-	}
+	ApplyExtraHeaders(w, s.extraHeaderFields)
 }
 
 func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
-	api := s.baseURL + "/api/connect/v1"
-
-	endpoints := oauth2.Endpoints{
-		Authorization:       uri.URI(api + "/oauth2/authorize"),
-		Token:               uri.URI(api + "/oauth2/token"),
-		Userinfo:            uri.URI(api + "/oauth2/userinfo"),
-		JWKS:                uri.URI(api + "/oauth2/jwks"),
-		Registration:        uri.URI(api + "/oauth2/register"),
-		Introspection:       uri.URI(api + "/oauth2/introspect"),
-		Revocation:          uri.URI(api + "/oauth2/revoke"),
-		DeviceAuthorization: uri.URI(api + "/oauth2/device"),
-	}
-
-	metadata := s.iamService.OAuth2ServerMetadata(endpoints)
+	metadata := connect_v1.OAuth2ServerMetadata(
+		s.cfg.BaseURL,
+		s.iamService.OAuth2ScopeRegistry.RegisteredScopes(),
+	)
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
@@ -213,72 +190,4 @@ func (s *Server) protectedResourceMetadataHandler(w http.ResponseWriter, r *http
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
-}
-
-func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
-	httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
-}
-
-func (s *Server) trustCenterRouter() chi.Router {
-	r := chi.NewRouter()
-
-	h := complianceportal.NewHandler(s.trustService)
-
-	r.Mount("/api/trust/v1", s.apiServer.CompliancePageHandler())
-	r.Get("/llms.txt", h.HandleLLMsTxt)
-	r.Get("/robots.txt", h.HandleRobotsTxt)
-	r.Get("/sitemap.xml", h.HandleSitemap)
-	r.Handle("/*", s.trustWebServer)
-
-	return r
-}
-
-func (s *Server) TrustCenterHandler() http.Handler {
-	r := chi.NewRouter()
-
-	r.Use(complianceportal.NewSNIMiddleware(s.trustService))
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Strict-Transport-Security", "max-age=31536000; preload")
-			s.setExtraHeaders(w)
-			next.ServeHTTP(w, r)
-		})
-	})
-
-	r.NotFound(s.handleCustomDomain404)
-
-	r.Mount("/", s.trustCenterRouter())
-
-	return r
-}
-
-func compliancePageHeadData(baseURL *baseurl.BaseURL) trust_web.HeadDataFunc {
-	return func(r *http.Request) trust_web.HeadData {
-		tc := complianceportal.CompliancePageFromContext(r.Context())
-		if tc == nil {
-			return trust_web.HeadData{Title: "Compliance Page"}
-		}
-
-		compliancePageBaseURL := complianceportal.CompliancePageBaseURLFromContext(r.Context())
-
-		description := tc.Title + " Compliance Page"
-		if tc.Description != nil && *tc.Description != "" {
-			description = *tc.Description
-		}
-
-		headData := trust_web.HeadData{
-			Title:       tc.Title,
-			Description: description,
-			OGURL:       ref.UnrefOrZero(compliancePageBaseURL),
-		}
-
-		if tc.LogoFileID != nil {
-			faviconURL, err := baseURL.WithPath("/api/files/v1/public/" + tc.LogoFileID.String()).String()
-			if err == nil {
-				headData.FaviconURL = faviconURL
-			}
-		}
-
-		return headData
-	}
 }

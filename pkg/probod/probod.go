@@ -79,6 +79,7 @@ import (
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
+	complianceportal_v1 "go.probo.inc/probo/pkg/server/api/complianceportal/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
@@ -687,6 +688,21 @@ func (impl *Implm) Run(
 		resourceAliasService,
 	)
 
+	staticCIMDAllow := oauth2.CIMDAllowFromClientIDs(impl.cfg.Auth.OAuth2Server.CIMDAllowedClientIDs)
+	iamService.OAuth2ServerService.SetCIMDAllow(
+		func(ctx context.Context, clientIDURL string) (oauth2.CIMDAllowance, error) {
+			host, ok := oauth2.CIMDClientIDHost(clientIDURL)
+			if ok {
+				_, err := trustService.GetPortalByDomainName(ctx, host)
+				if err == nil {
+					return oauth2.CIMDAllowanceAllowedSkipConsent, nil
+				}
+			}
+
+			return staticCIMDAllow(ctx, clientIDURL)
+		},
+	)
+
 	accessReviewService := accessreview.NewService(
 		pgClient,
 		encryptionKey,
@@ -750,6 +766,40 @@ func (impl *Implm) Run(
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create server: %w", err)
+	}
+
+	compliancePortalHandler, err := complianceportal_v1.NewMux(
+		complianceportal_v1.MuxConfig{
+			BaseURL:           baseURL,
+			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
+			Logger:            l.Named("compliance-portal"),
+			IAM:               iamService,
+			Visitor:           trustService,
+			ResourceAlias:     resourceAliasService,
+			File:              fileManagerService,
+			ESign:             esignService,
+			Mailman:           mailmanService,
+			Cookie: securecookie.Config{
+				Name:     impl.cfg.Auth.Cookie.Name,
+				Domain:   impl.cfg.Auth.Cookie.Domain,
+				Path:     "/",
+				MaxAge:   int(time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour),
+				Secret:   impl.cfg.Auth.Cookie.Secret,
+				Secure:   impl.cfg.Auth.Cookie.Secure,
+				HTTPOnly: true,
+				SameSite: http.SameSiteLaxMode,
+			},
+			TokenSecret: impl.cfg.Auth.Cookie.Secret,
+			GraphQLLimits: gqlutils.Limits{
+				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
+				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
+				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
+				DisableSuggestion: impl.cfg.Api.GraphQL.DisableSuggestion,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot create trust center handler: %w", err)
 	}
 
 	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
@@ -1095,7 +1145,7 @@ func (impl *Implm) Run(
 				r,
 				tp,
 				pgClient,
-				serverHandler.TrustCenterHandler(),
+				compliancePortalHandler,
 				trustService,
 				encryptionKey,
 			); err != nil {
@@ -1515,10 +1565,6 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 
 	if cfg.DeviceCodeDuration > 0 {
 		opts = append(opts, oauth2.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
-	}
-
-	if len(cfg.CIMDAllowedClientIDs) > 0 {
-		opts = append(opts, oauth2.WithCIMDAllowedClientIDs(cfg.CIMDAllowedClientIDs))
 	}
 
 	return opts

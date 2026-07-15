@@ -54,7 +54,6 @@ import (
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
-	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -95,15 +94,14 @@ type (
 	}
 
 	Server struct {
-		cfg                   Config
-		csrf                  *http.CrossOriginProtection
-		compliancePageHandler http.Handler
-		consoleHandler        http.Handler
-		cookieBannerHandler   http.Handler
-		filesHandler          http.Handler
-		mcpHandler            http.Handler
-		slackHandler          http.Handler
-		connectHandler        http.Handler
+		cfg                 Config
+		csrf                *http.CrossOriginProtection
+		consoleHandler      http.Handler
+		cookieBannerHandler http.Handler
+		filesHandler        http.Handler
+		mcpHandler          http.Handler
+		slackHandler        http.Handler
+		connectHandler      http.Handler
 	}
 )
 
@@ -187,19 +185,6 @@ func NewServer(cfg Config) (*Server, error) {
 	return &Server{
 		cfg:  cfg,
 		csrf: csrf,
-		compliancePageHandler: trust_v1.NewMux(
-			cfg.Logger.Named("trust.v1"),
-			cfg.IAM,
-			cfg.Trust,
-			cfg.ResourceAlias,
-			cfg.File,
-			cfg.ESign,
-			cfg.Mailman,
-			cfg.Cookie,
-			cfg.TokenSecret,
-			cfg.BaseURL,
-			cfg.GraphQLLimits,
-		),
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
@@ -258,6 +243,7 @@ func NewServer(cfg Config) (*Server, error) {
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),
 			cfg.IAM,
+			cfg.Trust,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.File,
@@ -271,17 +257,9 @@ func NewServer(cfg Config) (*Server, error) {
 
 				return err == nil
 			},
-			func(ctx context.Context, host string) bool {
-				_, err := cfg.Trust.GetPortalByDomainName(ctx, host)
-				return err == nil
-			},
 			cfg.GraphQLLimits,
 		),
 	}, nil
-}
-
-func (s *Server) CompliancePageHandler() http.Handler {
-	return s.compliancePageHandler
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
