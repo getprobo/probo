@@ -38,6 +38,15 @@ type Query {
   oauth2ScopesSupported: [OAuth2Scope!]!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)
+  oauthClientBranding(clientId: String): OAuthClientBranding
+    @goField(forceResolver: true)
+    @authentication(required: OPTIONAL)
+}
+
+type OAuthClientBranding {
+  name: String!
+  logo: File
+  clientURL: String
 }
 
 type OIDCProviderInfo {

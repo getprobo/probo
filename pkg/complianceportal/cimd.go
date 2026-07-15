@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 )
@@ -55,10 +54,10 @@ func OAuthCallbackURL(portalBaseURL string) (string, error) {
 	return parsed.String(), nil
 }
 
-func PortalBaseURLFromCIMDClientID(clientIDURL string) (string, error) {
-	parsed, err := url.Parse(clientIDURL)
+func PortalRootURL(rawURL string) (string, error) {
+	parsed, err := url.Parse(rawURL)
 	if err != nil {
-		return "", fmt.Errorf("cannot parse cimd client_id URL: %w", err)
+		return "", fmt.Errorf("cannot parse portal URL: %w", err)
 	}
 
 	parsed.Path = ""
@@ -66,6 +65,15 @@ func PortalBaseURLFromCIMDClientID(clientIDURL string) (string, error) {
 	parsed.Fragment = ""
 
 	return parsed.String(), nil
+}
+
+func PortalBaseURLFromCIMDClientID(clientIDURL string) (string, error) {
+	portalURL, err := PortalRootURL(clientIDURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse cimd client_id URL: %w", err)
+	}
+
+	return portalURL, nil
 }
 
 func BuildClientMetadataDocument(
@@ -82,9 +90,15 @@ func BuildClientMetadataDocument(
 		return oauth2.ClientMetadataDocument{}, fmt.Errorf("cannot build oauth callback URL: %w", err)
 	}
 
+	portalRootURL, err := PortalRootURL(portalBaseURL)
+	if err != nil {
+		return oauth2.ClientMetadataDocument{}, fmt.Errorf("cannot build cimd client_uri URL: %w", err)
+	}
+
 	doc := oauth2.ClientMetadataDocument{
 		ClientID:                clientID,
 		ClientName:              portal.Title,
+		ClientURI:               portalRootURL,
 		RedirectURIs:            []string{redirectURI},
 		TokenEndpointAuthMethod: "none",
 		GrantTypes:              []string{"authorization_code", "refresh_token"},
@@ -92,21 +106,10 @@ func BuildClientMetadataDocument(
 		Scope:                   VisitorOAuthScope,
 	}
 
-	if portal.WebsiteURL != nil && *portal.WebsiteURL != "" {
-		doc.ClientURI = *portal.WebsiteURL
-	} else {
-		doc.ClientURI = portalBaseURL
-	}
-
 	if portal.LogoFileID != nil {
-		parsedBaseURL, err := baseurl.Parse(portalBaseURL)
+		logoURI, err := BrandLogoURL(portalBaseURL)
 		if err == nil {
-			logoURI, err := parsedBaseURL.
-				WithPath("/api/files/v1/public/" + portal.LogoFileID.String()).
-				String()
-			if err == nil {
-				doc.LogoURI = logoURI
-			}
+			doc.LogoURI = logoURI
 		}
 	}
 

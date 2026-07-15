@@ -24,6 +24,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/baseurl"
+	page "go.probo.inc/probo/pkg/complianceportal"
 	visitor "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -53,7 +54,7 @@ type MuxConfig struct {
 }
 
 func NewMux(cfg MuxConfig) (http.Handler, error) {
-	webServer, err := NewServer(compliancePageHeadData(cfg.BaseURL))
+	webServer, err := NewServer(compliancePageHeadData())
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +108,8 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 			r.Use(complianceportal.NewCompliancePagePresenceMiddleware())
 
 			r.Method(http.MethodGet, complianceportal.CIMDMetadataPath, NewOAuthClientMetadataHandler())
+			r.Method(http.MethodGet, complianceportal.BrandLogoPath, NewBrandLogoHandler(cfg.Logger, cfg.File))
+			r.Method(http.MethodGet, complianceportal.BrandDarkLogoPath, NewBrandDarkLogoHandler(cfg.Logger, cfg.File))
 			r.Method(http.MethodGet, complianceportal.OAuthInitiatePath, oauthInitiateHandler)
 			r.Method(http.MethodGet, complianceportal.OAuthCallbackPath, oauthCallbackHandler)
 
@@ -131,7 +134,7 @@ func handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
 }
 
-func compliancePageHeadData(baseURL *baseurl.BaseURL) HeadDataFunc {
+func compliancePageHeadData() HeadDataFunc {
 	return func(r *http.Request) HeadData {
 		tc := complianceportal.CompliancePageFromContext(r.Context())
 		if tc == nil {
@@ -151,8 +154,8 @@ func compliancePageHeadData(baseURL *baseurl.BaseURL) HeadDataFunc {
 			OGURL:       ref.UnrefOrZero(compliancePageBaseURL),
 		}
 
-		if tc.LogoFileID != nil {
-			faviconURL, err := baseURL.WithPath("/api/files/v1/public/" + tc.LogoFileID.String()).String()
+		if tc.LogoFileID != nil && compliancePageBaseURL != nil {
+			faviconURL, err := page.BrandLogoURL(*compliancePageBaseURL)
 			if err == nil {
 				headData.FaviconURL = faviconURL
 			}

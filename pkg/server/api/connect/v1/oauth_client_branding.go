@@ -12,26 +12,45 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package complianceportal
+package connect_v1
 
 import (
-	portal "go.probo.inc/probo/pkg/complianceportal"
+	"context"
+
+	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 )
 
-const (
-	VisitorOAuthScope = portal.VisitorOAuthScope
-	GraphQLPath       = "/graphql"
-	CIMDMetadataPath  = portal.CIMDMetadataPath
-	BrandLogoPath     = portal.BrandLogoPath
-	BrandDarkLogoPath = portal.BrandDarkLogoPath
-	OAuthInitiatePath = "/initiate"
-	OAuthCallbackPath = portal.OAuthCallbackPath
-)
+func oauthClientBranding(
+	ctx context.Context,
+	r *Resolver,
+	clientID string,
+) (*types.OAuthClientBranding, error) {
+	branding, err := r.iam.OAuth2ServerService.ClientBranding(ctx, clientID)
+	if err != nil {
+		return nil, err
+	}
 
-func CIMDClientIDURL(portalBaseURL string) (string, error) {
-	return portal.CIMDClientIDURL(portalBaseURL)
+	if branding == nil {
+		return nil, nil
+	}
+
+	return oauthClientBrandingFromIAM(branding)
 }
 
-func OAuthCallbackURL(portalBaseURL string) (string, error) {
-	return portal.OAuthCallbackURL(portalBaseURL)
+func oauthClientBrandingFromIAM(
+	branding *oauth2.ClientBranding,
+) (*types.OAuthClientBranding, error) {
+	result := &types.OAuthClientBranding{
+		Name:      branding.Name,
+		ClientURL: branding.ClientURL,
+	}
+
+	if branding.LogoURL != nil {
+		result.Logo = &types.File{
+			DownloadURL: *branding.LogoURL,
+		}
+	}
+
+	return result, nil
 }

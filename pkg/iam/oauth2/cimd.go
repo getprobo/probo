@@ -526,3 +526,29 @@ func (s *Service) validateCIMDScopes(scopes coredata.OAuth2Scopes) error {
 
 	return nil
 }
+
+func (s *Service) CIMDClientMetadata(ctx context.Context, clientIDRaw string) (*ClientMetadataDocument, error) {
+	if !IsCIMDClientID(clientIDRaw) {
+		return nil, nil
+	}
+
+	doc, err := s.cimd.fetch(ctx, clientIDRaw)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch cimd client metadata: %w", err)
+	}
+
+	return doc, nil
+}
+
+func (s *Service) CIMDClientDisplayName(ctx context.Context, clientIDRaw string) (*string, error) {
+	doc, err := s.CIMDClientMetadata(ctx, clientIDRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	if doc == nil || doc.ClientName == "" {
+		return nil, nil
+	}
+
+	return &doc.ClientName, nil
+}

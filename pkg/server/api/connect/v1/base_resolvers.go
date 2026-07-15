@@ -271,6 +271,21 @@ func (r *queryResolver) Oauth2ScopesSupported(ctx context.Context) ([]coredata.O
 	return r.scopeRegistry.RegisteredScopes(), nil
 }
 
+// OauthClientBranding is the resolver for the oauthClientBranding field.
+func (r *queryResolver) OauthClientBranding(ctx context.Context, clientID *string) (*types.OAuthClientBranding, error) {
+	if clientID == nil || *clientID == "" {
+		return nil, nil
+	}
+
+	branding, err := oauthClientBranding(ctx, r.Resolver, *clientID)
+	if err != nil {
+		r.logger.WarnCtx(ctx, "cannot resolve oauth client branding", log.Error(err))
+		return nil, nil
+	}
+
+	return branding, nil
+}
+
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 

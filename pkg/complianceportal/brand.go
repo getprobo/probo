@@ -15,23 +15,32 @@
 package complianceportal
 
 import (
-	portal "go.probo.inc/probo/pkg/complianceportal"
+	"fmt"
+	"net/url"
 )
 
 const (
-	VisitorOAuthScope = portal.VisitorOAuthScope
-	GraphQLPath       = "/graphql"
-	CIMDMetadataPath  = portal.CIMDMetadataPath
-	BrandLogoPath     = portal.BrandLogoPath
-	BrandDarkLogoPath = portal.BrandDarkLogoPath
-	OAuthInitiatePath = "/initiate"
-	OAuthCallbackPath = portal.OAuthCallbackPath
+	BrandLogoPath     = "/brand/logo"
+	BrandDarkLogoPath = "/brand/dark-logo"
 )
 
-func CIMDClientIDURL(portalBaseURL string) (string, error) {
-	return portal.CIMDClientIDURL(portalBaseURL)
+func BrandLogoURL(portalBaseURL string) (string, error) {
+	return brandAssetURL(portalBaseURL, BrandLogoPath)
 }
 
-func OAuthCallbackURL(portalBaseURL string) (string, error) {
-	return portal.OAuthCallbackURL(portalBaseURL)
+func BrandDarkLogoURL(portalBaseURL string) (string, error) {
+	return brandAssetURL(portalBaseURL, BrandDarkLogoPath)
+}
+
+func brandAssetURL(portalBaseURL string, path string) (string, error) {
+	parsed, err := url.Parse(portalBaseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse portal base URL: %w", err)
+	}
+
+	parsed.Path = path
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+
+	return parsed.String(), nil
 }

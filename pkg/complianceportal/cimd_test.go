@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestCIMDClientIDURL(t *testing.T) {
@@ -48,20 +49,50 @@ func TestPortalBaseURLFromCIMDClientID(t *testing.T) {
 	assert.Equal(t, "https://acme.example.com", baseURL)
 }
 
+func TestBrandLogoURL(t *testing.T) {
+	t.Parallel()
+
+	logoURL, err := BrandLogoURL("https://acme.example.com/page")
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.example.com/brand/logo", logoURL)
+
+	darkLogoURL, err := BrandDarkLogoURL("https://acme.example.com/")
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.example.com/brand/dark-logo", darkLogoURL)
+}
+
 func TestBuildClientMetadataDocument(t *testing.T) {
 	t.Parallel()
 
-	websiteURL := "https://acme.example.com"
+	websiteURL := "https://www.acme.com"
 	portal := &coredata.TrustCenter{
 		Title:      "Acme Trust Center",
 		WebsiteURL: &websiteURL,
 	}
 
-	doc, err := BuildClientMetadataDocument(portal, "https://acme.example.com")
+	doc, err := BuildClientMetadataDocument(
+		portal,
+		"https://acme.example.com/.well-known/oauth-client-metadata",
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "https://acme.example.com/.well-known/oauth-client-metadata", doc.ClientID)
 	assert.Equal(t, "Acme Trust Center", doc.ClientName)
 	assert.Equal(t, []string{"https://acme.example.com/callback"}, doc.RedirectURIs)
-	assert.Equal(t, websiteURL, doc.ClientURI)
+	assert.Equal(t, "https://acme.example.com", doc.ClientURI)
 	assert.Equal(t, VisitorOAuthScope, doc.Scope)
+	assert.Empty(t, doc.LogoURI)
+}
+
+func TestBuildClientMetadataDocument_LogoURIUsesBrandLogoEndpoint(t *testing.T) {
+	t.Parallel()
+
+	logoFileID := gid.MustParseGID("WR-qMrB5AAEAGQAAAZ9mIO8B8vDFQ-i3")
+	portal := &coredata.TrustCenter{
+		Title:      "Acme Trust Center",
+		LogoFileID: &logoFileID,
+	}
+
+	doc, err := BuildClientMetadataDocument(portal, "https://acme.example.com")
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.example.com/brand/logo", doc.LogoURI)
 }
