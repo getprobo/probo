@@ -22,11 +22,14 @@ package coredata
 
 import (
 	"context"
+	"database/sql/driver"
 	"encoding"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -56,10 +59,74 @@ type (
 
 	Sessions []*Session
 
-	SessionData struct{}
+	SessionData struct {
+		BoundHost string `json:"bound_host,omitempty"`
+	}
 
 	AuthMethod string
 )
+
+func NormalizeBoundHost(host string) string {
+	return strings.ToLower(strings.TrimSpace(host))
+}
+
+func SessionDataForHost(host string) SessionData {
+	return SessionData{
+		BoundHost: NormalizeBoundHost(host),
+	}
+}
+
+func (d SessionData) IsDomainBound() bool {
+	return d.BoundHost != ""
+}
+
+func (d SessionData) MatchesBoundHost(requestHost string) bool {
+	if !d.IsDomainBound() {
+		return false
+	}
+
+	return NormalizeBoundHost(d.BoundHost) == NormalizeBoundHost(requestHost)
+}
+
+func (d SessionData) Value() (driver.Value, error) {
+	data, err := json.Marshal(d)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal session data: %w", err)
+	}
+
+	return data, nil
+}
+
+func (d *SessionData) Scan(value any) error {
+	if value == nil {
+		*d = SessionData{}
+
+		return nil
+	}
+
+	var data []byte
+
+	switch v := value.(type) {
+	case string:
+		data = []byte(v)
+	case []byte:
+		data = v
+	default:
+		return fmt.Errorf("cannot scan session data: unsupported type %T", value)
+	}
+
+	if len(data) == 0 {
+		*d = SessionData{}
+
+		return nil
+	}
+
+	if err := json.Unmarshal(data, d); err != nil {
+		return fmt.Errorf("cannot unmarshal session data: %w", err)
+	}
+
+	return nil
+}
 
 const (
 	AuthMethodMagicLink AuthMethod = "MAGIC_LINK"
