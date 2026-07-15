@@ -44,7 +44,10 @@ func registerTrayAutoStart(exePath string, runDir string) error {
 }
 
 func newTrayCmd() *cobra.Command {
-	var runDir string
+	var (
+		runDir    string
+		serverURL string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "tray",
@@ -52,6 +55,15 @@ func newTrayCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if runDir == "" {
 				runDir = deviceagent.DefaultEnrollmentRunDir()
+			}
+
+			if serverURL != "" {
+				normalized, err := deviceagent.NormalizeServerURL(serverURL)
+				if err != nil {
+					return fmt.Errorf("invalid --server: %w", err)
+				}
+
+				serverURL = normalized
 			}
 
 			exePath, err := os.Executable()
@@ -63,7 +75,7 @@ func newTrayCmd() *cobra.Command {
 				tray.Options{
 					RunDir:    runDir,
 					ExePath:   exePath,
-					ServerURL: deviceagent.DefaultServerURL,
+					ServerURL: serverURL,
 					Version:   version,
 				},
 			)
@@ -75,6 +87,12 @@ func newTrayCmd() *cobra.Command {
 		"run-dir",
 		deviceagent.DefaultEnrollmentRunDir(),
 		"directory containing the public enrollment marker",
+	)
+	cmd.Flags().StringVar(
+		&serverURL,
+		"server",
+		"",
+		"Probo console base URL; skips region picker when set (for local dev)",
 	)
 
 	return cmd

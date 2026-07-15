@@ -77,3 +77,18 @@ func NormalizeServerURL(host string) (string, error) {
 
 	return (&url.URL{Scheme: scheme, Host: strings.ToLower(parsed.Host)}).String(), nil
 }
+
+// ConsoleEnrollURL returns the browser enrollment page URL for serverURL.
+func ConsoleEnrollURL(serverURL string) (string, error) {
+	normalized, err := NormalizeServerURL(serverURL)
+	if err != nil {
+		return "", err
+	}
+
+	enrollURL, err := url.JoinPath(normalized, "enroll")
+	if err != nil {
+		return "", fmt.Errorf("cannot build console enroll URL: %w", err)
+	}
+
+	return enrollURL, nil
+}

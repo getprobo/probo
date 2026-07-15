@@ -35,10 +35,6 @@ import (
 )
 
 func Run(opts Options) error {
-	if opts.ServerURL == "" {
-		opts.ServerURL = deviceagent.DefaultServerURL
-	}
-
 	done := make(chan struct{})
 
 	var shutdown sync.Once
@@ -73,13 +69,28 @@ func Run(opts Options) error {
 	return nil
 }
 
+type enrollmentMenu struct {
+	items []*systray.MenuItem
+}
+
+func (m enrollmentMenu) show() {
+	for _, item := range m.items {
+		item.Show()
+	}
+}
+
+func (m enrollmentMenu) hide() {
+	for _, item := range m.items {
+		item.Hide()
+	}
+}
+
 func onReady(opts Options, done <-chan struct{}) {
 	setTrayIcons()
 
 	systray.SetTitle("Probo")
 
-	enrollmentRequiredItem := systray.AddMenuItem("Enrollment required", "Enroll from the Probo console")
-	enrollmentRequiredItem.Disable()
+	enrollMenu := setupEnrollmentMenu(opts, done)
 
 	connectedItem := systray.AddMenuItem("Connected", "Device is enrolled and reporting")
 	connectedItem.Disable()
@@ -101,7 +112,7 @@ func onReady(opts Options, done <-chan struct{}) {
 	updateMenu := func() {
 		enrolled, err := deviceagent.IsEnrolled(opts.RunDir)
 		if err != nil {
-			enrollmentRequiredItem.Hide()
+			enrollMenu.hide()
 			connectedItem.Hide()
 			statusUnavailableItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Status unavailable")
@@ -112,11 +123,11 @@ func onReady(opts Options, done <-chan struct{}) {
 		statusUnavailableItem.Hide()
 
 		if enrolled {
-			enrollmentRequiredItem.Hide()
+			enrollMenu.hide()
 			connectedItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Connected")
 		} else {
-			enrollmentRequiredItem.Show()
+			enrollMenu.show()
 			connectedItem.Hide()
 			systray.SetTooltip("Probo Device Posture Agent — Enrollment required")
 		}
@@ -143,6 +154,58 @@ func onReady(opts Options, done <-chan struct{}) {
 			select {
 			case <-aboutItem.ClickedCh:
 				showAbout(opts.Version)
+			case <-done:
+				return
+			}
+		}
+	}()
+}
+
+func setupEnrollmentMenu(opts Options, done <-chan struct{}) enrollmentMenu {
+	const enrollTooltip = "Open enrollment in your browser"
+
+	if opts.ServerURL != "" {
+		enrollItem := systray.AddMenuItem("Enroll in browser", enrollTooltip)
+		bindMenuClick(enrollItem, done, func() {
+			openConsoleEnroll(opts.ServerURL)
+		})
+
+		return enrollmentMenu{items: []*systray.MenuItem{enrollItem}}
+	}
+
+	enrollRoot := systray.AddMenuItem("Enroll in browser", enrollTooltip)
+
+	usItem := enrollRoot.AddSubMenuItem(
+		"United States (us.probo.com)",
+		"Open US console enrollment",
+	)
+	bindMenuClick(usItem, done, func() {
+		openConsoleEnroll(deviceagent.USConsoleURL)
+	})
+
+	euItem := enrollRoot.AddSubMenuItem(
+		"European Union (eu.probo.com)",
+		"Open EU console enrollment",
+	)
+	bindMenuClick(euItem, done, func() {
+		openConsoleEnroll(deviceagent.EUConsoleURL)
+	})
+
+	selfHostedItem := enrollRoot.AddSubMenuItem(
+		"Self hosted…",
+		"Enter your Probo hostname",
+	)
+	bindMenuClick(selfHostedItem, done, openSelfHostedEnroll)
+
+	return enrollmentMenu{items: []*systray.MenuItem{enrollRoot}}
+}
+
+func bindMenuClick(item *systray.MenuItem, done <-chan struct{}, fn func()) {
+	go func() {
+		for {
+			select {
+			case <-item.ClickedCh:
+				fn()
 			case <-done:
 				return
 			}

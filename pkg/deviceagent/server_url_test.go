@@ -66,3 +66,45 @@ func TestNormalizeServerURL(t *testing.T) {
 		})
 	}
 }
+
+func TestConsoleEnrollURL(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:  "hosted US console",
+			input: USConsoleURL,
+			want:  USConsoleURL + "/enroll",
+		},
+		{
+			name:  "local dev console",
+			input: "http://localhost:3000",
+			want:  "http://localhost:3000/enroll",
+		},
+		{
+			name:    "rejects whitespace-only input",
+			input:   "  ",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := ConsoleEnrollURL(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
