@@ -94,22 +94,10 @@ function RecentUpdatesSectionContent({ trustCenterKey }: RecentUpdatesSectionPro
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-r from-sand-1/0 to-sand-1 to-[96px]" />
         <div className="relative divide-y divide-sand-a2">
           {updates.map(update => (
-            // A single failing row degrades to a compact horizontal inline error.
-            <ErrorBoundary
-              key={update.id}
-              fallback={(_, reset) => (
-                <div className="px-6 py-4">
-                  <InlineError
-                    layout="horizontal"
-                    message={t("errors.inline.message")}
-                    retryLabel={t("errors.inline.retry")}
-                    onRetry={reset}
-                  />
-                </div>
-              )}
-            >
-              <MailingListUpdateListItem updateKey={update} />
-            </ErrorBoundary>
+            // Rows share fate (one connection query), so a row's field error
+            // bubbles to the section boundary above rather than degrading a
+            // single, unrecoverable row.
+            <MailingListUpdateListItem key={update.id} updateKey={update} />
           ))}
         </div>
       </div>
