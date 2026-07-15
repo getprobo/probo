@@ -118,6 +118,18 @@ const routes = [
           () => import("./pages/iam/auth/ConsentPageLoader"),
         ),
       },
+      {
+        path: "portal-login",
+        Component: lazy(() => import("./pages/iam/auth/PortalLoginPage")),
+      },
+      {
+        path: "magic-link-expired",
+        Component: lazy(() => import("./pages/iam/auth/MagicLinkExpiredPage")),
+      },
+      {
+        path: "magic-link-already-used",
+        Component: lazy(() => import("./pages/iam/auth/MagicLinkAlreadyUsedPage")),
+      },
     ],
   },
   {
