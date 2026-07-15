@@ -38,6 +38,7 @@ import { TrustCenterFileListItem } from "./_components/TrustCenterFileListItem";
 import { groupByField } from "./_lib/groupByField";
 import { toQueryVariables } from "./_lib/toQueryVariables";
 import { useDocumentTab } from "./_lib/useDocumentTab";
+import { documentsLayout } from "./variants";
 
 export const documentsPageQuery = graphql`
   query DocumentsPageQuery($visibility: TrustCenterVisibility) {
@@ -129,16 +130,15 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
   const fileGroups = groupByField(fileNodes, node => node.category)
     .sort((a, b) => a.key.localeCompare(b.key));
 
+  const { page, results } = documentsLayout({ busy: isRefetching });
+
   return (
     <>
       <PageHeader title={t("title")} count={total} flushBottomSpace>
         <DocumentsToolbar />
       </PageHeader>
-      <div className="flex w-full flex-col items-center px-8 py-8">
-        <div
-          aria-busy={isRefetching}
-          className={`flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150 ${isRefetching ? "opacity-60" : ""}`}
-        >
+      <div className={page()}>
+        <div aria-busy={isRefetching} className={results()}>
           <ListErrorBoundary
             onRetry={done => startTransition(() => {
               refetch(toQueryVariables(tab), { fetchPolicy: "network-only", onComplete: done });

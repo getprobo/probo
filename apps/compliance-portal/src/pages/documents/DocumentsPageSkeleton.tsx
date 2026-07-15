@@ -24,10 +24,14 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
+import { documentsLayout } from "./variants";
+
 const SECTION_PLACEHOLDERS = ["a", "b"];
 const ROW_PLACEHOLDERS = ["x", "y", "z"];
 
 export function DocumentsPageSkeleton() {
+  const { page, results } = documentsLayout();
+
   return (
     <>
       <HeaderBand flushBottomSpace>
@@ -36,8 +40,8 @@ export function DocumentsPageSkeleton() {
           <TabsSkeleton />
         </div>
       </HeaderBand>
-      <div className="flex w-full flex-col items-center px-8 py-8">
-        <div className="flex w-full max-w-5xl flex-col gap-8">
+      <div className={page()}>
+        <div className={results()}>
           {SECTION_PLACEHOLDERS.map(section => (
             <div key={section} className="flex flex-col gap-3">
               <TextSkeleton size={3} className="w-40" />
