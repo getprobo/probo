@@ -36,6 +36,9 @@ var ErrServerURLMismatch = errors.New("server URL does not match persisted confi
 // only when serverURL matches the server_url persisted in config.json.
 // Otherwise the enrollment token is exchanged, the key and server binding
 // are saved to disk immediately, and then the key is returned.
+//
+// Concurrent callers are serialized with an exclusive lock so only one
+// process exchanges a one-shot enrollment token for a given state dir.
 func LoadOrExchangeAPIKey(
 	ctx context.Context,
 	dir string,
@@ -47,6 +50,12 @@ func LoadOrExchangeAPIKey(
 	if err != nil {
 		return "", fmt.Errorf("invalid server URL: %w", err)
 	}
+
+	release, err := AcquireEnrollmentLock(dir)
+	if err != nil {
+		return "", fmt.Errorf("cannot acquire enrollment lock: %w", err)
+	}
+	defer release()
 
 	apiKey, err := LoadAPIKey(dir)
 	if err == nil {

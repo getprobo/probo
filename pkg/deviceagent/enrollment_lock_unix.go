@@ -22,14 +22,16 @@
 
 package deviceagent
 
-// DefaultConfigDir returns the directory under which the agent's config
-// and keystore live on non-Windows hosts.
-func DefaultConfigDir() string {
-	return "/var/lib/probo-agent"
+import (
+	"os"
+
+	"golang.org/x/sys/unix"
+)
+
+func lockFileExclusive(file *os.File) error {
+	return unix.Flock(int(file.Fd()), unix.LOCK_EX)
 }
 
-// DefaultEnrollmentRunDir returns the runtime directory for the public
-// enrollment marker and enrolling.lock on non-Windows hosts.
-func DefaultEnrollmentRunDir() string {
-	return "/var/run/probo-agent"
+func unlockFile(file *os.File) error {
+	return unix.Flock(int(file.Fd()), unix.LOCK_UN)
 }

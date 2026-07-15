@@ -37,7 +37,7 @@ func DefaultConfigDir() string {
 }
 
 // DefaultEnrollmentRunDir returns the runtime directory for the public
-// enrollment marker on Windows.
+// enrollment marker and enrolling.lock on Windows.
 func DefaultEnrollmentRunDir() string {
 	programData := os.Getenv("ProgramData")
 	if programData == "" {

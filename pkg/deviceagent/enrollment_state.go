@@ -40,8 +40,9 @@ const (
 )
 
 // EnrollmentRunDir returns the runtime directory for the public enrollment
-// marker. Production installs use DefaultEnrollmentRunDir(); custom --dir
-// values get an isolated sibling run tree for dev and tests.
+// marker and the short-lived enrolling.lock. Production installs use
+// DefaultEnrollmentRunDir(); custom --dir values get an isolated sibling
+// run tree for dev and tests.
 func EnrollmentRunDir(configDir string) string {
 	if configDir == "" {
 		configDir = DefaultConfigDir()

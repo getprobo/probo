@@ -18,18 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build !windows
+//go:build windows
 
 package deviceagent
 
-// DefaultConfigDir returns the directory under which the agent's config
-// and keystore live on non-Windows hosts.
-func DefaultConfigDir() string {
-	return "/var/lib/probo-agent"
+import (
+	"os"
+
+	"golang.org/x/sys/windows"
+)
+
+func lockFileExclusive(file *os.File) error {
+	return windows.LockFileEx(
+		windows.Handle(file.Fd()),
+		windows.LOCKFILE_EXCLUSIVE_LOCK,
+		0,
+		1,
+		0,
+		&windows.Overlapped{},
+	)
 }
 
-// DefaultEnrollmentRunDir returns the runtime directory for the public
-// enrollment marker and enrolling.lock on non-Windows hosts.
-func DefaultEnrollmentRunDir() string {
-	return "/var/run/probo-agent"
+func unlockFile(file *os.File) error {
+	return windows.UnlockFileEx(
+		windows.Handle(file.Fd()),
+		0,
+		1,
+		0,
+		&windows.Overlapped{},
+	)
 }

@@ -18,18 +18,69 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build !windows
-
 package deviceagent
 
-// DefaultConfigDir returns the directory under which the agent's config
-// and keystore live on non-Windows hosts.
-func DefaultConfigDir() string {
-	return "/var/lib/probo-agent"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestEnrollmentLockPath(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	assert.Equal(
+		t,
+		filepath.Join(EnrollmentRunDir(dir), EnrollmentLockFileName),
+		EnrollmentLockPath(dir),
+	)
 }
 
-// DefaultEnrollmentRunDir returns the runtime directory for the public
-// enrollment marker and enrolling.lock on non-Windows hosts.
-func DefaultEnrollmentRunDir() string {
-	return "/var/run/probo-agent"
+func TestAcquireEnrollmentLockConcurrent(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+
+	releaseFirst, err := AcquireEnrollmentLock(dir)
+	require.NoError(t, err)
+
+	acquired := make(chan error, 1)
+
+	go func() {
+		releaseSecond, err := AcquireEnrollmentLock(dir)
+		if err != nil {
+			acquired <- err
+			return
+		}
+
+		releaseSecond()
+
+		acquired <- nil
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	select {
+	case err := <-acquired:
+		require.NoError(t, err)
+		t.Fatal("second install acquired enrollment lock while first still holds it")
+	default:
+	}
+
+	releaseFirst()
+
+	select {
+	case err := <-acquired:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("second install did not acquire enrollment lock after first released it")
+	}
+
+	_, err = os.Stat(EnrollmentLockPath(dir))
+	require.NoError(t, err)
 }

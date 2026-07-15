@@ -39,6 +39,10 @@ func Install(cfg Config) error {
 
 	name := DefaultWindowsName
 
+	// Remove any previous registration so install is idempotent
+	// (matches Darwin's bootout-before-bootstrap).
+	_ = Uninstall(cfg)
+
 	bin := fmt.Sprintf(`"%s" run --dir "%s"`, cfg.ExePath, cfg.Dir)
 	if out, err := exec.Command(
 		"sc.exe",
