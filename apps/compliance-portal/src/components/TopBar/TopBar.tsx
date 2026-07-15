@@ -28,7 +28,6 @@ import { graphql, useFragment } from "react-relay";
 import { Link as RouterLink, useLocation } from "react-router";
 
 import { buildRequestAllContinueUrl } from "#/lib/auth/continueUrl";
-import { useSignInDialog } from "#/lib/auth/signInDialogContext";
 
 import type { TopBar_query$key } from "./__generated__/TopBar_query.graphql";
 import { TOP_BAR_NAV_ITEMS } from "./navItems";
@@ -61,8 +60,6 @@ export function TopBar({ queryKey }: TopBarProps) {
   const { t } = useTranslation();
   const data = useFragment(topBarFragment, queryKey);
   const { pathname } = useLocation();
-  const { openSignIn } = useSignInDialog();
-
   const { currentTrustCenter } = data;
   const title = currentTrustCenter.title;
   const logoUrl = currentTrustCenter.themedLogoUrl ?? undefined;
@@ -112,7 +109,17 @@ export function TopBar({ queryKey }: TopBarProps) {
                   color="neutral"
                   highContrast
                   iconStart={<LockSimpleIcon />}
-                  onClick={() => openSignIn({ continueTo: buildRequestAllContinueUrl() })}
+                  onClick={() => {
+                    const initiateURL = new URL(
+                      "/initiate",
+                      window.location.origin,
+                    );
+                    initiateURL.searchParams.set(
+                      "continue",
+                      buildRequestAllContinueUrl(),
+                    );
+                    window.location.href = initiateURL.toString();
+                  }}
                 >
                   {t("topBar.getAccess")}
                 </Button>

@@ -44,7 +44,7 @@
       }
     },
     "trust": {
-      "schema": "pkg/server/api/trust/v1/schema.graphql",
+      "schema": "pkg/server/api/complianceportal/v1/schema.graphql",
       "language": "typescript",
       "noFutureProofEnums": true,
       "customScalarTypes": {
@@ -54,7 +54,7 @@
       }
     },
     "complianceportal": {
-      "schema": "pkg/server/api/trust/v1/schema.graphql",
+      "schema": "pkg/server/api/complianceportal/v1/schema.graphql",
       "language": "typescript",
       "noFutureProofEnums": true,
       "customScalarTypes": {
