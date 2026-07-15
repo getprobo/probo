@@ -60,12 +60,12 @@ func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testin
 	trustCenterID := lookupTrustCenterID(t, owner)
 
 	uploadTrustCenterNDA(t, owner, trustCenterID)
-	activateTrustCenter(t, owner, trustCenterID)
+	trustHost := lookupTrustHost(t, owner, trustCenterID)
 
-	victim := testutil.SelfProvisionTrustCenterVisitor(t, trustCenterID)
-	attacker := testutil.SelfProvisionTrustCenterVisitor(t, trustCenterID)
+	victim := testutil.SelfProvisionTrustCenterVisitor(t, trustHost)
+	attacker := testutil.SelfProvisionTrustCenterVisitor(t, trustHost)
 
-	victimSignatureID, victimSignatureStatus := viewerSignature(t, victim, trustCenterID)
+	victimSignatureID, victimSignatureStatus := viewerSignature(t, victim, trustHost)
 	require.NotEmpty(t, victimSignatureID)
 	require.Equal(t, "PENDING", victimSignatureStatus)
 
@@ -77,7 +77,7 @@ func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testin
 		}
 	`
 
-	err := attacker.ExecuteTrust(trustCenterID, acceptMutation, map[string]any{
+	err := attacker.ExecuteTrust(trustHost, acceptMutation, map[string]any{
 		"input": map[string]any{"signatureId": victimSignatureID},
 	}, nil)
 	require.Error(t, err, "attacker must not be able to accept another visitor's signature")
@@ -91,7 +91,7 @@ func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testin
 		}
 	`
 
-	err = attacker.ExecuteTrust(trustCenterID, recordEventMutation, map[string]any{
+	err = attacker.ExecuteTrust(trustHost, recordEventMutation, map[string]any{
 		"input": map[string]any{
 			"signatureId": victimSignatureID,
 			"eventType":   "DOCUMENT_VIEWED",
@@ -100,7 +100,7 @@ func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testin
 	require.Error(t, err, "attacker must not be able to inject events into another visitor's signature")
 	assertForbidden(t, err)
 
-	_, statusAfterAttack := viewerSignature(t, victim, trustCenterID)
+	_, statusAfterAttack := viewerSignature(t, victim, trustHost)
 	assert.Equal(t, "PENDING", statusAfterAttack, "attack attempts must not have mutated the victim's signature")
 
 	var acceptResult struct {
@@ -112,7 +112,7 @@ func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testin
 		} `json:"acceptElectronicSignature"`
 	}
 
-	err = victim.ExecuteTrust(trustCenterID, acceptMutation, map[string]any{
+	err = victim.ExecuteTrust(trustHost, acceptMutation, map[string]any{
 		"input": map[string]any{"signatureId": victimSignatureID},
 	}, &acceptResult)
 	require.NoError(t, err, "the legitimate signer must still be able to accept their own signature")
@@ -147,7 +147,7 @@ func uploadTrustCenterNDA(t *testing.T, owner *testutil.Client, trustCenterID st
 	require.NoError(t, err)
 }
 
-func viewerSignature(t *testing.T, visitor *testutil.Client, trustCenterID string) (string, string) {
+func viewerSignature(t *testing.T, visitor *testutil.Client, trustHost string) (string, string) {
 	t.Helper()
 
 	const query = `
@@ -171,7 +171,7 @@ func viewerSignature(t *testing.T, visitor *testutil.Client, trustCenterID strin
 		} `json:"currentTrustCenter"`
 	}
 
-	err := visitor.ExecuteTrust(trustCenterID, query, nil, &result)
+	err := visitor.ExecuteTrust(trustHost, query, nil, &result)
 	require.NoError(t, err)
 
 	sig := result.CurrentTrustCenter.NonDisclosureAgreement.ViewerSignature

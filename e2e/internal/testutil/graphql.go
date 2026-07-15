@@ -219,9 +219,14 @@ func ConsoleGraphQLWithAccessToken(
 // page's host as TLS SNI. Certificates are Pebble-issued for e2e, so
 // verification is skipped.
 func trustHTTPClient(serverName string) *http.Client {
+	return trustHTTPClientWithJar(serverName, nil)
+}
+
+func trustHTTPClientWithJar(serverName string, jar http.CookieJar) *http.Client {
 	dialer := &net.Dialer{Timeout: 5 * time.Second}
 
 	return &http.Client{
+		Jar:     jar,
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
@@ -233,6 +238,36 @@ func trustHTTPClient(serverName string) *http.Client {
 			},
 		},
 	}
+}
+
+// WaitForTrustCenterHTTPS blocks until the dedicated trust-center listener
+// serves the page over TLS. Managed domains provision certificates
+// asynchronously after activation.
+func WaitForTrustCenterHTTPS(t testing.TB, host string) {
+	t.Helper()
+
+	client := TrustHTTPClient(host)
+
+	require.Eventually(
+		t,
+		func() bool {
+			resp, err := client.Get("https://" + host + complianceportalOAuthMetadataPath())
+			if err != nil {
+				return false
+			}
+
+			defer func() { _ = resp.Body.Close() }()
+
+			return resp.StatusCode == http.StatusOK
+		},
+		30*time.Second,
+		500*time.Millisecond,
+		"trust center did not become servable on the dedicated listener",
+	)
+}
+
+func complianceportalOAuthMetadataPath() string {
+	return "/.well-known/oauth-client-metadata"
 }
 
 // DoTrust posts a GraphQL query to a compliance page served on the dedicated
@@ -249,7 +284,7 @@ func (c *Client) DoTrust(host string, query string, variables map[string]any) (*
 		return nil, fmt.Errorf("cannot marshal request: %w", err)
 	}
 
-	endpoint := fmt.Sprintf("https://%s/api/trust/v1/graphql", host)
+	endpoint := fmt.Sprintf("https://%s/graphql", host)
 
 	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
 	if err != nil {
@@ -258,7 +293,12 @@ func (c *Client) DoTrust(host string, query string, variables map[string]any) (*
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := trustHTTPClient(host).Do(req)
+	client := trustHTTPClient(host)
+	if c.trustClient != nil && host == c.trustHost {
+		client = c.trustClient
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -351,6 +391,10 @@ func (c *Client) HTTPClient() *http.Client {
 
 func (c *Client) BaseURL() string {
 	return c.baseURL
+}
+
+func TrustHTTPClient(trustHost string) *http.Client {
+	return trustHTTPClient(trustHost)
 }
 
 type UploadFile struct {

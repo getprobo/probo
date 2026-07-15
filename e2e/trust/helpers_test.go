@@ -21,6 +21,7 @@
 package trust_test
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -56,6 +57,42 @@ func lookupTrustCenterID(t *testing.T, owner *testutil.Client) string {
 	require.NotEmpty(t, result.Node.TrustCenter.ID)
 
 	return result.Node.TrustCenter.ID
+}
+
+func lookupTrustHost(t *testing.T, owner *testutil.Client, trustCenterID string) string {
+	t.Helper()
+
+	activateTrustCenter(t, owner, trustCenterID)
+
+	const query = `
+		query($organizationId: ID!) {
+			node(id: $organizationId) {
+				... on Organization {
+					trustCenter { publicUrl }
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			TrustCenter struct {
+				PublicURL string `json:"publicUrl"`
+			} `json:"trustCenter"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.TrustCenter.PublicURL)
+
+	publicURL, err := url.Parse(result.Node.TrustCenter.PublicURL)
+	require.NoError(t, err)
+	require.NotEmpty(t, publicURL.Host)
+
+	return publicURL.Host
 }
 
 // activateTrustCenter flips the trust center to active so its public surface

@@ -24,9 +24,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -53,16 +55,19 @@ const (
 )
 
 type Client struct {
-	T              testing.TB
-	httpClient     *http.Client
-	baseURL        string
-	mailpitBaseURL string
-	role           TestRole
-	userID         gid.GID
-	profileID      gid.GID
-	organizationID gid.GID
-	email          string
-	password       string
+	T               testing.TB
+	httpClient      *http.Client
+	proboHTTPClient *http.Client
+	trustClient     *http.Client
+	trustHost       string
+	baseURL         string
+	mailpitBaseURL  string
+	role            TestRole
+	userID          gid.GID
+	profileID       gid.GID
+	organizationID  gid.GID
+	email           string
+	password        string
 }
 
 func NewClient(t testing.TB, role TestRole) *Client {
@@ -544,11 +549,7 @@ func NewClientWithNewSession(t testing.TB, from *Client) *Client {
 	return client
 }
 
-// SelfProvisionTrustCenterVisitor signs a brand-new email up as a trust
-// center visitor through the public magic-link flow (send + verify), the
-// same path a real visitor takes. It returns a Client bound to that
-// visitor's own session and cookie jar, scoped to no organization.
-func SelfProvisionTrustCenterVisitor(t testing.TB, trustCenterID string) *Client {
+func SelfProvisionTrustCenterVisitor(t testing.TB, trustHost string) *Client {
 	t.Helper()
 
 	jar, err := cookiejar.New(nil)
@@ -561,47 +562,170 @@ func SelfProvisionTrustCenterVisitor(t testing.TB, trustCenterID string) *Client
 		baseURL:        GetBaseURL(),
 		mailpitBaseURL: GetMailpitBaseURL(),
 		email:          email,
+		trustHost:      trustHost,
 		httpClient: &http.Client{
+			Jar:     jar,
+			Timeout: 30 * time.Second,
+		},
+		trustClient: trustHTTPClientWithJar(trustHost, jar),
+		proboHTTPClient: &http.Client{
 			Jar:     jar,
 			Timeout: 30 * time.Second,
 		},
 	}
 
-	visitor.sendMagicLink(trustCenterID, email)
-	token := visitor.pollForLinkToken(fmt.Sprintf("to:%s", email))
-	visitor.verifyMagicLink(trustCenterID, token)
+	visitor.connectViaCIMD(email)
 
 	return visitor
 }
 
-func (c *Client) sendMagicLink(trustCenterID, email string) {
-	const query = `
-		mutation($input: SendMagicLinkInput!) {
-			sendMagicLink(input: $input) {
-				success
-			}
-		}
-	`
+func (c *Client) connectViaCIMD(email string) {
+	c.T.Helper()
 
-	err := c.ExecuteTrust(trustCenterID, query, map[string]any{
-		"input": map[string]any{"email": email},
-	}, nil)
-	require.NoError(c.T, err, "sendMagicLink mutation failed")
+	WaitForTrustCenterHTTPS(c.T, c.trustHost)
+
+	initiateURL := fmt.Sprintf(
+		"https://%s/initiate?continue=/overview",
+		c.trustHost,
+	)
+
+	authorizeURL := c.redirectLocation(c.trustClient, initiateURL)
+	require.NotEmpty(c.T, authorizeURL, "oauth initiate must redirect to authorize")
+
+	portalLoginURL := c.redirectLocation(c.proboHTTPClient, authorizeURL)
+	require.Contains(c.T, portalLoginURL, "/auth/portal-login", "unauthenticated authorize must redirect to portal login")
+
+	authorizeParam := extractAuthorizeQueryParam(portalLoginURL)
+	require.NotEmpty(c.T, authorizeParam)
+
+	c.postConnectMagicLink(email, authorizeParam)
+
+	token := c.pollForLinkToken(fmt.Sprintf("to:%s", email))
+	verifyURL := c.baseURL + "/api/connect/v1/magic-link/verify?token=" + url.QueryEscape(token)
+
+	resumeAuthorizeURL := c.redirectLocation(c.proboHTTPClient, verifyURL)
+	require.Contains(c.T, resumeAuthorizeURL, "/api/connect/v1/oauth2/authorize")
+
+	authorizeResp := c.redirectHTTPResponse(c.proboHTTPClient, resumeAuthorizeURL)
+	require.False(
+		c.T,
+		IsConsentRedirect(authorizeResp),
+		"compliance portal CIMD must skip oauth consent screen",
+	)
+	require.Equal(c.T, http.StatusFound, authorizeResp.StatusCode)
+
+	_, err := OAuth2AuthorizeCodeFromRedirect(authorizeResp)
+	require.NoError(c.T, err, "compliance portal CIMD must issue authorization code without consent")
+
+	callbackURL := resolveRedirectURL(resumeAuthorizeURL, authorizeResp.Header.Get("Location"))
+	require.Contains(c.T, callbackURL, "/callback")
+
+	finalURL := c.redirectLocation(c.trustClient, callbackURL)
+	require.True(
+		c.T,
+		strings.HasSuffix(finalURL, "/overview") || strings.Contains(finalURL, "/overview"),
+		"oauth callback must redirect to continue URL, got %q",
+		finalURL,
+	)
 }
 
-func (c *Client) verifyMagicLink(trustCenterID, token string) {
-	const query = `
-		mutation($input: VerifyMagicLinkInput!) {
-			verifyMagicLink(input: $input) {
-				continue
-			}
-		}
-	`
+func (c *Client) postConnectMagicLink(email, authorizeParam string) {
+	c.T.Helper()
 
-	err := c.ExecuteTrust(trustCenterID, query, map[string]any{
-		"input": map[string]any{"token": token},
-	}, nil)
-	require.NoError(c.T, err, "verifyMagicLink mutation failed")
+	body := url.Values{}
+	body.Set("email", email)
+	body.Set("authorize", authorizeParam)
+
+	req, err := http.NewRequest(
+		"POST",
+		c.baseURL+"/api/connect/v1/magic-link/send",
+		strings.NewReader(body.Encode()),
+	)
+	require.NoError(c.T, err)
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.proboHTTPClient.Do(req)
+	require.NoError(c.T, err, "magic-link send request failed")
+
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(c.T, http.StatusNoContent, resp.StatusCode, "magic-link send must return 204")
+}
+
+func (c *Client) redirectLocation(client *http.Client, rawURL string) string {
+	c.T.Helper()
+
+	resp := c.redirectHTTPResponse(client, rawURL)
+	require.True(
+		c.T,
+		resp.StatusCode >= http.StatusMultipleChoices && resp.StatusCode < http.StatusBadRequest,
+		"expected redirect from %s, got %d",
+		rawURL,
+		resp.StatusCode,
+	)
+
+	location := resp.Header.Get("Location")
+	require.NotEmpty(c.T, location, "redirect from %s missing Location header", rawURL)
+
+	return resolveRedirectURL(rawURL, location)
+}
+
+func (c *Client) redirectHTTPResponse(client *http.Client, rawURL string) *OAuth2HTTPResponse {
+	c.T.Helper()
+
+	noRedirectClient := &http.Client{
+		Jar:       client.Jar,
+		Timeout:   client.Timeout,
+		Transport: client.Transport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	require.NoError(c.T, err)
+
+	resp, err := noRedirectClient.Do(req)
+	require.NoError(c.T, err, "request to %s failed", rawURL)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(c.T, err)
+
+	return &OAuth2HTTPResponse{
+		StatusCode: resp.StatusCode,
+		Header:     resp.Header,
+		Body:       body,
+	}
+}
+
+func resolveRedirectURL(baseURL, location string) string {
+	locURL, err := url.Parse(location)
+	if err != nil {
+		return location
+	}
+
+	if locURL.IsAbs() {
+		return locURL.String()
+	}
+
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return location
+	}
+
+	return base.ResolveReference(locURL).String()
+}
+
+func extractAuthorizeQueryParam(portalLoginURL string) string {
+	parsed, err := url.Parse(portalLoginURL)
+	if err != nil {
+		return ""
+	}
+
+	return parsed.Query().Get("authorize")
 }
 
 func (c *Client) GetEmail() string {
