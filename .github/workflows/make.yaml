@@ -467,7 +467,7 @@ jobs:
           GOTESTSUM_FORMAT: "testname"
           GOTESTSUM_JUNITFILE: "junit-e2e.xml"
         run: |
-          PROBOD_ACME_ROOT_CA="$(cat compose/pebble/certs/rootCA.pem)" \
+          PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
             CGO_ENABLED=1 go tool gotestsum -- -race -cover -coverprofile=coverage.out -count=1 ./e2e/console/...
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7

@@ -23,7 +23,7 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 
 | Target            | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `make stack-up`   | Start Docker Compose infra (Postgres, Pebble, Keycloak, etc.) |
+| `make stack-up`   | Start Docker Compose infra (Postgres, step-ca, Keycloak, etc.) |
 | `make stack-down` | Stop Docker Compose infra                                     |
 | `make stack-ps`   | List running containers                                       |
 | `make psql`       | Open a `psql` shell to the dev Postgres database              |

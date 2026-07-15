@@ -40,7 +40,7 @@ import (
 // trustCenterHTTPSAddr is the loopback address of the dedicated trust-center
 // HTTPS listener started by the e2e probod (see generateConfig). Compliance
 // pages are served here exclusively, routed by TLS SNI / Host header.
-const trustCenterHTTPSAddr = "127.0.0.1:10443"
+const trustCenterHTTPSAddr = "127.0.0.1:443"
 
 type GraphQLRequest struct {
 	Query     string         `json:"query"`
@@ -216,8 +216,8 @@ func ConsoleGraphQLWithAccessToken(
 
 // trustHTTPClient builds an HTTP client that always dials the dedicated
 // trust-center HTTPS listener on loopback while presenting the compliance
-// page's host as TLS SNI. Certificates are Pebble-issued for e2e, so
-// verification is skipped.
+// page's host as TLS SNI. Certificates are step-ca-issued for e2e, so
+// verification is skipped when the root is not installed in the test runner.
 func trustHTTPClient(serverName string) *http.Client {
 	return trustHTTPClientWithJar(serverName, nil)
 }
@@ -234,7 +234,7 @@ func trustHTTPClientWithJar(serverName string, jar http.CookieJar) *http.Client 
 			},
 			TLSClientConfig: &tls.Config{
 				ServerName:         serverName,
-				InsecureSkipVerify: true, //nolint:gosec // e2e talks to Pebble-issued certs on loopback.
+				InsecureSkipVerify: true, //nolint:gosec // e2e talks to step-ca-issued certs on loopback.
 			},
 		},
 	}

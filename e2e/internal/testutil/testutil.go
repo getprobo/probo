@@ -298,11 +298,11 @@ func generateConfig() (string, error) {
 		// yields {slug}.probopage.localhost subdomains for pages without a
 		// customer custom domain.
 		"PROBOD_TRUST_CENTER_HTTP_ADDR":   ":10080",
-		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  ":10443",
+		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  ":443",
 		"PROBOD_TRUST_CENTER_BASE_DOMAIN": "probopage.localhost",
 
 		// Keep certificate provisioning snappy so trust-center e2e flows do not
-		// wait on the default 30s poll (Pebble runs with PEBBLE_VA_ALWAYS_VALID).
+		// wait on the default 30s poll (step-ca validates HTTP-01 via port 80).
 		"PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL": "1",
 
 		// AWS / S3 (SeaweedFS).
@@ -321,7 +321,7 @@ func generateConfig() (string, error) {
 
 		// Custom domains.
 		"PROBOD_CUSTOM_DOMAINS_CNAME_TARGET": "custom.test.getprobo.com",
-		"PROBOD_ACME_DIRECTORY":              "https://localhost:14000/dir",
+		"PROBOD_ACME_DIRECTORY":              "https://localhost:9000/acme/acme/directory",
 		"PROBOD_ACME_EMAIL":                  "admin@test.getprobo.com",
 	}
 
