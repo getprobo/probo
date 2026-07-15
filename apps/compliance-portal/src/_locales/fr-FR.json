@@ -15,6 +15,58 @@
   "userMenu": {
     "signOut": "Se déconnecter"
   },
+  "common": {
+    "cancel": "Annuler",
+    "error": "Une erreur est survenue"
+  },
+  "auth": {
+    "backToPortal": "Retour au portail",
+    "signIn": {
+      "title": "Connectez-vous pour continuer",
+      "description": "Accédez aux ressources protégées ou soumettez une demande",
+      "or": "OU",
+      "withProvider": "Se connecter avec {{provider}}",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "vous@entreprise.com",
+      "emailRequired": "L'e-mail est requis",
+      "emailInvalid": "Saisissez une adresse e-mail valide",
+      "sendMagicLink": "Envoyer le lien magique",
+      "resend": "Renvoyer le lien",
+      "resendIn": "Renvoyer le lien dans {{seconds}}s",
+      "magicLinkSent": "Lien magique envoyé !",
+      "magicLinkSentNote": "Consultez votre e-mail et utilisez le lien pour vous connecter."
+    },
+    "requestAccess": {
+      "success": "Accès demandé"
+    },
+    "verify": {
+      "title": "Confirmation de votre e-mail",
+      "description": "Veuillez patienter pendant que nous vous connectons\u2026"
+    },
+    "fullName": {
+      "title": "Ajoutez votre nom",
+      "label": "Nom complet",
+      "placeholder": "Jean Dupont",
+      "required": "Le nom complet est requis",
+      "tooShort": "Le nom complet est trop court",
+      "submit": "Continuer"
+    },
+    "magicLinkExpired": {
+      "title": "Lien expiré",
+      "description": "Ce lien magique a expiré. Veuillez en demander un nouveau."
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "Lien déjà utilisé",
+      "description": "Ce lien magique a déjà été utilisé. Veuillez en demander un nouveau."
+    },
+    "errors": {
+      "magicLinkFailed": "Impossible d'envoyer le lien magique. Veuillez réessayer.",
+      "verifyFailed": "Impossible de vérifier le lien. Veuillez réessayer.",
+      "fullNameFailed": "Impossible d'enregistrer votre nom. Veuillez réessayer.",
+      "requestFailed": "Impossible de finaliser votre demande d'accès. Veuillez réessayer.",
+      "ndaRequired": "Vous devez signer l'accord de confidentialité avant de demander l'accès."
+    }
+  },
   "home": {
     "heroTitle": "La confiance chez {{name}}.",
     "heroDescription": "Bienvenue dans notre Compliance Portal. Retrouvez ici notre documentation et nos certifications de sécurité.",

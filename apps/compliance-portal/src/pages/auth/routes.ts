@@ -1,0 +1,51 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { lazy } from "@probo/react-lazy";
+import type { AppRoute } from "@probo/routes";
+
+import { AuthLayoutSkeleton } from "./AuthLayoutSkeleton";
+
+// Standalone auth steps that a magic-link email or a full-name gate lands on.
+// These sit outside the portal shell, under a minimal centered layout.
+export const authRoutes = [
+  {
+    Fallback: AuthLayoutSkeleton,
+    Component: lazy(() => import("#/pages/auth/AuthLayout")),
+    children: [
+      {
+        path: "verify-magic-link",
+        Component: lazy(() => import("#/pages/auth/VerifyMagicLinkPage")),
+      },
+      {
+        path: "full-name",
+        Component: lazy(() => import("#/pages/auth/FullNamePage")),
+      },
+      {
+        path: "magic-link-expired",
+        Component: lazy(() => import("#/pages/auth/MagicLinkExpiredPage")),
+      },
+      {
+        path: "magic-link-already-used",
+        Component: lazy(() => import("#/pages/auth/MagicLinkAlreadyUsedPage")),
+      },
+    ],
+  },
+] satisfies AppRoute[];

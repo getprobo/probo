@@ -25,6 +25,7 @@ import { createBrowserRouter } from "react-router";
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { getPathPrefix } from "#/lib/http/pathPrefix";
+import { authRoutes } from "#/pages/auth/routes";
 import { documentRoutes } from "#/pages/documents/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
@@ -64,6 +65,7 @@ const routes = [
       },
     ],
   },
+  ...authRoutes,
 ] satisfies AppRoute[];
 
 // The portal is served under a /trust/{slug} path prefix (or a bare custom
