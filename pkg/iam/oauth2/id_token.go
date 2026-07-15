@@ -24,6 +24,9 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -111,4 +114,45 @@ func NewIDTokenClaims(
 	}
 
 	return claims
+}
+
+func ParseIDTokenClaims(raw string) (*IDTokenClaims, error) {
+	parts := strings.Split(raw, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("cannot parse id token: invalid format")
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse id token payload: %w", err)
+	}
+
+	var claims IDTokenClaims
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return nil, fmt.Errorf("cannot decode id token claims: %w", err)
+	}
+
+	return &claims, nil
+}
+
+func ParseIDTokenIdentity(raw string, expectedNonce string) (gid.GID, error) {
+	if raw == "" {
+		return gid.GID{}, fmt.Errorf("cannot parse id token: missing token")
+	}
+
+	claims, err := ParseIDTokenClaims(raw)
+	if err != nil {
+		return gid.GID{}, err
+	}
+
+	if claims.Nonce != expectedNonce {
+		return gid.GID{}, fmt.Errorf("cannot validate nonce: mismatch")
+	}
+
+	identityID, err := gid.ParseGID(claims.Subject)
+	if err != nil {
+		return gid.GID{}, fmt.Errorf("cannot parse identity from id token: %w", err)
+	}
+
+	return identityID, nil
 }

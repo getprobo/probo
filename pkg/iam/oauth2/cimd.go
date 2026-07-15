@@ -58,6 +58,7 @@ type (
 		GrantTypes              []string `json:"grant_types"`
 		ResponseTypes           []string `json:"response_types"`
 		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+		Scope                   string   `json:"scope,omitempty"`
 	}
 
 	cimdCacheEntry struct {
@@ -70,17 +71,57 @@ type (
 		logger     *log.Logger
 		cache      sync.Map
 	}
+
+	CIMDAllowance string
+
+	CIMDAllowFunc func(ctx context.Context, clientIDURL string) (CIMDAllowance, error)
 )
 
-func cimdClientIDAllowed(clientID string, allowed []string) bool {
-	if len(allowed) == 0 {
-		return false
-	}
+const (
+	CIMDAllowanceDenied             CIMDAllowance = "denied"
+	CIMDAllowanceAllowed            CIMDAllowance = "allowed"
+	CIMDAllowanceAllowedSkipConsent CIMDAllowance = "allowed_skip_consent"
+)
 
-	return slices.Contains(allowed, clientID)
+func (a CIMDAllowance) Allowed() bool {
+	return a != CIMDAllowanceDenied
 }
 
-func isCIMDClientID(raw string) bool {
+func (a CIMDAllowance) SkipsConsent() bool {
+	return a == CIMDAllowanceAllowedSkipConsent
+}
+
+func CIMDAllowFromClientIDs(clientIDs []string) CIMDAllowFunc {
+	allowed := slices.Clone(clientIDs)
+
+	return func(_ context.Context, clientIDURL string) (CIMDAllowance, error) {
+		if slices.Contains(allowed, clientIDURL) {
+			return CIMDAllowanceAllowed, nil
+		}
+
+		return CIMDAllowanceDenied, nil
+	}
+}
+
+func CIMDClientIDHost(raw string) (string, bool) {
+	if !IsCIMDClientID(raw) {
+		return "", false
+	}
+
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return "", false
+	}
+
+	host := parsed.Hostname()
+	if host == "" {
+		return "", false
+	}
+
+	return host, true
+}
+
+func IsCIMDClientID(raw string) bool {
 	parsed, err := url.Parse(raw)
 	if err != nil {
 		return false
@@ -110,10 +151,10 @@ func isCIMDClientID(raw string) bool {
 }
 
 func newCIMDFetcher(logger *log.Logger) *cimdFetcher {
+	// CIMD URLs are allowlisted in resolveClient before fetch runs.
 	return &cimdFetcher{
 		httpClient: httpclient.DefaultClient(
 			httpclient.WithLogger(logger),
-			httpclient.WithSSRFProtection(),
 		),
 		logger: logger,
 	}
@@ -171,13 +212,21 @@ func (f *cimdFetcher) fetch(ctx context.Context, clientIDURL string) (*ClientMet
 		)
 	}
 
-	if err := validateClientMetadataDocument(clientIDURL, &doc); err != nil {
+	return f.finishFetch(clientIDURL, &doc, resp.Header.Get("Cache-Control"))
+}
+
+func (f *cimdFetcher) finishFetch(
+	clientIDURL string,
+	doc *ClientMetadataDocument,
+	cacheControl string,
+) (*ClientMetadataDocument, error) {
+	if err := validateClientMetadataDocument(clientIDURL, doc); err != nil {
 		return nil, err
 	}
 
-	f.storeCache(clientIDURL, &doc, resp.Header.Get("Cache-Control"))
+	f.storeCache(clientIDURL, doc, cacheControl)
 
-	return &doc, nil
+	return doc, nil
 }
 
 func validateClientMetadataDocument(clientIDURL string, doc *ClientMetadataDocument) error {
@@ -321,11 +370,15 @@ func (s *Service) resolveClient(
 		return s.GetClientByID(ctx, clientID)
 	}
 
-	if !isCIMDClientID(clientIDRaw) {
+	if !IsCIMDClientID(clientIDRaw) {
 		return nil, NewError(ErrInvalidClient, WithDescription("invalid client_id"))
 	}
 
-	if !cimdClientIDAllowed(clientIDRaw, s.cimdAllowedClientIDs) {
+	if allowance, err := s.cimdAllowance(ctx, clientIDRaw); err != nil || !allowance.Allowed() {
+		if err != nil {
+			s.logger.WarnCtx(ctx, "cannot check cimd client allowance", log.Error(err))
+		}
+
 		return nil, NewError(
 			ErrInvalidClient,
 			WithDescription("client_id is not allowed for client metadata documents"),
@@ -337,7 +390,12 @@ func (s *Service) resolveClient(
 		return nil, err
 	}
 
-	client, err := s.upsertCIMDClient(ctx, tx, clientIDRaw, doc)
+	scopes, err := s.cimdScopes(doc)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := s.upsertCIMDClient(ctx, tx, clientIDRaw, doc, scopes)
 	if err != nil {
 		return nil, err
 	}
@@ -350,6 +408,7 @@ func (s *Service) upsertCIMDClient(
 	tx pg.Tx,
 	externalClientID string,
 	doc *ClientMetadataDocument,
+	scopes coredata.OAuth2Scopes,
 ) (*coredata.OAuth2Client, error) {
 	var logoURI, clientURI *string
 	if doc.LogoURI != "" {
@@ -359,8 +418,6 @@ func (s *Service) upsertCIMDClient(
 	if doc.ClientURI != "" {
 		clientURI = &doc.ClientURI
 	}
-
-	scopes := coredata.OAuth2Scopes(authorizationServerScopes(s.registry.AllWriteScopes()))
 
 	now := time.Now()
 
@@ -408,4 +465,64 @@ func (s *Service) upsertCIMDClient(
 	}
 
 	return &client, nil
+}
+
+func (s *Service) cimdAllowance(ctx context.Context, clientIDRaw string) (CIMDAllowance, error) {
+	if !IsCIMDClientID(clientIDRaw) {
+		return CIMDAllowanceDenied, nil
+	}
+
+	if s.cimdAllow == nil {
+		return CIMDAllowanceDenied, nil
+	}
+
+	return s.cimdAllow(ctx, clientIDRaw)
+}
+
+func (s *Service) cimdScopes(doc *ClientMetadataDocument) (coredata.OAuth2Scopes, error) {
+	if strings.TrimSpace(doc.Scope) == "" {
+		return coredata.OAuth2Scopes(authorizationServerScopes(s.registry.AllWriteScopes())), nil
+	}
+
+	scopes, err := parseCIMDMetadataScopes(doc.Scope)
+	if err != nil {
+		return nil, NewError(ErrInvalidScope, WithDescription(err.Error()))
+	}
+
+	if err := s.validateCIMDScopes(scopes); err != nil {
+		return nil, err
+	}
+
+	return scopes, nil
+}
+
+func parseCIMDMetadataScopes(raw string) (coredata.OAuth2Scopes, error) {
+	fields := strings.Fields(strings.TrimSpace(raw))
+	if len(fields) == 0 {
+		return nil, nil
+	}
+
+	scopes := make(coredata.OAuth2Scopes, len(fields))
+	for i, field := range fields {
+		scopes[i] = coredata.OAuth2Scope(field)
+	}
+
+	return scopes, nil
+}
+
+func (s *Service) validateCIMDScopes(scopes coredata.OAuth2Scopes) error {
+	for _, scope := range scopes {
+		if IsStandardScope(scope) {
+			continue
+		}
+
+		if err := s.registry.ValidateScopes(coredata.OAuth2Scopes{scope}); err != nil {
+			return NewError(
+				ErrInvalidScope,
+				WithDescription(fmt.Sprintf("invalid scope in client metadata document: %s", scope)),
+			)
+		}
+	}
+
+	return nil
 }

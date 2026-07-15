@@ -68,7 +68,7 @@ type (
 		logger                    *log.Logger
 		gc                        *GarbageCollector
 		cimd                      *cimdFetcher
-		cimdAllowedClientIDs      []string
+		cimdAllow                 CIMDAllowFunc
 		registry                  *oauth2scope.Registry
 		accessTokenDuration       time.Duration
 		refreshTokenDuration      time.Duration
@@ -171,10 +171,14 @@ func WithRegistry(registry *oauth2scope.Registry) Option {
 	}
 }
 
-func WithCIMDAllowedClientIDs(clientIDs []string) Option {
+func WithCIMDAllow(fn CIMDAllowFunc) Option {
 	return func(s *Service) {
-		s.cimdAllowedClientIDs = clientIDs
+		s.cimdAllow = fn
 	}
+}
+
+func (s *Service) SetCIMDAllow(fn CIMDAllowFunc) {
+	s.cimdAllow = fn
 }
 
 func NewService(
@@ -303,9 +307,14 @@ func (s *Service) GetClientByID(ctx context.Context, clientID gid.GID) (*coredat
 
 func (s *Service) ExchangeAuthorizationCode(
 	ctx context.Context,
-	client *coredata.OAuth2Client,
+	clientIDRaw string,
 	codeValue, redirectURI, codeVerifier string,
 ) (*TokenResult, error) {
+	client, err := s.resolveClient(ctx, nil, clientIDRaw)
+	if err != nil {
+		return nil, err
+	}
+
 	var (
 		code                 = coredata.OAuth2AuthorizationCode{}
 		identity             = coredata.Identity{}
@@ -1497,37 +1506,49 @@ func (s *Service) Authorize(
 				codeChallengeMethod = coredata.OAuth2CodeChallengeMethodS256
 			}
 
-			// RFC 6819 §5.2.3.2 / §5.2.4.1: public clients must always require
-			// explicit user consent since they cannot be strongly authenticated.
-			if client.TokenEndpointAuthMethod != coredata.OAuth2ClientTokenEndpointAuthMethodNone {
+			skipConsent := false
+
+			if client.TokenEndpointAuthMethod == coredata.OAuth2ClientTokenEndpointAuthMethodNone {
+				// RFC 6819 §5.2.3.2 / §5.2.4.1: public clients must always
+				// require explicit user consent since they cannot be strongly
+				// authenticated.
+				allowance, allowanceErr := s.cimdAllowance(ctx, client.ExternalClientID)
+				if allowanceErr != nil {
+					s.logger.WarnCtx(ctx, "cannot check cimd client allowance", log.Error(allowanceErr))
+				} else {
+					skipConsent = allowance.SkipsConsent()
+				}
+			} else {
 				var existingConsent coredata.OAuth2Consent
-				if err := existingConsent.LoadMatchingConsent(
+				skipConsent = existingConsent.LoadMatchingConsent(
 					ctx,
 					tx,
 					req.IdentityID,
 					client.ID,
 					requestedScopes,
-				); err == nil {
-					var err error
+				) == nil
+			}
 
-					code, err = s.issueAuthorizationCode(
-						ctx,
-						tx,
-						client,
-						req.IdentityID,
-						uri.URI(req.RedirectURI),
-						requestedScopes,
-						req.CodeChallenge,
-						codeChallengeMethod,
-						req.Nonce,
-						req.AuthTime,
-					)
-					if err != nil {
-						return fmt.Errorf("cannot issue authorization code: %w", err)
-					}
+			if skipConsent {
+				var err error
 
-					return nil
+				code, err = s.issueAuthorizationCode(
+					ctx,
+					tx,
+					client,
+					req.IdentityID,
+					uri.URI(req.RedirectURI),
+					requestedScopes,
+					req.CodeChallenge,
+					codeChallengeMethod,
+					req.Nonce,
+					req.AuthTime,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot issue authorization code: %w", err)
 				}
+
+				return nil
 			}
 
 			now := time.Now()

@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 )
 
 func TestIsCIMDClientID(t *testing.T) {
@@ -72,27 +74,39 @@ func TestIsCIMDClientID(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				assert.Equal(t, tt.valid, isCIMDClientID(tt.raw))
+				assert.Equal(t, tt.valid, IsCIMDClientID(tt.raw))
 			},
 		)
 	}
 }
 
-func TestCIMDClientIDAllowed(t *testing.T) {
+func TestCIMDAllowFromClientIDs(t *testing.T) {
 	t.Parallel()
 
 	clientID := "https://chatgpt.com/oauth/client.json"
+	allow := CIMDAllowFromClientIDs(nil)
 
-	assert.False(t, cimdClientIDAllowed(clientID, nil))
-	assert.False(t, cimdClientIDAllowed(clientID, []string{}))
-	assert.True(
-		t,
-		cimdClientIDAllowed(clientID, []string{clientID}),
-	)
-	assert.False(
-		t,
-		cimdClientIDAllowed(clientID, []string{"https://other.example.com/oauth/client.json"}),
-	)
+	allowance, err := allow(t.Context(), clientID)
+	require.NoError(t, err)
+	assert.Equal(t, CIMDAllowanceDenied, allowance)
+
+	allow = CIMDAllowFromClientIDs([]string{})
+
+	allowance, err = allow(t.Context(), clientID)
+	require.NoError(t, err)
+	assert.Equal(t, CIMDAllowanceDenied, allowance)
+
+	allow = CIMDAllowFromClientIDs([]string{clientID})
+
+	allowance, err = allow(t.Context(), clientID)
+	require.NoError(t, err)
+	assert.Equal(t, CIMDAllowanceAllowed, allowance)
+
+	allow = CIMDAllowFromClientIDs([]string{"https://other.example.com/oauth/client.json"})
+
+	allowance, err = allow(t.Context(), clientID)
+	require.NoError(t, err)
+	assert.Equal(t, CIMDAllowanceDenied, allowance)
 }
 
 func TestValidateClientMetadataDocument(t *testing.T) {
@@ -226,6 +240,56 @@ func TestCIMDFetcherFetch(t *testing.T) {
 			_, err = fetcher.fetch(t.Context(), clientID)
 			require.NoError(t, err)
 			assert.Equal(t, 2, requestCount)
+		},
+	)
+}
+
+func TestCIMDScopes(t *testing.T) {
+	t.Parallel()
+
+	reg := oauth2scope.NewRegistry().Register(
+		map[coredata.OAuth2Scope][]string{
+			coredata.OAuth2Scope("v1:example:write"): {"example:write"},
+		},
+	)
+	svc := &Service{registry: reg}
+
+	t.Run(
+		"defaults to all scopes when metadata omits scope",
+		func(t *testing.T) {
+			t.Parallel()
+
+			scopes, err := svc.cimdScopes(&ClientMetadataDocument{})
+			require.NoError(t, err)
+			assert.Contains(t, scopes, ScopeOpenID)
+			assert.Contains(t, scopes, coredata.OAuth2Scope("v1:example:write"))
+		},
+	)
+
+	t.Run(
+		"uses scope declared in metadata",
+		func(t *testing.T) {
+			t.Parallel()
+
+			scopes, err := svc.cimdScopes(
+				&ClientMetadataDocument{Scope: "openid profile email"},
+			)
+			require.NoError(t, err)
+			assert.Equal(
+				t,
+				coredata.OAuth2Scopes{ScopeOpenID, ScopeProfile, ScopeEmail},
+				scopes,
+			)
+		},
+	)
+
+	t.Run(
+		"rejects unknown scope in metadata",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := svc.cimdScopes(&ClientMetadataDocument{Scope: "admin"})
+			require.Error(t, err)
 		},
 	)
 }

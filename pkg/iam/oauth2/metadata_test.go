@@ -21,17 +21,74 @@
 package oauth2_test
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/uri"
 )
+
+func TestFetchServerMetadata(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/.well-known/openid-configuration", r.URL.Path)
+
+				_ = json.NewEncoder(w).Encode(
+					map[string]string{
+						"issuer":                 "https://auth.example.com",
+						"authorization_endpoint": "https://auth.example.com/api/connect/v1/oauth2/authorize",
+						"token_endpoint":         "https://auth.example.com/api/connect/v1/oauth2/token",
+					},
+				)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	client := httpclient.DefaultClient(
+		httpclient.WithSSRFProtection(),
+		httpclient.WithSSRFAllowLoopback(),
+	)
+
+	metadata, err := oauth2.FetchServerMetadata(context.Background(), client, server.URL)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		uri.URI("https://auth.example.com/api/connect/v1/oauth2/authorize"),
+		metadata.AuthorizationEndpoint,
+	)
+}
+
+func TestAuthorizationURLWithQuery(t *testing.T) {
+	t.Parallel()
+
+	authorizationEndpoint := uri.URI("https://auth.example.com/api/connect/v1/oauth2/authorize")
+	query := url.Values{}
+	query.Set("client_id", "https://trust.example.com/.well-known/oauth-client-metadata")
+	query.Set("response_type", "code")
+
+	got, err := oauth2.AuthorizationURLWithQuery(authorizationEndpoint, query)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		"https://auth.example.com/api/connect/v1/oauth2/authorize?client_id=https%3A%2F%2Ftrust.example.com%2F.well-known%2Foauth-client-metadata&response_type=code",
+		got,
+	)
+}
 
 func TestNewMetadata(t *testing.T) {
 	t.Parallel()
