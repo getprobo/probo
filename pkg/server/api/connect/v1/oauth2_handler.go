@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
@@ -42,23 +43,29 @@ import (
 )
 
 type OAuth2Handler struct {
-	iam           *iam.Service
-	sessionCookie *authn.Cookie
-	baseURL       *baseurl.BaseURL
-	logger        *log.Logger
+	iam             *iam.Service
+	trust           *trust.Service
+	sessionCookie   *authn.Cookie
+	baseURL         *baseurl.BaseURL
+	portalLoginPath string
+	logger          *log.Logger
 }
 
 func NewOAuth2Handler(
 	svc *iam.Service,
+	trustSvc *trust.Service,
 	cookieConfig securecookie.Config,
 	baseURL *baseurl.BaseURL,
+	portalLoginPath string,
 	logger *log.Logger,
 ) *OAuth2Handler {
 	return &OAuth2Handler{
-		iam:           svc,
-		sessionCookie: authn.NewCookie(&cookieConfig),
-		baseURL:       baseURL,
-		logger:        logger.Named("oauth2"),
+		iam:             svc,
+		trust:           trustSvc,
+		sessionCookie:   authn.NewCookie(&cookieConfig),
+		baseURL:         baseURL,
+		portalLoginPath: portalLoginPath,
+		logger:          logger.Named("oauth2"),
 	}
 }
 
@@ -102,27 +109,15 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (h *OAuth2Handler) endpoints() oauth2.Endpoints {
-	api := h.baseURL.String() + "/api/connect/v1"
-
-	return oauth2.Endpoints{
-		Authorization:       uri.URI(api + "/oauth2/authorize"),
-		Token:               uri.URI(api + "/oauth2/token"),
-		Userinfo:            uri.URI(api + "/oauth2/userinfo"),
-		JWKS:                uri.URI(api + "/oauth2/jwks"),
-		Registration:        uri.URI(api + "/oauth2/register"),
-		Introspection:       uri.URI(api + "/oauth2/introspect"),
-		Revocation:          uri.URI(api + "/oauth2/revoke"),
-		DeviceAuthorization: uri.URI(api + "/oauth2/device"),
-	}
-}
-
 // --- Handlers ---
 
 // DiscoveryHandler serves the OpenID Connect Discovery document.
 // GET /.well-known/openid-configuration
 func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request) {
-	metadata := h.iam.OAuth2ServerMetadata(h.endpoints())
+	metadata := OAuth2ServerMetadata(
+		h.baseURL,
+		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
+	)
 
 	PublicCache(w, 1*time.Hour)
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
@@ -142,9 +137,29 @@ func (h *OAuth2Handler) JWKSHandler(w http.ResponseWriter, r *http.Request) {
 func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request) {
 	identity := authn.IdentityFromContext(r.Context())
 	if identity == nil {
-		continueURL := h.baseURL.WithPath("/api/connect/v1/oauth2/authorize").
-			WithQueryValues(r.URL.Query()).
-			MustString()
+		metadata := OAuth2ServerMetadata(
+			h.baseURL,
+			h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
+		)
+
+		continueURL, err := oauth2.AuthorizationURLWithQuery(metadata.AuthorizationEndpoint, r.URL.Query())
+		if err != nil {
+			h.logger.ErrorCtx(r.Context(), "cannot build authorization continue URL", log.Error(err))
+			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
+			return
+		}
+
+		clientID := r.URL.Query().Get("client_id")
+		if _, err := portalFromCIMDClientID(r.Context(), h.trust, clientID); err == nil {
+			q := url.Values{}
+			q.Set("authorize", r.URL.Query().Encode())
+			loginURL := h.baseURL.WithPath(h.portalLoginPath).WithQueryValues(q).MustString()
+			http.Redirect(w, r, loginURL, http.StatusFound)
+
+			return
+		}
+
 		loginURL := h.baseURL.WithPath("/auth/login").
 			WithQuery("continue", continueURL).
 			MustString()
@@ -468,7 +483,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 
 	result, err := h.iam.OAuth2ServerService.ExchangeAuthorizationCode(
 		r.Context(),
-		client,
+		client.ExternalClientID,
 		in.Code,
 		in.RedirectURI,
 		in.CodeVerifier,

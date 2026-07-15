@@ -49,6 +49,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -77,12 +78,12 @@ type (
 func NewMux(
 	logger *log.Logger,
 	svc *iam.Service,
+	trustSvc *trust.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
-	isTrustCenterDomain IsTrustCenterDomainFunc,
 	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
 	r := chi.NewMux()
@@ -101,7 +102,24 @@ func NewMux(
 		oauth2Middleware,
 	)
 
-	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost, isTrustCenterDomain)
+	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost)
+
+	magicLinkHandler := NewMagicLinkHandler(
+		svc,
+		trustSvc,
+		baseURL,
+		cookieConfig,
+		logger,
+	)
+
+	oauth2Handler := NewOAuth2Handler(
+		svc,
+		trustSvc,
+		cookieConfig,
+		baseURL,
+		"/auth/portal-login",
+		logger,
+	)
 
 	router.Handle("/graphql", graphqlHandler)
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)
@@ -110,32 +128,34 @@ func NewMux(
 	router.Get("/oidc/{provider}/login", oidcHandler.LoginHandler)
 	router.Get("/oidc/{provider}/callback", oidcHandler.CallbackHandler)
 
+	r.Post("/magic-link/send", magicLinkHandler.SendHandler)
+	r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)
+
 	// SCIM 2.0 endpoints - these use their own bearer token authentication
 	scimServer := NewSCIMServer(scimHandler)
 	r.Mount("/scim/2.0", http.StripPrefix("/scim/2.0", scimHandler.BearerTokenMiddleware(scimServer)))
 
 	// OAuth2 / OpenID Connect server endpoints.
-	oauth2Handler := NewOAuth2Handler(svc, cookieConfig, baseURL, logger)
 
 	// Public endpoints (no authentication).
-	r.Get("/oauth2/jwks", oauth2Handler.JWKSHandler)
-	r.Post("/oauth2/token", oauth2Handler.TokenHandler)
-	r.Post("/oauth2/device", oauth2Handler.DeviceAuthHandler)
+	r.Get(oauth2JWKSPath, oauth2Handler.JWKSHandler)
+	r.Post(oauth2TokenPath, oauth2Handler.TokenHandler)
+	r.Post(oauth2DeviceAuthorizationPath, oauth2Handler.DeviceAuthHandler)
 
 	// Bearer-token authenticated endpoints.
 	bearerAuth := r.With(oauth2Handler.BearerTokenMiddleware)
-	bearerAuth.Get("/oauth2/userinfo", oauth2Handler.UserInfoHandler)
+	bearerAuth.Get(oauth2UserinfoPath, oauth2Handler.UserInfoHandler)
 
 	// Client-authenticated endpoints.
 	clientAuth := r.With(oauth2Handler.ClientAuthMiddleware)
-	clientAuth.Post("/oauth2/introspect", oauth2Handler.IntrospectHandler)
-	clientAuth.Post("/oauth2/revoke", oauth2Handler.RevokeHandler)
+	clientAuth.Post(oauth2IntrospectPath, oauth2Handler.IntrospectHandler)
+	clientAuth.Post(oauth2RevokePath, oauth2Handler.RevokeHandler)
 
 	// Session-authenticated endpoints.
-	router.Get("/oauth2/authorize", oauth2Handler.AuthorizeHandler)
+	router.Get(oauth2AuthorizePath, oauth2Handler.AuthorizeHandler)
 
 	requireIdentity := router.With(identityPresenceMiddleware)
-	requireIdentity.Post("/oauth2/register", oauth2Handler.RegisterHandler)
+	requireIdentity.Post(oauth2RegisterPath, oauth2Handler.RegisterHandler)
 
 	return r
 }

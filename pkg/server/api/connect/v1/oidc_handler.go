@@ -30,25 +30,23 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/baseurl"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
-// IsTrustCenterDomainFunc checks whether a given host is a trust center
-// custom domain.
-type IsTrustCenterDomainFunc func(ctx context.Context, host string) bool
-
 type OIDCHandler struct {
-	iam                 *iam.Service
-	sessionCookie       *authn.Cookie
-	cookieSecret        string
-	logger              *log.Logger
-	safeRedirect        *saferedirect.SafeRedirect
-	isTrustCenterDomain IsTrustCenterDomainFunc
+	iam           *iam.Service
+	sessionCookie *authn.Cookie
+	logger        *log.Logger
+	safeRedirect  *saferedirect.SafeRedirect
 }
 
 func NewOIDCHandler(
@@ -56,15 +54,12 @@ func NewOIDCHandler(
 	cookieConfig securecookie.Config,
 	logger *log.Logger,
 	allowedHost saferedirect.AllowedHostFunc,
-	isTrustCenterDomain IsTrustCenterDomainFunc,
 ) *OIDCHandler {
 	return &OIDCHandler{
-		iam:                 iam,
-		sessionCookie:       authn.NewCookie(&cookieConfig),
-		cookieSecret:        cookieConfig.Secret,
-		logger:              logger,
-		safeRedirect:        saferedirect.New(allowedHost),
-		isTrustCenterDomain: isTrustCenterDomain,
+		iam:           iam,
+		sessionCookie: authn.NewCookie(&cookieConfig),
+		logger:        logger,
+		safeRedirect:  saferedirect.New(allowedHost),
 	}
 }
 
@@ -210,45 +205,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	redirectURL := h.safeRedirect.GetSafeRedirectURL(ctx, continueURL, defaultRedirect)
-
-	if transferURL, ok := h.buildSessionTransferURL(ctx, redirectURL, rootSession.ID.String()); ok {
-		http.Redirect(w, r, transferURL, http.StatusFound)
-		return
-	}
-
 	http.Redirect(w, r, redirectURL, http.StatusFound)
-}
-
-// buildSessionTransferURL returns a session-transfer URL on the target trust
-// center custom domain. This lets the custom domain set its own cookie for the
-// session.
-func (h *OIDCHandler) buildSessionTransferURL(ctx context.Context, redirectURL string, sessionID string) (string, bool) {
-	parsed, err := url.Parse(redirectURL)
-	if err != nil || !parsed.IsAbs() {
-		return "", false
-	}
-
-	if !h.isTrustCenterDomain(ctx, parsed.Host) {
-		return "", false
-	}
-
-	token, err := authn.SignSessionTransfer(sessionID, redirectURL, h.cookieSecret)
-	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot sign session transfer token", log.Error(err))
-		return "", false
-	}
-
-	transferURL := &url.URL{
-		Scheme: parsed.Scheme,
-		Host:   parsed.Host,
-		Path:   "/api/trust/v1/session-transfer",
-	}
-
-	q := transferURL.Query()
-	q.Set("token", token)
-	transferURL.RawQuery = q.Encode()
-
-	return transferURL.String(), true
 }
 
 func parseOIDCProvider(s string) (coredata.OIDCProvider, error) {
@@ -260,4 +217,186 @@ func parseOIDCProvider(s string) (coredata.OIDCProvider, error) {
 	default:
 		return "", errors.New("unknown provider")
 	}
+}
+
+type MagicLinkHandler struct {
+	iam           *iam.Service
+	trust         *trust.Service
+	proboBaseURL  *baseurl.BaseURL
+	sessionCookie *authn.Cookie
+	safeRedirect  *saferedirect.SafeRedirect
+	logger        *log.Logger
+}
+
+func NewMagicLinkHandler(
+	iamSvc *iam.Service,
+	trustSvc *trust.Service,
+	proboBaseURL *baseurl.BaseURL,
+	cookieConfig securecookie.Config,
+	logger *log.Logger,
+) *MagicLinkHandler {
+	return &MagicLinkHandler{
+		iam:           iamSvc,
+		trust:         trustSvc,
+		proboBaseURL:  proboBaseURL,
+		sessionCookie: authn.NewCookie(&cookieConfig),
+		safeRedirect:  saferedirect.New(nil),
+		logger:        logger,
+	}
+}
+
+func (h *MagicLinkHandler) SendHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := r.ParseForm(); err != nil {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid form data"))
+		return
+	}
+
+	emailAddr, err := mail.ParseAddr(r.FormValue("email"))
+	if err != nil {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid email"))
+		return
+	}
+
+	authorizeContinue := h.authorizeContinueURL(r.FormValue("authorize"))
+	if authorizeContinue == "" {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid authorize parameters"))
+		return
+	}
+
+	compliancePageID, organizationID, err := h.portalIDsFromAuthorize(ctx, r.FormValue("authorize"))
+	if err != nil {
+		h.logger.WarnCtx(ctx, "cannot resolve compliance portal from authorize params", log.Error(err))
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid authorize parameters"))
+
+		return
+	}
+
+	proboURL := h.proboBaseURL.String()
+
+	req := &iam.SendMagicLinkRequest{
+		Email:            emailAddr,
+		CompliancePageID: compliancePageID,
+		OrganizationID:   organizationID,
+		URLPath:          "/api/connect/v1/magic-link/verify",
+		Continue:         &authorizeContinue,
+		MagicLinkBaseURL: &proboURL,
+	}
+
+	if err := h.iam.AuthService.SendMagicLink(ctx, req); err != nil {
+		h.logger.ErrorCtx(ctx, "cannot send magic link", log.Error(err))
+		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *MagicLinkHandler) VerifyHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("missing token"))
+		return
+	}
+
+	identity, session, continueURL, err := h.iam.AuthService.OpenSessionWithMagicLink(ctx, token)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
+			http.Redirect(w, r, "/auth/magic-link-expired", http.StatusFound)
+			return
+		}
+
+		if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
+			http.Redirect(w, r, "/auth/magic-link-already-used", http.StatusFound)
+			return
+		}
+
+		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
+			httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid token"))
+			return
+		}
+
+		h.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
+		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
+		return
+	}
+
+	_ = identity
+
+	h.sessionCookie.Set(w, session)
+
+	metadata := OAuth2ServerMetadata(
+		h.proboBaseURL,
+		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
+	)
+
+	redirectURL := metadata.AuthorizationEndpoint.String()
+	if continueURL != nil && *continueURL != "" {
+		redirectURL = *continueURL
+	}
+
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func (h *MagicLinkHandler) authorizeContinueURL(encodedAuthorize string) string {
+	if encodedAuthorize == "" {
+		return ""
+	}
+
+	values, err := url.ParseQuery(encodedAuthorize)
+	if err != nil {
+		return ""
+	}
+
+	metadata := OAuth2ServerMetadata(
+		h.proboBaseURL,
+		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
+	)
+
+	continueURL, err := oauth2.AuthorizationURLWithQuery(metadata.AuthorizationEndpoint, values)
+	if err != nil {
+		return ""
+	}
+
+	return continueURL
+}
+
+func portalFromCIMDClientID(
+	ctx context.Context,
+	trustSvc *trust.Service,
+	clientID string,
+) (*coredata.TrustCenter, error) {
+	host, ok := oauth2.CIMDClientIDHost(clientID)
+	if !ok {
+		return nil, errors.New("invalid cimd client_id")
+	}
+
+	portal, err := trustSvc.GetPortalByDomainName(ctx, host)
+	if err != nil {
+		return nil, err
+	}
+
+	return portal, nil
+}
+
+func (h *MagicLinkHandler) portalIDsFromAuthorize(
+	ctx context.Context,
+	encodedAuthorize string,
+) (*gid.GID, gid.GID, error) {
+	values, err := url.ParseQuery(encodedAuthorize)
+	if err != nil {
+		return nil, gid.GID{}, err
+	}
+
+	portal, err := portalFromCIMDClientID(ctx, h.trust, values.Get("client_id"))
+	if err != nil {
+		return nil, gid.GID{}, err
+	}
+
+	return &portal.ID, portal.OrganizationID, nil
 }
