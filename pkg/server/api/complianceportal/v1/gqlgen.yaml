@@ -14,7 +14,7 @@ model:
 resolver:
   layout: "follow-schema"
   dir: "."
-  package: "trust_v1"
+  package: "complianceportal_v1"
   filename_template: "{name}_resolvers.go"
 
 autobind: []

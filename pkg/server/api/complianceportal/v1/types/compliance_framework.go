@@ -22,33 +22,17 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
-
-type ComplianceFramework struct {
-	ID          gid.GID    `json:"id"`
-	Framework   *Framework `json:"framework"`
-	FrameworkID gid.GID    `json:"-"`
-}
-
-func (ComplianceFramework) IsNode()           {}
-func (cf ComplianceFramework) GetID() gid.GID { return cf.ID }
 
 type ComplianceFrameworkConnection struct {
 	Edges    []*ComplianceFrameworkEdge `json:"edges"`
 	PageInfo *PageInfo                  `json:"pageInfo"`
 }
 
-type ComplianceFrameworkEdge struct {
-	Cursor page.CursorKey       `json:"cursor"`
-	Node   *ComplianceFramework `json:"node"`
-}
-
 func NewComplianceFramework(cf *coredata.ComplianceFramework) *ComplianceFramework {
 	return &ComplianceFramework{
-		ID:          cf.ID,
-		FrameworkID: cf.FrameworkID,
+		ID: cf.ID,
 	}
 }
 

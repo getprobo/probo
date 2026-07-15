@@ -1,4 +1,4 @@
-package trust_v1
+package complianceportal_v1
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -15,16 +15,17 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 // AcceptElectronicSignature is the resolver for the acceptElectronicSignature field.
 func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error) {
 	var (
-		identity = authn.IdentityFromContext(ctx)
-		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
+		identity    = authn.IdentityFromContext(ctx)
+		httpReq     = gqlutils.HTTPRequestFromContext(ctx)
+		trustCenter = complianceportal.CompliancePageFromContext(ctx)
 	)
 
 	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
@@ -32,8 +33,11 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		signerIP = httpReq.RemoteAddr
 	}
 
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+
 	signature, err := r.esign.AcceptSignature(
 		ctx,
+		scope,
 		&esign.AcceptSignatureRequest{
 			SignatureID:    input.SignatureID,
 			SignerFullName: identity.FullName,
@@ -55,8 +59,9 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 // RecordSigningEvent is the resolver for the recordSigningEvent field.
 func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error) {
 	var (
-		identity = authn.IdentityFromContext(ctx)
-		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
+		identity    = authn.IdentityFromContext(ctx)
+		httpReq     = gqlutils.HTTPRequestFromContext(ctx)
+		trustCenter = complianceportal.CompliancePageFromContext(ctx)
 	)
 
 	actorIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
@@ -64,8 +69,11 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		actorIP = httpReq.RemoteAddr
 	}
 
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+
 	if err := r.esign.RecordEvent(
 		ctx,
+		scope,
 		&esign.RecordEventRequest{
 			SignatureID: input.SignatureID,
 			EventType:   input.EventType,
@@ -132,7 +140,7 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 		return nil, nil
 	}
 
-	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
+	sig, err := r.esign.GetSignatureByID(ctx, scope, *access.ElectronicSignatureID)
 	if err != nil {
 		return nil, nil
 	}

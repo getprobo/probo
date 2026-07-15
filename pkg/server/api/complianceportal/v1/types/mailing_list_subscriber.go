@@ -18,30 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package trust_v1
+package types
 
 import (
-	"context"
-	"errors"
-
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func (r *Resolver) loadPublicFile(ctx context.Context, fileID gid.GID) (*types.File, error) {
-	file, err := r.fileManager.GetPublicFile(ctx, fileID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load public file", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+func NewMailingListSubscriber(s *coredata.MailingListSubscriber) *MailingListSubscriber {
+	return &MailingListSubscriber{
+		ID:        s.ID,
+		FullName:  s.FullName,
+		Email:     s.Email,
+		Status:    s.Status,
+		CreatedAt: s.CreatedAt,
+		UpdatedAt: s.UpdatedAt,
 	}
-
-	return types.NewFile(file, r.fileManager), nil
 }

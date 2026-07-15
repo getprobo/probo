@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,35 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package types
+package complianceportal_v1
 
 import (
-	"time"
+	"context"
 
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-type MailingListSubscriber struct {
-	ID        gid.GID                              `json:"id"`
-	FullName  string                               `json:"fullName"`
-	Email     mail.Addr                            `json:"email"`
-	Status    coredata.MailingListSubscriberStatus `json:"status"`
-	CreatedAt time.Time                            `json:"createdAt"`
-	UpdatedAt time.Time                            `json:"updatedAt"`
-}
+func (r *Resolver) ResourceAliasResolver(
+	ctx context.Context,
+	storageResourceID gid.GID,
+) (*string, error) {
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 
-func (MailingListSubscriber) IsNode()          {}
-func (m MailingListSubscriber) GetID() gid.GID { return m.ID }
+	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, storageResourceID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
 
-func NewMailingListSubscriber(s *coredata.MailingListSubscriber) *MailingListSubscriber {
-	return &MailingListSubscriber{
-		ID:        s.ID,
-		FullName:  s.FullName,
-		Email:     s.Email,
-		Status:    s.Status,
-		CreatedAt: s.CreatedAt,
-		UpdatedAt: s.UpdatedAt,
+		return nil, gqlutils.Internal(ctx)
 	}
+
+	return alias, nil
 }

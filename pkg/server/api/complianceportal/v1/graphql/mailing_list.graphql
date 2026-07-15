@@ -29,10 +29,7 @@ enum MailingListSubscriberStatus
     )
 }
 
-type MailingListSubscriber implements Node
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListSubscriber"
-  ) {
+type MailingListSubscriber implements Node {
   id: ID!
   fullName: String!
   email: EmailAddr!

@@ -1,4 +1,4 @@
-package trust_v1
+package complianceportal_v1
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -18,8 +18,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
@@ -165,7 +165,13 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
-	framework, err := trustService.GetFramework(ctx, scope, obj.FrameworkID)
+	complianceFramework, err := trustService.GetComplianceFramework(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load compliance framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	framework, err := trustService.GetFramework(ctx, scope, complianceFramework.FrameworkID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -827,9 +833,10 @@ func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.Trus
 
 // SubprocessorCategories is the resolver for the subprocessorCategories field.
 func (r *trustCenterResolver) SubprocessorCategories(ctx context.Context, obj *types.TrustCenter) ([]coredata.ThirdPartyCategory, error) {
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
-	categories, err := r.trust.ListDistinctTrustCenterCategoriesForOrganizationID(ctx, scope, obj.Organization.ID)
+	categories, err := r.trust.ListDistinctTrustCenterCategoriesForOrganizationID(ctx, scope, trustCenter.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessor categories", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -840,9 +847,10 @@ func (r *trustCenterResolver) SubprocessorCategories(ctx context.Context, obj *t
 
 // SubprocessorCountries is the resolver for the subprocessorCountries field.
 func (r *trustCenterResolver) SubprocessorCountries(ctx context.Context, obj *types.TrustCenter) ([]coredata.CountryCode, error) {
+	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
-	countries, err := r.trust.ListDistinctTrustCenterCountriesForOrganizationID(ctx, scope, obj.Organization.ID)
+	countries, err := r.trust.ListDistinctTrustCenterCountriesForOrganizationID(ctx, scope, trustCenter.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessor countries", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

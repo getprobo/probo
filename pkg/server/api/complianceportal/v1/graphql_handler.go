@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package trust_v1
+package complianceportal_v1
 
 import (
 	"net/http"
@@ -33,7 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/authentication"
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"

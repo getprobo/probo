@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,31 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package trust_v1
+package complianceportal_v1
 
 import (
 	"context"
+	"errors"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/server/api/complianceportal"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func (r *Resolver) ResourceAliasResolver(
-	ctx context.Context,
-	storageResourceID gid.GID,
-) (*string, error) {
-	trustCenter := complianceportal.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
-
-	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, storageResourceID)
+func (r *Resolver) loadPublicFile(ctx context.Context, fileID gid.GID) (*types.File, error) {
+	file, err := r.fileManager.GetPublicFile(ctx, fileID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load public file", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return alias, nil
+	return types.NewFile(file, r.fileManager), nil
 }

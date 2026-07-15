@@ -1,4 +1,4 @@
-package trust_v1
+package complianceportal_v1
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -9,12 +9,12 @@ import (
 	"context"
 
 	"go.gearno.de/kit/log"
+	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 // CreateRightsRequest is the resolver for the createRightsRequest field.
@@ -26,10 +26,10 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		return nil, gqlutils.Unauthenticatedf(ctx, "a verified email is required to submit a request")
 	}
 
-	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	compliancePage := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 
-	rightsRequest, err := r.trust.RightsRequests.Create(
+	rightsRequest, err := r.trust.CreateRightsRequest(
 		ctx,
 		scope,
 		&trust.CreateRightsRequest{

@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Package trust provides functionality for serving the trust center SPA frontend.
-package trust
+package complianceportal_v1
 
 import (
 	"fmt"

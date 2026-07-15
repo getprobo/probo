@@ -1,4 +1,4 @@
-package trust_v1
+package complianceportal_v1
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -16,7 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
@@ -121,6 +121,22 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 			return nil, gqlutils.Internal(ctx)
 		}
+	}
+
+	req := gqlutils.HTTPRequestFromContext(ctx)
+	if req == nil {
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	host, ok := complianceportal.TrustedRequestHost(req)
+	if !ok {
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	session.Data = coredata.SessionDataForHost(host)
+	if err := r.iam.SessionService.UpdateSessionData(ctx, session.ID, session.Data); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot bind session to host", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	trustCenter := complianceportal.CompliancePageFromContext(ctx)

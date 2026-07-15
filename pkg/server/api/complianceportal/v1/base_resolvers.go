@@ -1,4 +1,4 @@
-package trust_v1
+package complianceportal_v1
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -17,8 +17,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
+	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 

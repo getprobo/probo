@@ -172,26 +172,20 @@ type AuditEdge @nda {
   node: Audit!
 }
 
-type ComplianceFramework implements Node
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFramework"
-  ) {
+type ComplianceFramework implements Node {
   id: ID!
   framework: Framework! @goField(forceResolver: true)
 }
 
 type ComplianceFrameworkConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkConnection"
+    model: "go.probo.inc/probo/pkg/server/api/complianceportal/v1/types.ComplianceFrameworkConnection"
   ) {
   edges: [ComplianceFrameworkEdge!]!
   pageInfo: PageInfo!
 }
 
-type ComplianceFrameworkEdge
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkEdge"
-  ) {
+type ComplianceFrameworkEdge {
   cursor: CursorKey!
   node: ComplianceFramework!
 }
@@ -285,7 +279,7 @@ input SubprocessorFilter {
 
 type SubprocessorConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.SubprocessorConnection"
+    model: "go.probo.inc/probo/pkg/server/api/complianceportal/v1/types.SubprocessorConnection"
   ) @nda {
   edges: [SubprocessorEdge!]!
   pageInfo: PageInfo!
