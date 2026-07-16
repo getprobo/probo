@@ -47,6 +47,13 @@ type TrustCenter implements Node {
     before: CursorKey
   ): TrustCenterReferenceConnection! @goField(forceResolver: true)
 
+  commitmentGroups(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): CompliancePortalCommitmentGroupConnection! @goField(forceResolver: true)
+
   trustCenterFiles(
     first: Int
     after: CursorKey
@@ -302,6 +309,91 @@ type TrustCenterReferenceConnection @nda {
 type TrustCenterReferenceEdge @nda {
   cursor: CursorKey!
   node: TrustCenterReference!
+}
+
+enum CompliancePortalCommitmentIcon
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIcon") {
+  LOCK_KEY
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconLockKey")
+  EYE_SLASH
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconEyeSlash")
+  FINGERPRINT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconFingerprint")
+  SHIELD_WARNING
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconShieldWarning")
+  SHIELD_CHECK
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconShieldCheck")
+  SIREN
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconSiren")
+  KEY
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconKey")
+  LOCK
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconLock")
+  CLOUD
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconCloud")
+  DATABASE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconDatabase")
+  GLOBE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconGlobe")
+  EYE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconEye")
+  USERS
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconUsers")
+  CERTIFICATE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconCertificate")
+  GAVEL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconGavel")
+  HEARTBEAT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconHeartbeat")
+  BELL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconBell")
+  BUG
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconBug")
+  CODE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconCode")
+  SERVER
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconServer")
+}
+
+type CompliancePortalCommitmentGroup implements Node {
+  id: ID!
+  title: String!
+  description: String!
+
+  commitments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): CompliancePortalCommitmentConnection! @goField(forceResolver: true)
+}
+
+type CompliancePortalCommitmentGroupConnection {
+  edges: [CompliancePortalCommitmentGroupEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CompliancePortalCommitmentGroupEdge {
+  cursor: CursorKey!
+  node: CompliancePortalCommitmentGroup!
+}
+
+type CompliancePortalCommitment implements Node {
+  id: ID!
+  icon: CompliancePortalCommitmentIcon!
+  eyebrow: String!
+  title: String!
+  description: String!
+}
+
+type CompliancePortalCommitmentConnection {
+  edges: [CompliancePortalCommitmentEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CompliancePortalCommitmentEdge {
+  cursor: CursorKey!
+  node: CompliancePortalCommitment!
 }
 
 type TrustCenterFile implements Node @nda {

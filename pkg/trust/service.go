@@ -45,26 +45,30 @@ const NDAConsentText = "By clicking \"Review and sign\", I consent to sign this 
 
 type (
 	Service struct {
-		pg                     *pg.Client
-		s3                     *s3.Client
-		bucket                 string
-		proboSvc               *probo.Service
-		slackSigningSecret     string
-		baseURL                string
-		iam                    *iam.Service
-		esign                  *esign.Service
-		html2pdfConverter      *html2pdf.Converter
-		fileManager            *filemanager.Service
-		logger                 *log.Logger
-		slack                  *slack.Service
-		TrustCenters           *TrustCenterService
-		Documents              *DocumentService
-		Audits                 *AuditService
-		ThirdParties           *ThirdPartyService
-		Frameworks             *FrameworkService
-		ComplianceFrameworks   *ComplianceFrameworkService
-		TrustCenterAccesses    *TrustCenterAccessService
-		TrustCenterReferences  *TrustCenterReferenceService
+		pg                    *pg.Client
+		s3                    *s3.Client
+		bucket                string
+		proboSvc              *probo.Service
+		slackSigningSecret    string
+		baseURL               string
+		iam                   *iam.Service
+		esign                 *esign.Service
+		html2pdfConverter     *html2pdf.Converter
+		fileManager           *filemanager.Service
+		logger                *log.Logger
+		slack                 *slack.Service
+		TrustCenters          *TrustCenterService
+		Documents             *DocumentService
+		Audits                *AuditService
+		ThirdParties          *ThirdPartyService
+		Frameworks            *FrameworkService
+		ComplianceFrameworks  *ComplianceFrameworkService
+		TrustCenterAccesses   *TrustCenterAccessService
+		TrustCenterReferences *TrustCenterReferenceService
+
+		CompliancePortalCommitmentGroups *CompliancePortalCommitmentGroupService
+		CompliancePortalCommitments      *CompliancePortalCommitmentService
+
 		TrustCenterFiles       *TrustCenterFileService
 		Reports                *ReportService
 		Organizations          *OrganizationService
@@ -109,6 +113,8 @@ func NewService(
 	svc.ComplianceFrameworks = &ComplianceFrameworkService{svc: svc}
 	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc, iamSvc: iam, logger: logger}
 	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}
+	svc.CompliancePortalCommitmentGroups = &CompliancePortalCommitmentGroupService{svc: svc}
+	svc.CompliancePortalCommitments = &CompliancePortalCommitmentService{svc: svc}
 	svc.TrustCenterFiles = &TrustCenterFileService{svc: svc}
 	svc.Reports = &ReportService{svc: svc}
 	svc.Organizations = &OrganizationService{svc: svc}

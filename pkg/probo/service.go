@@ -113,6 +113,8 @@ type (
 		TrustCenters                          *TrustCenterService
 		TrustCenterAccesses                   *TrustCenterAccessService
 		TrustCenterReferences                 *TrustCenterReferenceService
+		CompliancePortalCommitmentGroups      *CompliancePortalCommitmentGroupService
+		CompliancePortalCommitments           *CompliancePortalCommitmentService
 		TrustCenterFiles                      *TrustCenterFileService
 		ComplianceFrameworks                  *ComplianceFrameworkService
 		ComplianceExternalURLs                *ComplianceExternalURLService
@@ -235,6 +237,8 @@ func NewService(
 	svc.TrustCenters = &TrustCenterService{svc: svc}
 	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc}
 	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}
+	svc.CompliancePortalCommitmentGroups = &CompliancePortalCommitmentGroupService{svc: svc}
+	svc.CompliancePortalCommitments = &CompliancePortalCommitmentService{svc: svc}
 	svc.ComplianceFrameworks = &ComplianceFrameworkService{svc: svc}
 	svc.ComplianceExternalURLs = &ComplianceExternalURLService{svc: svc}
 	svc.TrustCenterFiles = &TrustCenterFileService{

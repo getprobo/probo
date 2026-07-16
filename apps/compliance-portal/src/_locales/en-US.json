@@ -20,6 +20,7 @@
     "heroDescription": "Welcome to our Compliance Portal. Find our security documentation and certifications here.",
     "sections": {
       "compliance": "Compliance",
+      "securityCommitments": "Security Commitments",
       "trustedBy": "Trusted by",
       "recentUpdates": "Recent updates"
     },

@@ -133,6 +133,8 @@ const (
 	RiskAssessmentBoundaryEntityType                 uint16 = 101
 	AccessReviewCampaignSourceEntityType             uint16 = 102
 	AccessReviewCampaignSourceFetchAttemptEntityType uint16 = 103
+	CompliancePortalCommitmentGroupEntityType        uint16 = 104
+	CompliancePortalCommitmentEntityType             uint16 = 105
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -327,6 +329,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &AccessReviewCampaignSource{ID: id}, true
 	case AccessReviewCampaignSourceFetchAttemptEntityType:
 		return &AccessReviewCampaignSourceFetchAttempt{ID: id}, true
+	case CompliancePortalCommitmentGroupEntityType:
+		return &CompliancePortalCommitmentGroup{ID: id}, true
+	case CompliancePortalCommitmentEntityType:
+		return &CompliancePortalCommitment{ID: id}, true
 	default:
 		return nil, false
 	}

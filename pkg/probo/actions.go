@@ -69,6 +69,20 @@ const (
 	ActionTrustCenterReferenceUpdate     = "core:trust-center-reference:update"
 	ActionTrustCenterReferenceDelete     = "core:trust-center-reference:delete"
 
+	// CompliancePortalCommitmentGroup actions
+	ActionCompliancePortalCommitmentGroupList       = "core:compliance-portal-commitment-group:list"
+	ActionCompliancePortalCommitmentGroupCreate     = "core:compliance-portal-commitment-group:create"
+	ActionCompliancePortalCommitmentGroupUpdate     = "core:compliance-portal-commitment-group:update"
+	ActionCompliancePortalCommitmentGroupUpdateRank = "core:compliance-portal-commitment-group:update-rank"
+	ActionCompliancePortalCommitmentGroupDelete     = "core:compliance-portal-commitment-group:delete"
+
+	// CompliancePortalCommitment actions
+	ActionCompliancePortalCommitmentList       = "core:compliance-portal-commitment:list"
+	ActionCompliancePortalCommitmentCreate     = "core:compliance-portal-commitment:create"
+	ActionCompliancePortalCommitmentUpdate     = "core:compliance-portal-commitment:update"
+	ActionCompliancePortalCommitmentUpdateRank = "core:compliance-portal-commitment:update-rank"
+	ActionCompliancePortalCommitmentDelete     = "core:compliance-portal-commitment:delete"
+
 	// ComplianceFramework actions
 	ActionComplianceFrameworkList       = "core:compliance-framework:list"
 	ActionComplianceFrameworkCreate     = "core:compliance-framework:create"

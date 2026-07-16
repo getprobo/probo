@@ -106,6 +106,88 @@ enum TrustCenterReferenceOrderField
         )
 }
 
+enum CompliancePortalCommitmentGroupOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentGroupOrderField"
+    ) {
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentGroupOrderFieldRank"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentGroupOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentGroupOrderFieldUpdatedAt"
+        )
+}
+
+enum CompliancePortalCommitmentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentOrderField"
+    ) {
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentOrderFieldRank"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentOrderFieldUpdatedAt"
+        )
+}
+
+enum CompliancePortalCommitmentIcon
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIcon"
+    ) {
+    LOCK_KEY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconLockKey")
+    EYE_SLASH
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconEyeSlash")
+    FINGERPRINT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconFingerprint")
+    SHIELD_WARNING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconShieldWarning")
+    SHIELD_CHECK
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconShieldCheck")
+    SIREN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconSiren")
+    KEY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconKey")
+    LOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconLock")
+    CLOUD
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconCloud")
+    DATABASE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconDatabase")
+    GLOBE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconGlobe")
+    EYE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconEye")
+    USERS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconUsers")
+    CERTIFICATE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconCertificate")
+    GAVEL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconGavel")
+    HEARTBEAT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconHeartbeat")
+    BELL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconBell")
+    BUG
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconBug")
+    CODE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconCode")
+    SERVER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIconServer")
+}
+
 enum ComplianceExternalURLOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderField"
@@ -218,6 +300,22 @@ input TrustCenterReferenceOrder
     field: TrustCenterReferenceOrderField!
 }
 
+input CompliancePortalCommitmentGroupOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalCommitmentGroupOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CompliancePortalCommitmentGroupOrderField!
+}
+
+input CompliancePortalCommitmentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalCommitmentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CompliancePortalCommitmentOrderField!
+}
+
 input TrustCenterFileOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFileOrderBy"
@@ -271,6 +369,14 @@ type TrustCenter implements Node
         before: CursorKey
         orderBy: TrustCenterReferenceOrder
     ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+    commitmentGroups(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CompliancePortalCommitmentGroupOrder
+    ): CompliancePortalCommitmentGroupConnection! @goField(forceResolver: true)
 
     complianceFrameworks(
         first: Int
@@ -387,6 +493,66 @@ type TrustCenterReferenceConnection
 type TrustCenterReferenceEdge {
     cursor: CursorKey!
     node: TrustCenterReference!
+}
+
+type CompliancePortalCommitmentGroup implements Node {
+    id: ID!
+    title: String!
+    description: String!
+    rank: Int!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    commitments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CompliancePortalCommitmentOrder
+    ): CompliancePortalCommitmentConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CompliancePortalCommitmentGroupConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalCommitmentGroupConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CompliancePortalCommitmentGroupEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CompliancePortalCommitmentGroupEdge {
+    cursor: CursorKey!
+    node: CompliancePortalCommitmentGroup!
+}
+
+type CompliancePortalCommitment implements Node {
+    id: ID!
+    icon: CompliancePortalCommitmentIcon!
+    eyebrow: String!
+    title: String!
+    description: String!
+    rank: Int!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type CompliancePortalCommitmentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalCommitmentConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CompliancePortalCommitmentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CompliancePortalCommitmentEdge {
+    cursor: CursorKey!
+    node: CompliancePortalCommitment!
 }
 
 type ComplianceFramework implements Node
@@ -514,6 +680,24 @@ extend type Mutation {
     deleteTrustCenterReference(
         input: DeleteTrustCenterReferenceInput!
     ): DeleteTrustCenterReferencePayload!
+    createCompliancePortalCommitmentGroup(
+        input: CreateCompliancePortalCommitmentGroupInput!
+    ): CreateCompliancePortalCommitmentGroupPayload!
+    updateCompliancePortalCommitmentGroup(
+        input: UpdateCompliancePortalCommitmentGroupInput!
+    ): UpdateCompliancePortalCommitmentGroupPayload!
+    deleteCompliancePortalCommitmentGroup(
+        input: DeleteCompliancePortalCommitmentGroupInput!
+    ): DeleteCompliancePortalCommitmentGroupPayload!
+    createCompliancePortalCommitment(
+        input: CreateCompliancePortalCommitmentInput!
+    ): CreateCompliancePortalCommitmentPayload!
+    updateCompliancePortalCommitment(
+        input: UpdateCompliancePortalCommitmentInput!
+    ): UpdateCompliancePortalCommitmentPayload!
+    deleteCompliancePortalCommitment(
+        input: DeleteCompliancePortalCommitmentInput!
+    ): DeleteCompliancePortalCommitmentPayload!
     createComplianceFramework(
         input: CreateComplianceFrameworkInput!
     ): CreateComplianceFrameworkPayload!
@@ -610,6 +794,44 @@ input UpdateTrustCenterReferenceInput {
 }
 
 input DeleteTrustCenterReferenceInput {
+    id: ID!
+}
+
+input CreateCompliancePortalCommitmentGroupInput {
+    trustCenterId: ID!
+    title: String!
+    description: String!
+}
+
+input UpdateCompliancePortalCommitmentGroupInput {
+    id: ID!
+    title: String
+    description: String
+    rank: Int
+}
+
+input DeleteCompliancePortalCommitmentGroupInput {
+    id: ID!
+}
+
+input CreateCompliancePortalCommitmentInput {
+    groupId: ID!
+    icon: CompliancePortalCommitmentIcon!
+    eyebrow: String!
+    title: String!
+    description: String!
+}
+
+input UpdateCompliancePortalCommitmentInput {
+    id: ID!
+    icon: CompliancePortalCommitmentIcon
+    eyebrow: String
+    title: String
+    description: String
+    rank: Int
+}
+
+input DeleteCompliancePortalCommitmentInput {
     id: ID!
 }
 
@@ -710,6 +932,30 @@ type UpdateTrustCenterReferencePayload {
 
 type DeleteTrustCenterReferencePayload {
     deletedTrustCenterReferenceId: ID!
+}
+
+type CreateCompliancePortalCommitmentGroupPayload {
+    compliancePortalCommitmentGroupEdge: CompliancePortalCommitmentGroupEdge!
+}
+
+type UpdateCompliancePortalCommitmentGroupPayload {
+    compliancePortalCommitmentGroup: CompliancePortalCommitmentGroup!
+}
+
+type DeleteCompliancePortalCommitmentGroupPayload {
+    deletedCompliancePortalCommitmentGroupId: ID!
+}
+
+type CreateCompliancePortalCommitmentPayload {
+    compliancePortalCommitmentEdge: CompliancePortalCommitmentEdge!
+}
+
+type UpdateCompliancePortalCommitmentPayload {
+    compliancePortalCommitment: CompliancePortalCommitment!
+}
+
+type DeleteCompliancePortalCommitmentPayload {
+    deletedCompliancePortalCommitmentId: ID!
 }
 
 type CreateComplianceFrameworkPayload {

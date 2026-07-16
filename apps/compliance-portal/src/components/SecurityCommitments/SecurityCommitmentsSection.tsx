@@ -18,54 +18,70 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from "@probo/ui/src/v2/typography/Text";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { graphql, useFragment } from "react-relay";
 
-import { CommitmentCard } from "#/components/CommitmentCard/CommitmentCard";
+import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 
-import { SECURITY_COMMITMENT_GROUPS } from "./securityCommitments";
+import type { SecurityCommitmentsSection_trustCenter$key } from "./__generated__/SecurityCommitmentsSection_trustCenter.graphql";
+import { SecurityCommitmentGroupListItem } from "./SecurityCommitmentGroupListItem";
 import { securityCommitments } from "./variants";
 
-// "Security Commitments" section.
-//
-// TODO: This section renders placeholder data from a local POJO
-// (./securityCommitments.ts) because there is no backend / DB structure for it
-// yet. Replace it with a relay-driven fragment (and i18n copy) once available.
-export function SecurityCommitmentsSection() {
+// @throwOnFieldError makes a field error in this fragment throw at the read
+// below, where the section's ErrorBoundary contains it. See
+// contrib/claude/error-handling.md.
+const securityCommitmentsSectionFragment = graphql`
+  fragment SecurityCommitmentsSection_trustCenter on TrustCenter @throwOnFieldError {
+    commitmentGroups(first: 100) {
+      edges {
+        node {
+          id
+          ...SecurityCommitmentGroupListItem_group
+        }
+      }
+    }
+  }
+`;
+
+interface SecurityCommitmentsSectionProps {
+  trustCenterKey: SecurityCommitmentsSection_trustCenter$key;
+}
+
+// "Security Commitments" section: stacked groups, each a header above a grid of
+// commitment cards. Wraps its data-reading content in a boundary so a load
+// failure degrades to an inline error instead of taking down the page.
+export function SecurityCommitmentsSection({ trustCenterKey }: SecurityCommitmentsSectionProps) {
+  return (
+    <ErrorBoundary
+      fallback={(
+        <div className="w-full py-8">
+          <InlineErrorCard onRetry={() => window.location.reload()} />
+        </div>
+      )}
+    >
+      <SecurityCommitmentsSectionContent trustCenterKey={trustCenterKey} />
+    </ErrorBoundary>
+  );
+}
+
+function SecurityCommitmentsSectionContent({ trustCenterKey }: SecurityCommitmentsSectionProps) {
+  const data = useFragment(securityCommitmentsSectionFragment, trustCenterKey);
   const slots = securityCommitments();
+
+  const groups = data.commitmentGroups.edges.map(edge => edge.node);
+
+  if (groups.length === 0) {
+    return null;
+  }
 
   return (
     <section className={slots.root()}>
-      {SECURITY_COMMITMENT_GROUPS.map(group => (
-        <div key={group.title} className={slots.group()}>
-          <div className={slots.groupHeader()}>
-            {group.eyebrow != null && (
-              <Text size={1} color="gold">
-                {group.eyebrow}
-              </Text>
-            )}
-            <Text size={2} weight="medium" color="neutral" highContrast>
-              {group.title}
-            </Text>
-            <Text size={2} color="neutral">
-              {group.description}
-            </Text>
-          </div>
-          <div className={slots.grid()}>
-            {group.items.map(item => (
-              <CommitmentCard
-                key={item.title}
-                icon={<item.Icon size={32} weight="light" />}
-                eyebrow={<Text size={1} color="gold">{item.eyebrow}</Text>}
-                title={(
-                  <Text size={4} weight="medium" color="neutral" highContrast>
-                    {item.title}
-                  </Text>
-                )}
-                description={<Text size={2} color="neutral">{item.description}</Text>}
-              />
-            ))}
-          </div>
-        </div>
+      {groups.map((group, index) => (
+        <SecurityCommitmentGroupListItem
+          key={group.id}
+          groupKey={group}
+          showEyebrow={index === 0}
+        />
       ))}
     </section>
   );

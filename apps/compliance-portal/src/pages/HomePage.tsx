@@ -39,6 +39,7 @@ export const homePageQuery = graphql`
         ...OrganizationContactInfo_organization
       }
       ...ComplianceFrameworksSection_trustCenter
+      ...SecurityCommitmentsSection_trustCenter
       ...TrustedBySection_trustCenter
       ...RecentUpdatesSection_trustCenter
     }
@@ -66,7 +67,7 @@ export function HomePage({ queryRef }: HomePageProps) {
       <div className="flex w-full flex-col items-center px-8">
         <div className="flex w-full max-w-5xl flex-col">
           <ComplianceFrameworksSection trustCenterKey={currentTrustCenter} />
-          <SecurityCommitmentsSection />
+          <SecurityCommitmentsSection trustCenterKey={currentTrustCenter} />
           <TrustedBySection trustCenterKey={currentTrustCenter} />
           <RecentUpdatesSection trustCenterKey={currentTrustCenter} />
         </div>
