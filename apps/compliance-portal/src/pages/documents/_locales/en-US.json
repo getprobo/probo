@@ -30,5 +30,22 @@
     "description": "This trust center has not published any documents yet.",
     "filteredTitle": "No documents match this filter",
     "filteredDescription": "Try a different tab to see available documents."
+  },
+  "viewer": {
+    "back": "Documents",
+    "pageOf": "Page {{current}} of {{total}}",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "share": "Share document",
+    "linkCopied": "Link copied to clipboard",
+    "download": "Download",
+    "previewUnavailable": "Preview unavailable",
+    "downloadToView": "This file type can't be previewed here. Download it to view.",
+    "locked": {
+      "title": "Access required",
+      "description": "You don't have access to this document yet."
+    }
   }
 }

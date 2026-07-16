@@ -18,25 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Opens a base64 data URI (returned by the export mutations) in a new browser
-// tab. Decodes to a Blob so the object URL carries the right MIME type and the
-// browser previews the PDF inline instead of navigating to a huge data: URL.
-export function openExportedFile(dataUri: string): void {
-  const commaIndex = dataUri.indexOf(",");
-  const base64 = commaIndex === -1 ? dataUri : dataUri.slice(commaIndex + 1);
-  const mimeMatch = dataUri.match(/^data:([^;]+);/);
-  const mimeType = mimeMatch?.[1] ?? "application/octet-stream";
+import { tv } from "tailwind-variants/lite";
 
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  const blob = new Blob([bytes], { type: mimeType });
-  const objectUrl = URL.createObjectURL(blob);
-  window.open(objectUrl, "_blank", "noopener,noreferrer");
-
-  // Give the new tab time to claim the URL before releasing it.
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-}
+// Separator (Radix "Separator" over Base UI's Separator). A hairline rule that
+// stretches along the cross axis of its flex parent when vertical.
+export const separator = tv({
+  base: "shrink-0 bg-sand-a3",
+  variants: {
+    orientation: {
+      horizontal: "h-px w-full",
+      vertical: "w-px self-stretch",
+    },
+  },
+  defaultVariants: {
+    orientation: "horizontal",
+  },
+});

@@ -18,40 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { Text } from "../typography/Text";
 
-import type { TrustCenterFileListItem_file$key } from "./__generated__/TrustCenterFileListItem_file.graphql";
-import { DocumentEntry } from "./DocumentEntry";
+import { Separator } from "./Separator";
 
-const trustCenterFileListItemFragment = graphql`
-  fragment TrustCenterFileListItem_file on TrustCenterFile @throwOnFieldError {
-    id
-    alias
-    name
-    category
-    isUserAuthorized
-    access {
-      status
-    }
-  }
-`;
+export default {
+  title: "v2/Separator",
+  component: Separator,
+};
 
-interface TrustCenterFileListItemProps {
-  fileKey: TrustCenterFileListItem_file$key;
+export function Horizontal() {
+  return (
+    <div className="flex w-64 flex-col gap-3">
+      <Text size={2}>Above</Text>
+      <Separator />
+      <Text size={2}>Below</Text>
+    </div>
+  );
 }
 
-// A single uploaded trust-center file entry: name, its category, and an access
-// action linking to the viewer when authorized.
-export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProps) {
-  const file = useFragment(trustCenterFileListItemFragment, fileKey);
-
+export function Vertical() {
   return (
-    <DocumentEntry
-      title={file.name}
-      meta={file.category}
-      isAuthorized={file.isUserAuthorized}
-      requested={file.access?.status === "REQUESTED"}
-      viewHref={`/documents/${encodeURIComponent(file.alias ?? file.id)}`}
-    />
+    <div className="flex h-8 items-center gap-3">
+      <Text size={2}>Left</Text>
+      <Separator orientation="vertical" />
+      <Text size={2}>Right</Text>
+    </div>
   );
 }

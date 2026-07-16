@@ -21,15 +21,13 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import { useExportAndOpen } from "../_lib/useExportAndOpen";
-
 import type { DocumentListItem_document$key } from "./__generated__/DocumentListItem_document.graphql";
-import type { DocumentListItemExportMutation } from "./__generated__/DocumentListItemExportMutation.graphql";
 import { DocumentEntry } from "./DocumentEntry";
 
 const documentListItemFragment = graphql`
   fragment DocumentListItem_document on Document @throwOnFieldError {
     id
+    alias
     title
     documentType
     isUserAuthorized
@@ -39,27 +37,15 @@ const documentListItemFragment = graphql`
   }
 `;
 
-const exportDocumentMutation = graphql`
-  mutation DocumentListItemExportMutation($input: ExportDocumentPDFInput!) {
-    exportDocumentPDF(input: $input) {
-      data
-    }
-  }
-`;
-
 interface DocumentListItemProps {
   documentKey: DocumentListItem_document$key;
 }
 
 // A single Probo document entry: title, its document type, and an access action
-// that opens the exported PDF when the viewer is authorized.
+// linking to the viewer when authorized.
 export function DocumentListItem({ documentKey }: DocumentListItemProps) {
   const { t } = useTranslation("documents");
   const document = useFragment(documentListItemFragment, documentKey);
-  const [openDocument, isExporting] = useExportAndOpen<DocumentListItemExportMutation>(
-    exportDocumentMutation,
-    response => response.exportDocumentPDF.data,
-  );
 
   return (
     <DocumentEntry
@@ -67,8 +53,7 @@ export function DocumentListItem({ documentKey }: DocumentListItemProps) {
       meta={t(`types.${document.documentType}`)}
       isAuthorized={document.isUserAuthorized}
       requested={document.access?.status === "REQUESTED"}
-      onView={() => openDocument({ input: { documentId: document.id } })}
-      isViewing={isExporting}
+      viewHref={`/documents/${encodeURIComponent(document.alias ?? document.id)}`}
     />
   );
 }

@@ -43,9 +43,12 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
   const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
 
   return (
-    <div className="flex min-h-screen flex-col bg-sand-2">
+    // Bound the shell to the viewport so the TopBar and footer stay fixed and the
+    // page area scrolls on its own. Pages that fill the height (the document
+    // viewer) then scroll their own body while their toolbar stays put.
+    <div className="flex h-dvh flex-col bg-sand-2">
       <TopBar queryKey={data} />
-      <div className="flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <Outlet />
       </div>
       <PoweredBy label={t("footer.poweredBy")} />

@@ -22,11 +22,17 @@ import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
 import { DocumentsPageSkeleton } from "./DocumentsPageSkeleton";
+import { DocumentViewerPageSkeleton } from "./DocumentViewerPageSkeleton";
 
 export const documentRoutes = [
   {
     path: "documents",
     Fallback: DocumentsPageSkeleton,
     Component: lazy(() => import("./DocumentsPageLoader")),
+  },
+  {
+    path: "documents/:alias",
+    Fallback: DocumentViewerPageSkeleton,
+    Component: lazy(() => import("./DocumentViewerPageLoader")),
   },
 ] satisfies AppRoute[];

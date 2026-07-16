@@ -18,34 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback } from "react";
-import type { GraphQLTaggedNode, MutationParameters } from "relay-runtime";
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { useMutation } from "#/lib/relay/useMutation";
+import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
-import { openExportedFile } from "./openExportedFile";
+import { documentViewer } from "./_components/variants";
 
-// Shared "export then open" behavior for the document/file/report list items:
-// commit the resource's export mutation, open the returned base64 payload, and
-// let failures surface through the mutation notifier's toast. Each caller
-// supplies its typed mutation and a selector for the payload string.
-export function useExportAndOpen<T extends MutationParameters>(
-  mutation: GraphQLTaggedNode,
-  selectData: (response: T["response"]) => string,
-): readonly [(variables: T["variables"]) => void, boolean] {
-  const [commit, isExporting] = useMutation<T>(mutation);
+export function DocumentViewerPageSkeleton() {
+  const slots = documentViewer();
 
-  const open = useCallback(
-    (variables: T["variables"]) => {
-      commit({
-        variables,
-        onCompleted: response => openExportedFile(selectData(response)),
-      }).catch(() => {
-        // The mutation failure is already surfaced through a toast.
-      });
-    },
-    [commit, selectData],
+  return (
+    <div className={slots.root()}>
+      <HeaderBand flushBottomSpace>
+        <div className={slots.header()}>
+          <TextSkeleton size={1} className="w-20" />
+          <HeadingSkeleton size={7} className="w-80" />
+          <div className={slots.toolbar()}>
+            <ButtonSkeleton size={2} />
+            <div className={slots.actions()}>
+              <ButtonSkeleton size={2} />
+              <ButtonSkeleton size={2} />
+            </div>
+          </div>
+        </div>
+      </HeaderBand>
+      <div className={slots.body()}>
+        <div className={slots.stage()} />
+      </div>
+    </div>
   );
-
-  return [open, isExporting];
 }

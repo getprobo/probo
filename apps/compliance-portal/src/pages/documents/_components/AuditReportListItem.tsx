@@ -20,10 +20,7 @@
 
 import { graphql, useFragment } from "react-relay";
 
-import { useExportAndOpen } from "../_lib/useExportAndOpen";
-
 import type { AuditReportListItem_audit$key } from "./__generated__/AuditReportListItem_audit.graphql";
-import type { AuditReportListItemExportMutation } from "./__generated__/AuditReportListItemExportMutation.graphql";
 import { DocumentEntry } from "./DocumentEntry";
 
 const auditReportListItemFragment = graphql`
@@ -33,6 +30,7 @@ const auditReportListItemFragment = graphql`
     }
     reportFile {
       id
+      alias
       fileName
       isUserAuthorized
       access {
@@ -42,27 +40,15 @@ const auditReportListItemFragment = graphql`
   }
 `;
 
-const exportReportMutation = graphql`
-  mutation AuditReportListItemExportMutation($input: ExportReportPDFInput!) {
-    exportReportPDF(input: $input) {
-      data
-    }
-  }
-`;
-
 interface AuditReportListItemProps {
   auditKey: AuditReportListItem_audit$key;
 }
 
 // A single audit report entry: the framework name, the report file name, and an
-// access action that opens the exported report when the viewer is authorized.
-// Renders nothing when the audit has no report file.
+// access action linking to the viewer when authorized. Renders nothing when the
+// audit has no report file.
 export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
   const audit = useFragment(auditReportListItemFragment, auditKey);
-  const [openReport, isExporting] = useExportAndOpen<AuditReportListItemExportMutation>(
-    exportReportMutation,
-    response => response.exportReportPDF.data,
-  );
 
   const report = audit.reportFile;
   if (report == null) {
@@ -75,8 +61,7 @@ export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
       meta={report.fileName}
       isAuthorized={report.isUserAuthorized}
       requested={report.access?.status === "REQUESTED"}
-      onView={() => openReport({ input: { reportId: report.id } })}
-      isViewing={isExporting}
+      viewHref={`/documents/${encodeURIComponent(report.alias ?? report.id)}`}
     />
   );
 }

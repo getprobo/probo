@@ -18,40 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+import { useParams } from "react-router";
 
-import type { TrustCenterFileListItem_file$key } from "./__generated__/TrustCenterFileListItem_file.graphql";
-import { DocumentEntry } from "./DocumentEntry";
+import type { DocumentViewerPageQuery } from "./__generated__/DocumentViewerPageQuery.graphql";
+import { DocumentViewerPage, documentViewerPageQuery } from "./DocumentViewerPage";
+import { DocumentViewerPageSkeleton } from "./DocumentViewerPageSkeleton";
 
-const trustCenterFileListItemFragment = graphql`
-  fragment TrustCenterFileListItem_file on TrustCenterFile @throwOnFieldError {
-    id
-    alias
-    name
-    category
-    isUserAuthorized
-    access {
-      status
+export default function DocumentViewerPageLoader() {
+  const { alias } = useParams();
+  const [queryRef, loadQuery] = useQueryLoader<DocumentViewerPageQuery>(documentViewerPageQuery);
+
+  useEffect(() => {
+    if (alias) {
+      loadQuery({ alias });
     }
+  }, [loadQuery, alias]);
+
+  if (!queryRef) {
+    return <DocumentViewerPageSkeleton />;
   }
-`;
 
-interface TrustCenterFileListItemProps {
-  fileKey: TrustCenterFileListItem_file$key;
-}
-
-// A single uploaded trust-center file entry: name, its category, and an access
-// action linking to the viewer when authorized.
-export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProps) {
-  const file = useFragment(trustCenterFileListItemFragment, fileKey);
-
-  return (
-    <DocumentEntry
-      title={file.name}
-      meta={file.category}
-      isAuthorized={file.isUserAuthorized}
-      requested={file.access?.status === "REQUESTED"}
-      viewHref={`/documents/${encodeURIComponent(file.alias ?? file.id)}`}
-    />
-  );
+  return <DocumentViewerPage queryRef={queryRef} />;
 }

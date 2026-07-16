@@ -18,40 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { Separator as BaseSeparator } from "@base-ui/react/separator";
+import type { ComponentProps } from "react";
 
-import type { TrustCenterFileListItem_file$key } from "./__generated__/TrustCenterFileListItem_file.graphql";
-import { DocumentEntry } from "./DocumentEntry";
+import { separator } from "./variants";
 
-const trustCenterFileListItemFragment = graphql`
-  fragment TrustCenterFileListItem_file on TrustCenterFile @throwOnFieldError {
-    id
-    alias
-    name
-    category
-    isUserAuthorized
-    access {
-      status
-    }
-  }
-`;
+export type SeparatorProps = Omit<ComponentProps<typeof BaseSeparator>, "className"> & {
+  className?: string;
+};
 
-interface TrustCenterFileListItemProps {
-  fileKey: TrustCenterFileListItem_file$key;
-}
-
-// A single uploaded trust-center file entry: name, its category, and an access
-// action linking to the viewer when authorized.
-export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProps) {
-  const file = useFragment(trustCenterFileListItemFragment, fileKey);
+// A hairline rule (Radix "Separator"). Defaults to horizontal; pass
+// `orientation="vertical"` for inline dividers (e.g. toolbar groups).
+export function Separator(props: SeparatorProps) {
+  const { orientation = "horizontal", className, ...rest } = props;
 
   return (
-    <DocumentEntry
-      title={file.name}
-      meta={file.category}
-      isAuthorized={file.isUserAuthorized}
-      requested={file.access?.status === "REQUESTED"}
-      viewHref={`/documents/${encodeURIComponent(file.alias ?? file.id)}`}
+    <BaseSeparator
+      orientation={orientation}
+      className={separator({ orientation, className })}
+      {...rest}
     />
   );
 }

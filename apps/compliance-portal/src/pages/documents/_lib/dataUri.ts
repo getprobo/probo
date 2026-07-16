@@ -18,40 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
-
-import type { TrustCenterFileListItem_file$key } from "./__generated__/TrustCenterFileListItem_file.graphql";
-import { DocumentEntry } from "./DocumentEntry";
-
-const trustCenterFileListItemFragment = graphql`
-  fragment TrustCenterFileListItem_file on TrustCenterFile @throwOnFieldError {
-    id
-    alias
-    name
-    category
-    isUserAuthorized
-    access {
-      status
-    }
-  }
-`;
-
-interface TrustCenterFileListItemProps {
-  fileKey: TrustCenterFileListItem_file$key;
+// The MIME type declared in a `data:<mime>;base64,...` URI (the shape the export
+// mutations return), or null when the string isn't a recognizable data URI.
+export function dataUriMimeType(dataUri: string): string | null {
+  return dataUri.match(/^data:([^;,]+)[;,]/)?.[1] ?? null;
 }
 
-// A single uploaded trust-center file entry: name, its category, and an access
-// action linking to the viewer when authorized.
-export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProps) {
-  const file = useFragment(trustCenterFileListItemFragment, fileKey);
-
-  return (
-    <DocumentEntry
-      title={file.name}
-      meta={file.category}
-      isAuthorized={file.isUserAuthorized}
-      requested={file.access?.status === "REQUESTED"}
-      viewHref={`/documents/${encodeURIComponent(file.alias ?? file.id)}`}
-    />
-  );
+// Triggers a browser download of a data URI under the given file name.
+export function downloadDataUri(dataUri: string, filename: string): void {
+  const link = document.createElement("a");
+  link.href = dataUri;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
 }

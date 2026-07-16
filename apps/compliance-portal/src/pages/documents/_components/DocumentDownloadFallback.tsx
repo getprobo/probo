@@ -18,45 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArrowRightIcon, ClockIcon, LockSimpleIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, FileIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Link } from "@probo/ui/src/v2/Button/Link";
 import { useTranslation } from "react-i18next";
 
-interface DocumentAccessActionProps {
-  // Whether the viewer may open the document (public or granted access).
-  isAuthorized: boolean;
-  // Whether an access request is already pending for this document.
-  requested: boolean;
-  // Route to the document viewer, used when authorized.
-  viewHref: string;
+import { EmptyState } from "#/components/EmptyState/EmptyState";
+
+interface DocumentDownloadFallbackProps {
+  onDownload: () => void;
 }
 
-// Trailing access control for a document entry: a "View" link to the viewer when
-// authorized, a pending label when access was requested, otherwise a (currently
-// inert) "Get Access" call to action.
-export function DocumentAccessAction({ isAuthorized, requested, viewHref }: DocumentAccessActionProps) {
+// Body shown for file types that can't be previewed in the browser (office,
+// data, text): offer a download instead.
+export function DocumentDownloadFallback({ onDownload }: DocumentDownloadFallbackProps) {
   const { t } = useTranslation("documents");
 
-  if (isAuthorized) {
-    return (
-      <Link to={viewHref} variant="ghost" color="neutral" highContrast iconStart={<ArrowRightIcon />}>
-        {t("actions.view")}
-      </Link>
-    );
-  }
-
-  if (requested) {
-    return (
-      <Button variant="ghost" color="neutral" disabled iconStart={<ClockIcon />}>
-        {t("actions.requested")}
-      </Button>
-    );
-  }
-
   return (
-    <Button variant="ghost" color="neutral" highContrast iconStart={<LockSimpleIcon />}>
-      {t("actions.getAccess")}
-    </Button>
+    <div className="grid h-full place-items-center bg-sand-3 p-8">
+      <EmptyState
+        icon={<FileIcon />}
+        title={t("viewer.previewUnavailable")}
+        description={t("viewer.downloadToView")}
+        action={(
+          <Button color="neutral" highContrast iconStart={<DownloadSimpleIcon />} onClick={onDownload}>
+            {t("viewer.download")}
+          </Button>
+        )}
+      />
+    </div>
   );
 }
