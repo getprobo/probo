@@ -20,6 +20,8 @@
 
 import { graphql, useFragment } from "react-relay";
 
+import { useRequestFileAccess } from "../_lib/useAccessRequest";
+
 import type { TrustCenterFileListItem_file$key } from "./__generated__/TrustCenterFileListItem_file.graphql";
 import { DocumentEntry } from "./DocumentEntry";
 
@@ -44,6 +46,7 @@ interface TrustCenterFileListItemProps {
 // action linking to the viewer when authorized.
 export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProps) {
   const file = useFragment(trustCenterFileListItemFragment, fileKey);
+  const { requestAccess, isRequesting } = useRequestFileAccess(file.id);
 
   return (
     <DocumentEntry
@@ -52,6 +55,8 @@ export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProp
       isAuthorized={file.isUserAuthorized}
       requested={file.access?.status === "REQUESTED"}
       viewHref={`/documents/${encodeURIComponent(file.alias ?? file.id)}`}
+      onGetAccess={requestAccess}
+      isRequesting={isRequesting}
     />
   );
 }

@@ -24,6 +24,7 @@ import { graphql, usePreloadedQuery } from "react-relay";
 import type { DocumentViewerPageQuery } from "./__generated__/DocumentViewerPageQuery.graphql";
 import { DocumentLocked } from "./_components/DocumentLocked";
 import { DocumentViewer } from "./_components/DocumentViewer";
+import { useAccessRequest } from "./_lib/useAccessRequest";
 import type { DocumentKind } from "./_lib/useDocumentExport";
 import { useDocumentExport } from "./_lib/useDocumentExport";
 
@@ -81,9 +82,10 @@ export function DocumentViewerPage({ queryRef }: DocumentViewerPageProps) {
   const data = usePreloadedQuery<DocumentViewerPageQuery>(documentViewerPageQuery, queryRef);
   const node = resolveNode(data.aliasedNode);
   const { dataUri } = useDocumentExport(node.kind, node.id, node.isAuthorized);
+  const { requestAccess, isRequesting } = useAccessRequest(node.kind, node.id);
 
   if (!node.isAuthorized) {
-    return <DocumentLocked />;
+    return <DocumentLocked onGetAccess={requestAccess} isRequesting={isRequesting} />;
   }
 
   return <DocumentViewer title={node.title} dataUri={dataUri} downloadName={node.title} />;

@@ -20,9 +20,14 @@
 
 import { getPathPrefix } from "#/lib/http/pathPrefix";
 
-// Marker appended to a post-auth `continue` URL so the portal fires the pending
-// "request access" mutation once the user lands back authenticated.
+// Markers appended to a post-auth `continue` URL so the portal fires the pending
+// "request access" mutation once the user lands back authenticated. `request-all`
+// covers the top-bar "Get Access"; the per-resource markers carry the id of a
+// single document / report / file whose access was requested from a locked row.
 export const REQUEST_ALL_PARAM = "request-all";
+export const REQUEST_DOCUMENT_PARAM = "request-document-id";
+export const REQUEST_REPORT_PARAM = "request-report-id";
+export const REQUEST_FILE_PARAM = "request-file-id";
 
 // Validates a `continue` target before we navigate to it. Only same-origin URLs
 // under the portal's path prefix are accepted; anything else falls back to the
@@ -55,5 +60,13 @@ export function getSafeContinueUrl(param: string | null | undefined): string {
 export function buildRequestAllContinueUrl(): string {
   const url = new URL(window.location.href);
   url.searchParams.set(REQUEST_ALL_PARAM, "true");
+  return url.toString();
+}
+
+// Absolute URL of the current page with a per-resource marker set, so a single
+// document / report / file access request resumes after sign-in.
+export function buildRequestAccessContinueUrl(param: string, id: string): string {
+  const url = new URL(window.location.href);
+  url.searchParams.set(param, id);
   return url.toString();
 }

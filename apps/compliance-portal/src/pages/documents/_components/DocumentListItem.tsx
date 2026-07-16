@@ -21,6 +21,8 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import { useRequestDocumentAccess } from "../_lib/useAccessRequest";
+
 import type { DocumentListItem_document$key } from "./__generated__/DocumentListItem_document.graphql";
 import { DocumentEntry } from "./DocumentEntry";
 
@@ -46,6 +48,7 @@ interface DocumentListItemProps {
 export function DocumentListItem({ documentKey }: DocumentListItemProps) {
   const { t } = useTranslation("documents");
   const document = useFragment(documentListItemFragment, documentKey);
+  const { requestAccess, isRequesting } = useRequestDocumentAccess(document.id);
 
   return (
     <DocumentEntry
@@ -54,6 +57,8 @@ export function DocumentListItem({ documentKey }: DocumentListItemProps) {
       isAuthorized={document.isUserAuthorized}
       requested={document.access?.status === "REQUESTED"}
       viewHref={`/documents/${encodeURIComponent(document.alias ?? document.id)}`}
+      onGetAccess={requestAccess}
+      isRequesting={isRequesting}
     />
   );
 }

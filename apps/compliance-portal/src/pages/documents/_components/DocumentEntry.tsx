@@ -35,12 +35,24 @@ interface DocumentEntryProps {
   requested: boolean;
   // Route to the document viewer, used when authorized.
   viewHref: string;
+  // Requests access for this entry (gated behind sign-in when needed).
+  onGetAccess: () => void;
+  // Whether the access request is in flight.
+  isRequesting: boolean;
 }
 
 // Presentational row shared by the document / file / report list items: a title
 // with accent metadata and the trailing access action. The connection-item
 // wrappers own their fragments and supply these values.
-export function DocumentEntry({ title, meta, isAuthorized, requested, viewHref }: DocumentEntryProps) {
+export function DocumentEntry({
+  title,
+  meta,
+  isAuthorized,
+  requested,
+  viewHref,
+  onGetAccess,
+  isRequesting,
+}: DocumentEntryProps) {
   const { root, content } = documentListItem();
 
   return (
@@ -53,7 +65,13 @@ export function DocumentEntry({ title, meta, isAuthorized, requested, viewHref }
           {meta}
         </Text>
       </div>
-      <DocumentAccessAction isAuthorized={isAuthorized} requested={requested} viewHref={viewHref} />
+      <DocumentAccessAction
+        isAuthorized={isAuthorized}
+        requested={requested}
+        viewHref={viewHref}
+        onGetAccess={onGetAccess}
+        isRequesting={isRequesting}
+      />
     </div>
   );
 }

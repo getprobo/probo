@@ -23,14 +23,22 @@ import type { GraphQLError } from "@probo/helpers";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
+import type { PayloadError } from "relay-runtime";
 import { graphql } from "relay-runtime";
 
 import {
+  buildRequestAccessContinueUrl,
   buildRequestAllContinueUrl,
   REQUEST_ALL_PARAM,
+  REQUEST_DOCUMENT_PARAM,
+  REQUEST_FILE_PARAM,
+  REQUEST_REPORT_PARAM,
 } from "#/lib/auth/continueUrl";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import type { useResumeAccessRequest_documentMutation } from "./__generated__/useResumeAccessRequest_documentMutation.graphql";
+import type { useResumeAccessRequest_fileMutation } from "./__generated__/useResumeAccessRequest_fileMutation.graphql";
+import type { useResumeAccessRequest_reportMutation } from "./__generated__/useResumeAccessRequest_reportMutation.graphql";
 import type { useResumeAccessRequestMutation } from "./__generated__/useResumeAccessRequestMutation.graphql";
 
 const requestAllAccessesMutation = graphql`
@@ -43,9 +51,55 @@ const requestAllAccessesMutation = graphql`
   }
 `;
 
+const requestDocumentMutation = graphql`
+  mutation useResumeAccessRequest_documentMutation($input: RequestDocumentAccessInput!) {
+    requestDocumentAccess(input: $input) {
+      document {
+        id
+        access {
+          id
+          status
+        }
+      }
+    }
+  }
+`;
+
+const requestReportMutation = graphql`
+  mutation useResumeAccessRequest_reportMutation($input: RequestReportAccessInput!) {
+    requestReportAccess(input: $input) {
+      audit {
+        id
+        reportFile {
+          id
+          access {
+            id
+            status
+          }
+        }
+      }
+    }
+  }
+`;
+
+const requestFileMutation = graphql`
+  mutation useResumeAccessRequest_fileMutation($input: RequestTrustCenterFileAccessInput!) {
+    requestTrustCenterFileAccess(input: $input) {
+      file {
+        id
+        access {
+          id
+          status
+        }
+      }
+    }
+  }
+`;
+
 // After a user signs in through the dialog, they land back on the page that
-// carried the request-all marker. This hook fires the deferred
-// `requestAllAccesses` mutation once (when authenticated), routes to the
+// carried a deferred access marker. This hook fires the matching mutation once
+// (when authenticated) — request-all from the top bar, or a single
+// document / report / file requested from a locked row — routes to the
 // full-name gate when the backend asks for it, and clears the marker so a
 // refresh never re-triggers it.
 export function useResumeAccessRequest(isAuthenticated: boolean) {
@@ -59,29 +113,43 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
     requestAllAccessesMutation,
     { errorToast: false },
   );
-
-  const shouldResume
-    = isAuthenticated && searchParams.get(REQUEST_ALL_PARAM) === "true";
+  const [requestDocumentAccess] = useMutation<useResumeAccessRequest_documentMutation>(
+    requestDocumentMutation,
+    { errorToast: false },
+  );
+  const [requestReportAccess] = useMutation<useResumeAccessRequest_reportMutation>(
+    requestReportMutation,
+    { errorToast: false },
+  );
+  const [requestFileAccess] = useMutation<useResumeAccessRequest_fileMutation>(
+    requestFileMutation,
+    { errorToast: false },
+  );
 
   useEffect(() => {
-    if (!shouldResume || firedRef.current) {
+    if (!isAuthenticated || firedRef.current) {
       return;
     }
+
+    const documentId = searchParams.get(REQUEST_DOCUMENT_PARAM);
+    const reportId = searchParams.get(REQUEST_REPORT_PARAM);
+    const fileId = searchParams.get(REQUEST_FILE_PARAM);
+    const all = searchParams.get(REQUEST_ALL_PARAM) === "true";
+
+    if (!documentId && !reportId && !fileId && !all) {
+      return;
+    }
+
     firedRef.current = true;
 
-    // Drop the marker up front so a reload can't queue a second request.
-    searchParams.delete(REQUEST_ALL_PARAM);
-    setSearchParams(searchParams, { replace: true });
-
-    void requestAllAccesses({
-      variables: {},
-      onCompleted: (_response, errors) => {
+    // Shared outcome handling: route to the full-name gate (preserving the
+    // marker so the request resumes), surface NDA / failures as a toast, and
+    // confirm success. `continueUrl` re-adds the current marker for the gate.
+    const makeHandlers = (continueUrl: string) => ({
+      onCompleted: (_response: unknown, errors: PayloadError[] | null) => {
         const code = (errors?.[0] as GraphQLError | undefined)?.extensions?.code;
 
-        // The backend gates access behind a completed profile; send the user to
-        // the full-name step, preserving the marker so the request resumes.
         if (code === "FULL_NAME_REQUIRED") {
-          const continueUrl = buildRequestAllContinueUrl();
           void navigate(`/full-name?continue=${encodeURIComponent(continueUrl)}`);
           return;
         }
@@ -102,13 +170,56 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
       onError: () => {
         toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
       },
-      // The awaitable wrapper rejects on failure; toasts are handled above, so
-      // swallow the rejection to avoid an unhandled promise.
+    });
+
+    // Drop the marker up front so a reload can't queue a second request.
+    const clear = (param: string) => {
+      searchParams.delete(param);
+      setSearchParams(searchParams, { replace: true });
+    };
+
+    if (documentId) {
+      const continueUrl = buildRequestAccessContinueUrl(REQUEST_DOCUMENT_PARAM, documentId);
+      clear(REQUEST_DOCUMENT_PARAM);
+      void requestDocumentAccess({
+        variables: { input: { documentId } },
+        ...makeHandlers(continueUrl),
+      }).catch(() => {});
+      return;
+    }
+
+    if (reportId) {
+      const continueUrl = buildRequestAccessContinueUrl(REQUEST_REPORT_PARAM, reportId);
+      clear(REQUEST_REPORT_PARAM);
+      void requestReportAccess({
+        variables: { input: { reportId } },
+        ...makeHandlers(continueUrl),
+      }).catch(() => {});
+      return;
+    }
+
+    if (fileId) {
+      const continueUrl = buildRequestAccessContinueUrl(REQUEST_FILE_PARAM, fileId);
+      clear(REQUEST_FILE_PARAM);
+      void requestFileAccess({
+        variables: { input: { trustCenterFileId: fileId } },
+        ...makeHandlers(continueUrl),
+      }).catch(() => {});
+      return;
+    }
+
+    clear(REQUEST_ALL_PARAM);
+    void requestAllAccesses({
+      variables: {},
+      ...makeHandlers(buildRequestAllContinueUrl()),
     }).catch(() => {});
   }, [
-    shouldResume,
+    isAuthenticated,
     navigate,
     requestAllAccesses,
+    requestDocumentAccess,
+    requestReportAccess,
+    requestFileAccess,
     searchParams,
     setSearchParams,
     t,

@@ -30,12 +30,22 @@ interface DocumentAccessActionProps {
   requested: boolean;
   // Route to the document viewer, used when authorized.
   viewHref: string;
+  // Requests access for this entry (gated behind sign-in when needed).
+  onGetAccess: () => void;
+  // Whether the access request is in flight.
+  isRequesting: boolean;
 }
 
 // Trailing access control for a document entry: a "View" link to the viewer when
-// authorized, a pending label when access was requested, otherwise a (currently
-// inert) "Get Access" call to action.
-export function DocumentAccessAction({ isAuthorized, requested, viewHref }: DocumentAccessActionProps) {
+// authorized, a pending label when access was requested, otherwise a "Get
+// Access" action that requests access (prompting sign-in first when needed).
+export function DocumentAccessAction({
+  isAuthorized,
+  requested,
+  viewHref,
+  onGetAccess,
+  isRequesting,
+}: DocumentAccessActionProps) {
   const { t } = useTranslation("documents");
 
   if (isAuthorized) {
@@ -55,7 +65,14 @@ export function DocumentAccessAction({ isAuthorized, requested, viewHref }: Docu
   }
 
   return (
-    <Button variant="ghost" color="neutral" highContrast iconStart={<LockSimpleIcon />}>
+    <Button
+      variant="ghost"
+      color="neutral"
+      highContrast
+      loading={isRequesting}
+      iconStart={<LockSimpleIcon />}
+      onClick={onGetAccess}
+    >
       {t("actions.getAccess")}
     </Button>
   );

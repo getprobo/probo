@@ -24,9 +24,17 @@ import { useTranslation } from "react-i18next";
 
 import { EmptyState } from "#/components/EmptyState/EmptyState";
 
-// Shown when the viewer resolves a document the visitor may not access. The
-// Get Access CTA is display-only until the auth flow lands (see the list rows).
-export function DocumentLocked() {
+interface DocumentLockedProps {
+  // Requests access for the locked resource (prompting sign-in first when
+  // needed).
+  onGetAccess: () => void;
+  // Whether the access request is in flight.
+  isRequesting: boolean;
+}
+
+// Shown when the viewer resolves a document the visitor may not access, with a
+// Get Access CTA that requests access (prompting sign-in first when needed).
+export function DocumentLocked({ onGetAccess, isRequesting }: DocumentLockedProps) {
   const { t } = useTranslation("documents");
 
   return (
@@ -36,7 +44,13 @@ export function DocumentLocked() {
         title={t("viewer.locked.title")}
         description={t("viewer.locked.description")}
         action={(
-          <Button color="neutral" highContrast iconStart={<LockSimpleIcon />}>
+          <Button
+            color="neutral"
+            highContrast
+            loading={isRequesting}
+            iconStart={<LockSimpleIcon />}
+            onClick={onGetAccess}
+          >
             {t("actions.getAccess")}
           </Button>
         )}

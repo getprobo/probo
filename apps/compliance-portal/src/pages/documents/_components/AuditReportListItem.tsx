@@ -20,6 +20,8 @@
 
 import { graphql, useFragment } from "react-relay";
 
+import { useRequestReportAccess } from "../_lib/useAccessRequest";
+
 import type { AuditReportListItem_audit$key } from "./__generated__/AuditReportListItem_audit.graphql";
 import { DocumentEntry } from "./DocumentEntry";
 
@@ -49,8 +51,11 @@ interface AuditReportListItemProps {
 // audit has no report file.
 export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
   const audit = useFragment(auditReportListItemFragment, auditKey);
-
   const report = audit.reportFile;
+  // Hook must run unconditionally; the empty id is never used when there is no
+  // report file (the component returns null below).
+  const { requestAccess, isRequesting } = useRequestReportAccess(report?.id ?? "");
+
   if (report == null) {
     return null;
   }
@@ -62,6 +67,8 @@ export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
       isAuthorized={report.isUserAuthorized}
       requested={report.access?.status === "REQUESTED"}
       viewHref={`/documents/${encodeURIComponent(report.alias ?? report.id)}`}
+      onGetAccess={requestAccess}
+      isRequesting={isRequesting}
     />
   );
 }
