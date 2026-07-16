@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { groupBy } from "@probo/helpers";
 import { useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
@@ -35,7 +36,6 @@ import { DocumentSection } from "./_components/DocumentSection";
 import { DocumentsEmpty } from "./_components/DocumentsEmpty";
 import { DocumentsToolbar } from "./_components/DocumentsToolbar";
 import { TrustCenterFileListItem } from "./_components/TrustCenterFileListItem";
-import { groupByField } from "./_lib/groupByField";
 import { toQueryVariables } from "./_lib/toQueryVariables";
 import { useDocumentTab } from "./_lib/useDocumentTab";
 import { documentsLayout } from "./variants";
@@ -102,15 +102,19 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
   const { tab } = useDocumentTab();
   const [isRefetching, startTransition] = useTransition();
 
-  // The initial query already loaded with the URL's tab; only refetch on
-  // subsequent tab changes, inside a transition so the toolbar and current
-  // results stay mounted (dimmed via `isRefetching`) while the slice loads.
-  const isFirstRender = useRef(true);
+  // Keep the displayed slice in sync with the active tab. Seed from the tab the
+  // preloaded query actually loaded with (`queryRef.variables`) instead of
+  // assuming the first render matches the URL: if the tab changed while the
+  // initial preload was in flight, this reconciles by refetching rather than
+  // showing the wrong slice. Refetch inside a transition so the toolbar and
+  // current results stay mounted (dimmed via `isRefetching`) while it loads.
+  const fetchedVisibility = useRef(queryRef.variables.visibility ?? null);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    const target = toQueryVariables(tab).visibility ?? null;
+    if (target === fetchedVisibility.current) {
       return;
     }
+    fetchedVisibility.current = target;
     startTransition(() => {
       refetch(toQueryVariables(tab), { fetchPolicy: "store-or-network" });
     });
@@ -125,9 +129,11 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
 
   const total = documentNodes.length + fileNodes.length + auditNodes.length;
 
-  const documentGroups = groupByField(documentNodes, node => node.documentType)
+  const documentGroups = Object.entries(groupBy(documentNodes, node => node.documentType))
+    .map(([key, nodes]) => ({ key, nodes }))
     .sort((a, b) => t(`types.${a.key}`).localeCompare(t(`types.${b.key}`)));
-  const fileGroups = groupByField(fileNodes, node => node.category)
+  const fileGroups = Object.entries(groupBy(fileNodes, node => node.category))
+    .map(([key, nodes]) => ({ key, nodes }))
     .sort((a, b) => a.key.localeCompare(b.key));
 
   const { page, results } = documentsLayout({ busy: isRefetching });

@@ -41,7 +41,10 @@ export const toaster = tv({
     content: "flex min-w-0 flex-1 flex-col gap-1",
     title: "text-2 font-medium",
     description: "text-1",
-    close: "-mr-1 -mt-1 shrink-0 rounded-2 p-1 opacity-70 transition-opacity hover:opacity-100 [&_svg]:size-4",
+    close: [
+      "-mr-1 -mt-1 shrink-0 rounded-2 p-1 opacity-70 outline-none transition-opacity hover:opacity-100 [&_svg]:size-4",
+      "focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+    ],
   },
   variants: {
     // Mirrors Callout's surface tokens: bg step 2, border step 6, text step 11,

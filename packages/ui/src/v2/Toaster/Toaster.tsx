@@ -66,12 +66,12 @@ export function Toaster() {
               <span aria-hidden className={typed.icon()}>
                 {typeIcons[type]}
               </span>
-              <div className={typed.content()}>
+              <Toast.Content className={typed.content()}>
                 <Toast.Title className={typed.title()} />
                 {toast.description != null && (
                   <Toast.Description className={typed.description()} />
                 )}
-              </div>
+              </Toast.Content>
               <Toast.Close className={typed.close()} aria-label="Close">
                 <XIcon />
               </Toast.Close>

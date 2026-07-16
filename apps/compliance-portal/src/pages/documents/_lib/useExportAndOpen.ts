@@ -18,26 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ComponentProps } from "react";
+import { useCallback } from "react";
+import type { GraphQLTaggedNode, MutationParameters } from "relay-runtime";
 
-import { tabsSkeleton } from "./variants";
+import { useMutation } from "#/lib/relay/useMutation";
 
-export type TabsSkeletonProps = Omit<ComponentProps<"div">, "children"> & {
-  // Number of placeholder tabs to render (defaults to 3).
-  count?: number;
-};
+import { openExportedFile } from "./openExportedFile";
 
-// Loading placeholder paired with the tab bar: a row of pulse blocks over the
-// shared bottom border.
-export function TabsSkeleton(props: TabsSkeletonProps) {
-  const { count = 3, className, ...rest } = props;
-  const { root, item } = tabsSkeleton();
+// Shared "export then open" behavior for the document/file/report list items:
+// commit the resource's export mutation, open the returned base64 payload, and
+// let failures surface through the mutation notifier's toast. Each caller
+// supplies its typed mutation and a selector for the payload string.
+export function useExportAndOpen<T extends MutationParameters>(
+  mutation: GraphQLTaggedNode,
+  selectData: (response: T["response"]) => string,
+): readonly [(variables: T["variables"]) => void, boolean] {
+  const [commit, isExporting] = useMutation<T>(mutation);
 
-  return (
-    <div className={root({ className })} {...rest} aria-hidden>
-      {Array.from({ length: count }, (_, index) => (
-        <span key={index} className={item()} style={{ width: `${64 + (index % 3) * 16}px` }} />
-      ))}
-    </div>
+  const open = useCallback(
+    (variables: T["variables"]) => {
+      commit({
+        variables,
+        onCompleted: response => openExportedFile(selectData(response)),
+      }).catch(() => {
+        // The mutation failure is already surfaced through a toast.
+      });
+    },
+    [commit, selectData],
   );
+
+  return [open, isExporting];
 }

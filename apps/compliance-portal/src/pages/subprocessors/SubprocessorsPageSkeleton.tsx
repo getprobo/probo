@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
@@ -32,9 +34,9 @@ export function SubprocessorsPageSkeleton() {
         <div className="flex w-full flex-col gap-2">
           <HeadingSkeleton size={7} className="w-64" />
           <div className="flex min-h-16 items-center gap-3">
-            <div className="h-8 w-40 animate-pulse rounded-2 bg-sand-3" />
-            <div className="h-8 w-40 animate-pulse rounded-2 bg-sand-3" />
-            <div className="h-8 w-60 animate-pulse rounded-2 bg-sand-3" />
+            <SelectSkeleton />
+            <SelectSkeleton />
+            <TextFieldSkeleton />
           </div>
         </div>
       </HeaderBand>

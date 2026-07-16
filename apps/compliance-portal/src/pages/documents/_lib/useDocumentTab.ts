@@ -21,9 +21,19 @@
 import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
-export type DocumentTab = "all" | "public" | "private";
+// Single source of truth for the tab set. The type, the rendered tab list, and
+// URL validation all derive from this so a new tab can't be shown/written but
+// read back as the default.
+export const DOCUMENT_TABS = ["all", "public", "private"] as const;
 
-export const DOCUMENT_TABS: readonly DocumentTab[] = ["all", "public", "private"];
+export type DocumentTab = (typeof DOCUMENT_TABS)[number];
+
+// The default (no-filter) tab; kept out of the URL by `setTab`.
+const DEFAULT_DOCUMENT_TAB: DocumentTab = "all";
+
+function isDocumentTab(value: string | null): value is DocumentTab {
+  return value != null && (DOCUMENT_TABS as readonly string[]).includes(value);
+}
 
 interface DocumentTabState {
   tab: DocumentTab;
@@ -37,12 +47,12 @@ export function useDocumentTab(): DocumentTabState {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const raw = searchParams.get("tab");
-  const tab: DocumentTab = raw === "public" || raw === "private" ? raw : "all";
+  const tab: DocumentTab = isDocumentTab(raw) ? raw : DEFAULT_DOCUMENT_TAB;
 
   const setTab = useCallback((value: DocumentTab) => {
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous);
-      if (value === "all") {
+      if (value === DEFAULT_DOCUMENT_TAB) {
         next.delete("tab");
       } else {
         next.set("tab", value);

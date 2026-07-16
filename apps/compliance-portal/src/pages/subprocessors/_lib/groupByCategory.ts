@@ -18,29 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { groupBy } from "@probo/helpers";
+
 export interface CategoryGroup<T> {
   category: string;
   nodes: T[];
 }
 
 // Groups subprocessor nodes into their (non-empty) categories, ordered by the
-// localized category label. Presentational only — filtering happens server-side.
+// localized category label. Bucketing uses the shared `groupBy` primitive; the
+// category labeling/sorting is the subprocessor-specific part kept here.
+// Presentational only — filtering happens server-side.
 export function groupByCategory<T extends { readonly category: string }>(
   nodes: readonly T[],
   getLabel: (category: string) => string,
 ): CategoryGroup<T>[] {
-  const groups = new Map<string, T[]>();
-
-  for (const node of nodes) {
-    const existing = groups.get(node.category);
-    if (existing) {
-      existing.push(node);
-    } else {
-      groups.set(node.category, [node]);
-    }
-  }
-
-  return [...groups.entries()]
+  return Object.entries(groupBy([...nodes], node => node.category))
     .map(([category, groupNodes]) => ({ category, nodes: groupNodes }))
     .sort((a, b) => getLabel(a.category).localeCompare(getLabel(b.category)));
 }

@@ -18,18 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import { useMutation } from "#/lib/relay/useMutation";
-
-import { openExportedFile } from "../_lib/openExportedFile";
+import { useExportAndOpen } from "../_lib/useExportAndOpen";
 
 import type { DocumentListItem_document$key } from "./__generated__/DocumentListItem_document.graphql";
 import type { DocumentListItemExportMutation } from "./__generated__/DocumentListItemExportMutation.graphql";
-import { DocumentAccessAction } from "./DocumentAccessAction";
-import { documentListItem } from "./variants";
+import { DocumentEntry } from "./DocumentEntry";
 
 const documentListItemFragment = graphql`
   fragment DocumentListItem_document on Document @throwOnFieldError {
@@ -55,39 +51,24 @@ interface DocumentListItemProps {
   documentKey: DocumentListItem_document$key;
 }
 
-// A single Probo document row: title, its document type, and an access action
+// A single Probo document entry: title, its document type, and an access action
 // that opens the exported PDF when the viewer is authorized.
 export function DocumentListItem({ documentKey }: DocumentListItemProps) {
   const { t } = useTranslation("documents");
   const document = useFragment(documentListItemFragment, documentKey);
-  const [exportDocument, isExporting] = useMutation<DocumentListItemExportMutation>(exportDocumentMutation);
-  const { root, content } = documentListItem();
-
-  const handleView = () => {
-    exportDocument({
-      variables: { input: { documentId: document.id } },
-      onCompleted: response => openExportedFile(response.exportDocumentPDF.data),
-    }).catch(() => {
-      // The mutation failure is already surfaced through a toast.
-    });
-  };
+  const [openDocument, isExporting] = useExportAndOpen<DocumentListItemExportMutation>(
+    exportDocumentMutation,
+    response => response.exportDocumentPDF.data,
+  );
 
   return (
-    <div className={root()}>
-      <div className={content()}>
-        <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
-          {document.title}
-        </Text>
-        <Text size={1} color="gold" className="truncate">
-          {t(`types.${document.documentType}`)}
-        </Text>
-      </div>
-      <DocumentAccessAction
-        isAuthorized={document.isUserAuthorized}
-        requested={document.access?.status === "REQUESTED"}
-        onView={handleView}
-        isViewing={isExporting}
-      />
-    </div>
+    <DocumentEntry
+      title={document.title}
+      meta={t(`types.${document.documentType}`)}
+      isAuthorized={document.isUserAuthorized}
+      requested={document.access?.status === "REQUESTED"}
+      onView={() => openDocument({ input: { documentId: document.id } })}
+      isViewing={isExporting}
+    />
   );
 }

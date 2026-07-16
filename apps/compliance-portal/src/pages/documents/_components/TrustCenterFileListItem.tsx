@@ -18,17 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useFragment } from "react-relay";
 
-import { useMutation } from "#/lib/relay/useMutation";
-
-import { openExportedFile } from "../_lib/openExportedFile";
+import { useExportAndOpen } from "../_lib/useExportAndOpen";
 
 import type { TrustCenterFileListItem_file$key } from "./__generated__/TrustCenterFileListItem_file.graphql";
 import type { TrustCenterFileListItemExportMutation } from "./__generated__/TrustCenterFileListItemExportMutation.graphql";
-import { DocumentAccessAction } from "./DocumentAccessAction";
-import { documentListItem } from "./variants";
+import { DocumentEntry } from "./DocumentEntry";
 
 const trustCenterFileListItemFragment = graphql`
   fragment TrustCenterFileListItem_file on TrustCenterFile @throwOnFieldError {
@@ -54,38 +50,23 @@ interface TrustCenterFileListItemProps {
   fileKey: TrustCenterFileListItem_file$key;
 }
 
-// A single uploaded trust-center file row: name, its category, and an access
+// A single uploaded trust-center file entry: name, its category, and an access
 // action that opens the exported file when the viewer is authorized.
 export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProps) {
   const file = useFragment(trustCenterFileListItemFragment, fileKey);
-  const [exportFile, isExporting] = useMutation<TrustCenterFileListItemExportMutation>(exportTrustCenterFileMutation);
-  const { root, content } = documentListItem();
-
-  const handleView = () => {
-    exportFile({
-      variables: { input: { trustCenterFileId: file.id } },
-      onCompleted: response => openExportedFile(response.exportTrustCenterFile.data),
-    }).catch(() => {
-      // The mutation failure is already surfaced through a toast.
-    });
-  };
+  const [openFile, isExporting] = useExportAndOpen<TrustCenterFileListItemExportMutation>(
+    exportTrustCenterFileMutation,
+    response => response.exportTrustCenterFile.data,
+  );
 
   return (
-    <div className={root()}>
-      <div className={content()}>
-        <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
-          {file.name}
-        </Text>
-        <Text size={1} color="gold" className="truncate">
-          {file.category}
-        </Text>
-      </div>
-      <DocumentAccessAction
-        isAuthorized={file.isUserAuthorized}
-        requested={file.access?.status === "REQUESTED"}
-        onView={handleView}
-        isViewing={isExporting}
-      />
-    </div>
+    <DocumentEntry
+      title={file.name}
+      meta={file.category}
+      isAuthorized={file.isUserAuthorized}
+      requested={file.access?.status === "REQUESTED"}
+      onView={() => openFile({ input: { trustCenterFileId: file.id } })}
+      isViewing={isExporting}
+    />
   );
 }
