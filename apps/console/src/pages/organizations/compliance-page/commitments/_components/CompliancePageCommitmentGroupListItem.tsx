@@ -20,13 +20,14 @@
 
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Dialog, DialogContent, DialogFooter, IconPencil, IconPlusLarge, IconTrashCan, Spinner, Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
+import { Button, Card, Dialog, DialogContent, DialogFooter, IconChevronDown, IconChevronUp, IconPencil, IconPlusLarge, IconTrashCan, Spinner, Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
 import { useRef } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageCommitmentGroupListItemDeleteMutation } from "#/__generated__/core/CompliancePageCommitmentGroupListItemDeleteMutation.graphql";
 import type { CompliancePageCommitmentGroupListItemFragment$data, CompliancePageCommitmentGroupListItemFragment$key } from "#/__generated__/core/CompliancePageCommitmentGroupListItemFragment.graphql";
+import type { CompliancePageCommitmentGroupListItemUpdateRankMutation } from "#/__generated__/core/CompliancePageCommitmentGroupListItemUpdateRankMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CompliancePageCommitmentDialog, type CompliancePageCommitmentDialogRef } from "./CompliancePageCommitmentDialog";
@@ -38,6 +39,19 @@ const deleteGroupMutation = graphql`
   ) {
     deleteCompliancePortalCommitmentGroup(input: $input) {
       deletedCompliancePortalCommitmentGroupId
+    }
+  }
+`;
+
+const updateCommitmentRankMutation = graphql`
+  mutation CompliancePageCommitmentGroupListItemUpdateRankMutation(
+    $input: UpdateCompliancePortalCommitmentInput!
+  ) {
+    updateCompliancePortalCommitment(input: $input) {
+      compliancePortalCommitment {
+        id
+        rank
+      }
     }
   }
 `;
@@ -54,6 +68,7 @@ const fragment = graphql`
       edges {
         node {
           id
+          rank
           ...CompliancePageCommitmentListItemFragment
         }
       }
@@ -65,8 +80,13 @@ export function CompliancePageCommitmentGroupListItem(props: {
   fragmentRef: CompliancePageCommitmentGroupListItemFragment$key;
   onEdit: (group: CompliancePageCommitmentGroupListItemFragment$data) => void;
   onChanged: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+  isReordering: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }) {
-  const { fragmentRef, onEdit, onChanged } = props;
+  const { fragmentRef, onEdit, onChanged, isFirst, isLast, isReordering, onMoveUp, onMoveDown } = props;
 
   const { __ } = useTranslate();
   const group = useFragment<CompliancePageCommitmentGroupListItemFragment$key>(fragment, fragmentRef);
@@ -77,8 +97,26 @@ export function CompliancePageCommitmentGroupListItem(props: {
     deleteGroupMutation,
     { successMessage: __("Group deleted successfully"), errorMessage: __("Failed to delete group") },
   );
+  const [updateCommitmentRank, isReorderingCommitment] = useMutationWithToasts<
+    CompliancePageCommitmentGroupListItemUpdateRankMutation
+  >(
+    updateCommitmentRankMutation,
+    { successMessage: __("Order updated successfully"), errorMessage: __("Failed to update order") },
+  );
 
   const commitments = group.commitments.edges.map(edge => edge.node);
+
+  const moveCommitment = async (index: number, direction: "up" | "down") => {
+    const target = direction === "up" ? commitments[index - 1] : commitments[index + 1];
+    if (!target) {
+      return;
+    }
+
+    await updateCommitmentRank({
+      variables: { input: { id: commitments[index].id, rank: target.rank } },
+      onSuccess: onChanged,
+    });
+  };
 
   const handleDelete = async () => {
     await deleteGroup({
@@ -99,7 +137,21 @@ export function CompliancePageCommitmentGroupListItem(props: {
         </div>
         <div className="flex gap-2">
           {group.canUpdate && (
-            <Button variant="secondary" icon={IconPencil} onClick={() => onEdit(group)} />
+            <>
+              <Button
+                variant="secondary"
+                icon={IconChevronUp}
+                disabled={isFirst || isReordering}
+                onClick={onMoveUp}
+              />
+              <Button
+                variant="secondary"
+                icon={IconChevronDown}
+                disabled={isLast || isReordering}
+                onClick={onMoveDown}
+              />
+              <Button variant="secondary" icon={IconPencil} onClick={() => onEdit(group)} />
+            </>
           )}
           {group.canDelete && (
             <>
@@ -146,12 +198,17 @@ export function CompliancePageCommitmentGroupListItem(props: {
               </Td>
             </Tr>
           )}
-          {commitments.map(commitment => (
+          {commitments.map((commitment, index) => (
             <CompliancePageCommitmentListItem
               key={commitment.id}
               fragmentRef={commitment}
               onEdit={c => commitmentDialogRef.current?.openEdit(c)}
               onChanged={onChanged}
+              isFirst={index === 0}
+              isLast={index === commitments.length - 1}
+              isReordering={isReorderingCommitment}
+              onMoveUp={() => void moveCommitment(index, "up")}
+              onMoveDown={() => void moveCommitment(index, "down")}
             />
           ))}
         </Tbody>

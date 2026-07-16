@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, IconPencil, IconTrashCan, Spinner, Td, Tr } from "@probo/ui";
+import { Badge, Button, IconChevronDown, IconChevronUp, IconPencil, IconTrashCan, Spinner, Td, Tr } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -55,8 +55,13 @@ export function CompliancePageCommitmentListItem(props: {
   fragmentRef: CompliancePageCommitmentListItemFragment$key;
   onEdit: (commitment: CompliancePageCommitmentListItemFragment$data) => void;
   onChanged: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+  isReordering: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }) {
-  const { fragmentRef, onEdit, onChanged } = props;
+  const { fragmentRef, onEdit, onChanged, isFirst, isLast, isReordering, onMoveUp, onMoveDown } = props;
 
   const { __ } = useTranslate();
   const commitment = useFragment<CompliancePageCommitmentListItemFragment$key>(fragment, fragmentRef);
@@ -91,10 +96,24 @@ export function CompliancePageCommitmentListItem(props: {
       <Td>
         <span className="text-txt-secondary line-clamp-2">{commitment.description}</span>
       </Td>
-      <Td noLink width={120} className="text-end">
+      <Td noLink width={180} className="text-end">
         <div className="flex gap-2 justify-end">
           {commitment.canUpdate && (
-            <Button variant="secondary" icon={IconPencil} onClick={() => onEdit(commitment)} />
+            <>
+              <Button
+                variant="secondary"
+                icon={IconChevronUp}
+                disabled={isFirst || isReordering}
+                onClick={onMoveUp}
+              />
+              <Button
+                variant="secondary"
+                icon={IconChevronDown}
+                disabled={isLast || isReordering}
+                onClick={onMoveDown}
+              />
+              <Button variant="secondary" icon={IconPencil} onClick={() => onEdit(commitment)} />
+            </>
           )}
           {commitment.canDelete && (
             <Button

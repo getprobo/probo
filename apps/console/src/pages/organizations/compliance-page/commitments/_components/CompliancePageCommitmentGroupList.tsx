@@ -26,6 +26,8 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePageCommitmentGroupListFragment$key } from "#/__generated__/core/CompliancePageCommitmentGroupListFragment.graphql";
 import type { CompliancePageCommitmentGroupListRefetchQuery } from "#/__generated__/core/CompliancePageCommitmentGroupListRefetchQuery.graphql";
+import type { CompliancePageCommitmentGroupListUpdateRankMutation } from "#/__generated__/core/CompliancePageCommitmentGroupListUpdateRankMutation.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CompliancePageCommitmentGroupDialog, type CompliancePageCommitmentGroupDialogRef } from "./CompliancePageCommitmentGroupDialog";
 import { CompliancePageCommitmentGroupListItem } from "./CompliancePageCommitmentGroupListItem";
@@ -37,8 +39,22 @@ const fragment = graphql`
       edges {
         node {
           id
+          rank
           ...CompliancePageCommitmentGroupListItemFragment
         }
+      }
+    }
+  }
+`;
+
+const updateRankMutation = graphql`
+  mutation CompliancePageCommitmentGroupListUpdateRankMutation(
+    $input: UpdateCompliancePortalCommitmentGroupInput!
+  ) {
+    updateCompliancePortalCommitmentGroup(input: $input) {
+      compliancePortalCommitmentGroup {
+        id
+        rank
       }
     }
   }
@@ -59,9 +75,26 @@ export function CompliancePageCommitmentGroupList(props: {
     CompliancePageCommitmentGroupListFragment$key
   >(fragment, fragmentRef);
 
+  const [updateRank, isReordering] = useMutationWithToasts<CompliancePageCommitmentGroupListUpdateRankMutation>(
+    updateRankMutation,
+    { successMessage: __("Order updated successfully"), errorMessage: __("Failed to update order") },
+  );
+
   const onChanged = () => refetch({}, { fetchPolicy: "network-only" });
 
   const groups = data.commitmentGroups.edges.map(edge => edge.node);
+
+  const moveGroup = async (index: number, direction: "up" | "down") => {
+    const target = direction === "up" ? groups[index - 1] : groups[index + 1];
+    if (!target) {
+      return;
+    }
+
+    await updateRank({
+      variables: { input: { id: groups[index].id, rank: target.rank } },
+      onSuccess: onChanged,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -87,12 +120,17 @@ export function CompliancePageCommitmentGroupList(props: {
           )
         : (
             <div className="space-y-6">
-              {groups.map(group => (
+              {groups.map((group, index) => (
                 <CompliancePageCommitmentGroupListItem
                   key={group.id}
                   fragmentRef={group}
                   onEdit={g => dialogRef.current?.openEdit(g)}
                   onChanged={onChanged}
+                  isFirst={index === 0}
+                  isLast={index === groups.length - 1}
+                  isReordering={isReordering}
+                  onMoveUp={() => void moveGroup(index, "up")}
+                  onMoveDown={() => void moveGroup(index, "down")}
                 />
               ))}
             </div>
