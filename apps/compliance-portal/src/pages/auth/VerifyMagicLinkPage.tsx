@@ -68,7 +68,9 @@ export default function VerifyMagicLinkPage() {
         const code = (errors?.[0] as GraphQLError | undefined)?.extensions?.code;
 
         if (code === "ALREADY_AUTHENTICATED") {
-          window.location.href = getSafeContinueUrl(null);
+          // Already signed in: honor a `continue` on the URL if present so a
+          // deferred access request still resumes, instead of always going home.
+          window.location.href = getSafeContinueUrl(searchParams.get("continue"));
           return;
         }
         if (code === "TOKEN_EXPIRED") {

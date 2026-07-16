@@ -189,14 +189,22 @@ export function NDAPage({ queryRef }: NDAPageProps) {
       }).catch(() => {});
     }
 
-    void recordSigningEvent({
-      variables: { input: { signatureId: signature.id, eventType: "CONSENT_GIVEN" } },
-      onCompleted: () => {
-        void acceptSignature({
-          variables: { input: { signatureId: signature.id } },
-        }).catch(() => {});
+    // Consent + acceptance are the critical steps: surface failures (via the
+    // default mutation error toast) so the user can retry, instead of leaving
+    // the sign button apparently inert. The fire-and-forget events above stay
+    // silent (errorToast: false on the hook).
+    void recordSigningEvent(
+      {
+        variables: { input: { signatureId: signature.id, eventType: "CONSENT_GIVEN" } },
+        onCompleted: () => {
+          void acceptSignature(
+            { variables: { input: { signatureId: signature.id } } },
+            { errorToast: true },
+          ).catch(() => {});
+        },
       },
-    }).catch(() => {});
+      { errorToast: true },
+    ).catch(() => {});
   };
 
   const movePage = (direction: 1 | -1) => {
@@ -209,8 +217,14 @@ export function NDAPage({ queryRef }: NDAPageProps) {
     return <Navigate to="/" replace />;
   }
 
-  if (!nda || !signature || isCompleted) {
+  if (!nda || !signature) {
     return <Navigate to="/" replace />;
+  }
+
+  // Signature already sealed: the effect above redirects to the continue URL;
+  // render nothing meanwhile so we don't flash the sign UI or the home page.
+  if (isCompleted) {
+    return null;
   }
 
   const slots = ndaPage();

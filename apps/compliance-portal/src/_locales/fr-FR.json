@@ -65,8 +65,7 @@
       "magicLinkFailed": "Impossible d'envoyer le lien magique. Veuillez réessayer.",
       "verifyFailed": "Impossible de vérifier le lien. Veuillez réessayer.",
       "fullNameFailed": "Impossible d'enregistrer votre nom. Veuillez réessayer.",
-      "requestFailed": "Impossible de finaliser votre demande d'accès. Veuillez réessayer.",
-      "ndaRequired": "Vous devez signer l'accord de confidentialité avant de demander l'accès."
+      "requestFailed": "Impossible de finaliser votre demande d'accès. Veuillez réessayer."
     }
   },
   "home": {

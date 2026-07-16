@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
+import { gateRedirectPath } from "#/lib/auth/continueUrl";
 
 // Maps a caught gate error to the route that resolves it, carrying the current
 // URL as a `continue` target so the user returns here once the gate is cleared.
@@ -26,15 +26,5 @@ import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
 // page validates the continue URL via getSafeContinueUrl. Returns null for any
 // other error so the boundary can fall through to its normal error UI.
 export function resolveGateRedirect(error: unknown): string | null {
-  const continueUrl = encodeURIComponent(window.location.href);
-
-  if (error instanceof FullNameRequiredError) {
-    return `/full-name?continue=${continueUrl}`;
-  }
-
-  if (error instanceof NDASignatureRequiredError) {
-    return `/nda?continue=${continueUrl}`;
-  }
-
-  return null;
+  return gateRedirectPath(error, window.location.href);
 }

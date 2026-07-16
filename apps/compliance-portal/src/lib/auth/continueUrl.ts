@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
+
 import { getPathPrefix } from "#/lib/http/pathPrefix";
 
 // Markers appended to a post-auth `continue` URL so the portal fires the pending
@@ -69,4 +71,19 @@ export function buildRequestAccessContinueUrl(param: string, id: string): string
   const url = new URL(window.location.href);
   url.searchParams.set(param, id);
   return url.toString();
+}
+
+// Maps a caught auth-gate error to the route that resolves it, carrying the
+// given `continueUrl` so the user returns here (and any deferred request
+// resumes) once the gate is cleared. Returns null for non-gate errors. Shared
+// by the route boundaries and the request-access flows so all gate handling
+// stays in one place.
+export function gateRedirectPath(error: unknown, continueUrl: string): string | null {
+  if (error instanceof FullNameRequiredError) {
+    return `/full-name?continue=${encodeURIComponent(continueUrl)}`;
+  }
+  if (error instanceof NDASignatureRequiredError) {
+    return `/nda?continue=${encodeURIComponent(continueUrl)}`;
+  }
+  return null;
 }

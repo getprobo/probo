@@ -65,8 +65,7 @@
       "magicLinkFailed": "Couldn't send the magic link. Please try again.",
       "verifyFailed": "Couldn't verify the link. Please try again.",
       "fullNameFailed": "Couldn't save your name. Please try again.",
-      "requestFailed": "Couldn't complete your access request. Please try again.",
-      "ndaRequired": "You need to sign the NDA before requesting access."
+      "requestFailed": "Couldn't complete your access request. Please try again."
     }
   },
   "home": {

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { Toast } from "@base-ui/react/toast";
-import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
@@ -29,6 +28,7 @@ import { graphql } from "relay-runtime";
 import {
   buildRequestAccessContinueUrl,
   buildRequestAllContinueUrl,
+  gateRedirectPath,
   REQUEST_ALL_PARAM,
   REQUEST_DOCUMENT_PARAM,
   REQUEST_FILE_PARAM,
@@ -143,9 +143,9 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
     firedRef.current = true;
 
     // Shared outcome handling. The full-name and NDA gates are thrown by the
-    // fetch layer, so they arrive in `onError`: full-name deep-links to its gate
-    // (preserving the marker so the request resumes), NDA is a toast (its
-    // primary path is the query-load boundary), failures toast, success confirms.
+    // fetch layer, so they arrive in `onError` and deep-link to their gate page,
+    // preserving the marker so the request resumes once cleared. Other failures
+    // toast; success confirms.
     const makeHandlers = (continueUrl: string) => ({
       onCompleted: (_response: unknown, errors: PayloadError[] | null) => {
         if (errors && errors.length > 0) {
@@ -155,12 +155,9 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
         toast.add({ title: t("auth.requestAccess.success"), type: "success" });
       },
       onError: (error: Error) => {
-        if (error instanceof FullNameRequiredError) {
-          void navigate(`/full-name?continue=${encodeURIComponent(continueUrl)}`);
-          return;
-        }
-        if (error instanceof NDASignatureRequiredError) {
-          toast.add({ title: t("auth.errors.ndaRequired"), type: "error" });
+        const gatePath = gateRedirectPath(error, continueUrl);
+        if (gatePath) {
+          void navigate(gatePath);
           return;
         }
         toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
@@ -203,10 +200,11 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
       return;
     }
 
+    const allContinueUrl = buildRequestAllContinueUrl();
     clear(REQUEST_ALL_PARAM);
     void requestAllAccesses({
       variables: {},
-      ...makeHandlers(buildRequestAllContinueUrl()),
+      ...makeHandlers(allContinueUrl),
     }).catch(() => {});
   }, [
     isAuthenticated,

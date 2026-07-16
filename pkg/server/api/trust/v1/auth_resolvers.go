@@ -161,10 +161,15 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 
 	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, compliancePage.OrganizationID)
 	if err != nil {
-		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); !ok {
-			r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+		// External trust-center visitors have no organization profile; updating
+		// the identity's full name above is all that is needed for them.
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
+			return &types.UpdateFullNamePayload{Success: true}, nil
 		}
+
+		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	if profile.Source == coredata.ProfileSourceManual {
