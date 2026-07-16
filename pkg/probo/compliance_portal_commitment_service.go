@@ -71,9 +71,11 @@ func (r *UpdateCompliancePortalCommitmentRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.CompliancePortalCommitmentEntityType))
+
 	if r.Icon != nil {
 		v.Check(*r.Icon, "icon", validator.OneOfSlice(coredata.CompliancePortalCommitmentIcons()))
 	}
+
 	v.Check(r.Eyebrow, "eyebrow", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
