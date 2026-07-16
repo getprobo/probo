@@ -36,6 +36,15 @@ const securityCommitmentsSectionFragment = graphql`
       edges {
         node {
           id
+          # Same args as SecurityCommitmentGroupListItem_group so Relay merges
+          # this into one fetch; used only to drop groups with no cards.
+          commitments(first: 100) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
           ...SecurityCommitmentGroupListItem_group
         }
       }
@@ -68,7 +77,12 @@ function SecurityCommitmentsSectionContent({ trustCenterKey }: SecurityCommitmen
   const data = useFragment(securityCommitmentsSectionFragment, trustCenterKey);
   const slots = securityCommitments();
 
-  const groups = data.commitmentGroups.edges.map(edge => edge.node);
+  // Groups with no cards render nothing, so filter them out here to keep the
+  // section eyebrow on the first visible group and to hide the whole section
+  // (no empty padded gap) when nothing will render.
+  const groups = data.commitmentGroups.edges
+    .map(edge => edge.node)
+    .filter(node => node.commitments.edges.length > 0);
 
   if (groups.length === 0) {
     return null;
