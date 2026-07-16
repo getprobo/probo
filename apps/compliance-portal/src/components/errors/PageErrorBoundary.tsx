@@ -14,8 +14,9 @@
 
 import { Navigate, useRouteError } from "react-router";
 
+import { gateRedirectPath } from "#/lib/auth/continueUrl";
+
 import { GlobalError } from "./GlobalError";
-import { resolveGateRedirect } from "./resolveGateRedirect";
 
 // Child-route boundary: a page failure is contained to the layout's Outlet, so
 // the error renders inside the app chrome (TopBar + footer survive).
@@ -24,7 +25,7 @@ export function PageErrorBoundary() {
 
   // Full-name / NDA gates are recoverable: send the user to the gate page and
   // return them here afterwards, instead of showing an error.
-  const gateRedirect = resolveGateRedirect(error);
+  const gateRedirect = gateRedirectPath(error, window.location.href);
   if (gateRedirect) {
     return <Navigate replace to={gateRedirect} />;
   }
