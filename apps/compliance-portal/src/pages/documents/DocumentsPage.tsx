@@ -108,15 +108,35 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
   // initial preload was in flight, this reconciles by refetching rather than
   // showing the wrong slice. Refetch inside a transition so the toolbar and
   // current results stay mounted (dimmed via `isRefetching`) while it loads.
-  const fetchedVisibility = useRef(queryRef.variables.visibility ?? null);
+  //
+  // `requestedVisibility` de-dupes in-flight requests; `loadedVisibility` only
+  // advances when the *latest* refetch settles, so an out-of-order or failed
+  // refetch can't leave the list showing a different tab than the toolbar.
+  const initialVisibility = queryRef.variables.visibility ?? null;
+  const loadedVisibility = useRef(initialVisibility);
+  const requestedVisibility = useRef(initialVisibility);
   useEffect(() => {
     const target = toQueryVariables(tab).visibility ?? null;
-    if (target === fetchedVisibility.current) {
+    if (target === requestedVisibility.current) {
       return;
     }
-    fetchedVisibility.current = target;
+    requestedVisibility.current = target;
     startTransition(() => {
-      refetch(toQueryVariables(tab), { fetchPolicy: "store-or-network" });
+      refetch(toQueryVariables(tab), {
+        fetchPolicy: "store-or-network",
+        onComplete: (error) => {
+          if (requestedVisibility.current !== target) {
+            // A newer tab was requested; ignore this stale settle.
+            return;
+          }
+          if (error) {
+            // Allow re-selecting this tab to retry after a failed refetch.
+            requestedVisibility.current = loadedVisibility.current;
+            return;
+          }
+          loadedVisibility.current = target;
+        },
+      });
     });
   }, [refetch, tab]);
 

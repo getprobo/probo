@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { graphql } from "react-relay";
 
 import { useMutation } from "#/lib/relay/useMutation";
@@ -77,28 +77,41 @@ export function useDocumentExport(kind: DocumentKind, id: string, enabled: boole
     setDataUri(null);
   }
 
+  // Track the current target so a slow export that resolves after the id
+  // changed cannot overwrite the preview with the previous document's bytes.
+  const currentId = useRef(id);
+  useEffect(() => {
+    currentId.current = id;
+  }, [id]);
+
   useEffect(() => {
     if (!enabled || dataUri) {
       return;
     }
 
+    const apply = (targetId: string, data: string) => {
+      if (currentId.current === targetId) {
+        setDataUri(data);
+      }
+    };
+
     switch (kind) {
       case "Document":
         exportDocument({
           variables: { input: { documentId: id } },
-          onCompleted: response => setDataUri(response.exportDocumentPDF.data),
+          onCompleted: response => apply(id, response.exportDocumentPDF.data),
         }).catch(() => {});
         break;
       case "TrustCenterFile":
         exportFile({
           variables: { input: { trustCenterFileId: id } },
-          onCompleted: response => setDataUri(response.exportTrustCenterFile.data),
+          onCompleted: response => apply(id, response.exportTrustCenterFile.data),
         }).catch(() => {});
         break;
       case "AuditReport":
         exportReport({
           variables: { input: { reportId: id } },
-          onCompleted: response => setDataUri(response.exportReportPDF.data),
+          onCompleted: response => apply(id, response.exportReportPDF.data),
         }).catch(() => {});
         break;
     }

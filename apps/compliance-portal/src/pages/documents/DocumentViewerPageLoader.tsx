@@ -28,13 +28,16 @@ import { DocumentViewerPageSkeleton } from "./DocumentViewerPageSkeleton";
 
 export default function DocumentViewerPageLoader() {
   const { alias } = useParams();
-  const [queryRef, loadQuery] = useQueryLoader<DocumentViewerPageQuery>(documentViewerPageQuery);
+  const [queryRef, loadQuery, disposeQuery] = useQueryLoader<DocumentViewerPageQuery>(documentViewerPageQuery);
 
+  // Dispose on alias change so navigating between documents shows the skeleton
+  // during the transition instead of the previous document's metadata/preview.
   useEffect(() => {
     if (alias) {
       loadQuery({ alias });
     }
-  }, [loadQuery, alias]);
+    return () => disposeQuery();
+  }, [loadQuery, disposeQuery, alias]);
 
   if (!queryRef) {
     return <DocumentViewerPageSkeleton />;
