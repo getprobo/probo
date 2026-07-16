@@ -29,6 +29,7 @@ import { authRoutes } from "#/pages/auth/routes";
 import { documentRoutes } from "#/pages/documents/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
+import { ndaRoutes } from "#/pages/nda/routes";
 import { subprocessorRoutes } from "#/pages/subprocessors/routes";
 import { updateRoutes } from "#/pages/updates/routes";
 
@@ -66,6 +67,7 @@ const routes = [
     ],
   },
   ...authRoutes,
+  ...ndaRoutes,
 ] satisfies AppRoute[];
 
 // The portal is served under a /trust/{slug} path prefix (or a bare custom

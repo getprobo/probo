@@ -1,0 +1,8 @@
+{
+  "title": "Accord de confidentialit\u00e9",
+  "subtitle": "{{name}} exige la signature d'un accord de confidentialit\u00e9 avant d'acc\u00e9der aux documents de conformit\u00e9.",
+  "reviewAndSign": "Lire et signer",
+  "tryAgain": "R\u00e9essayer",
+  "sealing": "Scellement de votre signature\u2026",
+  "failedDescription": "Un probl\u00e8me est survenu lors du traitement de votre signature. Veuillez r\u00e9essayer."
+}

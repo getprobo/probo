@@ -1,7 +1,4 @@
 {
-  "common": {
-    "error": "Something went wrong"
-  },
   "topBar": {
     "tagline": "Compliance Portal",
     "getAccess": "Get Access",
@@ -17,7 +14,12 @@
   },
   "common": {
     "cancel": "Cancel",
-    "error": "Something went wrong"
+    "error": "Something went wrong",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "pageOf": "Page {{current}} of {{total}}",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in"
   },
   "auth": {
     "backToPortal": "Back to portal",

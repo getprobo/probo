@@ -19,8 +19,11 @@
 // SOFTWARE.
 
 import { Toast } from "@base-ui/react/toast";
-import type { GraphQLError } from "@probo/helpers";
-import { UnAuthenticatedError } from "@probo/relay";
+import {
+  FullNameRequiredError,
+  NDASignatureRequiredError,
+  UnAuthenticatedError,
+} from "@probo/relay";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -93,9 +96,12 @@ const fileMutation = graphql`
   }
 `;
 
-// Shared success / error handling for a single access request: full-name gate
-// and unauthenticated visitors are routed to the sign-in flow (deferring the
-// request via the continue URL), everything else surfaces a toast.
+// Shared success / error handling for a single access request. The auth,
+// full-name, and NDA gates are thrown by the fetch layer, so they surface in
+// `onError` (not `onError`'s GraphQL-errors argument): unauthenticated opens the
+// sign-in dialog, full-name deep-links to its gate (both deferring the request
+// via the continue URL), NDA is a toast (its primary path is the query-load
+// boundary), and everything else is a generic toast.
 function useAccessRequestHandlers(param: string, id: string) {
   const { openSignIn } = useSignInDialog();
   const navigate = useNavigate();
@@ -105,25 +111,10 @@ function useAccessRequestHandlers(param: string, id: string) {
   return useMemo(
     () => ({
       onCompleted: (_response: unknown, errors: PayloadError[] | null) => {
-        const code = (errors?.[0] as GraphQLError | undefined)?.extensions?.code;
-
-        if (code === "FULL_NAME_REQUIRED") {
-          const continueUrl = buildRequestAccessContinueUrl(param, id);
-          void navigate(`/full-name?continue=${encodeURIComponent(continueUrl)}`);
-          return;
-        }
-
         if (errors && errors.length > 0) {
-          toast.add({
-            title:
-              code === "NDA_SIGNATURE_REQUIRED"
-                ? t("auth.errors.ndaRequired")
-                : t("auth.errors.requestFailed"),
-            type: "error",
-          });
+          toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
           return;
         }
-
         toast.add({ title: t("auth.requestAccess.success"), type: "success" });
       },
       onError: (error: Error) => {
@@ -131,6 +122,19 @@ function useAccessRequestHandlers(param: string, id: string) {
         // lands back authenticated (see useResumeAccessRequest).
         if (error instanceof UnAuthenticatedError) {
           openSignIn({ continueTo: buildRequestAccessContinueUrl(param, id) });
+          return;
+        }
+        // Missing profile name: send them to the full-name gate, preserving the
+        // marker so the request resumes afterwards.
+        if (error instanceof FullNameRequiredError) {
+          const continueUrl = buildRequestAccessContinueUrl(param, id);
+          void navigate(`/full-name?continue=${encodeURIComponent(continueUrl)}`);
+          return;
+        }
+        // NDA is enforced at query load (the route boundary redirects to /nda);
+        // here we only inform, matching the trust app.
+        if (error instanceof NDASignatureRequiredError) {
+          toast.add({ title: t("auth.errors.ndaRequired"), type: "error" });
           return;
         }
         toast.add({ title: t("auth.errors.requestFailed"), type: "error" });

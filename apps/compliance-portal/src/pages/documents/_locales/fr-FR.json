@@ -33,11 +33,6 @@
   },
   "viewer": {
     "back": "Documents",
-    "pageOf": "Page {{current}} sur {{total}}",
-    "previousPage": "Page précédente",
-    "nextPage": "Page suivante",
-    "zoomIn": "Zoom avant",
-    "zoomOut": "Zoom arrière",
     "share": "Partager le document",
     "linkCopied": "Lien copié dans le presse-papiers",
     "download": "Télécharger",

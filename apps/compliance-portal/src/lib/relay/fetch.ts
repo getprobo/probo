@@ -12,7 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { ForbiddenError, InternalServerError, UnAuthenticatedError } from "@probo/relay";
+import {
+  ForbiddenError,
+  FullNameRequiredError,
+  InternalServerError,
+  NDASignatureRequiredError,
+  UnAuthenticatedError,
+} from "@probo/relay";
 import { type GraphQLError } from "graphql";
 import { type FetchFunction, type GraphQLResponse } from "relay-runtime";
 
@@ -96,6 +102,24 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
       );
       if (unauthenticated) {
         throw new UnAuthenticatedError(unauthenticated.message);
+      }
+
+      // Full-name and NDA are global gates (the backend attaches a resolver
+      // path even to these), so — like UNAUTHENTICATED — scan every error and
+      // throw so the route boundary can redirect to the matching gate page.
+      // Full name is required before the NDA check, so it is scanned first.
+      const fullNameRequired = json.errors.find(
+        error => error.extensions?.code === "FULL_NAME_REQUIRED",
+      );
+      if (fullNameRequired) {
+        throw new FullNameRequiredError(fullNameRequired.message);
+      }
+
+      const ndaRequired = json.errors.find(
+        error => error.extensions?.code === "NDA_SIGNATURE_REQUIRED",
+      );
+      if (ndaRequired) {
+        throw new NDASignatureRequiredError(ndaRequired.message);
       }
 
       // Everything else is only thrown here when it is request-level (no path) —

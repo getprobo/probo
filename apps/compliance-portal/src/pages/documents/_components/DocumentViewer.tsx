@@ -118,19 +118,19 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
                     <IconButton
                       variant="ghost"
                       color="neutral"
-                      aria-label={t("viewer.previousPage")}
+                      aria-label={t("common.previousPage")}
                       disabled={currentPage <= 1}
                       onClick={() => movePage(-1)}
                     >
                       <CaretLeftIcon />
                     </IconButton>
                     <Text size={2} color="neutral">
-                      {t("viewer.pageOf", { current: currentPage, total: numPages })}
+                      {t("common.pageOf", { current: currentPage, total: numPages })}
                     </Text>
                     <IconButton
                       variant="ghost"
                       color="neutral"
-                      aria-label={t("viewer.nextPage")}
+                      aria-label={t("common.nextPage")}
                       disabled={currentPage >= numPages}
                       onClick={() => movePage(1)}
                     >
@@ -142,7 +142,7 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
                     <IconButton
                       variant="ghost"
                       color="neutral"
-                      aria-label={t("viewer.zoomOut")}
+                      aria-label={t("common.zoomOut")}
                       onClick={() => setScale(value => clamp(value * 0.8, MIN_SCALE, MAX_SCALE))}
                     >
                       <MagnifyingGlassMinusIcon />
@@ -153,7 +153,7 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
                     <IconButton
                       variant="ghost"
                       color="neutral"
-                      aria-label={t("viewer.zoomIn")}
+                      aria-label={t("common.zoomIn")}
                       onClick={() => setScale(value => clamp(value * 1.25, MIN_SCALE, MAX_SCALE))}
                     >
                       <MagnifyingGlassPlusIcon />

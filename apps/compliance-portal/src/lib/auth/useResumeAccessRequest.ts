@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Toast } from "@base-ui/react/toast";
-import type { GraphQLError } from "@probo/helpers";
+import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
@@ -142,32 +142,27 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
 
     firedRef.current = true;
 
-    // Shared outcome handling: route to the full-name gate (preserving the
-    // marker so the request resumes), surface NDA / failures as a toast, and
-    // confirm success. `continueUrl` re-adds the current marker for the gate.
+    // Shared outcome handling. The full-name and NDA gates are thrown by the
+    // fetch layer, so they arrive in `onError`: full-name deep-links to its gate
+    // (preserving the marker so the request resumes), NDA is a toast (its
+    // primary path is the query-load boundary), failures toast, success confirms.
     const makeHandlers = (continueUrl: string) => ({
       onCompleted: (_response: unknown, errors: PayloadError[] | null) => {
-        const code = (errors?.[0] as GraphQLError | undefined)?.extensions?.code;
-
-        if (code === "FULL_NAME_REQUIRED") {
+        if (errors && errors.length > 0) {
+          toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
+          return;
+        }
+        toast.add({ title: t("auth.requestAccess.success"), type: "success" });
+      },
+      onError: (error: Error) => {
+        if (error instanceof FullNameRequiredError) {
           void navigate(`/full-name?continue=${encodeURIComponent(continueUrl)}`);
           return;
         }
-
-        if (errors && errors.length > 0) {
-          toast.add({
-            title:
-              code === "NDA_SIGNATURE_REQUIRED"
-                ? t("auth.errors.ndaRequired")
-                : t("auth.errors.requestFailed"),
-            type: "error",
-          });
+        if (error instanceof NDASignatureRequiredError) {
+          toast.add({ title: t("auth.errors.ndaRequired"), type: "error" });
           return;
         }
-
-        toast.add({ title: t("auth.requestAccess.success"), type: "success" });
-      },
-      onError: () => {
         toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
       },
     });

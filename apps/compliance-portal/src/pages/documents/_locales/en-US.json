@@ -33,11 +33,6 @@
   },
   "viewer": {
     "back": "Documents",
-    "pageOf": "Page {{current}} of {{total}}",
-    "previousPage": "Previous page",
-    "nextPage": "Next page",
-    "zoomIn": "Zoom in",
-    "zoomOut": "Zoom out",
     "share": "Share document",
     "linkCopied": "Link copied to clipboard",
     "download": "Download",

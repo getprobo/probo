@@ -12,14 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useRouteError } from "react-router";
+import { Navigate, useRouteError } from "react-router";
 
 import { GlobalError } from "./GlobalError";
+import { resolveGateRedirect } from "./resolveGateRedirect";
 
 // Child-route boundary: a page failure is contained to the layout's Outlet, so
 // the error renders inside the app chrome (TopBar + footer survive).
 export function PageErrorBoundary() {
   const error = useRouteError();
+
+  // Full-name / NDA gates are recoverable: send the user to the gate page and
+  // return them here afterwards, instead of showing an error.
+  const gateRedirect = resolveGateRedirect(error);
+  if (gateRedirect) {
+    return <Navigate replace to={gateRedirect} />;
+  }
 
   return (
     <GlobalError

@@ -49,11 +49,14 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
   const { t } = useTranslation();
   const identity = useFragment(topBarUserMenuFragment, identityKey);
 
+  // New users may not have set a full name yet; fall back to the email.
+  const displayName = identity.fullName.trim() || identity.email;
+
   return (
     <Dropdown>
       <DropdownTrigger
         render={(
-          <button type="button" className={topBarUserMenuTrigger()} aria-label={identity.fullName}>
+          <button type="button" className={topBarUserMenuTrigger()} aria-label={displayName}>
             <Avatar
               size={1}
               variant="soft"
@@ -62,7 +65,7 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
               fallback={<UserIcon />}
             />
             <Text size={2} weight="medium" color="neutral" highContrast>
-              {identity.fullName}
+              {displayName}
             </Text>
             <CaretDownIcon className="size-4 text-sand-11" />
           </button>

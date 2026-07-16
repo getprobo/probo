@@ -1,7 +1,4 @@
 {
-  "common": {
-    "error": "Une erreur est survenue"
-  },
   "topBar": {
     "tagline": "Portail de conformité",
     "getAccess": "Obtenir l'accès",
@@ -17,7 +14,12 @@
   },
   "common": {
     "cancel": "Annuler",
-    "error": "Une erreur est survenue"
+    "error": "Une erreur est survenue",
+    "previousPage": "Page pr\u00e9c\u00e9dente",
+    "nextPage": "Page suivante",
+    "pageOf": "Page {{current}} sur {{total}}",
+    "zoomOut": "Zoom arri\u00e8re",
+    "zoomIn": "Zoom avant"
   },
   "auth": {
     "backToPortal": "Retour au portail",
