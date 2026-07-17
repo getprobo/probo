@@ -170,6 +170,29 @@ WHERE
 	return nil
 }
 
+// DeleteUnreferenced removes cache entries whose certificate is no longer
+// referenced by any custom domain, so deleted domains cannot keep a usable
+// TLS cache entry.
+func (cc *CachedCertificates) DeleteUnreferenced(ctx context.Context, conn pg.Querier) error {
+	q := `
+DELETE FROM
+	cached_certificates
+WHERE
+	NOT EXISTS (
+		SELECT 1
+		FROM custom_domains
+		WHERE custom_domains.certificate_id = cached_certificates.certificate_id
+	)
+`
+
+	_, err := conn.Exec(ctx, q, pgx.NamedArgs{})
+	if err != nil {
+		return fmt.Errorf("cannot delete unreferenced certificate cache: %w", err)
+	}
+
+	return nil
+}
+
 func (cc *CachedCertificate) RefreshFromCertificate(ctx context.Context, conn pg.Querier, certificate *Certificate, encryptionKey cipher.EncryptionKey) error {
 	if certificate.SSLCertificate == nil {
 		return fmt.Errorf("certificate has no parsed certificate")

@@ -59,8 +59,13 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 	err := w.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			var caches coredata.CachedCertificates
+			if err := caches.DeleteUnreferenced(ctx, conn); err != nil {
+				return fmt.Errorf("cannot delete unreferenced certificate cache: %w", err)
+			}
+
 			certificates := coredata.Certificates{}
-			if err := certificates.LoadActive(ctx, conn, coredata.NewNoScope()); err != nil {
+			if err := certificates.LoadActiveReferenced(ctx, conn, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot load active certificates: %w", err)
 			}
 

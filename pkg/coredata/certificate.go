@@ -685,7 +685,10 @@ WHERE
 	return nil
 }
 
-func (certificates *Certificates) LoadActive(
+// LoadActiveReferenced loads active certificates that are still referenced by
+// at least one custom domain. Certificates left behind after a domain is
+// deleted must not be warmed into the TLS cache or served by SNI alone.
+func (certificates *Certificates) LoadActiveReferenced(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -714,6 +717,11 @@ WHERE
 	%s
 	AND status = @status
 	AND ssl_certificate IS NOT NULL
+	AND EXISTS (
+		SELECT 1
+		FROM custom_domains
+		WHERE custom_domains.certificate_id = certificates.id
+	)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -723,7 +731,7 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query active certificates: %w", err)
+		return fmt.Errorf("cannot query active referenced certificates: %w", err)
 	}
 
 	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Certificate])

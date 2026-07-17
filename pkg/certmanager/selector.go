@@ -23,6 +23,7 @@ package certmanager
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -89,6 +90,10 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			if err := requireRoutableDomain(ctx, conn, domain); err != nil {
+				return err
+			}
+
 			var cache coredata.CachedCertificate
 			if err := cache.LoadByDomain(ctx, conn, domain); err != nil {
 				if err := s.rebuildCacheEntry(ctx, conn, domain); err != nil {
@@ -123,6 +128,10 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 }
 
 func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domain string) error {
+	if err := requireRoutableDomain(ctx, conn, domain); err != nil {
+		return err
+	}
+
 	var certificate coredata.Certificate
 	if err := certificate.LoadByHostname(ctx, conn, coredata.NewNoScope(), domain); err != nil {
 		return fmt.Errorf("cannot load certificate: %w", err)
@@ -163,6 +172,25 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domai
 
 	if err := cache.Upsert(ctx, conn); err != nil {
 		return fmt.Errorf("cannot insert cache entry: %w", err)
+	}
+
+	return nil
+}
+
+// requireRoutableDomain ensures the SNI hostname still maps to a custom domain
+// row. Orphaned certificates left after domain deletion must not be served.
+func requireRoutableDomain(ctx context.Context, conn pg.Querier, domain string) error {
+	var customDomain coredata.CustomDomain
+	if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return err
+		}
+
+		return fmt.Errorf("cannot load custom domain: %w", err)
+	}
+
+	if customDomain.CertificateID == nil {
+		return coredata.ErrResourceNotFound
 	}
 
 	return nil
