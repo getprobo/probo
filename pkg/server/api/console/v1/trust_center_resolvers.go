@@ -53,6 +53,78 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 }
 
 // Permission is the resolver for the permission field.
+func (r *compliancePortalCommitmentResolver) Permission(ctx context.Context, obj *types.CompliancePortalCommitment, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *compliancePortalCommitmentConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalCommitmentConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalCommitmentList)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.management.CountCommitments(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count compliance portal commitments", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
+// Commitments is the resolver for the commitments field.
+func (r *compliancePortalCommitmentGroupResolver) Commitments(ctx context.Context, obj *types.CompliancePortalCommitmentGroup, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalCommitmentOrderField]) (*types.CompliancePortalCommitmentConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalCommitmentList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalCommitmentOrderField]{
+		Field:     coredata.CompliancePortalCommitmentOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalCommitmentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := r.management.ListCommitments(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal commitments", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalCommitmentConnection(result, obj.ID), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *compliancePortalCommitmentGroupResolver) Permission(ctx context.Context, obj *types.CompliancePortalCommitmentGroup, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *compliancePortalCommitmentGroupConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalCommitmentGroupConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalCommitmentGroupList)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.management.CountCommitmentGroups(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count compliance portal commitment groups", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
+// Permission is the resolver for the permission field.
 func (r *customDomainResolver) Permission(ctx context.Context, obj *types.CustomDomain, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
 }
@@ -367,6 +439,166 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 	return &types.DeleteTrustCenterReferencePayload{
 		DeletedTrustCenterReferenceID: input.ID,
+	}, nil
+}
+
+// CreateCompliancePortalCommitmentGroup is the resolver for the createCompliancePortalCommitmentGroup field.
+func (r *mutationResolver) CreateCompliancePortalCommitmentGroup(ctx context.Context, input types.CreateCompliancePortalCommitmentGroupInput) (*types.CreateCompliancePortalCommitmentGroupPayload, error) {
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalCommitmentGroupCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	group, err := r.management.CreateCommitmentGroup(
+		ctx, scope,
+		&management.CreateCompliancePortalCommitmentGroupRequest{
+			TrustCenterID: input.TrustCenterID,
+			Title:         input.Title,
+			Description:   input.Description,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create compliance portal commitment group", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateCompliancePortalCommitmentGroupPayload{
+		CompliancePortalCommitmentGroupEdge: types.NewCompliancePortalCommitmentGroupEdge(group, coredata.CompliancePortalCommitmentGroupOrderFieldRank),
+	}, nil
+}
+
+// UpdateCompliancePortalCommitmentGroup is the resolver for the updateCompliancePortalCommitmentGroup field.
+func (r *mutationResolver) UpdateCompliancePortalCommitmentGroup(ctx context.Context, input types.UpdateCompliancePortalCommitmentGroupInput) (*types.UpdateCompliancePortalCommitmentGroupPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentGroupUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	group, err := r.management.UpdateCommitmentGroup(
+		ctx, scope,
+		&management.UpdateCompliancePortalCommitmentGroupRequest{
+			ID:          input.ID,
+			Title:       input.Title,
+			Description: input.Description,
+			Rank:        input.Rank,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update compliance portal commitment group", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateCompliancePortalCommitmentGroupPayload{
+		CompliancePortalCommitmentGroup: types.NewCompliancePortalCommitmentGroup(group),
+	}, nil
+}
+
+// DeleteCompliancePortalCommitmentGroup is the resolver for the deleteCompliancePortalCommitmentGroup field.
+func (r *mutationResolver) DeleteCompliancePortalCommitmentGroup(ctx context.Context, input types.DeleteCompliancePortalCommitmentGroupInput) (*types.DeleteCompliancePortalCommitmentGroupPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentGroupDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.management.DeleteCommitmentGroup(ctx, scope, input.ID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete compliance portal commitment group", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCompliancePortalCommitmentGroupPayload{
+		DeletedCompliancePortalCommitmentGroupID: input.ID,
+	}, nil
+}
+
+// CreateCompliancePortalCommitment is the resolver for the createCompliancePortalCommitment field.
+func (r *mutationResolver) CreateCompliancePortalCommitment(ctx context.Context, input types.CreateCompliancePortalCommitmentInput) (*types.CreateCompliancePortalCommitmentPayload, error) {
+	scope, err := r.authorize(ctx, input.GroupID, management.ActionCompliancePortalCommitmentCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	commitment, err := r.management.CreateCommitment(
+		ctx, scope,
+		&management.CreateCompliancePortalCommitmentRequest{
+			GroupID:     input.GroupID,
+			Icon:        input.Icon,
+			Eyebrow:     input.Eyebrow,
+			Title:       input.Title,
+			Description: input.Description,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create compliance portal commitment", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateCompliancePortalCommitmentPayload{
+		CompliancePortalCommitmentEdge: types.NewCompliancePortalCommitmentEdge(commitment, coredata.CompliancePortalCommitmentOrderFieldRank),
+	}, nil
+}
+
+// UpdateCompliancePortalCommitment is the resolver for the updateCompliancePortalCommitment field.
+func (r *mutationResolver) UpdateCompliancePortalCommitment(ctx context.Context, input types.UpdateCompliancePortalCommitmentInput) (*types.UpdateCompliancePortalCommitmentPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	commitment, err := r.management.UpdateCommitment(
+		ctx, scope,
+		&management.UpdateCompliancePortalCommitmentRequest{
+			ID:          input.ID,
+			Icon:        input.Icon,
+			Eyebrow:     input.Eyebrow,
+			Title:       input.Title,
+			Description: input.Description,
+			Rank:        input.Rank,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update compliance portal commitment", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateCompliancePortalCommitmentPayload{
+		CompliancePortalCommitment: types.NewCompliancePortalCommitment(commitment),
+	}, nil
+}
+
+// DeleteCompliancePortalCommitment is the resolver for the deleteCompliancePortalCommitment field.
+func (r *mutationResolver) DeleteCompliancePortalCommitment(ctx context.Context, input types.DeleteCompliancePortalCommitmentInput) (*types.DeleteCompliancePortalCommitmentPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.management.DeleteCommitment(ctx, scope, input.ID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete compliance portal commitment", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCompliancePortalCommitmentPayload{
+		DeletedCompliancePortalCommitmentID: input.ID,
 	}, nil
 }
 
@@ -819,6 +1051,36 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	}
 
 	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
+}
+
+// CommitmentGroups is the resolver for the commitmentGroups field.
+func (r *trustCenterResolver) CommitmentGroups(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalCommitmentGroupOrderField]) (*types.CompliancePortalCommitmentGroupConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalCommitmentGroupList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalCommitmentGroupOrderField]{
+		Field:     coredata.CompliancePortalCommitmentGroupOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalCommitmentGroupOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := r.management.ListCommitmentGroups(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal commitment groups", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalCommitmentGroupConnection(result, obj.ID), nil
 }
 
 // ComplianceFrameworks is the resolver for the complianceFrameworks field.
@@ -1296,6 +1558,26 @@ func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
 	return &complianceFrameworkResolver{r}
 }
 
+// CompliancePortalCommitment returns schema.CompliancePortalCommitmentResolver implementation.
+func (r *Resolver) CompliancePortalCommitment() schema.CompliancePortalCommitmentResolver {
+	return &compliancePortalCommitmentResolver{r}
+}
+
+// CompliancePortalCommitmentConnection returns schema.CompliancePortalCommitmentConnectionResolver implementation.
+func (r *Resolver) CompliancePortalCommitmentConnection() schema.CompliancePortalCommitmentConnectionResolver {
+	return &compliancePortalCommitmentConnectionResolver{r}
+}
+
+// CompliancePortalCommitmentGroup returns schema.CompliancePortalCommitmentGroupResolver implementation.
+func (r *Resolver) CompliancePortalCommitmentGroup() schema.CompliancePortalCommitmentGroupResolver {
+	return &compliancePortalCommitmentGroupResolver{r}
+}
+
+// CompliancePortalCommitmentGroupConnection returns schema.CompliancePortalCommitmentGroupConnectionResolver implementation.
+func (r *Resolver) CompliancePortalCommitmentGroupConnection() schema.CompliancePortalCommitmentGroupConnectionResolver {
+	return &compliancePortalCommitmentGroupConnectionResolver{r}
+}
+
 // CustomDomain returns schema.CustomDomainResolver implementation.
 func (r *Resolver) CustomDomain() schema.CustomDomainResolver { return &customDomainResolver{r} }
 
@@ -1338,15 +1620,19 @@ func (r *Resolver) TrustCenterReferenceConnection() schema.TrustCenterReferenceC
 }
 
 type (
-	complianceCustomLinkResolver                struct{ *Resolver }
-	complianceFrameworkResolver                 struct{ *Resolver }
-	customDomainResolver                        struct{ *Resolver }
-	trustCenterResolver                         struct{ *Resolver }
-	trustCenterAccessResolver                   struct{ *Resolver }
-	trustCenterDocumentAccessResolver           struct{ *Resolver }
-	trustCenterDocumentAccessConnectionResolver struct{ *Resolver }
-	trustCenterFileResolver                     struct{ *Resolver }
-	trustCenterFileConnectionResolver           struct{ *Resolver }
-	trustCenterReferenceResolver                struct{ *Resolver }
-	trustCenterReferenceConnectionResolver      struct{ *Resolver }
+	complianceCustomLinkResolver                      struct{ *Resolver }
+	complianceFrameworkResolver                       struct{ *Resolver }
+	compliancePortalCommitmentResolver                struct{ *Resolver }
+	compliancePortalCommitmentConnectionResolver      struct{ *Resolver }
+	compliancePortalCommitmentGroupResolver           struct{ *Resolver }
+	compliancePortalCommitmentGroupConnectionResolver struct{ *Resolver }
+	customDomainResolver                              struct{ *Resolver }
+	trustCenterResolver                               struct{ *Resolver }
+	trustCenterAccessResolver                         struct{ *Resolver }
+	trustCenterDocumentAccessResolver                 struct{ *Resolver }
+	trustCenterDocumentAccessConnectionResolver       struct{ *Resolver }
+	trustCenterFileResolver                           struct{ *Resolver }
+	trustCenterFileConnectionResolver                 struct{ *Resolver }
+	trustCenterReferenceResolver                      struct{ *Resolver }
+	trustCenterReferenceConnectionResolver            struct{ *Resolver }
 )

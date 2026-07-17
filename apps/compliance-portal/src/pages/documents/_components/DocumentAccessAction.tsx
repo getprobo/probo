@@ -62,7 +62,7 @@ function StatusIcon({
 
 // Trailing access control for a document entry: a "View" link to the viewer when
 // authorized, a pending label when access was requested, otherwise a "Get
-// Access" action that requests access (prompting sign-in first when needed).
+// Access" action that requests access (redirecting to OAuth /initiate when needed).
 export function DocumentAccessAction({
   isAuthorized,
   requested,

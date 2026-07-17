@@ -180,6 +180,25 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	return types.NewFramework(framework), nil
 }
 
+// Commitments is the resolver for the commitments field.
+func (r *compliancePortalCommitmentGroupResolver) Commitments(ctx context.Context, obj *types.CompliancePortalCommitmentGroup, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.CompliancePortalCommitmentConnection, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	trustService := r.trust
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalCommitmentOrderField]{
+		Field:     coredata.CompliancePortalCommitmentOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	commitmentPage, err := trustService.ListCommitmentsForGroupID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list public compliance portal commitments", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalCommitmentConnection(commitmentPage), nil
+}
+
 // Alias is the resolver for the alias field.
 func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
 	return r.ResourceAliasResolver(ctx, obj.ID)
@@ -750,7 +769,7 @@ func (r *trustCenterResolver) ViewerSubscription(ctx context.Context, obj *types
 }
 
 // Documents is the resolver for the documents field.
-func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error) {
+func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterVisibilityFilter) (*types.DocumentConnection, error) {
 	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
@@ -760,7 +779,12 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	documentPage, err := trustService.ListDocumentsForOrganizationID(ctx, scope, trustCenter.OrganizationID, cursor)
+	documentFilter := coredata.NewDocumentTrustCenterFilter()
+	if filter != nil && filter.Visibility != nil {
+		documentFilter = documentFilter.WithTrustCenterVisibilities(*filter.Visibility)
+	}
+
+	documentPage, err := trustService.ListDocumentsForOrganizationID(ctx, scope, trustCenter.OrganizationID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -770,7 +794,7 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 }
 
 // Audits is the resolver for the audits field.
-func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error) {
+func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterVisibilityFilter) (*types.AuditConnection, error) {
 	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
@@ -780,7 +804,12 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	auditPage, err := trustService.ListAuditsForOrganizationID(ctx, scope, trustCenter.OrganizationID, cursor)
+	auditFilter := coredata.NewAuditTrustCenterFilter()
+	if filter != nil && filter.Visibility != nil {
+		auditFilter = auditFilter.WithTrustCenterVisibilities(*filter.Visibility)
+	}
+
+	auditPage, err := trustService.ListAuditsForOrganizationID(ctx, scope, trustCenter.OrganizationID, cursor, auditFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -878,8 +907,27 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(referencePage), nil
 }
 
+// CommitmentGroups is the resolver for the commitmentGroups field.
+func (r *trustCenterResolver) CommitmentGroups(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.CompliancePortalCommitmentGroupConnection, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	trustService := r.trust
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalCommitmentGroupOrderField]{
+		Field:     coredata.CompliancePortalCommitmentGroupOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	groupPage, err := trustService.ListCommitmentGroupsForPortalID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list public compliance portal commitment groups", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalCommitmentGroupConnection(groupPage), nil
+}
+
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
-func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error) {
+func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterVisibilityFilter) (*types.TrustCenterFileConnection, error) {
 	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
@@ -889,14 +937,19 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	filter := coredata.NewTrustCenterFileFilter(
-		coredata.WithTrustCenterFileVisibilities(
-			coredata.TrustCenterVisibilityPublic,
-			coredata.TrustCenterVisibilityPrivate,
-		),
+	visibilities := []coredata.TrustCenterVisibility{
+		coredata.TrustCenterVisibilityPublic,
+		coredata.TrustCenterVisibilityPrivate,
+	}
+	if filter != nil && filter.Visibility != nil {
+		visibilities = []coredata.TrustCenterVisibility{*filter.Visibility}
+	}
+
+	fileFilter := coredata.NewTrustCenterFileFilter(
+		coredata.WithTrustCenterFileVisibilities(visibilities...),
 	)
 
-	trustCenterFilePage, err := trustService.ListPortalFilesForOrganizationID(ctx, scope, trustCenter.OrganizationID, cursor, filter)
+	trustCenterFilePage, err := trustService.ListPortalFilesForOrganizationID(ctx, scope, trustCenter.OrganizationID, cursor, fileFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public trust center files", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1087,6 +1140,11 @@ func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
 	return &complianceFrameworkResolver{r}
 }
 
+// CompliancePortalCommitmentGroup returns schema.CompliancePortalCommitmentGroupResolver implementation.
+func (r *Resolver) CompliancePortalCommitmentGroup() schema.CompliancePortalCommitmentGroupResolver {
+	return &compliancePortalCommitmentGroupResolver{r}
+}
+
 // Document returns schema.DocumentResolver implementation.
 func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
 
@@ -1112,13 +1170,14 @@ func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 }
 
 type (
-	auditResolver                  struct{ *Resolver }
-	auditReportResolver            struct{ *Resolver }
-	complianceFrameworkResolver    struct{ *Resolver }
-	documentResolver               struct{ *Resolver }
-	frameworkResolver              struct{ *Resolver }
-	subprocessorConnectionResolver struct{ *Resolver }
-	trustCenterResolver            struct{ *Resolver }
-	trustCenterFileResolver        struct{ *Resolver }
-	trustCenterReferenceResolver   struct{ *Resolver }
+	auditResolver                           struct{ *Resolver }
+	auditReportResolver                     struct{ *Resolver }
+	complianceFrameworkResolver             struct{ *Resolver }
+	compliancePortalCommitmentGroupResolver struct{ *Resolver }
+	documentResolver                        struct{ *Resolver }
+	frameworkResolver                       struct{ *Resolver }
+	subprocessorConnectionResolver          struct{ *Resolver }
+	trustCenterResolver                     struct{ *Resolver }
+	trustCenterFileResolver                 struct{ *Resolver }
+	trustCenterReferenceResolver            struct{ *Resolver }
 )

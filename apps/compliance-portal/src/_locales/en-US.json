@@ -28,28 +28,8 @@
     "zoomIn": "Zoom in"
   },
   "auth": {
-    "backToPortal": "Back to portal",
-    "signIn": {
-      "title": "Sign in to continue",
-      "description": "Access protected resources or submit a request",
-      "or": "OR",
-      "withProvider": "Sign in with {{provider}}",
-      "emailLabel": "Email Address",
-      "emailPlaceholder": "you@company.com",
-      "emailRequired": "Email is required",
-      "emailInvalid": "Enter a valid email address",
-      "sendMagicLink": "Send Magic Link",
-      "resend": "Resend link",
-      "resendIn": "Resend link in {{seconds}}s",
-      "magicLinkSent": "Magic link sent!",
-      "magicLinkSentNote": "Check your email and use the link to sign in."
-    },
     "requestAccess": {
       "success": "Access requested"
-    },
-    "verify": {
-      "title": "Confirming your email",
-      "description": "Please wait while we sign you in\u2026"
     },
     "fullName": {
       "title": "Add your name",
@@ -59,17 +39,7 @@
       "tooShort": "Full name is too short",
       "submit": "Continue"
     },
-    "magicLinkExpired": {
-      "title": "Link expired",
-      "description": "This magic link has expired. Please request a new one."
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "Link already used",
-      "description": "This magic link has already been used. Please request a new one."
-    },
     "errors": {
-      "magicLinkFailed": "Couldn't send the magic link. Please try again.",
-      "verifyFailed": "Couldn't verify the link. Please try again.",
       "fullNameFailed": "Couldn't save your name. Please try again.",
       "requestFailed": "Couldn't complete your access request. Please try again."
     }

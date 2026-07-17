@@ -30,8 +30,7 @@ import { graphql, useFragment } from "react-relay";
 import { useSearchParams } from "react-router";
 
 import { SubscribeDialog } from "#/components/SubscribeDialog/SubscribeDialog";
-import { buildSubscribeContinueUrl, SUBSCRIBE_PARAM } from "#/lib/auth/continueUrl";
-import { useSignInDialog } from "#/lib/auth/signInDialogContext";
+import { buildSubscribeContinueUrl, redirectToInitiate, SUBSCRIBE_PARAM } from "#/lib/auth/continueUrl";
 import {
   SubscribeDialogContextProvider,
 } from "#/lib/mailingList/subscribeDialogContext";
@@ -69,7 +68,6 @@ export function SubscribeDialogProvider({
   children,
 }: SubscribeDialogProviderProps) {
   const data = useFragment(subscribeDialogProviderFragment, queryKey);
-  const { openSignIn } = useSignInDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unsubscribeFromMailingList, isUnsubscribing] = useUnsubscribeFromMailingList();
@@ -80,11 +78,11 @@ export function SubscribeDialogProvider({
 
   const openSubscribe = useCallback(() => {
     if (viewer == null) {
-      openSignIn({ continueTo: buildSubscribeContinueUrl() });
+      redirectToInitiate(buildSubscribeContinueUrl());
       return;
     }
     setDialogOpen(true);
-  }, [openSignIn, viewer]);
+  }, [viewer]);
 
   const unsubscribe = useCallback(async () => {
     try {

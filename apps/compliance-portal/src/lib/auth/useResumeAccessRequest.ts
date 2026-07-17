@@ -96,7 +96,7 @@ const requestFileMutation = graphql`
   }
 `;
 
-// After a user signs in through the dialog, they land back on the page that
+// After a user signs in through OAuth /initiate, they land back on the page that
 // carried a deferred access marker. This hook fires the matching mutation once
 // (when authenticated) — request-all from the top bar, or a single
 // document / report / file requested from a locked row — routes to the

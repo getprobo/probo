@@ -21,14 +21,6 @@ import (
 
 var organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
 
-// FullAccessPolicy grants organization owners and admins complete access to
-// every compliance portal capability, including custom domains, portal
-// configuration, access grants, files, references, frameworks, external URLs
-// and mailing lists.
-//
-// The managed probopage subdomain is a system-owned resource and can never be
-// deleted, so an explicit deny (which takes precedence over any allow) blocks
-// deletion of managed domains for every role.
 var FullAccessPolicy = policy.NewPolicy(
 	"compliance-portal:full-access",
 	"Compliance Portal Full Access",
@@ -40,8 +32,6 @@ var FullAccessPolicy = policy.NewPolicy(
 		When(policy.Equals("resource.managed", "true")),
 ).WithDescription("Full compliance portal access for organization owners and admins")
 
-// ViewerPolicy grants organization viewers read-only access to the compliance
-// portal.
 var ViewerPolicy = policy.NewPolicy(
 	"compliance-portal:viewer",
 	"Compliance Portal Viewer",
@@ -52,11 +42,11 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCompliancePortalDocumentAccessList,
 		ActionCompliancePortalFileGet, ActionCompliancePortalFileList, ActionCompliancePortalFileGetFileUrl,
 		ActionCompliancePortalReferenceList, ActionCompliancePortalReferenceGetLogoUrl,
+		ActionCompliancePortalCommitmentGroupList, ActionCompliancePortalCommitmentList,
 		ActionComplianceFrameworkList,
 	).WithSID("compliance-portal-read-access").When(organizationCondition),
 ).WithDescription("Read-only compliance portal access for organization viewers")
 
-// PolicySet returns the PolicySet for the compliance portal service.
 func PolicySet() *iam.PolicySet {
 	return iam.NewPolicySet().
 		AddRolePolicy("OWNER", FullAccessPolicy).

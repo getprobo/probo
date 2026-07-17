@@ -21,8 +21,7 @@
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Outlet } from "react-router";
 
-// Minimal centered chrome for the standalone auth steps that a magic-link email
-// or a full-name gate lands on (these cannot live inside the portal shell).
+// Minimal centered chrome for standalone auth steps (e.g. the full-name gate).
 export default function AuthLayout() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-sand-2 p-4">

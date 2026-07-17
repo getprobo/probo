@@ -43,8 +43,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useLocation } from "react-router";
 
-import { buildRequestAllContinueUrl } from "#/lib/auth/continueUrl";
-import { useSignInDialog } from "#/lib/auth/signInDialogContext";
+import { buildRequestAllContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
 import { useSignOut } from "#/lib/auth/useSignOut";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 
@@ -72,7 +71,6 @@ function isActive(pathname: string, to: string): boolean {
 export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { openSignIn } = useSignInDialog();
   const { openSubscribe, isSubscribed, unsubscribe, isUnsubscribing } = useSubscribeDialog();
   const [signOut, isSigningOut] = useSignOut();
   const [open, setOpen] = useState(false);
@@ -150,7 +148,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
                   iconStart={<LockSimpleIcon />}
                   onClick={() => {
                     close();
-                    openSignIn({ continueTo: buildRequestAllContinueUrl() });
+                    redirectToInitiate(buildRequestAllContinueUrl());
                   }}
                 >
                   {t("topBar.getAccess")}

@@ -29,11 +29,11 @@ import { graphql } from "relay-runtime";
 import {
   buildRequestAccessContinueUrl,
   gateRedirectPath,
+  redirectToInitiate,
   REQUEST_DOCUMENT_PARAM,
   REQUEST_FILE_PARAM,
   REQUEST_REPORT_PARAM,
 } from "#/lib/auth/continueUrl";
-import { useSignInDialog } from "#/lib/auth/signInDialogContext";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useAccessRequestDocumentMutation } from "./__generated__/useAccessRequestDocumentMutation.graphql";
@@ -95,11 +95,10 @@ const fileMutation = graphql`
 
 // Shared success / error handling for a single access request. The auth,
 // full-name, and NDA gates are thrown by the fetch layer, so they surface in
-// `onError`: unauthenticated opens the sign-in dialog, while full-name and NDA
-// deep-link to their gate page — all deferring the request via the continue URL
-// so it resumes once the gate is cleared. Everything else is a generic toast.
+// `onError`: unauthenticated redirects to OAuth /initiate, while full-name and
+// NDA deep-link to their gate page — all deferring the request via the continue
+// URL so it resumes once the gate is cleared. Everything else is a generic toast.
 function useAccessRequestHandlers(param: string, id: string) {
-  const { openSignIn } = useSignInDialog();
   const navigate = useNavigate();
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
@@ -116,10 +115,10 @@ function useAccessRequestHandlers(param: string, id: string) {
       onError: (error: Error) => {
         const continueUrl = buildRequestAccessContinueUrl(param, id);
 
-        // Not signed in: open the dialog, deferring this request until the user
-        // lands back authenticated (see useResumeAccessRequest).
+        // Not signed in: start OAuth, deferring this request until the user lands
+        // back authenticated (see useResumeAccessRequest).
         if (error instanceof UnAuthenticatedError) {
-          openSignIn({ continueTo: continueUrl });
+          redirectToInitiate(continueUrl);
           return;
         }
         // Full-name / NDA gate: deep-link to the gate page, preserving the
@@ -132,7 +131,7 @@ function useAccessRequestHandlers(param: string, id: string) {
         toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
       },
     }),
-    [openSignIn, navigate, toast, t, param, id],
+    [navigate, toast, t, param, id],
   );
 }
 

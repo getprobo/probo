@@ -108,3 +108,12 @@ export function gateRedirectPath(error: unknown, continueUrl: string): string | 
   }
   return null;
 }
+
+// Sends the browser to the OAuth entry point, carrying a validated continue URL
+// so the user returns to the portal (and any deferred access request resumes)
+// after sign-in.
+export function redirectToInitiate(continueTo: string): void {
+  const initiateURL = new URL("/initiate", window.location.origin);
+  initiateURL.searchParams.set("continue", getSafeContinueUrl(continueTo));
+  window.location.href = initiateURL.toString();
+}

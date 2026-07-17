@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package management
 
 import (
 	"context"
@@ -33,10 +33,6 @@ import (
 )
 
 type (
-	CompliancePortalCommitmentService struct {
-		svc *Service
-	}
-
 	CreateCompliancePortalCommitmentRequest struct {
 		GroupID     gid.GID
 		Icon        coredata.CompliancePortalCommitmentIcon
@@ -83,7 +79,7 @@ func (r *UpdateCompliancePortalCommitmentRequest) Validate() error {
 	return v.Error()
 }
 
-func (s CompliancePortalCommitmentService) ListForGroupID(
+func (s *Service) ListCommitments(
 	ctx context.Context,
 	scope coredata.Scoper,
 	groupID gid.GID,
@@ -91,14 +87,17 @@ func (s CompliancePortalCommitmentService) ListForGroupID(
 ) (*page.Page[*coredata.CompliancePortalCommitment, coredata.CompliancePortalCommitmentOrderField], error) {
 	var commitments coredata.CompliancePortalCommitments
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := commitments.LoadByGroupID(ctx, conn, scope, groupID, cursor)
-		if err != nil {
-			return fmt.Errorf("cannot load compliance portal commitments: %w", err)
-		}
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			err := commitments.LoadByGroupID(ctx, conn, scope, groupID, cursor)
+			if err != nil {
+				return fmt.Errorf("cannot load compliance portal commitments: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -106,23 +105,26 @@ func (s CompliancePortalCommitmentService) ListForGroupID(
 	return page.NewPage(commitments, cursor), nil
 }
 
-func (s CompliancePortalCommitmentService) CountForGroupID(
+func (s *Service) CountCommitments(
 	ctx context.Context,
 	scope coredata.Scoper,
 	groupID gid.GID,
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) (err error) {
-		commitments := coredata.CompliancePortalCommitments{}
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			commitments := coredata.CompliancePortalCommitments{}
 
-		count, err = commitments.CountByGroupID(ctx, conn, scope, groupID)
-		if err != nil {
-			return fmt.Errorf("cannot count compliance portal commitments: %w", err)
-		}
+			count, err = commitments.CountByGroupID(ctx, conn, scope, groupID)
+			if err != nil {
+				return fmt.Errorf("cannot count compliance portal commitments: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -130,21 +132,24 @@ func (s CompliancePortalCommitmentService) CountForGroupID(
 	return count, nil
 }
 
-func (s CompliancePortalCommitmentService) Get(
+func (s *Service) GetCommitment(
 	ctx context.Context,
 	scope coredata.Scoper,
 	commitmentID gid.GID,
 ) (*coredata.CompliancePortalCommitment, error) {
 	var commitment coredata.CompliancePortalCommitment
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := commitment.LoadByID(ctx, conn, scope, commitmentID)
-		if err != nil {
-			return fmt.Errorf("cannot load compliance portal commitment: %w", err)
-		}
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			err := commitment.LoadByID(ctx, conn, scope, commitmentID)
+			if err != nil {
+				return fmt.Errorf("cannot load compliance portal commitment: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +157,7 @@ func (s CompliancePortalCommitmentService) Get(
 	return &commitment, nil
 }
 
-func (s CompliancePortalCommitmentService) Create(
+func (s *Service) CreateCommitment(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *CreateCompliancePortalCommitmentRequest,
@@ -167,31 +172,34 @@ func (s CompliancePortalCommitmentService) Create(
 
 	var commitment *coredata.CompliancePortalCommitment
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		group := &coredata.CompliancePortalCommitmentGroup{}
-		if err := group.LoadByID(ctx, tx, scope, req.GroupID); err != nil {
-			return fmt.Errorf("cannot load compliance portal commitment group: %w", err)
-		}
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			group := &coredata.CompliancePortalCommitmentGroup{}
+			if err := group.LoadByID(ctx, tx, scope, req.GroupID); err != nil {
+				return fmt.Errorf("cannot load compliance portal commitment group: %w", err)
+			}
 
-		commitment = &coredata.CompliancePortalCommitment{
-			ID:             commitmentID,
-			OrganizationID: group.OrganizationID,
-			TrustCenterID:  group.TrustCenterID,
-			GroupID:        req.GroupID,
-			Icon:           req.Icon,
-			Eyebrow:        req.Eyebrow,
-			Title:          req.Title,
-			Description:    req.Description,
-			CreatedAt:      now,
-			UpdatedAt:      now,
-		}
+			commitment = &coredata.CompliancePortalCommitment{
+				ID:             commitmentID,
+				OrganizationID: group.OrganizationID,
+				TrustCenterID:  group.TrustCenterID,
+				GroupID:        req.GroupID,
+				Icon:           req.Icon,
+				Eyebrow:        req.Eyebrow,
+				Title:          req.Title,
+				Description:    req.Description,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
 
-		if err := commitment.Insert(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot insert compliance portal commitment: %w", err)
-		}
+			if err := commitment.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert compliance portal commitment: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +207,7 @@ func (s CompliancePortalCommitmentService) Create(
 	return commitment, nil
 }
 
-func (s CompliancePortalCommitmentService) Update(
+func (s *Service) UpdateCommitment(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *UpdateCompliancePortalCommitmentRequest,
@@ -212,44 +220,47 @@ func (s CompliancePortalCommitmentService) Update(
 
 	var commitment *coredata.CompliancePortalCommitment
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		commitment = &coredata.CompliancePortalCommitment{}
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			commitment = &coredata.CompliancePortalCommitment{}
 
-		if err := commitment.LoadByID(ctx, tx, scope, req.ID); err != nil {
-			return fmt.Errorf("cannot load compliance portal commitment: %w", err)
-		}
-
-		if req.Icon != nil {
-			commitment.Icon = *req.Icon
-		}
-
-		if req.Eyebrow != nil {
-			commitment.Eyebrow = *req.Eyebrow
-		}
-
-		if req.Title != nil {
-			commitment.Title = *req.Title
-		}
-
-		if req.Description != nil {
-			commitment.Description = *req.Description
-		}
-
-		commitment.UpdatedAt = now
-
-		if req.Rank != nil {
-			commitment.Rank = *req.Rank
-			if err := commitment.UpdateRank(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update rank: %w", err)
+			if err := commitment.LoadByID(ctx, tx, scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load compliance portal commitment: %w", err)
 			}
-		}
 
-		if err := commitment.Update(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot update compliance portal commitment: %w", err)
-		}
+			if req.Icon != nil {
+				commitment.Icon = *req.Icon
+			}
 
-		return nil
-	})
+			if req.Eyebrow != nil {
+				commitment.Eyebrow = *req.Eyebrow
+			}
+
+			if req.Title != nil {
+				commitment.Title = *req.Title
+			}
+
+			if req.Description != nil {
+				commitment.Description = *req.Description
+			}
+
+			commitment.UpdatedAt = now
+
+			if req.Rank != nil {
+				commitment.Rank = *req.Rank
+				if err := commitment.UpdateRank(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update rank: %w", err)
+				}
+			}
+
+			if err := commitment.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update compliance portal commitment: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -257,24 +268,27 @@ func (s CompliancePortalCommitmentService) Update(
 	return commitment, nil
 }
 
-func (s CompliancePortalCommitmentService) Delete(
+func (s *Service) DeleteCommitment(
 	ctx context.Context,
 	scope coredata.Scoper,
 	commitmentID gid.GID,
 ) error {
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		commitment := &coredata.CompliancePortalCommitment{}
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			commitment := &coredata.CompliancePortalCommitment{}
 
-		if err := commitment.LoadByID(ctx, tx, scope, commitmentID); err != nil {
-			return fmt.Errorf("cannot load compliance portal commitment: %w", err)
-		}
+			if err := commitment.LoadByID(ctx, tx, scope, commitmentID); err != nil {
+				return fmt.Errorf("cannot load compliance portal commitment: %w", err)
+			}
 
-		if err := commitment.Delete(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot delete compliance portal commitment: %w", err)
-		}
+			if err := commitment.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete compliance portal commitment: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	return err
 }

@@ -27,6 +27,8 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link as RouterLink, useLocation } from "react-router";
 
+import { buildRequestAllContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
+
 import type { TopBar_query$key } from "./__generated__/TopBar_query.graphql";
 import { TOP_BAR_NAV_ITEMS } from "./navItems";
 import { TopBarMobileNav } from "./TopBarMobileNav";
@@ -110,15 +112,7 @@ export function TopBar({ queryKey }: TopBarProps) {
                   highContrast
                   iconStart={<LockSimpleIcon />}
                   onClick={() => {
-                    const initiateURL = new URL(
-                      "/initiate",
-                      window.location.origin,
-                    );
-                    initiateURL.searchParams.set(
-                      "continue",
-                      location.pathname + location.search + location.hash,
-                    );
-                    window.location.href = initiateURL.toString();
+                    redirectToInitiate(buildRequestAllContinueUrl());
                   }}
                 >
                   {t("topBar.getAccess")}

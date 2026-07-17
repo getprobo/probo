@@ -25,7 +25,6 @@ import { Outlet, useMatch } from "react-router";
 
 import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
-import { SignInDialogProvider } from "#/lib/auth/SignInDialogProvider";
 import { useResumeAccessRequest } from "#/lib/auth/useResumeAccessRequest";
 import { SubscribeDialogProvider } from "#/lib/mailingList/SubscribeDialogProvider";
 
@@ -57,28 +56,26 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
   // stage; every other page uses normal document flow so the footer sits after
   // content (and at the bottom of short pages via flex-1 main).
   return (
-    <SignInDialogProvider>
-      <SubscribeDialogProvider queryKey={data}>
+    <SubscribeDialogProvider queryKey={data}>
+      <div
+        className={
+          isDocumentViewer
+            ? "flex h-dvh flex-col bg-sand-2"
+            : "flex min-h-dvh flex-col bg-sand-2"
+        }
+      >
+        <TopBar queryKey={data} />
         <div
           className={
             isDocumentViewer
-              ? "flex h-dvh flex-col bg-sand-2"
-              : "flex min-h-dvh flex-col bg-sand-2"
+              ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+              : "flex flex-1 flex-col"
           }
         >
-          <TopBar queryKey={data} />
-          <div
-            className={
-              isDocumentViewer
-                ? "flex min-h-0 flex-1 flex-col overflow-hidden"
-                : "flex flex-1 flex-col"
-            }
-          >
-            <Outlet />
-          </div>
-          {isDocumentViewer ? null : <PoweredBy label={t("footer.poweredBy")} />}
+          <Outlet />
         </div>
-      </SubscribeDialogProvider>
-    </SignInDialogProvider>
+        {isDocumentViewer ? null : <PoweredBy label={t("footer.poweredBy")} />}
+      </div>
+    </SubscribeDialogProvider>
   );
 }

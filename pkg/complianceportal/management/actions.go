@@ -41,6 +41,20 @@ const (
 	ActionCompliancePortalReferenceUpdate     = "compliance-portal:portal-reference:update"
 	ActionCompliancePortalReferenceDelete     = "compliance-portal:portal-reference:delete"
 
+	// Compliance portal commitment group actions.
+	ActionCompliancePortalCommitmentGroupList       = "compliance-portal:commitment-group:list"
+	ActionCompliancePortalCommitmentGroupCreate     = "compliance-portal:commitment-group:create"
+	ActionCompliancePortalCommitmentGroupUpdate     = "compliance-portal:commitment-group:update"
+	ActionCompliancePortalCommitmentGroupUpdateRank = "compliance-portal:commitment-group:update-rank"
+	ActionCompliancePortalCommitmentGroupDelete     = "compliance-portal:commitment-group:delete"
+
+	// Compliance portal commitment actions.
+	ActionCompliancePortalCommitmentList       = "compliance-portal:commitment:list"
+	ActionCompliancePortalCommitmentCreate     = "compliance-portal:commitment:create"
+	ActionCompliancePortalCommitmentUpdate     = "compliance-portal:commitment:update"
+	ActionCompliancePortalCommitmentUpdateRank = "compliance-portal:commitment:update-rank"
+	ActionCompliancePortalCommitmentDelete     = "compliance-portal:commitment:delete"
+
 	// Compliance portal file actions.
 	ActionCompliancePortalFileGet        = "compliance-portal:portal-file:get"
 	ActionCompliancePortalFileList       = "compliance-portal:portal-file:list"

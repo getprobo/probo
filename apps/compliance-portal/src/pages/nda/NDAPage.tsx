@@ -62,9 +62,7 @@ export const ndaPageQuery = graphql`
       id
     }
     currentTrustCenter @required(action: THROW) {
-      organization {
-        name
-      }
+      title
       nonDisclosureAgreement {
         fileUrl
       }
@@ -238,7 +236,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
               {t("title")}
             </Heading>
             <Text size={2} color="neutral">
-              {t("subtitle", { name: trustCenter.organization.name })}
+              {t("subtitle", { name: trustCenter.title })}
             </Text>
             {signature.consentText != null && (
               <Text size={1} color="faint" className={slots.consent()}>
