@@ -27,8 +27,6 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link as RouterLink, useLocation } from "react-router";
 
-import { buildRequestAllContinueUrl } from "#/lib/auth/continueUrl";
-
 import type { TopBar_query$key } from "./__generated__/TopBar_query.graphql";
 import { TOP_BAR_NAV_ITEMS } from "./navItems";
 import { TopBarMobileNav } from "./TopBarMobileNav";
@@ -59,7 +57,9 @@ function isActive(pathname: string, to: string): boolean {
 export function TopBar({ queryKey }: TopBarProps) {
   const { t } = useTranslation();
   const data = useFragment(topBarFragment, queryKey);
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
+
   const { currentTrustCenter } = data;
   const title = currentTrustCenter.title;
   const logoUrl = currentTrustCenter.themedLogoUrl ?? undefined;
@@ -116,7 +116,7 @@ export function TopBar({ queryKey }: TopBarProps) {
                     );
                     initiateURL.searchParams.set(
                       "continue",
-                      buildRequestAllContinueUrl(),
+                      location.pathname + location.search + location.hash,
                     );
                     window.location.href = initiateURL.toString();
                   }}

@@ -181,7 +181,7 @@ export const CompliancePageCustomLinkDialog = forwardRef<CompliancePageCustomLin
               error={errors.url?.message}
             />
             <Field
-              {...register("name")}
+              {...register("name", { onChange: () => setNameAutoDetected(false) })}
               label={__("Name")}
               type="text"
               required

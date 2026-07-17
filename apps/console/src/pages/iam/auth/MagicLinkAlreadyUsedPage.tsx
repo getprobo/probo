@@ -35,9 +35,9 @@ export default function MagicLinkAlreadyUsedPage() {
       </div>
       <Button
         className="w-full h-10"
-        onClick={() => void navigate(-1)}
+        onClick={() => void navigate("/auth/login")}
       >
-        {__("Go back")}
+        {__("Sign in")}
       </Button>
     </div>
   );

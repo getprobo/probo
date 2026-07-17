@@ -36,9 +36,9 @@ import { z } from "zod";
 
 import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
 import {
-  useCreateCompliancePageReferenceMutation,
-  useUpdateCompliancePageReferenceMutation,
-} from "#/hooks/graph/CompliancePageReferenceGraph";
+  useCreateTrustCenterReferenceMutation,
+  useUpdateTrustCenterReferenceMutation,
+} from "#/hooks/graph/TrustCenterReferenceGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const referenceSchema = z.object({
@@ -65,8 +65,8 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
     const [editReference, setEditReference] = useState<CompliancePageReferenceListItemFragment$data | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
-    const [createReference, isCreating] = useCreateCompliancePageReferenceMutation();
-    const [updateReference, isUpdating] = useUpdateCompliancePageReferenceMutation();
+    const [createReference, isCreating] = useCreateTrustCenterReferenceMutation();
+    const [updateReference, isUpdating] = useUpdateTrustCenterReferenceMutation();
 
     const { register, handleSubmit, formState: { errors }, reset } = useFormWithSchema(
       referenceSchema,

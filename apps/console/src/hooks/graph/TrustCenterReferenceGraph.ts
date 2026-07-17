@@ -14,14 +14,14 @@
 
 import { graphql } from "react-relay";
 
-import type { CompliancePageReferenceGraphCreateMutation } from "#/__generated__/core/CompliancePageReferenceGraphCreateMutation.graphql";
-import type { CompliancePageReferenceGraphDeleteMutation } from "#/__generated__/core/CompliancePageReferenceGraphDeleteMutation.graphql";
-import type { CompliancePageReferenceGraphUpdateMutation } from "#/__generated__/core/CompliancePageReferenceGraphUpdateMutation.graphql";
-import type { CompliancePageReferenceGraphUpdateRankMutation } from "#/__generated__/core/CompliancePageReferenceGraphUpdateRankMutation.graphql";
+import type { TrustCenterReferenceGraphCreateMutation } from "#/__generated__/core/TrustCenterReferenceGraphCreateMutation.graphql";
+import type { TrustCenterReferenceGraphDeleteMutation } from "#/__generated__/core/TrustCenterReferenceGraphDeleteMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateMutation } from "#/__generated__/core/TrustCenterReferenceGraphUpdateMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateRankMutation } from "#/__generated__/core/TrustCenterReferenceGraphUpdateRankMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-export const createCompliancePageReferenceMutation = graphql`
-  mutation CompliancePageReferenceGraphCreateMutation(
+export const createTrustCenterReferenceMutation = graphql`
+  mutation TrustCenterReferenceGraphCreateMutation(
     $input: CreateTrustCenterReferenceInput!
     $connections: [ID!]!
   ) {
@@ -47,8 +47,8 @@ export const createCompliancePageReferenceMutation = graphql`
   }
 `;
 
-export const updateCompliancePageReferenceMutation = graphql`
-  mutation CompliancePageReferenceGraphUpdateMutation(
+export const updateTrustCenterReferenceMutation = graphql`
+  mutation TrustCenterReferenceGraphUpdateMutation(
     $input: UpdateTrustCenterReferenceInput!
   ) {
     updateTrustCenterReference(input: $input) {
@@ -70,8 +70,8 @@ export const updateCompliancePageReferenceMutation = graphql`
   }
 `;
 
-export const deleteCompliancePageReferenceMutation = graphql`
-  mutation CompliancePageReferenceGraphDeleteMutation(
+export const deleteTrustCenterReferenceMutation = graphql`
+  mutation TrustCenterReferenceGraphDeleteMutation(
     $input: DeleteTrustCenterReferenceInput!
     $connections: [ID!]!
   ) {
@@ -81,9 +81,9 @@ export const deleteCompliancePageReferenceMutation = graphql`
   }
 `;
 
-export function useCreateCompliancePageReferenceMutation() {
-  return useMutation<CompliancePageReferenceGraphCreateMutation>(
-    createCompliancePageReferenceMutation,
+export function useCreateTrustCenterReferenceMutation() {
+  return useMutation<TrustCenterReferenceGraphCreateMutation>(
+    createTrustCenterReferenceMutation,
     {
       successMessage: "Reference created successfully",
       errorToast: "Failed to create reference",
@@ -91,9 +91,9 @@ export function useCreateCompliancePageReferenceMutation() {
   );
 }
 
-export function useUpdateCompliancePageReferenceMutation() {
-  return useMutation<CompliancePageReferenceGraphUpdateMutation>(
-    updateCompliancePageReferenceMutation,
+export function useUpdateTrustCenterReferenceMutation() {
+  return useMutation<TrustCenterReferenceGraphUpdateMutation>(
+    updateTrustCenterReferenceMutation,
     {
       successMessage: "Reference updated successfully",
       errorToast: "Failed to update reference",
@@ -101,8 +101,8 @@ export function useUpdateCompliancePageReferenceMutation() {
   );
 }
 
-export const updateCompliancePageReferenceRankMutation = graphql`
-  mutation CompliancePageReferenceGraphUpdateRankMutation(
+export const updateTrustCenterReferenceRankMutation = graphql`
+  mutation TrustCenterReferenceGraphUpdateRankMutation(
     $input: UpdateTrustCenterReferenceInput!
   ) {
     updateTrustCenterReference(input: $input) {
@@ -114,9 +114,9 @@ export const updateCompliancePageReferenceRankMutation = graphql`
   }
 `;
 
-export function useUpdateCompliancePageReferenceRankMutation() {
-  return useMutation<CompliancePageReferenceGraphUpdateRankMutation>(
-    updateCompliancePageReferenceRankMutation,
+export function useUpdateTrustCenterReferenceRankMutation() {
+  return useMutation<TrustCenterReferenceGraphUpdateRankMutation>(
+    updateTrustCenterReferenceRankMutation,
     {
       successMessage: "Order updated successfully",
       errorToast: "Failed to update order",
@@ -124,9 +124,9 @@ export function useUpdateCompliancePageReferenceRankMutation() {
   );
 }
 
-export function useDeleteCompliancePageReferenceMutation() {
-  return useMutation<CompliancePageReferenceGraphDeleteMutation>(
-    deleteCompliancePageReferenceMutation,
+export function useDeleteTrustCenterReferenceMutation() {
+  return useMutation<TrustCenterReferenceGraphDeleteMutation>(
+    deleteTrustCenterReferenceMutation,
     {
       successMessage: "Reference deleted successfully",
       errorToast: "Failed to delete reference",

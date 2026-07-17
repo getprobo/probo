@@ -62,18 +62,12 @@ export function CompliancePageDomainsSection(props: {
 
       <div className="space-y-3">
         {defaultDomain && (
-          <CompliancePageDomainCard
-            fKey={defaultDomain}
-            compliancePageId={compliancePageId}
-          />
+          <CompliancePageDomainCard fKey={defaultDomain} />
         )}
 
         {customDomain
           ? (
-              <CompliancePageDomainCard
-                fKey={customDomain}
-                compliancePageId={compliancePageId}
-              />
+              <CompliancePageDomainCard fKey={customDomain} />
             )
           : organization.canCreateCustomDomain && (
               <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-solid px-4 py-8">

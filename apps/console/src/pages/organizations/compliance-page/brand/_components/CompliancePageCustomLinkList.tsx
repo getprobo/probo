@@ -30,7 +30,7 @@ const compliancePageFragment = graphql`
   fragment CompliancePageCustomLinkList_compliancePageFragment on TrustCenter
   @refetchable(queryName: "CompliancePageCustomLinkList_compliancePageRefetchQuery")
   @argumentDefinitions(
-    first: { type: Int, defaultValue: 100 }
+    first: { type: Int, defaultValue: 500 }
     after: { type: CursorKey, defaultValue: null }
     order: { type: ComplianceCustomLinkOrder, defaultValue: { field: RANK, direction: ASC } }
   ) {

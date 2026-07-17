@@ -30,8 +30,8 @@ import {
   useDialogRef,
 } from "@probo/ui";
 
-import type { CompliancePageReferenceGraphDeleteMutation } from "#/__generated__/core/CompliancePageReferenceGraphDeleteMutation.graphql";
-import { deleteCompliancePageReferenceMutation } from "#/hooks/graph/CompliancePageReferenceGraph";
+import type { TrustCenterReferenceGraphDeleteMutation } from "#/__generated__/core/TrustCenterReferenceGraphDeleteMutation.graphql";
+import { deleteTrustCenterReferenceMutation } from "#/hooks/graph/TrustCenterReferenceGraph";
 import { useMutation } from "#/lib/relay/useMutation";
 
 type Props = {
@@ -52,8 +52,8 @@ export function DeleteCompliancePageReferenceDialog({
   const { __ } = useTranslate();
   const ref = useDialogRef();
 
-  const [mutate, isDeleting] = useMutation<CompliancePageReferenceGraphDeleteMutation>(
-    deleteCompliancePageReferenceMutation,
+  const [mutate, isDeleting] = useMutation<TrustCenterReferenceGraphDeleteMutation>(
+    deleteTrustCenterReferenceMutation,
     {
       successMessage: __("Reference deleted successfully"),
       errorToast: __("Failed to delete reference"),

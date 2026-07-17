@@ -46,9 +46,8 @@ const fragment = graphql`
 
 export function CompliancePageDomainCard(props: {
   fKey: CompliancePageDomainCardFragment$key;
-  compliancePageId: string;
 }) {
-  const { fKey, compliancePageId } = props;
+  const { fKey } = props;
 
   const { __ } = useTranslate();
 
@@ -85,7 +84,6 @@ export function CompliancePageDomainCard(props: {
             <DeleteCompliancePageDomainDialog
               domain={domain.domain}
               customDomainId={domain.id}
-              compliancePageId={compliancePageId}
             >
               <Button variant="danger">{__("Delete")}</Button>
             </DeleteCompliancePageDomainDialog>

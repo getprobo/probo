@@ -42,7 +42,6 @@ const createCustomDomainMutation = graphql`
       customDomain {
         id
         domain
-        managed
         sslStatus
         dnsRecords {
           type
@@ -156,7 +155,7 @@ export function NewCompliancePageDomainDialog(props: PropsWithChildren<{ complia
               <strong>{__("Examples:")}</strong>
               {" "}
               compliance.example.com,
-              compliance.example.com
+              trust.example.com
             </p>
           </div>
         </DialogContent>

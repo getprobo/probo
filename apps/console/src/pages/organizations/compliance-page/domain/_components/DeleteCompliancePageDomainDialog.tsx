@@ -46,7 +46,6 @@ const deleteCustomDomainMutation = graphql`
 type DeleteCompliancePageDomainDialogProps = PropsWithChildren<{
   domain: string;
   customDomainId: string;
-  compliancePageId: string;
 }>;
 
 export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDomainDialogProps) {
