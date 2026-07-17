@@ -51,6 +51,42 @@ export const textField = tv({
   },
 });
 
+// Multi-line text input, mirroring TextField's bordered surface. Base UI has no
+// textarea primitive, so this styles a native <textarea>.
+export const textArea = tv({
+  slots: {
+    root: [
+      "flex rounded-2 text-2 text-sand-12 transition-colors",
+      "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
+      "has-[textarea:disabled]:pointer-events-none has-[textarea:disabled]:opacity-50",
+    ],
+    textarea: [
+      "min-h-16 w-full resize-y bg-transparent px-2 py-1.5 text-sand-12 outline-none",
+      "placeholder:text-sand-a9",
+    ],
+  },
+  variants: {
+    variant: {
+      classic: { root: "border border-sand-a5 bg-sand-1 inset-shadow-2" },
+      surface: { root: "border border-sand-a5 bg-sand-1" },
+      soft: { root: "bg-gold-3" },
+    },
+  },
+  defaultVariants: {
+    variant: "surface",
+  },
+});
+
+// Vertical label + control + error grouping used by form dialogs.
+export const field = tv({
+  slots: {
+    root: "flex flex-col gap-1.5",
+    label: "flex flex-col gap-1.5",
+    labelText: "text-2 font-medium text-sand-12",
+    error: "text-1 text-red-a11",
+  },
+});
+
 export const textFieldSkeleton = tv({
   base: "inline-block animate-pulse rounded-2 bg-sand-3 align-middle",
   variants: {

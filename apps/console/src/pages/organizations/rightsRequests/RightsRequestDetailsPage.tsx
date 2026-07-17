@@ -65,8 +65,8 @@ import {
 } from "../../../hooks/graph/RightsRequestGraph";
 
 const updateRequestSchema = z.object({
-  requestType: z.enum(["ACCESS", "DELETION", "PORTABILITY"]),
-  requestState: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
+  requestType: z.enum(["ACCESS", "DELETION", "RECTIFICATION", "PORTABILITY", "OBJECTION", "COMPLAINT"]),
+  requestState: z.enum(["TODO", "IN_PROGRESS", "DONE", "REJECTED"]),
   dataSubject: z.string().optional(),
   contact: z.string().optional(),
   details: z.string().optional(),

@@ -28,9 +28,12 @@ import (
 type RightsRequestType string
 
 const (
-	RightsRequestTypeAccess      RightsRequestType = "ACCESS"
-	RightsRequestTypeDeletion    RightsRequestType = "DELETION"
-	RightsRequestTypePortability RightsRequestType = "PORTABILITY"
+	RightsRequestTypeAccess        RightsRequestType = "ACCESS"
+	RightsRequestTypeDeletion      RightsRequestType = "DELETION"
+	RightsRequestTypeRectification RightsRequestType = "RECTIFICATION"
+	RightsRequestTypePortability   RightsRequestType = "PORTABILITY"
+	RightsRequestTypeObjection     RightsRequestType = "OBJECTION"
+	RightsRequestTypeComplaint     RightsRequestType = "COMPLAINT"
 )
 
 var (
@@ -43,7 +46,10 @@ func RightsRequestTypes() []RightsRequestType {
 	return []RightsRequestType{
 		RightsRequestTypeAccess,
 		RightsRequestTypeDeletion,
+		RightsRequestTypeRectification,
 		RightsRequestTypePortability,
+		RightsRequestTypeObjection,
+		RightsRequestTypeComplaint,
 	}
 }
 
@@ -52,7 +58,10 @@ func (v RightsRequestType) IsValid() bool {
 	case
 		RightsRequestTypeAccess,
 		RightsRequestTypeDeletion,
-		RightsRequestTypePortability:
+		RightsRequestTypeRectification,
+		RightsRequestTypePortability,
+		RightsRequestTypeObjection,
+		RightsRequestTypeComplaint:
 		return true
 	}
 

@@ -18,22 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PlusIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
-import { useTranslation } from "react-i18next";
+import { tv } from "tailwind-variants/lite";
 
-import { PageHeader } from "#/components/PageHeader/PageHeader";
-
-export default function RequestsPage() {
-  const { t } = useTranslation();
-  return (
-    <PageHeader
-      title={t("requests.title")}
-      actions={(
-        <Button variant="soft" color="neutral" highContrast iconStart={<PlusIcon />}>
-          {t("requests.newRequest")}
-        </Button>
-      )}
-    />
-  );
-}
+// Data requests page shell: a centered content column below the header band.
+export const requestsLayout = tv({
+  slots: {
+    page: "flex w-full flex-col items-center px-8 py-8",
+    results: "flex w-full max-w-5xl flex-col gap-6",
+    loadMore: "flex justify-center",
+  },
+});

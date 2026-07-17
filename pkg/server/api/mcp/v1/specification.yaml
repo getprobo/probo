@@ -8489,7 +8489,10 @@ components:
       enum:
         - ACCESS
         - DELETION
+        - RECTIFICATION
         - PORTABILITY
+        - OBJECTION
+        - COMPLAINT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RightsRequestType
 
     RightsRequestState:
@@ -8498,6 +8501,7 @@ components:
         - TODO
         - IN_PROGRESS
         - DONE
+        - REJECTED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RightsRequestState
 
     RightsRequestOrderField:

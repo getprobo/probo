@@ -30,6 +30,7 @@ import { documentRoutes } from "#/pages/documents/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
 import { ndaRoutes } from "#/pages/nda/routes";
+import { requestRoutes } from "#/pages/requests/routes";
 import { subprocessorRoutes } from "#/pages/subprocessors/routes";
 import { updateRoutes } from "#/pages/updates/routes";
 
@@ -54,10 +55,7 @@ const routes = [
           ...documentRoutes,
           ...subprocessorRoutes,
           ...updateRoutes,
-          {
-            path: "requests",
-            Component: lazy(() => import("#/pages/RequestsPage")),
-          },
+          ...requestRoutes,
           {
             path: "*",
             Component: lazy(() => import("#/pages/NotFoundPage")),

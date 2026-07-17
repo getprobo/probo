@@ -81,10 +81,6 @@
       "viewAll": "Voir tout"
     }
   },
-  "requests": {
-    "title": "Demandes de données",
-    "newRequest": "Nouvelle demande"
-  },
   "notFound": {
     "title": "Page introuvable",
     "description": "La page que vous recherchez n'existe pas ou a été déplacée.",

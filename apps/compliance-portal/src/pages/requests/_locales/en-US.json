@@ -1,0 +1,71 @@
+{
+  "title": "Data Requests",
+  "newRequest": "New Request",
+  "loadMore": "Load more",
+  "empty": {
+    "title": "No requests yet",
+    "description": "Requests you submit will appear here so you can track their progress."
+  },
+  "types": {
+    "ACCESS": "Data Access",
+    "DELETION": "Data Deletion",
+    "RECTIFICATION": "Data Rectification",
+    "PORTABILITY": "Data Portability",
+    "OBJECTION": "Processing Objection",
+    "COMPLAINT": "Abuse Report"
+  },
+  "status": {
+    "TODO": "Pending",
+    "IN_PROGRESS": "Processing",
+    "DONE": "Completed",
+    "REJECTED": "Rejected"
+  },
+  "typeOption": {
+    "ACCESS": "Access my data",
+    "DELETION": "Delete my data",
+    "RECTIFICATION": "Correct my data",
+    "OBJECTION": "Object to processing",
+    "COMPLAINT": "Report abuse"
+  },
+  "dialog": {
+    "title": "New Request",
+    "description": "Choose a request type and fill in the details below.",
+    "typeLabel": "Request type",
+    "cancel": "Cancel",
+    "submit": "Submit Request",
+    "success": {
+      "title": "Request submitted",
+      "description": "We'll process your request and respond within 30 days.",
+      "close": "Close"
+    }
+  },
+  "form": {
+    "name": "Full Name",
+    "nameOptional": "Your Name (optional)",
+    "namePlaceholder": "John Doe",
+    "email": "Email Address",
+    "deletionWarning": "Data deletion is permanent and cannot be undone. Some data may be retained for legal obligations.",
+    "details": {
+      "ACCESS": {
+        "label": "Details of your request",
+        "placeholder": "I'd like a copy of all personal data associated with my account…"
+      },
+      "DELETION": {
+        "label": "Scope of deletion request",
+        "placeholder": "Please delete all personal data including…"
+      },
+      "RECTIFICATION": {
+        "label": "What should be corrected?",
+        "placeholder": "The following information is inaccurate…"
+      },
+      "OBJECTION": {
+        "label": "What are you objecting to?",
+        "placeholder": "I object to the processing of my data for…"
+      },
+      "COMPLAINT": {
+        "label": "Description of the concern",
+        "placeholder": "I noticed that…"
+      }
+    }
+  }
+}

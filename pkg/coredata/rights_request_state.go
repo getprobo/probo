@@ -31,6 +31,7 @@ const (
 	RightsRequestStateTodo       RightsRequestState = "TODO"
 	RightsRequestStateInProgress RightsRequestState = "IN_PROGRESS"
 	RightsRequestStateDone       RightsRequestState = "DONE"
+	RightsRequestStateRejected   RightsRequestState = "REJECTED"
 )
 
 var (
@@ -44,6 +45,7 @@ func RightsRequestStates() []RightsRequestState {
 		RightsRequestStateTodo,
 		RightsRequestStateInProgress,
 		RightsRequestStateDone,
+		RightsRequestStateRejected,
 	}
 }
 
@@ -52,7 +54,8 @@ func (v RightsRequestState) IsValid() bool {
 	case
 		RightsRequestStateTodo,
 		RightsRequestStateInProgress,
-		RightsRequestStateDone:
+		RightsRequestStateDone,
+		RightsRequestStateRejected:
 		return true
 	}
 

@@ -30,6 +30,9 @@ export const REQUEST_ALL_PARAM = "request-all";
 export const REQUEST_DOCUMENT_PARAM = "request-document-id";
 export const REQUEST_REPORT_PARAM = "request-report-id";
 export const REQUEST_FILE_PARAM = "request-file-id";
+// Marker that re-opens the "New Request" dialog once the user lands back
+// authenticated (the data request form gates on sign-in before it opens).
+export const NEW_REQUEST_PARAM = "new-request";
 
 // Validates a `continue` target before we navigate to it. Only same-origin URLs
 // under the portal's path prefix are accepted; anything else falls back to the
@@ -70,6 +73,14 @@ export function buildRequestAllContinueUrl(): string {
 export function buildRequestAccessContinueUrl(param: string, id: string): string {
   const url = new URL(window.location.href);
   url.searchParams.set(param, id);
+  return url.toString();
+}
+
+// Absolute URL of the current page with the new-request marker set, so the data
+// request dialog re-opens after sign-in.
+export function buildNewRequestContinueUrl(): string {
+  const url = new URL(window.location.href);
+  url.searchParams.set(NEW_REQUEST_PARAM, "true");
   return url.toString();
 }
 

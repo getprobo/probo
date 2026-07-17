@@ -1,0 +1,71 @@
+{
+  "title": "Demandes de données",
+  "newRequest": "Nouvelle demande",
+  "loadMore": "Charger plus",
+  "empty": {
+    "title": "Aucune demande pour le moment",
+    "description": "Les demandes que vous soumettez apparaîtront ici afin que vous puissiez suivre leur avancement."
+  },
+  "types": {
+    "ACCESS": "Accès aux données",
+    "DELETION": "Suppression des données",
+    "RECTIFICATION": "Rectification des données",
+    "PORTABILITY": "Portabilité des données",
+    "OBJECTION": "Opposition au traitement",
+    "COMPLAINT": "Signalement d'abus"
+  },
+  "status": {
+    "TODO": "En attente",
+    "IN_PROGRESS": "En cours",
+    "DONE": "Terminée",
+    "REJECTED": "Rejetée"
+  },
+  "typeOption": {
+    "ACCESS": "Accéder à mes données",
+    "DELETION": "Supprimer mes données",
+    "RECTIFICATION": "Corriger mes données",
+    "OBJECTION": "M'opposer au traitement",
+    "COMPLAINT": "Signaler un abus"
+  },
+  "dialog": {
+    "title": "Nouvelle demande",
+    "description": "Choisissez un type de demande et remplissez les détails ci-dessous.",
+    "typeLabel": "Type de demande",
+    "cancel": "Annuler",
+    "submit": "Envoyer la demande",
+    "success": {
+      "title": "Demande envoyée",
+      "description": "Nous traiterons votre demande et vous répondrons sous 30 jours.",
+      "close": "Fermer"
+    }
+  },
+  "form": {
+    "name": "Nom complet",
+    "nameOptional": "Votre nom (facultatif)",
+    "namePlaceholder": "Jean Dupont",
+    "email": "Adresse e-mail",
+    "deletionWarning": "La suppression des données est définitive et irréversible. Certaines données peuvent être conservées pour des obligations légales.",
+    "details": {
+      "ACCESS": {
+        "label": "Détails de votre demande",
+        "placeholder": "Je souhaite une copie de toutes les données personnelles associées à mon compte…"
+      },
+      "DELETION": {
+        "label": "Portée de la demande de suppression",
+        "placeholder": "Veuillez supprimer toutes les données personnelles, notamment…"
+      },
+      "RECTIFICATION": {
+        "label": "Que faut-il corriger ?",
+        "placeholder": "Les informations suivantes sont inexactes…"
+      },
+      "OBJECTION": {
+        "label": "À quoi vous opposez-vous ?",
+        "placeholder": "Je m'oppose au traitement de mes données pour…"
+      },
+      "COMPLAINT": {
+        "label": "Description du problème",
+        "placeholder": "J'ai remarqué que…"
+      }
+    }
+  }
+}

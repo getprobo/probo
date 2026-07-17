@@ -20,43 +20,49 @@
 
 type Translator = (s: string) => string;
 
-export type RightsRequestType = "ACCESS" | "DELETION" | "PORTABILITY";
+export type RightsRequestType =
+  | "ACCESS"
+  | "DELETION"
+  | "RECTIFICATION"
+  | "PORTABILITY"
+  | "OBJECTION"
+  | "COMPLAINT";
 
 export const rightsRequestTypes = [
   "ACCESS",
   "DELETION",
+  "RECTIFICATION",
   "PORTABILITY",
+  "OBJECTION",
+  "COMPLAINT",
 ] as const;
 
-export type RightsRequestState = "TODO" | "IN_PROGRESS" | "DONE";
+export type RightsRequestState = "TODO" | "IN_PROGRESS" | "DONE" | "REJECTED";
 
 export const rightsRequestStates = [
   "TODO",
   "IN_PROGRESS",
   "DONE",
+  "REJECTED",
 ] as const;
 
+const rightsRequestTypeLabels: Record<RightsRequestType, string> = {
+  "ACCESS": "Access",
+  "DELETION": "Deletion",
+  "RECTIFICATION": "Rectification",
+  "PORTABILITY": "Portability",
+  "OBJECTION": "Objection",
+  "COMPLAINT": "Complaint",
+};
+
 export function getRightsRequestTypeLabel(__: Translator, type: RightsRequestType) {
-  switch (type) {
-    case "ACCESS":
-      return __("Access");
-    case "DELETION":
-      return __("Deletion");
-    case "PORTABILITY":
-      return __("Portability");
-    default:
-      return type;
-  }
+  return __(rightsRequestTypeLabels[type] ?? type);
 }
 
 export function getRightsRequestTypeOptions(__: Translator) {
   return rightsRequestTypes.map((type) => ({
     value: type,
-    label: __({
-      "ACCESS": "Access",
-      "DELETION": "Deletion",
-      "PORTABILITY": "Portability",
-    }[type]),
+    label: __(rightsRequestTypeLabels[type]),
   }));
 }
 
@@ -70,31 +76,27 @@ export const getRightsRequestStateVariant = (
       return "info" as const;
     case "DONE":
       return "success" as const;
+    case "REJECTED":
+      return "danger" as const;
     default:
       return "neutral" as const;
   }
 };
 
+const rightsRequestStateLabels: Record<RightsRequestState, string> = {
+  "TODO": "To Do",
+  "IN_PROGRESS": "In Progress",
+  "DONE": "Done",
+  "REJECTED": "Rejected",
+};
+
 export function getRightsRequestStateLabel(__: Translator, state: RightsRequestState) {
-  switch (state) {
-    case "TODO":
-      return __("To Do");
-    case "IN_PROGRESS":
-      return __("In Progress");
-    case "DONE":
-      return __("Done");
-    default:
-      return state;
-  }
+  return __(rightsRequestStateLabels[state] ?? state);
 }
 
 export function getRightsRequestStateOptions(__: Translator) {
   return rightsRequestStates.map((state) => ({
     value: state,
-    label: __({
-      "TODO": "To Do",
-      "IN_PROGRESS": "In Progress",
-      "DONE": "Done",
-    }[state]),
+    label: __(rightsRequestStateLabels[state]),
   }));
 }

@@ -1,0 +1,83 @@
+enum RightsRequestType
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestType") {
+  ACCESS @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeAccess")
+  DELETION
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeDeletion")
+  RECTIFICATION
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeRectification"
+    )
+  PORTABILITY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypePortability"
+    )
+  OBJECTION
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeObjection")
+  COMPLAINT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeComplaint")
+}
+
+enum RightsRequestState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestState") {
+  TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateTodo")
+  IN_PROGRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateInProgress"
+    )
+  DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateDone")
+  REJECTED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateRejected")
+}
+
+type RightsRequest implements Node {
+  id: ID!
+  requestType: RightsRequestType!
+  requestState: RightsRequestState!
+  dataSubject: String
+  contact: String
+  details: String
+  deadline: Datetime
+  actionTaken: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type RightsRequestConnection {
+  edges: [RightsRequestEdge!]!
+  pageInfo: PageInfo!
+}
+
+type RightsRequestEdge {
+  cursor: CursorKey!
+  node: RightsRequest!
+}
+
+extend type Query {
+  # The current viewer's own data subject requests for this trust center,
+  # scoped by their verified email. Returns an empty connection for guests so
+  # the portal can still render its empty state.
+  myRightsRequests(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): RightsRequestConnection!
+}
+
+extend type Mutation {
+  # Submit a data subject request. Requires a verified viewer; the request is
+  # attributed to the viewer's email, so no NDA gate applies.
+  createRightsRequest(
+    input: CreateRightsRequestInput!
+  ): CreateRightsRequestPayload! @authentication(required: PRESENT)
+}
+
+input CreateRightsRequestInput {
+  requestType: RightsRequestType!
+  dataSubject: String
+  details: String
+}
+
+type CreateRightsRequestPayload {
+  rightsRequestEdge: RightsRequestEdge!
+}
