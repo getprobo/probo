@@ -92,7 +92,7 @@ func (s *Service) ListFilesForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := files.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
-				return fmt.Errorf("cannot load trust center files: %w", err)
+				return fmt.Errorf("cannot load compliance page files: %w", err)
 			}
 
 			return nil
@@ -119,7 +119,7 @@ func (s *Service) CountFilesForOrganizationID(
 
 			count, err = (&coredata.TrustCenterFiles{}).CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
-				return fmt.Errorf("cannot count trust center files: %w", err)
+				return fmt.Errorf("cannot count compliance page files: %w", err)
 			}
 
 			return nil
@@ -144,7 +144,7 @@ func (s *Service) GetFile(
 		func(ctx context.Context, conn pg.Querier) error {
 			file = &coredata.TrustCenterFile{}
 			if err := file.LoadByID(ctx, conn, scope, id); err != nil {
-				return fmt.Errorf("cannot load trust center file: %w", err)
+				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
 			return nil
@@ -210,7 +210,7 @@ func (s *Service) CreateFile(
 			}
 
 			if err := file.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert trust center file: %w", err)
+				return fmt.Errorf("cannot insert compliance page file: %w", err)
 			}
 
 			return nil
@@ -243,7 +243,7 @@ func (s *Service) UpdateFile(
 			file = &coredata.TrustCenterFile{}
 
 			if err := file.LoadByID(ctx, tx, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load trust center file: %w", err)
+				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
 			if req.Name != nil {
@@ -261,7 +261,7 @@ func (s *Service) UpdateFile(
 			file.UpdatedAt = now
 
 			if err := file.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update trust center file: %w", err)
+				return fmt.Errorf("cannot update compliance page file: %w", err)
 			}
 
 			return nil
@@ -285,11 +285,11 @@ func (s *Service) DeleteFile(
 			file := &coredata.TrustCenterFile{}
 
 			if err := file.LoadByID(ctx, tx, scope, trustCenterFileID); err != nil {
-				return fmt.Errorf("cannot load trust center file: %w", err)
+				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
 			if err := file.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete trust center file: %w", err)
+				return fmt.Errorf("cannot delete compliance page file: %w", err)
 			}
 
 			return nil
@@ -311,7 +311,7 @@ func (s *Service) GenerateFileURL(
 		func(ctx context.Context, conn pg.Querier) error {
 			file := &coredata.TrustCenterFile{}
 			if err := file.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
-				return fmt.Errorf("cannot load trust center file: %w", err)
+				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
 			storedFile = &coredata.File{}
@@ -405,9 +405,9 @@ func (s *Service) uploadFile(
 			ContentType:  new(contentType),
 			CacheControl: new("private, max-age=3600"),
 			Metadata: map[string]string{
-				"type":                 "trust-center-file",
-				"trust-center-file-id": trustCenterFileID.String(),
-				"organization-id":      organizationID.String(),
+				"type":                    "compliance-page-file",
+				"compliance-page-file-id": trustCenterFileID.String(),
+				"organization-id":         organizationID.String(),
 			},
 		},
 	)

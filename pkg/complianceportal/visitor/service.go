@@ -30,7 +30,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/complianceportal"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -45,7 +45,7 @@ const NDAConsentText = "By clicking \"Review and sign\", I consent to sign this 
 
 type (
 	// Service is the visitor-facing compliance portal service. It exposes the
-	// public read operations for the trust center and its related resources as
+	// public read operations for the compliance page and its related resources as
 	// methods on a single type.
 	Service struct {
 		pg                 *pg.Client
@@ -61,6 +61,7 @@ type (
 		logger             *log.Logger
 		slack              *slack.Service
 		resourceAlias      *resourcealias.Service
+		management         *management.Service
 	}
 )
 
@@ -78,6 +79,7 @@ func NewService(
 	logger *log.Logger,
 	slack *slack.Service,
 	resourceAliasSvc *resourcealias.Service,
+	managementSvc *management.Service,
 ) *Service {
 	svc := &Service{
 		pg:                 pgClient,
@@ -93,6 +95,7 @@ func NewService(
 		logger:             logger,
 		slack:              slack,
 		resourceAlias:      resourceAliasSvc,
+		management:         managementSvc,
 	}
 
 	return svc
@@ -102,18 +105,18 @@ func (s *Service) GetPortalByID(
 	ctx context.Context,
 	id gid.GID,
 ) (*coredata.TrustCenter, error) {
-	trustCenter := &coredata.TrustCenter{}
+	compliancePage := &coredata.TrustCenter{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenter.LoadByID(ctx, conn, coredata.NewNoScope(), id)
+			err := compliancePage.LoadByID(ctx, conn, coredata.NewNoScope(), id)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
 
-				return fmt.Errorf("cannot load trust center: %w", err)
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			return nil
@@ -123,25 +126,25 @@ func (s *Service) GetPortalByID(
 		return nil, err
 	}
 
-	return trustCenter, nil
+	return compliancePage, nil
 }
 
 func (s *Service) GetPortalBySlug(
 	ctx context.Context,
 	slug string,
 ) (*coredata.TrustCenter, error) {
-	trustCenter := &coredata.TrustCenter{}
+	compliancePage := &coredata.TrustCenter{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenter.LoadBySlug(ctx, conn, slug)
+			err := compliancePage.LoadBySlug(ctx, conn, slug)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
 
-				return fmt.Errorf("cannot load trust center: %w", err)
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			return nil
@@ -151,25 +154,25 @@ func (s *Service) GetPortalBySlug(
 		return nil, err
 	}
 
-	return trustCenter, nil
+	return compliancePage, nil
 }
 
 // GetEffectiveCanonicalHost returns the host a compliance page should be
 // served under. It prefers the primary domain when its certificate is active,
 // and otherwise falls back to the managed probopage subdomain. An empty string
 // is returned when no serving host can be determined.
-func (s *Service) GetPortalEffectiveCanonicalHost(ctx context.Context, trustCenterID gid.GID) (string, error) {
+func (s *Service) GetPortalEffectiveCanonicalHost(ctx context.Context, compliancePageID gid.GID) (string, error) {
 	var host string
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, coredata.NewNoScope(), trustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, coredata.NewNoScope(), compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			domain, err := complianceportal.EffectiveDomainForTrustCenter(ctx, conn, coredata.NewNoScope(), trustCenter)
+			domain, err := s.management.EffectiveDomainForCompliancePage(ctx, conn, coredata.NewNoScope(), compliancePage)
 			if err != nil {
 				return err
 			}
@@ -189,7 +192,7 @@ func (s *Service) GetPortalEffectiveCanonicalHost(ctx context.Context, trustCent
 }
 
 func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*coredata.TrustCenter, error) {
-	trustCenter := &coredata.TrustCenter{}
+	compliancePage := &coredata.TrustCenter{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -203,13 +206,13 @@ func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*co
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByDomainID(ctx, conn, customDomain.ID); err != nil {
+			compliancePage = &coredata.TrustCenter{}
+			if err := compliancePage.LoadByDomainID(ctx, conn, customDomain.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
 
-				return fmt.Errorf("cannot load trust center: %w", err)
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			return nil
@@ -219,37 +222,37 @@ func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*co
 		return nil, err
 	}
 
-	return trustCenter, err
+	return compliancePage, err
 }
 
 // GetPortalEmailPresenterConfigByOrganizationID resolves the emails.PresenterConfig for
-// the trust center that belongs to the given organization. This is used by the
+// the compliance page that belongs to the given organization. This is used by the
 // esign certificate worker which needs per-org branding at render time.
 func (s *Service) GetPortalEmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
-	var trustCenter coredata.TrustCenter
+	var compliancePage coredata.TrustCenter
 
 	scope := coredata.NewScopeFromObjectID(orgID)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return trustCenter.LoadByOrganizationID(ctx, conn, scope, orgID)
+			return compliancePage.LoadByOrganizationID(ctx, conn, scope, orgID)
 		},
 	)
 	if err != nil {
-		return emails.PresenterConfig{}, fmt.Errorf("cannot load trust center for org %s: %w", orgID, err)
+		return emails.PresenterConfig{}, fmt.Errorf("cannot load compliance page for org %s: %w", orgID, err)
 	}
 
-	return s.GetPortalEmailPresenterConfig(ctx, scope, trustCenter.ID)
+	return s.GetPortalEmailPresenterConfig(ctx, scope, compliancePage.ID)
 }
 
 func (s *Service) GetPortalOrganization(
 	ctx context.Context,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) (*coredata.Organization, error) {
-	trustCenter, err := s.GetPortalByID(ctx, trustCenterID)
+	compliancePage, err := s.GetPortalByID(ctx, compliancePageID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center: %w", err)
+		return nil, fmt.Errorf("cannot load compliance page: %w", err)
 	}
 
 	org := &coredata.Organization{}
@@ -257,7 +260,7 @@ func (s *Service) GetPortalOrganization(
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return org.LoadByID(ctx, conn, coredata.NewNoScope(), trustCenter.OrganizationID)
+			return org.LoadByID(ctx, conn, coredata.NewNoScope(), compliancePage.OrganizationID)
 		},
 	)
 	if err != nil {
@@ -305,17 +308,17 @@ func (s *Service) GetPortalNDAFileByID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID == nil {
+			if compliancePage.NonDisclosureAgreementFileID == nil {
 				return ErrNDAFileNotFound
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrNDAFileNotFound
 				}
@@ -349,7 +352,7 @@ func (s *Service) ProvisionPortalMember(
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.TrustCenter{}
 			if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			identity := &coredata.Identity{}
@@ -360,7 +363,7 @@ func (s *Service) ProvisionPortalMember(
 			access = &coredata.TrustCenterAccess{}
 			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePageID, identityID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load trust center access: %w", err)
+					return fmt.Errorf("cannot load compliance page access: %w", err)
 				}
 
 				access = &coredata.TrustCenterAccess{
@@ -399,7 +402,7 @@ func (s *Service) ProvisionPortalMember(
 				}
 
 				if err := access.Insert(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot insert trust center access: %w", err)
+					return fmt.Errorf("cannot insert compliance page access: %w", err)
 				}
 			}
 

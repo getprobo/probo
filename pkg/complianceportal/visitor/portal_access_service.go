@@ -60,9 +60,9 @@ func (s *Service) RequestPortalAccess(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			access = &coredata.TrustCenterAccess{}
@@ -70,7 +70,7 @@ func (s *Service) RequestPortalAccess(
 				return fmt.Errorf("cannot load compliance page membership: %w", err)
 			}
 
-			organizationID := trustCenter.OrganizationID
+			organizationID := compliancePage.OrganizationID
 
 			documentIDs := req.DocumentIDs
 			if req.DocumentIDs == nil {
@@ -145,7 +145,7 @@ func (s *Service) RequestPortalAccess(
 					func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterFileOrderField]) ([]*coredata.TrustCenterFile, error) {
 						var batch coredata.TrustCenterFiles
 						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
-							return nil, fmt.Errorf("cannot list trust center files: %w", err)
+							return nil, fmt.Errorf("cannot list compliance page files: %w", err)
 						}
 
 						return batch, nil
@@ -196,7 +196,7 @@ func (s *Service) RequestPortalAccess(
 				coredata.TrustCenterDocumentAccessStatusRequested,
 				now,
 			); err != nil {
-				return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
+				return fmt.Errorf("cannot bulk insert compliance page document accesses: %w", err)
 			}
 
 			if err := accesses.BulkInsertReportFileAccesses(
@@ -209,7 +209,7 @@ func (s *Service) RequestPortalAccess(
 				coredata.TrustCenterDocumentAccessStatusRequested,
 				now,
 			); err != nil {
-				return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+				return fmt.Errorf("cannot bulk insert compliance page report accesses: %w", err)
 			}
 
 			if err := accesses.BulkInsertTrustCenterFileAccesses(
@@ -222,7 +222,7 @@ func (s *Service) RequestPortalAccess(
 				coredata.TrustCenterDocumentAccessStatusRequested,
 				now,
 			); err != nil {
-				return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
+				return fmt.Errorf("cannot bulk insert compliance page file accesses: %w", err)
 			}
 
 			return nil
@@ -242,7 +242,7 @@ func (s *Service) RequestPortalAccess(
 func (s *Service) GetPortalAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	identityID gid.GID,
 ) (coredata.TrustCenterAccess, error) {
 	var access coredata.TrustCenterAccess
@@ -250,7 +250,7 @@ func (s *Service) GetPortalAccess(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+			return access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 		},
 	)
 
@@ -260,7 +260,7 @@ func (s *Service) GetPortalAccess(
 func (s *Service) GetPortalDocumentAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	identityID gid.GID,
 	documentID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
@@ -271,13 +271,13 @@ func (s *Service) GetPortalDocumentAccess(
 		func(ctx context.Context, conn pg.Querier) error {
 			access := &coredata.TrustCenterAccess{}
 
-			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
 				}
 
-				return fmt.Errorf("cannot load trust center access: %w", err)
+				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
 			profile := &coredata.MembershipProfile{}
@@ -315,7 +315,7 @@ func (s *Service) GetPortalDocumentAccess(
 func (s *Service) GetPortalReportFileAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	identityID gid.GID,
 	reportFileID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
@@ -326,13 +326,13 @@ func (s *Service) GetPortalReportFileAccess(
 		func(ctx context.Context, conn pg.Querier) error {
 			access := &coredata.TrustCenterAccess{}
 
-			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
 				}
 
-				return fmt.Errorf("cannot load trust center access: %w", err)
+				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
 			profile := &coredata.MembershipProfile{}
@@ -370,7 +370,7 @@ func (s *Service) GetPortalReportFileAccess(
 func (s *Service) GetPortalFileAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	identityID gid.GID,
 	trustCenterFileID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
@@ -381,13 +381,13 @@ func (s *Service) GetPortalFileAccess(
 		func(ctx context.Context, conn pg.Querier) error {
 			access := &coredata.TrustCenterAccess{}
 
-			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
 				}
 
-				return fmt.Errorf("cannot load trust center access: %w", err)
+				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
 			profile := &coredata.MembershipProfile{}
@@ -409,7 +409,7 @@ func (s *Service) GetPortalFileAccess(
 					return ErrDocumentAccessNotFound
 				}
 
-				return fmt.Errorf("cannot load trust center file access: %w", err)
+				return fmt.Errorf("cannot load compliance page file access: %w", err)
 			}
 
 			return nil
@@ -434,9 +434,9 @@ func (s *Service) GrantPortalAccessByIDs(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			identity := &coredata.Identity{}
@@ -445,8 +445,8 @@ func (s *Service) GrantPortalAccessByIDs(
 			}
 
 			access := &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenter.ID, identity.ID); err != nil {
-				return fmt.Errorf("cannot load trust center access: %w", err)
+			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePage.ID, identity.ID); err != nil {
+				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
 			profile := &coredata.MembershipProfile{}
@@ -477,7 +477,7 @@ func (s *Service) GrantPortalAccessByIDs(
 
 			if len(fileIDs) > 0 {
 				if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
-					return fmt.Errorf("cannot grant trust center file accesses: %w", err)
+					return fmt.Errorf("cannot grant compliance page file accesses: %w", err)
 				}
 			}
 
@@ -515,7 +515,7 @@ func (s *Service) sendPortalAccessEmail(
 	access.UpdatedAt = now
 
 	if err := access.Update(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
+		return fmt.Errorf("cannot update compliance page access with expiration: %w", err)
 	}
 
 	emailPresenterCfg, err := s.GetPortalEmailPresenterConfig(ctx, scope, access.TrustCenterID)
@@ -527,7 +527,7 @@ func (s *Service) sendPortalAccessEmail(
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {
-		return fmt.Errorf("cannot render trust center access email: %w", err)
+		return fmt.Errorf("cannot render compliance page access email: %w", err)
 	}
 
 	accessEmail := coredata.NewEmail(
@@ -560,9 +560,9 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			identity := &coredata.Identity{}
@@ -571,8 +571,8 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 			}
 
 			access := &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenter.ID, identity.ID); err != nil {
-				return fmt.Errorf("cannot load trust center access: %w", err)
+			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePage.ID, identity.ID); err != nil {
+				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
 			profile := &coredata.MembershipProfile{}
@@ -603,7 +603,7 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 				shouldSendEmail = true
 
 				if err := coredata.RejectOrRevokeByTrustCenterFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
-					return fmt.Errorf("cannot reject/revoke trust center file accesses: %w", err)
+					return fmt.Errorf("cannot reject/revoke compliance page file accesses: %w", err)
 				}
 			}
 
@@ -681,7 +681,7 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 		organization.Name,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot render trust center documents access rejected email: %w", err)
+		return fmt.Errorf("cannot render compliance page documents access rejected email: %w", err)
 	}
 
 	accessEmail := coredata.NewEmail(

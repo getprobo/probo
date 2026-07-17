@@ -65,10 +65,6 @@ type (
 		Email    mail.Addr
 		URLPath  string
 		Continue *string
-		// If users tries to connect to compliance page, we must brand the emails accordingly
-		CompliancePageID *gid.GID
-		// OrganizationID brands compliance portal magic-link emails.
-		OrganizationID *gid.GID
 		// OAuth2ClientIDRaw brands connect authorize magic-link emails.
 		OAuth2ClientIDRaw *string
 		MagicLinkBaseURL  *string
@@ -621,26 +617,9 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				if branding != nil {
 					senderName = branding.Name
 				}
-			} else if req.OrganizationID != nil {
-				organization := &coredata.Organization{}
-
-				if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), *req.OrganizationID); err != nil {
-					return fmt.Errorf("cannot load organization: %w", err)
-				}
-
-				senderName = organization.Name
 			}
 
 			emailPresenterCfg := emails.DefaultPresenterConfig(s.baseURL)
-
-			if req.CompliancePageID != nil {
-				var err error
-
-				emailPresenterCfg, err = s.CompliancePageService.EmailPresenterConfig(ctx, *req.CompliancePageID)
-				if err != nil {
-					return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
-				}
-			}
 
 			if req.MagicLinkBaseURL != nil {
 				emailPresenterCfg.BaseURL = *req.MagicLinkBaseURL
@@ -659,20 +638,13 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				return fmt.Errorf("cannot render magic link email: %w", err)
 			}
 
-			var emailOpts *coredata.EmailOptions
-			if req.CompliancePageID != nil {
-				emailOpts = &coredata.EmailOptions{
-					SenderName: &senderName,
-				}
-			}
-
 			magicLinkEmail := coredata.NewEmail(
 				fullName,
 				req.Email,
 				subject,
 				textBody,
 				htmlBody,
-				emailOpts,
+				nil,
 			)
 
 			if err := magicLinkEmail.Insert(ctx, tx); err != nil {

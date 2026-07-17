@@ -29,7 +29,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/complianceportal/resolver"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -98,12 +97,11 @@ func (s *Service) mailingListEmailConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			publicURL, err := resolver.PublicURLForTrustCenter(
+			publicURL, err := s.compliancePortal.PublicURLForCompliancePage(
 				ctx,
 				conn,
 				scope,
 				compliancePage,
-				s.trustCenterBaseDomain,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot resolve compliance page URL: %w", err)

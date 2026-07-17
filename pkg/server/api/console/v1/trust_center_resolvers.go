@@ -12,7 +12,6 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
@@ -60,7 +59,7 @@ func (r *customDomainResolver) Permission(ctx context.Context, obj *types.Custom
 
 // UpdateTrustCenter is the resolver for the updateTrustCenter field.
 func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalUpdate)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +94,7 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 
 // UploadTrustCenterNda is the resolver for the uploadTrustCenterNDA field.
 func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalNonDisclosureAgreementUpload)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalNonDisclosureAgreementUpload)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +124,7 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 
 // DeleteTrustCenterNda is the resolver for the deleteTrustCenterNDA field.
 func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalNonDisclosureAgreementDelete)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalNonDisclosureAgreementDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +142,7 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 
 // UpdateTrustCenterBrand is the resolver for the updateTrustCenterBrand field.
 func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input types.UpdateTrustCenterBrandInput) (*types.UpdateTrustCenterBrandPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalUpdate)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +203,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 
 // UpdateTrustCenterAccess is the resolver for the updateTrustCenterAccess field.
 func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionCompliancePortalAccessUpdate)
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +261,7 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 
 // DeleteTrustCenterAccess is the resolver for the deleteTrustCenterAccess field.
 func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionCompliancePortalAccessDelete)
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalAccessDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +278,7 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 
 // CreateTrustCenterReference is the resolver for the createTrustCenterReference field.
 func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalReferenceCreate)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalReferenceCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +315,7 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 
 // UpdateTrustCenterReference is the resolver for the updateTrustCenterReference field.
 func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input types.UpdateTrustCenterReferenceInput) (*types.UpdateTrustCenterReferencePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionCompliancePortalReferenceUpdate)
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalReferenceUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +355,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 
 // DeleteTrustCenterReference is the resolver for the deleteTrustCenterReference field.
 func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionCompliancePortalReferenceDelete)
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalReferenceDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +372,7 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 // CreateComplianceFramework is the resolver for the createComplianceFramework field.
 func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input types.CreateComplianceFrameworkInput) (*types.CreateComplianceFrameworkPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionComplianceFrameworkCreate)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionComplianceFrameworkCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +401,7 @@ func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input 
 
 // UpdateComplianceFramework is the resolver for the updateComplianceFramework field.
 func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input types.UpdateComplianceFrameworkInput) (*types.UpdateComplianceFrameworkPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionComplianceFrameworkUpdateRank)
+	scope, err := r.authorize(ctx, input.ID, management.ActionComplianceFrameworkUpdateRank)
 	if err != nil {
 		return nil, err
 	}
@@ -428,7 +427,7 @@ func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input 
 
 // DeleteComplianceFramework is the resolver for the deleteComplianceFramework field.
 func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input types.DeleteComplianceFrameworkInput) (*types.DeleteComplianceFrameworkPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionComplianceFrameworkDelete)
+	scope, err := r.authorize(ctx, input.ID, management.ActionComplianceFrameworkDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +454,7 @@ func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input 
 
 // CreateComplianceCustomLink is the resolver for the createComplianceCustomLink field.
 func (r *mutationResolver) CreateComplianceCustomLink(ctx context.Context, input types.CreateComplianceCustomLinkInput) (*types.CreateComplianceCustomLinkPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionComplianceCustomLinkCreate)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionComplianceCustomLinkCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +484,7 @@ func (r *mutationResolver) CreateComplianceCustomLink(ctx context.Context, input
 
 // UpdateComplianceCustomLink is the resolver for the updateComplianceCustomLink field.
 func (r *mutationResolver) UpdateComplianceCustomLink(ctx context.Context, input types.UpdateComplianceCustomLinkInput) (*types.UpdateComplianceCustomLinkPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionComplianceCustomLinkUpdate)
+	scope, err := r.authorize(ctx, input.ID, management.ActionComplianceCustomLinkUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +512,7 @@ func (r *mutationResolver) UpdateComplianceCustomLink(ctx context.Context, input
 
 // DeleteComplianceCustomLink is the resolver for the deleteComplianceCustomLink field.
 func (r *mutationResolver) DeleteComplianceCustomLink(ctx context.Context, input types.DeleteComplianceCustomLinkInput) (*types.DeleteComplianceCustomLinkPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionComplianceCustomLinkDelete)
+	scope, err := r.authorize(ctx, input.ID, management.ActionComplianceCustomLinkDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +534,7 @@ func (r *mutationResolver) DeleteComplianceCustomLink(ctx context.Context, input
 
 // CreateTrustCenterFile is the resolver for the createTrustCenterFile field.
 func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input types.CreateTrustCenterFileInput) (*types.CreateTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, complianceportal.ActionCompliancePortalFileCreate)
+	scope, err := r.authorize(ctx, input.OrganizationID, management.ActionCompliancePortalFileCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -572,7 +571,7 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 
 // UpdateTrustCenterFile is the resolver for the updateTrustCenterFile field.
 func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionCompliancePortalFileUpdate)
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalFileUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -603,7 +602,7 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 
 // GetTrustCenterFile is the resolver for the getTrustCenterFile field.
 func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionCompliancePortalFileGet)
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalFileGet)
 	if err != nil {
 		return nil, err
 	}
@@ -621,7 +620,7 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 
 // DeleteTrustCenterFile is the resolver for the deleteTrustCenterFile field.
 func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input types.DeleteTrustCenterFileInput) (*types.DeleteTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, complianceportal.ActionCompliancePortalFileDelete)
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalFileDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -638,7 +637,7 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 
 // CreateCustomDomain is the resolver for the createCustomDomain field.
 func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, complianceportal.ActionCustomDomainCreate)
+	scope, err := r.authorize(ctx, input.TrustCenterID, management.ActionCustomDomainCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -674,13 +673,13 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 
 // DeleteCustomDomain is the resolver for the deleteCustomDomain field.
 func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error) {
-	scope, err := r.authorize(ctx, input.CustomDomainID, complianceportal.ActionCustomDomainDelete)
+	scope, err := r.authorize(ctx, input.CustomDomainID, management.ActionCustomDomainDelete)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := r.management.RemoveCustomDomain(ctx, scope, input.CustomDomainID); err != nil {
-		if errors.Is(err, complianceportal.ErrCustomDomainManaged) {
+		if errors.Is(err, management.ErrCustomDomainManaged) {
 			return nil, gqlutils.Conflictf(ctx, "managed domain cannot be deleted")
 		}
 
@@ -696,7 +695,7 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 // Logo is the resolver for the logo field.
 func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet); err != nil {
 		return nil, err
 	}
 
@@ -709,7 +708,7 @@ func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) 
 
 // DarkLogo is the resolver for the darkLogo field.
 func (r *trustCenterResolver) DarkLogo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet); err != nil {
 		return nil, err
 	}
 
@@ -722,7 +721,7 @@ func (r *trustCenterResolver) DarkLogo(ctx context.Context, obj *types.TrustCent
 
 // Nda is the resolver for the nda field.
 func (r *trustCenterResolver) Nda(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
-	hasPermission, err := r.Resolver.Permission(ctx, obj, complianceportal.ActionCompliancePortalGetNda)
+	hasPermission, err := r.Resolver.Permission(ctx, obj, management.ActionCompliancePortalGetNda)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -764,7 +763,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 // Accesses is the resolver for the accesses field.
 func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalAccessList)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessList)
 	if err != nil {
 		return nil, err
 	}
@@ -794,7 +793,7 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 
 // References is the resolver for the references field.
 func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalReferenceList)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalReferenceList)
 	if err != nil {
 		return nil, err
 	}
@@ -824,7 +823,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 
 // ComplianceFrameworks is the resolver for the complianceFrameworks field.
 func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceFrameworkOrderField]) (*types.ComplianceFrameworkConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionComplianceFrameworkList)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionComplianceFrameworkList)
 	if err != nil {
 		return nil, err
 	}
@@ -854,7 +853,7 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 
 // CustomLinks is the resolver for the customLinks field.
 func (r *trustCenterResolver) CustomLinks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceCustomLinkOrderField]) (*types.ComplianceCustomLinkConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionComplianceCustomLinkList)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionComplianceCustomLinkList)
 	if err != nil {
 		return nil, err
 	}
@@ -884,7 +883,7 @@ func (r *trustCenterResolver) CustomLinks(ctx context.Context, obj *types.TrustC
 
 // MailingList is the resolver for the mailingList field.
 func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustCenter) (*types.MailingList, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionMailingListSubscriberList)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionMailingListSubscriberList)
 	if err != nil {
 		return nil, err
 	}
@@ -908,7 +907,7 @@ func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustC
 
 // DefaultDomain is the resolver for the defaultDomain field.
 func (r *trustCenterResolver) DefaultDomain(ctx context.Context, obj *types.TrustCenter) (*types.CustomDomain, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCustomDomainGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
 		return nil, err
 	}
@@ -928,7 +927,7 @@ func (r *trustCenterResolver) DefaultDomain(ctx context.Context, obj *types.Trus
 
 // CustomDomain is the resolver for the customDomain field.
 func (r *trustCenterResolver) CustomDomain(ctx context.Context, obj *types.TrustCenter) (*types.CustomDomain, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCustomDomainGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
 		return nil, err
 	}
@@ -948,7 +947,7 @@ func (r *trustCenterResolver) CustomDomain(ctx context.Context, obj *types.Trust
 
 // PublicURL is the resolver for the publicUrl field.
 func (r *trustCenterResolver) PublicURL(ctx context.Context, obj *types.TrustCenter) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
 	if err != nil {
 		return "", err
 	}
@@ -969,7 +968,7 @@ func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCe
 
 // NdaSignature is the resolver for the ndaSignature field.
 func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types.TrustCenterAccess) (*types.ElectronicSignature, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalAccessGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return nil, err
 	}
@@ -993,7 +992,7 @@ func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types
 
 // PendingRequestCount is the resolver for the pendingRequestCount field.
 func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalAccessGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return 0, err
 	}
@@ -1009,7 +1008,7 @@ func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj
 
 // ActiveCount is the resolver for the activeCount field.
 func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalAccessGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return 0, err
 	}
@@ -1045,7 +1044,7 @@ func (r *trustCenterAccessResolver) Profile(ctx context.Context, obj *types.Trus
 
 // AvailableDocumentAccesses is the resolver for the availableDocumentAccesses field.
 func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalAccessGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1156,7 +1155,7 @@ func (r *trustCenterDocumentAccessResolver) Audit(ctx context.Context, obj *type
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
-	scope, err := r.authorize(ctx, obj.TrustCenterAccessID, complianceportal.ActionCompliancePortalFileGet)
+	scope, err := r.authorize(ctx, obj.TrustCenterAccessID, management.ActionCompliancePortalFileGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1176,7 +1175,7 @@ func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterDocumentAccessConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, complianceportal.ActionCompliancePortalDocumentAccessList)
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalDocumentAccessList)
 	if err != nil {
 		return 0, err
 	}
@@ -1192,7 +1191,7 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 
 // File is the resolver for the file field.
 func (r *trustCenterFileResolver) File(ctx context.Context, obj *types.TrustCenterFile) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalFileGetFileUrl); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileGetFileUrl); err != nil {
 		return nil, err
 	}
 
@@ -1243,7 +1242,7 @@ func (r *trustCenterFileResolver) Permission(ctx context.Context, obj *types.Tru
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterFileConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, complianceportal.ActionCompliancePortalFileList)
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalFileList)
 	if err != nil {
 		return 0, err
 	}
@@ -1259,7 +1258,7 @@ func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj 
 
 // Logo is the resolver for the logo field.
 func (r *trustCenterReferenceResolver) Logo(ctx context.Context, obj *types.TrustCenterReference) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalReferenceGetLogoUrl); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalReferenceGetLogoUrl); err != nil {
 		return nil, err
 	}
 
@@ -1273,7 +1272,7 @@ func (r *trustCenterReferenceResolver) Permission(ctx context.Context, obj *type
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, complianceportal.ActionCompliancePortalReferenceList)
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalReferenceList)
 	if err != nil {
 		return 0, err
 	}

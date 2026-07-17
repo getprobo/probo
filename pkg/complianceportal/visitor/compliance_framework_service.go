@@ -58,7 +58,7 @@ func (s *Service) GetComplianceFramework(
 func (s *Service) ListComplianceFrameworksByPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceFrameworkOrderField],
 ) (*page.Page[*coredata.ComplianceFramework, coredata.ComplianceFrameworkOrderField], error) {
 	var complianceFrameworks coredata.ComplianceFrameworks
@@ -66,7 +66,7 @@ func (s *Service) ListComplianceFrameworksByPortalID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := complianceFrameworks.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+			err := complianceFrameworks.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance frameworks: %w", err)
 			}

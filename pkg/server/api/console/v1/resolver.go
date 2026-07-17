@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -67,6 +68,7 @@ type (
 		iam               *iam.Service
 		esign             *esign.Service
 		management        *management.Service
+		certManager       *certmanager.Service
 		accessReview      *accessreview.Service
 		agentRun          *agentrun.Service
 		mailman           *mailman.Service
@@ -90,10 +92,14 @@ func (r *Resolver) newCustomDomainType(
 	scope coredata.Scoper,
 	domain *coredata.CustomDomain,
 ) (*types.CustomDomain, error) {
-	cert, err := r.management.GetCertificate(ctx, scope, domain)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load certificate", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+	var cert *coredata.Certificate
+	if domain != nil && domain.CertificateID != nil {
+		var err error
+		cert, err = r.certManager.Get(ctx, scope, *domain.CertificateID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load certificate", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
 	}
 
 	return types.NewCustomDomain(domain, cert, r.customDomainCname), nil
@@ -106,6 +112,7 @@ func NewMux(
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	managementSvc *management.Service,
+	certManagerSvc *certmanager.Service,
 	accessReviewSvc *accessreview.Service,
 	agentRunSvc *agentrun.Service,
 	mailmanSvc *mailman.Service,
@@ -131,6 +138,7 @@ func NewMux(
 		resourceAliasSvc,
 		esignSvc,
 		managementSvc,
+		certManagerSvc,
 		accessReviewSvc,
 		agentRunSvc,
 		mailmanSvc,

@@ -33,7 +33,6 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
@@ -134,26 +133,26 @@ func (req *UpdateBrandRequest) Validate() error {
 func (s *Service) Get(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) (*coredata.TrustCenter, error) {
-	var trustCenter *coredata.TrustCenter
+	var compliancePage *coredata.TrustCenter
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage = &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center: %w", err)
+		return nil, fmt.Errorf("cannot load compliance page: %w", err)
 	}
 
-	return trustCenter, nil
+	return compliancePage, nil
 }
 
 func (s *Service) GetByOrganizationID(
@@ -161,14 +160,14 @@ func (s *Service) GetByOrganizationID(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.TrustCenter, error) {
-	var trustCenter *coredata.TrustCenter
+	var compliancePage *coredata.TrustCenter
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage = &coredata.TrustCenter{}
+			if err := compliancePage.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			return nil
@@ -178,7 +177,7 @@ func (s *Service) GetByOrganizationID(
 		return nil, err
 	}
 
-	return trustCenter, nil
+	return compliancePage, nil
 }
 
 func (s *Service) Update(
@@ -191,40 +190,40 @@ func (s *Service) Update(
 	}
 
 	var (
-		trustCenter *coredata.TrustCenter
-		file        *coredata.File
+		compliancePage *coredata.TrustCenter
+		file           *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage = &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			if req.Active != nil {
-				trustCenter.Active = *req.Active
+				compliancePage.Active = *req.Active
 			}
 
 			if req.Slug != nil {
-				trustCenter.Slug = *req.Slug
+				compliancePage.Slug = *req.Slug
 			}
 
 			if req.SearchEngineIndexing != nil {
-				trustCenter.SearchEngineIndexing = *req.SearchEngineIndexing
+				compliancePage.SearchEngineIndexing = *req.SearchEngineIndexing
 			}
 
 			if req.Title != nil {
-				trustCenter.Title = *req.Title
+				compliancePage.Title = *req.Title
 			}
 
 			if req.Description != nil {
-				trustCenter.Description = *req.Description
+				compliancePage.Description = *req.Description
 			}
 
 			if req.WebsiteURL != nil {
-				trustCenter.WebsiteURL = *req.WebsiteURL
+				compliancePage.WebsiteURL = *req.WebsiteURL
 			}
 
 			if req.Email != nil {
@@ -234,22 +233,22 @@ func (s *Service) Update(
 					}
 				}
 
-				trustCenter.Email = *req.Email
+				compliancePage.Email = *req.Email
 			}
 
 			if req.HeadquarterAddress != nil {
-				trustCenter.HeadquarterAddress = *req.HeadquarterAddress
+				compliancePage.HeadquarterAddress = *req.HeadquarterAddress
 			}
 
-			trustCenter.UpdatedAt = time.Now()
+			compliancePage.UpdatedAt = time.Now()
 
-			if err := trustCenter.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update trust center: %w", err)
+			if err := compliancePage.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance page: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID != nil {
+			if compliancePage.NonDisclosureAgreementFileID != nil {
 				file = &coredata.File{}
-				if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+				if err := file.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
 					return fmt.Errorf("cannot load file: %w", err)
 				}
 			}
@@ -261,7 +260,7 @@ func (s *Service) Update(
 		return nil, nil, err
 	}
 
-	return trustCenter, file, nil
+	return compliancePage, file, nil
 }
 
 func (s *Service) UploadNDA(
@@ -274,20 +273,20 @@ func (s *Service) UploadNDA(
 	}
 
 	var (
-		trustCenter *coredata.TrustCenter
-		file        *coredata.File
+		compliancePage *coredata.TrustCenter
+		file           *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage = &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if trustCenter.OrganizationID == gid.Nil {
-				return fmt.Errorf("trust center %s has no organization", req.TrustCenterID)
+			if compliancePage.OrganizationID == gid.Nil {
+				return fmt.Errorf("compliance page %s has no organization", req.TrustCenterID)
 			}
 
 			objectKey, err := uuid.NewV7()
@@ -305,7 +304,7 @@ func (s *Service) UploadNDA(
 
 			file = &coredata.File{
 				ID:             fileID,
-				OrganizationID: trustCenter.OrganizationID,
+				OrganizationID: compliancePage.OrganizationID,
 				BucketName:     s.bucket,
 				MimeType:       mimeType,
 				FileName:       req.FileName,
@@ -320,9 +319,9 @@ func (s *Service) UploadNDA(
 				file,
 				req.File,
 				map[string]string{
-					"type":            "trust-center-nda",
-					"trust-center-id": req.TrustCenterID.String(),
-					"organization-id": trustCenter.OrganizationID.String(),
+					"type":               "compliance-page-nda",
+					"compliance-page-id": req.TrustCenterID.String(),
+					"organization-id":    compliancePage.OrganizationID.String(),
 				},
 			)
 			if err != nil {
@@ -335,11 +334,11 @@ func (s *Service) UploadNDA(
 				return fmt.Errorf("cannot insert file: %w", err)
 			}
 
-			trustCenter.NonDisclosureAgreementFileID = &fileID
-			trustCenter.UpdatedAt = now
+			compliancePage.NonDisclosureAgreementFileID = &fileID
+			compliancePage.UpdatedAt = now
 
-			if err := trustCenter.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update trust center: %w", err)
+			if err := compliancePage.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance page: %w", err)
 			}
 
 			return nil
@@ -349,29 +348,29 @@ func (s *Service) UploadNDA(
 		return nil, nil, err
 	}
 
-	return trustCenter, file, nil
+	return compliancePage, file, nil
 }
 
 func (s *Service) DeleteNDA(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) (*coredata.TrustCenter, *coredata.File, error) {
-	var trustCenter *coredata.TrustCenter
+	var compliancePage *coredata.TrustCenter
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage = &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			trustCenter.NonDisclosureAgreementFileID = nil
-			trustCenter.UpdatedAt = time.Now()
+			compliancePage.NonDisclosureAgreementFileID = nil
+			compliancePage.UpdatedAt = time.Now()
 
-			if err := trustCenter.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update trust center: %w", err)
+			if err := compliancePage.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance page: %w", err)
 			}
 
 			return nil
@@ -381,7 +380,7 @@ func (s *Service) DeleteNDA(
 		return nil, nil, err
 	}
 
-	return trustCenter, nil, nil
+	return compliancePage, nil, nil
 }
 
 func (s *Service) UpdateBrand(
@@ -394,55 +393,55 @@ func (s *Service) UpdateBrand(
 	}
 
 	var (
-		trustCenter *coredata.TrustCenter
-		ndaFile     *coredata.File
+		compliancePage *coredata.TrustCenter
+		ndaFile        *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage = &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			now := time.Now()
 
 			if req.LogoFile != nil {
 				if *req.LogoFile == nil {
-					trustCenter.LogoFileID = nil
+					compliancePage.LogoFileID = nil
 				} else {
-					file, err := s.uploadBrandFile(ctx, scope, conn, *req.LogoFile, "trust-center-logo", trustCenter)
+					file, err := s.uploadBrandFile(ctx, scope, conn, *req.LogoFile, "compliance-page-logo", compliancePage)
 					if err != nil {
 						return fmt.Errorf("cannot upload logo file: %w", err)
 					}
 
-					trustCenter.LogoFileID = &file.ID
+					compliancePage.LogoFileID = &file.ID
 				}
 			}
 
 			if req.DarkLogoFile != nil {
 				if *req.DarkLogoFile == nil {
-					trustCenter.DarkLogoFileID = nil
+					compliancePage.DarkLogoFileID = nil
 				} else {
-					file, err := s.uploadBrandFile(ctx, scope, conn, *req.DarkLogoFile, "trust-center-dark-logo", trustCenter)
+					file, err := s.uploadBrandFile(ctx, scope, conn, *req.DarkLogoFile, "compliance-page-dark-logo", compliancePage)
 					if err != nil {
 						return fmt.Errorf("cannot upload dark logo file: %w", err)
 					}
 
-					trustCenter.DarkLogoFileID = &file.ID
+					compliancePage.DarkLogoFileID = &file.ID
 				}
 			}
 
-			trustCenter.UpdatedAt = now
+			compliancePage.UpdatedAt = now
 
-			if err := trustCenter.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update trust center: %w", err)
+			if err := compliancePage.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance page: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID != nil {
+			if compliancePage.NonDisclosureAgreementFileID != nil {
 				ndaFile = &coredata.File{}
-				if err := ndaFile.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+				if err := ndaFile.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
 					return fmt.Errorf("cannot load nda file: %w", err)
 				}
 			}
@@ -454,7 +453,7 @@ func (s *Service) UpdateBrand(
 		return nil, nil, err
 	}
 
-	return trustCenter, ndaFile, nil
+	return compliancePage, ndaFile, nil
 }
 
 func (s *Service) uploadBrandFile(
@@ -463,7 +462,7 @@ func (s *Service) uploadBrandFile(
 	conn pg.Tx,
 	fileUpload *FileUpload,
 	fileType string,
-	trustCenter *coredata.TrustCenter,
+	compliancePage *coredata.TrustCenter,
 ) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -482,9 +481,9 @@ func (s *Service) uploadBrandFile(
 		ContentType:  &mimeType,
 		CacheControl: new("max-age=3600, public"),
 		Metadata: map[string]string{
-			"type":            fileType,
-			"trust-center-id": trustCenter.ID.String(),
-			"organization-id": trustCenter.OrganizationID.String(),
+			"type":               fileType,
+			"compliance-page-id": compliancePage.ID.String(),
+			"organization-id":    compliancePage.OrganizationID.String(),
 		},
 	})
 	if err != nil {
@@ -504,7 +503,7 @@ func (s *Service) uploadBrandFile(
 
 	file := &coredata.File{
 		ID:             fileID,
-		OrganizationID: trustCenter.OrganizationID,
+		OrganizationID: compliancePage.OrganizationID,
 		BucketName:     s.bucket,
 		MimeType:       mimeType,
 		FileName:       fileUpload.Filename,
@@ -525,26 +524,26 @@ func (s *Service) uploadBrandFile(
 func (s *Service) GenerateNDAFileURL(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
 	var file *coredata.File
 
-	trustCenter := &coredata.TrustCenter{}
+	compliancePage := &coredata.TrustCenter{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID == nil {
+			if compliancePage.NonDisclosureAgreementFileID == nil {
 				return nil
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -555,7 +554,7 @@ func (s *Service) GenerateNDAFileURL(
 		return nil, err
 	}
 
-	if trustCenter.NonDisclosureAgreementFileID == nil {
+	if compliancePage.NonDisclosureAgreementFileID == nil {
 		return nil, nil
 	}
 
@@ -691,13 +690,7 @@ func (s *Service) EmailPresenterConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			publicURL, err := complianceportal.PublicURLForTrustCenter(
-				ctx,
-				conn,
-				scope,
-				compliancePage,
-				s.baseDomain,
-			)
+			publicURL, err := s.PublicURLForCompliancePage(ctx, conn, scope, compliancePage)
 			if err != nil {
 				return fmt.Errorf("cannot resolve compliance page URL: %w", err)
 			}
@@ -736,24 +729,24 @@ func (s *Service) EmailPresenterConfig(
 func (s *Service) GetMailingList(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) (*coredata.MailingList, error) {
 	var mailingList *coredata.MailingList
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if trustCenter.MailingListID == nil {
+			if compliancePage.MailingListID == nil {
 				return nil
 			}
 
 			mailingList = &coredata.MailingList{}
-			if err := mailingList.LoadByID(ctx, conn, scope, *trustCenter.MailingListID); err != nil {
+			if err := mailingList.LoadByID(ctx, conn, scope, *compliancePage.MailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 

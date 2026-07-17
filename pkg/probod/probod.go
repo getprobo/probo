@@ -52,7 +52,6 @@ import (
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
-	"go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -495,7 +494,7 @@ func (impl *Implm) Run(
 	oauth2ScopeRegistry := oauth2scope.NewRegistry().
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
-		Register(complianceportal.OAuth2ScopeMappings).
+		Register(management.OAuth2ScopeMappings).
 		Register(agentrun.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings)
@@ -618,12 +617,26 @@ func (impl *Implm) Run(
 		l.Named("esign"),
 	)
 
+	resourceAliasService := resourcealias.NewService(pgClient)
+
+	managementService := management.NewService(
+		pgClient,
+		s3Client,
+		impl.cfg.AWS.Bucket,
+		baseURL.String(),
+		impl.cfg.TrustCenter.BaseDomain,
+		fileManagerService,
+		certManagerService,
+		slackService,
+		l.Named("compliance-portal-management"),
+	)
+
 	mailmanService := mailman.NewService(
 		pgClient,
 		fileManagerService,
 		impl.cfg.Auth.Cookie.Secret,
 		baseURL,
-		impl.cfg.TrustCenter.BaseDomain,
+		managementService,
 		impl.cfg.AWS.Bucket,
 		encryptionKey,
 		l,
@@ -658,20 +671,6 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create probo service: %w", err)
 	}
 
-	resourceAliasService := resourcealias.NewService(pgClient)
-
-	managementService := management.NewService(
-		pgClient,
-		s3Client,
-		impl.cfg.AWS.Bucket,
-		baseURL.String(),
-		impl.cfg.TrustCenter.BaseDomain,
-		fileManagerService,
-		certManagerService,
-		slackService,
-		l.Named("compliance-portal-management"),
-	)
-
 	trustService := visitor.NewService(
 		pgClient,
 		s3Client,
@@ -686,6 +685,7 @@ func (impl *Implm) Run(
 		l,
 		slackService,
 		resourceAliasService,
+		managementService,
 	)
 
 	staticCIMDAllow := oauth2.CIMDAllowFromClientIDs(impl.cfg.Auth.OAuth2Server.CIMDAllowedClientIDs)
@@ -716,7 +716,7 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
-	iamService.Authorizer.RegisterPolicySet(complianceportal.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
@@ -732,6 +732,7 @@ func (impl *Implm) Run(
 			Trust:             trustService,
 			ESign:             esignService,
 			Management:        managementService,
+			CertManager:       certManagerService,
 			AccessReview:      accessReviewService,
 			AgentRun:          agentRunService,
 			Mailman:           mailmanService,

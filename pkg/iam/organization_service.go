@@ -613,7 +613,7 @@ func (s *OrganizationService) CreateOrganization(
 			OrganizationID:       organization.ID,
 			TenantID:             organization.TenantID,
 			Active:               false,
-			Slug:                 slug.Make(organization.Name),
+			Slug:                 slug.MakeWithEntropy(organization.Name),
 			Title:                organization.Name,
 			SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
 			MailingListID:        &mailingList.ID,

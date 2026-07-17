@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/complianceportal"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
@@ -23,7 +23,7 @@ import (
 
 // Subscribers is the resolver for the subscribers field on MailingList.
 func (r *mailingListResolver) Subscribers(ctx context.Context, obj *types.MailingList, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListSubscriberConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, complianceportal.ActionMailingListSubscriberList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionMailingListSubscriberList); err != nil {
 		return nil, err
 	}
 
@@ -45,7 +45,7 @@ func (r *mailingListResolver) Subscribers(ctx context.Context, obj *types.Mailin
 
 // Updates is the resolver for the updates field on MailingList.
 func (r *mailingListResolver) Updates(ctx context.Context, obj *types.MailingList, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListUpdateConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, complianceportal.ActionMailingListUpdateList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionMailingListUpdateList); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (r *mailingListResolver) Updates(ctx context.Context, obj *types.MailingLis
 
 // TotalCount is the resolver for the totalCount field.
 func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context, obj *types.MailingListSubscriberConnection) (int, error) {
-	if _, err := r.authorize(ctx, obj.ParentID, complianceportal.ActionMailingListSubscriberList); err != nil {
+	if _, err := r.authorize(ctx, obj.ParentID, management.ActionMailingListSubscriberList); err != nil {
 		return 0, err
 	}
 
@@ -89,7 +89,7 @@ func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context
 
 // TotalCount is the resolver for the totalCount field on MailingListUpdateConnection.
 func (r *mailingListUpdateConnectionResolver) TotalCount(ctx context.Context, obj *types.MailingListUpdateConnection) (int, error) {
-	if _, err := r.authorize(ctx, obj.ParentID, complianceportal.ActionMailingListUpdateList); err != nil {
+	if _, err := r.authorize(ctx, obj.ParentID, management.ActionMailingListUpdateList); err != nil {
 		return 0, err
 	}
 
@@ -104,7 +104,7 @@ func (r *mailingListUpdateConnectionResolver) TotalCount(ctx context.Context, ob
 
 // CreateMailingListUpdate is the resolver for the createMailingListUpdate field.
 func (r *mutationResolver) CreateMailingListUpdate(ctx context.Context, input types.CreateMailingListUpdateInput) (*types.CreateMailingListUpdatePayload, error) {
-	if _, err := r.authorize(ctx, input.MailingListID, complianceportal.ActionMailingListUpdateCreate); err != nil {
+	if _, err := r.authorize(ctx, input.MailingListID, management.ActionMailingListUpdateCreate); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func (r *mutationResolver) CreateMailingListUpdate(ctx context.Context, input ty
 
 // UpdateMailingListUpdate is the resolver for the updateMailingListUpdate field.
 func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input types.UpdateMailingListUpdateInput) (*types.UpdateMailingListUpdatePayload, error) {
-	if _, err := r.authorize(ctx, input.ID, complianceportal.ActionMailingListUpdateUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ID, management.ActionMailingListUpdateUpdate); err != nil {
 		return nil, err
 	}
 
@@ -170,7 +170,7 @@ func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input ty
 
 // SendMailingListUpdate is the resolver for the sendMailingListUpdate field.
 func (r *mutationResolver) SendMailingListUpdate(ctx context.Context, input types.SendMailingListUpdateInput) (*types.SendMailingListUpdatePayload, error) {
-	if _, err := r.authorize(ctx, input.ID, complianceportal.ActionMailingListUpdateUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ID, management.ActionMailingListUpdateUpdate); err != nil {
 		return nil, err
 	}
 
@@ -196,7 +196,7 @@ func (r *mutationResolver) SendMailingListUpdate(ctx context.Context, input type
 
 // DeleteMailingListUpdate is the resolver for the deleteMailingListUpdate field.
 func (r *mutationResolver) DeleteMailingListUpdate(ctx context.Context, input types.DeleteMailingListUpdateInput) (*types.DeleteMailingListUpdatePayload, error) {
-	if _, err := r.authorize(ctx, input.ID, complianceportal.ActionMailingListUpdateDelete); err != nil {
+	if _, err := r.authorize(ctx, input.ID, management.ActionMailingListUpdateDelete); err != nil {
 		return nil, err
 	}
 
@@ -217,7 +217,7 @@ func (r *mutationResolver) DeleteMailingListUpdate(ctx context.Context, input ty
 
 // UpdateMailingList is the resolver for the updateMailingList field.
 func (r *mutationResolver) UpdateMailingList(ctx context.Context, input types.UpdateMailingListInput) (*types.UpdateMailingListPayload, error) {
-	if _, err := r.authorize(ctx, input.ID, complianceportal.ActionMailingListUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ID, management.ActionMailingListUpdate); err != nil {
 		return nil, err
 	}
 
@@ -234,7 +234,7 @@ func (r *mutationResolver) UpdateMailingList(ctx context.Context, input types.Up
 
 // CreateMailingListSubscriber is the resolver for the createMailingListSubscriber field.
 func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, input types.CreateMailingListSubscriberInput) (*types.CreateMailingListSubscriberPayload, error) {
-	if _, err := r.authorize(ctx, input.MailingListID, complianceportal.ActionMailingListSubscriberCreate); err != nil {
+	if _, err := r.authorize(ctx, input.MailingListID, management.ActionMailingListSubscriberCreate); err != nil {
 		return nil, err
 	}
 
@@ -268,7 +268,7 @@ func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, inpu
 
 // DeleteMailingListSubscriber is the resolver for the deleteMailingListSubscriber field.
 func (r *mutationResolver) DeleteMailingListSubscriber(ctx context.Context, input types.DeleteMailingListSubscriberInput) (*types.DeleteMailingListSubscriberPayload, error) {
-	if _, err := r.authorize(ctx, input.ID, complianceportal.ActionMailingListSubscriberDelete); err != nil {
+	if _, err := r.authorize(ctx, input.ID, management.ActionMailingListSubscriberDelete); err != nil {
 		return nil, err
 	}
 

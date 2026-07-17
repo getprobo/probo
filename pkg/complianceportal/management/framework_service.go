@@ -76,7 +76,7 @@ func (r *DeleteFrameworkRequest) Validate() error {
 func (s *Service) ListFrameworksWithHidden(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceFrameworkOrderField],
 ) (*page.Page[*coredata.ComplianceFramework, coredata.ComplianceFrameworkOrderField], error) {
 	var cfs coredata.ComplianceFrameworks
@@ -84,7 +84,7 @@ func (s *Service) ListFrameworksWithHidden(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := cfs.LoadWithHiddenByTrustCenterID(ctx, conn, scope, trustCenterID, cursor); err != nil {
+			if err := cfs.LoadWithHiddenByTrustCenterID(ctx, conn, scope, compliancePageID, cursor); err != nil {
 				return fmt.Errorf("cannot load frameworks with hidden: %w", err)
 			}
 
@@ -116,9 +116,9 @@ func (s *Service) CreateFramework(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			framework := &coredata.Framework{}
@@ -128,7 +128,7 @@ func (s *Service) CreateFramework(
 
 			cf = &coredata.ComplianceFramework{
 				ID:             cfID,
-				OrganizationID: trustCenter.OrganizationID,
+				OrganizationID: compliancePage.OrganizationID,
 				TrustCenterID:  req.TrustCenterID,
 				FrameworkID:    req.FrameworkID,
 				CreatedAt:      now,

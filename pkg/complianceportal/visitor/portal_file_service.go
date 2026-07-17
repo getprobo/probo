@@ -47,7 +47,7 @@ func (s *Service) GetPortalFile(
 		func(ctx context.Context, conn pg.Querier) error {
 			err := trustCenterFile.LoadByID(ctx, conn, scope, trustCenterFileID)
 			if err != nil {
-				return fmt.Errorf("cannot load trust center file: %w", err)
+				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
 			return nil
@@ -58,11 +58,11 @@ func (s *Service) GetPortalFile(
 	}
 
 	if trustCenterFile.OrganizationID != organizationID {
-		return nil, ErrTrustCenterFileNotFound
+		return nil, ErrPortalFileNotFound
 	}
 
 	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
-		return nil, ErrTrustCenterFileNotVisible
+		return nil, ErrPortalFileNotVisible
 	}
 
 	return trustCenterFile, nil
@@ -82,7 +82,7 @@ func (s *Service) ListPortalFilesForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			err := trustCenterFiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
-				return fmt.Errorf("cannot load trust center files: %w", err)
+				return fmt.Errorf("cannot load compliance page files: %w", err)
 			}
 
 			return nil
@@ -103,7 +103,7 @@ func (s *Service) ExportPortalFile(
 ) ([]byte, string, error) {
 	fileData, mimeType, err := s.exportPortalFileData(ctx, scope, trustCenterFileID)
 	if err != nil {
-		return nil, "", fmt.Errorf("cannot export trust center file: %w", err)
+		return nil, "", fmt.Errorf("cannot export compliance page file: %w", err)
 	}
 
 	if mimeType == "application/pdf" {
@@ -141,7 +141,7 @@ func (s *Service) exportPortalFileData(
 		func(ctx context.Context, conn pg.Querier) error {
 			trustCenterFile = &coredata.TrustCenterFile{}
 			if err := trustCenterFile.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
-				return fmt.Errorf("cannot load trust center file: %w", err)
+				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
 			file = &coredata.File{}

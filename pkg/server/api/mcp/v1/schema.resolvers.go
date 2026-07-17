@@ -14,7 +14,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
@@ -4884,7 +4883,7 @@ func (r *Resolver) DeleteRightsRequestTool(ctx context.Context, req *mcp.CallToo
 // GetTrustCenterTool handles the getTrustCenter tool
 // Get the trust center for an organization
 func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrustCenterInput) (*mcp.CallToolResult, types.GetTrustCenterOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, complianceportal.ActionCompliancePortalGet)
+	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalGet)
 	if err != nil {
 		return nil, types.GetTrustCenterOutput{}, err
 	}
@@ -4931,7 +4930,7 @@ func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequ
 // UpdateTrustCenterTool handles the updateTrustCenter tool
 // Update the trust center settings
 func (r *Resolver) UpdateTrustCenterTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrustCenterInput) (*mcp.CallToolResult, types.UpdateTrustCenterOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalUpdate)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalUpdate)
 	if err != nil {
 		return nil, types.UpdateTrustCenterOutput{}, err
 	}
@@ -4969,7 +4968,7 @@ func (r *Resolver) UpdateTrustCenterTool(ctx context.Context, req *mcp.CallToolR
 // ListTrustCenterReferencesTool handles the listTrustCenterReferences tool
 // List all references for a trust center
 func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrustCenterReferencesInput) (*mcp.CallToolResult, types.ListTrustCenterReferencesOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalReferenceList)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalReferenceList)
 	if err != nil {
 		return nil, types.ListTrustCenterReferencesOutput{}, err
 	}
@@ -5015,7 +5014,7 @@ func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.C
 // AddTrustCenterReferenceTool handles the addTrustCenterReference tool
 // Add a new reference to the trust center
 func (r *Resolver) AddTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrustCenterReferenceInput) (*mcp.CallToolResult, types.AddTrustCenterReferenceOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, complianceportal.ActionCompliancePortalReferenceCreate)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalReferenceCreate)
 	if err != nil {
 		return nil, types.AddTrustCenterReferenceOutput{}, err
 	}
@@ -5046,7 +5045,7 @@ func (r *Resolver) AddTrustCenterReferenceTool(ctx context.Context, req *mcp.Cal
 // UpdateTrustCenterReferenceTool handles the updateTrustCenterReference tool
 // Update a trust center reference
 func (r *Resolver) UpdateTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrustCenterReferenceInput) (*mcp.CallToolResult, types.UpdateTrustCenterReferenceOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, complianceportal.ActionCompliancePortalReferenceUpdate)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalReferenceUpdate)
 	if err != nil {
 		return nil, types.UpdateTrustCenterReferenceOutput{}, err
 	}
@@ -5081,7 +5080,7 @@ func (r *Resolver) UpdateTrustCenterReferenceTool(ctx context.Context, req *mcp.
 // DeleteTrustCenterReferenceTool handles the deleteTrustCenterReference tool
 // Delete a trust center reference
 func (r *Resolver) DeleteTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrustCenterReferenceInput) (*mcp.CallToolResult, types.DeleteTrustCenterReferenceOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, complianceportal.ActionCompliancePortalReferenceDelete)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalReferenceDelete)
 	if err != nil {
 		return nil, types.DeleteTrustCenterReferenceOutput{}, err
 	}
@@ -5099,7 +5098,7 @@ func (r *Resolver) DeleteTrustCenterReferenceTool(ctx context.Context, req *mcp.
 // ListTrustCenterFilesTool handles the listTrustCenterFiles tool
 // List all files for the trust center
 func (r *Resolver) ListTrustCenterFilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrustCenterFilesInput) (*mcp.CallToolResult, types.ListTrustCenterFilesOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, complianceportal.ActionCompliancePortalFileList)
+	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalFileList)
 	if err != nil {
 		return nil, types.ListTrustCenterFilesOutput{}, err
 	}
@@ -5142,7 +5141,7 @@ func (r *Resolver) ListTrustCenterFilesTool(ctx context.Context, req *mcp.CallTo
 // DeleteTrustCenterFileTool handles the deleteTrustCenterFile tool
 // Delete a trust center file
 func (r *Resolver) DeleteTrustCenterFileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrustCenterFileInput) (*mcp.CallToolResult, types.DeleteTrustCenterFileOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, complianceportal.ActionCompliancePortalFileDelete)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalFileDelete)
 	if err != nil {
 		return nil, types.DeleteTrustCenterFileOutput{}, err
 	}
@@ -5160,7 +5159,7 @@ func (r *Resolver) DeleteTrustCenterFileTool(ctx context.Context, req *mcp.CallT
 // ListComplianceCustomLinksTool handles the listComplianceCustomLinks tool
 // List all custom links for a trust center
 func (r *Resolver) ListComplianceCustomLinksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListComplianceCustomLinksInput) (*mcp.CallToolResult, types.ListComplianceCustomLinksOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, complianceportal.ActionComplianceCustomLinkList)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionComplianceCustomLinkList)
 	if err != nil {
 		return nil, types.ListComplianceCustomLinksOutput{}, err
 	}
@@ -5192,7 +5191,7 @@ func (r *Resolver) ListComplianceCustomLinksTool(ctx context.Context, req *mcp.C
 // AddComplianceCustomLinkTool handles the addComplianceCustomLink tool
 // Add a new custom link to the trust center
 func (r *Resolver) AddComplianceCustomLinkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddComplianceCustomLinkInput) (*mcp.CallToolResult, types.AddComplianceCustomLinkOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, complianceportal.ActionComplianceCustomLinkCreate)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionComplianceCustomLinkCreate)
 	if err != nil {
 		return nil, types.AddComplianceCustomLinkOutput{}, err
 	}
@@ -5217,7 +5216,7 @@ func (r *Resolver) AddComplianceCustomLinkTool(ctx context.Context, req *mcp.Cal
 // UpdateComplianceCustomLinkTool handles the updateComplianceCustomLink tool
 // Update a compliance custom link
 func (r *Resolver) UpdateComplianceCustomLinkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateComplianceCustomLinkInput) (*mcp.CallToolResult, types.UpdateComplianceCustomLinkOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, complianceportal.ActionComplianceCustomLinkUpdate)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionComplianceCustomLinkUpdate)
 	if err != nil {
 		return nil, types.UpdateComplianceCustomLinkOutput{}, err
 	}
@@ -5251,7 +5250,7 @@ func (r *Resolver) UpdateComplianceCustomLinkTool(ctx context.Context, req *mcp.
 // DeleteComplianceCustomLinkTool handles the deleteComplianceCustomLink tool
 // Delete a compliance custom link
 func (r *Resolver) DeleteComplianceCustomLinkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteComplianceCustomLinkInput) (*mcp.CallToolResult, types.DeleteComplianceCustomLinkOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, complianceportal.ActionComplianceCustomLinkDelete)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionComplianceCustomLinkDelete)
 	if err != nil {
 		return nil, types.DeleteComplianceCustomLinkOutput{}, err
 	}
@@ -5274,7 +5273,7 @@ func (r *Resolver) DeleteComplianceCustomLinkTool(ctx context.Context, req *mcp.
 // CreateCustomDomainTool handles the createCustomDomain tool
 // Create a custom domain for a compliance page
 func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCustomDomainInput) (*mcp.CallToolResult, types.CreateCustomDomainOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, complianceportal.ActionCustomDomainCreate)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCustomDomainCreate)
 	if err != nil {
 		return nil, types.CreateCustomDomainOutput{}, err
 	}
@@ -5288,9 +5287,12 @@ func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.CreateCustomDomainOutput{}, fmt.Errorf("cannot create custom domain: %w", err)
 	}
 
-	cert, err := r.management.GetCertificate(ctx, scope, domain)
-	if err != nil {
-		return nil, types.CreateCustomDomainOutput{}, fmt.Errorf("cannot load certificate: %w", err)
+	var cert *coredata.Certificate
+	if domain.CertificateID != nil {
+		cert, err = r.certManager.Get(ctx, scope, *domain.CertificateID)
+		if err != nil {
+			return nil, types.CreateCustomDomainOutput{}, fmt.Errorf("cannot load certificate: %w", err)
+		}
 	}
 
 	return nil, types.CreateCustomDomainOutput{CustomDomain: types.NewCustomDomain(domain, cert)}, nil
@@ -5299,7 +5301,7 @@ func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallTool
 // DeleteCustomDomainTool handles the deleteCustomDomain tool
 // Delete the custom domain of a compliance page
 func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCustomDomainInput) (*mcp.CallToolResult, types.DeleteCustomDomainOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, complianceportal.ActionCustomDomainDelete)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCustomDomainDelete)
 	if err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, err
 	}
@@ -5313,9 +5315,12 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("compliance page has no custom domain")
 	}
 
-	cert, err := r.management.GetCertificate(ctx, scope, domain)
-	if err != nil {
-		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot load certificate: %w", err)
+	var cert *coredata.Certificate
+	if domain.CertificateID != nil {
+		cert, err = r.certManager.Get(ctx, scope, *domain.CertificateID)
+		if err != nil {
+			return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot load certificate: %w", err)
+		}
 	}
 
 	deletedDomain := types.NewCustomDomain(domain, cert)

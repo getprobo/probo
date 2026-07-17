@@ -69,18 +69,17 @@ type (
 		privateKey                 *rsa.PrivateKey
 		logger                     *log.Logger
 
-		AccountService        *AccountService
-		OrganizationService   *OrganizationService
-		CompliancePageService *CompliancePageService
-		SessionService        *SessionService
-		AuthService           *AuthService
-		SAMLService           *saml.Service
-		OIDCService           *oidc.Service
-		SCIMService           *scim.Service
-		APIKeyService         *APIKeyService
-		OAuth2ServerService   *oauth2.Service
-		Authorizer            *Authorizer
-		OAuth2ScopeRegistry   *oauth2scope.Registry
+		AccountService      *AccountService
+		OrganizationService *OrganizationService
+		SessionService      *SessionService
+		AuthService         *AuthService
+		SAMLService         *saml.Service
+		OIDCService         *oidc.Service
+		SCIMService         *scim.Service
+		APIKeyService       *APIKeyService
+		OAuth2ServerService *oauth2.Service
+		Authorizer          *Authorizer
+		OAuth2ScopeRegistry *oauth2scope.Registry
 
 		samlDomainVerifier *SAMLDomainVerifier
 	}
@@ -174,7 +173,6 @@ func NewService(
 
 	svc.AccountService = NewAccountService(svc)
 	svc.OrganizationService = NewOrganizationService(svc)
-	svc.CompliancePageService = NewCompliancePageService(svc)
 	svc.SessionService = NewSessionService(svc)
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)

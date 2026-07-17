@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // Package management holds the scoped, admin-facing compliance portal services
-// (trust center CRUD, domains, frameworks, external URLs, references, files and
+// (compliance page CRUD, domains, frameworks, external URLs, references, files and
 // accesses). It is the write side of the compliance portal feature.
 package management
 
@@ -37,7 +37,7 @@ const (
 
 type (
 	// Service is the admin-facing compliance portal service. It exposes the
-	// scoped CRUD operations for the trust center and its related resources as
+	// scoped CRUD operations for the compliance page and its related resources as
 	// methods on a single type.
 	Service struct {
 		pg            *pg.Client

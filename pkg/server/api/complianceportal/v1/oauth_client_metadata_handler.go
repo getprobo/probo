@@ -19,7 +19,7 @@ import (
 	"net/http"
 
 	"go.gearno.de/kit/httpserver"
-	portal "go.probo.inc/probo/pkg/complianceportal"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 )
 
@@ -38,7 +38,7 @@ func (h *oauthClientMetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	doc, err := portal.BuildClientMetadataDocument(compliancePage, *baseURL)
+	doc, err := visitor.BuildClientMetadataDocument(compliancePage, *baseURL)
 	if err != nil {
 		httpserver.RenderError(w, http.StatusInternalServerError, errInternal)
 		return

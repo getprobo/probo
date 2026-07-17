@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package resolver
+package management
 
 import (
 	"context"
@@ -23,29 +23,25 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// EffectiveDomainForTrustCenter returns the domain a compliance page is served
-// under: the custom domain when it has an active certificate, otherwise the
-// default subdomain when its certificate is active. It returns nil when no
-// serving domain is available yet.
-func EffectiveDomainForTrustCenter(
+func (s *Service) EffectiveDomainForCompliancePage(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	trustCenter *coredata.TrustCenter,
+	compliancePage *coredata.TrustCenter,
 ) (*coredata.CustomDomain, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, trustCenter)
+	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return nil, err
 	}
 
-	if trustCenter.CustomDomainID != nil {
-		if d := byID[*trustCenter.CustomDomainID]; d != nil && active[d.ID] {
+	if compliancePage.CustomDomainID != nil {
+		if d := byID[*compliancePage.CustomDomainID]; d != nil && active[d.ID] {
 			return d, nil
 		}
 	}
 
-	if trustCenter.DefaultDomainID != nil {
-		if d := byID[*trustCenter.DefaultDomainID]; d != nil && active[d.ID] {
+	if compliancePage.DefaultDomainID != nil {
+		if d := byID[*compliancePage.DefaultDomainID]; d != nil && active[d.ID] {
 			return d, nil
 		}
 	}
@@ -53,20 +49,13 @@ func EffectiveDomainForTrustCenter(
 	return nil, nil
 }
 
-// PublicURLForTrustCenter returns the canonical public URL of a compliance
-// page. Compliance pages are always served on a dedicated domain: the custom
-// domain when its certificate is active, otherwise the default probopage
-// subdomain (even while its certificate provisions), and finally the default
-// subdomain hostname derived from the page slug when no domain row is loaded
-// yet.
-func PublicURLForTrustCenter(
+func (s *Service) PublicURLForCompliancePage(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	trustCenter *coredata.TrustCenter,
-	baseDomain string,
+	compliancePage *coredata.TrustCenter,
 ) (string, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, trustCenter)
+	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return "", err
 	}
@@ -74,14 +63,14 @@ func PublicURLForTrustCenter(
 	var host string
 
 	switch {
-	case trustCenter.CustomDomainID != nil && byID[*trustCenter.CustomDomainID] != nil && active[*trustCenter.CustomDomainID]:
-		host = byID[*trustCenter.CustomDomainID].Domain
-	case trustCenter.DefaultDomainID != nil && byID[*trustCenter.DefaultDomainID] != nil:
-		host = byID[*trustCenter.DefaultDomainID].Domain
+	case compliancePage.CustomDomainID != nil && byID[*compliancePage.CustomDomainID] != nil && active[*compliancePage.CustomDomainID]:
+		host = byID[*compliancePage.CustomDomainID].Domain
+	case compliancePage.DefaultDomainID != nil && byID[*compliancePage.DefaultDomainID] != nil:
+		host = byID[*compliancePage.DefaultDomainID].Domain
 	}
 
 	if host == "" {
-		host = trustCenter.Slug + "." + baseDomain
+		host = compliancePage.Slug + "." + s.baseDomain
 	}
 
 	return "https://" + host, nil
@@ -91,15 +80,15 @@ func loadDomains(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	trustCenter *coredata.TrustCenter,
+	compliancePage *coredata.TrustCenter,
 ) (map[gid.GID]*coredata.CustomDomain, map[gid.GID]bool, error) {
 	var ids []gid.GID
-	if trustCenter.CustomDomainID != nil {
-		ids = append(ids, *trustCenter.CustomDomainID)
+	if compliancePage.CustomDomainID != nil {
+		ids = append(ids, *compliancePage.CustomDomainID)
 	}
 
-	if trustCenter.DefaultDomainID != nil {
-		ids = append(ids, *trustCenter.DefaultDomainID)
+	if compliancePage.DefaultDomainID != nil {
+		ids = append(ids, *compliancePage.DefaultDomainID)
 	}
 
 	byID := make(map[gid.GID]*coredata.CustomDomain)

@@ -15,23 +15,23 @@
 package complianceportal
 
 import (
-	portal "go.probo.inc/probo/pkg/complianceportal"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 )
 
 const (
-	VisitorOAuthScope = portal.VisitorOAuthScope
+	VisitorOAuthScope = visitor.VisitorOAuthScope
 	GraphQLPath       = "/graphql"
-	CIMDMetadataPath  = portal.CIMDMetadataPath
-	BrandLogoPath     = portal.BrandLogoPath
-	BrandDarkLogoPath = portal.BrandDarkLogoPath
+	CIMDMetadataPath  = visitor.CIMDMetadataPath
+	BrandLogoPath     = visitor.BrandLogoPath
+	BrandDarkLogoPath = visitor.BrandDarkLogoPath
 	OAuthInitiatePath = "/initiate"
-	OAuthCallbackPath = portal.OAuthCallbackPath
+	OAuthCallbackPath = visitor.OAuthCallbackPath
 )
 
 func CIMDClientIDURL(portalBaseURL string) (string, error) {
-	return portal.CIMDClientIDURL(portalBaseURL)
+	return visitor.CIMDClientIDURL(portalBaseURL)
 }
 
 func OAuthCallbackURL(portalBaseURL string) (string, error) {
-	return portal.OAuthCallbackURL(portalBaseURL)
+	return visitor.OAuthCallbackURL(portalBaseURL)
 }

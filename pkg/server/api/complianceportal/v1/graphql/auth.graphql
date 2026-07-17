@@ -1,28 +1,7 @@
 extend type Mutation {
-  sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
-    @authentication(required: OPTIONAL)
-  verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
-    @authentication(required: OPTIONAL)
   updateFullName(input: UpdateFullNameInput!): UpdateFullNamePayload
     @authentication(required: PRESENT) @sessionOnly
   signOut: SignOutPayload! @authentication(required: PRESENT) @sessionOnly
-}
-
-input SendMagicLinkInput {
-  email: EmailAddr!
-  continue: String
-}
-
-type SendMagicLinkPayload {
-  success: Boolean!
-}
-
-input VerifyMagicLinkInput {
-  token: String!
-}
-
-type VerifyMagicLinkPayload {
-  continue: String
 }
 
 input UpdateFullNameInput {

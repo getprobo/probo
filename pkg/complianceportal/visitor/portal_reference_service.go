@@ -33,7 +33,7 @@ import (
 func (s *Service) ListPortalReferencesForPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
 ) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
 	var references coredata.TrustCenterReferences
@@ -43,9 +43,9 @@ func (s *Service) ListPortalReferencesForPortalID(
 		ctx,
 
 		func(ctx context.Context, conn pg.Querier) error {
-			err := references.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+			err := references.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
 			if err != nil {
-				return fmt.Errorf("cannot load trust center references: %w", err)
+				return fmt.Errorf("cannot load compliance page references: %w", err)
 			}
 
 			return nil
@@ -72,7 +72,7 @@ func (s *Service) GeneratePortalReferenceLogoURL(
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot load trust center reference: %w", err)
+		return "", fmt.Errorf("cannot load compliance page reference: %w", err)
 	}
 
 	file, err := s.fileManager.GetPublicFile(ctx, reference.LogoFileID)
@@ -95,7 +95,7 @@ func (s *Service) GetPortalReference(
 		func(ctx context.Context, conn pg.Querier) error {
 			err := reference.LoadByID(ctx, conn, scope, referenceID)
 			if err != nil {
-				return fmt.Errorf("cannot load trust center reference: %w", err)
+				return fmt.Errorf("cannot load compliance page reference: %w", err)
 			}
 
 			return nil

@@ -21,27 +21,13 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
 )
 
-// The compliance portal service owns the relationship between a compliance
-// page (trust center) and its domains. A page has two slots stored on the
-// trust center row: a default {slug}.probopage.com domain provided by Probo and
-// an optional custom domain. It provisions each domain's TLS certificate
-// through the generic certmanager service within the trust center's transaction
-// so slot changes stay atomic with the page.
-
-// ErrCustomDomainSlotTaken is returned when a compliance page already has a
-// custom domain and another one is added.
 var ErrCustomDomainSlotTaken = errors.New("compliance page already has a custom domain")
 
-// AddCustomDomain provisions the compliance page's custom domain. It fails
-// when the page already has one. The default probopage subdomain, provisioned
-// at page creation, keeps serving as a fallback while the new certificate
-// provisions.
 func (s *Service) AddCustomDomain(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -60,12 +46,12 @@ func (s *Service) AddCustomDomain(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if trustCenter.CustomDomainID != nil {
+			if compliancePage.CustomDomainID != nil {
 				return ErrCustomDomainSlotTaken
 			}
 
@@ -76,7 +62,7 @@ func (s *Service) AddCustomDomain(
 
 			customDomain = coredata.NewCustomDomain(
 				scope.GetTenantID(),
-				trustCenter.OrganizationID,
+				compliancePage.OrganizationID,
 				domain,
 				false,
 			)
@@ -86,11 +72,11 @@ func (s *Service) AddCustomDomain(
 				return fmt.Errorf("cannot insert custom domain: %w", err)
 			}
 
-			trustCenter.CustomDomainID = &customDomain.ID
-			trustCenter.UpdatedAt = time.Now()
+			compliancePage.CustomDomainID = &customDomain.ID
+			compliancePage.UpdatedAt = time.Now()
 
-			if err := trustCenter.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update trust center: %w", err)
+			if err := compliancePage.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update compliance page: %w", err)
 			}
 
 			return nil
@@ -103,9 +89,6 @@ func (s *Service) AddCustomDomain(
 	return customDomain, nil
 }
 
-// RemoveCustomDomain clears the compliance page's custom domain and deletes
-// the underlying domain together with its certificate. The default domain
-// cannot be removed.
 func (s *Service) RemoveCustomDomain(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -120,24 +103,24 @@ func (s *Service) RemoveCustomDomain(
 			}
 
 			if domain.Managed {
-				return complianceportal.ErrCustomDomainManaged
+				return ErrCustomDomainManaged
 			}
 
-			trustCenter := &coredata.TrustCenter{}
-			err := trustCenter.LoadByDomainID(ctx, tx, customDomainID)
+			compliancePage := &coredata.TrustCenter{}
+			err := compliancePage.LoadByDomainID(ctx, tx, customDomainID)
 			switch {
 			case err == nil:
-				if trustCenter.CustomDomainID != nil && *trustCenter.CustomDomainID == customDomainID {
-					trustCenter.CustomDomainID = nil
-					trustCenter.UpdatedAt = time.Now()
+				if compliancePage.CustomDomainID != nil && *compliancePage.CustomDomainID == customDomainID {
+					compliancePage.CustomDomainID = nil
+					compliancePage.UpdatedAt = time.Now()
 
-					if err := trustCenter.Update(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot update trust center: %w", err)
+					if err := compliancePage.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update compliance page: %w", err)
 					}
 				}
 			case errors.Is(err, coredata.ErrResourceNotFound):
 			default:
-				return fmt.Errorf("cannot load trust center by domain id: %w", err)
+				return fmt.Errorf("cannot load compliance page by domain id: %w", err)
 			}
 
 			if err := domain.Delete(ctx, tx, scope); err != nil {
@@ -155,20 +138,6 @@ func (s *Service) RemoveCustomDomain(
 	)
 }
 
-// GetCertificate returns the certificate backing a custom domain, or nil when
-// the domain has no certificate yet.
-func (s *Service) GetCertificate(
-	ctx context.Context,
-	scope coredata.Scoper,
-	domain *coredata.CustomDomain,
-) (*coredata.Certificate, error) {
-	if domain == nil || domain.CertificateID == nil {
-		return nil, nil
-	}
-
-	return s.certManager.Get(ctx, scope, *domain.CertificateID)
-}
-
 // GetDefaultDomain returns the compliance page's default probopage subdomain,
 // or nil when it has not been provisioned yet.
 func (s *Service) GetDefaultDomain(
@@ -176,56 +145,29 @@ func (s *Service) GetDefaultDomain(
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
 ) (*coredata.CustomDomain, error) {
-	return s.domainSlot(ctx, scope, compliancePageID, func(tc *coredata.TrustCenter) *gid.GID {
-		return tc.DefaultDomainID
-	},
-	)
-}
-
-// GetCustomDomain returns the compliance page's custom domain, or nil when
-// none is configured.
-func (s *Service) GetCustomDomain(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-) (*coredata.CustomDomain, error) {
-	return s.domainSlot(ctx, scope, compliancePageID, func(tc *coredata.TrustCenter) *gid.GID {
-		return tc.CustomDomainID
-	},
-	)
-}
-
-func (s *Service) domainSlot(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-	slot func(*coredata.TrustCenter) *gid.GID,
-) (*coredata.CustomDomain, error) {
 	var domain *coredata.CustomDomain
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			domainID := slot(trustCenter)
-			if domainID == nil {
+			if compliancePage.DefaultDomainID == nil {
 				return nil
 			}
 
-			loaded := &coredata.CustomDomain{}
-			if err := loaded.LoadByID(ctx, conn, scope, *domainID); err != nil {
+			domain = &coredata.CustomDomain{}
+			if err := domain.LoadByID(ctx, conn, scope, *compliancePage.DefaultDomainID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
+					domain = nil
 					return nil
 				}
 
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
-
-			domain = loaded
 
 			return nil
 		},
@@ -237,31 +179,34 @@ func (s *Service) domainSlot(
 	return domain, nil
 }
 
-// EffectiveDomain returns the domain a compliance page is served under: the
-// custom domain when it has an active certificate, otherwise the default
-// subdomain when its certificate is active. It returns nil when no serving
-// domain is available yet.
-func (s *Service) EffectiveDomain(
+func (s *Service) GetCustomDomain(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
 ) (*coredata.CustomDomain, error) {
-	var effective *coredata.CustomDomain
+	var domain *coredata.CustomDomain
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			d, err := complianceportal.EffectiveDomainForTrustCenter(ctx, conn, scope, trustCenter)
-			if err != nil {
-				return err
+			if compliancePage.CustomDomainID == nil {
+				return nil
 			}
 
-			effective = d
+			domain = &coredata.CustomDomain{}
+			if err := domain.LoadByID(ctx, conn, scope, *compliancePage.CustomDomainID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					domain = nil
+					return nil
+				}
+
+				return fmt.Errorf("cannot load custom domain: %w", err)
+			}
 
 			return nil
 		},
@@ -270,26 +215,7 @@ func (s *Service) EffectiveDomain(
 		return nil, err
 	}
 
-	return effective, nil
-}
-
-// EffectiveCanonicalHost returns the host a compliance page should be served
-// under, or an empty string when no serving host is available yet.
-func (s *Service) EffectiveCanonicalHost(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-) (string, error) {
-	domain, err := s.EffectiveDomain(ctx, scope, compliancePageID)
-	if err != nil {
-		return "", err
-	}
-
-	if domain == nil {
-		return "", nil
-	}
-
-	return domain.Domain, nil
+	return domain, nil
 }
 
 // PublicURL returns the canonical public URL of a compliance page on its
@@ -304,17 +230,16 @@ func (s *Service) PublicURL(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			url, err := complianceportal.PublicURLForTrustCenter(ctx, conn, scope, trustCenter, s.baseDomain)
+			var err error
+			publicURL, err = s.PublicURLForCompliancePage(ctx, conn, scope, compliancePage)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot resolve public url: %w", err)
 			}
-
-			publicURL = url
 
 			return nil
 		},

@@ -22,7 +22,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/baseurl"
-	page "go.probo.inc/probo/pkg/complianceportal"
 	visitor "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -148,7 +147,7 @@ func compliancePageHeadData() HeadDataFunc {
 		}
 
 		if tc.LogoFileID != nil && compliancePageBaseURL != nil {
-			faviconURL, err := page.BrandLogoURL(*compliancePageBaseURL)
+			faviconURL, err := visitor.BrandLogoURL(*compliancePageBaseURL)
 			if err == nil {
 				headData.FaviconURL = faviconURL
 			}

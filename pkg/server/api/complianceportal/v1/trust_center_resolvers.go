@@ -467,7 +467,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 
 	trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
-		if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
+		if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
 		}
 
@@ -620,7 +620,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 	trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
-		if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
+		if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
 		}
 
@@ -836,7 +836,7 @@ func (r *trustCenterResolver) SubprocessorCategories(ctx context.Context, obj *t
 	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
-	categories, err := r.trust.ListDistinctTrustCenterCategoriesForOrganizationID(ctx, scope, trustCenter.OrganizationID)
+	categories, err := r.trust.ListDistinctPortalCategoriesForOrganizationID(ctx, scope, trustCenter.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessor categories", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -850,7 +850,7 @@ func (r *trustCenterResolver) SubprocessorCountries(ctx context.Context, obj *ty
 	trustCenter := complianceportal.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
-	countries, err := r.trust.ListDistinctTrustCenterCountriesForOrganizationID(ctx, scope, trustCenter.OrganizationID)
+	countries, err := r.trust.ListDistinctPortalCountriesForOrganizationID(ctx, scope, trustCenter.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessor countries", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -986,7 +986,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 	trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
-		if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
+		if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
 			return false, gqlutils.NotFoundf(ctx, "trust center file %q not found", obj.ID)
 		}
 

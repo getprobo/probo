@@ -23,6 +23,8 @@ package slug
 import (
 	"regexp"
 	"strings"
+
+	"go.probo.inc/probo/pkg/crypto/rand"
 )
 
 var (
@@ -41,4 +43,15 @@ func Make(s string) string {
 	s = strings.Trim(s, "-")
 
 	return s
+}
+
+func MakeWithEntropy(s string) string {
+	base := Make(s)
+	suffix := rand.MustHexString(4)
+
+	if base == "" {
+		return suffix
+	}
+
+	return base + "-" + suffix
 }

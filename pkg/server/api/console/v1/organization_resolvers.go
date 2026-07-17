@@ -13,7 +13,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
-	"go.probo.inc/probo/pkg/complianceportal"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -1159,7 +1159,7 @@ func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organiz
 
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1175,7 +1175,7 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, complianceportal.ActionCompliancePortalFileList)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileList)
 	if err != nil {
 		return nil, err
 	}

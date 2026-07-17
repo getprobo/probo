@@ -132,7 +132,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, id)
 		if err != nil {
-			if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
+			if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 

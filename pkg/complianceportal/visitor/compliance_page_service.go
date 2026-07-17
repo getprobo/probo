@@ -122,40 +122,40 @@ type (
 func (s *Service) RenderCompliancePageMarkdown(
 	ctx context.Context,
 	w io.Writer,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	scope coredata.Scoper,
 ) error {
-	org, err := s.GetPortalOrganization(ctx, trustCenterID)
+	org, err := s.GetPortalOrganization(ctx, compliancePageID)
 	if err != nil {
 		return fmt.Errorf("cannot load organization for compliance page: %w", err)
 	}
 
-	trustCenter, err := s.GetPortalByID(ctx, trustCenterID)
+	compliancePage, err := s.GetPortalByID(ctx, compliancePageID)
 	if err != nil {
-		return fmt.Errorf("cannot load trust center for compliance page: %w", err)
+		return fmt.Errorf("cannot load compliance page: %w", err)
 	}
 
 	data := &compliancePageData{
 		OrgName: org.Name,
 	}
 
-	if trustCenter.Description != nil && *trustCenter.Description != "" {
-		data.Description = *trustCenter.Description
+	if compliancePage.Description != nil && *compliancePage.Description != "" {
+		data.Description = *compliancePage.Description
 	}
 
-	if trustCenter.WebsiteURL != nil && *trustCenter.WebsiteURL != "" {
-		data.Details = append(data.Details, compliancePageDetail{Label: "Website", Value: *trustCenter.WebsiteURL})
+	if compliancePage.WebsiteURL != nil && *compliancePage.WebsiteURL != "" {
+		data.Details = append(data.Details, compliancePageDetail{Label: "Website", Value: *compliancePage.WebsiteURL})
 	}
 
-	if trustCenter.Email != nil && *trustCenter.Email != "" {
-		data.Details = append(data.Details, compliancePageDetail{Label: "Email", Value: *trustCenter.Email})
+	if compliancePage.Email != nil && *compliancePage.Email != "" {
+		data.Details = append(data.Details, compliancePageDetail{Label: "Email", Value: *compliancePage.Email})
 	}
 
-	if trustCenter.HeadquarterAddress != nil && *trustCenter.HeadquarterAddress != "" {
-		data.Details = append(data.Details, compliancePageDetail{Label: "Headquarters", Value: *trustCenter.HeadquarterAddress})
+	if compliancePage.HeadquarterAddress != nil && *compliancePage.HeadquarterAddress != "" {
+		data.Details = append(data.Details, compliancePageDetail{Label: "Headquarters", Value: *compliancePage.HeadquarterAddress})
 	}
 
-	data.Frameworks, err = s.fetchComplianceFrameworks(ctx, scope, trustCenterID)
+	data.Frameworks, err = s.fetchComplianceFrameworks(ctx, scope, compliancePageID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch compliance frameworks: %w", err)
 	}
@@ -175,12 +175,12 @@ func (s *Service) RenderCompliancePageMarkdown(
 		return fmt.Errorf("cannot fetch thirdParties: %w", err)
 	}
 
-	data.References, err = s.fetchReferences(ctx, scope, trustCenterID)
+	data.References, err = s.fetchReferences(ctx, scope, compliancePageID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch references: %w", err)
 	}
 
-	data.CustomLinks, err = s.fetchCustomLinks(ctx, scope, trustCenterID)
+	data.CustomLinks, err = s.fetchCustomLinks(ctx, scope, compliancePageID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch external links: %w", err)
 	}
@@ -207,11 +207,11 @@ type (
 func (s *Service) RenderSitemap(
 	ctx context.Context,
 	w io.Writer,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	scope coredata.Scoper,
 	baseURL string,
 ) error {
-	org, err := s.GetPortalOrganization(ctx, trustCenterID)
+	org, err := s.GetPortalOrganization(ctx, compliancePageID)
 	if err != nil {
 		return fmt.Errorf("cannot load organization for sitemap: %w", err)
 	}
@@ -322,7 +322,7 @@ func (s *Service) fetchDocumentIDs(
 			coredata.NewTrustCenterFileFilter(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("cannot list trust center files: %w", err)
+			return nil, fmt.Errorf("cannot list compliance page files: %w", err)
 		}
 
 		for _, file := range result.Data {
@@ -401,7 +401,7 @@ func (s *Service) fetchDocumentIDs(
 func (s *Service) fetchComplianceFrameworks(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) ([]compliancePageFramework, error) {
 	var frameworks []compliancePageFramework
 
@@ -417,7 +417,7 @@ func (s *Service) fetchComplianceFrameworks(
 			},
 		)
 
-		result, err := s.ListComplianceFrameworksByPortalID(ctx, scope, trustCenterID, cursor)
+		result, err := s.ListComplianceFrameworksByPortalID(ctx, scope, compliancePageID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list compliance frameworks: %w", err)
 		}
@@ -621,7 +621,7 @@ func (s *Service) fetchThirdParties(
 func (s *Service) fetchReferences(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) ([]compliancePageReference, error) {
 	var refs []compliancePageReference
 
@@ -637,7 +637,7 @@ func (s *Service) fetchReferences(
 			},
 		)
 
-		result, err := s.ListPortalReferencesForPortalID(ctx, scope, trustCenterID, cursor)
+		result, err := s.ListPortalReferencesForPortalID(ctx, scope, compliancePageID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list references: %w", err)
 		}
@@ -669,7 +669,7 @@ func (s *Service) fetchReferences(
 func (s *Service) fetchCustomLinks(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) ([]compliancePageCustomLink, error) {
 	var links []compliancePageCustomLink
 
@@ -685,7 +685,7 @@ func (s *Service) fetchCustomLinks(
 			},
 		)
 
-		result, err := s.ListCustomLinksForPortalID(ctx, scope, trustCenterID, cursor)
+		result, err := s.ListCustomLinksForPortalID(ctx, scope, compliancePageID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list custom links: %w", err)
 		}

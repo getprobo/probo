@@ -18,40 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package visitor
+package trust_test
 
 import (
-	"context"
-	"fmt"
+	"regexp"
+	"testing"
 
-	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func (s *Service) ListCustomLinksForPortalID(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-	cursor *page.Cursor[coredata.ComplianceCustomLinkOrderField],
-) (*page.Page[*coredata.ComplianceCustomLink, coredata.ComplianceCustomLinkOrderField], error) {
-	var links coredata.ComplianceCustomLinks
+func TestTrustCenter_SlugHasEntropySuffix(t *testing.T) {
+	t.Parallel()
 
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			err := links.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
-			if err != nil {
-				return fmt.Errorf("cannot load custom links: %w", err)
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	organizationID := owner.GetOrganizationID().String()
+
+	const query = `
+		query($organizationId: ID!) {
+			node(id: $organizationId) {
+				... on Organization {
+					trustCenter {
+						slug
+					}
+				}
 			}
+		}
+	`
 
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
+	var result struct {
+		Node struct {
+			TrustCenter struct {
+				Slug string `json:"slug"`
+			} `json:"trustCenter"`
+		} `json:"node"`
 	}
 
-	return page.NewPage(links, cursor), nil
+	err := owner.Execute(query, map[string]any{
+		"organizationId": organizationID,
+	}, &result)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.TrustCenter.Slug)
+
+	slugWithEntropy := regexp.MustCompile(`^[a-z0-9-]+-[0-9a-f]{8}$`)
+	assert.Regexp(t, slugWithEntropy, result.Node.TrustCenter.Slug)
 }

@@ -78,7 +78,7 @@ func (r *DeleteCustomLinkRequest) Validate() error {
 func (s *Service) ListCustomLinks(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceCustomLinkOrderField],
 ) (*page.Page[*coredata.ComplianceCustomLink, coredata.ComplianceCustomLinkOrderField], error) {
 	var items coredata.ComplianceCustomLinks
@@ -86,7 +86,7 @@ func (s *Service) ListCustomLinks(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := items.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor); err != nil {
+			if err := items.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor); err != nil {
 				return fmt.Errorf("cannot load custom links: %w", err)
 			}
 
@@ -117,14 +117,14 @@ func (s *Service) CreateCustomLink(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			item = &coredata.ComplianceCustomLink{
 				ID:             id,
-				OrganizationID: trustCenter.OrganizationID,
+				OrganizationID: compliancePage.OrganizationID,
 				TrustCenterID:  req.TrustCenterID,
 				Name:           req.Name,
 				URL:            req.URL,

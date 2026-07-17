@@ -159,7 +159,7 @@ func (s *Service) exportDocumentPDFData(
 			}
 
 			if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
-				return fmt.Errorf("document not visible on trust center")
+				return fmt.Errorf("document not visible on compliance page")
 			}
 
 			if err := version.LoadLatestPublishedVersion(ctx, conn, scope, documentID); err != nil {

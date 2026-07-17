@@ -82,7 +82,7 @@ func (utcrr *UpdateReferenceRequest) Validate() error {
 func (s *Service) ListReferences(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
 ) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
 	var references coredata.TrustCenterReferences
@@ -90,9 +90,9 @@ func (s *Service) ListReferences(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := references.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+			err := references.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
 			if err != nil {
-				return fmt.Errorf("cannot load trust center references: %w", err)
+				return fmt.Errorf("cannot load compliance page references: %w", err)
 			}
 
 			return nil
@@ -108,7 +108,7 @@ func (s *Service) ListReferences(
 func (s *Service) CountReferences(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -117,9 +117,9 @@ func (s *Service) CountReferences(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			references := coredata.TrustCenterReferences{}
 
-			count, err = references.CountByTrustCenterID(ctx, conn, scope, trustCenterID)
+			count, err = references.CountByTrustCenterID(ctx, conn, scope, compliancePageID)
 			if err != nil {
-				return fmt.Errorf("cannot count trust center references: %w", err)
+				return fmt.Errorf("cannot count compliance page references: %w", err)
 			}
 
 			return nil
@@ -144,7 +144,7 @@ func (s *Service) GetReference(
 		func(ctx context.Context, conn pg.Querier) error {
 			err := reference.LoadByID(ctx, conn, scope, referenceID)
 			if err != nil {
-				return fmt.Errorf("cannot load trust center reference: %w", err)
+				return fmt.Errorf("cannot load compliance page reference: %w", err)
 			}
 
 			return nil
@@ -177,9 +177,9 @@ func (s *Service) CreateReference(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			fileID, s3Key, err := s.uploadReferenceLogoFile(ctx, scope, tx, req.LogoFile, referenceID, req.TrustCenterID, now)
@@ -191,7 +191,7 @@ func (s *Service) CreateReference(
 
 			reference = &coredata.TrustCenterReference{
 				ID:             referenceID,
-				OrganizationID: trustCenter.OrganizationID,
+				OrganizationID: compliancePage.OrganizationID,
 				TrustCenterID:  req.TrustCenterID,
 				Name:           req.Name,
 				Description:    req.Description,
@@ -202,7 +202,7 @@ func (s *Service) CreateReference(
 			}
 
 			if err := reference.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert trust center reference: %w", err)
+				return fmt.Errorf("cannot insert compliance page reference: %w", err)
 			}
 
 			return nil
@@ -239,7 +239,7 @@ func (s *Service) UpdateReference(
 			reference = &coredata.TrustCenterReference{}
 
 			if err := reference.LoadByID(ctx, tx, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load trust center reference: %w", err)
+				return fmt.Errorf("cannot load compliance page reference: %w", err)
 			}
 
 			if req.LogoFile != nil {
@@ -278,7 +278,7 @@ func (s *Service) UpdateReference(
 			}
 
 			if err := reference.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update trust center reference: %w", err)
+				return fmt.Errorf("cannot update compliance page reference: %w", err)
 			}
 
 			return nil
@@ -303,11 +303,11 @@ func (s *Service) DeleteReference(
 			reference := &coredata.TrustCenterReference{}
 
 			if err := reference.LoadByID(ctx, tx, scope, trustCenterReferenceID); err != nil {
-				return fmt.Errorf("cannot load trust center reference: %w", err)
+				return fmt.Errorf("cannot load compliance page reference: %w", err)
 			}
 
 			if err := reference.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete trust center reference: %w", err)
+				return fmt.Errorf("cannot delete compliance page reference: %w", err)
 			}
 
 			return nil
@@ -331,7 +331,7 @@ func (s *Service) GenerateReferenceLogoURL(
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot load trust center reference: %w", err)
+		return "", fmt.Errorf("cannot load compliance page reference: %w", err)
 	}
 
 	file, err := s.fileManager.GetPublicFile(ctx, reference.LogoFileID)
@@ -348,7 +348,7 @@ func (s *Service) uploadReferenceLogoFile(
 	tx pg.Tx,
 	file File,
 	referenceID gid.GID,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	now time.Time,
 ) (gid.GID, string, error) {
 	fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
@@ -358,9 +358,9 @@ func (s *Service) uploadReferenceLogoFile(
 		return gid.GID{}, "", fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	trustCenter := &coredata.TrustCenter{}
-	if err := trustCenter.LoadByID(ctx, tx, scope, trustCenterID); err != nil {
-		return gid.GID{}, "", fmt.Errorf("cannot load trust center: %w", err)
+	compliancePage := &coredata.TrustCenter{}
+	if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
+		return gid.GID{}, "", fmt.Errorf("cannot load compliance page: %w", err)
 	}
 
 	var (
@@ -418,9 +418,9 @@ func (s *Service) uploadReferenceLogoFile(
 			ContentType:  new(contentType),
 			CacheControl: new("max-age=3600, public"),
 			Metadata: map[string]string{
-				"type":                      "trust-center-reference-logo",
-				"trust-center-reference-id": referenceID.String(),
-				"organization-id":           trustCenter.OrganizationID.String(),
+				"type":                         "compliance-page-reference-logo",
+				"compliance-page-reference-id": referenceID.String(),
+				"organization-id":              compliancePage.OrganizationID.String(),
 			},
 		},
 	)
@@ -430,7 +430,7 @@ func (s *Service) uploadReferenceLogoFile(
 
 	fileRecord := &coredata.File{
 		ID:             fileID,
-		OrganizationID: trustCenter.OrganizationID,
+		OrganizationID: compliancePage.OrganizationID,
 		BucketName:     s.bucket,
 		MimeType:       contentType,
 		FileName:       filename,

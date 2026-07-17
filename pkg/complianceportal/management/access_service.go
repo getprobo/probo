@@ -83,7 +83,7 @@ func (utcar *UpdateAccessRequest) Validate() error {
 func (s *Service) ListAccesses(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterAccessOrderField],
 ) (*page.Page[*coredata.TrustCenterAccess, coredata.TrustCenterAccessOrderField], error) {
 	var accesses coredata.TrustCenterAccesses
@@ -91,7 +91,7 @@ func (s *Service) ListAccesses(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return accesses.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+			return accesses.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
 		},
 	)
 	if err != nil {
@@ -244,7 +244,7 @@ func (s *Service) UpdateAccess(
 			access = &coredata.TrustCenterAccess{}
 
 			if err := access.LoadByID(ctx, tx, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load trust center access: %w", err)
+				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
 			var tcdas coredata.TrustCenterDocumentAccesses
@@ -310,11 +310,11 @@ func (s *Service) UpdateAccess(
 
 				trustCenterFiles := &coredata.TrustCenterFiles{}
 				if err := trustCenterFiles.LoadByIDs(ctx, tx, scope, trustCenterFileIDs); err != nil {
-					return fmt.Errorf("cannot load trust center files: %w", err)
+					return fmt.Errorf("cannot load compliance page files: %w", err)
 				}
 
 				if err := tcdas.MergeTrustCenterFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, fileData); err != nil {
-					return fmt.Errorf("cannot merge trust center file accesses: %w", err)
+					return fmt.Errorf("cannot merge compliance page file accesses: %w", err)
 				}
 			}
 
@@ -358,11 +358,11 @@ func (s *Service) DeleteAccess(
 			access := &coredata.TrustCenterAccess{}
 
 			if err := access.LoadByID(ctx, tx, scope, trustCenterAccessID); err != nil {
-				return fmt.Errorf("cannot load trust center access: %w", err)
+				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
 			if err := access.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete trust center access: %w", err)
+				return fmt.Errorf("cannot delete compliance page access: %w", err)
 			}
 
 			return nil
@@ -387,7 +387,7 @@ func (s *Service) sendAccessEmail(
 	access.UpdatedAt = now
 
 	if err := access.Update(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
+		return fmt.Errorf("cannot update compliance page access with expiration: %w", err)
 	}
 
 	profile := &coredata.MembershipProfile{}
@@ -410,7 +410,7 @@ func (s *Service) sendAccessEmail(
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {
-		return fmt.Errorf("cannot render trust center access email: %w", err)
+		return fmt.Errorf("cannot render compliance page access email: %w", err)
 	}
 
 	accessEmail := coredata.NewEmail(

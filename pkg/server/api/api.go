@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -70,6 +71,7 @@ type (
 		Trust             *visitor.Service
 		ESign             *esign.Service
 		Management        *management.Service
+		CertManager       *certmanager.Service
 		AccessReview      *accessreview.Service
 		AgentRun          *agentrun.Service
 		Slack             *slack.Service
@@ -192,6 +194,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.ESign,
 			cfg.Management,
+			cfg.CertManager,
 			cfg.AccessReview,
 			cfg.AgentRun,
 			cfg.Mailman,
@@ -225,6 +228,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
 			cfg.Management,
+			cfg.CertManager,
 			cfg.ResourceAlias,
 			cfg.ThirdParty,
 			cfg.IAM,

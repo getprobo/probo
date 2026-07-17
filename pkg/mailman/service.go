@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -51,14 +52,14 @@ const (
 )
 
 type Service struct {
-	pg                    *pg.Client
-	fm                    *filemanager.Service
-	tokenSecret           string
-	apiBaseURL            *baseurl.BaseURL
-	trustCenterBaseDomain string
-	bucket                string
-	encryptionKey         cipher.EncryptionKey
-	logger                *log.Logger
+	pg               *pg.Client
+	fm               *filemanager.Service
+	tokenSecret      string
+	apiBaseURL       *baseurl.BaseURL
+	compliancePortal *management.Service
+	bucket           string
+	encryptionKey    cipher.EncryptionKey
+	logger           *log.Logger
 }
 
 func NewService(
@@ -66,20 +67,20 @@ func NewService(
 	fm *filemanager.Service,
 	tokenSecret string,
 	apiBaseURL *baseurl.BaseURL,
-	trustCenterBaseDomain string,
+	compliancePortal *management.Service,
 	bucket string,
 	encryptionKey cipher.EncryptionKey,
 	logger *log.Logger,
 ) *Service {
 	return &Service{
-		pg:                    pgClient,
-		fm:                    fm,
-		tokenSecret:           tokenSecret,
-		apiBaseURL:            apiBaseURL,
-		trustCenterBaseDomain: trustCenterBaseDomain,
-		bucket:                bucket,
-		encryptionKey:         encryptionKey,
-		logger:                logger,
+		pg:               pgClient,
+		fm:               fm,
+		tokenSecret:      tokenSecret,
+		apiBaseURL:       apiBaseURL,
+		compliancePortal: compliancePortal,
+		bucket:           bucket,
+		encryptionKey:    encryptionKey,
+		logger:           logger,
 	}
 }
 

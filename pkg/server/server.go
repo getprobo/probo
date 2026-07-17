@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -64,6 +65,7 @@ type Config struct {
 	Trust             *visitor.Service
 	ESign             *esign.Service
 	Management        *management.Service
+	CertManager       *certmanager.Service
 	AccessReview      *accessreview.Service
 	AgentRun          *agentrun.Service
 	Slack             *slack.Service
@@ -105,6 +107,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,
 		Management:        cfg.Management,
+		CertManager:       cfg.CertManager,
 		AccessReview:      cfg.AccessReview,
 		AgentRun:          cfg.AgentRun,
 		Slack:             cfg.Slack,

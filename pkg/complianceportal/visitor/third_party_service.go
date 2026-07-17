@@ -87,7 +87,7 @@ func (s *Service) ListThirdPartiesForOrganizationID(
 	return page.NewPage(thirdParties, cursor), nil
 }
 
-func (s *Service) ListDistinctTrustCenterCategoriesForOrganizationID(
+func (s *Service) ListDistinctPortalCategoriesForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
@@ -116,7 +116,7 @@ func (s *Service) ListDistinctTrustCenterCategoriesForOrganizationID(
 	return categories, nil
 }
 
-func (s *Service) ListDistinctTrustCenterCountriesForOrganizationID(
+func (s *Service) ListDistinctPortalCountriesForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
@@ -148,7 +148,7 @@ func (s *Service) ListDistinctTrustCenterCountriesForOrganizationID(
 func (s *Service) CountThirdPartiesForPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePageID gid.GID,
 	filter *coredata.ThirdPartyFilter,
 ) (int, error) {
 	if filter == nil {
@@ -161,14 +161,14 @@ func (s *Service) CountThirdPartiesForPortalID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
-			trustCenter, err := s.GetPortal(ctx, scope, trustCenterID)
+			compliancePage, err := s.GetPortal(ctx, scope, compliancePageID)
 			if err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			thirdParties := &coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, trustCenter.OrganizationID, filter)
+			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, compliancePage.OrganizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}

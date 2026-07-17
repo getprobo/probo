@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,35 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package complianceportal
+package management
 
-import (
-	"fmt"
-	"net/url"
+import "errors"
+
+var (
+	// ErrCustomDomainNotActive is returned when a domain is set as primary
+	// while its SSL certificate is not yet active.
+	ErrCustomDomainNotActive = errors.New("custom domain SSL certificate is not active")
+
+	// ErrCustomDomainManaged is returned when an operation is attempted on the
+	// managed probopage subdomain that is only allowed on customer domains.
+	ErrCustomDomainManaged = errors.New("managed custom domain cannot be modified")
+
+	// ErrCustomDomainNotFound is returned when no custom domain exists for the
+	// requested resource.
+	ErrCustomDomainNotFound = errors.New("custom domain not found")
 )
-
-const (
-	BrandLogoPath     = "/brand/logo"
-	BrandDarkLogoPath = "/brand/dark-logo"
-)
-
-func BrandLogoURL(portalBaseURL string) (string, error) {
-	return brandAssetURL(portalBaseURL, BrandLogoPath)
-}
-
-func BrandDarkLogoURL(portalBaseURL string) (string, error) {
-	return brandAssetURL(portalBaseURL, BrandDarkLogoPath)
-}
-
-func brandAssetURL(portalBaseURL string, path string) (string, error) {
-	parsed, err := url.Parse(portalBaseURL)
-	if err != nil {
-		return "", fmt.Errorf("cannot parse portal base URL: %w", err)
-	}
-
-	parsed.Path = path
-	parsed.RawQuery = ""
-	parsed.Fragment = ""
-
-	return parsed.String(), nil
-}

@@ -14,7 +14,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
-	"go.probo.inc/probo/pkg/complianceportal"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
@@ -335,7 +335,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewTransferImpactAssessment(tia), nil
 		}
 	case coredata.TrustCenterEntityType:
-		action = complianceportal.ActionCompliancePortalGet
+		action = management.ActionCompliancePortalGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			trustCenter, err := r.management.Get(ctx, scope, id)
 			if err != nil {
@@ -345,7 +345,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewTrustCenter(trustCenter), nil
 		}
 	case coredata.TrustCenterAccessEntityType:
-		action = complianceportal.ActionCompliancePortalAccessGet
+		action = management.ActionCompliancePortalAccessGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			trustCenterAccess, err := r.management.GetAccess(ctx, scope, id)
 			if err != nil {
