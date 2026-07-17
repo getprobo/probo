@@ -12,6 +12,9 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
+-- page_title (later renamed to title) is a full page heading, not an org-name
+-- fragment for possessives like "{{name}}'s trust center". Seed from the org
+-- name so existing pages keep a sensible default until editors customize it.
 ALTER TABLE trust_centers
     ADD COLUMN page_title TEXT;
 

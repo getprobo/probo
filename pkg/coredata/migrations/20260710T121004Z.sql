@@ -14,8 +14,9 @@
 
 -- Backfill managed default domains for compliance pages created before
 -- default-domain provisioning existed. Hostnames use the managed base domain
--- suffix configured on the database (probo.trust_center_base_domain), falling
--- back to probopage.com for production installs.
+-- suffix configured on the database (probo.trust_center_base_domain). Self-
+-- managed installs without that setting are left alone — they do not get a
+-- SaaS default domain invented for them.
 
 WITH pending_pages AS (
     SELECT
@@ -24,14 +25,10 @@ WITH pending_pages AS (
         tc.organization_id,
         tc.slug,
         tc.created_at,
-        (
-            tc.slug || '.' || COALESCE(
-                NULLIF(current_setting('probo.trust_center_base_domain', true), ''),
-                'probopage.com'
-            )
-        )::citext AS hostname
+        (tc.slug || '.' || current_setting('probo.trust_center_base_domain', true))::citext AS hostname
     FROM trust_centers tc
     WHERE tc.default_domain_id IS NULL
+      AND NULLIF(current_setting('probo.trust_center_base_domain', true), '') IS NOT NULL
 ),
 minted_certificates AS (
     INSERT INTO certificates (
@@ -44,17 +41,7 @@ minted_certificates AS (
         updated_at
     )
     SELECT
-        translate(
-            encode(
-                substring(decode(translate(pp.trust_center_id, '-_', '+/'), 'base64') FROM 1 FOR 8)
-                || int2send(104::smallint)
-                || int8send((floor(extract(epoch FROM clock_timestamp()) * 1000))::bigint)
-                || substring(decode(md5(random()::text || pp.trust_center_id), 'hex') FROM 1 FOR 6),
-                'base64'
-            ),
-            '+/',
-            '-_'
-        ),
+        generate_gid(decode_base64_unpadded(pp.tenant_id), 104),
         pp.tenant_id,
         pp.hostname,
         'PENDING'::custom_domain_ssl_status,
@@ -76,17 +63,7 @@ minted_domains AS (
         updated_at
     )
     SELECT
-        translate(
-            encode(
-                substring(decode(translate(mc.id, '-_', '+/'), 'base64') FROM 1 FOR 8)
-                || int2send(37::smallint)
-                || int8send((floor(extract(epoch FROM clock_timestamp()) * 1000))::bigint)
-                || substring(decode(md5(random()::text || mc.id), 'hex') FROM 1 FOR 6),
-                'base64'
-            ),
-            '+/',
-            '-_'
-        ),
+        generate_gid(decode_base64_unpadded(mc.tenant_id), 37),
         mc.tenant_id,
         pp.organization_id,
         pp.hostname,

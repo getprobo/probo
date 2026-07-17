@@ -18,6 +18,37 @@ ALTER TABLE custom_domains ALTER COLUMN managed DROP DEFAULT;
 ALTER TABLE trust_centers ADD COLUMN default_domain_id TEXT REFERENCES custom_domains(id) ON DELETE SET NULL;
 ALTER TABLE trust_centers ADD COLUMN custom_domain_id TEXT REFERENCES custom_domains(id) ON DELETE SET NULL;
 
+INSERT INTO trust_centers (
+    id,
+    organization_id,
+    tenant_id,
+    active,
+    slug,
+    created_at,
+    updated_at
+)
+SELECT
+    generate_gid(decode_base64_unpadded(o.tenant_id), 22),
+    o.id,
+    o.tenant_id,
+    false,
+    LOWER(
+        REGEXP_REPLACE(
+            REGEXP_REPLACE(
+                unaccent(o.name),
+                '[^a-zA-Z0-9\s]', '', 'g'
+            ),
+            '\s+', '-', 'g'
+        )
+    ),
+    NOW(),
+    NOW()
+FROM organizations o
+WHERE o.custom_domain_id IS NOT NULL
+    AND NOT EXISTS (
+        SELECT 1 FROM trust_centers tc WHERE tc.organization_id = o.id
+    );
+
 UPDATE trust_centers tc
 SET custom_domain_id = o.custom_domain_id
 FROM organizations o

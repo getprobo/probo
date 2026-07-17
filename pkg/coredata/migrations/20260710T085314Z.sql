@@ -18,6 +18,42 @@ ALTER TABLE trust_centers
     ADD COLUMN email CITEXT,
     ADD COLUMN headquarter_address TEXT;
 
+INSERT INTO trust_centers (
+    id,
+    organization_id,
+    tenant_id,
+    active,
+    slug,
+    created_at,
+    updated_at
+)
+SELECT
+    generate_gid(decode_base64_unpadded(o.tenant_id), 22),
+    o.id,
+    o.tenant_id,
+    false,
+    LOWER(
+        REGEXP_REPLACE(
+            REGEXP_REPLACE(
+                unaccent(o.name),
+                '[^a-zA-Z0-9\s]', '', 'g'
+            ),
+            '\s+', '-', 'g'
+        )
+    ),
+    NOW(),
+    NOW()
+FROM organizations o
+WHERE NOT EXISTS (
+        SELECT 1 FROM trust_centers tc WHERE tc.organization_id = o.id
+    )
+    AND (
+        o.description IS NOT NULL
+        OR o.website_url IS NOT NULL
+        OR o.email IS NOT NULL
+        OR o.headquarter_address IS NOT NULL
+    );
+
 UPDATE trust_centers tc
 SET
     description = o.description,

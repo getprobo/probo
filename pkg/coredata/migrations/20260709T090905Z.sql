@@ -42,10 +42,9 @@ CREATE INDEX idx_certificates_http_challenge_token ON certificates(http_challeng
     WHERE http_challenge_token IS NOT NULL;
 
 -- Backfill one certificate per existing custom domain. A fresh GID is minted
--- for each row: the source domain's tenant (first 8 bytes of its GID) is kept,
--- the entity type is set to 104 (CertificateEntityType), and a millisecond
--- timestamp plus random suffix guarantee uniqueness. The certificate hostname
--- equals the custom domain name, which lets us link the two afterwards.
+-- for each row with generate_gid (entity type 104 = CertificateEntityType).
+-- The certificate hostname equals the custom domain name, which lets us link
+-- the two afterwards.
 INSERT INTO certificates (
     id,
     tenant_id,
@@ -66,17 +65,7 @@ INSERT INTO certificates (
     updated_at
 )
 SELECT
-    translate(
-        encode(
-            substring(decode(translate(cd.id, '-_', '+/'), 'base64') FROM 1 FOR 8)
-            || int2send(104::smallint)
-            || int8send((floor(extract(epoch FROM clock_timestamp()) * 1000))::bigint)
-            || substring(decode(md5(random()::text || cd.id), 'hex') FROM 1 FOR 6),
-            'base64'
-        ),
-        '+/',
-        '-_'
-    ),
+    generate_gid(decode_base64_unpadded(cd.tenant_id), 104),
     cd.tenant_id,
     cd.domain,
     cd.ssl_certificate,
@@ -100,7 +89,8 @@ ALTER TABLE custom_domains ADD COLUMN certificate_id TEXT REFERENCES certificate
 UPDATE custom_domains cd
 SET certificate_id = c.id
 FROM certificates c
-WHERE c.hostname = cd.domain;
+WHERE c.hostname = cd.domain
+    AND c.tenant_id = cd.tenant_id;
 
 -- Repoint the certificate cache from the custom domain to the certificate.
 ALTER TABLE cached_certificates ADD COLUMN certificate_id TEXT REFERENCES certificates(id) ON DELETE CASCADE;
