@@ -43,6 +43,21 @@ func Parse(raw string) (URI, error) {
 
 func (u URI) String() string { return string(u) }
 
+// IsHTTP reports whether u is an absolute http or https URL.
+func (u URI) IsHTTP() bool {
+	parsed, err := url.Parse(string(u))
+	if err != nil || parsed.Host == "" {
+		return false
+	}
+
+	switch parsed.Scheme {
+	case "http", "https":
+		return true
+	default:
+		return false
+	}
+}
+
 func (u *URI) UnmarshalText(text []byte) error {
 	parsed, err := Parse(string(text))
 	if err != nil {

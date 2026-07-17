@@ -40,6 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/netx"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 const (
@@ -257,6 +258,14 @@ func validateClientMetadataDocument(clientIDURL string, doc *ClientMetadataDocum
 		}
 	}
 
+	if err := validateCIMDWebURI(doc.ClientURI, "client_uri"); err != nil {
+		return err
+	}
+
+	if err := validateCIMDWebURI(doc.LogoURI, "logo_uri"); err != nil {
+		return err
+	}
+
 	authMethod := doc.TokenEndpointAuthMethod
 	if authMethod == "" {
 		authMethod = string(coredata.OAuth2ClientTokenEndpointAuthMethodNone)
@@ -304,6 +313,22 @@ func validateCIMDRedirectURI(redirectURI string) error {
 		return NewError(
 			ErrInvalidClient,
 			WithDescription("client metadata document contains invalid redirect_uri"),
+		)
+	}
+
+	return nil
+}
+
+func validateCIMDWebURI(raw, field string) error {
+	if raw == "" {
+		return nil
+	}
+
+	parsed, err := uri.Parse(raw)
+	if err != nil || !parsed.IsHTTP() {
+		return NewError(
+			ErrInvalidClient,
+			WithDescription("client metadata document contains invalid "+field),
 		)
 	}
 

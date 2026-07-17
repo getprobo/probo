@@ -28,21 +28,45 @@ import (
 func TestClientBrandingFromClient(t *testing.T) {
 	t.Parallel()
 
-	clientURL := uri.URI("https://example.com")
-	logoURL := uri.URI("https://example.com/logo.png")
+	t.Run("exposes http and https client urls", func(t *testing.T) {
+		t.Parallel()
 
-	branding := ClientBrandingFromClient(
-		&coredata.OAuth2Client{
-			ClientName: "Acme",
-			ClientURI:  &clientURL,
-			LogoURI:    &logoURL,
-		},
-	)
+		clientURL := uri.URI("https://example.com")
+		logoURL := uri.URI("https://example.com/logo.png")
 
-	require.NotNil(t, branding)
-	assert.Equal(t, "Acme", branding.Name)
-	assert.Equal(t, "https://example.com", *branding.ClientURL)
-	assert.Equal(t, "https://example.com/logo.png", *branding.LogoURL)
+		branding := ClientBrandingFromClient(
+			&coredata.OAuth2Client{
+				ClientName: "Acme",
+				ClientURI:  &clientURL,
+				LogoURI:    &logoURL,
+			},
+		)
+
+		require.NotNil(t, branding)
+		assert.Equal(t, "Acme", branding.Name)
+		assert.Equal(t, "https://example.com", *branding.ClientURL)
+		assert.Equal(t, "https://example.com/logo.png", *branding.LogoURL)
+	})
+
+	t.Run("omits non-web client and logo urls", func(t *testing.T) {
+		t.Parallel()
+
+		clientURL := uri.URI("javascript://example.com/%0Aalert(1)")
+		logoURL := uri.URI("data://example.com/image")
+
+		branding := ClientBrandingFromClient(
+			&coredata.OAuth2Client{
+				ClientName: "Acme",
+				ClientURI:  &clientURL,
+				LogoURI:    &logoURL,
+			},
+		)
+
+		require.NotNil(t, branding)
+		assert.Equal(t, "Acme", branding.Name)
+		assert.Nil(t, branding.ClientURL)
+		assert.Nil(t, branding.LogoURL)
+	})
 }
 
 func TestClientBranding_EmptyClientID(t *testing.T) {

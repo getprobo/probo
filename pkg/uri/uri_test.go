@@ -113,6 +113,32 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestURIIsHTTP(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		uri  URI
+		want bool
+	}{
+		{name: "https", uri: URI("https://example.com"), want: true},
+		{name: "http", uri: URI("http://localhost:3000"), want: true},
+		{name: "custom scheme", uri: URI("myapp://callback"), want: false},
+		{name: "javascript scheme", uri: URI("javascript://example.com/%0Aalert(1)"), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, tt.uri.IsHTTP())
+			},
+		)
+	}
+}
+
 func TestURIUnmarshalText(t *testing.T) {
 	t.Parallel()
 

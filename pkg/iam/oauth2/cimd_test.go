@@ -159,6 +159,45 @@ func TestValidateClientMetadataDocument(t *testing.T) {
 			require.Error(t, err)
 		},
 	)
+
+	t.Run(
+		"https client_uri and logo_uri allowed",
+		func(t *testing.T) {
+			t.Parallel()
+
+			good := doc
+			good.ClientURI = "https://mcp.example.com"
+			good.LogoURI = "https://mcp.example.com/logo.png"
+
+			require.NoError(t, validateClientMetadataDocument(clientID, &good))
+		},
+	)
+
+	t.Run(
+		"non-web client_uri rejected",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bad := doc
+			bad.ClientURI = "javascript://example.com/%0Aalert(1)"
+
+			err := validateClientMetadataDocument(clientID, &bad)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"non-web logo_uri rejected",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bad := doc
+			bad.LogoURI = "data://example.com/image"
+
+			err := validateClientMetadataDocument(clientID, &bad)
+			require.Error(t, err)
+		},
+	)
 }
 
 func TestCIMDFetcherFetch(t *testing.T) {

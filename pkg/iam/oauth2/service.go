@@ -1103,6 +1103,24 @@ func (s *Service) RegisterClient(
 		}
 	}
 
+	if req.ClientURI != nil && !req.ClientURI.IsHTTP() {
+		return gid.Nil,
+			"",
+			NewError(
+				ErrInvalidRequest,
+				WithDescription("client_uri must be an absolute http or https URL"),
+			)
+	}
+
+	if req.LogoURI != nil && !req.LogoURI.IsHTTP() {
+		return gid.Nil,
+			"",
+			NewError(
+				ErrInvalidRequest,
+				WithDescription("logo_uri must be an absolute http or https URL"),
+			)
+	}
+
 	var (
 		plaintextSecret string
 		secretHash      []byte

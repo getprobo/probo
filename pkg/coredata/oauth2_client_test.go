@@ -22,8 +22,10 @@ package coredata_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -99,4 +101,73 @@ func TestOAuth2Client_IsRedirectURIAllowed(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestNewCIMDClient_WebURIs(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"accepts https client_uri and logo_uri",
+		func(t *testing.T) {
+			t.Parallel()
+
+			clientURI := "https://mcp.example.com"
+			logoURI := "https://mcp.example.com/logo.png"
+
+			client, err := coredata.NewCIMDClient(
+				"https://mcp.example.com/oauth/metadata.json",
+				"Example MCP",
+				[]string{"https://mcp.example.com/callback"},
+				nil,
+				&logoURI,
+				&clientURI,
+				time.Now(),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, client.ClientURI)
+			require.NotNil(t, client.LogoURI)
+			assert.Equal(t, "https://mcp.example.com", client.ClientURI.String())
+			assert.Equal(t, "https://mcp.example.com/logo.png", client.LogoURI.String())
+		},
+	)
+
+	t.Run(
+		"rejects non-web client_uri",
+		func(t *testing.T) {
+			t.Parallel()
+
+			clientURI := "javascript://example.com/%0Aalert(1)"
+
+			_, err := coredata.NewCIMDClient(
+				"https://mcp.example.com/oauth/metadata.json",
+				"Example MCP",
+				[]string{"https://mcp.example.com/callback"},
+				nil,
+				nil,
+				&clientURI,
+				time.Now(),
+			)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects non-web logo_uri",
+		func(t *testing.T) {
+			t.Parallel()
+
+			logoURI := "data://example.com/image"
+
+			_, err := coredata.NewCIMDClient(
+				"https://mcp.example.com/oauth/metadata.json",
+				"Example MCP",
+				[]string{"https://mcp.example.com/callback"},
+				nil,
+				&logoURI,
+				nil,
+				time.Now(),
+			)
+			require.Error(t, err)
+		},
+	)
 }

@@ -53,12 +53,14 @@ func ClientBrandingFromClient(client *coredata.OAuth2Client) *ClientBranding {
 		Name: client.ClientName,
 	}
 
-	if client.ClientURI != nil {
+	// Only expose absolute http(s) URLs. Metadata may historically contain
+	// non-web schemes; branding must not surface those as links or image src.
+	if client.ClientURI != nil && client.ClientURI.IsHTTP() {
 		clientURL := client.ClientURI.String()
 		branding.ClientURL = &clientURL
 	}
 
-	if client.LogoURI != nil {
+	if client.LogoURI != nil && client.LogoURI.IsHTTP() {
 		logoURL := client.LogoURI.String()
 		branding.LogoURL = &logoURL
 	}
