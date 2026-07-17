@@ -21,8 +21,11 @@ BINARY="/usr/local/bin/probo-agent"
 STATE_DIR="/var/lib/probo-agent"
 RUN_DIR="/var/run/probo-agent"
 CONF_FILE="/tmp/probo-agent.conf"
+DAEMON_PLIST="/Library/LaunchDaemons/com.probo.agent.plist"
 TRAY_LABEL="com.probo.agent.tray"
 TRAY_PLIST_NAME="${TRAY_LABEL}.plist"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TRAY_PLIST_TMPL="${SCRIPT_DIR}/launchagent.plist.tmpl"
 
 # Mirror everything to the install log. We keep stdout/stderr open
 # too so failures still surface in macOS Installer.app's log pane.
@@ -46,35 +49,33 @@ mkdir -p "${RUN_DIR}"
 chown root:wheel "${RUN_DIR}"
 chmod 0755 "${RUN_DIR}"
 
+# Render the shared Go LaunchAgent template (pkg/deviceagent/tray/
+# launchagent.plist.tmpl) with fixed install paths. Values are
+# installer constants, so XML metacharacters are not expected.
+render_tray_plist() {
+    local tmpl="$1"
+    local out="$2"
+
+    sed \
+        -e "s|{{xml \.Label}}|${TRAY_LABEL}|g" \
+        -e "s|{{xml \.ExePath}}|${BINARY}|g" \
+        -e "s|{{xml \.RunDir}}|${RUN_DIR}|g" \
+        "${tmpl}" > "${out}"
+}
+
 register_tray_launchagent() {
     local current_user user_uid agents_dir plist_path
 
     agents_dir="/Library/LaunchAgents"
     plist_path="${agents_dir}/${TRAY_PLIST_NAME}"
 
+    if [ ! -f "${TRAY_PLIST_TMPL}" ]; then
+        echo "error: tray LaunchAgent template missing at ${TRAY_PLIST_TMPL}"
+        return 1
+    fi
+
     mkdir -p "${agents_dir}"
-    cat > "${plist_path}" <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>${TRAY_LABEL}</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>${BINARY}</string>
-        <string>tray</string>
-        <string>--run-dir</string>
-        <string>${RUN_DIR}</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-</dict>
-</plist>
-EOF
+    render_tray_plist "${TRAY_PLIST_TMPL}" "${plist_path}"
 
     chmod 0644 "${plist_path}"
     echo "Installed tray LaunchAgent at ${plist_path}."
@@ -154,6 +155,24 @@ register_enrollment_url_scheme() {
     echo "Registered probo:// URL scheme."
 }
 
+# Restart a previously enrolled LaunchDaemon after upgrades. Preinstall
+# boots it out so the binary can be replaced; without /tmp/probo-agent.conf
+# enrollment is skipped and nothing else would load it again.
+restart_existing_daemon() {
+    if [ ! -f "${DAEMON_PLIST}" ]; then
+        return 0
+    fi
+
+    launchctl bootout system "${DAEMON_PLIST}" 2>/dev/null || true
+    if ! launchctl bootstrap system "${DAEMON_PLIST}"; then
+        echo "warning: could not start LaunchDaemon at ${DAEMON_PLIST}; it may start after reboot."
+        return 1
+    fi
+
+    echo "Started LaunchDaemon at ${DAEMON_PLIST}."
+    return 0
+}
+
 # An admin (or MDM) may stage /tmp/probo-agent.conf to drive an
 # unattended enrollment. Recognized keys (shell-style):
 #
@@ -227,6 +246,7 @@ else
     echo "No ${CONF_FILE} found; enrollment can be completed from the menu bar icon."
 fi
 
+restart_existing_daemon
 register_tray_launchagent
 register_enrollment_url_scheme
 

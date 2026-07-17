@@ -6,8 +6,9 @@
   Placeholders are substituted by build.sh:
 
     @@VERSION@@       agent version, e.g. 0.1.0
-    @@PKG_ARCH@@      payload pkgbuild architecture (x86_64 or arm64)
+    @@PKG_ARCH@@      reserved (legacy; host filter uses @@HOST_ARCHS@@)
     @@HOST_ARCHS@@    host arch filter used by Installer.app
+                      (e.g. arm64 or arm64,x86_64 for universal)
 -->
 <installer-gui-script minSpecVersion="2">
     <title>Probo Device Posture Agent @@VERSION@@</title>
@@ -50,7 +51,7 @@
     <choice id="default"/>
     <choice id="com.getprobo.agent"
             title="Probo Device Posture Agent"
-            description="Installs probo-agent to /usr/local/bin and the launchd unit to /Library/LaunchDaemons.">
+            description="Installs probo-agent, the menu bar helper LaunchAgent, and Probo Agent.app for probo:// enrollment. The LaunchDaemon starts after enrollment.">
         <pkg-ref id="com.getprobo.agent"/>
     </choice>
 </installer-gui-script>

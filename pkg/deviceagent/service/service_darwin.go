@@ -31,7 +31,9 @@ import (
 	"text/template"
 )
 
-const plistPath = "/Library/LaunchDaemons/com.getprobo.agent.plist"
+const (
+	plistPath = "/Library/LaunchDaemons/com.probo.agent.plist"
+)
 
 const launchdPlistTmpl = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -70,6 +72,15 @@ func xmlEscape(v string) (string, error) {
 	}
 
 	return sb.String(), nil
+}
+
+func removeLaunchDaemonPlist(path string) error {
+	_ = exec.Command("launchctl", "bootout", "system", path).Run()
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("cannot remove plist %s: %w", path, err)
+	}
+
+	return nil
 }
 
 // Install writes and boots the launchd plist.
@@ -117,10 +128,7 @@ func Install(cfg Config) error {
 
 // Uninstall bootouts and removes the launchd plist.
 func Uninstall(cfg Config) error {
-	_ = exec.Command("launchctl", "bootout", "system", plistPath).Run()
-	if err := os.Remove(plistPath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("cannot remove plist: %w", err)
-	}
+	_ = cfg
 
-	return nil
+	return removeLaunchDaemonPlist(plistPath)
 }

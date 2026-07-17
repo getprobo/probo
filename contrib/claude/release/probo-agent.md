@@ -34,9 +34,11 @@ stay pure Go (no tray).
 
 ## Notes
 
-CI builds binaries for 8 OS/arch targets (linux, darwin, and windows on
-amd64 and arm64; freebsd on amd64 and arm64), publishes a GitHub
-Release with signed checksums, SBOM, and build attestations. The agent
+CI builds binaries for linux, windows, and freebsd (amd64/arm64) on
+Linux runners, and builds **CGO-enabled** darwin archives plus a
+signed/notarized **universal** `.pkg` on a macOS runner. The GitHub
+Release includes those archives, `probo-agent_*_darwin_universal.pkg`,
+`install.sh`, signed checksums, SBOM, and build attestations. The agent
 auto-update path downloads the matching archive plus `checksums.txt` and
 verifies the cosign bundle before installing.
 
@@ -45,14 +47,65 @@ Linux and FreeBSD use `probo-agent install --server …
 --enrollment-token …` from the shell, or the curl-to-sh installer
 documented below. Windows release binaries are
 cross-compiled from Linux with MinGW (CGO). macOS release binaries and
-`.pkg` installers must be built on macOS with `CGO_ENABLED=1`.
+the `.pkg` are built on macOS with `CGO_ENABLED=1`.
 
-macOS `.pkg` installers are built locally with
+### macOS `.pkg` (MDM / GUI install)
+
+Release and local builds use
 `cmd/probo-agent/installer/macos/build.sh` (requires macOS, a
-pre-built binary, and the Swift toolchain). The script also compiles
-`Probo Agent.app` — the headless `probo://` URL handler installed to
-`/Applications` — from `cmd/probo-agent/installer/macos/enroll-ui/`.
-They are not part of the GitHub Release workflow yet.
+pre-built binary — preferably universal via `lipo` — and the Swift
+toolchain). The script compiles `Probo Agent.app` (the headless
+`probo://` URL handler) from
+`cmd/probo-agent/installer/macos/enroll-ui/`, signs the binary and app
+when `CODESIGN_IDENTITY` is set, signs the product with
+`INSTALLER_IDENTITY`, and notarizes/staples when
+`NOTARYTOOL_KEYCHAIN_PROFILE` is set, or when `APPLE_ID`,
+`APPLE_ID_PASSWORD`, and `APPLE_TEAM_ID` are set (password is stored
+into a keychain profile; submits use `--keychain-profile` so the secret
+is not on `notarytool submit` argv).
+
+```shell
+# Local unsigned universal pkg (example)
+GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go build -o dist/probo-agent_arm64 ./cmd/probo-agent
+GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -o dist/probo-agent_amd64 ./cmd/probo-agent
+lipo -create dist/probo-agent_arm64 dist/probo-agent_amd64 -output dist/probo-agent_universal
+cmd/probo-agent/installer/macos/build.sh \
+  --binary dist/probo-agent_universal \
+  --arch universal \
+  --version "$(cat cmd/probo-agent/VERSION)"
+```
+
+PKG postinstall always installs the global tray LaunchAgent and
+registers `probo://`. The LaunchDaemon for `probo-agent run` is created
+only after enrollment (`probo-agent install`, deep link, or MDM
+`/tmp/probo-agent.conf`).
+
+### Apple signing secrets (GitHub)
+
+The `build-macos` job in `release-probo-agent.yaml` expects the same
+secret names as the auditor-mode release workflow. Configure these on
+the probo GitHub repository (or org) before tagging a release:
+
+| Secret | Purpose |
+|--------|---------|
+| `APPLE_CERTIFICATE` | Base64-encoded `.p12` (Developer ID) |
+| `APPLE_CERTIFICATE_PASSWORD` | `.p12` password |
+| `KEYCHAIN_PASSWORD` | Ephemeral CI keychain password |
+| `CODESIGN_IDENTITY` | e.g. `Developer ID Application: Probo Inc (TEAMID)` |
+| `INSTALLER_IDENTITY` | e.g. `Developer ID Installer: Probo Inc (TEAMID)` |
+| `APPLE_ID` | Apple ID email for `notarytool store-credentials` |
+| `APPLE_ID_PASSWORD` | App-specific password (stored into a keychain profile; not passed to `submit`) |
+| `APPLE_TEAM_ID` | 10-character Team ID |
+
+Local notarization can reuse a pre-stored profile instead of putting the
+password in the environment:
+
+```shell
+xcrun notarytool store-credentials probo-agent-notary \
+  --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID"
+# prompts for the app-specific password once
+export NOTARYTOOL_KEYCHAIN_PROFILE=probo-agent-notary
+```
 
 Windows enrollment is browser-driven: the console issues a
 `probo://enroll?server=...&token=...` deep link handled by

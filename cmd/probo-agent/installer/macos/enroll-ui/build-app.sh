@@ -4,7 +4,7 @@
 # the probo:// URL scheme and forwards enrollment links to probo-agent.
 #
 # Required arguments:
-#   --arch     amd64 or arm64
+#   --arch     amd64, arm64, or universal
 #   --version  Agent version, e.g. 0.1.0
 #   --output   Parent directory; creates "Probo Agent.app" inside it
 #
@@ -35,13 +35,17 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "${ARCH}" ]; then
-    echo "error: --arch (amd64|arm64) is required" >&2
+    echo "error: --arch (amd64|arm64|universal) is required" >&2
     exit 2
 fi
 case "${ARCH}" in
-    amd64) SWIFT_ARCH="x86_64" ;;
-    arm64) SWIFT_ARCH="arm64"  ;;
-    *)     echo "error: unsupported --arch '${ARCH}' (want amd64 or arm64)" >&2; exit 2 ;;
+    amd64)     SWIFT_ARCH_ARGS=(--arch x86_64) ;;
+    arm64)     SWIFT_ARCH_ARGS=(--arch arm64) ;;
+    universal) SWIFT_ARCH_ARGS=(--arch arm64 --arch x86_64) ;;
+    *)
+        echo "error: unsupported --arch '${ARCH}' (want amd64, arm64, or universal)" >&2
+        exit 2
+        ;;
 esac
 if [ -z "${VERSION}" ]; then
     echo "error: --version is required" >&2
@@ -61,8 +65,8 @@ BUILD_DIR="$(mktemp -d -t probo-agent-url-handler-build)"
 trap 'rm -rf "${BUILD_DIR}"' EXIT
 
 pushd "${SCRIPT_DIR}" >/dev/null
-swift build -c release --arch "${SWIFT_ARCH}" --scratch-path "${BUILD_DIR}"
-BIN_DIR="$(swift build -c release --arch "${SWIFT_ARCH}" --scratch-path "${BUILD_DIR}" --show-bin-path)"
+swift build -c release "${SWIFT_ARCH_ARGS[@]}" --scratch-path "${BUILD_DIR}"
+BIN_DIR="$(swift build -c release "${SWIFT_ARCH_ARGS[@]}" --scratch-path "${BUILD_DIR}" --show-bin-path)"
 BINARY="${BIN_DIR}/${EXECUTABLE_NAME}"
 popd >/dev/null
 
