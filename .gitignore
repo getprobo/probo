@@ -16,6 +16,11 @@ sbom-docker.json
 *.key
 *.tsbuildinfo
 compose/keycloak/probo-realm.json
+compose/step-ca/config/
+compose/step-ca/db/
+compose/step-ca/secrets/
+compose/step-ca/certs/
+compose/step-ca/templates/
 .sandbox.env
 
 # Generated files (codegen)

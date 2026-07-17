@@ -28,3 +28,9 @@ services:
 
   chrome:
     image: "artifact.probo.inc/dockerhub/chromedp/headless-shell@sha256:b24482ae166e2c67135f5a8ba9575c257efdd8e2fd6b2e931f9d88ede3d72f3b"
+
+  acme-http-01-proxy:
+    image: "artifact.probo.inc/dockerhub/library/caddy@sha256:c3d7ee5d2b11f9dc54f947f68a734c84e9c9666c92c88a7f30b9cba5da182adb"
+
+  step-ca:
+    image: "artifact.probo.inc/dockerhub/smallstep/step-ca@sha256:0f88382ac5af5c6b7bbba0c6e8fcefef52aee6f22ea364df8e02a09ffd0d22f3"

@@ -354,11 +354,11 @@ pkg/server/api/connect/v1/types/types.go: pkg/server/api/connect/v1/gqlgen.yaml 
 # gqlgen instances must run sequentially: parallel runs race on the Go build
 # cache and cause gqlgen's Rewriter.getSource() to panic with empty source.
 pkg/server/api/console/v1/schema/schema.go \
-pkg/server/api/console/v1/types/types.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/graphql $(CONSOLE_GQL) | pkg/server/api/connect/v1/types/types.go
+pkg/server/api/console/v1/types/types.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/graphql $(CONSOLE_GQL) | pkg/server/api/connect/v1/types/types.go apps/console/dist/index.html
 	$(GO_GENERATE) ./pkg/server/api/console/v1
 
 pkg/server/api/complianceportal/v1/schema/schema.go \
-pkg/server/api/complianceportal/v1/types/types.go: pkg/server/api/complianceportal/v1/gqlgen.yaml pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL) | pkg/server/api/console/v1/types/types.go
+pkg/server/api/complianceportal/v1/types/types.go: pkg/server/api/complianceportal/v1/gqlgen.yaml pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL) | pkg/server/api/console/v1/types/types.go apps/compliance-portal/dist/index.html
 	$(GO_GENERATE) ./pkg/server/api/complianceportal/v1
 
 pkg/server/api/mcp/v1/server/server.go \
@@ -424,14 +424,17 @@ psql: ## Open a psql shell to the postgres container
 	$(DOCKER_COMPOSE) exec postgres psql -U probod -d probod
 
 compose/step-ca/certs/root_ca.crt:
-	@$(MKDIR) compose/step-ca/secrets
+	# step-ca runs as UID 1000 and must be able to write into the bind mount
+	# on Linux CI (Docker Desktop often masks this locally).
+	@$(MKDIR) compose/step-ca
+	@chmod a+rwx compose/step-ca
 	$(DOCKER_COMPOSE) up -d acme-http-01-proxy step-ca
 	@i=0; \
 	while [ ! -f $@ ] && [ $$i -lt 60 ]; do \
 		sleep 1; \
 		i=$$((i + 1)); \
 	done
-	@test -f $@ || (echo "step-ca root CA not ready; check: docker compose logs step-ca" >&2; exit 1)
+	@test -f $@ || ($(DOCKER_COMPOSE) logs step-ca >&2; echo "step-ca root CA not ready" >&2; exit 1)
 
 compose/keycloak/certs/cert.pem:
 	$(MKDIR) ./compose/keycloak/certs
