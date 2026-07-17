@@ -54,7 +54,7 @@ import (
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -672,7 +672,7 @@ func (impl *Implm) Run(
 		l.Named("compliance-portal-management"),
 	)
 
-	trustService := trust.NewService(
+	trustService := visitor.NewService(
 		pgClient,
 		s3Client,
 		impl.cfg.AWS.Bucket,
@@ -731,7 +731,7 @@ func (impl *Implm) Run(
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,
-			CustomDomain:      managementService,
+			Management:        managementService,
 			AccessReview:      accessReviewService,
 			AgentRun:          agentRunService,
 			Mailman:           mailmanService,
@@ -1299,7 +1299,7 @@ func (impl *Implm) runApiServer(
 	return ctx.Err()
 }
 
-func newTrustCenterHTTPRedirectHandler(trustService *trust.Service, l *log.Logger) http.Handler {
+func newTrustCenterHTTPRedirectHandler(trustService *visitor.Service, l *log.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -1317,7 +1317,7 @@ func newTrustCenterHTTPRedirectHandler(trustService *trust.Service, l *log.Logge
 
 		// Check if this domain is a trust center custom domain
 		if _, err := trustService.GetPortalByDomainName(ctx, domain); err != nil {
-			if errors.Is(err, trust.ErrPageNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+			if errors.Is(err, visitor.ErrPageNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
 				// Not a trust center domain, return 404
 				httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
 				return
@@ -1353,7 +1353,7 @@ func (impl *Implm) runTrustCenterServer(
 	tp trace.TracerProvider,
 	pgClient *pg.Client,
 	trustRouter http.Handler,
-	trustService *trust.Service,
+	trustService *visitor.Service,
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")

@@ -30,11 +30,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handler {
+func NewSNIMiddleware(trustSvc *visitor.Service) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -46,7 +46,7 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 
 			compliancePage, err := trustSvc.GetPortalByDomainName(ctx, r.TLS.ServerName)
 			if err != nil {
-				if errors.Is(err, trust.ErrPageNotFound) {
+				if errors.Is(err, visitor.ErrPageNotFound) {
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -91,7 +91,7 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 						RawQuery: r.URL.RawQuery,
 					}
 
-					http.Redirect(w, r, target.String(), http.StatusMovedPermanently)
+					http.Redirect(w, r, target.String(), http.StatusPermanentRedirect)
 
 					return
 				}

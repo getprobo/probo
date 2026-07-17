@@ -23,15 +23,15 @@ package complianceportal
 import (
 	"net/http"
 
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 type Handler struct {
-	trustService *trust.Service
+	trustService *visitor.Service
 }
 
-func NewHandler(trustService *trust.Service) *Handler {
+func NewHandler(trustService *visitor.Service) *Handler {
 	return &Handler{trustService: trustService}
 }
 

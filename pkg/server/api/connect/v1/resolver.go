@@ -49,7 +49,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -68,7 +68,7 @@ type (
 		batchAuthorize authz.BatchAuthorizeFunc
 		logger         *log.Logger
 		iam            *iam.Service
-		trust          *trust.Service
+		trust          *visitor.Service
 		scopeRegistry  *oauth2scope.Registry
 		fileManager    *filemanager.Service
 		baseURL        *baseurl.BaseURL
@@ -79,7 +79,7 @@ type (
 func NewMux(
 	logger *log.Logger,
 	svc *iam.Service,
-	trustSvc *trust.Service,
+	trustSvc *visitor.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,

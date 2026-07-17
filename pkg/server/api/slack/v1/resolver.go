@@ -23,14 +23,14 @@ package slack_v1
 import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/slack"
 )
 
 func NewMux(
 	logger *log.Logger,
 	slackSvc *slack.Service,
-	trustSvc *trust.Service,
+	trustSvc *visitor.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
 

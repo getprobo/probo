@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"go.gearno.de/kit/log"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -51,11 +51,11 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		document, err := trustService.GetDocument(ctx, scope, trustCenter.OrganizationID, id)
 		if err != nil {
-			if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
+			if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 
@@ -80,7 +80,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		file, err := trustService.GetReport(ctx, scope, trustCenter.OrganizationID, id)
 		if err != nil {
-			if errors.Is(err, trust.ErrReportNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+			if errors.Is(err, visitor.ErrReportNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 
@@ -132,7 +132,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, id)
 		if err != nil {
-			if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+			if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 

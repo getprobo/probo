@@ -35,7 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/complianceportal/management"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -67,9 +67,9 @@ type (
 		ResourceAlias     *resourcealias.Service
 		File              *filemanager.Service
 		IAM               *iam.Service
-		Trust             *trust.Service
+		Trust             *visitor.Service
 		ESign             *esign.Service
-		CustomDomain      *management.Service
+		Management        *management.Service
 		AccessReview      *accessreview.Service
 		AgentRun          *agentrun.Service
 		Slack             *slack.Service
@@ -191,7 +191,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ResourceAlias,
 			cfg.IAM,
 			cfg.ESign,
-			cfg.CustomDomain,
+			cfg.Management,
 			cfg.AccessReview,
 			cfg.AgentRun,
 			cfg.Mailman,
@@ -224,7 +224,7 @@ func NewServer(cfg Config) (*Server, error) {
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
-			cfg.CustomDomain,
+			cfg.Management,
 			cfg.ResourceAlias,
 			cfg.ThirdParty,
 			cfg.IAM,

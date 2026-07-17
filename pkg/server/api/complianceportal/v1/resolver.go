@@ -21,7 +21,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
@@ -43,7 +43,7 @@ type (
 	}
 
 	Resolver struct {
-		trust         *trust.Service
+		trust         *visitor.Service
 		resourceAlias *resourcealias.Service
 		fileManager   *filemanager.Service
 		esign         *esign.Service

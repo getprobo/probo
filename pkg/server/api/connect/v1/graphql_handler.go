@@ -25,7 +25,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -39,7 +39,7 @@ import (
 
 func NewGraphQLHandler(
 	svc *iam.Service,
-	trustSvc *trust.Service,
+	trustSvc *visitor.Service,
 	logger *log.Logger,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,

@@ -25,7 +25,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -35,7 +35,7 @@ import (
 
 func newNDADirective(
 	logger *log.Logger,
-	trustSvc *trust.Service,
+	trustSvc *visitor.Service,
 	esignSvc *esign.Service,
 ) func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
 	return func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {

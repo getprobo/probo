@@ -16,7 +16,7 @@ package server
 
 import "net/http"
 
-const strictTransportSecurityValue = "max-age=31536000; preload"
+const strictTransportSecurityValue = "max-age=31536000; includeSubDomains; preload"
 
 func ApplyExtraHeaders(w http.ResponseWriter, extraHeaderFields map[string]string) {
 	for key, value := range extraHeaderFields {
@@ -26,11 +26,13 @@ func ApplyExtraHeaders(w http.ResponseWriter, extraHeaderFields map[string]strin
 
 func NewSecurityHeadersMiddleware(extraHeaderFields map[string]string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Strict-Transport-Security", strictTransportSecurityValue)
-			ApplyExtraHeaders(w, extraHeaderFields)
+		return http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Strict-Transport-Security", strictTransportSecurityValue)
+				ApplyExtraHeaders(w, extraHeaderFields)
 
-			next.ServeHTTP(w, r)
-		})
+				next.ServeHTTP(w, r)
+			},
+		)
 	}
 }

@@ -30,7 +30,7 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/slack"
@@ -63,7 +63,7 @@ const (
 	StatusReject = "reject"
 )
 
-func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *log.Logger, trustSvc *trust.Service) http.HandlerFunc {
+func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *log.Logger, trustSvc *visitor.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 

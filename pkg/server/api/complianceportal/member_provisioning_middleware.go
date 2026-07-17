@@ -27,12 +27,12 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewMemberProvisioningMiddleware(trustSvc *trust.Service, logger *log.Logger) func(next http.Handler) http.Handler {
+func NewMemberProvisioningMiddleware(trustSvc *visitor.Service, logger *log.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {

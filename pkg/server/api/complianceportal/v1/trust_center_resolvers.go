@@ -12,7 +12,7 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -106,10 +106,10 @@ func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.A
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrUserInactive) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrUserInactive) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
 			return false, nil
 		}
 
@@ -139,13 +139,13 @@ func (r *auditReportResolver) Access(ctx context.Context, obj *types.AuditReport
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		if errors.Is(err, trust.ErrUserInactive) {
+		if errors.Is(err, visitor.ErrUserInactive) {
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
@@ -193,11 +193,11 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 
 	document, err := trustService.GetDocument(ctx, scope, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
-		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
 		}
 
-		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
+		if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
 			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
 		}
 
@@ -222,10 +222,10 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrUserInactive) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrUserInactive) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
 			return false, nil
 		}
 
@@ -255,13 +255,13 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		if errors.Is(err, trust.ErrUserInactive) {
+		if errors.Is(err, visitor.ErrUserInactive) {
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
@@ -321,7 +321,7 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 
 	access, err := trustService.RequestPortalAccess(
 		ctx, scope,
-		&trust.PortalAccessRequest{
+		&visitor.PortalAccessRequest{
 			TrustCenterID: trustCenter.ID,
 			IdentityID:    identity.ID,
 			DocumentIDs:   nil,
@@ -350,11 +350,11 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 	document, err := trustService.GetDocument(ctx, scope, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
-		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
-		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
+		if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
@@ -467,7 +467,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 
 	trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
-		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+		if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
 		}
 
@@ -525,11 +525,11 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 
 	document, err := trustService.GetDocument(ctx, scope, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
-		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
-		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
+		if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
@@ -552,7 +552,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 
 	if _, err := trustService.RequestPortalAccess(
 		ctx, scope,
-		&trust.PortalAccessRequest{
+		&visitor.PortalAccessRequest{
 			TrustCenterID:      trustCenter.ID,
 			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{input.DocumentID},
@@ -595,7 +595,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 
 	if _, err := trustService.RequestPortalAccess(
 		ctx, scope,
-		&trust.PortalAccessRequest{
+		&visitor.PortalAccessRequest{
 			TrustCenterID:      trustCenter.ID,
 			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{},
@@ -620,7 +620,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 	trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
-		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+		if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
 		}
 
@@ -643,7 +643,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 	if _, err := trustService.RequestPortalAccess(
 		ctx, scope,
-		&trust.PortalAccessRequest{
+		&visitor.PortalAccessRequest{
 			TrustCenterID:      trustCenter.ID,
 			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{},
@@ -986,7 +986,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 	trustCenterFile, err := trustService.GetPortalFile(ctx, scope, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
-		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+		if errors.Is(err, visitor.ErrTrustCenterFileNotFound) || errors.Is(err, visitor.ErrTrustCenterFileNotVisible) {
 			return false, gqlutils.NotFoundf(ctx, "trust center file %q not found", obj.ID)
 		}
 
@@ -1010,10 +1010,10 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrUserInactive) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrUserInactive) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
 			return false, nil
 		}
 
@@ -1043,13 +1043,13 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) ||
-			errors.Is(err, trust.ErrUserNotFound) ||
-			errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		if errors.Is(err, trust.ErrUserInactive) {
+		if errors.Is(err, visitor.ErrUserInactive) {
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
