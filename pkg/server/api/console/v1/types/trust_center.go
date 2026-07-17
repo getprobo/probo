@@ -47,6 +47,8 @@ type TrustCenter struct {
 	ComplianceFrameworks *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
 	CustomLinks          *ComplianceCustomLinkConnection `json:"customLinks"`
 	MailingList          *MailingList                    `json:"mailingList,omitempty"`
+	DefaultDomain        *CustomDomain                   `json:"defaultDomain,omitempty"`
+	CustomDomain         *CustomDomain                   `json:"customDomain,omitempty"`
 	Permission           bool                            `json:"permission"`
 }
 
@@ -80,6 +82,14 @@ func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 
 	if tc.NonDisclosureAgreementFileID != nil {
 		trustCenter.Nda = &File{ID: *tc.NonDisclosureAgreementFileID}
+	}
+
+	if tc.DefaultDomainID != nil {
+		trustCenter.DefaultDomain = &CustomDomain{ID: *tc.DefaultDomainID}
+	}
+
+	if tc.CustomDomainID != nil {
+		trustCenter.CustomDomain = &CustomDomain{ID: *tc.CustomDomainID}
 	}
 
 	return trustCenter

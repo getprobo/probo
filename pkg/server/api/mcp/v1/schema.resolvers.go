@@ -5306,13 +5306,18 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.DeleteCustomDomainOutput{}, err
 	}
 
-	domain, err := r.management.GetCustomDomain(ctx, scope, input.TrustCenterID)
+	compliancePage, err := r.management.Get(ctx, scope, input.TrustCenterID)
 	if err != nil {
-		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot get custom domain: %w", err)
+		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot load compliance page: %w", err)
 	}
 
-	if domain == nil {
+	if compliancePage.CustomDomainID == nil {
 		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("compliance page has no custom domain")
+	}
+
+	domain, err := r.management.GetDomain(ctx, scope, *compliancePage.CustomDomainID)
+	if err != nil {
+		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot get custom domain: %w", err)
 	}
 
 	var cert *coredata.Certificate

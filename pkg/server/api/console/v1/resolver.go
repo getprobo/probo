@@ -85,26 +85,6 @@ type (
 	}
 )
 
-// newCustomDomainType loads the domain's certificate (when present) and builds
-// the GraphQL CustomDomain type with its certificate-backed SSL fields.
-func (r *Resolver) newCustomDomainType(
-	ctx context.Context,
-	scope coredata.Scoper,
-	domain *coredata.CustomDomain,
-) (*types.CustomDomain, error) {
-	var cert *coredata.Certificate
-	if domain != nil && domain.CertificateID != nil {
-		var err error
-		cert, err = r.certManager.Get(ctx, scope, *domain.CertificateID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot load certificate", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	return types.NewCustomDomain(domain, cert, r.customDomainCname), nil
-}
-
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,

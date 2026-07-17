@@ -39,9 +39,12 @@ import type { CompliancePageDomainDialogFragment$key } from "#/__generated__/cor
 
 const fragment = graphql`
   fragment CompliancePageDomainDialogFragment on CustomDomain {
-    sslStatus
     domain
-    provisioningError
+    certificate {
+      status
+      expiresAt
+      provisioningError
+    }
     dnsRecords {
       type
       name
@@ -49,7 +52,6 @@ const fragment = graphql`
       ttl
       purpose
     }
-    sslExpiresAt
   }
 `;
 
@@ -72,6 +74,9 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
   };
 
   const domain = useFragment<CompliancePageDomainDialogFragment$key>(fragment, fKey);
+  const sslStatus = domain.certificate?.status ?? "PENDING";
+  const expiresAt = domain.certificate?.expiresAt;
+  const provisioningError = domain.certificate?.provisioningError;
 
   return (
     <Dialog
@@ -80,14 +85,14 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
       title={(
         <div className="flex items-center gap-3">
           <span>{domain.domain}</span>
-          <Badge variant={getCustomDomainStatusBadgeVariant(domain.sslStatus)}>
-            {getCustomDomainStatusBadgeLabel(domain.sslStatus, __)}
+          <Badge variant={getCustomDomainStatusBadgeVariant(sslStatus)}>
+            {getCustomDomainStatusBadgeLabel(sslStatus, __)}
           </Badge>
         </div>
       )}
     >
       <DialogContent padded className="space-y-6">
-        {domain.sslStatus === "ACTIVE"
+        {sslStatus === "ACTIVE"
           ? (
               <div className="bg-subtle rounded-lg p-4">
                 <div className="flex items-start">
@@ -109,11 +114,11 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                         "Your custom domain is verified and SSL certificate is active",
                       )}
                     </p>
-                    {domain.sslExpiresAt && (
+                    {expiresAt && (
                       <p className="text-xs text-txt-tertiary mt-2">
                         {__("SSL expires")}
                         {" "}
-                        {new Date(domain.sslExpiresAt).toLocaleDateString()}
+                        {new Date(expiresAt).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -122,10 +127,10 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
             )
           : (
               <div>
-                {domain.provisioningError && (
+                {provisioningError && (
                   <div className="bg-danger-subtle text-danger rounded-lg p-4 mb-4">
                     <p className="text-sm font-medium mb-1">{__("Provisioning error")}</p>
-                    <p className="text-sm">{domain.provisioningError}</p>
+                    <p className="text-sm">{provisioningError}</p>
                   </div>
                 )}
 
@@ -188,7 +193,7 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                   ))}
                 </div>
 
-                {domain.sslStatus === "PENDING" && (
+                {sslStatus === "PENDING" && (
                   <div className="bg-subtle rounded-lg p-4 mt-4">
                     <p className="text-sm">
                       {__(

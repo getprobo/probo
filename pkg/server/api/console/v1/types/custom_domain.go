@@ -24,46 +24,34 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// NewCustomDomain builds the GraphQL CustomDomain type. The TLS lifecycle now
-// lives on the linked certificate; when cert is nil (certificate not yet
-// created) the domain reports a pending SSL status.
-func NewCustomDomain(d *coredata.CustomDomain, cert *coredata.Certificate, cnameTarget string) *CustomDomain {
-	result := &CustomDomain{
+func NewCustomDomain(d *coredata.CustomDomain, cnameTarget string) *CustomDomain {
+	domain := &CustomDomain{
 		ID: d.ID,
 		Organization: &Organization{
 			ID: d.OrganizationID,
 		},
-		Domain:    d.Domain,
-		Managed:   d.Managed,
-		SslStatus: coredata.CustomDomainSSLStatusPending,
-		CreatedAt: d.CreatedAt,
-		UpdatedAt: d.UpdatedAt,
+		Domain:     d.Domain,
+		Managed:    d.Managed,
+		DNSRecords: convertDNSRecords(d, cnameTarget),
+		CreatedAt:  d.CreatedAt,
+		UpdatedAt:  d.UpdatedAt,
 	}
 
-	if cert != nil {
-		result.SslStatus = coredata.CustomDomainSSLStatus(cert.Status)
-		result.SslExpiresAt = cert.SSLExpiresAt
-		result.ProvisioningError = cert.ProvisioningError
+	if d.CertificateID != nil {
+		domain.Certificate = &Certificate{ID: *d.CertificateID}
 	}
 
-	// Convert DNS records
-	result.DNSRecords = convertDNSRecords(d, cnameTarget)
-
-	return result
+	return domain
 }
 
 func convertDNSRecords(d *coredata.CustomDomain, cnameTarget string) []*DNSRecordInstruction {
-	var records []*DNSRecordInstruction
-
-	// For HTTP-01 challenges, we just need the domain to point to our servers via CNAME
-	record := &DNSRecordInstruction{
-		Type:    "CNAME",
-		Name:    d.Domain,
-		Value:   cnameTarget,
-		TTL:     300,
-		Purpose: "Point domain to Probo servers",
+	return []*DNSRecordInstruction{
+		{
+			Type:    "CNAME",
+			Name:    d.Domain,
+			Value:   cnameTarget,
+			TTL:     300,
+			Purpose: "Point domain to Probo servers",
+		},
 	}
-	records = append(records, record)
-
-	return records
 }

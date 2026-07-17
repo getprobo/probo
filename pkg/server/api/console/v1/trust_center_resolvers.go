@@ -124,6 +124,30 @@ func (r *compliancePortalCommitmentGroupConnectionResolver) TotalCount(ctx conte
 	return count, nil
 }
 
+// Certificate is the resolver for the certificate field.
+func (r *customDomainResolver) Certificate(ctx context.Context, obj *types.CustomDomain) (*types.Certificate, error) {
+	if obj.Certificate == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err := r.certManager.Get(ctx, scope, obj.Certificate.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load certificate", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCertificate(cert), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *customDomainResolver) Permission(ctx context.Context, obj *types.CustomDomain, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -893,13 +917,8 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	customDomain, err := r.newCustomDomainType(ctx, scope, domain)
-	if err != nil {
-		return nil, err
-	}
-
 	return &types.CreateCustomDomainPayload{
-		CustomDomain: customDomain,
+		CustomDomain: types.NewCustomDomain(domain, r.customDomainCname),
 	}, nil
 }
 
@@ -1169,42 +1188,50 @@ func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustC
 
 // DefaultDomain is the resolver for the defaultDomain field.
 func (r *trustCenterResolver) DefaultDomain(ctx context.Context, obj *types.TrustCenter) (*types.CustomDomain, error) {
+	if obj.DefaultDomain == nil {
+		return nil, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
 		return nil, err
 	}
 
-	domain, err := r.management.GetDefaultDomain(ctx, scope, obj.ID)
+	domain, err := r.management.GetDomain(ctx, scope, obj.DefaultDomain.ID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot load default domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if domain == nil {
-		return nil, nil
-	}
-
-	return r.newCustomDomainType(ctx, scope, domain)
+	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
 // CustomDomain is the resolver for the customDomain field.
 func (r *trustCenterResolver) CustomDomain(ctx context.Context, obj *types.TrustCenter) (*types.CustomDomain, error) {
+	if obj.CustomDomain == nil {
+		return nil, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
 		return nil, err
 	}
 
-	domain, err := r.management.GetCustomDomain(ctx, scope, obj.ID)
+	domain, err := r.management.GetDomain(ctx, scope, obj.CustomDomain.ID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot load custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if domain == nil {
-		return nil, nil
-	}
-
-	return r.newCustomDomainType(ctx, scope, domain)
+	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
 // PublicURL is the resolver for the publicUrl field.

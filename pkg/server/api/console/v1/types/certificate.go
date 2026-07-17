@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,24 +24,11 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewCustomDomain(d *coredata.CustomDomain, cert *coredata.Certificate) *CustomDomain {
-	domain := &CustomDomain{
-		ID:             d.ID,
-		OrganizationID: d.OrganizationID,
-		Domain:         d.Domain,
-		Managed:        d.Managed,
-		CreatedAt:      d.CreatedAt,
-		UpdatedAt:      d.UpdatedAt,
+func NewCertificate(c *coredata.Certificate) *Certificate {
+	return &Certificate{
+		ID:                c.ID,
+		Status:            c.Status,
+		ExpiresAt:         c.SSLExpiresAt,
+		ProvisioningError: c.ProvisioningError,
 	}
-
-	if cert != nil {
-		domain.Certificate = &Certificate{
-			ID:                cert.ID,
-			Status:            cert.Status,
-			ExpiresAt:         cert.SSLExpiresAt,
-			ProvisioningError: cert.ProvisioningError,
-		}
-	}
-
-	return domain
 }

@@ -138,73 +138,18 @@ func (s *Service) RemoveCustomDomain(
 	)
 }
 
-// GetDefaultDomain returns the compliance page's default probopage subdomain,
-// or nil when it has not been provisioned yet.
-func (s *Service) GetDefaultDomain(
+// GetDomain returns a custom domain by ID.
+func (s *Service) GetDomain(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	domainID gid.GID,
 ) (*coredata.CustomDomain, error) {
-	var domain *coredata.CustomDomain
+	domain := &coredata.CustomDomain{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			if compliancePage.DefaultDomainID == nil {
-				return nil
-			}
-
-			domain = &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, scope, *compliancePage.DefaultDomainID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					domain = nil
-					return nil
-				}
-
-				return fmt.Errorf("cannot load custom domain: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return domain, nil
-}
-
-func (s *Service) GetCustomDomain(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-) (*coredata.CustomDomain, error) {
-	var domain *coredata.CustomDomain
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			if compliancePage.CustomDomainID == nil {
-				return nil
-			}
-
-			domain = &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, scope, *compliancePage.CustomDomainID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					domain = nil
-					return nil
-				}
-
+			if err := domain.LoadByID(ctx, conn, scope, domainID); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 

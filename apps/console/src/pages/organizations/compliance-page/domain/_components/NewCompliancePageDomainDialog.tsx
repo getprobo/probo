@@ -42,7 +42,11 @@ const createCustomDomainMutation = graphql`
       customDomain {
         id
         domain
-        sslStatus
+        certificate {
+          status
+          expiresAt
+          provisioningError
+        }
         dnsRecords {
           type
           name
@@ -52,7 +56,6 @@ const createCustomDomainMutation = graphql`
         }
         createdAt
         updatedAt
-        sslExpiresAt
         canDelete: permission(action: "compliance-portal:custom-domain:delete")
         ...CompliancePageDomainCardFragment
       }

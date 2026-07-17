@@ -37,8 +37,10 @@ const fragment = graphql`
     id
     domain
     managed
-    sslStatus
-    provisioningError
+    certificate {
+      status
+      provisioningError
+    }
     canDelete: permission(action: "compliance-portal:custom-domain:delete")
     ...CompliancePageDomainDialogFragment
   }
@@ -52,6 +54,8 @@ export function CompliancePageDomainCard(props: {
   const { __ } = useTranslate();
 
   const domain = useFragment<CompliancePageDomainCardFragment$key>(fragment, fKey);
+  const sslStatus = domain.certificate?.status ?? "PENDING";
+  const provisioningError = domain.certificate?.provisioningError;
 
   return (
     <Card padded>
@@ -62,15 +66,15 @@ export function CompliancePageDomainCard(props: {
             {domain.managed && (
               <Badge variant="neutral">{__("Managed")}</Badge>
             )}
-            <Badge variant={getCustomDomainStatusBadgeVariant(domain.sslStatus)}>
-              {getCustomDomainStatusBadgeLabel(domain.sslStatus, __)}
+            <Badge variant={getCustomDomainStatusBadgeVariant(sslStatus)}>
+              {getCustomDomainStatusBadgeLabel(sslStatus, __)}
             </Badge>
           </div>
           <p className="text-sm text-txt-secondary">
-            {domain.sslStatus === "ACTIVE"
+            {sslStatus === "ACTIVE"
               ? __("Verified and serving traffic")
-              : domain.provisioningError
-                ? domain.provisioningError
+              : provisioningError
+                ? provisioningError
                 : __("Pending DNS verification")}
           </p>
         </div>

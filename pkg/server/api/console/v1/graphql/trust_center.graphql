@@ -249,31 +249,21 @@ enum TrustCenterFileOrderField
 }
 
 enum SSLStatus
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatus") {
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CertificateStatus") {
     PENDING
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusPending"
-        )
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CertificateStatusPending")
     PROVISIONING
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusProvisioning"
+            value: "go.probo.inc/probo/pkg/coredata.CertificateStatusProvisioning"
         )
     ACTIVE
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusActive"
-        )
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CertificateStatusActive")
     RENEWING
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusRenewing"
-        )
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CertificateStatusRenewing")
     EXPIRED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusExpired"
-        )
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CertificateStatusExpired")
     FAILED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusFailed"
-        )
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.CertificateStatusFailed")
 }
 
 input TrustCenterAccessOrder
@@ -648,14 +638,19 @@ type CustomDomain implements Node {
     organization: Organization!
     domain: String!
     managed: Boolean!
-    sslStatus: SSLStatus!
-    sslExpiresAt: Datetime
-    provisioningError: String
+    certificate: Certificate @goField(forceResolver: true)
     dnsRecords: [DNSRecordInstruction!]!
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type Certificate {
+    id: ID!
+    status: SSLStatus!
+    expiresAt: Datetime
+    provisioningError: String
 }
 
 type DNSRecordInstruction {

@@ -8737,7 +8737,7 @@ components:
         - RENEWING
         - EXPIRED
         - FAILED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatus
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CertificateStatus
 
     TrustCenterReferenceOrderField:
       type: string
@@ -8968,6 +8968,26 @@ components:
           type: string
           format: date-time
 
+    Certificate:
+      type: object
+      required:
+        - id
+        - status
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        status:
+          $ref: "#/components/schemas/SSLStatus"
+        expires_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        provisioning_error:
+          anyOf:
+            - type: string
+            - type: "null"
+
     CustomDomain:
       type: object
       required:
@@ -8975,7 +8995,6 @@ components:
         - organization_id
         - domain
         - managed
-        - ssl_status
         - created_at
         - updated_at
       properties:
@@ -8988,12 +9007,9 @@ components:
         managed:
           type: boolean
           description: Whether this domain is a Probo-managed probopage subdomain
-        ssl_status:
-          $ref: "#/components/schemas/SSLStatus"
-        ssl_expires_at:
+        certificate:
           anyOf:
-            - type: string
-              format: date-time
+            - $ref: "#/components/schemas/Certificate"
             - type: "null"
         created_at:
           type: string
