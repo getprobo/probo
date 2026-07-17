@@ -83,7 +83,14 @@ func AuthorizationURLWithQuery(
 		return "", fmt.Errorf("cannot parse authorization endpoint: %w", err)
 	}
 
-	u.RawQuery = query.Encode()
+	merged := u.Query()
+	for key, values := range query {
+		for _, value := range values {
+			merged.Add(key, value)
+		}
+	}
+
+	u.RawQuery = merged.Encode()
 
 	return u.String(), nil
 }

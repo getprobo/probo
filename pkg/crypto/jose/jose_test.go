@@ -325,6 +325,21 @@ func TestRSAPublicKeyFromJWK(t *testing.T) {
 			require.Error(t, err)
 		},
 	)
+
+	t.Run(
+		"rejects invalid rsa exponent",
+		func(t *testing.T) {
+			t.Parallel()
+
+			invalidExponent := jwk
+			invalidExponent.E = base64.RawURLEncoding.EncodeToString(
+				new(big.Int).Lsh(big.NewInt(1), 128).Bytes(),
+			)
+
+			_, err := jose.RSAPublicKeyFromJWK(invalidExponent)
+			require.Error(t, err)
+		},
+	)
 }
 
 func TestPublicKeyFromJWKS(t *testing.T) {
@@ -355,6 +370,16 @@ func TestPublicKeyFromJWKS(t *testing.T) {
 			t.Parallel()
 
 			_, err := jose.PublicKeyFromJWKS(jwks, "missing")
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"errors when jwks is nil",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := jose.PublicKeyFromJWKS(nil, "kid-1")
 			require.Error(t, err)
 		},
 	)
@@ -556,6 +581,19 @@ func TestVerifyJWTWithJWKS(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = jose.VerifyJWTWithJWKS(token, jwks)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects nil jwks",
+		func(t *testing.T) {
+			t.Parallel()
+
+			token, err := jose.SignJWT(key, "kid-1", map[string]string{"sub": "test"})
+			require.NoError(t, err)
+
+			_, err = jose.VerifyJWTWithJWKS(token, nil)
 			require.Error(t, err)
 		},
 	)

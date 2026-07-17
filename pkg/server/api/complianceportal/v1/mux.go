@@ -16,11 +16,9 @@ package complianceportal_v1
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -123,15 +121,10 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 			)
 
 			r.Handle("/*", webServer)
-			r.NotFound(handleCustomDomain404)
 		},
 	)
 
 	return r, nil
-}
-
-func handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
-	httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
 }
 
 func compliancePageHeadData() HeadDataFunc {

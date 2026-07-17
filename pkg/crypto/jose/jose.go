@@ -121,14 +121,23 @@ func RSAPublicKeyFromJWK(jwk JWK) (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("cannot decode rsa exponent: %w", err)
 	}
 
+	e := new(big.Int).SetBytes(eBytes)
+	if !e.IsInt64() || e.Sign() <= 0 {
+		return nil, fmt.Errorf("cannot convert jwk to rsa public key: invalid rsa exponent")
+	}
+
 	return &rsa.PublicKey{
 		N: new(big.Int).SetBytes(nBytes),
-		E: int(new(big.Int).SetBytes(eBytes).Int64()),
+		E: int(e.Int64()),
 	}, nil
 }
 
 // PublicKeyFromJWKS returns the RSA public key matching the given key ID.
 func PublicKeyFromJWKS(jwks *JWKS, kid string) (*rsa.PublicKey, error) {
+	if jwks == nil {
+		return nil, fmt.Errorf("cannot find signing key %q in jwks: jwks is nil", kid)
+	}
+
 	for _, key := range jwks.Keys {
 		if key.KeyID == kid {
 			return RSAPublicKeyFromJWK(key)
@@ -181,6 +190,10 @@ func VerifyJWT(raw string, pubKey *rsa.PublicKey) ([]byte, error) {
 
 // VerifyJWTWithJWKS verifies an RS256 JWT using the matching key from a JWKS.
 func VerifyJWTWithJWKS(raw string, jwks *JWKS) ([]byte, error) {
+	if jwks == nil {
+		return nil, fmt.Errorf("cannot verify jwt: jwks is nil")
+	}
+
 	parts := strings.Split(raw, ".")
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("cannot verify jwt: invalid format")

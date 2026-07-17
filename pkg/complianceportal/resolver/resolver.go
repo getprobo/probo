@@ -78,8 +78,6 @@ func PublicURLForTrustCenter(
 		host = byID[*trustCenter.CustomDomainID].Domain
 	case trustCenter.DefaultDomainID != nil && byID[*trustCenter.DefaultDomainID] != nil:
 		host = byID[*trustCenter.DefaultDomainID].Domain
-	case trustCenter.CustomDomainID != nil && byID[*trustCenter.CustomDomainID] != nil:
-		host = byID[*trustCenter.CustomDomainID].Domain
 	}
 
 	if host == "" {

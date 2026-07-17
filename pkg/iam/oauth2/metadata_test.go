@@ -90,6 +90,26 @@ func TestAuthorizationURLWithQuery(t *testing.T) {
 	)
 }
 
+func TestAuthorizationURLWithQueryPreservesEndpointQuery(t *testing.T) {
+	t.Parallel()
+
+	authorizationEndpoint := uri.URI(
+		"https://auth.example.com/api/connect/v1/oauth2/authorize?tenant=acme",
+	)
+	query := url.Values{}
+	query.Set("client_id", "https://trust.example.com/.well-known/oauth-client-metadata")
+	query.Set("response_type", "code")
+
+	got, err := oauth2.AuthorizationURLWithQuery(authorizationEndpoint, query)
+	require.NoError(t, err)
+
+	parsed, err := url.Parse(got)
+	require.NoError(t, err)
+	assert.Equal(t, "acme", parsed.Query().Get("tenant"))
+	assert.Equal(t, "https://trust.example.com/.well-known/oauth-client-metadata", parsed.Query().Get("client_id"))
+	assert.Equal(t, "code", parsed.Query().Get("response_type"))
+}
+
 func TestNewMetadata(t *testing.T) {
 	t.Parallel()
 

@@ -91,8 +91,38 @@ func (h *renewHandler) Claim(ctx context.Context) (coredata.Certificate, error) 
 	return certificate, nil
 }
 
-func (h *renewHandler) Process(_ context.Context, _ coredata.Certificate) error {
-	return nil
+func (h *renewHandler) Process(ctx context.Context, certificate coredata.Certificate) error {
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			fullCertificate := &coredata.Certificate{}
+			if err := fullCertificate.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), certificate.ID); err != nil {
+				return fmt.Errorf("cannot load certificate for renewal: %w", err)
+			}
+
+			if fullCertificate.Status != coredata.CertificateStatusRenewing {
+				return nil
+			}
+
+			fullCertificate.HTTPChallengeToken = nil
+			fullCertificate.HTTPChallengeKeyAuth = nil
+			fullCertificate.HTTPChallengeURL = nil
+			fullCertificate.HTTPOrderURL = nil
+			fullCertificate.ProvisioningError = nil
+
+			if err := fullCertificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot prepare certificate for renewal: %w", err)
+			}
+
+			h.logger.InfoCtx(
+				ctx,
+				"prepared certificate for renewal",
+				log.String("hostname", fullCertificate.Hostname),
+			)
+
+			return nil
+		},
+	)
 }
 
 func (h *renewHandler) RecoverStale(ctx context.Context) error {

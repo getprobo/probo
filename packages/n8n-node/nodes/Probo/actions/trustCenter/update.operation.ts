@@ -176,14 +176,16 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { trustCenterId };
+	const input: Record<string, unknown> = {
+		trustCenterId,
+		title,
+		description,
+		websiteUrl,
+		email,
+		headquarterAddress,
+	};
 	if (active !== undefined) input.active = active;
 	if (searchEngineIndexing) input.searchEngineIndexing = searchEngineIndexing;
-	if (description) input.description = description;
-	if (websiteUrl) input.websiteUrl = websiteUrl;
-	if (email) input.email = email;
-	if (headquarterAddress) input.headquarterAddress = headquarterAddress;
-	if (title) input.title = title;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 
