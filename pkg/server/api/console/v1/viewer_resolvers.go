@@ -17,6 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -228,6 +229,36 @@ func (r *viewerResolver) EnrolledDevices(ctx context.Context, obj *types.Viewer,
 	}
 
 	return types.NewOwnedDeviceConnection(devicesPage, r, organizationID, profile.ID), nil
+}
+
+// EnrolledDevice is the resolver for the enrolledDevice field.
+func (r *viewerResolver) EnrolledDevice(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.Device, error) {
+	scope, err := r.authorize(
+		ctx,
+		id,
+		itam.ActionEmployeeDeviceGet,
+		authz.WithSkipAssumptionCheck(),
+	)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, gqlutils.NotFoundf(ctx, "resource not found")
+		}
+
+		return nil, err
+	}
+
+	device, err := r.itam.GetDevice(ctx, scope, id)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get enrolled device", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDevice(device), nil
 }
 
 // Viewer returns schema.ViewerResolver implementation.

@@ -26,6 +26,7 @@ const (
 	// Device actions
 	ActionDeviceList         = "itam:device:list"
 	ActionEmployeeDeviceList = "itam:employee-device:list"
+	ActionEmployeeDeviceGet  = "itam:employee-device:get"
 	ActionDeviceGet          = "itam:device:get"
 	ActionDeviceCreate       = "itam:device:create"
 	ActionDeviceEnroll       = "itam:device:enroll"

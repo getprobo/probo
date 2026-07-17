@@ -40,6 +40,9 @@ var FullAccessPolicy = policy.NewPolicy(
 		ActionDeviceEnroll, ActionDeviceRevoke, ActionDeviceAssignOwner,
 		ActionDevicePostureList,
 	).WithSID("itam-full-access").When(organizationCondition),
+	policy.Allow(ActionEmployeeDeviceGet).
+		WithSID("itam-full-access-get-own-device").
+		When(organizationCondition, ownerCondition),
 ).WithDescription("Full ITAM access for organization owners and admins")
 
 // ViewerPolicy grants read-only access to ITAM entities for organization
@@ -60,7 +63,7 @@ var EmployeePolicy = policy.NewPolicy(
 	policy.Allow(ActionDeviceEnroll).
 		WithSID("itam-employee-enroll-device").
 		When(organizationCondition),
-	policy.Allow(ActionDeviceGet).
+	policy.Allow(ActionDeviceGet, ActionEmployeeDeviceGet).
 		WithSID("itam-employee-get-own-device").
 		When(organizationCondition, ownerCondition),
 	policy.Allow(ActionEmployeeDeviceList).

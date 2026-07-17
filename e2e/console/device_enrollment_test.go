@@ -31,6 +31,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 const (
@@ -105,6 +107,17 @@ const (
 							state
 						}
 					}
+				}
+			}
+		}`
+
+	getEnrolledDeviceQuery = `
+		query GetEnrolledDevice($id: ID!) {
+			viewer {
+				enrolledDevice(id: $id) {
+					id
+					state
+					hostname
 				}
 			}
 		}`
@@ -706,6 +719,72 @@ func TestDeviceEnrollment(t *testing.T) {
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not enroll devices")
+	})
+
+	t.Run("unassumed session can poll own enrolledDevice", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		enrolled := enrollAndActivateDevice(t, employee, orgID)
+		deviceID := enrolled.EnrollDevice.Device.ID
+
+		unassumed := testutil.NewClientWithNewSession(t, employee)
+
+		_, err := unassumed.Do(getDeviceQuery, map[string]any{"id": deviceID})
+		testutil.RequireErrorCode(t, err, "ASSUMPTION_REQUIRED", "node get requires assumption")
+
+		var result struct {
+			Viewer struct {
+				EnrolledDevice struct {
+					ID    string `json:"id"`
+					State string `json:"state"`
+				} `json:"enrolledDevice"`
+			} `json:"viewer"`
+		}
+		unassumed.MustExecute(getEnrolledDeviceQuery, map[string]any{"id": deviceID}, &result)
+		require.Equal(t, deviceID, result.Viewer.EnrolledDevice.ID)
+		require.Equal(t, "ACTIVE", result.Viewer.EnrolledDevice.State)
+	})
+
+	t.Run("unassumed session cannot read another users enrolledDevice", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		employeeA := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+		employeeB := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+
+		enrolledB := enrollDevice(t, employeeB, orgID)
+
+		unassumedA := testutil.NewClientWithNewSession(t, employeeA)
+
+		_, err := unassumedA.Do(getEnrolledDeviceQuery, map[string]any{
+			"id": enrolledB.EnrollDevice.Device.ID,
+		})
+		testutil.RequireErrorCode(t, err, "NOT_FOUND", "employee cannot read another users enrolledDevice")
+	})
+
+	t.Run("enrolledDevice does not disclose foreign org device existence", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, employeeA, _, _, _ := setupDeviceEnrollmentClients(t)
+		_, _, employeeB, _, orgBID, _ := setupDeviceEnrollmentClients(t)
+
+		enrolledB := enrollDevice(t, employeeB, orgBID)
+
+		unassumedA := testutil.NewClientWithNewSession(t, employeeA)
+
+		_, err := unassumedA.Do(getEnrolledDeviceQuery, map[string]any{
+			"id": enrolledB.EnrollDevice.Device.ID,
+		})
+		testutil.RequireErrorCode(t, err, "NOT_FOUND", "foreign org enrolledDevice must look like not found")
+
+		unknownID := gid.New(employeeA.GetOrganizationID().TenantID(), coredata.DeviceEntityType).String()
+		_, err = unassumedA.Do(getEnrolledDeviceQuery, map[string]any{
+			"id": unknownID,
+		})
+		testutil.RequireErrorCode(t, err, "NOT_FOUND", "unknown enrolledDevice must look like not found")
 	})
 
 	t.Run("owner retains admin access", func(t *testing.T) {

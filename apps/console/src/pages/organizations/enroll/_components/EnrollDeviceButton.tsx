@@ -49,9 +49,8 @@ const enrollDeviceButtonMutation = graphql`
 
 const enrollDeviceButtonStatusQuery = graphql`
   query EnrollDeviceButtonStatusQuery($deviceId: ID!) {
-    device: node(id: $deviceId) {
-      __typename
-      ... on Device {
+    viewer @required(action: THROW) {
+      enrolledDevice(id: $deviceId) {
         id
         state
         hostname
@@ -138,8 +137,8 @@ function EnrollDeviceButtonContent(
           return;
         }
 
-        const device = data?.device;
-        if (device?.__typename !== "Device") {
+        const device = data?.viewer.enrolledDevice;
+        if (device == null) {
           if (Date.now() > deadline) {
             setIsWaitingForActivity(false);
             setHasTimedOut(true);

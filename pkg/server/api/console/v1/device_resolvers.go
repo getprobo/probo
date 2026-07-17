@@ -101,6 +101,8 @@ func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.De
 }
 
 // EnrollDevice is the resolver for the enrollDevice field.
+// SkipAssumptionCheck: self-enrollment from /enroll runs before the viewer
+// assumes the target organization.
 func (r *mutationResolver) EnrollDevice(ctx context.Context, input types.EnrollDeviceInput) (*types.CreateDevicePayload, error) {
 	identity := authn.IdentityFromContext(ctx)
 
