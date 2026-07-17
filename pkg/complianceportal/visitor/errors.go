@@ -30,7 +30,6 @@ var (
 	ErrUserNotFound           = errors.New("user not found")
 	ErrUserInactive           = errors.New("user inactive")
 	ErrDocumentAccessNotFound = errors.New("document access not found")
-	ErrNDAFileNotFound        = errors.New("NDA file not found")
 	ErrDocumentNotFound       = errors.New("document not found")
 	ErrDocumentNotVisible     = errors.New("document not visible")
 	ErrReportNotFound         = errors.New("report not found")

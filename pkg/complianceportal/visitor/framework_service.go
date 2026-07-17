@@ -23,7 +23,6 @@ package visitor
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -53,90 +52,4 @@ func (s *Service) GetFramework(
 	}
 
 	return framework, nil
-}
-
-func (s *Service) GenerateFrameworkLightLogoURL(
-	ctx context.Context,
-	scope coredata.Scoper,
-	frameworkID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
-	file := &coredata.File{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
-				return fmt.Errorf("cannot load framework: %w", err)
-			}
-
-			if framework.LightLogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *framework.LightLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if file.FileKey == "" {
-		return nil, nil
-	}
-
-	presignedURL, err := s.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &presignedURL, nil
-}
-
-func (s *Service) GenerateFrameworkDarkLogoURL(
-	ctx context.Context,
-	scope coredata.Scoper,
-	frameworkID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
-	file := &coredata.File{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
-				return fmt.Errorf("cannot load framework: %w", err)
-			}
-
-			if framework.DarkLogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *framework.DarkLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if file.FileKey == "" {
-		return nil, nil
-	}
-
-	presignedURL, err := s.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &presignedURL, nil
 }

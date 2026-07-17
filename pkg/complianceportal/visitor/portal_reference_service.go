@@ -58,31 +58,6 @@ func (s *Service) ListPortalReferencesForPortalID(
 	return page.NewPage(references, cursor), nil
 }
 
-func (s *Service) GeneratePortalReferenceLogoURL(
-	ctx context.Context,
-	scope coredata.Scoper,
-	referenceID gid.GID,
-) (string, error) {
-	reference := &coredata.TrustCenterReference{}
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			return reference.LoadByID(ctx, tx, scope, referenceID)
-		},
-	)
-	if err != nil {
-		return "", fmt.Errorf("cannot load compliance page reference: %w", err)
-	}
-
-	file, err := s.fileManager.GetPublicFile(ctx, reference.LogoFileID)
-	if err != nil {
-		return "", err
-	}
-
-	return s.fileManager.GenerateFileURL(file), nil
-}
-
 func (s *Service) GetPortalReference(
 	ctx context.Context,
 	scope coredata.Scoper,

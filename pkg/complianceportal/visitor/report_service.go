@@ -25,7 +25,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
@@ -86,38 +85,6 @@ func (s *Service) loadReportByID(
 	}
 
 	return file, nil
-}
-
-func (s *Service) GenerateReportDownloadURL(
-	ctx context.Context,
-	scope coredata.Scoper,
-	fileID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
-	file, err := s.loadReportByID(ctx, scope, fileID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get file: %w", err)
-	}
-
-	presignClient := s3.NewPresignClient(s.s3)
-
-	presignedReq, err := presignClient.PresignGetObject(
-		ctx,
-		&s3.GetObjectInput{
-			Bucket:                     new(s.bucket),
-			Key:                        new(file.FileKey),
-			ResponseCacheControl:       new("max-age=3600, public"),
-			ResponseContentType:        new(file.MimeType),
-			ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
-		}, func(opts *s3.PresignOptions) {
-			opts.Expires = expiresIn
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot presign GetObject request: %w", err)
-	}
-
-	return &presignedReq.URL, nil
 }
 
 func (s *Service) ExportReportPDF(

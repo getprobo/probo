@@ -57,31 +57,6 @@ func (s *Service) GetPortal(
 	return compliancePage, nil
 }
 
-func (s *Service) GetPortalByOrganizationID(
-	ctx context.Context,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-) (*coredata.TrustCenter, error) {
-	compliancePage := &coredata.TrustCenter{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			err := compliancePage.LoadByOrganizationID(ctx, conn, scope, organizationID)
-			if err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return compliancePage, nil
-}
-
 func (s *Service) GetPortalNDAFile(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -156,100 +131,6 @@ func (s *Service) GeneratePortalNDAFileURL(
 	return presignedURL, nil
 }
 
-func (s *Service) GeneratePortalLogoURL(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
-	file := &coredata.File{}
-	compliancePage := &coredata.TrustCenter{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			if compliancePage.LogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if compliancePage.LogoFileID == nil {
-		return nil, nil
-	}
-
-	if file.FileKey == "" {
-		return nil, nil
-	}
-
-	presignedURL, err := s.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &presignedURL, nil
-}
-
-func (s *Service) GeneratePortalDarkLogoURL(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
-	file := &coredata.File{}
-	compliancePage := &coredata.TrustCenter{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			if compliancePage.DarkLogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.DarkLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if compliancePage.DarkLogoFileID == nil {
-		return nil, nil
-	}
-
-	if file.FileKey == "" {
-		return nil, nil
-	}
-
-	presignedURL, err := s.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &presignedURL, nil
-}
-
 func (s *Service) GetPortalEmailPresenterConfig(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -320,38 +201,4 @@ func (s *Service) GetPortalEmailPresenterConfig(
 	}
 
 	return emailPresenterCfg, nil
-}
-
-func (s *Service) GetPortalMailingList(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePageID gid.GID,
-) (*coredata.MailingList, error) {
-	var mailingList *coredata.MailingList
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			if compliancePage.MailingListID == nil {
-				return nil
-			}
-
-			mailingList = &coredata.MailingList{}
-			if err := mailingList.LoadByID(ctx, conn, scope, *compliancePage.MailingListID); err != nil {
-				return fmt.Errorf("cannot load mailing list: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return mailingList, nil
 }

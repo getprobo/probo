@@ -36,7 +36,6 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -48,20 +47,17 @@ type (
 	// public read operations for the compliance page and its related resources as
 	// methods on a single type.
 	Service struct {
-		pg                 *pg.Client
-		s3                 *s3.Client
-		bucket             string
-		slackSigningSecret string
-		baseURL            string
-		baseDomain         string
-		iam                *iam.Service
-		esign              *esign.Service
-		html2pdfConverter  *html2pdf.Converter
-		fileManager        *filemanager.Service
-		logger             *log.Logger
-		slack              *slack.Service
-		resourceAlias      *resourcealias.Service
-		management         *management.Service
+		pg                *pg.Client
+		s3                *s3.Client
+		bucket            string
+		baseURL           string
+		esign             *esign.Service
+		html2pdfConverter *html2pdf.Converter
+		fileManager       *filemanager.Service
+		logger            *log.Logger
+		slack             *slack.Service
+		resourceAlias     *resourcealias.Service
+		management        *management.Service
 	}
 )
 
@@ -70,9 +66,6 @@ func NewService(
 	s3Client *s3.Client,
 	bucket string,
 	baseURL string,
-	baseDomain string,
-	slackSigningSecret string,
-	iam *iam.Service,
 	esignSvc *esign.Service,
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
@@ -82,20 +75,17 @@ func NewService(
 	managementSvc *management.Service,
 ) *Service {
 	svc := &Service{
-		pg:                 pgClient,
-		s3:                 s3Client,
-		bucket:             bucket,
-		slackSigningSecret: slackSigningSecret,
-		baseURL:            baseURL,
-		baseDomain:         baseDomain,
-		iam:                iam,
-		esign:              esignSvc,
-		html2pdfConverter:  html2pdfConverter,
-		fileManager:        fileManagerService,
-		logger:             logger,
-		slack:              slack,
-		resourceAlias:      resourceAliasSvc,
-		management:         managementSvc,
+		pg:                pgClient,
+		s3:                s3Client,
+		bucket:            bucket,
+		baseURL:           baseURL,
+		esign:             esignSvc,
+		html2pdfConverter: html2pdfConverter,
+		fileManager:       fileManagerService,
+		logger:            logger,
+		slack:             slack,
+		resourceAlias:     resourceAliasSvc,
+		management:        managementSvc,
 	}
 
 	return svc
@@ -111,34 +101,6 @@ func (s *Service) GetPortalByID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			err := compliancePage.LoadByID(ctx, conn, coredata.NewNoScope(), id)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrPageNotFound
-				}
-
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return compliancePage, nil
-}
-
-func (s *Service) GetPortalBySlug(
-	ctx context.Context,
-	slug string,
-) (*coredata.TrustCenter, error) {
-	compliancePage := &coredata.TrustCenter{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			err := compliancePage.LoadBySlug(ctx, conn, slug)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
@@ -294,46 +256,6 @@ func (s *Service) GetPortalMembership(ctx context.Context, compliancePageID gid.
 	}
 
 	return membership, nil
-}
-
-func (s *Service) GetPortalNDAFileByID(
-	ctx context.Context,
-	compliancePageID gid.GID,
-) (*coredata.File, error) {
-	var (
-		file  *coredata.File
-		scope = coredata.NewScopeFromObjectID(compliancePageID)
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			if compliancePage.NonDisclosureAgreementFileID == nil {
-				return ErrNDAFileNotFound
-			}
-
-			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrNDAFileNotFound
-				}
-
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return file, nil
 }
 
 func (s *Service) ProvisionPortalMember(
