@@ -48,19 +48,32 @@ func RegisterAutoStart(exePath string, runDir string) error {
 
 	keyPath := sid + `\` + runKeyPath
 
-	key, _, err := registry.CreateKey(registry.USERS, keyPath, registry.SET_VALUE)
+	key, _, err := registry.CreateKey(registry.USERS, keyPath, registry.QUERY_VALUE|registry.SET_VALUE)
 	if err != nil {
 		return fmt.Errorf("cannot open or create Run registry key for interactive user: %w", err)
 	}
 
 	defer func() { _ = key.Close() }()
 
-	command := fmt.Sprintf(`"%s" tray --run-dir "%s"`, exePath, runDir)
+	command := trayRunCommand(exePath, runDir)
+
+	existing, _, err := key.GetStringValue(runValueName)
+	if err == nil && existing == command {
+		return nil
+	}
+	if err != nil && !errors.Is(err, registry.ErrNotExist) {
+		return fmt.Errorf("cannot read Run registry value: %w", err)
+	}
+
 	if err := key.SetStringValue(runValueName, command); err != nil {
 		return fmt.Errorf("cannot set Run registry value: %w", err)
 	}
 
 	return nil
+}
+
+func trayRunCommand(exePath string, runDir string) string {
+	return fmt.Sprintf(`"%s" tray --run-dir "%s"`, exePath, runDir)
 }
 
 func UnregisterAutoStart() error {

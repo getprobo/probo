@@ -23,6 +23,7 @@
 package tray
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/xml"
 	"errors"
@@ -73,6 +74,15 @@ func RegisterAutoStart(exePath string, runDir string) error {
 		return fmt.Errorf("enrollment run directory is required")
 	}
 
+	current, err := launchAgentIsCurrent(trayPlistPath, exePath, runDir)
+	if err != nil {
+		return err
+	}
+
+	if current {
+		return nil
+	}
+
 	if err := writeTrayLaunchAgentPlist(exePath, runDir); err != nil {
 		return err
 	}
@@ -82,7 +92,45 @@ func RegisterAutoStart(exePath string, runDir string) error {
 		return nil
 	}
 
-	return bootstrapTrayForUIDs(uids)
+	bootstrapTrayForUIDs(uids)
+
+	return nil
+}
+
+func renderLaunchAgentPlist(exePath string, runDir string) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := launchAgentPlist.Execute(
+		&buf,
+		launchAgentData{
+			Label:   trayLabel,
+			ExePath: exePath,
+			RunDir:  runDir,
+		},
+	); err != nil {
+		return nil, fmt.Errorf("cannot render LaunchAgent plist: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+// launchAgentIsCurrent reports whether plistPath already contains the
+// LaunchAgent definition for exePath and runDir.
+func launchAgentIsCurrent(plistPath string, exePath string, runDir string) (bool, error) {
+	existing, err := os.ReadFile(plistPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("cannot read LaunchAgent plist: %w", err)
+	}
+
+	desired, err := renderLaunchAgentPlist(exePath, runDir)
+	if err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(existing, desired), nil
 }
 
 func writeTrayLaunchAgentPlist(exePath string, runDir string) error {
@@ -91,22 +139,13 @@ func writeTrayLaunchAgentPlist(exePath string, runDir string) error {
 		return fmt.Errorf("cannot ensure launch agents directory: %w", err)
 	}
 
-	f, err := os.OpenFile(trayPlistPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	desired, err := renderLaunchAgentPlist(exePath, runDir)
 	if err != nil {
-		return fmt.Errorf("cannot write plist (need root?): %w", err)
+		return err
 	}
 
-	defer func() { _ = f.Close() }()
-
-	if err := launchAgentPlist.Execute(
-		f,
-		launchAgentData{
-			Label:   trayLabel,
-			ExePath: exePath,
-			RunDir:  runDir,
-		},
-	); err != nil {
-		return fmt.Errorf("cannot render LaunchAgent plist: %w", err)
+	if err := os.WriteFile(trayPlistPath, desired, 0o644); err != nil {
+		return fmt.Errorf("cannot write plist (need root?): %w", err)
 	}
 
 	return nil
@@ -123,7 +162,10 @@ func UnregisterAutoStart() error {
 	return nil
 }
 
-func bootstrapTrayForUIDs(uids []int) error {
+// bootstrapTrayForUIDs best-effort loads the tray LaunchAgent into each
+// GUI session. Failures are warnings only: the plist is enough for the
+// next login (same policy as the macOS PKG postinstall script).
+func bootstrapTrayForUIDs(uids []int) {
 	for _, uid := range uids {
 		target := fmt.Sprintf("gui/%d/%s", uid, trayLabel)
 
@@ -135,16 +177,15 @@ func bootstrapTrayForUIDs(uids []int) error {
 			fmt.Sprintf("gui/%d", uid),
 			trayPlistPath,
 		).CombinedOutput(); err != nil {
-			return fmt.Errorf(
-				"cannot run launchctl bootstrap for uid %d: %w: %s",
+			fmt.Fprintf(
+				os.Stderr,
+				"warning: could not start tray helper for uid %d; it will start at next GUI login: %v: %s\n",
 				uid,
 				err,
 				strings.TrimSpace(string(out)),
 			)
 		}
 	}
-
-	return nil
 }
 
 func bootoutTrayForUIDs(uids []int) {
