@@ -686,6 +686,7 @@ func (impl *Implm) Run(
 	)
 
 	staticCIMDAllow := oauth2.CIMDAllowFromClientIDs(impl.cfg.Auth.OAuth2Server.CIMDAllowedClientIDs)
+
 	iamService.OAuth2ServerService.SetCIMDAllow(
 		func(ctx context.Context, clientIDURL string) (oauth2.CIMDAllowance, error) {
 			host, ok := oauth2.CIMDClientIDHost(clientIDURL)
@@ -1322,6 +1323,7 @@ func newTrustCenterHTTPRedirectHandler(trustService *visitor.Service, l *log.Log
 			}
 
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
 			return
 		}
 

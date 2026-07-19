@@ -104,6 +104,7 @@ func loadDomains(
 	}
 
 	var certificateIDs []gid.GID
+
 	domainByCertificate := make(map[gid.GID]gid.GID)
 
 	for _, d := range domains {

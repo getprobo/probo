@@ -1547,6 +1547,7 @@ func (s *Service) Authorize(
 				}
 			} else {
 				var existingConsent coredata.OAuth2Consent
+
 				skipConsent = existingConsent.LoadMatchingConsent(
 					ctx,
 					tx,

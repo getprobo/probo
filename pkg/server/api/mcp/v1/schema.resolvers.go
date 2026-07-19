@@ -4953,6 +4953,7 @@ func (r *Resolver) UpdateTrustCenterTool(ctx context.Context, req *mcp.CallToolR
 	updateReq.WebsiteURL = UnwrapOmittable(input.WebsiteURL)
 	updateReq.Email = UnwrapOmittable(input.Email)
 	updateReq.HeadquarterAddress = UnwrapOmittable(input.HeadquarterAddress)
+
 	if title := UnwrapOmittable(input.Title); title != nil {
 		updateReq.Title = *title
 	}

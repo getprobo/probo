@@ -142,6 +142,7 @@ func (r *customDomainResolver) Certificate(ctx context.Context, obj *types.Custo
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load certificate", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1204,6 +1205,7 @@ func (r *trustCenterResolver) DefaultDomain(ctx context.Context, obj *types.Trus
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load default domain", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1228,6 +1230,7 @@ func (r *trustCenterResolver) CustomDomain(ctx context.Context, obj *types.Trust
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load custom domain", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

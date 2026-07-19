@@ -84,6 +84,7 @@ func AuthorizationURLWithQuery(
 	}
 
 	merged := u.Query()
+
 	for key, values := range query {
 		for _, value := range values {
 			merged.Add(key, value)

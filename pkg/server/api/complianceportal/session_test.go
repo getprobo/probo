@@ -49,6 +49,7 @@ func TestSessionHostMiddleware_RejectsMismatchedHost(t *testing.T) {
 	handler := NewSessionHostMiddleware(securecookie.Config{Name: "ssid"})(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authenticated = authn.IdentityFromContext(r.Context()) != nil
+
 			w.WriteHeader(http.StatusOK)
 		}),
 	)
@@ -80,6 +81,7 @@ func TestSessionHostMiddleware_AllowsMatchingTLSHost(t *testing.T) {
 	handler := NewSessionHostMiddleware(securecookie.Config{Name: "ssid"})(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authenticated = authn.IdentityFromContext(r.Context()) != nil
+
 			w.WriteHeader(http.StatusOK)
 		}),
 	)
@@ -111,6 +113,7 @@ func TestSessionHostMiddleware_RejectsSpoofedHostHeader(t *testing.T) {
 	handler := NewSessionHostMiddleware(securecookie.Config{Name: "ssid"})(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authenticated = authn.IdentityFromContext(r.Context()) != nil
+
 			w.WriteHeader(http.StatusOK)
 		}),
 	)

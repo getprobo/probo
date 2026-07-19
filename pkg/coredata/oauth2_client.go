@@ -651,6 +651,7 @@ func NewCIMDClient(
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse logo_uri: %w", err)
 		}
+
 		if !u.IsHTTP() {
 			return nil, fmt.Errorf("logo_uri must be an absolute http or https URL")
 		}
@@ -663,6 +664,7 @@ func NewCIMDClient(
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse client_uri: %w", err)
 		}
+
 		if !u.IsHTTP() {
 			return nil, fmt.Errorf("client_uri must be an absolute http or https URL")
 		}

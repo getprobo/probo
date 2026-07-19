@@ -37,6 +37,7 @@ func (s *Service) AddCustomDomain(
 	v := validator.New()
 	v.Check(compliancePageID, "compliance_page_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
 	v.Check(domain, "domain", validator.Required(), validator.NotEmpty(), validator.Domain())
+
 	if err := v.Error(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -107,6 +108,7 @@ func (s *Service) RemoveCustomDomain(
 			}
 
 			compliancePage := &coredata.TrustCenter{}
+
 			err := compliancePage.LoadByDomainID(ctx, tx, customDomainID)
 			switch {
 			case err == nil:
@@ -181,6 +183,7 @@ func (s *Service) PublicURL(
 			}
 
 			var err error
+
 			publicURL, err = s.PublicURLForCompliancePage(ctx, conn, scope, compliancePage)
 			if err != nil {
 				return fmt.Errorf("cannot resolve public url: %w", err)

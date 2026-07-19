@@ -39,6 +39,7 @@ func NewSessionHostMiddleware(cookieConfig securecookie.Config) func(next http.H
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
+
 				session := authn.SessionFromContext(ctx)
 				if session == nil {
 					next.ServeHTTP(w, r)
@@ -52,6 +53,7 @@ func NewSessionHostMiddleware(cookieConfig securecookie.Config) func(next http.H
 				}
 
 				securecookie.Clear(w, cookieConfig)
+
 				ctx = authn.ContextWithSession(ctx, nil)
 				ctx = authn.ContextWithIdentity(ctx, nil)
 				next.ServeHTTP(w, r.WithContext(ctx))

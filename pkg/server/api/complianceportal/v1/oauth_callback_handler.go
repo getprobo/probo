@@ -77,6 +77,7 @@ func (h *OAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	code := r.URL.Query().Get("code")
+
 	stateToken := r.URL.Query().Get("state")
 	if code == "" || stateToken == "" {
 		httpserver.RenderError(w, http.StatusBadRequest, errInvalidOAuthRequest)
@@ -92,6 +93,7 @@ func (h *OAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	portal := complianceportal.CompliancePageFromContext(ctx)
+
 	portalBaseURL := complianceportal.CompliancePageBaseURLFromContext(ctx)
 	if portal == nil || portalBaseURL == nil {
 		httpserver.RenderError(w, http.StatusNotFound, errNotFound)

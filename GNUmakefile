@@ -424,18 +424,20 @@ psql: ## Open a psql shell to the postgres container
 	$(DOCKER_COMPOSE) exec postgres psql -U probod -d probod
 
 compose/step-ca/certs/root_ca.crt:
-	# step-ca runs as UID 1000 and creates 0700 dirs; open them for the
-	# host user so later `go list ./...` can walk the bind mount on Linux.
+	# step-ca runs as UID 1000 and creates 0700 dirs. On Linux CI the host
+	# user cannot traverse them, so `-f` never sees root_ca.crt and a host
+	# chmod cannot fix ownership. Open perms from inside the container.
 	@$(MKDIR) compose/step-ca
 	@chmod a+rwx compose/step-ca
 	$(DOCKER_COMPOSE) up -d acme-http-01-proxy step-ca
 	@i=0; \
 	while [ ! -f $@ ] && [ $$i -lt 60 ]; do \
+		$(DOCKER_COMPOSE) exec -T -u 0 step-ca chmod -R a+rX /home/step 2>/dev/null || true; \
 		sleep 1; \
 		i=$$((i + 1)); \
 	done
 	@test -f $@ || ($(DOCKER_COMPOSE) logs step-ca >&2; echo "step-ca root CA not ready" >&2; exit 1)
-	@chmod -R a+rX compose/step-ca
+	@$(DOCKER_COMPOSE) exec -T -u 0 step-ca chmod -R a+rX /home/step
 
 compose/keycloak/certs/cert.pem:
 	$(MKDIR) ./compose/keycloak/certs

@@ -290,13 +290,10 @@ func (s *Service) generateDocumentPDFOnTheFly(
 		fileRecord := &coredata.File{}
 
 		fileErr := s.pg.WithConn(
-
 			ctx,
-
 			func(ctx context.Context, conn pg.Querier) error {
 				return fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID)
 			})
-
 		if fileErr == nil {
 			base64Data, mimeType, logoErr := s.fileManager.GetFileBase64(ctx, fileRecord)
 			if logoErr == nil {

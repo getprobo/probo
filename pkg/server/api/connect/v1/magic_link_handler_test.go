@@ -105,5 +105,4 @@ func TestMagicLinkHandler_SendHandler_Validation(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
-
 }

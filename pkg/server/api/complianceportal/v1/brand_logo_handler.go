@@ -63,6 +63,7 @@ func (h *brandLogoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fileID *gid.GID
+
 	switch h.variant {
 	case brandLogoVariantLogo:
 		fileID = compliancePage.LogoFileID

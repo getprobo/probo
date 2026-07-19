@@ -296,6 +296,7 @@ func (h *provisionHandler) skipsDNSChecks(
 	}
 
 	domain := &coredata.CustomDomain{}
+
 	err := domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), hostname)
 	if errors.Is(err, coredata.ErrResourceNotFound) {
 		return true, nil

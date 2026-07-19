@@ -97,7 +97,6 @@ func (s *Service) ListFilesForOrganizationID(
 
 			return nil
 		})
-
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +123,6 @@ func (s *Service) CountFilesForOrganizationID(
 
 			return nil
 		})
-
 	if err != nil {
 		return 0, err
 	}
