@@ -80,9 +80,9 @@ jobs:
       - name: "Generate Go code"
         run: |
           go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/mcp/v1
           go generate ./pkg/server/api/console/v1
           go generate ./pkg/server/api/complianceportal/v1
-          go generate ./pkg/server/api/mcp/v1
       - name: "Build binaries"
         env:
           CGO_ENABLED: "0"
@@ -253,9 +253,9 @@ jobs:
       - name: "Generate Go code"
         run: |
           go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/mcp/v1
           go generate ./pkg/server/api/console/v1
           go generate ./pkg/server/api/complianceportal/v1
-          go generate ./pkg/server/api/mcp/v1
       - name: "Build probod group binaries"
         env:
           CGO_ENABLED: "0"
@@ -318,9 +318,9 @@ jobs:
       - name: "Generate Go code"
         run: |
           go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/mcp/v1
           go generate ./pkg/server/api/console/v1
           go generate ./pkg/server/api/complianceportal/v1
-          go generate ./pkg/server/api/mcp/v1
       - name: "Run gofmt"
         run: |
           output="$(gofmt -l apps cmd packages pkg e2e)"
@@ -454,12 +454,10 @@ jobs:
           docker compose pull
           mkdir -p /tmp/docker-images
           docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
-      - name: "Build and start stack in parallel"
-        run: |
-          make stack-up &
-          STACK_PID=$!
-          make bin/probod
-          wait $STACK_PID
+      - name: "Build probod"
+        run: "make bin/probod"
+      - name: "Start stack"
+        run: "make stack-up"
       - run: "make stack-ps"
       - name: "Run e2e tests"
         env:

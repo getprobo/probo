@@ -138,7 +138,7 @@ go-lint: generate
 	$(GOLINTCMD) run ./...
 
 .PHONY: test
-test: generate
+test: generate apps/trust/dist/index.html
 test: CGO_ENABLED=1
 test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
 	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list ./... | grep -v /e2e/))
@@ -358,7 +358,7 @@ pkg/server/api/console/v1/types/types.go: pkg/server/api/console/v1/gqlgen.yaml 
 	$(GO_GENERATE) ./pkg/server/api/console/v1
 
 pkg/server/api/complianceportal/v1/schema/schema.go \
-pkg/server/api/complianceportal/v1/types/types.go: pkg/server/api/complianceportal/v1/gqlgen.yaml pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL) | pkg/server/api/console/v1/types/types.go apps/compliance-portal/dist/index.html
+pkg/server/api/complianceportal/v1/types/types.go: pkg/server/api/complianceportal/v1/gqlgen.yaml pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL) | pkg/server/api/console/v1/types/types.go pkg/server/api/mcp/v1/types/types.go apps/compliance-portal/dist/index.html
 	$(GO_GENERATE) ./pkg/server/api/complianceportal/v1
 
 pkg/server/api/mcp/v1/server/server.go \
@@ -424,8 +424,8 @@ psql: ## Open a psql shell to the postgres container
 	$(DOCKER_COMPOSE) exec postgres psql -U probod -d probod
 
 compose/step-ca/certs/root_ca.crt:
-	# step-ca runs as UID 1000 and must be able to write into the bind mount
-	# on Linux CI (Docker Desktop often masks this locally).
+	# step-ca runs as UID 1000 and creates 0700 dirs; open them for the
+	# host user so later `go list ./...` can walk the bind mount on Linux.
 	@$(MKDIR) compose/step-ca
 	@chmod a+rwx compose/step-ca
 	$(DOCKER_COMPOSE) up -d acme-http-01-proxy step-ca
@@ -435,6 +435,7 @@ compose/step-ca/certs/root_ca.crt:
 		i=$$((i + 1)); \
 	done
 	@test -f $@ || ($(DOCKER_COMPOSE) logs step-ca >&2; echo "step-ca root CA not ready" >&2; exit 1)
+	@chmod -R a+rX compose/step-ca
 
 compose/keycloak/certs/cert.pem:
 	$(MKDIR) ./compose/keycloak/certs
