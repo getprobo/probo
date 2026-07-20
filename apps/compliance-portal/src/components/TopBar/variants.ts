@@ -43,30 +43,7 @@ export const topBarUserMenuTrigger = tv({
   base: [
     "flex h-8 items-center gap-2 rounded-full py-1 pr-2.5 pl-1",
     "cursor-pointer outline-none transition-colors select-none",
-    "hover:bg-sand-3 data-[popup-open]:bg-sand-3",
+    "hover:bg-sand-3 data-popup-open:bg-sand-3",
     "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
   ],
-});
-
-// Right-edge mobile navigation drawer (Base UI Drawer).
-export const topBarMobileNav = tv({
-  slots: {
-    backdrop: [
-      "fixed inset-0 z-50 bg-sand-12/40",
-      "transition-opacity duration-200",
-      "data-starting-style:opacity-0 data-ending-style:opacity-0",
-    ],
-    viewport: "fixed inset-0 z-50 flex justify-end",
-    popup: [
-      "relative flex h-full w-[min(20rem,100%)] flex-col bg-sand-1 shadow-6 outline-none",
-      "[transform:translateX(var(--drawer-swipe-movement-x,0px))]",
-      "transition-transform duration-200",
-      "data-starting-style:translate-x-full data-ending-style:translate-x-full",
-    ],
-    content: "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4",
-    header: "flex items-center justify-between gap-3",
-    title: "text-4 font-medium text-sand-12",
-    nav: "flex flex-col gap-1",
-    actions: "mt-auto flex flex-col gap-2 border-t border-sand-a3 pt-4",
-  },
 });
