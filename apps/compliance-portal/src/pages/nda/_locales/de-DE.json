@@ -1,0 +1,8 @@
+{
+  "title": "Geheimhaltungsvereinbarung",
+  "subtitle": "{{name}} verlangt von Ihnen die Unterschrift einer Geheimhaltungsvereinbarung, bevor Sie auf Compliance-Dokumente zugreifen können.",
+  "reviewAndSign": "Prüfen und unterschreiben",
+  "tryAgain": "Erneut versuchen",
+  "sealing": "Ihre Unterschrift wird versiegelt…",
+  "failedDescription": "Bei der Verarbeitung Ihrer Unterschrift ist ein Problem aufgetreten. Bitte versuchen Sie es erneut."
+}

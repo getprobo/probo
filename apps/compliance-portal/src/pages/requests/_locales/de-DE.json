@@ -1,0 +1,71 @@
+{
+  "title": "Datenanfragen",
+  "newRequest": "Neue Anfrage",
+  "loadMore": "Mehr laden",
+  "empty": {
+    "title": "Noch keine Anfragen",
+    "description": "Von Ihnen gestellte Anfragen werden hier angezeigt, damit Sie deren Fortschritt verfolgen können."
+  },
+  "types": {
+    "ACCESS": "Datenzugriff",
+    "DELETION": "Datenlöschung",
+    "RECTIFICATION": "Datenberichtigung",
+    "PORTABILITY": "Datenübertragbarkeit",
+    "OBJECTION": "Widerspruch gegen die Verarbeitung",
+    "COMPLAINT": "Missbrauchsmeldung"
+  },
+  "status": {
+    "TODO": "Ausstehend",
+    "IN_PROGRESS": "In Bearbeitung",
+    "DONE": "Abgeschlossen",
+    "REJECTED": "Abgelehnt"
+  },
+  "typeOption": {
+    "ACCESS": "Auf meine Daten zugreifen",
+    "DELETION": "Meine Daten löschen",
+    "RECTIFICATION": "Meine Daten korrigieren",
+    "OBJECTION": "Der Verarbeitung widersprechen",
+    "COMPLAINT": "Missbrauch melden"
+  },
+  "dialog": {
+    "title": "Neue Anfrage",
+    "description": "Wählen Sie einen Anfragetyp und füllen Sie die Details unten aus.",
+    "typeLabel": "Anfragetyp",
+    "cancel": "Abbrechen",
+    "submit": "Anfrage senden",
+    "success": {
+      "title": "Anfrage gesendet",
+      "description": "Wir bearbeiten Ihre Anfrage und antworten innerhalb der gesetzlich vorgeschriebenen Frist.",
+      "close": "Schließen"
+    }
+  },
+  "form": {
+    "name": "Vollständiger Name",
+    "nameOptional": "Ihr Name (optional)",
+    "namePlaceholder": "Max Mustermann",
+    "email": "E-Mail-Adresse",
+    "deletionWarning": "Die Löschung von Daten ist endgültig und kann nicht widerrufen werden. Einige Daten können aufgrund gesetzlicher Verpflichtungen aufbewahrt werden.",
+    "details": {
+      "ACCESS": {
+        "label": "Details zu Ihrer Anfrage",
+        "placeholder": "Ich möchte eine Kopie aller personenbezogenen Daten, die mit meinem Konto verknüpft sind…"
+      },
+      "DELETION": {
+        "label": "Umfang der Löschanfrage",
+        "placeholder": "Bitte löschen Sie alle personenbezogenen Daten, einschließlich…"
+      },
+      "RECTIFICATION": {
+        "label": "Was soll korrigiert werden?",
+        "placeholder": "Die folgenden Angaben sind unrichtig…"
+      },
+      "OBJECTION": {
+        "label": "Wogegen widersprechen Sie?",
+        "placeholder": "Ich widerspreche der Verarbeitung meiner Daten für…"
+      },
+      "COMPLAINT": {
+        "label": "Beschreibung des Anliegens",
+        "placeholder": "Mir ist aufgefallen, dass…"
+      }
+    }
+  }
+}

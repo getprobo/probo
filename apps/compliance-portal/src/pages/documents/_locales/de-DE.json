@@ -1,0 +1,46 @@
+{
+  "title": "Dokumente",
+  "tabs": {
+    "all": "Alle",
+    "public": "Öffentlich",
+    "private": "Privat"
+  },
+  "sections": {
+    "reports": "Compliance-Berichte"
+  },
+  "types": {
+    "OTHER": "Sonstige",
+    "GOVERNANCE": "Governance",
+    "POLICY": "Richtlinien",
+    "PROCEDURE": "Verfahren",
+    "PLAN": "Pläne",
+    "REGISTER": "Register",
+    "RECORD": "Aufzeichnungen",
+    "REPORT": "Berichte",
+    "TEMPLATE": "Vorlagen",
+    "STATEMENT_OF_APPLICABILITY": "Anwendbarkeitserklärung"
+  },
+  "actions": {
+    "view": "Anzeigen",
+    "getAccess": "Zugang anfordern",
+    "requested": "Zugang angefordert"
+  },
+  "empty": {
+    "title": "Keine Dokumente verfügbar",
+    "description": "Dieses Compliance-Portal hat noch keine Dokumente veröffentlicht.",
+    "filteredTitle": "Keine Dokumente entsprechen diesem Filter",
+    "filteredDescription": "Wählen Sie einen anderen Tab, um verfügbare Dokumente anzuzeigen."
+  },
+  "viewer": {
+    "back": "Dokumente",
+    "share": "Dokument teilen",
+    "linkCopied": "Link in die Zwischenablage kopiert",
+    "download": "Herunterladen",
+    "previewUnavailable": "Vorschau nicht verfügbar",
+    "downloadToView": "Dieser Dateityp kann hier nicht angezeigt werden. Laden Sie ihn herunter, um ihn anzuzeigen.",
+    "locked": {
+      "title": "Zugang erforderlich",
+      "description": "Sie haben noch keinen Zugang zu diesem Dokument."
+    }
+  }
+}

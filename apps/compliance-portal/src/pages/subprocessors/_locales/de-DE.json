@@ -1,0 +1,109 @@
+{
+  "title": "Unterauftragsverarbeiter",
+  "filters": {
+    "allCategories": "Alle Kategorien",
+    "allRegions": "Alle Regionen",
+    "searchPlaceholder": "Suchen..."
+  },
+  "empty": {
+    "title": "Keine Unterauftragsverarbeiter aufgeführt.",
+    "description": "Dieses Compliance-Portal hat noch keine Unterauftragsverarbeiter veröffentlicht.",
+    "filteredTitle": "Keine Unterauftragsverarbeiter entsprechen Ihren Filtern.",
+    "filteredDescription": "Passen Sie Ihre Suche oder Filter an, um verfügbare Unterauftragsverarbeiter anzuzeigen.",
+    "clearFilters": "Filter zurücksetzen"
+  },
+  "regions": {
+    "global": "Weltweit",
+    "eu": "Europäische Union"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analytik",
+      "description": "Nutzungsanalysen und Produkttelemetrie."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Cloud-Monitoring",
+      "description": "Observability, Protokollierung und Verfügbarkeitsüberwachung."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Cloud-Anbieter",
+      "description": "Cloud-Hosting, Rechenleistung, Speicher und Netzwerke."
+    },
+    "COLLABORATION": {
+      "label": "Zusammenarbeit",
+      "description": "Tools für Kommunikation, Terminplanung und Teamarbeit."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Kundensupport",
+      "description": "Helpdesk, Ticketing und Kundenkommunikation."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Datenspeicherung und -verarbeitung",
+      "description": "Datenbanken, Data Warehouses und Verarbeitungspipelines."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Dokumentenmanagement",
+      "description": "Dokumentenspeicherung, Signatur und elektronische Unterschrift."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Personalmanagement",
+      "description": "Personalwesen, Gehaltsabrechnung und Personalprozesse."
+    },
+    "ENGINEERING": {
+      "label": "Entwicklung",
+      "description": "Entwicklertools und Engineering-Plattformen."
+    },
+    "FINANCE": {
+      "label": "Finanzen",
+      "description": "Rechnungsstellung, Zahlungen und Buchhaltung."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Identitätsanbieter",
+      "description": "Authentifizierung, SSO und Identitätsmanagement."
+    },
+    "IT": {
+      "label": "IT",
+      "description": "IT-Verwaltung und Gerätemanagement."
+    },
+    "MARKETING": {
+      "label": "Marketing",
+      "description": "Marketing, CRM und Zielgruppenansprache."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Büromanagement",
+      "description": "Arbeitsplatz- und Büromanagement."
+    },
+    "OTHER": {
+      "label": "Sonstige",
+      "description": "Weitere unterstützende Dienste."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Passwortverwaltung",
+      "description": "Verwaltung von Zugangsdaten und Geheimnissen."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Produkt und Design",
+      "description": "Tools für Produkt und Design."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Professionelle Dienstleistungen",
+      "description": "Beratung und professionelle Dienstleistungen."
+    },
+    "RECRUITING": {
+      "label": "Recruiting",
+      "description": "Einstellung, Sourcing und Bewerbermanagement."
+    },
+    "SALES": {
+      "label": "Vertrieb",
+      "description": "Vertriebsunterstützung und CRM."
+    },
+    "SECURITY": {
+      "label": "Sicherheit",
+      "description": "Sicherheit, Überwachung und sicherer Zugriff."
+    },
+    "VERSION_CONTROL": {
+      "label": "Versionskontrolle",
+      "description": "Quellcodeverwaltung und Code-Hosting."
+    }
+  }
+}

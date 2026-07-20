@@ -1,0 +1,122 @@
+{
+  "topBar": {
+    "tagline": "Compliance-Portal",
+    "getAccess": "Zugang anfordern",
+    "nav": {
+      "documents": "Dokumente",
+      "subprocessors": "Unterauftragsverarbeiter",
+      "updates": "Aktualisierungen",
+      "requests": "Anfragen"
+    }
+  },
+  "userMenu": {
+    "signOut": "Abmelden"
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "error": "Etwas ist schiefgelaufen",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "pageOf": "Seite {{current}} von {{total}}",
+    "zoomOut": "Verkleinern",
+    "zoomIn": "Vergrößern"
+  },
+  "auth": {
+    "backToPortal": "Zurück zum Portal",
+    "signIn": {
+      "title": "Melden Sie sich an, um fortzufahren",
+      "description": "Greifen Sie auf geschützte Inhalte zu oder stellen Sie eine Anfrage",
+      "or": "ODER",
+      "withProvider": "Mit {{provider}} anmelden",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "sie@unternehmen.com",
+      "emailRequired": "E-Mail-Adresse ist erforderlich",
+      "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein",
+      "sendMagicLink": "Magic Link senden",
+      "resend": "Link erneut senden",
+      "resendIn": "Link erneut senden in {{seconds}}s",
+      "magicLinkSent": "Magic Link gesendet!",
+      "magicLinkSentNote": "Prüfen Sie Ihre E-Mails und nutzen Sie den Link, um sich anzumelden."
+    },
+    "requestAccess": {
+      "success": "Zugang angefordert"
+    },
+    "verify": {
+      "title": "Ihre E-Mail-Adresse wird bestätigt",
+      "description": "Bitte warten Sie, während wir Sie anmelden…"
+    },
+    "fullName": {
+      "title": "Geben Sie Ihren Namen an",
+      "label": "Vollständiger Name",
+      "placeholder": "Max Mustermann",
+      "required": "Vollständiger Name ist erforderlich",
+      "tooShort": "Der vollständige Name ist zu kurz",
+      "submit": "Weiter"
+    },
+    "magicLinkExpired": {
+      "title": "Link abgelaufen",
+      "description": "Dieser Magic Link ist abgelaufen. Bitte fordern Sie einen neuen an."
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "Link bereits verwendet",
+      "description": "Dieser Magic Link wurde bereits verwendet. Bitte fordern Sie einen neuen an."
+    },
+    "errors": {
+      "magicLinkFailed": "Der Magic Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+      "verifyFailed": "Der Link konnte nicht verifiziert werden. Bitte versuchen Sie es erneut.",
+      "fullNameFailed": "Ihr Name konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+      "requestFailed": "Ihre Zugangsanfrage konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+    }
+  },
+  "home": {
+    "heroTitle": "Vertrauen bei {{name}}.",
+    "heroDescription": "Willkommen auf unserem Compliance-Portal. Hier finden Sie unsere Sicherheitsdokumentation und Zertifizierungen.",
+    "sections": {
+      "compliance": "Compliance",
+      "securityCommitments": "Sicherheitsverpflichtungen",
+      "trustedBy": "Vertraut von",
+      "recentUpdates": "Neueste Aktualisierungen"
+    },
+    "recentUpdates": {
+      "viewAll": "Alle anzeigen"
+    }
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "backHome": "Zurück zur Startseite"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Seite nicht gefunden",
+      "description": "Die gesuchte Seite existiert nicht oder wurde möglicherweise verschoben."
+    },
+    "forbidden": {
+      "title": "Zugriff verweigert",
+      "description": "Sie haben keine Berechtigung, diese Seite anzuzeigen."
+    },
+    "serverError": {
+      "title": "Etwas ist schiefgelaufen",
+      "description": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut."
+    },
+    "generic": {
+      "title": "Etwas ist schiefgelaufen",
+      "description": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es in Kürze erneut."
+    },
+    "actions": {
+      "backToCompliancePortal": "Zurück zum Compliance-Portal",
+      "tryAgain": "Erneut versuchen"
+    },
+    "inline": {
+      "message": "Inhalt kann nicht geladen werden",
+      "retry": "Erneut versuchen"
+    }
+  },
+  "footer": {
+    "poweredBy": "Bereitgestellt von"
+  },
+  "pagination": {
+    "previous": "Vorherige Seite",
+    "next": "Nächste Seite"
+  }
+}
