@@ -7112,12 +7112,10 @@ func (r *Resolver) RemoveResourceAliasTool(ctx context.Context, req *mcp.CallToo
 // ListCommitmentGroupsTool handles the listCommitmentGroups tool
 // List all commitment groups for a trust center
 func (r *Resolver) ListCommitmentGroupsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCommitmentGroupsInput) (*mcp.CallToolResult, types.ListCommitmentGroupsOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, probo.ActionCompliancePortalCommitmentGroupList)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalCommitmentGroupList)
 	if err != nil {
 		return nil, types.ListCommitmentGroupsOutput{}, err
 	}
-
-	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.CompliancePortalCommitmentGroupOrderField]{
 		Field:     coredata.CompliancePortalCommitmentGroupOrderFieldRank,
@@ -7133,7 +7131,7 @@ func (r *Resolver) ListCommitmentGroupsTool(ctx context.Context, req *mcp.CallTo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := prb.CompliancePortalCommitmentGroups.ListForTrustCenterID(ctx, scope, input.TrustCenterID, cursor)
+	p, err := r.management.ListCommitmentGroups(ctx, scope, input.TrustCenterID, cursor)
 	if err != nil {
 		return nil, types.ListCommitmentGroupsOutput{}, fmt.Errorf("cannot list commitment groups: %w", err)
 	}
@@ -7144,19 +7142,17 @@ func (r *Resolver) ListCommitmentGroupsTool(ctx context.Context, req *mcp.CallTo
 // AddCommitmentGroupTool handles the addCommitmentGroup tool
 // Add a new commitment group to a trust center
 func (r *Resolver) AddCommitmentGroupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCommitmentGroupInput) (*mcp.CallToolResult, types.AddCommitmentGroupOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, probo.ActionCompliancePortalCommitmentGroupCreate)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalCommitmentGroupCreate)
 	if err != nil {
 		return nil, types.AddCommitmentGroupOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	group, err := prb.CompliancePortalCommitmentGroups.Create(
+	group, err := r.management.CreateCommitmentGroup(
 		ctx, scope,
-		&probo.CreateCompliancePortalCommitmentGroupRequest{
-			TrustCenterID: input.TrustCenterID,
-			Title:         input.Title,
-			Description:   input.Description,
+		&management.CreateCompliancePortalCommitmentGroupRequest{
+			CompliancePortalID: input.TrustCenterID,
+			Title:              input.Title,
+			Description:        input.Description,
 		},
 	)
 	if err != nil {
@@ -7169,14 +7165,12 @@ func (r *Resolver) AddCommitmentGroupTool(ctx context.Context, req *mcp.CallTool
 // UpdateCommitmentGroupTool handles the updateCommitmentGroup tool
 // Update an existing commitment group
 func (r *Resolver) UpdateCommitmentGroupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCommitmentGroupInput) (*mcp.CallToolResult, types.UpdateCommitmentGroupOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionCompliancePortalCommitmentGroupUpdate)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentGroupUpdate)
 	if err != nil {
 		return nil, types.UpdateCommitmentGroupOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	updateReq := &probo.UpdateCompliancePortalCommitmentGroupRequest{
+	updateReq := &management.UpdateCompliancePortalCommitmentGroupRequest{
 		ID: input.ID,
 	}
 
@@ -7192,7 +7186,7 @@ func (r *Resolver) UpdateCommitmentGroupTool(ctx context.Context, req *mcp.CallT
 		updateReq.Rank = *rank
 	}
 
-	group, err := prb.CompliancePortalCommitmentGroups.Update(ctx, scope, updateReq)
+	group, err := r.management.UpdateCommitmentGroup(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateCommitmentGroupOutput{}, fmt.Errorf("cannot update commitment group: %w", err)
 	}
@@ -7203,14 +7197,12 @@ func (r *Resolver) UpdateCommitmentGroupTool(ctx context.Context, req *mcp.CallT
 // DeleteCommitmentGroupTool handles the deleteCommitmentGroup tool
 // Delete a commitment group
 func (r *Resolver) DeleteCommitmentGroupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCommitmentGroupInput) (*mcp.CallToolResult, types.DeleteCommitmentGroupOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionCompliancePortalCommitmentGroupDelete)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentGroupDelete)
 	if err != nil {
 		return nil, types.DeleteCommitmentGroupOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	err = prb.CompliancePortalCommitmentGroups.Delete(ctx, scope, input.ID)
+	err = r.management.DeleteCommitmentGroup(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteCommitmentGroupOutput{}, fmt.Errorf("cannot delete commitment group: %w", err)
 	}
@@ -7221,12 +7213,10 @@ func (r *Resolver) DeleteCommitmentGroupTool(ctx context.Context, req *mcp.CallT
 // ListCommitmentsTool handles the listCommitments tool
 // List all commitments in a commitment group
 func (r *Resolver) ListCommitmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCommitmentsInput) (*mcp.CallToolResult, types.ListCommitmentsOutput, error) {
-	scope, err := r.Authorize(ctx, input.GroupID, probo.ActionCompliancePortalCommitmentList)
+	scope, err := r.Authorize(ctx, input.GroupID, management.ActionCompliancePortalCommitmentList)
 	if err != nil {
 		return nil, types.ListCommitmentsOutput{}, err
 	}
-
-	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.CompliancePortalCommitmentOrderField]{
 		Field:     coredata.CompliancePortalCommitmentOrderFieldRank,
@@ -7242,7 +7232,7 @@ func (r *Resolver) ListCommitmentsTool(ctx context.Context, req *mcp.CallToolReq
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := prb.CompliancePortalCommitments.ListForGroupID(ctx, scope, input.GroupID, cursor)
+	p, err := r.management.ListCommitments(ctx, scope, input.GroupID, cursor)
 	if err != nil {
 		return nil, types.ListCommitmentsOutput{}, fmt.Errorf("cannot list commitments: %w", err)
 	}
@@ -7253,16 +7243,14 @@ func (r *Resolver) ListCommitmentsTool(ctx context.Context, req *mcp.CallToolReq
 // AddCommitmentTool handles the addCommitment tool
 // Add a new commitment to a commitment group
 func (r *Resolver) AddCommitmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCommitmentInput) (*mcp.CallToolResult, types.AddCommitmentOutput, error) {
-	scope, err := r.Authorize(ctx, input.GroupID, probo.ActionCompliancePortalCommitmentCreate)
+	scope, err := r.Authorize(ctx, input.GroupID, management.ActionCompliancePortalCommitmentCreate)
 	if err != nil {
 		return nil, types.AddCommitmentOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	commitment, err := prb.CompliancePortalCommitments.Create(
+	commitment, err := r.management.CreateCommitment(
 		ctx, scope,
-		&probo.CreateCompliancePortalCommitmentRequest{
+		&management.CreateCompliancePortalCommitmentRequest{
 			GroupID:     input.GroupID,
 			Icon:        input.Icon,
 			Eyebrow:     input.Eyebrow,
@@ -7280,14 +7268,12 @@ func (r *Resolver) AddCommitmentTool(ctx context.Context, req *mcp.CallToolReque
 // UpdateCommitmentTool handles the updateCommitment tool
 // Update an existing commitment
 func (r *Resolver) UpdateCommitmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCommitmentInput) (*mcp.CallToolResult, types.UpdateCommitmentOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionCompliancePortalCommitmentUpdate)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentUpdate)
 	if err != nil {
 		return nil, types.UpdateCommitmentOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	updateReq := &probo.UpdateCompliancePortalCommitmentRequest{
+	updateReq := &management.UpdateCompliancePortalCommitmentRequest{
 		ID: input.ID,
 	}
 
@@ -7311,7 +7297,7 @@ func (r *Resolver) UpdateCommitmentTool(ctx context.Context, req *mcp.CallToolRe
 		updateReq.Rank = *rank
 	}
 
-	commitment, err := prb.CompliancePortalCommitments.Update(ctx, scope, updateReq)
+	commitment, err := r.management.UpdateCommitment(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateCommitmentOutput{}, fmt.Errorf("cannot update commitment: %w", err)
 	}
@@ -7322,14 +7308,12 @@ func (r *Resolver) UpdateCommitmentTool(ctx context.Context, req *mcp.CallToolRe
 // DeleteCommitmentTool handles the deleteCommitment tool
 // Delete a commitment
 func (r *Resolver) DeleteCommitmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCommitmentInput) (*mcp.CallToolResult, types.DeleteCommitmentOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionCompliancePortalCommitmentDelete)
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalCommitmentDelete)
 	if err != nil {
 		return nil, types.DeleteCommitmentOutput{}, err
 	}
 
-	prb := r.proboSvc
-
-	err = prb.CompliancePortalCommitments.Delete(ctx, scope, input.ID)
+	err = r.management.DeleteCommitment(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteCommitmentOutput{}, fmt.Errorf("cannot delete commitment: %w", err)
 	}
