@@ -359,7 +359,7 @@ function ViewerDecision(props: {
                 });
               }}
             >
-              {__("Review and approve")}
+              {__("Approve")}
             </Button>
           )}
         </div>

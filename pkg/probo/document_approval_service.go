@@ -37,7 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-const DocumentApprovalConsentText = "By clicking \"Review and approve\", I consent to approve this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
+const DocumentApprovalConsentText = "By clicking \"Approve\", I consent to approve this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 
 type (
 	DocumentApprovalService struct {
