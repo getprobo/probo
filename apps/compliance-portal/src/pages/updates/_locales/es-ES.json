@@ -5,5 +5,15 @@
   "empty": {
     "title": "Todavía no hay novedades.",
     "description": "Suscríbase para recibir un aviso cuando se publiquen nuevas novedades."
+  },
+  "dialog": {
+    "title": "Suscribirse a las actualizaciones",
+    "description": "Reciba notificaciones cuando publiquemos nuevas actualizaciones de cumplimiento, añadamos subencargados o renovemos certificaciones.",
+    "email": "Dirección de correo electrónico",
+    "consent": "Al suscribirse, acepta recibir actualizaciones de cumplimiento de {{name}}. Puede cancelar la suscripción en cualquier momento.",
+    "cancel": "Cancelar",
+    "submit": "Suscribirse",
+    "successToast": "Se le notificará cuando se publiquen nuevas actualizaciones.",
+    "unsubscribeToast": "Ya no recibirá notificaciones de actualizaciones."
   }
 }

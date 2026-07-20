@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "サインアウト"
+    "subscribe": "アップデートを購読",
+    "subscribed": "アップデート購読中",
+    "signOut": "サインアウト",
+    "signOutFailed": "サインアウトできません"
   },
   "common": {
     "cancel": "キャンセル",

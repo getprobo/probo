@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Вийти"
+    "subscribe": "Підписатися на оновлення",
+    "subscribed": "Підписано на оновлення",
+    "signOut": "Вийти",
+    "signOutFailed": "Не вдалося вийти"
   },
   "common": {
     "cancel": "Скасувати",

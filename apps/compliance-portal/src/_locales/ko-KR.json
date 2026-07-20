@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "로그아웃"
+    "subscribe": "업데이트 구독",
+    "subscribed": "업데이트 구독 중",
+    "signOut": "로그아웃",
+    "signOutFailed": "로그아웃할 수 없습니다"
   },
   "common": {
     "cancel": "취소",

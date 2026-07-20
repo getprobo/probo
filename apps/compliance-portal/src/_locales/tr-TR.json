@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Çıkış yap"
+    "subscribe": "Güncellemelere abone ol",
+    "subscribed": "Güncellemelere abone olundu",
+    "signOut": "Çıkış yap",
+    "signOutFailed": "Çıkış yapılamıyor"
   },
   "common": {
     "cancel": "İptal",

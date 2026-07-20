@@ -5,5 +5,15 @@
   "empty": {
     "title": "Brak aktualizacji.",
     "description": "Zapisz się, aby otrzymywać powiadomienia o nowych aktualizacjach."
+  },
+  "dialog": {
+    "title": "Subskrybuj aktualizacje",
+    "description": "Otrzymuj powiadomienia, gdy publikujemy nowe aktualizacje zgodności, dodajemy podmioty przetwarzające lub odnawiamy certyfikaty.",
+    "email": "Adres e-mail",
+    "consent": "Subskrybując, zgadzasz się na otrzymywanie aktualizacji zgodności od {{name}}. Możesz anulować subskrypcję w dowolnym momencie.",
+    "cancel": "Anuluj",
+    "submit": "Subskrybuj",
+    "successToast": "Otrzymasz powiadomienie, gdy zostaną opublikowane nowe aktualizacje.",
+    "unsubscribeToast": "Nie będziesz już otrzymywać powiadomień o aktualizacjach."
   }
 }

@@ -5,5 +5,15 @@
   "empty": {
     "title": "暂无更新。",
     "description": "订阅后，我们发布新更新时会通知您。"
+  },
+  "dialog": {
+    "title": "订阅更新",
+    "description": "当我们发布新的合规更新、添加子处理方或更新认证时，您将收到通知。",
+    "email": "电子邮箱地址",
+    "consent": "订阅即表示您同意接收来自 {{name}} 的合规更新。您可以随时取消订阅。",
+    "cancel": "取消",
+    "submit": "订阅",
+    "successToast": "发布新更新时，您将收到通知。",
+    "unsubscribeToast": "您将不再收到更新通知。"
   }
 }

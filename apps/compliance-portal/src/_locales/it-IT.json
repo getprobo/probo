@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Esci"
+    "subscribe": "Iscriviti agli aggiornamenti",
+    "subscribed": "Iscritto agli aggiornamenti",
+    "signOut": "Esci",
+    "signOutFailed": "Impossibile uscire"
   },
   "common": {
     "cancel": "Annulla",

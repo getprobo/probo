@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Abmelden"
+    "subscribe": "Aktualisierungen abonnieren",
+    "subscribed": "Aktualisierungen abonniert",
+    "signOut": "Abmelden",
+    "signOutFailed": "Abmelden nicht möglich"
   },
   "common": {
     "cancel": "Abbrechen",

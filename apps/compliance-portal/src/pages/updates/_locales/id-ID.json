@@ -5,5 +5,15 @@
   "empty": {
     "title": "Belum ada pembaruan.",
     "description": "Berlangganan untuk mendapatkan pemberitahuan saat pembaruan baru dipublikasikan."
+  },
+  "dialog": {
+    "title": "Berlangganan pembaruan",
+    "description": "Dapatkan notifikasi saat kami menerbitkan pembaruan kepatuhan baru, menambahkan subprosesor, atau memperbarui sertifikasi.",
+    "email": "Alamat email",
+    "consent": "Dengan berlangganan, Anda setuju menerima pembaruan kepatuhan dari {{name}}. Anda dapat berhenti berlangganan kapan saja.",
+    "cancel": "Batal",
+    "submit": "Berlangganan",
+    "successToast": "Anda akan diberi tahu saat pembaruan baru diterbitkan.",
+    "unsubscribeToast": "Anda tidak akan lagi menerima notifikasi pembaruan."
   }
 }

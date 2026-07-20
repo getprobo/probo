@@ -5,5 +5,15 @@
   "empty": {
     "title": "Noch keine Aktualisierungen.",
     "description": "Abonnieren Sie, um benachrichtigt zu werden, wenn neue Aktualisierungen veröffentlicht werden."
+  },
+  "dialog": {
+    "title": "Aktualisierungen abonnieren",
+    "description": "Lassen Sie sich benachrichtigen, wenn wir neue Compliance-Aktualisierungen veröffentlichen, Unterauftragsverarbeiter hinzufügen oder Zertifizierungen erneuern.",
+    "email": "E-Mail-Adresse",
+    "consent": "Mit dem Abonnieren stimmen Sie zu, Compliance-Aktualisierungen von {{name}} zu erhalten. Sie können sich jederzeit abmelden.",
+    "cancel": "Abbrechen",
+    "submit": "Abonnieren",
+    "successToast": "Sie werden benachrichtigt, wenn neue Aktualisierungen veröffentlicht werden.",
+    "unsubscribeToast": "Sie erhalten keine Benachrichtigungen zu Aktualisierungen mehr."
   }
 }

@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "退出登录"
+    "subscribe": "订阅更新",
+    "subscribed": "已订阅更新",
+    "signOut": "退出登录",
+    "signOutFailed": "无法退出登录"
   },
   "common": {
     "cancel": "取消",

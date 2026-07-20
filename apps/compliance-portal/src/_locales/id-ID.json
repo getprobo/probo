@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Keluar"
+    "subscribe": "Berlangganan pembaruan",
+    "subscribed": "Sudah berlangganan pembaruan",
+    "signOut": "Keluar",
+    "signOutFailed": "Tidak dapat keluar"
   },
   "common": {
     "cancel": "Batal",

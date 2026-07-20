@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Wyloguj się"
+    "subscribe": "Subskrybuj aktualizacje",
+    "subscribed": "Subskrybowano aktualizacje",
+    "signOut": "Wyloguj się",
+    "signOutFailed": "Nie można się wylogować"
   },
   "common": {
     "cancel": "Anuluj",

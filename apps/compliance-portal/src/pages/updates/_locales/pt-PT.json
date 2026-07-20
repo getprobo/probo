@@ -5,5 +5,15 @@
   "empty": {
     "title": "Ainda não há atualizações.",
     "description": "Subscreva para ser notificado quando novas atualizações forem publicadas."
+  },
+  "dialog": {
+    "title": "Subscrever atualizações",
+    "description": "Receba notificações quando publicarmos novas atualizações de conformidade, adicionarmos subprocessadores ou renovarmos certificações.",
+    "email": "Endereço de e-mail",
+    "consent": "Ao subscrever, concorda em receber atualizações de conformidade de {{name}}. Pode cancelar a subscrição a qualquer momento.",
+    "cancel": "Cancelar",
+    "submit": "Subscrever",
+    "successToast": "Será notificado quando novas atualizações forem publicadas.",
+    "unsubscribeToast": "Já não receberá notificações de atualizações."
   }
 }

@@ -5,5 +5,15 @@
   "empty": {
     "title": "Nessun aggiornamento al momento.",
     "description": "Si iscriva per essere avvisato quando vengono pubblicati nuovi aggiornamenti."
+  },
+  "dialog": {
+    "title": "Iscriviti agli aggiornamenti",
+    "description": "Ricevi una notifica quando pubblichiamo nuovi aggiornamenti di conformità, aggiungiamo sub-responsabili o rinnoviamo le certificazioni.",
+    "email": "Indirizzo e-mail",
+    "consent": "Iscrivendoti, accetti di ricevere aggiornamenti di conformità da {{name}}. Puoi annullare l'iscrizione in qualsiasi momento.",
+    "cancel": "Annulla",
+    "submit": "Iscriviti",
+    "successToast": "Riceverai una notifica quando verranno pubblicati nuovi aggiornamenti.",
+    "unsubscribeToast": "Non riceverai più le notifiche degli aggiornamenti."
   }
 }

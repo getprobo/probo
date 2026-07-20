@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Cerrar sesión"
+    "subscribe": "Suscribirse a las actualizaciones",
+    "subscribed": "Suscrito a las actualizaciones",
+    "signOut": "Cerrar sesión",
+    "signOutFailed": "No se puede cerrar sesión"
   },
   "common": {
     "cancel": "Cancelar",

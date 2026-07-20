@@ -5,5 +5,15 @@
   "empty": {
     "title": "Henüz güncelleme yok.",
     "description": "Yeni güncellemeler yayınlandığında bildirim almak için abone olun."
+  },
+  "dialog": {
+    "title": "Güncellemelere abone ol",
+    "description": "Yeni uyumluluk güncellemeleri yayınladığımızda, alt işlemciler eklediğimizde veya sertifikaları yenilediğimizde bildirim alın.",
+    "email": "E-posta adresi",
+    "consent": "Abone olarak {{name}} kaynaklı uyumluluk güncellemelerini almayı kabul etmiş olursunuz. İstediğiniz zaman abonelikten çıkabilirsiniz.",
+    "cancel": "İptal",
+    "submit": "Abone ol",
+    "successToast": "Yeni güncellemeler yayınlandığında bilgilendirileceksiniz.",
+    "unsubscribeToast": "Artık güncelleme bildirimleri almayacaksınız."
   }
 }
