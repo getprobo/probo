@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -741,6 +740,10 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 		},
 	)
 	if err != nil {
+		if accessreview.IsCampaignClientError(err) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -773,7 +776,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if strings.HasPrefix(err.Error(), "cannot update campaign:") {
+		if accessreview.IsCampaignClientError(err) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -818,7 +821,7 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "cannot start campaign:") {
+		if accessreview.IsCampaignClientError(err) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
