@@ -35,7 +35,7 @@
     "submit": "Submit Request",
     "success": {
       "title": "Request submitted",
-      "description": "We'll process your request and respond within 30 days.",
+      "description": "We'll process your request and respond within the timeframe required by applicable law.",
       "close": "Close"
     }
   },

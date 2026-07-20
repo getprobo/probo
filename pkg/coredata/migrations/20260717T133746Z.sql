@@ -18,7 +18,9 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-ALTER TYPE rights_request_type ADD VALUE IF NOT EXISTS 'RECTIFICATION';
+-- Insert RECTIFICATION before PORTABILITY so the enum's sort order matches the
+-- canonical RightsRequestTypes() ordering used for type-sorted cursors.
+ALTER TYPE rights_request_type ADD VALUE IF NOT EXISTS 'RECTIFICATION' BEFORE 'PORTABILITY';
 ALTER TYPE rights_request_type ADD VALUE IF NOT EXISTS 'OBJECTION';
 ALTER TYPE rights_request_type ADD VALUE IF NOT EXISTS 'COMPLAINT';
 

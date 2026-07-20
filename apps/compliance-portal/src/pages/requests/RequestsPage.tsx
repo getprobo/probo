@@ -132,7 +132,7 @@ export function RequestsPage({ queryRef }: RequestsPageProps) {
 
   return (
     <>
-      <PageHeader title={t("title")} count={requests.length} actions={newRequestButton} />
+      <PageHeader title={t("title")} actions={newRequestButton} />
       <div className={page()}>
         <div className={results()}>
           <ListErrorBoundary

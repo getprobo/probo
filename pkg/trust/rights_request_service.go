@@ -29,6 +29,8 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // RightsRequestDeadlineDays is the number of days a portal-submitted data
@@ -54,11 +56,26 @@ type (
 	}
 )
 
+// Validate bounds the free-text fields with the same rules the console applies,
+// so this public portal mutation can't persist oversized or unsafe input.
+func (r *CreateRightsRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.DataSubject, "data_subject", validator.SafeText(probo.ContentMaxLength))
+	v.Check(r.Details, "details", validator.SafeText(probo.ContentMaxLength))
+
+	return v.Error()
+}
+
 func (s *RightsRequestService) Create(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *CreateRightsRequest,
 ) (*coredata.RightsRequest, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	deadline := now.AddDate(0, 0, RightsRequestDeadlineDays)
 
@@ -95,34 +112,6 @@ func (s *RightsRequestService) Create(
 	}
 
 	return request, nil
-}
-
-func (s RightsRequestService) CountForOrganizationIDAndContact(
-	ctx context.Context,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-	contact string,
-) (int, error) {
-	var count int
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) (err error) {
-			requests := coredata.RightsRequests{}
-
-			count, err = requests.CountByOrganizationIDAndContact(ctx, conn, scope, organizationID, contact)
-			if err != nil {
-				return fmt.Errorf("cannot count rights requests: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 func (s RightsRequestService) ListForOrganizationIDAndContact(

@@ -35,7 +35,7 @@
     "submit": "Envoyer la demande",
     "success": {
       "title": "Demande envoyée",
-      "description": "Nous traiterons votre demande et vous répondrons sous 30 jours.",
+      "description": "Nous traiterons votre demande et vous répondrons dans le délai prévu par la loi applicable.",
       "close": "Fermer"
     }
   },

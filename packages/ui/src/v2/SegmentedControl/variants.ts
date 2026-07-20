@@ -28,7 +28,7 @@ import { tv } from "tailwind-variants/lite";
 // (the pressed state only darkens the border, so selection never shifts layout).
 export const segmentedControl = tv({
   slots: {
-    root: "grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-1",
+    root: "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1",
     item: [
       "min-w-0 cursor-pointer select-none rounded-3 border border-sand-a6 bg-sand-1 px-4 py-3.5",
       "text-center text-2 font-medium text-sand-12 outline-none transition-colors",

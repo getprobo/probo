@@ -18,32 +18,60 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ReactNode } from "react";
+import { cloneElement, isValidElement, type ReactElement, type ReactNode, useId } from "react";
 
 import { field } from "./variants";
 
 export type FieldProps = {
-  // Text shown above the control. The control is nested inside the <label> so
-  // the association is implicit (no htmlFor / id threading required).
+  // Text shown above the control, associated with it via `htmlFor`/`id`.
   label?: ReactNode;
-  // Validation / server error shown below the control.
+  // Validation / server error shown below the control and linked to it via
+  // `aria-describedby` so assistive technology announces it.
   error?: ReactNode;
   className?: string;
+  // A single form control (TextField, Textarea, …). It receives an injected
+  // `id`, plus `aria-describedby`/`aria-invalid` when an error is present.
   children: ReactNode;
 };
 
-// Vertical label + control + error grouping for form dialogs.
+// Vertical label + control + error grouping for form dialogs. Unlike a raw
+// <label> wrapper, the label associates with the control by id, so controls
+// whose root is a <div> (and multi-element controls) remain valid and clicks
+// never activate an unintended descendant.
 export function Field(props: FieldProps) {
   const { label, error, className, children } = props;
-  const { root, label: labelSlot, labelText, error: errorSlot } = field();
+  const { root, labelText, error: errorSlot } = field();
+
+  const generatedId = useId();
+  const errorId = useId();
+
+  const child = isValidElement(children)
+    ? (children as ReactElement<Record<string, unknown>>)
+    : null;
+  const existingId = typeof child?.props.id === "string" ? child.props.id : undefined;
+  const controlId = existingId ?? generatedId;
+
+  const control = child
+    ? cloneElement(child, {
+        "id": controlId,
+        "aria-describedby": error != null ? errorId : undefined,
+        "aria-invalid": error != null ? true : undefined,
+      })
+    : children;
 
   return (
     <div className={root({ className })}>
-      <label className={labelSlot()}>
-        {label != null && <span className={labelText()}>{label}</span>}
-        {children}
-      </label>
-      {error != null && <p className={errorSlot()}>{error}</p>}
+      {label != null && (
+        <label htmlFor={controlId} className={labelText()}>
+          {label}
+        </label>
+      )}
+      {control}
+      {error != null && (
+        <p id={errorId} className={errorSlot()}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

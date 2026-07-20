@@ -98,7 +98,8 @@ export const rightsRequestFormConfig: Record<
 // Human-facing reference derived from the created year and a short suffix of the
 // opaque id (display-only; not a stored sequential number).
 export function formatRightsRequestReference(id: string, createdAt: string): string {
-  const year = new Date(createdAt).getFullYear();
+  // Use UTC so the reference year is stable regardless of the viewer's timezone.
+  const year = new Date(createdAt).getUTCFullYear();
   const suffix = id.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase();
   return `REQ-${year}-${suffix}`;
 }

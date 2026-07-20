@@ -34,7 +34,7 @@ import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
 import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -89,6 +89,7 @@ interface NewRequestFormProps {
 function NewRequestForm({ onClose, connectionId, viewerEmail, viewerName }: NewRequestFormProps) {
   const { t } = useTranslation("requests");
   const [submit, isSubmitting] = useCreateRightsRequest();
+  const typeLabelId = useId();
 
   const [type, setType] = useState<SubmittableRightsRequestType>("ACCESS");
   const [name, setName] = useState(viewerName);
@@ -148,10 +149,11 @@ function NewRequestForm({ onClose, connectionId, viewerEmail, viewerName }: NewR
       <DialogBody>
         <div className={root()}>
           <div className={label()}>
-            <Text size={2} weight="medium" color="neutral" highContrast>
+            <Text id={typeLabelId} size={2} weight="medium" color="neutral" highContrast>
               {t("dialog.typeLabel")}
             </Text>
             <SegmentedControl
+              aria-labelledby={typeLabelId}
               value={type}
               onValueChange={value => setType(value as SubmittableRightsRequestType)}
             >
@@ -173,6 +175,7 @@ function NewRequestForm({ onClose, connectionId, viewerEmail, viewerName }: NewR
             <TextField
               value={name}
               placeholder={t("form.namePlaceholder")}
+              required={!config.nameOptional}
               onChange={e => setName(e.target.value)}
             />
           </Field>

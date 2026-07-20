@@ -240,44 +240,6 @@ WHERE
 	return nil
 }
 
-func (rrs *RightsRequests) CountByOrganizationIDAndContact(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	contact string,
-) (int, error) {
-	q := `
-SELECT
-	COUNT(id)
-FROM
-	rights_requests
-WHERE
-	%s
-	AND organization_id = @organization_id
-	AND contact = @contact
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-		"contact":         contact,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-
-	err := row.Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot count rights requests: %w", err)
-	}
-
-	return count, nil
-}
-
 func (rrs *RightsRequests) LoadByOrganizationIDAndContact(
 	ctx context.Context,
 	conn pg.Querier,

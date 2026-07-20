@@ -10,7 +10,6 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
@@ -21,8 +20,10 @@ import (
 // CreateRightsRequest is the resolver for the createRightsRequest field.
 func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.CreateRightsRequestInput) (*types.CreateRightsRequestPayload, error) {
 	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to submit a request")
+	if identity == nil || !identity.EmailAddressVerified {
+		// The request is attributed to the viewer's email, so the email must be
+		// verified — an authenticated-but-unverified identity is not enough.
+		return nil, gqlutils.Unauthenticatedf(ctx, "a verified email is required to submit a request")
 	}
 
 	compliancePage := compliancepage.CompliancePageFromContext(ctx)
@@ -50,36 +51,4 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 			coredata.RightsRequestOrderFieldCreatedAt,
 		),
 	}, nil
-}
-
-// MyRightsRequests is the resolver for the myRightsRequests field.
-func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.RightsRequestConnection, error) {
-	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
-		Field:     coredata.RightsRequestOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		emptyPage := page.NewPage([]*coredata.RightsRequest{}, cursor)
-		return types.NewRightsRequestConnection(emptyPage), nil
-	}
-
-	compliancePage := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
-
-	result, err := r.trust.RightsRequests.ListForOrganizationIDAndContact(
-		ctx,
-		scope,
-		compliancePage.OrganizationID,
-		identity.EmailAddress.String(),
-		cursor,
-	)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list rights requests", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewRightsRequestConnection(result), nil
 }

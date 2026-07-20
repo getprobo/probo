@@ -30,6 +30,16 @@ type Query {
   oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)
+
+  # The current viewer's own data subject requests for this trust center,
+  # scoped by their verified email. Returns an empty connection for guests so
+  # the portal can still render its empty state.
+  myRightsRequests(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): RightsRequestConnection! @goField(forceResolver: true)
 }
 
 type OIDCProviderInfo {

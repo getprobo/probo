@@ -52,18 +52,6 @@ type RightsRequestEdge {
   node: RightsRequest!
 }
 
-extend type Query {
-  # The current viewer's own data subject requests for this trust center,
-  # scoped by their verified email. Returns an empty connection for guests so
-  # the portal can still render its empty state.
-  myRightsRequests(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-  ): RightsRequestConnection!
-}
-
 extend type Mutation {
   # Submit a data subject request. Requires a verified viewer; the request is
   # attributed to the viewer's email, so no NDA gate applies.

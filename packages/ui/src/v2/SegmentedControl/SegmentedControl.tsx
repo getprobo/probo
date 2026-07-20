@@ -19,40 +19,66 @@
 // SOFTWARE.
 
 import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { segmentedControl } from "./variants";
 
 export type SegmentedControlProps = {
   // Single selected value (controlled).
-  value?: string;
+  "value"?: string;
   // Single selected value (uncontrolled).
-  defaultValue?: string;
+  "defaultValue"?: string;
   // Fired with the newly selected value. Never fired with an empty selection,
   // so a value always stays selected (clicking the active item is a no-op).
-  onValueChange?: (value: string) => void;
-  disabled?: boolean;
-  className?: string;
-  children?: ReactNode;
+  "onValueChange"?: (value: string) => void;
+  "disabled"?: boolean;
+  "className"?: string;
+  // Accessible name for the group (or reference a visible label via
+  // `aria-labelledby`), since the control has no intrinsic label.
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
+  "children"?: ReactNode;
 };
 
 // Single-select pill group. Wraps Base UI's array-based ToggleGroup with a
-// friendlier single-value API.
+// friendlier single-value API. Selection is tracked internally (seeded from
+// `value`/`defaultValue`) so toggling the active item off — which Base UI
+// reports as an empty group value — never clears the selection.
 export function SegmentedControl(props: SegmentedControlProps) {
-  const { value, defaultValue, onValueChange, disabled, className, children } = props;
+  const {
+    value,
+    defaultValue,
+    onValueChange,
+    disabled,
+    className,
+    children,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+  } = props;
   const { root } = segmentedControl();
+
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const currentValue = isControlled ? value : internalValue;
 
   return (
     <BaseToggleGroup
       className={root({ className })}
       disabled={disabled}
-      value={value != null ? [value] : undefined}
-      defaultValue={defaultValue != null ? [defaultValue] : undefined}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledby}
+      value={currentValue != null ? [currentValue] : []}
       onValueChange={(groupValue) => {
         const next = groupValue[0];
-        if (next != null) {
-          onValueChange?.(next);
+        // Ignore the empty value emitted when the active item is toggled off,
+        // preserving the single-selection contract.
+        if (next == null) {
+          return;
         }
+        if (!isControlled) {
+          setInternalValue(next);
+        }
+        onValueChange?.(next);
       }}
     >
       {children}

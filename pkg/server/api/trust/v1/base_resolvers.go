@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -302,6 +303,38 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 	}
 
 	return result, nil
+}
+
+// MyRightsRequests is the resolver for the myRightsRequests field.
+func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.RightsRequestConnection, error) {
+	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
+		Field:     coredata.RightsRequestOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		emptyPage := page.NewPage([]*coredata.RightsRequest{}, cursor)
+		return types.NewRightsRequestConnection(emptyPage), nil
+	}
+
+	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
+
+	result, err := r.trust.RightsRequests.ListForOrganizationIDAndContact(
+		ctx,
+		scope,
+		compliancePage.OrganizationID,
+		identity.EmailAddress.String(),
+		cursor,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list rights requests", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRightsRequestConnection(result), nil
 }
 
 // Mutation returns schema.MutationResolver implementation.

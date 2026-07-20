@@ -81,7 +81,6 @@ export const textArea = tv({
 export const field = tv({
   slots: {
     root: "flex flex-col gap-1.5",
-    label: "flex flex-col gap-1.5",
     labelText: "text-2 font-medium text-sand-12",
     error: "text-1 text-red-a11",
   },
