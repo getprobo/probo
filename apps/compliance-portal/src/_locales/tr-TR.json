@@ -1,0 +1,122 @@
+{
+  "topBar": {
+    "tagline": "Uyumluluk Portalı",
+    "getAccess": "Erişim İste",
+    "nav": {
+      "documents": "Belgeler",
+      "subprocessors": "Alt İşleyiciler",
+      "updates": "Güncellemeler",
+      "requests": "Talepler"
+    }
+  },
+  "userMenu": {
+    "signOut": "Çıkış yap"
+  },
+  "common": {
+    "cancel": "İptal",
+    "error": "Bir şeyler ters gitti",
+    "previousPage": "Önceki sayfa",
+    "nextPage": "Sonraki sayfa",
+    "pageOf": "Sayfa {{current}} / {{total}}",
+    "zoomOut": "Uzaklaştır",
+    "zoomIn": "Yakınlaştır"
+  },
+  "auth": {
+    "backToPortal": "Portala geri dön",
+    "signIn": {
+      "title": "Devam etmek için giriş yapın",
+      "description": "Korumalı kaynaklara erişin veya bir talep gönderin",
+      "or": "VEYA",
+      "withProvider": "{{provider}} ile giriş yapın",
+      "emailLabel": "E-posta Adresi",
+      "emailPlaceholder": "siz@sirket.com",
+      "emailRequired": "E-posta adresi gereklidir",
+      "emailInvalid": "Geçerli bir e-posta adresi girin",
+      "sendMagicLink": "Sihirli Bağlantı Gönder",
+      "resend": "Bağlantıyı yeniden gönder",
+      "resendIn": "Bağlantıyı {{seconds}} saniye içinde yeniden gönder",
+      "magicLinkSent": "Sihirli bağlantı gönderildi!",
+      "magicLinkSentNote": "E-postanızı kontrol edin ve giriş yapmak için bağlantıyı kullanın."
+    },
+    "requestAccess": {
+      "success": "Erişim talep edildi"
+    },
+    "verify": {
+      "title": "E-postanız doğrulanıyor",
+      "description": "Giriş yapılırken lütfen bekleyin…"
+    },
+    "fullName": {
+      "title": "Adınızı ekleyin",
+      "label": "Ad Soyad",
+      "placeholder": "Ahmet Yılmaz",
+      "required": "Ad soyad gereklidir",
+      "tooShort": "Ad soyad çok kısa",
+      "submit": "Devam Et"
+    },
+    "magicLinkExpired": {
+      "title": "Bağlantının süresi doldu",
+      "description": "Bu sihirli bağlantının süresi doldu. Lütfen yeni bir bağlantı talep edin."
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "Bağlantı zaten kullanıldı",
+      "description": "Bu sihirli bağlantı zaten kullanıldı. Lütfen yeni bir bağlantı talep edin."
+    },
+    "errors": {
+      "magicLinkFailed": "Sihirli bağlantı gönderilemedi. Lütfen tekrar deneyin.",
+      "verifyFailed": "Bağlantı doğrulanamadı. Lütfen tekrar deneyin.",
+      "fullNameFailed": "Adınız kaydedilemedi. Lütfen tekrar deneyin.",
+      "requestFailed": "Erişim talebiniz tamamlanamadı. Lütfen tekrar deneyin."
+    }
+  },
+  "home": {
+    "heroTitle": "{{name}}'de Güven.",
+    "heroDescription": "Uyumluluk Portalımıza hoş geldiniz. Güvenlik belgelerimizi ve sertifikalarımızı burada bulabilirsiniz.",
+    "sections": {
+      "compliance": "Uyumluluk",
+      "securityCommitments": "Güvenlik Taahhütleri",
+      "trustedBy": "Bize güvenenler",
+      "recentUpdates": "Son güncellemeler"
+    },
+    "recentUpdates": {
+      "viewAll": "Tümünü görüntüle"
+    }
+  },
+  "notFound": {
+    "title": "Sayfa bulunamadı",
+    "description": "Aradığınız sayfa mevcut değil veya taşınmış olabilir.",
+    "backHome": "Ana sayfaya dön"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Sayfa bulunamadı",
+      "description": "Aradığınız sayfa mevcut değil veya taşınmış olabilir."
+    },
+    "forbidden": {
+      "title": "Erişim reddedildi",
+      "description": "Bu sayfayı görüntüleme izniniz yok."
+    },
+    "serverError": {
+      "title": "Bir şeyler ters gitti",
+      "description": "Beklenmeyen bir hatayla karşılaştık. Lütfen birazdan tekrar deneyin."
+    },
+    "generic": {
+      "title": "Bir şeyler ters gitti",
+      "description": "Beklenmeyen bir hatayla karşılaştık. Lütfen birazdan tekrar deneyin."
+    },
+    "actions": {
+      "backToCompliancePortal": "Uyumluluk Portalına geri dön",
+      "tryAgain": "Tekrar dene"
+    },
+    "inline": {
+      "message": "İçerik yüklenemedi",
+      "retry": "Yeniden dene"
+    }
+  },
+  "footer": {
+    "poweredBy": "Destekleyen"
+  },
+  "pagination": {
+    "previous": "Önceki sayfa",
+    "next": "Sonraki sayfa"
+  }
+}

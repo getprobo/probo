@@ -1,0 +1,109 @@
+{
+  "title": "Alt İşleyiciler",
+  "filters": {
+    "allCategories": "Tüm kategoriler",
+    "allRegions": "Tüm bölgeler",
+    "searchPlaceholder": "Ara..."
+  },
+  "empty": {
+    "title": "Listelenmiş alt işleyici yok.",
+    "description": "Bu Uyumluluk Portalı henüz herhangi bir alt işleyici yayınlamadı.",
+    "filteredTitle": "Filtrelerinizle eşleşen alt işleyici yok.",
+    "filteredDescription": "Mevcut alt işleyicileri görmek için aramanızı veya filtrelerinizi ayarlayın.",
+    "clearFilters": "Filtreleri temizle"
+  },
+  "regions": {
+    "global": "Küresel",
+    "eu": "Avrupa Birliği"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analitik",
+      "description": "Kullanım analitiği ve ürün telemetrisi."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Bulut İzleme",
+      "description": "Gözlemlenebilirlik, günlükleme ve çalışma süresi izleme."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Bulut Sağlayıcı",
+      "description": "Bulut barındırma, işlem, depolama ve ağ hizmetleri."
+    },
+    "COLLABORATION": {
+      "label": "İş Birliği",
+      "description": "İletişim, planlama ve ekip çalışması araçları."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Müşteri Desteği",
+      "description": "Yardım masası, talep yönetimi ve müşteri mesajlaşması."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Veri Depolama ve İşleme",
+      "description": "Veritabanları, veri ambarları ve işleme hatları."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Belge Yönetimi",
+      "description": "Belge depolama, imzalama ve e-imza."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Çalışan Yönetimi",
+      "description": "İK, bordro ve insan kaynakları operasyonları."
+    },
+    "ENGINEERING": {
+      "label": "Mühendislik",
+      "description": "Geliştirici araçları ve mühendislik platformları."
+    },
+    "FINANCE": {
+      "label": "Finans",
+      "description": "Faturalandırma, ödemeler ve muhasebe."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Kimlik Sağlayıcı",
+      "description": "Kimlik doğrulama, SSO ve kimlik yönetimi."
+    },
+    "IT": {
+      "label": "BT",
+      "description": "BT yönetimi ve cihaz yönetimi."
+    },
+    "MARKETING": {
+      "label": "Pazarlama",
+      "description": "Pazarlama, CRM ve hedef kitle etkileşimi."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Ofis Operasyonları",
+      "description": "İş yeri ve ofis operasyonları."
+    },
+    "OTHER": {
+      "label": "Diğer",
+      "description": "Diğer destekleyici hizmetler."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Parola Yönetimi",
+      "description": "Kimlik bilgisi ve gizli anahtar yönetimi."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Ürün ve Tasarım",
+      "description": "Ürün ve tasarım araçları."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Profesyonel Hizmetler",
+      "description": "Danışmanlık ve profesyonel hizmetler."
+    },
+    "RECRUITING": {
+      "label": "İşe Alım",
+      "description": "İşe alım, kaynak bulma ve başvuru takibi."
+    },
+    "SALES": {
+      "label": "Satış",
+      "description": "Satış destek araçları ve CRM."
+    },
+    "SECURITY": {
+      "label": "Güvenlik",
+      "description": "Güvenlik, izleme ve güvenli erişim."
+    },
+    "VERSION_CONTROL": {
+      "label": "Sürüm Kontrolü",
+      "description": "Kaynak kontrolü ve kod barındırma."
+    }
+  }
+}

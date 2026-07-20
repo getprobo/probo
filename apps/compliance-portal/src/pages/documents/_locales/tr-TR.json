@@ -1,0 +1,46 @@
+{
+  "title": "Belgeler",
+  "tabs": {
+    "all": "Tümü",
+    "public": "Genel",
+    "private": "Özel"
+  },
+  "sections": {
+    "reports": "Uyumluluk raporları"
+  },
+  "types": {
+    "OTHER": "Diğer",
+    "GOVERNANCE": "Yönetişim",
+    "POLICY": "Politikalar",
+    "PROCEDURE": "Prosedürler",
+    "PLAN": "Planlar",
+    "REGISTER": "Kayıt Defterleri",
+    "RECORD": "Kayıtlar",
+    "REPORT": "Raporlar",
+    "TEMPLATE": "Şablonlar",
+    "STATEMENT_OF_APPLICABILITY": "Uygulanabilirlik Bildirgesi"
+  },
+  "actions": {
+    "view": "Görüntüle",
+    "getAccess": "Erişim İste",
+    "requested": "Erişim talep edildi"
+  },
+  "empty": {
+    "title": "Kullanılabilir belge yok",
+    "description": "Bu Uyumluluk Portalı henüz herhangi bir belge yayınlamadı.",
+    "filteredTitle": "Bu filtreyle eşleşen belge yok",
+    "filteredDescription": "Kullanılabilir belgeleri görmek için farklı bir sekme deneyin."
+  },
+  "viewer": {
+    "back": "Belgeler",
+    "share": "Belgeyi paylaş",
+    "linkCopied": "Bağlantı panoya kopyalandı",
+    "download": "İndir",
+    "previewUnavailable": "Önizleme kullanılamıyor",
+    "downloadToView": "Bu dosya türü burada önizlenemiyor. Görüntülemek için indirin.",
+    "locked": {
+      "title": "Erişim gerekli",
+      "description": "Bu belgeye henüz erişiminiz yok."
+    }
+  }
+}

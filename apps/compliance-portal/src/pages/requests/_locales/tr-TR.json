@@ -1,0 +1,71 @@
+{
+  "title": "Veri Talepleri",
+  "newRequest": "Yeni Talep",
+  "loadMore": "Daha fazla yükle",
+  "empty": {
+    "title": "Henüz talep yok",
+    "description": "Gönderdiğiniz talepler burada görünür, böylece ilerlemelerini takip edebilirsiniz."
+  },
+  "types": {
+    "ACCESS": "Veriye Erişim",
+    "DELETION": "Veri Silme",
+    "RECTIFICATION": "Veri Düzeltme",
+    "PORTABILITY": "Veri Taşınabilirliği",
+    "OBJECTION": "İşlemeye İtiraz",
+    "COMPLAINT": "Kötüye Kullanım Bildirimi"
+  },
+  "status": {
+    "TODO": "Beklemede",
+    "IN_PROGRESS": "İşleniyor",
+    "DONE": "Tamamlandı",
+    "REJECTED": "Reddedildi"
+  },
+  "typeOption": {
+    "ACCESS": "Verilerime erişmek istiyorum",
+    "DELETION": "Verilerimi silmek istiyorum",
+    "RECTIFICATION": "Verilerimi düzeltmek istiyorum",
+    "OBJECTION": "İşlemeye itiraz etmek istiyorum",
+    "COMPLAINT": "Kötüye kullanım bildirmek istiyorum"
+  },
+  "dialog": {
+    "title": "Yeni Talep",
+    "description": "Bir talep türü seçin ve aşağıdaki ayrıntıları doldurun.",
+    "typeLabel": "Talep türü",
+    "cancel": "İptal",
+    "submit": "Talebi Gönder",
+    "success": {
+      "title": "Talep gönderildi",
+      "description": "Talebinizi işleme alacak ve geçerli yasaların gerektirdiği süre içinde yanıt vereceğiz.",
+      "close": "Kapat"
+    }
+  },
+  "form": {
+    "name": "Ad Soyad",
+    "nameOptional": "Adınız (isteğe bağlı)",
+    "namePlaceholder": "Ahmet Yılmaz",
+    "email": "E-posta Adresi",
+    "deletionWarning": "Veri silme işlemi kalıcıdır ve geri alınamaz. Bazı veriler yasal yükümlülükler nedeniyle saklanabilir.",
+    "details": {
+      "ACCESS": {
+        "label": "Talebinizin ayrıntıları",
+        "placeholder": "Hesabımla ilişkili tüm kişisel verilerin bir kopyasını almak istiyorum…"
+      },
+      "DELETION": {
+        "label": "Silme talebinin kapsamı",
+        "placeholder": "Lütfen aşağıdakiler dahil tüm kişisel verilerimi silin…"
+      },
+      "RECTIFICATION": {
+        "label": "Ne düzeltilmeli?",
+        "placeholder": "Aşağıdaki bilgiler yanlış…"
+      },
+      "OBJECTION": {
+        "label": "Neye itiraz ediyorsunuz?",
+        "placeholder": "Verilerimin şu amaçla işlenmesine itiraz ediyorum…"
+      },
+      "COMPLAINT": {
+        "label": "Sorunun açıklaması",
+        "placeholder": "Şunu fark ettim…"
+      }
+    }
+  }
+}

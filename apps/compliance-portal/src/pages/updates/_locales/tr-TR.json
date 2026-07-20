@@ -1,0 +1,9 @@
+{
+  "title": "Güncellemeler",
+  "subscribe": "Güncellemelere abone ol",
+  "backToUpdates": "Tüm güncellemeler",
+  "empty": {
+    "title": "Henüz güncelleme yok.",
+    "description": "Yeni güncellemeler yayınlandığında bildirim almak için abone olun."
+  }
+}
