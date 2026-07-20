@@ -32,6 +32,12 @@ type InstallOptions struct {
 	ConfigDir string // agent config / keystore dir (--dir)
 }
 
+// UninstallOptions configures an elevated probo-agent uninstall invocation.
+type UninstallOptions struct {
+	ExePath   string
+	ConfigDir string
+}
+
 func commandError(out []byte, err error) error {
 	if err == nil {
 		return nil

@@ -22,6 +22,10 @@ STATE_DIR="/var/lib/probo-agent"
 RUN_DIR="/var/run/probo-agent"
 CONF_FILE="/tmp/probo-agent.conf"
 DAEMON_PLIST="/Library/LaunchDaemons/com.probo.agent.plist"
+HELPER_LABEL="com.probo.agent.helper"
+HELPER_PLIST="/Library/LaunchDaemons/${HELPER_LABEL}.plist"
+HELPER_BINARY="/Library/PrivilegedHelperTools/${HELPER_LABEL}"
+APP_PATH="/Applications/Probo Agent.app"
 TRAY_LABEL="com.probo.agent.tray"
 TRAY_PLIST_NAME="${TRAY_LABEL}.plist"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -133,11 +137,10 @@ register_tray_launchagent() {
 }
 
 register_enrollment_url_scheme() {
-    local app_path lsregister
+    local lsregister
 
-    app_path="/Applications/Probo Agent.app"
-    if [ ! -d "${app_path}" ]; then
-        echo "warning: ${app_path} not found; cannot register probo:// URL scheme."
+    if [ ! -d "${APP_PATH}" ]; then
+        echo "warning: ${APP_PATH} not found; cannot register probo:// URL scheme."
         return 0
     fi
 
@@ -147,12 +150,68 @@ register_enrollment_url_scheme() {
         return 0
     fi
 
-    if ! "${lsregister}" -f "${app_path}"; then
+    if ! "${lsregister}" -f "${APP_PATH}"; then
         echo "warning: failed to register probo:// URL scheme."
         return 0
     fi
 
     echo "Registered probo:// URL scheme."
+}
+
+# Install the privileged helper as root during PKG install so browser
+# enrollment can use XPC without SMJobBless / an admin password prompt.
+install_privileged_helper() {
+    local src_helper="${APP_PATH}/Contents/Library/LaunchServices/${HELPER_LABEL}"
+
+    if [ ! -x "${src_helper}" ]; then
+        echo "error: privileged helper missing at ${src_helper}"
+        return 1
+    fi
+
+    mkdir -p /Library/PrivilegedHelperTools /Library/LaunchDaemons
+
+    if [ -f "${HELPER_PLIST}" ]; then
+        launchctl bootout system "${HELPER_PLIST}" 2>/dev/null || true
+    fi
+
+    # Match SMJobBless-style permissions (root:wheel, not world-writable).
+    install -m 0544 -o root -g wheel "${src_helper}" "${HELPER_BINARY}"
+
+    cat > "${HELPER_PLIST}" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>${HELPER_LABEL}</string>
+	<key>Program</key>
+	<string>${HELPER_BINARY}</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>${HELPER_BINARY}</string>
+	</array>
+	<key>MachServices</key>
+	<dict>
+		<key>${HELPER_LABEL}</key>
+		<true/>
+	</dict>
+	<key>AssociatedBundleIdentifiers</key>
+	<array>
+		<string>com.probo.agent.url-handler</string>
+	</array>
+</dict>
+</plist>
+EOF
+    chmod 0644 "${HELPER_PLIST}"
+    chown root:wheel "${HELPER_PLIST}"
+
+    if ! launchctl bootstrap system "${HELPER_PLIST}"; then
+        echo "warning: could not bootstrap ${HELPER_LABEL}; first XPC connect may start it."
+        return 0
+    fi
+
+    echo "Installed privileged helper at ${HELPER_BINARY}."
+    return 0
 }
 
 # Restart a previously enrolled LaunchDaemon after upgrades. Preinstall
@@ -244,6 +303,11 @@ if [ -f "${CONF_FILE}" ]; then
     rm -f "${CONF_FILE}"
 else
     echo "No ${CONF_FILE} found; enrollment can be completed from the menu bar icon."
+fi
+
+if ! install_privileged_helper; then
+    echo "error: privileged helper installation failed; browser enrollment will not work."
+    exit 1
 fi
 
 restart_existing_daemon

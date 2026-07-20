@@ -5,6 +5,26 @@ documented in this file.
 
 ## Unreleased
 
+### Added
+
+- macOS privileged helper (`com.probo.agent.helper`) embedded in
+  `Probo Agent.app` and installed by PKG postinstall for XPC-driven
+  browser enrollment (no SMJobBless / admin prompt on enroll).
+- Hidden `probo-agent enroll-url --preflight` JSON output for the URL handler.
+- `make -C cmd/probo-agent install|uninstall|clean` for local macOS PKG
+  test loops (install tears down leftovers first).
+
+### Changed
+
+- Browser enrollment via `Probo Agent.app` uses HelperClient + XPC only
+  (osascript elevation and enroll-time SMJobBless removed).
+- macOS PKG / app builds require `CODESIGN_IDENTITY` and `APPLE_TEAM_ID`.
+- CLI `enroll-url` on macOS refuses elevation; use the signed app deeplink
+  or `sudo probo-agent install`.
+- macOS `probo-agent uninstall` requires root (`sudo`).
+- PKG preinstall removes stale privileged helper files on upgrade;
+  postinstall reinstalls the helper as root.
+
 ## [0.1.1] - 2026-06-11
 
 ### Changed

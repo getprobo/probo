@@ -1,61 +1,10 @@
 import AppKit
-import Darwin
 import Foundation
-
-// Fixed install location written by the macOS PKG postinstall script
-// (cmd/probo-agent/installer/macos/scripts/postinstall, BINARY).
-private let agentExecutablePath = "/usr/local/bin/probo-agent"
-
-private enum EnrollmentCallbackState: String, Codable {
-    case success
-    case failure
-}
-
-private struct EnrollmentCallbackPayload: Codable {
-    let state: EnrollmentCallbackState
-    let message: String?
-}
-
-private enum EnrollmentCallbackStore {
-    static var statusFileURL: URL {
-        FileManager.default.temporaryDirectory
-            .appendingPathComponent("probo-agent-enrollment-status.json")
-    }
-
-    static var lockFileURL: URL {
-        FileManager.default.temporaryDirectory
-            .appendingPathComponent("probo-agent-enrollment-ui.lock")
-    }
-
-    static func isWizardRunning() -> Bool {
-        guard
-            let data = try? Data(contentsOf: lockFileURL),
-            let pidText = String(data: data, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-            let pid = Int32(pidText),
-            pid > 0
-        else {
-            return false
-        }
-
-        return kill(pid, 0) == 0
-    }
-
-    static func writeStatus(
-        state: EnrollmentCallbackState,
-        message: String?
-    ) {
-        let payload = EnrollmentCallbackPayload(state: state, message: message)
-        guard let data = try? JSONEncoder().encode(payload) else {
-            return
-        }
-
-        try? data.write(to: statusFileURL, options: [.atomic])
-    }
-}
+import HelperClient
 
 private final class URLHandlerApp: NSObject, NSApplicationDelegate {
     private var didReceiveURL = false
+    private var idleTimer: Timer?
 
     override init() {
         super.init()
@@ -69,11 +18,17 @@ private final class URLHandlerApp: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { _ in
-            if !self.didReceiveURL {
-                NSApp.terminate(nil)
-            }
+        NSLog("probo-agent url-handler: launched")
+        idleTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: false) { [weak self] _ in
+            guard let self, !self.didReceiveURL else { return }
+            NSLog("probo-agent url-handler: no URL received; exiting")
+            NSApp.terminate(nil)
         }
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard let rawURL = urls.first?.absoluteString else { return }
+        beginEnrollmentIfNeeded(rawURL: rawURL)
     }
 
     @objc private func handleGetURLEvent(
@@ -81,115 +36,71 @@ private final class URLHandlerApp: NSObject, NSApplicationDelegate {
         withReplyEvent replyEvent: NSAppleEventDescriptor
     ) {
         guard let rawURL = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue else {
-            reportFailure("Enrollment link is missing.")
+            presentFailure("Enrollment link is missing.")
             return
         }
 
-        guard !didReceiveURL else { return }
+        beginEnrollmentIfNeeded(rawURL: rawURL)
+    }
 
+    private func beginEnrollmentIfNeeded(rawURL: String) {
+        guard !didReceiveURL else { return }
         didReceiveURL = true
+        idleTimer?.invalidate()
+        idleTimer = nil
         runEnrollment(for: rawURL)
     }
 
     private func runEnrollment(for rawURL: String) {
-        let shouldNotifyWizard = EnrollmentCallbackStore.isWizardRunning()
+        NSLog("probo-agent url-handler: starting enrollment")
 
         DispatchQueue.global(qos: .userInitiated).async {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: agentExecutablePath)
-            process.arguments = ["enroll-url", rawURL]
-
-            let output = Pipe()
-            process.standardOutput = output
-            process.standardError = output
-
-            var outputData = Data()
-            let readHandle = output.fileHandleForReading
-            let readDone = DispatchSemaphore(value: 0)
-
-            readHandle.readabilityHandler = { handle in
-                let chunk = handle.availableData
-                if chunk.isEmpty {
-                    handle.readabilityHandler = nil
-                    readDone.signal()
+            do {
+                NSLog("probo-agent url-handler: preflight…")
+                let preflight = try EnrollmentFlow.runPreflight(rawURL: rawURL)
+                if preflight.alreadyEnrolled {
+                    NSLog("probo-agent url-handler: already enrolled")
+                    DispatchQueue.main.async {
+                        NSApp.terminate(nil)
+                    }
                     return
                 }
-                outputData.append(chunk)
-            }
 
-            defer { readHandle.readabilityHandler = nil }
+                NSLog("probo-agent url-handler: install via helper…")
+                try EnrollmentFlow.installViaHelper(preflight: preflight)
+                NSLog("probo-agent url-handler: install completed")
 
-            do {
-                try process.run()
+                DispatchQueue.main.async {
+                    NSApp.terminate(nil)
+                }
             } catch {
-                readDone.signal()
+                NSLog(
+                    "probo-agent url-handler: enrollment failed: %@",
+                    error.localizedDescription
+                )
                 DispatchQueue.main.async {
-                    self.reportFailure(
-                        self.sanitizedFailureMessage(error.localizedDescription),
-                        shouldNotifyWizard: shouldNotifyWizard
-                    )
+                    self.presentFailure(error.localizedDescription)
                 }
-                return
-            }
-
-            process.waitUntilExit()
-            readDone.wait()
-
-            guard process.terminationStatus == 0 else {
-                let message = String(data: outputData, encoding: .utf8)?
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-
-                DispatchQueue.main.async {
-                    self.reportFailure(
-                        self.sanitizedFailureMessage(message),
-                        shouldNotifyWizard: shouldNotifyWizard
-                    )
-                }
-                return
-            }
-
-            DispatchQueue.main.async {
-                if shouldNotifyWizard {
-                    EnrollmentCallbackStore.writeStatus(state: .success, message: nil)
-                }
-                NSApp.terminate(nil)
             }
         }
     }
 
-    private func reportFailure(_ message: String, shouldNotifyWizard: Bool = EnrollmentCallbackStore.isWizardRunning()) {
-        if shouldNotifyWizard {
-            EnrollmentCallbackStore.writeStatus(state: .failure, message: message)
-            NSApp.terminate(nil)
-            return
-        }
-
-        showError(message)
+    private func presentFailure(_ message: String) {
+        presentAlert(title: "Enrollment failed", message: message, style: .warning)
     }
 
-    private func sanitizedFailureMessage(_ raw: String?) -> String {
-        guard let raw else {
-            return "Enrollment failed. Please try again."
-        }
-
-        let normalized = raw.lowercased()
-        if normalized.contains("already enrolled") {
-            return "This device is already enrolled."
-        }
-        if normalized.contains("key") && normalized.contains("missing") {
-            return "Device API key is missing or invalid."
-        }
-
-        return "Enrollment failed. Please try again."
-    }
-
-    private func showError(_ message: String) {
-        let alert = NSAlert()
-        alert.messageText = "Enrollment failed"
-        alert.informativeText = message
-        alert.alertStyle = .warning
+    private func presentAlert(title: String, message: String, style: NSAlert.Style) {
+        // LSUIElement / .accessory apps otherwise show alerts that never appear.
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = style
         alert.runModal()
+
+        NSApp.setActivationPolicy(.accessory)
         NSApp.terminate(nil)
     }
 }

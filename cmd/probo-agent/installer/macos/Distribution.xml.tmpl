@@ -9,6 +9,7 @@
     @@PKG_ARCH@@      reserved (legacy; host filter uses @@HOST_ARCHS@@)
     @@HOST_ARCHS@@    host arch filter used by Installer.app
                       (e.g. arm64 or arm64,x86_64 for universal)
+    @@IDENTIFIER@@    package identifier (default com.probo.agent)
 -->
 <installer-gui-script minSpecVersion="2">
     <title>Probo Device Posture Agent @@VERSION@@</title>
@@ -38,20 +39,20 @@
     <license    file="license.txt"     mime-type="text/plain"/>
     <conclusion file="conclusion.html" mime-type="text/html"/>
 
-    <pkg-ref id="com.getprobo.agent"
+    <pkg-ref id="@@IDENTIFIER@@"
              version="@@VERSION@@"
              onConclusion="none">probo-agent-component.pkg</pkg-ref>
 
     <choices-outline>
         <line choice="default">
-            <line choice="com.getprobo.agent"/>
+            <line choice="@@IDENTIFIER@@"/>
         </line>
     </choices-outline>
 
     <choice id="default"/>
-    <choice id="com.getprobo.agent"
+    <choice id="@@IDENTIFIER@@"
             title="Probo Device Posture Agent"
             description="Installs probo-agent, the menu bar helper LaunchAgent, and Probo Agent.app for probo:// enrollment. The LaunchDaemon starts after enrollment.">
-        <pkg-ref id="com.getprobo.agent"/>
+        <pkg-ref id="@@IDENTIFIER@@"/>
     </choice>
 </installer-gui-script>

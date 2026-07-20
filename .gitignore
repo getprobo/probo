@@ -1,5 +1,6 @@
 bin/
 node_modules/
+.cache/
 .turbo
 .vscode
 .cursor/*

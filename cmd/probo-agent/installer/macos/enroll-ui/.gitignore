@@ -1,2 +1,6 @@
+# SwiftPM
 .build/
 .swiftpm/
+
+# Rendered by build-app.sh from *.tmpl (do not commit)
+Shared/*.generated.swift

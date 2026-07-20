@@ -22,22 +22,27 @@
 
 package elevate
 
-import "errors"
+import (
+	"testing"
 
-// ErrPrivilegedHelperRequired is returned when a non-root process asks for
-// elevation on macOS. Browser enrollment must go through the signed
-// Probo Agent.app XPC helper (installed by the PKG); CLI install/uninstall
-// require sudo.
-var ErrPrivilegedHelperRequired = errors.New(
-	"macOS elevation requires the signed Probo Agent.app privileged helper " +
-		"(browser enroll via PKG-installed helper) or sudo " +
-		"(CLI: sudo probo-agent install|uninstall)",
+	"github.com/stretchr/testify/require"
 )
 
-func runElevatedInstall(_ InstallOptions, _ string) error {
-	return ErrPrivilegedHelperRequired
+func TestRunElevatedInstallRequiresPrivilegedHelper(t *testing.T) {
+	t.Parallel()
+
+	err := RunElevatedInstall(
+		"/usr/local/bin/probo-agent",
+		"https://example.com",
+		"token",
+		"/var/lib/probo-agent",
+	)
+	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
 }
 
-func runElevatedUninstall(_ UninstallOptions) error {
-	return ErrPrivilegedHelperRequired
+func TestRunElevatedUninstallRequiresPrivilegedHelper(t *testing.T) {
+	t.Parallel()
+
+	err := RunElevatedUninstall("/usr/local/bin/probo-agent", "/var/lib/probo-agent")
+	require.ErrorIs(t, err, ErrPrivilegedHelperRequired)
 }

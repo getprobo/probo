@@ -6,7 +6,8 @@
 
   Placeholders are substituted by build-app.sh:
 
-    @@VERSION@@   agent version, e.g. 0.1.0
+    @@VERSION@@                        agent version, e.g. 0.1.0
+    @@HELPER_DESIGNATED_REQUIREMENT@@  codesign requirement for embedded helper
 -->
 <plist version="1.0">
 <dict>
@@ -15,7 +16,7 @@
     <key>CFBundleExecutable</key>
     <string>probo-agent-url-handler</string>
     <key>CFBundleIdentifier</key>
-    <string>com.getprobo.agent.url-handler</string>
+    <string>com.probo.agent.url-handler</string>
     <key>CFBundleName</key>
     <string>Probo Agent</string>
     <key>CFBundleDisplayName</key>
@@ -41,5 +42,10 @@
             </array>
         </dict>
     </array>
+    <key>SMPrivilegedExecutables</key>
+    <dict>
+        <key>com.probo.agent.helper</key>
+        <string>@@HELPER_DESIGNATED_REQUIREMENT@@</string>
+    </dict>
 </dict>
 </plist>

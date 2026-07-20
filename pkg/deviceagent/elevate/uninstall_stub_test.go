@@ -18,26 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:build darwin
-
 package elevate
 
-import "errors"
+import (
+	"testing"
 
-// ErrPrivilegedHelperRequired is returned when a non-root process asks for
-// elevation on macOS. Browser enrollment must go through the signed
-// Probo Agent.app XPC helper (installed by the PKG); CLI install/uninstall
-// require sudo.
-var ErrPrivilegedHelperRequired = errors.New(
-	"macOS elevation requires the signed Probo Agent.app privileged helper " +
-		"(browser enroll via PKG-installed helper) or sudo " +
-		"(CLI: sudo probo-agent install|uninstall)",
+	"github.com/stretchr/testify/require"
 )
 
-func runElevatedInstall(_ InstallOptions, _ string) error {
-	return ErrPrivilegedHelperRequired
-}
+func TestRunElevatedUninstallUnsupported(t *testing.T) {
+	t.Parallel()
 
-func runElevatedUninstall(_ UninstallOptions) error {
-	return ErrPrivilegedHelperRequired
+	err := RunElevatedUninstall("/usr/local/bin/probo-agent", "/var/lib/probo-agent")
+	require.Error(t, err)
 }

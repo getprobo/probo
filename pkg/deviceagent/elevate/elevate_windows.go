@@ -68,3 +68,36 @@ func runElevatedInstall(opts InstallOptions, enrollmentToken string) error {
 
 	return commandError(out, err)
 }
+
+func runElevatedUninstall(opts UninstallOptions) error {
+	args := []string{"uninstall"}
+	if opts.ConfigDir != "" {
+		args = append(args, "--dir", opts.ConfigDir)
+	}
+
+	argList := make([]string, len(args))
+	for i, arg := range args {
+		argList[i] = "'" + escapePowerShellSingleQuoted(arg) + "'"
+	}
+
+	script := fmt.Sprintf(
+		`$p = Start-Process -FilePath %s -ArgumentList @(%s) -Verb RunAs -Wait -PassThru; if ($p.ExitCode -ne 0) { exit $p.ExitCode }`,
+		"'"+escapePowerShellSingleQuoted(opts.ExePath)+"'",
+		strings.Join(argList, ","),
+	)
+
+	candidates := checks.CommandCandidates("powershell.exe")
+	if len(candidates) == 0 {
+		return fmt.Errorf("command %q not available at expected absolute path", "powershell.exe")
+	}
+
+	out, err := exec.Command(
+		candidates[0],
+		"-NoProfile",
+		"-NonInteractive",
+		"-Command",
+		script,
+	).CombinedOutput()
+
+	return commandError(out, err)
+}

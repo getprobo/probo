@@ -14,8 +14,10 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | `make test-short`            | Short tests only                                                                                       |
 | `make test-bench`            | Run benchmarks                                                                                         |
 | `make test-e2e`              | Run console end-to-end tests (requires `bin/probod`)                                                   |
-| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `lint-js`                                   |
-| `make fmt`                   | Format Go code (`go fmt ./...`)                                                                        |
+| `make lint`                  | Run Go + JS linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `lint-js`                              |
+| `make lint-swift`            | Opt-in: lint Swift enroll-ui (`swift-fmt` + `swift-lint`; needs Swift + SwiftLint; CI runs this on Linux) |
+| `make fmt`                   | Format Go code                                                                                         |
+| `make fmt-swift`             | Opt-in: format Swift enroll-ui (`swift format` + SwiftLint `--fix`; needs Swift)                     |
 | `make clean`                 | Remove all build artifacts, `node_modules`, generated files, and coverage                              |
 | `make help`                  | List targets with `##` doc comments                                                                    |
 
@@ -81,3 +83,6 @@ Individual codegen is driven by `go generate`:
 | `GOOS`               | (host)                                    | Cross-compile target OS                    |
 | `TEST_FLAGS`         | `-race -cover -coverprofile=coverage.out` | Extra flags passed to `go test`            |
 | `DOCKER_BUILD_FLAGS` | (empty)                                   | Extra flags for `docker build`             |
+| `SWIFTLINTCMD`       | `swiftlint`                               | SwiftLint binary                           |
+| `SWIFTCMD`           | `swift`                                   | Swift toolchain binary (`swift format`)    |
+| `SWIFT_ENROLL_UI`    | `cmd/probo-agent/installer/macos/enroll-ui` | Path to the Swift SPM package            |

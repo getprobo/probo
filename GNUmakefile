@@ -17,6 +17,13 @@ SYFT ?=	syft
 TAIL ?= tail
 ECHO ?= echo
 GOLINTCMD ?= golangci-lint
+SWIFTLINTCMD ?= swiftlint
+SWIFTCMD ?= swift
+SWIFT_ENROLL_UI ?= cmd/probo-agent/installer/macos/enroll-ui
+SWIFT_FORMAT_CONFIG ?= .swift-format
+SWIFTLINT_CONFIG ?= .swiftlint.yml
+
+swift_sources = $(shell find $(SWIFT_ENROLL_UI) \( -name '*.swift' ! -name '*.generated.swift' ! -path '*/.build/*' \) | sort)
 
 DOCKER_BUILD_FLAGS?=
 DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
@@ -90,13 +97,10 @@ PROBOCTL_SRC=	cmd/proboctl/main.go
 
 PROBO_AGENT_BIN=	bin/probo-agent
 PROBO_AGENT_SRC=	./cmd/probo-agent
-# Menu bar / tray enrollment is macOS and Windows only; those hosts need CGO.
+# Menu bar / tray enrollment is macOS and Windows; only macOS needs CGO.
 PROBO_AGENT_TARGET_OS=	$(if $(GOOS),$(GOOS),$(shell $(GO) env GOOS))
 PROBO_AGENT_CGO=	0
 ifeq ($(PROBO_AGENT_TARGET_OS),darwin)
-PROBO_AGENT_CGO=	1
-endif
-ifeq ($(PROBO_AGENT_TARGET_OS),windows)
 PROBO_AGENT_CGO=	1
 endif
 
@@ -119,6 +123,19 @@ lint-go: vet go-fmt go-fix go-lint
 .PHONY: lint-js
 lint-js:
 	$(NPM) run lint
+
+.PHONY: lint-swift
+lint-swift: swift-fmt swift-lint ## Lint Swift enroll-ui (format + SwiftLint)
+
+.PHONY: swift-fmt
+swift-fmt: ## Check Swift formatting with swift format
+	@command -v $(SWIFTCMD) >/dev/null 2>&1 || { echo "error: '$(SWIFTCMD)' not found; install the Swift toolchain (Xcode on macOS)"; exit 1; }
+	$(SWIFTCMD) format lint --configuration $(SWIFT_FORMAT_CONFIG) --strict --parallel $(swift_sources)
+
+.PHONY: swift-lint
+swift-lint: ## Lint Swift with SwiftLint
+	@command -v $(SWIFTLINTCMD) >/dev/null 2>&1 || { echo "error: '$(SWIFTLINTCMD)' not found; install SwiftLint (e.g. brew install swiftlint)"; exit 1; }
+	$(SWIFTLINTCMD) lint --strict --config $(SWIFTLINT_CONFIG) --cache-path .cache/swiftlint
 
 .PHONY: vet
 vet: generate embed
@@ -392,6 +409,14 @@ fmt: fmt-go ## Format Go code
 .PHONY: fmt-go
 fmt-go: ## Format Go code
 	go fmt ./...
+
+.PHONY: fmt-swift
+fmt-swift: ## Format Swift enroll-ui sources
+	@command -v $(SWIFTCMD) >/dev/null 2>&1 || { echo "error: '$(SWIFTCMD)' not found; install the Swift toolchain (Xcode on macOS)"; exit 1; }
+	$(SWIFTCMD) format --configuration $(SWIFT_FORMAT_CONFIG) --in-place --parallel $(swift_sources)
+	@if command -v $(SWIFTLINTCMD) >/dev/null 2>&1; then \
+		$(SWIFTLINTCMD) lint --fix --config $(SWIFTLINT_CONFIG) --cache-path .cache/swiftlint; \
+	fi
 
 .PHONY: clean
 clean: ## Clean the project (node_modules and build artifacts)

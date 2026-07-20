@@ -33,6 +33,10 @@ import (
 
 const (
 	plistPath = "/Library/LaunchDaemons/com.probo.agent.plist"
+
+	helperLabel      = "com.probo.agent.helper"
+	helperPlistPath  = "/Library/LaunchDaemons/" + helperLabel + ".plist"
+	helperBinaryPath = "/Library/PrivilegedHelperTools/" + helperLabel
 )
 
 const launchdPlistTmpl = `<?xml version="1.0" encoding="UTF-8"?>
@@ -83,6 +87,31 @@ func removeLaunchDaemonPlist(path string) error {
 	return nil
 }
 
+func removeManagedPath(path string) error {
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("cannot remove %s: %w", path, err)
+	}
+
+	return nil
+}
+
+// removePrivilegedHelper boots out and deletes the PKG-installed XPC helper.
+// Missing artifacts are treated as success so uninstall stays idempotent.
+func removePrivilegedHelper() error {
+	_ = exec.Command("launchctl", "bootout", "system/"+helperLabel).Run()
+	_ = exec.Command("launchctl", "bootout", "system", helperPlistPath).Run()
+
+	if err := removeManagedPath(helperPlistPath); err != nil {
+		return fmt.Errorf("cannot remove privileged helper plist: %w", err)
+	}
+
+	if err := removeManagedPath(helperBinaryPath); err != nil {
+		return fmt.Errorf("cannot remove privileged helper binary: %w", err)
+	}
+
+	return nil
+}
+
 // Install writes and boots the launchd plist.
 func Install(cfg Config) error {
 	if cfg.ExePath == "" {
@@ -126,9 +155,18 @@ func Install(cfg Config) error {
 	return nil
 }
 
-// Uninstall bootouts and removes the launchd plist.
+// Uninstall bootouts and removes the agent LaunchDaemon and the privileged
+// XPC helper installed by the macOS PKG.
 func Uninstall(cfg Config) error {
 	_ = cfg
 
-	return removeLaunchDaemonPlist(plistPath)
+	if err := removeLaunchDaemonPlist(plistPath); err != nil {
+		return err
+	}
+
+	if err := removePrivilegedHelper(); err != nil {
+		return fmt.Errorf("cannot remove privileged helper: %w", err)
+	}
+
+	return nil
 }

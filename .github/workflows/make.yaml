@@ -380,6 +380,41 @@ jobs:
               reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -name="eslint ($dir)" || true
           done
 
+  lint-swift:
+    name: "lint-swift"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+      pull-requests: "write"
+    steps:
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a" # v2.4.0
+        with:
+          swift-version: "6.0"
+      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+      - name: "Install SwiftLint"
+        run: |
+          curl -sL "https://github.com/realm/SwiftLint/releases/download/0.65.0/swiftlint_linux_amd64.zip" -o /tmp/swiftlint.zip
+          sudo unzip -o /tmp/swiftlint.zip -d /usr/local/bin
+          sudo chmod +x /usr/local/bin/swiftlint
+          swiftlint version
+      - name: "Run swift format"
+        run: |
+          sources="$(find cmd/probo-agent/installer/macos/enroll-ui \( -name '*.swift' ! -name '*.generated.swift' ! -path '*/.build/*' \) | sort)"
+          swift format lint --configuration .swift-format --strict --parallel $sources
+      - name: "Run SwiftLint"
+        run: swiftlint lint --strict --config .swiftlint.yml --cache-path /tmp/swiftlint-cache
+      - name: "Annotate PR with SwiftLint findings"
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          swiftlint lint --config .swiftlint.yml --cache-path /tmp/swiftlint-cache 2>&1 | \
+            reviewdog -f=swiftlint -reporter=github-pr-review -filter-mode=nofilter -name="swiftlint" || true
+
   test:
     name: "test"
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"

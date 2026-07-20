@@ -25,9 +25,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -100,6 +102,8 @@ func newRootCmd() *cobra.Command {
 }
 
 func newEnrollURLCmd() *cobra.Command {
+	var preflight bool
+
 	cmd := &cobra.Command{
 		Use:    "enroll-url [url]",
 		Hidden: true,
@@ -112,12 +116,30 @@ func newEnrollURLCmd() *cobra.Command {
 
 			dir := resolveDir(cmd)
 
+			if preflight {
+				enrolled, err := deviceagent.IsEnrolled(deviceagent.EnrollmentRunDir(dir))
+				if err != nil {
+					return fmt.Errorf("cannot check enrollment state: %w", err)
+				}
+
+				return writeEnrollPreflight(cmd.OutOrStdout(), serverURL, enrollmentToken, dir, enrolled)
+			}
+
 			already, err := reportIfAlreadyEnrolled(dir)
 			if err != nil {
 				return err
 			}
+
 			if already {
 				return nil
+			}
+
+			if runtime.GOOS == "darwin" {
+				return fmt.Errorf(
+					"macOS browser enrollment must use the signed Probo Agent.app " +
+						"(probo:// deeplink); for CLI use: sudo probo-agent install " +
+						"--server … --enrollment-token …",
+				)
 			}
 
 			exePath, err := os.Executable()
@@ -135,7 +157,40 @@ func newEnrollURLCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().BoolVar(&preflight, "preflight", false, "validate enrollment URL and print JSON for the macOS URL handler")
+
 	return cmd
+}
+
+type enrollPreflightResponse struct {
+	Server          string `json:"server"`
+	Token           string `json:"token"`
+	AlreadyEnrolled bool   `json:"alreadyEnrolled"`
+	ConfigDir       string `json:"configDir"`
+}
+
+func writeEnrollPreflight(
+	w io.Writer,
+	serverURL, enrollmentToken, dir string,
+	alreadyEnrolled bool,
+) error {
+	payload := enrollPreflightResponse{
+		Server:          serverURL,
+		Token:           enrollmentToken,
+		AlreadyEnrolled: alreadyEnrolled,
+		ConfigDir:       dir,
+	}
+
+	out, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("cannot encode enrollment preflight response: %w", err)
+	}
+
+	if _, err := fmt.Fprintln(w, string(out)); err != nil {
+		return fmt.Errorf("cannot write enrollment preflight response: %w", err)
+	}
+
+	return nil
 }
 
 // reportIfAlreadyEnrolled prints a success message and returns true when
@@ -231,6 +286,7 @@ func newInstallCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			if already {
 				return nil
 			}
