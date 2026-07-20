@@ -88,7 +88,7 @@ export function RisksChart({ organizationId, type, risks }: Props) {
       <div className="flex justify-between items-center mb-6">
         <h2 className="font-semibold text-lg">
           {type === "inherent"
-            ? __("Inherent Risk")
+            ? __("Initial Risk")
             : __("Residual Risk")}
         </h2>
         <div className="flex gap-3">

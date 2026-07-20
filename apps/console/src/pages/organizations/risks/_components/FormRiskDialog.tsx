@@ -264,7 +264,7 @@ export function FormRiskDialog({
               <ImpactAndLikelihood
                 errors={errors}
                 control={control}
-                label={__("Inherent Risk")}
+                label={__("Initial Risk")}
                 prefix="inherent"
               />
               <ImpactAndLikelihood

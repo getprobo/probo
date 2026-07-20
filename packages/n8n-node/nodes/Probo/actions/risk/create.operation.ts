@@ -97,7 +97,7 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Inherent Likelihood',
+		displayName: 'Initial Likelihood',
 		name: 'inherentLikelihood',
 		type: 'number',
 		displayOptions: {
@@ -111,11 +111,11 @@ export const description: INodeProperties[] = [
 			maxValue: 5,
 		},
 		default: 1,
-		description: 'The inherent likelihood of the risk (1-5)',
+		description: 'The initial likelihood of the risk (1-5)',
 		required: true,
 	},
 	{
-		displayName: 'Inherent Impact',
+		displayName: 'Initial Impact',
 		name: 'inherentImpact',
 		type: 'number',
 		displayOptions: {
@@ -129,7 +129,7 @@ export const description: INodeProperties[] = [
 			maxValue: 5,
 		},
 		default: 1,
-		description: 'The inherent impact of the risk (1-5)',
+		description: 'The initial impact of the risk (1-5)',
 		required: true,
 	},
 	{

@@ -153,7 +153,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(
 				out,
 				"%s%d (likelihood: %d, impact: %d)\n",
-				label.Render("Inherent Risk Score:"),
+				label.Render("Initial Risk Score:"),
 				r.InherentRiskScore,
 				r.InherentLikelihood,
 				r.InherentImpact,

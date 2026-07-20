@@ -109,7 +109,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
-            <Th>{__("Inherent Risk")}</Th>
+            <Th>{__("Initial Risk")}</Th>
             <Th>{__("Residual Risk")}</Th>
             {!props.readOnly && <Th></Th>}
           </Tr>

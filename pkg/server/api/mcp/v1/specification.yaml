@@ -1843,13 +1843,13 @@ components:
           description: Risk treatment
         inherent_likelihood:
           type: integer
-          description: Inherent likelihood
+          description: Initial likelihood
         inherent_impact:
           type: integer
-          description: Inherent impact
+          description: Initial impact
         inherent_risk_score:
           type: integer
-          description: Inherent risk score
+          description: Initial risk score
         residual_likelihood:
           type: integer
           description: Residual likelihood
@@ -1961,10 +1961,10 @@ components:
           description: Risk treatment
         inherent_likelihood:
           type: integer
-          description: Inherent likelihood
+          description: Initial likelihood
         inherent_impact:
           type: integer
-          description: Inherent impact
+          description: Initial impact
         residual_likelihood:
           type: integer
           description: Residual likelihood
@@ -2013,10 +2013,10 @@ components:
           description: Risk treatment
         inherent_likelihood:
           type: integer
-          description: Inherent likelihood
+          description: Initial likelihood
         inherent_impact:
           type: integer
-          description: Inherent impact
+          description: Initial impact
         residual_likelihood:
           type: integer
           description: Residual likelihood
