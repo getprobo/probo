@@ -39,8 +39,9 @@ import (
 
 // trustCenterHTTPSAddr is the loopback address of the dedicated trust-center
 // HTTPS listener started by the e2e probod (see generateConfig). Compliance
-// pages are served here exclusively, routed by TLS SNI / Host header.
-const trustCenterHTTPSAddr = "127.0.0.1:443"
+// pages are served here exclusively, routed by TLS SNI / Host header. Uses a
+// non-privileged port so the e2e suite doesn't require root/CAP_NET_BIND_SERVICE.
+const trustCenterHTTPSAddr = "127.0.0.1:8443"
 
 type GraphQLRequest struct {
 	Query     string         `json:"query"`

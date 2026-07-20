@@ -27,7 +27,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePageReferenceListFragment$key } from "#/__generated__/core/CompliancePageReferenceListFragment.graphql";
 import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
 import type { CompliancePageReferenceListQuery } from "#/__generated__/core/CompliancePageReferenceListQuery.graphql";
-import { useUpdateTrustCenterReferenceRankMutation } from "#/hooks/graph/TrustCenterReferenceGraph";
+import { useUpdateCompliancePageReferenceRankMutation } from "#/pages/organizations/compliance-page/_lib/compliancePageReferenceMutations";
 
 import { CompliancePageReferenceListItem } from "./CompliancePageReferenceListItem";
 
@@ -65,7 +65,7 @@ export function CompliancePageReferenceList(props: {
     CompliancePageReferenceListQuery,
     CompliancePageReferenceListFragment$key
   >(fragment, fragmentRef);
-  const [updateRank] = useUpdateTrustCenterReferenceRankMutation();
+  const [updateRank] = useUpdateCompliancePageReferenceRankMutation();
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);

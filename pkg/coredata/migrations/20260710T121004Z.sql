@@ -29,6 +29,19 @@ WITH pending_pages AS (
     FROM trust_centers tc
     WHERE tc.default_domain_id IS NULL
       AND NULLIF(current_setting('probo.trust_center_base_domain', true), '') IS NOT NULL
+      -- Skip hostnames that already exist: minting a certificate or custom
+      -- domain for them would violate their unique constraints and abort
+      -- the whole migration.
+      AND NOT EXISTS (
+          SELECT 1
+          FROM certificates c
+          WHERE c.hostname = (tc.slug || '.' || current_setting('probo.trust_center_base_domain', true))::citext
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM custom_domains cd
+          WHERE cd.domain = (tc.slug || '.' || current_setting('probo.trust_center_base_domain', true))::citext
+      )
 ),
 minted_certificates AS (
     INSERT INTO certificates (

@@ -35,11 +35,11 @@ import { forwardRef, type ReactNode, useImperativeHandle, useState } from "react
 import { z } from "zod";
 
 import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
-import {
-  useCreateTrustCenterReferenceMutation,
-  useUpdateTrustCenterReferenceMutation,
-} from "#/hooks/graph/TrustCenterReferenceGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import {
+  useCreateCompliancePageReferenceMutation,
+  useUpdateCompliancePageReferenceMutation,
+} from "#/pages/organizations/compliance-page/_lib/compliancePageReferenceMutations";
 
 const referenceSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -65,8 +65,8 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
     const [editReference, setEditReference] = useState<CompliancePageReferenceListItemFragment$data | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
-    const [createReference, isCreating] = useCreateTrustCenterReferenceMutation();
-    const [updateReference, isUpdating] = useUpdateTrustCenterReferenceMutation();
+    const [createReference, isCreating] = useCreateCompliancePageReferenceMutation();
+    const [updateReference, isUpdating] = useUpdateCompliancePageReferenceMutation();
 
     const { register, handleSubmit, formState: { errors }, reset } = useFormWithSchema(
       referenceSchema,

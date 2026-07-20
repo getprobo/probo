@@ -25,7 +25,6 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -39,7 +38,6 @@ import (
 
 func NewGraphQLHandler(
 	svc *iam.Service,
-	trustSvc *visitor.Service,
 	logger *log.Logger,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
@@ -52,7 +50,6 @@ func NewGraphQLHandler(
 			batchAuthorize: authz.NewBatchAuthorizeFunc(svc, logger),
 			logger:         logger,
 			iam:            svc,
-			trust:          trustSvc,
 			scopeRegistry:  svc.OAuth2ScopeRegistry,
 			fileManager:    fileManagerSvc,
 			baseURL:        baseURL,

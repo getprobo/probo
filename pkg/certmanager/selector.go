@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -68,7 +67,14 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 
 	if cached, ok := s.cache.Load(domain); ok {
 		if cert, ok := cached.(*tls.Certificate); ok {
-			return cert, nil
+			if err := s.checkRoutable(domain); err == nil {
+				return cert, nil
+			}
+
+			// The domain was deleted or is no longer routable since the
+			// cache entry was stored; evict it and fall through to a fresh
+			// database load below.
+			s.cache.Delete(domain)
 		}
 	}
 
@@ -80,6 +86,21 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 	s.cache.Store(domain, cert)
 
 	return cert, nil
+}
+
+// checkRoutable reports whether domain is still a routable custom domain
+// with an active certificate. It is used to revalidate memory-cache hits so
+// certificates for deleted or de-provisioned domains stop being served
+// without waiting for process restart.
+func (s *Selector) checkRoutable(domain string) error {
+	ctx := context.Background()
+
+	return s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return requireRoutableDomain(ctx, conn, domain)
+		},
+	)
 }
 
 func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
@@ -153,32 +174,20 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domai
 		return fmt.Errorf("certificate has no encrypted private key data")
 	}
 
-	privateKeyPEM, err := certificate.DecryptPrivateKey(s.encryptionKey)
-	if err != nil {
-		return fmt.Errorf("cannot decrypt private key: %w", err)
+	if certificate.SSLExpiresAt == nil {
+		return fmt.Errorf("certificate has no expiry")
 	}
 
 	s.cache.Store(domain, certificate.SSLCertificate)
 
-	cache := &coredata.CachedCertificate{
-		Domain:           certificate.Hostname,
-		CertificatePEM:   string(certificate.SSLCertificatePEM),
-		PrivateKeyPEM:    string(privateKeyPEM),
-		CertificateChain: certificate.SSLCertificateChain,
-		ExpiresAt:        *certificate.SSLExpiresAt,
-		CachedAt:         time.Now(),
-		CertificateID:    certificate.ID,
-	}
-
-	if err := cache.Upsert(ctx, conn); err != nil {
+	var cache coredata.CachedCertificate
+	if err := cache.RefreshFromCertificate(ctx, conn, &certificate, s.encryptionKey); err != nil {
 		return fmt.Errorf("cannot insert cache entry: %w", err)
 	}
 
 	return nil
 }
 
-// requireRoutableDomain ensures the SNI hostname still maps to a custom domain
-// row. Orphaned certificates left after domain deletion must not be served.
 func requireRoutableDomain(ctx context.Context, conn pg.Querier, domain string) error {
 	var customDomain coredata.CustomDomain
 	if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {

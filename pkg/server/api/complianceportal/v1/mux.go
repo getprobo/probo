@@ -104,7 +104,7 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 		func(r chi.Router) {
 			r.Use(complianceportal.NewCompliancePagePresenceMiddleware())
 
-			r.Method(http.MethodGet, complianceportal.CIMDMetadataPath, NewOAuthClientMetadataHandler())
+			r.Method(http.MethodGet, complianceportal.CIMDMetadataPath, NewOAuthClientMetadataHandler(cfg.Visitor))
 			r.Method(http.MethodGet, complianceportal.BrandLogoPath, NewBrandLogoHandler(cfg.Logger, cfg.File))
 			r.Method(http.MethodGet, complianceportal.BrandDarkLogoPath, NewBrandDarkLogoHandler(cfg.Logger, cfg.File))
 			r.Method(http.MethodGet, complianceportal.OAuthInitiatePath, oauthInitiateHandler)

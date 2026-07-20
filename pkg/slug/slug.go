@@ -46,11 +46,26 @@ func Make(s string) string {
 }
 
 func MakeWithEntropy(s string) string {
+	const maxDNSLabel = 63
+
 	base := Make(s)
 	suffix := rand.MustHexString(4)
 
 	if base == "" {
 		return suffix
+	}
+
+	// DNS labels are capped at 63 octets. Keep the entropy suffix and
+	// truncate the name-derived prefix so hostnames stay provisionable.
+	maxBase := maxDNSLabel - 1 - len(suffix)
+	if maxBase < 1 {
+		return suffix
+	}
+	if len(base) > maxBase {
+		base = strings.Trim(base[:maxBase], "-")
+		if base == "" {
+			return suffix
+		}
 	}
 
 	return base + "-" + suffix

@@ -59,8 +59,14 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 	err := w.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			var domains coredata.CustomDomains
+			keepCertificateIDs, err := domains.LoadReferencedCertificateIDs(ctx, conn)
+			if err != nil {
+				return fmt.Errorf("cannot load referenced certificate ids: %w", err)
+			}
+
 			var caches coredata.CachedCertificates
-			if err := caches.DeleteUnreferenced(ctx, conn); err != nil {
+			if err := caches.DeleteWhereCertificateIDNotIn(ctx, conn, keepCertificateIDs); err != nil {
 				return fmt.Errorf("cannot delete unreferenced certificate cache: %w", err)
 			}
 
@@ -116,19 +122,6 @@ func (w *CacheStore) warmCertificate(ctx context.Context, conn pg.Querier, certi
 		return fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
-	if len(loadedCertificate.SSLCertificatePEM) == 0 {
-		return fmt.Errorf("certificate has no certificate PEM")
-	}
-
-	privateKeyPEM, err := loadedCertificate.DecryptPrivateKey(w.encryptionKey)
-	if err != nil {
-		return fmt.Errorf("cannot decrypt private key: %w", err)
-	}
-
-	if len(privateKeyPEM) == 0 {
-		return fmt.Errorf("certificate has no private key PEM")
-	}
-
 	if loadedCertificate.SSLExpiresAt == nil {
 		return fmt.Errorf("certificate has no expiry date")
 	}
@@ -137,18 +130,9 @@ func (w *CacheStore) warmCertificate(ctx context.Context, conn pg.Querier, certi
 		return fmt.Errorf("certificate has expired")
 	}
 
-	cache := &coredata.CachedCertificate{
-		Domain:           loadedCertificate.Hostname,
-		CertificatePEM:   string(loadedCertificate.SSLCertificatePEM),
-		PrivateKeyPEM:    string(privateKeyPEM),
-		CertificateChain: loadedCertificate.SSLCertificateChain,
-		ExpiresAt:        *loadedCertificate.SSLExpiresAt,
-		CachedAt:         time.Now(),
-		CertificateID:    loadedCertificate.ID,
-	}
-
-	if err := cache.Upsert(ctx, conn); err != nil {
-		return fmt.Errorf("cannot upsert cache entry: %w", err)
+	var cache coredata.CachedCertificate
+	if err := cache.RefreshFromCertificate(ctx, conn, &loadedCertificate, w.encryptionKey); err != nil {
+		return fmt.Errorf("cannot refresh certificate cache: %w", err)
 	}
 
 	return nil

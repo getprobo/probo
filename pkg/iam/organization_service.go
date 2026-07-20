@@ -756,27 +756,33 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert mailing list: %w", err)
 			}
 
-			defaultDomainHostname := trustCenter.Slug + "." + s.trustCenterBaseDomain
+			// Self-managed installs without a configured base domain don't get
+			// a default managed domain: there is no suffix to mint a
+			// "{slug}." hostname from, so the compliance page stays without
+			// a domain until the organization adds a custom one.
+			if s.trustCenterBaseDomain != "" {
+				defaultDomainHostname := trustCenter.Slug + "." + s.trustCenterBaseDomain
 
-			defaultDomain := coredata.NewCustomDomain(
-				tenantID,
-				organization.ID,
-				defaultDomainHostname,
-				true,
-			)
+				defaultDomain := coredata.NewCustomDomain(
+					tenantID,
+					organization.ID,
+					defaultDomainHostname,
+					true,
+				)
 
-			certificate, err := s.certManager.EnsureCertificate(ctx, tx, scope, defaultDomainHostname)
-			if err != nil {
-				return fmt.Errorf("cannot ensure certificate for default custom domain: %w", err)
+				certificate, err := s.certManager.EnsureCertificate(ctx, tx, scope, defaultDomainHostname)
+				if err != nil {
+					return fmt.Errorf("cannot ensure certificate for default custom domain: %w", err)
+				}
+
+				defaultDomain.CertificateID = &certificate.ID
+
+				if err := defaultDomain.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert default custom domain: %w", err)
+				}
+
+				trustCenter.DefaultDomainID = &defaultDomain.ID
 			}
-
-			defaultDomain.CertificateID = &certificate.ID
-
-			if err := defaultDomain.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert default custom domain: %w", err)
-			}
-
-			trustCenter.DefaultDomainID = &defaultDomain.ID
 
 			if err := trustCenter.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert trust center: %w", err)

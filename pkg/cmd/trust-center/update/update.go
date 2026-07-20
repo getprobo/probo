@@ -182,7 +182,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("email") {
-				input["email"] = flagEmail
+				if flagEmail == "" {
+					input["email"] = nil
+				} else {
+					input["email"] = flagEmail
+				}
 			}
 
 			if cmd.Flags().Changed("headquarter-address") {

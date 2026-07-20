@@ -24,6 +24,7 @@ INSERT INTO trust_centers (
     tenant_id,
     active,
     slug,
+    search_engine_indexing,
     created_at,
     updated_at
 )
@@ -41,6 +42,7 @@ SELECT
             '\s+', '-', 'g'
         )
     ),
+    'NOT_INDEXABLE',
     NOW(),
     NOW()
 FROM organizations o

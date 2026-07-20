@@ -580,6 +580,19 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 		return fmt.Errorf("cannot generate magic link token: %w", err)
 	}
 
+	senderName := magicLinkDefaultSenderName
+
+	if req.OAuth2ClientIDRaw != nil && *req.OAuth2ClientIDRaw != "" {
+		branding, err := s.OAuth2ServerService.ClientBranding(ctx, *req.OAuth2ClientIDRaw)
+		if err != nil {
+			return fmt.Errorf("cannot load oauth2 client branding: %w", err)
+		}
+
+		if branding != nil {
+			senderName = branding.Name
+		}
+	}
+
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -596,7 +609,6 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 
 			fullName := req.Email.Username()
 			identity := &coredata.Identity{}
-			senderName := magicLinkDefaultSenderName
 
 			if err := identity.LoadByEmail(ctx, tx, req.Email); err == nil {
 				if identity.FullName != "" {
@@ -605,17 +617,6 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 			} else {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load identity: %w", err)
-				}
-			}
-
-			if req.OAuth2ClientIDRaw != nil && *req.OAuth2ClientIDRaw != "" {
-				branding, err := s.OAuth2ServerService.ClientBranding(ctx, *req.OAuth2ClientIDRaw)
-				if err != nil {
-					return fmt.Errorf("cannot load oauth2 client branding: %w", err)
-				}
-
-				if branding != nil {
-					senderName = branding.Name
 				}
 			}
 

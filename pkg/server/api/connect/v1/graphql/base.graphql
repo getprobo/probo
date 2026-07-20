@@ -45,7 +45,7 @@ type Query {
 
 type OAuthClientBranding {
   name: String!
-  logo: File
+  logoUrl: String
   clientURL: String
 }
 

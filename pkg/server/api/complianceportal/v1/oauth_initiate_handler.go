@@ -58,8 +58,9 @@ func NewOAuthInitiateHandler(
 func (h *OAuthInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	compliancePage := complianceportal.CompliancePageFromContext(ctx)
 	portalBaseURL := complianceportal.CompliancePageBaseURLFromContext(ctx)
-	if portalBaseURL == nil {
+	if compliancePage == nil || portalBaseURL == nil {
 		httpserver.RenderError(w, http.StatusNotFound, errNotFound)
 		return
 	}
@@ -75,7 +76,15 @@ func (h *OAuthInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	clientID, err := complianceportal.CIMDClientIDURL(*portalBaseURL)
+	canonicalBaseURL, err := h.visitor.GetPortalCanonicalBaseURL(ctx, compliancePage.ID, *portalBaseURL)
+	if err != nil {
+		h.logger.ErrorCtx(ctx, "cannot resolve canonical portal base URL", log.Error(err))
+		httpserver.RenderError(w, http.StatusInternalServerError, errInternal)
+
+		return
+	}
+
+	clientID, err := complianceportal.CIMDClientIDURL(canonicalBaseURL)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot build cimd client_id", log.Error(err))
 		httpserver.RenderError(w, http.StatusInternalServerError, errInternal)
@@ -83,7 +92,7 @@ func (h *OAuthInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	redirectURI, err := complianceportal.OAuthCallbackURL(*portalBaseURL)
+	redirectURI, err := complianceportal.OAuthCallbackURL(canonicalBaseURL)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot build oauth redirect_uri", log.Error(err))
 		httpserver.RenderError(w, http.StatusInternalServerError, errInternal)

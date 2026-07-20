@@ -14,33 +14,15 @@
 
 package visitor
 
-import (
-	"fmt"
-	"net/url"
-)
-
 const (
 	BrandLogoPath     = "/brand/logo"
 	BrandDarkLogoPath = "/brand/dark-logo"
 )
 
 func BrandLogoURL(portalBaseURL string) (string, error) {
-	return brandAssetURL(portalBaseURL, BrandLogoPath)
+	return portalEndpointURL(portalBaseURL, BrandLogoPath)
 }
 
 func BrandDarkLogoURL(portalBaseURL string) (string, error) {
-	return brandAssetURL(portalBaseURL, BrandDarkLogoPath)
-}
-
-func brandAssetURL(portalBaseURL string, path string) (string, error) {
-	parsed, err := url.Parse(portalBaseURL)
-	if err != nil {
-		return "", fmt.Errorf("cannot parse portal base URL: %w", err)
-	}
-
-	parsed.Path = path
-	parsed.RawQuery = ""
-	parsed.Fragment = ""
-
-	return parsed.String(), nil
+	return portalEndpointURL(portalBaseURL, BrandDarkLogoPath)
 }

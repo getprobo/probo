@@ -29,38 +29,26 @@ const (
 )
 
 func CIMDClientIDURL(portalBaseURL string) (string, error) {
-	parsed, err := url.Parse(portalBaseURL)
-	if err != nil {
-		return "", err
-	}
-
-	parsed.Path = CIMDMetadataPath
-	parsed.RawQuery = ""
-	parsed.Fragment = ""
-
-	return parsed.String(), nil
+	return portalEndpointURL(portalBaseURL, CIMDMetadataPath)
 }
 
 func OAuthCallbackURL(portalBaseURL string) (string, error) {
-	parsed, err := url.Parse(portalBaseURL)
-	if err != nil {
-		return "", err
-	}
-
-	parsed.Path = OAuthCallbackPath
-	parsed.RawQuery = ""
-	parsed.Fragment = ""
-
-	return parsed.String(), nil
+	return portalEndpointURL(portalBaseURL, OAuthCallbackPath)
 }
 
 func PortalRootURL(rawURL string) (string, error) {
-	parsed, err := url.Parse(rawURL)
+	return portalEndpointURL(rawURL, "")
+}
+
+// portalEndpointURL replaces the path on a portal base URL and clears
+// query/fragment. Shared by CIMD, OAuth callback, and brand asset URLs.
+func portalEndpointURL(portalBaseURL string, path string) (string, error) {
+	parsed, err := url.Parse(portalBaseURL)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse portal URL: %w", err)
 	}
 
-	parsed.Path = ""
+	parsed.Path = path
 	parsed.RawQuery = ""
 	parsed.Fragment = ""
 

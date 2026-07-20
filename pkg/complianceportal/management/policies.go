@@ -44,6 +44,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCompliancePortalReferenceList, ActionCompliancePortalReferenceGetLogoUrl,
 		ActionCompliancePortalCommitmentGroupList, ActionCompliancePortalCommitmentList,
 		ActionComplianceFrameworkList,
+		ActionComplianceCustomLinkList,
 	).WithSID("compliance-portal-read-access").When(organizationCondition),
 ).WithDescription("Read-only compliance portal access for organization viewers")
 

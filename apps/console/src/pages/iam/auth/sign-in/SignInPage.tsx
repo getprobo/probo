@@ -42,9 +42,7 @@ export const signInPageQuery = graphql`
     oauthClientBranding(clientId: $clientId) {
       name
       clientURL
-      logo {
-        downloadUrl
-      }
+      logoUrl
     }
   }
 `;
@@ -85,7 +83,7 @@ export default function SignInPage(props: Props) {
         <>
           <OAuthClientBrandingSection
             name={clientBranding.name}
-            logoDownloadUrl={clientBranding.logo?.downloadUrl}
+            logoDownloadUrl={clientBranding.logoUrl}
             clientURL={clientBranding.clientURL}
           />
           <div className="w-full border-t border-t-border-mid" />

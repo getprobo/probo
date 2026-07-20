@@ -17,5 +17,5 @@
 
 UPDATE trust_centers
 SET
-    slug = slug || '-' || encode(gen_random_bytes(4), 'hex'),
+    slug = slug || '-' || encode(gen_random_bytes(16), 'hex'),
     updated_at = clock_timestamp();

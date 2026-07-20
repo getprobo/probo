@@ -26,7 +26,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -115,25 +114,6 @@ func NewIDTokenClaims(
 	}
 
 	return claims
-}
-
-func ParseIDTokenClaims(raw string) (*IDTokenClaims, error) {
-	parts := strings.Split(raw, ".")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("cannot parse id token: invalid format")
-	}
-
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse id token payload: %w", err)
-	}
-
-	var claims IDTokenClaims
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil, fmt.Errorf("cannot decode id token claims: %w", err)
-	}
-
-	return &claims, nil
 }
 
 func ParseIDTokenIdentity(

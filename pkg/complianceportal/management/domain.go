@@ -65,7 +65,7 @@ func (s *Service) PublicURLForCompliancePage(
 	switch {
 	case compliancePage.CustomDomainID != nil && byID[*compliancePage.CustomDomainID] != nil && active[*compliancePage.CustomDomainID]:
 		host = byID[*compliancePage.CustomDomainID].Domain
-	case compliancePage.DefaultDomainID != nil && byID[*compliancePage.DefaultDomainID] != nil:
+	case compliancePage.DefaultDomainID != nil && byID[*compliancePage.DefaultDomainID] != nil && active[*compliancePage.DefaultDomainID]:
 		host = byID[*compliancePage.DefaultDomainID].Domain
 	}
 

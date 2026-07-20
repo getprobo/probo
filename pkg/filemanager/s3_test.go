@@ -33,6 +33,7 @@ import (
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 )
@@ -54,7 +55,7 @@ func newTestS3Service(t *testing.T, handler http.HandlerFunc) *filemanager.Servi
 		},
 	)
 
-	return filemanager.NewService(nil, nil, s3Client)
+	return filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
 }
 
 func TestOpenFile_StreamsBody(t *testing.T) {

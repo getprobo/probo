@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -62,7 +63,7 @@ func (s *Service) ServePublicFile(
 
 	obj, err := s.OpenFile(ctx, file, conds)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot open public file: %w", err)
 	}
 
 	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
@@ -99,7 +100,12 @@ func (s *Service) ServePublicFile(
 	}
 
 	if _, err := io.Copy(w, obj.Body); err != nil {
-		return err
+		// The response status and headers are already written at this point,
+		// so returning the error would make the caller render a JSON 500
+		// body into an already-started (and possibly partial) response.
+		// Log it and stop instead.
+		s.logger.ErrorCtx(ctx, "cannot stream public file", log.Error(err), log.String("file_id", fileID.String()))
+		return nil
 	}
 
 	return nil

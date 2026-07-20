@@ -62,7 +62,6 @@ type (
 		magicLinkTokenValidity     time.Duration
 		sessionDuration            time.Duration
 		bucket                     string
-		encryptionKey              cipher.EncryptionKey
 		trustCenterBaseDomain      string
 		certManager                *certmanager.Service
 		certificate                *x509.Certificate
@@ -150,6 +149,10 @@ func NewService(
 		return nil, fmt.Errorf("oauth2 scope registry is required")
 	}
 
+	if cfg.CertManager == nil {
+		return nil, fmt.Errorf("cert manager is required")
+	}
+
 	svc := &Service{
 		pg:                         pgClient,
 		fm:                         fm,
@@ -163,7 +166,6 @@ func NewService(
 		magicLinkTokenValidity:     cfg.MagicLinkTokenValidity,
 		sessionDuration:            cfg.SessionDuration,
 		bucket:                     cfg.Bucket,
-		encryptionKey:              cfg.EncryptionKey,
 		trustCenterBaseDomain:      cfg.TrustCenterBaseDomain,
 		certManager:                cfg.CertManager,
 		certificate:                cfg.Certificate,

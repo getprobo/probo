@@ -97,6 +97,12 @@ func (h *renewHandler) Process(ctx context.Context, certificate coredata.Certifi
 		func(ctx context.Context, tx pg.Tx) error {
 			fullCertificate := &coredata.Certificate{}
 			if err := fullCertificate.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), certificate.ID); err != nil {
+				// Another provision/renewal cycle may already hold the row
+				// (SKIP LOCKED) or the certificate may have been deleted.
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
 				return fmt.Errorf("cannot load certificate for renewal: %w", err)
 			}
 

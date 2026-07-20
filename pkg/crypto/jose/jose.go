@@ -32,6 +32,11 @@ import (
 	"strings"
 )
 
+// minRSAModulusBits is the smallest RSA modulus size accepted for RS256
+// verification. NIST SP 800-131A and industry guidance both treat moduli
+// below 2048 bits as too weak for continued use.
+const minRSAModulusBits = 2048
+
 type (
 	// JWK represents a JSON Web Key (RFC 7517).
 	JWK struct {
@@ -126,8 +131,13 @@ func RSAPublicKeyFromJWK(jwk JWK) (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("cannot convert jwk to rsa public key: invalid rsa exponent")
 	}
 
+	n := new(big.Int).SetBytes(nBytes)
+	if n.BitLen() < minRSAModulusBits {
+		return nil, fmt.Errorf("cannot convert jwk to rsa public key: modulus is %d bits, minimum is %d", n.BitLen(), minRSAModulusBits)
+	}
+
 	return &rsa.PublicKey{
-		N: new(big.Int).SetBytes(nBytes),
+		N: n,
 		E: int(e.Int64()),
 	}, nil
 }
@@ -157,6 +167,15 @@ func VerifyJWT(raw string, pubKey *rsa.PublicKey) ([]byte, error) {
 	headerJSON, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode jwt header: %w", err)
+	}
+
+	var headerFields map[string]json.RawMessage
+	if err := json.Unmarshal(headerJSON, &headerFields); err != nil {
+		return nil, fmt.Errorf("cannot parse jwt header: %w", err)
+	}
+
+	if _, ok := headerFields["crit"]; ok {
+		return nil, fmt.Errorf("cannot verify jwt: unsupported critical header parameter")
 	}
 
 	var header JWTHeader

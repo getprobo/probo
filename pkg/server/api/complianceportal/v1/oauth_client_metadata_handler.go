@@ -23,22 +23,32 @@ import (
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 )
 
-type oauthClientMetadataHandler struct{}
+type oauthClientMetadataHandler struct {
+	visitor *visitor.Service
+}
 
-func NewOAuthClientMetadataHandler() http.Handler {
-	return &oauthClientMetadataHandler{}
+func NewOAuthClientMetadataHandler(visitorSvc *visitor.Service) http.Handler {
+	return &oauthClientMetadataHandler{visitor: visitorSvc}
 }
 
 func (h *oauthClientMetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	compliancePage := complianceportal.CompliancePageFromContext(r.Context())
-	baseURL := complianceportal.CompliancePageBaseURLFromContext(r.Context())
+	ctx := r.Context()
+
+	compliancePage := complianceportal.CompliancePageFromContext(ctx)
+	baseURL := complianceportal.CompliancePageBaseURLFromContext(ctx)
 
 	if compliancePage == nil || baseURL == nil {
 		httpserver.RenderError(w, http.StatusNotFound, errNotFound)
 		return
 	}
 
-	doc, err := visitor.BuildClientMetadataDocument(compliancePage, *baseURL)
+	canonicalBaseURL, err := h.visitor.GetPortalCanonicalBaseURL(ctx, compliancePage.ID, *baseURL)
+	if err != nil {
+		httpserver.RenderError(w, http.StatusInternalServerError, errInternal)
+		return
+	}
+
+	doc, err := visitor.BuildClientMetadataDocument(compliancePage, canonicalBaseURL)
 	if err != nil {
 		httpserver.RenderError(w, http.StatusInternalServerError, errInternal)
 		return

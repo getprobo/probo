@@ -94,7 +94,6 @@ export const currentTrustDocumentsQuery = graphql`
   query TrustGraphCurrentDocumentsQuery {
     currentTrustCenter {
       id
-      title
       documents(first: 50) {
         edges {
           node {
@@ -121,7 +120,6 @@ export const currentTrustSubprocessorsQuery = graphql`
   query TrustGraphCurrentSubprocessorsQuery {
     currentTrustCenter {
       id
-      title
       subprocessors(first: 50) {
         edges {
           node {

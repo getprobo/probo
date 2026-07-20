@@ -21,6 +21,7 @@
 package slug
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -89,6 +90,17 @@ func TestMakeWithEntropy(t *testing.T) {
 			first := MakeWithEntropy("Acme Corp")
 			second := MakeWithEntropy("Acme Corp")
 			assert.NotEqual(t, first, second, "MakeWithEntropy should produce distinct slugs")
+		},
+	)
+
+	t.Run(
+		"long names stay within dns label length",
+		func(t *testing.T) {
+			t.Parallel()
+
+			got := MakeWithEntropy(strings.Repeat("Very Long Organization Name ", 10))
+			assert.LessOrEqual(t, len(got), 63)
+			assert.Regexp(t, `^[a-z0-9-]+-[0-9a-f]{8}$`, got)
 		},
 	)
 }

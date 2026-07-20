@@ -55,28 +55,3 @@ func (s *Service) ListCommitmentGroupsForPortalID(
 
 	return page.NewPage(groups, cursor), nil
 }
-
-func (s *Service) GetCommitmentGroup(
-	ctx context.Context,
-	scope coredata.Scoper,
-	groupID gid.GID,
-) (*coredata.CompliancePortalCommitmentGroup, error) {
-	group := &coredata.CompliancePortalCommitmentGroup{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			err := group.LoadByID(ctx, conn, scope, groupID)
-			if err != nil {
-				return fmt.Errorf("cannot load compliance portal commitment group: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return group, nil
-}

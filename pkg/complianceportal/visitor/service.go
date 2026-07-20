@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -151,6 +152,38 @@ func (s *Service) GetPortalEffectiveCanonicalHost(ctx context.Context, complianc
 	}
 
 	return host, nil
+}
+
+// GetPortalCanonicalBaseURL rewrites currentBaseURL to the compliance page's
+// canonical host, if one is set. OAuth client_id and redirect_uri values must
+// always be derived from the canonical base URL: the SNI middleware only
+// redirects secondary domains to the canonical host for non-well-known
+// paths, so a client_id fetched from /.well-known/oauth-client-metadata on a
+// secondary domain must already advertise the canonical redirect_uri to stay
+// consistent with what /callback uses at token exchange time. When no
+// canonical host can be determined, currentBaseURL is returned unchanged.
+func (s *Service) GetPortalCanonicalBaseURL(
+	ctx context.Context,
+	compliancePageID gid.GID,
+	currentBaseURL string,
+) (string, error) {
+	canonicalHost, err := s.GetPortalEffectiveCanonicalHost(ctx, compliancePageID)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve canonical host: %w", err)
+	}
+
+	if canonicalHost == "" {
+		return currentBaseURL, nil
+	}
+
+	parsed, err := url.Parse(currentBaseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse portal base URL: %w", err)
+	}
+
+	parsed.Host = canonicalHost
+
+	return parsed.String(), nil
 }
 
 func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*coredata.TrustCenter, error) {

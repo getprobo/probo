@@ -298,7 +298,7 @@ func generateConfig() (string, error) {
 		// yields {slug}.probopage.localhost subdomains for pages without a
 		// customer custom domain.
 		"PROBOD_TRUST_CENTER_HTTP_ADDR":   ":10080",
-		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  ":443",
+		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  ":8443",
 		"PROBOD_TRUST_CENTER_BASE_DOMAIN": "probopage.localhost",
 
 		// Keep certificate provisioning snappy so trust-center e2e flows do not

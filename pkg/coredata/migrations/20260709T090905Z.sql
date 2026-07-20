@@ -25,7 +25,7 @@ CREATE TABLE certificates (
     ssl_certificate_chain TEXT,
     status custom_domain_ssl_status NOT NULL,
     ssl_expires_at TIMESTAMP WITH TIME ZONE,
-    ssl_retry_count INTEGER NOT NULL DEFAULT 0,
+    ssl_retry_count INTEGER NOT NULL,
     ssl_last_attempt_at TIMESTAMP WITH TIME ZONE,
     http_challenge_token TEXT,
     http_challenge_key_auth TEXT,
@@ -100,6 +100,12 @@ SET certificate_id = cd.certificate_id
 FROM custom_domains cd
 WHERE cd.id = cc.custom_domain_id;
 
+-- Entries that could not be repointed (stale custom_domain_id, or a domain
+-- whose certificate was never migrated) are unusable cache rows; drop them
+-- rather than leaving certificate_id NULL for callers that always expect it.
+DELETE FROM cached_certificates WHERE certificate_id IS NULL;
+
+ALTER TABLE cached_certificates ALTER COLUMN certificate_id SET NOT NULL;
 ALTER TABLE cached_certificates DROP COLUMN custom_domain_id;
 
 -- Drop the certificate lifecycle columns now living on certificates.

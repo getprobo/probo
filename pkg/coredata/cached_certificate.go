@@ -170,22 +170,25 @@ WHERE
 	return nil
 }
 
-// DeleteUnreferenced removes cache entries whose certificate is no longer
-// referenced by any custom domain, so deleted domains cannot keep a usable
-// TLS cache entry.
-func (cc *CachedCertificates) DeleteUnreferenced(ctx context.Context, conn pg.Querier) error {
+// DeleteWhereCertificateIDNotIn removes cache rows whose certificate is not
+// among the provided IDs. An empty keep set deletes every cache row.
+func (cc *CachedCertificates) DeleteWhereCertificateIDNotIn(
+	ctx context.Context,
+	conn pg.Querier,
+	keepCertificateIDs []gid.GID,
+) error {
 	q := `
 DELETE FROM
 	cached_certificates
 WHERE
-	NOT EXISTS (
-		SELECT 1
-		FROM custom_domains
-		WHERE custom_domains.certificate_id = cached_certificates.certificate_id
-	)
+	NOT (certificate_id = ANY(@keep_certificate_ids::text[]))
 `
 
-	_, err := conn.Exec(ctx, q, pgx.NamedArgs{})
+	_, err := conn.Exec(
+		ctx,
+		q,
+		pgx.NamedArgs{"keep_certificate_ids": keepCertificateIDs},
+	)
 	if err != nil {
 		return fmt.Errorf("cannot delete unreferenced certificate cache: %w", err)
 	}

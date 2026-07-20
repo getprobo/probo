@@ -47,9 +47,7 @@ func oauthClientBrandingFromIAM(
 	}
 
 	if branding.LogoURL != nil {
-		result.Logo = &types.File{
-			DownloadURL: *branding.LogoURL,
-		}
+		result.LogoURL = branding.LogoURL
 	}
 
 	return result, nil

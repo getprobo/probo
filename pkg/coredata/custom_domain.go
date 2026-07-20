@@ -377,3 +377,32 @@ WHERE
 
 	return nil
 }
+
+// LoadReferencedCertificateIDs returns certificate IDs currently linked from
+// any custom domain. Used by the certificate cache warmer to drop orphaned
+// cache rows without joining across entity tables.
+func (domains *CustomDomains) LoadReferencedCertificateIDs(
+	ctx context.Context,
+	conn pg.Querier,
+) ([]gid.GID, error) {
+	q := `
+SELECT DISTINCT
+	certificate_id
+FROM
+	custom_domains
+WHERE
+	certificate_id IS NOT NULL
+`
+
+	rows, err := conn.Query(ctx, q, pgx.NamedArgs{})
+	if err != nil {
+		return nil, fmt.Errorf("cannot query referenced certificate ids: %w", err)
+	}
+
+	certificateIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect referenced certificate ids: %w", err)
+	}
+
+	return certificateIDs, nil
+}

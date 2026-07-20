@@ -22,6 +22,7 @@ package filemanager_test
 
 import (
 	"context"
+	"io"
 	"net/url"
 	"testing"
 	"time"
@@ -31,6 +32,7 @@ import (
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -45,7 +47,7 @@ func TestGenerateFileURL_PublicFile(t *testing.T) {
 		t.Fatalf("cannot parse base URL: %v", err)
 	}
 
-	svc := filemanager.NewService(nil, base, nil)
+	svc := filemanager.NewService(nil, base, nil, log.NewLogger(log.WithOutput(io.Discard)))
 	file := &coredata.File{
 		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
 		Visibility: coredata.FileVisibilityPublic,
@@ -66,7 +68,7 @@ func TestGenerateFileURL_PrivateFile(t *testing.T) {
 		t.Fatalf("cannot parse base URL: %v", err)
 	}
 
-	svc := filemanager.NewService(nil, base, nil)
+	svc := filemanager.NewService(nil, base, nil, log.NewLogger(log.WithOutput(io.Discard)))
 	file := &coredata.File{
 		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
 		Visibility: coredata.FileVisibilityPrivate,
@@ -88,7 +90,7 @@ func TestGeneratePresignedURL_EscapesContentDispositionFilename(t *testing.T) {
 			Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
 		},
 	)
-	svc := filemanager.NewService(nil, nil, s3Client)
+	svc := filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
 	file := &coredata.File{
 		BucketName: "uploads",
 		FileKey:    "tenant/file",
