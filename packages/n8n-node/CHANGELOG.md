@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.203.0] - 2026-07-20
+
+### Changed
+
+- Renamed the risk operations' "Inherent" field label to "Initial", for consistency with the console and CLI
+
 ## [0.202.1] - 2026-07-15
 
 ### Fixed
