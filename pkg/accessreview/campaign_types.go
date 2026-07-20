@@ -37,9 +37,10 @@ type (
 	}
 
 	UpdateAccessReviewCampaignRequest struct {
-		CampaignID  gid.GID
-		Name        **string
-		Description **string
+		CampaignID            gid.GID
+		Name                  **string
+		Description           **string
+		AccessReviewSourceIDs *[]gid.GID
 	}
 
 	AddCampaignSourceRequest struct {

@@ -171,6 +171,12 @@ func (s *Service) UpdateCampaign(
 				return fmt.Errorf("cannot update campaign: %w", err)
 			}
 
+			if req.AccessReviewSourceIDs != nil {
+				if err := s.syncCampaignSources(ctx, conn, scope, campaign, *req.AccessReviewSourceIDs); err != nil {
+					return err
+				}
+			}
+
 			return nil
 		},
 	)
@@ -292,6 +298,77 @@ func (s *Service) RemoveCampaignSource(
 	}
 
 	return campaign, nil
+}
+
+func (s *Service) syncCampaignSources(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	campaign *coredata.AccessReviewCampaign,
+	sourceIDs []gid.GID,
+) error {
+	var campaignSources coredata.AccessReviewCampaignSources
+	if err := campaignSources.LoadByCampaignID(ctx, conn, scope, campaign.ID); err != nil {
+		return fmt.Errorf("cannot load campaign sources: %w", err)
+	}
+
+	existingSourceIDs := make([]gid.GID, 0, len(campaignSources))
+	for _, campaignSource := range campaignSources {
+		if campaignSource.AccessReviewSourceID != nil {
+			existingSourceIDs = append(existingSourceIDs, *campaignSource.AccessReviewSourceID)
+		}
+	}
+
+	for _, sourceID := range sourceIDs {
+		if containsGID(existingSourceIDs, sourceID) {
+			continue
+		}
+
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, conn, scope, sourceID); err != nil {
+			return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
+		}
+
+		if source.OrganizationID != campaign.OrganizationID {
+			return fmt.Errorf(
+				"cannot update campaign: access source %s does not belong to the same organization",
+				sourceID,
+			)
+		}
+
+		if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
+			return fmt.Errorf("cannot snapshot scope source: %w", err)
+		}
+	}
+
+	for _, existingSourceID := range existingSourceIDs {
+		if containsGID(sourceIDs, existingSourceID) {
+			continue
+		}
+
+		campaignSource := &coredata.AccessReviewCampaignSource{}
+		if err := campaignSource.DeleteByCampaignIDAndAccessReviewSourceID(
+			ctx,
+			conn,
+			scope,
+			campaign.ID,
+			existingSourceID,
+		); err != nil {
+			return fmt.Errorf("cannot delete campaign source: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func containsGID(ids []gid.GID, id gid.GID) bool {
+	for _, candidate := range ids {
+		if candidate == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Service) StartCampaign(

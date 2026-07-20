@@ -762,14 +762,19 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 		ctx,
 		scope,
 		accessreview.UpdateAccessReviewCampaignRequest{
-			CampaignID:  input.AccessReviewCampaignID,
-			Name:        gqlutils.UnwrapOmittable(input.Name),
-			Description: gqlutils.UnwrapOmittable(input.Description),
+			CampaignID:            input.AccessReviewCampaignID,
+			Name:                  gqlutils.UnwrapOmittable(input.Name),
+			Description:           gqlutils.UnwrapOmittable(input.Description),
+			AccessReviewSourceIDs: gqlutils.UnwrapOmittable(input.AccessReviewSourceIds),
 		},
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if strings.HasPrefix(err.Error(), "cannot update campaign:") {
+			return nil, gqlutils.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update access review campaign", log.Error(err))
