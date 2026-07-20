@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.200.0] - 2026-07-20
+
+### Changed
+
+- Renamed the risk overview's "Inherent" label to "Initial" in command help text, for consistency with the console
+
 ## [0.199.0] - 2026-07-02
 
 ### Added
