@@ -1,0 +1,71 @@
+{
+  "title": "Solicitudes de datos",
+  "newRequest": "Nueva solicitud",
+  "loadMore": "Cargar más",
+  "empty": {
+    "title": "Todavía no hay solicitudes",
+    "description": "Las solicitudes que envíe aparecerán aquí para que pueda seguir su progreso."
+  },
+  "types": {
+    "ACCESS": "Acceso a datos",
+    "DELETION": "Supresión de datos",
+    "RECTIFICATION": "Rectificación de datos",
+    "PORTABILITY": "Portabilidad de datos",
+    "OBJECTION": "Oposición al tratamiento",
+    "COMPLAINT": "Denuncia de abuso"
+  },
+  "status": {
+    "TODO": "Pendiente",
+    "IN_PROGRESS": "En curso",
+    "DONE": "Completada",
+    "REJECTED": "Rechazada"
+  },
+  "typeOption": {
+    "ACCESS": "Acceder a mis datos",
+    "DELETION": "Eliminar mis datos",
+    "RECTIFICATION": "Corregir mis datos",
+    "OBJECTION": "Oponerme al tratamiento",
+    "COMPLAINT": "Denunciar un abuso"
+  },
+  "dialog": {
+    "title": "Nueva solicitud",
+    "description": "Elija un tipo de solicitud y complete los datos a continuación.",
+    "typeLabel": "Tipo de solicitud",
+    "cancel": "Cancelar",
+    "submit": "Enviar solicitud",
+    "success": {
+      "title": "Solicitud enviada",
+      "description": "Procesaremos su solicitud y responderemos dentro del plazo previsto por la legislación aplicable.",
+      "close": "Cerrar"
+    }
+  },
+  "form": {
+    "name": "Nombre completo",
+    "nameOptional": "Su nombre (opcional)",
+    "namePlaceholder": "Juan Pérez",
+    "email": "Correo electrónico",
+    "deletionWarning": "La supresión de datos es definitiva y no se puede deshacer. Algunos datos pueden conservarse por obligaciones legales.",
+    "details": {
+      "ACCESS": {
+        "label": "Detalles de su solicitud",
+        "placeholder": "Deseo recibir una copia de todos los datos personales asociados a mi cuenta…"
+      },
+      "DELETION": {
+        "label": "Alcance de la solicitud de supresión",
+        "placeholder": "Elimine todos mis datos personales, incluidos…"
+      },
+      "RECTIFICATION": {
+        "label": "¿Qué debe corregirse?",
+        "placeholder": "La siguiente información es incorrecta…"
+      },
+      "OBJECTION": {
+        "label": "¿A qué se opone?",
+        "placeholder": "Me opongo al tratamiento de mis datos para…"
+      },
+      "COMPLAINT": {
+        "label": "Descripción del problema",
+        "placeholder": "He observado que…"
+      }
+    }
+  }
+}

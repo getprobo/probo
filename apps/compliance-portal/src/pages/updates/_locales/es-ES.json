@@ -1,0 +1,9 @@
+{
+  "title": "Novedades",
+  "subscribe": "Suscribirse a las novedades",
+  "backToUpdates": "Todas las novedades",
+  "empty": {
+    "title": "Todavía no hay novedades.",
+    "description": "Suscríbase para recibir un aviso cuando se publiquen nuevas novedades."
+  }
+}

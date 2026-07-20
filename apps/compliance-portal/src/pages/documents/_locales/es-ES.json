@@ -1,0 +1,46 @@
+{
+  "title": "Documentos",
+  "tabs": {
+    "all": "Todos",
+    "public": "Públicos",
+    "private": "Privados"
+  },
+  "sections": {
+    "reports": "Informes de cumplimiento"
+  },
+  "types": {
+    "OTHER": "Otros",
+    "GOVERNANCE": "Gobernanza",
+    "POLICY": "Políticas",
+    "PROCEDURE": "Procedimientos",
+    "PLAN": "Planes",
+    "REGISTER": "Registros",
+    "RECORD": "Actas",
+    "REPORT": "Informes",
+    "TEMPLATE": "Plantillas",
+    "STATEMENT_OF_APPLICABILITY": "Declaración de aplicabilidad"
+  },
+  "actions": {
+    "view": "Ver",
+    "getAccess": "Solicitar acceso",
+    "requested": "Acceso solicitado"
+  },
+  "empty": {
+    "title": "No hay documentos disponibles",
+    "description": "Este portal de cumplimiento aún no ha publicado ningún documento.",
+    "filteredTitle": "Ningún documento coincide con este filtro",
+    "filteredDescription": "Pruebe otra pestaña para ver los documentos disponibles."
+  },
+  "viewer": {
+    "back": "Documentos",
+    "share": "Compartir documento",
+    "linkCopied": "Enlace copiado al portapapeles",
+    "download": "Descargar",
+    "previewUnavailable": "Vista previa no disponible",
+    "downloadToView": "Este tipo de archivo no se puede previsualizar aquí. Descárguelo para verlo.",
+    "locked": {
+      "title": "Acceso necesario",
+      "description": "Todavía no tiene acceso a este documento."
+    }
+  }
+}

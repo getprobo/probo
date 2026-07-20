@@ -1,0 +1,8 @@
+{
+  "title": "Acuerdo de confidencialidad",
+  "subtitle": "{{name}} exige la firma de un acuerdo de confidencialidad antes de acceder a los documentos de cumplimiento.",
+  "reviewAndSign": "Revisar y firmar",
+  "tryAgain": "Reintentar",
+  "sealing": "Sellando su firma…",
+  "failedDescription": "Se ha producido un problema al procesar su firma. Inténtelo de nuevo."
+}
