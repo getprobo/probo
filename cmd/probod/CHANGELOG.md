@@ -4,6 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.227.0] - 2026-07-20
+
+### Added
+
+- Added a Trust Center documents page with category grouping, a Public/Private visibility filter, and a full document viewer for PDFs, images, and other file downloads
+- Added configurable, reorderable commitment cards to the compliance portal home page, replacing the hardcoded placeholder content
+- Added a sign-in dialog (magic link + OIDC) that gates trust-center access requests
+
+### Changed
+
+- Renamed risk overview labels for consistency: "Severity" to "Score" and "Inherent" to "Initial"
+- Archiving a document now voids pending approval quorums and cancels requested signatures instead of leaving them dangling
+
+### Fixed
+
+- Fixed an ambiguous tenant filter that caused signature load queries to fail
+
 ## [0.226.1] - 2026-07-15
 
 ### Fixed
