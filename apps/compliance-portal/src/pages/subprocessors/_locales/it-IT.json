@@ -1,0 +1,109 @@
+{
+  "title": "Sub-responsabili del trattamento",
+  "filters": {
+    "allCategories": "Tutte le categorie",
+    "allRegions": "Tutte le regioni",
+    "searchPlaceholder": "Cerca..."
+  },
+  "empty": {
+    "title": "Nessun sub-responsabile del trattamento elencato.",
+    "description": "Questo portale di conformità non ha ancora pubblicato alcun sub-responsabile del trattamento.",
+    "filteredTitle": "Nessun sub-responsabile del trattamento corrisponde ai filtri selezionati.",
+    "filteredDescription": "Modifichi la ricerca o i filtri per visualizzare i sub-responsabili disponibili.",
+    "clearFilters": "Rimuovi filtri"
+  },
+  "regions": {
+    "global": "Globale",
+    "eu": "Unione Europea"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analisi",
+      "description": "Analisi di utilizzo e telemetria del prodotto."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Monitoraggio cloud",
+      "description": "Osservabilità, registrazione dei log e monitoraggio della disponibilità."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Fornitore cloud",
+      "description": "Hosting cloud, elaborazione, archiviazione e rete."
+    },
+    "COLLABORATION": {
+      "label": "Collaborazione",
+      "description": "Strumenti di comunicazione, pianificazione e lavoro di squadra."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Assistenza clienti",
+      "description": "Help desk, gestione dei ticket e messaggistica con i clienti."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Archiviazione ed elaborazione dei dati",
+      "description": "Database, data warehouse e pipeline di elaborazione."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Gestione documentale",
+      "description": "Archiviazione, firma e firma elettronica dei documenti."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Gestione del personale",
+      "description": "Risorse umane, gestione delle retribuzioni e operazioni relative al personale."
+    },
+    "ENGINEERING": {
+      "label": "Ingegneria",
+      "description": "Strumenti e piattaforme per gli sviluppatori."
+    },
+    "FINANCE": {
+      "label": "Finanza",
+      "description": "Fatturazione, pagamenti e contabilità."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Fornitore di identità",
+      "description": "Autenticazione, SSO e gestione delle identità."
+    },
+    "IT": {
+      "label": "Informatica",
+      "description": "Amministrazione informatica e gestione dei dispositivi."
+    },
+    "MARKETING": {
+      "label": "Marketing",
+      "description": "Marketing, CRM e coinvolgimento del pubblico."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Operazioni d'ufficio",
+      "description": "Gestione e operazioni degli spazi di lavoro."
+    },
+    "OTHER": {
+      "label": "Altro",
+      "description": "Altri servizi di supporto."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Gestione delle password",
+      "description": "Gestione delle credenziali e dei segreti."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Prodotto e design",
+      "description": "Strumenti per il prodotto e il design."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Servizi professionali",
+      "description": "Consulenza e servizi professionali."
+    },
+    "RECRUITING": {
+      "label": "Reclutamento",
+      "description": "Assunzioni, sourcing e gestione delle candidature."
+    },
+    "SALES": {
+      "label": "Vendite",
+      "description": "Supporto alle vendite e CRM."
+    },
+    "SECURITY": {
+      "label": "Sicurezza",
+      "description": "Sicurezza, monitoraggio e accesso sicuro."
+    },
+    "VERSION_CONTROL": {
+      "label": "Controllo versione",
+      "description": "Controllo del codice sorgente e hosting del codice."
+    }
+  }
+}

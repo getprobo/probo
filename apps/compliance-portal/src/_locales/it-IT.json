@@ -1,0 +1,122 @@
+{
+  "topBar": {
+    "tagline": "Portale di conformità",
+    "getAccess": "Richiedi accesso",
+    "nav": {
+      "documents": "Documenti",
+      "subprocessors": "Sub-responsabili del trattamento",
+      "updates": "Aggiornamenti",
+      "requests": "Richieste"
+    }
+  },
+  "userMenu": {
+    "signOut": "Esci"
+  },
+  "common": {
+    "cancel": "Annulla",
+    "error": "Qualcosa è andato storto",
+    "previousPage": "Pagina precedente",
+    "nextPage": "Pagina successiva",
+    "pageOf": "Pagina {{current}} di {{total}}",
+    "zoomOut": "Riduci zoom",
+    "zoomIn": "Aumenta zoom"
+  },
+  "auth": {
+    "backToPortal": "Torna al portale",
+    "signIn": {
+      "title": "Accedi per continuare",
+      "description": "Accedi alle risorse protette o invia una richiesta",
+      "or": "OPPURE",
+      "withProvider": "Accedi con {{provider}}",
+      "emailLabel": "Indirizzo email",
+      "emailPlaceholder": "nome@azienda.com",
+      "emailRequired": "L'indirizzo email è obbligatorio",
+      "emailInvalid": "Inserisci un indirizzo email valido",
+      "sendMagicLink": "Invia link magico",
+      "resend": "Invia di nuovo il link",
+      "resendIn": "Invia di nuovo il link in {{seconds}}s",
+      "magicLinkSent": "Link magico inviato!",
+      "magicLinkSentNote": "Controlli la Sua email e usi il link per accedere."
+    },
+    "requestAccess": {
+      "success": "Accesso richiesto"
+    },
+    "verify": {
+      "title": "Verifica dell'email in corso",
+      "description": "Attenda mentre effettuiamo il Suo accesso…"
+    },
+    "fullName": {
+      "title": "Aggiunga il Suo nome",
+      "label": "Nome completo",
+      "placeholder": "Mario Rossi",
+      "required": "Il nome completo è obbligatorio",
+      "tooShort": "Il nome completo è troppo corto",
+      "submit": "Continua"
+    },
+    "magicLinkExpired": {
+      "title": "Link scaduto",
+      "description": "Questo link magico è scaduto. La preghiamo di richiederne uno nuovo."
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "Link già utilizzato",
+      "description": "Questo link magico è già stato utilizzato. La preghiamo di richiederne uno nuovo."
+    },
+    "errors": {
+      "magicLinkFailed": "Impossibile inviare il link magico. La preghiamo di riprovare.",
+      "verifyFailed": "Impossibile verificare il link. La preghiamo di riprovare.",
+      "fullNameFailed": "Impossibile salvare il Suo nome. La preghiamo di riprovare.",
+      "requestFailed": "Impossibile completare la Sua richiesta di accesso. La preghiamo di riprovare."
+    }
+  },
+  "home": {
+    "heroTitle": "La fiducia in {{name}}.",
+    "heroDescription": "Benvenuti nel nostro Portale di conformità. Qui potete trovare la nostra documentazione di sicurezza e le nostre certificazioni.",
+    "sections": {
+      "compliance": "Conformità",
+      "securityCommitments": "Impegni di sicurezza",
+      "trustedBy": "Si fidano di noi",
+      "recentUpdates": "Aggiornamenti recenti"
+    },
+    "recentUpdates": {
+      "viewAll": "Vedi tutti"
+    }
+  },
+  "notFound": {
+    "title": "Pagina non trovata",
+    "description": "La pagina che sta cercando non esiste o è stata spostata.",
+    "backHome": "Torna alla home"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Pagina non trovata",
+      "description": "La pagina che sta cercando non esiste o potrebbe essere stata spostata."
+    },
+    "forbidden": {
+      "title": "Accesso negato",
+      "description": "Non ha l'autorizzazione per visualizzare questa pagina."
+    },
+    "serverError": {
+      "title": "Qualcosa è andato storto",
+      "description": "Si è verificato un errore imprevisto. La preghiamo di riprovare a breve."
+    },
+    "generic": {
+      "title": "Qualcosa è andato storto",
+      "description": "Si è verificato un errore imprevisto. La preghiamo di riprovare a breve."
+    },
+    "actions": {
+      "backToCompliancePortal": "Torna al portale di conformità",
+      "tryAgain": "Riprova"
+    },
+    "inline": {
+      "message": "Impossibile caricare il contenuto",
+      "retry": "Riprova"
+    }
+  },
+  "footer": {
+    "poweredBy": "Offerto da"
+  },
+  "pagination": {
+    "previous": "Pagina precedente",
+    "next": "Pagina successiva"
+  }
+}

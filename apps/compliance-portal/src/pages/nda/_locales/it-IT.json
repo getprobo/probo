@@ -1,0 +1,8 @@
+{
+  "title": "Accordo di riservatezza",
+  "subtitle": "{{name}} richiede che Lei firmi un accordo di riservatezza prima di accedere ai documenti di conformità.",
+  "reviewAndSign": "Leggi e firma",
+  "tryAgain": "Riprova",
+  "sealing": "Stiamo sigillando la Sua firma…",
+  "failedDescription": "Si è verificato un problema nell'elaborazione della Sua firma. La preghiamo di riprovare."
+}

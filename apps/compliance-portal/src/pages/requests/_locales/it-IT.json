@@ -1,0 +1,71 @@
+{
+  "title": "Richieste di dati",
+  "newRequest": "Nuova richiesta",
+  "loadMore": "Carica altri",
+  "empty": {
+    "title": "Nessuna richiesta al momento",
+    "description": "Le richieste che invierà appariranno qui, così potrà seguirne l'avanzamento."
+  },
+  "types": {
+    "ACCESS": "Accesso ai dati",
+    "DELETION": "Cancellazione dei dati",
+    "RECTIFICATION": "Rettifica dei dati",
+    "PORTABILITY": "Portabilità dei dati",
+    "OBJECTION": "Opposizione al trattamento",
+    "COMPLAINT": "Segnalazione di abuso"
+  },
+  "status": {
+    "TODO": "In attesa",
+    "IN_PROGRESS": "In elaborazione",
+    "DONE": "Completata",
+    "REJECTED": "Rifiutata"
+  },
+  "typeOption": {
+    "ACCESS": "Accedere ai miei dati",
+    "DELETION": "Eliminare i miei dati",
+    "RECTIFICATION": "Correggere i miei dati",
+    "OBJECTION": "Opporsi al trattamento",
+    "COMPLAINT": "Segnalare un abuso"
+  },
+  "dialog": {
+    "title": "Nuova richiesta",
+    "description": "Scelga un tipo di richiesta e compili i dettagli riportati di seguito.",
+    "typeLabel": "Tipo di richiesta",
+    "cancel": "Annulla",
+    "submit": "Invia richiesta",
+    "success": {
+      "title": "Richiesta inviata",
+      "description": "Elaboreremo la Sua richiesta e risponderemo entro i termini previsti dalla legge applicabile.",
+      "close": "Chiudi"
+    }
+  },
+  "form": {
+    "name": "Nome completo",
+    "nameOptional": "Il Suo nome (opzionale)",
+    "namePlaceholder": "Mario Rossi",
+    "email": "Indirizzo email",
+    "deletionWarning": "La cancellazione dei dati è permanente e non può essere annullata. Alcuni dati potrebbero essere conservati per obblighi di legge.",
+    "details": {
+      "ACCESS": {
+        "label": "Dettagli della richiesta",
+        "placeholder": "Vorrei una copia di tutti i dati personali associati al mio account…"
+      },
+      "DELETION": {
+        "label": "Ambito della richiesta di cancellazione",
+        "placeholder": "Vi prego di eliminare tutti i dati personali, tra cui…"
+      },
+      "RECTIFICATION": {
+        "label": "Cosa deve essere corretto?",
+        "placeholder": "Le seguenti informazioni sono inesatte…"
+      },
+      "OBJECTION": {
+        "label": "A cosa si oppone?",
+        "placeholder": "Mi oppongo al trattamento dei miei dati per…"
+      },
+      "COMPLAINT": {
+        "label": "Descrizione del problema",
+        "placeholder": "Ho notato che…"
+      }
+    }
+  }
+}
