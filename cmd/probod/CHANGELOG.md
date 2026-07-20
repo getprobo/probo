@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.228.0] - 2026-07-20
+
+### Added
+
+- The compliance portal is now served in production for the `/trust` path and custom-domain sites, replacing the previous trust center frontend
+- Added Data Requests pages to the compliance portal: data subjects can submit and track GDPR/CCPA rights requests (including rectification, objection, and complaint types) after magic-link sign-in, scoped to their verified email
+- Added subscribe-to-updates in the compliance portal, with an Updates CTA and a sign-out action in the user menu
+- Added eleven new compliance-portal locales: German, Spanish, Indonesian, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Ukrainian, and Simplified Chinese
+
+### Changed
+
+- Renamed the document approval button to "Approve" and updated the consent text to match, since the action only approves
+- Made the compliance portal layout responsive
+- Standardized copy to say "compliance portal" instead of "trust center" throughout
+
+### Fixed
+
+- Fixed document row accessibility for mobile screen readers and corrected PDF page sync after fit-to-width reflow
+- Preserved `Field` `aria-describedby` when showing form errors
+
 ## [0.227.0] - 2026-07-20
 
 ### Added
