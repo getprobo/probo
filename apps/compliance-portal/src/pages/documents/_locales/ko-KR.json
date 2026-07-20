@@ -1,0 +1,46 @@
+{
+  "title": "문서",
+  "tabs": {
+    "all": "전체",
+    "public": "공개",
+    "private": "비공개"
+  },
+  "sections": {
+    "reports": "컴플라이언스 보고서"
+  },
+  "types": {
+    "OTHER": "기타",
+    "GOVERNANCE": "거버넌스",
+    "POLICY": "정책",
+    "PROCEDURE": "절차",
+    "PLAN": "계획",
+    "REGISTER": "등록부",
+    "RECORD": "기록",
+    "REPORT": "보고서",
+    "TEMPLATE": "템플릿",
+    "STATEMENT_OF_APPLICABILITY": "적용 범위 선언서"
+  },
+  "actions": {
+    "view": "보기",
+    "getAccess": "액세스 요청",
+    "requested": "액세스가 요청되었습니다"
+  },
+  "empty": {
+    "title": "이용 가능한 문서가 없습니다",
+    "description": "이 컴플라이언스 포털은 아직 문서를 공개하지 않았습니다.",
+    "filteredTitle": "이 필터에 일치하는 문서가 없습니다",
+    "filteredDescription": "다른 탭을 선택하여 이용 가능한 문서를 확인해 보세요."
+  },
+  "viewer": {
+    "back": "문서",
+    "share": "문서 공유",
+    "linkCopied": "링크가 클립보드에 복사되었습니다",
+    "download": "다운로드",
+    "previewUnavailable": "미리보기를 사용할 수 없습니다",
+    "downloadToView": "이 파일 형식은 여기서 미리 볼 수 없습니다. 확인하려면 다운로드하세요.",
+    "locked": {
+      "title": "액세스 필요",
+      "description": "아직 이 문서에 대한 액세스 권한이 없습니다."
+    }
+  }
+}

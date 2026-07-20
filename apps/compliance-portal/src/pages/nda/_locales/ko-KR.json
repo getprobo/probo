@@ -1,0 +1,8 @@
+{
+  "title": "비밀 유지 계약",
+  "subtitle": "{{name}}에서는 컴플라이언스 문서에 접근하기 전에 비밀 유지 계약(NDA)에 서명하도록 요구합니다.",
+  "reviewAndSign": "검토 후 서명",
+  "tryAgain": "다시 시도",
+  "sealing": "서명을 처리하는 중…",
+  "failedDescription": "서명을 처리하는 중 문제가 발생했습니다. 다시 시도해 주세요."
+}

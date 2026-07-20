@@ -1,0 +1,9 @@
+{
+  "title": "업데이트",
+  "subscribe": "업데이트 구독하기",
+  "backToUpdates": "모든 업데이트",
+  "empty": {
+    "title": "아직 업데이트가 없습니다.",
+    "description": "새 업데이트가 게시되면 알림을 받으려면 구독하세요."
+  }
+}

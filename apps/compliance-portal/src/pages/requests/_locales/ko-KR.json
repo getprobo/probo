@@ -1,0 +1,71 @@
+{
+  "title": "데이터 요청",
+  "newRequest": "새 요청",
+  "loadMore": "더 보기",
+  "empty": {
+    "title": "아직 요청이 없습니다",
+    "description": "제출한 요청은 여기에 표시되어 진행 상황을 추적할 수 있습니다."
+  },
+  "types": {
+    "ACCESS": "데이터 액세스",
+    "DELETION": "데이터 삭제",
+    "RECTIFICATION": "데이터 정정",
+    "PORTABILITY": "데이터 이동",
+    "OBJECTION": "처리 반대",
+    "COMPLAINT": "악용 신고"
+  },
+  "status": {
+    "TODO": "대기 중",
+    "IN_PROGRESS": "처리 중",
+    "DONE": "완료됨",
+    "REJECTED": "거부됨"
+  },
+  "typeOption": {
+    "ACCESS": "내 데이터 액세스",
+    "DELETION": "내 데이터 삭제",
+    "RECTIFICATION": "내 데이터 정정",
+    "OBJECTION": "처리에 반대",
+    "COMPLAINT": "악용 신고"
+  },
+  "dialog": {
+    "title": "새 요청",
+    "description": "요청 유형을 선택하고 아래 세부 정보를 입력하세요.",
+    "typeLabel": "요청 유형",
+    "cancel": "취소",
+    "submit": "요청 제출",
+    "success": {
+      "title": "요청이 제출되었습니다",
+      "description": "관련 법률에서 정한 기한 내에 요청을 처리하고 답변드리겠습니다.",
+      "close": "닫기"
+    }
+  },
+  "form": {
+    "name": "이름",
+    "nameOptional": "이름 (선택)",
+    "namePlaceholder": "홍길동",
+    "email": "이메일 주소",
+    "deletionWarning": "데이터 삭제는 영구적이며 되돌릴 수 없습니다. 일부 데이터는 법적 의무에 따라 보관될 수 있습니다.",
+    "details": {
+      "ACCESS": {
+        "label": "요청 세부 사항",
+        "placeholder": "제 계정과 관련된 모든 개인 데이터의 사본을 요청합니다…"
+      },
+      "DELETION": {
+        "label": "삭제 요청 범위",
+        "placeholder": "다음을 포함한 모든 개인 데이터를 삭제해 주세요…"
+      },
+      "RECTIFICATION": {
+        "label": "수정이 필요한 내용은 무엇인가요?",
+        "placeholder": "다음 정보가 정확하지 않습니다…"
+      },
+      "OBJECTION": {
+        "label": "무엇에 반대하시나요?",
+        "placeholder": "다음 목적을 위한 제 데이터 처리에 반대합니다…"
+      },
+      "COMPLAINT": {
+        "label": "우려 사항 설명",
+        "placeholder": "다음과 같은 문제를 발견했습니다…"
+      }
+    }
+  }
+}
