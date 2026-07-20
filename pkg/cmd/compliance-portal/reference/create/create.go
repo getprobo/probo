@@ -30,12 +30,12 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const trustCenterQuery = `
+const compliancePortalQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
     ... on Organization {
-      trustCenter {
+      compliancePortal {
         id
       }
     }
@@ -44,9 +44,9 @@ query($id: ID!) {
 `
 
 const createMutation = `
-mutation($input: CreateTrustCenterReferenceInput!) {
-  createTrustCenterReference(input: $input) {
-    trustCenterReferenceEdge {
+mutation($input: CreateCompliancePortalReferenceInput!) {
+  createCompliancePortalReference(input: $input) {
+    compliancePortalReferenceEdge {
       node {
         id
         name
@@ -59,18 +59,18 @@ mutation($input: CreateTrustCenterReferenceInput!) {
 }
 `
 
-type trustCenterQueryResponse struct {
+type compliancePortalQueryResponse struct {
 	Node *struct {
-		Typename    string `json:"__typename"`
-		TrustCenter *struct {
+		Typename         string `json:"__typename"`
+		CompliancePortal *struct {
 			ID string `json:"id"`
-		} `json:"trustCenter"`
+		} `json:"compliancePortal"`
 	} `json:"node"`
 }
 
 type createResponse struct {
-	CreateTrustCenterReference struct {
-		TrustCenterReferenceEdge struct {
+	CreateCompliancePortalReference struct {
+		CompliancePortalReferenceEdge struct {
 			Node struct {
 				ID          string  `json:"id"`
 				Name        string  `json:"name"`
@@ -78,8 +78,8 @@ type createResponse struct {
 				WebsiteUrl  *string `json:"websiteUrl"`
 				Rank        int     `json:"rank"`
 			} `json:"node"`
-		} `json:"trustCenterReferenceEdge"`
-	} `json:"createTrustCenterReference"`
+		} `json:"compliancePortalReferenceEdge"`
+	} `json:"createCompliancePortalReference"`
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
@@ -92,12 +92,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a trust center reference",
+		Short: "Create a compliance portal reference",
 		Example: `  # Create a reference interactively
-  prb trust-center reference create
+  prb compliance-portal reference create
 
   # Create a reference non-interactively
-  prb trust-center ref create --name "Acme Corp" --description "Enterprise customer" --website "https://acme.com"`,
+  prb compliance-portal ref create --name "Acme Corp" --description "Enterprise customer" --website "https://acme.com"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -125,16 +125,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
-			// Fetch trust center ID from organization.
+			// Fetch compliance portal ID from organization.
 			data, err := client.Do(
-				trustCenterQuery,
+				compliancePortalQuery,
 				map[string]any{"id": flagOrg},
 			)
 			if err != nil {
 				return err
 			}
 
-			var tcResp trustCenterQueryResponse
+			var tcResp compliancePortalQueryResponse
 			if err := json.Unmarshal(data, &tcResp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
@@ -147,8 +147,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("expected Organization node, got %s", tcResp.Node.Typename)
 			}
 
-			if tcResp.Node.TrustCenter == nil {
-				return fmt.Errorf("trust center not found for organization %s", flagOrg)
+			if tcResp.Node.CompliancePortal == nil {
+				return fmt.Errorf("compliance portal not found for organization %s", flagOrg)
 			}
 
 			if f.IOStreams.IsInteractive() {
@@ -188,8 +188,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			input := map[string]any{
-				"trustCenterId": tcResp.Node.TrustCenter.ID,
-				"name":          flagName,
+				"compliancePortalId": tcResp.Node.CompliancePortal.ID,
+				"name":               flagName,
 			}
 
 			if flagDescription != "" {
@@ -213,7 +213,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			r := resp.CreateTrustCenterReference.TrustCenterReferenceEdge.Node
+			r := resp.CreateCompliancePortalReference.CompliancePortalReferenceEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Created reference %s (%s)\n",

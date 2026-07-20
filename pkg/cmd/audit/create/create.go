@@ -62,13 +62,13 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg                   string
-		flagFramework             string
-		flagName                  string
-		flagState                 string
-		flagValidFrom             string
-		flagValidUntil            string
-		flagTrustCenterVisibility string
+		flagOrg                        string
+		flagFramework                  string
+		flagName                       string
+		flagState                      string
+		flagValidFrom                  string
+		flagValidUntil                 string
+		flagCompliancePortalVisibility string
 	)
 
 	cmd := &cobra.Command{
@@ -160,8 +160,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["validUntil"] = flagValidUntil
 			}
 
-			if flagTrustCenterVisibility != "" {
-				input["trustCenterVisibility"] = flagTrustCenterVisibility
+			if flagCompliancePortalVisibility != "" {
+				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
 			}
 
 			data, err := client.Do(
@@ -195,7 +195,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
-	cmd.Flags().StringVar(&flagTrustCenterVisibility, "trust-center-visibility", "", "Trust center visibility: NONE, PRIVATE, PUBLIC")
+	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd
 }

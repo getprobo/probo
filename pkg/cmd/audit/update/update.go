@@ -57,11 +57,11 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName                  string
-		flagState                 string
-		flagValidFrom             string
-		flagValidUntil            string
-		flagTrustCenterVisibility string
+		flagName                       string
+		flagState                      string
+		flagValidFrom                  string
+		flagValidUntil                 string
+		flagCompliancePortalVisibility string
 	)
 
 	cmd := &cobra.Command{
@@ -107,8 +107,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["validUntil"] = flagValidUntil
 			}
 
-			if cmd.Flags().Changed("trust-center-visibility") {
-				input["trustCenterVisibility"] = flagTrustCenterVisibility
+			if cmd.Flags().Changed("compliance-portal-visibility") {
+				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
 			}
 
 			if len(input) == 1 {
@@ -144,7 +144,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
-	cmd.Flags().StringVar(&flagTrustCenterVisibility, "trust-center-visibility", "", "Trust center visibility: NONE, PRIVATE, PUBLIC")
+	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd
 }

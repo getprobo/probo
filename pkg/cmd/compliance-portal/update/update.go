@@ -29,12 +29,12 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const trustCenterQuery = `
+const compliancePortalQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
     ... on Organization {
-      trustCenter {
+      compliancePortal {
         id
       }
     }
@@ -43,9 +43,9 @@ query($id: ID!) {
 `
 
 const updateMutation = `
-mutation($input: UpdateTrustCenterInput!) {
-  updateTrustCenter(input: $input) {
-    trustCenter {
+mutation($input: UpdateCompliancePortalInput!) {
+  updateCompliancePortal(input: $input) {
+    compliancePortal {
       id
       active
       searchEngineIndexing
@@ -59,18 +59,18 @@ mutation($input: UpdateTrustCenterInput!) {
 }
 `
 
-type trustCenterQueryResponse struct {
+type compliancePortalQueryResponse struct {
 	Node *struct {
-		Typename    string `json:"__typename"`
-		TrustCenter *struct {
+		Typename         string `json:"__typename"`
+		CompliancePortal *struct {
 			ID string `json:"id"`
-		} `json:"trustCenter"`
+		} `json:"compliancePortal"`
 	} `json:"node"`
 }
 
 type updateResponse struct {
-	UpdateTrustCenter struct {
-		TrustCenter struct {
+	UpdateCompliancePortal struct {
+		CompliancePortal struct {
 			ID                   string  `json:"id"`
 			Active               bool    `json:"active"`
 			SearchEngineIndexing string  `json:"searchEngineIndexing"`
@@ -79,8 +79,8 @@ type updateResponse struct {
 			WebsiteURL           *string `json:"websiteUrl"`
 			Email                *string `json:"email"`
 			HeadquarterAddress   *string `json:"headquarterAddress"`
-		} `json:"trustCenter"`
-	} `json:"updateTrustCenter"`
+		} `json:"compliancePortal"`
+	} `json:"updateCompliancePortal"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
@@ -97,12 +97,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "Update trust center settings",
-		Example: `  # Enable the trust center
-  prb trust-center update --active
+		Short: "Update compliance portal settings",
+		Example: `  # Enable the compliance portal
+  prb compliance-portal update --active
 
   # Disable search engine indexing
-  prb trust-center update --search-engine-indexing NOT_INDEXABLE`,
+  prb compliance-portal update --search-engine-indexing NOT_INDEXABLE`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -131,16 +131,16 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
-			// Fetch trust center ID from organization.
+			// Fetch compliance portal ID from organization.
 			data, err := client.Do(
-				trustCenterQuery,
+				compliancePortalQuery,
 				map[string]any{"id": flagOrg},
 			)
 			if err != nil {
 				return err
 			}
 
-			var tcResp trustCenterQueryResponse
+			var tcResp compliancePortalQueryResponse
 			if err := json.Unmarshal(data, &tcResp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
@@ -153,12 +153,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("expected Organization node, got %s", tcResp.Node.Typename)
 			}
 
-			if tcResp.Node.TrustCenter == nil {
-				return fmt.Errorf("trust center not found for organization %s", flagOrg)
+			if tcResp.Node.CompliancePortal == nil {
+				return fmt.Errorf("compliance portal not found for organization %s", flagOrg)
 			}
 
 			input := map[string]any{
-				"trustCenterId": tcResp.Node.TrustCenter.ID,
+				"compliancePortalId": tcResp.Node.CompliancePortal.ID,
 			}
 
 			if cmd.Flags().Changed("active") {
@@ -214,10 +214,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			tc := resp.UpdateTrustCenter.TrustCenter
+			tc := resp.UpdateCompliancePortal.CompliancePortal
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Updated trust center %s\n",
+				"Updated compliance portal %s\n",
 				tc.ID,
 			)
 
@@ -226,7 +226,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().BoolVar(&flagActive, "active", false, "Enable or disable the trust center")
+	cmd.Flags().BoolVar(&flagActive, "active", false, "Enable or disable the compliance portal")
 	cmd.Flags().StringVar(&flagSearchEngineIndexing, "search-engine-indexing", "", "Search engine indexing: INDEXABLE, NOT_INDEXABLE")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Compliance page description")
 	cmd.Flags().StringVar(&flagWebsiteURL, "website-url", "", "Compliance page website URL")

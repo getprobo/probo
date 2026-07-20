@@ -30,9 +30,9 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteTrustCenterFileInput!) {
-  deleteTrustCenterFile(input: $input) {
-    deletedTrustCenterFileId
+mutation($input: DeleteCompliancePortalReferenceInput!) {
+  deleteCompliancePortalReference(input: $input) {
+    deletedCompliancePortalReferenceId
   }
 }
 `
@@ -42,18 +42,18 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "delete <id>",
-		Short: "Delete a trust center file",
+		Short: "Delete a compliance portal reference",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {
 				if !f.IOStreams.IsInteractive() {
-					return fmt.Errorf("cannot delete file: confirmation required, use --yes to confirm")
+					return fmt.Errorf("cannot delete reference: confirmation required, use --yes to confirm")
 				}
 
 				var confirmed bool
 
 				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Delete trust center file %s?", args[0])).
+					Title(fmt.Sprintf("Delete reference %s?", args[0])).
 					Value(&confirmed).
 					Run()
 				if err != nil {
@@ -97,7 +97,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Deleted trust center file %s\n",
+				"Deleted reference %s\n",
 				args[0],
 			)
 

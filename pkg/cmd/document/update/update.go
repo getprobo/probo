@@ -34,7 +34,7 @@ mutation($input: UpdateDocumentInput!) {
   updateDocument(input: $input) {
     document {
       id
-      trustCenterVisibility
+      compliancePortalVisibility
     }
     documentVersion {
       id
@@ -52,8 +52,8 @@ mutation($input: UpdateDocumentInput!) {
 type updateResponse struct {
 	UpdateDocument struct {
 		Document struct {
-			ID                    string `json:"id"`
-			TrustCenterVisibility string `json:"trustCenterVisibility"`
+			ID                         string `json:"id"`
+			CompliancePortalVisibility string `json:"compliancePortalVisibility"`
 		} `json:"document"`
 		DocumentVersion *struct {
 			ID             string `json:"id"`
@@ -69,11 +69,11 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagTitle                 string
-		flagContent               string
-		flagDocumentType          string
-		flagClassification        string
-		flagTrustCenterVisibility string
+		flagTitle                      string
+		flagContent                    string
+		flagDocumentType               string
+		flagClassification             string
+		flagCompliancePortalVisibility string
 	)
 
 	cmd := &cobra.Command{
@@ -134,16 +134,16 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["classification"] = flagClassification
 			}
 
-			if cmd.Flags().Changed("trust-center-visibility") {
+			if cmd.Flags().Changed("compliance-portal-visibility") {
 				if err := cmdutil.ValidateEnum(
-					"trust-center-visibility",
-					flagTrustCenterVisibility,
+					"compliance-portal-visibility",
+					flagCompliancePortalVisibility,
 					[]string{"NONE", "PRIVATE", "PUBLIC"},
 				); err != nil {
 					return err
 				}
 
-				input["trustCenterVisibility"] = flagTrustCenterVisibility
+				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
 			}
 
 			if len(input) == 1 {
@@ -189,7 +189,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Document content")
 	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Document type: OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE, STATEMENT_OF_APPLICABILITY")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET")
-	cmd.Flags().StringVar(&flagTrustCenterVisibility, "trust-center-visibility", "", "Trust center visibility: NONE, PRIVATE, PUBLIC")
+	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd
 }

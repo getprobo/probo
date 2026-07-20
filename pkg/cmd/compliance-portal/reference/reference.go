@@ -18,22 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package file
+package reference
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/trust-center/file/delete"
-	"go.probo.inc/probo/pkg/cmd/trust-center/file/list"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/reference/create"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/reference/delete"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/reference/list"
 )
 
-func NewCmdFile(f *cmdutil.Factory) *cobra.Command {
+func NewCmdReference(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "file <command>",
-		Short: "Manage trust center files",
+		Use:     "reference <command>",
+		Short:   "Manage compliance portal references",
+		Aliases: []string{"ref"},
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(create.NewCmdCreate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 
 	return cmd

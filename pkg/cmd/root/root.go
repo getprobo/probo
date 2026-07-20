@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/browse"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/completion"
+	complianceportal "go.probo.inc/probo/pkg/cmd/compliance-portal"
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
 	consentrecord "go.probo.inc/probo/pkg/cmd/consent-record"
 	cmdcontext "go.probo.inc/probo/pkg/cmd/context"
@@ -58,7 +59,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/tia"
 	trackerpattern "go.probo.inc/probo/pkg/cmd/tracker-pattern"
 	trackerresource "go.probo.inc/probo/pkg/cmd/tracker-resource"
-	trustcenter "go.probo.inc/probo/pkg/cmd/trust-center"
 	"go.probo.inc/probo/pkg/cmd/user"
 	"go.probo.inc/probo/pkg/cmd/version"
 	"go.probo.inc/probo/pkg/cmd/webhook"
@@ -130,7 +130,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))
 	cmd.AddCommand(tia.NewCmdTIA(f))
-	cmd.AddCommand(trustcenter.NewCmdTrustCenter(f))
+	cmd.AddCommand(complianceportal.NewCmdCompliancePortal(f))
 	cmd.AddCommand(user.NewCmdUser(f))
 	cmd.AddCommand(thirdpartymgmt.NewCmdThirdParty(f))
 	cmd.AddCommand(version.NewCmdVersion(f))

@@ -40,7 +40,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter
           node {
             id
             status
-            trustCenterVisibility
+            compliancePortalVisibility
             versions(first: 1) {
               edges {
                 node {
@@ -63,10 +63,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter
 `
 
 type document struct {
-	ID                    string `json:"id"`
-	Status                string `json:"status"`
-	TrustCenterVisibility string `json:"trustCenterVisibility"`
-	Versions              struct {
+	ID                         string `json:"id"`
+	Status                     string `json:"status"`
+	CompliancePortalVisibility string `json:"compliancePortalVisibility"`
+	Versions                   struct {
 		Edges []struct {
 			Node struct {
 				Title          string `json:"title"`

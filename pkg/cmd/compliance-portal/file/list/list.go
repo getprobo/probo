@@ -30,18 +30,18 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TrustCenterFileOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalFileOrder) {
   node(id: $id) {
     __typename
     ... on Organization {
-      trustCenterFiles(first: $first, after: $after, orderBy: $orderBy) {
+      compliancePortalFiles(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {
             id
             name
             category
-            trustCenterVisibility
+            compliancePortalVisibility
             createdAt
           }
         }
@@ -55,12 +55,12 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TrustCenterFileOrder) 
 }
 `
 
-type trustCenterFile struct {
-	ID                    string `json:"id"`
-	Name                  string `json:"name"`
-	Category              string `json:"category"`
-	TrustCenterVisibility string `json:"trustCenterVisibility"`
-	CreatedAt             string `json:"createdAt"`
+type compliancePortalFile struct {
+	ID                         string `json:"id"`
+	Name                       string `json:"name"`
+	Category                   string `json:"category"`
+	CompliancePortalVisibility string `json:"compliancePortalVisibility"`
+	CreatedAt                  string `json:"createdAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -74,13 +74,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List trust center files",
+		Short:   "List compliance portal files",
 		Aliases: []string{"ls"},
 		Example: `  # List files in the default organization
-  prb trust-center file list
+  prb compliance-portal file list
 
   # List files sorted by name
-  prb trust-center file ls --order-by NAME`,
+  prb compliance-portal file ls --order-by NAME`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -133,11 +133,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[trustCenterFile], error) {
+				func(data json.RawMessage) (*api.Connection[compliancePortalFile], error) {
 					var resp struct {
 						Node *struct {
-							Typename         string                          `json:"__typename"`
-							TrustCenterFiles api.Connection[trustCenterFile] `json:"trustCenterFiles"`
+							Typename              string                               `json:"__typename"`
+							CompliancePortalFiles api.Connection[compliancePortalFile] `json:"compliancePortalFiles"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -152,7 +152,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
 
-					return &resp.Node.TrustCenterFiles, nil
+					return &resp.Node.CompliancePortalFiles, nil
 				},
 			)
 			if err != nil {
@@ -174,7 +174,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					file.ID,
 					file.Name,
 					file.Category,
-					file.TrustCenterVisibility,
+					file.CompliancePortalVisibility,
 				})
 			}
 

@@ -23,10 +23,10 @@ package commitmentgroup
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/trust-center/commitmentgroup/create"
-	"go.probo.inc/probo/pkg/cmd/trust-center/commitmentgroup/delete"
-	"go.probo.inc/probo/pkg/cmd/trust-center/commitmentgroup/list"
-	"go.probo.inc/probo/pkg/cmd/trust-center/commitmentgroup/update"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitmentgroup/create"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitmentgroup/delete"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitmentgroup/list"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitmentgroup/update"
 )
 
 func NewCmdCommitmentGroup(f *cmdutil.Factory) *cobra.Command {

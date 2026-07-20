@@ -30,11 +30,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TrustCenterReferenceOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalReferenceOrder) {
   node(id: $id) {
     __typename
     ... on Organization {
-      trustCenter {
+      compliancePortal {
         references(first: $first, after: $after, orderBy: $orderBy) {
           totalCount
           edges {
@@ -58,7 +58,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TrustCenterReferenceOr
 }
 `
 
-type trustCenterReference struct {
+type compliancePortalReference struct {
 	ID          string  `json:"id"`
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
@@ -78,13 +78,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List trust center references",
+		Short:   "List compliance portal references",
 		Aliases: []string{"ls"},
 		Example: `  # List references in the default organization
-  prb trust-center reference list
+  prb compliance-portal reference list
 
   # List references sorted by rank
-  prb trust-center ref ls --order-by RANK`,
+  prb compliance-portal ref ls --order-by RANK`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -137,13 +137,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[trustCenterReference], error) {
+				func(data json.RawMessage) (*api.Connection[compliancePortalReference], error) {
 					var resp struct {
 						Node *struct {
-							Typename    string `json:"__typename"`
-							TrustCenter *struct {
-								References api.Connection[trustCenterReference] `json:"references"`
-							} `json:"trustCenter"`
+							Typename         string `json:"__typename"`
+							CompliancePortal *struct {
+								References api.Connection[compliancePortalReference] `json:"references"`
+							} `json:"compliancePortal"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -158,11 +158,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
 
-					if resp.Node.TrustCenter == nil {
-						return nil, fmt.Errorf("trust center not found for organization %s", flagOrg)
+					if resp.Node.CompliancePortal == nil {
+						return nil, fmt.Errorf("compliance portal not found for organization %s", flagOrg)
 					}
 
-					return &resp.Node.TrustCenter.References, nil
+					return &resp.Node.CompliancePortal.References, nil
 				},
 			)
 			if err != nil {

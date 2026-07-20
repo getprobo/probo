@@ -35,7 +35,7 @@ query($id: ID!) {
   node(id: $id) {
     __typename
     ... on Organization {
-      trustCenter {
+      compliancePortal {
         id
         active
         searchEngineIndexing
@@ -53,8 +53,8 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename    string `json:"__typename"`
-		TrustCenter *struct {
+		Typename         string `json:"__typename"`
+		CompliancePortal *struct {
 			ID                   string  `json:"id"`
 			Active               bool    `json:"active"`
 			SearchEngineIndexing string  `json:"searchEngineIndexing"`
@@ -64,7 +64,7 @@ type viewResponse struct {
 			NdaFileUrl           *string `json:"ndaFileUrl"`
 			CreatedAt            string  `json:"createdAt"`
 			UpdatedAt            string  `json:"updatedAt"`
-		} `json:"trustCenter"`
+		} `json:"compliancePortal"`
 	} `json:"node"`
 }
 
@@ -76,7 +76,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "view",
-		Short: "View trust center settings",
+		Short: "View compliance portal settings",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -130,11 +130,11 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 			}
 
-			if resp.Node.TrustCenter == nil {
-				return fmt.Errorf("trust center not found for organization %s", flagOrg)
+			if resp.Node.CompliancePortal == nil {
+				return fmt.Errorf("compliance portal not found for organization %s", flagOrg)
 			}
 
-			tc := resp.Node.TrustCenter
+			tc := resp.Node.CompliancePortal
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, tc)
@@ -145,7 +145,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(28)
 
-			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render("Trust Center"))
+			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render("Compliance Portal"))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), tc.ID)
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Active:"), tc.Active)

@@ -18,26 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package reference
+package complianceportal
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/trust-center/reference/create"
-	"go.probo.inc/probo/pkg/cmd/trust-center/reference/delete"
-	"go.probo.inc/probo/pkg/cmd/trust-center/reference/list"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitment"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/commitmentgroup"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/file"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/reference"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/update"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/view"
 )
 
-func NewCmdReference(f *cmdutil.Factory) *cobra.Command {
+func NewCmdCompliancePortal(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "reference <command>",
-		Short:   "Manage trust center references",
-		Aliases: []string{"ref"},
+		Use:     "compliance-portal <command>",
+		Short:   "Manage compliance portal",
+		Aliases: []string{"tc"},
 	}
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(update.NewCmdUpdate(f))
+	cmd.AddCommand(reference.NewCmdReference(f))
+	cmd.AddCommand(commitmentgroup.NewCmdCommitmentGroup(f))
+	cmd.AddCommand(commitment.NewCmdCommitment(f))
+	cmd.AddCommand(file.NewCmdFile(f))
 
 	return cmd
 }

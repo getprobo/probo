@@ -37,7 +37,7 @@ query($id: ID!) {
     ... on Document {
       id
       status
-      trustCenterVisibility
+      compliancePortalVisibility
       currentPublishedMajor
       currentPublishedMinor
       versions(first: 1) {
@@ -61,13 +61,13 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename              string `json:"__typename"`
-		ID                    string `json:"id"`
-		Status                string `json:"status"`
-		TrustCenterVisibility string `json:"trustCenterVisibility"`
-		CurrentPublishedMajor *int   `json:"currentPublishedMajor"`
-		CurrentPublishedMinor *int   `json:"currentPublishedMinor"`
-		Versions              struct {
+		Typename                   string `json:"__typename"`
+		ID                         string `json:"id"`
+		Status                     string `json:"status"`
+		CompliancePortalVisibility string `json:"compliancePortalVisibility"`
+		CurrentPublishedMajor      *int   `json:"currentPublishedMajor"`
+		CurrentPublishedMinor      *int   `json:"currentPublishedMinor"`
+		Versions                   struct {
 			Edges []struct {
 				Node struct {
 					Title          string `json:"title"`
@@ -153,7 +153,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), doc.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Status:"), doc.Status)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Visibility:"), doc.TrustCenterVisibility)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Visibility:"), doc.CompliancePortalVisibility)
 
 			if len(doc.Versions.Edges) > 0 {
 				v := doc.Versions.Edges[0].Node
