@@ -49,7 +49,8 @@ export function DropdownPopup(props: DropdownPopupProps) {
 
   return (
     <Menu.Portal>
-      <Menu.Positioner side={side} align={align} sideOffset={sideOffset}>
+      {/* z-3 on the Positioner so the portaled root wins over in-page z-1. */}
+      <Menu.Positioner className="z-3" side={side} align={align} sideOffset={sideOffset}>
         <Menu.Popup className={dropdownPopup({ className })} {...popupProps}>
           <DropdownProvider value={{ size, variant, highContrast }}>
             {children}

@@ -25,6 +25,6 @@ import { tv } from "tailwind-variants/lite";
 // BackdropCard; this slot only styles the icon container.
 export const commitmentCard = tv({
   slots: {
-    icon: "relative z-10 flex size-8 items-center justify-center text-gold-9",
+    icon: "relative z-1 flex size-8 items-center justify-center text-gold-9",
   },
 });

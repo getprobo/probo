@@ -30,6 +30,7 @@
  *   typography.css  Inter font + type scale (text-1…9) + font weights
  *   radius.css      radius scale (rounded-1…6)
  *   shadows.css     elevation scale (shadow-1…6)
+ *   z-index.css     stacking scale (z-1…6) by UI layer
  *
  * Spacing intentionally stays on Tailwind's native scale (not tokenized).
  * See contrib/claude/v2-tokens.md for the full usage guide.
@@ -38,3 +39,4 @@
 @import "./theme/typography.css";
 @import "./theme/radius.css";
 @import "./theme/shadows.css";
+@import "./theme/z-index.css";

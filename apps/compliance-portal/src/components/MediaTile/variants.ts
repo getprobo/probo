@@ -32,7 +32,7 @@ export const mediaTile = tv({
     backdrop: "pointer-events-none absolute inset-0",
     blurBackdrop: "pointer-events-none absolute inset-0 size-full scale-150 object-cover opacity-10 blur-lg",
     backdropFade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
-    mediaContent: "relative z-10 flex size-16 items-center justify-center [&_img]:size-full [&_img]:object-contain",
+    mediaContent: "relative z-1 flex size-16 items-center justify-center [&_img]:size-full [&_img]:object-contain",
     caption: "flex w-full items-center justify-center px-4 py-3",
   },
   variants: {

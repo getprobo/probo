@@ -2,7 +2,7 @@
 
 The v2 UI kit is built on a small set of **numbered token scales** sourced from Radix and the "Probo Radix UI" Figma file. Every token family follows the same convention as color — a numbered scale exposed as Tailwind utilities — so the kit speaks one consistent visual language: `bg-sand-3`, `text-4`, `rounded-3`, `shadow-2`.
 
-Theme entry: [`packages/ui/src/v2/theme.css`](../../packages/ui/src/v2/theme.css), aggregating `theme/colors.css`, `theme/typography.css`, `theme/radius.css`, `theme/shadows.css`.
+Theme entry: [`packages/ui/src/v2/theme.css`](../../packages/ui/src/v2/theme.css), aggregating `theme/colors.css`, `theme/typography.css`, `theme/radius.css`, `theme/shadows.css`, `theme/z-index.css`.
 
 | Family | Utilities | Steps | Source |
 |--------|-----------|-------|--------|
@@ -10,6 +10,7 @@ Theme entry: [`packages/ui/src/v2/theme.css`](../../packages/ui/src/v2/theme.css
 | Typography | `text-<1–9>` (+ font weights) | 9 | Radix type scale |
 | Radius | `rounded-<1–6>` | 6 | Radix "Medium" radius |
 | Shadow | `shadow-<1–6>`, `inset-shadow-<1–3>` | 6 / 3 | Radix elevation |
+| Z-index | `z-<1–6>` | 6 | UI layer roles |
 | Spacing | Tailwind native (`p-4`, `gap-2`, …) | — | not tokenized |
 
 Each `--<family>-*` is reset to `initial` in its theme layer, so a v2 build exposes **only** the numbered scales — Tailwind's default palette, t-shirt type sizes, and `shadow-sm/md/lg` are intentionally unavailable. Use the numbered token; never reintroduce an ad-hoc value.
@@ -255,6 +256,33 @@ Theme file: [`packages/ui/src/v2/theme/shadows.css`](../../packages/ui/src/v2/th
 
 // Bad — Tailwind default shadow (wiped) or a manual dark: override
 <div className="shadow-md dark:shadow-none">…</div>
+```
+
+# Z-index (`z-1` … `z-6`)
+
+Stacking scale by **UI layer role**, not arbitrary elevation. Prefer the step that matches the element type; never invent ad-hoc values (`z-10`, `z-[999]`) in a v2 build.
+
+Theme file: [`packages/ui/src/v2/theme/z-index.css`](../../packages/ui/src/v2/theme/z-index.css)
+
+| Step | Value | Role |
+|------|-------|------|
+| 1 | 1 | Local stacking inside a component (media over a decorative backdrop) |
+| 2 | 10 | Sticky / fixed page chrome (top bars, sticky toolbars) |
+| 3 | 30 | Floating menus (select, dropdown, tooltip, popover) |
+| 4 | 40 | Overlay backdrops (dimmers under modals / drawers) |
+| 5 | 50 | Modals and drawers |
+| 6 | 60 | Toasts / global notifications (always on top) |
+
+Put the token on the **portaled root** that participates in the document stacking context (e.g. a menu `Positioner`), not only an inner popup. A local `z-1` in the page will paint above a portaled popup that has no z-index of its own.
+
+```tsx
+// Good — local media above its own backdrop; menu sits in the popover layer
+<div className="relative z-1">…logo…</div>
+<Menu.Positioner className="z-3">…</Menu.Positioner>
+
+// Bad — Tailwind default / arbitrary z-index (wiped or discouraged in v2)
+<div className="z-10">…</div>
+<div className="z-[999]">…</div>
 ```
 
 # Spacing (Tailwind native)

@@ -25,7 +25,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/hooks.md`](contrib/claude/hooks.md) — Custom hooks (_lib placement, awaitable useMutation primitive, auto error handling)
 - [`contrib/claude/react-components.md`](contrib/claude/react-components.md) — React component shape (file/export, props, configure vs data via hooks, naming/suffix taxonomy, error props)
 - [`contrib/claude/ui.md`](contrib/claude/ui.md) — @probo/ui v2 kit (Base UI headless, Tailwind, tailwind-variants, flat folders, bundle-safe skeletons)
-- [`contrib/claude/v2-tokens.md`](contrib/claude/v2-tokens.md) — v2 design tokens (color, typography, radius, shadow scales; native spacing)
+- [`contrib/claude/v2-tokens.md`](contrib/claude/v2-tokens.md) — v2 design tokens (color, typography, radius, shadow, z-index scales; native spacing)
 - [`contrib/claude/forms.md`](contrib/claude/forms.md) — Frontend forms (Base UI Field/Form tiers, native vs zod vs react-hook-form, server errors)
 - [`contrib/claude/routing.md`](contrib/claude/routing.md) — Frontend routing (@probo/routes, navigation, typed params, URL state, auth/protected routes)
 - [`contrib/claude/state-management.md`](contrib/claude/state-management.md) — Client state decision order (Relay, URL, local, context, zustand)

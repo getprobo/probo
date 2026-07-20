@@ -27,7 +27,7 @@ export const poweredBy = tv({
     root: "relative flex w-full items-center justify-center overflow-hidden bg-sand-2 py-6 text-sand-11",
     backdrop: "pointer-events-none absolute inset-0",
     backdropFade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-2 to-sand-2/0",
-    content: "relative z-10 flex items-center justify-center gap-2",
+    content: "relative z-1 flex items-center justify-center gap-2",
     logo: "h-6 w-auto text-sand-9",
   },
 });

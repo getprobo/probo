@@ -20,7 +20,8 @@
 
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
-import { createBrowserRouter } from "react-router";
+import { Fragment } from "react";
+import { createBrowserRouter, redirect } from "react-router";
 
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
@@ -51,6 +52,15 @@ const routes = [
             index: true,
             Fallback: HomePageSkeleton,
             Component: lazy(() => import("#/pages/HomePageLoader")),
+          },
+          // Legacy trust-app URL; home now lives at the index route.
+          {
+            path: "overview",
+            loader: () => {
+              // eslint-disable-next-line
+              throw redirect("/");
+            },
+            Component: Fragment,
           },
           ...documentRoutes,
           ...subprocessorRoutes,

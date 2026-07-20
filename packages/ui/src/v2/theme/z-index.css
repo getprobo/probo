@@ -1,0 +1,56 @@
+/* Copyright (c) 2026 Probo Inc <hello@probo.com>.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Z-index — stacking scale by UI layer (steps 1–6)
+ *
+ * Numbered like color / type / radius / shadow. Each step is a layer role, not
+ * an arbitrary elevation. Values are spaced so a future mid-layer can land
+ * between them without renumbering consumers.
+ *
+ *   Step   value   Role
+ *   ─────  ──────  ────────────────────────────────────────────────────────
+ *   1      1       Local stacking inside a component (media over backdrop)
+ *   2      10      Sticky / fixed page chrome (top bars, sticky toolbars)
+ *   3      30      Floating menus (select, dropdown, tooltip, popover)
+ *   4      40      Overlay backdrops (dimmers under modals / drawers)
+ *   5      50      Modals and drawers
+ *   6      60      Toasts / global notifications (always on top)
+ *
+ * Put the token on the portaled root that participates in the document
+ * stacking context (e.g. the Positioner for menus, not only the inner Popup).
+ * A local z-1 inside the page will otherwise paint above a portaled popup
+ * that has no z-index of its own.
+ *
+ * --z-index-* is reset to initial so the v2 build exposes only this numeric
+ * scale (not Tailwind's z-10 / z-20 / … defaults). z-auto stays available as
+ * a static utility.
+ * ------------------------------------------------------------------------- */
+@theme {
+    --z-index-*: initial;
+
+    --z-index-1: 1;
+    --z-index-2: 10;
+    --z-index-3: 30;
+    --z-index-4: 40;
+    --z-index-5: 50;
+    --z-index-6: 60;
+}

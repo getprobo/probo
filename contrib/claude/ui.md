@@ -9,7 +9,7 @@ These rules are the **source of truth**. The legacy tree (`Atoms/`, `Molecules/`
 | Topic | Guide |
 |-------|--------|
 | Component shape, props, naming/suffixes | [`contrib/claude/react-components.md`](react-components.md) |
-| v2 design tokens (color, type, radius, shadow, spacing) | [`contrib/claude/v2-tokens.md`](v2-tokens.md) |
+| v2 design tokens (color, type, radius, shadow, z-index, spacing) | [`contrib/claude/v2-tokens.md`](v2-tokens.md) |
 | App folder layout and special folders | [`contrib/claude/app-arborescence.md`](app-arborescence.md) |
 | Error boundaries and error/fallback props | [`contrib/claude/error-handling.md`](error-handling.md) |
 | Relay data loading | [`contrib/claude/relay.md`](relay.md) |
@@ -20,7 +20,7 @@ These rules are the **source of truth**. The legacy tree (`Atoms/`, `Molecules/`
 |------|------------|
 | Package | **`@probo/ui`** — v2 components under `src/v2`. Apps opt into v2 by importing the v2 theme (see [`v2-tokens.md`](v2-tokens.md)). |
 | Styling | **Tailwind v4** with the Radix-scale tokens (`bg-sand-3`, `text-sand-12`, `rounded-3`, `text-4`, …). |
-| Variants API | **`tailwind-variants/lite`** only — `import { tv } from "tailwind-variants/lite"`. The `/lite` entrypoint ships **without `tailwind-merge`**, which is required: the numbered scales (`text-1…9`, `rounded-1…6`, `shadow-1…6`) collide with the color/utility namespaces and tailwind-merge would silently drop the scale class (e.g. `text-3` next to `text-sand-11`). The legacy v1 kit stays on `tailwind-variants` (with merge). |
+| Variants API | **`tailwind-variants/lite`** only — `import { tv } from "tailwind-variants/lite"`. The `/lite` entrypoint ships **without `tailwind-merge`**, which is required: the numbered scales (`text-1…9`, `rounded-1…6`, `shadow-1…6`, `z-1…6`) collide with the color/utility namespaces and tailwind-merge would silently drop the scale class (e.g. `text-3` next to `text-sand-11`). The legacy v1 kit stays on `tailwind-variants` (with merge). |
 | Class composition | **Do not use `clsx` or `tailwind-merge`.** All conditional styling goes through `tv` variants and slots. |
 | Headless primitives | **Base UI** (`@base-ui/react`). We **style** these primitives; we do not re-implement their behavior. |
 

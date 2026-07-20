@@ -27,7 +27,7 @@ import { tv } from "tailwind-variants/lite";
 export const toaster = tv({
   slots: {
     viewport: [
-      "fixed bottom-0 right-0 z-60 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 p-4",
+      "fixed bottom-0 right-0 z-6 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 p-4",
       "outline-none",
     ],
     root: [

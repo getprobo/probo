@@ -28,7 +28,7 @@ import { backdropCard } from "./variants";
 interface BackdropCardProps {
   // Centered content shown above the backdrop (an icon or a logo box). The node
   // owns its own sizing/color; position it above the backdrop with `relative
-  // z-10`.
+  // z-1`.
   media: ReactNode;
   // When set, a blurred, magnified copy of this image becomes the backdrop;
   // otherwise a dotted texture is shown.

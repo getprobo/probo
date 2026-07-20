@@ -113,14 +113,14 @@ export function DocumentEntry({
           ? (
               <RouterLink
                 to={viewHref}
-                className="absolute inset-0 z-10 hidden max-sm:block"
+                className="absolute inset-0 z-1 hidden max-sm:block"
                 aria-label={mobileHitLabel}
               />
             )
           : (
               <button
                 type="button"
-                className="absolute inset-0 z-10 hidden max-sm:block"
+                className="absolute inset-0 z-1 hidden max-sm:block"
                 aria-label={mobileHitLabel}
                 disabled={isRequesting}
                 onClick={onGetAccess}

@@ -25,7 +25,7 @@ import { tv } from "tailwind-variants/lite";
 // the body. The card frame and backdrop live in BackdropCard.
 export const subprocessorListItem = tv({
   slots: {
-    logo: "relative z-10 flex size-10 items-center justify-center overflow-hidden rounded-2 bg-sand-1",
+    logo: "relative z-1 flex size-10 items-center justify-center overflow-hidden rounded-2 bg-sand-1",
     logoImage: "size-full object-cover",
     logoFallbackIcon: "text-sand-9",
     region: "flex items-start gap-1",

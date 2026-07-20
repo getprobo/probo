@@ -43,7 +43,8 @@ export function SelectPopup(props: SelectPopupProps) {
 
   return (
     <BaseSelect.Portal>
-      <BaseSelect.Positioner side={side} align={align} sideOffset={sideOffset}>
+      {/* z-3 on the Positioner so the portaled root wins over in-page z-1. */}
+      <BaseSelect.Positioner className="z-3" side={side} align={align} sideOffset={sideOffset}>
         <BaseSelect.Popup className={selectPopup({ className })} {...popupProps}>
           {children}
         </BaseSelect.Popup>
