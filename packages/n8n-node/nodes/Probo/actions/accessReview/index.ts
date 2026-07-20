@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
-import * as addSourceOp from './addSource.operation';
 import * as createOp from './create.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
@@ -41,12 +40,6 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				name: 'Add Source',
-				value: 'addSource',
-				description: 'Add a scope source to an access review campaign',
-				action: 'Add a scope source to an access review campaign',
-			},
 			{
 				name: 'Cancel',
 				value: 'cancel',
@@ -98,7 +91,6 @@ export const description: INodeProperties[] = [
 		],
 		default: 'create',
 	},
-	...addSourceOp.description,
 	...createOp.description,
 	...deleteOp.description,
 	...getOp.description,
@@ -110,7 +102,6 @@ export const description: INodeProperties[] = [
 ];
 
 export {
-	addSourceOp as addSource,
 	createOp as create,
 	deleteOp as delete,
 	getOp as get,

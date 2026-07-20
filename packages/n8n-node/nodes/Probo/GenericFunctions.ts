@@ -21,6 +21,7 @@
 import type {
 	IExecuteFunctions,
 	IHookFunctions,
+	ILoadOptionsFunctions,
 	IDataObject,
 	JsonObject,
 	IHttpRequestOptions,
@@ -35,8 +36,10 @@ type ApiRequestFn = (
 	variables?: IDataObject,
 ) => Promise<IDataObject>;
 
+type ApiRequestContext = IExecuteFunctions | IHookFunctions | ILoadOptionsFunctions;
+
 async function proboGraphqlRequest(
-	this: IExecuteFunctions | IHookFunctions,
+	this: ApiRequestContext,
 	apiPath: string,
 	query: string,
 	variables: IDataObject = {},
@@ -82,7 +85,7 @@ async function proboGraphqlRequest(
 }
 
 export async function proboApiRequest(
-	this: IExecuteFunctions | IHookFunctions,
+	this: ApiRequestContext,
 	query: string,
 	variables: IDataObject = {},
 ): Promise<IDataObject> {
@@ -160,7 +163,7 @@ export async function proboApiRequestAllItems(
 ): Promise<IDataObject[]> {
 	return proboGraphqlRequestAllItems.call(
 		this,
-		proboApiRequest,
+		proboApiRequest as ApiRequestFn,
 		query,
 		variables,
 		getConnection,
@@ -179,7 +182,7 @@ export async function proboConnectApiRequestAllItems(
 ): Promise<IDataObject[]> {
 	return proboGraphqlRequestAllItems.call(
 		this,
-		proboConnectApiRequest,
+		proboConnectApiRequest as ApiRequestFn,
 		query,
 		variables,
 		getConnection,

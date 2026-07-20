@@ -588,6 +588,7 @@ input UpdateAccessReviewCampaignInput {
     accessReviewCampaignId: ID!
     name: String @goField(omittable: true)
     description: String @goField(omittable: true)
+    accessReviewSourceIds: [ID!] @goField(omittable: true)
 }
 
 type UpdateAccessReviewCampaignPayload {

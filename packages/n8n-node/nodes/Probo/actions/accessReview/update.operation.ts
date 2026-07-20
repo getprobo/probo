@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { accessReviewSourceIdsUpdateField } from './sources.fields';
 
 export const description: INodeProperties[] = [
 	{
@@ -62,6 +63,20 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The description of the access review campaign',
 	},
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['accessReview'],
+				operation: ['update'],
+			},
+		},
+		options: [accessReviewSourceIdsUpdateField],
+	},
 ];
 
 export async function execute(
@@ -71,6 +86,9 @@ export async function execute(
 	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
+	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
+		accessReviewSourceIds?: string[];
+	};
 
 	const query = `
 		mutation UpdateAccessReviewCampaign($input: UpdateAccessReviewCampaignInput!) {
@@ -89,9 +107,12 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string> = { accessReviewCampaignId };
+	const input: Record<string, string | string[]> = { accessReviewCampaignId };
 	if (name) input.name = name;
 	if (description) input.description = description;
+	if (additionalFields.accessReviewSourceIds !== undefined) {
+		input.accessReviewSourceIds = additionalFields.accessReviewSourceIds;
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

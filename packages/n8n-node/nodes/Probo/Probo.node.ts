@@ -31,6 +31,7 @@ import {
 	getAllResourceFields,
 	getExecuteFunction,
 } from './actions';
+import { getAccessReviewSources } from './actions/accessReview/loadAccessReviewSourceOptions';
 
 export class Probo implements INodeType {
 	description: INodeTypeDescription = {
@@ -273,6 +274,9 @@ export class Probo implements INodeType {
 	}
 
 	methods = {
+		loadOptions: {
+			getAccessReviewSources,
+		},
 		listSearch: {},
 	};
 }
