@@ -776,7 +776,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.Is(err, accessreview.ErrCampaignNotDraft) {
+		if errors.Is(err, accessreview.ErrCampaignCannotUpdate) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -822,7 +822,7 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
 		if errors.Is(err, accessreview.ErrCampaignMissingSources) ||
-			errors.Is(err, accessreview.ErrCampaignNotDraft) {
+			errors.Is(err, accessreview.ErrCampaignCannotStart) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 

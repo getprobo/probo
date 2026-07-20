@@ -159,12 +159,7 @@ func (s *Service) UpdateCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf(
-					"cannot update campaign: status is %s, expected %s: %w",
-					campaign.Status,
-					coredata.AccessReviewCampaignStatusDraft,
-					ErrCampaignNotDraft,
-				)
+				return ErrCampaignCannotUpdate
 			}
 
 			if req.Name != nil && *req.Name != nil {
@@ -247,12 +242,7 @@ func (s *Service) AddCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf(
-					"cannot add scope source: campaign status is %s, expected %s: %w",
-					campaign.Status,
-					coredata.AccessReviewCampaignStatusDraft,
-					ErrCampaignNotDraft,
-				)
+				return ErrCampaignCannotUpdate
 			}
 
 			source := &coredata.AccessReviewSource{}
@@ -301,12 +291,7 @@ func (s *Service) RemoveCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf(
-					"cannot remove scope source: campaign status is %s, expected %s: %w",
-					campaign.Status,
-					coredata.AccessReviewCampaignStatusDraft,
-					ErrCampaignNotDraft,
-				)
+				return ErrCampaignCannotUpdate
 			}
 
 			campaignSource := &coredata.AccessReviewCampaignSource{}
@@ -415,12 +400,7 @@ func (s *Service) StartCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf(
-					"cannot start campaign: status is %s, expected %s: %w",
-					campaign.Status,
-					coredata.AccessReviewCampaignStatusDraft,
-					ErrCampaignNotDraft,
-				)
+				return ErrCampaignCannotStart
 			}
 
 			var campaignSources coredata.AccessReviewCampaignSources
