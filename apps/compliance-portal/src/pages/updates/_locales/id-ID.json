@@ -1,0 +1,9 @@
+{
+  "title": "Pembaruan",
+  "subscribe": "Berlangganan pembaruan",
+  "backToUpdates": "Semua pembaruan",
+  "empty": {
+    "title": "Belum ada pembaruan.",
+    "description": "Berlangganan untuk mendapatkan pemberitahuan saat pembaruan baru dipublikasikan."
+  }
+}

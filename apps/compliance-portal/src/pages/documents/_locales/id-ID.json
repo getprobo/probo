@@ -1,0 +1,46 @@
+{
+  "title": "Dokumen",
+  "tabs": {
+    "all": "Semua",
+    "public": "Publik",
+    "private": "Privat"
+  },
+  "sections": {
+    "reports": "Laporan kepatuhan"
+  },
+  "types": {
+    "OTHER": "Lainnya",
+    "GOVERNANCE": "Tata Kelola",
+    "POLICY": "Kebijakan",
+    "PROCEDURE": "Prosedur",
+    "PLAN": "Rencana",
+    "REGISTER": "Register",
+    "RECORD": "Catatan",
+    "REPORT": "Laporan",
+    "TEMPLATE": "Templat",
+    "STATEMENT_OF_APPLICABILITY": "Pernyataan Keberlakuan"
+  },
+  "actions": {
+    "view": "Lihat",
+    "getAccess": "Dapatkan Akses",
+    "requested": "Akses telah diminta"
+  },
+  "empty": {
+    "title": "Belum ada dokumen yang tersedia",
+    "description": "Portal kepatuhan ini belum mempublikasikan dokumen apa pun.",
+    "filteredTitle": "Tidak ada dokumen yang cocok dengan filter ini",
+    "filteredDescription": "Coba tab lain untuk melihat dokumen yang tersedia."
+  },
+  "viewer": {
+    "back": "Dokumen",
+    "share": "Bagikan dokumen",
+    "linkCopied": "Tautan disalin ke clipboard",
+    "download": "Unduh",
+    "previewUnavailable": "Pratinjau tidak tersedia",
+    "downloadToView": "Jenis file ini tidak dapat dipratinjau di sini. Unduh untuk melihatnya.",
+    "locked": {
+      "title": "Akses diperlukan",
+      "description": "Anda belum memiliki akses ke dokumen ini."
+    }
+  }
+}

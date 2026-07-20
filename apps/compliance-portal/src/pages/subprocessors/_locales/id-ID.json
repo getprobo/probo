@@ -1,0 +1,109 @@
+{
+  "title": "Subprosesor",
+  "filters": {
+    "allCategories": "Semua kategori",
+    "allRegions": "Semua wilayah",
+    "searchPlaceholder": "Cari..."
+  },
+  "empty": {
+    "title": "Belum ada subprosesor yang tercantum.",
+    "description": "Portal kepatuhan ini belum mempublikasikan subprosesor apa pun.",
+    "filteredTitle": "Tidak ada subprosesor yang cocok dengan filter Anda.",
+    "filteredDescription": "Sesuaikan pencarian atau filter Anda untuk melihat subprosesor yang tersedia.",
+    "clearFilters": "Hapus filter"
+  },
+  "regions": {
+    "global": "Global",
+    "eu": "Uni Eropa"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analitik",
+      "description": "Analitik penggunaan dan telemetri produk."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Pemantauan Cloud",
+      "description": "Observabilitas, pencatatan log, dan pemantauan waktu aktif."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Penyedia Cloud",
+      "description": "Hosting cloud, komputasi, penyimpanan, dan jaringan."
+    },
+    "COLLABORATION": {
+      "label": "Kolaborasi",
+      "description": "Komunikasi, penjadwalan, dan alat kerja tim."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Dukungan Pelanggan",
+      "description": "Layanan bantuan, tiket, dan pesan pelanggan."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Penyimpanan dan Pemrosesan Data",
+      "description": "Basis data, gudang data, dan alur pemrosesan."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Manajemen Dokumen",
+      "description": "Penyimpanan dokumen, penandatanganan, dan tanda tangan elektronik."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Manajemen Karyawan",
+      "description": "SDM, penggajian, dan operasi kepegawaian."
+    },
+    "ENGINEERING": {
+      "label": "Rekayasa",
+      "description": "Perangkat dan platform rekayasa perangkat lunak."
+    },
+    "FINANCE": {
+      "label": "Keuangan",
+      "description": "Penagihan, pembayaran, dan akuntansi."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Penyedia Identitas",
+      "description": "Autentikasi, SSO, dan manajemen identitas."
+    },
+    "IT": {
+      "label": "TI",
+      "description": "Administrasi TI dan manajemen perangkat."
+    },
+    "MARKETING": {
+      "label": "Pemasaran",
+      "description": "Pemasaran, CRM, dan keterlibatan audiens."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Operasional Kantor",
+      "description": "Operasional tempat kerja dan kantor."
+    },
+    "OTHER": {
+      "label": "Lainnya",
+      "description": "Layanan pendukung lainnya."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Manajemen Kata Sandi",
+      "description": "Manajemen kredensial dan rahasia."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Produk dan Desain",
+      "description": "Perangkat produk dan desain."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Layanan Profesional",
+      "description": "Konsultasi dan layanan profesional."
+    },
+    "RECRUITING": {
+      "label": "Rekrutmen",
+      "description": "Perekrutan, pencarian kandidat, dan pelacakan pelamar."
+    },
+    "SALES": {
+      "label": "Penjualan",
+      "description": "Dukungan penjualan dan CRM."
+    },
+    "SECURITY": {
+      "label": "Keamanan",
+      "description": "Keamanan, pemantauan, dan akses yang aman."
+    },
+    "VERSION_CONTROL": {
+      "label": "Kontrol Versi",
+      "description": "Kontrol sumber dan hosting kode."
+    }
+  }
+}

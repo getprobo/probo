@@ -1,0 +1,71 @@
+{
+  "title": "Permintaan Data",
+  "newRequest": "Permintaan Baru",
+  "loadMore": "Muat lebih banyak",
+  "empty": {
+    "title": "Belum ada permintaan",
+    "description": "Permintaan yang Anda ajukan akan muncul di sini agar Anda dapat memantau progresnya."
+  },
+  "types": {
+    "ACCESS": "Akses Data",
+    "DELETION": "Penghapusan Data",
+    "RECTIFICATION": "Rektifikasi Data",
+    "PORTABILITY": "Portabilitas Data",
+    "OBJECTION": "Keberatan atas Pemrosesan",
+    "COMPLAINT": "Laporan Penyalahgunaan"
+  },
+  "status": {
+    "TODO": "Menunggu",
+    "IN_PROGRESS": "Sedang Diproses",
+    "DONE": "Selesai",
+    "REJECTED": "Ditolak"
+  },
+  "typeOption": {
+    "ACCESS": "Akses data saya",
+    "DELETION": "Hapus data saya",
+    "RECTIFICATION": "Perbaiki data saya",
+    "OBJECTION": "Keberatan atas pemrosesan",
+    "COMPLAINT": "Laporkan penyalahgunaan"
+  },
+  "dialog": {
+    "title": "Permintaan Baru",
+    "description": "Pilih jenis permintaan dan lengkapi detail di bawah ini.",
+    "typeLabel": "Jenis permintaan",
+    "cancel": "Batal",
+    "submit": "Kirim Permintaan",
+    "success": {
+      "title": "Permintaan terkirim",
+      "description": "Kami akan memproses permintaan Anda dan memberikan tanggapan dalam jangka waktu yang ditetapkan oleh hukum yang berlaku.",
+      "close": "Tutup"
+    }
+  },
+  "form": {
+    "name": "Nama Lengkap",
+    "nameOptional": "Nama Anda (opsional)",
+    "namePlaceholder": "Budi Santoso",
+    "email": "Alamat Email",
+    "deletionWarning": "Penghapusan data bersifat permanen dan tidak dapat dibatalkan. Sebagian data mungkin tetap disimpan untuk memenuhi kewajiban hukum.",
+    "details": {
+      "ACCESS": {
+        "label": "Detail permintaan Anda",
+        "placeholder": "Saya ingin mendapatkan salinan semua data pribadi yang terkait dengan akun saya…"
+      },
+      "DELETION": {
+        "label": "Lingkup permintaan penghapusan",
+        "placeholder": "Mohon hapus semua data pribadi termasuk…"
+      },
+      "RECTIFICATION": {
+        "label": "Apa yang harus diperbaiki?",
+        "placeholder": "Informasi berikut ini tidak akurat…"
+      },
+      "OBJECTION": {
+        "label": "Terhadap apa Anda keberatan?",
+        "placeholder": "Saya keberatan dengan pemrosesan data saya untuk…"
+      },
+      "COMPLAINT": {
+        "label": "Deskripsi masalah",
+        "placeholder": "Saya melihat bahwa…"
+      }
+    }
+  }
+}

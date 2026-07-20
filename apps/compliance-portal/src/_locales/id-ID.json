@@ -1,0 +1,122 @@
+{
+  "topBar": {
+    "tagline": "Portal Kepatuhan",
+    "getAccess": "Dapatkan Akses",
+    "nav": {
+      "documents": "Dokumen",
+      "subprocessors": "Subprosesor",
+      "updates": "Pembaruan",
+      "requests": "Permintaan"
+    }
+  },
+  "userMenu": {
+    "signOut": "Keluar"
+  },
+  "common": {
+    "cancel": "Batal",
+    "error": "Terjadi kesalahan",
+    "previousPage": "Halaman sebelumnya",
+    "nextPage": "Halaman berikutnya",
+    "pageOf": "Halaman {{current}} dari {{total}}",
+    "zoomOut": "Perkecil",
+    "zoomIn": "Perbesar"
+  },
+  "auth": {
+    "backToPortal": "Kembali ke portal",
+    "signIn": {
+      "title": "Masuk untuk melanjutkan",
+      "description": "Akses sumber daya yang dilindungi atau ajukan permintaan",
+      "or": "ATAU",
+      "withProvider": "Masuk dengan {{provider}}",
+      "emailLabel": "Alamat Email",
+      "emailPlaceholder": "anda@perusahaan.com",
+      "emailRequired": "Email wajib diisi",
+      "emailInvalid": "Masukkan alamat email yang valid",
+      "sendMagicLink": "Kirim Tautan Ajaib",
+      "resend": "Kirim ulang tautan",
+      "resendIn": "Kirim ulang tautan dalam {{seconds}} detik",
+      "magicLinkSent": "Tautan ajaib terkirim!",
+      "magicLinkSentNote": "Periksa email Anda dan gunakan tautan tersebut untuk masuk."
+    },
+    "requestAccess": {
+      "success": "Akses telah diminta"
+    },
+    "verify": {
+      "title": "Mengonfirmasi email Anda",
+      "description": "Harap tunggu sementara kami memproses proses masuk Anda…"
+    },
+    "fullName": {
+      "title": "Tambahkan nama Anda",
+      "label": "Nama Lengkap",
+      "placeholder": "Budi Santoso",
+      "required": "Nama lengkap wajib diisi",
+      "tooShort": "Nama lengkap terlalu pendek",
+      "submit": "Lanjutkan"
+    },
+    "magicLinkExpired": {
+      "title": "Tautan kedaluwarsa",
+      "description": "Tautan ajaib ini telah kedaluwarsa. Silakan minta tautan baru."
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "Tautan sudah digunakan",
+      "description": "Tautan ajaib ini sudah digunakan. Silakan minta tautan baru."
+    },
+    "errors": {
+      "magicLinkFailed": "Tautan ajaib gagal dikirim. Silakan coba lagi.",
+      "verifyFailed": "Tautan gagal diverifikasi. Silakan coba lagi.",
+      "fullNameFailed": "Nama Anda gagal disimpan. Silakan coba lagi.",
+      "requestFailed": "Permintaan akses Anda gagal diselesaikan. Silakan coba lagi."
+    }
+  },
+  "home": {
+    "heroTitle": "Kepercayaan di {{name}}.",
+    "heroDescription": "Selamat datang di Portal Kepatuhan kami. Temukan dokumentasi keamanan dan sertifikasi kami di sini.",
+    "sections": {
+      "compliance": "Kepatuhan",
+      "securityCommitments": "Komitmen Keamanan",
+      "trustedBy": "Dipercaya oleh",
+      "recentUpdates": "Pembaruan terbaru"
+    },
+    "recentUpdates": {
+      "viewAll": "Lihat semua"
+    }
+  },
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "description": "Halaman yang Anda cari tidak ada atau telah dipindahkan.",
+    "backHome": "Kembali ke beranda"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Halaman tidak ditemukan",
+      "description": "Halaman yang Anda cari tidak ada atau mungkin telah dipindahkan."
+    },
+    "forbidden": {
+      "title": "Akses ditolak",
+      "description": "Anda tidak memiliki izin untuk melihat halaman ini."
+    },
+    "serverError": {
+      "title": "Terjadi kesalahan",
+      "description": "Kami mengalami kesalahan yang tidak terduga. Silakan coba lagi sebentar lagi."
+    },
+    "generic": {
+      "title": "Terjadi kesalahan",
+      "description": "Kami mengalami kesalahan yang tidak terduga. Silakan coba lagi sebentar lagi."
+    },
+    "actions": {
+      "backToCompliancePortal": "Kembali ke portal kepatuhan",
+      "tryAgain": "Coba lagi"
+    },
+    "inline": {
+      "message": "Konten tidak dapat dimuat",
+      "retry": "Coba lagi"
+    }
+  },
+  "footer": {
+    "poweredBy": "Didukung oleh"
+  },
+  "pagination": {
+    "previous": "Halaman sebelumnya",
+    "next": "Halaman berikutnya"
+  }
+}
