@@ -724,8 +724,8 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 		},
 	)
 	if err != nil {
-		if errors.Is(err, accessreview.ErrCampaignSourceOrganizationMismatch) {
-			return nil, gqlutils.Invalid(ctx, err)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create access review campaign", log.Error(err))
@@ -760,8 +760,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.Is(err, accessreview.ErrCampaignNotDraft) ||
-			errors.Is(err, accessreview.ErrCampaignSourceOrganizationMismatch) {
+		if errors.Is(err, accessreview.ErrCampaignNotDraft) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -875,6 +874,10 @@ func (r *mutationResolver) AddAccessReviewCampaignSource(ctx context.Context, in
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot add scope source to access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
