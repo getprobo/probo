@@ -87,11 +87,17 @@ export function SubscribeDialogProvider({
   }, [openSignIn, viewer]);
 
   const unsubscribe = useCallback(async () => {
-    await unsubscribeFromMailingList({ variables: {} });
+    try {
+      await unsubscribeFromMailingList({ variables: {} });
+    } catch {
+      // Errors are surfaced by the mutation notifier.
+    }
   }, [unsubscribeFromMailingList]);
 
   // After a guest signs in to subscribe, they land back with the subscribe
   // marker; open the dialog once and drop the marker so a reload can't re-open.
+  // Derive the next params from the updater's previous snapshot so a concurrent
+  // effect that already cleared an access-request marker is not undone.
   const resumed = useRef(false);
   useEffect(() => {
     if (resumed.current || viewer == null || searchParams.get(SUBSCRIBE_PARAM) == null) {
@@ -99,9 +105,11 @@ export function SubscribeDialogProvider({
     }
     resumed.current = true;
     setDialogOpen(true);
-    const next = new URLSearchParams(searchParams);
-    next.delete(SUBSCRIBE_PARAM);
-    setSearchParams(next, { replace: true });
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.delete(SUBSCRIBE_PARAM);
+      return next;
+    }, { replace: true });
   }, [viewer, searchParams, setSearchParams]);
 
   const value = useMemo(

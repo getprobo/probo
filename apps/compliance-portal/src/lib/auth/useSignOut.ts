@@ -43,8 +43,12 @@ export function useSignOut() {
   });
 
   const signOut = useCallback(async () => {
-    await commit({ variables: {} });
-    window.location.reload();
+    try {
+      await commit({ variables: {} });
+      window.location.reload();
+    } catch {
+      // errorToast already handles user-facing feedback.
+    }
   }, [commit]);
 
   return [signOut, isSigningOut] as const;

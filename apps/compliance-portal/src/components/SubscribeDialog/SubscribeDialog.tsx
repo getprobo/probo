@@ -29,7 +29,7 @@ import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useSubscribeToMailingList } from "#/lib/mailingList/useSubscribeToMailingList";
@@ -45,7 +45,8 @@ interface SubscribeDialogProps {
 }
 
 // Auth-gated mailing-list subscribe confirmation. The form only mounts while
-// open so each open starts clean without a reset effect.
+// open so each open starts clean without a reset effect. Dismiss is blocked
+// while the mutation is in flight so a Cancel/Escape cannot race a reopen.
 export function SubscribeDialog({
   open,
   onOpenChange,
@@ -53,12 +54,23 @@ export function SubscribeDialog({
   viewerEmail,
   organizationName,
 }: SubscribeDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && isSubmitting) {
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
       <DialogPopup>
         {open && (
           <SubscribeForm
             onClose={() => onOpenChange(false)}
+            onSubmittingChange={setIsSubmitting}
             trustCenterId={trustCenterId}
             viewerEmail={viewerEmail}
             organizationName={organizationName}
@@ -71,6 +83,7 @@ export function SubscribeDialog({
 
 interface SubscribeFormProps {
   onClose: () => void;
+  onSubmittingChange: (submitting: boolean) => void;
   trustCenterId: string;
   viewerEmail: string;
   organizationName: string;
@@ -78,23 +91,39 @@ interface SubscribeFormProps {
 
 function SubscribeForm({
   onClose,
+  onSubmittingChange,
   trustCenterId,
   viewerEmail,
   organizationName,
 }: SubscribeFormProps) {
   const { t } = useTranslation("updates");
   const [subscribe, isSubscribing] = useSubscribeToMailingList(trustCenterId);
-  const [submitted, setSubmitted] = useState(false);
+  const aliveRef = useRef(true);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    onSubmittingChange(isSubscribing);
+    return () => {
+      onSubmittingChange(false);
+    };
+  }, [isSubscribing, onSubmittingChange]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (submitted) {
+    if (isSubscribing) {
       return;
     }
     try {
       await subscribe();
-      setSubmitted(true);
-      onClose();
+      if (aliveRef.current) {
+        onClose();
+      }
     } catch {
       // Errors are surfaced by the mutation notifier; keep the form open.
     }
@@ -119,7 +148,13 @@ function SubscribeForm({
       </DialogBody>
 
       <DialogFooter>
-        <Button type="button" variant="soft" color="neutral" onClick={onClose}>
+        <Button
+          type="button"
+          variant="soft"
+          color="neutral"
+          disabled={isSubscribing}
+          onClick={onClose}
+        >
           {t("dialog.cancel")}
         </Button>
         <Button type="submit" variant="solid" color="neutral" highContrast loading={isSubscribing}>
