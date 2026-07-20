@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.201.0] - 2026-07-20
+
+### Added
+
+- `prb trust-center commitment` and `prb trust-center commitment-group` commands to create, list, update, and delete compliance portal commitments and their groups
+
 ## [0.200.0] - 2026-07-20
 
 ### Changed
