@@ -65,10 +65,11 @@ func (s *Service) CreateCampaign(
 				}
 
 				if source.OrganizationID != campaign.OrganizationID {
-					return &CampaignSourceOrganizationMismatchError{
-						Operation: "create",
-						SourceID:  sourceID,
-					}
+					return fmt.Errorf(
+						"cannot create campaign: access source %s does not belong to the same organization: %w",
+						sourceID,
+						ErrCampaignSourceOrganizationMismatch,
+					)
 				}
 
 				if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
@@ -157,11 +158,12 @@ func (s *Service) UpdateCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return &CampaignInvalidStatusError{
-					Operation: "update",
-					Status:    campaign.Status,
-					Expected:  coredata.AccessReviewCampaignStatusDraft,
-				}
+				return fmt.Errorf(
+					"cannot update campaign: status is %s, expected %s: %w",
+					campaign.Status,
+					coredata.AccessReviewCampaignStatusDraft,
+					ErrCampaignNotDraft,
+				)
 			}
 
 			if req.Name != nil && *req.Name != nil {
@@ -244,11 +246,12 @@ func (s *Service) AddCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return &CampaignInvalidStatusError{
-					Operation: "add scope source",
-					Status:    campaign.Status,
-					Expected:  coredata.AccessReviewCampaignStatusDraft,
-				}
+				return fmt.Errorf(
+					"cannot add scope source: campaign status is %s, expected %s: %w",
+					campaign.Status,
+					coredata.AccessReviewCampaignStatusDraft,
+					ErrCampaignNotDraft,
+				)
 			}
 
 			source := &coredata.AccessReviewSource{}
@@ -257,10 +260,11 @@ func (s *Service) AddCampaignSource(
 			}
 
 			if source.OrganizationID != campaign.OrganizationID {
-				return &CampaignSourceOrganizationMismatchError{
-					Operation: "add scope source",
-					SourceID:  req.AccessReviewSourceID,
-				}
+				return fmt.Errorf(
+					"cannot add scope source: access source %q does not belong to the same organization: %w",
+					req.AccessReviewSourceID,
+					ErrCampaignSourceOrganizationMismatch,
+				)
 			}
 
 			if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
@@ -296,11 +300,12 @@ func (s *Service) RemoveCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return &CampaignInvalidStatusError{
-					Operation: "remove scope source",
-					Status:    campaign.Status,
-					Expected:  coredata.AccessReviewCampaignStatusDraft,
-				}
+				return fmt.Errorf(
+					"cannot remove scope source: campaign status is %s, expected %s: %w",
+					campaign.Status,
+					coredata.AccessReviewCampaignStatusDraft,
+					ErrCampaignNotDraft,
+				)
 			}
 
 			campaignSource := &coredata.AccessReviewCampaignSource{}
@@ -348,10 +353,11 @@ func (s *Service) syncCampaignSources(
 		}
 
 		if source.OrganizationID != campaign.OrganizationID {
-			return &CampaignSourceOrganizationMismatchError{
-				Operation: "update",
-				SourceID:  sourceID,
-			}
+			return fmt.Errorf(
+				"cannot update campaign: access source %s does not belong to the same organization: %w",
+				sourceID,
+				ErrCampaignSourceOrganizationMismatch,
+			)
 		}
 
 		if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
@@ -408,11 +414,12 @@ func (s *Service) StartCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return &CampaignInvalidStatusError{
-					Operation: "start",
-					Status:    campaign.Status,
-					Expected:  coredata.AccessReviewCampaignStatusDraft,
-				}
+				return fmt.Errorf(
+					"cannot start campaign: status is %s, expected %s: %w",
+					campaign.Status,
+					coredata.AccessReviewCampaignStatusDraft,
+					ErrCampaignNotDraft,
+				)
 			}
 
 			var campaignSources coredata.AccessReviewCampaignSources
