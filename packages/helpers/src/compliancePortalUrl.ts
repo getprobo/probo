@@ -18,50 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-type Translator = (s: string) => string;
+export function getCompliancePortalUrl(path: string): string {
+  const currentPath = window.location.pathname;
+  const trustMatch = currentPath.match(/^\/trust\/([^/]+)/);
 
-export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
-
-export const trustCenterVisibilities = [
-  "NONE",
-  "PRIVATE",
-  "PUBLIC",
-] as const;
-
-export const getTrustCenterVisibilityVariant = (visibility: TrustCenterVisibility) => {
-  switch (visibility) {
-    case "NONE":
-      return "danger" as const;
-    case "PRIVATE":
-      return "warning" as const;
-    case "PUBLIC":
-      return "success" as const;
-    default:
-      return "neutral" as const;
+  if (!trustMatch) {
+    return `/${path}`;
   }
-};
 
-export const getTrustCenterVisibilityLabel = (visibility: TrustCenterVisibility) => {
-  switch (visibility) {
-    case "NONE":
-      return "None";
-    case "PRIVATE":
-      return "Private";
-    case "PUBLIC":
-      return "Public";
-    default:
-      return visibility;
-  }
-};
-
-export function getTrustCenterVisibilityOptions(__: Translator) {
-  return trustCenterVisibilities.map((visibility) => ({
-    value: visibility,
-    label: __({
-      "NONE": "None",
-      "PRIVATE": "Private",
-      "PUBLIC": "Public",
-    }[visibility]),
-    variant: getTrustCenterVisibilityVariant(visibility),
-  }));
+  return `../${path}`;
 }

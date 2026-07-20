@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
+import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 
-export function getTrustCenterDocumentAccessStatusBadgeVariant(status: TrustCenterDocumentAccessStatus) {
+export function getCompliancePortalDocumentAccessStatusBadgeVariant(status: CompliancePortalDocumentAccessStatus) {
   switch (status) {
     case "REQUESTED":
       return "warning" as const;
@@ -32,7 +32,7 @@ export function getTrustCenterDocumentAccessStatusBadgeVariant(status: TrustCent
   }
 }
 
-export function getTrustCenterDocumentAccessStatusLabel(status: TrustCenterDocumentAccessStatus, __: (key: string) => string) {
+export function getCompliancePortalDocumentAccessStatusLabel(status: CompliancePortalDocumentAccessStatus, __: (key: string) => string) {
   switch (status) {
     case "REQUESTED":
       return __("requested");
@@ -45,7 +45,7 @@ export function getTrustCenterDocumentAccessStatusLabel(status: TrustCenterDocum
   }
 }
 
-interface ITrustCenterDocumentAccessInfo {
+interface ICompliancePortalDocumentAccessInfo {
   variant: string;
   type: string;
   persisted: boolean;
@@ -53,10 +53,10 @@ interface ITrustCenterDocumentAccessInfo {
   typeLabel: string,
   category: string;
   id: string;
-  status: TrustCenterDocumentAccessStatus;
+  status: CompliancePortalDocumentAccessStatus;
 }
 
-export type TrustCenterDocumentAccessInfo = ITrustCenterDocumentAccessInfo & (
+export type CompliancePortalDocumentAccessInfo = ICompliancePortalDocumentAccessInfo & (
   {
     variant: "info",
     type: "document",

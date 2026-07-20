@@ -100,50 +100,50 @@ func NewPresenter(baseURL string, fullName string) *Presenter {
 }
 
 const (
-	subjectConfirmEmail                      = "Confirm your email address"
-	subjectPasswordReset                     = "Reset your password"
-	subjectInvitation                        = "Invitation to join %s on Probo"
-	subjectDocumentApproval                  = "Action Required – Please review and approve %s compliance documents"
-	subjectDocumentSigning                   = "Action Required – Please review and sign %s compliance documents"
-	subjectDocumentExport                    = "Your document export is ready"
-	subjectFrameworkExport                   = "Your framework export is ready"
-	subjectTrustCenterAccess                 = "Compliance Page Access Invitation - %s"
-	subjectTrustCenterDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
-	subjectMagicLink                         = "Connect to %s"
-	subjectMailingListSubscription           = "%s – Confirm Your Compliance Updates Subscription"
-	subjectMailingListUnsubscription         = "%s – You've been unsubscribed"
-	subjectMailingListUpdates                = "%s – %s"
+	subjectConfirmEmail                           = "Confirm your email address"
+	subjectPasswordReset                          = "Reset your password"
+	subjectInvitation                             = "Invitation to join %s on Probo"
+	subjectDocumentApproval                       = "Action Required – Please review and approve %s compliance documents"
+	subjectDocumentSigning                        = "Action Required – Please review and sign %s compliance documents"
+	subjectDocumentExport                         = "Your document export is ready"
+	subjectFrameworkExport                        = "Your framework export is ready"
+	subjectCompliancePortalAccess                 = "Compliance Page Access Invitation - %s"
+	subjectCompliancePortalDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
+	subjectMagicLink                              = "Connect to %s"
+	subjectMailingListSubscription                = "%s – Confirm Your Compliance Updates Subscription"
+	subjectMailingListUnsubscription              = "%s – You've been unsubscribed"
+	subjectMailingListUpdates                     = "%s – %s"
 )
 
 var (
-	confirmEmailHTMLTemplate                      = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/confirm-email.html.tmpl"))
-	confirmEmailTextTemplate                      = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/confirm-email.txt.tmpl"))
-	passwordResetHTMLTemplate                     = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/password-reset.html.tmpl"))
-	passwordResetTextTemplate                     = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/password-reset.txt.tmpl"))
-	invitationHTMLTemplate                        = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/invitation.html.tmpl"))
-	invitationTextTemplate                        = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/invitation.txt.tmpl"))
-	documentApprovalHTMLTemplate                  = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-approval.html.tmpl"))
-	documentApprovalTextTemplate                  = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-approval.txt.tmpl"))
-	documentSigningHTMLTemplate                   = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-signing.html.tmpl"))
-	documentSigningTextTemplate                   = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-signing.txt.tmpl"))
-	documentExportHTMLTemplate                    = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-export.html.tmpl"))
-	documentExportTextTemplate                    = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-export.txt.tmpl"))
-	frameworkExportHTMLTemplate                   = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/framework-export.html.tmpl"))
-	frameworkExportTextTemplate                   = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/framework-export.txt.tmpl"))
-	trustCenterAccessHTMLTemplate                 = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/trust-center-access.html.tmpl"))
-	trustCenterAccessTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-access.txt.tmpl"))
-	trustCenterDocumentAccessRejectedHTMLTemplate = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/trust-center-document-access-rejected.html.tmpl"))
-	trustCenterDocumentAccessRejectedTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-document-access-rejected.txt.tmpl"))
-	magicLinkHTMLTemplate                         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/magic-link.html.tmpl"))
-	magicLinkTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
-	electronicSignatureCertificateHTMLTemplate    = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/electronic-signature-certificate.html.tmpl"))
-	electronicSignatureCertificateTextTemplate    = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/electronic-signature-certificate.txt.tmpl"))
-	mailingListSubscriptionHTMLTemplate           = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-subscription.html.tmpl"))
-	mailingListSubscriptionTextTemplate           = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-subscription.txt.tmpl"))
-	mailingListUnsubscriptionHTMLTemplate         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.html.tmpl"))
-	mailingListUnsubscriptionTextTemplate         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.txt.tmpl"))
-	mailingListUpdatesHTMLTemplate                = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-updates.html.tmpl"))
-	mailingListUpdatesTextTemplate                = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-updates.txt.tmpl"))
+	confirmEmailHTMLTemplate                           = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/confirm-email.html.tmpl"))
+	confirmEmailTextTemplate                           = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/confirm-email.txt.tmpl"))
+	passwordResetHTMLTemplate                          = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/password-reset.html.tmpl"))
+	passwordResetTextTemplate                          = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/password-reset.txt.tmpl"))
+	invitationHTMLTemplate                             = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/invitation.html.tmpl"))
+	invitationTextTemplate                             = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/invitation.txt.tmpl"))
+	documentApprovalHTMLTemplate                       = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-approval.html.tmpl"))
+	documentApprovalTextTemplate                       = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-approval.txt.tmpl"))
+	documentSigningHTMLTemplate                        = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-signing.html.tmpl"))
+	documentSigningTextTemplate                        = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-signing.txt.tmpl"))
+	documentExportHTMLTemplate                         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-export.html.tmpl"))
+	documentExportTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-export.txt.tmpl"))
+	frameworkExportHTMLTemplate                        = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/framework-export.html.tmpl"))
+	frameworkExportTextTemplate                        = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/framework-export.txt.tmpl"))
+	compliancePortalAccessHTMLTemplate                 = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-access.html.tmpl"))
+	compliancePortalAccessTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-access.txt.tmpl"))
+	compliancePortalDocumentAccessRejectedHTMLTemplate = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/compliance-portal-document-access-rejected.html.tmpl"))
+	compliancePortalDocumentAccessRejectedTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/compliance-portal-document-access-rejected.txt.tmpl"))
+	magicLinkHTMLTemplate                              = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/magic-link.html.tmpl"))
+	magicLinkTextTemplate                              = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
+	electronicSignatureCertificateHTMLTemplate         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/electronic-signature-certificate.html.tmpl"))
+	electronicSignatureCertificateTextTemplate         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/electronic-signature-certificate.txt.tmpl"))
+	mailingListSubscriptionHTMLTemplate                = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-subscription.html.tmpl"))
+	mailingListSubscriptionTextTemplate                = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-subscription.txt.tmpl"))
+	mailingListUnsubscriptionHTMLTemplate              = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.html.tmpl"))
+	mailingListUnsubscriptionTextTemplate              = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.txt.tmpl"))
+	mailingListUpdatesHTMLTemplate                     = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-updates.html.tmpl"))
+	mailingListUpdatesTextTemplate                     = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-updates.txt.tmpl"))
 )
 
 func (p *Presenter) getCommonVariables() (*CommonVariables, error) {
@@ -334,7 +334,7 @@ func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl strin
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderTrustCenterAccess(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderCompliancePortalAccess(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables()
 	if err != nil {
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
@@ -348,12 +348,12 @@ func (p *Presenter) RenderTrustCenterAccess(ctx context.Context, organizationNam
 		OrganizationName: organizationName,
 	}
 
-	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)
+	textBody, htmlBody, err = renderEmail(compliancePortalAccessTextTemplate, compliancePortalAccessHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectTrustCenterAccess, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(subjectCompliancePortalAccess, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
+func (p *Presenter) RenderCompliancePortalDocumentAccessRejected(
 	ctx context.Context,
 	fileNames []string,
 	organizationName string,
@@ -373,9 +373,9 @@ func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
 		OrganizationName: organizationName,
 	}
 
-	textBody, htmlBody, err = renderEmail(trustCenterDocumentAccessRejectedTextTemplate, trustCenterDocumentAccessRejectedHTMLTemplate, data)
+	textBody, htmlBody, err = renderEmail(compliancePortalDocumentAccessRejectedTextTemplate, compliancePortalDocumentAccessRejectedHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(subjectCompliancePortalDocumentAccessRejected, organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string, tokenString string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {

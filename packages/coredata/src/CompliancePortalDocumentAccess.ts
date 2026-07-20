@@ -18,24 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from 'react-email';
-import * as React from 'react';
-import EmailLayout, { bodyText } from './components/EmailLayout';
+export const compliancePortalDocumentAccessStatus = {
+  REQUESTED: "REQUESTED",
+  GRANTED: "GRANTED",
+  REJECTED: "REJECTED",
+  REVOKED: "REVOKED",
+} as const;
 
-export const TrustCenterDocumentAccessRejected = () => {
-  return (
-    <EmailLayout subject={`Compliance Page Document Access Rejected - ${'{{.OrganizationName}}'}`}>
-      <Text style={bodyText}>
-        Your access request to the following files in <strong>{'{{.OrganizationName}}'}</strong>'s compliance page has been rejected:
-      </Text>
-
-      <Text  style={bodyText}>
-      {'{{range .FileNames}}'}
-        • {'{{.}}'}<br/>
-      {'{{end}}'}
-      </Text>
-    </EmailLayout>
-  );
-};
-
-export default TrustCenterDocumentAccessRejected;
+export type CompliancePortalDocumentAccessStatus = (typeof compliancePortalDocumentAccessStatus)[keyof typeof compliancePortalDocumentAccessStatus];

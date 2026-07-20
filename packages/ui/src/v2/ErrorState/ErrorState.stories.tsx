@@ -20,7 +20,7 @@ import { ErrorState } from "./ErrorState";
 
 const actions = (
   <>
-    <Button size={2} color="neutral" highContrast>Back to trust center</Button>
+    <Button size={2} color="neutral" highContrast>Back to compliance portal</Button>
     <Button size={2} variant="soft" color="neutral">Contact support</Button>
   </>
 );

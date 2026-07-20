@@ -50,7 +50,7 @@ type Story = StoryObj<typeof Link>;
 
 export const Playground: Story = {};
 
-// Mirrors the Trust Center top-bar nav: ghost links with a persistent active
+// Mirrors the Compliance Portal top-bar nav: ghost links with a persistent active
 // pill on the selected item.
 export const Nav: Story = {
   render: () => (

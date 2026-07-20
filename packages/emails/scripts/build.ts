@@ -32,8 +32,8 @@ import DocumentSigning from "../src/DocumentSigning";
 import FrameworkExport from "../src/FrameworkExport";
 import Invitation from "../src/Invitation";
 import PasswordReset from "../src/PasswordReset";
-import TrustCenterAccess from "../src/TrustCenterAccess";
-import TrustCenterDocumentAccessRejected from "../src/TrustCenterDocumentAccessRejected";
+import CompliancePortalAccess from "../src/CompliancePortalAccess";
+import CompliancePortalDocumentAccessRejected from "../src/CompliancePortalDocumentAccessRejected";
 import ElectronicSignatureCertificate from "../src/ElectronicSignatureCertificate";
 import MailingListSubscription from "../src/MailingListSubscription";
 import MailingListUnsubscription from "../src/MailingListUnsubscription";
@@ -77,12 +77,12 @@ const templates: TemplateConfig[] = [
     render: () => FrameworkExport(),
   },
   {
-    name: "trust-center-access",
-    render: () => TrustCenterAccess(),
+    name: "compliance-portal-access",
+    render: () => CompliancePortalAccess(),
   },
   {
-    name: "trust-center-document-access-rejected",
-    render: () => TrustCenterDocumentAccessRejected(),
+    name: "compliance-portal-document-access-rejected",
+    render: () => CompliancePortalDocumentAccessRejected(),
   },
   {
     name: "magic-link",

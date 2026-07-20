@@ -26,7 +26,7 @@ import EmailLayout, {
   buttonContainer,
 } from "./components/EmailLayout";
 
-export const TrustCenterAccess = () => {
+export const CompliancePortalAccess = () => {
   return (
     <EmailLayout
       subject={`Compliance Page Access Invitation - ${"{{.OrganizationName}}"}`}
@@ -46,4 +46,4 @@ export const TrustCenterAccess = () => {
   );
 };
 
-export default TrustCenterAccess;
+export default CompliancePortalAccess;

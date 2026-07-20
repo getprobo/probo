@@ -19,5 +19,5 @@
 // SOFTWARE.
 
 export type {
-  TrustCenterDocumentAccessStatus,
-} from "./TrustCenterDocumentAccess";
+  CompliancePortalDocumentAccessStatus,
+} from "./CompliancePortalDocumentAccess";

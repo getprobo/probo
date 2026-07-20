@@ -83,17 +83,17 @@ export {
     getObligationTypeOptions,
 } from "./obligationType";
 export {
-    getTrustCenterVisibilityVariant,
-    getTrustCenterVisibilityLabel,
-    getTrustCenterVisibilityOptions,
-    getTrustCenterVisibilityVariant as getCompliancePageVisibilityVariant,
-    getTrustCenterVisibilityLabel as getCompliancePageVisibilityLabel,
-    getTrustCenterVisibilityOptions as getCompliancePageVisibilityOptions,
-    trustCenterVisibilities,
-    trustCenterVisibilities as compliancePageVisibilities,
-    type TrustCenterVisibility,
-    type TrustCenterVisibility as CompliancePageVisibility,
-} from "./trustCenterVisibility";
+    getCompliancePortalVisibilityVariant,
+    getCompliancePortalVisibilityLabel,
+    getCompliancePortalVisibilityOptions,
+    getCompliancePortalVisibilityVariant as getCompliancePageVisibilityVariant,
+    getCompliancePortalVisibilityLabel as getCompliancePageVisibilityLabel,
+    getCompliancePortalVisibilityOptions as getCompliancePageVisibilityOptions,
+    compliancePortalVisibilities,
+    compliancePortalVisibilities as compliancePageVisibilities,
+    type CompliancePortalVisibility,
+    type CompliancePortalVisibility as CompliancePageVisibility,
+} from "./compliancePortalVisibility";
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export {
@@ -121,18 +121,18 @@ export {
   fromMaxAgeSeconds,
 } from "./duration";
 export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
-export { getTrustCenterUrl } from "./trustCenter";
+export { getCompliancePortalUrl } from "./compliancePortalUrl";
 export { detectSocialName } from "./socialUrl";
 export { formatError, type GraphQLError } from "./error";
 export { Role, roles, getAssignableRoles } from "./roles";
 export {
-  getTrustCenterDocumentAccessStatusBadgeVariant,
-  getTrustCenterDocumentAccessStatusLabel,
-  getTrustCenterDocumentAccessStatusBadgeVariant as getCompliancePageDocumentAccessStatusBadgeVariant,
-  getTrustCenterDocumentAccessStatusLabel as getCompliancePageDocumentAccessStatusLabel,
-  type TrustCenterDocumentAccessInfo,
-  type TrustCenterDocumentAccessInfo as CompliancePageDocumentAccessInfo,
-} from "./trustCenterDocumentAccess";
+  getCompliancePortalDocumentAccessStatusBadgeVariant,
+  getCompliancePortalDocumentAccessStatusLabel,
+  getCompliancePortalDocumentAccessStatusBadgeVariant as getCompliancePageDocumentAccessStatusBadgeVariant,
+  getCompliancePortalDocumentAccessStatusLabel as getCompliancePageDocumentAccessStatusLabel,
+  type CompliancePortalDocumentAccessInfo,
+  type CompliancePortalDocumentAccessInfo as CompliancePageDocumentAccessInfo,
+} from "./compliancePortalDocumentAccess";
 export {
   getRightsRequestTypeLabel,
   getRightsRequestTypeOptions,
