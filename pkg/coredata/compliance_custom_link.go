@@ -36,14 +36,14 @@ import (
 
 type (
 	ComplianceCustomLink struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		TrustCenterID  gid.GID   `db:"trust_center_id"`
-		Name           string    `db:"name"`
-		URL            string    `db:"url"`
-		Rank           int       `db:"rank"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID                 gid.GID   `db:"id"`
+		OrganizationID     gid.GID   `db:"organization_id"`
+		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		Name               string    `db:"name"`
+		URL                string    `db:"url"`
+		Rank               int       `db:"rank"`
+		CreatedAt          time.Time `db:"created_at"`
+		UpdatedAt          time.Time `db:"updated_at"`
 	}
 
 	ComplianceCustomLinks []*ComplianceCustomLink
@@ -182,7 +182,7 @@ RETURNING rank;
 		"id":              c.ID,
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": c.OrganizationID,
-		"trust_center_id": c.TrustCenterID,
+		"trust_center_id": c.CompliancePortalID,
 		"name":            c.Name,
 		"url":             c.URL,
 		"created_at":      c.CreatedAt,
@@ -267,7 +267,7 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"id":              c.ID,
 		"new_rank":        c.Rank,
-		"trust_center_id": c.TrustCenterID,
+		"trust_center_id": c.CompliancePortalID,
 		"updated_at":      c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -305,11 +305,11 @@ WHERE
 	return nil
 }
 
-func (c *ComplianceCustomLinks) LoadByTrustCenterID(
+func (c *ComplianceCustomLinks) LoadByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[ComplianceCustomLinkOrderField],
 ) error {
 	q := `
@@ -331,7 +331,7 @@ WHERE
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.NamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 

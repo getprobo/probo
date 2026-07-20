@@ -36,38 +36,38 @@ import (
 )
 
 type (
-	TrustCenterReference struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		TrustCenterID  gid.GID   `db:"trust_center_id"`
-		Name           string    `db:"name"`
-		Description    *string   `db:"description"`
-		WebsiteURL     string    `db:"website_url"`
-		LogoFileID     gid.GID   `db:"logo_file_id"`
-		Rank           int       `db:"rank"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+	CompliancePortalReference struct {
+		ID                 gid.GID   `db:"id"`
+		OrganizationID     gid.GID   `db:"organization_id"`
+		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		Name               string    `db:"name"`
+		Description        *string   `db:"description"`
+		WebsiteURL         string    `db:"website_url"`
+		LogoFileID         gid.GID   `db:"logo_file_id"`
+		Rank               int       `db:"rank"`
+		CreatedAt          time.Time `db:"created_at"`
+		UpdatedAt          time.Time `db:"updated_at"`
 	}
 
-	TrustCenterReferences []*TrustCenterReference
+	CompliancePortalReferences []*CompliancePortalReference
 )
 
-func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) page.CursorKey {
+func (t CompliancePortalReference) CursorKey(orderBy CompliancePortalReferenceOrderField) page.CursorKey {
 	switch orderBy {
-	case TrustCenterReferenceOrderFieldRank:
+	case CompliancePortalReferenceOrderFieldRank:
 		return page.NewCursorKey(t.ID, t.Rank)
-	case TrustCenterReferenceOrderFieldName:
+	case CompliancePortalReferenceOrderFieldName:
 		return page.NewCursorKey(t.ID, t.Name)
-	case TrustCenterReferenceOrderFieldCreatedAt:
+	case CompliancePortalReferenceOrderFieldCreatedAt:
 		return page.NewCursorKey(t.ID, t.CreatedAt)
-	case TrustCenterReferenceOrderFieldUpdatedAt:
+	case CompliancePortalReferenceOrderFieldUpdatedAt:
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t *TrustCenterReference) AuthorizationAttributes(
+func (t *CompliancePortalReference) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
@@ -106,11 +106,11 @@ func (t *TrustCenterReference) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (t *TrustCenterReference) LoadByID(
+func (t *CompliancePortalReference) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterReferenceID gid.GID,
+	compliancePortalReferenceID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -133,7 +133,7 @@ LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_reference_id": trustCenterReferenceID}
+	args := pgx.StrictNamedArgs{"trust_center_reference_id": compliancePortalReferenceID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -141,9 +141,9 @@ LIMIT 1;
 		return fmt.Errorf("cannot query trust_center_references: %w", err)
 	}
 
-	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterReference])
+	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalReference])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center reference: %w", err)
+		return fmt.Errorf("cannot collect compliance portal reference: %w", err)
 	}
 
 	*t = reference
@@ -151,7 +151,7 @@ LIMIT 1;
 	return nil
 }
 
-func (t *TrustCenterReference) Insert(
+func (t *CompliancePortalReference) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -191,7 +191,7 @@ RETURNING rank;
 		"tenant_id":       scope.GetTenantID(),
 		"id":              t.ID,
 		"organization_id": t.OrganizationID,
-		"trust_center_id": t.TrustCenterID,
+		"trust_center_id": t.CompliancePortalID,
 		"name":            t.Name,
 		"description":     t.Description,
 		"website_url":     t.WebsiteURL,
@@ -208,13 +208,13 @@ RETURNING rank;
 			}
 		}
 
-		return fmt.Errorf("cannot insert trust center reference: %w", err)
+		return fmt.Errorf("cannot insert compliance portal reference: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterReference) Update(
+func (t *CompliancePortalReference) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -246,7 +246,7 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center reference: %w", err)
+		return fmt.Errorf("cannot update compliance portal reference: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -256,7 +256,7 @@ WHERE
 	return nil
 }
 
-func (t *TrustCenterReference) UpdateRank(
+func (t *CompliancePortalReference) UpdateRank(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -293,20 +293,20 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"id":              t.ID,
 		"new_rank":        t.Rank,
-		"trust_center_id": t.TrustCenterID,
+		"trust_center_id": t.CompliancePortalID,
 		"updated_at":      t.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center reference rank: %w", err)
+		return fmt.Errorf("cannot update compliance portal reference rank: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterReference) Delete(
+func (t *CompliancePortalReference) Delete(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -326,18 +326,18 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete trust center reference: %w", err)
+		return fmt.Errorf("cannot delete compliance portal reference: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterReferences) LoadByTrustCenterID(
+func (t *CompliancePortalReferences) LoadByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
-	cursor *page.Cursor[TrustCenterReferenceOrderField],
+	compliancePortalID gid.GID,
+	cursor *page.Cursor[CompliancePortalReferenceOrderField],
 ) error {
 	q := `
 SELECT
@@ -361,7 +361,7 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -370,9 +370,9 @@ WHERE
 		return fmt.Errorf("cannot query trust_center_references: %w", err)
 	}
 
-	references, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterReference])
+	references, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalReference])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center references: %w", err)
+		return fmt.Errorf("cannot collect compliance portal references: %w", err)
 	}
 
 	*t = references
@@ -380,11 +380,11 @@ WHERE
 	return nil
 }
 
-func (t *TrustCenterReferences) CountByTrustCenterID(
+func (t *CompliancePortalReferences) CountByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -398,14 +398,14 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
 
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count trust center references: %w", err)
+		return 0, fmt.Errorf("cannot count compliance portal references: %w", err)
 	}
 
 	return count, nil

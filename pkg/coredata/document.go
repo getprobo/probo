@@ -37,16 +37,16 @@ import (
 
 type (
 	Document struct {
-		ID                    gid.GID               `db:"id"`
-		OrganizationID        gid.GID               `db:"organization_id"`
-		CurrentPublishedMajor *int                  `db:"current_published_major"`
-		CurrentPublishedMinor *int                  `db:"current_published_minor"`
-		TrustCenterVisibility TrustCenterVisibility `db:"trust_center_visibility"`
-		WriteMode             DocumentWriteMode     `db:"write_mode"`
-		Status                DocumentStatus        `db:"status"`
-		ArchivedAt            *time.Time            `db:"archived_at"`
-		CreatedAt             time.Time             `db:"created_at"`
-		UpdatedAt             time.Time             `db:"updated_at"`
+		ID                         gid.GID                    `db:"id"`
+		OrganizationID             gid.GID                    `db:"organization_id"`
+		CurrentPublishedMajor      *int                       `db:"current_published_major"`
+		CurrentPublishedMinor      *int                       `db:"current_published_minor"`
+		CompliancePortalVisibility CompliancePortalVisibility `db:"trust_center_visibility"`
+		WriteMode                  DocumentWriteMode          `db:"write_mode"`
+		Status                     DocumentStatus             `db:"status"`
+		ArchivedAt                 *time.Time                 `db:"archived_at"`
+		CreatedAt                  time.Time                  `db:"created_at"`
+		UpdatedAt                  time.Time                  `db:"updated_at"`
 
 		// ordering only
 		Title        string       `db:"title"`
@@ -505,7 +505,7 @@ VALUES (
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
 		"write_mode":              p.WriteMode,
-		"trust_center_visibility": p.TrustCenterVisibility,
+		"trust_center_visibility": p.CompliancePortalVisibility,
 		"status":                  p.Status,
 		"archived_at":             p.ArchivedAt,
 		"created_at":              p.CreatedAt,
@@ -582,7 +582,7 @@ WHERE
 		"updated_at":              time.Now(),
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
-		"trust_center_visibility": p.TrustCenterVisibility,
+		"trust_center_visibility": p.CompliancePortalVisibility,
 		"status":                  p.Status,
 		"archived_at":             p.ArchivedAt,
 	}

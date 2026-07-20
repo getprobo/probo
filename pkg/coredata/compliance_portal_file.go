@@ -34,34 +34,34 @@ import (
 )
 
 type (
-	TrustCenterFile struct {
-		ID                    gid.GID               `db:"id"`
-		OrganizationID        gid.GID               `db:"organization_id"`
-		Name                  string                `db:"name"`
-		Category              string                `db:"category"`
-		FileID                gid.GID               `db:"file_id"`
-		TrustCenterVisibility TrustCenterVisibility `db:"trust_center_visibility"`
-		CreatedAt             time.Time             `db:"created_at"`
-		UpdatedAt             time.Time             `db:"updated_at"`
+	CompliancePortalFile struct {
+		ID                         gid.GID                    `db:"id"`
+		OrganizationID             gid.GID                    `db:"organization_id"`
+		Name                       string                     `db:"name"`
+		Category                   string                     `db:"category"`
+		FileID                     gid.GID                    `db:"file_id"`
+		CompliancePortalVisibility CompliancePortalVisibility `db:"trust_center_visibility"`
+		CreatedAt                  time.Time                  `db:"created_at"`
+		UpdatedAt                  time.Time                  `db:"updated_at"`
 	}
 
-	TrustCenterFiles []*TrustCenterFile
+	CompliancePortalFiles []*CompliancePortalFile
 )
 
-func (t TrustCenterFile) CursorKey(orderBy TrustCenterFileOrderField) page.CursorKey {
+func (t CompliancePortalFile) CursorKey(orderBy CompliancePortalFileOrderField) page.CursorKey {
 	switch orderBy {
-	case TrustCenterFileOrderFieldName:
+	case CompliancePortalFileOrderFieldName:
 		return page.NewCursorKey(t.ID, t.Name)
-	case TrustCenterFileOrderFieldCreatedAt:
+	case CompliancePortalFileOrderFieldCreatedAt:
 		return page.NewCursorKey(t.ID, t.CreatedAt)
-	case TrustCenterFileOrderFieldUpdatedAt:
+	case CompliancePortalFileOrderFieldUpdatedAt:
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t *TrustCenterFile) AuthorizationAttributes(
+func (t *CompliancePortalFile) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
@@ -100,11 +100,11 @@ func (t *TrustCenterFile) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (t *TrustCenterFile) LoadByID(
+func (t *CompliancePortalFile) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterFileID gid.GID,
+	compliancePortalFileID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -125,7 +125,7 @@ LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_file_id": trustCenterFileID}
+	args := pgx.StrictNamedArgs{"trust_center_file_id": compliancePortalFileID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -133,9 +133,9 @@ LIMIT 1;
 		return fmt.Errorf("cannot query trust_center_files: %w", err)
 	}
 
-	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterFile])
+	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalFile])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center file: %w", err)
+		return fmt.Errorf("cannot collect compliance portal file: %w", err)
 	}
 
 	*t = file
@@ -143,11 +143,11 @@ LIMIT 1;
 	return nil
 }
 
-func (f *TrustCenterFiles) LoadByIDs(
+func (f *CompliancePortalFiles) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterFileIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 ) error {
 	q := `
 SELECT
@@ -168,7 +168,7 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"ids": trustCenterFileIDs}
+	args := pgx.StrictNamedArgs{"ids": compliancePortalFileIDs}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -177,21 +177,21 @@ WHERE
 	}
 	defer rows.Close()
 
-	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterFile])
+	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalFile])
 	if err != nil {
 		return fmt.Errorf("cannot collect file: %w", err)
 	}
 
 	*f = files
 
-	if len(files) != len(gid.NewSet(trustCenterFileIDs...)) {
+	if len(files) != len(gid.NewSet(compliancePortalFileIDs...)) {
 		return ErrResourceNotFound
 	}
 
 	return nil
 }
 
-func (t TrustCenterFile) Insert(
+func (t CompliancePortalFile) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -229,20 +229,20 @@ VALUES (
 		"name":                    t.Name,
 		"category":                t.Category,
 		"file_id":                 t.FileID,
-		"trust_center_visibility": t.TrustCenterVisibility,
+		"trust_center_visibility": t.CompliancePortalVisibility,
 		"created_at":              t.CreatedAt,
 		"updated_at":              t.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert trust center file: %w", err)
+		return fmt.Errorf("cannot insert compliance portal file: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterFile) Update(
+func (t *CompliancePortalFile) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -274,19 +274,19 @@ RETURNING
 		"id":                      t.ID,
 		"name":                    t.Name,
 		"category":                t.Category,
-		"trust_center_visibility": t.TrustCenterVisibility,
+		"trust_center_visibility": t.CompliancePortalVisibility,
 		"updated_at":              t.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center file: %w", err)
+		return fmt.Errorf("cannot update compliance portal file: %w", err)
 	}
 
-	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterFile])
+	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalFile])
 	if err != nil {
-		return fmt.Errorf("cannot collect updated trust center file: %w", err)
+		return fmt.Errorf("cannot collect updated compliance portal file: %w", err)
 	}
 
 	*t = file
@@ -294,7 +294,7 @@ RETURNING
 	return nil
 }
 
-func (t *TrustCenterFile) Delete(
+func (t *CompliancePortalFile) Delete(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -314,19 +314,19 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete trust center file: %w", err)
+		return fmt.Errorf("cannot delete compliance portal file: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterFiles) LoadByOrganizationID(
+func (t *CompliancePortalFiles) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[TrustCenterFileOrderField],
-	filter *TrustCenterFileFilter,
+	cursor *page.Cursor[CompliancePortalFileOrderField],
+	filter *CompliancePortalFileFilter,
 ) error {
 	q := `
 SELECT
@@ -359,9 +359,9 @@ WHERE
 		return fmt.Errorf("cannot query trust_center_files: %w", err)
 	}
 
-	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterFile])
+	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalFile])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center files: %w", err)
+		return fmt.Errorf("cannot collect compliance portal files: %w", err)
 	}
 
 	*t = files
@@ -369,7 +369,7 @@ WHERE
 	return nil
 }
 
-func (t *TrustCenterFiles) CountByOrganizationID(
+func (t *CompliancePortalFiles) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -394,7 +394,7 @@ WHERE
 
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count trust center files: %w", err)
+		return 0, fmt.Errorf("cannot count compliance portal files: %w", err)
 	}
 
 	return count, nil

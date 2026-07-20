@@ -51,8 +51,8 @@ const (
 	DatumEntityType                                  uint16 = 19
 	AuditEntityType                                  uint16 = 20
 	_                                                uint16 = 21 // ReportEntityType - removed
-	TrustCenterEntityType                            uint16 = 22
-	TrustCenterAccessEntityType                      uint16 = 23
+	CompliancePortalEntityType                       uint16 = 22
+	CompliancePortalAccessEntityType                 uint16 = 23
 	ThirdPartyBusinessAssociateAgreementEntityType   uint16 = 24
 	FileEntityType                                   uint16 = 25
 	ThirdPartyContactEntityType                      uint16 = 26
@@ -64,13 +64,13 @@ const (
 	_                                                uint16 = 32 // ContinualImprovementEntityType - removed
 	ProcessingActivityEntityType                     uint16 = 33
 	ExportJobEntityType                              uint16 = 34
-	TrustCenterReferenceEntityType                   uint16 = 35
-	TrustCenterDocumentAccessEntityType              uint16 = 36
+	CompliancePortalReferenceEntityType              uint16 = 35
+	CompliancePortalDocumentAccessEntityType         uint16 = 36
 	CustomDomainEntityType                           uint16 = 37
 	InvitationEntityType                             uint16 = 38
 	MembershipEntityType                             uint16 = 39
 	SlackMessageEntityType                           uint16 = 40
-	TrustCenterFileEntityType                        uint16 = 41
+	CompliancePortalFileEntityType                   uint16 = 41
 	SAMLConfigurationEntityType                      uint16 = 42
 	PersonalAPIKeyEntityType                         uint16 = 43
 	_                                                uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
@@ -180,10 +180,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Datum{ID: id}, true
 	case AuditEntityType:
 		return &Audit{ID: id}, true
-	case TrustCenterEntityType:
-		return &TrustCenter{ID: id}, true
-	case TrustCenterAccessEntityType:
-		return &TrustCenterAccess{ID: id}, true
+	case CompliancePortalEntityType:
+		return &CompliancePortal{ID: id}, true
+	case CompliancePortalAccessEntityType:
+		return &CompliancePortalAccess{ID: id}, true
 	case ThirdPartyBusinessAssociateAgreementEntityType:
 		return &ThirdPartyBusinessAssociateAgreement{ID: id}, true
 	case FileEntityType:
@@ -202,10 +202,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &ProcessingActivity{ID: id}, true
 	case ExportJobEntityType:
 		return &ExportJob{ID: id}, true
-	case TrustCenterReferenceEntityType:
-		return &TrustCenterReference{ID: id}, true
-	case TrustCenterDocumentAccessEntityType:
-		return &TrustCenterDocumentAccess{ID: id}, true
+	case CompliancePortalReferenceEntityType:
+		return &CompliancePortalReference{ID: id}, true
+	case CompliancePortalDocumentAccessEntityType:
+		return &CompliancePortalDocumentAccess{ID: id}, true
 	case CustomDomainEntityType:
 		return &CustomDomain{ID: id}, true
 	case InvitationEntityType:
@@ -214,8 +214,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Membership{ID: id}, true
 	case SlackMessageEntityType:
 		return &SlackMessage{ID: id}, true
-	case TrustCenterFileEntityType:
-		return &TrustCenterFile{ID: id}, true
+	case CompliancePortalFileEntityType:
+		return &CompliancePortalFile{ID: id}, true
 	case SAMLConfigurationEntityType:
 		return &SAMLConfiguration{ID: id}, true
 	case PersonalAPIKeyEntityType:

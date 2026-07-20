@@ -36,17 +36,17 @@ import (
 
 type (
 	Audit struct {
-		ID                    gid.GID               `db:"id"`
-		Name                  *string               `db:"name"`
-		OrganizationID        gid.GID               `db:"organization_id"`
-		FrameworkID           gid.GID               `db:"framework_id"`
-		ReportFileID          *gid.GID              `db:"report_file_id"`
-		ValidFrom             *time.Time            `db:"valid_from"`
-		ValidUntil            *time.Time            `db:"valid_until"`
-		State                 AuditState            `db:"state"`
-		TrustCenterVisibility TrustCenterVisibility `db:"trust_center_visibility"`
-		CreatedAt             time.Time             `db:"created_at"`
-		UpdatedAt             time.Time             `db:"updated_at"`
+		ID                         gid.GID                    `db:"id"`
+		Name                       *string                    `db:"name"`
+		OrganizationID             gid.GID                    `db:"organization_id"`
+		FrameworkID                gid.GID                    `db:"framework_id"`
+		ReportFileID               *gid.GID                   `db:"report_file_id"`
+		ValidFrom                  *time.Time                 `db:"valid_from"`
+		ValidUntil                 *time.Time                 `db:"valid_until"`
+		State                      AuditState                 `db:"state"`
+		CompliancePortalVisibility CompliancePortalVisibility `db:"trust_center_visibility"`
+		CreatedAt                  time.Time                  `db:"created_at"`
+		UpdatedAt                  time.Time                  `db:"updated_at"`
 	}
 
 	Audits []*Audit
@@ -288,7 +288,7 @@ INSERT INTO audits (
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
 		"state":                   a.State,
-		"trust_center_visibility": a.TrustCenterVisibility,
+		"trust_center_visibility": a.CompliancePortalVisibility,
 		"created_at":              a.CreatedAt,
 		"updated_at":              a.UpdatedAt,
 	}
@@ -330,7 +330,7 @@ WHERE
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
 		"state":                   a.State,
-		"trust_center_visibility": a.TrustCenterVisibility,
+		"trust_center_visibility": a.CompliancePortalVisibility,
 		"updated_at":              a.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

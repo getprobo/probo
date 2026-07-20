@@ -28,8 +28,8 @@ import (
 type SlackMessageType string
 
 const (
-	SlackMessageTypeTrustCenterAccessRequest SlackMessageType = "TRUST_CENTER_ACCESS_REQUEST"
-	SlackMessageTypeWelcome                  SlackMessageType = "WELCOME"
+	SlackMessageTypeCompliancePortalAccessRequest SlackMessageType = "TRUST_CENTER_ACCESS_REQUEST"
+	SlackMessageTypeWelcome                       SlackMessageType = "WELCOME"
 )
 
 var (
@@ -40,7 +40,7 @@ var (
 
 func SlackMessageTypes() []SlackMessageType {
 	return []SlackMessageType{
-		SlackMessageTypeTrustCenterAccessRequest,
+		SlackMessageTypeCompliancePortalAccessRequest,
 		SlackMessageTypeWelcome,
 	}
 }
@@ -48,7 +48,7 @@ func SlackMessageTypes() []SlackMessageType {
 func (v SlackMessageType) IsValid() bool {
 	switch v {
 	case
-		SlackMessageTypeTrustCenterAccessRequest,
+		SlackMessageTypeCompliancePortalAccessRequest,
 		SlackMessageTypeWelcome:
 		return true
 	}

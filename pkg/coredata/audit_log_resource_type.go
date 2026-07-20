@@ -59,10 +59,10 @@ func ResourceTypeName(entityType uint16) string {
 		return "Datum"
 	case AuditEntityType:
 		return "Audit"
-	case TrustCenterEntityType:
-		return "TrustCenter"
-	case TrustCenterAccessEntityType:
-		return "TrustCenterAccess"
+	case CompliancePortalEntityType:
+		return "CompliancePortal"
+	case CompliancePortalAccessEntityType:
+		return "CompliancePortalAccess"
 	case ThirdPartyBusinessAssociateAgreementEntityType:
 		return "ThirdPartyBusinessAssociateAgreement"
 	case FileEntityType:
@@ -79,18 +79,18 @@ func ResourceTypeName(entityType uint16) string {
 		return "ThirdPartyService"
 	case ProcessingActivityEntityType:
 		return "ProcessingActivity"
-	case TrustCenterReferenceEntityType:
-		return "TrustCenterReference"
-	case TrustCenterDocumentAccessEntityType:
-		return "TrustCenterDocumentAccess"
+	case CompliancePortalReferenceEntityType:
+		return "CompliancePortalReference"
+	case CompliancePortalDocumentAccessEntityType:
+		return "CompliancePortalDocumentAccess"
 	case CustomDomainEntityType:
 		return "CustomDomain"
 	case InvitationEntityType:
 		return "Invitation"
 	case MembershipEntityType:
 		return "Membership"
-	case TrustCenterFileEntityType:
-		return "TrustCenterFile"
+	case CompliancePortalFileEntityType:
+		return "CompliancePortalFile"
 	case DataProtectionImpactAssessmentEntityType:
 		return "DataProtectionImpactAssessment"
 	case TransferImpactAssessmentEntityType:

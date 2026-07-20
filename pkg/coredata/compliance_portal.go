@@ -36,7 +36,7 @@ import (
 )
 
 type (
-	TrustCenter struct {
+	CompliancePortal struct {
 		ID                           gid.GID              `db:"id"`
 		OrganizationID               gid.GID              `db:"organization_id"`
 		TenantID                     gid.TenantID         `db:"tenant_id"`
@@ -58,19 +58,19 @@ type (
 		UpdatedAt                    time.Time            `db:"updated_at"`
 	}
 
-	TrustCenters []*TrustCenter
+	CompliancePortals []*CompliancePortal
 )
 
-func (tc *TrustCenter) CursorKey(orderBy TrustCenterOrderField) page.CursorKey {
+func (tc *CompliancePortal) CursorKey(orderBy CompliancePortalOrderField) page.CursorKey {
 	switch orderBy {
-	case TrustCenterOrderFieldCreatedAt:
+	case CompliancePortalOrderFieldCreatedAt:
 		return page.NewCursorKey(tc.ID, tc.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tc *TrustCenter) AuthorizationAttributes(
+func (tc *CompliancePortal) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
@@ -109,11 +109,11 @@ func (tc *TrustCenter) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (tc *TrustCenter) LoadByID(
+func (tc *CompliancePortal) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -146,29 +146,29 @@ LIMIT 1;
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center: %w", err)
+		return fmt.Errorf("cannot query compliance portal: %w", err)
 	}
 
-	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	compliancePortal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortal])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center: %w", err)
+		return fmt.Errorf("cannot collect compliance portal: %w", err)
 	}
 
-	*tc = trustCenter
+	*tc = compliancePortal
 
 	return nil
 }
 
-func (tc *TrustCenter) LoadByMailingListID(
+func (tc *CompliancePortal) LoadByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -210,24 +210,24 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center by mailing list id: %w", err)
+		return fmt.Errorf("cannot query compliance portal by mailing list id: %w", err)
 	}
 
-	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	compliancePortal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortal])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center: %w", err)
+		return fmt.Errorf("cannot collect compliance portal: %w", err)
 	}
 
-	*tc = trustCenter
+	*tc = compliancePortal
 
 	return nil
 }
 
-func (tc *TrustCenter) LoadByOrganizationID(
+func (tc *CompliancePortal) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -269,25 +269,25 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center: %w", err)
+		return fmt.Errorf("cannot query compliance portal: %w", err)
 	}
 
-	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	compliancePortal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortal])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center: %w", err)
+		return fmt.Errorf("cannot collect compliance portal: %w", err)
 	}
 
-	*tc = trustCenter
+	*tc = compliancePortal
 
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access trust centers by slug across all tenants for public access.
-func (tc *TrustCenter) LoadBySlug(
+// Tenant id scope is not applied because we want to access compliance portals by slug across all tenants for public access.
+func (tc *CompliancePortal) LoadBySlug(
 	ctx context.Context,
 	conn pg.Querier,
 	slug string,
@@ -324,19 +324,19 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center: %w", err)
+		return fmt.Errorf("cannot query compliance portal: %w", err)
 	}
 
-	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	compliancePortal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortal])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center: %w", err)
+		return fmt.Errorf("cannot collect compliance portal: %w", err)
 	}
 
-	*tc = trustCenter
+	*tc = compliancePortal
 
 	return nil
 }
@@ -346,7 +346,7 @@ LIMIT 1;
 // reverse SNI lookup: a served host resolves to a custom domain, which resolves
 // back to its page. Tenant scope is not applied because SNI resolution happens
 // across all tenants for public access.
-func (tc *TrustCenter) LoadByDomainID(
+func (tc *CompliancePortal) LoadByDomainID(
 	ctx context.Context,
 	conn pg.Querier,
 	domainID gid.GID,
@@ -384,24 +384,24 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center by domain id: %w", err)
+		return fmt.Errorf("cannot query compliance portal by domain id: %w", err)
 	}
 
-	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	compliancePortal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortal])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center: %w", err)
+		return fmt.Errorf("cannot collect compliance portal: %w", err)
 	}
 
-	*tc = trustCenter
+	*tc = compliancePortal
 
 	return nil
 }
 
-func (tc *TrustCenter) Insert(
+func (tc *CompliancePortal) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -480,13 +480,13 @@ INSERT INTO trust_centers (
 			}
 		}
 
-		return fmt.Errorf("cannot insert trust center: %w", err)
+		return fmt.Errorf("cannot insert compliance portal: %w", err)
 	}
 
 	return nil
 }
 
-func (tc *TrustCenter) Update(
+func (tc *CompliancePortal) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -536,7 +536,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center: %w", err)
+		return fmt.Errorf("cannot update compliance portal: %w", err)
 	}
 
 	return nil

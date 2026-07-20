@@ -29,15 +29,15 @@ import (
 
 type (
 	MembershipProfileFilter struct {
-		withMembership        *bool
-		withTrustCenterAccess *bool
-		contractEnded         *bool
-		currentDate           time.Time
-		email                 *mail.Addr
-		userName              *string
-		externalID            *string
-		state                 *ProfileState
-		source                *ProfileSource
+		withMembership             *bool
+		withCompliancePortalAccess *bool
+		contractEnded              *bool
+		currentDate                time.Time
+		email                      *mail.Addr
+		userName                   *string
+		externalID                 *string
+		state                      *ProfileState
+		source                     *ProfileSource
 	}
 )
 
@@ -53,8 +53,8 @@ func (f *MembershipProfileFilter) WithMembership() *MembershipProfileFilter {
 	return f
 }
 
-func (f *MembershipProfileFilter) WithTrustCenterAccess() *MembershipProfileFilter {
-	f.withTrustCenterAccess = new(true)
+func (f *MembershipProfileFilter) WithCompliancePortalAccess() *MembershipProfileFilter {
+	f.withCompliancePortalAccess = new(true)
 	return f
 }
 
@@ -101,7 +101,7 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_user_name":         f.userName,
 		"filter_external_id":       f.externalID,
 		"with_membership":          f.withMembership,
-		"with_trust_center_access": f.withTrustCenterAccess,
+		"with_trust_center_access": f.withCompliancePortalAccess,
 		"contract_ended":           f.contractEnded,
 		"current_date":             f.currentDate,
 		"filter_state":             f.state,

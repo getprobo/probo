@@ -37,14 +37,14 @@ import (
 
 type (
 	CompliancePortalCommitmentGroup struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		TrustCenterID  gid.GID   `db:"trust_center_id"`
-		Title          string    `db:"title"`
-		Description    string    `db:"description"`
-		Rank           int       `db:"rank"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID                 gid.GID   `db:"id"`
+		OrganizationID     gid.GID   `db:"organization_id"`
+		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		Title              string    `db:"title"`
+		Description        string    `db:"description"`
+		Rank               int       `db:"rank"`
+		CreatedAt          time.Time `db:"created_at"`
+		UpdatedAt          time.Time `db:"updated_at"`
 	}
 
 	CompliancePortalCommitmentGroups []*CompliancePortalCommitmentGroup
@@ -181,7 +181,7 @@ RETURNING rank;
 		"tenant_id":       scope.GetTenantID(),
 		"id":              t.ID,
 		"organization_id": t.OrganizationID,
-		"trust_center_id": t.TrustCenterID,
+		"trust_center_id": t.CompliancePortalID,
 		"title":           t.Title,
 		"description":     t.Description,
 		"created_at":      t.CreatedAt,
@@ -276,7 +276,7 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"id":              t.ID,
 		"new_rank":        t.Rank,
-		"trust_center_id": t.TrustCenterID,
+		"trust_center_id": t.CompliancePortalID,
 		"updated_at":      t.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -315,11 +315,11 @@ WHERE
 	return nil
 }
 
-func (t *CompliancePortalCommitmentGroups) LoadByTrustCenterID(
+func (t *CompliancePortalCommitmentGroups) LoadByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[CompliancePortalCommitmentGroupOrderField],
 ) error {
 	q := `
@@ -342,7 +342,7 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -361,11 +361,11 @@ WHERE
 	return nil
 }
 
-func (t *CompliancePortalCommitmentGroups) CountByTrustCenterID(
+func (t *CompliancePortalCommitmentGroups) CountByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -379,7 +379,7 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int

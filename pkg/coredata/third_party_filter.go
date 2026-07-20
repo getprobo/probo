@@ -26,27 +26,27 @@ import (
 
 type (
 	ThirdPartyFilter struct {
-		showOnTrustCenter *bool
-		level             *int
-		query             *string
-		category          *ThirdPartyCategory
-		country           *CountryCode
+		showOnCompliancePortal *bool
+		level                  *int
+		query                  *string
+		category               *ThirdPartyCategory
+		country                *CountryCode
 	}
 )
 
 func NewThirdPartyFilter(
-	showOnTrustCenter *bool,
+	showOnCompliancePortal *bool,
 	level *int,
 	query *string,
 	category *ThirdPartyCategory,
 	country *CountryCode,
 ) *ThirdPartyFilter {
 	return &ThirdPartyFilter{
-		showOnTrustCenter: showOnTrustCenter,
-		level:             level,
-		query:             query,
-		category:          category,
-		country:           country,
+		showOnCompliancePortal: showOnCompliancePortal,
+		level:                  level,
+		query:                  query,
+		category:               category,
+		country:                country,
 	}
 }
 
@@ -59,8 +59,8 @@ func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_country":       nil,
 	}
 
-	if f.showOnTrustCenter != nil {
-		args["show_on_trust_center"] = *f.showOnTrustCenter
+	if f.showOnCompliancePortal != nil {
+		args["show_on_trust_center"] = *f.showOnCompliancePortal
 	}
 
 	if f.query != nil && *f.query != "" {

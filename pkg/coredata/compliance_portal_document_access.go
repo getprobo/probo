@@ -36,31 +36,31 @@ import (
 )
 
 type (
-	TrustCenterDocumentAccess struct {
-		ID                  gid.GID                         `db:"id"`
-		OrganizationID      gid.GID                         `db:"organization_id"`
-		TrustCenterAccessID gid.GID                         `db:"trust_center_access_id"`
-		DocumentID          *gid.GID                        `db:"document_id"`
-		ReportFileID        *gid.GID                        `db:"report_file_id"`
-		TrustCenterFileID   *gid.GID                        `db:"trust_center_file_id"`
-		Status              TrustCenterDocumentAccessStatus `db:"status"`
-		CreatedAt           time.Time                       `db:"created_at"`
-		UpdatedAt           time.Time                       `db:"updated_at"`
+	CompliancePortalDocumentAccess struct {
+		ID                       gid.GID                              `db:"id"`
+		OrganizationID           gid.GID                              `db:"organization_id"`
+		CompliancePortalAccessID gid.GID                              `db:"trust_center_access_id"`
+		DocumentID               *gid.GID                             `db:"document_id"`
+		ReportFileID             *gid.GID                             `db:"report_file_id"`
+		CompliancePortalFileID   *gid.GID                             `db:"trust_center_file_id"`
+		Status                   CompliancePortalDocumentAccessStatus `db:"status"`
+		CreatedAt                time.Time                            `db:"created_at"`
+		UpdatedAt                time.Time                            `db:"updated_at"`
 	}
 
-	TrustCenterDocumentAccesses []*TrustCenterDocumentAccess
+	CompliancePortalDocumentAccesses []*CompliancePortalDocumentAccess
 )
 
-func (tcda *TrustCenterDocumentAccess) CursorKey(orderBy TrustCenterDocumentAccessOrderField) page.CursorKey {
+func (tcda *CompliancePortalDocumentAccess) CursorKey(orderBy CompliancePortalDocumentAccessOrderField) page.CursorKey {
 	switch orderBy {
-	case TrustCenterDocumentAccessOrderFieldCreatedAt:
+	case CompliancePortalDocumentAccessOrderFieldCreatedAt:
 		return page.NewCursorKey(tcda.ID, tcda.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tcda *TrustCenterDocumentAccess) AuthorizationAttributes(
+func (tcda *CompliancePortalDocumentAccess) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
@@ -99,7 +99,7 @@ func (tcda *TrustCenterDocumentAccess) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (tcda *TrustCenterDocumentAccess) LoadByID(
+func (tcda *CompliancePortalDocumentAccess) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -131,16 +131,16 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center document access: %w", err)
+		return fmt.Errorf("cannot query compliance portal document access: %w", err)
 	}
 
-	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalDocumentAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center document access: %w", err)
+		return fmt.Errorf("cannot collect compliance portal document access: %w", err)
 	}
 
 	*tcda = access
@@ -148,11 +148,11 @@ LIMIT 1;
 	return nil
 }
 
-func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndDocumentID(
+func (tcda *CompliancePortalDocumentAccess) LoadByCompliancePortalAccessIDAndDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	documentID gid.GID,
 ) error {
 	q := `
@@ -178,23 +178,23 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"document_id":            documentID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center document access: %w", err)
+		return fmt.Errorf("cannot query compliance portal document access: %w", err)
 	}
 
-	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalDocumentAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center document access: %w", err)
+		return fmt.Errorf("cannot collect compliance portal document access: %w", err)
 	}
 
 	*tcda = access
@@ -202,11 +202,11 @@ LIMIT 1;
 	return nil
 }
 
-func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndReportFileID(
+func (tcda *CompliancePortalDocumentAccess) LoadByCompliancePortalAccessIDAndReportFileID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	reportFileID gid.GID,
 ) error {
 	q := `
@@ -232,23 +232,23 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"report_file_id":         reportFileID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center document access: %w", err)
+		return fmt.Errorf("cannot query compliance portal document access: %w", err)
 	}
 
-	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalDocumentAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center document access: %w", err)
+		return fmt.Errorf("cannot collect compliance portal document access: %w", err)
 	}
 
 	*tcda = access
@@ -256,7 +256,7 @@ LIMIT 1;
 	return nil
 }
 
-func (tcda *TrustCenterDocumentAccess) Insert(
+func (tcda *CompliancePortalDocumentAccess) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -291,10 +291,10 @@ INSERT INTO trust_center_document_accesses (
 		"id":                     tcda.ID,
 		"tenant_id":              scope.GetTenantID(),
 		"organization_id":        tcda.OrganizationID,
-		"trust_center_access_id": tcda.TrustCenterAccessID,
+		"trust_center_access_id": tcda.CompliancePortalAccessID,
 		"document_id":            tcda.DocumentID,
 		"report_file_id":         tcda.ReportFileID,
-		"trust_center_file_id":   tcda.TrustCenterFileID,
+		"trust_center_file_id":   tcda.CompliancePortalFileID,
 		"status":                 tcda.Status,
 		"created_at":             tcda.CreatedAt,
 		"updated_at":             tcda.UpdatedAt,
@@ -313,13 +313,13 @@ INSERT INTO trust_center_document_accesses (
 			}
 		}
 
-		return fmt.Errorf("cannot insert trust center document access: %w", err)
+		return fmt.Errorf("cannot insert compliance portal document access: %w", err)
 	}
 
 	return nil
 }
 
-func (tcda *TrustCenterDocumentAccess) Update(
+func (tcda *CompliancePortalDocumentAccess) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -344,13 +344,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center document access: %w", err)
+		return fmt.Errorf("cannot update compliance portal document access: %w", err)
 	}
 
 	return nil
 }
 
-func (tcda *TrustCenterDocumentAccess) Delete(
+func (tcda *CompliancePortalDocumentAccess) Delete(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -371,17 +371,17 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete trust center document access: %w", err)
+		return fmt.Errorf("cannot delete compliance portal document access: %w", err)
 	}
 
 	return nil
 }
 
-func (tcdas *TrustCenterDocumentAccesses) CountByTrustCenterAccessID(
+func (tcdas *CompliancePortalDocumentAccesses) CountByCompliancePortalAccessID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -396,7 +396,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -410,11 +410,11 @@ WHERE
 	return count, nil
 }
 
-func (tcdas *TrustCenterDocumentAccesses) CountPendingRequestByTrustCenterAccessID(
+func (tcdas *CompliancePortalDocumentAccesses) CountPendingRequestByCompliancePortalAccessID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -430,7 +430,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -444,11 +444,11 @@ WHERE
 	return count, nil
 }
 
-func (tcdas *TrustCenterDocumentAccesses) CountActiveByTrustCenterAccessID(
+func (tcdas *CompliancePortalDocumentAccesses) CountActiveByCompliancePortalAccessID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -464,7 +464,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -478,12 +478,12 @@ WHERE
 	return count, nil
 }
 
-func (tcdas *TrustCenterDocumentAccesses) LoadAvailableByTrustCenterAccessID(
+func (tcdas *CompliancePortalDocumentAccesses) LoadAvailableByCompliancePortalAccessID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
-	cursor *page.Cursor[TrustCenterDocumentAccessOrderField],
+	compliancePortalAccessID gid.GID,
+	cursor *page.Cursor[CompliancePortalDocumentAccessOrderField],
 ) error {
 	q := `
 WITH organization AS (
@@ -581,19 +581,19 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center document accesses: %w", err)
+		return fmt.Errorf("cannot query compliance portal document accesses: %w", err)
 	}
 
-	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterDocumentAccess])
+	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocumentAccess])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center document accesses: %w", err)
+		return fmt.Errorf("cannot collect compliance portal document accesses: %w", err)
 	}
 
 	*tcdas = accesses
@@ -601,12 +601,12 @@ WHERE %s
 	return nil
 }
 
-func (tcdas *TrustCenterDocumentAccesses) LoadByTrustCenterAccessID(
+func (tcdas *CompliancePortalDocumentAccesses) LoadByCompliancePortalAccessID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
-	cursor *page.Cursor[TrustCenterDocumentAccessOrderField],
+	compliancePortalAccessID gid.GID,
+	cursor *page.Cursor[CompliancePortalDocumentAccessOrderField],
 ) error {
 	q := `
 SELECT
@@ -630,19 +630,19 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center document accesses: %w", err)
+		return fmt.Errorf("cannot query compliance portal document accesses: %w", err)
 	}
 
-	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterDocumentAccess])
+	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocumentAccess])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center document accesses: %w", err)
+		return fmt.Errorf("cannot collect compliance portal document accesses: %w", err)
 	}
 
 	*tcdas = accesses
@@ -654,7 +654,7 @@ func GrantByDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	documentIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
@@ -670,7 +670,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"document_ids":           documentIDs,
 		"updated_at":             updatedAt,
 	}
@@ -678,7 +678,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot grant trust center document accesses by document IDs: %w", err)
+		return fmt.Errorf("cannot grant compliance portal document accesses by document IDs: %w", err)
 	}
 
 	return nil
@@ -688,7 +688,7 @@ func RejectOrRevokeByDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	documentIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
@@ -709,7 +709,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"document_ids":           documentIDs,
 		"updated_at":             updatedAt,
 	}
@@ -717,7 +717,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot reject trust center document accesses by document IDs: %w", err)
+		return fmt.Errorf("cannot reject compliance portal document accesses by document IDs: %w", err)
 	}
 
 	return nil
@@ -727,7 +727,7 @@ func GrantByReportFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	reportFileIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
@@ -743,7 +743,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"report_file_ids":        reportFileIDs,
 		"updated_at":             updatedAt,
 	}
@@ -751,7 +751,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot grant trust center document accesses by report file IDs: %w", err)
+		return fmt.Errorf("cannot grant compliance portal document accesses by report file IDs: %w", err)
 	}
 
 	return nil
@@ -761,7 +761,7 @@ func RejectOrRevokeByReportFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	reportFileIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
@@ -782,7 +782,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"report_file_ids":        reportFileIDs,
 		"updated_at":             updatedAt,
 	}
@@ -790,24 +790,24 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot reject trust center document accesses by report file IDs: %w", err)
+		return fmt.Errorf("cannot reject compliance portal document accesses by report file IDs: %w", err)
 	}
 
 	return nil
 }
 
-type MergeTrustCenterDocumentAccessesData struct {
-	ID     gid.GID                         `json:"id"`
-	Status TrustCenterDocumentAccessStatus `json:"status"`
+type MergeCompliancePortalDocumentAccessesData struct {
+	ID     gid.GID                              `json:"id"`
+	Status CompliancePortalDocumentAccessStatus `json:"status"`
 }
 
-func (tcdas TrustCenterDocumentAccesses) MergeDocumentAccesses(
+func (tcdas CompliancePortalDocumentAccesses) MergeDocumentAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	trustCenterAccessID gid.GID,
-	data []MergeTrustCenterDocumentAccessesData,
+	compliancePortalAccessID gid.GID,
+	data []MergeCompliancePortalDocumentAccessesData,
 ) error {
 	q := `
 WITH data AS (
@@ -859,9 +859,9 @@ WHEN NOT MATCHED
 `
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
 		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"organization_id":        organizationID,
 		"now":                    time.Now(),
 		"data":                   data,
@@ -874,14 +874,14 @@ WHEN NOT MATCHED
 	return nil
 }
 
-func (tcdas TrustCenterDocumentAccesses) BulkInsertDocumentAccesses(
+func (tcdas CompliancePortalDocumentAccesses) BulkInsertDocumentAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	organizationID gid.GID,
 	documentIDs []gid.GID,
-	status TrustCenterDocumentAccessStatus,
+	status CompliancePortalDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
 	if len(documentIDs) == 0 {
@@ -921,28 +921,28 @@ ON CONFLICT DO NOTHING
 	args := pgx.StrictNamedArgs{
 		"tenant_id":              scope.GetTenantID(),
 		"organization_id":        organizationID,
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"document_ids":           documentIDs,
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
 		"status":     status,
 		"created_at": createdAt,
 		"updated_at": createdAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
+		return fmt.Errorf("cannot bulk insert compliance portal document accesses: %w", err)
 	}
 
 	return nil
 }
 
-func (tcdas TrustCenterDocumentAccesses) MergeReportFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) MergeReportFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	trustCenterAccessID gid.GID,
-	data []MergeTrustCenterDocumentAccessesData,
+	compliancePortalAccessID gid.GID,
+	data []MergeCompliancePortalDocumentAccessesData,
 ) error {
 	q := `
 WITH data AS (
@@ -994,9 +994,9 @@ WHEN NOT MATCHED
 `
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
 		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"organization_id":        organizationID,
 		"now":                    time.Now(),
 		"data":                   data,
@@ -1009,14 +1009,14 @@ WHEN NOT MATCHED
 	return nil
 }
 
-func (tcdas TrustCenterDocumentAccesses) BulkInsertReportFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) BulkInsertReportFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	organizationID gid.GID,
 	reportFileIDs []gid.GID,
-	status TrustCenterDocumentAccessStatus,
+	status CompliancePortalDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
 	if len(reportFileIDs) == 0 {
@@ -1056,8 +1056,8 @@ ON CONFLICT DO NOTHING
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": organizationID,
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"trust_center_access_id":                   trustCenterAccessID,
+		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"trust_center_access_id":                   compliancePortalAccessID,
 		"report_file_ids":                          reportFileIDs,
 		"status":                                   status,
 		"created_at":                               createdAt,
@@ -1065,18 +1065,18 @@ ON CONFLICT DO NOTHING
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot bulk insert trust center report file accesses: %w", err)
+		return fmt.Errorf("cannot bulk insert compliance portal report file accesses: %w", err)
 	}
 
 	return nil
 }
 
-func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndTrustCenterFileID(
+func (tcda *CompliancePortalDocumentAccess) LoadByCompliancePortalAccessIDAndCompliancePortalFileID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
-	trustCenterFileID gid.GID,
+	compliancePortalAccessID gid.GID,
+	compliancePortalFileID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -1101,23 +1101,23 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
-		"trust_center_file_id":   trustCenterFileID,
+		"trust_center_access_id": compliancePortalAccessID,
+		"trust_center_file_id":   compliancePortalFileID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center document access: %w", err)
+		return fmt.Errorf("cannot query compliance portal document access: %w", err)
 	}
 
-	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalDocumentAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center document access: %w", err)
+		return fmt.Errorf("cannot collect compliance portal document access: %w", err)
 	}
 
 	*tcda = access
@@ -1125,12 +1125,12 @@ LIMIT 1;
 	return nil
 }
 
-func GrantByTrustCenterFileIDs(
+func GrantByCompliancePortalFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
-	trustCenterFileIDs []gid.GID,
+	compliancePortalAccessID gid.GID,
+	compliancePortalFileIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -1145,26 +1145,26 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
-		"trust_center_file_ids":  trustCenterFileIDs,
+		"trust_center_access_id": compliancePortalAccessID,
+		"trust_center_file_ids":  compliancePortalFileIDs,
 		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot grant trust center document accesses by trust center file IDs: %w", err)
+		return fmt.Errorf("cannot grant compliance portal document accesses by compliance portal file IDs: %w", err)
 	}
 
 	return nil
 }
 
-func RejectOrRevokeByTrustCenterFileIDs(
+func RejectOrRevokeByCompliancePortalFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
-	trustCenterFileIDs []gid.GID,
+	compliancePortalAccessID gid.GID,
+	compliancePortalFileIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -1184,27 +1184,27 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
-		"trust_center_file_ids":  trustCenterFileIDs,
+		"trust_center_access_id": compliancePortalAccessID,
+		"trust_center_file_ids":  compliancePortalFileIDs,
 		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot reject trust center document accesses by trust center file IDs: %w", err)
+		return fmt.Errorf("cannot reject compliance portal document accesses by compliance portal file IDs: %w", err)
 	}
 
 	return nil
 }
 
-func (tcdas TrustCenterDocumentAccesses) MergeTrustCenterFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) MergeCompliancePortalFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	trustCenterAccessID gid.GID,
-	data []MergeTrustCenterDocumentAccessesData,
+	compliancePortalAccessID gid.GID,
+	data []MergeCompliancePortalDocumentAccessesData,
 ) error {
 	q := `
 WITH data AS (
@@ -1256,9 +1256,9 @@ WHEN NOT MATCHED
 `
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
 		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_access_id": compliancePortalAccessID,
 		"organization_id":        organizationID,
 		"now":                    time.Now(),
 		"data":                   data,
@@ -1271,14 +1271,14 @@ WHEN NOT MATCHED
 	return nil
 }
 
-func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) BulkInsertCompliancePortalFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 	organizationID gid.GID,
-	trustCenterFileIDs []gid.GID,
-	status TrustCenterDocumentAccessStatus,
+	compliancePortalFileIDs []gid.GID,
+	status CompliancePortalDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
 	q := `
@@ -1314,16 +1314,16 @@ ON CONFLICT DO NOTHING
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": organizationID,
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"trust_center_access_id":                   trustCenterAccessID,
-		"trust_center_file_ids":                    trustCenterFileIDs,
+		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"trust_center_access_id":                   compliancePortalAccessID,
+		"trust_center_file_ids":                    compliancePortalFileIDs,
 		"status":                                   status,
 		"created_at":                               createdAt,
 		"updated_at":                               createdAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
+		return fmt.Errorf("cannot bulk insert compliance portal file accesses: %w", err)
 	}
 
 	return nil

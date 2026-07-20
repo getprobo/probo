@@ -25,15 +25,15 @@ import (
 )
 
 type (
-	TrustCenterFileFilter struct {
-		trustCenterVisibilities []TrustCenterVisibility
+	CompliancePortalFileFilter struct {
+		compliancePortalVisibilities []CompliancePortalVisibility
 	}
 )
 
-type TrustCenterFileFilterOption func(f *TrustCenterFileFilter)
+type CompliancePortalFileFilterOption func(f *CompliancePortalFileFilter)
 
-func NewTrustCenterFileFilter(opts ...TrustCenterFileFilterOption) *TrustCenterFileFilter {
-	f := &TrustCenterFileFilter{}
+func NewCompliancePortalFileFilter(opts ...CompliancePortalFileFilterOption) *CompliancePortalFileFilter {
+	f := &CompliancePortalFileFilter{}
 
 	for _, opt := range opts {
 		opt(f)
@@ -42,17 +42,17 @@ func NewTrustCenterFileFilter(opts ...TrustCenterFileFilterOption) *TrustCenterF
 	return f
 }
 
-func WithTrustCenterFileVisibilities(visibilities ...TrustCenterVisibility) TrustCenterFileFilterOption {
-	return func(f *TrustCenterFileFilter) {
-		f.trustCenterVisibilities = visibilities
+func WithCompliancePortalFileVisibilities(visibilities ...CompliancePortalVisibility) CompliancePortalFileFilterOption {
+	return func(f *CompliancePortalFileFilter) {
+		f.compliancePortalVisibilities = visibilities
 	}
 }
 
-func (f *TrustCenterFileFilter) SQLArguments() pgx.NamedArgs {
+func (f *CompliancePortalFileFilter) SQLArguments() pgx.NamedArgs {
 	var visibilities []string
-	if f.trustCenterVisibilities != nil {
-		visibilities = make([]string, len(f.trustCenterVisibilities))
-		for i, v := range f.trustCenterVisibilities {
+	if f.compliancePortalVisibilities != nil {
+		visibilities = make([]string, len(f.compliancePortalVisibilities))
+		for i, v := range f.compliancePortalVisibilities {
 			visibilities[i] = v.String()
 		}
 	}
@@ -62,7 +62,7 @@ func (f *TrustCenterFileFilter) SQLArguments() pgx.NamedArgs {
 	}
 }
 
-func (f *TrustCenterFileFilter) SQLFragment() string {
+func (f *CompliancePortalFileFilter) SQLFragment() string {
 	return `CASE
   WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
     trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])

@@ -26,7 +26,7 @@ import (
 
 type (
 	AuditFilter struct {
-		trustCenterVisibilities []TrustCenterVisibility
+		compliancePortalVisibilities []CompliancePortalVisibility
 	}
 )
 
@@ -34,26 +34,26 @@ func NewAuditFilter() *AuditFilter {
 	return &AuditFilter{}
 }
 
-func NewAuditTrustCenterFilter() *AuditFilter {
+func NewAuditCompliancePortalFilter() *AuditFilter {
 	return &AuditFilter{
-		trustCenterVisibilities: []TrustCenterVisibility{
-			TrustCenterVisibilityPrivate,
-			TrustCenterVisibilityPublic,
+		compliancePortalVisibilities: []CompliancePortalVisibility{
+			CompliancePortalVisibilityPrivate,
+			CompliancePortalVisibilityPublic,
 		},
 	}
 }
 
-func (f *AuditFilter) WithTrustCenterVisibilities(visibilities ...TrustCenterVisibility) *AuditFilter {
-	f.trustCenterVisibilities = visibilities
+func (f *AuditFilter) WithCompliancePortalVisibilities(visibilities ...CompliancePortalVisibility) *AuditFilter {
+	f.compliancePortalVisibilities = visibilities
 	return f
 }
 
 func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 	args := pgx.NamedArgs{}
 
-	if f.trustCenterVisibilities != nil {
-		visibilities := make([]string, len(f.trustCenterVisibilities))
-		for i, v := range f.trustCenterVisibilities {
+	if f.compliancePortalVisibilities != nil {
+		visibilities := make([]string, len(f.compliancePortalVisibilities))
+		for i, v := range f.compliancePortalVisibilities {
 			visibilities[i] = v.String()
 		}
 
@@ -64,7 +64,7 @@ func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 }
 
 func (f *AuditFilter) SQLFragment() string {
-	if f.trustCenterVisibilities != nil {
+	if f.compliancePortalVisibilities != nil {
 		return "trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])"
 	}
 

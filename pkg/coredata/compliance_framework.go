@@ -37,15 +37,15 @@ import (
 
 type (
 	ComplianceFramework struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		TrustCenterID  gid.GID   `db:"trust_center_id"`
-		FrameworkID    gid.GID   `db:"framework_id"`
-		Rank           int       `db:"rank"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID                 gid.GID   `db:"id"`
+		OrganizationID     gid.GID   `db:"organization_id"`
+		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		FrameworkID        gid.GID   `db:"framework_id"`
+		Rank               int       `db:"rank"`
+		CreatedAt          time.Time `db:"created_at"`
+		UpdatedAt          time.Time `db:"updated_at"`
 
-		// Visibility is a non-db field used to return all frameworks for a trust center, including hidden ones.
+		// Visibility is a non-db field used to return all frameworks for a compliance portal, including hidden ones.
 		Visibility ComplianceFrameworkVisibility `db:"visibility"`
 	}
 
@@ -149,11 +149,11 @@ LIMIT 1;
 	return nil
 }
 
-func (c *ComplianceFramework) LoadByTrustCenterIDAndFrameworkID(
+func (c *ComplianceFramework) LoadByCompliancePortalIDAndFrameworkID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	frameworkID gid.GID,
 ) error {
 	q := `
@@ -177,7 +177,7 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": trustCenterID,
+		"trust_center_id": compliancePortalID,
 		"framework_id":    frameworkID,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -235,7 +235,7 @@ RETURNING rank;
 		"id":              c.ID,
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": c.OrganizationID,
-		"trust_center_id": c.TrustCenterID,
+		"trust_center_id": c.CompliancePortalID,
 		"framework_id":    c.FrameworkID,
 		"created_at":      c.CreatedAt,
 		"updated_at":      c.UpdatedAt,
@@ -292,7 +292,7 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"id":              c.ID,
 		"new_rank":        c.Rank,
-		"trust_center_id": c.TrustCenterID,
+		"trust_center_id": c.CompliancePortalID,
 		"updated_at":      c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -330,11 +330,11 @@ WHERE
 	return nil
 }
 
-func (c *ComplianceFrameworks) LoadByTrustCenterID(
+func (c *ComplianceFrameworks) LoadByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[ComplianceFrameworkOrderField],
 ) error {
 	q := `
@@ -356,7 +356,7 @@ WHERE
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.NamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -375,11 +375,11 @@ WHERE
 	return nil
 }
 
-func (c *ComplianceFrameworks) LoadWithHiddenByTrustCenterID(
+func (c *ComplianceFrameworks) LoadWithHiddenByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[ComplianceFrameworkOrderField],
 ) error {
 	q := `
@@ -413,7 +413,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"trust_center_id": trustCenterID}
+	args := pgx.NamedArgs{"trust_center_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 

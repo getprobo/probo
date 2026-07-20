@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,63 +23,54 @@ package coredata
 import (
 	"encoding"
 	"fmt"
-
-	"go.probo.inc/probo/pkg/page"
 )
 
-type TrustCenterAccessOrderField string
+type CompliancePortalAccessState string
 
 const (
-	TrustCenterAccessOrderFieldCreatedAt TrustCenterAccessOrderField = "CREATED_AT"
+	CompliancePortalAccessStateActive   CompliancePortalAccessState = "ACTIVE"
+	CompliancePortalAccessStateInactive CompliancePortalAccessState = "INACTIVE"
 )
 
 var (
-	_ page.OrderField          = TrustCenterAccessOrderField("")
-	_ fmt.Stringer             = TrustCenterAccessOrderField("")
-	_ encoding.TextMarshaler   = TrustCenterAccessOrderField("")
-	_ encoding.TextUnmarshaler = (*TrustCenterAccessOrderField)(nil)
+	_ fmt.Stringer             = CompliancePortalAccessState("")
+	_ encoding.TextMarshaler   = CompliancePortalAccessState("")
+	_ encoding.TextUnmarshaler = (*CompliancePortalAccessState)(nil)
 )
 
-func TrustCenterAccessOrderFields() []TrustCenterAccessOrderField {
-	return []TrustCenterAccessOrderField{
-		TrustCenterAccessOrderFieldCreatedAt,
+func CompliancePortalAccessStates() []CompliancePortalAccessState {
+	return []CompliancePortalAccessState{
+		CompliancePortalAccessStateActive,
+		CompliancePortalAccessStateInactive,
 	}
 }
 
-func (v TrustCenterAccessOrderField) IsValid() bool {
+func (v CompliancePortalAccessState) IsValid() bool {
 	switch v {
 	case
-		TrustCenterAccessOrderFieldCreatedAt:
+		CompliancePortalAccessStateActive,
+		CompliancePortalAccessStateInactive:
 		return true
 	}
 
 	return false
 }
 
-func (v TrustCenterAccessOrderField) String() string {
+func (v CompliancePortalAccessState) String() string {
 	return string(v)
 }
 
-func (v TrustCenterAccessOrderField) MarshalText() ([]byte, error) {
+func (v CompliancePortalAccessState) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *TrustCenterAccessOrderField) UnmarshalText(text []byte) error {
-	val := TrustCenterAccessOrderField(text)
+func (v *CompliancePortalAccessState) UnmarshalText(text []byte) error {
+	val := CompliancePortalAccessState(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid TrustCenterAccessOrderField value: %q", string(text))
+		return fmt.Errorf("invalid CompliancePortalAccessState value: %q", string(text))
 	}
 
 	*v = val
 
 	return nil
-}
-
-func (tcaof TrustCenterAccessOrderField) Column() string {
-	switch tcaof {
-	case TrustCenterAccessOrderFieldCreatedAt:
-		return "created_at"
-	}
-
-	panic(fmt.Sprintf("unsupported order by: %s", tcaof))
 }

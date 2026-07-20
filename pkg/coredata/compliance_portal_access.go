@@ -36,30 +36,30 @@ import (
 )
 
 type (
-	TrustCenterAccess struct {
+	CompliancePortalAccess struct {
 		ID                    gid.GID      `db:"id"`
 		OrganizationID        gid.GID      `db:"organization_id"`
 		TenantID              gid.TenantID `db:"tenant_id"`
 		IdentityID            gid.GID      `db:"identity_id"`
-		TrustCenterID         gid.GID      `db:"trust_center_id"`
+		CompliancePortalID    gid.GID      `db:"trust_center_id"`
 		ElectronicSignatureID *gid.GID     `db:"electronic_signature_id"`
 		CreatedAt             time.Time    `db:"created_at"`
 		UpdatedAt             time.Time    `db:"updated_at"`
 	}
 
-	TrustCenterAccesses []*TrustCenterAccess
+	CompliancePortalAccesses []*CompliancePortalAccess
 )
 
-func (tca *TrustCenterAccess) CursorKey(orderBy TrustCenterAccessOrderField) page.CursorKey {
+func (tca *CompliancePortalAccess) CursorKey(orderBy CompliancePortalAccessOrderField) page.CursorKey {
 	switch orderBy {
-	case TrustCenterAccessOrderFieldCreatedAt:
+	case CompliancePortalAccessOrderFieldCreatedAt:
 		return page.NewCursorKey(tca.ID, tca.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tca *TrustCenterAccess) AuthorizationAttributes(
+func (tca *CompliancePortalAccess) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
@@ -98,7 +98,7 @@ func (tca *TrustCenterAccess) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (tca *TrustCenterAccess) LoadByID(
+func (tca *CompliancePortalAccess) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -129,16 +129,16 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center access: %w", err)
+		return fmt.Errorf("cannot query compliance portal access: %w", err)
 	}
 
-	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAccess])
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center access: %w", err)
+		return fmt.Errorf("cannot collect compliance portal access: %w", err)
 	}
 
 	*tca = access
@@ -146,11 +146,11 @@ LIMIT 1;
 	return nil
 }
 
-func (tca *TrustCenterAccess) LoadByTrustCenterIDAndIdentityID(
+func (tca *CompliancePortalAccess) LoadByCompliancePortalIDAndIdentityID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	identityID gid.GID,
 ) error {
 	q := `
@@ -175,23 +175,23 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": trustCenterID,
+		"trust_center_id": compliancePortalID,
 		"identity_id":     identityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center access: %w", err)
+		return fmt.Errorf("cannot query compliance portal access: %w", err)
 	}
 
-	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAccess])
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center access: %w", err)
+		return fmt.Errorf("cannot collect compliance portal access: %w", err)
 	}
 
 	*tca = access
@@ -199,7 +199,7 @@ LIMIT 1;
 	return nil
 }
 
-func (tca *TrustCenterAccess) Insert(
+func (tca *CompliancePortalAccess) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -231,7 +231,7 @@ INSERT INTO trust_center_accesses (
 		"tenant_id":               tca.TenantID,
 		"organization_id":         tca.OrganizationID,
 		"identity_id":             tca.IdentityID,
-		"trust_center_id":         tca.TrustCenterID,
+		"trust_center_id":         tca.CompliancePortalID,
 		"electronic_signature_id": tca.ElectronicSignatureID,
 		"created_at":              tca.CreatedAt,
 		"updated_at":              tca.UpdatedAt,
@@ -245,13 +245,13 @@ INSERT INTO trust_center_accesses (
 			}
 		}
 
-		return fmt.Errorf("cannot insert trust center access: %w", err)
+		return fmt.Errorf("cannot insert compliance portal access: %w", err)
 	}
 
 	return nil
 }
 
-func (tca *TrustCenterAccess) Update(
+func (tca *CompliancePortalAccess) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -276,13 +276,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center access: %w", err)
+		return fmt.Errorf("cannot update compliance portal access: %w", err)
 	}
 
 	return nil
 }
 
-func (tca *TrustCenterAccess) Delete(
+func (tca *CompliancePortalAccess) Delete(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
@@ -303,18 +303,18 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete trust center access: %w", err)
+		return fmt.Errorf("cannot delete compliance portal access: %w", err)
 	}
 
 	return nil
 }
 
-func (tcas *TrustCenterAccesses) LoadByTrustCenterID(
+func (tcas *CompliancePortalAccesses) LoadByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	trustCenterID gid.GID,
-	cursor *page.Cursor[TrustCenterAccessOrderField],
+	compliancePortalID gid.GID,
+	cursor *page.Cursor[CompliancePortalAccessOrderField],
 ) error {
 	q := `
 SELECT
@@ -337,19 +337,19 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": trustCenterID,
+		"trust_center_id": compliancePortalID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center accesses: %w", err)
+		return fmt.Errorf("cannot query compliance portal accesses: %w", err)
 	}
 
-	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterAccess])
+	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalAccess])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center accesses: %w", err)
+		return fmt.Errorf("cannot collect compliance portal accesses: %w", err)
 	}
 
 	*tcas = accesses

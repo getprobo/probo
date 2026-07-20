@@ -25,52 +25,52 @@ import (
 	"fmt"
 )
 
-type TrustCenterVisibility string
+type CompliancePortalVisibility string
 
 const (
-	TrustCenterVisibilityNone    TrustCenterVisibility = "NONE"
-	TrustCenterVisibilityPrivate TrustCenterVisibility = "PRIVATE"
-	TrustCenterVisibilityPublic  TrustCenterVisibility = "PUBLIC"
+	CompliancePortalVisibilityNone    CompliancePortalVisibility = "NONE"
+	CompliancePortalVisibilityPrivate CompliancePortalVisibility = "PRIVATE"
+	CompliancePortalVisibilityPublic  CompliancePortalVisibility = "PUBLIC"
 )
 
 var (
-	_ fmt.Stringer             = TrustCenterVisibility("")
-	_ encoding.TextMarshaler   = TrustCenterVisibility("")
-	_ encoding.TextUnmarshaler = (*TrustCenterVisibility)(nil)
+	_ fmt.Stringer             = CompliancePortalVisibility("")
+	_ encoding.TextMarshaler   = CompliancePortalVisibility("")
+	_ encoding.TextUnmarshaler = (*CompliancePortalVisibility)(nil)
 )
 
-func TrustCenterVisibilities() []TrustCenterVisibility {
-	return []TrustCenterVisibility{
-		TrustCenterVisibilityNone,
-		TrustCenterVisibilityPrivate,
-		TrustCenterVisibilityPublic,
+func CompliancePortalVisibilities() []CompliancePortalVisibility {
+	return []CompliancePortalVisibility{
+		CompliancePortalVisibilityNone,
+		CompliancePortalVisibilityPrivate,
+		CompliancePortalVisibilityPublic,
 	}
 }
 
-func (v TrustCenterVisibility) IsValid() bool {
+func (v CompliancePortalVisibility) IsValid() bool {
 	switch v {
 	case
-		TrustCenterVisibilityNone,
-		TrustCenterVisibilityPrivate,
-		TrustCenterVisibilityPublic:
+		CompliancePortalVisibilityNone,
+		CompliancePortalVisibilityPrivate,
+		CompliancePortalVisibilityPublic:
 		return true
 	}
 
 	return false
 }
 
-func (v TrustCenterVisibility) String() string {
+func (v CompliancePortalVisibility) String() string {
 	return string(v)
 }
 
-func (v TrustCenterVisibility) MarshalText() ([]byte, error) {
+func (v CompliancePortalVisibility) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *TrustCenterVisibility) UnmarshalText(text []byte) error {
-	val := TrustCenterVisibility(text)
+func (v *CompliancePortalVisibility) UnmarshalText(text []byte) error {
+	val := CompliancePortalVisibility(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid TrustCenterVisibility value: %q", string(text))
+		return fmt.Errorf("invalid CompliancePortalVisibility value: %q", string(text))
 	}
 
 	*v = val

@@ -172,7 +172,7 @@ type (
 		TermsOfServiceURL             *string                  `db:"terms_of_service_url"`
 		SecurityPageURL               *string                  `db:"security_page_url"`
 		TrustPageURL                  *string                  `db:"trust_page_url"`
-		ShowOnTrustCenter             bool                     `db:"show_on_trust_center"`
+		ShowOnCompliancePortal        bool                     `db:"show_on_trust_center"`
 		Level                         int                      `db:"level"`
 		VettingStatus                 *ThirdPartyVettingStatus `db:"vetting_status"`
 		VettingWebsiteURL             *string                  `db:"vetting_website_url"`
@@ -716,7 +716,7 @@ VALUES (
 		"terms_of_service_url":             v.TermsOfServiceURL,
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
-		"show_on_trust_center":             v.ShowOnTrustCenter,
+		"show_on_trust_center":             v.ShowOnCompliancePortal,
 		"level":                            v.Level,
 		"vetting_status":                   v.VettingStatus,
 		"vetting_website_url":              v.VettingWebsiteURL,
@@ -786,7 +786,7 @@ WHERE
 	return count, nil
 }
 
-func (v *ThirdParties) LoadDistinctTrustCenterCategoriesByOrganizationID(
+func (v *ThirdParties) LoadDistinctCompliancePortalCategoriesByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -822,7 +822,7 @@ ORDER BY
 	return categories, nil
 }
 
-func (v *ThirdParties) LoadDistinctTrustCenterCountriesByOrganizationID(
+func (v *ThirdParties) LoadDistinctCompliancePortalCountriesByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -996,7 +996,7 @@ WHERE %s
 		"trust_page_url":                   v.TrustPageURL,
 		"business_owner_profile_id":        v.BusinessOwnerID,
 		"security_owner_profile_id":        v.SecurityOwnerID,
-		"show_on_trust_center":             v.ShowOnTrustCenter,
+		"show_on_trust_center":             v.ShowOnCompliancePortal,
 		"level":                            v.Level,
 		"vetting_status":                   v.VettingStatus,
 		"vetting_website_url":              v.VettingWebsiteURL,

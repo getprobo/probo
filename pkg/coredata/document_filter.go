@@ -27,15 +27,15 @@ import (
 
 type (
 	DocumentFilter struct {
-		query                   *string
-		trustCenterVisibilities []TrustCenterVisibility
-		published               *bool
-		employeeIdentityID      *gid.GID
-		employeeFilterModes     []EmployeeFilterMode
-		documentTypes           []DocumentType
-		classifications         []DocumentClassification
-		writeModes              []DocumentWriteMode
-		status                  []DocumentStatus
+		query                        *string
+		compliancePortalVisibilities []CompliancePortalVisibility
+		published                    *bool
+		employeeIdentityID           *gid.GID
+		employeeFilterModes          []EmployeeFilterMode
+		documentTypes                []DocumentType
+		classifications              []DocumentClassification
+		writeModes                   []DocumentWriteMode
+		status                       []DocumentStatus
 	}
 )
 
@@ -45,13 +45,13 @@ func NewDocumentFilter(query *string) *DocumentFilter {
 	}
 }
 
-func NewDocumentTrustCenterFilter() *DocumentFilter {
+func NewDocumentCompliancePortalFilter() *DocumentFilter {
 	published := true
 
 	return &DocumentFilter{
-		trustCenterVisibilities: []TrustCenterVisibility{
-			TrustCenterVisibilityPrivate,
-			TrustCenterVisibilityPublic,
+		compliancePortalVisibilities: []CompliancePortalVisibility{
+			CompliancePortalVisibilityPrivate,
+			CompliancePortalVisibilityPublic,
 		},
 		published: &published,
 		status:    []DocumentStatus{DocumentStatusActive},
@@ -63,8 +63,8 @@ func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
 	return f
 }
 
-func (f *DocumentFilter) WithTrustCenterVisibilities(visibilities ...TrustCenterVisibility) *DocumentFilter {
-	f.trustCenterVisibilities = visibilities
+func (f *DocumentFilter) WithCompliancePortalVisibilities(visibilities ...CompliancePortalVisibility) *DocumentFilter {
+	f.compliancePortalVisibilities = visibilities
 	return f
 }
 
@@ -97,9 +97,9 @@ func (f *DocumentFilter) WithStatus(status []DocumentStatus) *DocumentFilter {
 
 func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 	var visibilities []string
-	if f.trustCenterVisibilities != nil {
-		visibilities = make([]string, len(f.trustCenterVisibilities))
-		for i, v := range f.trustCenterVisibilities {
+	if f.compliancePortalVisibilities != nil {
+		visibilities = make([]string, len(f.compliancePortalVisibilities))
+		for i, v := range f.compliancePortalVisibilities {
 			visibilities[i] = v.String()
 		}
 	}

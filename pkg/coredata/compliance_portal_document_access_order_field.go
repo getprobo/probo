@@ -27,47 +27,47 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type TrustCenterOrderField string
+type CompliancePortalDocumentAccessOrderField string
 
 const (
-	TrustCenterOrderFieldCreatedAt TrustCenterOrderField = "CREATED_AT"
+	CompliancePortalDocumentAccessOrderFieldCreatedAt CompliancePortalDocumentAccessOrderField = "CREATED_AT"
 )
 
 var (
-	_ page.OrderField          = TrustCenterOrderField("")
-	_ fmt.Stringer             = TrustCenterOrderField("")
-	_ encoding.TextMarshaler   = TrustCenterOrderField("")
-	_ encoding.TextUnmarshaler = (*TrustCenterOrderField)(nil)
+	_ page.OrderField          = CompliancePortalDocumentAccessOrderField("")
+	_ fmt.Stringer             = CompliancePortalDocumentAccessOrderField("")
+	_ encoding.TextMarshaler   = CompliancePortalDocumentAccessOrderField("")
+	_ encoding.TextUnmarshaler = (*CompliancePortalDocumentAccessOrderField)(nil)
 )
 
-func TrustCenterOrderFields() []TrustCenterOrderField {
-	return []TrustCenterOrderField{
-		TrustCenterOrderFieldCreatedAt,
+func CompliancePortalDocumentAccessOrderFields() []CompliancePortalDocumentAccessOrderField {
+	return []CompliancePortalDocumentAccessOrderField{
+		CompliancePortalDocumentAccessOrderFieldCreatedAt,
 	}
 }
 
-func (v TrustCenterOrderField) IsValid() bool {
+func (v CompliancePortalDocumentAccessOrderField) IsValid() bool {
 	switch v {
 	case
-		TrustCenterOrderFieldCreatedAt:
+		CompliancePortalDocumentAccessOrderFieldCreatedAt:
 		return true
 	}
 
 	return false
 }
 
-func (v TrustCenterOrderField) String() string {
+func (v CompliancePortalDocumentAccessOrderField) String() string {
 	return string(v)
 }
 
-func (v TrustCenterOrderField) MarshalText() ([]byte, error) {
+func (v CompliancePortalDocumentAccessOrderField) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *TrustCenterOrderField) UnmarshalText(text []byte) error {
-	val := TrustCenterOrderField(text)
+func (v *CompliancePortalDocumentAccessOrderField) UnmarshalText(text []byte) error {
+	val := CompliancePortalDocumentAccessOrderField(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid TrustCenterOrderField value: %q", string(text))
+		return fmt.Errorf("invalid CompliancePortalDocumentAccessOrderField value: %q", string(text))
 	}
 
 	*v = val
@@ -75,6 +75,6 @@ func (v *TrustCenterOrderField) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (p TrustCenterOrderField) Column() string {
-	return string(p)
+func (tcdaof CompliancePortalDocumentAccessOrderField) Column() string {
+	return string(tcdaof)
 }

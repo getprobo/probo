@@ -37,17 +37,17 @@ import (
 
 type (
 	CompliancePortalCommitment struct {
-		ID             gid.GID                        `db:"id"`
-		OrganizationID gid.GID                        `db:"organization_id"`
-		TrustCenterID  gid.GID                        `db:"trust_center_id"`
-		GroupID        gid.GID                        `db:"group_id"`
-		Icon           CompliancePortalCommitmentIcon `db:"icon"`
-		Eyebrow        string                         `db:"eyebrow"`
-		Title          string                         `db:"title"`
-		Description    string                         `db:"description"`
-		Rank           int                            `db:"rank"`
-		CreatedAt      time.Time                      `db:"created_at"`
-		UpdatedAt      time.Time                      `db:"updated_at"`
+		ID                 gid.GID                        `db:"id"`
+		OrganizationID     gid.GID                        `db:"organization_id"`
+		CompliancePortalID gid.GID                        `db:"trust_center_id"`
+		GroupID            gid.GID                        `db:"group_id"`
+		Icon               CompliancePortalCommitmentIcon `db:"icon"`
+		Eyebrow            string                         `db:"eyebrow"`
+		Title              string                         `db:"title"`
+		Description        string                         `db:"description"`
+		Rank               int                            `db:"rank"`
+		CreatedAt          time.Time                      `db:"created_at"`
+		UpdatedAt          time.Time                      `db:"updated_at"`
 	}
 
 	CompliancePortalCommitments []*CompliancePortalCommitment
@@ -193,7 +193,7 @@ RETURNING rank;
 		"tenant_id":       scope.GetTenantID(),
 		"id":              t.ID,
 		"organization_id": t.OrganizationID,
-		"trust_center_id": t.TrustCenterID,
+		"trust_center_id": t.CompliancePortalID,
 		"group_id":        t.GroupID,
 		"icon":            t.Icon,
 		"eyebrow":         t.Eyebrow,

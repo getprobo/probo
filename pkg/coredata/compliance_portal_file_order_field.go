@@ -28,54 +28,54 @@ import (
 )
 
 type (
-	TrustCenterFileOrderField string
+	CompliancePortalFileOrderField string
 )
 
 const (
-	TrustCenterFileOrderFieldName      TrustCenterFileOrderField = "NAME"
-	TrustCenterFileOrderFieldCreatedAt TrustCenterFileOrderField = "CREATED_AT"
-	TrustCenterFileOrderFieldUpdatedAt TrustCenterFileOrderField = "UPDATED_AT"
+	CompliancePortalFileOrderFieldName      CompliancePortalFileOrderField = "NAME"
+	CompliancePortalFileOrderFieldCreatedAt CompliancePortalFileOrderField = "CREATED_AT"
+	CompliancePortalFileOrderFieldUpdatedAt CompliancePortalFileOrderField = "UPDATED_AT"
 )
 
 var (
-	_ page.OrderField          = TrustCenterFileOrderField("")
-	_ fmt.Stringer             = TrustCenterFileOrderField("")
-	_ encoding.TextMarshaler   = TrustCenterFileOrderField("")
-	_ encoding.TextUnmarshaler = (*TrustCenterFileOrderField)(nil)
+	_ page.OrderField          = CompliancePortalFileOrderField("")
+	_ fmt.Stringer             = CompliancePortalFileOrderField("")
+	_ encoding.TextMarshaler   = CompliancePortalFileOrderField("")
+	_ encoding.TextUnmarshaler = (*CompliancePortalFileOrderField)(nil)
 )
 
-func TrustCenterFileOrderFields() []TrustCenterFileOrderField {
-	return []TrustCenterFileOrderField{
-		TrustCenterFileOrderFieldName,
-		TrustCenterFileOrderFieldCreatedAt,
-		TrustCenterFileOrderFieldUpdatedAt,
+func CompliancePortalFileOrderFields() []CompliancePortalFileOrderField {
+	return []CompliancePortalFileOrderField{
+		CompliancePortalFileOrderFieldName,
+		CompliancePortalFileOrderFieldCreatedAt,
+		CompliancePortalFileOrderFieldUpdatedAt,
 	}
 }
 
-func (v TrustCenterFileOrderField) IsValid() bool {
+func (v CompliancePortalFileOrderField) IsValid() bool {
 	switch v {
 	case
-		TrustCenterFileOrderFieldName,
-		TrustCenterFileOrderFieldCreatedAt,
-		TrustCenterFileOrderFieldUpdatedAt:
+		CompliancePortalFileOrderFieldName,
+		CompliancePortalFileOrderFieldCreatedAt,
+		CompliancePortalFileOrderFieldUpdatedAt:
 		return true
 	}
 
 	return false
 }
 
-func (v TrustCenterFileOrderField) String() string {
+func (v CompliancePortalFileOrderField) String() string {
 	return string(v)
 }
 
-func (v TrustCenterFileOrderField) MarshalText() ([]byte, error) {
+func (v CompliancePortalFileOrderField) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *TrustCenterFileOrderField) UnmarshalText(text []byte) error {
-	val := TrustCenterFileOrderField(text)
+func (v *CompliancePortalFileOrderField) UnmarshalText(text []byte) error {
+	val := CompliancePortalFileOrderField(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid TrustCenterFileOrderField value: %q", string(text))
+		return fmt.Errorf("invalid CompliancePortalFileOrderField value: %q", string(text))
 	}
 
 	*v = val
@@ -83,13 +83,13 @@ func (v *TrustCenterFileOrderField) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (p TrustCenterFileOrderField) Column() string {
+func (p CompliancePortalFileOrderField) Column() string {
 	switch p {
-	case TrustCenterFileOrderFieldName:
+	case CompliancePortalFileOrderFieldName:
 		return "name"
-	case TrustCenterFileOrderFieldCreatedAt:
+	case CompliancePortalFileOrderFieldCreatedAt:
 		return "created_at"
-	case TrustCenterFileOrderFieldUpdatedAt:
+	case CompliancePortalFileOrderFieldUpdatedAt:
 		return "updated_at"
 	default:
 		return string(p)
