@@ -1,0 +1,122 @@
+{
+  "topBar": {
+    "tagline": "Portal de Conformidade",
+    "getAccess": "Obter Acesso",
+    "nav": {
+      "documents": "Documentos",
+      "subprocessors": "Subcontratantes",
+      "updates": "Atualizações",
+      "requests": "Pedidos"
+    }
+  },
+  "userMenu": {
+    "signOut": "Terminar sessão"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "error": "Ocorreu um erro",
+    "previousPage": "Página anterior",
+    "nextPage": "Página seguinte",
+    "pageOf": "Página {{current}} de {{total}}",
+    "zoomOut": "Reduzir zoom",
+    "zoomIn": "Aumentar zoom"
+  },
+  "auth": {
+    "backToPortal": "Voltar ao portal",
+    "signIn": {
+      "title": "Inicie sessão para continuar",
+      "description": "Aceda a recursos protegidos ou submeta um pedido",
+      "or": "OU",
+      "withProvider": "Iniciar sessão com {{provider}}",
+      "emailLabel": "Endereço de E-mail",
+      "emailPlaceholder": "nome@empresa.com",
+      "emailRequired": "O e-mail é obrigatório",
+      "emailInvalid": "Introduza um endereço de e-mail válido",
+      "sendMagicLink": "Enviar Link Mágico",
+      "resend": "Reenviar link",
+      "resendIn": "Reenviar link em {{seconds}}s",
+      "magicLinkSent": "Link mágico enviado!",
+      "magicLinkSentNote": "Verifique o seu e-mail e utilize o link para iniciar sessão."
+    },
+    "requestAccess": {
+      "success": "Acesso solicitado"
+    },
+    "verify": {
+      "title": "A confirmar o seu e-mail",
+      "description": "Aguarde enquanto iniciamos a sua sessão…"
+    },
+    "fullName": {
+      "title": "Adicione o seu nome",
+      "label": "Nome Completo",
+      "placeholder": "João Silva",
+      "required": "O nome completo é obrigatório",
+      "tooShort": "O nome completo é demasiado curto",
+      "submit": "Continuar"
+    },
+    "magicLinkExpired": {
+      "title": "Link expirado",
+      "description": "Este link mágico expirou. Solicite um novo."
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "Link já utilizado",
+      "description": "Este link mágico já foi utilizado. Solicite um novo."
+    },
+    "errors": {
+      "magicLinkFailed": "Não foi possível enviar o link mágico. Tente novamente.",
+      "verifyFailed": "Não foi possível verificar o link. Tente novamente.",
+      "fullNameFailed": "Não foi possível guardar o seu nome. Tente novamente.",
+      "requestFailed": "Não foi possível concluir o seu pedido de acesso. Tente novamente."
+    }
+  },
+  "home": {
+    "heroTitle": "A confiança na {{name}}.",
+    "heroDescription": "Bem-vindo ao nosso Portal de Conformidade. Encontre aqui a nossa documentação de segurança e certificações.",
+    "sections": {
+      "compliance": "Conformidade",
+      "securityCommitments": "Compromissos de Segurança",
+      "trustedBy": "Confiam em nós",
+      "recentUpdates": "Atualizações recentes"
+    },
+    "recentUpdates": {
+      "viewAll": "Ver tudo"
+    }
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "A página que procura não existe ou foi movida.",
+    "backHome": "Voltar ao início"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Página não encontrada",
+      "description": "A página que procura não existe ou pode ter sido movida."
+    },
+    "forbidden": {
+      "title": "Acesso negado",
+      "description": "Não tem permissão para ver esta página."
+    },
+    "serverError": {
+      "title": "Ocorreu um erro",
+      "description": "Ocorreu um erro inesperado. Tente novamente dentro de momentos."
+    },
+    "generic": {
+      "title": "Ocorreu um erro",
+      "description": "Ocorreu um erro inesperado. Tente novamente dentro de momentos."
+    },
+    "actions": {
+      "backToCompliancePortal": "Voltar ao portal de conformidade",
+      "tryAgain": "Tentar novamente"
+    },
+    "inline": {
+      "message": "Não foi possível carregar o conteúdo",
+      "retry": "Tentar novamente"
+    }
+  },
+  "footer": {
+    "poweredBy": "Desenvolvido por"
+  },
+  "pagination": {
+    "previous": "Página anterior",
+    "next": "Página seguinte"
+  }
+}

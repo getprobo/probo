@@ -1,0 +1,109 @@
+{
+  "title": "Subcontratantes",
+  "filters": {
+    "allCategories": "Todas as categorias",
+    "allRegions": "Todas as regiões",
+    "searchPlaceholder": "Pesquisar..."
+  },
+  "empty": {
+    "title": "Nenhum subcontratante listado.",
+    "description": "Este portal de conformidade ainda não publicou subcontratantes.",
+    "filteredTitle": "Nenhum subcontratante corresponde aos seus filtros.",
+    "filteredDescription": "Ajuste a sua pesquisa ou filtros para ver os subcontratantes disponíveis.",
+    "clearFilters": "Limpar filtros"
+  },
+  "regions": {
+    "global": "Global",
+    "eu": "União Europeia"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Análise",
+      "description": "Análise de utilização e telemetria de produto."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Monitorização na Cloud",
+      "description": "Observabilidade, registo de eventos e monitorização de disponibilidade."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Fornecedor de Cloud",
+      "description": "Alojamento, computação, armazenamento e rede em cloud."
+    },
+    "COLLABORATION": {
+      "label": "Colaboração",
+      "description": "Ferramentas de comunicação, agendamento e trabalho em equipa."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Suporte ao Cliente",
+      "description": "Serviço de assistência, gestão de tickets e mensagens com clientes."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Armazenamento e Processamento de Dados",
+      "description": "Bases de dados, armazéns de dados e fluxos de processamento."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Gestão de Documentos",
+      "description": "Armazenamento de documentos, assinatura e assinatura eletrónica."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Gestão de Colaboradores",
+      "description": "Recursos humanos, processamento salarial e gestão de pessoas."
+    },
+    "ENGINEERING": {
+      "label": "Engenharia",
+      "description": "Ferramentas para programadores e plataformas de engenharia."
+    },
+    "FINANCE": {
+      "label": "Finanças",
+      "description": "Faturação, pagamentos e contabilidade."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Fornecedor de Identidade",
+      "description": "Autenticação, SSO e gestão de identidade."
+    },
+    "IT": {
+      "label": "TI",
+      "description": "Administração de TI e gestão de dispositivos."
+    },
+    "MARKETING": {
+      "label": "Marketing",
+      "description": "Marketing, CRM e envolvimento de audiências."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Operações de Escritório",
+      "description": "Operações de local de trabalho e escritório."
+    },
+    "OTHER": {
+      "label": "Outros",
+      "description": "Outros serviços de suporte."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Gestão de Palavras-passe",
+      "description": "Gestão de credenciais e segredos."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Produto e Design",
+      "description": "Ferramentas de produto e design."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Serviços Profissionais",
+      "description": "Consultoria e serviços profissionais."
+    },
+    "RECRUITING": {
+      "label": "Recrutamento",
+      "description": "Contratação, procura de talento e acompanhamento de candidaturas."
+    },
+    "SALES": {
+      "label": "Vendas",
+      "description": "Capacitação de vendas e CRM."
+    },
+    "SECURITY": {
+      "label": "Segurança",
+      "description": "Segurança, monitorização e acesso seguro."
+    },
+    "VERSION_CONTROL": {
+      "label": "Controlo de Versões",
+      "description": "Controlo de código-fonte e alojamento de código."
+    }
+  }
+}

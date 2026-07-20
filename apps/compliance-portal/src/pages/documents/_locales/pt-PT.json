@@ -1,0 +1,46 @@
+{
+  "title": "Documentos",
+  "tabs": {
+    "all": "Todos",
+    "public": "Público",
+    "private": "Privado"
+  },
+  "sections": {
+    "reports": "Relatórios de conformidade"
+  },
+  "types": {
+    "OTHER": "Outros",
+    "GOVERNANCE": "Governação",
+    "POLICY": "Políticas",
+    "PROCEDURE": "Procedimentos",
+    "PLAN": "Planos",
+    "REGISTER": "Livros de Registo",
+    "RECORD": "Registos",
+    "REPORT": "Relatórios",
+    "TEMPLATE": "Modelos",
+    "STATEMENT_OF_APPLICABILITY": "Declaração de Aplicabilidade"
+  },
+  "actions": {
+    "view": "Ver",
+    "getAccess": "Obter Acesso",
+    "requested": "Acesso solicitado"
+  },
+  "empty": {
+    "title": "Nenhum documento disponível",
+    "description": "Este portal de conformidade ainda não publicou documentos.",
+    "filteredTitle": "Nenhum documento corresponde a este filtro",
+    "filteredDescription": "Experimente outro separador para ver os documentos disponíveis."
+  },
+  "viewer": {
+    "back": "Documentos",
+    "share": "Partilhar documento",
+    "linkCopied": "Link copiado para a área de transferência",
+    "download": "Transferir",
+    "previewUnavailable": "Pré-visualização indisponível",
+    "downloadToView": "Este tipo de ficheiro não pode ser pré-visualizado aqui. Transfira-o para o visualizar.",
+    "locked": {
+      "title": "Acesso necessário",
+      "description": "Ainda não tem acesso a este documento."
+    }
+  }
+}

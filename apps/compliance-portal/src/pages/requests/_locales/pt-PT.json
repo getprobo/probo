@@ -1,0 +1,71 @@
+{
+  "title": "Pedidos de Dados",
+  "newRequest": "Novo Pedido",
+  "loadMore": "Carregar mais",
+  "empty": {
+    "title": "Ainda não há pedidos",
+    "description": "Os pedidos que submeter aparecerão aqui para que possa acompanhar o seu progresso."
+  },
+  "types": {
+    "ACCESS": "Acesso a Dados",
+    "DELETION": "Eliminação de Dados",
+    "RECTIFICATION": "Retificação de Dados",
+    "PORTABILITY": "Portabilidade de Dados",
+    "OBJECTION": "Oposição ao Tratamento",
+    "COMPLAINT": "Denúncia de Abuso"
+  },
+  "status": {
+    "TODO": "Pendente",
+    "IN_PROGRESS": "Em processamento",
+    "DONE": "Concluído",
+    "REJECTED": "Rejeitado"
+  },
+  "typeOption": {
+    "ACCESS": "Aceder aos meus dados",
+    "DELETION": "Eliminar os meus dados",
+    "RECTIFICATION": "Corrigir os meus dados",
+    "OBJECTION": "Opor-me ao tratamento",
+    "COMPLAINT": "Denunciar abuso"
+  },
+  "dialog": {
+    "title": "Novo Pedido",
+    "description": "Escolha um tipo de pedido e preencha os detalhes abaixo.",
+    "typeLabel": "Tipo de pedido",
+    "cancel": "Cancelar",
+    "submit": "Enviar Pedido",
+    "success": {
+      "title": "Pedido enviado",
+      "description": "Iremos processar o seu pedido e responder dentro do prazo exigido pela legislação aplicável.",
+      "close": "Fechar"
+    }
+  },
+  "form": {
+    "name": "Nome Completo",
+    "nameOptional": "O Seu Nome (opcional)",
+    "namePlaceholder": "João Silva",
+    "email": "Endereço de E-mail",
+    "deletionWarning": "A eliminação de dados é permanente e não pode ser revertida. Alguns dados podem ser retidos por obrigações legais.",
+    "details": {
+      "ACCESS": {
+        "label": "Detalhes do seu pedido",
+        "placeholder": "Gostaria de receber uma cópia de todos os dados pessoais associados à minha conta…"
+      },
+      "DELETION": {
+        "label": "Âmbito do pedido de eliminação",
+        "placeholder": "Por favor, elimine todos os dados pessoais, incluindo…"
+      },
+      "RECTIFICATION": {
+        "label": "O que deve ser corrigido?",
+        "placeholder": "As seguintes informações estão incorretas…"
+      },
+      "OBJECTION": {
+        "label": "Ao que se opõe?",
+        "placeholder": "Oponho-me ao tratamento dos meus dados para…"
+      },
+      "COMPLAINT": {
+        "label": "Descrição da preocupação",
+        "placeholder": "Reparei que…"
+      }
+    }
+  }
+}
