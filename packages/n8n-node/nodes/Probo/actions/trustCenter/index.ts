@@ -28,6 +28,14 @@ import * as getAllFilesOp from './getAllFiles.operation';
 import * as deleteFileOp from './deleteFile.operation';
 import * as createExternalUrlOp from './createExternalUrl.operation';
 import * as deleteExternalUrlOp from './deleteExternalUrl.operation';
+import * as getAllCommitmentGroupsOp from './getAllCommitmentGroups.operation';
+import * as createCommitmentGroupOp from './createCommitmentGroup.operation';
+import * as updateCommitmentGroupOp from './updateCommitmentGroup.operation';
+import * as deleteCommitmentGroupOp from './deleteCommitmentGroup.operation';
+import * as getAllCommitmentsOp from './getAllCommitments.operation';
+import * as createCommitmentOp from './createCommitment.operation';
+import * as updateCommitmentOp from './updateCommitment.operation';
+import * as deleteCommitmentOp from './deleteCommitment.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -42,6 +50,18 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Create Commitment',
+				value: 'createCommitment',
+				description: 'Create a new compliance portal commitment',
+				action: 'Create a compliance portal commitment',
+			},
+			{
+				name: 'Create Commitment Group',
+				value: 'createCommitmentGroup',
+				description: 'Create a new compliance portal commitment group',
+				action: 'Create a compliance portal commitment group',
+			},
+			{
 				name: 'Create External URL',
 				value: 'createExternalUrl',
 				description: 'Create a new compliance external URL',
@@ -52,6 +72,18 @@ export const description: INodeProperties[] = [
 				value: 'createReference',
 				description: 'Create a new trust center reference',
 				action: 'Create a trust center reference',
+			},
+			{
+				name: 'Delete Commitment',
+				value: 'deleteCommitment',
+				description: 'Delete a compliance portal commitment',
+				action: 'Delete a compliance portal commitment',
+			},
+			{
+				name: 'Delete Commitment Group',
+				value: 'deleteCommitmentGroup',
+				description: 'Delete a compliance portal commitment group',
+				action: 'Delete a compliance portal commitment group',
 			},
 			{
 				name: 'Delete External URL',
@@ -78,6 +110,18 @@ export const description: INodeProperties[] = [
 				action: 'Get trust center settings',
 			},
 			{
+				name: 'Get Many Commitment Groups',
+				value: 'getAllCommitmentGroups',
+				description: 'Get many compliance portal commitment groups',
+				action: 'Get many compliance portal commitment groups',
+			},
+			{
+				name: 'Get Many Commitments',
+				value: 'getAllCommitments',
+				description: 'Get many compliance portal commitments',
+				action: 'Get many compliance portal commitments',
+			},
+			{
 				name: 'Get Many Files',
 				value: 'getAllFiles',
 				description: 'Get many trust center files',
@@ -95,6 +139,18 @@ export const description: INodeProperties[] = [
 				description: 'Update trust center settings',
 				action: 'Update trust center settings',
 			},
+			{
+				name: 'Update Commitment',
+				value: 'updateCommitment',
+				description: 'Update a compliance portal commitment',
+				action: 'Update a compliance portal commitment',
+			},
+			{
+				name: 'Update Commitment Group',
+				value: 'updateCommitmentGroup',
+				description: 'Update a compliance portal commitment group',
+				action: 'Update a compliance portal commitment group',
+			},
 		],
 		default: 'get',
 	},
@@ -107,6 +163,14 @@ export const description: INodeProperties[] = [
 	...deleteFileOp.description,
 	...createExternalUrlOp.description,
 	...deleteExternalUrlOp.description,
+	...getAllCommitmentGroupsOp.description,
+	...createCommitmentGroupOp.description,
+	...updateCommitmentGroupOp.description,
+	...deleteCommitmentGroupOp.description,
+	...getAllCommitmentsOp.description,
+	...createCommitmentOp.description,
+	...updateCommitmentOp.description,
+	...deleteCommitmentOp.description,
 ];
 
 export {
@@ -119,4 +183,12 @@ export {
 	deleteFileOp as deleteFile,
 	createExternalUrlOp as createExternalUrl,
 	deleteExternalUrlOp as deleteExternalUrl,
+	getAllCommitmentGroupsOp as getAllCommitmentGroups,
+	createCommitmentGroupOp as createCommitmentGroup,
+	updateCommitmentGroupOp as updateCommitmentGroup,
+	deleteCommitmentGroupOp as deleteCommitmentGroup,
+	getAllCommitmentsOp as getAllCommitments,
+	createCommitmentOp as createCommitment,
+	updateCommitmentOp as updateCommitment,
+	deleteCommitmentOp as deleteCommitment,
 };

@@ -18,32 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package trustcenter
+package commitment
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/trust-center/commitment"
-	"go.probo.inc/probo/pkg/cmd/trust-center/commitmentgroup"
-	"go.probo.inc/probo/pkg/cmd/trust-center/file"
-	"go.probo.inc/probo/pkg/cmd/trust-center/reference"
-	"go.probo.inc/probo/pkg/cmd/trust-center/update"
-	"go.probo.inc/probo/pkg/cmd/trust-center/view"
+	"go.probo.inc/probo/pkg/cmd/trust-center/commitment/create"
+	"go.probo.inc/probo/pkg/cmd/trust-center/commitment/delete"
+	"go.probo.inc/probo/pkg/cmd/trust-center/commitment/list"
+	"go.probo.inc/probo/pkg/cmd/trust-center/commitment/update"
 )
 
-func NewCmdTrustCenter(f *cmdutil.Factory) *cobra.Command {
+func NewCmdCommitment(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "trust-center <command>",
-		Short:   "Manage trust center",
-		Aliases: []string{"tc"},
+		Use:     "commitment <command>",
+		Short:   "Manage compliance portal commitments",
+		Aliases: []string{"cmt"},
 	}
 
-	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(create.NewCmdCreate(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(reference.NewCmdReference(f))
-	cmd.AddCommand(commitmentgroup.NewCmdCommitmentGroup(f))
-	cmd.AddCommand(commitment.NewCmdCommitment(f))
-	cmd.AddCommand(file.NewCmdFile(f))
+	cmd.AddCommand(delete.NewCmdDelete(f))
 
 	return cmd
 }

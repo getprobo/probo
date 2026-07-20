@@ -9140,6 +9140,366 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted trust center reference ID
 
+    CompliancePortalCommitmentIcon:
+      type: string
+      enum:
+        - LOCK_KEY
+        - EYE_SLASH
+        - FINGERPRINT
+        - SHIELD_WARNING
+        - SHIELD_CHECK
+        - SIREN
+        - KEY
+        - LOCK
+        - CLOUD
+        - DATABASE
+        - GLOBE
+        - EYE
+        - USERS
+        - CERTIFICATE
+        - GAVEL
+        - HEARTBEAT
+        - BELL
+        - BUG
+        - CODE
+        - SERVER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentIcon
+
+    CompliancePortalCommitmentGroupOrderField:
+      type: string
+      enum:
+        - RANK
+        - CREATED_AT
+        - UPDATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentGroupOrderField
+
+    CompliancePortalCommitmentGroupOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/CompliancePortalCommitmentGroupOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    CompliancePortalCommitmentOrderField:
+      type: string
+      enum:
+        - RANK
+        - CREATED_AT
+        - UPDATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalCommitmentOrderField
+
+    CompliancePortalCommitmentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/CompliancePortalCommitmentOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    CommitmentGroup:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - rank
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        title:
+          type: string
+        description:
+          type: string
+        rank:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Commitment:
+      type: object
+      required:
+        - id
+        - group_id
+        - icon
+        - eyebrow
+        - title
+        - description
+        - rank
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        group_id:
+          $ref: "#/components/schemas/GID"
+        icon:
+          $ref: "#/components/schemas/CompliancePortalCommitmentIcon"
+        eyebrow:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        rank:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListCommitmentGroupsInput:
+      type: object
+      required:
+        - trust_center_id
+      properties:
+        trust_center_id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center ID
+        order_by:
+          $ref: "#/components/schemas/CompliancePortalCommitmentGroupOrderBy"
+          description: Commitment group order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListCommitmentGroupsOutput:
+      type: object
+      required:
+        - commitment_groups
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        commitment_groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommitmentGroup"
+
+    AddCommitmentGroupInput:
+      type: object
+      required:
+        - trust_center_id
+        - title
+        - description
+      properties:
+        trust_center_id:
+          $ref: "#/components/schemas/GID"
+          description: Trust center ID
+        title:
+          type: string
+          description: Group title
+        description:
+          type: string
+          description: Group description
+
+    AddCommitmentGroupOutput:
+      type: object
+      required:
+        - commitment_group
+      properties:
+        commitment_group:
+          $ref: "#/components/schemas/CommitmentGroup"
+
+    UpdateCommitmentGroupInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Commitment group ID
+        title:
+          type:
+            - string
+            - "null"
+          description: Group title
+          go.probo.inc/mcpgen/omittable: true
+        description:
+          type:
+            - string
+            - "null"
+          description: Group description
+          go.probo.inc/mcpgen/omittable: true
+        rank:
+          type:
+            - integer
+            - "null"
+          description: Group rank
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateCommitmentGroupOutput:
+      type: object
+      required:
+        - commitment_group
+      properties:
+        commitment_group:
+          $ref: "#/components/schemas/CommitmentGroup"
+
+    DeleteCommitmentGroupInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Commitment group ID
+
+    DeleteCommitmentGroupOutput:
+      type: object
+      required:
+        - deleted_commitment_group_id
+      properties:
+        deleted_commitment_group_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted commitment group ID
+
+    ListCommitmentsInput:
+      type: object
+      required:
+        - group_id
+      properties:
+        group_id:
+          $ref: "#/components/schemas/GID"
+          description: Commitment group ID
+        order_by:
+          $ref: "#/components/schemas/CompliancePortalCommitmentOrderBy"
+          description: Commitment order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListCommitmentsOutput:
+      type: object
+      required:
+        - commitments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        commitments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Commitment"
+
+    AddCommitmentInput:
+      type: object
+      required:
+        - group_id
+        - icon
+        - eyebrow
+        - title
+        - description
+      properties:
+        group_id:
+          $ref: "#/components/schemas/GID"
+          description: Commitment group ID
+        icon:
+          $ref: "#/components/schemas/CompliancePortalCommitmentIcon"
+          description: Commitment icon
+        eyebrow:
+          type: string
+          description: Commitment eyebrow
+        title:
+          type: string
+          description: Commitment title
+        description:
+          type: string
+          description: Commitment description
+
+    AddCommitmentOutput:
+      type: object
+      required:
+        - commitment
+      properties:
+        commitment:
+          $ref: "#/components/schemas/Commitment"
+
+    UpdateCommitmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Commitment ID
+        icon:
+          anyOf:
+            - $ref: "#/components/schemas/CompliancePortalCommitmentIcon"
+            - type: "null"
+          description: Commitment icon
+          go.probo.inc/mcpgen/omittable: true
+        eyebrow:
+          type:
+            - string
+            - "null"
+          description: Commitment eyebrow
+          go.probo.inc/mcpgen/omittable: true
+        title:
+          type:
+            - string
+            - "null"
+          description: Commitment title
+          go.probo.inc/mcpgen/omittable: true
+        description:
+          type:
+            - string
+            - "null"
+          description: Commitment description
+          go.probo.inc/mcpgen/omittable: true
+        rank:
+          type:
+            - integer
+            - "null"
+          description: Commitment rank
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateCommitmentOutput:
+      type: object
+      required:
+        - commitment
+      properties:
+        commitment:
+          $ref: "#/components/schemas/Commitment"
+
+    DeleteCommitmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Commitment ID
+
+    DeleteCommitmentOutput:
+      type: object
+      required:
+        - deleted_commitment_id
+      properties:
+        deleted_commitment_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted commitment ID
+
     ResourceAlias:
       type: object
       required:
@@ -13656,6 +14016,74 @@ tools:
       $ref: "#/components/schemas/DeleteTrustCenterReferenceInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTrustCenterReferenceOutput"
+  - name: listCommitmentGroups
+    description: List all commitment groups for a trust center
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCommitmentGroupsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCommitmentGroupsOutput"
+  - name: addCommitmentGroup
+    description: Add a new commitment group to a trust center
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCommitmentGroupInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCommitmentGroupOutput"
+  - name: updateCommitmentGroup
+    description: Update an existing commitment group
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCommitmentGroupInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCommitmentGroupOutput"
+  - name: deleteCommitmentGroup
+    description: Delete a commitment group
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCommitmentGroupInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCommitmentGroupOutput"
+  - name: listCommitments
+    description: List all commitments in a commitment group
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListCommitmentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCommitmentsOutput"
+  - name: addCommitment
+    description: Add a new commitment to a commitment group
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCommitmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCommitmentOutput"
+  - name: updateCommitment
+    description: Update an existing commitment
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCommitmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCommitmentOutput"
+  - name: deleteCommitment
+    description: Delete a commitment
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCommitmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCommitmentOutput"
   - name: setResourceAlias
     description: Set a resource alias for a resource
     hints:
