@@ -140,7 +140,7 @@ function NewRequestForm({ onClose, connectionId, viewerEmail, viewerName }: NewR
   }
 
   return (
-    <form onSubmit={(e) => { void onSubmit(e); }}>
+    <form className="flex flex-col gap-4" onSubmit={(e) => { void onSubmit(e); }}>
       <DialogHeader>
         <DialogTitle>{t("dialog.title")}</DialogTitle>
         <DialogDescription>{t("dialog.description")}</DialogDescription>
