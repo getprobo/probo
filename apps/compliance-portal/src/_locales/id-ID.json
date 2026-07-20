@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Portal Kepatuhan",
     "getAccess": "Dapatkan Akses",
+    "openMenu": "Buka menu",
+    "closeMenu": "Tutup menu",
+    "menuTitle": "Menu",
     "nav": {
       "documents": "Dokumen",
       "subprocessors": "Subprosesor",

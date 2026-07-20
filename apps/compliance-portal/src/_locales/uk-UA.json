@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Портал відповідності",
     "getAccess": "Отримати доступ",
+    "openMenu": "Відкрити меню",
+    "closeMenu": "Закрити меню",
+    "menuTitle": "Меню",
     "nav": {
       "documents": "Документи",
       "subprocessors": "Субпідрядники",

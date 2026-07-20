@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Portale di conformità",
     "getAccess": "Richiedi accesso",
+    "openMenu": "Apri menu",
+    "closeMenu": "Chiudi menu",
+    "menuTitle": "Menu",
     "nav": {
       "documents": "Documenti",
       "subprocessors": "Sub-responsabili del trattamento",

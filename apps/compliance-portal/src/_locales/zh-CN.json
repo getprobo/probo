@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "合规门户",
     "getAccess": "获取访问权限",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "menuTitle": "菜单",
     "nav": {
       "documents": "文档",
       "subprocessors": "分包处理方",

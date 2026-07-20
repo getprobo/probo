@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Portal Zgodności",
     "getAccess": "Uzyskaj dostęp",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "menuTitle": "Menu",
     "nav": {
       "documents": "Dokumenty",
       "subprocessors": "Podprocesorzy",

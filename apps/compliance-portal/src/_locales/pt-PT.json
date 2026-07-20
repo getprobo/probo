@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Portal de Conformidade",
     "getAccess": "Obter Acesso",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "menuTitle": "Menu",
     "nav": {
       "documents": "Documentos",
       "subprocessors": "Subcontratantes",

@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Uyumluluk Portalı",
     "getAccess": "Erişim İste",
+    "openMenu": "Menüyü aç",
+    "closeMenu": "Menüyü kapat",
+    "menuTitle": "Menü",
     "nav": {
       "documents": "Belgeler",
       "subprocessors": "Alt İşleyiciler",

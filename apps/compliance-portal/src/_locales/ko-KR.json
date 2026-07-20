@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "컴플라이언스 포털",
     "getAccess": "액세스 요청",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기",
+    "menuTitle": "메뉴",
     "nav": {
       "documents": "문서",
       "subprocessors": "하위 처리자",

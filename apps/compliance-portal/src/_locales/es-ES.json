@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Portal de cumplimiento",
     "getAccess": "Solicitar acceso",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "menuTitle": "Menú",
     "nav": {
       "documents": "Documentos",
       "subprocessors": "Subencargados",

@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Compliance-Portal",
     "getAccess": "Zugang anfordern",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "menuTitle": "Menü",
     "nav": {
       "documents": "Dokumente",
       "subprocessors": "Unterauftragsverarbeiter",

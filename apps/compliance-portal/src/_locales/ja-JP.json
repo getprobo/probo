@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "コンプライアンスポータル",
     "getAccess": "アクセスをリクエスト",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "menuTitle": "メニュー",
     "nav": {
       "documents": "ドキュメント",
       "subprocessors": "サブプロセッサ",
