@@ -37,8 +37,19 @@ import { pdfPreview } from "./variants";
 // it from a CDN, so the viewer works under a strict trust-center CSP.
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
-// Horizontal inset so pages don't kiss the viewport edge on phones.
-const PAGE_GUTTER_PX = 32;
+// Total horizontal inset (both sides) for fit-to-width at 100% zoom.
+// Desktop matches HeaderBand / hero `px-8` (32px per side); mobile keeps the
+// tighter phone gutter so pages stay readable.
+const PAGE_GUTTER_MOBILE_PX = 32;
+const PAGE_GUTTER_DESKTOP_PX = 64;
+// Tailwind `md` — same breakpoint as `max-md:px-4` on the hero band.
+const DESKTOP_MEDIA_QUERY = "(min-width: 768px)";
+
+function pageGutterPx(): number {
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches
+    ? PAGE_GUTTER_DESKTOP_PX
+    : PAGE_GUTTER_MOBILE_PX;
+}
 
 function findCenteredPage(
   wrapper: HTMLDivElement,
@@ -110,13 +121,19 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
     }
 
     const updateWidth = () => {
-      setPageWidth(Math.max(wrapper.clientWidth - PAGE_GUTTER_PX, 1));
+      setPageWidth(Math.max(wrapper.clientWidth - pageGutterPx(), 1));
     };
 
     updateWidth();
     const observer = new ResizeObserver(updateWidth);
     observer.observe(wrapper);
-    return () => observer.disconnect();
+    // Recompute when crossing the md breakpoint so the gutter tracks hero padding.
+    const media = window.matchMedia(DESKTOP_MEDIA_QUERY);
+    media.addEventListener("change", updateWidth);
+    return () => {
+      observer.disconnect();
+      media.removeEventListener("change", updateWidth);
+    };
   }, []);
 
   // After fit-to-width / zoom reflow, the same scroll offset can center a
