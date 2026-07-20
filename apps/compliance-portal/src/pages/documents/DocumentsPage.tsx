@@ -31,11 +31,11 @@ import type { DocumentsPage_query$key } from "./__generated__/DocumentsPage_quer
 import type { DocumentsPageQuery } from "./__generated__/DocumentsPageQuery.graphql";
 import type { DocumentsPageRefetchQuery } from "./__generated__/DocumentsPageRefetchQuery.graphql";
 import { AuditReportListItem } from "./_components/AuditReportListItem";
+import { CompliancePortalFileListItem } from "./_components/CompliancePortalFileListItem";
 import { DocumentListItem } from "./_components/DocumentListItem";
 import { DocumentSection } from "./_components/DocumentSection";
 import { DocumentsEmpty } from "./_components/DocumentsEmpty";
 import { DocumentsToolbar } from "./_components/DocumentsToolbar";
-import { CompliancePortalFileListItem } from "./_components/CompliancePortalFileListItem";
 import { toQueryVariables } from "./_lib/toQueryVariables";
 import { useDocumentTab } from "./_lib/useDocumentTab";
 import { documentsLayout } from "./variants";

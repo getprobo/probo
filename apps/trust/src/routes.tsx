@@ -35,8 +35,8 @@ import { OverviewPage } from "#/pages/OverviewPage";
 import { SubprocessorsPage } from "#/pages/SubprocessorsPage";
 import { currentTrustUpdatesQuery, UpdatesPage } from "#/pages/UpdatesPage";
 import {
-  currentTrustDocumentsQuery,
   currentCompliancePortalGraphQuery,
+  currentTrustDocumentsQuery,
   currentTrustSubprocessorsQuery,
 } from "#/queries/CompliancePortalGraph";
 

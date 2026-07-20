@@ -32,11 +32,11 @@ import { Link, useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { AuditRow } from "#/components/AuditRow";
+import { CompliancePortalFileRow } from "#/components/CompliancePortalFileRow";
 import { DocumentRow } from "#/components/DocumentRow";
 import { RowHeader } from "#/components/RowHeader";
 import { Rows } from "#/components/Rows";
 import { SubprocessorRow } from "#/components/SubprocessorRow";
-import { CompliancePortalFileRow } from "#/components/CompliancePortalFileRow";
 import { documentTypeLabel } from "#/helpers/documents";
 import type { CompliancePortalGraphCurrentQuery$data } from "#/queries/__generated__/CompliancePortalGraphCurrentQuery.graphql";
 

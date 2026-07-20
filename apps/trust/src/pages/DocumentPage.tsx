@@ -41,13 +41,13 @@ import { graphql } from "relay-runtime";
 
 import { PDFPreview } from "#/components/PDFPreview";
 
+import type { DocumentPageExportCompliancePortalFileMutation } from "./__generated__/DocumentPageExportCompliancePortalFileMutation.graphql";
 import type { DocumentPageExportDocumentMutation } from "./__generated__/DocumentPageExportDocumentMutation.graphql";
 import type { DocumentPageExportReportMutation } from "./__generated__/DocumentPageExportReportMutation.graphql";
-import type { DocumentPageExportCompliancePortalFileMutation } from "./__generated__/DocumentPageExportCompliancePortalFileMutation.graphql";
 import type { DocumentPageQuery as DocumentPageQueryType } from "./__generated__/DocumentPageQuery.graphql";
+import type { DocumentPageRequestCompliancePortalFileAccessMutation } from "./__generated__/DocumentPageRequestCompliancePortalFileAccessMutation.graphql";
 import type { DocumentPageRequestDocumentAccessMutation } from "./__generated__/DocumentPageRequestDocumentAccessMutation.graphql";
 import type { DocumentPageRequestReportAccessMutation } from "./__generated__/DocumentPageRequestReportAccessMutation.graphql";
-import type { DocumentPageRequestCompliancePortalFileAccessMutation } from "./__generated__/DocumentPageRequestCompliancePortalFileAccessMutation.graphql";
 
 export const documentPageQuery = graphql`
   query DocumentPageQuery($alias: String!) {

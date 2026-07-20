@@ -23,10 +23,10 @@ import { useTranslate } from "@probo/i18n";
 import { Fragment } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
+import { CompliancePortalFileRow } from "#/components/CompliancePortalFileRow";
 import { DocumentRow } from "#/components/DocumentRow";
 import { RowHeader } from "#/components/RowHeader";
 import { Rows } from "#/components/Rows";
-import { CompliancePortalFileRow } from "#/components/CompliancePortalFileRow";
 import { documentTypeLabel } from "#/helpers/documents";
 import type { CompliancePortalGraphCurrentDocumentsQuery } from "#/queries/__generated__/CompliancePortalGraphCurrentDocumentsQuery.graphql";
 import { currentTrustDocumentsQuery } from "#/queries/CompliancePortalGraph";

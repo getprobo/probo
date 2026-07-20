@@ -98,6 +98,11 @@ export class Probo implements INodeType {
 						description: 'View audit log entries',
 					},
 					{
+						name: 'Compliance Portal',
+						value: 'compliancePortal',
+						description: 'Manage compliance portal',
+					},
+					{
 						name: 'Control',
 						value: 'control',
 						description: 'Manage controls',
@@ -221,11 +226,6 @@ export class Probo implements INodeType {
 						name: 'Tracker Pattern',
 						value: 'trackerPattern',
 						description: 'Manage tracker patterns',
-					},
-					{
-						name: 'Compliance Portal',
-						value: 'compliancePortal',
-						description: 'Manage compliance portal',
 					},
 					{
 						name: 'User',

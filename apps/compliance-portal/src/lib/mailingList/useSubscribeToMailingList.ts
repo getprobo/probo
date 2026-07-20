@@ -36,8 +36,8 @@ const subscribeToMailingListMutation = graphql`
   }
 `;
 
-// Subscribes the authenticated viewer to the trust center mailing list and
-// links the new subscriber onto currentTrustCenter.viewerSubscription.
+// Subscribes the authenticated viewer to the compliance portal mailing list and
+// links the new subscriber onto currentCompliancePortal.viewerSubscription.
 export function useSubscribeToMailingList(trustCenterId: string) {
   const { t } = useTranslation("updates");
   const [commit, isSubscribing] = useMutation<useSubscribeToMailingListMutation>(

@@ -63,6 +63,18 @@ export const description: INodeProperties[] = [
 				description: 'The classification of the document. Updating it edits the current draft version, creating one from the latest published version if none exists.',
 			},
 			{
+				displayName: 'Compliance Portal Visibility',
+				name: 'compliancePortalVisibility',
+				type: 'options',
+				options: [
+					{ name: 'None', value: 'NONE' },
+					{ name: 'Private', value: 'PRIVATE' },
+					{ name: 'Public', value: 'PUBLIC' },
+				],
+				default: 'NONE',
+				description: 'The compliance portal visibility of the document',
+			},
+			{
 				displayName: 'Content',
 				name: 'content',
 				type: 'string',
@@ -103,18 +115,6 @@ export const description: INodeProperties[] = [
 				type: 'string',
 				default: '',
 				description: 'The title of the document. Updating it edits the current draft version, creating one from the latest published version if none exists.',
-			},
-			{
-				displayName: 'Compliance Portal Visibility',
-				name: 'compliancePortalVisibility',
-				type: 'options',
-				options: [
-					{ name: 'None', value: 'NONE' },
-					{ name: 'Private', value: 'PRIVATE' },
-					{ name: 'Public', value: 'PUBLIC' },
-				],
-				default: 'NONE',
-				description: 'The compliance portal visibility of the document',
 			},
 		],
 	},
