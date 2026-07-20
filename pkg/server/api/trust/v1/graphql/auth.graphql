@@ -5,6 +5,7 @@ extend type Mutation {
     @authentication(required: OPTIONAL)
   updateFullName(input: UpdateFullNameInput!): UpdateFullNamePayload
     @authentication(required: PRESENT) @sessionOnly
+  signOut: SignOutPayload! @authentication(required: PRESENT) @sessionOnly
 }
 
 input SendMagicLinkInput {
@@ -29,5 +30,9 @@ input UpdateFullNameInput {
 }
 
 type UpdateFullNamePayload {
+  success: Boolean!
+}
+
+type SignOutPayload {
   success: Boolean!
 }

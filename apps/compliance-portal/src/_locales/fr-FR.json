@@ -10,7 +10,10 @@
     }
   },
   "userMenu": {
-    "signOut": "Se déconnecter"
+    "subscribe": "S'abonner aux mises à jour",
+    "subscribed": "Abonné aux mises à jour",
+    "signOut": "Se déconnecter",
+    "signOutFailed": "Impossible de se déconnecter"
   },
   "common": {
     "cancel": "Annuler",

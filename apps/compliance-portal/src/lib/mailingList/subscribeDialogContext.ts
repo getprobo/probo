@@ -18,31 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BellIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
-import { useTranslation } from "react-i18next";
+import { createContext, useContext } from "react";
 
-import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
+export type SubscribeDialogContextValue = {
+  // Opens the subscribe dialog, or the sign-in dialog when the viewer is a guest.
+  openSubscribe: () => void;
+  // True when the viewer already has a mailing-list subscription.
+  isSubscribed: boolean;
+  // Unsubscribes the viewer (used by the user-menu subscribed row).
+  unsubscribe: () => Promise<void>;
+  isUnsubscribing: boolean;
+};
 
-// "Subscribe to updates" call to action shared by the list header, empty state,
-// and detail toolbar. Hidden once the viewer is already subscribed.
-export function UpdatesSubscribeButton() {
-  const { t } = useTranslation("updates");
-  const { openSubscribe, isSubscribed } = useSubscribeDialog();
+const SubscribeDialogContext = createContext<SubscribeDialogContextValue | null>(null);
 
-  if (isSubscribed) {
-    return null;
+export const SubscribeDialogContextProvider = SubscribeDialogContext.Provider;
+
+export function useSubscribeDialog(): SubscribeDialogContextValue {
+  const context = useContext(SubscribeDialogContext);
+  if (context === null) {
+    throw new Error("useSubscribeDialog must be used within a SubscribeDialogProvider");
   }
-
-  return (
-    <Button
-      variant="soft"
-      color="neutral"
-      highContrast
-      iconStart={<BellIcon />}
-      onClick={openSubscribe}
-    >
-      {t("subscribe")}
-    </Button>
-  );
+  return context;
 }

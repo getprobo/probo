@@ -5,5 +5,15 @@
   "empty": {
     "title": "No updates yet.",
     "description": "Subscribe to get notified when new updates are published."
+  },
+  "dialog": {
+    "title": "Subscribe to updates",
+    "description": "Get notified when we publish new compliance updates, add subprocessors, or renew certifications.",
+    "email": "Email Address",
+    "consent": "By subscribing, you agree to receive compliance updates from {{name}}. You can unsubscribe at any time.",
+    "cancel": "Cancel",
+    "submit": "Subscribe",
+    "successToast": "You will be notified when new updates are published.",
+    "unsubscribeToast": "You will no longer receive update notifications."
   }
 }

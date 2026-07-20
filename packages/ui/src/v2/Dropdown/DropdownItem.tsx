@@ -28,14 +28,15 @@ export type DropdownItemProps
   = & Omit<ComponentProps<typeof Menu.Item>, "color" | "className">
     & {
       className?: string;
-      color?: "accent" | "error";
+      color?: "accent" | "error" | "success";
       iconStart?: ReactNode;
       // Trailing keyboard shortcut hint (e.g. "⌘ E").
       shortcut?: ReactNode;
     };
 
 // A single actionable menu item. Inherits size/variant/highContrast from the
-// popup; set `color="error"` for destructive actions.
+// popup; set `color="error"` for destructive actions and `color="success"` for
+// affirmative status rows (e.g. subscribed).
 export function DropdownItem(props: DropdownItemProps) {
   const { className, color = "accent", iconStart, shortcut, children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();

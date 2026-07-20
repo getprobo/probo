@@ -33,6 +33,8 @@ export const REQUEST_FILE_PARAM = "request-file-id";
 // Marker that re-opens the "New Request" dialog once the user lands back
 // authenticated (the data request form gates on sign-in before it opens).
 export const NEW_REQUEST_PARAM = "new-request";
+// Marker that re-opens the "Subscribe to updates" dialog after sign-in.
+export const SUBSCRIBE_PARAM = "subscribe";
 
 // Validates a `continue` target before we navigate to it. Only same-origin URLs
 // under the portal's path prefix are accepted; anything else falls back to the
@@ -81,6 +83,14 @@ export function buildRequestAccessContinueUrl(param: string, id: string): string
 export function buildNewRequestContinueUrl(): string {
   const url = new URL(window.location.href);
   url.searchParams.set(NEW_REQUEST_PARAM, "true");
+  return url.toString();
+}
+
+// Absolute URL of the current page with the subscribe marker set, so the
+// mailing-list subscribe dialog re-opens after sign-in.
+export function buildSubscribeContinueUrl(): string {
+  const url = new URL(window.location.href);
+  url.searchParams.set(SUBSCRIBE_PARAM, "true");
   return url.toString();
 }
 

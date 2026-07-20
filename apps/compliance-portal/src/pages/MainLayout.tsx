@@ -27,6 +27,7 @@ import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
 import { SignInDialogProvider } from "#/lib/auth/SignInDialogProvider";
 import { useResumeAccessRequest } from "#/lib/auth/useResumeAccessRequest";
+import { SubscribeDialogProvider } from "#/lib/mailingList/SubscribeDialogProvider";
 
 import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
 
@@ -36,6 +37,7 @@ export const mainLayoutQuery = graphql`
       __typename
     }
     ...TopBar_query
+    ...SubscribeDialogProvider_query
   }
 `;
 
@@ -55,13 +57,15 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
   // page area scrolls on its own. Pages that fill the height (the document
   // viewer) then scroll their own body while their toolbar stays put.
     <SignInDialogProvider>
-      <div className="flex h-dvh flex-col bg-sand-2">
-        <TopBar queryKey={data} />
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <Outlet />
+      <SubscribeDialogProvider queryKey={data}>
+        <div className="flex h-dvh flex-col bg-sand-2">
+          <TopBar queryKey={data} />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <Outlet />
+          </div>
+          <PoweredBy label={t("footer.poweredBy")} />
         </div>
-        <PoweredBy label={t("footer.poweredBy")} />
-      </div>
+      </SubscribeDialogProvider>
     </SignInDialogProvider>
   );
 }

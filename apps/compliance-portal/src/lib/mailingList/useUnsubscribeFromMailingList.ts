@@ -18,31 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BellIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { useTranslation } from "react-i18next";
+import { graphql } from "relay-runtime";
 
-import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
+import { useMutation } from "#/lib/relay/useMutation";
 
-// "Subscribe to updates" call to action shared by the list header, empty state,
-// and detail toolbar. Hidden once the viewer is already subscribed.
-export function UpdatesSubscribeButton() {
-  const { t } = useTranslation("updates");
-  const { openSubscribe, isSubscribed } = useSubscribeDialog();
+import type { useUnsubscribeFromMailingListMutation } from "./__generated__/useUnsubscribeFromMailingListMutation.graphql";
 
-  if (isSubscribed) {
-    return null;
+const unsubscribeFromMailingListMutation = graphql`
+  mutation useUnsubscribeFromMailingListMutation {
+    unsubscribeFromMailingList {
+      deletedMailingListSubscriberId @deleteRecord
+    }
   }
+`;
 
-  return (
-    <Button
-      variant="soft"
-      color="neutral"
-      highContrast
-      iconStart={<BellIcon />}
-      onClick={openSubscribe}
-    >
-      {t("subscribe")}
-    </Button>
+// Removes the authenticated viewer from the trust center mailing list. The
+// @deleteRecord directive clears viewerSubscription links in the store.
+export function useUnsubscribeFromMailingList() {
+  const { t } = useTranslation("updates");
+  return useMutation<useUnsubscribeFromMailingListMutation>(
+    unsubscribeFromMailingListMutation,
+    { successMessage: t("dialog.unsubscribeToast") },
   );
 }

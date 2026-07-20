@@ -5,5 +5,15 @@
   "empty": {
     "title": "Aucune mise à jour pour le moment.",
     "description": "Abonnez-vous pour être informé lors de la publication de nouvelles mises à jour."
+  },
+  "dialog": {
+    "title": "S'abonner aux mises à jour",
+    "description": "Recevez une notification lorsque nous publions de nouvelles mises à jour de conformité, ajoutons des sous-traitants ou renouvelons des certifications.",
+    "email": "Adresse e-mail",
+    "consent": "En vous abonnant, vous acceptez de recevoir les mises à jour de conformité de {{name}}. Vous pouvez vous désabonner à tout moment.",
+    "cancel": "Annuler",
+    "submit": "S'abonner",
+    "successToast": "Vous serez informé lors de la publication de nouvelles mises à jour.",
+    "unsubscribeToast": "Vous ne recevrez plus les notifications de mises à jour."
   }
 }

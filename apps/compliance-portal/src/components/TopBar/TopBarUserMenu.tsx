@@ -18,11 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon, SignOutIcon, UserIcon } from "@phosphor-icons/react";
+import { BellIcon, BellRingingIcon, CaretDownIcon, SignOutIcon, UserIcon } from "@phosphor-icons/react";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
-import { DropdownGroupLabel } from "@probo/ui/src/v2/Dropdown/DropdownGroupLabel";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
@@ -30,6 +29,9 @@ import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
+
+import { useSignOut } from "#/lib/auth/useSignOut";
+import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 
 import type { TopBarUserMenu_identity$key } from "./__generated__/TopBarUserMenu_identity.graphql";
 import { topBarUserMenuTrigger } from "./variants";
@@ -48,9 +50,19 @@ interface TopBarUserMenuProps {
 export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
   const { t } = useTranslation();
   const identity = useFragment(topBarUserMenuFragment, identityKey);
+  const { openSubscribe, isSubscribed, unsubscribe, isUnsubscribing } = useSubscribeDialog();
+  const [signOut, isSigningOut] = useSignOut();
 
   // New users may not have set a full name yet; fall back to the email.
   const displayName = identity.fullName.trim() || identity.email;
+
+  const onSubscribeItemClick = () => {
+    if (isSubscribed) {
+      void unsubscribe();
+      return;
+    }
+    openSubscribe();
+  };
 
   return (
     <Dropdown>
@@ -73,10 +85,31 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
       />
       <DropdownPopup align="end">
         <DropdownGroup>
-          <DropdownGroupLabel>{identity.email}</DropdownGroupLabel>
+          <div className="flex w-full flex-col gap-1 px-3 py-3">
+            <Text size={2} weight="medium" color="neutral" highContrast>
+              {displayName}
+            </Text>
+            <Text size={1} color="faint" className="truncate">
+              {identity.email}
+            </Text>
+          </div>
         </DropdownGroup>
         <DropdownSeparator />
-        <DropdownItem color="error" iconStart={<SignOutIcon />}>
+        <DropdownItem
+          iconStart={isSubscribed ? <BellRingingIcon /> : <BellIcon />}
+          color={isSubscribed ? "success" : "accent"}
+          disabled={isUnsubscribing}
+          onClick={onSubscribeItemClick}
+        >
+          {isSubscribed ? t("userMenu.subscribed") : t("userMenu.subscribe")}
+        </DropdownItem>
+        <DropdownSeparator />
+        <DropdownItem
+          color="error"
+          iconStart={<SignOutIcon />}
+          disabled={isSigningOut}
+          onClick={() => { void signOut(); }}
+        >
           {t("userMenu.signOut")}
         </DropdownItem>
       </DropdownPopup>

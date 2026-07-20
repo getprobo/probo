@@ -189,3 +189,24 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 
 	return &types.UpdateFullNamePayload{Success: true}, nil
 }
+
+// SignOut is the resolver for the signOut field.
+func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, error) {
+	session := authn.SessionFromContext(ctx)
+
+	err := r.iam.SessionService.CloseSession(ctx, session.ID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
+			return &types.SignOutPayload{Success: true}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
+	r.sessionCookie.Clear(w)
+
+	return &types.SignOutPayload{Success: true}, nil
+}

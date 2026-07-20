@@ -18,31 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BellIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql } from "relay-runtime";
 
-import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
+import { useMutation } from "#/lib/relay/useMutation";
 
-// "Subscribe to updates" call to action shared by the list header, empty state,
-// and detail toolbar. Hidden once the viewer is already subscribed.
-export function UpdatesSubscribeButton() {
-  const { t } = useTranslation("updates");
-  const { openSubscribe, isSubscribed } = useSubscribeDialog();
+import type { useSignOutMutation } from "./__generated__/useSignOutMutation.graphql";
 
-  if (isSubscribed) {
-    return null;
+const signOutMutation = graphql`
+  mutation useSignOutMutation {
+    signOut {
+      success
+    }
   }
+`;
 
-  return (
-    <Button
-      variant="soft"
-      color="neutral"
-      highContrast
-      iconStart={<BellIcon />}
-      onClick={openSubscribe}
-    >
-      {t("subscribe")}
-    </Button>
-  );
+// Closes the trust-center session and clears the session cookie. Callers reload
+// the page after success so the UI drops back to the guest chrome.
+export function useSignOut() {
+  const { t } = useTranslation();
+  const [commit, isSigningOut] = useMutation<useSignOutMutation>(signOutMutation, {
+    errorToast: t("userMenu.signOutFailed"),
+  });
+
+  const signOut = useCallback(async () => {
+    await commit({ variables: {} });
+    window.location.reload();
+  }, [commit]);
+
+  return [signOut, isSigningOut] as const;
 }
