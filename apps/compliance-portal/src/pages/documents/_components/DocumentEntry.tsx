@@ -91,8 +91,12 @@ export function DocumentEntry({
         />
       </div>
 
-      {/* Mobile: status icon only; the row overlay handles activation. */}
-      <div className="hidden shrink-0 max-sm:block" aria-hidden={mobileHitLabel != null}>
+      {/* Mobile: status icon only; the row overlay handles activation.
+          Pending (`requested`) rows keep the icon in the a11y tree as status. */}
+      <div
+        className="hidden shrink-0 max-sm:block"
+        aria-hidden={mobileHitLabel != null ? true : undefined}
+      >
         <DocumentAccessAction
           isAuthorized={isAuthorized}
           requested={requested}

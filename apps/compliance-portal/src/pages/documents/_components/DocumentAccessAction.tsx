@@ -74,6 +74,19 @@ export function DocumentAccessAction({
   const { t } = useTranslation("documents");
 
   if (!interactive) {
+    // Pending rows have no mobile hit overlay — expose status for assistive tech.
+    if (requested) {
+      return (
+        <span
+          className="flex size-8 items-center justify-center"
+          role="status"
+          aria-label={t("actions.requested")}
+        >
+          <ClockIcon className="size-4 text-sand-11" aria-hidden />
+        </span>
+      );
+    }
+
     return (
       <span className="flex size-8 items-center justify-center" aria-hidden>
         <StatusIcon

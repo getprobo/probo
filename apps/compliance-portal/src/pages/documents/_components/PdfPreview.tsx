@@ -40,6 +40,24 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 // Horizontal inset so pages don't kiss the viewport edge on phones.
 const PAGE_GUTTER_PX = 32;
 
+function findCenteredPage(
+  wrapper: HTMLDivElement,
+  pages: ArrayLike<HTMLElement | null | undefined>,
+): number | null {
+  const middle = wrapper.getBoundingClientRect().top + wrapper.clientHeight / 2;
+  for (let index = 0; index < pages.length; index += 1) {
+    const page = pages[index];
+    if (page == null) {
+      continue;
+    }
+    const rect = page.getBoundingClientRect();
+    if (rect.top <= middle && rect.bottom >= middle) {
+      return index + 1;
+    }
+  }
+  return null;
+}
+
 export interface PdfPreviewHandle {
   scrollToPage: (page: number) => void;
 }
@@ -73,6 +91,18 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
     },
   }), []);
 
+  const resolveVisiblePage = () => {
+    const wrapper = wrapperRef.current;
+    const pages = documentRef.current?.pages.current;
+    if (!wrapper || !pages?.length) {
+      return;
+    }
+    const page = findCenteredPage(wrapper, pages);
+    if (page != null) {
+      onVisiblePageChange(page);
+    }
+  };
+
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) {
@@ -89,21 +119,33 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
     return () => observer.disconnect();
   }, []);
 
-  const resolveVisiblePage = () => {
-    const wrapper = wrapperRef.current;
-    const pages = documentRef.current?.pages.current;
-    if (!wrapper || !pages?.length) {
+  // After fit-to-width / zoom reflow, the same scroll offset can center a
+  // different page — recompute once the resized pages have painted.
+  useEffect(() => {
+    if (pageWidth == null || numPages === 0) {
       return;
     }
-    const middle = wrapper.getBoundingClientRect().top + wrapper.clientHeight / 2;
-    for (let index = 0; index < pages.length; index += 1) {
-      const rect = pages[index].getBoundingClientRect();
-      if (rect.top <= middle && rect.bottom >= middle) {
-        onVisiblePageChange(index + 1);
-        return;
-      }
-    }
-  };
+
+    let secondFrame = 0;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        const wrapper = wrapperRef.current;
+        const pages = documentRef.current?.pages.current;
+        if (!wrapper || !pages?.length) {
+          return;
+        }
+        const page = findCenteredPage(wrapper, pages);
+        if (page != null) {
+          onVisiblePageChange(page);
+        }
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, [pageWidth, scale, numPages, onVisiblePageChange]);
 
   const slots = pdfPreview();
 
