@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -812,6 +813,10 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "cannot start campaign:") {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot start access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
