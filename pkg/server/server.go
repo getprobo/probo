@@ -62,7 +62,7 @@ type Config struct {
 	ResourceAlias     *resourcealias.Service
 	File              *filemanager.Service
 	IAM               *iam.Service
-	Trust             *visitor.Service
+	Visitor           *visitor.Service
 	ESign             *esign.Service
 	Management        *management.Service
 	CertManager       *certmanager.Service
@@ -104,7 +104,7 @@ func NewServer(cfg Config) (*Server, error) {
 		ResourceAlias:     cfg.ResourceAlias,
 		File:              cfg.File,
 		IAM:               cfg.IAM,
-		Trust:             cfg.Trust,
+		Visitor:           cfg.Visitor,
 		ESign:             cfg.ESign,
 		Management:        cfg.Management,
 		CertManager:       cfg.CertManager,

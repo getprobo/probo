@@ -379,13 +379,13 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 	}
 
 	req := probo.CreateAuditRequest{
-		OrganizationID:        input.OrganizationID,
-		FrameworkID:           input.FrameworkID,
-		Name:                  input.Name,
-		ValidFrom:             input.ValidFrom,
-		ValidUntil:            input.ValidUntil,
-		State:                 input.State,
-		TrustCenterVisibility: input.TrustCenterVisibility,
+		OrganizationID:             input.OrganizationID,
+		FrameworkID:                input.FrameworkID,
+		Name:                       input.Name,
+		ValidFrom:                  input.ValidFrom,
+		ValidUntil:                 input.ValidUntil,
+		State:                      input.State,
+		CompliancePortalVisibility: input.CompliancePortalVisibility,
 	}
 
 	audit, err := r.probo.Audits.Create(ctx, scope, &req)
@@ -435,12 +435,12 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	}
 
 	req := probo.UpdateAuditRequest{
-		ID:                    input.ID,
-		Name:                  gqlutils.UnwrapOmittable(input.Name),
-		ValidFrom:             input.ValidFrom,
-		ValidUntil:            input.ValidUntil,
-		State:                 input.State,
-		TrustCenterVisibility: input.TrustCenterVisibility,
+		ID:                         input.ID,
+		Name:                       gqlutils.UnwrapOmittable(input.Name),
+		ValidFrom:                  input.ValidFrom,
+		ValidUntil:                 input.ValidUntil,
+		State:                      input.State,
+		CompliancePortalVisibility: input.CompliancePortalVisibility,
 	}
 
 	audit, err := r.probo.Audits.Update(ctx, scope, &req)

@@ -34,8 +34,8 @@ func (r *Resolver) ResourceAliasResolver(
 	ctx context.Context,
 	storageResourceID gid.GID,
 ) (*string, error) {
-	trustCenter := complianceportal.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
 	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, storageResourceID)
 	if err != nil {

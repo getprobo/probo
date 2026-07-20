@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"go.gearno.de/kit/log"
-	trust "go.probo.inc/probo/pkg/complianceportal/visitor"
+	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
@@ -26,13 +26,13 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		return nil, gqlutils.Unauthenticatedf(ctx, "a verified email is required to submit a request")
 	}
 
-	compliancePage := complianceportal.CompliancePageFromContext(ctx)
+	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 
-	rightsRequest, err := r.trust.CreateRightsRequest(
+	rightsRequest, err := r.visitor.CreateRightsRequest(
 		ctx,
 		scope,
-		&trust.CreateRightsRequest{
+		&visitor.CreateRightsRequest{
 			OrganizationID: compliancePage.OrganizationID,
 			RequestType:    input.RequestType,
 			DataSubject:    input.DataSubject,

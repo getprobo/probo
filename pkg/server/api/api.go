@@ -68,7 +68,7 @@ type (
 		ResourceAlias     *resourcealias.Service
 		File              *filemanager.Service
 		IAM               *iam.Service
-		Trust             *visitor.Service
+		Visitor           *visitor.Service
 		ESign             *esign.Service
 		Management        *management.Service
 		CertManager       *certmanager.Service
@@ -242,12 +242,12 @@ func NewServer(cfg Config) (*Server, error) {
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),
 			cfg.Slack,
-			cfg.Trust,
+			cfg.Visitor,
 		),
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),
 			cfg.IAM,
-			cfg.Trust,
+			cfg.Visitor,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.File,
@@ -257,7 +257,7 @@ func NewServer(cfg Config) (*Server, error) {
 					return true
 				}
 
-				_, err := cfg.Trust.GetPortalByDomainName(ctx, host)
+				_, err := cfg.Visitor.GetPortalByDomainName(ctx, host)
 
 				return err == nil
 			},

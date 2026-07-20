@@ -1157,36 +1157,36 @@ func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organiz
 	return types.NewAgentRunConnection(page, r, obj.ID), nil
 }
 
-// TrustCenter is the resolver for the trustCenter field.
-func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
+// CompliancePortal is the resolver for the compliancePortal field.
+func (r *organizationResolver) CompliancePortal(ctx context.Context, obj *types.Organization) (*types.CompliancePortal, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
 	if err != nil {
 		return nil, err
 	}
 
-	trustCenter, err := r.management.GetByOrganizationID(ctx, scope, obj.ID)
+	compliancePortal, err := r.management.GetByOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewTrustCenter(trustCenter), nil
+	return types.NewCompliancePortal(compliancePortal), nil
 }
 
-// TrustCenterFiles is the resolver for the trustCenterFiles field.
-func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
+// CompliancePortalFiles is the resolver for the compliancePortalFiles field.
+func (r *organizationResolver) CompliancePortalFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalFileOrderField]) (*types.CompliancePortalFileConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
-		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalFileOrderField]{
+		Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.TrustCenterFileOrderField]{
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalFileOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1194,13 +1194,13 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := r.management.ListFilesForOrganizationID(ctx, scope, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
+	pageResult, err := r.management.ListFilesForOrganizationID(ctx, scope, obj.ID, cursor, &coredata.CompliancePortalFileFilter{})
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization trust center files", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list organization compliance portal files", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewTrustCenterFileConnection(pageResult, obj.ID), nil
+	return types.NewCompliancePortalFileConnection(pageResult, obj.ID), nil
 }
 
 // CookieBanners is the resolver for the cookieBanners field.

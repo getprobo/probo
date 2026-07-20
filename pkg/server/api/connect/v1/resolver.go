@@ -78,7 +78,7 @@ type (
 func NewMux(
 	logger *log.Logger,
 	svc *iam.Service,
-	trustSvc *visitor.Service,
+	visitorSvc *visitor.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,

@@ -4590,13 +4590,13 @@ components:
         - OUTDATED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditState
 
-    TrustCenterVisibility:
+    CompliancePortalVisibility:
       type: string
       enum:
         - NONE
         - PRIVATE
         - PUBLIC
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrustCenterVisibility
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalVisibility
 
     AuditOrderField:
       type: string
@@ -4627,7 +4627,7 @@ components:
         - organization_id
         - framework_id
         - state
-        - trust_center_visibility
+        - compliance_portal_visibility
         - has_report
         - created_at
         - updated_at
@@ -4661,9 +4661,9 @@ components:
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
-        trust_center_visibility:
-          $ref: "#/components/schemas/TrustCenterVisibility"
-          description: Trust center visibility
+        compliance_portal_visibility:
+          $ref: "#/components/schemas/CompliancePortalVisibility"
+          description: Compliance portal visibility
         has_report:
           type: boolean
           description: Whether the audit has an attached report
@@ -4818,13 +4818,13 @@ components:
             - type: "null"
               description: No state
           description: Audit state
-        trust_center_visibility:
+        compliance_portal_visibility:
           anyOf:
-            - $ref: "#/components/schemas/TrustCenterVisibility"
-              description: Trust center visibility
+            - $ref: "#/components/schemas/CompliancePortalVisibility"
+              description: Compliance portal visibility
             - type: "null"
-              description: No trust center visibility
-          description: Trust center visibility
+              description: No compliance portal visibility
+          description: Compliance portal visibility
 
     UpdateAuditOutput:
       type: object
@@ -5781,7 +5781,7 @@ components:
       required:
         - id
         - organization_id
-        - trust_center_visibility
+        - compliance_portal_visibility
         - write_mode
         - status
         - created_at
@@ -5803,9 +5803,9 @@ components:
             - integer
             - "null"
           description: Current published minor version number
-        trust_center_visibility:
-          $ref: "#/components/schemas/TrustCenterVisibility"
-          description: Trust center visibility
+        compliance_portal_visibility:
+          $ref: "#/components/schemas/CompliancePortalVisibility"
+          description: Compliance portal visibility
         write_mode:
           $ref: "#/components/schemas/DocumentWriteMode"
           description: Write mode (authored or generated)
@@ -6043,11 +6043,11 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentWriteMode"
               description: Filter by write mode (AUTHORED or GENERATED)
-            trust_center_visibilities:
+            compliance_portal_visibilities:
               type: array
               items:
-                $ref: "#/components/schemas/TrustCenterVisibility"
-              description: Trust center visibilities
+                $ref: "#/components/schemas/CompliancePortalVisibility"
+              description: Compliance portal visibilities
             document_types:
               type: array
               items:
@@ -6118,9 +6118,9 @@ components:
         document_type:
           $ref: "#/components/schemas/DocumentType"
           description: Document type
-        trust_center_visibility:
-          $ref: "#/components/schemas/TrustCenterVisibility"
-          description: Trust center visibility
+        compliance_portal_visibility:
+          $ref: "#/components/schemas/CompliancePortalVisibility"
+          description: Compliance portal visibility
         default_approver_ids:
           type: array
           items:
@@ -6159,9 +6159,9 @@ components:
         document_type:
           $ref: "#/components/schemas/DocumentType"
           description: Document type
-        trust_center_visibility:
-          $ref: "#/components/schemas/TrustCenterVisibility"
-          description: Trust center visibility
+        compliance_portal_visibility:
+          $ref: "#/components/schemas/CompliancePortalVisibility"
+          description: Compliance portal visibility
         default_approver_ids:
           type: array
           items:
@@ -8739,42 +8739,42 @@ components:
         - FAILED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CertificateStatus
 
-    TrustCenterReferenceOrderField:
+    CompliancePortalReferenceOrderField:
       type: string
       enum:
         - RANK
         - NAME
         - CREATED_AT
         - UPDATED_AT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalReferenceOrderField
 
-    TrustCenterReferenceOrderBy:
+    CompliancePortalReferenceOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/TrustCenterReferenceOrderField"
+          $ref: "#/components/schemas/CompliancePortalReferenceOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    TrustCenterFileOrderField:
+    CompliancePortalFileOrderField:
       type: string
       enum:
         - NAME
         - CREATED_AT
         - UPDATED_AT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalFileOrderField
 
-    TrustCenterFileOrderBy:
+    CompliancePortalFileOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/TrustCenterFileOrderField"
+          $ref: "#/components/schemas/CompliancePortalFileOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
@@ -8825,7 +8825,7 @@ components:
           type: string
           format: date-time
 
-    TrustCenter:
+    CompliancePortal:
       type: object
       required:
         - id
@@ -8880,7 +8880,7 @@ components:
           type: string
           format: date-time
 
-    TrustCenterReference:
+    CompliancePortalReference:
       type: object
       required:
         - id
@@ -8912,14 +8912,14 @@ components:
           type: string
           format: date-time
 
-    TrustCenterFile:
+    CompliancePortalFile:
       type: object
       required:
         - id
         - name
         - category
         - file
-        - trust_center_visibility
+        - compliance_portal_visibility
         - organization_id
         - created_at
         - updated_at
@@ -8932,8 +8932,8 @@ components:
           type: string
         file:
           $ref: "#/components/schemas/File"
-        trust_center_visibility:
-          $ref: "#/components/schemas/TrustCenterVisibility"
+        compliance_portal_visibility:
+          $ref: "#/components/schemas/CompliancePortalVisibility"
         organization_id:
           $ref: "#/components/schemas/GID"
         created_at:
@@ -9018,7 +9018,7 @@ components:
           type: string
           format: date-time
 
-    GetTrustCenterInput:
+    GetCompliancePortalInput:
       type: object
       required:
         - organization_id
@@ -9027,27 +9027,27 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
 
-    GetTrustCenterOutput:
+    GetCompliancePortalOutput:
       type: object
       required:
-        - trust_center
+        - compliance_portal
       properties:
-        trust_center:
-          $ref: "#/components/schemas/TrustCenter"
+        compliance_portal:
+          $ref: "#/components/schemas/CompliancePortal"
 
-    UpdateTrustCenterInput:
+    UpdateCompliancePortalInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Trust center ID
+          description: Compliance portal ID
         active:
           type:
             - boolean
             - "null"
-          description: Whether the trust center is active
+          description: Whether the compliance portal is active
           go.probo.inc/mcpgen/omittable: true
         search_engine_indexing:
           anyOf:
@@ -9086,25 +9086,25 @@ components:
           description: Public compliance page title
           go.probo.inc/mcpgen/omittable: true
 
-    UpdateTrustCenterOutput:
+    UpdateCompliancePortalOutput:
       type: object
       required:
-        - trust_center
+        - compliance_portal
       properties:
-        trust_center:
-          $ref: "#/components/schemas/TrustCenter"
+        compliance_portal:
+          $ref: "#/components/schemas/CompliancePortal"
 
-    ListTrustCenterReferencesInput:
+    ListCompliancePortalReferencesInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Trust center ID
+          description: Compliance portal ID
         order_by:
-          $ref: "#/components/schemas/TrustCenterReferenceOrderBy"
-          description: Trust center reference order by
+          $ref: "#/components/schemas/CompliancePortalReferenceOrderBy"
+          description: Compliance portal reference order by
         size:
           type: integer
           description: Page size
@@ -9112,28 +9112,28 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListTrustCenterReferencesOutput:
+    ListCompliancePortalReferencesOutput:
       type: object
       required:
-        - trust_center_references
+        - compliance_portal_references
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        trust_center_references:
+        compliance_portal_references:
           type: array
           items:
-            $ref: "#/components/schemas/TrustCenterReference"
+            $ref: "#/components/schemas/CompliancePortalReference"
 
-    AddTrustCenterReferenceInput:
+    AddCompliancePortalReferenceInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
         - name
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Trust center ID
+          description: Compliance portal ID
         name:
           type: string
           description: Reference name
@@ -9144,22 +9144,22 @@ components:
           type: string
           description: Reference website URL
 
-    AddTrustCenterReferenceOutput:
+    AddCompliancePortalReferenceOutput:
       type: object
       required:
-        - trust_center_reference
+        - compliance_portal_reference
       properties:
-        trust_center_reference:
-          $ref: "#/components/schemas/TrustCenterReference"
+        compliance_portal_reference:
+          $ref: "#/components/schemas/CompliancePortalReference"
 
-    UpdateTrustCenterReferenceInput:
+    UpdateCompliancePortalReferenceInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Trust center reference ID
+          description: Compliance portal reference ID
         name:
           type:
             - string
@@ -9185,31 +9185,31 @@ components:
           description: Reference rank
           go.probo.inc/mcpgen/omittable: true
 
-    UpdateTrustCenterReferenceOutput:
+    UpdateCompliancePortalReferenceOutput:
       type: object
       required:
-        - trust_center_reference
+        - compliance_portal_reference
       properties:
-        trust_center_reference:
-          $ref: "#/components/schemas/TrustCenterReference"
+        compliance_portal_reference:
+          $ref: "#/components/schemas/CompliancePortalReference"
 
-    DeleteTrustCenterReferenceInput:
+    DeleteCompliancePortalReferenceInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Trust center reference ID
+          description: Compliance portal reference ID
 
-    DeleteTrustCenterReferenceOutput:
+    DeleteCompliancePortalReferenceOutput:
       type: object
       required:
-        - deleted_trust_center_reference_id
+        - deleted_compliance_portal_reference_id
       properties:
-        deleted_trust_center_reference_id:
+        deleted_compliance_portal_reference_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted trust center reference ID
+          description: Deleted compliance portal reference ID
 
     CompliancePortalCommitmentIcon:
       type: string
@@ -9579,7 +9579,7 @@ components:
       properties:
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: Document, trust center file, or audit ID
+          description: Document, compliance portal file, or audit ID
         alias:
           type: string
           description: Human-readable alias slug
@@ -9623,7 +9623,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Resource ID whose alias was removed
 
-    ListTrustCenterFilesInput:
+    ListCompliancePortalFilesInput:
       type: object
       required:
         - organization_id
@@ -9632,8 +9632,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/TrustCenterFileOrderBy"
-          description: Trust center file order by
+          $ref: "#/components/schemas/CompliancePortalFileOrderBy"
+          description: Compliance portal file order by
         size:
           type: integer
           description: Page size
@@ -9641,45 +9641,45 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListTrustCenterFilesOutput:
+    ListCompliancePortalFilesOutput:
       type: object
       required:
-        - trust_center_files
+        - compliance_portal_files
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        trust_center_files:
+        compliance_portal_files:
           type: array
           items:
-            $ref: "#/components/schemas/TrustCenterFile"
+            $ref: "#/components/schemas/CompliancePortalFile"
 
-    DeleteTrustCenterFileInput:
+    DeleteCompliancePortalFileInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Trust center file ID
+          description: Compliance portal file ID
 
-    DeleteTrustCenterFileOutput:
+    DeleteCompliancePortalFileOutput:
       type: object
       required:
-        - deleted_trust_center_file_id
+        - deleted_compliance_portal_file_id
       properties:
-        deleted_trust_center_file_id:
+        deleted_compliance_portal_file_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted trust center file ID
+          description: Deleted compliance portal file ID
 
     ListComplianceCustomLinksInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Trust center ID
+          description: Compliance portal ID
         order_by:
           $ref: "#/components/schemas/ComplianceCustomLinkOrderBy"
           description: Compliance custom link order by
@@ -9706,13 +9706,13 @@ components:
     AddComplianceCustomLinkInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
         - name
         - url
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Trust center ID
+          description: Compliance portal ID
         name:
           type: string
           description: Custom Link name
@@ -9784,12 +9784,12 @@ components:
     CreateCustomDomainInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
         - domain
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Compliance page (trust center) ID
+          description: Compliance portal ID
         domain:
           type: string
           description: Custom domain name
@@ -9805,11 +9805,11 @@ components:
     DeleteCustomDomainInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Compliance page (trust center) ID
+          description: Compliance portal ID
 
     DeleteCustomDomainOutput:
       type: object
@@ -14036,57 +14036,57 @@ tools:
       $ref: "#/components/schemas/DeleteRightsRequestInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRightsRequestOutput"
-  - name: getTrustCenter
-    description: Get the trust center for an organization
+  - name: getCompliancePortal
+    description: Get the compliance portal for an organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/GetTrustCenterInput"
+      $ref: "#/components/schemas/GetCompliancePortalInput"
     outputSchema:
-      $ref: "#/components/schemas/GetTrustCenterOutput"
-  - name: updateTrustCenter
-    description: Update a trust center's settings
+      $ref: "#/components/schemas/GetCompliancePortalOutput"
+  - name: updateCompliancePortal
+    description: Update a compliance portal's settings
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateTrustCenterInput"
+      $ref: "#/components/schemas/UpdateCompliancePortalInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateTrustCenterOutput"
-  - name: listTrustCenterReferences
-    description: List all references for a trust center
+      $ref: "#/components/schemas/UpdateCompliancePortalOutput"
+  - name: listCompliancePortalReferences
+    description: List all references for a compliance portal
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListTrustCenterReferencesInput"
+      $ref: "#/components/schemas/ListCompliancePortalReferencesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListTrustCenterReferencesOutput"
-  - name: addTrustCenterReference
-    description: Add a new reference to a trust center
+      $ref: "#/components/schemas/ListCompliancePortalReferencesOutput"
+  - name: addCompliancePortalReference
+    description: Add a new reference to a compliance portal
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddTrustCenterReferenceInput"
+      $ref: "#/components/schemas/AddCompliancePortalReferenceInput"
     outputSchema:
-      $ref: "#/components/schemas/AddTrustCenterReferenceOutput"
-  - name: updateTrustCenterReference
-    description: Update an existing trust center reference
+      $ref: "#/components/schemas/AddCompliancePortalReferenceOutput"
+  - name: updateCompliancePortalReference
+    description: Update an existing compliance portal reference
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateTrustCenterReferenceInput"
+      $ref: "#/components/schemas/UpdateCompliancePortalReferenceInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateTrustCenterReferenceOutput"
-  - name: deleteTrustCenterReference
-    description: Delete a trust center reference
+      $ref: "#/components/schemas/UpdateCompliancePortalReferenceOutput"
+  - name: deleteCompliancePortalReference
+    description: Delete a compliance portal reference
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteTrustCenterReferenceInput"
+      $ref: "#/components/schemas/DeleteCompliancePortalReferenceInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteTrustCenterReferenceOutput"
+      $ref: "#/components/schemas/DeleteCompliancePortalReferenceOutput"
   - name: listCommitmentGroups
     description: List all commitment groups for a trust center
     hints:
@@ -14172,26 +14172,26 @@ tools:
       $ref: "#/components/schemas/RemoveResourceAliasInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveResourceAliasOutput"
-  - name: listTrustCenterFiles
-    description: List all files for the trust center
+  - name: listCompliancePortalFiles
+    description: List all files for the compliance portal
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListTrustCenterFilesInput"
+      $ref: "#/components/schemas/ListCompliancePortalFilesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListTrustCenterFilesOutput"
-  - name: deleteTrustCenterFile
-    description: Delete a trust center file
+      $ref: "#/components/schemas/ListCompliancePortalFilesOutput"
+  - name: deleteCompliancePortalFile
+    description: Delete a compliance portal file
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteTrustCenterFileInput"
+      $ref: "#/components/schemas/DeleteCompliancePortalFileInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteTrustCenterFileOutput"
+      $ref: "#/components/schemas/DeleteCompliancePortalFileOutput"
   - name: listComplianceCustomLinks
-    description: List all compliance custom links for a trust center
+    description: List all compliance custom links for a compliance portal
     hints:
       readonly: true
       idempotent: true
@@ -14200,7 +14200,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListComplianceCustomLinksOutput"
   - name: addComplianceCustomLink
-    description: Add a new compliance custom link to a trust center
+    description: Add a new compliance custom link to a compliance portal
     hints:
       readonly: false
     inputSchema:

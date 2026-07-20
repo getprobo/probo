@@ -41,7 +41,7 @@ import (
 
 func NewGraphQLHandler(
 	iamSvc *iam.Service,
-	trustSvc *visitor.Service,
+	visitorSvc *visitor.Service,
 	resourceAliasSvc *resourcealias.Service,
 	fileManagerSvc *filemanager.Service,
 	esignSvc *esign.Service,
@@ -55,7 +55,7 @@ func NewGraphQLHandler(
 	config := schema.Config{
 		Resolvers: &Resolver{
 			iam:           iamSvc,
-			trust:         trustSvc,
+			visitor:       visitorSvc,
 			resourceAlias: resourceAliasSvc,
 			fileManager:   fileManagerSvc,
 			esign:         esignSvc,
@@ -65,7 +65,7 @@ func NewGraphQLHandler(
 			sessionCookie: authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
-			Nda:            newNDADirective(logger, trustSvc, esignSvc),
+			Nda:            newNDADirective(logger, visitorSvc, esignSvc),
 			Authentication: authentication.Directive,
 			SessionOnly:    session.Directive,
 		},

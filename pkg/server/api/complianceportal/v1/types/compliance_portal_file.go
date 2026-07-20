@@ -25,36 +25,34 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type TrustCenterAccessOrderBy = OrderBy[coredata.TrustCenterAccessOrderField]
-
-func NewTrustCenterAccessConnection(
-	page *page.Page[*coredata.TrustCenterAccess, coredata.TrustCenterAccessOrderField],
-) *TrustCenterAccessConnection {
-	var edges = make([]*TrustCenterAccessEdge, len(page.Data))
-
-	for i := range edges {
-		edges[i] = NewTrustCenterAccessEdge(page.Data[i], page.Cursor.OrderBy.Field)
+func NewCompliancePortalFileConnection(
+	p *page.Page[*coredata.CompliancePortalFile, coredata.CompliancePortalFileOrderField],
+) *CompliancePortalFileConnection {
+	edges := make([]*CompliancePortalFileEdge, len(p.Data))
+	for i, portalFile := range p.Data {
+		edges[i] = NewCompliancePortalFileEdge(portalFile, p.Cursor.OrderBy.Field)
 	}
 
-	return &TrustCenterAccessConnection{
+	return &CompliancePortalFileConnection{
 		Edges:    edges,
-		PageInfo: NewPageInfo(page),
+		PageInfo: NewPageInfo(p),
 	}
 }
 
-func NewTrustCenterAccessEdge(tca *coredata.TrustCenterAccess, orderBy coredata.TrustCenterAccessOrderField) *TrustCenterAccessEdge {
-	return &TrustCenterAccessEdge{
-		Cursor: tca.CursorKey(orderBy),
-		Node:   NewTrustCenterAccess(tca),
+func NewCompliancePortalFile(f *coredata.CompliancePortalFile) *CompliancePortalFile {
+	return &CompliancePortalFile{
+		ID:       f.ID,
+		Name:     f.Name,
+		Category: f.Category,
 	}
 }
 
-func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
-	return &TrustCenterAccess{
-		ID:             tca.ID,
-		OrganizationID: tca.OrganizationID,
-		IdentityID:     tca.IdentityID,
-		CreatedAt:      tca.CreatedAt,
-		UpdatedAt:      tca.UpdatedAt,
+func NewCompliancePortalFileEdge(
+	f *coredata.CompliancePortalFile,
+	orderField coredata.CompliancePortalFileOrderField,
+) *CompliancePortalFileEdge {
+	return &CompliancePortalFileEdge{
+		Node:   NewCompliancePortalFile(f),
+		Cursor: f.CursorKey(orderField),
 	}
 }

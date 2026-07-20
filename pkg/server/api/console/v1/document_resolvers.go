@@ -847,13 +847,13 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	document, documentVersion, err := r.probo.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
-			OrganizationID:        input.OrganizationID,
-			Title:                 input.Title,
-			Content:               content,
-			Classification:        input.Classification,
-			DocumentType:          input.DocumentType,
-			TrustCenterVisibility: input.TrustCenterVisibility,
-			DefaultApproverIDs:    input.DefaultApproverIds,
+			OrganizationID:             input.OrganizationID,
+			Title:                      input.Title,
+			Content:                    content,
+			Classification:             input.Classification,
+			DocumentType:               input.DocumentType,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
+			DefaultApproverIDs:         input.DefaultApproverIds,
 		},
 	)
 	if err != nil {
@@ -891,13 +891,13 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	document, documentVersion, draftCreated, err := r.probo.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
-			DocumentID:            input.ID,
-			Title:                 input.Title,
-			Content:               input.Content,
-			Classification:        input.Classification,
-			DocumentType:          input.DocumentType,
-			TrustCenterVisibility: input.TrustCenterVisibility,
-			DefaultApproverIDs:    defaultApproverIDs,
+			DocumentID:                 input.ID,
+			Title:                      input.Title,
+			Content:                    input.Content,
+			Classification:             input.Classification,
+			DocumentType:               input.DocumentType,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
+			DefaultApproverIDs:         defaultApproverIDs,
 		},
 	)
 	if err != nil {

@@ -172,7 +172,7 @@ type Audit implements Node {
         filter: FindingFilter
     ): FindingConnection @goField(forceResolver: true)
 
-    trustCenterVisibility: TrustCenterVisibility!
+    compliancePortalVisibility: CompliancePortalVisibility!
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -276,7 +276,7 @@ input CreateAuditInput {
     validFrom: Datetime
     validUntil: Datetime
     state: AuditState
-    trustCenterVisibility: TrustCenterVisibility
+    compliancePortalVisibility: CompliancePortalVisibility
     file: Upload
 }
 
@@ -286,7 +286,7 @@ input UpdateAuditInput {
     validFrom: Datetime
     validUntil: Datetime
     state: AuditState
-    trustCenterVisibility: TrustCenterVisibility
+    compliancePortalVisibility: CompliancePortalVisibility
 }
 
 input DeleteAuditInput {

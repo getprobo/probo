@@ -92,9 +92,9 @@ func (h *OAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	portal := complianceportal.CompliancePageFromContext(ctx)
+	portal := complianceportal.CompliancePortalFromContext(ctx)
 
-	portalBaseURL := complianceportal.CompliancePageBaseURLFromContext(ctx)
+	portalBaseURL := complianceportal.CompliancePortalBaseURLFromContext(ctx)
 	if portal == nil || portalBaseURL == nil {
 		httpserver.RenderError(w, http.StatusNotFound, errNotFound)
 		return

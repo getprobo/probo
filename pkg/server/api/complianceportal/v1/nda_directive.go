@@ -35,7 +35,7 @@ import (
 
 func newNDADirective(
 	logger *log.Logger,
-	trustSvc *visitor.Service,
+	visitorSvc *visitor.Service,
 	esignSvc *esign.Service,
 ) func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
 	return func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
@@ -44,13 +44,13 @@ func newNDADirective(
 			return next(ctx)
 		}
 
-		compliancePage := complianceportal.CompliancePageFromContext(ctx)
+		compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 		if compliancePage == nil {
 			logger.ErrorCtx(ctx, "cannot get compliance page from context")
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		membership, err := trustSvc.GetPortalMembership(ctx, compliancePage.ID, identity.ID)
+		membership, err := visitorSvc.GetPortalMembership(ctx, compliancePage.ID, identity.ID)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot get compliance page membership", log.Error(err))
 			return nil, gqlutils.Internal(ctx)

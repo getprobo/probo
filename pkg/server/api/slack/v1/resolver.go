@@ -30,7 +30,7 @@ import (
 func NewMux(
 	logger *log.Logger,
 	slackSvc *slack.Service,
-	trustSvc *visitor.Service,
+	visitorSvc *visitor.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -40,7 +40,7 @@ func NewMux(
 		slackSvc,
 		slackSvc.GetSlackSigningSecret(),
 		logger,
-		trustSvc,
+		visitorSvc,
 	))
 
 	return r

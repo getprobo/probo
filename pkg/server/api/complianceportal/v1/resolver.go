@@ -17,8 +17,6 @@
 package complianceportal_v1
 
 import (
-	"time"
-
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
@@ -31,19 +29,8 @@ import (
 )
 
 type (
-	TrustAuthConfig struct {
-		CookieName        string
-		CookieDomain      string
-		CookieDuration    time.Duration
-		TokenDuration     time.Duration
-		ReportURLDuration time.Duration
-		Scope             string
-		TokenType         string
-		CookieSecure      bool
-	}
-
 	Resolver struct {
-		trust         *visitor.Service
+		visitor       *visitor.Service
 		resourceAlias *resourcealias.Service
 		fileManager   *filemanager.Service
 		esign         *esign.Service

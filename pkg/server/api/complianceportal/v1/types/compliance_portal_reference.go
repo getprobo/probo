@@ -25,31 +25,36 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewTrustCenterReference(tcc *coredata.TrustCenterReference) *TrustCenterReference {
-	return &TrustCenterReference{
-		ID:          tcc.ID,
-		Name:        tcc.Name,
-		Description: tcc.Description,
-		WebsiteURL:  tcc.WebsiteURL,
+func NewCompliancePortalReference(ref *coredata.CompliancePortalReference) *CompliancePortalReference {
+	return &CompliancePortalReference{
+		ID:          ref.ID,
+		Name:        ref.Name,
+		Description: ref.Description,
+		WebsiteURL:  ref.WebsiteURL,
 	}
 }
 
-func NewTrustCenterReferenceConnection(p *page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField]) *TrustCenterReferenceConnection {
-	edges := make([]*TrustCenterReferenceEdge, len(p.Data))
+func NewCompliancePortalReferenceConnection(
+	p *page.Page[*coredata.CompliancePortalReference, coredata.CompliancePortalReferenceOrderField],
+) *CompliancePortalReferenceConnection {
+	edges := make([]*CompliancePortalReferenceEdge, len(p.Data))
 
 	for i, item := range p.Data {
-		edges[i] = NewTrustCenterReferenceEdge(item, p.Cursor.OrderBy.Field)
+		edges[i] = NewCompliancePortalReferenceEdge(item, p.Cursor.OrderBy.Field)
 	}
 
-	return &TrustCenterReferenceConnection{
+	return &CompliancePortalReferenceConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
 	}
 }
 
-func NewTrustCenterReferenceEdge(tcc *coredata.TrustCenterReference, orderBy coredata.TrustCenterReferenceOrderField) *TrustCenterReferenceEdge {
-	return &TrustCenterReferenceEdge{
-		Cursor: tcc.CursorKey(orderBy),
-		Node:   NewTrustCenterReference(tcc),
+func NewCompliancePortalReferenceEdge(
+	ref *coredata.CompliancePortalReference,
+	orderBy coredata.CompliancePortalReferenceOrderField,
+) *CompliancePortalReferenceEdge {
+	return &CompliancePortalReferenceEdge{
+		Cursor: ref.CursorKey(orderBy),
+		Node:   NewCompliancePortalReference(ref),
 	}
 }

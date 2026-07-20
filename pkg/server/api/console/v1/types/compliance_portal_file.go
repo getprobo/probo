@@ -26,48 +26,50 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type TrustCenterReferenceOrderBy = OrderBy[coredata.TrustCenterReferenceOrderField]
+type CompliancePortalFileOrderBy = OrderBy[coredata.CompliancePortalFileOrderField]
 
-type TrustCenterReferenceConnection struct {
+type CompliancePortalFileConnection struct {
 	TotalCount int                         `json:"totalCount"`
-	Edges      []*TrustCenterReferenceEdge `json:"edges"`
+	Edges      []*CompliancePortalFileEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	ParentID   gid.GID                     `json:"-"`
 }
 
-func NewTrustCenterReference(tcc *coredata.TrustCenterReference) *TrustCenterReference {
-	return &TrustCenterReference{
-		ID:          tcc.ID,
-		Name:        tcc.Name,
-		Description: tcc.Description,
-		WebsiteURL:  tcc.WebsiteURL,
-		Logo:        &File{ID: tcc.LogoFileID},
-		Rank:        tcc.Rank,
-		CreatedAt:   tcc.CreatedAt,
-		UpdatedAt:   tcc.UpdatedAt,
+func NewCompliancePortalFile(tcf *coredata.CompliancePortalFile) *CompliancePortalFile {
+	return &CompliancePortalFile{
+		ID:                         tcf.ID,
+		Name:                       tcf.Name,
+		Category:                   tcf.Category,
+		File:                       &File{ID: tcf.FileID},
+		CompliancePortalVisibility: tcf.CompliancePortalVisibility,
+		CreatedAt:                  tcf.CreatedAt,
+		UpdatedAt:                  tcf.UpdatedAt,
+		Organization: &Organization{
+			ID: tcf.OrganizationID,
+		},
 	}
 }
 
-func NewTrustCenterReferenceConnection(
-	p *page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField],
+func NewCompliancePortalFileConnection(
+	p *page.Page[*coredata.CompliancePortalFile, coredata.CompliancePortalFileOrderField],
 	parentID gid.GID,
-) *TrustCenterReferenceConnection {
-	var edges = make([]*TrustCenterReferenceEdge, len(p.Data))
+) *CompliancePortalFileConnection {
+	var edges = make([]*CompliancePortalFileEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewTrustCenterReferenceEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewCompliancePortalFileEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &TrustCenterReferenceConnection{
+	return &CompliancePortalFileConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
 		ParentID: parentID,
 	}
 }
 
-func NewTrustCenterReferenceEdge(tcc *coredata.TrustCenterReference, orderBy coredata.TrustCenterReferenceOrderField) *TrustCenterReferenceEdge {
-	return &TrustCenterReferenceEdge{
-		Cursor: tcc.CursorKey(orderBy),
-		Node:   NewTrustCenterReference(tcc),
+func NewCompliancePortalFileEdge(tcf *coredata.CompliancePortalFile, orderBy coredata.CompliancePortalFileOrderField) *CompliancePortalFileEdge {
+	return &CompliancePortalFileEdge{
+		Cursor: tcf.CursorKey(orderBy),
+		Node:   NewCompliancePortalFile(tcf),
 	}
 }

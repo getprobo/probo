@@ -23,9 +23,9 @@ import (
 // AcceptElectronicSignature is the resolver for the acceptElectronicSignature field.
 func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error) {
 	var (
-		identity    = authn.IdentityFromContext(ctx)
-		httpReq     = gqlutils.HTTPRequestFromContext(ctx)
-		trustCenter = complianceportal.CompliancePageFromContext(ctx)
+		identity         = authn.IdentityFromContext(ctx)
+		httpReq          = gqlutils.HTTPRequestFromContext(ctx)
+		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
 
 	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
@@ -33,7 +33,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		signerIP = httpReq.RemoteAddr
 	}
 
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
 	signature, err := r.esign.AcceptSignature(
 		ctx,
@@ -59,9 +59,9 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 // RecordSigningEvent is the resolver for the recordSigningEvent field.
 func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error) {
 	var (
-		identity    = authn.IdentityFromContext(ctx)
-		httpReq     = gqlutils.HTTPRequestFromContext(ctx)
-		trustCenter = complianceportal.CompliancePageFromContext(ctx)
+		identity         = authn.IdentityFromContext(ctx)
+		httpReq          = gqlutils.HTTPRequestFromContext(ctx)
+		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
 
 	actorIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
@@ -69,7 +69,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		actorIP = httpReq.RemoteAddr
 	}
 
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
 	if err := r.esign.RecordEvent(
 		ctx,
@@ -92,13 +92,13 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 
 // FileURL is the resolver for the fileUrl field.
 func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error) {
-	trustCenter := complianceportal.CompliancePageFromContext(ctx)
+	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
 
 	if identity := authn.IdentityFromContext(ctx); identity != nil && r.esign != nil {
-		scope := coredata.NewScopeFromObjectID(trustCenter.ID)
-		trustService := r.trust
+		scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
+		visitorService := r.visitor
 
-		access, err := trustService.GetPortalAccess(ctx, scope, trustCenter.ID, identity.ID)
+		access, err := visitorService.GetPortalAccess(ctx, scope, compliancePortal.ID, identity.ID)
 		if err == nil && access.ElectronicSignatureID != nil {
 			fileURL, err := r.esign.GenerateSignatureFileURL(ctx, *access.ElectronicSignatureID, 15*time.Minute)
 			if err == nil {
@@ -109,10 +109,10 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 		}
 	}
 
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
-	trustService := r.trust
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
+	visitorService := r.visitor
 
-	fileURL, err := trustService.GeneratePortalNDAFileURL(ctx, scope, trustCenter.ID, 15*time.Minute)
+	fileURL, err := visitorService.GeneratePortalNDAFileURL(ctx, scope, compliancePortal.ID, 15*time.Minute)
 	if err != nil {
 		return "", gqlutils.Internal(ctx)
 	}
@@ -127,11 +127,11 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 		return nil, nil
 	}
 
-	trustCenter := complianceportal.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
-	trustService := r.trust
+	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
+	visitorService := r.visitor
 
-	access, err := trustService.GetPortalAccess(ctx, scope, trustCenter.ID, identity.ID)
+	access, err := visitorService.GetPortalAccess(ctx, scope, compliancePortal.ID, identity.ID)
 	if err != nil {
 		return nil, nil
 	}

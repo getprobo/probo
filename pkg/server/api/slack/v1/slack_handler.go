@@ -63,7 +63,7 @@ const (
 	StatusReject = "reject"
 )
 
-func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *log.Logger, trustSvc *visitor.Service) http.HandlerFunc {
+func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *log.Logger, visitorSvc *visitor.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -235,7 +235,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 				documentIDs = []gid.GID{gID}
 			case coredata.FileEntityType:
 				reportIDs = []gid.GID{gID}
-			case coredata.TrustCenterFileEntityType:
+			case coredata.CompliancePortalFileEntityType:
 				fileIDs = []gid.GID{gID}
 			default:
 				logger.ErrorCtx(ctx, "unknown entity type", log.Error(err))
@@ -247,7 +247,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 
 		switch statusAction {
 		case StatusAccept:
-			if err := trustSvc.GrantPortalAccessByIDs(
+			if err := visitorSvc.GrantPortalAccessByIDs(
 				ctx,
 				scope,
 				initialSlackMessage.OrganizationID,
@@ -262,7 +262,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 				return
 			}
 		case StatusReject:
-			if err := trustSvc.RejectOrRevokePortalAccessByIDs(
+			if err := visitorSvc.RejectOrRevokePortalAccessByIDs(
 				ctx,
 				scope,
 				initialSlackMessage.OrganizationID,

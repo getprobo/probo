@@ -1,4 +1,4 @@
-type TrustCenter implements Node {
+type CompliancePortal implements Node {
   id: ID!
   active: Boolean!
   slug: String!
@@ -20,7 +20,7 @@ type TrustCenter implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    filter: TrustCenterVisibilityFilter
+    filter: CompliancePortalVisibilityFilter
   ): DocumentConnection! @goField(forceResolver: true)
 
   audits(
@@ -28,7 +28,7 @@ type TrustCenter implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    filter: TrustCenterVisibilityFilter
+    filter: CompliancePortalVisibilityFilter
   ): AuditConnection! @goField(forceResolver: true)
 
   subprocessors(
@@ -49,7 +49,7 @@ type TrustCenter implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-  ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+  ): CompliancePortalReferenceConnection! @goField(forceResolver: true)
 
   commitmentGroups(
     first: Int
@@ -58,13 +58,13 @@ type TrustCenter implements Node {
     before: CursorKey
   ): CompliancePortalCommitmentGroupConnection! @goField(forceResolver: true)
 
-  trustCenterFiles(
+  compliancePortalFiles(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    filter: TrustCenterVisibilityFilter
-  ): TrustCenterFileConnection! @goField(forceResolver: true)
+    filter: CompliancePortalVisibilityFilter
+  ): CompliancePortalFileConnection! @goField(forceResolver: true)
 
   complianceFrameworks(
     first: Int
@@ -109,16 +109,16 @@ enum DocumentType
     )
 }
 
-enum TrustCenterVisibility
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibility") {
+enum CompliancePortalVisibility
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibility") {
   PRIVATE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPrivate")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityPrivate")
   PUBLIC
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPublic")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityPublic")
 }
 
-input TrustCenterVisibilityFilter {
-  visibility: TrustCenterVisibility
+input CompliancePortalVisibilityFilter {
+  visibility: CompliancePortalVisibility
 }
 
 type Document implements Node @nda {
@@ -291,7 +291,7 @@ type SubprocessorEdge @nda {
   node: Subprocessor!
 }
 
-type TrustCenterReference implements Node @nda {
+type CompliancePortalReference implements Node @nda {
   id: ID!
   name: String!
   description: String
@@ -299,14 +299,14 @@ type TrustCenterReference implements Node @nda {
   logo: File! @goField(forceResolver: true)
 }
 
-type TrustCenterReferenceConnection @nda {
-  edges: [TrustCenterReferenceEdge!]!
+type CompliancePortalReferenceConnection @nda {
+  edges: [CompliancePortalReferenceEdge!]!
   pageInfo: PageInfo!
 }
 
-type TrustCenterReferenceEdge @nda {
+type CompliancePortalReferenceEdge @nda {
   cursor: CursorKey!
-  node: TrustCenterReference!
+  node: CompliancePortalReference!
 }
 
 enum CompliancePortalCommitmentIcon
@@ -394,7 +394,7 @@ type CompliancePortalCommitmentEdge {
   node: CompliancePortalCommitment!
 }
 
-type TrustCenterFile implements Node @nda {
+type CompliancePortalFile implements Node @nda {
   id: ID!
   name: String!
   category: String!
@@ -403,14 +403,14 @@ type TrustCenterFile implements Node @nda {
   access: DocumentAccess @goField(forceResolver: true)
 }
 
-type TrustCenterFileConnection @nda {
-  edges: [TrustCenterFileEdge!]!
+type CompliancePortalFileConnection @nda {
+  edges: [CompliancePortalFileEdge!]!
   pageInfo: PageInfo!
 }
 
-type TrustCenterFileEdge @nda {
+type CompliancePortalFileEdge @nda {
   cursor: CursorKey!
-  node: TrustCenterFile!
+  node: CompliancePortalFile!
 }
 
 type ComplianceCustomLink implements Node {
@@ -430,7 +430,7 @@ type ComplianceCustomLinkEdge {
   node: ComplianceCustomLink!
 }
 
-type TrustCenterAccess implements Node {
+type CompliancePortalAccess implements Node {
   id: ID!
   email: EmailAddr!
   name: String!
@@ -440,23 +440,23 @@ type TrustCenterAccess implements Node {
 
 enum DocumentAccessStatus
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatus"
+    model: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessStatus"
   ) {
   REQUESTED
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRequested"
+      value: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessStatusRequested"
     )
   GRANTED
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusGranted"
+      value: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessStatusGranted"
     )
   REJECTED
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRejected"
+      value: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessStatusRejected"
     )
   REVOKED
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRevoked"
+      value: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessStatusRevoked"
     )
 }
 
@@ -474,9 +474,9 @@ extend type Mutation {
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
     @authentication(required: OPTIONAL) @nda
 
-  exportTrustCenterFile(
-    input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @authentication(required: OPTIONAL) @nda
+  exportCompliancePortalFile(
+    input: ExportCompliancePortalFileInput!
+  ): ExportCompliancePortalFilePayload! @authentication(required: OPTIONAL) @nda
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
@@ -486,8 +486,8 @@ extend type Mutation {
     input: RequestReportAccessInput!
   ): RequestReportAccessPayload! @authentication(required: PRESENT) @nda
 
-  requestTrustCenterFileAccess(
-    input: RequestTrustCenterFileAccessInput!
+  requestCompliancePortalFileAccess(
+    input: RequestCompliancePortalFileAccessInput!
   ): RequestFileAccessPayload! @authentication(required: PRESENT) @nda
 }
 
@@ -500,11 +500,11 @@ type RequestReportAccessPayload {
 }
 
 type RequestFileAccessPayload {
-  file: TrustCenterFile
+  file: CompliancePortalFile
 }
 
 type RequestAccessesPayload {
-  trustCenterAccess: TrustCenterAccess!
+  compliancePortalAccess: CompliancePortalAccess!
 }
 
 input ExportDocumentPDFInput {
@@ -523,12 +523,12 @@ input RequestReportAccessInput {
   reportId: ID!
 }
 
-input RequestTrustCenterFileAccessInput {
-  trustCenterFileId: ID!
+input RequestCompliancePortalFileAccessInput {
+  compliancePortalFileId: ID!
 }
 
-input ExportTrustCenterFileInput {
-  trustCenterFileId: ID!
+input ExportCompliancePortalFileInput {
+  compliancePortalFileId: ID!
 }
 
 type ExportDocumentPDFPayload {
@@ -539,6 +539,6 @@ type ExportReportPDFPayload {
   data: String!
 }
 
-type ExportTrustCenterFilePayload {
+type ExportCompliancePortalFilePayload {
   data: String!
 }

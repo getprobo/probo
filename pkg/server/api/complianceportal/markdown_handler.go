@@ -28,15 +28,15 @@ import (
 )
 
 type Handler struct {
-	trustService *visitor.Service
+	visitor *visitor.Service
 }
 
-func NewHandler(trustService *visitor.Service) *Handler {
-	return &Handler{trustService: trustService}
+func NewHandler(visitorSvc *visitor.Service) *Handler {
+	return &Handler{visitor: visitorSvc}
 }
 
 func (h *Handler) HandleLLMsTxt(w http.ResponseWriter, r *http.Request) {
-	tc := CompliancePageFromContext(r.Context())
+	tc := CompliancePortalFromContext(r.Context())
 	if tc == nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
@@ -46,19 +46,19 @@ func (h *Handler) HandleLLMsTxt(w http.ResponseWriter, r *http.Request) {
 
 	scope := coredata.NewScopeFromObjectID(tc.ID)
 
-	if err := h.trustService.RenderCompliancePageMarkdown(r.Context(), w, tc.ID, scope); err != nil {
+	if err := h.visitor.RenderCompliancePortalMarkdown(r.Context(), w, tc.ID, scope); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
 
 func (h *Handler) HandleRobotsTxt(w http.ResponseWriter, r *http.Request) {
-	tc := CompliancePageFromContext(r.Context())
+	tc := CompliancePortalFromContext(r.Context())
 	if tc == nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
-	baseURL := CompliancePageBaseURLFromContext(r.Context())
+	baseURL := CompliancePortalBaseURLFromContext(r.Context())
 	if baseURL == nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
@@ -66,19 +66,19 @@ func (h *Handler) HandleRobotsTxt(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-	if err := h.trustService.RenderRobotsTxt(r.Context(), w, tc.SearchEngineIndexing, *baseURL); err != nil {
+	if err := h.visitor.RenderRobotsTxt(r.Context(), w, tc.SearchEngineIndexing, *baseURL); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
 
 func (h *Handler) HandleSitemap(w http.ResponseWriter, r *http.Request) {
-	tc := CompliancePageFromContext(r.Context())
+	tc := CompliancePortalFromContext(r.Context())
 	if tc == nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
-	baseURL := CompliancePageBaseURLFromContext(r.Context())
+	baseURL := CompliancePortalBaseURLFromContext(r.Context())
 	if baseURL == nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
@@ -88,7 +88,7 @@ func (h *Handler) HandleSitemap(w http.ResponseWriter, r *http.Request) {
 
 	scope := coredata.NewScopeFromObjectID(tc.ID)
 
-	if err := h.trustService.RenderSitemap(r.Context(), w, tc.ID, scope, *baseURL); err != nil {
+	if err := h.visitor.RenderSitemap(r.Context(), w, tc.ID, scope, *baseURL); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }

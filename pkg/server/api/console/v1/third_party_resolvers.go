@@ -142,7 +142,7 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 			Certifications:                input.Certifications,
 			BusinessOwnerID:               gqlutils.UnwrapOmittable(input.BusinessOwnerID),
 			SecurityOwnerID:               gqlutils.UnwrapOmittable(input.SecurityOwnerID),
-			ShowOnTrustCenter:             input.ShowOnTrustCenter,
+			ShowOnCompliancePortal:        input.ShowOnCompliancePortal,
 			Countries:                     input.Countries,
 		},
 	)

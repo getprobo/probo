@@ -85,13 +85,13 @@ func NewDocument(document *coredata.Document) *Document {
 		Organization: &Organization{
 			ID: document.OrganizationID,
 		},
-		CurrentPublishedMajor: document.CurrentPublishedMajor,
-		CurrentPublishedMinor: document.CurrentPublishedMinor,
-		WriteMode:             document.WriteMode,
-		TrustCenterVisibility: document.TrustCenterVisibility,
-		Status:                document.Status,
-		ArchivedAt:            document.ArchivedAt,
-		CreatedAt:             document.CreatedAt,
-		UpdatedAt:             document.UpdatedAt,
+		CurrentPublishedMajor:      document.CurrentPublishedMajor,
+		CurrentPublishedMinor:      document.CurrentPublishedMinor,
+		WriteMode:                  document.WriteMode,
+		CompliancePortalVisibility: document.CompliancePortalVisibility,
+		Status:                     document.Status,
+		ArchivedAt:                 document.ArchivedAt,
+		CreatedAt:                  document.CreatedAt,
+		UpdatedAt:                  document.UpdatedAt,
 	}
 }

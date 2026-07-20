@@ -102,7 +102,7 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 
 	r.Group(
 		func(r chi.Router) {
-			r.Use(complianceportal.NewCompliancePagePresenceMiddleware())
+			r.Use(complianceportal.NewCompliancePortalPresenceMiddleware())
 
 			r.Method(http.MethodGet, complianceportal.CIMDMetadataPath, NewOAuthClientMetadataHandler(cfg.Visitor))
 			r.Method(http.MethodGet, complianceportal.BrandLogoPath, NewBrandLogoHandler(cfg.Logger, cfg.File))
@@ -128,12 +128,12 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 
 func compliancePageHeadData() HeadDataFunc {
 	return func(r *http.Request) HeadData {
-		tc := complianceportal.CompliancePageFromContext(r.Context())
+		tc := complianceportal.CompliancePortalFromContext(r.Context())
 		if tc == nil {
 			return HeadData{Title: "Compliance Page"}
 		}
 
-		compliancePageBaseURL := complianceportal.CompliancePageBaseURLFromContext(r.Context())
+		compliancePageBaseURL := complianceportal.CompliancePortalBaseURLFromContext(r.Context())
 
 		description := tc.Title + " Compliance Page"
 		if tc.Description != nil && *tc.Description != "" {

@@ -31,10 +31,10 @@ type (
 )
 
 var (
-	identityContextKey = &ctxKey{name: "identity"}
-	sessionContextKey  = &ctxKey{name: "session"}
-	apiKeyContextKey   = &ctxKey{name: "api_key"}
-	trustCenterKey     = &ctxKey{name: "trust_center"}
+	identityContextKey  = &ctxKey{name: "identity"}
+	sessionContextKey   = &ctxKey{name: "session"}
+	apiKeyContextKey    = &ctxKey{name: "api_key"}
+	compliancePortalKey = &ctxKey{name: "compliance_portal"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {

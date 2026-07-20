@@ -334,25 +334,25 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewTransferImpactAssessment(tia), nil
 		}
-	case coredata.TrustCenterEntityType:
+	case coredata.CompliancePortalEntityType:
 		action = management.ActionCompliancePortalGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			trustCenter, err := r.management.Get(ctx, scope, id)
+			compliancePortal, err := r.management.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewTrustCenter(trustCenter), nil
+			return types.NewCompliancePortal(compliancePortal), nil
 		}
-	case coredata.TrustCenterAccessEntityType:
+	case coredata.CompliancePortalAccessEntityType:
 		action = management.ActionCompliancePortalAccessGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			trustCenterAccess, err := r.management.GetAccess(ctx, scope, id)
+			compliancePortalAccess, err := r.management.GetAccess(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewTrustCenterAccess(trustCenterAccess), nil
+			return types.NewCompliancePortalAccess(compliancePortalAccess), nil
 		}
 	case coredata.RightsRequestEntityType:
 		action = probo.ActionRightsRequestGet

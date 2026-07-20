@@ -34,8 +34,8 @@ func NewOAuthClientMetadataHandler(visitorSvc *visitor.Service) http.Handler {
 func (h *oauthClientMetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	compliancePage := complianceportal.CompliancePageFromContext(ctx)
-	baseURL := complianceportal.CompliancePageBaseURLFromContext(ctx)
+	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
+	baseURL := complianceportal.CompliancePortalBaseURLFromContext(ctx)
 
 	if compliancePage == nil || baseURL == nil {
 		httpserver.RenderError(w, http.StatusNotFound, errNotFound)

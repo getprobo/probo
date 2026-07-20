@@ -29,16 +29,16 @@ import (
 type ctxKey struct{ name string }
 
 var (
-	compliancePageKey        = &ctxKey{name: "compliance_page"}
-	compliancePageBaseURLKey = &ctxKey{name: "compliance_page_base_url"}
+	compliancePortalKey        = &ctxKey{name: "compliance_portal"}
+	compliancePortalBaseURLKey = &ctxKey{name: "compliance_portal_base_url"}
 )
 
-func CompliancePageFromContext(ctx context.Context) *coredata.TrustCenter {
-	page, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
+func CompliancePortalFromContext(ctx context.Context) *coredata.CompliancePortal {
+	page, _ := ctx.Value(compliancePortalKey).(*coredata.CompliancePortal)
 	return page
 }
 
-func CompliancePageBaseURLFromContext(ctx context.Context) *string {
-	page, _ := ctx.Value(compliancePageBaseURLKey).(*string)
+func CompliancePortalBaseURLFromContext(ctx context.Context) *string {
+	page, _ := ctx.Value(compliancePortalBaseURLKey).(*string)
 	return page
 }

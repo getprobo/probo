@@ -314,14 +314,14 @@ type Organization implements Node {
         orderBy: AgentRunOrder
     ): AgentRunConnection! @goField(forceResolver: true)
 
-    trustCenter: TrustCenter @goField(forceResolver: true)
-    trustCenterFiles(
+    compliancePortal: CompliancePortal @goField(forceResolver: true)
+    compliancePortalFiles(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: TrustCenterFileOrder
-    ): TrustCenterFileConnection! @goField(forceResolver: true)
+        orderBy: CompliancePortalFileOrder
+    ): CompliancePortalFileConnection! @goField(forceResolver: true)
 
     cookieBanners(
         first: Int

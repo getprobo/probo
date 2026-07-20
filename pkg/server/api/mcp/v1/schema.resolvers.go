@@ -1523,12 +1523,12 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 	audit, err := svc.Audits.Update(
 		ctx, scope,
 		&probo.UpdateAuditRequest{
-			ID:                    input.ID,
-			Name:                  UnwrapOmittable(input.Name),
-			ValidFrom:             input.ValidFrom,
-			ValidUntil:            input.ValidUntil,
-			State:                 input.State,
-			TrustCenterVisibility: input.TrustCenterVisibility,
+			ID:                         input.ID,
+			Name:                       UnwrapOmittable(input.Name),
+			ValidFrom:                  input.ValidFrom,
+			ValidUntil:                 input.ValidUntil,
+			State:                      input.State,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
 		},
 	)
 	if err != nil {
@@ -2240,9 +2240,9 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
-	var trustCenterVisibility *coredata.TrustCenterVisibility
-	if input.TrustCenterVisibility != nil {
-		trustCenterVisibility = input.TrustCenterVisibility
+	var compliancePortalVisibility *coredata.CompliancePortalVisibility
+	if input.CompliancePortalVisibility != nil {
+		compliancePortalVisibility = input.CompliancePortalVisibility
 	}
 
 	contentJSON, err := markdownToProseMirrorJSON(input.Content)
@@ -2253,13 +2253,13 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 	document, documentVersion, err := svc.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
-			OrganizationID:        input.OrganizationID,
-			Title:                 input.Title,
-			Content:               contentJSON,
-			Classification:        input.Classification,
-			DocumentType:          input.DocumentType,
-			TrustCenterVisibility: trustCenterVisibility,
-			DefaultApproverIDs:    input.DefaultApproverIds,
+			OrganizationID:             input.OrganizationID,
+			Title:                      input.Title,
+			Content:                    contentJSON,
+			Classification:             input.Classification,
+			DocumentType:               input.DocumentType,
+			CompliancePortalVisibility: compliancePortalVisibility,
+			DefaultApproverIDs:         input.DefaultApproverIds,
 		},
 	)
 	if err != nil {
@@ -2296,13 +2296,13 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	document, documentVersion, _, err := svc.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
-			DocumentID:            input.ID,
-			Title:                 input.Title,
-			Content:               content,
-			Classification:        input.Classification,
-			DocumentType:          input.DocumentType,
-			TrustCenterVisibility: input.TrustCenterVisibility,
-			DefaultApproverIDs:    defaultApproverIDs,
+			DocumentID:                 input.ID,
+			Title:                      input.Title,
+			Content:                    content,
+			Classification:             input.Classification,
+			DocumentType:               input.DocumentType,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
+			DefaultApproverIDs:         defaultApproverIDs,
 		},
 	)
 	if err != nil {
@@ -4880,65 +4880,65 @@ func (r *Resolver) DeleteRightsRequestTool(ctx context.Context, req *mcp.CallToo
 	}, nil
 }
 
-// GetTrustCenterTool handles the getTrustCenter tool
-// Get the trust center for an organization
-func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrustCenterInput) (*mcp.CallToolResult, types.GetTrustCenterOutput, error) {
+// GetCompliancePortalTool handles the getCompliancePortal tool
+// Get the compliance portal for an organization
+func (r *Resolver) GetCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCompliancePortalInput) (*mcp.CallToolResult, types.GetCompliancePortalOutput, error) {
 	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalGet)
 	if err != nil {
-		return nil, types.GetTrustCenterOutput{}, err
+		return nil, types.GetCompliancePortalOutput{}, err
 	}
 
 	prb := r.management
 
-	trustCenter, err := prb.GetByOrganizationID(ctx, scope, input.OrganizationID)
+	compliancePortal, err := prb.GetByOrganizationID(ctx, scope, input.OrganizationID)
 	if err != nil {
-		return nil, types.GetTrustCenterOutput{}, fmt.Errorf("cannot get trust center: %w", err)
+		return nil, types.GetCompliancePortalOutput{}, fmt.Errorf("cannot get compliance portal: %w", err)
 	}
 
-	tc := types.NewTrustCenter(trustCenter)
+	tc := types.NewCompliancePortal(compliancePortal)
 
-	if trustCenter.LogoFileID != nil {
-		logo, err := r.loadFile(ctx, scope, *trustCenter.LogoFileID)
+	if compliancePortal.LogoFileID != nil {
+		logo, err := r.loadFile(ctx, scope, *compliancePortal.LogoFileID)
 		if err != nil {
-			return nil, types.GetTrustCenterOutput{}, err
+			return nil, types.GetCompliancePortalOutput{}, err
 		}
 
 		tc.Logo = logo
 	}
 
-	if trustCenter.DarkLogoFileID != nil {
-		darkLogo, err := r.loadFile(ctx, scope, *trustCenter.DarkLogoFileID)
+	if compliancePortal.DarkLogoFileID != nil {
+		darkLogo, err := r.loadFile(ctx, scope, *compliancePortal.DarkLogoFileID)
 		if err != nil {
-			return nil, types.GetTrustCenterOutput{}, err
+			return nil, types.GetCompliancePortalOutput{}, err
 		}
 
 		tc.DarkLogo = darkLogo
 	}
 
-	if trustCenter.NonDisclosureAgreementFileID != nil {
-		nda, err := r.loadFile(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
+	if compliancePortal.NonDisclosureAgreementFileID != nil {
+		nda, err := r.loadFile(ctx, scope, *compliancePortal.NonDisclosureAgreementFileID)
 		if err != nil {
-			return nil, types.GetTrustCenterOutput{}, err
+			return nil, types.GetCompliancePortalOutput{}, err
 		}
 
 		tc.Nda = nda
 	}
 
-	return nil, types.GetTrustCenterOutput{TrustCenter: tc}, nil
+	return nil, types.GetCompliancePortalOutput{CompliancePortal: tc}, nil
 }
 
-// UpdateTrustCenterTool handles the updateTrustCenter tool
-// Update the trust center settings
-func (r *Resolver) UpdateTrustCenterTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrustCenterInput) (*mcp.CallToolResult, types.UpdateTrustCenterOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalUpdate)
+// UpdateCompliancePortalTool handles the updateCompliancePortal tool
+// Update the compliance portal settings
+func (r *Resolver) UpdateCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalInput) (*mcp.CallToolResult, types.UpdateCompliancePortalOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalUpdate)
 	if err != nil {
-		return nil, types.UpdateTrustCenterOutput{}, err
+		return nil, types.UpdateCompliancePortalOutput{}, err
 	}
 
 	prb := r.management
 
 	updateReq := &management.UpdateRequest{
-		ID: input.TrustCenterID,
+		ID: input.CompliancePortalID,
 	}
 
 	if active := UnwrapOmittable(input.Active); active != nil {
@@ -4958,31 +4958,31 @@ func (r *Resolver) UpdateTrustCenterTool(ctx context.Context, req *mcp.CallToolR
 		updateReq.Title = *title
 	}
 
-	trustCenter, _, err := prb.Update(ctx, scope, updateReq)
+	compliancePortal, _, err := prb.Update(ctx, scope, updateReq)
 	if err != nil {
-		return nil, types.UpdateTrustCenterOutput{}, fmt.Errorf("cannot update trust center: %w", err)
+		return nil, types.UpdateCompliancePortalOutput{}, fmt.Errorf("cannot update compliance portal: %w", err)
 	}
 
-	return nil, types.UpdateTrustCenterOutput{TrustCenter: types.NewTrustCenter(trustCenter)}, nil
+	return nil, types.UpdateCompliancePortalOutput{CompliancePortal: types.NewCompliancePortal(compliancePortal)}, nil
 }
 
-// ListTrustCenterReferencesTool handles the listTrustCenterReferences tool
-// List all references for a trust center
-func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrustCenterReferencesInput) (*mcp.CallToolResult, types.ListTrustCenterReferencesOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalReferenceList)
+// ListCompliancePortalReferencesTool handles the listCompliancePortalReferences tool
+// List all references for a compliance portal
+func (r *Resolver) ListCompliancePortalReferencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalReferencesInput) (*mcp.CallToolResult, types.ListCompliancePortalReferencesOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalReferenceList)
 	if err != nil {
-		return nil, types.ListTrustCenterReferencesOutput{}, err
+		return nil, types.ListCompliancePortalReferencesOutput{}, err
 	}
 
 	prb := r.management
 
-	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
-		Field:     coredata.TrustCenterReferenceOrderFieldRank,
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalReferenceOrderField]{
+		Field:     coredata.CompliancePortalReferenceOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalReferenceOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -4990,18 +4990,18 @@ func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.C
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := prb.ListReferences(ctx, scope, input.TrustCenterID, cursor)
+	p, err := prb.ListReferences(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
-		return nil, types.ListTrustCenterReferencesOutput{}, fmt.Errorf("cannot list trust center references: %w", err)
+		return nil, types.ListCompliancePortalReferencesOutput{}, fmt.Errorf("cannot list compliance portal references: %w", err)
 	}
 
-	refs := make([]*types.TrustCenterReference, 0, len(p.Data))
+	refs := make([]*types.CompliancePortalReference, 0, len(p.Data))
 	for _, reference := range p.Data {
-		ref := types.NewTrustCenterReference(reference)
+		ref := types.NewCompliancePortalReference(reference)
 
 		logo, err := r.loadFile(ctx, scope, reference.LogoFileID)
 		if err != nil {
-			return nil, types.ListTrustCenterReferencesOutput{}, err
+			return nil, types.ListCompliancePortalReferencesOutput{}, err
 		}
 
 		ref.Logo = logo
@@ -5009,15 +5009,15 @@ func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.C
 		refs = append(refs, ref)
 	}
 
-	return nil, types.NewListTrustCenterReferencesOutput(refs, p), nil
+	return nil, types.NewListCompliancePortalReferencesOutput(refs, p), nil
 }
 
-// AddTrustCenterReferenceTool handles the addTrustCenterReference tool
-// Add a new reference to the trust center
-func (r *Resolver) AddTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrustCenterReferenceInput) (*mcp.CallToolResult, types.AddTrustCenterReferenceOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalReferenceCreate)
+// AddCompliancePortalReferenceTool handles the addCompliancePortalReference tool
+// Add a new reference to the compliance portal
+func (r *Resolver) AddCompliancePortalReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCompliancePortalReferenceInput) (*mcp.CallToolResult, types.AddCompliancePortalReferenceOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalReferenceCreate)
 	if err != nil {
-		return nil, types.AddTrustCenterReferenceOutput{}, err
+		return nil, types.AddCompliancePortalReferenceOutput{}, err
 	}
 
 	prb := r.management
@@ -5030,25 +5030,25 @@ func (r *Resolver) AddTrustCenterReferenceTool(ctx context.Context, req *mcp.Cal
 	reference, err := prb.CreateReference(
 		ctx, scope,
 		&management.CreateReferenceRequest{
-			TrustCenterID: input.TrustCenterID,
-			Name:          input.Name,
-			Description:   input.Description,
-			WebsiteURL:    websiteURL,
+			CompliancePortalID: input.CompliancePortalID,
+			Name:               input.Name,
+			Description:        input.Description,
+			WebsiteURL:         websiteURL,
 		},
 	)
 	if err != nil {
-		return nil, types.AddTrustCenterReferenceOutput{}, fmt.Errorf("cannot add trust center reference: %w", err)
+		return nil, types.AddCompliancePortalReferenceOutput{}, fmt.Errorf("cannot add compliance portal reference: %w", err)
 	}
 
-	return nil, types.AddTrustCenterReferenceOutput{TrustCenterReference: types.NewTrustCenterReference(reference)}, nil
+	return nil, types.AddCompliancePortalReferenceOutput{CompliancePortalReference: types.NewCompliancePortalReference(reference)}, nil
 }
 
-// UpdateTrustCenterReferenceTool handles the updateTrustCenterReference tool
-// Update a trust center reference
-func (r *Resolver) UpdateTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrustCenterReferenceInput) (*mcp.CallToolResult, types.UpdateTrustCenterReferenceOutput, error) {
+// UpdateCompliancePortalReferenceTool handles the updateCompliancePortalReference tool
+// Update a compliance portal reference
+func (r *Resolver) UpdateCompliancePortalReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalReferenceInput) (*mcp.CallToolResult, types.UpdateCompliancePortalReferenceOutput, error) {
 	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalReferenceUpdate)
 	if err != nil {
-		return nil, types.UpdateTrustCenterReferenceOutput{}, err
+		return nil, types.UpdateCompliancePortalReferenceOutput{}, err
 	}
 
 	prb := r.management
@@ -5072,95 +5072,95 @@ func (r *Resolver) UpdateTrustCenterReferenceTool(ctx context.Context, req *mcp.
 
 	reference, err := prb.UpdateReference(ctx, scope, updateRefReq)
 	if err != nil {
-		return nil, types.UpdateTrustCenterReferenceOutput{}, fmt.Errorf("cannot update trust center reference: %w", err)
+		return nil, types.UpdateCompliancePortalReferenceOutput{}, fmt.Errorf("cannot update compliance portal reference: %w", err)
 	}
 
-	return nil, types.UpdateTrustCenterReferenceOutput{TrustCenterReference: types.NewTrustCenterReference(reference)}, nil
+	return nil, types.UpdateCompliancePortalReferenceOutput{CompliancePortalReference: types.NewCompliancePortalReference(reference)}, nil
 }
 
-// DeleteTrustCenterReferenceTool handles the deleteTrustCenterReference tool
-// Delete a trust center reference
-func (r *Resolver) DeleteTrustCenterReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrustCenterReferenceInput) (*mcp.CallToolResult, types.DeleteTrustCenterReferenceOutput, error) {
+// DeleteCompliancePortalReferenceTool handles the deleteCompliancePortalReference tool
+// Delete a compliance portal reference
+func (r *Resolver) DeleteCompliancePortalReferenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalReferenceInput) (*mcp.CallToolResult, types.DeleteCompliancePortalReferenceOutput, error) {
 	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalReferenceDelete)
 	if err != nil {
-		return nil, types.DeleteTrustCenterReferenceOutput{}, err
+		return nil, types.DeleteCompliancePortalReferenceOutput{}, err
 	}
 
 	prb := r.management
 
 	err = prb.DeleteReference(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.DeleteTrustCenterReferenceOutput{}, fmt.Errorf("cannot delete trust center reference: %w", err)
+		return nil, types.DeleteCompliancePortalReferenceOutput{}, fmt.Errorf("cannot delete compliance portal reference: %w", err)
 	}
 
-	return nil, types.DeleteTrustCenterReferenceOutput{DeletedTrustCenterReferenceID: input.ID}, nil
+	return nil, types.DeleteCompliancePortalReferenceOutput{DeletedCompliancePortalReferenceID: input.ID}, nil
 }
 
-// ListTrustCenterFilesTool handles the listTrustCenterFiles tool
-// List all files for the trust center
-func (r *Resolver) ListTrustCenterFilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrustCenterFilesInput) (*mcp.CallToolResult, types.ListTrustCenterFilesOutput, error) {
+// ListCompliancePortalFilesTool handles the listCompliancePortalFiles tool
+// List all files for the compliance portal
+func (r *Resolver) ListCompliancePortalFilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalFilesInput) (*mcp.CallToolResult, types.ListCompliancePortalFilesOutput, error) {
 	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalFileList)
 	if err != nil {
-		return nil, types.ListTrustCenterFilesOutput{}, err
+		return nil, types.ListCompliancePortalFilesOutput{}, err
 	}
 
 	prb := r.management
 
-	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
-		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalFileOrderField]{
+		Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.TrustCenterFileOrderField]{
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalFileOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
 	}
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-	filter := coredata.NewTrustCenterFileFilter()
+	filter := coredata.NewCompliancePortalFileFilter()
 
 	p, err := prb.ListFilesForOrganizationID(ctx, scope, input.OrganizationID, cursor, filter)
 	if err != nil {
-		return nil, types.ListTrustCenterFilesOutput{}, fmt.Errorf("cannot list trust center files: %w", err)
+		return nil, types.ListCompliancePortalFilesOutput{}, fmt.Errorf("cannot list compliance portal files: %w", err)
 	}
 
-	files := make([]*types.TrustCenterFile, 0, len(p.Data))
+	files := make([]*types.CompliancePortalFile, 0, len(p.Data))
 	for _, f := range p.Data {
 		file, err := r.loadFile(ctx, scope, f.FileID)
 		if err != nil {
-			return nil, types.ListTrustCenterFilesOutput{}, err
+			return nil, types.ListCompliancePortalFilesOutput{}, err
 		}
 
-		files = append(files, types.NewTrustCenterFile(f, file))
+		files = append(files, types.NewCompliancePortalFile(f, file))
 	}
 
-	return nil, types.NewListTrustCenterFilesOutput(files, p), nil
+	return nil, types.NewListCompliancePortalFilesOutput(files, p), nil
 }
 
-// DeleteTrustCenterFileTool handles the deleteTrustCenterFile tool
-// Delete a trust center file
-func (r *Resolver) DeleteTrustCenterFileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrustCenterFileInput) (*mcp.CallToolResult, types.DeleteTrustCenterFileOutput, error) {
+// DeleteCompliancePortalFileTool handles the deleteCompliancePortalFile tool
+// Delete a compliance portal file
+func (r *Resolver) DeleteCompliancePortalFileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalFileInput) (*mcp.CallToolResult, types.DeleteCompliancePortalFileOutput, error) {
 	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalFileDelete)
 	if err != nil {
-		return nil, types.DeleteTrustCenterFileOutput{}, err
+		return nil, types.DeleteCompliancePortalFileOutput{}, err
 	}
 
 	prb := r.management
 
 	err = prb.DeleteFile(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.DeleteTrustCenterFileOutput{}, fmt.Errorf("cannot delete trust center file: %w", err)
+		return nil, types.DeleteCompliancePortalFileOutput{}, fmt.Errorf("cannot delete compliance portal file: %w", err)
 	}
 
-	return nil, types.DeleteTrustCenterFileOutput{DeletedTrustCenterFileID: input.ID}, nil
+	return nil, types.DeleteCompliancePortalFileOutput{DeletedCompliancePortalFileID: input.ID}, nil
 }
 
 // ListComplianceCustomLinksTool handles the listComplianceCustomLinks tool
-// List all custom links for a trust center
+// List all custom links for a compliance portal
 func (r *Resolver) ListComplianceCustomLinksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListComplianceCustomLinksInput) (*mcp.CallToolResult, types.ListComplianceCustomLinksOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionComplianceCustomLinkList)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionComplianceCustomLinkList)
 	if err != nil {
 		return nil, types.ListComplianceCustomLinksOutput{}, err
 	}
@@ -5181,7 +5181,7 @@ func (r *Resolver) ListComplianceCustomLinksTool(ctx context.Context, req *mcp.C
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := prb.ListCustomLinks(ctx, scope, input.TrustCenterID, cursor)
+	p, err := prb.ListCustomLinks(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
 		return nil, types.ListComplianceCustomLinksOutput{}, fmt.Errorf("cannot list compliance custom links: %w", err)
 	}
@@ -5190,9 +5190,9 @@ func (r *Resolver) ListComplianceCustomLinksTool(ctx context.Context, req *mcp.C
 }
 
 // AddComplianceCustomLinkTool handles the addComplianceCustomLink tool
-// Add a new custom link to the trust center
+// Add a new custom link to the compliance portal
 func (r *Resolver) AddComplianceCustomLinkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddComplianceCustomLinkInput) (*mcp.CallToolResult, types.AddComplianceCustomLinkOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionComplianceCustomLinkCreate)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionComplianceCustomLinkCreate)
 	if err != nil {
 		return nil, types.AddComplianceCustomLinkOutput{}, err
 	}
@@ -5202,9 +5202,9 @@ func (r *Resolver) AddComplianceCustomLinkTool(ctx context.Context, req *mcp.Cal
 	item, err := prb.CreateCustomLink(
 		ctx, scope,
 		&management.CreateCustomLinkRequest{
-			TrustCenterID: input.TrustCenterID,
-			Name:          input.Name,
-			URL:           input.URL,
+			CompliancePortalID: input.CompliancePortalID,
+			Name:               input.Name,
+			URL:                input.URL,
 		},
 	)
 	if err != nil {
@@ -5274,14 +5274,14 @@ func (r *Resolver) DeleteComplianceCustomLinkTool(ctx context.Context, req *mcp.
 // CreateCustomDomainTool handles the createCustomDomain tool
 // Create a custom domain for a compliance page
 func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCustomDomainInput) (*mcp.CallToolResult, types.CreateCustomDomainOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCustomDomainCreate)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCustomDomainCreate)
 	if err != nil {
 		return nil, types.CreateCustomDomainOutput{}, err
 	}
 
 	domain, err := r.management.AddCustomDomain(
 		ctx, scope,
-		input.TrustCenterID,
+		input.CompliancePortalID,
 		input.Domain,
 	)
 	if err != nil {
@@ -5302,12 +5302,12 @@ func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallTool
 // DeleteCustomDomainTool handles the deleteCustomDomain tool
 // Delete the custom domain of a compliance page
 func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCustomDomainInput) (*mcp.CallToolResult, types.DeleteCustomDomainOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCustomDomainDelete)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCustomDomainDelete)
 	if err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, err
 	}
 
-	compliancePage, err := r.management.Get(ctx, scope, input.TrustCenterID)
+	compliancePage, err := r.management.Get(ctx, scope, input.CompliancePortalID)
 	if err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot load compliance page: %w", err)
 	}

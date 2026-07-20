@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,42 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package complianceportal
+package types
 
 import (
-	"net/http"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/v2/gqlerror"
-	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewCompliancePagePresenceMiddleware() func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				compliancePage := CompliancePageFromContext(r.Context())
+func NewCompliancePortal(cp *coredata.CompliancePortal) *CompliancePortal {
+	return &CompliancePortal{
+		ID:                 cp.ID,
+		Active:             cp.Active,
+		Slug:               cp.Slug,
+		Title:              cp.Title,
+		Description:        cp.Description,
+		WebsiteURL:         cp.WebsiteURL,
+		Email:              cp.Email,
+		HeadquarterAddress: cp.HeadquarterAddress,
+	}
+}
 
-				if compliancePage == nil {
-					httpserver.RenderJSON(
-						w,
-						http.StatusNotFound,
-						&graphql.Response{
-							Errors: gqlerror.List{
-								gqlutils.NotFoundf(
-									r.Context(),
-									"compliance page not found",
-								),
-							},
-						},
-					)
-
-					return
-				}
-
-				next.ServeHTTP(w, r)
-			},
-		)
+func NewNonDisclosureAgreement(file *coredata.File) *NonDisclosureAgreement {
+	return &NonDisclosureAgreement{
+		FileName: file.FileName,
 	}
 }

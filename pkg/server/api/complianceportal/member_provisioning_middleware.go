@@ -32,7 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewMemberProvisioningMiddleware(trustSvc *visitor.Service, logger *log.Logger) func(next http.Handler) http.Handler {
+func NewMemberProvisioningMiddleware(visitorSvc *visitor.Service, logger *log.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -44,9 +44,9 @@ func NewMemberProvisioningMiddleware(trustSvc *visitor.Service, logger *log.Logg
 					return
 				}
 
-				compliancePage := CompliancePageFromContext(r.Context())
+				compliancePage := CompliancePortalFromContext(r.Context())
 
-				if _, err := trustSvc.ProvisionPortalMember(ctx, compliancePage.ID, identity.ID); err != nil {
+				if _, err := visitorSvc.ProvisionPortalMember(ctx, compliancePage.ID, identity.ID); err != nil {
 					logger.ErrorCtx(ctx, "cannot provision member", log.Error(err))
 					httpserver.RenderJSON(
 						w,

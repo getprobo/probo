@@ -25,8 +25,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
-	return &TrustCenter{
+func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
+	return &CompliancePortal{
 		ID:                   tc.ID,
 		OrganizationID:       tc.OrganizationID,
 		Active:               tc.Active,
@@ -41,8 +41,8 @@ func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 	}
 }
 
-func NewTrustCenterReference(r *coredata.TrustCenterReference) *TrustCenterReference {
-	return &TrustCenterReference{
+func NewCompliancePortalReference(r *coredata.CompliancePortalReference) *CompliancePortalReference {
+	return &CompliancePortalReference{
 		ID:          r.ID,
 		Name:        r.Name,
 		Description: r.Description,
@@ -53,10 +53,10 @@ func NewTrustCenterReference(r *coredata.TrustCenterReference) *TrustCenterRefer
 	}
 }
 
-func NewListTrustCenterReferencesOutput(
-	refs []*TrustCenterReference,
-	p *page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField],
-) ListTrustCenterReferencesOutput {
+func NewListCompliancePortalReferencesOutput(
+	refs []*CompliancePortalReference,
+	p *page.Page[*coredata.CompliancePortalReference, coredata.CompliancePortalReferenceOrderField],
+) ListCompliancePortalReferencesOutput {
 	var nextCursor *page.CursorKey
 
 	if len(p.Data) > 0 {
@@ -64,35 +64,35 @@ func NewListTrustCenterReferencesOutput(
 		nextCursor = &cursorKey
 	}
 
-	return ListTrustCenterReferencesOutput{
+	return ListCompliancePortalReferencesOutput{
+		NextCursor:                 nextCursor,
+		CompliancePortalReferences: refs,
+	}
+}
+
+func NewCompliancePortalFile(f *coredata.CompliancePortalFile, file *File) *CompliancePortalFile {
+	return &CompliancePortalFile{
+		ID:                         f.ID,
+		OrganizationID:             f.OrganizationID,
+		Name:                       f.Name,
+		Category:                   f.Category,
+		File:                       file,
+		CompliancePortalVisibility: f.CompliancePortalVisibility,
+		CreatedAt:                  f.CreatedAt,
+		UpdatedAt:                  f.UpdatedAt,
+	}
+}
+
+func NewListCompliancePortalFilesOutput(files []*CompliancePortalFile, p *page.Page[*coredata.CompliancePortalFile, coredata.CompliancePortalFileOrderField]) ListCompliancePortalFilesOutput {
+	var nextCursor *page.CursorKey
+
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListCompliancePortalFilesOutput{
 		NextCursor:            nextCursor,
-		TrustCenterReferences: refs,
-	}
-}
-
-func NewTrustCenterFile(f *coredata.TrustCenterFile, file *File) *TrustCenterFile {
-	return &TrustCenterFile{
-		ID:                    f.ID,
-		OrganizationID:        f.OrganizationID,
-		Name:                  f.Name,
-		Category:              f.Category,
-		File:                  file,
-		TrustCenterVisibility: f.TrustCenterVisibility,
-		CreatedAt:             f.CreatedAt,
-		UpdatedAt:             f.UpdatedAt,
-	}
-}
-
-func NewListTrustCenterFilesOutput(files []*TrustCenterFile, p *page.Page[*coredata.TrustCenterFile, coredata.TrustCenterFileOrderField]) ListTrustCenterFilesOutput {
-	var nextCursor *page.CursorKey
-
-	if len(p.Data) > 0 {
-		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
-		nextCursor = &cursorKey
-	}
-
-	return ListTrustCenterFilesOutput{
-		NextCursor:       nextCursor,
-		TrustCenterFiles: files,
+		CompliancePortalFiles: files,
 	}
 }

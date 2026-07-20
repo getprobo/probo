@@ -34,7 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewSNIMiddleware(trustSvc *visitor.Service) func(next http.Handler) http.Handler {
+func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -44,7 +44,7 @@ func NewSNIMiddleware(trustSvc *visitor.Service) func(next http.Handler) http.Ha
 				return
 			}
 
-			compliancePage, err := trustSvc.GetPortalByDomainName(ctx, r.TLS.ServerName)
+			compliancePage, err := visitorSvc.GetPortalByDomainName(ctx, r.TLS.ServerName)
 			if err != nil {
 				if errors.Is(err, visitor.ErrPageNotFound) {
 					next.ServeHTTP(w, r)
@@ -68,7 +68,7 @@ func NewSNIMiddleware(trustSvc *visitor.Service) func(next http.Handler) http.Ha
 			// page is only ever served under a single origin. ACME HTTP-01
 			// challenges are handled upstream and never reach this middleware.
 			if !strings.HasPrefix(r.URL.Path, "/.well-known/") {
-				canonicalHost, err := trustSvc.GetPortalEffectiveCanonicalHost(ctx, compliancePage.ID)
+				canonicalHost, err := visitorSvc.GetPortalEffectiveCanonicalHost(ctx, compliancePage.ID)
 				if err != nil {
 					httpserver.RenderJSON(
 						w,
@@ -106,13 +106,13 @@ func NewSNIMiddleware(trustSvc *visitor.Service) func(next http.Handler) http.Ha
 
 			ctx = context.WithValue(
 				ctx,
-				compliancePageBaseURLKey,
+				compliancePortalBaseURLKey,
 				&baseURLString,
 			)
 			r = r.WithContext(ctx)
 
 			if compliancePage.Active {
-				ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
+				ctx = context.WithValue(ctx, compliancePortalKey, compliancePage)
 				next.ServeHTTP(w, r.WithContext(ctx))
 
 				return

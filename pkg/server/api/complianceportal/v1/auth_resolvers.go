@@ -26,7 +26,7 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	compliancePage := complianceportal.CompliancePageFromContext(ctx)
+	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 
 	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, compliancePage.OrganizationID)
 	if err != nil {

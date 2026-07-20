@@ -56,7 +56,7 @@ func NewBrandDarkLogoHandler(logger *log.Logger, fileManager *filemanager.Servic
 }
 
 func (h *brandLogoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	compliancePage := complianceportal.CompliancePageFromContext(r.Context())
+	compliancePage := complianceportal.CompliancePortalFromContext(r.Context())
 	if compliancePage == nil {
 		httpserver.RenderError(w, http.StatusNotFound, errNotFound)
 		return
