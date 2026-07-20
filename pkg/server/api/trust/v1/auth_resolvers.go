@@ -197,11 +197,13 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 	err := r.iam.SessionService.CloseSession(ctx, session.ID)
 	if err != nil {
 		_, notFound := errors.AsType[*iam.ErrSessionNotFound](err)
+
 		_, expired := errors.AsType[*iam.ErrSessionExpired](err)
 		if !notFound && !expired {
 			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		// Already closed or missing — still clear the cookie so the browser
 		// drops the stale session on concurrent / retried logout.
 	}
