@@ -34,9 +34,9 @@ import (
 
 type (
 	CreateCompliancePortalCommitmentGroupRequest struct {
-		TrustCenterID gid.GID
-		Title         string
-		Description   string
+		CompliancePortalID gid.GID
+		Title              string
+		Description        string
 	}
 
 	UpdateCompliancePortalCommitmentGroupRequest struct {
@@ -50,7 +50,7 @@ type (
 func (r *CreateCompliancePortalCommitmentGroupRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(r.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(r.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(r.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
 
@@ -70,7 +70,7 @@ func (r *UpdateCompliancePortalCommitmentGroupRequest) Validate() error {
 func (s *Service) ListCommitmentGroups(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.CompliancePortalCommitmentGroupOrderField],
 ) (*page.Page[*coredata.CompliancePortalCommitmentGroup, coredata.CompliancePortalCommitmentGroupOrderField], error) {
 	var groups coredata.CompliancePortalCommitmentGroups
@@ -78,7 +78,7 @@ func (s *Service) ListCommitmentGroups(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := groups.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+			err := groups.LoadByCompliancePortalID(ctx, conn, scope, compliancePortalID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance portal commitment groups: %w", err)
 			}
@@ -96,7 +96,7 @@ func (s *Service) ListCommitmentGroups(
 func (s *Service) CountCommitmentGroups(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -105,7 +105,7 @@ func (s *Service) CountCommitmentGroups(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			groups := coredata.CompliancePortalCommitmentGroups{}
 
-			count, err = groups.CountByTrustCenterID(ctx, conn, scope, trustCenterID)
+			count, err = groups.CountByCompliancePortalID(ctx, conn, scope, compliancePortalID)
 			if err != nil {
 				return fmt.Errorf("cannot count compliance portal commitment groups: %w", err)
 			}
@@ -163,19 +163,19 @@ func (s *Service) CreateCommitmentGroup(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			compliancePortal := &coredata.CompliancePortal{}
+			if err := compliancePortal.LoadByID(ctx, tx, scope, req.CompliancePortalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
 			group = &coredata.CompliancePortalCommitmentGroup{
-				ID:             groupID,
-				OrganizationID: trustCenter.OrganizationID,
-				TrustCenterID:  req.TrustCenterID,
-				Title:          req.Title,
-				Description:    req.Description,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                 groupID,
+				OrganizationID:     compliancePortal.OrganizationID,
+				CompliancePortalID: req.CompliancePortalID,
+				Title:              req.Title,
+				Description:        req.Description,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
 
 			if err := group.Insert(ctx, tx, scope); err != nil {

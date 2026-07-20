@@ -36,13 +36,13 @@ func (s *Service) GetPortal(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
-) (*coredata.TrustCenter, error) {
-	var compliancePage *coredata.TrustCenter
+) (*coredata.CompliancePortal, error) {
+	var compliancePage *coredata.CompliancePortal
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage = &coredata.TrustCenter{}
+			compliancePage = &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -67,7 +67,7 @@ func (s *Service) GetPortalNDAFile(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -102,7 +102,7 @@ func (s *Service) GeneratePortalNDAFileURL(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -137,7 +137,7 @@ func (s *Service) GetPortalEmailPresenterConfig(
 	compliancePageID gid.GID,
 ) (emails.PresenterConfig, error) {
 	var (
-		compliancePage    = &coredata.TrustCenter{}
+		compliancePage    = &coredata.CompliancePortal{}
 		organization      = &coredata.Organization{}
 		logoFile          = &coredata.File{}
 		compliancePageURL string
@@ -161,7 +161,7 @@ func (s *Service) GetPortalEmailPresenterConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			publicURL, err := s.management.PublicURLForCompliancePage(
+			publicURL, err := s.management.PublicURLForCompliancePortal(
 				ctx,
 				conn,
 				scope,

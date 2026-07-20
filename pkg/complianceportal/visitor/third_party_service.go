@@ -63,8 +63,8 @@ func (s *Service) ListThirdPartiesForOrganizationID(
 	filter *coredata.ThirdPartyFilter,
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
 	if filter == nil {
-		showOnTrustCenter := true
-		filter = coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil, nil, nil)
+		showOnCompliancePortal := true
+		filter = coredata.NewThirdPartyFilter(&showOnCompliancePortal, nil, nil, nil, nil)
 	}
 
 	var thirdParties coredata.ThirdParties
@@ -99,7 +99,7 @@ func (s *Service) ListDistinctPortalCategoriesForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdParties := &coredata.ThirdParties{}
 
-			result, err := thirdParties.LoadDistinctTrustCenterCategoriesByOrganizationID(ctx, conn, scope, organizationID)
+			result, err := thirdParties.LoadDistinctCompliancePortalCategoriesByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty categories: %w", err)
 			}
@@ -128,7 +128,7 @@ func (s *Service) ListDistinctPortalCountriesForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdParties := &coredata.ThirdParties{}
 
-			result, err := thirdParties.LoadDistinctTrustCenterCountriesByOrganizationID(ctx, conn, scope, organizationID)
+			result, err := thirdParties.LoadDistinctCompliancePortalCountriesByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty countries: %w", err)
 			}
@@ -152,8 +152,8 @@ func (s *Service) CountThirdPartiesForPortalID(
 	filter *coredata.ThirdPartyFilter,
 ) (int, error) {
 	if filter == nil {
-		showOnTrustCenter := true
-		filter = coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil, nil, nil)
+		showOnCompliancePortal := true
+		filter = coredata.NewThirdPartyFilter(&showOnCompliancePortal, nil, nil, nil, nil)
 	}
 
 	var count int

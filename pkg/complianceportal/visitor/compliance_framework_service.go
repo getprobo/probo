@@ -66,7 +66,7 @@ func (s *Service) ListComplianceFrameworksByPortalID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := complianceFrameworks.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
+			err := complianceFrameworks.LoadByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance frameworks: %w", err)
 			}

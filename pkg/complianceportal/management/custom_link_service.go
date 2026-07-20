@@ -34,9 +34,9 @@ import (
 
 type (
 	CreateCustomLinkRequest struct {
-		TrustCenterID gid.GID
-		Name          string
-		URL           string
+		CompliancePortalID gid.GID
+		Name               string
+		URL                string
 	}
 
 	UpdateCustomLinkRequest struct {
@@ -53,7 +53,7 @@ type (
 
 func (r *CreateCustomLinkRequest) Validate() error {
 	v := validator.New()
-	v.Check(r.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(r.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(r.URL, "url", validator.Required(), validator.URL())
 
 	return v.Error()
@@ -86,7 +86,7 @@ func (s *Service) ListCustomLinks(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := items.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor); err != nil {
+			if err := items.LoadByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor); err != nil {
 				return fmt.Errorf("cannot load custom links: %w", err)
 			}
 
@@ -117,19 +117,19 @@ func (s *Service) CreateCustomLink(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+			compliancePage := &coredata.CompliancePortal{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.CompliancePortalID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			item = &coredata.ComplianceCustomLink{
-				ID:             id,
-				OrganizationID: compliancePage.OrganizationID,
-				TrustCenterID:  req.TrustCenterID,
-				Name:           req.Name,
-				URL:            req.URL,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                 id,
+				OrganizationID:     compliancePage.OrganizationID,
+				CompliancePortalID: req.CompliancePortalID,
+				Name:               req.Name,
+				URL:                req.URL,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
 
 			if err := item.Insert(ctx, tx, scope); err != nil {

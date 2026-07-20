@@ -47,7 +47,7 @@ type ComplianceDocsResult struct {
 	SubprocessorsListURL          EnrichedField       `json:"subprocessors_list_url" jsonschema:"URL of the vendor's sub-processors list page."`
 	StatusPageURL                 EnrichedField       `json:"status_page_url" jsonschema:"URL of the vendor's uptime/status page (e.g. status.vendor.com)."`
 	SecurityPageURL               EnrichedField       `json:"security_page_url" jsonschema:"URL of the vendor's security page or security overview."`
-	TrustPageURL                  EnrichedField       `json:"trust_page_url" jsonschema:"URL of the vendor's trust center / trust portal (e.g. Vanta, SafeBase, Drata hosted)."`
+	TrustPageURL                  EnrichedField       `json:"trust_page_url" jsonschema:"URL of the vendor's compliance portal / trust portal (e.g. Vanta, SafeBase, Drata hosted)."`
 	Certifications                CertificationsField `json:"certifications" jsonschema:"Certifications and compliance frameworks the vendor publicly claims."`
 }
 

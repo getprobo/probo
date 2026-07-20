@@ -114,7 +114,7 @@ type (
 		BusinessAssociateAgreementURL string         `json:"business_associate_agreement_url" jsonschema:"URL to the BAA page if HIPAA-eligible"`
 		SubprocessorsListURL          string         `json:"subprocessors_list_url" jsonschema:"URL to the public subprocessors list"`
 		SecurityPageURL               string         `json:"security_page_url" jsonschema:"URL to the third_party's security page"`
-		TrustPageURL                  string         `json:"trust_page_url" jsonschema:"URL to the trust center"`
+		TrustPageURL                  string         `json:"trust_page_url" jsonschema:"URL to the compliance portal"`
 		TermsOfServiceURL             string         `json:"terms_of_service_url" jsonschema:"URL to the terms of service"`
 		StatusPageURL                 string         `json:"status_page_url" jsonschema:"URL to the third_party's status / uptime page"`
 		BugBountyURL                  string         `json:"bug_bounty_url" jsonschema:"URL to the bug bounty or responsible disclosure program"`

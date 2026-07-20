@@ -143,19 +143,19 @@ func newOrchestratorAgent(
 		},
 		{
 			toolName:    "assess_data_processing",
-			description: "Assess data processing practices. Returns structured JSON with encryption, retention, deletion, data locations, transfer mechanisms, DPA status, DSAR handling, and rating. Input: a relevant page URL (privacy policy, DPA, security page, or trust center).",
+			description: "Assess data processing practices. Returns structured JSON with encryption, retention, deletion, data locations, transfer mechanisms, DPA status, DSAR handling, and rating. Input: a relevant page URL (privacy policy, DPA, security page, or compliance portal).",
 			tools:       readOnlyBrowserTools,
 			build:       buildDataProcessingAgent,
 		},
 		{
 			toolName:    "assess_incident_response",
-			description: "Evaluate incident response capabilities. Returns structured JSON with ir_plan, notification_timeline, status_page, post_mortems, recent_incidents, security_contact, and rating. Input: a relevant page URL (security page, trust center, or status page).",
+			description: "Evaluate incident response capabilities. Returns structured JSON with ir_plan, notification_timeline, status_page, post_mortems, recent_incidents, security_contact, and rating. Input: a relevant page URL (security page, compliance portal, or status page).",
 			tools:       readOnlyBrowserTools,
 			build:       buildIncidentResponseAgent,
 		},
 		{
 			toolName:    "assess_business_continuity",
-			description: "Evaluate business continuity and disaster recovery. Returns structured JSON with dr_plan, rto, rpo, cloud_providers, uptime_sla, regions, backup_strategy, and rating. Input: a relevant page URL (SLA page, trust center, or infrastructure docs).",
+			description: "Evaluate business continuity and disaster recovery. Returns structured JSON with dr_plan, rto, rpo, cloud_providers, uptime_sla, regions, backup_strategy, and rating. Input: a relevant page URL (SLA page, compliance portal, or infrastructure docs).",
 			tools:       readOnlyBrowserTools,
 			build:       buildBusinessContinuityAgent,
 		},
@@ -167,13 +167,13 @@ func newOrchestratorAgent(
 		},
 		{
 			toolName:    "assess_ai_risk",
-			description: "Evaluate AI governance (ISO 42001). Returns structured JSON with ai_involvement, use_cases, model_transparency, bias_controls, customer_data_training, human_oversight, and rating. Input: relevant page URL (AI policy, trust center, responsible AI page, or main website).",
+			description: "Evaluate AI governance (ISO 42001). Returns structured JSON with ai_involvement, use_cases, model_transparency, bias_controls, customer_data_training, human_oversight, and rating. Input: relevant page URL (AI policy, compliance portal, responsible AI page, or main website).",
 			tools:       readOnlyBrowserTools,
 			build:       buildAIRiskAgent,
 		},
 		{
 			toolName:    "assess_regulatory_compliance",
-			description: "Deep regulatory compliance check. Returns structured JSON with per-framework assessment (gdpr, hipaa, pci_dss, sox) each with articles, status, and notes. Input: relevant page URL (DPA, compliance page, trust center).",
+			description: "Deep regulatory compliance check. Returns structured JSON with per-framework assessment (gdpr, hipaa, pci_dss, sox) each with articles, status, and notes. Input: relevant page URL (DPA, compliance page, compliance portal).",
 			tools:       readOnlyBrowserTools,
 			build:       buildRegulatoryComplianceAgent,
 		},

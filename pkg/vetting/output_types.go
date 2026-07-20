@@ -336,13 +336,13 @@ type (
 	// --- ThirdParty Comparison ---
 
 	AlternativeThirdParty struct {
-		Name           string   `json:"name" jsonschema:"Alternative third_party name"`
-		Website        string   `json:"website" jsonschema:"Alternative third_party website URL"`
-		Certifications []string `json:"certifications" jsonschema:"Visible certifications"`
-		TrustCenter    bool     `json:"trust_center" jsonschema:"Whether a trust center page was found"`
-		PrivacyPolicy  bool     `json:"privacy_policy" jsonschema:"Whether a privacy policy was found"`
-		CompanySize    string   `json:"company_size" jsonschema:"Estimated company size"`
-		SecurityScore  string   `json:"security_score" jsonschema:"Quick security impression: Strong, Adequate, or Weak"`
+		Name             string   `json:"name" jsonschema:"Alternative third_party name"`
+		Website          string   `json:"website" jsonschema:"Alternative third_party website URL"`
+		Certifications   []string `json:"certifications" jsonschema:"Visible certifications"`
+		CompliancePortal bool     `json:"compliance_portal" jsonschema:"Whether a compliance portal page was found"`
+		PrivacyPolicy    bool     `json:"privacy_policy" jsonschema:"Whether a privacy policy was found"`
+		CompanySize      string   `json:"company_size" jsonschema:"Estimated company size"`
+		SecurityScore    string   `json:"security_score" jsonschema:"Quick security impression: Strong, Adequate, or Weak"`
 	}
 
 	ComparisonSummary struct {

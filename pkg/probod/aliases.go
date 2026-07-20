@@ -29,7 +29,7 @@ type (
 	MetricsConfig                 = probodconfig.MetricsConfig
 	TracingConfig                 = probodconfig.TracingConfig
 	ESignConfig                   = probodconfig.ESignConfig
-	TrustCenterConfig             = probodconfig.TrustCenterConfig
+	CompliancePortalConfig        = probodconfig.CompliancePortalConfig
 	APIConfig                     = probodconfig.APIConfig
 	CorsConfig                    = probodconfig.CorsConfig
 	GraphQLConfig                 = probodconfig.GraphQLConfig

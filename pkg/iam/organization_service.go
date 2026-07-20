@@ -608,8 +608,8 @@ func (s *OrganizationService) CreateOrganization(
 			UpdatedAt:      now,
 		}
 
-		trustCenter = &coredata.TrustCenter{
-			ID:                   gid.New(tenantID, coredata.TrustCenterEntityType),
+		compliancePortal = &coredata.CompliancePortal{
+			ID:                   gid.New(tenantID, coredata.CompliancePortalEntityType),
 			OrganizationID:       organization.ID,
 			TenantID:             organization.TenantID,
 			Active:               false,
@@ -726,7 +726,7 @@ func (s *OrganizationService) CreateOrganization(
 				}
 
 				organization.LogoFileID = &logoFile.ID
-				trustCenter.LogoFileID = &logoFile.ID
+				compliancePortal.LogoFileID = &logoFile.ID
 			}
 
 			if horizontalLogoFile != nil {
@@ -760,8 +760,8 @@ func (s *OrganizationService) CreateOrganization(
 			// a default managed domain: there is no suffix to mint a
 			// "{slug}." hostname from, so the compliance page stays without
 			// a domain until the organization adds a custom one.
-			if s.trustCenterBaseDomain != "" {
-				defaultDomainHostname := trustCenter.Slug + "." + s.trustCenterBaseDomain
+			if s.compliancePortalBaseDomain != "" {
+				defaultDomainHostname := compliancePortal.Slug + "." + s.compliancePortalBaseDomain
 
 				defaultDomain := coredata.NewCustomDomain(
 					tenantID,
@@ -781,29 +781,29 @@ func (s *OrganizationService) CreateOrganization(
 					return fmt.Errorf("cannot insert default custom domain: %w", err)
 				}
 
-				trustCenter.DefaultDomainID = &defaultDomain.ID
+				compliancePortal.DefaultDomainID = &defaultDomain.ID
 			}
 
-			if err := trustCenter.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert trust center: %w", err)
+			if err := compliancePortal.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert compliance portal: %w", err)
 			}
 
 			proboData := &coredata.ThirdParty{
-				ID:                   gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
-				OrganizationID:       organization.ID,
-				Name:                 proboThirdParty.Name,
-				Description:          &proboThirdParty.Description,
-				Category:             coredata.ThirdPartyCategorySecurity,
-				HeadquarterAddress:   &proboThirdParty.HeadquarterAddress,
-				LegalName:            &proboThirdParty.LegalName,
-				WebsiteURL:           &proboThirdParty.WebsiteURL,
-				PrivacyPolicyURL:     &proboThirdParty.PrivacyPolicyURL,
-				TermsOfServiceURL:    &proboThirdParty.TermsOfServiceURL,
-				SubprocessorsListURL: &proboThirdParty.SubprocessorsListURL,
-				ShowOnTrustCenter:    false,
-				Level:                1,
-				CreatedAt:            now,
-				UpdatedAt:            now,
+				ID:                     gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
+				OrganizationID:         organization.ID,
+				Name:                   proboThirdParty.Name,
+				Description:            &proboThirdParty.Description,
+				Category:               coredata.ThirdPartyCategorySecurity,
+				HeadquarterAddress:     &proboThirdParty.HeadquarterAddress,
+				LegalName:              &proboThirdParty.LegalName,
+				WebsiteURL:             &proboThirdParty.WebsiteURL,
+				PrivacyPolicyURL:       &proboThirdParty.PrivacyPolicyURL,
+				TermsOfServiceURL:      &proboThirdParty.TermsOfServiceURL,
+				SubprocessorsListURL:   &proboThirdParty.SubprocessorsListURL,
+				ShowOnCompliancePortal: false,
+				Level:                  1,
+				CreatedAt:              now,
+				UpdatedAt:              now,
 			}
 
 			if err := proboData.Insert(ctx, tx, scope); err != nil {
@@ -832,7 +832,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		tenantID           = organizationID.TenantID()
 		scope              = coredata.NewScopeFromObjectID(organizationID)
 		organization       = &coredata.Organization{}
-		compliancePage     = &coredata.TrustCenter{}
+		compliancePage     = &coredata.CompliancePortal{}
 	)
 
 	// TODO: s3 upload happen before we validate the tenantID

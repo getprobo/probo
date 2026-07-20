@@ -85,7 +85,7 @@ type (
 		StatusPageURL                 **string
 		BusinessOwnerID               **gid.GID
 		SecurityOwnerID               **gid.GID
-		ShowOnTrustCenter             *bool
+		ShowOnCompliancePortal        *bool
 	}
 
 	CreateThirdPartyRiskAssessmentRequest struct {
@@ -416,8 +416,8 @@ func (s ThirdPartyService) Update(
 				thirdParty.SecurityPageURL = *req.SecurityPageURL
 			}
 
-			if req.ShowOnTrustCenter != nil {
-				thirdParty.ShowOnTrustCenter = *req.ShowOnTrustCenter
+			if req.ShowOnCompliancePortal != nil {
+				thirdParty.ShowOnCompliancePortal = *req.ShowOnCompliancePortal
 			}
 
 			if req.TrustPageURL != nil {
@@ -607,7 +607,7 @@ func (s ThirdPartyService) Create(
 		TrustPageURL:                  req.TrustPageURL,
 		StatusPageURL:                 req.StatusPageURL,
 		TermsOfServiceURL:             req.TermsOfServiceURL,
-		ShowOnTrustCenter:             false,
+		ShowOnCompliancePortal:        false,
 		Level:                         1,
 	}
 
@@ -770,7 +770,7 @@ func (s ThirdPartyService) ImportFromCommon(
 					TermsOfServiceURL:             commonParty.TermsOfServiceURL,
 					SecurityPageURL:               commonParty.SecurityPageURL,
 					TrustPageURL:                  commonParty.TrustPageURL,
-					ShowOnTrustCenter:             false,
+					ShowOnCompliancePortal:        false,
 					Level:                         1,
 					CreatedAt:                     now,
 					UpdatedAt:                     now,

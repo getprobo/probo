@@ -34,8 +34,8 @@ import (
 
 type (
 	CreateFrameworkRequest struct {
-		TrustCenterID gid.GID
-		FrameworkID   gid.GID
+		CompliancePortalID gid.GID
+		FrameworkID        gid.GID
 	}
 
 	UpdateFrameworkRequest struct {
@@ -51,7 +51,7 @@ type (
 func (r *CreateFrameworkRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(r.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(r.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(r.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
 
 	return v.Error()
@@ -84,7 +84,7 @@ func (s *Service) ListFrameworksWithHidden(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := cfs.LoadWithHiddenByTrustCenterID(ctx, conn, scope, compliancePageID, cursor); err != nil {
+			if err := cfs.LoadWithHiddenByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor); err != nil {
 				return fmt.Errorf("cannot load frameworks with hidden: %w", err)
 			}
 
@@ -116,8 +116,8 @@ func (s *Service) CreateFramework(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+			compliancePage := &coredata.CompliancePortal{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.CompliancePortalID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
@@ -127,12 +127,12 @@ func (s *Service) CreateFramework(
 			}
 
 			cf = &coredata.ComplianceFramework{
-				ID:             cfID,
-				OrganizationID: compliancePage.OrganizationID,
-				TrustCenterID:  req.TrustCenterID,
-				FrameworkID:    req.FrameworkID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                 cfID,
+				OrganizationID:     compliancePage.OrganizationID,
+				CompliancePortalID: req.CompliancePortalID,
+				FrameworkID:        req.FrameworkID,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
 
 			if err := cf.Insert(ctx, tx, scope); err != nil {

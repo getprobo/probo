@@ -181,16 +181,16 @@ func (s *Service) CreateCommitment(
 			}
 
 			commitment = &coredata.CompliancePortalCommitment{
-				ID:             commitmentID,
-				OrganizationID: group.OrganizationID,
-				TrustCenterID:  group.TrustCenterID,
-				GroupID:        req.GroupID,
-				Icon:           req.Icon,
-				Eyebrow:        req.Eyebrow,
-				Title:          req.Title,
-				Description:    req.Description,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                 commitmentID,
+				OrganizationID:     group.OrganizationID,
+				CompliancePortalID: group.CompliancePortalID,
+				GroupID:            req.GroupID,
+				Icon:               req.Icon,
+				Eyebrow:            req.Eyebrow,
+				Title:              req.Title,
+				Description:        req.Description,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
 
 			if err := commitment.Insert(ctx, tx, scope); err != nil {

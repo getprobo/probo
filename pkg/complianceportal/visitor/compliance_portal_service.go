@@ -119,7 +119,7 @@ type (
 	}
 )
 
-func (s *Service) RenderCompliancePageMarkdown(
+func (s *Service) RenderCompliancePortalMarkdown(
 	ctx context.Context,
 	w io.Writer,
 	compliancePageID gid.GID,
@@ -286,7 +286,7 @@ func (s *Service) fetchDocumentIDs(
 		}
 
 		for _, doc := range result.Data {
-			if doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+			if doc.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 				continue
 			}
 
@@ -308,8 +308,8 @@ func (s *Service) fetchDocumentIDs(
 			page.MaxCursorSize,
 			cursorKey,
 			page.Head,
-			page.OrderBy[coredata.TrustCenterFileOrderField]{
-				Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+			page.OrderBy[coredata.CompliancePortalFileOrderField]{
+				Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
 				Direction: page.OrderDirectionAsc,
 			},
 		)
@@ -319,14 +319,14 @@ func (s *Service) fetchDocumentIDs(
 			scope,
 			orgID,
 			cursor,
-			coredata.NewTrustCenterFileFilter(),
+			coredata.NewCompliancePortalFileFilter(),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list compliance page files: %w", err)
 		}
 
 		for _, file := range result.Data {
-			if file.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+			if file.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 				continue
 			}
 
@@ -338,7 +338,7 @@ func (s *Service) fetchDocumentIDs(
 		}
 
 		last := result.Data[len(result.Data)-1]
-		ck := last.CursorKey(coredata.TrustCenterFileOrderFieldCreatedAt)
+		ck := last.CursorKey(coredata.CompliancePortalFileOrderFieldCreatedAt)
 		cursorKey = &ck
 	}
 
@@ -360,7 +360,7 @@ func (s *Service) fetchDocumentIDs(
 		}
 
 		for _, audit := range result.Data {
-			if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+			if audit.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 				continue
 			}
 
@@ -477,7 +477,7 @@ func (s *Service) fetchDocuments(
 		}
 
 		for _, doc := range result.Data {
-			if doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+			if doc.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 				continue
 			}
 
@@ -527,7 +527,7 @@ func (s *Service) fetchAudits(
 		}
 
 		for _, audit := range result.Data {
-			if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+			if audit.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 				continue
 			}
 
@@ -631,8 +631,8 @@ func (s *Service) fetchReferences(
 			page.MaxCursorSize,
 			cursorKey,
 			page.Head,
-			page.OrderBy[coredata.TrustCenterReferenceOrderField]{
-				Field:     coredata.TrustCenterReferenceOrderFieldRank,
+			page.OrderBy[coredata.CompliancePortalReferenceOrderField]{
+				Field:     coredata.CompliancePortalReferenceOrderFieldRank,
 				Direction: page.OrderDirectionAsc,
 			},
 		)
@@ -659,7 +659,7 @@ func (s *Service) fetchReferences(
 		}
 
 		last := result.Data[len(result.Data)-1]
-		ck := last.CursorKey(coredata.TrustCenterReferenceOrderFieldRank)
+		ck := last.CursorKey(coredata.CompliancePortalReferenceOrderFieldRank)
 		cursorKey = &ck
 	}
 

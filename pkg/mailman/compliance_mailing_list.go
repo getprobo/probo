@@ -63,7 +63,7 @@ func (s *Service) mailingListEmailConfig(
 ) (emails.PresenterConfig, string, string, *mail.Addr, error) {
 	var (
 		mailingList       = &coredata.MailingList{}
-		compliancePage    = &coredata.TrustCenter{}
+		compliancePage    = &coredata.CompliancePortal{}
 		organization      = &coredata.Organization{}
 		compliancePageURL string
 		logoFile          = &coredata.File{}
@@ -97,7 +97,7 @@ func (s *Service) mailingListEmailConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			publicURL, err := s.compliancePortal.PublicURLForCompliancePage(
+			publicURL, err := s.compliancePortal.PublicURLForCompliancePortal(
 				ctx,
 				conn,
 				scope,
@@ -116,7 +116,7 @@ func (s *Service) mailingListEmailConfig(
 		return defaultCfg, "", "", nil, err
 	}
 
-	cfg, err := s.presenterConfigFromTrustCenter(compliancePage, organization, compliancePageURL, logoFile)
+	cfg, err := s.presenterConfigFromCompliancePortal(compliancePage, organization, compliancePageURL, logoFile)
 	if err != nil {
 		return defaultCfg, "", "", nil, err
 	}
@@ -134,8 +134,8 @@ func (s *Service) mailingListEmailConfig(
 	return cfg, organization.Name, updatesPageURL, mailingList.ReplyTo, nil
 }
 
-func (s *Service) presenterConfigFromTrustCenter(
-	compliancePage *coredata.TrustCenter,
+func (s *Service) presenterConfigFromCompliancePortal(
+	compliancePage *coredata.CompliancePortal,
 	organization *coredata.Organization,
 	compliancePageURL string,
 	logoFile *coredata.File,

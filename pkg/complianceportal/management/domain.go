@@ -23,11 +23,11 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func (s *Service) EffectiveDomainForCompliancePage(
+func (s *Service) EffectiveDomainForCompliancePortal(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	compliancePage *coredata.TrustCenter,
+	compliancePage *coredata.CompliancePortal,
 ) (*coredata.CustomDomain, error) {
 	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
@@ -49,11 +49,11 @@ func (s *Service) EffectiveDomainForCompliancePage(
 	return nil, nil
 }
 
-func (s *Service) PublicURLForCompliancePage(
+func (s *Service) PublicURLForCompliancePortal(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	compliancePage *coredata.TrustCenter,
+	compliancePage *coredata.CompliancePortal,
 ) (string, error) {
 	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
@@ -80,7 +80,7 @@ func loadDomains(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	compliancePage *coredata.TrustCenter,
+	compliancePage *coredata.CompliancePortal,
 ) (map[gid.GID]*coredata.CustomDomain, map[gid.GID]bool, error) {
 	var ids []gid.GID
 	if compliancePage.CustomDomainID != nil {

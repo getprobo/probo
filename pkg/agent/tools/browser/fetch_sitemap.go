@@ -57,7 +57,7 @@ func FetchSitemapTool() agent.Tool {
 
 	return agent.FunctionTool(
 		"fetch_sitemap",
-		"Fetch and parse a sitemap XML file. Returns discovered URLs which can reveal pages not linked from the main navigation (trust centers, legal docs, status pages).",
+		"Fetch and parse a sitemap XML file. Returns discovered URLs which can reveal pages not linked from the main navigation (compliance portals, legal docs, status pages).",
 		func(ctx context.Context, p sitemapParams) (agent.ToolResult, error) {
 			if err := validatePublicURL(p.URL); err != nil {
 				return agent.ResultJSON(

@@ -95,8 +95,8 @@ func NewService(
 func (s *Service) GetPortalByID(
 	ctx context.Context,
 	id gid.GID,
-) (*coredata.TrustCenter, error) {
-	compliancePage := &coredata.TrustCenter{}
+) (*coredata.CompliancePortal, error) {
+	compliancePage := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -130,12 +130,12 @@ func (s *Service) GetPortalEffectiveCanonicalHost(ctx context.Context, complianc
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, coredata.NewNoScope(), compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			domain, err := s.management.EffectiveDomainForCompliancePage(ctx, conn, coredata.NewNoScope(), compliancePage)
+			domain, err := s.management.EffectiveDomainForCompliancePortal(ctx, conn, coredata.NewNoScope(), compliancePage)
 			if err != nil {
 				return err
 			}
@@ -186,8 +186,8 @@ func (s *Service) GetPortalCanonicalBaseURL(
 	return parsed.String(), nil
 }
 
-func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*coredata.TrustCenter, error) {
-	compliancePage := &coredata.TrustCenter{}
+func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*coredata.CompliancePortal, error) {
+	compliancePage := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -201,7 +201,7 @@ func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*co
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
-			compliancePage = &coredata.TrustCenter{}
+			compliancePage = &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByDomainID(ctx, conn, customDomain.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
@@ -224,7 +224,7 @@ func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*co
 // the compliance page that belongs to the given organization. This is used by the
 // esign certificate worker which needs per-org branding at render time.
 func (s *Service) GetPortalEmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
-	var compliancePage coredata.TrustCenter
+	var compliancePage coredata.CompliancePortal
 
 	scope := coredata.NewScopeFromObjectID(orgID)
 
@@ -265,13 +265,13 @@ func (s *Service) GetPortalOrganization(
 	return org, nil
 }
 
-func (s *Service) GetPortalMembership(ctx context.Context, compliancePageID gid.GID, identityID gid.GID) (*coredata.TrustCenterAccess, error) {
-	membership := &coredata.TrustCenterAccess{}
+func (s *Service) GetPortalMembership(ctx context.Context, compliancePageID gid.GID, identityID gid.GID) (*coredata.CompliancePortalAccess, error) {
+	membership := &coredata.CompliancePortalAccess{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return membership.LoadByTrustCenterIDAndIdentityID(
+			return membership.LoadByCompliancePortalIDAndIdentityID(
 				ctx,
 				conn,
 				coredata.NewScopeFromObjectID(compliancePageID),
@@ -295,9 +295,9 @@ func (s *Service) ProvisionPortalMember(
 	ctx context.Context,
 	compliancePageID gid.GID,
 	identityID gid.GID,
-) (*coredata.TrustCenterAccess, error) {
+) (*coredata.CompliancePortalAccess, error) {
 	var (
-		access *coredata.TrustCenterAccess
+		access *coredata.CompliancePortalAccess
 		now    = time.Now()
 		scope  = coredata.NewScopeFromObjectID(compliancePageID)
 	)
@@ -305,7 +305,7 @@ func (s *Service) ProvisionPortalMember(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -315,20 +315,20 @@ func (s *Service) ProvisionPortalMember(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			access = &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePageID, identityID); err != nil {
+			access = &coredata.CompliancePortalAccess{}
+			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, compliancePageID, identityID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load compliance page access: %w", err)
 				}
 
-				access = &coredata.TrustCenterAccess{
-					ID:             gid.New(scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-					OrganizationID: compliancePage.OrganizationID,
-					TenantID:       scope.GetTenantID(),
-					IdentityID:     identityID,
-					TrustCenterID:  compliancePageID,
-					CreatedAt:      now,
-					UpdatedAt:      now,
+				access = &coredata.CompliancePortalAccess{
+					ID:                 gid.New(scope.GetTenantID(), coredata.CompliancePortalAccessEntityType),
+					OrganizationID:     compliancePage.OrganizationID,
+					TenantID:           scope.GetTenantID(),
+					IdentityID:         identityID,
+					CompliancePortalID: compliancePageID,
+					CreatedAt:          now,
+					UpdatedAt:          now,
 				}
 
 				var sig *coredata.ElectronicSignature

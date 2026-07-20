@@ -33,7 +33,7 @@ import (
 func (s *Service) ListCommitmentGroupsForPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.CompliancePortalCommitmentGroupOrderField],
 ) (*page.Page[*coredata.CompliancePortalCommitmentGroup, coredata.CompliancePortalCommitmentGroupOrderField], error) {
 	var groups coredata.CompliancePortalCommitmentGroups
@@ -41,7 +41,7 @@ func (s *Service) ListCommitmentGroupsForPortalID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := groups.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+			err := groups.LoadByCompliancePortalID(ctx, conn, scope, compliancePortalID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance portal commitment groups: %w", err)
 			}

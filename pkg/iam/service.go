@@ -62,7 +62,7 @@ type (
 		magicLinkTokenValidity     time.Duration
 		sessionDuration            time.Duration
 		bucket                     string
-		trustCenterBaseDomain      string
+		compliancePortalBaseDomain string
 		certManager                *certmanager.Service
 		certificate                *x509.Certificate
 		privateKey                 *rsa.PrivateKey
@@ -92,7 +92,7 @@ type (
 		Bucket                         string
 		TokenSecret                    string
 		BaseURL                        *baseurl.BaseURL
-		TrustCenterBaseDomain          string
+		CompliancePortalBaseDomain     string
 		CertManager                    *certmanager.Service
 		EncryptionKey                  cipher.EncryptionKey
 		Certificate                    *x509.Certificate
@@ -166,7 +166,7 @@ func NewService(
 		magicLinkTokenValidity:     cfg.MagicLinkTokenValidity,
 		sessionDuration:            cfg.SessionDuration,
 		bucket:                     cfg.Bucket,
-		trustCenterBaseDomain:      cfg.TrustCenterBaseDomain,
+		compliancePortalBaseDomain: cfg.CompliancePortalBaseDomain,
 		certManager:                cfg.CertManager,
 		certificate:                cfg.Certificate,
 		privateKey:                 cfg.PrivateKey,

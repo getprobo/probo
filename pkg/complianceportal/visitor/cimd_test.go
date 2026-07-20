@@ -65,7 +65,7 @@ func TestBuildClientMetadataDocument(t *testing.T) {
 	t.Parallel()
 
 	websiteURL := "https://www.acme.com"
-	portal := &coredata.TrustCenter{
+	portal := &coredata.CompliancePortal{
 		Title:      "Acme Compliance Page",
 		WebsiteURL: &websiteURL,
 	}
@@ -87,7 +87,7 @@ func TestBuildClientMetadataDocument_LogoURIUsesBrandLogoEndpoint(t *testing.T) 
 	t.Parallel()
 
 	logoFileID := gid.MustParseGID("WR-qMrB5AAEAGQAAAZ9mIO8B8vDFQ-i3")
-	portal := &coredata.TrustCenter{
+	portal := &coredata.CompliancePortal{
 		Title:      "Acme Compliance Page",
 		LogoFileID: &logoFileID,
 	}

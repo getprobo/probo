@@ -98,13 +98,13 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        soa.OrganizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             soa.OrganizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -371,13 +371,13 @@ func (s *GeneratedDocumentService) PublishDataList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -643,13 +643,13 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -938,13 +938,13 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -1264,13 +1264,13 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -1558,13 +1558,13 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -1953,13 +1953,13 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -2185,13 +2185,13 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -2433,13 +2433,13 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
@@ -2984,13 +2984,13 @@ func (s *GeneratedDocumentService) PublishRiskList(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                    documentID,
-					OrganizationID:        organizationID,
-					WriteMode:             coredata.DocumentWriteModeGenerated,
-					TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-					Status:                coredata.DocumentStatusActive,
-					CreatedAt:             now,
-					UpdatedAt:             now,
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {

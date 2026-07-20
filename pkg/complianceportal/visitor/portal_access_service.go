@@ -36,37 +36,37 @@ import (
 )
 
 type PortalAccessRequest struct {
-	TrustCenterID      gid.GID
-	IdentityID         gid.GID
-	DocumentIDs        []gid.GID
-	ReportIDs          []gid.GID
-	TrustCenterFileIDs []gid.GID
+	CompliancePortalID      gid.GID
+	IdentityID              gid.GID
+	DocumentIDs             []gid.GID
+	ReportIDs               []gid.GID
+	CompliancePortalFileIDs []gid.GID
 }
 
 const (
-	PortalAccessURLFormat = "https://%s/organizations/%s/trust-center/access"
+	PortalAccessURLFormat = "https://%s/organizations/%s/compliance-page/access"
 )
 
 func (s *Service) RequestPortalAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *PortalAccessRequest,
-) (*coredata.TrustCenterAccess, error) {
+) (*coredata.CompliancePortalAccess, error) {
 	var (
 		now    = time.Now()
-		access *coredata.TrustCenterAccess
+		access *coredata.CompliancePortalAccess
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+			compliancePage := &coredata.CompliancePortal{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.CompliancePortalID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			access = &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, req.TrustCenterID, req.IdentityID); err != nil {
+			access = &coredata.CompliancePortalAccess{}
+			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, req.CompliancePortalID, req.IdentityID); err != nil {
 				return fmt.Errorf("cannot load compliance page membership: %w", err)
 			}
 
@@ -74,7 +74,7 @@ func (s *Service) RequestPortalAccess(
 
 			documentIDs := req.DocumentIDs
 			if req.DocumentIDs == nil {
-				filter := coredata.NewDocumentTrustCenterFilter()
+				filter := coredata.NewDocumentCompliancePortalFilter()
 
 				allDocuments, err := page.LoadAll(
 					ctx,
@@ -102,7 +102,7 @@ func (s *Service) RequestPortalAccess(
 
 			reportIDs := req.ReportIDs
 			if req.ReportIDs == nil {
-				auditFilter := coredata.NewAuditTrustCenterFilter()
+				auditFilter := coredata.NewAuditCompliancePortalFilter()
 
 				allAudits, err := page.LoadAll(
 					ctx,
@@ -130,20 +130,20 @@ func (s *Service) RequestPortalAccess(
 				}
 			}
 
-			trustCenterFileIDs := req.TrustCenterFileIDs
-			if req.TrustCenterFileIDs == nil {
-				filter := coredata.NewTrustCenterFileFilter(
-					coredata.WithTrustCenterFileVisibilities(coredata.TrustCenterVisibilityPrivate, coredata.TrustCenterVisibilityNone),
+			compliancePortalFileIDs := req.CompliancePortalFileIDs
+			if req.CompliancePortalFileIDs == nil {
+				filter := coredata.NewCompliancePortalFileFilter(
+					coredata.WithCompliancePortalFileVisibilities(coredata.CompliancePortalVisibilityPrivate, coredata.CompliancePortalVisibilityNone),
 				)
 
-				allTrustCenterFiles, err := page.LoadAll(
+				allCompliancePortalFiles, err := page.LoadAll(
 					ctx,
-					page.OrderBy[coredata.TrustCenterFileOrderField]{
-						Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+					page.OrderBy[coredata.CompliancePortalFileOrderField]{
+						Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
 						Direction: page.OrderDirectionDesc,
 					},
-					func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterFileOrderField]) ([]*coredata.TrustCenterFile, error) {
-						var batch coredata.TrustCenterFiles
+					func(ctx context.Context, cursor *page.Cursor[coredata.CompliancePortalFileOrderField]) ([]*coredata.CompliancePortalFile, error) {
+						var batch coredata.CompliancePortalFiles
 						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
 							return nil, fmt.Errorf("cannot list compliance page files: %w", err)
 						}
@@ -155,20 +155,20 @@ func (s *Service) RequestPortalAccess(
 					return err
 				}
 
-				for _, file := range allTrustCenterFiles {
-					trustCenterFileIDs = append(trustCenterFileIDs, file.ID)
+				for _, file := range allCompliancePortalFiles {
+					compliancePortalFileIDs = append(compliancePortalFileIDs, file.ID)
 				}
 			}
 
 			existingAccesses, err := page.LoadAll(
 				ctx,
-				page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
-					Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+				page.OrderBy[coredata.CompliancePortalDocumentAccessOrderField]{
+					Field:     coredata.CompliancePortalDocumentAccessOrderFieldCreatedAt,
 					Direction: page.OrderDirectionAsc,
 				},
-				func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterDocumentAccessOrderField]) ([]*coredata.TrustCenterDocumentAccess, error) {
-					var batch coredata.TrustCenterDocumentAccesses
-					if err := batch.LoadByTrustCenterAccessID(ctx, tx, scope, access.ID, cursor); err != nil {
+				func(ctx context.Context, cursor *page.Cursor[coredata.CompliancePortalDocumentAccessOrderField]) ([]*coredata.CompliancePortalDocumentAccess, error) {
+					var batch coredata.CompliancePortalDocumentAccesses
+					if err := batch.LoadByCompliancePortalAccessID(ctx, tx, scope, access.ID, cursor); err != nil {
 						return nil, fmt.Errorf("cannot load existing access records: %w", err)
 					}
 
@@ -179,12 +179,12 @@ func (s *Service) RequestPortalAccess(
 				return err
 			}
 
-			existingDocumentIDs, existingReportIDs, existingTrustCenterFileIDs := extractExistingIDs(existingAccesses)
+			existingDocumentIDs, existingReportIDs, existingCompliancePortalFileIDs := extractExistingIDs(existingAccesses)
 			newDocumentIDs := filterExistingIDs(documentIDs, existingDocumentIDs)
 			newReportIDs := filterExistingIDs(reportIDs, existingReportIDs)
-			newTrustCenterFileIDs := filterExistingIDs(trustCenterFileIDs, existingTrustCenterFileIDs)
+			newCompliancePortalFileIDs := filterExistingIDs(compliancePortalFileIDs, existingCompliancePortalFileIDs)
 
-			var accesses coredata.TrustCenterDocumentAccesses
+			var accesses coredata.CompliancePortalDocumentAccesses
 
 			if err := accesses.BulkInsertDocumentAccesses(
 				ctx,
@@ -193,7 +193,7 @@ func (s *Service) RequestPortalAccess(
 				access.ID,
 				access.OrganizationID,
 				newDocumentIDs,
-				coredata.TrustCenterDocumentAccessStatusRequested,
+				coredata.CompliancePortalDocumentAccessStatusRequested,
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot bulk insert compliance page document accesses: %w", err)
@@ -206,20 +206,20 @@ func (s *Service) RequestPortalAccess(
 				access.ID,
 				access.OrganizationID,
 				newReportIDs,
-				coredata.TrustCenterDocumentAccessStatusRequested,
+				coredata.CompliancePortalDocumentAccessStatusRequested,
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot bulk insert compliance page report accesses: %w", err)
 			}
 
-			if err := accesses.BulkInsertTrustCenterFileAccesses(
+			if err := accesses.BulkInsertCompliancePortalFileAccesses(
 				ctx,
 				tx,
 				scope,
 				access.ID,
 				access.OrganizationID,
-				newTrustCenterFileIDs,
-				coredata.TrustCenterDocumentAccessStatusRequested,
+				newCompliancePortalFileIDs,
+				coredata.CompliancePortalDocumentAccessStatusRequested,
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot bulk insert compliance page file accesses: %w", err)
@@ -232,7 +232,7 @@ func (s *Service) RequestPortalAccess(
 		return nil, err
 	}
 
-	if err := s.slack.QueueSlackNotification(ctx, scope, req.IdentityID, req.TrustCenterID); err != nil {
+	if err := s.slack.QueueSlackNotification(ctx, scope, req.IdentityID, req.CompliancePortalID); err != nil {
 		s.logger.ErrorCtx(ctx, "cannot queue slack notification", log.Error(err))
 	}
 
@@ -244,13 +244,13 @@ func (s *Service) GetPortalAccess(
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
 	identityID gid.GID,
-) (coredata.TrustCenterAccess, error) {
-	var access coredata.TrustCenterAccess
+) (coredata.CompliancePortalAccess, error) {
+	var access coredata.CompliancePortalAccess
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
+			return access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 		},
 	)
 
@@ -263,15 +263,15 @@ func (s *Service) GetPortalDocumentAccess(
 	compliancePageID gid.GID,
 	identityID gid.GID,
 	documentID gid.GID,
-) (*coredata.TrustCenterDocumentAccess, error) {
-	var documentAccess *coredata.TrustCenterDocumentAccess
+) (*coredata.CompliancePortalDocumentAccess, error) {
+	var documentAccess *coredata.CompliancePortalDocumentAccess
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			access := &coredata.TrustCenterAccess{}
+			access := &coredata.CompliancePortalAccess{}
 
-			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
+			err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
@@ -291,9 +291,9 @@ func (s *Service) GetPortalDocumentAccess(
 				return ErrUserInactive
 			}
 
-			documentAccess = &coredata.TrustCenterDocumentAccess{}
+			documentAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			err = documentAccess.LoadByTrustCenterAccessIDAndDocumentID(ctx, conn, scope, access.ID, documentID)
+			err = documentAccess.LoadByCompliancePortalAccessIDAndDocumentID(ctx, conn, scope, access.ID, documentID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
@@ -318,15 +318,15 @@ func (s *Service) GetPortalReportFileAccess(
 	compliancePageID gid.GID,
 	identityID gid.GID,
 	reportFileID gid.GID,
-) (*coredata.TrustCenterDocumentAccess, error) {
-	var reportAccess *coredata.TrustCenterDocumentAccess
+) (*coredata.CompliancePortalDocumentAccess, error) {
+	var reportAccess *coredata.CompliancePortalDocumentAccess
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			access := &coredata.TrustCenterAccess{}
+			access := &coredata.CompliancePortalAccess{}
 
-			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
+			err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
@@ -346,9 +346,9 @@ func (s *Service) GetPortalReportFileAccess(
 				return ErrUserInactive
 			}
 
-			reportAccess = &coredata.TrustCenterDocumentAccess{}
+			reportAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			err = reportAccess.LoadByTrustCenterAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID)
+			err = reportAccess.LoadByCompliancePortalAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
@@ -372,16 +372,16 @@ func (s *Service) GetPortalFileAccess(
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
 	identityID gid.GID,
-	trustCenterFileID gid.GID,
-) (*coredata.TrustCenterDocumentAccess, error) {
-	var fileAccess *coredata.TrustCenterDocumentAccess
+	compliancePortalFileID gid.GID,
+) (*coredata.CompliancePortalDocumentAccess, error) {
+	var fileAccess *coredata.CompliancePortalDocumentAccess
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			access := &coredata.TrustCenterAccess{}
+			access := &coredata.CompliancePortalAccess{}
 
-			err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
+			err := access.LoadByCompliancePortalIDAndIdentityID(ctx, conn, scope, compliancePageID, identityID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMembershipNotFound
@@ -401,9 +401,9 @@ func (s *Service) GetPortalFileAccess(
 				return ErrUserInactive
 			}
 
-			fileAccess = &coredata.TrustCenterDocumentAccess{}
+			fileAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			err = fileAccess.LoadByTrustCenterAccessIDAndTrustCenterFileID(ctx, conn, scope, access.ID, trustCenterFileID)
+			err = fileAccess.LoadByCompliancePortalAccessIDAndCompliancePortalFileID(ctx, conn, scope, access.ID, compliancePortalFileID)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
@@ -434,7 +434,7 @@ func (s *Service) GrantPortalAccessByIDs(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -444,8 +444,8 @@ func (s *Service) GrantPortalAccessByIDs(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			access := &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePage.ID, identity.ID); err != nil {
+			access := &coredata.CompliancePortalAccess{}
+			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, compliancePage.ID, identity.ID); err != nil {
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
@@ -476,7 +476,7 @@ func (s *Service) GrantPortalAccessByIDs(
 			}
 
 			if len(fileIDs) > 0 {
-				if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
+				if err := coredata.GrantByCompliancePortalFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
 					return fmt.Errorf("cannot grant compliance page file accesses: %w", err)
 				}
 			}
@@ -503,7 +503,7 @@ func (s *Service) sendPortalAccessEmail(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	access *coredata.TrustCenterAccess,
+	access *coredata.CompliancePortalAccess,
 	profile *coredata.MembershipProfile,
 ) error {
 	organization := &coredata.Organization{}
@@ -518,14 +518,14 @@ func (s *Service) sendPortalAccessEmail(
 		return fmt.Errorf("cannot update compliance page access with expiration: %w", err)
 	}
 
-	emailPresenterCfg, err := s.GetPortalEmailPresenterConfig(ctx, scope, access.TrustCenterID)
+	emailPresenterCfg, err := s.GetPortalEmailPresenterConfig(ctx, scope, access.CompliancePortalID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
 	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
 
-	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
+	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalAccess(ctx, organization.Name)
 	if err != nil {
 		return fmt.Errorf("cannot render compliance page access email: %w", err)
 	}
@@ -560,7 +560,7 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -570,8 +570,8 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			access := &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePage.ID, identity.ID); err != nil {
+			access := &coredata.CompliancePortalAccess{}
+			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, compliancePage.ID, identity.ID); err != nil {
 				return fmt.Errorf("cannot load compliance page access: %w", err)
 			}
 
@@ -602,7 +602,7 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 			if len(fileIDs) > 0 {
 				shouldSendEmail = true
 
-				if err := coredata.RejectOrRevokeByTrustCenterFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
+				if err := coredata.RejectOrRevokeByCompliancePortalFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
 					return fmt.Errorf("cannot reject/revoke compliance page file accesses: %w", err)
 				}
 			}
@@ -622,7 +622,7 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	access *coredata.TrustCenterAccess,
+	access *coredata.CompliancePortalAccess,
 	profile *coredata.MembershipProfile,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
@@ -657,7 +657,7 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 		fileNames = append(fileNames, reportLabels...)
 	}
 
-	var files coredata.TrustCenterFiles
+	var files coredata.CompliancePortalFiles
 	if len(fileIDs) > 0 {
 		if err := files.LoadByIDs(ctx, tx, scope, fileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot load files by IDs: %w", err)
@@ -668,14 +668,14 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 		}
 	}
 
-	emailPresenterCfg, err := s.GetPortalEmailPresenterConfig(ctx, scope, access.TrustCenterID)
+	emailPresenterCfg, err := s.GetPortalEmailPresenterConfig(ctx, scope, access.CompliancePortalID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
 	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, profile.FullName)
 
-	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterDocumentAccessRejected(
+	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalDocumentAccessRejected(
 		ctx,
 		fileNames,
 		organization.Name,
@@ -702,11 +702,11 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 	return nil
 }
 
-func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GID, []gid.GID, []gid.GID) {
+func extractExistingIDs(accesses coredata.CompliancePortalDocumentAccesses) ([]gid.GID, []gid.GID, []gid.GID) {
 	var (
-		documentIDs        []gid.GID
-		reportIDs          []gid.GID
-		trustCenterFileIDs []gid.GID
+		documentIDs             []gid.GID
+		reportIDs               []gid.GID
+		compliancePortalFileIDs []gid.GID
 	)
 
 	for _, access := range accesses {
@@ -718,12 +718,12 @@ func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GI
 			reportIDs = append(reportIDs, *access.ReportFileID)
 		}
 
-		if access.TrustCenterFileID != nil {
-			trustCenterFileIDs = append(trustCenterFileIDs, *access.TrustCenterFileID)
+		if access.CompliancePortalFileID != nil {
+			compliancePortalFileIDs = append(compliancePortalFileIDs, *access.CompliancePortalFileID)
 		}
 	}
 
-	return documentIDs, reportIDs, trustCenterFileIDs
+	return documentIDs, reportIDs, compliancePortalFileIDs
 }
 
 func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {

@@ -89,7 +89,7 @@ func (s *Service) ListAuditsForOrganizationID(
 	var audits coredata.Audits
 
 	if filter == nil {
-		filter = coredata.NewAuditTrustCenterFilter()
+		filter = coredata.NewAuditCompliancePortalFilter()
 	}
 
 	err := s.pg.WithConn(

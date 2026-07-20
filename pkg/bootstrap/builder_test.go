@@ -188,10 +188,10 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Auth.SAML.DomainVerificationResolverAddr)
 
 	// Trust center config
-	assert.Empty(t, cfg.Probod.TrustCenter.HTTPAddr)
-	assert.Empty(t, cfg.Probod.TrustCenter.HTTPSAddr)
-	assert.Empty(t, cfg.Probod.TrustCenter.BaseDomain)
-	assert.Nil(t, cfg.Probod.TrustCenter.ProxyProtocol.TrustedProxies)
+	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPAddr)
+	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPSAddr)
+	assert.Empty(t, cfg.Probod.CompliancePortal.BaseDomain)
+	assert.Nil(t, cfg.Probod.CompliancePortal.ProxyProtocol.TrustedProxies)
 
 	// AWS config
 	assert.Empty(t, cfg.Probod.AWS.Region)
@@ -469,10 +469,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 120, cfg.Probod.Auth.SAML.DomainVerificationIntervalSeconds)
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.Auth.SAML.DomainVerificationResolverAddr)
 	// Trust center
-	assert.Equal(t, ":8080", cfg.Probod.TrustCenter.HTTPAddr)
-	assert.Equal(t, ":8443", cfg.Probod.TrustCenter.HTTPSAddr)
-	assert.Equal(t, "probopage.example.com", cfg.Probod.TrustCenter.BaseDomain)
-	assert.Equal(t, []string{"10.0.1.1", "10.0.1.2"}, cfg.Probod.TrustCenter.ProxyProtocol.TrustedProxies)
+	assert.Equal(t, ":8080", cfg.Probod.CompliancePortal.HTTPAddr)
+	assert.Equal(t, ":8443", cfg.Probod.CompliancePortal.HTTPSAddr)
+	assert.Equal(t, "probopage.example.com", cfg.Probod.CompliancePortal.BaseDomain)
+	assert.Equal(t, []string{"10.0.1.1", "10.0.1.2"}, cfg.Probod.CompliancePortal.ProxyProtocol.TrustedProxies)
 	// AWS
 	assert.Equal(t, "eu-west-1", cfg.Probod.AWS.Region)
 	assert.Equal(t, "probo-files", cfg.Probod.AWS.Bucket)

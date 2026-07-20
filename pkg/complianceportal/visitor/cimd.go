@@ -65,7 +65,7 @@ func PortalBaseURLFromCIMDClientID(clientIDURL string) (string, error) {
 }
 
 func BuildClientMetadataDocument(
-	portal *coredata.TrustCenter,
+	portal *coredata.CompliancePortal,
 	portalBaseURL string,
 ) (oauth2.ClientMetadataDocument, error) {
 	clientID, err := CIMDClientIDURL(portalBaseURL)

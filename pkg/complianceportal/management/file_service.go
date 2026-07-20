@@ -41,18 +41,18 @@ import (
 
 type (
 	CreateFileRequest struct {
-		OrganizationID        gid.GID
-		Name                  string
-		Category              string
-		File                  File
-		TrustCenterVisibility coredata.TrustCenterVisibility
+		OrganizationID             gid.GID
+		Name                       string
+		Category                   string
+		File                       File
+		CompliancePortalVisibility coredata.CompliancePortalVisibility
 	}
 
 	UpdateFileRequest struct {
-		ID                    gid.GID
-		Name                  *string
-		Category              *string
-		TrustCenterVisibility *coredata.TrustCenterVisibility
+		ID                         gid.GID
+		Name                       *string
+		Category                   *string
+		CompliancePortalVisibility *coredata.CompliancePortalVisibility
 	}
 )
 
@@ -63,7 +63,7 @@ func (ctcfr *CreateFileRequest) Validate() error {
 	v.Check(ctcfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctcfr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 	v.Check(ctcfr.File, "file", validator.Required())
-	v.Check(ctcfr.TrustCenterVisibility, "trust_center_visibility", validator.Required(), validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	v.Check(ctcfr.CompliancePortalVisibility, "trust_center_visibility", validator.Required(), validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }
@@ -71,10 +71,10 @@ func (ctcfr *CreateFileRequest) Validate() error {
 func (utcfr *UpdateFileRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(utcfr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
+	v.Check(utcfr.ID, "id", validator.Required(), validator.GID(coredata.CompliancePortalFileEntityType))
 	v.Check(utcfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(utcfr.Category, "category", validator.SafeText(TitleMaxLength))
-	v.Check(utcfr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	v.Check(utcfr.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }
@@ -83,10 +83,10 @@ func (s *Service) ListFilesForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.TrustCenterFileOrderField],
-	filter *coredata.TrustCenterFileFilter,
-) (*page.Page[*coredata.TrustCenterFile, coredata.TrustCenterFileOrderField], error) {
-	var files coredata.TrustCenterFiles
+	cursor *page.Cursor[coredata.CompliancePortalFileOrderField],
+	filter *coredata.CompliancePortalFileFilter,
+) (*page.Page[*coredata.CompliancePortalFile, coredata.CompliancePortalFileOrderField], error) {
+	var files coredata.CompliancePortalFiles
 
 	err := s.pg.WithConn(
 		ctx,
@@ -116,7 +116,7 @@ func (s *Service) CountFilesForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 
-			count, err = (&coredata.TrustCenterFiles{}).CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = (&coredata.CompliancePortalFiles{}).CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count compliance page files: %w", err)
 			}
@@ -134,13 +134,13 @@ func (s *Service) GetFile(
 	ctx context.Context,
 	scope coredata.Scoper,
 	id gid.GID,
-) (*coredata.TrustCenterFile, error) {
-	var file *coredata.TrustCenterFile
+) (*coredata.CompliancePortalFile, error) {
+	var file *coredata.CompliancePortalFile
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			file = &coredata.TrustCenterFile{}
+			file = &coredata.CompliancePortalFile{}
 			if err := file.LoadByID(ctx, conn, scope, id); err != nil {
 				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
@@ -159,7 +159,7 @@ func (s *Service) CreateFile(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *CreateFileRequest,
-) (*coredata.TrustCenterFile, error) {
+) (*coredata.CompliancePortalFile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -179,32 +179,32 @@ func (s *Service) CreateFile(
 
 	now := time.Now()
 
-	trustCenterFileID := gid.New(scope.GetTenantID(), coredata.TrustCenterFileEntityType)
+	compliancePortalFileID := gid.New(scope.GetTenantID(), coredata.CompliancePortalFileEntityType)
 
 	var (
-		file  *coredata.TrustCenterFile
+		file  *coredata.CompliancePortalFile
 		s3Key string
 	)
 
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			fileID, objectKey, err := s.uploadFile(ctx, scope, tx, req.File, trustCenterFileID, req.OrganizationID, now)
+			fileID, objectKey, err := s.uploadFile(ctx, scope, tx, req.File, compliancePortalFileID, req.OrganizationID, now)
 			if err != nil {
 				return fmt.Errorf("cannot upload file: %w", err)
 			}
 
 			s3Key = objectKey
 
-			file = &coredata.TrustCenterFile{
-				ID:                    trustCenterFileID,
-				OrganizationID:        req.OrganizationID,
-				Name:                  req.Name,
-				Category:              req.Category,
-				FileID:                fileID,
-				TrustCenterVisibility: req.TrustCenterVisibility,
-				CreatedAt:             now,
-				UpdatedAt:             now,
+			file = &coredata.CompliancePortalFile{
+				ID:                         compliancePortalFileID,
+				OrganizationID:             req.OrganizationID,
+				Name:                       req.Name,
+				Category:                   req.Category,
+				FileID:                     fileID,
+				CompliancePortalVisibility: req.CompliancePortalVisibility,
+				CreatedAt:                  now,
+				UpdatedAt:                  now,
 			}
 
 			if err := file.Insert(ctx, tx, scope); err != nil {
@@ -226,19 +226,19 @@ func (s *Service) UpdateFile(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *UpdateFileRequest,
-) (*coredata.TrustCenterFile, error) {
+) (*coredata.CompliancePortalFile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
 
-	var file *coredata.TrustCenterFile
+	var file *coredata.CompliancePortalFile
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			file = &coredata.TrustCenterFile{}
+			file = &coredata.CompliancePortalFile{}
 
 			if err := file.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance page file: %w", err)
@@ -252,8 +252,8 @@ func (s *Service) UpdateFile(
 				file.Category = *req.Category
 			}
 
-			if req.TrustCenterVisibility != nil {
-				file.TrustCenterVisibility = *req.TrustCenterVisibility
+			if req.CompliancePortalVisibility != nil {
+				file.CompliancePortalVisibility = *req.CompliancePortalVisibility
 			}
 
 			file.UpdatedAt = now
@@ -275,14 +275,14 @@ func (s *Service) UpdateFile(
 func (s *Service) DeleteFile(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterFileID gid.GID,
+	compliancePortalFileID gid.GID,
 ) error {
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			file := &coredata.TrustCenterFile{}
+			file := &coredata.CompliancePortalFile{}
 
-			if err := file.LoadByID(ctx, tx, scope, trustCenterFileID); err != nil {
+			if err := file.LoadByID(ctx, tx, scope, compliancePortalFileID); err != nil {
 				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
@@ -299,7 +299,7 @@ func (s *Service) DeleteFile(
 func (s *Service) GenerateFileURL(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterFileID gid.GID,
+	compliancePortalFileID gid.GID,
 	duration time.Duration,
 ) (string, error) {
 	var storedFile *coredata.File
@@ -307,8 +307,8 @@ func (s *Service) GenerateFileURL(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			file := &coredata.TrustCenterFile{}
-			if err := file.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
+			file := &coredata.CompliancePortalFile{}
+			if err := file.LoadByID(ctx, conn, scope, compliancePortalFileID); err != nil {
 				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
@@ -337,7 +337,7 @@ func (s *Service) uploadFile(
 	scope coredata.Scoper,
 	tx pg.Tx,
 	file File,
-	trustCenterFileID gid.GID,
+	compliancePortalFileID gid.GID,
 	organizationID gid.GID,
 	now time.Time,
 ) (gid.GID, string, error) {
@@ -404,7 +404,7 @@ func (s *Service) uploadFile(
 			CacheControl: new("private, max-age=3600"),
 			Metadata: map[string]string{
 				"type":                    "compliance-page-file",
-				"compliance-page-file-id": trustCenterFileID.String(),
+				"compliance-page-file-id": compliancePortalFileID.String(),
 				"organization-id":         organizationID.String(),
 			},
 		},

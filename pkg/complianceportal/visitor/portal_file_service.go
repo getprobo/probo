@@ -38,14 +38,14 @@ func (s *Service) GetPortalFile(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	trustCenterFileID gid.GID,
-) (*coredata.TrustCenterFile, error) {
-	trustCenterFile := &coredata.TrustCenterFile{}
+	compliancePortalFileID gid.GID,
+) (*coredata.CompliancePortalFile, error) {
+	compliancePortalFile := &coredata.CompliancePortalFile{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenterFile.LoadByID(ctx, conn, scope, trustCenterFileID)
+			err := compliancePortalFile.LoadByID(ctx, conn, scope, compliancePortalFileID)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
@@ -57,30 +57,30 @@ func (s *Service) GetPortalFile(
 		return nil, err
 	}
 
-	if trustCenterFile.OrganizationID != organizationID {
+	if compliancePortalFile.OrganizationID != organizationID {
 		return nil, ErrPortalFileNotFound
 	}
 
-	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+	if compliancePortalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 		return nil, ErrPortalFileNotVisible
 	}
 
-	return trustCenterFile, nil
+	return compliancePortalFile, nil
 }
 
 func (s *Service) ListPortalFilesForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.TrustCenterFileOrderField],
-	filter *coredata.TrustCenterFileFilter,
-) (*page.Page[*coredata.TrustCenterFile, coredata.TrustCenterFileOrderField], error) {
-	var trustCenterFiles coredata.TrustCenterFiles
+	cursor *page.Cursor[coredata.CompliancePortalFileOrderField],
+	filter *coredata.CompliancePortalFileFilter,
+) (*page.Page[*coredata.CompliancePortalFile, coredata.CompliancePortalFileOrderField], error) {
+	var compliancePortalFiles coredata.CompliancePortalFiles
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenterFiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			err := compliancePortalFiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance page files: %w", err)
 			}
@@ -92,16 +92,16 @@ func (s *Service) ListPortalFilesForOrganizationID(
 		return nil, err
 	}
 
-	return page.NewPage(trustCenterFiles, cursor), nil
+	return page.NewPage(compliancePortalFiles, cursor), nil
 }
 
 func (s *Service) ExportPortalFile(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterFileID gid.GID,
+	compliancePortalFileID gid.GID,
 	email mail.Addr,
 ) ([]byte, string, error) {
-	fileData, mimeType, err := s.exportPortalFileData(ctx, scope, trustCenterFileID)
+	fileData, mimeType, err := s.exportPortalFileData(ctx, scope, compliancePortalFileID)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot export compliance page file: %w", err)
 	}
@@ -121,31 +121,31 @@ func (s *Service) ExportPortalFile(
 func (s *Service) ExportPortalFileWithoutWatermark(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterFileID gid.GID,
+	compliancePortalFileID gid.GID,
 ) ([]byte, string, error) {
-	return s.exportPortalFileData(ctx, scope, trustCenterFileID)
+	return s.exportPortalFileData(ctx, scope, compliancePortalFileID)
 }
 
 func (s *Service) exportPortalFileData(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterFileID gid.GID,
+	compliancePortalFileID gid.GID,
 ) ([]byte, string, error) {
 	var (
-		trustCenterFile *coredata.TrustCenterFile
-		file            *coredata.File
+		compliancePortalFile *coredata.CompliancePortalFile
+		file                 *coredata.File
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			trustCenterFile = &coredata.TrustCenterFile{}
-			if err := trustCenterFile.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
+			compliancePortalFile = &coredata.CompliancePortalFile{}
+			if err := compliancePortalFile.LoadByID(ctx, conn, scope, compliancePortalFileID); err != nil {
 				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, trustCenterFile.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, compliancePortalFile.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 

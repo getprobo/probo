@@ -34,16 +34,16 @@ func (s *Service) ListPortalReferencesForPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
-	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
-) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
-	var references coredata.TrustCenterReferences
+	cursor *page.Cursor[coredata.CompliancePortalReferenceOrderField],
+) (*page.Page[*coredata.CompliancePortalReference, coredata.CompliancePortalReferenceOrderField], error) {
+	var references coredata.CompliancePortalReferences
 
 	err := s.pg.WithConn(
 
 		ctx,
 
 		func(ctx context.Context, conn pg.Querier) error {
-			err := references.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
+			err := references.LoadByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance page references: %w", err)
 			}
@@ -62,8 +62,8 @@ func (s *Service) GetPortalReference(
 	ctx context.Context,
 	scope coredata.Scoper,
 	referenceID gid.GID,
-) (*coredata.TrustCenterReference, error) {
-	reference := &coredata.TrustCenterReference{}
+) (*coredata.CompliancePortalReference, error) {
+	reference := &coredata.CompliancePortalReference{}
 
 	err := s.pg.WithConn(
 		ctx,

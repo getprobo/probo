@@ -405,6 +405,6 @@ const (
 	ActionCommonThirdPartyList = "core:common-third-party:list"
 
 	// ElectronicSignature actions (tenant-scoped via the related document
-	// version signature / trust center access).
+	// version signature / compliance portal access).
 	ActionElectronicSignatureGet = "core:electronic-signature:get"
 )

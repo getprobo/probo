@@ -28,17 +28,17 @@ import (
 )
 
 type Document struct {
-	ID                    gid.GID                        `json:"id"`
-	OrganizationID        gid.GID                        `json:"organizationId"`
-	Title                 string                         `json:"title"`
-	DocumentType          coredata.DocumentType          `json:"documentType"`
-	Status                coredata.DocumentStatus        `json:"status"`
-	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
-	CurrentPublishedMajor *int                           `json:"currentPublishedMajor"`
-	CurrentPublishedMinor *int                           `json:"currentPublishedMinor"`
-	ArchivedAt            *time.Time                     `json:"archivedAt"`
-	CreatedAt             time.Time                      `json:"createdAt"`
-	UpdatedAt             time.Time                      `json:"updatedAt"`
+	ID                         gid.GID                             `json:"id"`
+	OrganizationID             gid.GID                             `json:"organizationId"`
+	Title                      string                              `json:"title"`
+	DocumentType               coredata.DocumentType               `json:"documentType"`
+	Status                     coredata.DocumentStatus             `json:"status"`
+	CompliancePortalVisibility coredata.CompliancePortalVisibility `json:"compliancePortalVisibility"`
+	CurrentPublishedMajor      *int                                `json:"currentPublishedMajor"`
+	CurrentPublishedMinor      *int                                `json:"currentPublishedMinor"`
+	ArchivedAt                 *time.Time                          `json:"archivedAt"`
+	CreatedAt                  time.Time                           `json:"createdAt"`
+	UpdatedAt                  time.Time                           `json:"updatedAt"`
 }
 
 type DocumentVersion struct {
@@ -91,17 +91,17 @@ type DocumentApprovalDecision struct {
 
 func NewDocument(d *coredata.Document) *Document {
 	return &Document{
-		ID:                    d.ID,
-		OrganizationID:        d.OrganizationID,
-		Title:                 d.Title,
-		DocumentType:          d.DocumentType,
-		Status:                d.Status,
-		TrustCenterVisibility: d.TrustCenterVisibility,
-		CurrentPublishedMajor: d.CurrentPublishedMajor,
-		CurrentPublishedMinor: d.CurrentPublishedMinor,
-		ArchivedAt:            d.ArchivedAt,
-		CreatedAt:             d.CreatedAt,
-		UpdatedAt:             d.UpdatedAt,
+		ID:                         d.ID,
+		OrganizationID:             d.OrganizationID,
+		Title:                      d.Title,
+		DocumentType:               d.DocumentType,
+		Status:                     d.Status,
+		CompliancePortalVisibility: d.CompliancePortalVisibility,
+		CurrentPublishedMajor:      d.CurrentPublishedMajor,
+		CurrentPublishedMinor:      d.CurrentPublishedMinor,
+		ArchivedAt:                 d.ArchivedAt,
+		CreatedAt:                  d.CreatedAt,
+		UpdatedAt:                  d.UpdatedAt,
 	}
 }
 

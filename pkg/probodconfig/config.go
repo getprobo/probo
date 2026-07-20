@@ -60,7 +60,7 @@ type (
 		Pg                PgConfig                      `json:"pg"`
 		Api               APIConfig                     `json:"api"`
 		Auth              AuthConfig                    `json:"auth"`
-		TrustCenter       TrustCenterConfig             `json:"trust-center"`
+		CompliancePortal  CompliancePortalConfig        `json:"trust-center"`
 		AWS               AWSConfig                     `json:"aws"`
 		Notifications     NotificationsConfig           `json:"notifications"`
 		Connectors        []ConnectorConfig             `json:"connectors,omitempty"`
@@ -79,8 +79,8 @@ type (
 		Branding      bool                `json:"branding"`
 	}
 
-	// TrustCenterConfig contains trust center server configuration.
-	TrustCenterConfig struct {
+	// CompliancePortalConfig contains compliance portal server configuration.
+	CompliancePortalConfig struct {
 		HTTPAddr      string              `json:"http-addr,omitempty"`
 		HTTPSAddr     string              `json:"https-addr,omitempty"`
 		BaseDomain    string              `json:"base-domain,omitempty"`

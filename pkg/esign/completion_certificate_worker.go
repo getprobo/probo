@@ -39,7 +39,7 @@ import (
 )
 
 // EmailPresenterConfigFunc resolves the emails.PresenterConfig for the
-// organization that owns the given trust center.
+// organization that owns the given compliance portal.
 type EmailPresenterConfigFunc func(ctx context.Context, organizationID gid.GID) (emails.PresenterConfig, error)
 
 type completionCertificateHandler struct {

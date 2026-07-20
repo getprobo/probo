@@ -39,22 +39,22 @@ type AuditService struct {
 
 type (
 	CreateAuditRequest struct {
-		OrganizationID        gid.GID
-		FrameworkID           gid.GID
-		Name                  *string
-		ValidFrom             *time.Time
-		ValidUntil            *time.Time
-		State                 *coredata.AuditState
-		TrustCenterVisibility *coredata.TrustCenterVisibility
+		OrganizationID             gid.GID
+		FrameworkID                gid.GID
+		Name                       *string
+		ValidFrom                  *time.Time
+		ValidUntil                 *time.Time
+		State                      *coredata.AuditState
+		CompliancePortalVisibility *coredata.CompliancePortalVisibility
 	}
 
 	UpdateAuditRequest struct {
-		ID                    gid.GID
-		Name                  **string
-		ValidFrom             *time.Time
-		ValidUntil            *time.Time
-		State                 *coredata.AuditState
-		TrustCenterVisibility *coredata.TrustCenterVisibility
+		ID                         gid.GID
+		Name                       **string
+		ValidFrom                  *time.Time
+		ValidUntil                 *time.Time
+		State                      *coredata.AuditState
+		CompliancePortalVisibility *coredata.CompliancePortalVisibility
 	}
 
 	UploadAuditReportRequest struct {
@@ -71,7 +71,7 @@ func (car *CreateAuditRequest) Validate() error {
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
 	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
-	v.Check(car.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	v.Check(car.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }
@@ -83,7 +83,7 @@ func (uar *UpdateAuditRequest) Validate() error {
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
-	v.Check(uar.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	v.Check(uar.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }
@@ -164,24 +164,24 @@ func (s *AuditService) Create(
 
 	now := time.Now()
 	audit := &coredata.Audit{
-		ID:                    gid.New(scope.GetTenantID(), coredata.AuditEntityType),
-		Name:                  req.Name,
-		OrganizationID:        req.OrganizationID,
-		FrameworkID:           req.FrameworkID,
-		ValidFrom:             req.ValidFrom,
-		ValidUntil:            req.ValidUntil,
-		State:                 coredata.AuditStateNotStarted,
-		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-		CreatedAt:             now,
-		UpdatedAt:             now,
+		ID:                         gid.New(scope.GetTenantID(), coredata.AuditEntityType),
+		Name:                       req.Name,
+		OrganizationID:             req.OrganizationID,
+		FrameworkID:                req.FrameworkID,
+		ValidFrom:                  req.ValidFrom,
+		ValidUntil:                 req.ValidUntil,
+		State:                      coredata.AuditStateNotStarted,
+		CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+		CreatedAt:                  now,
+		UpdatedAt:                  now,
 	}
 
 	if req.State != nil {
 		audit.State = *req.State
 	}
 
-	if req.TrustCenterVisibility != nil {
-		audit.TrustCenterVisibility = *req.TrustCenterVisibility
+	if req.CompliancePortalVisibility != nil {
+		audit.CompliancePortalVisibility = *req.CompliancePortalVisibility
 	}
 
 	err := s.svc.pg.WithTx(
@@ -244,8 +244,8 @@ func (s *AuditService) Update(
 				audit.State = *req.State
 			}
 
-			if req.TrustCenterVisibility != nil {
-				audit.TrustCenterVisibility = *req.TrustCenterVisibility
+			if req.CompliancePortalVisibility != nil {
+				audit.CompliancePortalVisibility = *req.CompliancePortalVisibility
 			}
 
 			audit.UpdatedAt = time.Now()

@@ -41,7 +41,7 @@ func (s *Service) ListCustomLinksForPortalID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := links.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
+			err := links.LoadByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load custom links: %w", err)
 			}

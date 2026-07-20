@@ -54,15 +54,15 @@ type (
 	}
 
 	UploadNDARequest struct {
-		TrustCenterID gid.GID
-		File          io.Reader
-		FileName      string
+		CompliancePortalID gid.GID
+		File               io.Reader
+		FileName           string
 	}
 
 	UpdateBrandRequest struct {
-		TrustCenterID gid.GID
-		LogoFile      **FileUpload
-		DarkLogoFile  **FileUpload
+		CompliancePortalID gid.GID
+		LogoFile           **FileUpload
+		DarkLogoFile       **FileUpload
 	}
 )
 
@@ -71,7 +71,7 @@ const maxBrandFileSize = 5 * 1024 * 1024 // 5MB
 func (utcr *UpdateRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(utcr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(utcr.ID, "id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(utcr.Slug, "slug", validator.SafeText(NameMaxLength))
 	v.Check(utcr.NonDisclosureAgreementFileID, "non_disclosure_agreement_file_id", validator.GID(coredata.FileEntityType))
 
@@ -101,7 +101,7 @@ func (utcr *UpdateRequest) Validate() error {
 func (utcndar *UploadNDARequest) Validate() error {
 	v := validator.New()
 
-	v.Check(utcndar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(utcndar.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(utcndar.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
@@ -134,13 +134,13 @@ func (s *Service) Get(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
-) (*coredata.TrustCenter, error) {
-	var compliancePage *coredata.TrustCenter
+) (*coredata.CompliancePortal, error) {
+	var compliancePage *coredata.CompliancePortal
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage = &coredata.TrustCenter{}
+			compliancePage = &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -159,13 +159,13 @@ func (s *Service) GetByOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-) (*coredata.TrustCenter, error) {
-	var compliancePage *coredata.TrustCenter
+) (*coredata.CompliancePortal, error) {
+	var compliancePage *coredata.CompliancePortal
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage = &coredata.TrustCenter{}
+			compliancePage = &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -184,20 +184,20 @@ func (s *Service) Update(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *UpdateRequest,
-) (*coredata.TrustCenter, *coredata.File, error) {
+) (*coredata.CompliancePortal, *coredata.File, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, err
 	}
 
 	var (
-		compliancePage *coredata.TrustCenter
+		compliancePage *coredata.CompliancePortal
 		file           *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.TrustCenter{}
+			compliancePage = &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -267,26 +267,26 @@ func (s *Service) UploadNDA(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *UploadNDARequest,
-) (*coredata.TrustCenter, *coredata.File, error) {
+) (*coredata.CompliancePortal, *coredata.File, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, err
 	}
 
 	var (
-		compliancePage *coredata.TrustCenter
+		compliancePage *coredata.CompliancePortal
 		file           *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, req.TrustCenterID); err != nil {
+			compliancePage = &coredata.CompliancePortal{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, req.CompliancePortalID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			if compliancePage.OrganizationID == gid.Nil {
-				return fmt.Errorf("compliance page %s has no organization", req.TrustCenterID)
+				return fmt.Errorf("compliance page %s has no organization", req.CompliancePortalID)
 			}
 
 			objectKey, err := uuid.NewV7()
@@ -320,7 +320,7 @@ func (s *Service) UploadNDA(
 				req.File,
 				map[string]string{
 					"type":               "compliance-page-nda",
-					"compliance-page-id": req.TrustCenterID.String(),
+					"compliance-page-id": req.CompliancePortalID.String(),
 					"organization-id":    compliancePage.OrganizationID.String(),
 				},
 			)
@@ -355,13 +355,13 @@ func (s *Service) DeleteNDA(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
-) (*coredata.TrustCenter, *coredata.File, error) {
-	var compliancePage *coredata.TrustCenter
+) (*coredata.CompliancePortal, *coredata.File, error) {
+	var compliancePage *coredata.CompliancePortal
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.TrustCenter{}
+			compliancePage = &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -387,21 +387,21 @@ func (s *Service) UpdateBrand(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *UpdateBrandRequest,
-) (*coredata.TrustCenter, *coredata.File, error) {
+) (*coredata.CompliancePortal, *coredata.File, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, err
 	}
 
 	var (
-		compliancePage *coredata.TrustCenter
+		compliancePage *coredata.CompliancePortal
 		ndaFile        *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, req.TrustCenterID); err != nil {
+			compliancePage = &coredata.CompliancePortal{}
+			if err := compliancePage.LoadByID(ctx, conn, scope, req.CompliancePortalID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
@@ -462,7 +462,7 @@ func (s *Service) uploadBrandFile(
 	conn pg.Tx,
 	fileUpload *FileUpload,
 	fileType string,
-	compliancePage *coredata.TrustCenter,
+	compliancePage *coredata.CompliancePortal,
 ) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -529,7 +529,7 @@ func (s *Service) GenerateNDAFileURL(
 ) (*string, error) {
 	var file *coredata.File
 
-	compliancePage := &coredata.TrustCenter{}
+	compliancePage := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -573,7 +573,7 @@ func (s *Service) GenerateLogoURL(
 	expiresIn time.Duration,
 ) (*string, error) {
 	file := &coredata.File{}
-	compliancePage := &coredata.TrustCenter{}
+	compliancePage := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -620,7 +620,7 @@ func (s *Service) GenerateDarkLogoURL(
 	expiresIn time.Duration,
 ) (*string, error) {
 	file := &coredata.File{}
-	compliancePage := &coredata.TrustCenter{}
+	compliancePage := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -666,7 +666,7 @@ func (s *Service) EmailPresenterConfig(
 	compliancePageID gid.GID,
 ) (emails.PresenterConfig, error) {
 	var (
-		compliancePage    = &coredata.TrustCenter{}
+		compliancePage    = &coredata.CompliancePortal{}
 		organization      = &coredata.Organization{}
 		logoFile          = &coredata.File{}
 		compliancePageURL string
@@ -690,7 +690,7 @@ func (s *Service) EmailPresenterConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			publicURL, err := s.PublicURLForCompliancePage(ctx, conn, scope, compliancePage)
+			publicURL, err := s.PublicURLForCompliancePortal(ctx, conn, scope, compliancePage)
 			if err != nil {
 				return fmt.Errorf("cannot resolve compliance page URL: %w", err)
 			}
@@ -736,7 +736,7 @@ func (s *Service) GetMailingList(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}

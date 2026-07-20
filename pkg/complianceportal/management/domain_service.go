@@ -35,7 +35,7 @@ func (s *Service) AddCustomDomain(
 	domain string,
 ) (*coredata.CustomDomain, error) {
 	v := validator.New()
-	v.Check(compliancePageID, "compliance_page_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(compliancePageID, "compliance_page_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(domain, "domain", validator.Required(), validator.NotEmpty(), validator.Domain())
 
 	if err := v.Error(); err != nil {
@@ -47,7 +47,7 @@ func (s *Service) AddCustomDomain(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
@@ -107,7 +107,7 @@ func (s *Service) RemoveCustomDomain(
 				return ErrCustomDomainManaged
 			}
 
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 
 			err := compliancePage.LoadByDomainID(ctx, tx, customDomainID)
 			switch {
@@ -177,14 +177,14 @@ func (s *Service) PublicURL(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.TrustCenter{}
+			compliancePage := &coredata.CompliancePortal{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			var err error
 
-			publicURL, err = s.PublicURLForCompliancePage(ctx, conn, scope, compliancePage)
+			publicURL, err = s.PublicURLForCompliancePortal(ctx, conn, scope, compliancePage)
 			if err != nil {
 				return fmt.Errorf("cannot resolve public url: %w", err)
 			}

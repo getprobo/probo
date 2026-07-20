@@ -105,23 +105,23 @@ type (
 	}
 
 	CreateDocumentRequest struct {
-		OrganizationID        gid.GID
-		Title                 string
-		Content               string
-		Classification        coredata.DocumentClassification
-		DocumentType          coredata.DocumentType
-		TrustCenterVisibility *coredata.TrustCenterVisibility
-		DefaultApproverIDs    []gid.GID
+		OrganizationID             gid.GID
+		Title                      string
+		Content                    string
+		Classification             coredata.DocumentClassification
+		DocumentType               coredata.DocumentType
+		CompliancePortalVisibility *coredata.CompliancePortalVisibility
+		DefaultApproverIDs         []gid.GID
 	}
 
 	UpdateDocumentRequest struct {
-		DocumentID            gid.GID
-		Title                 *string
-		Content               *string
-		Classification        *coredata.DocumentClassification
-		DocumentType          *coredata.DocumentType
-		TrustCenterVisibility *coredata.TrustCenterVisibility
-		DefaultApproverIDs    *[]gid.GID
+		DocumentID                 gid.GID
+		Title                      *string
+		Content                    *string
+		Classification             *coredata.DocumentClassification
+		DocumentType               *coredata.DocumentType
+		CompliancePortalVisibility *coredata.CompliancePortalVisibility
+		DefaultApproverIDs         *[]gid.GID
 	}
 
 	RequestSignatureRequest struct {
@@ -182,7 +182,7 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	)
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
-	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	v.Check(cdr.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 	v.Check(len(cdr.DefaultApproverIDs), "default_approver_ids", validator.Max(100))
 	v.Check(cdr.DefaultApproverIDs, "default_approver_ids", validator.NoDuplicates())
 	v.CheckEach(cdr.DefaultApproverIDs, "default_approver_ids", func(_ int, item any) {
@@ -231,7 +231,7 @@ func (udr *UpdateDocumentRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
-	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+	v.Check(udr.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	if udr.DefaultApproverIDs != nil {
 		v.Check(len(*udr.DefaultApproverIDs), "default_approver_ids", validator.Max(100))
@@ -791,16 +791,16 @@ func (s *DocumentService) Create(
 	organization := &coredata.Organization{}
 
 	document := &coredata.Document{
-		ID:                    documentID,
-		WriteMode:             coredata.DocumentWriteModeAuthored,
-		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
-		Status:                coredata.DocumentStatusActive,
-		CreatedAt:             now,
-		UpdatedAt:             now,
+		ID:                         documentID,
+		WriteMode:                  coredata.DocumentWriteModeAuthored,
+		CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+		Status:                     coredata.DocumentStatusActive,
+		CreatedAt:                  now,
+		UpdatedAt:                  now,
 	}
 
-	if req.TrustCenterVisibility != nil {
-		document.TrustCenterVisibility = *req.TrustCenterVisibility
+	if req.CompliancePortalVisibility != nil {
+		document.CompliancePortalVisibility = *req.CompliancePortalVisibility
 	}
 
 	content := req.Content
@@ -2209,8 +2209,8 @@ func (s *DocumentService) Update(
 
 			previousDocument := *document
 
-			if req.TrustCenterVisibility != nil {
-				document.TrustCenterVisibility = *req.TrustCenterVisibility
+			if req.CompliancePortalVisibility != nil {
+				document.CompliancePortalVisibility = *req.CompliancePortalVisibility
 			}
 
 			document.UpdatedAt = now
@@ -2225,7 +2225,7 @@ func (s *DocumentService) Update(
 			}
 
 			hasVersionChanges := req.Title != nil || req.Content != nil || req.Classification != nil || req.DocumentType != nil
-			docLevelChanged := req.TrustCenterVisibility != nil || req.DefaultApproverIDs != nil
+			docLevelChanged := req.CompliancePortalVisibility != nil || req.DefaultApproverIDs != nil
 
 			if req.Content != nil && document.WriteMode == coredata.DocumentWriteModeGenerated {
 				return &ErrDocumentVersionGenerated{}
@@ -2498,7 +2498,7 @@ func (s *DocumentService) Archive(
 			document.Status = coredata.DocumentStatusArchived
 			document.ArchivedAt = &now
 			document.UpdatedAt = now
-			document.TrustCenterVisibility = coredata.TrustCenterVisibilityNone
+			document.CompliancePortalVisibility = coredata.CompliancePortalVisibilityNone
 
 			if err := document.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot archive document: %w", err)

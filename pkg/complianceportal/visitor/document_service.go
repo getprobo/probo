@@ -53,7 +53,7 @@ func (s *Service) ListDocumentsForOrganizationID(
 	var documents coredata.Documents
 
 	if filter == nil {
-		filter = coredata.NewDocumentTrustCenterFilter()
+		filter = coredata.NewDocumentCompliancePortalFilter()
 	}
 
 	err := s.pg.WithConn(
@@ -131,7 +131,7 @@ func (s *Service) GetDocument(
 		return nil, ErrDocumentNotFound
 	}
 
-	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+	if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 		return nil, ErrDocumentNotVisible
 	}
 
@@ -158,7 +158,7 @@ func (s *Service) exportDocumentPDFData(
 				return &ErrDocumentArchived{}
 			}
 
-			if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+			if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 				return fmt.Errorf("document not visible on compliance page")
 			}
 

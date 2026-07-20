@@ -173,7 +173,7 @@ func TestWriteConfig_OmitsEmptyOptionalBlocks(t *testing.T) {
 					Pepper: "pepper",
 				},
 			},
-			TrustCenter: probodconfig.TrustCenterConfig{
+			CompliancePortal: probodconfig.CompliancePortalConfig{
 				HTTPAddr: ":80",
 			},
 			CustomDomains: probodconfig.CustomDomainsConfig{
@@ -222,9 +222,9 @@ func TestWriteConfig_OmitsEmptyOptionalBlocks(t *testing.T) {
 	require.True(t, ok)
 	assert.NotContains(t, customDomains, "acme")
 
-	trustCenter, ok := probod["trust-center"].(map[string]any)
+	compliancePortal, ok := probod["trust-center"].(map[string]any)
 	require.True(t, ok)
-	assert.NotContains(t, trustCenter, "proxy-protocol")
+	assert.NotContains(t, compliancePortal, "proxy-protocol")
 
 	llm, ok := probod["llm"].(map[string]any)
 	require.True(t, ok)
@@ -249,7 +249,7 @@ func TestWriteConfig_OmitsEmptyProxyProtocolAndCorsSlices(t *testing.T) {
 					AllowedOrigins: []string{},
 				},
 			},
-			TrustCenter: probodconfig.TrustCenterConfig{
+			CompliancePortal: probodconfig.CompliancePortalConfig{
 				HTTPAddr: ":10080",
 				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: make([]string, 0),
@@ -277,9 +277,9 @@ func TestWriteConfig_OmitsEmptyProxyProtocolAndCorsSlices(t *testing.T) {
 	assert.NotContains(t, api, "proxy-protocol")
 	assert.NotContains(t, api, "cors")
 
-	trustCenter, ok := probod["trust-center"].(map[string]any)
+	compliancePortal, ok := probod["trust-center"].(map[string]any)
 	require.True(t, ok)
-	assert.NotContains(t, trustCenter, "proxy-protocol")
+	assert.NotContains(t, compliancePortal, "proxy-protocol")
 }
 
 func TestWriteConfig_OmitsEmptyExtraHeaderFieldsMap(t *testing.T) {

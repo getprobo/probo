@@ -123,9 +123,9 @@ func (s *Service) UpdateSlackAccessMessage(
 				return fmt.Errorf("cannot load slack message: %w", err)
 			}
 
-			var trustCenter coredata.TrustCenter
-			if err := trustCenter.LoadByOrganizationID(ctx, tx, scope, slackMessage.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
+			var compliancePortal coredata.CompliancePortal
+			if err := compliancePortal.LoadByOrganizationID(ctx, tx, scope, slackMessage.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
 			identity := &coredata.Identity{}
@@ -133,12 +133,12 @@ func (s *Service) UpdateSlackAccessMessage(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			var trustCenterAccess coredata.TrustCenterAccess
-			if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenter.ID, identity.ID); err != nil {
-				return fmt.Errorf("cannot load trust center access: %w", err)
+			var compliancePortalAccess coredata.CompliancePortalAccess
+			if err := compliancePortalAccess.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, compliancePortal.ID, identity.ID); err != nil {
+				return fmt.Errorf("cannot load compliance portal access: %w", err)
 			}
 
-			documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, scope, trustCenterAccess.ID)
+			documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, scope, compliancePortalAccess.ID)
 			if err != nil {
 				return err
 			}
@@ -149,7 +149,7 @@ func (s *Service) UpdateSlackAccessMessage(
 				newSlackMessageID,
 				identity.FullName,
 				requesterEmail,
-				trustCenter.OrganizationID,
+				compliancePortal.OrganizationID,
 				documents,
 				reports,
 				files,
@@ -197,26 +197,26 @@ func (s *Service) QueueSlackNotification(
 	ctx context.Context,
 	scope coredata.Scoper,
 	identityID gid.GID,
-	trustCenterID gid.GID,
+	compliancePortalID gid.GID,
 ) error {
 	return s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var (
-			identity          = &coredata.Identity{}
-			trustCenterAccess *coredata.TrustCenterAccess
+			identity               = &coredata.Identity{}
+			compliancePortalAccess *coredata.CompliancePortalAccess
 		)
 
 		if err := identity.LoadByID(ctx, tx, identityID); err != nil {
 			return fmt.Errorf("cannot load identity: %w", err)
 		}
 
-		trustCenterAccess = &coredata.TrustCenterAccess{}
-		if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenterID, identityID); err != nil {
-			return fmt.Errorf("cannot load trust center access: %w", err)
+		compliancePortalAccess = &coredata.CompliancePortalAccess{}
+		if err := compliancePortalAccess.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, compliancePortalID, identityID); err != nil {
+			return fmt.Errorf("cannot load compliance portal access: %w", err)
 		}
 
-		var trustCenter coredata.TrustCenter
-		if err := trustCenter.LoadByID(ctx, tx, scope, trustCenterID); err != nil {
-			return fmt.Errorf("cannot load trust center: %w", err)
+		var compliancePortal coredata.CompliancePortal
+		if err := compliancePortal.LoadByID(ctx, tx, scope, compliancePortalID); err != nil {
+			return fmt.Errorf("cannot load compliance portal: %w", err)
 		}
 
 		var connectors coredata.Connectors
@@ -224,7 +224,7 @@ func (s *Service) QueueSlackNotification(
 			ctx,
 			tx,
 			scope,
-			trustCenter.OrganizationID,
+			compliancePortal.OrganizationID,
 		); err != nil {
 			return fmt.Errorf("cannot load connectors: %w", err)
 		}
@@ -242,7 +242,7 @@ func (s *Service) QueueSlackNotification(
 			return ErrNoSlackConnector
 		}
 
-		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, scope, trustCenterAccess.ID)
+		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, scope, compliancePortalAccess.ID)
 		if err != nil {
 			return fmt.Errorf("cannot load documents, reports and files: %w", err)
 		}
@@ -253,7 +253,7 @@ func (s *Service) QueueSlackNotification(
 			slackMessageID,
 			identity.FullName,
 			identity.EmailAddress,
-			trustCenter.OrganizationID,
+			compliancePortal.OrganizationID,
 			documents,
 			reports,
 			files,
@@ -271,8 +271,8 @@ func (s *Service) QueueSlackNotification(
 		now := time.Now()
 		slackMessage := &coredata.SlackMessage{
 			ID:             slackMessageID,
-			OrganizationID: trustCenter.OrganizationID,
-			Type:           coredata.SlackMessageTypeTrustCenterAccessRequest,
+			OrganizationID: compliancePortal.OrganizationID,
+			Type:           coredata.SlackMessageTypeCompliancePortalAccessRequest,
 			Body:           body,
 			RequesterEmail: &identity.EmailAddress,
 			Metadata:       metadata.toMap(),
@@ -288,9 +288,9 @@ func (s *Service) QueueSlackNotification(
 			ctx,
 			tx,
 			scope,
-			trustCenter.OrganizationID,
+			compliancePortal.OrganizationID,
 			identity.EmailAddress,
-			coredata.SlackMessageTypeTrustCenterAccessRequest,
+			coredata.SlackMessageTypeCompliancePortalAccessRequest,
 			sevenDaysAgo,
 		)
 		if err == nil {
@@ -323,7 +323,7 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	trustCenterAccessID gid.GID,
+	compliancePortalAccessID gid.GID,
 ) (
 	documents []SlackMessageDocument,
 	reports []SlackMessageReport,
@@ -336,14 +336,14 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 
 	accesses, err := page.LoadAll(
 		ctx,
-		page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
-			Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+		page.OrderBy[coredata.CompliancePortalDocumentAccessOrderField]{
+			Field:     coredata.CompliancePortalDocumentAccessOrderFieldCreatedAt,
 			Direction: page.OrderDirectionAsc,
 		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterDocumentAccessOrderField]) ([]*coredata.TrustCenterDocumentAccess, error) {
-			var batch coredata.TrustCenterDocumentAccesses
-			if err := batch.LoadByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID, cursor); err != nil {
-				return nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
+		func(ctx context.Context, cursor *page.Cursor[coredata.CompliancePortalDocumentAccessOrderField]) ([]*coredata.CompliancePortalDocumentAccess, error) {
+			var batch coredata.CompliancePortalDocumentAccesses
+			if err := batch.LoadByCompliancePortalAccessID(ctx, conn, scope, compliancePortalAccessID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load compliance portal document accesses: %w", err)
 			}
 
 			return batch, nil
@@ -360,7 +360,7 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 				return nil, nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
 
-			if doc.CurrentPublishedMajor == nil || doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+			if doc.CurrentPublishedMajor == nil || doc.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 				continue
 			}
 
@@ -401,16 +401,16 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 			)
 		}
 
-		if access.TrustCenterFileID != nil {
-			file := &coredata.TrustCenterFile{}
-			if err := file.LoadByID(ctx, conn, scope, *access.TrustCenterFileID); err != nil {
-				return nil, nil, nil, fmt.Errorf("cannot load trust center file: %w", err)
+		if access.CompliancePortalFileID != nil {
+			file := &coredata.CompliancePortalFile{}
+			if err := file.LoadByID(ctx, conn, scope, *access.CompliancePortalFileID); err != nil {
+				return nil, nil, nil, fmt.Errorf("cannot load compliance portal file: %w", err)
 			}
 
 			files = append(
 				files,
 				SlackMessageFile{
-					ID:       access.TrustCenterFileID.String(),
+					ID:       access.CompliancePortalFileID.String(),
 					Name:     file.Name,
 					Category: file.Category,
 					Status:   access.Status.String(),

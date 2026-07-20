@@ -145,7 +145,7 @@ func New() *Implm {
 					DomainVerificationResolverAddr:    "8.8.8.8:53",
 				},
 			},
-			TrustCenter: TrustCenterConfig{
+			CompliancePortal: CompliancePortalConfig{
 				HTTPAddr:   ":80",
 				HTTPSAddr:  ":443",
 				BaseDomain: "probopage.com",
@@ -547,7 +547,7 @@ func (impl *Implm) Run(
 			CnameTarget:       impl.cfg.CustomDomains.CnameTarget,
 			CAAIssuerDomain:   impl.cfg.CustomDomains.CAAIssuerDomain,
 			ResolverAddr:      impl.cfg.CustomDomains.ResolverAddr,
-			ManagedBaseDomain: impl.cfg.TrustCenter.BaseDomain,
+			ManagedBaseDomain: impl.cfg.CompliancePortal.BaseDomain,
 			RenewalInterval:   customDomainRenewalInterval,
 			ProvisionInterval: customDomainProvisionInterval,
 		},
@@ -568,7 +568,7 @@ func (impl *Implm) Run(
 			Bucket:                         impl.cfg.AWS.Bucket,
 			TokenSecret:                    impl.cfg.Auth.Cookie.Secret,
 			BaseURL:                        baseURL,
-			TrustCenterBaseDomain:          impl.cfg.TrustCenter.BaseDomain,
+			CompliancePortalBaseDomain:     impl.cfg.CompliancePortal.BaseDomain,
 			EncryptionKey:                  encryptionKey,
 			Certificate:                    samlCert,
 			PrivateKey:                     samlKey,
@@ -624,7 +624,7 @@ func (impl *Implm) Run(
 		s3Client,
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
-		impl.cfg.TrustCenter.BaseDomain,
+		impl.cfg.CompliancePortal.BaseDomain,
 		fileManagerService,
 		certManagerService,
 		slackService,
@@ -671,7 +671,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create probo service: %w", err)
 	}
 
-	trustService := visitor.NewService(
+	visitorService := visitor.NewService(
 		pgClient,
 		s3Client,
 		impl.cfg.AWS.Bucket,
@@ -691,7 +691,7 @@ func (impl *Implm) Run(
 		func(ctx context.Context, clientIDURL string) (oauth2.CIMDAllowance, error) {
 			host, ok := oauth2.CIMDClientIDHost(clientIDURL)
 			if ok {
-				_, err := trustService.GetPortalByDomainName(ctx, host)
+				_, err := visitorService.GetPortalByDomainName(ctx, host)
 				if err == nil {
 					return oauth2.CIMDAllowanceAllowedSkipConsent, nil
 				}
@@ -727,7 +727,7 @@ func (impl *Implm) Run(
 			ResourceAlias:     resourceAliasService,
 			File:              fileManagerService,
 			IAM:               iamService,
-			Trust:             trustService,
+			Visitor:           visitorService,
 			ESign:             esignService,
 			Management:        managementService,
 			CertManager:       certManagerService,
@@ -773,7 +773,7 @@ func (impl *Implm) Run(
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Logger:            l.Named("compliance-portal"),
 			IAM:               iamService,
-			Visitor:           trustService,
+			Visitor:           visitorService,
 			ResourceAlias:     resourceAliasService,
 			File:              fileManagerService,
 			ESign:             esignService,
@@ -798,7 +798,7 @@ func (impl *Implm) Run(
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("cannot create trust center handler: %w", err)
+		return fmt.Errorf("cannot create compliance portal handler: %w", err)
 	}
 
 	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
@@ -958,7 +958,7 @@ func (impl *Implm) Run(
 
 	wg.Go(
 		func() {
-			if err := esignService.Run(esignServiceCtx, trustService.GetPortalEmailPresenterConfigByOrganizationID); err != nil {
+			if err := esignService.Run(esignServiceCtx, visitorService.GetPortalEmailPresenterConfigByOrganizationID); err != nil {
 				cancel(fmt.Errorf("esign service crashed: %w", err))
 			}
 		},
@@ -1133,22 +1133,22 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
-	defer stopTrustCenterServer()
+	compliancePortalServerCtx, stopCompliancePortalServer := context.WithCancel(context.Background())
+	defer stopCompliancePortalServer()
 
 	wg.Go(
 		func() {
-			if err := impl.runTrustCenterServer(
-				trustCenterServerCtx,
+			if err := impl.runCompliancePortalServer(
+				compliancePortalServerCtx,
 				l,
 				r,
 				tp,
 				pgClient,
 				compliancePortalHandler,
-				trustService,
+				visitorService,
 				encryptionKey,
 			); err != nil {
-				cancel(fmt.Errorf("trust center server crashed: %w", err))
+				cancel(fmt.Errorf("compliance portal server crashed: %w", err))
 			}
 		},
 	)
@@ -1156,7 +1156,7 @@ func (impl *Implm) Run(
 	<-ctx.Done()
 
 	stopApiServer()
-	stopTrustCenterServer()
+	stopCompliancePortalServer()
 	stopWebhookWorker()
 	stopESignService()
 	stopCertManagerService()
@@ -1298,7 +1298,7 @@ func (impl *Implm) runApiServer(
 	return ctx.Err()
 }
 
-func newTrustCenterHTTPRedirectHandler(trustService *visitor.Service, l *log.Logger) http.Handler {
+func newCompliancePortalHTTPRedirectHandler(visitorService *visitor.Service, l *log.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -1314,10 +1314,10 @@ func newTrustCenterHTTPRedirectHandler(trustService *visitor.Service, l *log.Log
 			return
 		}
 
-		// Check if this domain is a trust center custom domain
-		if _, err := trustService.GetPortalByDomainName(ctx, domain); err != nil {
+		// Check if this domain is a compliance portal custom domain
+		if _, err := visitorService.GetPortalByDomainName(ctx, domain); err != nil {
 			if errors.Is(err, visitor.ErrPageNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-				// Not a trust center domain, return 404
+				// Not a compliance portal domain, return 404
 				httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
 				return
 			}
@@ -1327,7 +1327,7 @@ func newTrustCenterHTTPRedirectHandler(trustService *visitor.Service, l *log.Log
 			return
 		}
 
-		// This is a trust center domain, redirect to HTTPS
+		// This is a compliance portal domain, redirect to HTTPS
 		base, err := baseurl.Parse("https://" + domain)
 		if err != nil {
 			httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
@@ -1337,7 +1337,7 @@ func newTrustCenterHTTPRedirectHandler(trustService *visitor.Service, l *log.Log
 		httpsURL := base.WithPath(r.URL.Path).WithQueryValues(r.URL.Query()).MustString()
 		l.InfoCtx(
 			ctx,
-			"HTTP request to trust center custom domain, redirecting to HTTPS",
+			"HTTP request to compliance portal custom domain, redirecting to HTTPS",
 			log.String("domain", domain),
 			log.String("path", r.URL.Path),
 			log.String("to", httpsURL),
@@ -1346,19 +1346,19 @@ func newTrustCenterHTTPRedirectHandler(trustService *visitor.Service, l *log.Log
 	})
 }
 
-func (impl *Implm) runTrustCenterServer(
+func (impl *Implm) runCompliancePortalServer(
 	ctx context.Context,
 	l *log.Logger,
 	r prometheus.Registerer,
 	tp trace.TracerProvider,
 	pgClient *pg.Client,
 	trustRouter http.Handler,
-	trustService *visitor.Service,
+	visitorService *visitor.Service,
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
 
-	ctx, span := tracer.Start(ctx, "probod.runTrustCenterServer")
+	ctx, span := tracer.Start(ctx, "probod.runCompliancePortalServer")
 	defer span.End()
 
 	certSelector := certmanager.NewSelector(pgClient, encryptionKey)
@@ -1371,7 +1371,7 @@ func (impl *Implm) runTrustCenterServer(
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	l.Info("starting trust center services")
+	l.Info("starting compliance portal services")
 	span.AddEvent("Trust center services starting")
 
 	httpACMEHandler := certmanager.NewACMEChallengeHandler(
@@ -1379,10 +1379,10 @@ func (impl *Implm) runTrustCenterServer(
 		l.Named("http_acme_handler"),
 	)
 
-	httpRedirectHandler := newTrustCenterHTTPRedirectHandler(trustService, l.Named("http_redirect"))
+	httpRedirectHandler := newCompliancePortalHTTPRedirectHandler(visitorService, l.Named("http_redirect"))
 
 	httpServer := httpserver.NewServer(
-		impl.cfg.TrustCenter.HTTPAddr,
+		impl.cfg.CompliancePortal.HTTPAddr,
 		httpACMEHandler.Handle(httpRedirectHandler),
 		httpserver.WithLogger(l),
 		httpserver.WithRegisterer(r),
@@ -1401,8 +1401,8 @@ func (impl *Implm) runTrustCenterServer(
 
 			defer func() { _ = listener.Close() }()
 
-			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)
+			if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
+				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies)
 				if err != nil {
 					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
 				}
@@ -1413,7 +1413,7 @@ func (impl *Implm) runTrustCenterServer(
 					ConnPolicy:        policy,
 				}
 
-				l.Info("using proxy protocol for trust center HTTP server", log.Any("trusted-proxies", impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies))
+				l.Info("using proxy protocol for compliance portal HTTP server", log.Any("trusted-proxies", impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies))
 			}
 
 			if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
@@ -1446,7 +1446,7 @@ func (impl *Implm) runTrustCenterServer(
 	}
 	httpServerLogger := l.Named("", log.SkipMatch(ignoreTLSHandshakeErrors))
 	httpsServer := httpserver.NewServer(
-		impl.cfg.TrustCenter.HTTPSAddr,
+		impl.cfg.CompliancePortal.HTTPSAddr,
 		handler,
 		httpserver.WithLogger(httpServerLogger),
 		httpserver.WithRegisterer(r),
@@ -1482,7 +1482,7 @@ func (impl *Implm) runTrustCenterServer(
 
 	g.Go(
 		func() error {
-			l.InfoCtx(ctx, "starting trust center https server", log.String("addr", httpsServer.Addr))
+			l.InfoCtx(ctx, "starting compliance portal https server", log.String("addr", httpsServer.Addr))
 			span.AddEvent("HTTPS server starting")
 
 			listener, err := net.Listen("tcp", httpsServer.Addr)
@@ -1492,8 +1492,8 @@ func (impl *Implm) runTrustCenterServer(
 
 			defer func() { _ = listener.Close() }()
 
-			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)
+			if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
+				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies)
 				if err != nil {
 					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
 				}
@@ -1504,7 +1504,7 @@ func (impl *Implm) runTrustCenterServer(
 					ConnPolicy:        policy,
 				}
 
-				l.Info("using proxy protocol for trust center HTTPS server", log.Any("trusted-proxies", impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies))
+				l.Info("using proxy protocol for compliance portal HTTPS server", log.Any("trusted-proxies", impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies))
 			}
 
 			if err := httpsServer.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
@@ -1515,7 +1515,7 @@ func (impl *Implm) runTrustCenterServer(
 		},
 	)
 
-	l.Info("trust center servers started")
+	l.Info("compliance portal servers started")
 	span.AddEvent("Trust center servers started")
 
 	go func() {
@@ -1524,7 +1524,7 @@ func (impl *Implm) runTrustCenterServer(
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		l.InfoCtx(ctx, "shutting down trust center servers...")
+		l.InfoCtx(ctx, "shutting down compliance portal servers...")
 		span.AddEvent("Trust center servers shutting down")
 
 		if err := httpsServer.Shutdown(shutdownCtx); err != nil {

@@ -40,11 +40,11 @@ import (
 
 type (
 	CreateReferenceRequest struct {
-		TrustCenterID gid.GID
-		Name          string
-		Description   *string
-		WebsiteURL    string
-		LogoFile      File
+		CompliancePortalID gid.GID
+		Name               string
+		Description        *string
+		WebsiteURL         string
+		LogoFile           File
 	}
 
 	UpdateReferenceRequest struct {
@@ -60,7 +60,7 @@ type (
 func (ctcrr *CreateReferenceRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(ctcrr.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(ctcrr.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(ctcrr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctcrr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ctcrr.WebsiteURL, "website_url", validator.Required(), validator.SafeText(2048))
@@ -71,7 +71,7 @@ func (ctcrr *CreateReferenceRequest) Validate() error {
 func (utcrr *UpdateReferenceRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(utcrr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterReferenceEntityType))
+	v.Check(utcrr.ID, "id", validator.Required(), validator.GID(coredata.CompliancePortalReferenceEntityType))
 	v.Check(utcrr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(utcrr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(utcrr.WebsiteURL, "website_url", validator.SafeText(2048))
@@ -83,14 +83,14 @@ func (s *Service) ListReferences(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
-	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
-) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
-	var references coredata.TrustCenterReferences
+	cursor *page.Cursor[coredata.CompliancePortalReferenceOrderField],
+) (*page.Page[*coredata.CompliancePortalReference, coredata.CompliancePortalReferenceOrderField], error) {
+	var references coredata.CompliancePortalReferences
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := references.LoadByTrustCenterID(ctx, conn, scope, compliancePageID, cursor)
+			err := references.LoadByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance page references: %w", err)
 			}
@@ -115,9 +115,9 @@ func (s *Service) CountReferences(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
-			references := coredata.TrustCenterReferences{}
+			references := coredata.CompliancePortalReferences{}
 
-			count, err = references.CountByTrustCenterID(ctx, conn, scope, compliancePageID)
+			count, err = references.CountByCompliancePortalID(ctx, conn, scope, compliancePageID)
 			if err != nil {
 				return fmt.Errorf("cannot count compliance page references: %w", err)
 			}
@@ -136,8 +136,8 @@ func (s *Service) GetReference(
 	ctx context.Context,
 	scope coredata.Scoper,
 	referenceID gid.GID,
-) (*coredata.TrustCenterReference, error) {
-	var reference coredata.TrustCenterReference
+) (*coredata.CompliancePortalReference, error) {
+	var reference coredata.CompliancePortalReference
 
 	err := s.pg.WithConn(
 		ctx,
@@ -161,44 +161,44 @@ func (s *Service) CreateReference(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *CreateReferenceRequest,
-) (*coredata.TrustCenterReference, error) {
+) (*coredata.CompliancePortalReference, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
 
-	referenceID := gid.New(scope.GetTenantID(), coredata.TrustCenterReferenceEntityType)
+	referenceID := gid.New(scope.GetTenantID(), coredata.CompliancePortalReferenceEntityType)
 
-	var reference *coredata.TrustCenterReference
+	var reference *coredata.CompliancePortalReference
 
 	var logoKey string
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+			compliancePage := &coredata.CompliancePortal{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, req.CompliancePortalID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			fileID, s3Key, err := s.uploadReferenceLogoFile(ctx, scope, tx, req.LogoFile, referenceID, req.TrustCenterID, now)
+			fileID, s3Key, err := s.uploadReferenceLogoFile(ctx, scope, tx, req.LogoFile, referenceID, req.CompliancePortalID, now)
 			if err != nil {
 				return fmt.Errorf("cannot upload logo file: %w", err)
 			}
 
 			logoKey = s3Key
 
-			reference = &coredata.TrustCenterReference{
-				ID:             referenceID,
-				OrganizationID: compliancePage.OrganizationID,
-				TrustCenterID:  req.TrustCenterID,
-				Name:           req.Name,
-				Description:    req.Description,
-				WebsiteURL:     req.WebsiteURL,
-				LogoFileID:     fileID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+			reference = &coredata.CompliancePortalReference{
+				ID:                 referenceID,
+				OrganizationID:     compliancePage.OrganizationID,
+				CompliancePortalID: req.CompliancePortalID,
+				Name:               req.Name,
+				Description:        req.Description,
+				WebsiteURL:         req.WebsiteURL,
+				LogoFileID:         fileID,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
 
 			if err := reference.Insert(ctx, tx, scope); err != nil {
@@ -220,7 +220,7 @@ func (s *Service) UpdateReference(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req *UpdateReferenceRequest,
-) (*coredata.TrustCenterReference, error) {
+) (*coredata.CompliancePortalReference, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (s *Service) UpdateReference(
 	now := time.Now()
 
 	var (
-		reference *coredata.TrustCenterReference
+		reference *coredata.CompliancePortalReference
 		newFileID *gid.GID
 		logoKey   string
 	)
@@ -236,14 +236,14 @@ func (s *Service) UpdateReference(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			reference = &coredata.TrustCenterReference{}
+			reference = &coredata.CompliancePortalReference{}
 
 			if err := reference.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance page reference: %w", err)
 			}
 
 			if req.LogoFile != nil {
-				fileID, s3Key, err := s.uploadReferenceLogoFile(ctx, scope, tx, *req.LogoFile, req.ID, reference.TrustCenterID, now)
+				fileID, s3Key, err := s.uploadReferenceLogoFile(ctx, scope, tx, *req.LogoFile, req.ID, reference.CompliancePortalID, now)
 				if err != nil {
 					return fmt.Errorf("cannot upload logo file: %w", err)
 				}
@@ -295,14 +295,14 @@ func (s *Service) UpdateReference(
 func (s *Service) DeleteReference(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trustCenterReferenceID gid.GID,
+	compliancePortalReferenceID gid.GID,
 ) error {
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			reference := &coredata.TrustCenterReference{}
+			reference := &coredata.CompliancePortalReference{}
 
-			if err := reference.LoadByID(ctx, tx, scope, trustCenterReferenceID); err != nil {
+			if err := reference.LoadByID(ctx, tx, scope, compliancePortalReferenceID); err != nil {
 				return fmt.Errorf("cannot load compliance page reference: %w", err)
 			}
 
@@ -322,7 +322,7 @@ func (s *Service) GenerateReferenceLogoURL(
 	scope coredata.Scoper,
 	referenceID gid.GID,
 ) (string, error) {
-	reference := &coredata.TrustCenterReference{}
+	reference := &coredata.CompliancePortalReference{}
 
 	err := s.pg.WithTx(
 		ctx,
@@ -358,7 +358,7 @@ func (s *Service) uploadReferenceLogoFile(
 		return gid.GID{}, "", fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	compliancePage := &coredata.TrustCenter{}
+	compliancePage := &coredata.CompliancePortal{}
 	if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
 		return gid.GID{}, "", fmt.Errorf("cannot load compliance page: %w", err)
 	}
