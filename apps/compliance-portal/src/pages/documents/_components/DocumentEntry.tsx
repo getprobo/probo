@@ -22,6 +22,8 @@ import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { Link as RouterLink } from "react-router";
 
 import { DocumentAccessAction } from "./DocumentAccessAction";
 
@@ -43,8 +45,8 @@ interface DocumentEntryProps {
 }
 
 // Presentational row shared by the document / file / report list items: a title
-// with accent metadata and the trailing access action. The connection-item
-// wrappers own their fragments and supply these values.
+// with accent metadata and the trailing access action. On small screens the
+// whole row is the hit target (the trailing icon is a status affordance only).
 export function DocumentEntry({
   title,
   meta,
@@ -54,8 +56,21 @@ export function DocumentEntry({
   onGetAccess,
   isRequesting,
 }: DocumentEntryProps) {
+  const { t } = useTranslation("documents");
+
+  const mobileHitLabel = requested
+    ? null
+    : isAuthorized
+      ? t("actions.view")
+      : t("actions.getAccess");
+
   return (
-    <ListItem>
+    <ListItem
+      className={[
+        "relative",
+        mobileHitLabel != null ? "max-sm:cursor-pointer max-sm:hover:bg-sand-2" : "",
+      ].filter(Boolean).join(" ")}
+    >
       <ListItemContent>
         <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
           {title}
@@ -64,13 +79,50 @@ export function DocumentEntry({
           {meta}
         </Text>
       </ListItemContent>
-      <DocumentAccessAction
-        isAuthorized={isAuthorized}
-        requested={requested}
-        viewHref={viewHref}
-        onGetAccess={onGetAccess}
-        isRequesting={isRequesting}
-      />
+
+      {/* Desktop: labeled interactive control. */}
+      <div className="max-sm:hidden">
+        <DocumentAccessAction
+          isAuthorized={isAuthorized}
+          requested={requested}
+          viewHref={viewHref}
+          onGetAccess={onGetAccess}
+          isRequesting={isRequesting}
+        />
+      </div>
+
+      {/* Mobile: status icon only; the row overlay handles activation. */}
+      <div className="hidden shrink-0 max-sm:block" aria-hidden={mobileHitLabel != null}>
+        <DocumentAccessAction
+          isAuthorized={isAuthorized}
+          requested={requested}
+          viewHref={viewHref}
+          onGetAccess={onGetAccess}
+          isRequesting={isRequesting}
+          interactive={false}
+        />
+      </div>
+
+      {/* Sit above the row content so title / icon areas are part of the hit target. */}
+      {mobileHitLabel != null && (
+        isAuthorized
+          ? (
+              <RouterLink
+                to={viewHref}
+                className="absolute inset-0 z-10 hidden max-sm:block"
+                aria-label={mobileHitLabel}
+              />
+            )
+          : (
+              <button
+                type="button"
+                className="absolute inset-0 z-10 hidden max-sm:block"
+                aria-label={mobileHitLabel}
+                disabled={isRequesting}
+                onClick={onGetAccess}
+              />
+            )
+      )}
     </ListItem>
   );
 }

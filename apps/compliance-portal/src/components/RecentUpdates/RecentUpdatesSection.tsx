@@ -89,7 +89,7 @@ function RecentUpdatesSectionContent({ trustCenterKey }: RecentUpdatesSectionPro
     >
       <div className="relative overflow-hidden rounded-5 border border-sand-3 bg-sand-1">
         <div aria-hidden className="pointer-events-none absolute inset-0" style={dotPatternStyle} />
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-r from-sand-1/0 to-sand-1 to-[96px]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-r from-sand-1/0 to-sand-1 to-[96px] max-sm:to-[48px]" />
         <div className="relative divide-y divide-sand-a2">
           {updates.map(update => (
             // Rows share fate (one connection query), so a row's field error

@@ -107,7 +107,7 @@ export function SubprocessorsPage({ queryRef }: SubprocessorsPageProps) {
       <PageHeader title={t("title")} count={subprocessors.totalCount} flushBottomSpace>
         <SubprocessorsToolbar queryKey={root} />
       </PageHeader>
-      <div className="flex w-full flex-col items-center px-8 py-8">
+      <div className="flex w-full flex-col items-center px-8 py-8 max-md:px-4">
         <div
           aria-busy={isRefetching}
           className={`flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150 ${isRefetching ? "opacity-60" : ""}`}

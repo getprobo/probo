@@ -25,7 +25,7 @@ export const errorState = tv({
     root: "flex w-full items-center justify-center",
     block: "flex min-w-64 max-w-md flex-col items-center gap-6 text-center",
     content: "flex w-full flex-col items-center gap-2",
-    actions: "flex items-center justify-center gap-2",
+    actions: "flex flex-wrap items-center justify-center gap-2",
   },
   variants: {
     // Standalone fills the viewport; in-shell sits inside the app chrome.

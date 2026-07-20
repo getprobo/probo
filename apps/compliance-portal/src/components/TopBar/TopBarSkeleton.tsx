@@ -43,7 +43,8 @@ export function TopBarSkeleton() {
       <div className={slots.inner()}>
         <div className={slots.brand()}>
           <AvatarSkeleton size={1} radius="small" />
-          <TextSkeleton size={2} className="w-24" />
+          <TextSkeleton size={2} className={`w-24 ${slots.brandName()}`} />
+          <TextSkeleton size={2} className={`w-28 ${slots.tagline()}`} />
         </div>
 
         <div className={slots.spacer()} />
@@ -54,6 +55,10 @@ export function TopBarSkeleton() {
           ))}
           <ButtonSkeleton size={2} />
         </nav>
+
+        <div className={slots.menuTrigger()}>
+          <div className="size-8 animate-pulse rounded-2 bg-sand-3" />
+        </div>
       </div>
     </div>
   );

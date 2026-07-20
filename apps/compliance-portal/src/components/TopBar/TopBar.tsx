@@ -31,20 +31,16 @@ import { buildRequestAllContinueUrl } from "#/lib/auth/continueUrl";
 import { useSignInDialog } from "#/lib/auth/signInDialogContext";
 
 import type { TopBar_query$key } from "./__generated__/TopBar_query.graphql";
+import { TOP_BAR_NAV_ITEMS } from "./navItems";
+import { TopBarMobileNav } from "./TopBarMobileNav";
 import { TopBarUserMenu } from "./TopBarUserMenu";
 import { topBar } from "./variants";
-
-const NAV_ITEMS = [
-  { to: "/documents", labelKey: "topBar.nav.documents" },
-  { to: "/subprocessors", labelKey: "topBar.nav.subprocessors" },
-  { to: "/updates", labelKey: "topBar.nav.updates" },
-  { to: "/requests", labelKey: "topBar.nav.requests" },
-] as const;
 
 const topBarFragment = graphql`
   fragment TopBar_query on Query {
     viewer {
       ...TopBarUserMenu_identity
+      ...TopBarMobileNav_identity
     }
     currentTrustCenter @required(action: THROW) {
       themedLogoUrl
@@ -88,10 +84,10 @@ export function TopBar({ queryKey }: TopBarProps) {
             fallback={organizationName.charAt(0) || "?"}
             className={slots.logo()}
           />
-          <Text size={2} weight="medium" color="neutral" highContrast>
+          <Text size={2} weight="medium" color="neutral" highContrast className={slots.brandName()}>
             {organizationName}
           </Text>
-          <Text size={2} color="neutral">
+          <Text size={2} color="neutral" className={slots.tagline()}>
             {t("topBar.tagline")}
           </Text>
         </RouterLink>
@@ -99,7 +95,7 @@ export function TopBar({ queryKey }: TopBarProps) {
         <div className={slots.spacer()} />
 
         <nav className={slots.nav()}>
-          {NAV_ITEMS.map(item => (
+          {TOP_BAR_NAV_ITEMS.map(item => (
             <Link
               key={item.to}
               to={item.to}
@@ -125,6 +121,8 @@ export function TopBar({ queryKey }: TopBarProps) {
               )
             : <TopBarUserMenu identityKey={data.viewer} />}
         </nav>
+
+        <TopBarMobileNav identityKey={data.viewer ?? null} />
       </div>
     </header>
   );

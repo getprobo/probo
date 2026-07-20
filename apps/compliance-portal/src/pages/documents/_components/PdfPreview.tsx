@@ -28,7 +28,7 @@ import { times } from "@probo/helpers";
 // eslint-disable-next-line import-x/default
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { ComponentRef, Ref } from "react";
-import { useImperativeHandle, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
 import { pdfPreview } from "./variants";
@@ -37,6 +37,9 @@ import { pdfPreview } from "./variants";
 // it from a CDN, so the viewer works under a strict trust-center CSP.
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
+// Horizontal inset so pages don't kiss the viewport edge on phones.
+const PAGE_GUTTER_PX = 32;
+
 export interface PdfPreviewHandle {
   scrollToPage: (page: number) => void;
 }
@@ -44,7 +47,7 @@ export interface PdfPreviewHandle {
 interface PdfPreviewProps {
   // Base64 data URI of the PDF to render.
   file: string;
-  // Zoom factor applied to every page.
+  // Zoom factor applied on top of fit-to-width sizing.
   scale: number;
   // Handle exposing imperative page navigation to the toolbar.
   ref?: Ref<PdfPreviewHandle>;
@@ -54,11 +57,12 @@ interface PdfPreviewProps {
   onVisiblePageChange: (page: number) => void;
 }
 
-// Scrollable react-pdf renderer, controlled by the viewer toolbar: it takes the
-// zoom `scale`, reports the page count and the visible page, and exposes an
-// imperative `scrollToPage` for the page-navigation buttons.
+// Scrollable react-pdf renderer, controlled by the viewer toolbar: pages fit
+// the viewport width by default, then the zoom `scale` multiplies that width.
+// Reports the page count and the visible page, and exposes `scrollToPage`.
 export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }: PdfPreviewProps) {
   const [numPages, setNumPages] = useState(0);
+  const [pageWidth, setPageWidth] = useState<number | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<ComponentRef<typeof Document>>(null);
 
@@ -68,6 +72,22 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
       node?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
   }), []);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
+      return;
+    }
+
+    const updateWidth = () => {
+      setPageWidth(Math.max(wrapper.clientWidth - PAGE_GUTTER_PX, 1));
+    };
+
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, []);
 
   const resolveVisiblePage = () => {
     const wrapper = wrapperRef.current;
@@ -104,9 +124,17 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
           onVisiblePageChange(1);
         }}
       >
-        {times(numPages, index => (
-          <Page key={index} pageNumber={index + 1} scale={scale} className={slots.page()} />
-        ))}
+        {pageWidth != null
+          ? times(numPages, index => (
+              <Page
+                key={index}
+                pageNumber={index + 1}
+                width={pageWidth}
+                scale={scale}
+                className={slots.page()}
+              />
+            ))
+          : null}
       </Document>
     </div>
   );

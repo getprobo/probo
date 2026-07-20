@@ -28,7 +28,7 @@ export function HomePageSkeleton() {
   return (
     <>
       <HeroSkeleton />
-      <div className="flex w-full flex-col items-center px-8">
+      <div className="flex w-full flex-col items-center px-8 max-md:px-4">
         <div className="flex w-full max-w-5xl flex-col">
           <ComplianceFrameworksSectionSkeleton />
           <SecurityCommitmentsSectionSkeleton />

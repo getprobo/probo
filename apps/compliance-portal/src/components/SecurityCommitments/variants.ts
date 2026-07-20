@@ -27,6 +27,6 @@ export const securityCommitments = tv({
     root: "flex w-full flex-col gap-8 py-8",
     group: "flex w-full flex-col gap-4",
     groupHeader: "flex w-full flex-col gap-2",
-    grid: "grid grid-cols-3 gap-4",
+    grid: "grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1",
   },
 });

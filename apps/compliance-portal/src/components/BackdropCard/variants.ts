@@ -25,10 +25,10 @@ import { tv } from "tailwind-variants/lite";
 // the card surface, with centered media on top, above a left-aligned body.
 export const backdropCard = tv({
   slots: {
-    header: "relative flex w-full items-center overflow-hidden p-8",
+    header: "relative flex w-full items-center overflow-hidden p-8 max-md:p-4",
     blurBackdrop: "pointer-events-none absolute inset-0 size-full scale-150 object-cover opacity-10 blur-lg",
     backdrop: "pointer-events-none absolute inset-0",
     backdropFade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
-    body: "flex flex-col gap-2 px-8 pb-8",
+    body: "flex flex-col gap-2 px-8 pb-8 max-md:px-4 max-md:pb-4",
   },
 });

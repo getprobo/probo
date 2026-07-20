@@ -23,7 +23,7 @@ import { tv } from "tailwind-variants/lite";
 // Data requests page shell: a centered content column below the header band.
 export const requestsLayout = tv({
   slots: {
-    page: "flex w-full flex-col items-center px-8 py-8",
+    page: "flex w-full flex-col items-center px-8 py-8 max-md:px-4",
     results: "flex w-full max-w-5xl flex-col gap-6",
     loadMore: "flex justify-center",
   },

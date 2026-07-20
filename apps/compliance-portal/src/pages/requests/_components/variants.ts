@@ -26,7 +26,7 @@ export const rightsRequestList = tv({
   slots: {
     icon: "flex size-9 shrink-0 items-center justify-center rounded-3 bg-sand-3 text-sand-a11 [&_svg]:size-4",
     subline: "flex min-w-0 items-center gap-1.5",
-    trailing: "flex shrink-0 items-center gap-3",
+    trailing: "flex shrink-0 items-center gap-3 max-sm:self-start",
   },
 });
 

@@ -21,7 +21,7 @@
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
-import { Outlet } from "react-router";
+import { Outlet, useMatch } from "react-router";
 
 import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
@@ -48,22 +48,35 @@ interface MainLayoutProps {
 export function MainLayout({ queryRef }: MainLayoutProps) {
   const { t } = useTranslation();
   const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
+  const isDocumentViewer = useMatch("documents/:alias") != null;
 
   // Resume a deferred "request access" once the user lands back authenticated.
   useResumeAccessRequest(data.viewer != null);
 
+  // Document viewer fills the viewport under the TopBar and scrolls its own
+  // stage; every other page uses normal document flow so the footer sits after
+  // content (and at the bottom of short pages via flex-1 main).
   return (
-  // Bound the shell to the viewport so the TopBar and footer stay fixed and the
-  // page area scrolls on its own. Pages that fill the height (the document
-  // viewer) then scroll their own body while their toolbar stays put.
     <SignInDialogProvider>
       <SubscribeDialogProvider queryKey={data}>
-        <div className="flex h-dvh flex-col bg-sand-2">
+        <div
+          className={
+            isDocumentViewer
+              ? "flex h-dvh flex-col bg-sand-2"
+              : "flex min-h-dvh flex-col bg-sand-2"
+          }
+        >
           <TopBar queryKey={data} />
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div
+            className={
+              isDocumentViewer
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+                : "flex flex-1 flex-col"
+            }
+          >
             <Outlet />
           </div>
-          <PoweredBy label={t("footer.poweredBy")} />
+          {isDocumentViewer ? null : <PoweredBy label={t("footer.poweredBy")} />}
         </div>
       </SubscribeDialogProvider>
     </SignInDialogProvider>

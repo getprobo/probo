@@ -163,8 +163,14 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
               )}
             </div>
             <div className={slots.actions()}>
-              <Button variant="ghost" color="neutral" iconStart={<ShareNetworkIcon />} onClick={handleShare}>
-                {t("viewer.share")}
+              <Button
+                variant="ghost"
+                color="neutral"
+                iconStart={<ShareNetworkIcon />}
+                onClick={handleShare}
+                aria-label={t("viewer.share")}
+              >
+                <span className={slots.actionLabel()}>{t("viewer.share")}</span>
               </Button>
               <Separator orientation="vertical" className={slots.separator()} />
               <Button
@@ -173,8 +179,9 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
                 iconStart={<DownloadSimpleIcon />}
                 disabled={dataUri == null}
                 onClick={handleDownload}
+                aria-label={t("viewer.download")}
               >
-                {t("viewer.download")}
+                <span className={slots.actionLabel()}>{t("viewer.download")}</span>
               </Button>
             </div>
           </div>

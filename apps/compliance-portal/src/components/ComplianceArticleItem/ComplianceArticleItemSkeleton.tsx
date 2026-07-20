@@ -23,7 +23,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { complianceArticleItem } from "./variants";
 
 // Loading placeholder paired with ComplianceArticleItem: same row layout with
-// a pulse icon and skeleton text.
+// a pulse icon and skeleton text (meta stacks under the title on max-sm).
 export function ComplianceArticleItemSkeleton() {
   const slots = complianceArticleItem();
 
@@ -31,9 +31,11 @@ export function ComplianceArticleItemSkeleton() {
     <div className={slots.root()} aria-hidden>
       <div className={slots.iconPlaceholder()} />
       <div className={slots.content()}>
-        <TextSkeleton size={2} className="w-48" />
+        <div className={slots.text()}>
+          <TextSkeleton size={2} className="w-48 max-sm:w-40" />
+        </div>
+        <TextSkeleton size={1} className={`w-20 ${slots.meta()}`} />
       </div>
-      <TextSkeleton size={1} className="w-20 shrink-0" />
     </div>
   );
 }

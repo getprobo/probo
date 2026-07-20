@@ -64,7 +64,7 @@ export function HomePage({ queryRef }: HomePageProps) {
       >
         <OrganizationContactInfo organizationKey={organization} />
       </Hero>
-      <div className="flex w-full flex-col items-center px-8">
+      <div className="flex w-full flex-col items-center px-8 max-md:px-4">
         <div className="flex w-full max-w-5xl flex-col">
           <ComplianceFrameworksSection trustCenterKey={currentTrustCenter} />
           <SecurityCommitmentsSection trustCenterKey={currentTrustCenter} />

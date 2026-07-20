@@ -78,7 +78,7 @@ function TrustedBySectionContent({ trustCenterKey }: TrustedBySectionProps) {
 
   return (
     <HomeSection title={t("home.sections.trustedBy")}>
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
         {references.map(reference => (
           <TrustCenterReferenceListItem key={reference.id} referenceKey={reference} />
         ))}

@@ -18,13 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TopBarSkeleton } from "#/components/TopBar/TopBarSkeleton";
-
-export function MainLayoutSkeleton() {
-  return (
-    <div className="flex min-h-dvh flex-col bg-sand-2">
-      <TopBarSkeleton />
-      <div className="flex flex-1 flex-col" />
-    </div>
-  );
-}
+export const TOP_BAR_NAV_ITEMS = [
+  { to: "/documents", labelKey: "topBar.nav.documents" },
+  { to: "/subprocessors", labelKey: "topBar.nav.subprocessors" },
+  { to: "/updates", labelKey: "topBar.nav.updates" },
+  { to: "/requests", labelKey: "topBar.nav.requests" },
+] as const;

@@ -61,25 +61,27 @@ export function RightsRequestListItem({ rightsRequestKey }: RightsRequestListIte
   const { icon, subline, trailing } = rightsRequestList();
 
   return (
-    <ListItem>
-      <span className={icon()}>
-        {getRightsRequestTypeIcon(request.requestType)}
-      </span>
-      <ListItemContent>
-        <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
-          {t(`types.${request.requestType}`)}
-        </Text>
-        <div className={subline()}>
-          <Text size={1} color="gold">
-            {reference}
+    <ListItem className="max-sm:flex-col max-sm:items-stretch max-sm:gap-2">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
+        <span className={icon()}>
+          {getRightsRequestTypeIcon(request.requestType)}
+        </span>
+        <ListItemContent>
+          <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
+            {t(`types.${request.requestType}`)}
           </Text>
-          {request.actionTaken != null && request.actionTaken !== "" && (
-            <Text size={1} color="faint" className="truncate">
-              {`· ${request.actionTaken}`}
+          <div className={subline()}>
+            <Text size={1} color="gold">
+              {reference}
             </Text>
-          )}
-        </div>
-      </ListItemContent>
+            {request.actionTaken != null && request.actionTaken !== "" && (
+              <Text size={1} color="faint" className="truncate">
+                {`· ${request.actionTaken}`}
+              </Text>
+            )}
+          </div>
+        </ListItemContent>
+      </div>
       <div className={trailing()}>
         <Text size={1} color="faint">
           {formatRelativeTime(request.createdAt, i18n.language)}

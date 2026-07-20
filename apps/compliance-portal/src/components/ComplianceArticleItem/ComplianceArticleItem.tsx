@@ -30,7 +30,7 @@ export interface ComplianceArticleItemProps {
   title: ReactNode;
   // Optional accent sub-label below the title.
   eyebrow?: ReactNode;
-  // Right-aligned metadata (e.g. relative time).
+  // Trailing metadata on desktop; stacks under the title on small screens.
   meta?: ReactNode;
 }
 
@@ -43,20 +43,22 @@ export function ComplianceArticleItem({ icon, title, eyebrow, meta }: Compliance
     <div className={slots.root()}>
       <span className={slots.icon()}>{icon}</span>
       <div className={slots.content()}>
-        <Text size={2} weight="medium" color="neutral" highContrast>
-          {title}
-        </Text>
-        {eyebrow != null && (
-          <Text size={1} color="gold">
-            {eyebrow}
+        <div className={slots.text()}>
+          <Text size={2} weight="medium" color="neutral" highContrast className={slots.title()}>
+            {title}
+          </Text>
+          {eyebrow != null && (
+            <Text size={1} color="gold">
+              {eyebrow}
+            </Text>
+          )}
+        </div>
+        {meta != null && (
+          <Text size={1} color="faint" className={slots.meta()}>
+            {meta}
           </Text>
         )}
       </div>
-      {meta != null && (
-        <Text size={1} color="faint" className={slots.meta()}>
-          {meta}
-        </Text>
-      )}
     </div>
   );
 }

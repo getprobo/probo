@@ -36,8 +36,8 @@ export const hero = tv({
 export const organizationContactInfo = tv({
   slots: {
     // Only a top divider gap; the band's py-8 provides the bottom spacing.
-    root: "flex w-full items-center gap-6 border-t border-sand-a2 pt-4",
-    item: "flex items-center gap-2 text-sand-11 [&_svg]:size-5",
-    link: "flex items-center gap-2 text-sand-11 hover:underline [&_svg]:size-5",
+    root: "flex w-full flex-wrap items-center gap-x-6 gap-y-2 border-t border-sand-a2 pt-4 max-md:flex-col max-md:items-start",
+    item: "flex min-w-0 items-center gap-2 text-sand-11 [&_svg]:size-5 [&_svg]:shrink-0 [&>*]:min-w-0 [&>*:not(svg)]:break-words",
+    link: "flex min-w-0 items-center gap-2 text-sand-11 hover:underline [&_svg]:size-5 [&_svg]:shrink-0 [&>*]:min-w-0 [&>*:not(svg)]:break-all",
   },
 });

@@ -2,6 +2,9 @@
   "topBar": {
     "tagline": "Compliance Portal",
     "getAccess": "Get Access",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "menuTitle": "Menu",
     "nav": {
       "documents": "Documents",
       "subprocessors": "Subprocessors",

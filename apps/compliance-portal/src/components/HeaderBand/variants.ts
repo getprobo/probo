@@ -25,7 +25,7 @@ import { tv } from "tailwind-variants/lite";
 // Hero and the page headers so the band is defined once.
 export const headerBand = tv({
   slots: {
-    band: "flex w-full flex-col items-center border-b border-sand-a3 bg-sand-1 px-8",
+    band: "flex w-full flex-col items-center border-b border-sand-a3 bg-sand-1 px-8 max-md:px-4",
     inner: "w-full max-w-5xl",
   },
   variants: {

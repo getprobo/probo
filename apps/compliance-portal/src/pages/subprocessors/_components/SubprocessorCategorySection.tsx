@@ -51,7 +51,7 @@ export function SubprocessorCategorySection({ category, subprocessors }: Subproc
           {t(`categories.${category}.description`)}
         </Text>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1">
         {subprocessors.map(subprocessor => (
           <SubprocessorListItem key={subprocessor.id} subprocessorKey={subprocessor} />
         ))}

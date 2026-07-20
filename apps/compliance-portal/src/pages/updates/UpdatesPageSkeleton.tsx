@@ -18,26 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { PaginationSkeleton } from "@probo/ui/src/v2/Pagination/PaginationSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 
 import { ComplianceArticleItemSkeleton } from "#/components/ComplianceArticleItem/ComplianceArticleItemSkeleton";
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
+import { pageHeader } from "#/components/PageHeader/variants";
 
 import { updatesList } from "./_components/variants";
 import { UPDATES_PAGE_SIZE } from "./_lib/constants";
 
 export function UpdatesPageSkeleton() {
   const { card, rows } = updatesList();
+  const header = pageHeader();
 
   return (
     <>
       <HeaderBand>
-        <div className="flex w-full flex-col gap-2">
-          <HeadingSkeleton size={7} className="w-40" />
+        <div className={header.content()}>
+          <div className={header.titleRow()}>
+            <HeadingSkeleton size={7} className="w-40" />
+            <ButtonSkeleton size={2} className="max-sm:w-full" />
+          </div>
         </div>
       </HeaderBand>
-      <div className="flex w-full flex-col items-center px-8 py-8">
+      <div className="flex w-full flex-col items-center px-8 py-8 max-md:px-4">
         <div className="flex w-full max-w-5xl flex-col gap-8">
           <div className={card()} aria-hidden>
             <div className={rows()}>

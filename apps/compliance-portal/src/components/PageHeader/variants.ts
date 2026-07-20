@@ -25,7 +25,7 @@ import { tv } from "tailwind-variants/lite";
 export const pageHeader = tv({
   slots: {
     content: "flex w-full flex-col gap-2",
-    titleRow: "flex w-full items-center justify-between gap-4",
+    titleRow: "flex w-full items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch",
     // Muted item count appended to the title (e.g. "Documents (3)").
     count: "font-light text-sand-8",
   },

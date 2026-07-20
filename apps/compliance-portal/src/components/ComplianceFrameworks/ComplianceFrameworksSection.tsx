@@ -80,7 +80,7 @@ function ComplianceFrameworksSectionContent({ trustCenterKey }: ComplianceFramew
 
   return (
     <HomeSection title={t("home.sections.compliance")}>
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
         {frameworks.map(framework => (
           <ComplianceFrameworkListItem key={framework.id} complianceFrameworkKey={framework} />
         ))}

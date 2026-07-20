@@ -44,8 +44,8 @@ export const updatesList = tv({
 // Slots are shared by the detail page and its skeleton.
 export const updateArticle = tv({
   slots: {
-    toolbar: "flex w-full items-center justify-between gap-4",
-    content: "flex w-full flex-col items-center px-8 py-8",
+    toolbar: "flex w-full items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch",
+    content: "flex w-full flex-col items-center px-8 py-8 max-md:px-4",
     article: "flex w-full max-w-2xl flex-col gap-4",
     meta: "flex items-center gap-1.5",
     metaIcon: "size-4 text-gold-9",

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArrowRightIcon, ClockIcon, LockSimpleIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon, ClockIcon, LockSimpleIcon, SpinnerGapIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Button/Link";
 import { useTranslation } from "react-i18next";
@@ -34,6 +34,30 @@ interface DocumentAccessActionProps {
   onGetAccess: () => void;
   // Whether the access request is in flight.
   isRequesting: boolean;
+  // When false, render a non-interactive status icon (used as the mobile
+  // affordance while the row itself handles the hit target).
+  interactive?: boolean;
+}
+
+function StatusIcon({
+  isAuthorized,
+  requested,
+  isRequesting,
+}: {
+  isAuthorized: boolean;
+  requested: boolean;
+  isRequesting: boolean;
+}) {
+  if (isAuthorized) {
+    return <ArrowRightIcon className="size-4 text-sand-12" />;
+  }
+  if (requested) {
+    return <ClockIcon className="size-4 text-sand-11" />;
+  }
+  if (isRequesting) {
+    return <SpinnerGapIcon className="size-4 animate-spin text-sand-12" />;
+  }
+  return <LockSimpleIcon className="size-4 text-sand-12" />;
 }
 
 // Trailing access control for a document entry: a "View" link to the viewer when
@@ -45,12 +69,31 @@ export function DocumentAccessAction({
   viewHref,
   onGetAccess,
   isRequesting,
+  interactive = true,
 }: DocumentAccessActionProps) {
   const { t } = useTranslation("documents");
 
+  if (!interactive) {
+    return (
+      <span className="flex size-8 items-center justify-center" aria-hidden>
+        <StatusIcon
+          isAuthorized={isAuthorized}
+          requested={requested}
+          isRequesting={isRequesting}
+        />
+      </span>
+    );
+  }
+
   if (isAuthorized) {
     return (
-      <Link to={viewHref} variant="ghost" color="neutral" highContrast iconStart={<ArrowRightIcon />}>
+      <Link
+        to={viewHref}
+        variant="ghost"
+        color="neutral"
+        highContrast
+        iconStart={<ArrowRightIcon />}
+      >
         {t("actions.view")}
       </Link>
     );

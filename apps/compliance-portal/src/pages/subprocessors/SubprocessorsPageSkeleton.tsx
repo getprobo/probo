@@ -33,17 +33,17 @@ export function SubprocessorsPageSkeleton() {
       <HeaderBand flushBottomSpace>
         <div className="flex w-full flex-col gap-2">
           <HeadingSkeleton size={7} className="w-64" />
-          <div className="flex min-h-16 items-center gap-3">
+          <div className="flex min-h-16 flex-wrap items-center gap-3 max-sm:pb-8">
             <SelectSkeleton />
             <SelectSkeleton />
             <TextFieldSkeleton />
           </div>
         </div>
       </HeaderBand>
-      <div className="flex w-full flex-col items-center px-8 py-8">
+      <div className="flex w-full flex-col items-center px-8 py-8 max-md:px-4">
         <div className="flex w-full max-w-5xl flex-col gap-4">
           <TextSkeleton size={3} className="w-48" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {CARD_PLACEHOLDERS.map(placeholder => (
               <div key={placeholder} className="h-56 animate-pulse rounded-5 bg-sand-3" />
             ))}

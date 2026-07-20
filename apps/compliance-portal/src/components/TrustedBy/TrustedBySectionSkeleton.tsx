@@ -31,7 +31,7 @@ export function TrustedBySectionSkeleton() {
       <div className={slots.header()}>
         <TextSkeleton size={2} className="w-20" />
       </div>
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
         {Array.from({ length: 6 }, (_, index) => (
           <MediaTileSkeleton key={index} variant="logo" />
         ))}

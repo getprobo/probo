@@ -43,7 +43,7 @@ export const dialog = tv({
     title: "text-4 font-medium text-sand-12",
     description: "text-2 text-sand-11",
     body: "px-6",
-    footer: "flex items-center justify-end gap-3 px-6",
+    footer: "flex flex-wrap items-center justify-end gap-3 px-6 max-sm:flex-col-reverse max-sm:items-stretch",
   },
 });
 

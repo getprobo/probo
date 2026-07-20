@@ -24,7 +24,7 @@ import { tv } from "tailwind-variants/lite";
 // `busy` variant dims the current results while a filtered slice refetches.
 export const documentsLayout = tv({
   slots: {
-    page: "flex w-full flex-col items-center px-8 py-8",
+    page: "flex w-full flex-col items-center px-8 py-8 max-md:px-4",
     results: "flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150",
   },
   variants: {

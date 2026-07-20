@@ -35,7 +35,7 @@ export function DocumentsToolbar() {
 
   return (
     <Tabs value={tab} onValueChange={value => setTab(value as DocumentTab)}>
-      <TabsList>
+      <TabsList className="max-w-full overflow-x-auto">
         {DOCUMENT_TABS.map(value => (
           <TabsTab key={value} value={value}>
             {t(`tabs.${value}`)}

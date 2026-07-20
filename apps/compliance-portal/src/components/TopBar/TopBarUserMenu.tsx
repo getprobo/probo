@@ -76,10 +76,10 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
               radius="small"
               fallback={<UserIcon />}
             />
-            <Text size={2} weight="medium" color="neutral" highContrast>
+            <Text size={2} weight="medium" color="neutral" highContrast className="max-w-36 truncate">
               {displayName}
             </Text>
-            <CaretDownIcon className="size-4 text-sand-11" />
+            <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
           </button>
         )}
       />

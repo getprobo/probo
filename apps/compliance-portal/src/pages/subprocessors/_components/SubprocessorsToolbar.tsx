@@ -69,8 +69,11 @@ export function SubprocessorsToolbar({ queryKey }: SubprocessorsToolbarProps) {
   }, [subprocessorCountries, countryLabel]);
 
   return (
-    <div className="flex min-h-16 flex-wrap items-center gap-3">
-      <div className="w-40">
+    // flushBottomSpace drops the band's bottom padding so the desktop toolbar
+    // sits on the header edge; restore that padding on small screens where the
+    // controls stack into a column.
+    <div className="flex min-h-16 flex-wrap items-center gap-3 max-sm:pb-8">
+      <div className="w-40 max-sm:w-full">
         <Select value={category || null} onValueChange={value => setCategory(value ?? "")}>
           <SelectTrigger placeholder={t("filters.allCategories")}>
             {(value: string | null) => (value ? t(`categories.${value}.label`) : t("filters.allCategories"))}
@@ -83,7 +86,7 @@ export function SubprocessorsToolbar({ queryKey }: SubprocessorsToolbarProps) {
           </SelectPopup>
         </Select>
       </div>
-      <div className="w-40">
+      <div className="w-40 max-sm:w-full">
         <Select value={country || null} onValueChange={value => setCountry(value ?? "")}>
           <SelectTrigger placeholder={t("filters.allRegions")}>
             {(value: string | null) => (value ? countryLabel(value) : t("filters.allRegions"))}
@@ -96,7 +99,7 @@ export function SubprocessorsToolbar({ queryKey }: SubprocessorsToolbarProps) {
           </SelectPopup>
         </Select>
       </div>
-      <div className="w-60">
+      <div className="min-w-60 flex-1 max-sm:w-full max-sm:min-w-0">
         <TextField
           value={queryInput}
           onValueChange={setQueryInput}
