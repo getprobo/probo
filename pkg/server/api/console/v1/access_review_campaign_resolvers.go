@@ -822,7 +822,7 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
-		if errors.Is(err, accessreview.ErrCampaignNoScopeSources) ||
+		if errors.Is(err, accessreview.ErrCampaignNoSourcesSelected) ||
 			errors.Is(err, accessreview.ErrCampaignNotDraft) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
