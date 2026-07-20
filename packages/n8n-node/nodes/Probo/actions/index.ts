@@ -48,7 +48,7 @@ import * as risk from './risk';
 import * as statementOfApplicability from './statementOfApplicability';
 import * as task from './task';
 import * as tia from './tia';
-import * as trustCenter from './trustCenter';
+import * as compliancePortal from './compliancePortal';
 import * as thirdParty from './thirdParty';
 import * as webhook from './webhook';
 
@@ -92,7 +92,7 @@ export const resources: Record<string, ResourceModule> = {
 	statementOfApplicability: statementOfApplicability as ResourceModule,
 	task: task as ResourceModule,
 	tia: tia as ResourceModule,
-	trustCenter: trustCenter as ResourceModule,
+	compliancePortal: compliancePortal as ResourceModule,
 	thirdParty: thirdParty as ResourceModule,
 	webhook: webhook as ResourceModule,
 };

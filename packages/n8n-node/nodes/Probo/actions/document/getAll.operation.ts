@@ -169,7 +169,7 @@ export async function execute(
 							node {
 								id
 								status
-								trustCenterVisibility
+								compliancePortalVisibility
 								currentPublishedMajor
 								currentPublishedMinor
 								archivedAt

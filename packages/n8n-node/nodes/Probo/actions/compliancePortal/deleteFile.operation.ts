@@ -23,17 +23,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Trust Center File ID',
-		name: 'trustCenterFileId',
+		displayName: 'Compliance Portal File ID',
+		name: 'compliancePortalFileId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['deleteFile'],
 			},
 		},
 		default: '',
-		description: 'The ID of the trust center file to delete',
+		description: 'The ID of the compliance portal file to delete',
 		required: true,
 	},
 ];
@@ -42,17 +42,17 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const trustCenterFileId = this.getNodeParameter('trustCenterFileId', itemIndex) as string;
+	const compliancePortalFileId = this.getNodeParameter('compliancePortalFileId', itemIndex) as string;
 
 	const query = `
-		mutation DeleteTrustCenterFile($input: DeleteTrustCenterFileInput!) {
-			deleteTrustCenterFile(input: $input) {
-				deletedTrustCenterFileId
+		mutation DeleteCompliancePortalFile($input: DeleteCompliancePortalFileInput!) {
+			deleteCompliancePortalFile(input: $input) {
+				deletedCompliancePortalFileId
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { input: { id: trustCenterFileId } });
+	const responseData = await proboApiRequest.call(this, query, { input: { id: compliancePortalFileId } });
 
 	return {
 		json: responseData,

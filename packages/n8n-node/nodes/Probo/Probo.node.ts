@@ -223,9 +223,9 @@ export class Probo implements INodeType {
 						description: 'Manage tracker patterns',
 					},
 					{
-						name: 'Trust Center',
-						value: 'trustCenter',
-						description: 'Manage trust center',
+						name: 'Compliance Portal',
+						value: 'compliancePortal',
+						description: 'Manage compliance portal',
 					},
 					{
 						name: 'User',

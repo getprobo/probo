@@ -23,17 +23,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Trust Center ID',
-		name: 'trustCenterId',
+		displayName: 'Compliance Portal ID',
+		name: 'compliancePortalId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['createReference'],
 			},
 		},
 		default: '',
-		description: 'The ID of the trust center',
+		description: 'The ID of the compliance portal',
 		required: true,
 	},
 	{
@@ -42,7 +42,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['createReference'],
 			},
 		},
@@ -59,7 +59,7 @@ export const description: INodeProperties[] = [
 		},
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['createReference'],
 			},
 		},
@@ -72,7 +72,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['createReference'],
 			},
 		},
@@ -85,15 +85,15 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const trustCenterId = this.getNodeParameter('trustCenterId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
 
 	const query = `
-		mutation CreateTrustCenterReference($input: CreateTrustCenterReferenceInput!) {
-			createTrustCenterReference(input: $input) {
-				trustCenterReferenceEdge {
+		mutation CreateCompliancePortalReference($input: CreateCompliancePortalReferenceInput!) {
+			createCompliancePortalReference(input: $input) {
+				compliancePortalReferenceEdge {
 					node {
 						id
 						name
@@ -108,7 +108,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { trustCenterId, name };
+	const input: Record<string, unknown> = { compliancePortalId, name };
 	if (description) input.description = description;
 	if (websiteUrl) input.websiteUrl = websiteUrl;
 

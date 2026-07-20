@@ -45,7 +45,7 @@ export const description: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 			},
 		},
 		options: [
@@ -70,8 +70,8 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Create Reference',
 				value: 'createReference',
-				description: 'Create a new trust center reference',
-				action: 'Create a trust center reference',
+				description: 'Create a new compliance portal reference',
+				action: 'Create a compliance portal reference',
 			},
 			{
 				name: 'Delete Commitment',
@@ -94,20 +94,20 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Delete File',
 				value: 'deleteFile',
-				description: 'Delete a trust center file',
-				action: 'Delete a trust center file',
+				description: 'Delete a compliance portal file',
+				action: 'Delete a compliance portal file',
 			},
 			{
 				name: 'Delete Reference',
 				value: 'deleteReference',
-				description: 'Delete a trust center reference',
-				action: 'Delete a trust center reference',
+				description: 'Delete a compliance portal reference',
+				action: 'Delete a compliance portal reference',
 			},
 			{
 				name: 'Get',
 				value: 'get',
-				description: 'Get trust center settings',
-				action: 'Get trust center settings',
+				description: 'Get compliance portal settings',
+				action: 'Get compliance portal settings',
 			},
 			{
 				name: 'Get Many Commitment Groups',
@@ -124,20 +124,20 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Get Many Files',
 				value: 'getAllFiles',
-				description: 'Get many trust center files',
-				action: 'Get many trust center files',
+				description: 'Get many compliance portal files',
+				action: 'Get many compliance portal files',
 			},
 			{
 				name: 'Get Many References',
 				value: 'getAllReferences',
-				description: 'Get many trust center references',
-				action: 'Get many trust center references',
+				description: 'Get many compliance portal references',
+				action: 'Get many compliance portal references',
 			},
 			{
 				name: 'Update',
 				value: 'update',
-				description: 'Update trust center settings',
-				action: 'Update trust center settings',
+				description: 'Update compliance portal settings',
+				action: 'Update compliance portal settings',
 			},
 			{
 				name: 'Update Commitment',

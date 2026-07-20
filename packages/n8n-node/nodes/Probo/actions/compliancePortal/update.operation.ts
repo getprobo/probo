@@ -23,17 +23,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Trust Center ID',
-		name: 'trustCenterId',
+		displayName: 'Compliance Portal ID',
+		name: 'compliancePortalId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
 		default: '',
-		description: 'The ID of the trust center to update',
+		description: 'The ID of the compliance portal to update',
 		required: true,
 	},
 	{
@@ -42,12 +42,12 @@ export const description: INodeProperties[] = [
 		type: 'boolean',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
 		default: false,
-		description: 'Whether the trust center is active',
+		description: 'Whether the compliance portal is active',
 	},
 	{
 		displayName: 'Search Engine Indexing',
@@ -55,7 +55,7 @@ export const description: INodeProperties[] = [
 		type: 'options',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
@@ -74,7 +74,7 @@ export const description: INodeProperties[] = [
 			},
 		],
 		default: '',
-		description: 'Whether search engines should index the trust center',
+		description: 'Whether search engines should index the compliance portal',
 	},
 	{
 		displayName: 'Title',
@@ -82,7 +82,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
@@ -95,7 +95,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
@@ -108,7 +108,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
@@ -122,7 +122,7 @@ export const description: INodeProperties[] = [
 		placeholder: 'name@example.com',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
@@ -135,7 +135,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['update'],
 			},
 		},
@@ -148,7 +148,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const trustCenterId = this.getNodeParameter('trustCenterId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
 	const active = this.getNodeParameter('active', itemIndex) as boolean | undefined;
 	const searchEngineIndexing = this.getNodeParameter('searchEngineIndexing', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
@@ -158,9 +158,9 @@ export async function execute(
 	const title = this.getNodeParameter('title', itemIndex, '') as string;
 
 	const query = `
-		mutation UpdateTrustCenter($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter {
+		mutation UpdateCompliancePortal($input: UpdateCompliancePortalInput!) {
+			updateCompliancePortal(input: $input) {
+				compliancePortal {
 					id
 					active
 					searchEngineIndexing
@@ -177,7 +177,7 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = {
-		trustCenterId,
+		compliancePortalId,
 		title,
 		description,
 		websiteUrl,

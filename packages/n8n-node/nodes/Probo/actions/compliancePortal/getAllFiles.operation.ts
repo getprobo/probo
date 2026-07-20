@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -28,13 +28,43 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
-				operation: ['get'],
+				resource: ['compliancePortal'],
+				operation: ['getAllFiles'],
 			},
 		},
 		default: '',
 		description: 'The ID of the organization',
 		required: true,
+	},
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['compliancePortal'],
+				operation: ['getAllFiles'],
+			},
+		},
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['compliancePortal'],
+				operation: ['getAllFiles'],
+				returnAll: [false],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+		},
+		default: 50,
+		description: 'Max number of results to return',
 	},
 ];
 
@@ -43,31 +73,49 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
+	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetTrustCenter($organizationId: ID!) {
+		query GetCompliancePortalFiles($organizationId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter {
-						id
-						active
-						searchEngineIndexing
-						logoFileUrl
-						darkLogoFileUrl
-						ndaFileName
-						ndaFileUrl
-						createdAt
-						updatedAt
+					compliancePortalFiles(first: $first, after: $after) {
+						edges {
+							node {
+								id
+								name
+								category
+								compliancePortalVisibility
+								createdAt
+								updatedAt
+							}
+						}
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
 					}
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { organizationId });
+	const compliancePortalFiles = await proboApiRequestAllItems.call(
+		this,
+		query,
+		{ organizationId },
+		(response) => {
+			const data = response?.data as IDataObject | undefined;
+			const node = data?.node as IDataObject | undefined;
+			return node?.compliancePortalFiles as IDataObject | undefined;
+		},
+		returnAll,
+		limit,
+	);
 
 	return {
-		json: responseData,
+		json: { compliancePortalFiles },
 		pairedItem: { item: itemIndex },
 	};
 }

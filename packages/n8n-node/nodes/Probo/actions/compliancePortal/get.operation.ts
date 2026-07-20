@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,17 +23,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Audit ID',
-		name: 'auditId',
+		displayName: 'Organization ID',
+		name: 'organizationId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['audit'],
+				resource: ['compliancePortal'],
 				operation: ['get'],
 			},
 		},
 		default: '',
-		description: 'The ID of the audit',
+		description: 'The ID of the organization',
 		required: true,
 	},
 ];
@@ -42,31 +42,29 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 
 	const query = `
-		query GetAudit($auditId: ID!) {
-			node(id: $auditId) {
-				... on Audit {
-					id
-					name
-					state
-					validFrom
-					validUntil
-					reportUrl
-					compliancePortalVisibility
-					createdAt
-					updatedAt
+		query GetCompliancePortal($organizationId: ID!) {
+			node(id: $organizationId) {
+				... on Organization {
+					compliancePortal {
+						id
+						active
+						searchEngineIndexing
+						logoFileUrl
+						darkLogoFileUrl
+						ndaFileName
+						ndaFileUrl
+						createdAt
+						updatedAt
+					}
 				}
 			}
 		}
 	`;
 
-	const variables = {
-		auditId,
-	};
-
-	const responseData = await proboApiRequest.call(this, query, variables);
+	const responseData = await proboApiRequest.call(this, query, { organizationId });
 
 	return {
 		json: responseData,

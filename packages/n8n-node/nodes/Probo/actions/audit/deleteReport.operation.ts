@@ -54,7 +54,7 @@ export async function execute(
 					validFrom
 					validUntil
 					reportUrl
-					trustCenterVisibility
+					compliancePortalVisibility
 					createdAt
 					updatedAt
 				}

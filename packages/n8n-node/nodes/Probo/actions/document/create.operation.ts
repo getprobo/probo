@@ -125,8 +125,8 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Trust Center Visibility',
-				name: 'trustCenterVisibility',
+				displayName: 'Compliance Portal Visibility',
+				name: 'compliancePortalVisibility',
 				type: 'options',
 				options: [
 					{ name: 'None', value: 'NONE' },
@@ -134,7 +134,7 @@ export const description: INodeProperties[] = [
 					{ name: 'Public', value: 'PUBLIC' },
 				],
 				default: 'NONE',
-				description: 'The trust center visibility of the document',
+				description: 'The compliance portal visibility of the document',
 			},
 			{
 				displayName: 'Default Approver IDs',
@@ -157,7 +157,7 @@ export async function execute(
 	const classification = this.getNodeParameter('classification', itemIndex) as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
-		trustCenterVisibility?: string;
+		compliancePortalVisibility?: string;
 		defaultApproverIds?: string;
 	};
 
@@ -168,7 +168,7 @@ export async function execute(
 					node {
 						id
 						status
-						trustCenterVisibility
+						compliancePortalVisibility
 						currentPublishedMajor
 						currentPublishedMinor
 						archivedAt
@@ -203,7 +203,7 @@ export async function execute(
 		classification,
 	};
 	if (content) input.content = content;
-	if (additionalFields.trustCenterVisibility) input.trustCenterVisibility = additionalFields.trustCenterVisibility;
+	if (additionalFields.compliancePortalVisibility) input.compliancePortalVisibility = additionalFields.compliancePortalVisibility;
 	if (additionalFields.defaultApproverIds) {
 		input.defaultApproverIds = additionalFields.defaultApproverIds.split(',').map(id => id.trim()).filter(Boolean);
 	}

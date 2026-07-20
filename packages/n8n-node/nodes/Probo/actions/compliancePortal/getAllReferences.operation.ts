@@ -28,8 +28,8 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
-				operation: ['getAllFiles'],
+				resource: ['compliancePortal'],
+				operation: ['getAllReferences'],
 			},
 		},
 		default: '',
@@ -42,8 +42,8 @@ export const description: INodeProperties[] = [
 		type: 'boolean',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
-				operation: ['getAllFiles'],
+				resource: ['compliancePortal'],
+				operation: ['getAllReferences'],
 			},
 		},
 		default: false,
@@ -55,8 +55,8 @@ export const description: INodeProperties[] = [
 		type: 'number',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
-				operation: ['getAllFiles'],
+				resource: ['compliancePortal'],
+				operation: ['getAllReferences'],
 				returnAll: [false],
 			},
 		},
@@ -77,23 +77,26 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetTrustCenterFiles($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query GetCompliancePortalReferences($organizationId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenterFiles(first: $first, after: $after) {
-						edges {
-							node {
-								id
-								name
-								category
-								trustCenterVisibility
-								createdAt
-								updatedAt
+					compliancePortal {
+						references(first: $first, after: $after) {
+							edges {
+								node {
+									id
+									name
+									description
+									websiteUrl
+									rank
+									createdAt
+									updatedAt
+								}
 							}
-						}
-						pageInfo {
-							hasNextPage
-							endCursor
+							pageInfo {
+								hasNextPage
+								endCursor
+							}
 						}
 					}
 				}
@@ -101,21 +104,22 @@ export async function execute(
 		}
 	`;
 
-	const trustCenterFiles = await proboApiRequestAllItems.call(
+	const references = await proboApiRequestAllItems.call(
 		this,
 		query,
 		{ organizationId },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.trustCenterFiles as IDataObject | undefined;
+			const compliancePortal = node?.compliancePortal as IDataObject | undefined;
+			return compliancePortal?.references as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
 	);
 
 	return {
-		json: { trustCenterFiles },
+		json: { references },
 		pairedItem: { item: itemIndex },
 	};
 }

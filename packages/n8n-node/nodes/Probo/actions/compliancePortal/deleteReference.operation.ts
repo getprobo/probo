@@ -23,45 +23,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Trust Center ID',
-		name: 'trustCenterId',
+		displayName: 'Compliance Portal Reference ID',
+		name: 'compliancePortalReferenceId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
-				operation: ['createCustomLink'],
+				resource: ['compliancePortal'],
+				operation: ['deleteReference'],
 			},
 		},
 		default: '',
-		description: 'The ID of the trust center',
-		required: true,
-	},
-	{
-		displayName: 'Name',
-		name: 'name',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['trustCenter'],
-				operation: ['createCustomLink'],
-			},
-		},
-		default: '',
-		description: 'The name of the custom link',
-		required: true,
-	},
-	{
-		displayName: 'URL',
-		name: 'url',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['trustCenter'],
-				operation: ['createCustomLink'],
-			},
-		},
-		default: '',
-		description: 'The custom link',
+		description: 'The ID of the compliance portal reference to delete',
 		required: true,
 	},
 ];
@@ -70,30 +42,17 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const trustCenterId = this.getNodeParameter('trustCenterId', itemIndex) as string;
-	const name = this.getNodeParameter('name', itemIndex) as string;
-	const url = this.getNodeParameter('url', itemIndex) as string;
+	const compliancePortalReferenceId = this.getNodeParameter('compliancePortalReferenceId', itemIndex) as string;
 
 	const query = `
-		mutation CreateComplianceCustomLink($input: CreateComplianceCustomLinkInput!) {
-			createComplianceCustomLink(input: $input) {
-				complianceCustomLinkEdge {
-					node {
-						id
-						name
-						url
-						rank
-						createdAt
-						updatedAt
-					}
-				}
+		mutation DeleteCompliancePortalReference($input: DeleteCompliancePortalReferenceInput!) {
+			deleteCompliancePortalReference(input: $input) {
+				deletedCompliancePortalReferenceId
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, {
-		input: { trustCenterId, name, url },
-	});
+	const responseData = await proboApiRequest.call(this, query, { input: { id: compliancePortalReferenceId } });
 
 	return {
 		json: responseData,

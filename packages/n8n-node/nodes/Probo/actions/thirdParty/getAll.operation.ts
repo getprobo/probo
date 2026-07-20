@@ -176,7 +176,7 @@ export async function execute(
 								trustPageUrl
 								certifications
 								countries
-								showOnTrustCenter
+								showOnCompliancePortal
 								level
 								ancestors {
 									id

@@ -28,7 +28,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
+				resource: ['compliancePortal'],
 				operation: ['deleteCustomLink'],
 			},
 		},
