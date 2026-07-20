@@ -30,7 +30,8 @@ export type FieldProps = {
   error?: ReactNode;
   className?: string;
   // A single form control (TextField, Textarea, …). It receives an injected
-  // `id`, plus `aria-describedby`/`aria-invalid` when an error is present.
+  // `id`, plus `aria-invalid` and a merged `aria-describedby` when an error
+  // is present (existing description IDs are kept).
   children: ReactNode;
 };
 
@@ -51,11 +52,22 @@ export function Field(props: FieldProps) {
   const existingId = typeof child?.props.id === "string" ? child.props.id : undefined;
   const controlId = existingId ?? generatedId;
 
+  const existingDescribedBy
+    = typeof child?.props["aria-describedby"] === "string"
+      ? child.props["aria-describedby"].trim() || undefined
+      : undefined;
+  // Append the error id without dropping hint / help description ids the
+  // control already exposes. Omit the prop when there is no error so an
+  // existing value is not wiped by cloneElement.
+  const describedBy = error != null
+    ? [existingDescribedBy, errorId].filter(Boolean).join(" ")
+    : undefined;
+
   const control = child
     ? cloneElement(child, {
-        "id": controlId,
-        "aria-describedby": error != null ? errorId : undefined,
-        "aria-invalid": error != null ? true : undefined,
+        id: controlId,
+        ...(describedBy != null ? { "aria-describedby": describedBy } : {}),
+        ...(error != null ? { "aria-invalid": true as const } : {}),
       })
     : children;
 
