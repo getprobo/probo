@@ -740,7 +740,7 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 		},
 	)
 	if err != nil {
-		if accessreview.IsCampaignClientError(err) {
+		if errors.Is(err, accessreview.ErrCampaignSourceOrganizationMismatch) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -776,7 +776,8 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if accessreview.IsCampaignClientError(err) {
+		if errors.Is(err, accessreview.ErrCampaignNotDraft) ||
+			errors.Is(err, accessreview.ErrCampaignSourceOrganizationMismatch) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -821,7 +822,8 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
-		if accessreview.IsCampaignClientError(err) {
+		if errors.Is(err, accessreview.ErrCampaignNoScopeSources) ||
+			errors.Is(err, accessreview.ErrCampaignNotDraft) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
