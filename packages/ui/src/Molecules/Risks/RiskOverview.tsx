@@ -70,7 +70,7 @@ export function RiskOverview({ type, risk }: Props) {
         />
       </div>
       <div className="space-y-2">
-        <div className="font-medium text-xs">{__("Severity")}</div>
+        <div className="font-medium text-xs">{__("Score")}</div>
         <div
           className={clsx(
             severity?.bg,
