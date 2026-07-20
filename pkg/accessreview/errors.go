@@ -24,5 +24,6 @@ import "errors"
 
 var (
 	ErrCampaignMissingSources = errors.New("cannot start campaign: no scope sources configured")
-	ErrCampaignNotDraft          = errors.New("campaign must be in draft status")
+	ErrCampaignCannotStart    = errors.New("cannot start campaign: only draft campaigns can be started")
+	ErrCampaignCannotUpdate   = errors.New("cannot update campaign: only draft campaigns can be updated")
 )
