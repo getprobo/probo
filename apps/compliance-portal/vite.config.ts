@@ -32,6 +32,26 @@ export default defineConfig({
   plugins: [react(), babel({ plugins: ["relay"] }), tailwindcss()],
   build: {
     assetsDir: "assets",
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "react",
+              test: /node_modules\/(?:react-dom|react)\//,
+            },
+            {
+              name: "relay",
+              test: /node_modules\/(?:react-relay|relay-runtime)\//,
+            },
+            {
+              name: "react-router",
+              test: /node_modules\/react-router\//,
+            },
+          ],
+        },
+      },
+    },
   },
   base: "./",
   server: {
