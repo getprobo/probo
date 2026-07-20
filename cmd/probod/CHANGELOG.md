@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.229.0] - 2026-07-20
+
+### Added
+
+- MCP commitment and commitment group tools (create, list, update, delete) so automation can manage compliance portal commitments end to end
+
+### Changed
+
+- Redirect the legacy compliance portal `/overview` URL to home
+- Introduced a v2 z-index scale so portaled menus and popups sit above in-page media
+
+### Fixed
+
+- Aligned the compliance portal PDF preview and desktop gutter with the page header, and matched list skeletons to the card surface
+
 ## [0.228.0] - 2026-07-20
 
 ### Added
