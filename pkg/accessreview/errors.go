@@ -23,7 +23,7 @@ package accessreview
 import "errors"
 
 var (
-	ErrCampaignNoScopeSources             = errors.New("cannot start campaign: no scope sources configured")
+	ErrCampaignNoSourcesSelected          = errors.New("cannot start campaign: no scope sources configured")
 	ErrCampaignNotDraft                   = errors.New("campaign must be in draft status")
 	ErrCampaignSourceOrganizationMismatch = errors.New("access source does not belong to the same organization")
 )
