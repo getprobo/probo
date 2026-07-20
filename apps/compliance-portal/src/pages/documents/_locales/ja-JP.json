@@ -1,0 +1,46 @@
+{
+  "title": "ドキュメント",
+  "tabs": {
+    "all": "すべて",
+    "public": "公開",
+    "private": "非公開"
+  },
+  "sections": {
+    "reports": "コンプライアンスレポート"
+  },
+  "types": {
+    "OTHER": "その他",
+    "GOVERNANCE": "ガバナンス",
+    "POLICY": "ポリシー",
+    "PROCEDURE": "手順書",
+    "PLAN": "計画",
+    "REGISTER": "台帳",
+    "RECORD": "記録",
+    "REPORT": "レポート",
+    "TEMPLATE": "テンプレート",
+    "STATEMENT_OF_APPLICABILITY": "適用宣言書"
+  },
+  "actions": {
+    "view": "表示",
+    "getAccess": "アクセスをリクエスト",
+    "requested": "アクセスをリクエスト済み"
+  },
+  "empty": {
+    "title": "利用可能なドキュメントはありません",
+    "description": "このコンプライアンスポータルでは、まだドキュメントが公開されていません。",
+    "filteredTitle": "このフィルターに一致するドキュメントはありません",
+    "filteredDescription": "別のタブを選択して、利用可能なドキュメントを確認してください。"
+  },
+  "viewer": {
+    "back": "ドキュメント",
+    "share": "ドキュメントを共有",
+    "linkCopied": "リンクをクリップボードにコピーしました",
+    "download": "ダウンロード",
+    "previewUnavailable": "プレビューは利用できません",
+    "downloadToView": "このファイル形式はここでプレビューできません。表示するにはダウンロードしてください。",
+    "locked": {
+      "title": "アクセスが必要です",
+      "description": "このドキュメントへのアクセス権をまだお持ちではありません。"
+    }
+  }
+}

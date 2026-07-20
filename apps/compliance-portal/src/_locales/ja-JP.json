@@ -1,0 +1,122 @@
+{
+  "topBar": {
+    "tagline": "コンプライアンスポータル",
+    "getAccess": "アクセスをリクエスト",
+    "nav": {
+      "documents": "ドキュメント",
+      "subprocessors": "サブプロセッサ",
+      "updates": "アップデート",
+      "requests": "リクエスト"
+    }
+  },
+  "userMenu": {
+    "signOut": "サインアウト"
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "error": "問題が発生しました",
+    "previousPage": "前のページ",
+    "nextPage": "次のページ",
+    "pageOf": "{{current}} / {{total}} ページ",
+    "zoomOut": "ズームアウト",
+    "zoomIn": "ズームイン"
+  },
+  "auth": {
+    "backToPortal": "ポータルに戻る",
+    "signIn": {
+      "title": "続行するにはサインインしてください",
+      "description": "保護されたリソースにアクセスするか、リクエストを送信してください",
+      "or": "または",
+      "withProvider": "{{provider}}でサインイン",
+      "emailLabel": "メールアドレス",
+      "emailPlaceholder": "you@company.com",
+      "emailRequired": "メールアドレスは必須です",
+      "emailInvalid": "有効なメールアドレスを入力してください",
+      "sendMagicLink": "マジックリンクを送信",
+      "resend": "リンクを再送信",
+      "resendIn": "{{seconds}}秒後にリンクを再送信",
+      "magicLinkSent": "マジックリンクを送信しました。",
+      "magicLinkSentNote": "メールを確認し、リンクからサインインしてください。"
+    },
+    "requestAccess": {
+      "success": "アクセスをリクエストしました"
+    },
+    "verify": {
+      "title": "メールアドレスを確認しています",
+      "description": "サインイン処理を行っています。少々お待ちください…"
+    },
+    "fullName": {
+      "title": "お名前を入力してください",
+      "label": "氏名",
+      "placeholder": "山田 太郎",
+      "required": "氏名は必須です",
+      "tooShort": "氏名が短すぎます",
+      "submit": "続ける"
+    },
+    "magicLinkExpired": {
+      "title": "リンクの有効期限が切れています",
+      "description": "このマジックリンクは有効期限が切れています。新しいリンクをリクエストしてください。"
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "リンクは既に使用されています",
+      "description": "このマジックリンクは既に使用されています。新しいリンクをリクエストしてください。"
+    },
+    "errors": {
+      "magicLinkFailed": "マジックリンクを送信できませんでした。もう一度お試しください。",
+      "verifyFailed": "リンクを確認できませんでした。もう一度お試しください。",
+      "fullNameFailed": "お名前を保存できませんでした。もう一度お試しください。",
+      "requestFailed": "アクセスリクエストを完了できませんでした。もう一度お試しください。"
+    }
+  },
+  "home": {
+    "heroTitle": "{{name}}における信頼。",
+    "heroDescription": "コンプライアンスポータルへようこそ。セキュリティに関する文書や認証はこちらからご確認いただけます。",
+    "sections": {
+      "compliance": "コンプライアンス",
+      "securityCommitments": "セキュリティへの取り組み",
+      "trustedBy": "導入企業",
+      "recentUpdates": "最新のアップデート"
+    },
+    "recentUpdates": {
+      "viewAll": "すべて表示"
+    }
+  },
+  "notFound": {
+    "title": "ページが見つかりません",
+    "description": "お探しのページは存在しないか、移動された可能性があります。",
+    "backHome": "ホームに戻る"
+  },
+  "errors": {
+    "notFound": {
+      "title": "ページが見つかりません",
+      "description": "お探しのページは存在しないか、移動された可能性があります。"
+    },
+    "forbidden": {
+      "title": "アクセスが拒否されました",
+      "description": "このページを表示する権限がありません。"
+    },
+    "serverError": {
+      "title": "問題が発生しました",
+      "description": "予期しないエラーが発生しました。しばらくしてからもう一度お試しください。"
+    },
+    "generic": {
+      "title": "問題が発生しました",
+      "description": "予期しないエラーが発生しました。しばらくしてからもう一度お試しください。"
+    },
+    "actions": {
+      "backToCompliancePortal": "コンプライアンスポータルに戻る",
+      "tryAgain": "もう一度試す"
+    },
+    "inline": {
+      "message": "コンテンツを読み込めません",
+      "retry": "再試行"
+    }
+  },
+  "footer": {
+    "poweredBy": "提供"
+  },
+  "pagination": {
+    "previous": "前のページ",
+    "next": "次のページ"
+  }
+}

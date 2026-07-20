@@ -1,0 +1,109 @@
+{
+  "title": "サブプロセッサ",
+  "filters": {
+    "allCategories": "すべてのカテゴリ",
+    "allRegions": "すべての地域",
+    "searchPlaceholder": "検索…"
+  },
+  "empty": {
+    "title": "サブプロセッサはまだ登録されていません。",
+    "description": "このコンプライアンスポータルでは、まだサブプロセッサが公開されていません。",
+    "filteredTitle": "フィルターに一致するサブプロセッサがありません。",
+    "filteredDescription": "検索条件やフィルターを調整して、利用可能なサブプロセッサを表示してください。",
+    "clearFilters": "フィルターをクリア"
+  },
+  "regions": {
+    "global": "グローバル",
+    "eu": "欧州連合"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "分析",
+      "description": "利用状況分析とプロダクトテレメトリー。"
+    },
+    "CLOUD_MONITORING": {
+      "label": "クラウドモニタリング",
+      "description": "オブザーバビリティ、ログ記録、稼働監視。"
+    },
+    "CLOUD_PROVIDER": {
+      "label": "クラウドプロバイダー",
+      "description": "クラウドホスティング、コンピューティング、ストレージ、ネットワーキング。"
+    },
+    "COLLABORATION": {
+      "label": "コラボレーション",
+      "description": "コミュニケーション、スケジュール管理、チームワークのためのツール。"
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "カスタマーサポート",
+      "description": "ヘルプデスク、チケット管理、カスタマーメッセージング。"
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "データストレージと処理",
+      "description": "データベース、データウェアハウス、処理パイプライン。"
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "文書管理",
+      "description": "文書の保管、署名、電子署名。"
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "従業員管理",
+      "description": "人事、給与、人事オペレーション。"
+    },
+    "ENGINEERING": {
+      "label": "エンジニアリング",
+      "description": "開発者向けツールとエンジニアリングプラットフォーム。"
+    },
+    "FINANCE": {
+      "label": "財務",
+      "description": "請求、決済、会計。"
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "ID プロバイダー",
+      "description": "認証、SSO、ID 管理。"
+    },
+    "IT": {
+      "label": "IT",
+      "description": "IT 管理とデバイス管理。"
+    },
+    "MARKETING": {
+      "label": "マーケティング",
+      "description": "マーケティング、CRM、オーディエンスエンゲージメント。"
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "オフィス運営",
+      "description": "職場およびオフィスの運営業務。"
+    },
+    "OTHER": {
+      "label": "その他",
+      "description": "その他のサポートサービス。"
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "パスワード管理",
+      "description": "認証情報とシークレットの管理。"
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "プロダクトとデザイン",
+      "description": "プロダクトおよびデザイン向けツール。"
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "プロフェッショナルサービス",
+      "description": "コンサルティングおよび専門サービス。"
+    },
+    "RECRUITING": {
+      "label": "採用",
+      "description": "採用、ソーシング、応募者管理。"
+    },
+    "SALES": {
+      "label": "セールス",
+      "description": "セールスイネーブルメントと CRM。"
+    },
+    "SECURITY": {
+      "label": "セキュリティ",
+      "description": "セキュリティ、監視、安全なアクセス。"
+    },
+    "VERSION_CONTROL": {
+      "label": "バージョン管理",
+      "description": "ソースコード管理とコードホスティング。"
+    }
+  }
+}

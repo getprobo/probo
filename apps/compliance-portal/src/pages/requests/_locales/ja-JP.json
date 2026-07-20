@@ -1,0 +1,71 @@
+{
+  "title": "データリクエスト",
+  "newRequest": "新規リクエスト",
+  "loadMore": "もっと読み込む",
+  "empty": {
+    "title": "リクエストはまだありません",
+    "description": "送信したリクエストはこちらに表示され、進捗状況を確認できます。"
+  },
+  "types": {
+    "ACCESS": "データアクセス",
+    "DELETION": "データ削除",
+    "RECTIFICATION": "データ訂正",
+    "PORTABILITY": "データポータビリティ",
+    "OBJECTION": "処理への異議",
+    "COMPLAINT": "不正利用の報告"
+  },
+  "status": {
+    "TODO": "保留中",
+    "IN_PROGRESS": "処理中",
+    "DONE": "完了",
+    "REJECTED": "却下"
+  },
+  "typeOption": {
+    "ACCESS": "自分のデータにアクセスする",
+    "DELETION": "自分のデータを削除する",
+    "RECTIFICATION": "自分のデータを訂正する",
+    "OBJECTION": "処理に異議を申し立てる",
+    "COMPLAINT": "不正利用を報告する"
+  },
+  "dialog": {
+    "title": "新規リクエスト",
+    "description": "リクエストの種類を選択し、以下の詳細を入力してください。",
+    "typeLabel": "リクエストの種類",
+    "cancel": "キャンセル",
+    "submit": "リクエストを送信",
+    "success": {
+      "title": "リクエストを送信しました",
+      "description": "リクエストを受け付けました。適用法で定められた期間内に対応いたします。",
+      "close": "閉じる"
+    }
+  },
+  "form": {
+    "name": "氏名",
+    "nameOptional": "お名前（任意）",
+    "namePlaceholder": "山田 太郎",
+    "email": "メールアドレス",
+    "deletionWarning": "データの削除は完全かつ元に戻すことができません。法的義務により一部のデータが保持される場合があります。",
+    "details": {
+      "ACCESS": {
+        "label": "リクエストの詳細",
+        "placeholder": "自分のアカウントに関連するすべての個人データのコピーを希望します…"
+      },
+      "DELETION": {
+        "label": "削除リクエストの範囲",
+        "placeholder": "以下を含むすべての個人データを削除してください…"
+      },
+      "RECTIFICATION": {
+        "label": "訂正が必要な内容",
+        "placeholder": "以下の情報が正しくありません…"
+      },
+      "OBJECTION": {
+        "label": "異議の対象は何ですか？",
+        "placeholder": "以下の目的での自分のデータの処理に異議を申し立てます…"
+      },
+      "COMPLAINT": {
+        "label": "問題の詳細",
+        "placeholder": "以下のことに気づきました…"
+      }
+    }
+  }
+}
