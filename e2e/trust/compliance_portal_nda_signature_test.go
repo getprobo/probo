@@ -49,21 +49,21 @@ const minimalPDFBase64 = "JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9QYWdlcyAyIDAgUi9UeX
 	"ES//AhpppZNeBhllklmyLLLKJrsclh/4AgAA//9tzQSTZW5kc3RyZWFtCmVuZG9iagoKc3RhcnR4" +
 	"cmVmCjUxMgolJUVPRg=="
 
-// TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature is a
+// TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature is a
 // regression test for GHSA-22xj-f767-ppw6: any self-provisioned trust
 // center visitor could accept another visitor's NDA signature, or inject
 // audit-trail events into it, simply by knowing its GID.
-func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testing.T) {
+func TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	trustCenterID := lookupTrustCenterID(t, owner)
+	compliancePortalID := lookupCompliancePortalID(t, owner)
 
-	uploadTrustCenterNDA(t, owner, trustCenterID)
-	trustHost := lookupTrustHost(t, owner, trustCenterID)
+	uploadCompliancePortalNDA(t, owner, compliancePortalID)
+	trustHost := lookupTrustHost(t, owner, compliancePortalID)
 
-	victim := testutil.SelfProvisionTrustCenterVisitor(t, trustHost)
-	attacker := testutil.SelfProvisionTrustCenterVisitor(t, trustHost)
+	victim := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
+	attacker := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
 
 	victimSignatureID, victimSignatureStatus := viewerSignature(t, victim, trustHost)
 	require.NotEmpty(t, victimSignatureID)
@@ -119,13 +119,13 @@ func TestTrustCenter_AcceptElectronicSignature_RejectsForeignSignature(t *testin
 	assert.Equal(t, "ACCEPTED", acceptResult.AcceptElectronicSignature.Signature.Status)
 }
 
-func uploadTrustCenterNDA(t *testing.T, owner *testutil.Client, trustCenterID string) {
+func uploadCompliancePortalNDA(t *testing.T, owner *testutil.Client, compliancePortalID string) {
 	t.Helper()
 
 	const query = `
-		mutation($input: UploadTrustCenterNDAInput!) {
-			uploadTrustCenterNDA(input: $input) {
-				trustCenter { id }
+		mutation($input: UploadCompliancePortalNDAInput!) {
+			uploadCompliancePortalNDA(input: $input) {
+				compliancePortal { id }
 			}
 		}
 	`
@@ -135,9 +135,9 @@ func uploadTrustCenterNDA(t *testing.T, owner *testutil.Client, trustCenterID st
 
 	err = owner.ExecuteWithFile(query, map[string]any{
 		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"fileName":      "nda.pdf",
-			"file":          nil,
+			"compliancePortalId": compliancePortalID,
+			"fileName":           "nda.pdf",
+			"file":               nil,
 		},
 	}, "input.file", testutil.UploadFile{
 		Filename:    "nda.pdf",
@@ -152,7 +152,7 @@ func viewerSignature(t *testing.T, visitor *testutil.Client, trustHost string) (
 
 	const query = `
 		query {
-			currentTrustCenter {
+			currentCompliancePortal {
 				nonDisclosureAgreement {
 					viewerSignature { id status }
 				}
@@ -161,20 +161,20 @@ func viewerSignature(t *testing.T, visitor *testutil.Client, trustHost string) (
 	`
 
 	var result struct {
-		CurrentTrustCenter struct {
+		CurrentCompliancePortal struct {
 			NonDisclosureAgreement struct {
 				ViewerSignature struct {
 					ID     string `json:"id"`
 					Status string `json:"status"`
 				} `json:"viewerSignature"`
 			} `json:"nonDisclosureAgreement"`
-		} `json:"currentTrustCenter"`
+		} `json:"currentCompliancePortal"`
 	}
 
 	err := visitor.ExecuteTrust(trustHost, query, nil, &result)
 	require.NoError(t, err)
 
-	sig := result.CurrentTrustCenter.NonDisclosureAgreement.ViewerSignature
+	sig := result.CurrentCompliancePortal.NonDisclosureAgreement.ViewerSignature
 
 	return sig.ID, sig.Status
 }

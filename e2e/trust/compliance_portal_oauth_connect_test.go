@@ -26,13 +26,13 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTrustCenter_CIMDMetadataDocument(t *testing.T) {
+func TestCompliancePortal_CIMDMetadataDocument(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	trustCenterID := lookupTrustCenterID(t, owner)
-	trustHost := lookupTrustHost(t, owner, trustCenterID)
-	testutil.WaitForTrustCenterHTTPS(t, trustHost)
+	compliancePortalID := lookupCompliancePortalID(t, owner)
+	trustHost := lookupTrustHost(t, owner, compliancePortalID)
+	testutil.WaitForCompliancePortalHTTPS(t, trustHost)
 
 	client := testutil.TrustHTTPClient(trustHost)
 	resp, err := client.Get("https://" + trustHost + "/.well-known/oauth-client-metadata")
@@ -71,35 +71,35 @@ func TestTrustCenter_CIMDMetadataDocument(t *testing.T) {
 	assert.NotEmpty(t, doc.ClientName)
 }
 
-func TestTrustCenter_VisitorConnectViaCIMD(t *testing.T) {
+func TestCompliancePortal_VisitorConnectViaCIMD(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	trustCenterID := lookupTrustCenterID(t, owner)
-	trustHost := lookupTrustHost(t, owner, trustCenterID)
+	compliancePortalID := lookupCompliancePortalID(t, owner)
+	trustHost := lookupTrustHost(t, owner, compliancePortalID)
 
-	visitor := testutil.SelfProvisionTrustCenterVisitor(t, trustHost)
+	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
 
 	const query = `
 		query {
-			currentTrustCenter {
+			currentCompliancePortal {
 				title
 			}
 		}
 	`
 
 	var result struct {
-		CurrentTrustCenter struct {
+		CurrentCompliancePortal struct {
 			Title string `json:"title"`
-		} `json:"currentTrustCenter"`
+		} `json:"currentCompliancePortal"`
 	}
 
 	err := visitor.ExecuteTrust(trustHost, query, nil, &result)
 	require.NoError(t, err, "visitor session must authenticate trust GraphQL after CIMD connect")
-	assert.NotEmpty(t, result.CurrentTrustCenter.Title)
+	assert.NotEmpty(t, result.CurrentCompliancePortal.Title)
 }
 
-func TestTrustCenter_UnknownCIMDClientRejected(t *testing.T) {
+func TestCompliancePortal_UnknownCIMDClientRejected(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)

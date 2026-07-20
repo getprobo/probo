@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTrustCenter_SlugHasEntropySuffix(t *testing.T) {
+func TestCompliancePortal_SlugHasEntropySuffix(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -39,7 +39,7 @@ func TestTrustCenter_SlugHasEntropySuffix(t *testing.T) {
 		query($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter {
+					compliancePortal {
 						slug
 					}
 				}
@@ -49,9 +49,9 @@ func TestTrustCenter_SlugHasEntropySuffix(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			TrustCenter struct {
+			CompliancePortal struct {
 				Slug string `json:"slug"`
-			} `json:"trustCenter"`
+			} `json:"compliancePortal"`
 		} `json:"node"`
 	}
 
@@ -59,8 +59,8 @@ func TestTrustCenter_SlugHasEntropySuffix(t *testing.T) {
 		"organizationId": organizationID,
 	}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.TrustCenter.Slug)
+	require.NotEmpty(t, result.Node.CompliancePortal.Slug)
 
 	slugWithEntropy := regexp.MustCompile(`^[a-z0-9-]+-[0-9a-f]{8}$`)
-	assert.Regexp(t, slugWithEntropy, result.Node.TrustCenter.Slug)
+	assert.Regexp(t, slugWithEntropy, result.Node.CompliancePortal.Slug)
 }

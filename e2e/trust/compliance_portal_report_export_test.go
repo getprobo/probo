@@ -46,30 +46,30 @@ const nodeQuery = `
 	}
 `
 
-// TestTrustCenter_ExportReportPDF_TenantIsolation verifies that a public
+// TestCompliancePortal_ExportReportPDF_TenantIsolation verifies that a public
 // audit-report PDF can only be exported through its own organization's trust
-// center. A visitor on another organization's trust center must not be able to
+// center. A visitor on another organization's compliance portal must not be able to
 // download it by supplying the foreign report GID (cross-tenant IDOR).
-func TestTrustCenter_ExportReportPDF_TenantIsolation(t *testing.T) {
+func TestCompliancePortal_ExportReportPDF_TenantIsolation(t *testing.T) {
 	t.Parallel()
 
 	victimOwner := testutil.NewClient(t, testutil.RoleOwner)
 	attackerOwner := testutil.NewClient(t, testutil.RoleOwner)
 
-	victimTrustCenterID, victimReportID := setupPublicAuditReport(t, victimOwner)
-	attackerTrustCenterID, _ := setupPublicAuditReport(t, attackerOwner)
+	victimCompliancePortalID, victimReportID := setupPublicAuditReport(t, victimOwner)
+	attackerCompliancePortalID, _ := setupPublicAuditReport(t, attackerOwner)
 
-	t.Run("owning trust center can export its report", func(t *testing.T) {
+	t.Run("owning compliance portal can export its report", func(t *testing.T) {
 		var result struct {
 			ExportReportPDF struct {
 				Data string `json:"data"`
 			} `json:"exportReportPDF"`
 		}
 
-		err := victimOwner.ExecuteTrust(victimTrustCenterID, exportReportPDFMutation, map[string]any{
+		err := victimOwner.ExecuteTrust(victimCompliancePortalID, exportReportPDFMutation, map[string]any{
 			"input": map[string]any{"reportId": victimReportID},
 		}, &result)
-		require.NoError(t, err, "the owning trust center must serve its own public report")
+		require.NoError(t, err, "the owning compliance portal must serve its own public report")
 		assert.True(
 			t,
 			strings.HasPrefix(result.ExportReportPDF.Data, "data:application/pdf;base64,"),
@@ -78,11 +78,11 @@ func TestTrustCenter_ExportReportPDF_TenantIsolation(t *testing.T) {
 		)
 	})
 
-	t.Run("foreign trust center cannot export another org's report", func(t *testing.T) {
-		err := attackerOwner.ExecuteTrust(attackerTrustCenterID, exportReportPDFMutation, map[string]any{
+	t.Run("foreign compliance portal cannot export another org's report", func(t *testing.T) {
+		err := attackerOwner.ExecuteTrust(attackerCompliancePortalID, exportReportPDFMutation, map[string]any{
 			"input": map[string]any{"reportId": victimReportID},
 		}, nil)
-		require.Error(t, err, "a foreign trust center must not export another org's report")
+		require.Error(t, err, "a foreign compliance portal must not export another org's report")
 		assert.Contains(
 			t,
 			err.Error(),
@@ -92,37 +92,37 @@ func TestTrustCenter_ExportReportPDF_TenantIsolation(t *testing.T) {
 	})
 }
 
-// TestTrustCenter_Node_TenantIsolation exercises the generic node(id:) resolver:
-// a visitor on one organization's trust center must not resolve a node that
+// TestCompliancePortal_Node_TenantIsolation exercises the generic node(id:) resolver:
+// a visitor on one organization's compliance portal must not resolve a node that
 // belongs to another organization, even with a valid foreign GID.
-func TestTrustCenter_Node_TenantIsolation(t *testing.T) {
+func TestCompliancePortal_Node_TenantIsolation(t *testing.T) {
 	t.Parallel()
 
 	victimOwner := testutil.NewClient(t, testutil.RoleOwner)
 	attackerOwner := testutil.NewClient(t, testutil.RoleOwner)
 
-	victimTrustCenterID, _ := setupPublicAuditReport(t, victimOwner)
-	attackerTrustCenterID, _ := setupPublicAuditReport(t, attackerOwner)
+	victimCompliancePortalID, _ := setupPublicAuditReport(t, victimOwner)
+	attackerCompliancePortalID, _ := setupPublicAuditReport(t, attackerOwner)
 
-	t.Run("owning trust center resolves its own node", func(t *testing.T) {
+	t.Run("owning compliance portal resolves its own node", func(t *testing.T) {
 		var result struct {
 			Node struct {
 				Typename string `json:"__typename"`
 			} `json:"node"`
 		}
 
-		err := victimOwner.ExecuteTrust(victimTrustCenterID, nodeQuery, map[string]any{
-			"id": victimTrustCenterID,
+		err := victimOwner.ExecuteTrust(victimCompliancePortalID, nodeQuery, map[string]any{
+			"id": victimCompliancePortalID,
 		}, &result)
-		require.NoError(t, err, "the owning trust center must resolve its own node")
+		require.NoError(t, err, "the owning compliance portal must resolve its own node")
 		assert.NotEmpty(t, result.Node.Typename, "expected the node to resolve to a concrete type")
 	})
 
-	t.Run("foreign trust center cannot resolve another org's node", func(t *testing.T) {
-		err := attackerOwner.ExecuteTrust(attackerTrustCenterID, nodeQuery, map[string]any{
-			"id": victimTrustCenterID,
+	t.Run("foreign compliance portal cannot resolve another org's node", func(t *testing.T) {
+		err := attackerOwner.ExecuteTrust(attackerCompliancePortalID, nodeQuery, map[string]any{
+			"id": victimCompliancePortalID,
 		}, nil)
-		require.Error(t, err, "a foreign trust center must not resolve another org's node")
+		require.Error(t, err, "a foreign compliance portal must not resolve another org's node")
 		assert.Contains(
 			t,
 			err.Error(),
@@ -133,9 +133,9 @@ func TestTrustCenter_Node_TenantIsolation(t *testing.T) {
 }
 
 // setupPublicAuditReport creates an audit with an uploaded report file, marks it
-// as publicly visible on the trust center, activates the trust center, and
-// returns the trust center ID and the report file ID.
-func setupPublicAuditReport(t *testing.T, owner *testutil.Client) (trustCenterID string, reportID string) {
+// as publicly visible on the compliance portal, activates the compliance portal, and
+// returns the compliance portal ID and the report file ID.
+func setupPublicAuditReport(t *testing.T, owner *testutil.Client) (compliancePortalID string, reportID string) {
 	t.Helper()
 
 	frameworkID := factory.NewFramework(owner).WithName(factory.SafeName("Framework")).Create()
@@ -188,14 +188,14 @@ func setupPublicAuditReport(t *testing.T, owner *testutil.Client) (trustCenterID
 
 	err = owner.Execute(setVisibilityMutation, map[string]any{
 		"input": map[string]any{
-			"id":                    auditID,
-			"trustCenterVisibility": "PUBLIC",
+			"id":                         auditID,
+			"compliancePortalVisibility": "PUBLIC",
 		},
 	}, nil)
 	require.NoError(t, err)
 
-	trustCenterID = lookupTrustCenterID(t, owner)
-	activateTrustCenter(t, owner, trustCenterID)
+	compliancePortalID = lookupCompliancePortalID(t, owner)
+	activateCompliancePortal(t, owner, compliancePortalID)
 
-	return trustCenterID, reportID
+	return compliancePortalID, reportID
 }

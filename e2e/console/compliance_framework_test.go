@@ -28,15 +28,15 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// trustCenterID looks up the caller's own organization's trust center id.
-func trustCenterID(t *testing.T, c *testutil.Client) string {
+// compliancePortalID looks up the caller's own organization's compliance portal id.
+func compliancePortalID(t *testing.T, c *testutil.Client) string {
 	t.Helper()
 
 	var result struct {
 		Node struct {
-			TrustCenter struct {
+			CompliancePortal struct {
 				ID string `json:"id"`
-			} `json:"trustCenter"`
+			} `json:"compliancePortal"`
 		} `json:"node"`
 	}
 
@@ -44,7 +44,7 @@ func trustCenterID(t *testing.T, c *testutil.Client) string {
 		query($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter { id }
+					compliancePortal { id }
 				}
 			}
 		}
@@ -52,16 +52,16 @@ func trustCenterID(t *testing.T, c *testutil.Client) string {
 		"organizationId": c.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.TrustCenter.ID)
+	require.NotEmpty(t, result.Node.CompliancePortal.ID)
 
-	return result.Node.TrustCenter.ID
+	return result.Node.CompliancePortal.ID
 }
 
 func TestComplianceFramework_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	trustCenterID := trustCenterID(t, owner)
+	compliancePortalID := compliancePortalID(t, owner)
 	frameworkID := factory.CreateFramework(owner)
 
 	var result struct {
@@ -82,8 +82,8 @@ func TestComplianceFramework_Create(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"frameworkId":   frameworkID,
+			"compliancePortalId": compliancePortalID,
+			"frameworkId":        frameworkID,
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -102,7 +102,7 @@ func TestComplianceFramework_TenantIsolation(t *testing.T) {
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	org1TrustCenterID := trustCenterID(t, org1Owner)
+	org1CompliancePortalID := compliancePortalID(t, org1Owner)
 	org2FrameworkID := factory.CreateFramework(org2Owner)
 
 	_, err := org1Owner.Do(`
@@ -113,8 +113,8 @@ func TestComplianceFramework_TenantIsolation(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"trustCenterId": org1TrustCenterID,
-			"frameworkId":   org2FrameworkID,
+			"compliancePortalId": org1CompliancePortalID,
+			"frameworkId":        org2FrameworkID,
 		},
 	})
 	require.Error(t, err, "must not accept a frameworkId belonging to another organization")

@@ -28,15 +28,15 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// lookupTrustCenterID resolves the trust center ID of the owner's organization.
-func lookupTrustCenterID(t *testing.T, owner *testutil.Client) string {
+// lookupCompliancePortalID resolves the compliance portal ID of the owner's organization.
+func lookupCompliancePortalID(t *testing.T, owner *testutil.Client) string {
 	t.Helper()
 
 	const query = `
 		query($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter { id }
+					compliancePortal { id }
 				}
 			}
 		}
@@ -44,9 +44,9 @@ func lookupTrustCenterID(t *testing.T, owner *testutil.Client) string {
 
 	var result struct {
 		Node struct {
-			TrustCenter struct {
+			CompliancePortal struct {
 				ID string `json:"id"`
-			} `json:"trustCenter"`
+			} `json:"compliancePortal"`
 		} `json:"node"`
 	}
 
@@ -54,21 +54,21 @@ func lookupTrustCenterID(t *testing.T, owner *testutil.Client) string {
 		"organizationId": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.TrustCenter.ID)
+	require.NotEmpty(t, result.Node.CompliancePortal.ID)
 
-	return result.Node.TrustCenter.ID
+	return result.Node.CompliancePortal.ID
 }
 
-func lookupTrustHost(t *testing.T, owner *testutil.Client, trustCenterID string) string {
+func lookupTrustHost(t *testing.T, owner *testutil.Client, compliancePortalID string) string {
 	t.Helper()
 
-	activateTrustCenter(t, owner, trustCenterID)
+	activateCompliancePortal(t, owner, compliancePortalID)
 
 	const query = `
 		query($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter { publicUrl }
+					compliancePortal { publicUrl }
 				}
 			}
 		}
@@ -76,9 +76,9 @@ func lookupTrustHost(t *testing.T, owner *testutil.Client, trustCenterID string)
 
 	var result struct {
 		Node struct {
-			TrustCenter struct {
+			CompliancePortal struct {
 				PublicURL string `json:"publicUrl"`
-			} `json:"trustCenter"`
+			} `json:"compliancePortal"`
 		} `json:"node"`
 	}
 
@@ -86,32 +86,32 @@ func lookupTrustHost(t *testing.T, owner *testutil.Client, trustCenterID string)
 		"organizationId": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.TrustCenter.PublicURL)
+	require.NotEmpty(t, result.Node.CompliancePortal.PublicURL)
 
-	publicURL, err := url.Parse(result.Node.TrustCenter.PublicURL)
+	publicURL, err := url.Parse(result.Node.CompliancePortal.PublicURL)
 	require.NoError(t, err)
 	require.NotEmpty(t, publicURL.Host)
 
 	return publicURL.Host
 }
 
-// activateTrustCenter flips the trust center to active so its public surface
+// activateCompliancePortal flips the compliance portal to active so its public surface
 // (NDA, subprocessors, reports, branding) becomes reachable by visitors.
-func activateTrustCenter(t *testing.T, owner *testutil.Client, trustCenterID string) {
+func activateCompliancePortal(t *testing.T, owner *testutil.Client, compliancePortalID string) {
 	t.Helper()
 
 	const query = `
-		mutation($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter { id active }
+		mutation($input: UpdateCompliancePortalInput!) {
+			updateCompliancePortal(input: $input) {
+				compliancePortal { id active }
 			}
 		}
 	`
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"active":        true,
+			"compliancePortalId": compliancePortalID,
+			"active":             true,
 		},
 	}, nil)
 	require.NoError(t, err)

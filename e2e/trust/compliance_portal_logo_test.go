@@ -33,17 +33,17 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
+func TestCompliancePortal_LogoFileDownloadURL(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	organizationID := owner.GetOrganizationID().String()
 
-	const trustCenterQuery = `
+	const compliancePortalQuery = `
 		query($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter {
+					compliancePortal {
 						id
 					}
 				}
@@ -51,26 +51,26 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 		}
 	`
 
-	var trustCenterLookup struct {
+	var compliancePortalLookup struct {
 		Node struct {
-			TrustCenter struct {
+			CompliancePortal struct {
 				ID string `json:"id"`
-			} `json:"trustCenter"`
+			} `json:"compliancePortal"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(trustCenterQuery, map[string]any{
+	err := owner.Execute(compliancePortalQuery, map[string]any{
 		"organizationId": organizationID,
-	}, &trustCenterLookup)
+	}, &compliancePortalLookup)
 	require.NoError(t, err)
-	require.NotEmpty(t, trustCenterLookup.Node.TrustCenter.ID)
+	require.NotEmpty(t, compliancePortalLookup.Node.CompliancePortal.ID)
 
-	trustCenterID := trustCenterLookup.Node.TrustCenter.ID
+	compliancePortalID := compliancePortalLookup.Node.CompliancePortal.ID
 
 	const activateMutation = `
-		mutation($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter {
+		mutation($input: UpdateCompliancePortalInput!) {
+			updateCompliancePortal(input: $input) {
+				compliancePortal {
 					id
 					active
 					publicUrl
@@ -80,19 +80,19 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	`
 
 	var activateResult struct {
-		UpdateTrustCenter struct {
-			TrustCenter struct {
+		UpdateCompliancePortal struct {
+			CompliancePortal struct {
 				ID        string `json:"id"`
 				Active    bool   `json:"active"`
 				PublicURL string `json:"publicUrl"`
-			} `json:"trustCenter"`
-		} `json:"updateTrustCenter"`
+			} `json:"compliancePortal"`
+		} `json:"updateCompliancePortal"`
 	}
 
 	err = owner.Execute(activateMutation, map[string]any{
 		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"active":        true,
+			"compliancePortalId": compliancePortalID,
+			"active":             true,
 		},
 	}, &activateResult)
 	require.NoError(t, err)
@@ -100,18 +100,18 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	// Publishing the page provisions a managed {slug}.probopage.localhost
 	// domain; the effective public URL resolves to it while no customer
 	// custom domain is primary.
-	require.NotEmpty(t, activateResult.UpdateTrustCenter.TrustCenter.PublicURL)
+	require.NotEmpty(t, activateResult.UpdateCompliancePortal.CompliancePortal.PublicURL)
 
-	publicURL, err := url.Parse(activateResult.UpdateTrustCenter.TrustCenter.PublicURL)
+	publicURL, err := url.Parse(activateResult.UpdateCompliancePortal.CompliancePortal.PublicURL)
 	require.NoError(t, err)
 
 	trustHost := publicURL.Host
 	require.NotEmpty(t, trustHost)
 
 	const uploadMutation = `
-		mutation UpdateTrustCenterBrand($input: UpdateTrustCenterBrandInput!) {
-			updateTrustCenterBrand(input: $input) {
-				trustCenter {
+		mutation UpdateCompliancePortalBrand($input: UpdateCompliancePortalBrandInput!) {
+			updateCompliancePortalBrand(input: $input) {
+				compliancePortal {
 					id
 					logo {
 						id
@@ -136,22 +136,22 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	}
 
 	var uploadResult struct {
-		UpdateTrustCenterBrand struct {
-			TrustCenter struct {
+		UpdateCompliancePortalBrand struct {
+			CompliancePortal struct {
 				ID   string `json:"id"`
 				Logo *struct {
 					ID          string `json:"id"`
 					FileName    string `json:"fileName"`
 					DownloadURL string `json:"downloadUrl"`
 				} `json:"logo"`
-			} `json:"trustCenter"`
-		} `json:"updateTrustCenterBrand"`
+			} `json:"compliancePortal"`
+		} `json:"updateCompliancePortalBrand"`
 	}
 
 	err = owner.ExecuteWithFile(uploadMutation, map[string]any{
 		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"logoFile":      nil,
+			"compliancePortalId": compliancePortalID,
+			"logoFile":           nil,
 		},
 	}, "input.logoFile", testutil.UploadFile{
 		Filename:    "trust-center-logo.png",
@@ -159,11 +159,11 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 		Content:     pngContent,
 	}, &uploadResult)
 	require.NoError(t, err)
-	require.NotNil(t, uploadResult.UpdateTrustCenterBrand.TrustCenter.Logo)
+	require.NotNil(t, uploadResult.UpdateCompliancePortalBrand.CompliancePortal.Logo)
 
 	const trustGraphQLQuery = `
 		query {
-			currentTrustCenter {
+			currentCompliancePortal {
 				logo {
 					id
 					fileName
@@ -174,31 +174,31 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	`
 
 	var trustResult struct {
-		CurrentTrustCenter struct {
+		CurrentCompliancePortal struct {
 			Logo *struct {
 				ID          string `json:"id"`
 				FileName    string `json:"fileName"`
 				DownloadURL string `json:"downloadUrl"`
 			} `json:"logo"`
-		} `json:"currentTrustCenter"`
+		} `json:"currentCompliancePortal"`
 	}
 
 	// The dedicated HTTPS listener only serves the page once the managed
 	// domain's certificate has been provisioned (async, ~1s poll in e2e), so
 	// retry until the TLS handshake and query succeed.
 	require.Eventually(t, func() bool {
-		trustResult.CurrentTrustCenter.Logo = nil
+		trustResult.CurrentCompliancePortal.Logo = nil
 		if err := owner.ExecuteTrust(trustHost, trustGraphQLQuery, nil, &trustResult); err != nil {
 			return false
 		}
 
-		return trustResult.CurrentTrustCenter.Logo != nil
-	}, 30*time.Second, 500*time.Millisecond, "trust center did not become servable on the dedicated listener")
+		return trustResult.CurrentCompliancePortal.Logo != nil
+	}, 30*time.Second, 500*time.Millisecond, "compliance portal did not become servable on the dedicated listener")
 
-	require.NotNil(t, trustResult.CurrentTrustCenter.Logo)
-	assert.Equal(t, uploadResult.UpdateTrustCenterBrand.TrustCenter.Logo.ID, trustResult.CurrentTrustCenter.Logo.ID)
+	require.NotNil(t, trustResult.CurrentCompliancePortal.Logo)
+	assert.Equal(t, uploadResult.UpdateCompliancePortalBrand.CompliancePortal.Logo.ID, trustResult.CurrentCompliancePortal.Logo.ID)
 
-	downloadURL := trustResult.CurrentTrustCenter.Logo.DownloadURL
+	downloadURL := trustResult.CurrentCompliancePortal.Logo.DownloadURL
 	assert.True(
 		t,
 		strings.Contains(downloadURL, "/api/files/v1/public/"),

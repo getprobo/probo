@@ -549,7 +549,7 @@ func NewClientWithNewSession(t testing.TB, from *Client) *Client {
 	return client
 }
 
-func SelfProvisionTrustCenterVisitor(t testing.TB, trustHost string) *Client {
+func SelfProvisionCompliancePortalVisitor(t testing.TB, trustHost string) *Client {
 	t.Helper()
 
 	jar, err := cookiejar.New(nil)
@@ -582,7 +582,7 @@ func SelfProvisionTrustCenterVisitor(t testing.TB, trustHost string) *Client {
 func (c *Client) connectViaCIMD(email string) {
 	c.T.Helper()
 
-	WaitForTrustCenterHTTPS(c.T, c.trustHost)
+	WaitForCompliancePortalHTTPS(c.T, c.trustHost)
 
 	initiateURL := fmt.Sprintf(
 		"https://%s/initiate?continue=/overview",

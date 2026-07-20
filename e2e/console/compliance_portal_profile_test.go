@@ -22,17 +22,17 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTrustCenter_UpdateProfile(t *testing.T) {
+func TestCompliancePortal_UpdateProfile(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	organizationID := owner.GetOrganizationID().String()
 
-	const trustCenterQuery = `
+	const compliancePortalQuery = `
 		query($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter {
+					compliancePortal {
 						id
 					}
 				}
@@ -40,26 +40,26 @@ func TestTrustCenter_UpdateProfile(t *testing.T) {
 		}
 	`
 
-	var trustCenterLookup struct {
+	var compliancePortalLookup struct {
 		Node struct {
-			TrustCenter struct {
+			CompliancePortal struct {
 				ID string `json:"id"`
-			} `json:"trustCenter"`
+			} `json:"compliancePortal"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(trustCenterQuery, map[string]any{
+	err := owner.Execute(compliancePortalQuery, map[string]any{
 		"organizationId": organizationID,
-	}, &trustCenterLookup)
+	}, &compliancePortalLookup)
 	require.NoError(t, err)
-	require.NotEmpty(t, trustCenterLookup.Node.TrustCenter.ID)
+	require.NotEmpty(t, compliancePortalLookup.Node.CompliancePortal.ID)
 
-	trustCenterID := trustCenterLookup.Node.TrustCenter.ID
+	compliancePortalID := compliancePortalLookup.Node.CompliancePortal.ID
 
 	const updateMutation = `
-		mutation UpdateTrustCenter($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter {
+		mutation UpdateCompliancePortal($input: UpdateCompliancePortalInput!) {
+			updateCompliancePortal(input: $input) {
+				compliancePortal {
 					id
 					title
 					description
@@ -72,21 +72,21 @@ func TestTrustCenter_UpdateProfile(t *testing.T) {
 	`
 
 	var result struct {
-		UpdateTrustCenter struct {
-			TrustCenter struct {
+		UpdateCompliancePortal struct {
+			CompliancePortal struct {
 				ID                 string  `json:"id"`
 				Title              string  `json:"title"`
 				Description        *string `json:"description"`
 				WebsiteURL         *string `json:"websiteUrl"`
 				Email              *string `json:"email"`
 				HeadquarterAddress *string `json:"headquarterAddress"`
-			} `json:"trustCenter"`
-		} `json:"updateTrustCenter"`
+			} `json:"compliancePortal"`
+		} `json:"updateCompliancePortal"`
 	}
 
 	err = owner.Execute(updateMutation, map[string]any{
 		"input": map[string]any{
-			"trustCenterId":      trustCenterID,
+			"compliancePortalId": compliancePortalID,
 			"title":              "Acme Security",
 			"description":        "We keep your data safe.",
 			"websiteUrl":         "https://example.com",
@@ -96,8 +96,8 @@ func TestTrustCenter_UpdateProfile(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	tc := result.UpdateTrustCenter.TrustCenter
-	assert.Equal(t, trustCenterID, tc.ID)
+	tc := result.UpdateCompliancePortal.CompliancePortal
+	assert.Equal(t, compliancePortalID, tc.ID)
 	assert.Equal(t, "Acme Security", tc.Title)
 	require.NotNil(t, tc.Description)
 	assert.Equal(t, "We keep your data safe.", *tc.Description)

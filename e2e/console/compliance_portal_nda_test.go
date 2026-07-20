@@ -29,17 +29,17 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTrustCenter_UploadNDA(t *testing.T) {
+func TestCompliancePortal_UploadNDA(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	organizationID := owner.GetOrganizationID().String()
 
-	const trustCenterQuery = `
+	const compliancePortalQuery = `
 		query($organizationId: ID!) {
 			node(id: $organizationId) {
 				... on Organization {
-					trustCenter {
+					compliancePortal {
 						id
 					}
 				}
@@ -47,26 +47,26 @@ func TestTrustCenter_UploadNDA(t *testing.T) {
 		}
 	`
 
-	var trustCenterLookup struct {
+	var compliancePortalLookup struct {
 		Node struct {
-			TrustCenter struct {
+			CompliancePortal struct {
 				ID string `json:"id"`
-			} `json:"trustCenter"`
+			} `json:"compliancePortal"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(trustCenterQuery, map[string]any{
+	err := owner.Execute(compliancePortalQuery, map[string]any{
 		"organizationId": organizationID,
-	}, &trustCenterLookup)
+	}, &compliancePortalLookup)
 	require.NoError(t, err)
-	require.NotEmpty(t, trustCenterLookup.Node.TrustCenter.ID)
+	require.NotEmpty(t, compliancePortalLookup.Node.CompliancePortal.ID)
 
-	trustCenterID := trustCenterLookup.Node.TrustCenter.ID
+	compliancePortalID := compliancePortalLookup.Node.CompliancePortal.ID
 
 	const uploadMutation = `
-		mutation UploadTrustCenterNDA($input: UploadTrustCenterNDAInput!) {
-			uploadTrustCenterNDA(input: $input) {
-				trustCenter {
+		mutation UploadCompliancePortalNDA($input: UploadCompliancePortalNDAInput!) {
+			uploadCompliancePortalNDA(input: $input) {
+				compliancePortal {
 					id
 					nda {
 						id
@@ -81,23 +81,23 @@ func TestTrustCenter_UploadNDA(t *testing.T) {
 	pdfContent := []byte("%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF")
 
 	var uploadResult struct {
-		UploadTrustCenterNDA struct {
-			TrustCenter struct {
+		UploadCompliancePortalNDA struct {
+			CompliancePortal struct {
 				ID  string `json:"id"`
 				Nda *struct {
 					ID          string `json:"id"`
 					FileName    string `json:"fileName"`
 					DownloadURL string `json:"downloadUrl"`
 				} `json:"nda"`
-			} `json:"trustCenter"`
-		} `json:"uploadTrustCenterNDA"`
+			} `json:"compliancePortal"`
+		} `json:"uploadCompliancePortalNDA"`
 	}
 
 	err = owner.ExecuteWithFile(uploadMutation, map[string]any{
 		"input": map[string]any{
-			"trustCenterId": trustCenterID,
-			"fileName":      "nda.pdf",
-			"file":          nil,
+			"compliancePortalId": compliancePortalID,
+			"fileName":           "nda.pdf",
+			"file":               nil,
 		},
 	}, "input.file", testutil.UploadFile{
 		Filename:    "nda.pdf",
@@ -106,14 +106,14 @@ func TestTrustCenter_UploadNDA(t *testing.T) {
 	}, &uploadResult)
 	require.NoError(t, err)
 
-	assert.Equal(t, trustCenterID, uploadResult.UploadTrustCenterNDA.TrustCenter.ID)
-	require.NotNil(t, uploadResult.UploadTrustCenterNDA.TrustCenter.Nda)
-	assert.Equal(t, "nda.pdf", uploadResult.UploadTrustCenterNDA.TrustCenter.Nda.FileName)
-	assert.NotEmpty(t, uploadResult.UploadTrustCenterNDA.TrustCenter.Nda.DownloadURL)
+	assert.Equal(t, compliancePortalID, uploadResult.UploadCompliancePortalNDA.CompliancePortal.ID)
+	require.NotNil(t, uploadResult.UploadCompliancePortalNDA.CompliancePortal.Nda)
+	assert.Equal(t, "nda.pdf", uploadResult.UploadCompliancePortalNDA.CompliancePortal.Nda.FileName)
+	assert.NotEmpty(t, uploadResult.UploadCompliancePortalNDA.CompliancePortal.Nda.DownloadURL)
 	assert.True(
 		t,
-		strings.Contains(uploadResult.UploadTrustCenterNDA.TrustCenter.Nda.DownloadURL, "/api/files/v1/"),
+		strings.Contains(uploadResult.UploadCompliancePortalNDA.CompliancePortal.Nda.DownloadURL, "/api/files/v1/"),
 		"downloadUrl must route through the files API, got %q",
-		uploadResult.UploadTrustCenterNDA.TrustCenter.Nda.DownloadURL,
+		uploadResult.UploadCompliancePortalNDA.CompliancePortal.Nda.DownloadURL,
 	)
 }

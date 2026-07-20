@@ -71,40 +71,40 @@ func TestSecurity_WriteGap_PublishRiskListApproverIDs(t *testing.T) {
 	require.Error(t, err, "must not accept an approverId belonging to another organization")
 }
 
-// TestSecurity_WriteGap_TrustCenterAccessDocuments covers a write-gap found
-// while auditing GHSA-c74x-79w6-63jh's blast radius: TrustCenterAccessService.Update
+// TestSecurity_WriteGap_CompliancePortalAccessDocuments covers a write-gap found
+// while auditing GHSA-c74x-79w6-63jh's blast radius: CompliancePortalAccessService.Update
 // persisted caller-supplied document/report-file/trust-center-file ids into
 // trust_center_document_accesses (via coredata's MergeDocumentAccesses/
-// MergeReportFileAccesses/MergeTrustCenterFileAccesses) without validating
-// they belong to the trust center's own organization -- the DB-level FK check
+// MergeReportFileAccesses/MergeCompliancePortalFileAccesses) without validating
+// they belong to the compliance portal's own organization -- the DB-level FK check
 // alone doesn't catch this because those primary keys are globally unique,
 // not per-tenant.
 //
-// TrustCenterAccess rows are normally created through the trust/v1 public
+// CompliancePortalAccess rows are normally created through the trust/v1 public
 // portal's visitor request flow (requestAllAccesses), which needs a
 // separate authenticated visitor identity and NDA acceptance. To keep this
 // test focused on the fix under test (the Update mutation's FK validation)
 // rather than that unrelated flow, the access row's prerequisite state is
 // seeded directly via SQL against the same Postgres database the e2e probod
-// instance runs against, then the real updateTrustCenterAccess mutation is
+// instance runs against, then the real updateCompliancePortalAccess mutation is
 // exercised through the live GraphQL API.
-func TestSecurity_WriteGap_TrustCenterAccessDocuments(t *testing.T) {
+func TestSecurity_WriteGap_CompliancePortalAccessDocuments(t *testing.T) {
 	t.Parallel()
 
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	org1TrustCenterID := trustCenterID(t, org1Owner)
-	org1DocumentID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for trust center access").Create()
+	org1CompliancePortalID := compliancePortalID(t, org1Owner)
+	org1DocumentID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for compliance portal access").Create()
 	org2DocumentID := factory.NewDocument(org2Owner).WithTitle("Org2 Secret Document").Create()
 
-	accessID := seedTrustCenterAccess(t, org1Owner, org1TrustCenterID)
+	accessID := seedCompliancePortalAccess(t, org1Owner, org1CompliancePortalID)
 
 	t.Run("cannot grant access to a document from another organization", func(t *testing.T) {
 		_, err := org1Owner.Do(`
-			mutation($input: UpdateTrustCenterAccessInput!) {
-				updateTrustCenterAccess(input: $input) {
-					trustCenterAccess { id }
+			mutation($input: UpdateCompliancePortalAccessInput!) {
+				updateCompliancePortalAccess(input: $input) {
+					compliancePortalAccess { id }
 				}
 			}
 		`, map[string]any{
@@ -118,9 +118,9 @@ func TestSecurity_WriteGap_TrustCenterAccessDocuments(t *testing.T) {
 
 	t.Run("can grant access to a document from the same organization", func(t *testing.T) {
 		_, err := org1Owner.Do(`
-			mutation($input: UpdateTrustCenterAccessInput!) {
-				updateTrustCenterAccess(input: $input) {
-					trustCenterAccess { id }
+			mutation($input: UpdateCompliancePortalAccessInput!) {
+				updateCompliancePortalAccess(input: $input) {
+					compliancePortalAccess { id }
 				}
 			}
 		`, map[string]any{
@@ -133,20 +133,20 @@ func TestSecurity_WriteGap_TrustCenterAccessDocuments(t *testing.T) {
 	})
 }
 
-// seedTrustCenterAccess inserts a minimal trust_center_accesses row directly
+// seedCompliancePortalAccess inserts a minimal trust_center_accesses row directly
 // via SQL, bypassing the trust/v1 visitor request flow (which requires a
 // separate authenticated visitor identity and NDA acceptance) so that
-// updateTrustCenterAccess -- the mutation under test -- can be exercised in
+// updateCompliancePortalAccess -- the mutation under test -- can be exercised in
 // isolation. owner's own identity id is reused to satisfy the row's
 // identity_id foreign key; which identity it is doesn't matter for this test.
-func seedTrustCenterAccess(t *testing.T, owner *testutil.Client, trustCenterID string) string {
+func seedCompliancePortalAccess(t *testing.T, owner *testutil.Client, compliancePortalID string) string {
 	t.Helper()
 
-	tcID, err := gid.ParseGID(trustCenterID)
+	tcID, err := gid.ParseGID(compliancePortalID)
 	require.NoError(t, err)
 
 	tenantID := owner.GetOrganizationID().TenantID()
-	accessID := gid.New(tenantID, coredata.TrustCenterAccessEntityType)
+	accessID := gid.New(tenantID, coredata.CompliancePortalAccessEntityType)
 	now := time.Now().UTC()
 
 	client := test.PGClient(t)

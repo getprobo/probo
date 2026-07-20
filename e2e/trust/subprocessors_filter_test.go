@@ -29,12 +29,12 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTrustCenter_SubprocessorsFilter(t *testing.T) {
+func TestCompliancePortal_SubprocessorsFilter(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	trustCenterID := lookupTrustCenterID(t, owner)
-	activateTrustCenter(t, owner, trustCenterID)
+	compliancePortalID := lookupCompliancePortalID(t, owner)
+	activateCompliancePortal(t, owner, compliancePortalID)
 
 	awsName := factory.SafeName("AWS")
 	awsID := factory.NewThirdParty(owner).WithName(awsName).WithCategory("CLOUD_PROVIDER").Create()
@@ -51,69 +51,69 @@ func TestTrustCenter_SubprocessorsFilter(t *testing.T) {
 	t.Run("no filter returns every published subprocessor", func(t *testing.T) {
 		t.Parallel()
 
-		result := querySubprocessors(t, owner, trustCenterID, nil)
-		assert.Equal(t, 3, result.CurrentTrustCenter.Subprocessors.TotalCount)
-		assert.Len(t, result.CurrentTrustCenter.Subprocessors.Edges, 3)
+		result := querySubprocessors(t, owner, compliancePortalID, nil)
+		assert.Equal(t, 3, result.CurrentCompliancePortal.Subprocessors.TotalCount)
+		assert.Len(t, result.CurrentCompliancePortal.Subprocessors.Edges, 3)
 	})
 
 	t.Run("category filter narrows to one category", func(t *testing.T) {
 		t.Parallel()
 
-		result := querySubprocessors(t, owner, trustCenterID, map[string]any{
+		result := querySubprocessors(t, owner, compliancePortalID, map[string]any{
 			"category": "CLOUD_PROVIDER",
 		})
-		require.Equal(t, 1, result.CurrentTrustCenter.Subprocessors.TotalCount)
-		require.Len(t, result.CurrentTrustCenter.Subprocessors.Edges, 1)
-		assert.Equal(t, awsName, result.CurrentTrustCenter.Subprocessors.Edges[0].Node.Name)
+		require.Equal(t, 1, result.CurrentCompliancePortal.Subprocessors.TotalCount)
+		require.Len(t, result.CurrentCompliancePortal.Subprocessors.Edges, 1)
+		assert.Equal(t, awsName, result.CurrentCompliancePortal.Subprocessors.Edges[0].Node.Name)
 	})
 
 	t.Run("country filter matches array membership", func(t *testing.T) {
 		t.Parallel()
 
-		result := querySubprocessors(t, owner, trustCenterID, map[string]any{
+		result := querySubprocessors(t, owner, compliancePortalID, map[string]any{
 			"country": "IE",
 		})
-		require.Equal(t, 1, result.CurrentTrustCenter.Subprocessors.TotalCount)
-		require.Len(t, result.CurrentTrustCenter.Subprocessors.Edges, 1)
-		assert.Equal(t, stripeName, result.CurrentTrustCenter.Subprocessors.Edges[0].Node.Name)
+		require.Equal(t, 1, result.CurrentCompliancePortal.Subprocessors.TotalCount)
+		require.Len(t, result.CurrentCompliancePortal.Subprocessors.Edges, 1)
+		assert.Equal(t, stripeName, result.CurrentCompliancePortal.Subprocessors.Edges[0].Node.Name)
 	})
 
 	t.Run("query filter matches name substring", func(t *testing.T) {
 		t.Parallel()
 
-		result := querySubprocessors(t, owner, trustCenterID, map[string]any{
+		result := querySubprocessors(t, owner, compliancePortalID, map[string]any{
 			"query": slackName,
 		})
-		require.Equal(t, 1, result.CurrentTrustCenter.Subprocessors.TotalCount)
-		require.Len(t, result.CurrentTrustCenter.Subprocessors.Edges, 1)
-		assert.Equal(t, slackName, result.CurrentTrustCenter.Subprocessors.Edges[0].Node.Name)
+		require.Equal(t, 1, result.CurrentCompliancePortal.Subprocessors.TotalCount)
+		require.Len(t, result.CurrentCompliancePortal.Subprocessors.Edges, 1)
+		assert.Equal(t, slackName, result.CurrentCompliancePortal.Subprocessors.Edges[0].Node.Name)
 	})
 
 	t.Run("combined filters intersect", func(t *testing.T) {
 		t.Parallel()
 
-		result := querySubprocessors(t, owner, trustCenterID, map[string]any{
+		result := querySubprocessors(t, owner, compliancePortalID, map[string]any{
 			"category": "FINANCE",
 			"country":  "US",
 		})
-		require.Equal(t, 1, result.CurrentTrustCenter.Subprocessors.TotalCount)
-		require.Len(t, result.CurrentTrustCenter.Subprocessors.Edges, 1)
-		assert.Equal(t, stripeName, result.CurrentTrustCenter.Subprocessors.Edges[0].Node.Name)
+		require.Equal(t, 1, result.CurrentCompliancePortal.Subprocessors.TotalCount)
+		require.Len(t, result.CurrentCompliancePortal.Subprocessors.Edges, 1)
+		assert.Equal(t, stripeName, result.CurrentCompliancePortal.Subprocessors.Edges[0].Node.Name)
 	})
 
 	t.Run("non-matching filter returns empty set", func(t *testing.T) {
 		t.Parallel()
 
-		result := querySubprocessors(t, owner, trustCenterID, map[string]any{
+		result := querySubprocessors(t, owner, compliancePortalID, map[string]any{
 			"category": "SECURITY",
 		})
-		assert.Equal(t, 0, result.CurrentTrustCenter.Subprocessors.TotalCount)
-		assert.Empty(t, result.CurrentTrustCenter.Subprocessors.Edges)
+		assert.Equal(t, 0, result.CurrentCompliancePortal.Subprocessors.TotalCount)
+		assert.Empty(t, result.CurrentCompliancePortal.Subprocessors.Edges)
 	})
 }
 
 type subprocessorsResult struct {
-	CurrentTrustCenter struct {
+	CurrentCompliancePortal struct {
 		Subprocessors struct {
 			TotalCount int `json:"totalCount"`
 			Edges      []struct {
@@ -125,20 +125,20 @@ type subprocessorsResult struct {
 				} `json:"node"`
 			} `json:"edges"`
 		} `json:"subprocessors"`
-	} `json:"currentTrustCenter"`
+	} `json:"currentCompliancePortal"`
 }
 
 func querySubprocessors(
 	t *testing.T,
 	owner *testutil.Client,
-	trustCenterID string,
+	compliancePortalID string,
 	filter map[string]any,
 ) subprocessorsResult {
 	t.Helper()
 
 	const query = `
 		query($filter: SubprocessorFilter) {
-			currentTrustCenter {
+			currentCompliancePortal {
 				subprocessors(first: 50, filter: $filter) {
 					totalCount
 					edges {
@@ -156,7 +156,7 @@ func querySubprocessors(
 
 	var result subprocessorsResult
 
-	err := owner.ExecuteTrust(trustCenterID, query, map[string]any{"filter": filter}, &result)
+	err := owner.ExecuteTrust(compliancePortalID, query, map[string]any{"filter": filter}, &result)
 	require.NoError(t, err)
 
 	return result
@@ -168,16 +168,16 @@ func publishSubprocessor(t *testing.T, owner *testutil.Client, thirdPartyID stri
 	const mutation = `
 		mutation($input: UpdateThirdPartyInput!) {
 			updateThirdParty(input: $input) {
-				thirdParty { id showOnTrustCenter countries }
+				thirdParty { id showOnCompliancePortal countries }
 			}
 		}
 	`
 
 	err := owner.Execute(mutation, map[string]any{
 		"input": map[string]any{
-			"id":                thirdPartyID,
-			"showOnTrustCenter": true,
-			"countries":         countries,
+			"id":                     thirdPartyID,
+			"showOnCompliancePortal": true,
+			"countries":              countries,
 		},
 	}, nil)
 	require.NoError(t, err)

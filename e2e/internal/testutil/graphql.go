@@ -37,11 +37,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// trustCenterHTTPSAddr is the loopback address of the dedicated trust-center
+// compliancePortalHTTPSAddr is the loopback address of the dedicated trust-center
 // HTTPS listener started by the e2e probod (see generateConfig). Compliance
 // pages are served here exclusively, routed by TLS SNI / Host header. Uses a
 // non-privileged port so the e2e suite doesn't require root/CAP_NET_BIND_SERVICE.
-const trustCenterHTTPSAddr = "127.0.0.1:8443"
+const compliancePortalHTTPSAddr = "127.0.0.1:8443"
 
 type GraphQLRequest struct {
 	Query     string         `json:"query"`
@@ -231,7 +231,7 @@ func trustHTTPClientWithJar(serverName string, jar http.CookieJar) *http.Client 
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				return dialer.DialContext(ctx, "tcp", trustCenterHTTPSAddr)
+				return dialer.DialContext(ctx, "tcp", compliancePortalHTTPSAddr)
 			},
 			TLSClientConfig: &tls.Config{
 				ServerName:         serverName,
@@ -241,10 +241,10 @@ func trustHTTPClientWithJar(serverName string, jar http.CookieJar) *http.Client 
 	}
 }
 
-// WaitForTrustCenterHTTPS blocks until the dedicated trust-center listener
+// WaitForCompliancePortalHTTPS blocks until the dedicated trust-center listener
 // serves the page over TLS. Managed domains provision certificates
 // asynchronously after activation.
-func WaitForTrustCenterHTTPS(t testing.TB, host string) {
+func WaitForCompliancePortalHTTPS(t testing.TB, host string) {
 	t.Helper()
 
 	client := TrustHTTPClient(host)
@@ -263,7 +263,7 @@ func WaitForTrustCenterHTTPS(t testing.TB, host string) {
 		},
 		30*time.Second,
 		500*time.Millisecond,
-		"trust center did not become servable on the dedicated listener",
+		"compliance portal did not become servable on the dedicated listener",
 	)
 }
 
