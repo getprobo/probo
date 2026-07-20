@@ -20,22 +20,22 @@
 
 import { createContext, type ReactNode } from "react";
 
-import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import type { CompliancePortalGraphCurrentQuery$data } from "#/queries/__generated__/CompliancePortalGraphCurrentQuery.graphql";
 
-export const TrustCenterContext = createContext<
-  TrustGraphCurrentQuery$data["currentTrustCenter"] | null
+export const CompliancePortalContext = createContext<
+  CompliancePortalGraphCurrentQuery$data["currentCompliancePortal"] | null
 >(null);
 
-export const TrustCenterProvider = ({
+export const CompliancePortalProvider = ({
   children,
-  trustCenter,
+  compliancePortal,
 }: {
   children: ReactNode;
-  trustCenter: TrustGraphCurrentQuery$data["currentTrustCenter"];
+  compliancePortal: CompliancePortalGraphCurrentQuery$data["currentCompliancePortal"];
 }) => {
   return (
-    <TrustCenterContext.Provider value={trustCenter}>
+    <CompliancePortalContext.Provider value={compliancePortal}>
       {children}
-    </TrustCenterContext.Provider>
+    </CompliancePortalContext.Provider>
   );
 };

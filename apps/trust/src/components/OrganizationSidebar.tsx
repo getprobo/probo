@@ -37,7 +37,7 @@ import { useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import type { CompliancePortalGraphCurrentQuery$data } from "#/queries/__generated__/CompliancePortalGraphCurrentQuery.graphql";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
 import type { OrganizationSidebar_subscribeToMailingListMutation } from "./__generated__/OrganizationSidebar_subscribeToMailingListMutation.graphql";
@@ -47,7 +47,7 @@ import { FrameworkBadge } from "./FrameworkBadge";
 const requestAllAccessesMutation = graphql`
   mutation OrganizationSidebar_requestAllAccessesMutation {
     requestAllAccesses {
-      trustCenterAccess {
+      compliancePortalAccess {
         id
       }
     }
@@ -76,13 +76,13 @@ const unsubscribeFromMailingListMutation = graphql`
 `;
 
 export function OrganizationSidebar({
-  trustCenter,
+  compliancePortal,
   isAuthenticated,
 }: {
-  trustCenter: TrustGraphCurrentQuery$data["currentTrustCenter"];
+  compliancePortal: CompliancePortalGraphCurrentQuery$data["currentCompliancePortal"];
   isAuthenticated: boolean;
 }) {
-  const trustCenterId = trustCenter?.id;
+  const compliancePortalId = compliancePortal?.id;
   const { __ } = useTranslate();
   const { toast } = useToast();
   const theme = useSystemTheme();
@@ -91,8 +91,8 @@ export function OrganizationSidebar({
   const location = useLocation();
 
   const logoFileUrl = theme === "dark"
-    ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
-    : trustCenter?.logo?.downloadUrl;
+    ? (compliancePortal?.darkLogo?.downloadUrl ?? compliancePortal?.logo?.downloadUrl)
+    : compliancePortal?.logo?.downloadUrl;
 
   const [requestAllAccesses, isRequestingAccess]
     = useMutation<OrganizationSidebar_requestAllAccessesMutation>(
@@ -155,12 +155,12 @@ export function OrganizationSidebar({
       variables: {},
       updater: (store, data) => {
         const subscription = data?.subscribeToMailingList?.subscription;
-        if (!subscription?.id || !trustCenterId) return;
-        const trustCenterRecord = store.get(trustCenterId);
-        if (!trustCenterRecord) return;
+        if (!subscription?.id || !compliancePortalId) return;
+        const compliancePortalRecord = store.get(compliancePortalId);
+        if (!compliancePortalRecord) return;
         const subscriptionRecord = store.get(subscription.id);
         if (!subscriptionRecord) return;
-        trustCenterRecord.setLinkedRecord(subscriptionRecord, "viewerSubscription");
+        compliancePortalRecord.setLinkedRecord(subscriptionRecord, "viewerSubscription");
       },
       onCompleted: (_, errors) => {
         if (errors?.length) {
@@ -215,7 +215,7 @@ export function OrganizationSidebar({
     });
   };
 
-  if (!trustCenter) {
+  if (!compliancePortal) {
     return null;
   }
 
@@ -233,9 +233,9 @@ export function OrganizationSidebar({
         : (
             <div className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1" />
           )}
-      <h1 className="text-2xl mt-6">{trustCenter.title}</h1>
+      <h1 className="text-2xl mt-6">{compliancePortal.title}</h1>
       <p className="text-sm text-txt-secondary mt-1">
-        {trustCenter.description}
+        {compliancePortal.description}
       </p>
 
       <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
@@ -246,32 +246,32 @@ export function OrganizationSidebar({
           <IconBlock size={16} />
           {__("Business information")}
         </h2>
-        {trustCenter.websiteUrl && (
+        {compliancePortal.websiteUrl && (
           <BusinessInfo label={__("Website")}>
-            <a {...externalLinkProps(trustCenter.websiteUrl)}>
+            <a {...externalLinkProps(compliancePortal.websiteUrl)}>
               <span className="text-txt-info hover:underline ">
-                {new URL(trustCenter.websiteUrl).host}
+                {new URL(compliancePortal.websiteUrl).host}
               </span>
             </a>
           </BusinessInfo>
         )}
-        {trustCenter.email && (
+        {compliancePortal.email && (
           <BusinessInfo label={__("Contact")}>
-            <a href={`mailto:${trustCenter.email}`}>
+            <a href={`mailto:${compliancePortal.email}`}>
               <span className="text-txt-info hover:underline ">
-                {trustCenter.email}
+                {compliancePortal.email}
               </span>
             </a>
           </BusinessInfo>
         )}
-        {trustCenter.headquarterAddress && (
+        {compliancePortal.headquarterAddress && (
           <BusinessInfo label={__("HQ address")}>
-            {trustCenter.headquarterAddress}
+            {compliancePortal.headquarterAddress}
           </BusinessInfo>
         )}
-        {trustCenter.customLinks.edges.length > 0 && (
+        {compliancePortal.customLinks.edges.length > 0 && (
           <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {trustCenter.customLinks.edges.map(({ node }) => (
+            {compliancePortal.customLinks.edges.map(({ node }) => (
               <a
                 key={node.id}
                 {...externalLinkProps(node.url)}
@@ -287,7 +287,7 @@ export function OrganizationSidebar({
         <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
 
         {/* Certifications */}
-        {trustCenter.complianceFrameworks.edges.length > 0 && (
+        {compliancePortal.complianceFrameworks.edges.length > 0 && (
           <>
             <div className="space-y-4">
               <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
@@ -300,7 +300,7 @@ export function OrganizationSidebar({
                   gridTemplateColumns: "repeat(auto-fit, 75px",
                 }}
               >
-                {trustCenter.complianceFrameworks.edges.map(edge => (
+                {compliancePortal.complianceFrameworks.edges.map(edge => (
                   <FrameworkBadge key={edge.node.id} framework={edge.node.framework} />
                 ))}
               </div>
@@ -322,7 +322,7 @@ export function OrganizationSidebar({
             {__("Request access")}
           </Button>
           {isAuthenticated && (
-            trustCenter.viewerSubscription
+            compliancePortal.viewerSubscription
               ? (
                   <Button
                     disabled={isUnsubscribing}

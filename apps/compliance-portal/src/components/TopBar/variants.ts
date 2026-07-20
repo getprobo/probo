@@ -20,7 +20,7 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Trust Center top navigation bar. Slots are shared by the live TopBar and its
+// Compliance Portal top navigation bar. Slots are shared by the live TopBar and its
 // skeleton so the loading placeholder is structurally identical. Desktop-first:
 // unprefixed classes are the desktop layout; max-md: collapses into the burger.
 export const topBar = tv({

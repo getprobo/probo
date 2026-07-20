@@ -36,9 +36,9 @@ import { SubprocessorsPage } from "#/pages/SubprocessorsPage";
 import { currentTrustUpdatesQuery, UpdatesPage } from "#/pages/UpdatesPage";
 import {
   currentTrustDocumentsQuery,
-  currentTrustGraphQuery,
+  currentCompliancePortalGraphQuery,
   currentTrustSubprocessorsQuery,
-} from "#/queries/TrustGraph";
+} from "#/queries/CompliancePortalGraph";
 
 import { DocumentPageErrorBoundary } from "./components/DocumentPageErrorBoundary";
 import { PageError } from "./components/PageError";
@@ -79,7 +79,7 @@ const routes = [
   {
     path: "/overview",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+      loadQuery(consoleEnvironment, currentCompliancePortalGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -100,7 +100,7 @@ const routes = [
   {
     path: "/documents",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+      loadQuery(consoleEnvironment, currentCompliancePortalGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -119,7 +119,7 @@ const routes = [
   {
     path: "/subprocessors",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+      loadQuery(consoleEnvironment, currentCompliancePortalGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -138,7 +138,7 @@ const routes = [
   {
     path: "/updates",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+      loadQuery(consoleEnvironment, currentCompliancePortalGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,

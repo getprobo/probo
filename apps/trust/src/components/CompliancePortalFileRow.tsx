@@ -32,14 +32,14 @@ import { useFragment, useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { TrustCenterFileRow_requestAccessMutation } from "./__generated__/TrustCenterFileRow_requestAccessMutation.graphql";
-import type { TrustCenterFileRowFragment$key } from "./__generated__/TrustCenterFileRowFragment.graphql";
+import type { CompliancePortalFileRow_requestAccessMutation } from "./__generated__/CompliancePortalFileRow_requestAccessMutation.graphql";
+import type { CompliancePortalFileRowFragment$key } from "./__generated__/CompliancePortalFileRowFragment.graphql";
 
 const requestAccessMutation = graphql`
-  mutation TrustCenterFileRow_requestAccessMutation(
-    $input: RequestTrustCenterFileAccessInput!
+  mutation CompliancePortalFileRow_requestAccessMutation(
+    $input: RequestCompliancePortalFileAccessInput!
   ) {
-    requestTrustCenterFileAccess(input: $input) {
+    requestCompliancePortalFileAccess(input: $input) {
       file {
         access {
           id
@@ -50,8 +50,8 @@ const requestAccessMutation = graphql`
   }
 `;
 
-const trustCenterFileRowFragment = graphql`
-  fragment TrustCenterFileRowFragment on TrustCenterFile {
+const compliancePortalFileRowFragment = graphql`
+  fragment CompliancePortalFileRowFragment on CompliancePortalFile {
     id
     alias
     name
@@ -63,8 +63,8 @@ const trustCenterFileRowFragment = graphql`
   }
 `;
 
-export function TrustCenterFileRow(props: {
-  file: TrustCenterFileRowFragment$key;
+export function CompliancePortalFileRow(props: {
+  file: CompliancePortalFileRowFragment$key;
 }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -72,12 +72,12 @@ export function TrustCenterFileRow(props: {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const file = useFragment(trustCenterFileRowFragment, props.file);
+  const file = useFragment(compliancePortalFileRowFragment, props.file);
   const filePath = file.alias ?? file.id;
   const hasRequested = file.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
-    = useMutation<TrustCenterFileRow_requestAccessMutation>(
+    = useMutation<CompliancePortalFileRow_requestAccessMutation>(
       requestAccessMutation,
     );
 
@@ -85,7 +85,7 @@ export function TrustCenterFileRow(props: {
     requestAccess({
       variables: {
         input: {
-          trustCenterFileId: file.id,
+          compliancePortalFileId: file.id,
         },
       },
       onCompleted: (_, errors) => {

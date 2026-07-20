@@ -26,42 +26,42 @@ import { Outlet } from "react-router";
 
 import { OrganizationSidebar } from "#/components/OrganizationSidebar";
 import { useRequestAccessCallback } from "#/hooks/useRequestAccessCallback";
-import { TrustCenterProvider } from "#/providers/TrustCenterProvider";
-import type { TrustGraphCurrentQuery } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
-import { currentTrustGraphQuery } from "#/queries/TrustGraph";
+import { CompliancePortalProvider } from "#/providers/CompliancePortalProvider";
+import type { CompliancePortalGraphCurrentQuery } from "#/queries/__generated__/CompliancePortalGraphCurrentQuery.graphql";
+import { currentCompliancePortalGraphQuery } from "#/queries/CompliancePortalGraph";
 
 type Props = {
-  queryRef: PreloadedQuery<TrustGraphCurrentQuery>;
+  queryRef: PreloadedQuery<CompliancePortalGraphCurrentQuery>;
 };
 
 export function MainLayout(props: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery<TrustGraphCurrentQuery>(currentTrustGraphQuery, props.queryRef);
-  const trustCenter = data.currentTrustCenter;
+  const data = usePreloadedQuery<CompliancePortalGraphCurrentQuery>(currentCompliancePortalGraphQuery, props.queryRef);
+  const compliancePortal = data.currentCompliancePortal;
   const isAuthenticated = data.viewer != null;
 
   const theme = useSystemTheme();
 
   useFavicon(
     theme === "dark"
-      ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
-      : trustCenter?.logo?.downloadUrl,
+      ? (compliancePortal?.darkLogo?.downloadUrl ?? compliancePortal?.logo?.downloadUrl)
+      : compliancePortal?.logo?.downloadUrl,
   );
   useRequestAccessCallback();
 
   return (
-    <TrustCenterProvider trustCenter={trustCenter}>
+    <CompliancePortalProvider compliancePortal={compliancePortal}>
       <div className="grid grid-cols-1 max-w-[1280px] mx-4 pt-6 gap-4 lg:mx-auto lg:gap-10 lg:pt-20 lg:grid-cols-[400px_1fr] lg:items-start ">
-        <OrganizationSidebar trustCenter={trustCenter} isAuthenticated={isAuthenticated} />
+        <OrganizationSidebar compliancePortal={compliancePortal} isAuthenticated={isAuthenticated} />
         <main>
           <Tabs className="mb-8">
             <TabLink to="/overview">{__("Overview")}</TabLink>
             <TabLink to="/documents">{__("Documents")}</TabLink>
-            {trustCenter.subprocessorInfo.totalCount > 0
+            {compliancePortal.subprocessorInfo.totalCount > 0
               && <TabLink to="/subprocessors">{__("Subprocessors")}</TabLink>}
             <TabLink to="/updates">{__("Updates")}</TabLink>
           </Tabs>
-          <Outlet context={{ trustCenter }} />
+          <Outlet context={{ compliancePortal }} />
         </main>
       </div>
 
@@ -73,6 +73,6 @@ export function MainLayout(props: Props) {
         {" "}
         <Logo withPicto className="h-6" />
       </a>
-    </TrustCenterProvider>
+    </CompliancePortalProvider>
   );
 }

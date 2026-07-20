@@ -24,7 +24,7 @@ import { graphql, usePreloadedQuery } from "react-relay";
 
 import { ComplianceFrameworksSection } from "#/components/ComplianceFrameworks/ComplianceFrameworksSection";
 import { Hero } from "#/components/Hero/Hero";
-import { TrustCenterContactInfo } from "#/components/Hero/TrustCenterContactInfo";
+import { CompliancePortalContactInfo } from "#/components/Hero/CompliancePortalContactInfo";
 import { RecentUpdatesSection } from "#/components/RecentUpdates/RecentUpdatesSection";
 import { SecurityCommitmentsSection } from "#/components/SecurityCommitments/SecurityCommitmentsSection";
 import { TrustedBySection } from "#/components/TrustedBy/TrustedBySection";
@@ -33,13 +33,13 @@ import type { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
 
 export const homePageQuery = graphql`
   query HomePageQuery @throwOnFieldError {
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       title
-      ...TrustCenterContactInfo_trustCenter
-      ...ComplianceFrameworksSection_trustCenter
-      ...SecurityCommitmentsSection_trustCenter
-      ...TrustedBySection_trustCenter
-      ...RecentUpdatesSection_trustCenter
+      ...CompliancePortalContactInfo_compliancePortal
+      ...ComplianceFrameworksSection_compliancePortal
+      ...SecurityCommitmentsSection_compliancePortal
+      ...TrustedBySection_compliancePortal
+      ...RecentUpdatesSection_compliancePortal
     }
   }
 `;
@@ -51,8 +51,8 @@ interface HomePageProps {
 export function HomePage({ queryRef }: HomePageProps) {
   const { t } = useTranslation();
   const data = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
-  const { currentTrustCenter } = data;
-  const { title } = currentTrustCenter;
+  const { currentCompliancePortal } = data;
+  const { title } = currentCompliancePortal;
 
   return (
     <>
@@ -60,14 +60,14 @@ export function HomePage({ queryRef }: HomePageProps) {
         title={t("home.heroTitle", { name: title })}
         description={t("home.heroDescription")}
       >
-        <TrustCenterContactInfo trustCenterKey={currentTrustCenter} />
+        <CompliancePortalContactInfo compliancePortalKey={currentCompliancePortal} />
       </Hero>
       <div className="flex w-full flex-col items-center px-8 max-md:px-4">
         <div className="flex w-full max-w-5xl flex-col">
-          <ComplianceFrameworksSection trustCenterKey={currentTrustCenter} />
-          <SecurityCommitmentsSection trustCenterKey={currentTrustCenter} />
-          <TrustedBySection trustCenterKey={currentTrustCenter} />
-          <RecentUpdatesSection trustCenterKey={currentTrustCenter} />
+          <ComplianceFrameworksSection compliancePortalKey={currentCompliancePortal} />
+          <SecurityCommitmentsSection compliancePortalKey={currentCompliancePortal} />
+          <TrustedBySection compliancePortalKey={currentCompliancePortal} />
+          <RecentUpdatesSection compliancePortalKey={currentCompliancePortal} />
         </div>
       </div>
     </>

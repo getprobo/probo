@@ -27,7 +27,7 @@ import { EmptyState } from "#/components/EmptyState/EmptyState";
 import { useSubprocessorFilters } from "../_lib/useSubprocessorFilters";
 
 // Empty state for the subprocessor list. When filters are active it offers to
-// clear them; otherwise it states the trust center lists no subprocessors.
+// clear them; otherwise it states the compliance portal lists no subprocessors.
 export function SubprocessorsEmpty() {
   const { t } = useTranslation("subprocessors");
   const { hasActiveFilters, clear } = useSubprocessorFilters();

@@ -65,9 +65,9 @@ const reportMutation = graphql`
 
 const fileMutation = graphql`
   mutation useRequestAccessCallback_fileMutation(
-    $input: RequestTrustCenterFileAccessInput!
+    $input: RequestCompliancePortalFileAccessInput!
   ) {
-    requestTrustCenterFileAccess(input: $input) {
+    requestCompliancePortalFileAccess(input: $input) {
       file {
         access {
           id
@@ -81,7 +81,7 @@ const fileMutation = graphql`
 const allMutation = graphql`
   mutation useRequestAccessCallback_allMutation {
     requestAllAccesses {
-      trustCenterAccess {
+      compliancePortalAccess {
         id
       }
     }
@@ -164,7 +164,7 @@ export function useRequestAccessCallback() {
       searchParams.delete("request-file-id");
       void requestFileAccess({
         variables: {
-          input: { trustCenterFileId: fileId },
+          input: { compliancePortalFileId: fileId },
         },
         onCompleted: (_, errors) => {
           if (errors?.length) {

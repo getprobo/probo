@@ -26,25 +26,25 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { DocumentRow } from "#/components/DocumentRow";
 import { RowHeader } from "#/components/RowHeader";
 import { Rows } from "#/components/Rows";
-import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
+import { CompliancePortalFileRow } from "#/components/CompliancePortalFileRow";
 import { documentTypeLabel } from "#/helpers/documents";
-import type { TrustGraphCurrentDocumentsQuery } from "#/queries/__generated__/TrustGraphCurrentDocumentsQuery.graphql";
-import { currentTrustDocumentsQuery } from "#/queries/TrustGraph";
+import type { CompliancePortalGraphCurrentDocumentsQuery } from "#/queries/__generated__/CompliancePortalGraphCurrentDocumentsQuery.graphql";
+import { currentTrustDocumentsQuery } from "#/queries/CompliancePortalGraph";
 
 type Props = {
-  queryRef: PreloadedQuery<TrustGraphCurrentDocumentsQuery>;
+  queryRef: PreloadedQuery<CompliancePortalGraphCurrentDocumentsQuery>;
 };
 
 export function DocumentsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery<TrustGraphCurrentDocumentsQuery>(
+  const data = usePreloadedQuery<CompliancePortalGraphCurrentDocumentsQuery>(
     currentTrustDocumentsQuery,
     queryRef,
   );
   const documents
-    = data.currentTrustCenter?.documents.edges.map(edge => edge.node) ?? [];
+    = data.currentCompliancePortal?.documents.edges.map(edge => edge.node) ?? [];
   const files
-    = data.currentTrustCenter?.trustCenterFiles.edges.map(edge => edge.node) ?? [];
+    = data.currentCompliancePortal?.compliancePortalFiles.edges.map(edge => edge.node) ?? [];
   const documentsPerType = groupBy(documents, document =>
     documentTypeLabel(document.documentType, __),
   );
@@ -68,7 +68,7 @@ export function DocumentsPage({ queryRef }: Props) {
           <Fragment key={category}>
             <RowHeader>{category}</RowHeader>
             {files.map(file => (
-              <TrustCenterFileRow key={file.id} file={file} />
+              <CompliancePortalFileRow key={file.id} file={file} />
             ))}
           </Fragment>
         ))}

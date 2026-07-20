@@ -27,7 +27,7 @@ import type { useDocumentExportDocumentMutation } from "./__generated__/useDocum
 import type { useDocumentExportFileMutation } from "./__generated__/useDocumentExportFileMutation.graphql";
 import type { useDocumentExportReportMutation } from "./__generated__/useDocumentExportReportMutation.graphql";
 
-export type DocumentKind = "Document" | "TrustCenterFile" | "AuditReport";
+export type DocumentKind = "Document" | "CompliancePortalFile" | "AuditReport";
 
 const exportDocumentMutation = graphql`
   mutation useDocumentExportDocumentMutation($input: ExportDocumentPDFInput!) {
@@ -38,8 +38,8 @@ const exportDocumentMutation = graphql`
 `;
 
 const exportFileMutation = graphql`
-  mutation useDocumentExportFileMutation($input: ExportTrustCenterFileInput!) {
-    exportTrustCenterFile(input: $input) {
+  mutation useDocumentExportFileMutation($input: ExportCompliancePortalFileInput!) {
+    exportCompliancePortalFile(input: $input) {
       data
     }
   }
@@ -102,10 +102,10 @@ export function useDocumentExport(kind: DocumentKind, id: string, enabled: boole
           onCompleted: response => apply(id, response.exportDocumentPDF.data),
         }).catch(() => {});
         break;
-      case "TrustCenterFile":
+      case "CompliancePortalFile":
         exportFile({
-          variables: { input: { trustCenterFileId: id } },
-          onCompleted: response => apply(id, response.exportTrustCenterFile.data),
+          variables: { input: { compliancePortalFileId: id } },
+          onCompleted: response => apply(id, response.exportCompliancePortalFile.data),
         }).catch(() => {});
         break;
       case "AuditReport":

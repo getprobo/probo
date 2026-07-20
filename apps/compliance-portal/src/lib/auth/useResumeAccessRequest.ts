@@ -44,7 +44,7 @@ import type { useResumeAccessRequestMutation } from "./__generated__/useResumeAc
 const requestAllAccessesMutation = graphql`
   mutation useResumeAccessRequestMutation {
     requestAllAccesses {
-      trustCenterAccess {
+      compliancePortalAccess {
         id
       }
     }
@@ -83,8 +83,8 @@ const requestReportMutation = graphql`
 `;
 
 const requestFileMutation = graphql`
-  mutation useResumeAccessRequest_fileMutation($input: RequestTrustCenterFileAccessInput!) {
-    requestTrustCenterFileAccess(input: $input) {
+  mutation useResumeAccessRequest_fileMutation($input: RequestCompliancePortalFileAccessInput!) {
+    requestCompliancePortalFileAccess(input: $input) {
       file {
         id
         access {
@@ -194,7 +194,7 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
       const continueUrl = buildRequestAccessContinueUrl(REQUEST_FILE_PARAM, fileId);
       clear(REQUEST_FILE_PARAM);
       void requestFileAccess({
-        variables: { input: { trustCenterFileId: fileId } },
+        variables: { input: { compliancePortalFileId: fileId } },
         ...makeHandlers(continueUrl),
       }).catch(() => {});
       return;

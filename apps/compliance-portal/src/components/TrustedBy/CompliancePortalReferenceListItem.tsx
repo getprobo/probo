@@ -24,10 +24,10 @@ import { graphql, useFragment } from "react-relay";
 import { MediaTile } from "#/components/MediaTile/MediaTile";
 import { externalHref } from "#/lib/url/hostname";
 
-import type { TrustCenterReferenceListItem_reference$key } from "./__generated__/TrustCenterReferenceListItem_reference.graphql";
+import type { CompliancePortalReferenceListItem_reference$key } from "./__generated__/CompliancePortalReferenceListItem_reference.graphql";
 
-const trustCenterReferenceListItemFragment = graphql`
-  fragment TrustCenterReferenceListItem_reference on TrustCenterReference @throwOnFieldError {
+const compliancePortalReferenceListItemFragment = graphql`
+  fragment CompliancePortalReferenceListItem_reference on CompliancePortalReference @throwOnFieldError {
     name
     websiteUrl
     logo {
@@ -36,13 +36,13 @@ const trustCenterReferenceListItemFragment = graphql`
   }
 `;
 
-interface TrustCenterReferenceListItemProps {
-  referenceKey: TrustCenterReferenceListItem_reference$key;
+interface CompliancePortalReferenceListItemProps {
+  referenceKey: CompliancePortalReferenceListItem_reference$key;
 }
 
 // A single "Trusted by" logo tile, linking to the reference's website.
-export function TrustCenterReferenceListItem({ referenceKey }: TrustCenterReferenceListItemProps) {
-  const reference = useFragment(trustCenterReferenceListItemFragment, referenceKey);
+export function CompliancePortalReferenceListItem({ referenceKey }: CompliancePortalReferenceListItemProps) {
+  const reference = useFragment(compliancePortalReferenceListItemFragment, referenceKey);
 
   return (
     <a

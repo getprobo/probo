@@ -46,7 +46,7 @@ export const ndaPageQuery = graphql`
       # eslint-disable-next-line relay/unused-fields
       id
     }
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       title
       nonDisclosureAgreement {
         fileName
@@ -61,7 +61,7 @@ export const ndaPageQuery = graphql`
 `;
 
 const ndaPageFragment = graphql`
-  fragment NDAPageFragment on TrustCenter
+  fragment NDAPageFragment on CompliancePortal
   @refetchable(queryName: "NDAPageRefetchQuery") {
     nonDisclosureAgreement @required(action: THROW) {
       viewerSignature {
@@ -108,12 +108,12 @@ export function NDAPage(props: {
   const isDesktop = !isMobile;
 
   const queryData = usePreloadedQuery<NDAPageQueryType>(ndaPageQuery, props.queryRef);
-  const trustCenter = queryData.currentTrustCenter;
+  const compliancePortal = queryData.currentCompliancePortal;
   const viewer = queryData.viewer;
 
   const [data, refetch] = useRefetchableFragment<NDAPageRefetchQuery, NDAPageFragment$key>(
     ndaPageFragment,
-    trustCenter,
+    compliancePortal,
   );
   const ndaSignature = data.nonDisclosureAgreement.viewerSignature;
 
@@ -217,7 +217,7 @@ export function NDAPage(props: {
     });
   };
 
-  const nda = trustCenter.nonDisclosureAgreement;
+  const nda = compliancePortal.nonDisclosureAgreement;
   if (!viewer) {
     return <Navigate to="/connect" replace />;
   }
@@ -244,7 +244,7 @@ export function NDAPage(props: {
                 __(
                   "%s requires you to sign an NDA before accessing compliance documents.",
                 ),
-                trustCenter.title,
+                compliancePortal.title,
               )}
             </p>
             {isMobile && nda?.fileUrl && (

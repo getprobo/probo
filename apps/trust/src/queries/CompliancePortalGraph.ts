@@ -23,12 +23,12 @@ import { graphql } from "relay-runtime";
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 // Queries for custom domain (subdomain) approach
-export const currentTrustGraphQuery = graphql`
-  query TrustGraphCurrentQuery {
+export const currentCompliancePortalGraphQuery = graphql`
+  query CompliancePortalGraphCurrentQuery {
     viewer {
       id
     }
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       id
       slug
       title
@@ -91,8 +91,8 @@ export const currentTrustGraphQuery = graphql`
 `;
 
 export const currentTrustDocumentsQuery = graphql`
-  query TrustGraphCurrentDocumentsQuery {
-    currentTrustCenter {
+  query CompliancePortalGraphCurrentDocumentsQuery {
+    currentCompliancePortal {
       id
       documents(first: 50) {
         edges {
@@ -103,12 +103,12 @@ export const currentTrustDocumentsQuery = graphql`
           }
         }
       }
-      trustCenterFiles(first: 50) {
+      compliancePortalFiles(first: 50) {
         edges {
           node {
             id
             category
-            ...TrustCenterFileRowFragment
+            ...CompliancePortalFileRowFragment
           }
         }
       }
@@ -117,8 +117,8 @@ export const currentTrustDocumentsQuery = graphql`
 `;
 
 export const currentTrustSubprocessorsQuery = graphql`
-  query TrustGraphCurrentSubprocessorsQuery {
-    currentTrustCenter {
+  query CompliancePortalGraphCurrentSubprocessorsQuery {
+    currentCompliancePortal {
       id
       subprocessors(first: 50) {
         edges {

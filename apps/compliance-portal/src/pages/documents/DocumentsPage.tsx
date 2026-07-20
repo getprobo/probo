@@ -35,13 +35,13 @@ import { DocumentListItem } from "./_components/DocumentListItem";
 import { DocumentSection } from "./_components/DocumentSection";
 import { DocumentsEmpty } from "./_components/DocumentsEmpty";
 import { DocumentsToolbar } from "./_components/DocumentsToolbar";
-import { TrustCenterFileListItem } from "./_components/TrustCenterFileListItem";
+import { CompliancePortalFileListItem } from "./_components/CompliancePortalFileListItem";
 import { toQueryVariables } from "./_lib/toQueryVariables";
 import { useDocumentTab } from "./_lib/useDocumentTab";
 import { documentsLayout } from "./variants";
 
 export const documentsPageQuery = graphql`
-  query DocumentsPageQuery($visibility: TrustCenterVisibility) {
+  query DocumentsPageQuery($visibility: CompliancePortalVisibility) {
     ...DocumentsPage_query @arguments(visibility: $visibility)
   }
 `;
@@ -49,8 +49,8 @@ export const documentsPageQuery = graphql`
 const documentsPageFragment = graphql`
   fragment DocumentsPage_query on Query
   @refetchable(queryName: "DocumentsPageRefetchQuery")
-  @argumentDefinitions(visibility: { type: "TrustCenterVisibility" }) {
-    currentTrustCenter @required(action: THROW) {
+  @argumentDefinitions(visibility: { type: "CompliancePortalVisibility" }) {
+    currentCompliancePortal @required(action: THROW) {
       documents(first: 250, filter: { visibility: $visibility }) {
         edges {
           node {
@@ -71,12 +71,12 @@ const documentsPageFragment = graphql`
           }
         }
       }
-      trustCenterFiles(first: 250, filter: { visibility: $visibility }) {
+      compliancePortalFiles(first: 250, filter: { visibility: $visibility }) {
         edges {
           node {
             id
             category
-            ...TrustCenterFileListItem_file
+            ...CompliancePortalFileListItem_file
           }
         }
       }
@@ -88,7 +88,7 @@ interface DocumentsPageProps {
   queryRef: PreloadedQuery<DocumentsPageQuery>;
 }
 
-// Trust Center documents page: a unified list of published documents, uploaded
+// Compliance Portal documents page: a unified list of published documents, uploaded
 // files, and audit reports, grouped into category sections. The All/Public/
 // Private tabs are backed by a server-side visibility filter.
 export function DocumentsPage({ queryRef }: DocumentsPageProps) {
@@ -140,10 +140,10 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
     });
   }, [refetch, tab]);
 
-  const { currentTrustCenter } = data;
-  const documentNodes = currentTrustCenter.documents.edges.map(edge => edge.node);
-  const fileNodes = currentTrustCenter.trustCenterFiles.edges.map(edge => edge.node);
-  const auditNodes = currentTrustCenter.audits.edges
+  const { currentCompliancePortal } = data;
+  const documentNodes = currentCompliancePortal.documents.edges.map(edge => edge.node);
+  const fileNodes = currentCompliancePortal.compliancePortalFiles.edges.map(edge => edge.node);
+  const auditNodes = currentCompliancePortal.audits.edges
     .map(edge => edge.node)
     .filter(node => node.reportFile != null);
 
@@ -191,7 +191,7 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
                     {fileGroups.map(group => (
                       <DocumentSection key={`category:${group.key}`} title={group.key}>
                         {group.nodes.map(node => (
-                          <TrustCenterFileListItem key={node.id} fileKey={node} />
+                          <CompliancePortalFileListItem key={node.id} fileKey={node} />
                         ))}
                       </DocumentSection>
                     ))}

@@ -37,7 +37,7 @@ export const documentViewerPageQuery = graphql`
         title
         isUserAuthorized
       }
-      ... on TrustCenterFile {
+      ... on CompliancePortalFile {
         id
         name
         isUserAuthorized
@@ -66,8 +66,8 @@ function resolveNode(node: DocumentViewerPageQuery["response"]["aliasedNode"]): 
   switch (node.__typename) {
     case "Document":
       return { kind: "Document", id: node.id, title: node.title, isAuthorized: node.isUserAuthorized };
-    case "TrustCenterFile":
-      return { kind: "TrustCenterFile", id: node.id, title: node.name, isAuthorized: node.isUserAuthorized };
+    case "CompliancePortalFile":
+      return { kind: "CompliancePortalFile", id: node.id, title: node.name, isAuthorized: node.isUserAuthorized };
     case "AuditReport":
       return { kind: "AuditReport", id: node.id, title: node.fileName, isAuthorized: node.isUserAuthorized };
     default:

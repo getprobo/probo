@@ -26,7 +26,7 @@ import { EmptyState } from "#/components/EmptyState/EmptyState";
 import { useDocumentTab } from "../_lib/useDocumentTab";
 
 // Empty state for the documents list. When a Public/Private tab is active it
-// notes the filter; otherwise it states the trust center publishes no documents.
+// notes the filter; otherwise it states the compliance portal publishes no documents.
 export function DocumentsEmpty() {
   const { t } = useTranslation("documents");
   const { tab } = useDocumentTab();

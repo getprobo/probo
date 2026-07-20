@@ -21,7 +21,7 @@
 import { graphql } from "react-relay";
 import { type LiveState, readFragment } from "relay-runtime";
 
-import type { TrustCenterLogoResolverFragment$key } from "./__generated__/TrustCenterLogoResolverFragment.graphql";
+import type { CompliancePortalLogoResolverFragment$key } from "./__generated__/CompliancePortalLogoResolverFragment.graphql";
 
 function prefersDark(): boolean {
   return typeof window !== "undefined"
@@ -30,21 +30,21 @@ function prefersDark(): boolean {
 }
 
 /**
- * @relayField TrustCenter.themedLogoUrl: String
- * @rootFragment TrustCenterLogoResolverFragment
+ * @relayField CompliancePortal.themedLogoUrl: String
+ * @rootFragment CompliancePortalLogoResolverFragment
  * @live
  *
- * Resolves the trust center logo download URL for the current system color
+ * Resolves the compliance portal logo download URL for the current system color
  * scheme: the dark logo (falling back to the light one) when the OS prefers
  * dark, otherwise the light logo. Lives in the graph so consumers select a
  * single field instead of threading `useSystemTheme` through URL selection.
  */
 export function themedLogoUrl(
-  key: TrustCenterLogoResolverFragment$key,
+  key: CompliancePortalLogoResolverFragment$key,
 ): LiveState<string | null> {
   const data = readFragment(
     graphql`
-      fragment TrustCenterLogoResolverFragment on TrustCenter {
+      fragment CompliancePortalLogoResolverFragment on CompliancePortal {
         logo {
           downloadUrl
         }

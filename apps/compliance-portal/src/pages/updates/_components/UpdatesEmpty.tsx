@@ -25,7 +25,7 @@ import { EmptyState } from "#/components/EmptyState/EmptyState";
 
 import { UpdatesSubscribeButton } from "./UpdatesSubscribeButton";
 
-// Empty state for the updates list: shown when the trust center has published no
+// Empty state for the updates list: shown when the compliance portal has published no
 // updates yet, inviting the visitor to subscribe.
 export function UpdatesEmpty() {
   const { t } = useTranslation("updates");

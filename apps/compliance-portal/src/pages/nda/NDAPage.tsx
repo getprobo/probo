@@ -61,7 +61,7 @@ export const ndaPageQuery = graphql`
     viewer {
       id
     }
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       title
       nonDisclosureAgreement {
         fileUrl
@@ -72,7 +72,7 @@ export const ndaPageQuery = graphql`
 `;
 
 const ndaPageFragment = graphql`
-  fragment NDAPageFragment on TrustCenter
+  fragment NDAPageFragment on CompliancePortal
   @refetchable(queryName: "NDAPageRefetchQuery") {
     nonDisclosureAgreement @required(action: THROW) {
       viewerSignature {
@@ -122,13 +122,13 @@ export function NDAPage({ queryRef }: NDAPageProps) {
   const [scale, setScale] = useState(1);
 
   const data = usePreloadedQuery<NDAPageQueryType>(ndaPageQuery, queryRef);
-  const trustCenter = data.currentTrustCenter;
+  const compliancePortal = data.currentCompliancePortal;
   const [fragment, refetch] = useRefetchableFragment<NDAPageRefetchQuery, NDAPageFragment$key>(
     ndaPageFragment,
-    trustCenter,
+    compliancePortal,
   );
 
-  const nda = trustCenter.nonDisclosureAgreement;
+  const nda = compliancePortal.nonDisclosureAgreement;
   const signature = fragment.nonDisclosureAgreement.viewerSignature;
 
   const safeContinueUrl = getSafeContinueUrl(searchParams.get("continue"));
@@ -236,7 +236,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
               {t("title")}
             </Heading>
             <Text size={2} color="neutral">
-              {t("subtitle", { name: trustCenter.title })}
+              {t("subtitle", { name: compliancePortal.title })}
             </Text>
             {signature.consentText != null && (
               <Text size={1} color="faint" className={slots.consent()}>

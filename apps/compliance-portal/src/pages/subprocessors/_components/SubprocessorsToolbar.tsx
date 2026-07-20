@@ -34,11 +34,11 @@ import { useSubprocessorSearch } from "../_lib/useSubprocessorSearch";
 import type { SubprocessorsToolbar_query$key } from "./__generated__/SubprocessorsToolbar_query.graphql";
 
 // Facet data: the distinct categories and countries actually present across the
-// trust center's published subprocessors, used to populate the filter dropdowns
+// compliance portal's published subprocessors, used to populate the filter dropdowns
 // (server-computed so the options never dead-end on an empty result).
 const subprocessorsToolbarFragment = graphql`
   fragment SubprocessorsToolbar_query on Query {
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       subprocessorCategories
       subprocessorCountries
     }
@@ -58,7 +58,7 @@ export function SubprocessorsToolbar({ queryKey }: SubprocessorsToolbarProps) {
   const { category, country, setCategory, setCountry } = useSubprocessorFilters();
   const [queryInput, setQueryInput] = useSubprocessorSearch();
 
-  const { subprocessorCategories, subprocessorCountries } = data.currentTrustCenter;
+  const { subprocessorCategories, subprocessorCountries } = data.currentCompliancePortal;
 
   const categoryOptions = useMemo(() => {
     return [...subprocessorCategories].sort((a, b) => t(`categories.${a}.label`).localeCompare(t(`categories.${b}.label`)));

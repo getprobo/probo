@@ -28,12 +28,12 @@ import { HomeSection } from "#/components/HomeSection/HomeSection";
 import { MailingListUpdateListItem } from "#/components/MailingListUpdateListItem/MailingListUpdateListItem";
 import { dotPatternStyle } from "#/components/MediaTile/variants";
 
-import type { RecentUpdatesSection_trustCenter$key } from "./__generated__/RecentUpdatesSection_trustCenter.graphql";
+import type { RecentUpdatesSection_compliancePortal$key } from "./__generated__/RecentUpdatesSection_compliancePortal.graphql";
 
 // @throwOnFieldError surfaces a field error at the read below so the section
 // ErrorBoundary contains it. See contrib/claude/error-handling.md.
 const recentUpdatesSectionFragment = graphql`
-  fragment RecentUpdatesSection_trustCenter on TrustCenter @throwOnFieldError {
+  fragment RecentUpdatesSection_compliancePortal on CompliancePortal @throwOnFieldError {
     updates(first: 5) {
       edges {
         node {
@@ -46,12 +46,12 @@ const recentUpdatesSectionFragment = graphql`
 `;
 
 interface RecentUpdatesSectionProps {
-  trustCenterKey: RecentUpdatesSection_trustCenter$key;
+  compliancePortalKey: RecentUpdatesSection_compliancePortal$key;
 }
 
 // "Recent updates" section: the latest mailing-list updates as a list, with a
 // link to the full updates page. A load failure degrades to an inline error.
-export function RecentUpdatesSection({ trustCenterKey }: RecentUpdatesSectionProps) {
+export function RecentUpdatesSection({ compliancePortalKey }: RecentUpdatesSectionProps) {
   const { t } = useTranslation();
 
   return (
@@ -64,14 +64,14 @@ export function RecentUpdatesSection({ trustCenterKey }: RecentUpdatesSectionPro
         </HomeSection>
       )}
     >
-      <RecentUpdatesSectionContent trustCenterKey={trustCenterKey} />
+      <RecentUpdatesSectionContent compliancePortalKey={compliancePortalKey} />
     </ErrorBoundary>
   );
 }
 
-function RecentUpdatesSectionContent({ trustCenterKey }: RecentUpdatesSectionProps) {
+function RecentUpdatesSectionContent({ compliancePortalKey }: RecentUpdatesSectionProps) {
   const { t } = useTranslation();
-  const data = useFragment(recentUpdatesSectionFragment, trustCenterKey);
+  const data = useFragment(recentUpdatesSectionFragment, compliancePortalKey);
   const updates = data.updates.edges.map(edge => edge.node);
 
   if (updates.length === 0) {

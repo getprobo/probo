@@ -29,7 +29,7 @@ import type { UpdatesPageQuery } from "#/pages/__generated__/UpdatesPageQuery.gr
 
 export const currentTrustUpdatesQuery = graphql`
   query UpdatesPageQuery {
-    currentTrustCenter {
+    currentCompliancePortal {
       id
       updates(first: 50) {
         edges {
@@ -57,7 +57,7 @@ export function UpdatesPage({ queryRef }: Props) {
   );
 
   const items
-    = data.currentTrustCenter?.updates.edges.map(e => e.node) ?? [];
+    = data.currentCompliancePortal?.updates.edges.map(e => e.node) ?? [];
 
   return (
     <div>

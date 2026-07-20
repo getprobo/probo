@@ -24,18 +24,18 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import { Rows } from "#/components/Rows";
 import { SubprocessorRow } from "#/components/SubprocessorRow";
-import type { TrustGraphCurrentSubprocessorsQuery } from "#/queries/__generated__/TrustGraphCurrentSubprocessorsQuery.graphql";
-import { currentTrustSubprocessorsQuery } from "#/queries/TrustGraph";
+import type { CompliancePortalGraphCurrentSubprocessorsQuery } from "#/queries/__generated__/CompliancePortalGraphCurrentSubprocessorsQuery.graphql";
+import { currentTrustSubprocessorsQuery } from "#/queries/CompliancePortalGraph";
 
 type Props = {
-  queryRef: PreloadedQuery<TrustGraphCurrentSubprocessorsQuery>;
+  queryRef: PreloadedQuery<CompliancePortalGraphCurrentSubprocessorsQuery>;
 };
 
 export function SubprocessorsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery<TrustGraphCurrentSubprocessorsQuery>(currentTrustSubprocessorsQuery, queryRef);
+  const data = usePreloadedQuery<CompliancePortalGraphCurrentSubprocessorsQuery>(currentTrustSubprocessorsQuery, queryRef);
   const subprocessors
-    = data.currentTrustCenter?.subprocessors.edges.map(edge => edge.node) ?? [];
+    = data.currentCompliancePortal?.subprocessors.edges.map(edge => edge.node) ?? [];
 
   const hasAnyCountries = subprocessors.some(subprocessor => subprocessor.countries.length > 0);
 
@@ -45,7 +45,7 @@ export function SubprocessorsPage({ queryRef }: Props) {
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          data.currentTrustCenter?.title ?? "",
+          data.currentCompliancePortal?.title ?? "",
         )}
       </p>
       <Rows>

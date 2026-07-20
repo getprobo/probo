@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getTrustCenterUrl } from "@probo/helpers";
+import { getCompliancePortalUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Skeleton, TabLink, Tabs } from "@probo/ui";
 
@@ -31,12 +31,12 @@ export function MainSkeleton() {
       <Skeleton className="w-full h-300" />
       <main>
         <Tabs className="mb-8">
-          <TabLink to={getTrustCenterUrl("overview")}>{__("Overview")}</TabLink>
-          <TabLink to={getTrustCenterUrl("documents")}>{__("Documents")}</TabLink>
-          <TabLink to={getTrustCenterUrl("subprocessors")}>
+          <TabLink to={getCompliancePortalUrl("overview")}>{__("Overview")}</TabLink>
+          <TabLink to={getCompliancePortalUrl("documents")}>{__("Documents")}</TabLink>
+          <TabLink to={getCompliancePortalUrl("subprocessors")}>
             {__("Subprocessors")}
           </TabLink>
-          <TabLink to={getTrustCenterUrl("updates")}>{__("Updates")}</TabLink>
+          <TabLink to={getCompliancePortalUrl("updates")}>{__("Updates")}</TabLink>
         </Tabs>
         <TabSkeleton />
       </main>

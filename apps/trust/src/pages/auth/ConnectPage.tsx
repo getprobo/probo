@@ -30,7 +30,7 @@ import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql"
 
 export const connectPageQuery = graphql`
   query ConnectPageQuery {
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       title
     }
   }
@@ -45,7 +45,7 @@ export function ConnectPage(props: {
   const safeContinueUrl = useSafeContinueUrl();
 
   const {
-    currentTrustCenter: { title },
+    currentCompliancePortal: { title },
   } = usePreloadedQuery<ConnectPageQuery>(connectPageQuery, queryRef);
 
   usePageTitle(__(`Connect to ${title}'s Compliance Page`));

@@ -53,7 +53,7 @@ const updatesPageFragment = graphql`
     last: { type: "Int" }
     before: { type: "CursorKey" }
   ) {
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       updates(first: $first, after: $after, last: $last, before: $before) {
         pageInfo {
           hasNextPage
@@ -96,7 +96,7 @@ export function UpdatesPage({ queryRef }: UpdatesPageProps) {
     });
   }, [refetch]);
 
-  const { updates } = data.currentTrustCenter;
+  const { updates } = data.currentCompliancePortal;
   const { pageInfo } = updates;
   const { isPending, goPrevious, goNext } = useCursorPagination(refetchUpdates, pageInfo, UPDATES_PAGE_SIZE);
 

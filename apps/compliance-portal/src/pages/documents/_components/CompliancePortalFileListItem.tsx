@@ -22,11 +22,11 @@ import { graphql, useFragment } from "react-relay";
 
 import { useRequestFileAccess } from "../_lib/useAccessRequest";
 
-import type { TrustCenterFileListItem_file$key } from "./__generated__/TrustCenterFileListItem_file.graphql";
+import type { CompliancePortalFileListItem_file$key } from "./__generated__/CompliancePortalFileListItem_file.graphql";
 import { DocumentEntry } from "./DocumentEntry";
 
-const trustCenterFileListItemFragment = graphql`
-  fragment TrustCenterFileListItem_file on TrustCenterFile @throwOnFieldError {
+const compliancePortalFileListItemFragment = graphql`
+  fragment CompliancePortalFileListItem_file on CompliancePortalFile @throwOnFieldError {
     id
     alias
     name
@@ -38,14 +38,14 @@ const trustCenterFileListItemFragment = graphql`
   }
 `;
 
-interface TrustCenterFileListItemProps {
-  fileKey: TrustCenterFileListItem_file$key;
+interface CompliancePortalFileListItemProps {
+  fileKey: CompliancePortalFileListItem_file$key;
 }
 
 // A single uploaded trust-center file entry: name, its category, and an access
 // action linking to the viewer when authorized.
-export function TrustCenterFileListItem({ fileKey }: TrustCenterFileListItemProps) {
-  const file = useFragment(trustCenterFileListItemFragment, fileKey);
+export function CompliancePortalFileListItem({ fileKey }: CompliancePortalFileListItemProps) {
+  const file = useFragment(compliancePortalFileListItemFragment, fileKey);
   const { requestAccess, isRequesting } = useRequestFileAccess(file.id);
 
   return (

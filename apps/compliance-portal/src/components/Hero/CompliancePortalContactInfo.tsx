@@ -24,29 +24,29 @@ import { graphql, useFragment } from "react-relay";
 
 import { externalHref, hostnameOf } from "#/lib/url/hostname";
 
-import type { TrustCenterContactInfo_trustCenter$key } from "./__generated__/TrustCenterContactInfo_trustCenter.graphql";
+import type { CompliancePortalContactInfo_compliancePortal$key } from "./__generated__/CompliancePortalContactInfo_compliancePortal.graphql";
 import { organizationContactInfo } from "./variants";
 
-const trustCenterContactInfoFragment = graphql`
-  fragment TrustCenterContactInfo_trustCenter on TrustCenter {
+const compliancePortalContactInfoFragment = graphql`
+  fragment CompliancePortalContactInfo_compliancePortal on CompliancePortal {
     websiteUrl
     email
     headquarterAddress
   }
 `;
 
-interface TrustCenterContactInfoProps {
-  trustCenterKey: TrustCenterContactInfo_trustCenter$key;
+interface CompliancePortalContactInfoProps {
+  compliancePortalKey: CompliancePortalContactInfo_compliancePortal$key;
 }
 
-// Trust center contact details (website, email, HQ) rendered as an icon + label
-// row. Owns its fragment so it can be reused wherever the trust center is in scope.
-export function TrustCenterContactInfo({ trustCenterKey }: TrustCenterContactInfoProps) {
-  const trustCenter = useFragment(trustCenterContactInfoFragment, trustCenterKey);
+// Compliance portal contact details (website, email, HQ) rendered as an icon +
+// label row. Owns its fragment so it can be reused wherever the portal is in scope.
+export function CompliancePortalContactInfo({ compliancePortalKey }: CompliancePortalContactInfoProps) {
+  const compliancePortal = useFragment(compliancePortalContactInfoFragment, compliancePortalKey);
 
-  const hasWebsite = trustCenter.websiteUrl != null && trustCenter.websiteUrl !== "";
-  const hasEmail = trustCenter.email != null && trustCenter.email !== "";
-  const hasAddress = trustCenter.headquarterAddress != null && trustCenter.headquarterAddress !== "";
+  const hasWebsite = compliancePortal.websiteUrl != null && compliancePortal.websiteUrl !== "";
+  const hasEmail = compliancePortal.email != null && compliancePortal.email !== "";
+  const hasAddress = compliancePortal.headquarterAddress != null && compliancePortal.headquarterAddress !== "";
 
   // Nothing to show — render no row (and therefore no divider) at all.
   if (!hasWebsite && !hasEmail && !hasAddress) {
@@ -60,21 +60,21 @@ export function TrustCenterContactInfo({ trustCenterKey }: TrustCenterContactInf
       {hasWebsite && (
         <a
           className={link()}
-          href={externalHref(trustCenter.websiteUrl)}
+          href={externalHref(compliancePortal.websiteUrl)}
           target="_blank"
           rel="noopener noreferrer"
         >
           <GlobeSimpleIcon />
           <Text size={2} color="neutral">
-            {hostnameOf(trustCenter.websiteUrl)}
+            {hostnameOf(compliancePortal.websiteUrl)}
           </Text>
         </a>
       )}
       {hasEmail && (
-        <a className={link()} href={`mailto:${trustCenter.email}`}>
+        <a className={link()} href={`mailto:${compliancePortal.email}`}>
           <EnvelopeIcon />
           <Text size={2} color="neutral">
-            {trustCenter.email}
+            {compliancePortal.email}
           </Text>
         </a>
       )}
@@ -82,7 +82,7 @@ export function TrustCenterContactInfo({ trustCenterKey }: TrustCenterContactInf
         <div className={item()}>
           <MapPinSimpleIcon />
           <Text size={2} color="neutral">
-            {trustCenter.headquarterAddress}
+            {compliancePortal.headquarterAddress}
           </Text>
         </div>
       )}

@@ -43,15 +43,15 @@ import { PDFPreview } from "#/components/PDFPreview";
 
 import type { DocumentPageExportDocumentMutation } from "./__generated__/DocumentPageExportDocumentMutation.graphql";
 import type { DocumentPageExportReportMutation } from "./__generated__/DocumentPageExportReportMutation.graphql";
-import type { DocumentPageExportTrustCenterFileMutation } from "./__generated__/DocumentPageExportTrustCenterFileMutation.graphql";
+import type { DocumentPageExportCompliancePortalFileMutation } from "./__generated__/DocumentPageExportCompliancePortalFileMutation.graphql";
 import type { DocumentPageQuery as DocumentPageQueryType } from "./__generated__/DocumentPageQuery.graphql";
 import type { DocumentPageRequestDocumentAccessMutation } from "./__generated__/DocumentPageRequestDocumentAccessMutation.graphql";
 import type { DocumentPageRequestReportAccessMutation } from "./__generated__/DocumentPageRequestReportAccessMutation.graphql";
-import type { DocumentPageRequestTrustCenterFileAccessMutation } from "./__generated__/DocumentPageRequestTrustCenterFileAccessMutation.graphql";
+import type { DocumentPageRequestCompliancePortalFileAccessMutation } from "./__generated__/DocumentPageRequestCompliancePortalFileAccessMutation.graphql";
 
 export const documentPageQuery = graphql`
   query DocumentPageQuery($alias: String!) {
-    currentTrustCenter {
+    currentCompliancePortal {
       logo {
         downloadUrl
       }
@@ -70,7 +70,7 @@ export const documentPageQuery = graphql`
           status
         }
       }
-      ... on TrustCenterFile {
+      ... on CompliancePortalFile {
         id
         name
         isUserAuthorized
@@ -102,11 +102,11 @@ const exportDocumentMutation = graphql`
   }
 `;
 
-const exportTrustCenterFileMutation = graphql`
-  mutation DocumentPageExportTrustCenterFileMutation(
-    $input: ExportTrustCenterFileInput!
+const exportCompliancePortalFileMutation = graphql`
+  mutation DocumentPageExportCompliancePortalFileMutation(
+    $input: ExportCompliancePortalFileInput!
   ) {
-    exportTrustCenterFile(input: $input) {
+    exportCompliancePortalFile(input: $input) {
       data
     }
   }
@@ -137,11 +137,11 @@ const requestDocumentAccessMutation = graphql`
   }
 `;
 
-const requestTrustCenterFileAccessMutation = graphql`
-  mutation DocumentPageRequestTrustCenterFileAccessMutation(
-    $input: RequestTrustCenterFileAccessInput!
+const requestCompliancePortalFileAccessMutation = graphql`
+  mutation DocumentPageRequestCompliancePortalFileAccessMutation(
+    $input: RequestCompliancePortalFileAccessInput!
   ) {
-    requestTrustCenterFileAccess(input: $input) {
+    requestCompliancePortalFileAccess(input: $input) {
       file {
         access {
           id
@@ -192,7 +192,7 @@ function getNodeTitle(node: DocumentPageQueryType["response"]["aliasedNode"]): s
   switch (node.__typename) {
     case "Document":
       return node.title;
-    case "TrustCenterFile":
+    case "CompliancePortalFile":
       return node.name;
     case "AuditReport":
       return node.fileName;
@@ -204,7 +204,7 @@ function getNodeTitle(node: DocumentPageQueryType["response"]["aliasedNode"]): s
 function getNodeId(node: DocumentPageQueryType["response"]["aliasedNode"]): string | undefined {
   switch (node.__typename) {
     case "Document":
-    case "TrustCenterFile":
+    case "CompliancePortalFile":
     case "AuditReport":
       return node.id;
     default:
@@ -224,12 +224,12 @@ export function DocumentPage({ queryRef }: Props) {
   const [exportError, setExportError] = useState<string | null>(null);
 
   const data = usePreloadedQuery<DocumentPageQueryType>(documentPageQuery, queryRef);
-  const trustCenter = data.currentTrustCenter;
+  const compliancePortal = data.currentCompliancePortal;
   const node = data.aliasedNode;
 
   if (
     node.__typename !== "Document"
-    && node.__typename !== "TrustCenterFile"
+    && node.__typename !== "CompliancePortalFile"
     && node.__typename !== "AuditReport"
   ) {
     throw new Error(`Unexpected node type: ${node.__typename}`);
@@ -239,19 +239,19 @@ export function DocumentPage({ queryRef }: Props) {
   const nodeId = getNodeId(node);
 
   const logoFileUrl = theme === "dark"
-    ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
-    : trustCenter?.logo?.downloadUrl;
+    ? (compliancePortal?.darkLogo?.downloadUrl ?? compliancePortal?.logo?.downloadUrl)
+    : compliancePortal?.logo?.downloadUrl;
 
   const [exportDocument, isExportingDocument]
     = useMutation<DocumentPageExportDocumentMutation>(exportDocumentMutation);
   const [exportFile, isExportingFile]
-    = useMutation<DocumentPageExportTrustCenterFileMutation>(exportTrustCenterFileMutation);
+    = useMutation<DocumentPageExportCompliancePortalFileMutation>(exportCompliancePortalFileMutation);
   const [exportReport, isExportingReport]
     = useMutation<DocumentPageExportReportMutation>(exportReportMutation);
   const [requestAccess, isRequestingAccess]
     = useMutation<DocumentPageRequestDocumentAccessMutation>(requestDocumentAccessMutation);
   const [requestFileAccess, isRequestingFileAccess]
-    = useMutation<DocumentPageRequestTrustCenterFileAccessMutation>(requestTrustCenterFileAccessMutation);
+    = useMutation<DocumentPageRequestCompliancePortalFileAccessMutation>(requestCompliancePortalFileAccessMutation);
   const [requestReportAccess, isRequestingReportAccess]
     = useMutation<DocumentPageRequestReportAccessMutation>(requestReportAccessMutation);
 
@@ -291,15 +291,15 @@ export function DocumentPage({ queryRef }: Props) {
           onError,
         });
         break;
-      case "TrustCenterFile":
+      case "CompliancePortalFile":
         exportFile({
-          variables: { input: { trustCenterFileId: node.id } },
+          variables: { input: { compliancePortalFileId: node.id } },
           onCompleted: (response, errors) => {
             if (onCompletedErrors(errors)) return;
-            if (isPdfDataUri(response.exportTrustCenterFile.data)) {
-              setPdfData(response.exportTrustCenterFile.data);
+            if (isPdfDataUri(response.exportCompliancePortalFile.data)) {
+              setPdfData(response.exportCompliancePortalFile.data);
             } else {
-              setFileData(response.exportTrustCenterFile.data);
+              setFileData(response.exportCompliancePortalFile.data);
             }
           },
           onError,
@@ -359,9 +359,9 @@ export function DocumentPage({ queryRef }: Props) {
           onError,
         });
         break;
-      case "TrustCenterFile":
+      case "CompliancePortalFile":
         requestFileAccess({
-          variables: { input: { trustCenterFileId: node.id } },
+          variables: { input: { compliancePortalFileId: node.id } },
           onCompleted,
           onError,
         });
@@ -378,7 +378,7 @@ export function DocumentPage({ queryRef }: Props) {
 
   const isRequesting = isRequestingAccess || isRequestingFileAccess || isRequestingReportAccess;
   const hasRequested = node.access?.status === "REQUESTED";
-  const isPdf = node.__typename === "Document" || node.__typename === "AuditReport" || (node.__typename === "TrustCenterFile" && pdfData !== null);
+  const isPdf = node.__typename === "Document" || node.__typename === "AuditReport" || (node.__typename === "CompliancePortalFile" && pdfData !== null);
 
   const handleDownload = () => {
     if (!fileData || !nodeTitle) return;

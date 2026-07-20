@@ -20,15 +20,15 @@
 
 import { useContext } from "react";
 
-import { TrustCenterContext } from "#/providers/TrustCenterProvider";
+import { CompliancePortalContext } from "#/providers/CompliancePortalProvider";
 
-export function useTrustCenter(): {
+export function useCompliancePortal(): {
   id: string;
   title: string;
 } {
-  const context = useContext(TrustCenterContext);
+  const context = useContext(CompliancePortalContext);
   if (!context) {
-    throw new Error("useTrustCenter must be used within a TrustCenterProvider");
+    throw new Error("useCompliancePortal must be used within a CompliancePortalProvider");
   }
   return context;
 }

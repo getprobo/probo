@@ -41,7 +41,7 @@ const topBarFragment = graphql`
       ...TopBarUserMenu_identity
       ...TopBarMobileNav_identity
     }
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       themedLogoUrl
       title
     }
@@ -62,9 +62,9 @@ export function TopBar({ queryKey }: TopBarProps) {
   const location = useLocation();
   const { pathname } = location;
 
-  const { currentTrustCenter } = data;
-  const title = currentTrustCenter.title;
-  const logoUrl = currentTrustCenter.themedLogoUrl ?? undefined;
+  const { currentCompliancePortal } = data;
+  const title = currentCompliancePortal.title;
+  const logoUrl = currentCompliancePortal.themedLogoUrl ?? undefined;
 
   const slots = topBar();
 

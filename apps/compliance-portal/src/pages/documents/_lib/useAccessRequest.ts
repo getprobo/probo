@@ -80,8 +80,8 @@ const reportMutation = graphql`
 `;
 
 const fileMutation = graphql`
-  mutation useAccessRequestFileMutation($input: RequestTrustCenterFileAccessInput!) {
-    requestTrustCenterFileAccess(input: $input) {
+  mutation useAccessRequestFileMutation($input: RequestCompliancePortalFileAccessInput!) {
+    requestCompliancePortalFileAccess(input: $input) {
       file {
         id
         access {
@@ -171,7 +171,7 @@ export function useRequestFileAccess(id: string): AccessRequest {
   );
 
   const requestAccess = useCallback(() => {
-    void mutate({ variables: { input: { trustCenterFileId: id } }, ...handlers }).catch(() => {});
+    void mutate({ variables: { input: { compliancePortalFileId: id } }, ...handlers }).catch(() => {});
   }, [mutate, id, handlers]);
 
   return { requestAccess, isRequesting };
@@ -189,7 +189,7 @@ export function useAccessRequest(kind: DocumentKind, id: string): AccessRequest 
       return document;
     case "AuditReport":
       return report;
-    case "TrustCenterFile":
+    case "CompliancePortalFile":
       return file;
   }
 }

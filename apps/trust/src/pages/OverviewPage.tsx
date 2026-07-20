@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import {
-  getTrustCenterUrl,
+  getCompliancePortalUrl,
   groupBy,
   objectEntries,
   sprintf,
@@ -36,9 +36,9 @@ import { DocumentRow } from "#/components/DocumentRow";
 import { RowHeader } from "#/components/RowHeader";
 import { Rows } from "#/components/Rows";
 import { SubprocessorRow } from "#/components/SubprocessorRow";
-import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
+import { CompliancePortalFileRow } from "#/components/CompliancePortalFileRow";
 import { documentTypeLabel } from "#/helpers/documents";
-import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import type { CompliancePortalGraphCurrentQuery$data } from "#/queries/__generated__/CompliancePortalGraphCurrentQuery.graphql";
 
 import type {
   OverviewPageFragment$data,
@@ -46,7 +46,7 @@ import type {
 } from "./__generated__/OverviewPageFragment.graphql";
 
 const overviewFragment = graphql`
-  fragment OverviewPageFragment on TrustCenter {
+  fragment OverviewPageFragment on CompliancePortal {
     references(first: 14) {
       edges {
         node {
@@ -77,12 +77,12 @@ const overviewFragment = graphql`
         }
       }
     }
-    trustCenterFiles(first: 5) {
+    compliancePortalFiles(first: 5) {
       edges {
         node {
           id
           category
-          ...TrustCenterFileRowFragment
+          ...CompliancePortalFileRowFragment
         }
       }
     }
@@ -90,26 +90,26 @@ const overviewFragment = graphql`
 `;
 
 export function OverviewPage() {
-  const { trustCenter } = useOutletContext<{
-    trustCenter: OverviewPageFragment$key
-      & TrustGraphCurrentQuery$data["currentTrustCenter"];
+  const { compliancePortal } = useOutletContext<{
+    compliancePortal: OverviewPageFragment$key
+      & CompliancePortalGraphCurrentQuery$data["currentCompliancePortal"];
   }>();
-  const fragment = useFragment(overviewFragment, trustCenter);
+  const fragment = useFragment(overviewFragment, compliancePortal);
   return (
     <div>
       <References
         references={fragment.references.edges.map(edge => edge.node)}
       />
       <Documents
-        audits={trustCenter.audits.edges}
+        audits={compliancePortal.audits.edges}
         documents={fragment.documents.edges}
-        files={fragment.trustCenterFiles.edges}
-        url={getTrustCenterUrl("documents")}
+        files={fragment.compliancePortalFiles.edges}
+        url={getCompliancePortalUrl("documents")}
       />
       <Subprocessors
-        title={trustCenter.title}
+        title={compliancePortal.title}
         subprocessors={fragment.subprocessors.edges}
-        url={getTrustCenterUrl("subprocessors")}
+        url={getCompliancePortalUrl("subprocessors")}
       />
     </div>
   );
@@ -122,9 +122,9 @@ function Documents({
   url,
 }: {
   documents: OverviewPageFragment$data["documents"]["edges"];
-  files: OverviewPageFragment$data["trustCenterFiles"]["edges"];
+  files: OverviewPageFragment$data["compliancePortalFiles"]["edges"];
   audits: NonNullable<
-    TrustGraphCurrentQuery$data["currentTrustCenter"]
+    CompliancePortalGraphCurrentQuery$data["currentCompliancePortal"]
   >["audits"]["edges"];
   url: string;
 }) {
@@ -171,7 +171,7 @@ function Documents({
           <Fragment key={category}>
             <RowHeader>{category}</RowHeader>
             {files.map(file => (
-              <TrustCenterFileRow key={file.id} file={file} />
+              <CompliancePortalFileRow key={file.id} file={file} />
             ))}
           </Fragment>
         ))}

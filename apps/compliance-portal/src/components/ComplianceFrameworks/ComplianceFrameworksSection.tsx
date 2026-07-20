@@ -25,14 +25,14 @@ import { graphql, useFragment } from "react-relay";
 import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 import { HomeSection } from "#/components/HomeSection/HomeSection";
 
-import type { ComplianceFrameworksSection_trustCenter$key } from "./__generated__/ComplianceFrameworksSection_trustCenter.graphql";
+import type { ComplianceFrameworksSection_compliancePortal$key } from "./__generated__/ComplianceFrameworksSection_compliancePortal.graphql";
 import { ComplianceFrameworkListItem } from "./ComplianceFrameworkListItem";
 
 // @throwOnFieldError makes a field error in this fragment throw at the read
 // below, where the section's ErrorBoundary contains it. See
 // contrib/claude/error-handling.md.
 const complianceFrameworksSectionFragment = graphql`
-  fragment ComplianceFrameworksSection_trustCenter on TrustCenter @throwOnFieldError {
+  fragment ComplianceFrameworksSection_compliancePortal on CompliancePortal @throwOnFieldError {
     complianceFrameworks(first: 8) {
       edges {
         node {
@@ -45,13 +45,13 @@ const complianceFrameworksSectionFragment = graphql`
 `;
 
 interface ComplianceFrameworksSectionProps {
-  trustCenterKey: ComplianceFrameworksSection_trustCenter$key;
+  compliancePortalKey: ComplianceFrameworksSection_compliancePortal$key;
 }
 
-// "Compliance" section: the grid of certification frameworks the trust center
+// "Compliance" section: the grid of certification frameworks the compliance portal
 // covers. Wraps its data-reading content in a boundary so a load failure
 // degrades to an inline error instead of taking down the page.
-export function ComplianceFrameworksSection({ trustCenterKey }: ComplianceFrameworksSectionProps) {
+export function ComplianceFrameworksSection({ compliancePortalKey }: ComplianceFrameworksSectionProps) {
   const { t } = useTranslation();
 
   return (
@@ -64,14 +64,14 @@ export function ComplianceFrameworksSection({ trustCenterKey }: ComplianceFramew
         </HomeSection>
       )}
     >
-      <ComplianceFrameworksSectionContent trustCenterKey={trustCenterKey} />
+      <ComplianceFrameworksSectionContent compliancePortalKey={compliancePortalKey} />
     </ErrorBoundary>
   );
 }
 
-function ComplianceFrameworksSectionContent({ trustCenterKey }: ComplianceFrameworksSectionProps) {
+function ComplianceFrameworksSectionContent({ compliancePortalKey }: ComplianceFrameworksSectionProps) {
   const { t } = useTranslation();
-  const data = useFragment(complianceFrameworksSectionFragment, trustCenterKey);
+  const data = useFragment(complianceFrameworksSectionFragment, compliancePortalKey);
   const frameworks = data.complianceFrameworks.edges.map(edge => edge.node);
 
   if (frameworks.length === 0) {

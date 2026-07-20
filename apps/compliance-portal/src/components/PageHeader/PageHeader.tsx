@@ -38,7 +38,7 @@ export interface PageHeaderProps {
   flushBottomSpace?: boolean;
 }
 
-// Page header for the Trust Center nav pages: a size-7 title in the shared white
+// Page header for the Compliance Portal nav pages: a size-7 title in the shared white
 // band, with an optional count, inline actions, and a toolbar slot below.
 export function PageHeader({ title, count, actions, children, flushBottomSpace }: PageHeaderProps) {
   const { content, titleRow, count: countSlot } = pageHeader();

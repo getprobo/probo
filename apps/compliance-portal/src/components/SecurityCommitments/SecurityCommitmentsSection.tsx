@@ -23,7 +23,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 
-import type { SecurityCommitmentsSection_trustCenter$key } from "./__generated__/SecurityCommitmentsSection_trustCenter.graphql";
+import type { SecurityCommitmentsSection_compliancePortal$key } from "./__generated__/SecurityCommitmentsSection_compliancePortal.graphql";
 import { SecurityCommitmentGroupListItem } from "./SecurityCommitmentGroupListItem";
 import { securityCommitments } from "./variants";
 
@@ -31,7 +31,7 @@ import { securityCommitments } from "./variants";
 // below, where the section's ErrorBoundary contains it. See
 // contrib/claude/error-handling.md.
 const securityCommitmentsSectionFragment = graphql`
-  fragment SecurityCommitmentsSection_trustCenter on TrustCenter @throwOnFieldError {
+  fragment SecurityCommitmentsSection_compliancePortal on CompliancePortal @throwOnFieldError {
     commitmentGroups(first: 100) {
       edges {
         node {
@@ -53,13 +53,13 @@ const securityCommitmentsSectionFragment = graphql`
 `;
 
 interface SecurityCommitmentsSectionProps {
-  trustCenterKey: SecurityCommitmentsSection_trustCenter$key;
+  compliancePortalKey: SecurityCommitmentsSection_compliancePortal$key;
 }
 
 // "Security Commitments" section: stacked groups, each a header above a grid of
 // commitment cards. Wraps its data-reading content in a boundary so a load
 // failure degrades to an inline error instead of taking down the page.
-export function SecurityCommitmentsSection({ trustCenterKey }: SecurityCommitmentsSectionProps) {
+export function SecurityCommitmentsSection({ compliancePortalKey }: SecurityCommitmentsSectionProps) {
   return (
     <ErrorBoundary
       fallback={(
@@ -68,13 +68,13 @@ export function SecurityCommitmentsSection({ trustCenterKey }: SecurityCommitmen
         </div>
       )}
     >
-      <SecurityCommitmentsSectionContent trustCenterKey={trustCenterKey} />
+      <SecurityCommitmentsSectionContent compliancePortalKey={compliancePortalKey} />
     </ErrorBoundary>
   );
 }
 
-function SecurityCommitmentsSectionContent({ trustCenterKey }: SecurityCommitmentsSectionProps) {
-  const data = useFragment(securityCommitmentsSectionFragment, trustCenterKey);
+function SecurityCommitmentsSectionContent({ compliancePortalKey }: SecurityCommitmentsSectionProps) {
+  const data = useFragment(securityCommitmentsSectionFragment, compliancePortalKey);
   const slots = securityCommitments();
 
   // Groups with no cards render nothing, so filter them out here to keep the

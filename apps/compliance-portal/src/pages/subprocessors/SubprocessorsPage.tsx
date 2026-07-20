@@ -52,7 +52,7 @@ const subprocessorsPageFragment = graphql`
     category: { type: "SubprocessorCategory" }
     country: { type: "CountryCode" }
   ) {
-    currentTrustCenter @required(action: THROW) {
+    currentCompliancePortal @required(action: THROW) {
       subprocessors(first: 250, filter: { query: $query, category: $category, country: $country }) {
         totalCount
         edges {
@@ -98,7 +98,7 @@ export function SubprocessorsPage({ queryRef }: SubprocessorsPageProps) {
     });
   }, [refetch, query, category, country]);
 
-  const { subprocessors } = data.currentTrustCenter;
+  const { subprocessors } = data.currentCompliancePortal;
   const nodes: SubprocessorNode[] = subprocessors.edges.map(edge => edge.node);
   const groups = groupByCategory(nodes, value => t(`categories.${value}.label`));
 

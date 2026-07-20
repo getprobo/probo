@@ -25,18 +25,18 @@ import { graphql, useFragment } from "react-relay";
 import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 import { HomeSection } from "#/components/HomeSection/HomeSection";
 
-import type { TrustedBySection_trustCenter$key } from "./__generated__/TrustedBySection_trustCenter.graphql";
-import { TrustCenterReferenceListItem } from "./TrustCenterReferenceListItem";
+import type { TrustedBySection_compliancePortal$key } from "./__generated__/TrustedBySection_compliancePortal.graphql";
+import { CompliancePortalReferenceListItem } from "./CompliancePortalReferenceListItem";
 
 // @throwOnFieldError surfaces a field error at the read below so the section
 // ErrorBoundary contains it. See contrib/claude/error-handling.md.
 const trustedBySectionFragment = graphql`
-  fragment TrustedBySection_trustCenter on TrustCenter @throwOnFieldError {
+  fragment TrustedBySection_compliancePortal on CompliancePortal @throwOnFieldError {
     references(first: 12) {
       edges {
         node {
           id
-          ...TrustCenterReferenceListItem_reference
+          ...CompliancePortalReferenceListItem_reference
         }
       }
     }
@@ -44,12 +44,12 @@ const trustedBySectionFragment = graphql`
 `;
 
 interface TrustedBySectionProps {
-  trustCenterKey: TrustedBySection_trustCenter$key;
+  compliancePortalKey: TrustedBySection_compliancePortal$key;
 }
 
 // "Trusted by" section: a grid of customer / reference logos. A load failure
 // degrades to an inline error instead of taking down the page.
-export function TrustedBySection({ trustCenterKey }: TrustedBySectionProps) {
+export function TrustedBySection({ compliancePortalKey }: TrustedBySectionProps) {
   const { t } = useTranslation();
 
   return (
@@ -62,14 +62,14 @@ export function TrustedBySection({ trustCenterKey }: TrustedBySectionProps) {
         </HomeSection>
       )}
     >
-      <TrustedBySectionContent trustCenterKey={trustCenterKey} />
+      <TrustedBySectionContent compliancePortalKey={compliancePortalKey} />
     </ErrorBoundary>
   );
 }
 
-function TrustedBySectionContent({ trustCenterKey }: TrustedBySectionProps) {
+function TrustedBySectionContent({ compliancePortalKey }: TrustedBySectionProps) {
   const { t } = useTranslation();
-  const data = useFragment(trustedBySectionFragment, trustCenterKey);
+  const data = useFragment(trustedBySectionFragment, compliancePortalKey);
   const references = data.references.edges.map(edge => edge.node);
 
   if (references.length === 0) {
@@ -80,7 +80,7 @@ function TrustedBySectionContent({ trustCenterKey }: TrustedBySectionProps) {
     <HomeSection title={t("home.sections.trustedBy")}>
       <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
         {references.map(reference => (
-          <TrustCenterReferenceListItem key={reference.id} referenceKey={reference} />
+          <CompliancePortalReferenceListItem key={reference.id} referenceKey={reference} />
         ))}
       </div>
     </HomeSection>
