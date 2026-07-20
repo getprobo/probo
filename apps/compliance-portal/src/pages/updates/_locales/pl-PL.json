@@ -1,0 +1,9 @@
+{
+  "title": "Aktualizacje",
+  "subscribe": "Zapisz się na aktualizacje",
+  "backToUpdates": "Wszystkie aktualizacje",
+  "empty": {
+    "title": "Brak aktualizacji.",
+    "description": "Zapisz się, aby otrzymywać powiadomienia o nowych aktualizacjach."
+  }
+}

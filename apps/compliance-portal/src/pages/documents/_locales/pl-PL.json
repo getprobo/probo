@@ -1,0 +1,46 @@
+{
+  "title": "Dokumenty",
+  "tabs": {
+    "all": "Wszystkie",
+    "public": "Publiczne",
+    "private": "Prywatne"
+  },
+  "sections": {
+    "reports": "Raporty zgodności"
+  },
+  "types": {
+    "OTHER": "Inne",
+    "GOVERNANCE": "Zarządzanie",
+    "POLICY": "Polityki",
+    "PROCEDURE": "Procedury",
+    "PLAN": "Plany",
+    "REGISTER": "Rejestry",
+    "RECORD": "Zapisy",
+    "REPORT": "Raporty",
+    "TEMPLATE": "Szablony",
+    "STATEMENT_OF_APPLICABILITY": "Deklaracja stosowania"
+  },
+  "actions": {
+    "view": "Wyświetl",
+    "getAccess": "Uzyskaj dostęp",
+    "requested": "Poproszono o dostęp"
+  },
+  "empty": {
+    "title": "Brak dostępnych dokumentów",
+    "description": "Ten Portal Zgodności nie opublikował jeszcze żadnych dokumentów.",
+    "filteredTitle": "Żaden dokument nie odpowiada temu filtrowi",
+    "filteredDescription": "Wybierz inną zakładkę, aby zobaczyć dostępne dokumenty."
+  },
+  "viewer": {
+    "back": "Dokumenty",
+    "share": "Udostępnij dokument",
+    "linkCopied": "Link skopiowany do schowka",
+    "download": "Pobierz",
+    "previewUnavailable": "Podgląd niedostępny",
+    "downloadToView": "Tego typu plików nie można wyświetlić w podglądzie. Pobierz plik, aby go zobaczyć.",
+    "locked": {
+      "title": "Wymagany dostęp",
+      "description": "Nie masz jeszcze dostępu do tego dokumentu."
+    }
+  }
+}

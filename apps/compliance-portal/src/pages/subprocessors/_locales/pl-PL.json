@@ -1,0 +1,109 @@
+{
+  "title": "Podprocesorzy",
+  "filters": {
+    "allCategories": "Wszystkie kategorie",
+    "allRegions": "Wszystkie regiony",
+    "searchPlaceholder": "Szukaj..."
+  },
+  "empty": {
+    "title": "Brak podprocesorów na liście.",
+    "description": "Ten Portal Zgodności nie opublikował jeszcze żadnych podprocesorów.",
+    "filteredTitle": "Żaden podprocesor nie odpowiada wybranym filtrom.",
+    "filteredDescription": "Zmień wyszukiwanie lub filtry, aby zobaczyć dostępnych podprocesorów.",
+    "clearFilters": "Wyczyść filtry"
+  },
+  "regions": {
+    "global": "Globalny",
+    "eu": "Unia Europejska"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analityka",
+      "description": "Analityka użytkowania i telemetria produktu."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Monitorowanie w chmurze",
+      "description": "Obserwowalność, logowanie zdarzeń i monitorowanie dostępności."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Dostawca usług w chmurze",
+      "description": "Hosting w chmurze, moc obliczeniowa, przechowywanie danych i sieci."
+    },
+    "COLLABORATION": {
+      "label": "Współpraca",
+      "description": "Komunikacja, planowanie i narzędzia do pracy zespołowej."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Obsługa klienta",
+      "description": "Helpdesk, zgłoszenia i komunikacja z klientami."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Przechowywanie i przetwarzanie danych",
+      "description": "Bazy danych, hurtownie danych i potoki przetwarzania."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Zarządzanie dokumentami",
+      "description": "Przechowywanie, podpisywanie i podpis elektroniczny dokumentów."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Zarządzanie pracownikami",
+      "description": "HR, płace i obsługa kadrowa."
+    },
+    "ENGINEERING": {
+      "label": "Inżynieria",
+      "description": "Narzędzia deweloperskie i platformy inżynieryjne."
+    },
+    "FINANCE": {
+      "label": "Finanse",
+      "description": "Rozliczenia, płatności i księgowość."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Dostawca tożsamości",
+      "description": "Uwierzytelnianie, SSO i zarządzanie tożsamością."
+    },
+    "IT": {
+      "label": "IT",
+      "description": "Administracja IT i zarządzanie urządzeniami."
+    },
+    "MARKETING": {
+      "label": "Marketing",
+      "description": "Marketing, CRM i budowanie zaangażowania odbiorców."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Operacje biurowe",
+      "description": "Obsługa i funkcjonowanie biura."
+    },
+    "OTHER": {
+      "label": "Inne",
+      "description": "Inne usługi pomocnicze."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Zarządzanie hasłami",
+      "description": "Zarządzanie danymi uwierzytelniającymi i sekretami."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Produkt i design",
+      "description": "Narzędzia produktowe i projektowe."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Usługi profesjonalne",
+      "description": "Doradztwo i usługi profesjonalne."
+    },
+    "RECRUITING": {
+      "label": "Rekrutacja",
+      "description": "Rekrutacja, sourcing i śledzenie kandydatów."
+    },
+    "SALES": {
+      "label": "Sprzedaż",
+      "description": "Wsparcie sprzedaży i CRM."
+    },
+    "SECURITY": {
+      "label": "Bezpieczeństwo",
+      "description": "Bezpieczeństwo, monitorowanie i bezpieczny dostęp."
+    },
+    "VERSION_CONTROL": {
+      "label": "Kontrola wersji",
+      "description": "Zarządzanie kodem źródłowym i jego hostowanie."
+    }
+  }
+}

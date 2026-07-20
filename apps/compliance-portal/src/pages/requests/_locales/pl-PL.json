@@ -1,0 +1,71 @@
+{
+  "title": "Wnioski o dane",
+  "newRequest": "Nowy wniosek",
+  "loadMore": "Wczytaj więcej",
+  "empty": {
+    "title": "Brak wniosków",
+    "description": "Złożone wnioski będą wyświetlane tutaj, co pozwoli śledzić ich postęp."
+  },
+  "types": {
+    "ACCESS": "Dostęp do danych",
+    "DELETION": "Usunięcie danych",
+    "RECTIFICATION": "Sprostowanie danych",
+    "PORTABILITY": "Przenoszenie danych",
+    "OBJECTION": "Sprzeciw wobec przetwarzania",
+    "COMPLAINT": "Zgłoszenie nadużycia"
+  },
+  "status": {
+    "TODO": "Oczekujący",
+    "IN_PROGRESS": "W trakcie realizacji",
+    "DONE": "Zrealizowany",
+    "REJECTED": "Odrzucony"
+  },
+  "typeOption": {
+    "ACCESS": "Uzyskaj dostęp do moich danych",
+    "DELETION": "Usuń moje dane",
+    "RECTIFICATION": "Popraw moje dane",
+    "OBJECTION": "Zgłoś sprzeciw wobec przetwarzania",
+    "COMPLAINT": "Zgłoś nadużycie"
+  },
+  "dialog": {
+    "title": "Nowy wniosek",
+    "description": "Wybierz typ wniosku i uzupełnij poniższe informacje.",
+    "typeLabel": "Typ wniosku",
+    "cancel": "Anuluj",
+    "submit": "Wyślij wniosek",
+    "success": {
+      "title": "Wniosek został złożony",
+      "description": "Rozpatrzymy Twój wniosek i odpowiemy w terminie wymaganym przez obowiązujące prawo.",
+      "close": "Zamknij"
+    }
+  },
+  "form": {
+    "name": "Imię i nazwisko",
+    "nameOptional": "Twoje imię i nazwisko (opcjonalnie)",
+    "namePlaceholder": "Jan Kowalski",
+    "email": "Adres e-mail",
+    "deletionWarning": "Usunięcie danych jest trwałe i nieodwracalne. Niektóre dane mogą zostać zachowane w związku z obowiązkami prawnymi.",
+    "details": {
+      "ACCESS": {
+        "label": "Szczegóły Twojego wniosku",
+        "placeholder": "Proszę o kopię wszystkich danych osobowych powiązanych z moim kontem…"
+      },
+      "DELETION": {
+        "label": "Zakres wniosku o usunięcie danych",
+        "placeholder": "Proszę usunąć wszystkie dane osobowe, w tym…"
+      },
+      "RECTIFICATION": {
+        "label": "Co należy poprawić?",
+        "placeholder": "Następujące informacje są nieprawidłowe…"
+      },
+      "OBJECTION": {
+        "label": "Wobec czego wnoszony jest sprzeciw?",
+        "placeholder": "Wnoszę sprzeciw wobec przetwarzania moich danych w celu…"
+      },
+      "COMPLAINT": {
+        "label": "Opis zgłaszanego problemu",
+        "placeholder": "Zgłaszam, że…"
+      }
+    }
+  }
+}
