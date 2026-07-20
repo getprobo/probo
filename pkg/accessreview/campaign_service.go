@@ -429,7 +429,7 @@ func (s *Service) StartCampaign(
 			}
 
 			if len(campaignSources) == 0 {
-				return ErrCampaignNoSourcesSelected
+				return ErrCampaignMissingSources
 			}
 
 			now := time.Now()
