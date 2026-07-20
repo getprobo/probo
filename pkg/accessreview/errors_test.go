@@ -22,29 +22,32 @@ package accessreview
 
 import (
 	"errors"
+	"fmt"
+	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-var (
-	ErrCampaignMissingSources = errors.New("cannot start campaign: no scope sources configured")
-	ErrCampaignInProgress     = errors.New("campaign is in progress")
-	ErrCampaignPendingActions = errors.New("campaign is pending actions")
-	ErrCampaignCompleted      = errors.New("campaign is completed")
-	ErrCampaignCancelled      = errors.New("campaign is cancelled")
-)
+func TestCampaignStatusError(t *testing.T) {
+	t.Parallel()
 
-func CampaignStatusError(status coredata.AccessReviewCampaignStatus) error {
-	switch status {
-	case coredata.AccessReviewCampaignStatusInProgress:
-		return ErrCampaignInProgress
-	case coredata.AccessReviewCampaignStatusPendingActions:
-		return ErrCampaignPendingActions
-	case coredata.AccessReviewCampaignStatusCompleted:
-		return ErrCampaignCompleted
-	case coredata.AccessReviewCampaignStatusCancelled:
-		return ErrCampaignCancelled
-	default:
-		return ErrCampaignInProgress
+	tests := []struct {
+		status coredata.AccessReviewCampaignStatus
+		want   error
+	}{
+		{status: coredata.AccessReviewCampaignStatusInProgress, want: ErrCampaignInProgress},
+		{status: coredata.AccessReviewCampaignStatusPendingActions, want: ErrCampaignPendingActions},
+		{status: coredata.AccessReviewCampaignStatusCompleted, want: ErrCampaignCompleted},
+		{status: coredata.AccessReviewCampaignStatusCancelled, want: ErrCampaignCancelled},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.status), func(t *testing.T) {
+			t.Parallel()
+
+			err := fmt.Errorf("cannot start campaign: %w", CampaignStatusError(tt.status))
+			assert.ErrorIs(t, err, tt.want)
+		})
 	}
 }

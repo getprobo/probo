@@ -776,7 +776,10 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.Is(err, accessreview.ErrCampaignCannotUpdate) {
+		if errors.Is(err, accessreview.ErrCampaignInProgress) ||
+			errors.Is(err, accessreview.ErrCampaignPendingActions) ||
+			errors.Is(err, accessreview.ErrCampaignCompleted) ||
+			errors.Is(err, accessreview.ErrCampaignCancelled) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -822,7 +825,10 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
 		if errors.Is(err, accessreview.ErrCampaignMissingSources) ||
-			errors.Is(err, accessreview.ErrCampaignCannotStart) {
+			errors.Is(err, accessreview.ErrCampaignInProgress) ||
+			errors.Is(err, accessreview.ErrCampaignPendingActions) ||
+			errors.Is(err, accessreview.ErrCampaignCompleted) ||
+			errors.Is(err, accessreview.ErrCampaignCancelled) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -892,6 +898,13 @@ func (r *mutationResolver) AddAccessReviewCampaignSource(ctx context.Context, in
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, accessreview.ErrCampaignInProgress) ||
+			errors.Is(err, accessreview.ErrCampaignPendingActions) ||
+			errors.Is(err, accessreview.ErrCampaignCompleted) ||
+			errors.Is(err, accessreview.ErrCampaignCancelled) {
+			return nil, gqlutils.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot add scope source to access review campaign", log.Error(err))

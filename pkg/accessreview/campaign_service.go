@@ -159,7 +159,7 @@ func (s *Service) UpdateCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return ErrCampaignCannotUpdate
+				return fmt.Errorf("cannot update campaign: %w", CampaignStatusError(campaign.Status))
 			}
 
 			if req.Name != nil && *req.Name != nil {
@@ -242,10 +242,8 @@ func (s *Service) AddCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return ErrCampaignCannotUpdate
+				return fmt.Errorf("cannot add scope source: %w", CampaignStatusError(campaign.Status))
 			}
-
-			source := &coredata.AccessReviewSource{}
 			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return coredata.ErrResourceNotFound
@@ -291,10 +289,8 @@ func (s *Service) RemoveCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return ErrCampaignCannotUpdate
+				return fmt.Errorf("cannot remove scope source: %w", CampaignStatusError(campaign.Status))
 			}
-
-			campaignSource := &coredata.AccessReviewCampaignSource{}
 			if err := campaignSource.DeleteByCampaignIDAndAccessReviewSourceID(ctx, conn, scope, campaign.ID, req.AccessReviewSourceID); err != nil {
 				return fmt.Errorf("cannot delete campaign source: %w", err)
 			}
@@ -400,7 +396,7 @@ func (s *Service) StartCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return ErrCampaignCannotStart
+				return fmt.Errorf("cannot start campaign: %w", CampaignStatusError(campaign.Status))
 			}
 
 			var campaignSources coredata.AccessReviewCampaignSources
