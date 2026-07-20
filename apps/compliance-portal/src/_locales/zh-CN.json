@@ -1,0 +1,122 @@
+{
+  "topBar": {
+    "tagline": "合规门户",
+    "getAccess": "获取访问权限",
+    "nav": {
+      "documents": "文档",
+      "subprocessors": "分包处理方",
+      "updates": "更新",
+      "requests": "请求"
+    }
+  },
+  "userMenu": {
+    "signOut": "退出登录"
+  },
+  "common": {
+    "cancel": "取消",
+    "error": "出现问题",
+    "previousPage": "上一页",
+    "nextPage": "下一页",
+    "pageOf": "第 {{current}} 页，共 {{total}} 页",
+    "zoomOut": "缩小",
+    "zoomIn": "放大"
+  },
+  "auth": {
+    "backToPortal": "返回门户",
+    "signIn": {
+      "title": "登录以继续",
+      "description": "访问受保护的资源或提交请求",
+      "or": "或",
+      "withProvider": "使用 {{provider}} 登录",
+      "emailLabel": "电子邮箱地址",
+      "emailPlaceholder": "you@company.com",
+      "emailRequired": "请填写电子邮箱地址",
+      "emailInvalid": "请输入有效的电子邮箱地址",
+      "sendMagicLink": "发送登录链接",
+      "resend": "重新发送链接",
+      "resendIn": "{{seconds}} 秒后可重新发送链接",
+      "magicLinkSent": "登录链接已发送！",
+      "magicLinkSentNote": "请查看您的邮箱，并使用链接登录。"
+    },
+    "requestAccess": {
+      "success": "已提交访问请求"
+    },
+    "verify": {
+      "title": "正在确认您的电子邮箱",
+      "description": "请稍候，我们正在为您登录……"
+    },
+    "fullName": {
+      "title": "添加您的姓名",
+      "label": "姓名",
+      "placeholder": "张三",
+      "required": "请填写姓名",
+      "tooShort": "姓名过短",
+      "submit": "继续"
+    },
+    "magicLinkExpired": {
+      "title": "链接已过期",
+      "description": "此登录链接已过期，请重新申请一个。"
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "链接已被使用",
+      "description": "此登录链接已被使用，请重新申请一个。"
+    },
+    "errors": {
+      "magicLinkFailed": "登录链接发送失败，请重试。",
+      "verifyFailed": "链接验证失败，请重试。",
+      "fullNameFailed": "姓名保存失败，请重试。",
+      "requestFailed": "访问请求提交失败，请重试。"
+    }
+  },
+  "home": {
+    "heroTitle": "信赖 {{name}}。",
+    "heroDescription": "欢迎访问我们的合规门户。您可以在此查看我们的安全文档和认证。",
+    "sections": {
+      "compliance": "合规",
+      "securityCommitments": "安全承诺",
+      "trustedBy": "深受信赖",
+      "recentUpdates": "最新动态"
+    },
+    "recentUpdates": {
+      "viewAll": "查看全部"
+    }
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "description": "您要查找的页面不存在或已被移动。",
+    "backHome": "返回首页"
+  },
+  "errors": {
+    "notFound": {
+      "title": "页面未找到",
+      "description": "您要查找的页面不存在或可能已被移动。"
+    },
+    "forbidden": {
+      "title": "访问被拒绝",
+      "description": "您无权查看此页面。"
+    },
+    "serverError": {
+      "title": "出现问题",
+      "description": "我们遇到了一个意外错误，请稍后重试。"
+    },
+    "generic": {
+      "title": "出现问题",
+      "description": "我们遇到了一个意外错误，请稍后重试。"
+    },
+    "actions": {
+      "backToCompliancePortal": "返回合规门户",
+      "tryAgain": "重试"
+    },
+    "inline": {
+      "message": "无法加载内容",
+      "retry": "重试"
+    }
+  },
+  "footer": {
+    "poweredBy": "技术支持"
+  },
+  "pagination": {
+    "previous": "上一页",
+    "next": "下一页"
+  }
+}

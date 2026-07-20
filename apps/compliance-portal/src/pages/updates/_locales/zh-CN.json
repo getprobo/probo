@@ -1,0 +1,9 @@
+{
+  "title": "更新",
+  "subscribe": "订阅更新",
+  "backToUpdates": "所有更新",
+  "empty": {
+    "title": "暂无更新。",
+    "description": "订阅后，我们发布新更新时会通知您。"
+  }
+}

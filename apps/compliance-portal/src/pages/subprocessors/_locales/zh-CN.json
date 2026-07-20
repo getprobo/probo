@@ -1,0 +1,109 @@
+{
+  "title": "分包处理方",
+  "filters": {
+    "allCategories": "所有类别",
+    "allRegions": "所有地区",
+    "searchPlaceholder": "搜索……"
+  },
+  "empty": {
+    "title": "暂无分包处理方。",
+    "description": "此合规门户尚未发布任何分包处理方。",
+    "filteredTitle": "没有符合筛选条件的分包处理方。",
+    "filteredDescription": "请调整搜索条件或筛选条件以查看可用的分包处理方。",
+    "clearFilters": "清除筛选条件"
+  },
+  "regions": {
+    "global": "全球",
+    "eu": "欧盟"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "分析",
+      "description": "使用情况分析和产品遥测数据。"
+    },
+    "CLOUD_MONITORING": {
+      "label": "云监控",
+      "description": "可观测性、日志记录和正常运行时间监控。"
+    },
+    "CLOUD_PROVIDER": {
+      "label": "云服务提供商",
+      "description": "云托管、计算、存储和网络服务。"
+    },
+    "COLLABORATION": {
+      "label": "协作",
+      "description": "通信、日程安排和团队协作工具。"
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "客户支持",
+      "description": "帮助台、工单处理和客户消息服务。"
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "数据存储与处理",
+      "description": "数据库、数据仓库和数据处理管道。"
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "文档管理",
+      "description": "文档存储、签署和电子签名。"
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "员工管理",
+      "description": "人力资源、薪资和人事运营。"
+    },
+    "ENGINEERING": {
+      "label": "工程",
+      "description": "开发者工具和工程平台。"
+    },
+    "FINANCE": {
+      "label": "财务",
+      "description": "账单、支付和会计。"
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "身份提供商",
+      "description": "身份验证、单点登录和身份管理。"
+    },
+    "IT": {
+      "label": "IT",
+      "description": "IT 管理和设备管理。"
+    },
+    "MARKETING": {
+      "label": "市场营销",
+      "description": "市场营销、客户关系管理和受众互动。"
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "办公运营",
+      "description": "办公场所和日常运营管理。"
+    },
+    "OTHER": {
+      "label": "其他",
+      "description": "其他支持性服务。"
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "密码管理",
+      "description": "凭证和密钥管理。"
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "产品与设计",
+      "description": "产品和设计工具。"
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "专业服务",
+      "description": "咨询和专业服务。"
+    },
+    "RECRUITING": {
+      "label": "招聘",
+      "description": "招聘、人才寻访和求职者跟踪。"
+    },
+    "SALES": {
+      "label": "销售",
+      "description": "销售赋能和客户关系管理。"
+    },
+    "SECURITY": {
+      "label": "安全",
+      "description": "安全、监控和安全访问控制。"
+    },
+    "VERSION_CONTROL": {
+      "label": "版本控制",
+      "description": "源代码控制和代码托管。"
+    }
+  }
+}

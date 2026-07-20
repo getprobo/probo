@@ -1,0 +1,8 @@
+{
+  "title": "保密协议",
+  "subtitle": "{{name}} 要求您在访问合规文档之前签署保密协议。",
+  "reviewAndSign": "查看并签署",
+  "tryAgain": "重试",
+  "sealing": "正在加密保存您的签名……",
+  "failedDescription": "处理您的签名时遇到问题，请重试。"
+}

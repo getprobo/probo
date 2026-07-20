@@ -1,0 +1,71 @@
+{
+  "title": "数据请求",
+  "newRequest": "新建请求",
+  "loadMore": "加载更多",
+  "empty": {
+    "title": "暂无请求",
+    "description": "您提交的请求将显示在此处，方便您跟踪处理进度。"
+  },
+  "types": {
+    "ACCESS": "数据访问",
+    "DELETION": "数据删除",
+    "RECTIFICATION": "数据更正",
+    "PORTABILITY": "数据可携权",
+    "OBJECTION": "处理异议",
+    "COMPLAINT": "滥用举报"
+  },
+  "status": {
+    "TODO": "待处理",
+    "IN_PROGRESS": "处理中",
+    "DONE": "已完成",
+    "REJECTED": "已拒绝"
+  },
+  "typeOption": {
+    "ACCESS": "访问我的数据",
+    "DELETION": "删除我的数据",
+    "RECTIFICATION": "更正我的数据",
+    "OBJECTION": "反对数据处理",
+    "COMPLAINT": "举报滥用行为"
+  },
+  "dialog": {
+    "title": "新建请求",
+    "description": "选择请求类型并填写以下详细信息。",
+    "typeLabel": "请求类型",
+    "cancel": "取消",
+    "submit": "提交请求",
+    "success": {
+      "title": "请求已提交",
+      "description": "我们将处理您的请求，并在适用法律规定的时限内予以回复。",
+      "close": "关闭"
+    }
+  },
+  "form": {
+    "name": "姓名",
+    "nameOptional": "您的姓名（选填）",
+    "namePlaceholder": "张三",
+    "email": "电子邮箱地址",
+    "deletionWarning": "数据删除操作为永久性操作，无法撤销。出于法律义务要求，部分数据可能会被保留。",
+    "details": {
+      "ACCESS": {
+        "label": "请求详情",
+        "placeholder": "我希望获取与我账户相关的所有个人数据的副本……"
+      },
+      "DELETION": {
+        "label": "删除请求的范围",
+        "placeholder": "请删除我的所有个人数据，包括……"
+      },
+      "RECTIFICATION": {
+        "label": "需要更正哪些内容？",
+        "placeholder": "以下信息不准确……"
+      },
+      "OBJECTION": {
+        "label": "您反对的是什么？",
+        "placeholder": "我反对将我的数据用于……"
+      },
+      "COMPLAINT": {
+        "label": "问题描述",
+        "placeholder": "我注意到……"
+      }
+    }
+  }
+}

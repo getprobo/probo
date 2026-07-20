@@ -1,0 +1,46 @@
+{
+  "title": "文档",
+  "tabs": {
+    "all": "全部",
+    "public": "公开",
+    "private": "私密"
+  },
+  "sections": {
+    "reports": "合规报告"
+  },
+  "types": {
+    "OTHER": "其他",
+    "GOVERNANCE": "治理",
+    "POLICY": "政策",
+    "PROCEDURE": "流程",
+    "PLAN": "计划",
+    "REGISTER": "登记册",
+    "RECORD": "记录",
+    "REPORT": "报告",
+    "TEMPLATE": "模板",
+    "STATEMENT_OF_APPLICABILITY": "适用性声明"
+  },
+  "actions": {
+    "view": "查看",
+    "getAccess": "获取访问权限",
+    "requested": "已申请访问权限"
+  },
+  "empty": {
+    "title": "暂无可用文档",
+    "description": "此合规门户尚未发布任何文档。",
+    "filteredTitle": "没有符合此筛选条件的文档",
+    "filteredDescription": "请尝试切换到其他标签以查看可用文档。"
+  },
+  "viewer": {
+    "back": "文档",
+    "share": "分享文档",
+    "linkCopied": "链接已复制到剪贴板",
+    "download": "下载",
+    "previewUnavailable": "无法预览",
+    "downloadToView": "此文件类型无法在此处预览，请下载后查看。",
+    "locked": {
+      "title": "需要访问权限",
+      "description": "您尚未获得此文档的访问权限。"
+    }
+  }
+}
