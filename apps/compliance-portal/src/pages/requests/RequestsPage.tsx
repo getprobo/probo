@@ -30,8 +30,11 @@ import { useSearchParams } from "react-router";
 import { EmptyState } from "#/components/EmptyState/EmptyState";
 import { ListErrorBoundary } from "#/components/errors/ListErrorBoundary";
 import { PageHeader } from "#/components/PageHeader/PageHeader";
-import { buildNewRequestContinueUrl, NEW_REQUEST_PARAM } from "#/lib/auth/continueUrl";
-import { useSignInDialog } from "#/lib/auth/signInDialogContext";
+import {
+  buildNewRequestContinueUrl,
+  NEW_REQUEST_PARAM,
+  redirectToInitiate,
+} from "#/lib/auth/continueUrl";
 
 import type { RequestsPage_query$key } from "./__generated__/RequestsPage_query.graphql";
 import type { RequestsPageQuery } from "./__generated__/RequestsPageQuery.graphql";
@@ -85,7 +88,6 @@ export function RequestsPage({ queryRef }: RequestsPageProps) {
     RequestsPage_query$key
   >(requestsPageFragment, root);
 
-  const { openSignIn } = useSignInDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -112,7 +114,7 @@ export function RequestsPage({ queryRef }: RequestsPageProps) {
       setDialogOpen(true);
       return;
     }
-    openSignIn({ continueTo: buildNewRequestContinueUrl() });
+    redirectToInitiate(buildNewRequestContinueUrl());
   };
 
   const { page, results, loadMore } = requestsLayout();
