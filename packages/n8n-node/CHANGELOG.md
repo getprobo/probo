@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.204.0] - 2026-07-20
+
+### Added
+
+- Trust Center commitment and commitment group operations (create, get all, update, delete) so workflows can manage compliance portal commitments end to end
+
 ## [0.203.0] - 2026-07-20
 
 ### Changed
