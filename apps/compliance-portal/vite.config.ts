@@ -55,7 +55,7 @@ export default defineConfig({
   },
   base: "./",
   server: {
-    port: 5175,
+    port: 5174,
     proxy: {
       "^/trust/[^/]+/api": {
         target: "http://localhost:8080",

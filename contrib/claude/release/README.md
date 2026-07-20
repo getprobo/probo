@@ -53,9 +53,9 @@ track's paths:
 git log $(git describe --tags --abbrev=0 --match='prb/v*')..HEAD --oneline \
   -- cmd/prb pkg/cli pkg/cmd
 
-# probod (server group: probod + console + trust + ui)
+# probod (server group: probod + console + compliance-portal + ui)
 git log $(git describe --tags --abbrev=0 --match='probod/v*')..HEAD --oneline \
-  -- cmd/probod apps/console apps/trust packages/ui pkg
+  -- cmd/probod apps/console apps/compliance-portal packages/ui pkg
 
 # probod-bootstrap
 git log $(git describe --tags --abbrev=0 --match='probod-bootstrap/v*')..HEAD --oneline \

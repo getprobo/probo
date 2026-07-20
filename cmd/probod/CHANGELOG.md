@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `probod` (the server, including the bundled `@probo/console`, `@probo/trust`, and `@probo/ui` frontends) will be documented in this file.
+All notable changes to `probod` (the server, including the bundled `@probo/console`, `@probo/compliance-portal`, and `@probo/ui` frontends) will be documented in this file.
 
 ## Unreleased
 

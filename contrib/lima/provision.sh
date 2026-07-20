@@ -141,7 +141,7 @@ cat > /etc/systemd/system/probo-node-modules.service << EOF
 [Unit]
 Description=Bind-mount VM-local node_modules over workspace
 DefaultDependencies=no
-Before=probo-console.service probo-trust.service
+Before=probo-console.service probo-compliance-portal.service
 
 [Service]
 Type=oneshot
@@ -168,7 +168,7 @@ make -C /workspace generate WITH_APPS=1
 make -C /workspace embed
 
 echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/console/.env
-echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/trust/.env
+echo "VITE_API_URL=http://${VM_IP}:8080" > /workspace/apps/compliance-portal/.env
 
 # Install systemd services for the sandbox
 cat > /etc/systemd/system/probo-stack.service << EOF
@@ -229,9 +229,9 @@ RestartSec=3s
 WantedBy=multi-user.target
 EOF
 
-cat > /etc/systemd/system/probo-trust.service << EOF
+cat > /etc/systemd/system/probo-compliance-portal.service << EOF
 [Unit]
-Description=Probo Trust Dev Server
+Description=Probo Compliance Portal Dev Server
 Requires=probo-node-modules.service
 After=probo-node-modules.service probod.service
 
@@ -239,7 +239,7 @@ After=probo-node-modules.service probod.service
 Type=simple
 User=${LIMA_USER}
 WorkingDirectory=/workspace
-ExecStart=/usr/bin/npm --workspace @probo/trust run dev -- --host 0.0.0.0
+ExecStart=/usr/bin/npm --workspace @probo/compliance-portal run dev -- --host 0.0.0.0
 Restart=on-failure
 RestartSec=3s
 
@@ -249,4 +249,4 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now probo-stack.service
-systemctl enable --now probod.service probo-console.service probo-trust.service
+systemctl enable --now probod.service probo-console.service probo-compliance-portal.service

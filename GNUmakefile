@@ -71,6 +71,7 @@ GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/mcp/v1/types/types.go
 
 EMBEDDED= apps/console/dist/index.html \
+	apps/compliance-portal/dist/index.html \
 	apps/trust/dist/index.html \
 	@probo/emails
 
@@ -94,7 +95,7 @@ ifdef WITH_APPS
 GENERATED += relay
 EMBEDDED += \
 	@probo/console \
-	@probo/trust
+	@probo/compliance-portal
 endif
 
 .PHONY: all
@@ -210,7 +211,7 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/ro
 	PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
 	PROBOD_AUTH_COOKIE_SECURE=false; \
 	PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
-	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
+	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174,http://localhost:5175"; \
 	PROBOD_PG_ADDR=localhost:5432; \
 	PROBOD_PG_USERNAME=postgres; \
 	PROBOD_PG_PASSWORD=postgres; \
@@ -333,6 +334,12 @@ pkg/server/api/trust/v1/schema.graphql: pkg/server/api/trust/v1/graphql $(TRUST_
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
+.PHONY: @probo/compliance-portal
+@probo/compliance-portal: NODE_ENV=production
+@probo/compliance-portal: relay
+	$(NPM) --workspace $@ run check
+	$(NPM) --workspace $@ run build
+
 .PHONY: generate
 generate: $(GENERATED)
 
@@ -385,7 +392,7 @@ fmt-go: ## Format Go code
 clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf bin/*
 	$(RM) -rf node_modules
-	$(RM) -rf apps/{console,trust}/{dist,node_modules}
+	$(RM) -rf apps/{console,trust,compliance-portal}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
 	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
@@ -433,7 +440,7 @@ compose/keycloak/probo-realm.json: compose/keycloak/probo-realm.json.tmpl compos
 	-e "s|PRIVATE_KEY_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/private-key.pem)|g" \
 	$@.tmpl > $@
 
-apps/console/dist/index.html apps/trust/dist/index.html:
+apps/console/dist/index.html apps/compliance-portal/dist/index.html apps/trust/dist/index.html:
 	$(MKDIR) $(dir $@)
 	$(ECHO) dev-server > $@
 

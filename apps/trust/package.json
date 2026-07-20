@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5174",
+    "dev": "vite --port 5175",
     "build": "tsc -b && vite build",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "preview": "vite preview"

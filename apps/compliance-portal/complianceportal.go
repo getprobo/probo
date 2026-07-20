@@ -18,38 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { fileURLToPath, URL } from "node:url";
+package complianceportalstatics
 
-import babel from "@rolldown/plugin-babel";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import "embed"
 
-// https://vite.dev/config/
-// @vitejs/plugin-react@6 (Vite 8) no longer runs Babel, so the Relay tagged
-// template transform is applied via @rolldown/plugin-babel instead.
-export default defineConfig({
-  plugins: [
-    react(),
-    babel({ plugins: ["relay"] }),
-    tailwindcss(),
-  ],
-  build: {
-    assetsDir: "assets",
-  },
-  base: "./",
-  server: {
-    port: 5175,
-    proxy: {
-      "^/trust/[^/]+/api": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-    },
-  },
-  resolve: {
-    alias: {
-      "#": fileURLToPath(new URL("./src", import.meta.url)),
-    },
-  },
-});
+//go:embed dist
+var StaticFiles embed.FS

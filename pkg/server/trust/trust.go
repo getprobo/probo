@@ -28,7 +28,7 @@ import (
 	"io/fs"
 	"net/http"
 
-	truststatics "go.probo.inc/probo/apps/trust"
+	complianceportalstatics "go.probo.inc/probo/apps/compliance-portal"
 	"go.probo.inc/probo/pkg/server/statichandler"
 )
 
@@ -59,7 +59,7 @@ func NewServer(headDataFunc HeadDataFunc) (*Server, error) {
 	}
 
 	spaServer, err := statichandler.NewServer(
-		truststatics.StaticFiles,
+		complianceportalstatics.StaticFiles,
 		"dist",
 		gzipOptions,
 		statichandler.WithFileRenderer("/index.html", renderer),
@@ -72,7 +72,7 @@ func NewServer(headDataFunc HeadDataFunc) (*Server, error) {
 }
 
 func buildIndexRenderer(headDataFunc HeadDataFunc) (statichandler.FileRenderer, error) {
-	subFS, err := fs.Sub(truststatics.StaticFiles, "dist")
+	subFS, err := fs.Sub(complianceportalstatics.StaticFiles, "dist")
 	if err != nil {
 		return nil, fmt.Errorf("cannot open dist: %w", err)
 	}

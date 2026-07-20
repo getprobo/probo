@@ -28,16 +28,16 @@ jobs:
         run: |
           npm --workspace @probo/console run check
           NODE_ENV=production npm --workspace @probo/console run build
-      - name: "Build trust"
+      - name: "Build compliance-portal"
         run: |
-          npm --workspace @probo/trust run check
-          NODE_ENV=production npm --workspace @probo/trust run build
+          npm --workspace @probo/compliance-portal run check
+          NODE_ENV=production npm --workspace @probo/compliance-portal run build
       - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "frontend-apps"
           path: |
             apps/console/dist/
-            apps/trust/dist/
+            apps/compliance-portal/dist/
             packages/emails/dist/
           retention-days: 1
 

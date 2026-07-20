@@ -5,7 +5,7 @@ Each release track now keeps its own changelog. The history below 0.173.0 of the
 ## Per-track changelogs
 
 - `prb` (CLI) — [cmd/prb/CHANGELOG.md](cmd/prb/CHANGELOG.md)
-- `probod` (server, including bundled `@probo/console`, `@probo/trust`, `@probo/ui`) — [cmd/probod/CHANGELOG.md](cmd/probod/CHANGELOG.md)
+- `probod` (server, including bundled `@probo/console`, `@probo/compliance-portal`, `@probo/ui`) — [cmd/probod/CHANGELOG.md](cmd/probod/CHANGELOG.md)
 - `probod-bootstrap` — [cmd/probod-bootstrap/CHANGELOG.md](cmd/probod-bootstrap/CHANGELOG.md)
 - `@probo/n8n-nodes-probo` — [packages/n8n-node/CHANGELOG.md](packages/n8n-node/CHANGELOG.md)
 - `@probo/cookie-banner` — [packages/cookie-banner/CHANGELOG.md](packages/cookie-banner/CHANGELOG.md)
