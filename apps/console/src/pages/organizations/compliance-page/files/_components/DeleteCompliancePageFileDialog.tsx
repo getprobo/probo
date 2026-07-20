@@ -28,11 +28,11 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 const deleteCompliancePageFileMutation = graphql`
   mutation DeleteCompliancePageFileDialogMutation(
-    $input: DeleteTrustCenterFileInput!
+    $input: DeleteCompliancePortalFileInput!
     $connections: [ID!]!
   ) {
-    deleteTrustCenterFile(input: $input) {
-      deletedTrustCenterFileId @deleteEdge(connections: $connections)
+    deleteCompliancePortalFile(input: $input) {
+      deletedCompliancePortalFileId @deleteEdge(connections: $connections)
     }
   }
 `;

@@ -49,11 +49,11 @@ const acceptedFileTypes = {
 
 const createCompliancePageFileMutation = graphql`
   mutation NewCompliancePageFileDialog_createMutation(
-    $input: CreateTrustCenterFileInput!
+    $input: CreateCompliancePortalFileInput!
     $connections: [ID!]!
   ) {
-    createTrustCenterFile(input: $input) {
-      trustCenterFileEdge @prependEdge(connections: $connections) {
+    createCompliancePortalFile(input: $input) {
+      compliancePortalFileEdge @prependEdge(connections: $connections) {
         node {
           ...CompliancePageFileListItem_fileFragment
         }
@@ -122,7 +122,7 @@ export function NewCompliancePageFileDialog(props: {
           organizationId,
           name: data.name,
           category: data.category,
-          trustCenterVisibility: data.compliancePageVisibility,
+          compliancePortalVisibility: data.compliancePageVisibility,
           file: null,
         },
         connections: connectionId ? [connectionId] : [],

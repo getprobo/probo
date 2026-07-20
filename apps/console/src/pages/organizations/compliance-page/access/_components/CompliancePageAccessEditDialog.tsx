@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
+import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePageDocumentAccessInfo } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -45,7 +45,7 @@ import { CompliancePageDocumentAccessList } from "#/pages/organizations/complian
 import { ElectronicSignatureSection } from "#/pages/organizations/compliance-page/access/_components/ElectronicSignatureSection";
 
 const documentAccessFragment = graphql`
-  fragment CompliancePageAccessEditDialogDocumentAccessFragment on TrustCenterDocumentAccess @inline {
+  fragment CompliancePageAccessEditDialogDocumentAccessFragment on CompliancePortalDocumentAccess @inline {
     id
     status
     document {
@@ -68,7 +68,7 @@ const documentAccessFragment = graphql`
         name
       }
     }
-    trustCenterFile {
+    compliancePortalFile {
       id
       name
       category
@@ -112,15 +112,15 @@ function toDocumentAccessInfo(
       status: node.status,
     };
   }
-  if (node.trustCenterFile) {
+  if (node.compliancePortalFile) {
     return {
-      persisted: node.id !== node.trustCenterFile.id,
+      persisted: node.id !== node.compliancePortalFile.id,
       variant: "highlight",
-      name: node.trustCenterFile.name,
+      name: node.compliancePortalFile.name,
       type: "file",
       typeLabel: __("File"),
-      category: node.trustCenterFile.category,
-      id: node.trustCenterFile.id,
+      category: node.compliancePortalFile.category,
+      id: node.compliancePortalFile.id,
       status: node.status,
     };
   }
@@ -130,7 +130,7 @@ function toDocumentAccessInfo(
 const compliancePageAccessEditDialogQuery = graphql`
   query CompliancePageAccessEditDialogQuery($accessId: ID!) {
     node(id: $accessId) {
-      ... on TrustCenterAccess {
+      ... on CompliancePortalAccess {
         id
         ndaSignature {
           ...ElectronicSignatureSectionFragment
@@ -152,10 +152,10 @@ const compliancePageAccessEditDialogQuery = graphql`
 
 const updateAccessMutation = graphql`
   mutation CompliancePageAccessEditDialogUpdateMutation(
-    $input: UpdateTrustCenterAccessInput!
+    $input: UpdateCompliancePortalAccessInput!
   ) {
-    updateTrustCenterAccess(input: $input) {
-      trustCenterAccess {
+    updateCompliancePortalAccess(input: $input) {
+      compliancePortalAccess {
         id
         createdAt
         updatedAt
@@ -224,7 +224,7 @@ function CompliancePageAccessEditForm(props: {
       getCompliancePageDocumentAccessInfo(edge.node, __),
     ) ?? [];
   const initialStatusByID = initialDocumentAccesses.reduce<
-    Record<string, TrustCenterDocumentAccessStatus>
+    Record<string, CompliancePortalDocumentAccessStatus>
   >((acc, docAccess) => {
     acc[docAccess.id] = docAccess.status;
     return acc;
@@ -236,7 +236,7 @@ function CompliancePageAccessEditForm(props: {
   const handleUpdateDocumentAccessStatus = useCallback(
     (
       documentAccess: CompliancePageDocumentAccessInfo,
-      status: TrustCenterDocumentAccessStatus,
+      status: CompliancePortalDocumentAccessStatus,
     ) => {
       setDocumentAccesses((prev) => {
         const nextDocumentAccesses = [...prev];
@@ -278,13 +278,13 @@ function CompliancePageAccessEditForm(props: {
   );
 
   const handleSubmit = async () => {
-    const documents: { id: string; status: TrustCenterDocumentAccessStatus }[]
+    const documents: { id: string; status: CompliancePortalDocumentAccessStatus }[]
       = [];
-    const reports: { id: string; status: TrustCenterDocumentAccessStatus }[]
+    const reports: { id: string; status: CompliancePortalDocumentAccessStatus }[]
       = [];
     const compliancePageFiles: {
       id: string;
-      status: TrustCenterDocumentAccessStatus;
+      status: CompliancePortalDocumentAccessStatus;
     }[] = [];
 
     for (const docAccess of documentAccesses) {
@@ -312,7 +312,7 @@ function CompliancePageAccessEditForm(props: {
           id: access.id,
           documents,
           reports,
-          trustCenterFiles: compliancePageFiles,
+          compliancePortalFiles: compliancePageFiles,
         },
       },
     });

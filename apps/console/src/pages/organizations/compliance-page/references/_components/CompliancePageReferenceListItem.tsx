@@ -28,7 +28,7 @@ import type { CompliancePageReferenceListItemFragment$data, CompliancePageRefere
 import { DeleteCompliancePageReferenceDialog } from "#/components/compliancePage/DeleteCompliancePageReferenceDialog";
 
 const fragment = graphql`
-  fragment CompliancePageReferenceListItemFragment on TrustCenterReference {
+  fragment CompliancePageReferenceListItemFragment on CompliancePortalReference {
     id
     logo {
       downloadUrl

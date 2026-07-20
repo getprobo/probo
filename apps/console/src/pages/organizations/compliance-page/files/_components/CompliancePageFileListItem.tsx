@@ -33,13 +33,13 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageFileListItem_compliancePageFragment on TrustCenter {
+  fragment CompliancePageFileListItem_compliancePageFragment on CompliancePortal {
     canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
 
 const fileFragment = graphql`
-  fragment CompliancePageFileListItem_fileFragment on TrustCenterFile {
+  fragment CompliancePageFileListItem_fileFragment on CompliancePortalFile {
     id
     name
     alias
@@ -49,7 +49,7 @@ const fileFragment = graphql`
     file {
       downloadUrl
     }
-    compliancePageVisibility: trustCenterVisibility
+    compliancePageVisibility: compliancePortalVisibility
     createdAt
     canUpdate: permission(action: "compliance-portal:portal-file:update")
     canDelete: permission(action: "compliance-portal:portal-file:delete")
@@ -57,9 +57,9 @@ const fileFragment = graphql`
 `;
 
 const updateCompliancePageFileMutation = graphql`
-  mutation CompliancePageFileListItemMutation($input: UpdateTrustCenterFileInput!) {
-    updateTrustCenterFile(input: $input) {
-      trustCenterFile {
+  mutation CompliancePageFileListItemMutation($input: UpdateCompliancePortalFileInput!) {
+    updateCompliancePortalFile(input: $input) {
+      compliancePortalFile {
         ...CompliancePageFileListItem_fileFragment
       }
     }
@@ -99,7 +99,7 @@ export function CompliancePageFileListItem(props: {
         variables: {
           input: {
             id: file.id,
-            trustCenterVisibility: typedValue,
+            compliancePortalVisibility: typedValue,
           },
         },
       });

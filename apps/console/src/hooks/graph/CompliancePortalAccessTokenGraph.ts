@@ -22,10 +22,10 @@ import { graphql } from "react-relay";
 
 /* eslint-disable relay/unused-fields */
 
-export const trustCenterByIdQuery = graphql`
-  query TrustCenterAccessTokenGraphQuery($trustCenterId: ID!) {
-    node(id: $trustCenterId) {
-      ... on TrustCenter {
+export const compliancePortalByIdQuery = graphql`
+  query CompliancePortalAccessTokenGraphQuery($compliancePortalId: ID!) {
+    node(id: $compliancePortalId) {
+      ... on CompliancePortal {
         id
         active
         organization {

@@ -32,7 +32,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageAuditListItem_compliancePageFragment on TrustCenter {
+  fragment CompliancePageAuditListItem_compliancePageFragment on CompliancePortal {
     canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
@@ -46,7 +46,7 @@ const auditFragment = graphql`
     }
     validUntil
     state
-    compliancePageVisibility: trustCenterVisibility
+    compliancePageVisibility: compliancePortalVisibility
   }
 `;
 
@@ -92,7 +92,7 @@ export function CompliancePageAuditListItem(props: {
         variables: {
           input: {
             id: audit.id,
-            trustCenterVisibility: typedValue,
+            compliancePortalVisibility: typedValue,
           },
         },
       });

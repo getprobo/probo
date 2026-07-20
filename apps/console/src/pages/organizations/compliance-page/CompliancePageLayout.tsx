@@ -34,7 +34,7 @@ export const compliancePageLayoutQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        compliancePage: trustCenter {
+        compliancePage: compliancePortal {
           id
           active
           publicUrl

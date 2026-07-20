@@ -29,11 +29,11 @@ import type { CompliancePageAccessListQuery } from "#/__generated__/core/Complia
 import { CompliancePageAccessListItem } from "./CompliancePageAccessListItem";
 
 const fragment = graphql`
-  fragment CompliancePageAccessListFragment on TrustCenter
+  fragment CompliancePageAccessListFragment on CompliancePortal
   @argumentDefinitions(
     first: { type: Int, defaultValue: 10 }
     after: { type: CursorKey, defaultValue: null }
-    order: { type: TrustCenterAccessOrder, defaultValue: { field: CREATED_AT, direction: DESC } }
+    order: { type: CompliancePortalAccessOrder, defaultValue: { field: CREATED_AT, direction: DESC } }
   )
   @refetchable(queryName: "CompliancePageAccessListQuery") {
     accesses(

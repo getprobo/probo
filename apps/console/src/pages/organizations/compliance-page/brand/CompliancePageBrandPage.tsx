@@ -34,7 +34,7 @@ export const compliancePageBrandPageQuery = graphql`
       __typename
       ... on Organization {
         ...CompliancePageDomainsSection_organizationFragment
-        compliancePage: trustCenter @required(action: THROW) {
+        compliancePage: compliancePortal @required(action: THROW) {
           ...CompliancePageProfileSection_compliancePageFragment
           ...CompliancePageVisualIdentitySection_compliancePageFragment
           ...CompliancePageCustomLinksSection_compliancePageFragment

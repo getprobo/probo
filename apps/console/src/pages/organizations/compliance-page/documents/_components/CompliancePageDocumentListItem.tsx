@@ -34,7 +34,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {
+  fragment CompliancePageDocumentListItem_compliancePageFragment on CompliancePortal {
     canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
@@ -45,7 +45,7 @@ const documentFragment = graphql`
     alias
     canSetAlias: permission(action: "resourcealias:alias:set")
     canRemoveAlias: permission(action: "resourcealias:alias:remove")
-    compliancePageVisibility: trustCenterVisibility
+    compliancePageVisibility: compliancePortalVisibility
     latestPublishedVersion: versions(
       first: 1
       orderBy: { field: CREATED_AT, direction: DESC }
@@ -107,7 +107,7 @@ export function CompliancePageDocumentListItem(props: {
         variables: {
           input: {
             id: document.id,
-            trustCenterVisibility: typedValue,
+            compliancePortalVisibility: typedValue,
           },
         },
       });

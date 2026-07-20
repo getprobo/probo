@@ -42,7 +42,7 @@ export const compliancePageFrameworkListItemFragment = graphql`
 `;
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageFrameworkListItem_compliancePage on TrustCenter {
+  fragment CompliancePageFrameworkListItem_compliancePage on CompliancePortal {
     id
     canUpdate: permission(action: "compliance-portal:portal:update")
   }
@@ -86,7 +86,7 @@ export function CompliancePageFrameworkListItem(props: CompliancePageFrameworkLi
   );
   const compliancePage = useFragment(compliancePageFragment, compliancePageKey);
   const canUpdate = compliancePage.canUpdate;
-  const trustCenterId = compliancePage.id;
+  const compliancePortalId = compliancePage.id;
   const { id, visibility, framework } = complianceFramework;
 
   const serverPublic = visibility === "PUBLIC";
@@ -137,7 +137,7 @@ export function CompliancePageFrameworkListItem(props: CompliancePageFrameworkLi
         await createComplianceFramework({
           variables: {
             input: {
-              trustCenterId,
+              compliancePortalId,
               frameworkId: framework.id,
             },
           },
@@ -161,7 +161,7 @@ export function CompliancePageFrameworkListItem(props: CompliancePageFrameworkLi
     id,
     onRefetch,
     createComplianceFramework,
-    trustCenterId,
+    compliancePortalId,
     framework.id,
   ]);
 

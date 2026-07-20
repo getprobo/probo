@@ -29,7 +29,7 @@ import { CompliancePageAuditListItem } from "./CompliancePageAuditListItem";
 
 const fragment = graphql`
   fragment CompliancePageAuditListFragment on Organization {
-    compliancePage: trustCenter @required(action: THROW) {
+    compliancePage: compliancePortal @required(action: THROW) {
       ...CompliancePageAuditListItem_compliancePageFragment
     }
     audits(first: 100) {

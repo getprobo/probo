@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
+import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePageDocumentAccessInfo } from "@probo/helpers";
 import { getCompliancePageDocumentAccessStatusBadgeVariant, getCompliancePageDocumentAccessStatusLabel } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
@@ -26,10 +26,10 @@ import { Badge, Button, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 
 interface CompliancePageDocumentAccessListProps {
   documentAccesses: CompliancePageDocumentAccessInfo[];
-  initialStatusByID: Record<string, TrustCenterDocumentAccessStatus>;
+  initialStatusByID: Record<string, CompliancePortalDocumentAccessStatus>;
   onGrantAll: () => void;
   onRejectOrRevokeAll: () => void;
-  onUpdateStatus: (docAccess: CompliancePageDocumentAccessInfo, status: TrustCenterDocumentAccessStatus) => void;
+  onUpdateStatus: (docAccess: CompliancePageDocumentAccessInfo, status: CompliancePortalDocumentAccessStatus) => void;
 }
 
 export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAccessListProps) {

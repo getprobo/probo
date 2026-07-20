@@ -34,7 +34,7 @@ export const compliancePageReferencesPageQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        compliancePage: trustCenter @required(action: THROW) {
+        compliancePage: compliancePortal @required(action: THROW) {
           id
           canCreateReference: permission(action: "compliance-portal:portal-reference:create")
           ...CompliancePageReferenceListFragment

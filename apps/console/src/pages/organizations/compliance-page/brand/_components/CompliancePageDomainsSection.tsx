@@ -25,7 +25,7 @@ import { NewCompliancePageDomainDialog } from "../../domain/_components/NewCompl
 const organizationFragment = graphql`
   fragment CompliancePageDomainsSection_organizationFragment on Organization {
     canCreateCustomDomain: permission(action: "compliance-portal:custom-domain:create")
-    compliancePage: trustCenter @required(action: THROW) {
+    compliancePage: compliancePortal @required(action: THROW) {
       id
       defaultDomain {
         id

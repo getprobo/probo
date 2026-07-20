@@ -40,7 +40,7 @@ const deleteMutation = graphql`
 `;
 
 const fragment = graphql`
-  fragment CompliancePageMailingListFragment on TrustCenter
+  fragment CompliancePageMailingListFragment on CompliancePortal
   @argumentDefinitions(
     first: { type: Int, defaultValue: 20 }
     after: { type: CursorKey, defaultValue: null }

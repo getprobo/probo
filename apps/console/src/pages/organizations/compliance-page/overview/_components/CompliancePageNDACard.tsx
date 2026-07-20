@@ -22,7 +22,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePageNDACard_compliancePage$key } from "#/__generated__/core/CompliancePageNDACard_compliancePage.graphql";
 
 const fragment = graphql`
-  fragment CompliancePageNDACard_compliancePage on TrustCenter {
+  fragment CompliancePageNDACard_compliancePage on CompliancePortal {
     nda {
       fileName
       downloadUrl

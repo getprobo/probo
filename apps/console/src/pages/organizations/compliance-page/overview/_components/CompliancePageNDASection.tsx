@@ -31,7 +31,7 @@ import { CompliancePageNDACard } from "./CompliancePageNDACard";
 
 const fragment = graphql`
   fragment CompliancePageNDASectionFragment on Organization {
-    compliancePage: trustCenter {
+    compliancePage: compliancePortal {
       id
       nda {
         fileName
@@ -72,7 +72,7 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
     await uploadNDA({
       variables: {
         input: {
-          trustCenterId: organization.compliancePage.id,
+          compliancePortalId: organization.compliancePage.id,
           fileName: file.name,
           file: null,
         },
@@ -111,8 +111,8 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
   };
 
   const handleNDADelete = () => {
-    const trustCenterId = organization.compliancePage?.id;
-    if (!trustCenterId) {
+    const compliancePortalId = organization.compliancePage?.id;
+    if (!compliancePortalId) {
       toast({
         title: __("Error"),
         description: __("Compliance page not found"),
@@ -122,7 +122,7 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
     }
 
     confirm(
-      () => deleteNDA({ variables: { input: { trustCenterId } } }),
+      () => deleteNDA({ variables: { input: { compliancePortalId } } }),
       {
         title: __("Delete NDA"),
         message: __("Are you sure you want to delete the NDA file? This action cannot be undone."),

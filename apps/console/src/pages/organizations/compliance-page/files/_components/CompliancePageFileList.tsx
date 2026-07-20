@@ -33,10 +33,10 @@ import { EditCompliancePageFileDialog } from "./EditCompliancePageFileDialog";
 
 const fragment = graphql`
   fragment CompliancePageFileListFragment on Organization {
-    compliancePage: trustCenter @required(action: THROW) {
+    compliancePage: compliancePortal @required(action: THROW) {
       ...CompliancePageFileListItem_compliancePageFragment
     }
-    compliancePageFiles: trustCenterFiles(first: 100)
+    compliancePageFiles: compliancePortalFiles(first: 100)
       @connection(key: "CompliancePageFileList_compliancePageFiles") {
       __id
       edges {

@@ -29,7 +29,7 @@ import { CompliancePageDocumentListItem } from "./CompliancePageDocumentListItem
 
 const fragment = graphql`
   fragment CompliancePageDocumentListFragment on Organization {
-    compliancePage: trustCenter @required(action: THROW) {
+    compliancePage: compliancePortal @required(action: THROW) {
       ...CompliancePageDocumentListItem_compliancePageFragment
     }
     documents(first: 100 filter: { status: [ACTIVE] }) {

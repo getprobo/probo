@@ -23,7 +23,7 @@ import { useUpdateCompliancePageMutation } from "#/hooks/graph/CompliancePageGra
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageProfileSection_compliancePageFragment on TrustCenter {
+  fragment CompliancePageProfileSection_compliancePageFragment on CompliancePortal {
     id
     title
     description
@@ -72,7 +72,7 @@ export function CompliancePageProfileSection(props: {
     await updateCompliancePage({
       variables: {
         input: {
-          trustCenterId: compliancePage.id,
+          compliancePortalId: compliancePage.id,
           title: data.title,
           description: data.description || null,
           websiteUrl: data.websiteUrl || null,

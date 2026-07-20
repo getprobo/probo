@@ -28,11 +28,11 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 export const createCompliancePageReferenceMutation = graphql`
   mutation compliancePageReferenceMutationsCreateMutation(
-    $input: CreateTrustCenterReferenceInput!
+    $input: CreateCompliancePortalReferenceInput!
     $connections: [ID!]!
   ) {
-    createTrustCenterReference(input: $input) {
-      trustCenterReferenceEdge @appendEdge(connections: $connections) {
+    createCompliancePortalReference(input: $input) {
+      compliancePortalReferenceEdge @appendEdge(connections: $connections) {
         cursor
         node {
           id
@@ -55,10 +55,10 @@ export const createCompliancePageReferenceMutation = graphql`
 
 export const updateCompliancePageReferenceMutation = graphql`
   mutation compliancePageReferenceMutationsUpdateMutation(
-    $input: UpdateTrustCenterReferenceInput!
+    $input: UpdateCompliancePortalReferenceInput!
   ) {
-    updateTrustCenterReference(input: $input) {
-      trustCenterReference {
+    updateCompliancePortalReference(input: $input) {
+      compliancePortalReference {
         id
         name
         description
@@ -78,11 +78,11 @@ export const updateCompliancePageReferenceMutation = graphql`
 
 export const deleteCompliancePageReferenceMutation = graphql`
   mutation compliancePageReferenceMutationsDeleteMutation(
-    $input: DeleteTrustCenterReferenceInput!
+    $input: DeleteCompliancePortalReferenceInput!
     $connections: [ID!]!
   ) {
-    deleteTrustCenterReference(input: $input) {
-      deletedTrustCenterReferenceId @deleteEdge(connections: $connections)
+    deleteCompliancePortalReference(input: $input) {
+      deletedCompliancePortalReferenceId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -109,10 +109,10 @@ export function useUpdateCompliancePageReferenceMutation() {
 
 export const updateCompliancePageReferenceRankMutation = graphql`
   mutation compliancePageReferenceMutationsUpdateRankMutation(
-    $input: UpdateTrustCenterReferenceInput!
+    $input: UpdateCompliancePortalReferenceInput!
   ) {
-    updateTrustCenterReference(input: $input) {
-      trustCenterReference {
+    updateCompliancePortalReference(input: $input) {
+      compliancePortalReference {
         id
         rank
       }

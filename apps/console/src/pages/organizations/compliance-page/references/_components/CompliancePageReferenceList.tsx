@@ -32,12 +32,12 @@ import { useUpdateCompliancePageReferenceRankMutation } from "#/pages/organizati
 import { CompliancePageReferenceListItem } from "./CompliancePageReferenceListItem";
 
 const fragment = graphql`
-  fragment CompliancePageReferenceListFragment on TrustCenter
+  fragment CompliancePageReferenceListFragment on CompliancePortal
   @refetchable(queryName: "CompliancePageReferenceListQuery")
   @argumentDefinitions (
     first: { type: Int defaultValue: 100 }
     after: { type: CursorKey defaultValue: null }
-    order: { type: TrustCenterReferenceOrder, defaultValue: { field: RANK, direction: ASC } }
+    order: { type: CompliancePortalReferenceOrder, defaultValue: { field: RANK, direction: ASC } }
   ) {
     references(first: $first, after: $after, orderBy: $order)
     @connection(key: "CompliancePageReferenceList_references", filters: ["orderBy"]) {

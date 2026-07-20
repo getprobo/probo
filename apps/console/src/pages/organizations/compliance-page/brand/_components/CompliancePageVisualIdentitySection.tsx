@@ -31,7 +31,7 @@ import type { CompliancePageVisualIdentitySection_updateMutation } from "#/__gen
 import { useMutation } from "#/lib/relay/useMutation";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageVisualIdentitySection_compliancePageFragment on TrustCenter {
+  fragment CompliancePageVisualIdentitySection_compliancePageFragment on CompliancePortal {
     id
     logo {
       downloadUrl
@@ -44,9 +44,9 @@ const compliancePageFragment = graphql`
 `;
 
 const updateMutation = graphql`
-  mutation CompliancePageVisualIdentitySection_updateMutation($input: UpdateTrustCenterBrandInput!) {
-    updateTrustCenterBrand(input: $input) {
-      trustCenter {
+  mutation CompliancePageVisualIdentitySection_updateMutation($input: UpdateCompliancePortalBrandInput!) {
+    updateCompliancePortalBrand(input: $input) {
+      compliancePortal {
         id
         logo {
           downloadUrl
@@ -115,7 +115,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
     void updateBrand({
       variables: {
         input: {
-          trustCenterId: compliancePageId,
+          compliancePortalId: compliancePageId,
           logoFile: null,
         },
       },
@@ -137,7 +137,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
     void updateBrand({
       variables: {
         input: {
-          trustCenterId: compliancePageId,
+          compliancePortalId: compliancePageId,
           darkLogoFile: null,
         },
       },
@@ -154,7 +154,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
     await updateBrand({
       variables: {
         input: {
-          trustCenterId: compliancePageId,
+          compliancePortalId: compliancePageId,
           logoFile: null,
         },
       },
@@ -167,7 +167,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
     await updateBrand({
       variables: {
         input: {
-          trustCenterId: compliancePageId,
+          compliancePortalId: compliancePageId,
           darkLogoFile: null,
         },
       },

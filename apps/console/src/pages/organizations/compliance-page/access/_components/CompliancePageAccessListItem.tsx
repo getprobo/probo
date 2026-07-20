@@ -31,7 +31,7 @@ import { CompliancePageAccessEditDialog } from "./CompliancePageAccessEditDialog
 import { NdaSignatureBadge } from "./NdaSignatureBadge";
 
 const fragment = graphql`
-  fragment CompliancePageAccessListItemFragment on TrustCenterAccess {
+  fragment CompliancePageAccessListItemFragment on CompliancePortalAccess {
     id
     createdAt
     profile {

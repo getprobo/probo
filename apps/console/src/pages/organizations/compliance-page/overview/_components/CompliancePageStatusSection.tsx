@@ -28,7 +28,7 @@ import { useUpdateCompliancePageMutation } from "#/hooks/graph/CompliancePageGra
 
 const fragment = graphql`
   fragment CompliancePageStatusSectionFragment on Organization {
-    compliancePage: trustCenter {
+    compliancePage: compliancePortal {
       id
       active
       searchEngineIndexing
@@ -65,7 +65,7 @@ export function CompliancePageStatusSection(props: {
     await updateCompliancePage({
       variables: {
         input: {
-          trustCenterId: organization.compliancePage.id,
+          compliancePortalId: organization.compliancePage.id,
           active,
         },
       },
@@ -85,7 +85,7 @@ export function CompliancePageStatusSection(props: {
     await updateCompliancePage({
       variables: {
         input: {
-          trustCenterId: organization.compliancePage.id,
+          compliancePortalId: organization.compliancePage.id,
           searchEngineIndexing: indexable ? "INDEXABLE" : "NOT_INDEXABLE",
         },
       },

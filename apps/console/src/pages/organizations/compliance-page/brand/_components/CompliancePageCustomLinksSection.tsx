@@ -21,7 +21,7 @@ import type { CompliancePageCustomLinksSection_compliancePageFragment$key } from
 import { CompliancePageCustomLinkList } from "./CompliancePageCustomLinkList";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageCustomLinksSection_compliancePageFragment on TrustCenter {
+  fragment CompliancePageCustomLinksSection_compliancePageFragment on CompliancePortal {
     ...CompliancePageCustomLinkList_compliancePageFragment
   }
 `;

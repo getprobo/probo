@@ -144,7 +144,7 @@ export const CompliancePageCustomLinkDialog = forwardRef<CompliancePageCustomLin
       if (mode === "create") {
         await create({
           variables: {
-            input: { trustCenterId: compliancePageId, name: data.name, url: data.url },
+            input: { compliancePortalId: compliancePageId, name: data.name, url: data.url },
           },
           updater: (store) => {
             const payload = store.getRootField("createComplianceCustomLink");

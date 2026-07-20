@@ -29,9 +29,9 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutation } from "#/lib/relay/useMutation";
 
 const updateCompliancePageFileMutation = graphql`
-  mutation EditCompliancePageFileDialogMutation($input: UpdateTrustCenterFileInput!) {
-    updateTrustCenterFile(input: $input) {
-      trustCenterFile {
+  mutation EditCompliancePageFileDialogMutation($input: UpdateCompliancePortalFileInput!) {
+    updateCompliancePortalFile(input: $input) {
+      compliancePortalFile {
         ...CompliancePageFileListItem_fileFragment
       }
     }

@@ -38,7 +38,7 @@ export const compliancePageMailingListPageQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        compliancePage: trustCenter @required(action: THROW) {
+        compliancePage: compliancePortal @required(action: THROW) {
           id
           mailingList {
             id

@@ -29,7 +29,7 @@ export const compliancePageCommitmentsPageQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        compliancePage: trustCenter @required(action: THROW) {
+        compliancePage: compliancePortal @required(action: THROW) {
           id
           canCreateGroup: permission(action: "core:compliance-portal-commitment-group:create")
           ...CompliancePageCommitmentGroupListFragment
@@ -53,7 +53,7 @@ export function CompliancePageCommitmentsPage(props: { queryRef: PreloadedQuery<
   return (
     <CompliancePageCommitmentGroupList
       fragmentRef={organization.compliancePage}
-      trustCenterId={organization.compliancePage.id}
+      compliancePortalId={organization.compliancePage.id}
       canCreate={organization.compliancePage.canCreateGroup}
     />
   );

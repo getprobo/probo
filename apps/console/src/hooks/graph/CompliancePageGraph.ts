@@ -26,9 +26,9 @@ import type { CompliancePageGraphUploadNDAMutation } from "#/__generated__/core/
 import { useMutation } from "#/lib/relay/useMutation";
 
 const updateCompliancePageMutation = graphql`
-  mutation CompliancePageGraphUpdateMutation($input: UpdateTrustCenterInput!) {
-    updateTrustCenter(input: $input) {
-      trustCenter {
+  mutation CompliancePageGraphUpdateMutation($input: UpdateCompliancePortalInput!) {
+    updateCompliancePortal(input: $input) {
+      compliancePortal {
         id
         active
         searchEngineIndexing
@@ -55,10 +55,10 @@ export function useUpdateCompliancePageMutation() {
 
 const uploadCompliancePageNDAMutation = graphql`
   mutation CompliancePageGraphUploadNDAMutation(
-    $input: UploadTrustCenterNDAInput!
+    $input: UploadCompliancePortalNDAInput!
   ) {
-    uploadTrustCenterNDA(input: $input) {
-      trustCenter {
+    uploadCompliancePortalNDA(input: $input) {
+      compliancePortal {
         id
         nda {
           fileName
@@ -79,10 +79,10 @@ export function useUploadCompliancePageNDAMutation() {
 
 const deleteCompliancePageNDAMutation = graphql`
   mutation CompliancePageGraphDeleteNDAMutation(
-    $input: DeleteTrustCenterNDAInput!
+    $input: DeleteCompliancePortalNDAInput!
   ) {
-    deleteTrustCenterNDA(input: $input) {
-      trustCenter {
+    deleteCompliancePortalNDA(input: $input) {
+      compliancePortal {
         id
         nda {
           fileName

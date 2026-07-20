@@ -70,7 +70,7 @@ const groupSchema = z.object({
 type GroupFormData = z.infer<typeof groupSchema>;
 
 export type CompliancePageCommitmentGroupDialogRef = {
-  openCreate: (trustCenterId: string) => void;
+  openCreate: (compliancePortalId: string) => void;
   openEdit: (group: CompliancePageCommitmentGroupListItemFragment$data) => void;
 };
 
@@ -81,7 +81,7 @@ export const CompliancePageCommitmentGroupDialog = forwardRef<
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
   const [mode, setMode] = useState<"create" | "edit">("create");
-  const [trustCenterId, setTrustCenterId] = useState<string>("");
+  const [compliancePortalId, setCompliancePortalId] = useState<string>("");
   const [groupId, setGroupId] = useState<string>("");
 
   const [createGroup, isCreating] = useMutationWithToasts<CompliancePageCommitmentGroupDialogCreateMutation>(
@@ -100,7 +100,7 @@ export const CompliancePageCommitmentGroupDialog = forwardRef<
   useImperativeHandle(ref, () => ({
     openCreate: (tId: string) => {
       setMode("create");
-      setTrustCenterId(tId);
+      setCompliancePortalId(tId);
       reset({ title: "", description: "" });
       dialogRef.current?.open();
     },
@@ -115,7 +115,7 @@ export const CompliancePageCommitmentGroupDialog = forwardRef<
   const onSubmit = async (data: GroupFormData) => {
     if (mode === "create") {
       await createGroup({
-        variables: { input: { trustCenterId, title: data.title, description: data.description } },
+        variables: { input: { compliancePortalId, title: data.title, description: data.description } },
         onSuccess: () => {
           reset();
           dialogRef.current?.close();

@@ -29,7 +29,7 @@ import type { CompliancePageFrameworkList_compliancePageRefetchQuery } from "#/_
 import { CompliancePageFrameworkListItem } from "./CompliancePageFrameworkListItem";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageFrameworkList_compliancePageFragment on TrustCenter
+  fragment CompliancePageFrameworkList_compliancePageFragment on CompliancePortal
   @refetchable(queryName: "CompliancePageFrameworkList_compliancePageRefetchQuery")
   @argumentDefinitions(
     first: { type: Int, defaultValue: 100 }

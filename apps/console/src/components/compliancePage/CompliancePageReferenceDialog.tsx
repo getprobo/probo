@@ -123,7 +123,7 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
         await createReference({
           variables: {
             input: {
-              trustCenterId: compliancePageId,
+              compliancePortalId: compliancePageId,
               name: data.name,
               description: data.description || null,
               websiteUrl: data.websiteUrl,

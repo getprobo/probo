@@ -22,7 +22,7 @@ import { CompliancePageFrameworkList } from "./CompliancePageFrameworkList";
 
 const fragment = graphql`
   fragment CompliancePageFrameworksSectionFragment on Organization {
-    compliancePage: trustCenter {
+    compliancePage: compliancePortal {
       ...CompliancePageFrameworkList_compliancePageFragment
     }
   }

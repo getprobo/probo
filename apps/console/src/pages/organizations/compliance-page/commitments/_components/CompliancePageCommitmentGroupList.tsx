@@ -33,7 +33,7 @@ import { CompliancePageCommitmentGroupDialog, type CompliancePageCommitmentGroup
 import { CompliancePageCommitmentGroupListItem } from "./CompliancePageCommitmentGroupListItem";
 
 const fragment = graphql`
-  fragment CompliancePageCommitmentGroupListFragment on TrustCenter
+  fragment CompliancePageCommitmentGroupListFragment on CompliancePortal
   @refetchable(queryName: "CompliancePageCommitmentGroupListRefetchQuery") {
     commitmentGroups(first: 100, orderBy: { field: RANK, direction: ASC }) {
       edges {
@@ -62,10 +62,10 @@ const updateRankMutation = graphql`
 
 export function CompliancePageCommitmentGroupList(props: {
   fragmentRef: CompliancePageCommitmentGroupListFragment$key;
-  trustCenterId: string;
+  compliancePortalId: string;
   canCreate: boolean;
 }) {
-  const { fragmentRef, trustCenterId, canCreate } = props;
+  const { fragmentRef, compliancePortalId, canCreate } = props;
 
   const { __ } = useTranslate();
   const dialogRef = useRef<CompliancePageCommitmentGroupDialogRef>(null);
@@ -106,7 +106,7 @@ export function CompliancePageCommitmentGroupList(props: {
           </p>
         </div>
         {canCreate && (
-          <Button icon={IconPlusLarge} onClick={() => dialogRef.current?.openCreate(trustCenterId)}>
+          <Button icon={IconPlusLarge} onClick={() => dialogRef.current?.openCreate(compliancePortalId)}>
             {__("Add Group")}
           </Button>
         )}

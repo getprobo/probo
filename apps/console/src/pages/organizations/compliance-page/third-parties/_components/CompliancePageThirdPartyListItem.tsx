@@ -33,7 +33,7 @@ const thirdPartyFragment = graphql`
     id
     category
     name
-    showOnCompliancePage: showOnTrustCenter
+    showOnCompliancePage: showOnCompliancePortal
     canUpdate: permission(action: "core:thirdParty:update")
   }
 `;
@@ -43,7 +43,7 @@ const updateThirdPartyVisibilityMutation = graphql`
     updateThirdParty(input: $input) {
       thirdParty {
         id
-        showOnTrustCenter
+        showOnCompliancePortal
         ...CompliancePageThirdPartyListItem_thirdPartyFragment
       }
     }
@@ -94,7 +94,7 @@ export function CompliancePageThirdPartyListItem(props: {
                 variables: {
                   input: {
                     id: thirdParty.id,
-                    showOnTrustCenter: !thirdParty.showOnCompliancePage,
+                    showOnCompliancePortal: !thirdParty.showOnCompliancePage,
                   },
                 },
               })}

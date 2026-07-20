@@ -32,7 +32,7 @@ export const compliancePageOverviewPageQuery = graphql`
   query CompliancePageOverviewPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        compliancePage: trustCenter {
+        compliancePage: compliancePortal {
           canGetNDA: permission(action: "compliance-portal:portal:get-nda")
         }
       }

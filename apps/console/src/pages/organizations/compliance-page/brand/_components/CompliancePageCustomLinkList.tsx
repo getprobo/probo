@@ -27,7 +27,7 @@ import { CompliancePageCustomLinkDialog, type CompliancePageCustomLinkDialogRef 
 import { CompliancePageCustomLinkListItem } from "./CompliancePageCustomLinkListItem";
 
 const compliancePageFragment = graphql`
-  fragment CompliancePageCustomLinkList_compliancePageFragment on TrustCenter
+  fragment CompliancePageCustomLinkList_compliancePageFragment on CompliancePortal
   @refetchable(queryName: "CompliancePageCustomLinkList_compliancePageRefetchQuery")
   @argumentDefinitions(
     first: { type: Int, defaultValue: 500 }

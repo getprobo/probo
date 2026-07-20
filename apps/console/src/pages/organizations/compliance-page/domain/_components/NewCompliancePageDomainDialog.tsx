@@ -106,7 +106,7 @@ export function NewCompliancePageDomainDialog(props: PropsWithChildren<{ complia
     await createCustomDomain({
       variables: {
         input: {
-          trustCenterId: compliancePageId,
+          compliancePortalId: compliancePageId,
           domain: normalizedDomain,
         },
       },
