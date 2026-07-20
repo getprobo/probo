@@ -60,6 +60,7 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var domains coredata.CustomDomains
+
 			keepCertificateIDs, err := domains.LoadReferencedCertificateIDs(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot load referenced certificate ids: %w", err)

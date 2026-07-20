@@ -61,6 +61,7 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot validate profile update", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 	}
@@ -77,6 +78,7 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -87,6 +89,7 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 	}

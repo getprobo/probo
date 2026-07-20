@@ -466,7 +466,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 
 	result, err := h.iam.OAuth2ServerService.ExchangeAuthorizationCode(
 		r.Context(),
-		client.ExternalClientID,
+		client.ID.String(),
 		in.Code,
 		in.RedirectURI,
 		in.CodeVerifier,

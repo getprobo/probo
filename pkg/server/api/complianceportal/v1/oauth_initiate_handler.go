@@ -60,6 +60,7 @@ func (h *OAuthInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	compliancePage := complianceportal.CompliancePageFromContext(ctx)
 	portalBaseURL := complianceportal.CompliancePageBaseURLFromContext(ctx)
+
 	if compliancePage == nil || portalBaseURL == nil {
 		httpserver.RenderError(w, http.StatusNotFound, errNotFound)
 		return

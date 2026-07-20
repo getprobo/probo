@@ -378,7 +378,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	fileManagerService := filemanager.NewService(pgClient, baseURL, s3Client, l)
+	fileManagerService := filemanager.NewService(pgClient, baseURL, s3Client, l.Named("filemanager"))
 
 	commonThirdPartyEnrichmentCfg, err := impl.buildCommonThirdPartyEnrichmentConfig(l, tp, r, fileManagerService)
 	if err != nil {

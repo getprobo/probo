@@ -30,9 +30,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 
-import type { compliancePageReferenceMutationsDeleteMutation } from "#/__generated__/core/compliancePageReferenceMutationsDeleteMutation.graphql";
-import { useMutation } from "#/lib/relay/useMutation";
-import { deleteCompliancePageReferenceMutation } from "#/pages/organizations/compliance-page/_lib/compliancePageReferenceMutations";
+import { useDeleteCompliancePageReferenceMutation } from "#/pages/organizations/compliance-page/_lib/compliancePageReferenceMutations";
 
 type Props = {
   children: React.ReactNode;
@@ -52,16 +50,10 @@ export function DeleteCompliancePageReferenceDialog({
   const { __ } = useTranslate();
   const ref = useDialogRef();
 
-  const [mutate, isDeleting] = useMutation<compliancePageReferenceMutationsDeleteMutation>(
-    deleteCompliancePageReferenceMutation,
-    {
-      successMessage: __("Reference deleted successfully"),
-      errorToast: __("Failed to delete reference"),
-    },
-  );
+  const [deleteReference, isDeleting] = useDeleteCompliancePageReferenceMutation();
 
   const handleDelete = async () => {
-    await mutate({
+    await deleteReference({
       variables: {
         input: {
           id: referenceId,

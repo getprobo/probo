@@ -61,6 +61,7 @@ func MakeWithEntropy(s string) string {
 	if maxBase < 1 {
 		return suffix
 	}
+
 	if len(base) > maxBase {
 		base = strings.Trim(base[:maxBase], "-")
 		if base == "" {
