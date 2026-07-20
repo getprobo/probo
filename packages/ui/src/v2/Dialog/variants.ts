@@ -32,7 +32,7 @@ export const dialog = tv({
     ],
     popup: [
       "fixed left-1/2 top-1/2 z-5 -translate-x-1/2 -translate-y-1/2",
-      "flex w-[calc(100vw-2rem)] max-w-[600px] flex-col gap-4",
+      "flex w-[calc(100vw-2rem)] max-w-150 flex-col gap-4",
       "max-h-[calc(100vh-2rem)] overflow-y-auto overflow-x-clip",
       "rounded-5 border border-sand-6 bg-sand-1 py-6 shadow-6 outline-none",
       "transition-all duration-150",
@@ -51,7 +51,7 @@ export const dialog = tv({
 // so a placeholder can render before Base UI (and the content) loads.
 export const dialogSkeleton = tv({
   base: [
-    "flex w-full max-w-[600px] flex-col gap-4",
+    "flex w-full max-w-150 flex-col gap-4",
     "rounded-5 border border-sand-6 bg-sand-1 py-6 shadow-6",
   ],
 });

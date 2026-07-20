@@ -20,15 +20,24 @@
 
 import type { ComponentProps } from "react";
 
+import { TextSkeleton } from "../typography/TextSkeleton";
+
 import { list } from "./variants";
 
 export type ListItemSkeletonProps = Omit<ComponentProps<"li">, "children">;
 
-// Loading placeholder paired with ListItem: a pulse bar that keeps the row
-// dividers of a List.
+// Loading placeholder paired with ListItem: same row shell (card background +
+// dividers) with pulse bars for the primary column — not a filled sand-2 slab.
 export function ListItemSkeleton(props: ListItemSkeletonProps) {
   const { className, ...rest } = props;
-  const { skeletonItem } = list();
+  const { item, content } = list();
 
-  return <li className={skeletonItem({ className })} aria-hidden {...rest} />;
+  return (
+    <li className={item({ className })} aria-hidden {...rest}>
+      <div className={content()}>
+        <TextSkeleton size={2} className="w-40" />
+        <TextSkeleton size={1} className="w-24" />
+      </div>
+    </li>
+  );
 }

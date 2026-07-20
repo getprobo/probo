@@ -27,7 +27,10 @@ import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 import { pageHeader } from "#/components/PageHeader/variants";
 
 import { updatesList } from "./_components/variants";
-import { UPDATES_PAGE_SIZE } from "./_lib/constants";
+
+// Placeholder rows for the loading card — enough to read as a list, far fewer
+// than UPDATES_PAGE_SIZE so the skeleton does not dominate the viewport.
+const UPDATES_SKELETON_COUNT = 5;
 
 export function UpdatesPageSkeleton() {
   const { card, rows } = updatesList();
@@ -47,7 +50,7 @@ export function UpdatesPageSkeleton() {
         <div className="flex w-full max-w-5xl flex-col gap-8">
           <div className={card()} aria-hidden>
             <div className={rows()}>
-              {Array.from({ length: UPDATES_PAGE_SIZE }, (_, index) => (
+              {Array.from({ length: UPDATES_SKELETON_COUNT }, (_, index) => (
                 <ComplianceArticleItemSkeleton key={index} />
               ))}
             </div>

@@ -27,6 +27,5 @@ export const list = tv({
     root: "list-none overflow-hidden rounded-4 border border-sand-a3 bg-sand-1",
     item: "flex items-center gap-4 border-b border-sand-a3 px-4 py-3 last:border-b-0",
     content: "flex min-w-0 flex-1 flex-col gap-0.5",
-    skeletonItem: "h-16 animate-pulse border-b border-sand-a3 bg-sand-2 last:border-b-0",
   },
 });
