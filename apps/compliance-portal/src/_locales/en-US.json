@@ -104,7 +104,7 @@
       "description": "We hit an unexpected error. Please try again in a moment."
     },
     "actions": {
-      "backToTrustCenter": "Back to trust center",
+      "backToCompliancePortal": "Back to compliance portal",
       "tryAgain": "Try again"
     },
     "inline": {

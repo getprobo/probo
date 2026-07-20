@@ -27,7 +27,7 @@
   },
   "empty": {
     "title": "Aucun document disponible",
-    "description": "Ce trust center n'a pas encore publié de documents.",
+    "description": "Ce portail de conformité n'a pas encore publié de documents.",
     "filteredTitle": "Aucun document ne correspond à ce filtre",
     "filteredDescription": "Essayez un autre onglet pour voir les documents disponibles."
   },

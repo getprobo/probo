@@ -75,7 +75,7 @@ export function GlobalError({ error, onRetry, fullPage = false }: GlobalErrorPro
       actions={(
         <>
           <Link to="/" variant="solid" color="neutral" highContrast size={2}>
-            {t("errors.actions.backToTrustCenter")}
+            {t("errors.actions.backToCompliancePortal")}
           </Link>
           {onRetry && (
             <Button variant="soft" color="neutral" size={2} onClick={onRetry}>

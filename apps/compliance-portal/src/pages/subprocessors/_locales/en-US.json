@@ -7,7 +7,7 @@
   },
   "empty": {
     "title": "No subprocessors listed.",
-    "description": "This trust center has not published any subprocessors yet.",
+    "description": "This compliance portal has not published any subprocessors yet.",
     "filteredTitle": "No subprocessors match your filters.",
     "filteredDescription": "Adjust your search or filters to see available subprocessors.",
     "clearFilters": "Clear filters"

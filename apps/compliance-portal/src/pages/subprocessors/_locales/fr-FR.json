@@ -7,7 +7,7 @@
   },
   "empty": {
     "title": "Aucun sous-traitant répertorié.",
-    "description": "Ce centre de confiance n'a pas encore publié de sous-traitants.",
+    "description": "Ce portail de conformité n'a pas encore publié de sous-traitants.",
     "filteredTitle": "Aucun sous-traitant ne correspond à vos filtres.",
     "filteredDescription": "Ajustez votre recherche ou vos filtres pour voir les sous-traitants disponibles.",
     "clearFilters": "Réinitialiser les filtres"

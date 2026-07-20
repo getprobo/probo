@@ -70,7 +70,7 @@
   },
   "home": {
     "heroTitle": "La confiance chez {{name}}.",
-    "heroDescription": "Bienvenue dans notre Compliance Portal. Retrouvez ici notre documentation et nos certifications de sécurité.",
+    "heroDescription": "Bienvenue dans notre Portail de conformité. Retrouvez ici notre documentation et nos certifications de sécurité.",
     "sections": {
       "compliance": "Conformité",
       "securityCommitments": "Engagements de sécurité",
@@ -104,7 +104,7 @@
       "description": "Une erreur inattendue s'est produite. Veuillez réessayer dans un instant."
     },
     "actions": {
-      "backToTrustCenter": "Retour au trust center",
+      "backToCompliancePortal": "Retour au portail de conformité",
       "tryAgain": "Réessayer"
     },
     "inline": {
