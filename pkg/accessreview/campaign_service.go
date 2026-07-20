@@ -22,6 +22,7 @@ package accessreview
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -61,15 +62,15 @@ func (s *Service) CreateCampaign(
 			for _, sourceID := range req.AccessReviewSourceIDs {
 				source := &coredata.AccessReviewSource{}
 				if err := source.LoadByID(ctx, conn, scope, sourceID); err != nil {
-					return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
+					if errors.Is(err, coredata.ErrResourceNotFound) {
+						return coredata.ErrResourceNotFound
+					}
+
+					return fmt.Errorf("cannot load access source: %w", err)
 				}
 
 				if source.OrganizationID != campaign.OrganizationID {
-					return fmt.Errorf(
-						"cannot create campaign: access source %s does not belong to the same organization: %w",
-						sourceID,
-						ErrCampaignSourceOrganizationMismatch,
-					)
+					return coredata.ErrResourceNotFound
 				}
 
 				if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
@@ -256,15 +257,15 @@ func (s *Service) AddCampaignSource(
 
 			source := &coredata.AccessReviewSource{}
 			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
-				return fmt.Errorf("cannot load access source %s: %w", req.AccessReviewSourceID, err)
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return coredata.ErrResourceNotFound
+				}
+
+				return fmt.Errorf("cannot load access source: %w", err)
 			}
 
 			if source.OrganizationID != campaign.OrganizationID {
-				return fmt.Errorf(
-					"cannot add scope source: access source %q does not belong to the same organization: %w",
-					req.AccessReviewSourceID,
-					ErrCampaignSourceOrganizationMismatch,
-				)
+				return coredata.ErrResourceNotFound
 			}
 
 			if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
@@ -349,15 +350,15 @@ func (s *Service) syncCampaignSources(
 
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, conn, scope, sourceID); err != nil {
-			return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return coredata.ErrResourceNotFound
+			}
+
+			return fmt.Errorf("cannot load access source: %w", err)
 		}
 
 		if source.OrganizationID != campaign.OrganizationID {
-			return fmt.Errorf(
-				"cannot update campaign: access source %s does not belong to the same organization: %w",
-				sourceID,
-				ErrCampaignSourceOrganizationMismatch,
-			)
+			return coredata.ErrResourceNotFound
 		}
 
 		if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
