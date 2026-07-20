@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { List } from "@probo/ui/src/v2/List/List";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 
@@ -32,7 +33,7 @@ interface DocumentSectionProps {
 
 // One category group: a localized header above a bordered list of rows.
 export function DocumentSection({ title, description, children }: DocumentSectionProps) {
-  const { root, header, list } = documentSection();
+  const { root, header } = documentSection();
 
   return (
     <section className={root()}>
@@ -46,7 +47,7 @@ export function DocumentSection({ title, description, children }: DocumentSectio
           </Text>
         )}
       </div>
-      <div className={list()}>{children}</div>
+      <List>{children}</List>
     </section>
   );
 }

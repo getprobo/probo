@@ -18,38 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
-import { TabsSkeleton } from "@probo/ui/src/v2/Tabs/TabsSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { tv } from "tailwind-variants/lite";
 
-import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
-
-import { documentsLayout } from "./variants";
-
-const SECTION_PLACEHOLDERS = ["a", "b"];
-
-export function DocumentsPageSkeleton() {
-  const { page, results } = documentsLayout();
-
-  return (
-    <>
-      <HeaderBand flushBottomSpace>
-        <div className="flex w-full flex-col gap-2">
-          <HeadingSkeleton size={7} className="w-64" />
-          <TabsSkeleton />
-        </div>
-      </HeaderBand>
-      <div className={page()}>
-        <div className={results()}>
-          {SECTION_PLACEHOLDERS.map(section => (
-            <div key={section} className="flex flex-col gap-3">
-              <TextSkeleton size={3} className="w-40" />
-              <ListSkeleton count={3} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
+// Bordered list surface: a soft sand card of divided rows, with a flexible
+// primary column for title + metadata. Border treatment matches Card `soft`.
+export const list = tv({
+  slots: {
+    root: "list-none overflow-hidden rounded-4 border border-sand-a3 bg-sand-1",
+    item: "flex items-center gap-4 border-b border-sand-a3 px-4 py-3 last:border-b-0",
+    content: "flex min-w-0 flex-1 flex-col gap-0.5",
+    skeletonItem: "h-16 animate-pulse border-b border-sand-a3 bg-sand-2 last:border-b-0",
+  },
+});

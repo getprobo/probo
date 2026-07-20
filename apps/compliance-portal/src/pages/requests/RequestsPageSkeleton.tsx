@@ -18,18 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
-import { rightsRequestList } from "./_components/variants";
 import { requestsLayout } from "./variants";
-
-const ROW_PLACEHOLDERS = ["a", "b", "c", "d"];
 
 export function RequestsPageSkeleton() {
   const { page, results } = requestsLayout();
-  const { card } = rightsRequestList();
 
   return (
     <>
@@ -41,14 +38,7 @@ export function RequestsPageSkeleton() {
       </HeaderBand>
       <div className={page()}>
         <div className={results()}>
-          <div className={card()}>
-            {ROW_PLACEHOLDERS.map(row => (
-              <div
-                key={row}
-                className="h-16 animate-pulse border-b border-sand-a3 bg-sand-2 last:border-b-0"
-              />
-            ))}
-          </div>
+          <ListSkeleton count={4} />
         </div>
       </div>
     </>

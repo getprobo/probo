@@ -20,6 +20,7 @@
 
 import { NoteIcon, PlusIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { List } from "@probo/ui/src/v2/List/List";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
@@ -37,7 +38,6 @@ import type { RequestsPageQuery } from "./__generated__/RequestsPageQuery.graphq
 import type { RequestsPageRefetchQuery } from "./__generated__/RequestsPageRefetchQuery.graphql";
 import { NewRequestDialog } from "./_components/NewRequestDialog";
 import { RightsRequestListItem } from "./_components/RightsRequestListItem";
-import { rightsRequestList } from "./_components/variants";
 import { requestsLayout } from "./variants";
 
 export const requestsPageQuery = graphql`
@@ -116,7 +116,6 @@ export function RequestsPage({ queryRef }: RequestsPageProps) {
   };
 
   const { page, results, loadMore } = requestsLayout();
-  const { card } = rightsRequestList();
 
   const newRequestButton = (
     <Button
@@ -149,11 +148,11 @@ export function RequestsPage({ queryRef }: RequestsPageProps) {
                 )
               : (
                   <>
-                    <div className={card()}>
+                    <List>
                       {requests.map(request => (
                         <RightsRequestListItem key={request.id} rightsRequestKey={request} />
                       ))}
-                    </div>
+                    </List>
                     {hasNext && (
                       <div className={loadMore()}>
                         <Button

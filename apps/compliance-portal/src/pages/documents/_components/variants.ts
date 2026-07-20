@@ -20,22 +20,13 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Document list: category sections, each a titled block above a bordered list.
-// Entries share a common layout (title + accent metadata + trailing access
-// action).
+// Document list: category section chrome (title + description). The bordered
+// list surface and row layout live in @probo/ui List.
 
 export const documentSection = tv({
   slots: {
     root: "flex flex-col gap-3",
     header: "flex flex-col gap-0.5",
-    list: "overflow-hidden rounded-4 border border-sand-a4 bg-sand-1",
-  },
-});
-
-export const documentListItem = tv({
-  slots: {
-    root: "flex items-center gap-4 border-b border-sand-a3 px-4 py-3 last:border-b-0",
-    content: "flex min-w-0 flex-1 flex-col gap-0.5",
   },
 });
 

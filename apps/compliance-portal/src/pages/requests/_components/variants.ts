@@ -20,14 +20,11 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Data request list: a bordered card of rows, each with a leading type icon, a
-// title + reference/message subline, and a trailing time + status badge.
+// Data request row chrome beyond the shared list surface: leading type icon,
+// reference/message subline, and trailing time + status badge.
 export const rightsRequestList = tv({
   slots: {
-    card: "overflow-hidden rounded-4 border border-sand-a4 bg-sand-1",
-    item: "flex items-center gap-4 border-b border-sand-a3 px-4 py-3 last:border-b-0",
     icon: "flex size-9 shrink-0 items-center justify-center rounded-3 bg-sand-3 text-sand-a11 [&_svg]:size-4",
-    content: "flex min-w-0 flex-1 flex-col gap-0.5",
     subline: "flex min-w-0 items-center gap-1.5",
     trailing: "flex shrink-0 items-center gap-3",
   },

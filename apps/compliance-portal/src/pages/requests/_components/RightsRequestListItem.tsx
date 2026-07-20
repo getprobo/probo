@@ -19,6 +19,8 @@
 // SOFTWARE.
 
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -56,14 +58,14 @@ export function RightsRequestListItem({ rightsRequestKey }: RightsRequestListIte
 
   const badge = getRightsRequestStatusBadge(request.requestState);
   const reference = formatRightsRequestReference(request.id, request.createdAt);
-  const { item, icon, content, subline, trailing } = rightsRequestList();
+  const { icon, subline, trailing } = rightsRequestList();
 
   return (
-    <div className={item()}>
+    <ListItem>
       <span className={icon()}>
         {getRightsRequestTypeIcon(request.requestType)}
       </span>
-      <div className={content()}>
+      <ListItemContent>
         <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
           {t(`types.${request.requestType}`)}
         </Text>
@@ -77,7 +79,7 @@ export function RightsRequestListItem({ rightsRequestKey }: RightsRequestListIte
             </Text>
           )}
         </div>
-      </div>
+      </ListItemContent>
       <div className={trailing()}>
         <Text size={1} color="faint">
           {formatRelativeTime(request.createdAt, i18n.language)}
@@ -86,6 +88,6 @@ export function RightsRequestListItem({ rightsRequestKey }: RightsRequestListIte
           {t(`status.${request.requestState}`)}
         </Badge>
       </div>
-    </div>
+    </ListItem>
   );
 }

@@ -18,11 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 
 import { DocumentAccessAction } from "./DocumentAccessAction";
-import { documentListItem } from "./variants";
 
 interface DocumentEntryProps {
   // Primary line (document title, file name, or framework name).
@@ -53,18 +54,16 @@ export function DocumentEntry({
   onGetAccess,
   isRequesting,
 }: DocumentEntryProps) {
-  const { root, content } = documentListItem();
-
   return (
-    <div className={root()}>
-      <div className={content()}>
+    <ListItem>
+      <ListItemContent>
         <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
           {title}
         </Text>
         <Text size={1} color="gold" className="truncate">
           {meta}
         </Text>
-      </div>
+      </ListItemContent>
       <DocumentAccessAction
         isAuthorized={isAuthorized}
         requested={requested}
@@ -72,6 +71,6 @@ export function DocumentEntry({
         onGetAccess={onGetAccess}
         isRequesting={isRequesting}
       />
-    </div>
+    </ListItem>
   );
 }
