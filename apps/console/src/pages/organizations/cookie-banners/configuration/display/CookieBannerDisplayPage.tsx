@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconPlusSmall } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -61,7 +61,7 @@ interface CookieBannerDisplayPageProps {
 export default function CookieBannerDisplayPage({
   queryRef,
 }: CookieBannerDisplayPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const data = usePreloadedQuery<CookieBannerDisplayPageQuery>(cookieBannerDisplayPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -79,17 +79,17 @@ export default function CookieBannerDisplayPage({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {__("Organize cookies into categories and declare which cookies your site uses.")}
+            {t("displayPage.description")}
           </p>
           <Button variant="secondary" onClick={() => setShowCreateDialog(true)}>
             <IconPlusSmall size={16} />
-            {__("Add Category")}
+            {t("displayPage.actions.addCategory")}
           </Button>
         </div>
 
         {categories.length === 0 && (
           <Card className="border p-8 text-center text-muted-foreground">
-            {__("No categories yet. Add a category to start managing cookies.")}
+            {t("displayPage.empty")}
           </Card>
         )}
 

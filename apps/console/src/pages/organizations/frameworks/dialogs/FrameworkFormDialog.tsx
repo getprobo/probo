@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -30,6 +29,7 @@ import {
   Textarea,
   useDialogRef,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -86,7 +86,7 @@ const schema = z.object({
  */
 export function FrameworkFormDialog(props: Props) {
   const { children, connectionId, ref, framework, organizationId } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const newRef = useDialogRef();
   const dialogRef = ref ?? newRef;
   const { register, handleSubmit, reset } = useFormWithSchema(schema, {
@@ -96,12 +96,12 @@ export function FrameworkFormDialog(props: Props) {
     },
   });
   const [create, isCreating] = useMutationWithToasts(createFrameworkMutation, {
-    successMessage: __("Framework created successfully"),
-    errorMessage: __("Failed to create framework"),
+    successMessage: t("frameworkFormDialog.messages.created"),
+    errorMessage: t("frameworkFormDialog.errors.create"),
   });
   const [update, isUpdating] = useMutationWithToasts(updateFrameworkMutation, {
-    successMessage: __("Framework updated successfully"),
-    errorMessage: __("Failed to update framework"),
+    successMessage: t("frameworkFormDialog.messages.updated"),
+    errorMessage: t("frameworkFormDialog.errors.update"),
   });
   const onSubmit = async (data: z.infer<typeof schema>) => {
     if (framework) {
@@ -136,7 +136,7 @@ export function FrameworkFormDialog(props: Props) {
     <Dialog
       trigger={children}
       ref={dialogRef}
-      title={<Breadcrumb items={[__("Framework"), __("New Framework")]} />}
+      title={<Breadcrumb items={[t("frameworkFormDialog.breadcrumb.framework"), t("frameworkFormDialog.breadcrumb.newFramework")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
@@ -144,18 +144,18 @@ export function FrameworkFormDialog(props: Props) {
             {...register("name")}
             variant="title"
             required
-            placeholder={__("Framework title")}
+            placeholder={t("frameworkFormDialog.fields.title")}
           />
           <Textarea
             {...register("description")}
             variant="ghost"
             autogrow
-            placeholder={__("Add description")}
+            placeholder={t("frameworkFormDialog.fields.description")}
           />
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating || isUpdating}>
-            {framework ? __("Update framework") : __("Create framework")}
+            {framework ? t("frameworkFormDialog.actions.update") : t("frameworkFormDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

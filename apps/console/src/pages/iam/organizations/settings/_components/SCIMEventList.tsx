@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, usePaginationFragment } from "react-relay";
 
 import type { SCIMEventListFragment$key } from "#/__generated__/iam/SCIMEventListFragment.graphql";
@@ -51,7 +51,7 @@ const SCIMEventListFragment = graphql`
 
 export function SCIMEventList(props: { fKey: SCIMEventListFragment$key }) {
   const { fKey } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const eventsPagination = usePaginationFragment<
     SCIMEventListPaginationQuery,
@@ -68,10 +68,10 @@ export function SCIMEventList(props: { fKey: SCIMEventListFragment$key }) {
     >
       <Thead>
         <Tr>
-          <Th>{__("Time")}</Th>
-          <Th>{__("Method")}</Th>
-          <Th>{__("Path")}</Th>
-          <Th>{__("Result")}</Th>
+          <Th>{t("scimEventList.columns.time")}</Th>
+          <Th>{t("scimEventList.columns.method")}</Th>
+          <Th>{t("scimEventList.columns.path")}</Th>
+          <Th>{t("scimEventList.columns.result")}</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -80,7 +80,7 @@ export function SCIMEventList(props: { fKey: SCIMEventListFragment$key }) {
           ? (
               <Tr>
                 <Td colSpan={4} className="text-center text-txt-secondary">
-                  {__("No SCIM events recorded yet.")}
+                  {t("scimEventList.empty")}
                 </Td>
               </Tr>
             )

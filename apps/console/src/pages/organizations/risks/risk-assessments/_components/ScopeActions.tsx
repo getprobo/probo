@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -34,6 +33,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { ScopeActionsDeleteMutation } from "#/__generated__/core/ScopeActionsDeleteMutation.graphql";
@@ -64,7 +64,7 @@ export function ScopeActions(props: {
   scope: { id: string; name: string };
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
   const [updateScope] = useMutation<ScopeActionsUpdateMutation>(updateScopeMutation);
@@ -99,7 +99,7 @@ export function ScopeActions(props: {
           },
         });
       },
-      { message: __("Delete this scope and all its nodes, processes, and threats?") },
+      { message: t("riskAssessmentScopeActions.deleteConfirmation") },
     );
   };
 
@@ -107,28 +107,28 @@ export function ScopeActions(props: {
     <>
       <ActionDropdown>
         <DropdownItem icon={IconPencil} onSelect={() => dialogRef.current?.open()}>
-          {__("Edit")}
+          {t("riskAssessmentScopeActions.actions.edit")}
         </DropdownItem>
         <DropdownItem icon={IconTrashCan} variant="danger" onSelect={onDelete}>
-          {__("Delete")}
+          {t("riskAssessmentScopeActions.actions.delete")}
         </DropdownItem>
       </ActionDropdown>
       <Dialog
         className="max-w-lg"
         ref={dialogRef}
-        title={<Breadcrumb items={[__("Scopes"), __("Edit Scope")]} />}
+        title={<Breadcrumb items={[t("riskAssessmentScopeActions.breadcrumb.scopes"), t("riskAssessmentScopeActions.breadcrumb.editScope")]} />}
       >
         <form onSubmit={e => void handleSubmit(onEdit)(e)}>
           <DialogContent padded className="space-y-4">
             <Field
-              label={__("Name")}
-              {...register("name", { required: __("This field is required") })}
+              label={t("riskAssessmentScopeActions.fields.name")}
+              {...register("name", { required: t("riskAssessmentScopeActions.validation.nameRequired") })}
               type="text"
               error={formState.errors.name?.message}
             />
           </DialogContent>
           <DialogFooter>
-            <Button type="submit">{__("Save")}</Button>
+            <Button type="submit">{t("riskAssessmentScopeActions.actions.save")}</Button>
           </DialogFooter>
         </form>
       </Dialog>

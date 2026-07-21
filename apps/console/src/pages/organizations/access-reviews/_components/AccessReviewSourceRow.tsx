@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
+import { dateTimeFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -35,6 +35,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useLazyLoadQuery, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -104,33 +105,36 @@ type Props = {
   organizationId: string;
 };
 
-function sourceLabel(connectorProvider: string | null | undefined): string {
+function sourceLabel(
+  connectorProvider: string | null | undefined,
+  t: (key: string) => string,
+): string {
   if (!connectorProvider) {
-    return "CSV";
+    return t("accessReviewSourceRow.sources.csv");
   }
 
   switch (connectorProvider) {
     case "GOOGLE_WORKSPACE":
-      return "Google Workspace";
+      return t("accessReviewSourceRow.sources.googleWorkspace");
     case "MICROSOFT_365":
-      return "Microsoft 365";
+      return t("accessReviewSourceRow.sources.microsoft365");
     case "LINEAR":
-      return "Linear";
+      return t("accessReviewSourceRow.sources.linear");
     case "SLACK":
-      return "Slack";
+      return t("accessReviewSourceRow.sources.slack");
     case "METABASE":
-      return "Metabase";
+      return t("accessReviewSourceRow.sources.metabase");
     case "SIGNOZ":
-      return "SigNoz";
+      return t("accessReviewSourceRow.sources.signoz");
     case "CURSOR":
-      return "Cursor";
+      return t("accessReviewSourceRow.sources.cursor");
     default:
       return connectorProvider;
   }
 }
 
 export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Props) {
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation();
   const confirm = useConfirm();
   const { toast } = useToast();
 
@@ -150,9 +154,9 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
           onCompleted: (_response, errors) => {
             if (errors?.length) {
               toast({
-                title: __("Error"),
+                title: t("accessReviewSourceRow.messages.error"),
                 description: formatError(
-                  __("Failed to delete access source"),
+                  t("accessReviewSourceRow.errors.delete"),
                   errors,
                 ),
                 variant: "error",
@@ -161,9 +165,9 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
           },
           onError: (error) => {
             toast({
-              title: __("Error"),
+              title: t("accessReviewSourceRow.messages.error"),
               description: formatError(
-                __("Failed to delete access source"),
+                t("accessReviewSourceRow.errors.delete"),
                 error,
               ),
               variant: "error",
@@ -172,10 +176,9 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
         });
       },
       {
-        message: sprintf(
-          __("This will permanently delete \"%s\". This action cannot be undone."),
-          accessSource.name,
-        ),
+        message: t("accessReviewSourceRow.deleteConfirmation", {
+          name: accessSource.name,
+        }),
       },
     );
   };
@@ -191,9 +194,9 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("accessReviewSourceRow.messages.error"),
             description: formatError(
-              __("Failed to configure source"),
+              t("accessReviewSourceRow.errors.configure"),
               errors,
             ),
             variant: "error",
@@ -201,16 +204,16 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Organization updated."),
+          title: t("accessReviewSourceRow.messages.success"),
+          description: t("accessReviewSourceRow.messages.organizationUpdated"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("accessReviewSourceRow.messages.error"),
           description: formatError(
-            __("Failed to configure source"),
+            t("accessReviewSourceRow.errors.configure"),
             error,
           ),
           variant: "error",
@@ -246,21 +249,25 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
       <Td>{accessSource.name}</Td>
       <Td>
         <Badge variant="neutral" size="sm">
-          {sourceLabel(accessSource.connector?.provider ?? null)}
+          {sourceLabel(accessSource.connector?.provider ?? null, t)}
         </Badge>
       </Td>
       <Td>
         {accessSource.connectionStatus === "CONNECTED" && (
-          <Badge variant="success" size="sm">{__("Connected")}</Badge>
+          <Badge variant="success" size="sm">
+            {t("accessReviewSourceRow.status.connected")}
+          </Badge>
         )}
         {accessSource.connectionStatus === "DISCONNECTED" && (
           <div className="flex items-center gap-2">
             <Badge variant="danger" size="sm">
-              {canReconnect ? __("Disconnected") : __("Invalid credentials")}
+              {canReconnect
+                ? t("accessReviewSourceRow.status.disconnected")
+                : t("accessReviewSourceRow.status.invalidCredentials")}
             </Badge>
             {canReconnect && (
               <Button variant="secondary" onClick={handleReconnect}>
-                {__("Reconnect")}
+                {t("accessReviewSourceRow.actions.reconnect")}
               </Button>
             )}
           </div>
@@ -269,9 +276,13 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
       <Td>
         {showOrgSelector && (
           <Suspense
-            fallback={
-              <Select variant="editor" disabled placeholder={__("Loading...")} />
-            }
+            fallback={(
+              <Select
+                variant="editor"
+                disabled
+                placeholder={t("accessReviewSourceRow.loading")}
+              />
+            )}
           >
             <InlineOrgSelect
               accessReviewSourceId={accessSource.id}
@@ -283,7 +294,7 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
       </Td>
       <Td>
         <time dateTime={accessSource.createdAt}>
-          {formatDate(accessSource.createdAt)}
+          {dateTimeFormat(i18n.language, accessSource.createdAt)}
         </time>
       </Td>
       {accessSource.canDelete && (
@@ -298,7 +309,7 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
                 handleDelete();
               }}
             >
-              {__("Delete")}
+              {t("accessReviewSourceRow.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         </Td>
@@ -316,7 +327,7 @@ function InlineOrgSelect({
   selectedOrganization: string;
   onSelect: (slug: string) => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const data = useLazyLoadQuery<AccessReviewSourceRowOrgsQuery>(
     orgsQuery,
     { accessReviewSourceId },
@@ -337,7 +348,7 @@ function InlineOrgSelect({
   return (
     <Select
       variant="editor"
-      placeholder={__("Select organization")}
+      placeholder={t("accessReviewSourceRow.selectOrganization")}
       value={selectedOrganization}
       onValueChange={onSelect}
     >
@@ -357,7 +368,7 @@ function ManualOrgInput({
   selectedOrganization: string;
   onSubmit: (slug: string) => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [value, setValue] = useState(selectedOrganization);
 
   const handleBlur = () => {
@@ -376,7 +387,7 @@ function ManualOrgInput({
 
   return (
     <Input
-      placeholder={__("org-slug")}
+      placeholder={t("accessReviewSourceRow.organizationSlugPlaceholder")}
       value={value}
       onChange={e => setValue(e.target.value)}
       onBlur={handleBlur}

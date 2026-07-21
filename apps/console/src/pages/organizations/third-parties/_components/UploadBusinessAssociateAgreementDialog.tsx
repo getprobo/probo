@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -33,6 +32,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { z } from "zod";
 
@@ -58,12 +58,6 @@ const uploadBusinessAssociateAgreementMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  fileName: z.string().min(1, "File name is required"),
-  validFrom: z.string().optional(),
-  validUntil: z.string().optional(),
-});
-
 type Props = {
   children: React.ReactNode;
   thirdPartyId: string;
@@ -75,7 +69,12 @@ export function UploadBusinessAssociateAgreementDialog({
   thirdPartyId,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
+  const schema = z.object({
+    fileName: z.string().min(1, t("uploadBusinessAssociateAgreementDialog.validation.fileNameRequired")),
+    validFrom: z.string().optional(),
+    validUntil: z.string().optional(),
+  });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const ref = useDialogRef();
 
@@ -133,9 +132,9 @@ export function UploadBusinessAssociateAgreementDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("uploadBusinessAssociateAgreementDialog.messages.error"),
             description: formatError(
-              __("Failed to upload Business Associate Agreement"),
+              t("uploadBusinessAssociateAgreementDialog.errors.upload"),
               errors,
             ),
             variant: "error",
@@ -143,8 +142,8 @@ export function UploadBusinessAssociateAgreementDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Business Associate Agreement uploaded successfully"),
+          title: t("uploadBusinessAssociateAgreementDialog.messages.success"),
+          description: t("uploadBusinessAssociateAgreementDialog.messages.uploaded"),
           variant: "success",
         });
         reset();
@@ -154,9 +153,9 @@ export function UploadBusinessAssociateAgreementDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("uploadBusinessAssociateAgreementDialog.messages.error"),
           description: formatError(
-            __("Failed to upload Business Associate Agreement"),
+            t("uploadBusinessAssociateAgreementDialog.errors.upload"),
             error,
           ),
           variant: "error",
@@ -172,7 +171,7 @@ export function UploadBusinessAssociateAgreementDialog({
 
   return (
     <Dialog
-      title={__("Upload Business Associate Agreement")}
+      title={t("uploadBusinessAssociateAgreementDialog.title")}
       ref={ref}
       trigger={children}
       className="max-w-lg"
@@ -181,7 +180,7 @@ export function UploadBusinessAssociateAgreementDialog({
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Dropzone
-            description={__("Only PDF files up to 10MB are allowed")}
+            description={t("uploadBusinessAssociateAgreementDialog.fileHelp")}
             isUploading={isUploading}
             onDrop={handleDrop}
             accept={{
@@ -193,8 +192,7 @@ export function UploadBusinessAssociateAgreementDialog({
           {uploadedFile && (
             <div className="p-3 bg-tertiary-subtle rounded-lg">
               <p className="text-sm font-medium">
-                {__("Selected file")}
-                :
+                {t("uploadBusinessAssociateAgreementDialog.selectedFile")}
               </p>
               <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
             </div>
@@ -202,18 +200,18 @@ export function UploadBusinessAssociateAgreementDialog({
 
           <Field
             {...register("fileName")}
-            label={__("File name")}
+            label={t("uploadBusinessAssociateAgreementDialog.fields.fileName")}
             type="text"
             required
             error={errors.fileName?.message}
-            placeholder={__("Business Associate Agreement")}
+            placeholder={t("uploadBusinessAssociateAgreementDialog.placeholders.fileName")}
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label={__("Valid from")}>
+            <Field label={t("uploadBusinessAssociateAgreementDialog.fields.validFrom")}>
               <Input {...register("validFrom")} type="date" />
             </Field>
-            <Field label={__("Valid until")}>
+            <Field label={t("uploadBusinessAssociateAgreementDialog.fields.validUntil")}>
               <Input {...register("validUntil")} type="date" />
             </Field>
           </div>
@@ -225,7 +223,7 @@ export function UploadBusinessAssociateAgreementDialog({
             disabled={isUploading || !uploadedFile}
             icon={isUploading ? Spinner : undefined}
           >
-            {__("Upload")}
+            {t("uploadBusinessAssociateAgreementDialog.actions.upload")}
           </Button>
         </DialogFooter>
       </form>

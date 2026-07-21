@@ -19,8 +19,7 @@
 // SOFTWARE.
 
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import {
   Badge,
   Button,
@@ -42,6 +41,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -283,7 +283,7 @@ interface CategorySectionProps {
 
 export function CategorySection({ categoryKey, connectionId }: CategorySectionProps) {
   const category = useFragment(categorySectionFragment, categoryKey);
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
   const confirm = useConfirm();
 
@@ -309,6 +309,35 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
   const patternsConnectionId = category.trackerPatterns.__id;
   const patterns = category.trackerPatterns.edges.map(e => e.node);
   const isMutating = isUpdating || isCreating || isUpdatingPattern;
+  const formatDuration = (seconds: number | null, trackerType: string) => {
+    if (seconds === null || seconds <= 0) {
+      return ["LOCAL_STORAGE", "INDEXED_DB", "CACHE_STORAGE"].includes(trackerType)
+        ? t("categorySection.duration.persistent")
+        : t("categorySection.duration.session");
+    }
+    const units = [["year", 31536000, 21 * 86400], ["month", 2592000, 2 * 86400], ["week", 604800, 43200], ["day", 86400, 7200], ["hour", 3600, 300], ["minute", 60, 5], ["second", 1, 0]] as const;
+    let remaining = seconds;
+    const parts: string[] = [];
+    for (const [unit, unitSeconds, snap] of units) {
+      if (remaining < unitSeconds - snap) continue;
+      let count = Math.floor(remaining / unitSeconds);
+      const leftover = remaining - count * unitSeconds;
+      if (leftover >= unitSeconds - snap) count++;
+      remaining = leftover <= snap || leftover >= unitSeconds - snap ? 0 : leftover;
+      parts.push(t(`categorySection.duration.${unit}`, { count }));
+    }
+    return new Intl.ListFormat(i18n.language, { style: "long", type: "unit" }).format(parts);
+  };
+  const trackerTypeBadge = (type: string) => {
+    const badges = {
+      COOKIE: { variant: "warning" as const, label: t("categorySection.trackerTypes.cookie") },
+      LOCAL_STORAGE: { variant: "info" as const, label: t("categorySection.trackerTypes.localStorage") },
+      SESSION_STORAGE: { variant: "highlight" as const, label: t("categorySection.trackerTypes.sessionStorage") },
+      INDEXED_DB: { variant: "success" as const, label: t("categorySection.trackerTypes.indexedDb") },
+      CACHE_STORAGE: { variant: "outline" as const, label: t("categorySection.trackerTypes.cacheStorage") },
+    };
+    return badges[type as keyof typeof badges] ?? { variant: "neutral" as const, label: type };
+  };
 
   const handleSaveCategory = (
     name: string, slug: string, description: string,
@@ -328,24 +357,24 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
       onCompleted(_response, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("categorySection.errors.title"),
             description: errors[0].message,
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Category updated"),
+          title: t("categorySection.messages.successTitle"),
+          description: t("categorySection.messages.updated"),
           variant: "success",
         });
         setIsEditingCategory(false);
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("categorySection.errors.title"),
           description: formatError(
-            __("Failed to update category"),
+            t("categorySection.errors.updateCategory"),
             error,
           ),
           variant: "error",
@@ -374,26 +403,26 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             e => (e as unknown as GraphQLError).extensions?.code === "CONFLICT",
           );
           toast({
-            title: __("Error"),
+            title: t("categorySection.errors.title"),
             description: isConflict
-              ? __("A cookie with this name already exists in this banner")
+              ? t("categorySection.errors.duplicateCookie")
               : errors[0].message,
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Cookie added"),
+          title: t("categorySection.messages.successTitle"),
+          description: t("categorySection.messages.cookieAdded"),
           variant: "success",
         });
         setIsAddingCookie(false);
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("categorySection.errors.title"),
           description: formatError(
-            __("Failed to add cookie"),
+            t("categorySection.errors.addCookie"),
             error,
           ),
           variant: "error",
@@ -418,26 +447,26 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             e => (e as unknown as GraphQLError).extensions?.code === "CONFLICT",
           );
           toast({
-            title: __("Error"),
+            title: t("categorySection.errors.title"),
             description: isConflict
-              ? __("A cookie with this name already exists in this banner")
+              ? t("categorySection.errors.duplicateCookie")
               : errors[0].message,
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Cookie updated"),
+          title: t("categorySection.messages.successTitle"),
+          description: t("categorySection.messages.cookieUpdated"),
           variant: "success",
         });
         setEditingCookieId(null);
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("categorySection.errors.title"),
           description: formatError(
-            __("Failed to update cookie"),
+            t("categorySection.errors.updateCookie"),
             error,
           ),
           variant: "error",
@@ -457,7 +486,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
       onCompleted(_response, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("categorySection.errors.title"),
             description: errors[0].message,
             variant: "error",
           });
@@ -466,9 +495,9 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("categorySection.errors.title"),
           description: formatError(
-            __("Failed to update cookie"),
+            t("categorySection.errors.updateCookie"),
             error,
           ),
           variant: "error",
@@ -489,14 +518,14 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             onCompleted(_response, errors) {
               if (errors?.length) {
                 toast({
-                  title: __("Error"),
+                  title: t("categorySection.errors.title"),
                   description: errors[0].message,
                   variant: "error",
                 });
               } else {
                 toast({
-                  title: __("Success"),
-                  description: __("Cookie deleted"),
+                  title: t("categorySection.messages.successTitle"),
+                  description: t("categorySection.messages.cookieDeleted"),
                   variant: "success",
                 });
               }
@@ -504,9 +533,9 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("categorySection.errors.title"),
                 description: formatError(
-                  __("Failed to delete cookie"),
+                  t("categorySection.errors.deleteCookie"),
                   error,
                 ),
                 variant: "error",
@@ -516,9 +545,9 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
           });
         }),
       {
-        message: __("Are you sure you want to delete \"%s\"?").replace("%s", patternName),
+        message: t("categorySection.deleteCookieConfirmation", { name: patternName }),
         variant: "danger",
-        label: __("Delete"),
+        label: t("categorySection.actions.delete"),
       },
     );
   };
@@ -541,22 +570,22 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+                toast({ title: t("categorySection.errors.title"), description: errors[0].message, variant: "error" });
               } else {
-                toast({ title: __("Success"), description: __("Category deleted"), variant: "success" });
+                toast({ title: t("categorySection.messages.successTitle"), description: t("categorySection.messages.categoryDeleted"), variant: "success" });
               }
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: formatError(__("Failed to delete category"), error), variant: "error" });
+              toast({ title: t("categorySection.errors.title"), description: formatError(t("categorySection.errors.deleteCategory"), error), variant: "error" });
               resolve();
             },
           });
         }),
       {
-        message: __("Are you sure you want to delete the category \"%s\"? Any cookies in this category will be moved to Uncategorised.").replace("%s", category.name),
+        message: t("categorySection.deleteCategoryConfirmation", { name: category.name }),
         variant: "danger",
-        label: __("Delete"),
+        label: t("categorySection.actions.delete"),
       },
     );
   };
@@ -568,11 +597,11 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
       variables: { input: { cookieCategoryId: category.id, rank: above.rank } },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          toast({ title: t("categorySection.errors.title"), description: errors[0].message, variant: "error" });
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error), variant: "error" });
+        toast({ title: t("categorySection.errors.title"), description: formatError(t("categorySection.errors.reorder"), error), variant: "error" });
       },
     });
   };
@@ -584,11 +613,11 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
       variables: { input: { cookieCategoryId: category.id, rank: below.rank } },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          toast({ title: t("categorySection.errors.title"), description: errors[0].message, variant: "error" });
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error), variant: "error" });
+        toast({ title: t("categorySection.errors.title"), description: formatError(t("categorySection.errors.reorder"), error), variant: "error" });
       },
     });
   };
@@ -636,23 +665,23 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
       onCompleted(_response, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("categorySection.errors.title"),
             description: errors[0].message,
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Cookie moved"),
+          title: t("categorySection.messages.successTitle"),
+          description: t("categorySection.messages.cookieMoved"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("categorySection.errors.title"),
           description: formatError(
-            __("Failed to move cookie"),
+            t("categorySection.errors.moveCookie"),
             error,
           ),
           variant: "error",
@@ -683,7 +712,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{category.name}</span>
                   {category.kind === "NECESSARY" && (
-                    <Badge variant="neutral">{__("Required")}</Badge>
+                    <Badge variant="neutral">{t("categorySection.required")}</Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -710,12 +739,12 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                     onClick={() => setIsEditingCategory(true)}
                   >
                     <IconPencil size={14} />
-                    {__("Edit")}
+                    {t("categorySection.actions.edit")}
                   </Button>
                   {canDelete && (
                     <Button variant="danger" onClick={handleDeleteCategory}>
                       <IconTrashCan size={14} />
-                      {__("Delete")}
+                      {t("categorySection.actions.delete")}
                     </Button>
                   )}
                 </div>
@@ -727,8 +756,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
               {category.description}
             </p>
             <p className="mt-2 text-xs text-txt-secondary/70">
-              {__("Block elements until consent is given:")}
-              {" "}
+              {t("categorySection.blockHint")}
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
                 data-cookie-consent=&quot;
                 {category.slug}
@@ -738,7 +766,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             {category.gcmConsentTypes.length > 0 && (
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="text-xs text-txt-secondary/70">
-                  {__("Google Consent Mode:")}
+                  {t("categorySection.googleConsentMode")}
                 </span>
                 {category.gcmConsentTypes.map(type => (
                   <Badge key={type} variant="neutral">
@@ -750,10 +778,10 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             {category.posthogConsent && (
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="text-xs text-txt-secondary/70">
-                  {__("PostHog:")}
+                  {t("categorySection.posthog")}
                 </span>
                 <Badge variant="neutral">
-                  {__("Tracking consent")}
+                  {t("categorySection.trackingConsent")}
                 </Badge>
               </div>
             )}
@@ -764,9 +792,9 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
       <table className="w-full text-left">
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Type")}</Th>
-            <Th>{__("Duration")}</Th>
+            <Th>{t("categorySection.columns.name")}</Th>
+            <Th>{t("categorySection.columns.type")}</Th>
+            <Th>{t("categorySection.columns.duration")}</Th>
             <Th className="w-20" />
           </Tr>
         </Thead>
@@ -796,12 +824,12 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                     </Td>
                     <Td>
                       {(() => {
-                        const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
+                        const typeBadge = trackerTypeBadge(pattern.trackerType);
                         return <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>;
                       })()}
                     </Td>
                     <Td className="text-sm text-muted-foreground">
-                      {humanizeSeconds(pattern.maxAgeSeconds ?? null, pattern.trackerType)}
+                      {formatDuration(pattern.maxAgeSeconds ?? null, pattern.trackerType)}
                     </Td>
                     <Td>
                       <div className="flex items-center gap-1">
@@ -809,7 +837,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                           type="button"
                           onClick={() => handleToggleExcluded(pattern.id, !pattern.excluded)}
                           className="p-1 rounded cursor-pointer"
-                          title={pattern.excluded ? __("Include") : __("Exclude")}
+                          title={pattern.excluded ? t("categorySection.actions.include") : t("categorySection.actions.exclude")}
                         >
                           {pattern.excluded ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
                         </button>
@@ -877,7 +905,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
             }}
           >
             <IconPlusSmall size={14} />
-            {__("Add Cookie")}
+            {t("categorySection.actions.addCookie")}
           </Button>
         </div>
       )}

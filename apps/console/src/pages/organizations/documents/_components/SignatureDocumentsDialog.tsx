@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Avatar,
   Breadcrumb,
@@ -38,6 +36,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { type ReactNode, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -124,7 +123,7 @@ export function SignatureDocumentsDialog({
   children,
   onSave,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const { list: selectedPeople, toggle } = useList<string>([]);
 
@@ -137,9 +136,11 @@ export function SignatureDocumentsDialog({
         successMessage: (response) => {
           const actualRequestsCount
             = response.bulkRequestSignatures.documentVersionSignatureEdges.length;
-          return sprintf(__("%s signature requests created"), actualRequestsCount);
+          return t("signatureDocumentsDialog.messages.created", {
+            count: actualRequestsCount,
+          });
         },
-        errorMessage: __("Failed to create signature requests"),
+        errorMessage: t("signatureDocumentsDialog.errors.create"),
       },
     );
 
@@ -168,7 +169,14 @@ export function SignatureDocumentsDialog({
       className="max-w-xl"
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Documents"), __("Signature requests")]} />}
+      title={(
+        <Breadcrumb
+          items={[
+            t("signatureDocumentsDialog.breadcrumbs.documents"),
+            t("signatureDocumentsDialog.breadcrumbs.requests"),
+          ]}
+        />
+      )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent>
@@ -181,7 +189,7 @@ export function SignatureDocumentsDialog({
             type="submit"
             disabled={selectedPeople.length === 0 || isSubmitting}
           >
-            {__("Request signatures")}
+            {t("signatureDocumentsDialog.actions.request")}
           </Button>
         </DialogFooter>
       </form>
@@ -196,7 +204,7 @@ function PeopleList({
   onChange: (id: string) => void;
   selectedPeople: string[];
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = useLazyLoadQuery<SignatureDocumentsDialogPeopleQuery>(
     signatureDocumentsDialogPeopleQuery,
@@ -254,7 +262,9 @@ function PeopleList({
           icon={IconChevronDown}
           type="button"
         >
-          {sprintf(__("Show %s more"), profiles.length)}
+          {t("signatureDocumentsDialog.actions.showMore", {
+            count: profiles.length,
+          })}
         </Button>
       )}
     </>

@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
 import { ActionDropdown, DropdownItem, IconArchive, IconArrowDown, IconTrashCan, useConfirm, useToast } from "@probo/ui";
 import { use, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
@@ -126,7 +126,7 @@ export function DocumentActionsDropdown(props: {
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { email: defaultEmail } = use(CurrentUser);
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
   const deleteDocumentDialogRef = useRef<DeleteDocumentDialogRef>(null);
@@ -153,25 +153,22 @@ export function DocumentActionsDropdown(props: {
             variables: { input: { documentId: document.id } },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({ title: __("Error"), description: formatError(__("Failed to archive document"), errors), variant: "error" });
+                toast({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.archive"), errors), variant: "error" });
               } else {
-                toast({ title: __("Success"), description: __("Document archived successfully."), variant: "success" });
+                toast({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.archived"), variant: "success" });
               }
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: error.message, variant: "error" });
+              toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
               resolve();
             },
           });
         }),
       {
-        message: sprintf(
-          __("This will archive the document \"%s\". It will no longer be editable."),
-          version.title,
-        ),
+        message: t("documentActions.confirmations.archive", { title: version.title }),
         variant: "danger",
-        label: __("Archive"),
+        label: t("documentActions.actions.archive"),
       },
     );
   };
@@ -181,13 +178,13 @@ export function DocumentActionsDropdown(props: {
       variables: { input: { documentId: document.id } },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: formatError(__("Failed to unarchive document"), errors), variant: "error" });
+          toast({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.unarchive"), errors), variant: "error" });
         } else {
-          toast({ title: __("Success"), description: __("Document unarchived successfully."), variant: "success" });
+          toast({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.unarchived"), variant: "success" });
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
+        toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
       },
     });
   };
@@ -200,24 +197,24 @@ export function DocumentActionsDropdown(props: {
             variables: { input: { documentId: document.id } },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({ title: __("Error"), description: formatError(__("Failed to delete draft"), errors), variant: "error" });
+                toast({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.deleteDraft"), errors), variant: "error" });
               } else {
-                toast({ title: __("Success"), description: __("Draft deleted successfully."), variant: "success" });
+                toast({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.draftDeleted"), variant: "success" });
                 onVersionChanged();
                 void navigate(`/organizations/${organizationId}/documents/${document.id}/description`);
               }
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: error.message, variant: "error" });
+              toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
               resolve();
             },
           });
         }),
       {
-        message: __("This will delete the current draft and revert to the last published version."),
+        message: t("documentActions.confirmations.deleteDraft"),
         variant: "danger",
-        label: __("Delete draft"),
+        label: t("documentActions.actions.deleteDraft"),
       },
     );
   };
@@ -246,8 +243,8 @@ export function DocumentActionsDropdown(props: {
       onCompleted: (data, errors) => {
         if (errors?.length) {
           toast({
-            title: __("Error"),
-            description: errors[0]?.message || __("Failed to generate PDF"),
+            title: t("documentActions.errors.title"),
+            description: errors[0]?.message || t("documentActions.errors.generatePdf"),
             variant: "error",
           });
           return;
@@ -263,7 +260,7 @@ export function DocumentActionsDropdown(props: {
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
+        toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
       },
     });
   };
@@ -289,7 +286,7 @@ export function DocumentActionsDropdown(props: {
           icon={IconArrowDown}
           disabled={isExporting}
         >
-          {__("Download PDF")}
+          {t("documentActions.actions.downloadPdf")}
         </DropdownItem>
         {document.canDeleteDraft && version.status === "DRAFT" && !(version.major === 0 && version.minor === 1) && (
           <DropdownItem
@@ -297,7 +294,7 @@ export function DocumentActionsDropdown(props: {
             disabled={isDeletingDraft}
             onClick={handleDeleteDraft}
           >
-            {__("Delete draft")}
+            {t("documentActions.actions.deleteDraft")}
           </DropdownItem>
         )}
         {document.canArchive && document.status === "ACTIVE" && (
@@ -306,7 +303,7 @@ export function DocumentActionsDropdown(props: {
             disabled={isArchiving}
             onClick={handleArchive}
           >
-            {__("Archive document")}
+            {t("documentActions.actions.archiveDocument")}
           </DropdownItem>
         )}
         {document.canUnarchive && document.status === "ARCHIVED" && (
@@ -315,7 +312,7 @@ export function DocumentActionsDropdown(props: {
             disabled={isUnarchiving}
             onClick={handleUnarchive}
           >
-            {__("Unarchive document")}
+            {t("documentActions.actions.unarchiveDocument")}
           </DropdownItem>
         )}
         {document.canDelete && (
@@ -324,7 +321,7 @@ export function DocumentActionsDropdown(props: {
             icon={IconTrashCan}
             onClick={() => deleteDocumentDialogRef.current?.open()}
           >
-            {__("Delete document")}
+            {t("documentActions.actions.deleteDocument")}
           </DropdownItem>
         )}
       </ActionDropdown>

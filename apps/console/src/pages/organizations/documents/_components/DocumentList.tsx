@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { documentClassifications, documentTypes, documentWriteModes, getDocumentClassificationLabel, getDocumentTypeLabel, getDocumentWriteModeLabel, sprintf } from "@probo/helpers";
+import { documentClassifications, documentTypes, documentWriteModes } from "@probo/helpers";
 import { useList } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconSignature, IconTrashCan, IconUpload, Option, Select, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { type ComponentProps, use, useEffect, useRef, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { usePaginationFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -126,7 +126,7 @@ export function DocumentList(props: {
   const { email: defaultEmail } = use(CurrentUser);
   const bulkExportDialogRef = useRef<BulkExportDialogRef>(null);
   const deleteDocumentsDialogRef = useRef<DeleteDocumentDialogRef>(null);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const pagination = usePaginationFragment<DocumentsListQuery, DocumentListFragment$key>(
     fragment,
@@ -159,11 +159,11 @@ export function DocumentList(props: {
   const [bulkExportDocuments, isBulkExporting] = useBulkExportDocumentsMutation();
   const [bulkArchiveDocuments, isBulkArchiving] = useMutationWithToasts<DocumentListBulkArchiveMutation>(
     bulkArchiveMutation,
-    { successMessage: __("Documents archived successfully."), errorMessage: __("Failed to archive documents") },
+    { successMessage: t("documentList.messages.archived"), errorMessage: t("documentList.errors.archive") },
   );
   const [bulkUnarchiveDocuments, isBulkUnarchiving] = useMutationWithToasts<DocumentListBulkUnarchiveMutation>(
     bulkUnarchiveMutation,
-    { successMessage: __("Documents unarchived successfully."), errorMessage: __("Failed to unarchive documents") },
+    { successMessage: t("documentList.messages.unarchived"), errorMessage: t("documentList.errors.unarchive") },
   );
   const { list: selection, toggle, clear, reset } = useList<string>([]);
 
@@ -327,10 +327,10 @@ export function DocumentList(props: {
           value={writeModeFilter ?? "ALL"}
           onValueChange={handleWriteModeFilterChange}
         >
-          <Option value="ALL">{__("All sources")}</Option>
+          <Option value="ALL">{t("documentList.filters.allSources")}</Option>
           {documentWriteModes.map(source => (
             <Option key={source} value={source}>
-              {getDocumentWriteModeLabel(__, source) ?? source}
+              {t(`documentList.writeModes.${source.toLowerCase()}`)}
             </Option>
           ))}
         </Select>
@@ -338,10 +338,10 @@ export function DocumentList(props: {
           value={documentTypeFilter ?? "ALL"}
           onValueChange={handleDocumentTypeFilterChange}
         >
-          <Option value="ALL">{__("All types")}</Option>
+          <Option value="ALL">{t("documentList.filters.allTypes")}</Option>
           {documentTypes.map(type => (
             <Option key={type} value={type}>
-              {getDocumentTypeLabel(__, type) ?? type}
+              {t(`documentList.documentTypes.${type.toLowerCase()}`)}
             </Option>
           ))}
         </Select>
@@ -349,10 +349,10 @@ export function DocumentList(props: {
           value={classificationFilter ?? "ALL"}
           onValueChange={handleClassificationFilterChange}
         >
-          <Option value="ALL">{__("All classifications")}</Option>
+          <Option value="ALL">{t("documentList.filters.allClassifications")}</Option>
           {documentClassifications.map(classification => (
             <Option key={classification} value={classification}>
-              {getDocumentClassificationLabel(__, classification) ?? classification}
+              {t(`documentList.classifications.${classification.toLowerCase()}`)}
             </Option>
           ))}
         </Select>
@@ -375,17 +375,17 @@ export function DocumentList(props: {
                             />
                           </Th>
                           <SortableTh field="TITLE" className="min-w-0 pr-12" onOrderChange={handleOrderChange}>
-                            {__("Name")}
+                            {t("documentList.columns.name")}
                           </SortableTh>
-                          <Th className="w-24">{__("Status")}</Th>
-                          <Th className="w-20">{__("Version")}</Th>
+                          <Th className="w-24">{t("documentList.columns.status")}</Th>
+                          <Th className="w-20">{t("documentList.columns.version")}</Th>
                           <SortableTh field="DOCUMENT_TYPE" className="w-28" onOrderChange={handleOrderChange}>
-                            {__("Type")}
+                            {t("documentList.columns.type")}
                           </SortableTh>
-                          <Th className="w-32">{__("Classification")}</Th>
-                          <Th className="w-60">{__("Approvers")}</Th>
-                          <Th className="w-40">{__("Last update")}</Th>
-                          <Th className="w-20">{__("Signatures")}</Th>
+                          <Th className="w-32">{t("documentList.columns.classification")}</Th>
+                          <Th className="w-60">{t("documentList.columns.approvers")}</Th>
+                          <Th className="w-40">{t("documentList.columns.lastUpdate")}</Th>
+                          <Th className="w-20">{t("documentList.columns.signatures")}</Th>
                           {hasAnyAction && <Th className="w-18"></Th>}
                         </Tr>
                       )
@@ -394,7 +394,7 @@ export function DocumentList(props: {
                           <Th colspan={hasAnyAction ? 10 : 9} compact>
                             <div className="flex justify-between items-center h-8">
                               <div className="flex gap-2 items-center">
-                                {sprintf(__("%s documents selected"), selection.length)}
+                                {t("documentList.selected", { count: selection.length })}
                                 {" "}
                                 -
                                 <button
@@ -402,7 +402,7 @@ export function DocumentList(props: {
                                   className="flex gap-1 items-center hover:text-txt-primary"
                                 >
                                   <IconCrossLargeX size={12} />
-                                  {__("Clear selection")}
+                                  {t("documentList.actions.clearSelection")}
                                 </button>
                               </div>
                               <div className="flex gap-2 items-center">
@@ -417,7 +417,7 @@ export function DocumentList(props: {
                                             disabled={isBulkUnarchiving}
                                             className="py-0.5 px-2 text-xs h-6 min-h-6"
                                           >
-                                            {__("Unarchive")}
+                                            {t("documentList.actions.unarchive")}
                                           </Button>
                                         )}
                                         {canDeleteAny && (
@@ -427,7 +427,7 @@ export function DocumentList(props: {
                                             onClick={handleBulkDelete}
                                             className="py-0.5 px-2 text-xs h-6 min-h-6"
                                           >
-                                            {__("Delete")}
+                                            {t("documentList.actions.delete")}
                                           </Button>
                                         )}
                                       </>
@@ -440,7 +440,7 @@ export function DocumentList(props: {
                                               icon={IconUpload}
                                               className="py-0.5 px-2 text-xs h-6 min-h-6"
                                             >
-                                              {__("Publish")}
+                                              {t("documentList.actions.publish")}
                                             </Button>
                                           </PublishDocumentsDialog>
                                         )}
@@ -451,7 +451,7 @@ export function DocumentList(props: {
                                               icon={IconSignature}
                                               className="py-0.5 px-2 text-xs h-6 min-h-6"
                                             >
-                                              {__("Request signature")}
+                                              {t("documentList.actions.requestSignature")}
                                             </Button>
                                           </SignatureDocumentsDialog>
                                         )}
@@ -467,7 +467,7 @@ export function DocumentList(props: {
                                             icon={IconArrowDown}
                                             className="py-0.5 px-2 text-xs h-6 min-h-6"
                                           >
-                                            {__("Export")}
+                                            {t("documentList.actions.export")}
                                           </Button>
                                         </BulkExportDialog>
                                         {canArchiveAny && (
@@ -478,7 +478,7 @@ export function DocumentList(props: {
                                             disabled={isBulkArchiving}
                                             className="py-0.5 px-2 text-xs h-6 min-h-6"
                                           >
-                                            {__("Archive")}
+                                            {t("documentList.actions.archive")}
                                           </Button>
                                         )}
                                         {canDeleteAny && (
@@ -488,7 +488,7 @@ export function DocumentList(props: {
                                             onClick={handleBulkDelete}
                                             className="py-0.5 px-2 text-xs h-6 min-h-6"
                                           >
-                                            {__("Delete")}
+                                            {t("documentList.actions.delete")}
                                           </Button>
                                         )}
                                       </>
@@ -517,11 +517,13 @@ export function DocumentList(props: {
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {tab === "ARCHIVED" ? __("No archived documents") : __("No documents yet")}
+                    {tab === "ARCHIVED"
+                      ? t("documentList.empty.archivedTitle")
+                      : t("documentList.empty.title")}
                   </h3>
                   {tab !== "ARCHIVED" && (
                     <p className="text-txt-tertiary mb-4">
-                      {__("Create your first document to get started.")}
+                      {t("documentList.empty.description")}
                     </p>
                   )}
                 </div>

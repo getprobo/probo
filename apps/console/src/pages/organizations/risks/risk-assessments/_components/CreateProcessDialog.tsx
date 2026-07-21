@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { CreateProcessDialogMutation } from "#/__generated__/core/CreateProcessDialogMutation.graphql";
@@ -54,7 +54,7 @@ export function CreateProcessDialog(props: {
   nodes: { id: string; name: string }[];
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [createProcess, isCreating] = useMutation<CreateProcessDialogMutation>(createProcessMutation);
   const { register, control, handleSubmit, reset, formState } = useForm({
@@ -81,21 +81,21 @@ export function CreateProcessDialog(props: {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={<Button icon={IconPlusLarge} variant="secondary" disabled={props.nodes.length < 2}>{__("Add")}</Button>}
-      title={<Breadcrumb items={[__("Processes"), __("Add Process")]} />}
+      trigger={<Button icon={IconPlusLarge} variant="secondary" disabled={props.nodes.length < 2}>{t("createRiskAssessmentProcessDialog.actions.add")}</Button>}
+      title={<Breadcrumb items={[t("createRiskAssessmentProcessDialog.breadcrumb.processes"), t("createRiskAssessmentProcessDialog.breadcrumb.addProcess")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <ControlledField label={__("Source")} name="sourceNodeId" control={control} rules={{ required: __("This field is required") }} type="select" placeholder={__("Select source node")}>
+          <ControlledField label={t("createRiskAssessmentProcessDialog.fields.source")} name="sourceNodeId" control={control} rules={{ required: t("createRiskAssessmentProcessDialog.validation.required") }} type="select" placeholder={t("createRiskAssessmentProcessDialog.placeholders.sourceNode")}>
             {props.nodes.map(n => <Option key={n.id} value={n.id}>{n.name}</Option>)}
           </ControlledField>
-          <ControlledField label={__("Target")} name="targetNodeId" control={control} rules={{ required: __("This field is required") }} type="select" placeholder={__("Select target node")}>
+          <ControlledField label={t("createRiskAssessmentProcessDialog.fields.target")} name="targetNodeId" control={control} rules={{ required: t("createRiskAssessmentProcessDialog.validation.required") }} type="select" placeholder={t("createRiskAssessmentProcessDialog.placeholders.targetNode")}>
             {props.nodes.map(n => <Option key={n.id} value={n.id}>{n.name}</Option>)}
           </ControlledField>
-          <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" error={formState.errors.name?.message} placeholder={__("e.g. User → API")} />
+          <Field label={t("createRiskAssessmentProcessDialog.fields.name")} {...register("name", { required: t("createRiskAssessmentProcessDialog.validation.required") })} type="text" error={formState.errors.name?.message} placeholder={t("createRiskAssessmentProcessDialog.placeholders.name")} />
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={isCreating || props.nodes.length < 2}>{__("Add")}</Button>
+          <Button type="submit" disabled={isCreating || props.nodes.length < 2}>{t("createRiskAssessmentProcessDialog.actions.add")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

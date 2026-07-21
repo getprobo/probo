@@ -26,32 +26,32 @@ export const peopleRoles = [
     "SERVICE_ACCOUNT",
 ] as const;
 
-export function getRoles(__: Translator) {
+export function getRoles(t: Translator) {
     return [
         {
             value: "EMPLOYEE",
-            label: __("Employee"),
+            label: t("helpers.peopleRole.employee"),
         },
         {
             value: "CONTRACTOR",
-            label: __("Contractor"),
+            label: t("helpers.peopleRole.contractor"),
         },
         {
             value: "SERVICE_ACCOUNT",
-            label: __("Service account"),
+            label: t("helpers.peopleRole.serviceAccount"),
         },
     ];
 }
 
-export function getRole(__: Translator, role?: string): string {
+export function getRole(t: Translator, role?: string): string {
     switch (role) {
         case "EMPLOYEE":
-            return __("Employee");
+            return t("helpers.peopleRole.employee");
         case "CONTRACTOR":
-            return __("Contractor");
+            return t("helpers.peopleRole.contractor");
         case "SERVICE_ACCOUNT":
-            return __("Service account");
+            return t("helpers.peopleRole.serviceAccount");
         default:
-            return __("Unknown");
+            return t("helpers.common.unknown");
     }
 }

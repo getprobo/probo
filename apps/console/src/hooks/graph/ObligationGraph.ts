@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { promisifyMutation } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { useConfirm } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -149,10 +149,10 @@ export const useDeleteObligation = (
   obligation: { id: string },
   connectionId: string,
 ) => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [mutate] = useMutationWithToasts(deleteObligationMutation, {
-    successMessage: __("Obligation deleted successfully"),
-    errorMessage: __("Failed to delete obligation"),
+    successMessage: t("obligationGraph.messages.deleted"),
+    errorMessage: t("obligationGraph.errors.delete"),
   });
   const confirm = useConfirm();
 
@@ -168,9 +168,7 @@ export const useDeleteObligation = (
           },
         }),
       {
-        message: __(
-          "This will permanently delete this obligation. This action cannot be undone.",
-        ),
+        message: t("obligationGraph.deleteConfirmation"),
       },
     );
   };
@@ -179,7 +177,7 @@ export const useDeleteObligation = (
 export const useCreateObligation = (connectionId: string) => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(createObligationMutation);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (input: {
     organizationId: string;
@@ -195,10 +193,10 @@ export const useCreateObligation = (connectionId: string) => {
     status: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create obligation: organization is required"));
+      return alert(t("obligationGraph.errors.createOrganizationRequired"));
     }
     if (!input.ownerId) {
-      return alert(__("Failed to create obligation: owner is required"));
+      return alert(t("obligationGraph.errors.createOwnerRequired"));
     }
 
     return promisifyMutation(mutate)({
@@ -225,7 +223,7 @@ export const useCreateObligation = (connectionId: string) => {
 export const useUpdateObligation = () => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(updateObligationMutation);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (input: {
     id: string;
@@ -241,7 +239,7 @@ export const useUpdateObligation = () => {
     status?: string;
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update obligation: ID is required"));
+      return alert(t("obligationGraph.errors.updateIdRequired"));
     }
 
     return promisifyMutation(mutate)({

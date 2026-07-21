@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Card,
   Input,
@@ -30,6 +29,7 @@ import {
   Tr,
 } from "@probo/ui";
 import { type ComponentProps, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -102,7 +102,7 @@ interface CookieBannerResourcesPageProps {
 export default function CookieBannerResourcesPage({
   queryRef,
 }: CookieBannerResourcesPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const data = usePreloadedQuery<CookieBannerResourcesPageQuery>(cookieBannerResourcesPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -156,7 +156,7 @@ export default function CookieBannerResourcesPage({
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Input
-          placeholder={__("Search by origin or path...")}
+          placeholder={t("resourcesPage.filters.search")}
           value={queryFilter}
           onChange={e => setQueryFilter(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleQuerySubmit()}
@@ -167,16 +167,16 @@ export default function CookieBannerResourcesPage({
           value={typeFilter ?? "ALL"}
           onValueChange={handleTypeFilterChange}
         >
-          <Option value="ALL">{__("All types")}</Option>
-          <Option value="SCRIPT">{__("Script")}</Option>
-          <Option value="IFRAME">{__("Iframe")}</Option>
-          <Option value="IMAGE">{__("Image")}</Option>
-          <Option value="STYLESHEET">{__("Stylesheet")}</Option>
-          <Option value="FONT">{__("Font")}</Option>
-          <Option value="BEACON">{__("Beacon")}</Option>
-          <Option value="FETCH">{__("Fetch")}</Option>
-          <Option value="MEDIA">{__("Media")}</Option>
-          <Option value="SERVICE_WORKER">{__("Service Worker")}</Option>
+          <Option value="ALL">{t("resourcesPage.types.all")}</Option>
+          <Option value="SCRIPT">{t("resourcesPage.types.script")}</Option>
+          <Option value="IFRAME">{t("resourcesPage.types.iframe")}</Option>
+          <Option value="IMAGE">{t("resourcesPage.types.image")}</Option>
+          <Option value="STYLESHEET">{t("resourcesPage.types.stylesheet")}</Option>
+          <Option value="FONT">{t("resourcesPage.types.font")}</Option>
+          <Option value="BEACON">{t("resourcesPage.types.beacon")}</Option>
+          <Option value="FETCH">{t("resourcesPage.types.fetch")}</Option>
+          <Option value="MEDIA">{t("resourcesPage.types.media")}</Option>
+          <Option value="SERVICE_WORKER">{t("resourcesPage.types.serviceWorker")}</Option>
         </Select>
       </div>
 
@@ -190,11 +190,11 @@ export default function CookieBannerResourcesPage({
               >
                 <Thead>
                   <Tr>
-                    <Th>{__("Type")}</Th>
-                    <SortableTh field="ORIGIN">{__("Origin")}</SortableTh>
-                    <Th>{__("Path")}</Th>
-                    <Th>{__("Category")}</Th>
-                    <SortableTh field="LAST_DETECTED_AT">{__("Last Detected")}</SortableTh>
+                    <Th>{t("resourcesPage.columns.type")}</Th>
+                    <SortableTh field="ORIGIN">{t("resourcesPage.columns.origin")}</SortableTh>
+                    <Th>{t("resourcesPage.columns.path")}</Th>
+                    <Th>{t("resourcesPage.columns.category")}</Th>
+                    <SortableTh field="LAST_DETECTED_AT">{t("resourcesPage.columns.lastDetected")}</SortableTh>
                     <Th className="w-px" />
                   </Tr>
                 </Thead>
@@ -213,10 +213,10 @@ export default function CookieBannerResourcesPage({
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {__("No uncategorised resources")}
+                    {t("resourcesPage.empty.title")}
                   </h3>
                   <p className="text-txt-tertiary">
-                    {__("All detected resources have been categorised. New resources will appear here when detected.")}
+                    {t("resourcesPage.empty.description")}
                   </p>
                 </div>
               </Card>

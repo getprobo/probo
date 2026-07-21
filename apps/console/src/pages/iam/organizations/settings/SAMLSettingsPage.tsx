@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
 import { Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -64,7 +64,7 @@ export function SAMLSettingsPage(props: {
   const [domainVerificationToken, setDomainVerificationToken]
     = useState<string>();
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const { organization } = usePreloadedQuery<SAMLSettingsPageQuery>(samlSettingsPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
@@ -98,10 +98,10 @@ export function SAMLSettingsPage(props: {
     <>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-base font-medium">{__("SAML Single Sign-On")}</h2>
+          <h2 className="text-base font-medium">{t("samlSettingsPage.title")}</h2>
           {organization.canCreateSAMLConfiguration && (
             <Button onClick={() => handleOpenFormDialog()}>
-              {__("Add Configuration")}
+              {t("samlSettingsPage.actions.addConfiguration")}
             </Button>
           )}
         </div>
@@ -116,7 +116,7 @@ export function SAMLSettingsPage(props: {
       <Dialog
         ref={formDialogRef}
         onClose={handleCloseFormDialog}
-        title={<Breadcrumb items={[__("SAML Settings"), __("Configure")]} />}
+        title={<Breadcrumb items={[t("samlSettingsPage.breadcrumb.settings"), t("samlSettingsPage.breadcrumb.configure")]} />}
       >
         {isEditing
           ? (
@@ -138,7 +138,7 @@ export function SAMLSettingsPage(props: {
         ref={domainDialogRef}
         onClose={handleCloseVerifyDomainDialog}
         title={
-          <Breadcrumb items={[__("SAML Settings"), __("Verify Domain")]} />
+          <Breadcrumb items={[t("samlSettingsPage.breadcrumb.settings"), t("samlSettingsPage.breadcrumb.verifyDomain")]} />
         }
       >
         {domainVerificationToken && (

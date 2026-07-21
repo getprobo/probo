@@ -21,15 +21,10 @@
 import {
   formatDatetime,
   formatError,
-  getRightsRequestStateLabel,
-  getRightsRequestStateOptions,
   getRightsRequestStateVariant,
-  getRightsRequestTypeLabel,
-  getRightsRequestTypeOptions,
   type GraphQLError,
   toDateInput,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -46,6 +41,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
@@ -84,7 +80,7 @@ export default function RightsRequestDetailsPage(props: Props) {
     props.queryRef,
   );
   const request = data.node;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
 
@@ -129,15 +125,15 @@ export default function RightsRequestDetailsPage(props: Props) {
       });
 
       toast({
-        title: __("Success"),
-        description: __("Rights request updated successfully"),
+        title: t("rightsRequestDetailsPage.messages.success"),
+        description: t("rightsRequestDetailsPage.messages.updated"),
         variant: "success",
       });
     } catch (error) {
       toast({
-        title: __("Error"),
+        title: t("rightsRequestDetailsPage.messages.error"),
         description: formatError(
-          __("Failed to update rights request"),
+          t("rightsRequestDetailsPage.errors.update"),
           error as GraphQLError,
         ),
         variant: "error",
@@ -145,8 +141,8 @@ export default function RightsRequestDetailsPage(props: Props) {
     }
   });
 
-  const typeOptions = getRightsRequestTypeOptions(__);
-  const stateOptions = getRightsRequestStateOptions(__);
+  const typeOptions = ["ACCESS", "DELETION", "RECTIFICATION", "PORTABILITY", "OBJECTION", "COMPLAINT"] as const;
+  const stateOptions = ["TODO", "IN_PROGRESS", "DONE", "REJECTED"] as const;
 
   const breadcrumbRequestsUrl = `/organizations/${organizationId}/rights-requests`;
 
@@ -156,7 +152,7 @@ export default function RightsRequestDetailsPage(props: Props) {
         <Breadcrumb
           items={[
             {
-              label: __("Rights Requests"),
+              label: t("rightsRequestDetailsPage.breadcrumb.requests"),
               to: breadcrumbRequestsUrl,
             },
             { label: request.dataSubject || request.id! },
@@ -165,7 +161,7 @@ export default function RightsRequestDetailsPage(props: Props) {
         {request.canDelete && (
           <ActionDropdown>
             <DropdownItem onClick={deleteRequest} variant="danger">
-              {__("Delete")}
+              {t("rightsRequestDetailsPage.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         )}
@@ -176,26 +172,17 @@ export default function RightsRequestDetailsPage(props: Props) {
           <div className="mb-6">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold">
-                {getRightsRequestTypeLabel(
-                  __,
-                  request.requestType || "ACCESS",
-                )}
+                {t(`rightsRequestDetailsPage.types.${(request.requestType || "ACCESS").toLowerCase()}`)}
               </h1>
               <Badge variant="neutral">
-                {getRightsRequestTypeLabel(
-                  __,
-                  request.requestType || "ACCESS",
-                )}
+                {t(`rightsRequestDetailsPage.types.${(request.requestType || "ACCESS").toLowerCase()}`)}
               </Badge>
               <Badge
                 variant={getRightsRequestStateVariant(
                   request.requestState || "TODO",
                 )}
               >
-                {getRightsRequestStateLabel(
-                  __,
-                  request.requestState || "TODO",
-                )}
+                {t(`rightsRequestDetailsPage.states.${(request.requestState || "TODO").toLowerCase()}`)}
               </Badge>
             </div>
           </div>
@@ -208,7 +195,7 @@ export default function RightsRequestDetailsPage(props: Props) {
                 render={({ field }) => (
                   <div>
                     <Label>
-                      {__("Request Type")}
+                      {t("rightsRequestDetailsPage.fields.requestType")}
                       {" "}
                       *
                     </Label>
@@ -218,10 +205,10 @@ export default function RightsRequestDetailsPage(props: Props) {
                     >
                       {typeOptions.map(option => (
                         <Option
-                          key={option.value}
-                          value={option.value}
+                          key={option}
+                          value={option}
                         >
-                          {option.label}
+                          {t(`rightsRequestDetailsPage.types.${option.toLowerCase()}`)}
                         </Option>
                       ))}
                     </Select>
@@ -244,7 +231,7 @@ export default function RightsRequestDetailsPage(props: Props) {
                 render={({ field }) => (
                   <div>
                     <Label>
-                      {__("State")}
+                      {t("rightsRequestDetailsPage.fields.state")}
                       {" "}
                       *
                     </Label>
@@ -254,10 +241,10 @@ export default function RightsRequestDetailsPage(props: Props) {
                     >
                       {stateOptions.map(option => (
                         <Option
-                          key={option.value}
-                          value={option.value}
+                          key={option}
+                          value={option}
                         >
-                          {option.label}
+                          {t(`rightsRequestDetailsPage.states.${option.toLowerCase()}`)}
                         </Option>
                       ))}
                     </Select>
@@ -276,22 +263,22 @@ export default function RightsRequestDetailsPage(props: Props) {
             </div>
 
             <Field
-              label={__("Data Subject")}
+              label={t("rightsRequestDetailsPage.fields.dataSubject")}
               {...register("dataSubject")}
               error={formState.errors.dataSubject?.message}
             />
 
             <Field
-              label={__("Contact")}
+              label={t("rightsRequestDetailsPage.fields.contact")}
               {...register("contact")}
               error={formState.errors.contact?.message}
             />
 
             <div>
-              <Label>{__("Details")}</Label>
+              <Label>{t("rightsRequestDetailsPage.fields.details")}</Label>
               <Textarea
                 {...register("details")}
-                placeholder={__("Enter request details")}
+                placeholder={t("rightsRequestDetailsPage.placeholders.details")}
                 rows={3}
               />
               {formState.errors.details?.message && (
@@ -303,7 +290,7 @@ export default function RightsRequestDetailsPage(props: Props) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{__("Deadline")}</Label>
+                <Label>{t("rightsRequestDetailsPage.fields.deadline")}</Label>
                 <Input type="date" {...register("deadline")} />
                 {formState.errors.deadline?.message && (
                   <div className="text-red-500 text-sm mt-1">
@@ -314,10 +301,10 @@ export default function RightsRequestDetailsPage(props: Props) {
             </div>
 
             <div>
-              <Label>{__("Action Taken")}</Label>
+              <Label>{t("rightsRequestDetailsPage.fields.actionTaken")}</Label>
               <Textarea
                 {...register("actionTaken")}
-                placeholder={__("Enter action taken")}
+                placeholder={t("rightsRequestDetailsPage.placeholders.actionTaken")}
                 rows={3}
               />
               {formState.errors.actionTaken?.message && (
@@ -335,8 +322,8 @@ export default function RightsRequestDetailsPage(props: Props) {
                   disabled={formState.isSubmitting}
                 >
                   {formState.isSubmitting
-                    ? __("Saving...")
-                    : __("Save Changes")}
+                    ? t("rightsRequestDetailsPage.actions.saving")
+                    : t("rightsRequestDetailsPage.actions.save")}
                 </Button>
               )}
             </div>

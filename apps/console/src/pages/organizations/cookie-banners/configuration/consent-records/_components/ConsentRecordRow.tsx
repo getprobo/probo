@@ -18,16 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConsentRecordRowFragment$key } from "#/__generated__/core/ConsentRecordRowFragment.graphql";
 
 import {
   formatAnonymizedIp,
-  getActionLabel,
   getActionVariant,
 } from "./consentRecordHelpers";
 
@@ -53,7 +52,7 @@ interface ConsentRecordRowProps {
 }
 
 export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
   const record = useFragment(consentRecordFragment, recordKey);
 
   return (
@@ -63,7 +62,7 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
       </Td>
       <Td>
         <Badge variant={getActionVariant(record.action)}>
-          {getActionLabel(record.action, __)}
+          {t(`consentRecordPage.actions.${record.action.toLowerCase()}`)}
         </Badge>
       </Td>
       <Td>
@@ -100,7 +99,7 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
       </Td>
       <Td>
         <time dateTime={record.createdAt}>
-          {formatDate(record.createdAt)}
+          {dateFormat(i18n.language, record.createdAt)}
         </time>
       </Td>
     </Tr>

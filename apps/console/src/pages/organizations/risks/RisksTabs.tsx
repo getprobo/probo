@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { TabLink, Tabs } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { RisksTabsQuery } from "#/__generated__/core/RisksTabsQuery.graphql";
@@ -41,7 +41,7 @@ interface RisksTabsProps {
 }
 
 export function RisksTabs({ queryRef }: RisksTabsProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<RisksTabsQuery>(risksTabsQuery, queryRef);
 
@@ -54,12 +54,12 @@ export function RisksTabs({ queryRef }: RisksTabsProps) {
     <Tabs>
       {canListRisks && (
         <TabLink to={`${baseUrl}/risks`} end>
-          {__("Risks")}
+          {t("risksTabs.risks")}
         </TabLink>
       )}
       {canListRiskAssessments && (
         <TabLink to={`${baseUrl}/risk-assessments`} end>
-          {__("Risk assessments")}
+          {t("risksTabs.riskAssessments")}
         </TabLink>
       )}
     </Tabs>

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -32,6 +31,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -87,9 +87,9 @@ export function OAuthTokensPage(props: {
   queryRef: PreloadedQuery<OAuthTokensPageQuery>;
 }) {
   const { queryRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(__("OAuth tokens"));
+  usePageTitle(t("oauthTokensPage.pageTitle"));
 
   const { viewer } = usePreloadedQuery<OAuthTokensPageQuery>(
     oauthTokensPageQuery,
@@ -106,15 +106,13 @@ export function OAuthTokensPage(props: {
   return (
     <div className="space-y-6 w-full py-6">
       <PageHeader
-        title={__("OAuth tokens")}
-        description={__(
-          "Create bearer tokens with scoped API access for your account.",
-        )}
+        title={t("oauthTokensPage.title")}
+        description={t("oauthTokensPage.description")}
       >
         {viewer.canCreateOAuth2AccessToken && (
           <Button asChild>
             <Link to="/me/oauth-tokens/new">
-              {__("Create token")}
+              {t("oauthTokensPage.actions.create")}
             </Link>
           </Button>
         )}
@@ -125,12 +123,10 @@ export function OAuthTokensPage(props: {
             <Card padded>
               <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {__("No OAuth tokens")}
+                  {t("oauthTokensPage.empty.title")}
                 </h3>
                 <p className="text-gray-600">
-                  {__(
-                    "Create a token to authenticate API requests on your behalf.",
-                  )}
+                  {t("oauthTokensPage.empty.description")}
                 </p>
               </div>
             </Card>
@@ -139,16 +135,16 @@ export function OAuthTokensPage(props: {
             <Card padded className="space-y-4">
               {totalCount > tokens.length && (
                 <p className="text-sm text-txt-tertiary">
-                  {`${__("Showing")} ${tokens.length} ${__("of")} ${totalCount}`}
+                  {t("oauthTokensPage.showing", { shown: tokens.length, total: totalCount })}
                 </p>
               )}
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Scopes")}</Th>
-                    <Th>{__("Created")}</Th>
-                    <Th>{__("Expires")}</Th>
+                    <Th>{t("oauthTokensPage.columns.name")}</Th>
+                    <Th>{t("oauthTokensPage.columns.scopes")}</Th>
+                    <Th>{t("oauthTokensPage.columns.created")}</Th>
+                    <Th>{t("oauthTokensPage.columns.expires")}</Th>
                     <Th className="w-0" />
                   </Tr>
                 </Thead>
@@ -170,7 +166,7 @@ export function OAuthTokensPage(props: {
                   disabled={isLoadingNext}
                   icon={isLoadingNext ? Spinner : IconChevronDown}
                 >
-                  {__("Show more")}
+                  {t("oauthTokensPage.actions.showMore")}
                 </Button>
               )}
             </Card>

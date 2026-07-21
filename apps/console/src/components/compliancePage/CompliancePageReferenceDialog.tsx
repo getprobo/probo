@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { acceptImage } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, type ReactNode, useImperativeHandle, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
@@ -57,7 +57,7 @@ export type CompliancePageReferenceDialogRef = {
 
 export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceDialogRef, { children?: ReactNode }>(
   function CompliancePageReferenceDialog({ children }, ref) {
-    const { __ } = useTranslate();
+    const { t } = useTranslation();
     const dialogRef = useDialogRef();
     const [mode, setMode] = useState<"create" | "edit">("create");
     const [compliancePageId, setCompliancePageId] = useState<string>("");
@@ -182,7 +182,7 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
     };
 
     const isSubmitting = isCreating || isUpdating;
-    const title = mode === "create" ? __("Add Reference") : __("Edit Reference");
+    const title = mode === "create" ? t("trustCenterReferenceDialog.actions.add") : t("trustCenterReferenceDialog.actions.edit");
 
     return (
       <>
@@ -202,45 +202,45 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
             <DialogContent padded className="space-y-6">
               <Field
                 {...register("name")}
-                label={__("Reference Name")}
+                label={t("trustCenterReferenceDialog.fields.name.label")}
                 type="text"
                 required
                 error={errors.name?.message}
-                placeholder={__("Company or organization name")}
+                placeholder={t("trustCenterReferenceDialog.fields.name.placeholder")}
               />
 
-              <Field label={__("Description")} error={errors.description?.message}>
+              <Field label={t("trustCenterReferenceDialog.fields.description.label")} error={errors.description?.message}>
                 <Textarea
                   {...register("description")}
-                  placeholder={__("Brief description of the reference")}
+                  placeholder={t("trustCenterReferenceDialog.fields.description.placeholder")}
                   rows={3}
                 />
               </Field>
 
               <Field
                 {...register("websiteUrl")}
-                label={__("Website URL")}
+                label={t("trustCenterReferenceDialog.fields.websiteUrl.label")}
                 type="url"
                 required
                 error={errors.websiteUrl?.message}
-                placeholder={__("https://example.com")}
+                placeholder={t("trustCenterReferenceDialog.fields.websiteUrl.placeholder")}
               />
 
               {mode === "edit" && (
                 <Field
                   {...register("rank", { valueAsNumber: true })}
-                  label={__("Rank")}
+                  label={t("trustCenterReferenceDialog.fields.rank.label")}
                   type="number"
                   min={1}
                   error={errors.rank?.message}
-                  placeholder={__("Display order (1, 2, 3...)")}
-                  help={__("Lower numbers appear first")}
+                  placeholder={t("trustCenterReferenceDialog.fields.rank.placeholder")}
+                  help={t("trustCenterReferenceDialog.fields.rank.help")}
                 />
               )}
 
-              <Field label={__("Logo")}>
+              <Field label={t("trustCenterReferenceDialog.fields.logo.label")}>
                 <Dropzone
-                  description={__("Upload logo image (PNG, JPG, WEBP, SVG up to 5MB)")}
+                  description={t("trustCenterReferenceDialog.fields.logo.description")}
                   isUploading={isSubmitting}
                   onDrop={handleDrop}
                   accept={acceptImage}
@@ -249,7 +249,7 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
                 {uploadedFile && (
                   <div className="mt-2 p-3 bg-tertiary-subtle rounded-lg">
                     <p className="text-sm font-medium">
-                      {__("Selected file")}
+                      {t("trustCenterReferenceDialog.fields.logo.selectedFile")}
                       :
                     </p>
                     <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
@@ -258,14 +258,14 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
                 {mode === "edit" && !uploadedFile && (
                   <div className="mt-2 p-3 bg-tertiary-subtle rounded-lg">
                     <p className="text-sm text-txt-secondary">
-                      {__("Current logo will be kept if no new file is uploaded")}
+                      {t("trustCenterReferenceDialog.fields.logo.keepCurrent")}
                     </p>
                   </div>
                 )}
                 {mode === "create" && !uploadedFile && (
                   <div className="mt-2 p-3 bg-warning-subtle rounded-lg">
                     <p className="text-sm">
-                      {__("Logo is required for new references")}
+                      {t("trustCenterReferenceDialog.fields.logo.required")}
                     </p>
                   </div>
                 )}
@@ -278,7 +278,7 @@ export const CompliancePageReferenceDialog = forwardRef<CompliancePageReferenceD
                 disabled={isSubmitting || (mode === "create" && !uploadedFile)}
                 icon={isSubmitting ? Spinner : undefined}
               >
-                {mode === "create" ? __("Add Reference") : __("Update Reference")}
+                {mode === "create" ? t("trustCenterReferenceDialog.actions.add") : t("trustCenterReferenceDialog.actions.update")}
               </Button>
             </DialogFooter>
           </form>

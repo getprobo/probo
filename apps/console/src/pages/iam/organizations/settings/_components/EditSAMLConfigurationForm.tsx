@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -93,7 +93,7 @@ export function EditSAMLConfigurationForm(props: {
   const { onUpdate, queryRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const { samlConfiguration }
@@ -109,8 +109,8 @@ export function EditSAMLConfigurationForm(props: {
     = useMutationWithToasts<EditSAMLConfigurationForm_updateMutation>(
       updateSAMLConfigurationMutation,
       {
-        successMessage: "SAML configuration updated successfully.",
-        errorMessage: "Failed to update SAML configuration. Please try again.",
+        successMessage: t("editSamlConfigurationForm.messages.updated"),
+        errorMessage: t("editSamlConfigurationForm.errors.update"),
       },
     );
 
@@ -133,9 +133,9 @@ export function EditSAMLConfigurationForm(props: {
           if (e) {
             toast({
               variant: "error",
-              title: __("Error"),
+              title: t("common.error"),
               description: formatError(
-                __("Failed to update SAML configuration"),
+                t("editSamlConfigurationForm.errors.update"),
                 e,
               ),
             });
@@ -146,7 +146,7 @@ export function EditSAMLConfigurationForm(props: {
         },
       });
     },
-    [onUpdate, organizationId, samlConfiguration.id, update, __, toast],
+    [onUpdate, organizationId, samlConfiguration.id, update, t, toast],
   );
 
   return (

@@ -20,97 +20,97 @@
 
 type Translator = (s: string) => string;
 
-export function getRiskImpacts(__: Translator) {
+export function getRiskImpacts(t: Translator) {
     return [
         {
             value: 1,
-            label: __("Negligible"),
+            label: t("helpers.riskImpact.negligible"),
         },
         {
             value: 2,
-            label: __("Low"),
+            label: t("helpers.riskImpact.low"),
         },
         {
             value: 3,
-            label: __("Moderate"),
+            label: t("helpers.riskImpact.moderate"),
         },
         {
             value: 4,
-            label: __("Significant"),
+            label: t("helpers.riskImpact.significant"),
         },
         {
             value: 5,
-            label: __("Catastrophic"),
+            label: t("helpers.riskImpact.catastrophic"),
         },
     ];
 }
 
-export function getTreatment(__: Translator, treatment?: string): string {
+export function getTreatment(t: Translator, treatment?: string): string {
     switch (treatment) {
         case "MITIGATED":
-            return __("Mitigate");
+            return t("helpers.riskTreatment.mitigate");
         case "ACCEPTED":
-            return __("Accept");
+            return t("helpers.riskTreatment.accept");
         case "TRANSFERRED":
-            return __("Transfer");
+            return t("helpers.riskTreatment.transfer");
         case "AVOIDED":
-            return __("Avoid");
+            return t("helpers.riskTreatment.avoid");
         default:
-            return __("Unknown");
+            return t("helpers.common.unknown");
     }
 }
 
-export function getRiskLikelihoods(__: Translator) {
+export function getRiskLikelihoods(t: Translator) {
     return [
         {
             value: 1,
-            label: __("Improbable"),
+            label: t("helpers.riskLikelihood.improbable"),
         },
         {
             value: 2,
-            label: __("Remote"),
+            label: t("helpers.riskLikelihood.remote"),
         },
         {
             value: 3,
-            label: __("Occasional"),
+            label: t("helpers.riskLikelihood.occasional"),
         },
         {
             value: 4,
-            label: __("Probable"),
+            label: t("helpers.riskLikelihood.probable"),
         },
         {
             value: 5,
-            label: __("Frequent"),
+            label: t("helpers.riskLikelihood.frequent"),
         },
     ];
 }
 
-function getRiskSeverities(__: Translator) {
+function getRiskSeverities(t: Translator) {
     return [
         {
             min: 15,
             variant: "danger",
-            label: __("Critical"),
+            label: t("helpers.riskSeverity.critical"),
             bg: "bg-danger",
             color: "text-txt-danger",
         },
         {
             min: 5,
             variant: "warning",
-            label: __("High"),
+            label: t("helpers.riskSeverity.high"),
             bg: "bg-warning",
             color: "text-txt-warning",
         },
         {
             min: 0,
             variant: "neutral",
-            label: __("Low"),
+            label: t("helpers.riskSeverity.low"),
             bg: "bg-txt-quaternary",
             color: "text-txt-primary",
         },
     ] as const;
 }
 
-export function getSeverity(__: Translator, score: number) {
-    return getRiskSeverities(__).find((s) => score >= s.min);
+export function getSeverity(t: Translator, score: number) {
+    return getRiskSeverities(t).find((s) => score >= s.min);
 }

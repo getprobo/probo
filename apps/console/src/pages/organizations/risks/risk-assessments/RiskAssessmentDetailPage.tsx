@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -31,6 +31,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   graphql,
@@ -90,7 +91,7 @@ interface RiskAssessmentDetailPageProps {
 }
 
 export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDetailPageProps) {
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -99,7 +100,7 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
   const ra = data.node;
   const [deleteRiskAssessment] = useMutation<RiskAssessmentDetailPageDeleteMutation>(deleteMutation);
 
-  usePageTitle(ra?.name ?? __("Risk Assessment"));
+  usePageTitle(ra?.name ?? t("riskAssessmentDetailPage.title"));
 
   if (!ra?.id) {
     return null;
@@ -126,7 +127,7 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
             onCompleted(_, errors) {
               if (errors?.length) {
                 toast({
-                  title: __("Error"),
+                  title: t("riskAssessmentDetailPage.messages.error"),
                   description: errors[0].message,
                   variant: "error",
                 });
@@ -138,15 +139,15 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
             },
             onError(error) {
               toast({
-                title: __("Error"),
-                description: formatError(__("Failed to delete risk assessment"), error),
+                title: t("riskAssessmentDetailPage.messages.error"),
+                description: formatError(t("riskAssessmentDetailPage.errors.delete"), error),
                 variant: "error",
               });
               reject(error);
             },
           });
         }),
-      { message: __("This will permanently delete this risk assessment and all its scopes, nodes, processes, and threats. This action cannot be undone.") },
+      { message: t("riskAssessmentDetailPage.deleteConfirmation") },
     );
   };
 
@@ -154,7 +155,7 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: __("Risk Assessments"), to: listUrl },
+          { label: t("riskAssessmentDetailPage.breadcrumb.assessments"), to: listUrl },
           { label: ra.name ?? "" },
         ]}
       />
@@ -169,14 +170,14 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
               icon={IconTrashCan}
               onClick={handleDelete}
             >
-              {__("Delete")}
+              {t("riskAssessmentDetailPage.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         )}
       </PageHeader>
 
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Details")}</h2>
+        <h2 className="text-base font-medium">{t("riskAssessmentDetailPage.details")}</h2>
         <Card className="space-y-4" padded>
           {ra.description && (
             <div className="text-sm text-txt-secondary">{ra.description}</div>
@@ -184,18 +185,18 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
           <div className="grid grid-cols-3 gap-4">
             <div>
               <div className="text-xs text-txt-tertiary font-semibold mb-1">
-                {__("Created at")}
+                {t("riskAssessmentDetailPage.fields.createdAt")}
               </div>
               <div className="text-sm text-txt-primary">
-                {formatDate(ra.createdAt)}
+                {dateFormat(i18n.language, ra.createdAt)}
               </div>
             </div>
             <div>
               <div className="text-xs text-txt-tertiary font-semibold mb-1">
-                {__("Updated at")}
+                {t("riskAssessmentDetailPage.fields.updatedAt")}
               </div>
               <div className="text-sm text-txt-primary">
-                {formatDate(ra.updatedAt)}
+                {dateFormat(i18n.language, ra.updatedAt)}
               </div>
             </div>
           </div>
@@ -204,7 +205,7 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">{__("Scopes")}</h2>
+          <h2 className="text-base font-medium">{t("riskAssessmentDetailPage.scopes")}</h2>
           <CreateScopeDialog
             connectionId={scopesConnectionId}
           />
@@ -213,7 +214,7 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
         {scopes.length === 0 && (
           <Card padded>
             <div className="text-center text-txt-secondary">
-              {__("No scopes yet. Create a scope to start defining nodes, processes, and threats.")}
+              {t("riskAssessmentDetailPage.emptyScopes")}
             </div>
           </Card>
         )}

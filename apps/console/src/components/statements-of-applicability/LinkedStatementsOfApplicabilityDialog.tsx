@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -30,6 +29,7 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { Suspense, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -75,13 +75,14 @@ export function LinkedStatementsOfApplicabilityDialog({
   children,
   ...props
 }: Props) {
+  const { t } = useTranslation();
   const dialogRef = useRef<{ open: () => void; close: () => void }>(null);
 
   return (
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title="Link Statement of Applicability"
+      title={t("linkedStatementsOfApplicabilityDialog.title")}
     >
       <Suspense fallback={<div>Loading...</div>}>
         <LinkedStatementsOfApplicabilityDialogContent
@@ -96,7 +97,7 @@ export function LinkedStatementsOfApplicabilityDialog({
 function LinkedStatementsOfApplicabilityDialogContent(
   props: Omit<Props, "children"> & { onClose: () => void },
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const [selectedSOA, setSelectedSOA] = useState<{
     id: string;
@@ -163,12 +164,10 @@ function LinkedStatementsOfApplicabilityDialogContent(
           ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-txt-secondary text-base mb-2">
-                  {__("No statements of applicability available")}
+                  {t("linkedStatementsOfApplicabilityDialog.empty.title")}
                 </div>
                 <div className="text-txt-tertiary text-sm">
-                  {__(
-                    "Create a statement of applicability first to link it to this control",
-                  )}
+                  {t("linkedStatementsOfApplicabilityDialog.empty.description")}
                 </div>
               </div>
             )
@@ -176,7 +175,7 @@ function LinkedStatementsOfApplicabilityDialogContent(
               ? (
                   <div className="space-y-2">
                     <div className="text-sm font-medium mb-2">
-                      {__("Select a statement of applicability:")}
+                      {t("linkedStatementsOfApplicabilityDialog.select")}
                     </div>
                     {statementsOfApplicability.map((soa) => {
                       const isLinked = linkedSOAIds.has(soa.id);
@@ -197,7 +196,7 @@ function LinkedStatementsOfApplicabilityDialogContent(
                                   onClick={e => e.stopPropagation()}
                                 >
                                   <Badge variant="success">
-                                    {__("Linked")}
+                                    {t("linkedStatementsOfApplicabilityDialog.linked")}
                                   </Badge>
                                   <Button
                                     variant="danger"
@@ -205,7 +204,7 @@ function LinkedStatementsOfApplicabilityDialogContent(
                                       handleUnlink(soa.id)}
                                     disabled={props.disabled}
                                   >
-                                    {__("Unlink")}
+                                    {t("linkedStatementsOfApplicabilityDialog.actions.unlink")}
                                   </Button>
                                 </div>
                               )
@@ -220,7 +219,7 @@ function LinkedStatementsOfApplicabilityDialogContent(
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-sm text-txt-secondary mb-1">
-                          {__("Selected:")}
+                          {t("linkedStatementsOfApplicabilityDialog.selected")}
                         </div>
                         <div className="text-lg font-medium">
                           {selectedSOA.name}
@@ -230,7 +229,7 @@ function LinkedStatementsOfApplicabilityDialogContent(
                         variant="tertiary"
                         onClick={() => setSelectedSOA(null)}
                       >
-                        {__("Change")}
+                        {t("linkedStatementsOfApplicabilityDialog.actions.change")}
                       </Button>
                     </div>
 
@@ -242,16 +241,16 @@ function LinkedStatementsOfApplicabilityDialogContent(
                             setApplicability(checked)}
                         />
                         <span className="font-medium">
-                          {__("Applicable")}
+                          {t("linkedStatementsOfApplicabilityDialog.applicable")}
                         </span>
                       </label>
 
                       <div>
                         <label className="text-sm font-medium mb-1 block">
-                          {__("Justification (optional)")}
+                          {t("linkedStatementsOfApplicabilityDialog.justification.label")}
                         </label>
                         <Textarea
-                          placeholder={__("Add a justification...")}
+                          placeholder={t("linkedStatementsOfApplicabilityDialog.justification.placeholder")}
                           value={justification}
                           onChange={e =>
                             setJustification(e.target.value)}
@@ -262,7 +261,7 @@ function LinkedStatementsOfApplicabilityDialogContent(
                   </div>
                 )}
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")}>
+      <DialogFooter exitLabel={t("linkedStatementsOfApplicabilityDialog.actions.close")}>
         {selectedSOA
           ? (
               <>
@@ -270,14 +269,14 @@ function LinkedStatementsOfApplicabilityDialogContent(
                   variant="secondary"
                   onClick={() => setSelectedSOA(null)}
                 >
-                  {__("Back")}
+                  {t("linkedStatementsOfApplicabilityDialog.actions.back")}
                 </Button>
                 <Button
                   variant="primary"
                   onClick={handleLink}
                   disabled={props.disabled}
                 >
-                  {__("Link")}
+                  {t("linkedStatementsOfApplicabilityDialog.actions.link")}
                 </Button>
               </>
             )

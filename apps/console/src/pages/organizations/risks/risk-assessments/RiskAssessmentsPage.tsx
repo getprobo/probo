@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   PageHeader,
   Tbody,
@@ -29,6 +28,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -98,7 +98,7 @@ interface RiskAssessmentsPageProps {
 }
 
 export default function RiskAssessmentsPage({ queryRef }: RiskAssessmentsPageProps) {
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
 
   const data = usePreloadedQuery<RiskAssessmentsPageQuery>(riskAssessmentsPageQuery, queryRef);
@@ -128,15 +128,13 @@ export default function RiskAssessmentsPage({ queryRef }: RiskAssessmentsPagePro
     );
   };
 
-  usePageTitle(__("Risk Assessments"));
+  usePageTitle(t("riskAssessmentsPage.title"));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Risk Assessments")}
-        description={__(
-          "Manage risk assessments with scopes, nodes, processes, threats, and scenarios.",
-        )}
+        title={t("riskAssessmentsPage.title")}
+        description={t("riskAssessmentsPage.description")}
       >
         {canCreate && (
           <CreateRiskAssessmentDialog
@@ -148,9 +146,9 @@ export default function RiskAssessmentsPage({ queryRef }: RiskAssessmentsPagePro
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
-            <SortableTh field="NAME">{__("Name")}</SortableTh>
-            <Th>{__("Description")}</Th>
-            <SortableTh field="CREATED_AT">{__("Created")}</SortableTh>
+            <SortableTh field="NAME">{t("riskAssessmentsPage.columns.name")}</SortableTh>
+            <Th>{t("riskAssessmentsPage.columns.description")}</Th>
+            <SortableTh field="CREATED_AT">{t("riskAssessmentsPage.columns.created")}</SortableTh>
           </Tr>
         </Thead>
         <Tbody>
@@ -164,7 +162,7 @@ export default function RiskAssessmentsPage({ queryRef }: RiskAssessmentsPagePro
                 {ra.description || "—"}
               </Td>
               <Td className="text-txt-secondary">
-                {formatDate(ra.createdAt)}
+                {dateFormat(i18n.language, ra.createdAt)}
               </Td>
             </Tr>
           ))}

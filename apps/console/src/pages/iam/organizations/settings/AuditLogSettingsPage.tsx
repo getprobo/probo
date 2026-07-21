@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -32,6 +31,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -139,8 +139,10 @@ function ActionBadge({ action }: { action: string }) {
 
 function AuditLogEntryRow({
   entryKey,
+  language,
 }: {
   entryKey: AuditLogSettingsPageRowFragment$key;
+  language: string;
 }) {
   const entry = useFragment(auditLogEntryRowFragment, entryKey);
 
@@ -148,7 +150,7 @@ function AuditLogEntryRow({
     <Tr>
       <Td>
         <span className="text-sm text-txt-secondary whitespace-nowrap">
-          {formatDate(entry.createdAt)}
+          {dateFormat(language, entry.createdAt)}
         </span>
       </Td>
       <Td>
@@ -179,7 +181,7 @@ function AuditLogEntryRow({
 export function AuditLogSettingsPage(props: {
   queryRef: PreloadedQuery<AuditLogSettingsPageQuery>;
 }) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
 
   const { organization } = usePreloadedQuery<AuditLogSettingsPageQuery>(
     auditLogSettingsPageQuery,
@@ -201,11 +203,9 @@ export function AuditLogSettingsPage(props: {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-base font-medium">{__("Audit Log")}</h2>
+        <h2 className="text-base font-medium">{t("auditLogSettingsPage.title")}</h2>
         <p className="text-sm text-txt-tertiary">
-          {__(
-            "A record of all actions performed in your organization. Entries are immutable and cannot be modified or deleted.",
-          )}
+          {t("auditLogSettingsPage.description")}
         </p>
       </div>
 
@@ -213,27 +213,27 @@ export function AuditLogSettingsPage(props: {
         ? (
             <div className="text-center py-8">
               <p className="text-sm text-txt-tertiary">
-                {__("No audit log entries yet.")}
+                {t("auditLogSettingsPage.empty")}
               </p>
             </div>
           )
         : (
             <div className="space-y-4">
               <p className="text-sm text-txt-tertiary">
-                {`${__("Showing")} ${entries.length} ${__("of")} ${totalCount} ${__("entries")}`}
+                {t("auditLogSettingsPage.showing", { shown: entries.length, total: totalCount })}
               </p>
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Date")}</Th>
-                    <Th>{__("Actor")}</Th>
-                    <Th>{__("Action")}</Th>
-                    <Th>{__("Resource")}</Th>
+                    <Th>{t("auditLogSettingsPage.columns.date")}</Th>
+                    <Th>{t("auditLogSettingsPage.columns.actor")}</Th>
+                    <Th>{t("auditLogSettingsPage.columns.action")}</Th>
+                    <Th>{t("auditLogSettingsPage.columns.resource")}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
                   {entries.map(entry => (
-                    <AuditLogEntryRow key={entry.id} entryKey={entry} />
+                    <AuditLogEntryRow key={entry.id} entryKey={entry} language={i18n.language} />
                   ))}
                 </Tbody>
               </Table>
@@ -245,7 +245,7 @@ export function AuditLogSettingsPage(props: {
                   disabled={isLoadingNext}
                   icon={isLoadingNext ? Spinner : IconChevronDown}
                 >
-                  {__("Show more")}
+                  {t("auditLogSettingsPage.actions.showMore")}
                 </Button>
               )}
             </div>

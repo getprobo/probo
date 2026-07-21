@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { toMaxAgeSeconds } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import type { CookieEntry } from "./CategorySection";
 
@@ -42,7 +42,7 @@ export function AddCookieRow({
   onSave,
   onCancel,
 }: AddCookieRowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
 
   const { register, handleSubmit, control } = useForm<CookieFormValues>({
     defaultValues: {
@@ -67,11 +67,11 @@ export function AddCookieRow({
         <div className="flex flex-col gap-2 min-w-0 max-w-xs">
           <Input
             {...register("name")}
-            placeholder={__("Cookie name")}
+            placeholder={t("addCookieRow.fields.namePlaceholder")}
           />
           <Input
             {...register("description")}
-            placeholder={__("Description")}
+            placeholder={t("addCookieRow.fields.descriptionPlaceholder")}
           />
         </div>
       </Td>
@@ -96,13 +96,13 @@ export function AddCookieRow({
             onClick={() => void handleSubmit(onSubmit)()}
             disabled={isUpdating}
           >
-            {__("Save")}
+            {t("addCookieRow.actions.save")}
           </Button>
           <Button
             variant="secondary"
             onClick={onCancel}
           >
-            {__("Cancel")}
+            {t("addCookieRow.actions.cancel")}
           </Button>
         </div>
       </Td>

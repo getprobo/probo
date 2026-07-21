@@ -18,10 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
+import {
+  Badge,
+  Button,
+  Field,
+  IconCrossLargeX,
+  Option,
+  Select,
+} from "@probo/ui";
 import { type ComponentProps, Suspense, useState } from "react";
-import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  type FieldValues,
+  type Path,
+} from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { usePeople } from "#/hooks/graph/PeopleGraph";
 
@@ -67,10 +79,24 @@ export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
 }
 
 function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedPeople" | "placeholder">,
+  props: Pick<
+    Props<T>,
+    | "organizationId"
+    | "control"
+    | "name"
+    | "disabled"
+    | "selectedPeople"
+    | "placeholder"
+  >,
 ) {
-  const { __ } = useTranslate();
-  const { name, organizationId, control, selectedPeople = [], placeholder } = props;
+  const { t } = useTranslation();
+  const {
+    name,
+    organizationId,
+    control,
+    selectedPeople = [],
+    placeholder,
+  } = props;
   const people = usePeople(organizationId, { contractEnded: false });
   const [isOpen, setIsOpen] = useState(false);
 
@@ -91,10 +117,16 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
         control={control}
         name={name as Path<T>}
         render={({ field }) => {
-          const selectedPeopleIds = (Array.isArray(field.value) ? field.value : []) as string[];
+          const selectedPeopleIds = (
+            Array.isArray(field.value) ? field.value : []
+          ) as string[];
 
-          const selectedPeople = allPeople.filter(p => selectedPeopleIds.includes(p.id));
-          const availablePeople = allPeople.filter(p => !selectedPeopleIds.includes(p.id));
+          const selectedPeople = allPeople.filter(p =>
+            selectedPeopleIds.includes(p.id),
+          );
+          const availablePeople = allPeople.filter(
+            p => !selectedPeopleIds.includes(p.id),
+          );
 
           const handleAddPerson = (personId: string) => {
             const newValue = [...selectedPeopleIds, personId];
@@ -103,7 +135,9 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
           };
 
           const handleRemovePerson = (personId: string) => {
-            const newValue = selectedPeopleIds.filter((id: string) => id !== personId);
+            const newValue = selectedPeopleIds.filter(
+              (id: string) => id !== personId,
+            );
             field.onChange(newValue);
           };
 
@@ -114,7 +148,9 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                   disabled={props.disabled}
                   id={name}
                   variant="editor"
-                  placeholder={placeholder ?? __("Add people...")}
+                  placeholder={
+                    placeholder ?? t("peopleMultiSelectField.addPlaceholder")
+                  }
                   onValueChange={handleAddPerson}
                   key={`${selectedPeopleIds.length}-${people.length}`}
                   className="w-full"
@@ -123,7 +159,11 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                   onOpenChange={setIsOpen}
                 >
                   {availablePeople.map(person => (
-                    <Option key={person.id} value={person.id} className="flex gap-2">
+                    <Option
+                      key={person.id}
+                      value={person.id}
+                      className="flex gap-2"
+                    >
                       <div className="flex flex-col">
                         <span>{person.fullName}</span>
                         {person.emailAddress && (
@@ -140,7 +180,11 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
               {selectedPeople.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {selectedPeople.map(person => (
-                    <Badge key={person.id} variant="neutral" className="flex items-center gap-2">
+                    <Badge
+                      key={person.id}
+                      variant="neutral"
+                      className="flex items-center gap-2"
+                    >
                       <span>{person.fullName}</span>
                       {!props.disabled && (
                         <Button
@@ -158,7 +202,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
 
               {selectedPeople.length === 0 && availablePeople.length === 0 && (
                 <div className="text-sm text-txt-secondary py-2">
-                  {__("No people available")}
+                  {t("peopleMultiSelectField.empty")}
                 </div>
               )}
             </div>

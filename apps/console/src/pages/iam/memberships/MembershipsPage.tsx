@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -28,6 +27,7 @@ import {
   Input,
 } from "@probo/ui";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
@@ -67,10 +67,10 @@ export const membershipsPageQuery = graphql`
 export function MembershipsPage(props: {
   queryRef: PreloadedQuery<MembershipsPageQuery>;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
-  usePageTitle(__("Select an organization"));
+  usePageTitle(t("membershipsPage.pageTitle"));
 
   const { queryRef } = props;
   const {
@@ -93,13 +93,13 @@ export function MembershipsPage(props: {
     <>
       <div className="space-y-6 w-full py-6">
         <h1 className="text-3xl font-bold text-center">
-          {__("Select an organization")}
+          {t("membershipsPage.title")}
         </h1>
         <div className="space-y-4 w-full">
           {invitingOrganizations.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">
-                {__("Pending invitations")}
+                {t("membershipsPage.pendingInvitations")}
               </h2>
               {invitingOrganizations.map(organization => (
                 <InvitingOrganizationCard key={organization.id} fKey={organization} />
@@ -109,12 +109,12 @@ export function MembershipsPage(props: {
           {initialProfiles.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">
-                {__("Your organizations")}
+                {t("membershipsPage.yourOrganizations")}
               </h2>
               <div className="w-full">
                 <Input
                   icon={IconMagnifyingGlass}
-                  placeholder={__("Search organizations...")}
+                  placeholder={t("membershipsPage.searchPlaceholder")}
                   value={search}
                   onValueChange={setSearch}
                 />
@@ -122,7 +122,7 @@ export function MembershipsPage(props: {
               {profiles.length === 0
                 ? (
                     <div className="text-center text-txt-secondary py-4">
-                      {__("No organizations found")}
+                      {t("membershipsPage.empty")}
                     </div>
                   )
                 : (
@@ -138,10 +138,10 @@ export function MembershipsPage(props: {
           )}
           <Card padded>
             <h2 className="text-xl font-semibold mb-1">
-              {__("Create an organization")}
+              {t("membershipsPage.createOrganization.title")}
             </h2>
             <p className="text-txt-tertiary mb-4">
-              {__("Add a new organization to your account")}
+              {t("membershipsPage.createOrganization.description")}
             </p>
             <Button
               to="/organizations/new"
@@ -149,7 +149,7 @@ export function MembershipsPage(props: {
               icon={IconPlusLarge}
               className="w-full"
             >
-              {__("Create organization")}
+              {t("membershipsPage.createOrganization.action")}
             </Button>
           </Card>
         </div>

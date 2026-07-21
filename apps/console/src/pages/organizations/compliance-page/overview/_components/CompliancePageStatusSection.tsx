@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Card, Spinner, Toggle, useToast } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -42,7 +42,7 @@ export function CompliancePageStatusSection(props: {
 }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const { toast } = useToast();
 
   const organization = useFragment<CompliancePageStatusSectionFragment$key>(
@@ -55,8 +55,8 @@ export function CompliancePageStatusSection(props: {
   const handleToggleActive = async (active: boolean) => {
     if (!organization.compliancePage?.id) {
       toast({
-        title: __("Error"),
-        description: __("Compliance page not found"),
+        title: t("statusSection.errors.title"),
+        description: t("statusSection.errors.notFound"),
         variant: "error",
       });
       return;
@@ -75,8 +75,8 @@ export function CompliancePageStatusSection(props: {
   const handleToggleSearchEngineIndexing = async (indexable: boolean) => {
     if (!organization.compliancePage?.id) {
       toast({
-        title: __("Error"),
-        description: __("Compliance page not found"),
+        title: t("statusSection.errors.title"),
+        description: t("statusSection.errors.notFound"),
         variant: "error",
       });
       return;
@@ -96,18 +96,16 @@ export function CompliancePageStatusSection(props: {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">
-          {__("Compliance Page Status")}
+          {t("statusSection.title")}
         </h2>
         {isUpdating && <Spinner />}
       </div>
       <Card padded className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h3 className="font-medium">{__("Activate Compliance Page")}</h3>
+            <h3 className="font-medium">{t("statusSection.activation.title")}</h3>
             <p className="text-sm text-txt-tertiary">
-              {__(
-                "Make your compliance page publicly accessible to build customer confidence",
-              )}
+              {t("statusSection.activation.description")}
             </p>
           </div>
           <Toggle
@@ -119,17 +117,15 @@ export function CompliancePageStatusSection(props: {
 
         <div className="flex items-center justify-between border-t border-border-solid pt-4">
           <div className="space-y-1">
-            <h3 className="font-medium">{__("Search Engine Indexing")}</h3>
+            <h3 className="font-medium">{t("statusSection.indexing.title")}</h3>
             <p className="text-sm text-txt-tertiary">
-              {__(
-                "Allow search engines to index your compliance page and make it discoverable",
-              )}
+              {t("statusSection.indexing.description")}
             </p>
           </div>
           <span
             title={
               !organization.compliancePage?.active
-                ? __("Activate your compliance page first to enable search engine indexing")
+                ? t("statusSection.indexing.disabledHint")
                 : undefined
             }
           >

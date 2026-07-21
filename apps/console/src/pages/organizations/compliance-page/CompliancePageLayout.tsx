@@ -20,8 +20,8 @@
 
 import { safeOpenUrl } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Badge, Button, IconBell2, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconShield, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 import { graphql } from "relay-runtime";
@@ -48,9 +48,9 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
   const { queryRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
-  usePageTitle(__("Compliance Page"));
+  usePageTitle(t("layout.title"));
 
   const { organization } = usePreloadedQuery<CompliancePageLayoutQuery>(compliancePageLayoutQuery, queryRef);
   if (organization.__typename !== "Organization") {
@@ -62,20 +62,20 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Compliance Page")}
-        description={__(
-          "Configure your public compliance page to showcase your security and compliance posture.",
-        )}
+        title={t("layout.title")}
+        description={t("layout.description")}
       >
         <Badge variant={organization.compliancePage?.active ? "success" : "danger"}>
-          {organization.compliancePage?.active ? __("Active") : __("Inactive")}
+          {organization.compliancePage?.active
+            ? t("layout.status.active")
+            : t("layout.status.inactive")}
         </Badge>
         {organization.compliancePage?.active && compliancePageUrl && (
           <Button
             variant="secondary"
             onClick={() => safeOpenUrl(compliancePageUrl)}
           >
-            {__("Open")}
+            {t("layout.actions.open")}
           </Button>
         )}
       </PageHeader>
@@ -83,43 +83,43 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
       <Tabs>
         <TabLink to={`/organizations/${organizationId}/compliance-page`} end>
           <IconSettingsGear2 className="size-4" />
-          {__("Overview")}
+          {t("layout.tabs.overview")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/brand`}>
           <IconPencil className="size-4" />
-          {__("Brand")}
+          {t("layout.tabs.brand")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/references`}>
           <IconCheckmark1 className="size-4" />
-          {__("References")}
+          {t("layout.tabs.references")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/commitments`}>
           <IconShield className="size-4" />
-          {__("Commitments")}
+          {t("layout.tabs.commitments")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/audits`}>
           <IconMedal className="size-4" />
-          {__("Audits")}
+          {t("layout.tabs.audits")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/documents`}>
           <IconPageTextLine className="size-4" />
-          {__("Documents")}
+          {t("layout.tabs.documents")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/files`}>
           <IconFolder2 className="size-4" />
-          {__("Files")}
+          {t("layout.tabs.files")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/third-parties`}>
           <IconStore className="size-4" />
-          {__("Subprocessors")}
+          {t("layout.tabs.subprocessors")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/access`}>
           <IconPeopleAdd className="size-4" />
-          {__("Access")}
+          {t("layout.tabs.access")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/mailing-list`}>
           <IconBell2 className="size-4" />
-          {__("Mailing List")}
+          {t("layout.tabs.mailingList")}
         </TabLink>
       </Tabs>
 

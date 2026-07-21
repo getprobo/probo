@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { CreateBoundaryDialogMutation } from "#/__generated__/core/CreateBoundaryDialogMutation.graphql";
@@ -54,7 +54,7 @@ export function CreateBoundaryDialog(props: {
   connectionId: string;
   boundaries: { id: string; name: string }[];
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [createBoundary, isCreating] = useMutation<CreateBoundaryDialogMutation>(createBoundaryMutation);
   const { register, control, handleSubmit, reset, formState } = useForm({
@@ -80,20 +80,20 @@ export function CreateBoundaryDialog(props: {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={<Button icon={IconPlusLarge} variant="secondary">{__("Add")}</Button>}
-      title={<Breadcrumb items={[__("Boundaries"), __("Add Boundary")]} />}
+      trigger={<Button icon={IconPlusLarge} variant="secondary">{t("createRiskAssessmentBoundaryDialog.actions.add")}</Button>}
+      title={<Breadcrumb items={[t("createRiskAssessmentBoundaryDialog.breadcrumb.boundaries"), t("createRiskAssessmentBoundaryDialog.breadcrumb.addBoundary")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" error={formState.errors.name?.message} />
-          <ControlledField label={__("Parent boundary")} name="parentBoundaryId" control={control} type="select">
-            <Option value="none">{__("None (top level)")}</Option>
+          <Field label={t("createRiskAssessmentBoundaryDialog.fields.name")} {...register("name", { required: t("createRiskAssessmentBoundaryDialog.validation.nameRequired") })} type="text" error={formState.errors.name?.message} />
+          <ControlledField label={t("createRiskAssessmentBoundaryDialog.fields.parentBoundary")} name="parentBoundaryId" control={control} type="select">
+            <Option value="none">{t("createRiskAssessmentBoundaryDialog.noneTopLevel")}</Option>
             {props.boundaries.map(b => (
               <Option key={b.id} value={b.id}>{b.name}</Option>
             ))}
           </ControlledField>
         </DialogContent>
-        <DialogFooter><Button type="submit" disabled={isCreating}>{__("Add")}</Button></DialogFooter>
+        <DialogFooter><Button type="submit" disabled={isCreating}>{t("createRiskAssessmentBoundaryDialog.actions.add")}</Button></DialogFooter>
       </form>
     </Dialog>
   );

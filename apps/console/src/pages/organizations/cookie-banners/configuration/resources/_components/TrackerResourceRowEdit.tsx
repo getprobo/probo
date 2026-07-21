@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Input, Td, Tr } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 interface FormValues {
   displayName: string;
@@ -42,7 +42,7 @@ export function TrackerResourceRowEdit({
   onSave,
   onCancel,
 }: TrackerResourceRowEditProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
 
   const { register, handleSubmit } = useForm<FormValues>({
     defaultValues: {
@@ -64,27 +64,27 @@ export function TrackerResourceRowEdit({
       <Td className="pr-3">
         <Input
           {...register("displayName")}
-          placeholder={__("Display name")}
+          placeholder={t("trackerResourceRowEdit.fields.displayNamePlaceholder")}
         />
       </Td>
       <Td className="pr-3" colSpan={4}>
         <div className="flex items-center gap-2">
           <Input
             {...register("description")}
-            placeholder={__("Description")}
+            placeholder={t("trackerResourceRowEdit.fields.descriptionPlaceholder")}
             className="flex-1"
           />
           <Button
             onClick={() => void handleSubmit(onSubmit)()}
             disabled={isUpdating}
           >
-            {__("Save")}
+            {t("trackerResourceRowEdit.actions.save")}
           </Button>
           <Button
             variant="secondary"
             onClick={onCancel}
           >
-            {__("Cancel")}
+            {t("trackerResourceRowEdit.actions.cancel")}
           </Button>
         </div>
       </Td>

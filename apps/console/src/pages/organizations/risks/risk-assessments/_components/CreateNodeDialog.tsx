@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { CreateNodeDialogMutation } from "#/__generated__/core/CreateNodeDialogMutation.graphql";
@@ -54,7 +54,7 @@ export function CreateNodeDialog(props: {
   connectionId: string;
   boundaries: { id: string; name: string }[];
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [createNode, isCreating] = useMutation<CreateNodeDialogMutation>(createNodeMutation);
   const { register, control, handleSubmit, reset, formState } = useForm({
@@ -81,27 +81,27 @@ export function CreateNodeDialog(props: {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={<Button icon={IconPlusLarge} variant="secondary">{__("Add")}</Button>}
-      title={<Breadcrumb items={[__("Nodes"), __("Add Node")]} />}
+      trigger={<Button icon={IconPlusLarge} variant="secondary">{t("createRiskAssessmentNodeDialog.actions.add")}</Button>}
+      title={<Breadcrumb items={[t("createRiskAssessmentNodeDialog.breadcrumb.nodes"), t("createRiskAssessmentNodeDialog.breadcrumb.addNode")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <ControlledField label={__("Type")} name="nodeType" control={control} type="select">
-            <Option value="ENTITY">{__("Entity")}</Option>
-            <Option value="ASSET">{__("Asset")}</Option>
-            <Option value="DATA">{__("Data")}</Option>
+          <ControlledField label={t("createRiskAssessmentNodeDialog.fields.type")} name="nodeType" control={control} type="select">
+            <Option value="ENTITY">{t("createRiskAssessmentNodeDialog.types.entity")}</Option>
+            <Option value="ASSET">{t("createRiskAssessmentNodeDialog.types.asset")}</Option>
+            <Option value="DATA">{t("createRiskAssessmentNodeDialog.types.data")}</Option>
           </ControlledField>
-          <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" error={formState.errors.name?.message} />
+          <Field label={t("createRiskAssessmentNodeDialog.fields.name")} {...register("name", { required: t("createRiskAssessmentNodeDialog.validation.nameRequired") })} type="text" error={formState.errors.name?.message} />
           {props.boundaries.length > 0 && (
-            <ControlledField label={__("Boundary")} name="boundaryId" control={control} type="select">
-              <Option value="none">{__("None")}</Option>
+            <ControlledField label={t("createRiskAssessmentNodeDialog.fields.boundary")} name="boundaryId" control={control} type="select">
+              <Option value="none">{t("createRiskAssessmentNodeDialog.none")}</Option>
               {props.boundaries.map(b => (
                 <Option key={b.id} value={b.id}>{b.name}</Option>
               ))}
             </ControlledField>
           )}
         </DialogContent>
-        <DialogFooter><Button type="submit" disabled={isCreating}>{__("Add")}</Button></DialogFooter>
+        <DialogFooter><Button type="submit" disabled={isCreating}>{t("createRiskAssessmentNodeDialog.actions.add")}</Button></DialogFooter>
       </form>
     </Dialog>
   );

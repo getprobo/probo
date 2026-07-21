@@ -22,7 +22,6 @@ import {
   getObligationStatusLabel,
   getObligationStatusVariant,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -37,6 +36,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -102,16 +102,16 @@ type Props = {
 };
 
 export function LinkedObligationDialog({ children, ...props }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
-    <Dialog trigger={children} title={__("Link obligations")}>
+    <Dialog trigger={children} title={t("linkedObligationsDialog.title")}>
       <DialogContent>
         <Suspense fallback={<Spinner centered />}>
           <LinkedObligationsDialogContent {...props} />
         </Suspense>
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")} />
+      <DialogFooter exitLabel={t("linkedObligationsDialog.actions.close")} />
     </Dialog>
   );
 }
@@ -125,12 +125,14 @@ function LinkedObligationsDialogContent(props: Omit<Props, "children">) {
     },
     { fetchPolicy: "network-only" },
   );
-  const { data, loadNext, hasNext, isLoadingNext }
-    = usePaginationFragment<LinkedObligationsDialogQuery_fragment, LinkedObligationsDialogFragment$key>(
-      obligationsFragment,
-      query.organization as LinkedObligationsDialogFragment$key,
-    );
-  const { __ } = useTranslate();
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
+    LinkedObligationsDialogQuery_fragment,
+    LinkedObligationsDialogFragment$key
+  >(
+    obligationsFragment,
+    query.organization as LinkedObligationsDialogFragment$key,
+  );
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const obligations = useMemo(
     () => data.obligations?.edges?.map(edge => edge.node) ?? [],
@@ -156,7 +158,7 @@ function LinkedObligationsDialogContent(props: Omit<Props, "children">) {
       <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search obligations...")}
+          placeholder={t("linkedObligationsDialog.searchPlaceholder")}
           onValueChange={setSearch}
         />
       </div>
@@ -191,7 +193,7 @@ function ObligationRow(props: {
   onUnlink: (obligationId: string) => void;
   disabled?: boolean;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const isLinked = props.linkedObligations.has(props.obligation.id);
 
   const onToggle = () => {
@@ -208,11 +210,12 @@ function ObligationRow(props: {
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-txt-primary truncate">
-              {props.obligation.area || __("No area specified")}
-              {props.obligation.source || __("No source specified")}
+              {props.obligation.area || t("linkedObligationsDialog.noArea")}
+              {props.obligation.source || t("linkedObligationsDialog.noSource")}
             </div>
             <div className="text-xs text-txt-secondary">
-              {props.obligation.owner?.fullName || __("Unassigned")}
+              {props.obligation.owner?.fullName
+                || t("linkedObligationsDialog.unassigned")}
             </div>
           </div>
           <Badge variant={getObligationStatusVariant(props.obligation.status)}>
@@ -227,7 +230,9 @@ function ObligationRow(props: {
         disabled={props.disabled}
         className="ml-6"
       >
-        {isLinked ? __("Unlink") : __("Link")}
+        {isLinked
+          ? t("linkedObligationsDialog.actions.unlink")
+          : t("linkedObligationsDialog.actions.link")}
       </Button>
     </div>
   );

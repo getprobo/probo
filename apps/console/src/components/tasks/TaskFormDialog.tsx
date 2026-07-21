@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatDatetime } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -40,6 +39,7 @@ import {
 import { Breadcrumb } from "@probo/ui";
 import { type ReactNode, useEffect } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useFragment, useRelayEnvironment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -143,7 +143,7 @@ type Props = {
 
 export default function TaskFormDialog(props: Props) {
   const { children, connection, ref, task: taskKey, measureId, onCompleted } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const newRef = useDialogRef();
   const dialogRef = ref ?? newRef;
   const organizationId = useOrganizationId();
@@ -152,8 +152,8 @@ export default function TaskFormDialog(props: Props) {
   const [mutate] = useMutationWithToasts(
     task ? taskUpdateMutation : taskCreateMutation,
     {
-      successMessage: __(`Task ${task ? "updated" : "created"} successfully.`),
-      errorMessage: __(`Failed to ${task ? "update" : "create"} task`),
+      successMessage: t(task ? "taskFormDialog.messages.updated" : "taskFormDialog.messages.created"),
+      errorMessage: t(task ? "taskFormDialog.errors.update" : "taskFormDialog.errors.create"),
     },
   );
 
@@ -246,7 +246,7 @@ export default function TaskFormDialog(props: Props) {
       trigger={children}
       title={(
         <Breadcrumb
-          items={[__("Tasks"), isUpdating ? __("Edit Task") : __("New Task")]}
+          items={[t("taskFormDialog.breadcrumb.tasks"), isUpdating ? t("taskFormDialog.breadcrumb.edit") : t("taskFormDialog.breadcrumb.new")]}
         />
       )}
     >
@@ -257,23 +257,23 @@ export default function TaskFormDialog(props: Props) {
               id="title"
               required
               variant="title"
-              placeholder={__("Task title")}
+              placeholder={t("taskFormDialog.fields.title.placeholder")}
               {...register("name")}
             />
             <Textarea
               id="content"
               variant="ghost"
               autogrow
-              placeholder={__("Add description")}
+              placeholder={t("taskFormDialog.fields.description.placeholder")}
               {...register("description")}
             />
           </div>
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
-            <Label>{__("Properties")}</Label>
+            <Label>{t("taskFormDialog.properties")}</Label>
             {isUpdating && (
               <PropertyRow
-                label={__("State")}
+                label={t("taskFormDialog.fields.state.label")}
                 error={"state" in formState.errors ? formState.errors.state?.message : undefined}
               >
                 <Controller
@@ -287,19 +287,19 @@ export default function TaskFormDialog(props: Props) {
                       <Option value="TODO">
                         <span className="flex items-center gap-2">
                           <TaskStateIcon state="TODO" />
-                          {__("To do")}
+                          {t("taskFormDialog.states.todo")}
                         </span>
                       </Option>
                       <Option value="IN_PROGRESS">
                         <span className="flex items-center gap-2">
                           <TaskStateIcon state="IN_PROGRESS" />
-                          {__("In progress")}
+                          {t("taskFormDialog.states.inProgress")}
                         </span>
                       </Option>
                       <Option value="DONE">
                         <span className="flex items-center gap-2">
                           <TaskStateIcon state="DONE" />
-                          {__("Done")}
+                          {t("taskFormDialog.states.done")}
                         </span>
                       </Option>
                     </Select>
@@ -308,7 +308,7 @@ export default function TaskFormDialog(props: Props) {
               </PropertyRow>
             )}
             <PropertyRow
-              label={__("Priority")}
+              label={t("taskFormDialog.fields.priority.label")}
               error={formState.errors.priority?.message}
             >
               <Controller
@@ -322,25 +322,25 @@ export default function TaskFormDialog(props: Props) {
                     <Option value="URGENT">
                       <span className="flex items-center gap-2">
                         <PriorityLevel level="URGENT" />
-                        {__("Urgent")}
+                        {t("taskFormDialog.priorities.urgent")}
                       </span>
                     </Option>
                     <Option value="HIGH">
                       <span className="flex items-center gap-2">
                         <PriorityLevel level="HIGH" />
-                        {__("High")}
+                        {t("taskFormDialog.priorities.high")}
                       </span>
                     </Option>
                     <Option value="MEDIUM">
                       <span className="flex items-center gap-2">
                         <PriorityLevel level="MEDIUM" />
-                        {__("Medium")}
+                        {t("taskFormDialog.priorities.medium")}
                       </span>
                     </Option>
                     <Option value="LOW">
                       <span className="flex items-center gap-2">
                         <PriorityLevel level="LOW" />
-                        {__("Low")}
+                        {t("taskFormDialog.priorities.low")}
                       </span>
                     </Option>
                   </Select>
@@ -348,7 +348,7 @@ export default function TaskFormDialog(props: Props) {
               />
             </PropertyRow>
             <PropertyRow
-              label={__("Assigned to")}
+              label={t("taskFormDialog.fields.assignedTo.label")}
               error={formState.errors.assignedToId?.message}
             >
               <PeopleSelectField
@@ -360,7 +360,7 @@ export default function TaskFormDialog(props: Props) {
             </PropertyRow>
             {showMeasure && (
               <PropertyRow
-                label={__("Measure")}
+                label={t("taskFormDialog.fields.measure.label")}
                 error={formState.errors.measureId?.message}
               >
                 <MeasureSelectField
@@ -372,7 +372,7 @@ export default function TaskFormDialog(props: Props) {
               </PropertyRow>
             )}
             <PropertyRow
-              label={__("Time estimate")}
+              label={t("taskFormDialog.fields.timeEstimate.label")}
               error={formState.errors.timeEstimate?.message}
             >
               <Controller
@@ -388,7 +388,7 @@ export default function TaskFormDialog(props: Props) {
               />
             </PropertyRow>
             <PropertyRow
-              label={__("Deadline")}
+              label={t("taskFormDialog.fields.deadline.label")}
               error={formState.errors.deadline?.message}
             >
               <Input id="deadline" type="date" {...register("deadline")} />
@@ -397,7 +397,7 @@ export default function TaskFormDialog(props: Props) {
         </DialogContent>
         <DialogFooter>
           <Button type="submit">
-            {isUpdating ? __("Update task") : __("Create task")}
+            {isUpdating ? t("taskFormDialog.actions.update") : t("taskFormDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

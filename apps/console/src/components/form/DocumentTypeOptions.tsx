@@ -18,18 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { documentTypes, getDocumentTypeLabel } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { documentTypes } from "@probo/helpers";
 import { Option } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export function DocumentTypeOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <>
       {documentTypes.map(type => (
         <Option key={type} value={type}>
-          {getDocumentTypeLabel(__, type)}
+          {t(`documentTypeOptions.types.${type}`)}
         </Option>
       ))}
     </>

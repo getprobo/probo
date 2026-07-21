@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { faviconUrl } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -33,6 +32,7 @@ import {
   Tr,
   TrButton,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -70,7 +70,7 @@ type Props<Params> = {
 };
 
 export function LinkedThirdPartiesCard<Params>(props: Props<Params>) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const thirdParties = props.thirdParties;
 
   const onAttach = (thirdPartyId: string) => {
@@ -101,8 +101,8 @@ export function LinkedThirdPartiesCard<Params>(props: Props<Params>) {
     <Table>
       <Thead>
         <Tr>
-          <Th>{__("Name")}</Th>
-          <Th>{__("Category")}</Th>
+          <Th>{t("linkedThirdPartiesCard.columns.name")}</Th>
+          <Th>{t("linkedThirdPartiesCard.columns.category")}</Th>
           {!props.readOnly && <Th></Th>}
         </Tr>
       </Thead>
@@ -113,7 +113,7 @@ export function LinkedThirdPartiesCard<Params>(props: Props<Params>) {
               colSpan={props.readOnly ? 2 : 3}
               className="text-center text-txt-secondary"
             >
-              {__("No third parties linked")}
+              {t("linkedThirdPartiesCard.empty")}
             </Td>
           </Tr>
         )}
@@ -134,7 +134,7 @@ export function LinkedThirdPartiesCard<Params>(props: Props<Params>) {
             onUnlink={onDetach}
           >
             <TrButton colspan={3} icon={IconPlusLarge}>
-              {__("Link third party")}
+              {t("linkedThirdPartiesCard.actions.link")}
             </TrButton>
           </LinkedThirdPartiesDialog>
         )}
@@ -150,7 +150,7 @@ function ThirdPartyRow(props: {
 }) {
   const thirdParty = useFragment(linkedThirdPartyFragment, props.thirdParty);
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const logo = faviconUrl(thirdParty.websiteUrl);
 
   return (
@@ -179,7 +179,7 @@ function ThirdPartyRow(props: {
             onClick={() => props.onClick(thirdParty.id)}
             icon={IconTrashCan}
           >
-            {__("Unlink")}
+            {t("linkedThirdPartiesCard.actions.unlink")}
           </Button>
         </Td>
       )}

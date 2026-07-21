@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge, PageHeader } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -43,9 +43,9 @@ interface Props {
 }
 
 export default function TasksPage({ queryRef }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
-  usePageTitle(__("Tasks"));
+  usePageTitle(t("tasks.title"));
 
   return (
     <div className="space-y-6">
@@ -53,14 +53,12 @@ export default function TasksPage({ queryRef }: Props) {
         organizationRef={query.organization}
         header={({ connectionId, canCreateTask, refetch }) => (
           <PageHeader
-            title={__("Tasks")}
-            description={__(
-              "Track your assigned compliance tasks and keep progress on track.",
-            )}
+            title={t("tasks.title")}
+            description={t("tasks.description")}
           >
             {canCreateTask && (
               <TaskFormDialog connection={connectionId} onCompleted={refetch}>
-                <Button icon={IconPlusLarge}>{__("New task")}</Button>
+                <Button icon={IconPlusLarge}>{t("tasks.actions.create")}</Button>
               </TaskFormDialog>
             )}
           </PageHeader>

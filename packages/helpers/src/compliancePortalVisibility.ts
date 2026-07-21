@@ -54,13 +54,13 @@ export const getCompliancePortalVisibilityLabel = (visibility: CompliancePortalV
   }
 };
 
-export function getCompliancePortalVisibilityOptions(__: Translator) {
+export function getCompliancePortalVisibilityOptions(t: Translator) {
   return compliancePortalVisibilities.map((visibility) => ({
     value: visibility,
-    label: __({
-      "NONE": "None",
-      "PRIVATE": "Private",
-      "PUBLIC": "Public",
+    label: t({
+      "NONE": "helpers.compliancePortalVisibility.none",
+      "PRIVATE": "helpers.compliancePortalVisibility.private",
+      "PUBLIC": "helpers.compliancePortalVisibility.public",
     }[visibility]),
     variant: getCompliancePortalVisibilityVariant(visibility),
   }));

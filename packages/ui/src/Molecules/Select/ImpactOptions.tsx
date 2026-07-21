@@ -18,29 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Option } from "../../Atoms/Select/Select";
 
 export function ImpactOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const descriptions = {
     LOW: {
-      label: __("Low"),
-      description: __("Minimal impact on business"),
+      label: t("ui.risk.severity.low"),
+      description: t("ui.impactOptions.low"),
     },
     MEDIUM: {
-      label: __("Medium"),
-      description: __("Moderate impact on business"),
+      label: t("ui.risk.severity.medium"),
+      description: t("ui.impactOptions.medium"),
     },
     HIGH: {
-      label: __("High"),
-      description: __("Significant business impact"),
+      label: t("ui.risk.severity.high"),
+      description: t("ui.impactOptions.high"),
     },
     CRITICAL: {
-      label: __("Critical"),
-      description: __("Critical to business operations"),
+      label: t("ui.risk.severity.critical"),
+      description: t("ui.impactOptions.critical"),
     },
   } as const;
 

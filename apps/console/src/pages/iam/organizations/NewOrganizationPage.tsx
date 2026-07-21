@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -29,6 +28,7 @@ import {
   useToast,
 } from "@probo/ui";
 import type { FormEventHandler } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { Link, useLocation, useNavigate } from "react-router";
 
@@ -50,7 +50,7 @@ function NewOrganizationPageInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const [createOrganization, isCreating]
     = useMutation<NewOrganizationPageMutation>(createOrganizationMutation);
@@ -61,8 +61,7 @@ function NewOrganizationPageInner() {
     const name = formData.get("name") ? (formData.get("name") as string).toString() : "";
     if (!name) {
       toast({
-        title: __("Error"),
-        description: __("Name is required"),
+        title: t("common.error"), description: t("newOrganizationPage.errors.nameRequired"),
         variant: "error",
       });
       return;
@@ -77,8 +76,7 @@ function NewOrganizationPageInner() {
       onCompleted: (r, e) => {
         if (e) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to create organization"), e),
+            title: t("common.error"), description: formatError(t("newOrganizationPage.errors.create"), e),
             variant: "error",
           });
           return;
@@ -87,14 +85,13 @@ function NewOrganizationPageInner() {
         const org = r.createOrganization!.organization;
         void navigate(`/organizations/${org!.id}`);
         toast({
-          title: __("Success"),
-          description: __("Organization has been created successfully"),
+          title: t("common.success"), description: t("newOrganizationPage.messages.created"),
           variant: "success",
         });
       },
       onError: (e) => {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: e.message,
           variant: "error",
         });
@@ -109,34 +106,30 @@ function NewOrganizationPageInner() {
         className="mb-4 inline-flex gap-2 items-center"
       >
         <IconChevronLeft size={16} />
-        {__("Back")}
+        {t("newOrganizationPage.actions.back")}
       </Link>
       <PageHeader
-        title={__("Create Organization")}
-        description={__(
-          "Create a new organization to manage your compliance and security needs.",
-        )}
+        title={t("newOrganizationPage.title")}
+        description={t("newOrganizationPage.description")}
       />
       <Card padded asChild>
         <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
           <h2 className="text-xl font-semibold mb-1">
-            {__("Organization Details")}
+            {t("newOrganizationPage.details")}
           </h2>
           <p className="text-txt-tertiary text-sm mb-4">
-            {__("Enter the basic information about your organization.")}
+            {t("newOrganizationPage.detailsDescription")}
           </p>
           <Field
             required
             name="name"
             type="text"
-            placeholder={__("Organization name")}
-            label={__("Organization name")}
-            help={__(
-              "The name of your organization as it will appear throughout the platform.",
-            )}
+            placeholder={t("newOrganizationPage.fields.name")}
+            label={t("newOrganizationPage.fields.name")}
+            help={t("newOrganizationPage.fields.nameHelp")}
           />
           <Button disabled={isCreating} type="submit" className="w-full">
-            {__("Create Organization")}
+            {t("newOrganizationPage.actions.create")}
           </Button>
         </form>
       </Card>

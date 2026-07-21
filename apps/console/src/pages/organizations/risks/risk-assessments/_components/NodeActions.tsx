@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -35,6 +34,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { NodeActionsDeleteMutation } from "#/__generated__/core/NodeActionsDeleteMutation.graphql";
@@ -65,7 +65,7 @@ export function NodeActions(props: {
   boundaries: { id: string; name: string }[];
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
   const [updateNode] = useMutation<NodeActionsUpdateMutation>(updateNodeMutation);
@@ -81,7 +81,7 @@ export function NodeActions(props: {
     <>
       <ActionDropdown>
         <DropdownItem icon={IconPencil} onSelect={() => dialogRef.current?.open()}>
-          {__("Edit")}
+          {t("riskAssessmentNodeActions.actions.edit")}
         </DropdownItem>
         <DropdownItem
           icon={IconTrashCan}
@@ -95,13 +95,13 @@ export function NodeActions(props: {
                 },
               });
             },
-            { message: __("Delete this node?") },
+            { message: t("riskAssessmentNodeActions.deleteConfirmation") },
           )}
         >
-          {__("Delete")}
+          {t("riskAssessmentNodeActions.actions.delete")}
         </DropdownItem>
       </ActionDropdown>
-      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Nodes"), __("Edit")]} />}>
+      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[t("riskAssessmentNodeActions.breadcrumb.nodes"), t("riskAssessmentNodeActions.actions.edit")]} />}>
         <form onSubmit={e => void handleSubmit((d) => {
           updateNode({
             variables: { input: { id: props.node.id, name: d.name, nodeType: d.nodeType as "ENTITY" | "ASSET" | "DATA", boundaryId: d.boundaryId === "none" ? null : d.boundaryId } },
@@ -110,20 +110,20 @@ export function NodeActions(props: {
         })(e)}
         >
           <DialogContent padded className="space-y-4">
-            <ControlledField label={__("Type")} name="nodeType" control={control} type="select">
-              <Option value="ENTITY">{__("Entity")}</Option>
-              <Option value="ASSET">{__("Asset")}</Option>
-              <Option value="DATA">{__("Data")}</Option>
+            <ControlledField label={t("riskAssessmentNodeActions.fields.type")} name="nodeType" control={control} type="select">
+              <Option value="ENTITY">{t("riskAssessmentNodeActions.types.entity")}</Option>
+              <Option value="ASSET">{t("riskAssessmentNodeActions.types.asset")}</Option>
+              <Option value="DATA">{t("riskAssessmentNodeActions.types.data")}</Option>
             </ControlledField>
-            <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" />
-            <ControlledField label={__("Boundary")} name="boundaryId" control={control} type="select">
-              <Option value="none">{__("None")}</Option>
+            <Field label={t("riskAssessmentNodeActions.fields.name")} {...register("name", { required: t("riskAssessmentNodeActions.validation.nameRequired") })} type="text" />
+            <ControlledField label={t("riskAssessmentNodeActions.fields.boundary")} name="boundaryId" control={control} type="select">
+              <Option value="none">{t("riskAssessmentNodeActions.none")}</Option>
               {props.boundaries.map(b => (
                 <Option key={b.id} value={b.id}>{b.name}</Option>
               ))}
             </ControlledField>
           </DialogContent>
-          <DialogFooter><Button type="submit">{__("Save")}</Button></DialogFooter>
+          <DialogFooter><Button type="submit">{t("riskAssessmentNodeActions.actions.save")}</Button></DialogFooter>
         </form>
       </Dialog>
     </>

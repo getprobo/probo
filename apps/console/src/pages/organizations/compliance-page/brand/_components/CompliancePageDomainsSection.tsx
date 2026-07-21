@@ -12,8 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconChevronRight } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -42,7 +42,7 @@ const organizationFragment = graphql`
 export function CompliancePageDomainsSection(props: {
   organizationRef: CompliancePageDomainsSection_organizationFragment$key;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const organization = useFragment(organizationFragment, props.organizationRef);
   const compliancePageId = organization.compliancePage.id;
@@ -52,11 +52,9 @@ export function CompliancePageDomainsSection(props: {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-base font-medium">{__("Domains")}</h2>
+        <h2 className="text-base font-medium">{t("brandPage.domains.title")}</h2>
         <p className="text-sm text-txt-tertiary">
-          {__(
-            "Your compliance page is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own.",
-          )}
+          {t("brandPage.domains.description")}
         </p>
       </div>
 
@@ -72,12 +70,10 @@ export function CompliancePageDomainsSection(props: {
           : organization.canCreateCustomDomain && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-solid px-4 py-8">
               <p className="max-w-md text-center text-sm text-txt-tertiary">
-                {__(
-                  "Use your own domain to make your compliance page feel more professional.",
-                )}
+                {t("domainPage.empty.description")}
               </p>
               <NewCompliancePageDomainDialog compliancePageId={compliancePageId}>
-                <Button iconAfter={IconChevronRight}>{__("Configure")}</Button>
+                <Button iconAfter={IconChevronRight}>{t("brandPage.domains.actions.configure")}</Button>
               </NewCompliancePageDomainDialog>
             </div>
           )}

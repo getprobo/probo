@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Button, IconChevronDown, IconPageTextLine, IconPencil, IconSend, IconTrashCan, Spinner, Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -79,7 +80,7 @@ export function CompliancePageUpdatesList(props: {
   onEdit: (update: UpdateNode) => void;
 }) {
   const { fragmentRef, onEdit } = props;
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/compliance-page");
 
   const sendDialogRef = useDialogRef();
   const [updateToSend, setUpdateToSend] = useState<UpdateNode | null>(null);
@@ -93,8 +94,8 @@ export function CompliancePageUpdatesList(props: {
 
   const [deleteUpdate, isDeleting]
     = useMutation<CompliancePageUpdatesListDeleteMutation>(deleteMutation, {
-      successMessage: __("Update deleted successfully"),
-      errorToast: __("Failed to delete update"),
+      successMessage: t("updatesList.messages.deleted"),
+      errorToast: t("updatesList.errors.delete"),
     });
 
   const handleDelete = (id: string) => {
@@ -120,7 +121,7 @@ export function CompliancePageUpdatesList(props: {
               <Tbody>
                 <Tr>
                   <Td className="text-center text-txt-tertiary py-8">
-                    {__("No updates yet")}
+                    {t("updatesList.empty")}
                   </Td>
                 </Tr>
               </Tbody>
@@ -131,9 +132,9 @@ export function CompliancePageUpdatesList(props: {
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Title")}</Th>
-                    <Th>{__("Status")}</Th>
-                    <Th>{__("Created")}</Th>
+                    <Th>{t("updatesList.columns.title")}</Th>
+                    <Th>{t("updatesList.columns.status")}</Th>
+                    <Th>{t("updatesList.columns.created")}</Th>
                     <Th />
                   </Tr>
                 </Thead>
@@ -143,11 +144,11 @@ export function CompliancePageUpdatesList(props: {
                       <Td>{node.title}</Td>
                       <Td>
                         <Badge variant={node.status === "SENT" ? "success" : node.status === "DRAFT" ? "warning" : "info"}>
-                          {node.status === "SENT" ? __("Sent") : node.status === "ENQUEUED" ? __("Queued") : node.status === "PROCESSING" ? __("Processing…") : __("Draft")}
+                          {t(`updatesList.status.${node.status.toLowerCase()}`)}
                         </Badge>
                       </Td>
                       <Td className="text-txt-tertiary text-sm">
-                        {new Date(node.createdAt).toLocaleDateString()}
+                        {dateFormat(i18n.language, node.createdAt)}
                       </Td>
                       <Td className="w-auto">
                         <div className="flex gap-2 justify-end">
@@ -156,23 +157,23 @@ export function CompliancePageUpdatesList(props: {
                               variant="secondary"
                               icon={IconSend}
                               onClick={() => handleSend(node)}
-                              aria-label={__("Send")}
+                              aria-label={t("updatesList.actions.send")}
                             >
-                              {__("Send")}
+                              {t("updatesList.actions.send")}
                             </Button>
                           )}
                           <Button
                             variant="secondary"
                             icon={node.status === "DRAFT" ? IconPencil : IconPageTextLine}
                             onClick={() => onEdit(node)}
-                            aria-label={node.status === "DRAFT" ? __("Edit update") : __("View update")}
+                            aria-label={node.status === "DRAFT" ? t("updatesList.actions.edit") : t("updatesList.actions.view")}
                           />
                           <Button
                             variant="danger"
                             icon={IconTrashCan}
                             disabled={isDeleting}
                             onClick={() => handleDelete(node.id)}
-                            aria-label={__("Delete update")}
+                            aria-label={t("updatesList.actions.delete")}
                           />
                         </div>
                       </Td>
@@ -189,7 +190,7 @@ export function CompliancePageUpdatesList(props: {
                   icon={IconChevronDown}
                 >
                   {isLoadingNext && <Spinner />}
-                  {__("Show More")}
+                  {t("updatesList.actions.showMore")}
                 </Button>
               )}
             </>

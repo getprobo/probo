@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPlusLarge,
@@ -28,6 +27,7 @@ import {
   Tabs,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
@@ -58,7 +58,7 @@ export default function DocumentsPage(props: {
   const { queryRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const { organization } = usePreloadedQuery<DocumentsPageQuery>(
     documentsPageQuery,
@@ -68,7 +68,7 @@ export default function DocumentsPage(props: {
     throw new Error("invalid type for node");
   }
 
-  usePageTitle(__("Documents"));
+  usePageTitle(t("documentsPage.pageTitle"));
 
   const [tab, setTab] = useState<"ACTIVE" | "ARCHIVED">("ACTIVE");
   const [documentListConnectionId, setDocumentListConnectionId] = useState(
@@ -82,26 +82,28 @@ export default function DocumentsPage(props: {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Documents")}
-        description={__("Manage your organization's documents")}
+        title={t("documentsPage.title")}
+        description={t("documentsPage.description")}
       >
         <div className="flex gap-2">
           {organization.canCreateDocument && tab === "ACTIVE" && (
             <CreateDocumentDialog
               connection={documentListConnectionId}
-              trigger={
-                <Button icon={IconPlusLarge}>{__("New document")}</Button>
-              }
+              trigger={(
+                <Button icon={IconPlusLarge}>
+                  {t("documentsPage.actions.new")}
+                </Button>
+              )}
             />
           )}
         </div>
       </PageHeader>
       <Tabs>
         <TabItem active={tab === "ACTIVE"} onClick={() => setTab("ACTIVE")}>
-          {__("Active")}
+          {t("documentsPage.tabs.active")}
         </TabItem>
         <TabItem active={tab === "ARCHIVED"} onClick={() => setTab("ARCHIVED")}>
-          {__("Archived")}
+          {t("documentsPage.tabs.archived")}
         </TabItem>
       </Tabs>
       <DocumentList

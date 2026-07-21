@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -33,6 +32,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -76,7 +76,7 @@ export function CreateRiskAssessmentDialog({
   connection,
   thirdPartyId,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const { register, handleSubmit, formState, reset, control }
     = useFormWithSchema(schema, {
@@ -107,9 +107,9 @@ export function CreateRiskAssessmentDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("createThirdPartyRiskAssessmentDialog.messages.error"),
             description: formatError(
-              __("Failed to create Risk Assessment"),
+              t("createThirdPartyRiskAssessmentDialog.errors.create"),
               errors,
             ),
             variant: "error",
@@ -117,8 +117,8 @@ export function CreateRiskAssessmentDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Risk Assessment created successfully."),
+          title: t("createThirdPartyRiskAssessmentDialog.messages.success"),
+          description: t("createThirdPartyRiskAssessmentDialog.messages.created"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -126,9 +126,9 @@ export function CreateRiskAssessmentDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("createThirdPartyRiskAssessmentDialog.messages.error"),
           description: formatError(
-            __("Failed to create Risk Assessment"),
+            t("createThirdPartyRiskAssessmentDialog.errors.create"),
             error,
           ),
           variant: "error",
@@ -146,14 +146,14 @@ export function CreateRiskAssessmentDialog({
       trigger={children}
       title={(
         <Breadcrumb
-          items={[__("Risk Assessments"), __("New Risk Assessment")]}
+          items={[t("createThirdPartyRiskAssessmentDialog.breadcrumb.riskAssessments"), t("createThirdPartyRiskAssessmentDialog.breadcrumb.newRiskAssessment")]}
         />
       )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <ControlledField
-            label={__("Data Sensitivity")}
+            label={t("createThirdPartyRiskAssessmentDialog.fields.dataSensitivity")}
             name="dataSensitivity"
             control={control}
             type="select"
@@ -161,7 +161,7 @@ export function CreateRiskAssessmentDialog({
             <SentitivityOptions />
           </ControlledField>
           <ControlledField
-            label={__("Business Impact")}
+            label={t("createThirdPartyRiskAssessmentDialog.fields.businessImpact")}
             name="businessImpact"
             control={control}
             type="select"
@@ -169,18 +169,16 @@ export function CreateRiskAssessmentDialog({
             <ImpactOptions />
           </ControlledField>
           <Field
-            label={__("Notes")}
+            label={t("createThirdPartyRiskAssessmentDialog.fields.notes")}
             {...register("notes")}
             type="textarea"
             error={formState.errors.notes?.message}
-            help={__(
-              "Add any context or details about this risk assessment that might be helpful for future reference.",
-            )}
+            help={t("createThirdPartyRiskAssessmentDialog.notesHelp")}
           />
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>
-            {__("Create")}
+            {t("createThirdPartyRiskAssessmentDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

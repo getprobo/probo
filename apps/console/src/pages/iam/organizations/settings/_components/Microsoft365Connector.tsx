@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -35,6 +34,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { Microsoft365ConnectorDeleteMutation } from "#/__generated__/iam/Microsoft365ConnectorDeleteMutation.graphql";
@@ -93,7 +93,7 @@ export function Microsoft365Connector(props: {
   const scimConfigurationId = data?.id;
   const bridgeId = bridge?.id;
   const organizationId = useOrganizationId();
-  const { __, dateTimeFormat } = useTranslate();
+  const { t, i18n } = useTranslation();
   const bridgeState = bridge?.state ?? null;
   const latestBridgeError = bridge?.syncError ?? null;
   const isBridgeFailed = bridgeState === "FAILED";
@@ -106,16 +106,14 @@ export function Microsoft365Connector(props: {
       ? "warning"
       : "success";
   const bridgeStatusLabel = isBridgeDisabled
-    ? __("Disabled")
+    ? t("microsoft365Connector.status.disabled")
     : isBridgeFailed
-      ? __("Error")
+      ? t("microsoft365Connector.status.error")
       : isBridgePending
-        ? __("Syncing")
-        : __("Connected");
+        ? t("microsoft365Connector.status.syncing")
+        : t("microsoft365Connector.status.connected");
   const bridgeErrorMessage = latestBridgeError
-    ?? __(
-      "The bridge is currently failing to sync. Check the provisioning event history for more details.",
-    );
+    ?? t("microsoft365Connector.errors.bridgeSync");
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const excludedUserNamesDialogRef = useDialogRef();
@@ -158,22 +156,22 @@ export function Microsoft365Connector(props: {
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors.map(e => e.message).join(", "),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Microsoft 365 disconnected successfully"),
+          title: t("common.success"),
+          description: t("microsoft365Connector.messages.disconnected"),
           variant: "success",
         });
         dialogRef.current?.close();
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: error.message,
           variant: "error",
         });
@@ -197,21 +195,21 @@ export function Microsoft365Connector(props: {
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors.map(e => e.message).join(", "),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Excluded user names updated successfully"),
+          title: t("common.success"),
+          description: t("microsoft365Connector.messages.excludedUsersUpdated"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: error.message,
           variant: "error",
         });
@@ -238,15 +236,13 @@ export function Microsoft365Connector(props: {
           <Microsoft className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{__("Microsoft 365")}</h3>
+          <h3 className="font-medium">{t("microsoft365Connector.name")}</h3>
           <p className="text-sm text-txt-secondary">
-            {__(
-              "Connect Microsoft 365 to automatically sync users via SCIM.",
-            )}
+            {t("microsoft365Connector.connectDescription")}
           </p>
         </div>
         <Button variant="secondary" onClick={handleConnect}>
-          {__("Connect")}
+          {t("microsoft365Connector.actions.connect")}
         </Button>
       </Card>
     );
@@ -259,9 +255,9 @@ export function Microsoft365Connector(props: {
           <Microsoft className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{__("Microsoft 365")}</h3>
+          <h3 className="font-medium">{t("microsoft365Connector.name")}</h3>
           <p className="text-sm text-txt-secondary">
-            {sprintf(__("Connected on %s"), dateTimeFormat(connector.createdAt))}
+            {t("microsoft365Connector.connectedOn", { date: dateTimeFormat(i18n.language, connector.createdAt) })}
           </p>
         </div>
         <Badge variant={bridgeStatusBadgeVariant} size="md">
@@ -272,18 +268,18 @@ export function Microsoft365Connector(props: {
           trigger={(
             <Button variant="secondary">
               <IconSettingsGear2 size={16} />
-              {__("Settings")}
+              {t("microsoft365Connector.actions.settings")}
             </Button>
           )}
-          title={__("Microsoft 365 Settings")}
+          title={t("microsoft365Connector.settings.title")}
           className="max-w-lg"
         >
           <DialogContent padded className="space-y-6">
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium">{__("Excluded user names")}</h4>
+                <h4 className="text-sm font-medium">{t("microsoft365Connector.settings.excludedUserNames")}</h4>
                 <p className="text-sm text-txt-secondary mt-1">
-                  {__("Users with these user names will not be synced from Microsoft 365.")}
+                  {t("microsoft365Connector.settings.excludedUserNamesDescription")}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -302,7 +298,7 @@ export function Microsoft365Connector(props: {
                   className="flex-1"
                 />
                 <Button onClick={handleAddUser} variant="secondary" disabled={isUpdating}>
-                  {__("Add")}
+                  {t("microsoft365Connector.actions.add")}
                 </Button>
               </div>
 
@@ -319,7 +315,7 @@ export function Microsoft365Connector(props: {
                         onClick={() => handleRemoveUser(user)}
                         disabled={isUpdating}
                       >
-                        {__("Remove")}
+                        {t("microsoft365Connector.actions.remove")}
                       </Button>
                     </div>
                   ))}
@@ -328,7 +324,7 @@ export function Microsoft365Connector(props: {
 
               {currentExcludedUserNames.length === 0 && (
                 <p className="text-sm text-txt-secondary text-center py-4">
-                  {__("No excluded user names. All Microsoft 365 users will be synced.")}
+                  {t("microsoft365Connector.settings.noExcludedUserNames")}
                 </p>
               )}
             </div>
@@ -338,20 +334,18 @@ export function Microsoft365Connector(props: {
           ref={dialogRef}
           trigger={(
             <Button variant="danger">
-              {__("Disconnect")}
+              {t("microsoft365Connector.actions.disconnect")}
             </Button>
           )}
-          title={__("Disconnect Microsoft 365")}
+          title={t("microsoft365Connector.disconnect.title")}
           className="max-w-lg"
         >
           <DialogContent padded className="space-y-4">
             <p className="text-txt-secondary text-sm">
-              {__(
-                "This will disconnect your Microsoft 365 integration. Users will no longer be automatically synced via SCIM.",
-              )}
+              {t("microsoft365Connector.disconnect.description")}
             </p>
             <p className="text-red-600 text-sm font-medium">
-              {__("This action cannot be undone.")}
+              {t("microsoft365Connector.disconnect.warning")}
             </p>
           </DialogContent>
           <DialogFooter>
@@ -361,8 +355,8 @@ export function Microsoft365Connector(props: {
               disabled={isDeleting}
             >
               {isDeleting
-                ? __("Disconnecting...")
-                : __("Disconnect")}
+                ? t("microsoft365Connector.actions.disconnecting")
+                : t("microsoft365Connector.actions.disconnect")}
             </Button>
           </DialogFooter>
         </Dialog>
@@ -374,8 +368,8 @@ export function Microsoft365Connector(props: {
           <div className="space-y-1">
             <p className="text-sm font-medium text-txt-danger">
               {isBridgeDisabled
-                ? __("Bridge is disabled")
-                : __("Bridge is in an error state")}
+                ? t("microsoft365Connector.errors.bridgeDisabled")
+                : t("microsoft365Connector.errors.bridgeFailed")}
             </p>
             <p className="text-sm text-txt-secondary whitespace-pre-wrap break-all">
               {bridgeErrorMessage}

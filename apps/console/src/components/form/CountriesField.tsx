@@ -18,12 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { countries, type CountryCode, getCountryName, getCountryOptions } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { countries, type CountryCode, getCountryName } from "@probo/helpers";
 import { Badge, IconCrossLargeX, Input } from "@probo/ui";
 import { clsx } from "clsx";
 import { useEffect, useState } from "react";
-import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 type Props<T extends FieldValues = FieldValues> = {
   control: Control<T>;
@@ -31,7 +36,11 @@ type Props<T extends FieldValues = FieldValues> = {
   disabled?: boolean;
 };
 
-export function CountriesField<T extends FieldValues = FieldValues>({ control, name, disabled }: Props<T>) {
+export function CountriesField<T extends FieldValues = FieldValues>({
+  control,
+  name,
+  disabled,
+}: Props<T>) {
   return (
     <Controller
       control={control}
@@ -54,7 +63,7 @@ type CountriesFieldInputProps = {
 };
 
 function CountriesFieldInput(props: CountriesFieldInputProps) {
-  const { __ } = useTranslate();
+  const { i18n } = useTranslation();
   const [animateBadge, setAnimateBadge] = useState(false);
 
   const addCountry = (code: string) => {
@@ -85,7 +94,7 @@ function CountriesFieldInput(props: CountriesFieldInputProps) {
                     && "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent",
                   )}
                 >
-                  {getCountryName(__, countryCode as CountryCode)}
+                  {getCountryName(i18n.language, countryCode as CountryCode)}
                   <div className="w-0 overflow-hidden group-hover:w-4 duration-200">
                     <IconCrossLargeX size={12} />
                   </div>
@@ -113,10 +122,13 @@ type CountryInputProps = {
 };
 
 function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const countryOptions = getCountryOptions(__);
+  const countryOptions = availableCountries.map(code => ({
+    value: code,
+    label: getCountryName(i18n.language, code),
+  }));
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
@@ -126,7 +138,9 @@ function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
   }, [isOpen]);
 
   const filteredCountries = countryOptions
-    .filter((option: { value: string; label: string }) => availableCountries.includes(option.value as CountryCode))
+    .filter((option: { value: string; label: string }) =>
+      availableCountries.includes(option.value as CountryCode),
+    )
     .filter((option: { value: string; label: string }) =>
       option.label.toLowerCase().includes(search.toLowerCase()),
     );
@@ -145,7 +159,7 @@ function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             onFocus={() => setIsOpen(true)}
-            placeholder={__("Search and add countries...")}
+            placeholder={t("countriesField.searchPlaceholder")}
             className="w-full pr-8"
           />
           <button
@@ -186,10 +200,7 @@ function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
       )}
 
       {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       )}
     </div>
   );

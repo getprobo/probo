@@ -20,10 +20,8 @@
 
 import {
   formatError,
-  getControlMaturityLevelLabel,
   promisifyMutation,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -35,6 +33,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   useMutation,
@@ -182,7 +181,7 @@ type Props = {
 * Display the control detail on the right panel
 */
 export default function FrameworkControlPage({ queryRef }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { framework } = useOutletContext<{
     framework: FrameworkDetailPageFragment$data;
@@ -251,7 +250,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           onCompleted: (response, error) => {
             if (error) {
               toast({
-                title: __("Error"),
+                title: t("frameworkControlPage.messages.error"),
                 description: formatError(
                   errorMessage,
                   error,
@@ -263,7 +262,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           },
           onError: (error) => {
             toast({
-              title: __("Error"),
+              title: t("frameworkControlPage.messages.error"),
               description: formatError(
                 errorMessage,
                 error,
@@ -293,7 +292,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         });
       },
       {
-        message: __("Are you sure you want to delete this control?"),
+        message: t("frameworkControlPage.deleteConfirmation"),
       },
     );
   };
@@ -314,7 +313,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
               control={control}
             >
               <Button icon={IconPencil} variant="secondary">
-                {__("Edit control")}
+                {t("frameworkControlPage.actions.editControl")}
               </Button>
             </FrameworkControlDialog>
           )}
@@ -325,7 +324,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                 variant="danger"
                 onClick={onDelete}
               >
-                {__("Delete")}
+                {t("frameworkControlPage.actions.delete")}
               </DropdownItem>
             </ActionDropdown>
           )}
@@ -342,20 +341,20 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         <Card padded className="mb-6 mt-6">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-txt-secondary">{__("Best Practice")}</span>
+              <span className="text-sm text-txt-secondary">{t("frameworkControlPage.fields.bestPractice")}</span>
               <Badge variant={control.bestPractice ? "success" : "neutral"} size="sm">
-                {control.bestPractice ? __("Yes") : __("No")}
+                {control.bestPractice ? t("frameworkControlPage.answers.yes") : t("frameworkControlPage.answers.no")}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-txt-secondary">{__("Maturity level")}</span>
+              <span className="text-sm text-txt-secondary">{t("frameworkControlPage.fields.maturityLevel")}</span>
               <Badge variant="neutral" size="sm">
-                {getControlMaturityLevelLabel(__, control.maturityLevel ?? "NONE")}
+                {t(`frameworkControlPage.maturityLevels.${(control.maturityLevel ?? "NONE").toLowerCase()}`)}
               </Badge>
             </div>
             {control.maturityLevel === "NONE" && control.notImplementedJustification && (
               <div>
-                <span className="text-xs text-txt-secondary">{__("Justification for non-implementation")}</span>
+                <span className="text-xs text-txt-secondary">{t("frameworkControlPage.fields.notImplementedJustification")}</span>
                 <div className="text-sm mt-0.5 whitespace-pre-wrap">{control.notImplementedJustification}</div>
               </div>
             )}
@@ -372,11 +371,11 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             connectionId={control.measures?.__id ?? ""}
             onAttach={withErrorHandling(
               attachMeasure,
-              __("Failed to link measure"),
+              t("frameworkControlPage.errors.linkMeasure"),
             )}
             onDetach={withErrorHandling(
               detachMeasure,
-              __("Failed to unlink measure"),
+              t("frameworkControlPage.errors.unlinkMeasure"),
             )}
             disabled={isAttachingMeasure || isDetachingMeasure}
             readOnly={measuresReadOnly}
@@ -393,11 +392,11 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             connectionId={control.documents?.__id ?? ""}
             onAttach={withErrorHandling(
               attachDocument,
-              __("Failed to link document"),
+              t("frameworkControlPage.errors.linkDocument"),
             )}
             onDetach={withErrorHandling(
               detachDocument,
-              __("Failed to unlink document"),
+              t("frameworkControlPage.errors.unlinkDocument"),
             )}
             disabled={isAttachingDocument || isDetachingDocument}
             readOnly={documentsReadOnly}
@@ -413,11 +412,11 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             connectionId={control.audits?.__id ?? ""}
             onAttach={withErrorHandling(
               attachAudit,
-              __("Failed to link audit"),
+              t("frameworkControlPage.errors.linkAudit"),
             )}
             onDetach={withErrorHandling(
               detachAudit,
-              __("Failed to unlink audit"),
+              t("frameworkControlPage.errors.unlinkAudit"),
             )}
             disabled={isAttachingAudit || isDetachingAudit}
             readOnly={auditsReadOnly}
@@ -435,11 +434,11 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             connectionId={control.obligations?.__id ?? ""}
             onAttach={withErrorHandling(
               attachObligation,
-              __("Failed to link obligation"),
+              t("frameworkControlPage.errors.linkObligation"),
             )}
             onDetach={withErrorHandling(
               detachObligation,
-              __("Failed to unlink obligation"),
+              t("frameworkControlPage.errors.unlinkObligation"),
             )}
             disabled={
               isAttachingObligation || isDetachingObligation

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Badge, Button, IconCrossLargeX, useConfirm } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -74,7 +74,7 @@ export function DocumentApprovalList(props: {
   versionFragmentRef: DocumentApprovalList_versionFragment$key;
 }) {
   const { versionFragmentRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const version = useFragment(versionFragment, versionFragmentRef);
 
@@ -105,10 +105,8 @@ export function DocumentApprovalList(props: {
           });
         }),
       {
-        message: __(
-          "This will void the current approval request and return the version to draft. This action cannot be undone.",
-        ),
-        label: __("Void approval"),
+        message: t("documentApprovalList.confirmation.void"),
+        label: t("documentApprovalList.actions.void"),
         variant: "danger",
       },
     );
@@ -122,10 +120,10 @@ export function DocumentApprovalList(props: {
   } as const;
 
   const statusLabel = {
-    PENDING: __("Pending"),
-    APPROVED: __("Approved"),
-    REJECTED: __("Rejected"),
-    VOIDED: __("Voided"),
+    PENDING: t("documentApprovalList.status.pending"),
+    APPROVED: t("documentApprovalList.status.approved"),
+    REJECTED: t("documentApprovalList.status.rejected"),
+    VOIDED: t("documentApprovalList.status.voided"),
   } as const;
 
   return (
@@ -142,7 +140,7 @@ export function DocumentApprovalList(props: {
               onClick={handleVoid}
               disabled={isVoiding}
             >
-              {__("Cancel")}
+              {t("documentApprovalList.actions.cancel")}
             </Button>
           )}
         </div>
@@ -151,7 +149,7 @@ export function DocumentApprovalList(props: {
       {edges.length === 0
         ? (
             <div className="text-sm text-txt-secondary text-center py-8">
-              {__("No approval decisions yet.")}
+              {t("documentApprovalList.empty")}
             </div>
           )
         : (

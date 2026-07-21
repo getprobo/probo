@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Component, type ReactNode, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQueryLoader } from "react-relay";
 import { useSearchParams } from "react-router";
 
@@ -61,13 +61,13 @@ class ConsentErrorBoundary extends Component<
 }
 
 function ConsentErrorFallback() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-      <h1 className="text-2xl font-bold">{__("Invalid Request")}</h1>
+      <h1 className="text-2xl font-bold">{t("consentPage.invalidRequest.title")}</h1>
       <p className="text-txt-tertiary">
-        {__("This consent request is invalid or has expired.")}
+        {t("consentPage.invalidRequest.description")}
       </p>
     </div>
   );

@@ -18,21 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TranslatorProvider as ProboTranslatorProvider } from "@probo/i18n";
-import type { PropsWithChildren } from "react";
+type Translator = (key: string, options?: { count?: number }) => string;
 
-// TODO : implement a way to retrieve translations strings
-const loader = () => {
-  return Promise.resolve({} as Record<string, string>);
-};
+export function fileSize(size: number, t: Translator): string {
+  if (size < 0) return "";
+  if (size === 0) return `0 ${t("size.B")}`;
 
-/**
- * Provider for the translator
- */
-export function TranslatorProvider({ children }: PropsWithChildren) {
-  return (
-    <ProboTranslatorProvider lang="en" loader={loader}>
-      {children}
-    </ProboTranslatorProvider>
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const unitIndex = Math.min(
+    Math.floor(Math.log(size) / Math.log(1024)),
+    units.length - 1,
   );
+  const formattedSize = Math.round((size / 1024 ** unitIndex) * 100) / 100;
+
+  return `${formattedSize} ${t(`size.${units[unitIndex]}`)}`;
 }

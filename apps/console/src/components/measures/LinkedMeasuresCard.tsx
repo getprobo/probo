@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -37,6 +35,7 @@ import {
 import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
 import { clsx } from "clsx";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -83,7 +82,7 @@ type Props<Params> = {
  * Reusable component that displays a list of linked measures
  */
 export function LinkedMeasuresCard<Params>(props: Props<Params>) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [limit, setLimit] = useState<number | null>(
     props.variant === "card" ? 4 : null,
   );
@@ -123,7 +122,9 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
     <Wrapper padded className="space-y-[10px]">
       {variant === "card" && (
         <div className="flex justify-between">
-          <div className="text-lg font-semibold">{__("Measures")}</div>
+          <div className="text-lg font-semibold">
+            {t("linkedMeasuresCard.title")}
+          </div>
           {!props.readOnly && (
             <LinkedMeasureDialog
               connectionId={props.connectionId}
@@ -133,7 +134,7 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
               onUnlink={onDetach}
             >
               <Button variant="tertiary" icon={IconPlusLarge}>
-                {__("Link measure")}
+                {t("linkedMeasuresCard.actions.link")}
               </Button>
             </LinkedMeasureDialog>
           )}
@@ -142,8 +143,8 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
       <Table className={clsx(variant === "card" && "bg-invert")}>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("State")}</Th>
+            <Th>{t("linkedMeasuresCard.columns.name")}</Th>
+            <Th>{t("linkedMeasuresCard.columns.state")}</Th>
             {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
@@ -154,7 +155,7 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
                 colSpan={props.readOnly ? 2 : 3}
                 className="text-center text-txt-secondary"
               >
-                {__("No measures linked")}
+                {t("linkedMeasuresCard.empty")}
               </Td>
             </Tr>
           )}
@@ -175,7 +176,7 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
               onUnlink={onDetach}
             >
               <TrButton colspan={3} icon={IconPlusLarge}>
-                {__("Link measure")}
+                {t("linkedMeasuresCard.actions.link")}
               </TrButton>
             </LinkedMeasureDialog>
           )}
@@ -188,7 +189,9 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
           className="mt-3 mx-auto"
           icon={IconChevronDown}
         >
-          {sprintf(__("Show %s more"), props.measures.length - limit)}
+          {t("linkedMeasuresCard.actions.showMore", {
+            count: props.measures.length - limit,
+          })}
         </Button>
       )}
     </Wrapper>
@@ -202,7 +205,7 @@ function MeasureRow(props: {
 }) {
   const measure = useFragment(linkedMeasureFragment, props.measure);
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Tr to={`/organizations/${organizationId}/measures/${measure.id}`}>
@@ -217,7 +220,7 @@ function MeasureRow(props: {
             onClick={() => props.onClick(measure.id)}
             icon={IconTrashCan}
           >
-            {__("Unlink")}
+            {t("linkedMeasuresCard.actions.unlink")}
           </Button>
         </Td>
       )}

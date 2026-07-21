@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconTrashCan } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -60,7 +60,7 @@ export function GeneralSettingsPage(props: {
   queryRef: PreloadedQuery<GeneralSettingsPageQuery>;
 }) {
   const { queryRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { organization } = usePreloadedQuery<GeneralSettingsPageQuery>(
@@ -75,8 +75,8 @@ export function GeneralSettingsPage(props: {
     = useMutationWithToasts<GeneralSettingsPage_deleteMutation>(
       deleteOrganizationMutation,
       {
-        successMessage: __("Organization deleted successfully."),
-        errorMessage: __("Failed to delete organization"),
+        successMessage: t("generalSettingsPage.messages.deleted"),
+        errorMessage: t("generalSettingsPage.errors.delete"),
       },
     );
 
@@ -101,18 +101,18 @@ export function GeneralSettingsPage(props: {
       {organization.canDelete && (
         <div className="space-y-4 mt-12">
           <h2 className="text-base font-medium text-red-600">
-            {__("Danger Zone")}
+            {t("generalSettingsPage.dangerZone.title")}
           </h2>
           <Card padded className="border-red-200 flex items-center gap-3">
             <div className="mr-auto">
               <h3 className="text-base font-semibold text-red-700">
-                {__("Delete Organization")}
+                {t("generalSettingsPage.dangerZone.delete.title")}
               </h3>
               <p className="text-sm text-txt-tertiary">
-                {__("Permanently delete this organization and all its data.")}
+                {t("generalSettingsPage.dangerZone.delete.description")}
                 {" "}
                 <span className="text-red-600 font-medium">
-                  {__("This action cannot be undone.")}
+                  {t("generalSettingsPage.dangerZone.delete.warning")}
                 </span>
               </p>
             </div>
@@ -126,7 +126,7 @@ export function GeneralSettingsPage(props: {
                 icon={IconTrashCan}
                 disabled={isDeletingOrganization}
               >
-                {__("Delete Organization")}
+                {t("generalSettingsPage.dangerZone.delete.action")}
               </Button>
             </DeleteOrganizationDialog>
           </Card>

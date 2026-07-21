@@ -1,0 +1,243 @@
+{
+  "bannerTranslationSection": {
+    "title": "Bannière",
+    "policyLinkHelp": "Utilisez {{cookie_policy_link}} et {{privacy_policy_link}} pour insérer des liens vers les politiques."
+  },
+  "panelTranslationSection": {
+    "title": "Panneau de préférences",
+    "necessaryCategoryHelp": "Utilisez {{necessary_category}} pour désigner la catégorie de cookies obligatoire.",
+    "accessibilityLabels": "Libellés d'accessibilité",
+    "categoryNames": "Noms des catégories",
+    "translatedName": "Nom traduit",
+    "translatedDescription": "Description traduite"
+  },
+  "placeholderTranslationSection": {
+    "title": "Espace réservé",
+    "description": "Affiché à la place du contenu bloqué jusqu'à ce que le visiteur donne son consentement.",
+    "categoryHelp": "Utilisez {{category}} pour désigner la catégorie de contenu."
+  },
+  "translationEditor": {
+    "messages": {
+      "successTitle": "Succès",
+      "saved": "Traduction enregistrée"
+    },
+    "errors": {
+      "title": "Erreur",
+      "save": "Échec de l’enregistrement de la traduction"
+    },
+    "exampleCategory": "Analytique",
+    "actions": {
+      "saving": "Enregistrement...",
+      "save": "Enregistrer les traductions"
+    },
+    "labels": {
+      "bannerTitle": "Titre de la bannière",
+      "bannerDescription": "Description de la bannière",
+      "acceptAllButton": "Bouton Tout accepter",
+      "rejectAllButton": "Bouton Tout refuser",
+      "customizeButton": "Bouton Personnaliser",
+      "cookiePolicyLinkText": "Texte du lien vers la politique relative aux cookies",
+      "privacyPolicyLinkText": "Texte du lien vers la politique de confidentialité",
+      "panelTitle": "Titre du panneau",
+      "panelDescription": "Description du panneau",
+      "saveButton": "Bouton Enregistrer",
+      "ariaClose": "Fermer (ARIA)",
+      "ariaShowDetails": "Afficher les détails (ARIA)",
+      "ariaHideDetails": "Masquer les détails (ARIA)",
+      "ariaCookieSettings": "Paramètres des cookies (ARIA)",
+      "placeholderText": "Texte de l'espace réservé",
+      "placeholderButton": "Bouton de l'espace réservé"
+    }
+  },
+  "overviewPage": {
+    "pageTitle": "Bannières de cookies",
+    "title": "Bannières de cookies",
+    "description": "Gérez les bannières de consentement aux cookies de vos sites web. Configurez les catégories, les cookies et installez le SDK.",
+    "messages": { "successTitle": "Succès", "deleted": "Bannière de cookies supprimée avec succès" },
+    "errors": { "title": "Erreur", "delete": "Échec de la suppression de la bannière de cookies" },
+    "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
+    "actions": { "createFirst": "Créer votre première bannière", "create": "Créer une bannière", "delete": "Supprimer" },
+    "status": { "active": "Active", "inactive": "Inactive" }
+  },
+  "emptyState": {
+    "title": "Aucune bannière de cookies pour le moment",
+    "description": "Créez votre première bannière de consentement aux cookies pour commencer à recueillir le consentement conforme au RGPD de vos visiteurs.",
+    "steps": {
+      "create": { "title": "Créer une bannière", "description": "Configurez votre bannière de consentement aux cookies avec un nom, une URL d’origine et un lien vers la politique de confidentialité." },
+      "categories": { "title": "Configurer les catégories", "description": "Organisez vos cookies en catégories telles que Analytique, Publicité et Fonctionnel." },
+      "sdk": { "title": "Installer le SDK", "description": "Ajoutez une seule balise de script ou importez le module ES pour commencer à recueillir le consentement." }
+    }
+  },
+  "translationsPage": {
+    "necessaryFallback": "Nécessaire",
+    "languageDefault": "{{language}} (par défaut)",
+    "defaultLanguageDescription": "Il s’agit de la langue par défaut. Ces traductions sont affichées lorsque la langue d’un visiteur n’est pas disponible."
+  },
+  "trackerPatternRowEdit": {
+    "fields": { "description": "Description", "descriptionPlaceholder": "Description", "maxAge": "Âge maximal" },
+    "actions": { "save": "Enregistrer", "cancel": "Annuler" }
+  },
+  "trackerPatternRow": {
+    "messages": { "successTitle": "Succès", "cookieDeleted": "Cookie supprimé", "cookieMoved": "Cookie déplacé", "thirdPartyImported": "Tiers importé", "cookieUpdated": "Cookie mis à jour" },
+    "errors": { "title": "Erreur", "deleteCookie": "Échec de la suppression du cookie", "moveCookie": "Échec du déplacement du cookie", "updateCookie": "Échec de la mise à jour du cookie", "importThirdParty": "Échec de l’importation du tiers" },
+    "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
+    "actions": { "edit": "Modifier", "importThirdParties": "Importer vers les tiers", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
+    "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
+    "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
+    "duration": { "session": "Session", "persistent": "Persistant", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "year_one": "{{count}} an", "year_other": "{{count}} ans" },
+    "commonCatalog": "Catalogue commun"
+  },
+  "trackerProperties": {
+    "messages": { "successTitle": "Succès", "moved": "Cookie déplacé", "copiedTitle": "Copié", "idCopied": "ID du traceur commun copié dans le presse-papiers" },
+    "errors": { "title": "Erreur", "move": "Échec du déplacement du cookie", "copy": "Échec de la copie de l’ID du traceur commun" },
+    "properties": { "pattern": "Modèle", "matchType": "Type de correspondance", "type": "Type", "source": "Source", "category": "Catégorie", "thirdParty": "Tiers", "maxAge": "Âge maximal", "description": "Description", "descriptionSource": "Source de la description", "excluded": "Exclu", "detectedCount": "Traceurs distincts détectés", "lastMatched": "Dernière correspondance" },
+    "matchTypes": { "exact": "Exact", "glob": "Glob" },
+    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
+    "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
+    "duration": { "session": "Session", "persistent": "Persistant", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "year_one": "{{count}} an", "year_other": "{{count}} ans" },
+    "commonCatalog": "Catalogue commun", "manual": "Manuel", "boolean": { "yes": "Oui", "no": "Non" }
+  },
+  "detectedTrackersSection": {
+    "title": "Traceurs détectés",
+    "columns": { "identifier": "Identifiant", "initiatorUrl": "URL initiatrice", "maxAge": "Âge maximal (secondes)", "source": "Source", "detectionTime": "Heure de détection" },
+    "empty": "Aucun traceur détecté pour ce modèle pour le moment."
+  },
+  "moveToCategorySelect": { "empty": "Aucune catégorie" },
+  "moveToCategoryDropdown": { "empty": "Aucune catégorie" },
+  "detectedTrackerRow": {
+    "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
+    "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
+  },
+  "trackerPatternDetailPage": {
+    "breadcrumbs": { "index": "Bannières de cookies", "trackers": "Traceurs" }
+  },
+  "trackersPage": {
+    "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories" },
+    "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
+    "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
+    "columns": { "name": "Nom", "thirdParty": "Tiers", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal", "lastMatched": "Dernière correspondance" },
+    "empty": { "title": "Aucun modèle de traceur", "description": "Aucun modèle de cookie n’a encore été détecté. Les modèles apparaîtront ici lorsqu’ils seront détectés." }
+  },
+  "codeSnippets": {
+    "title": "Extrait JavaScript",
+    "messages": { "copiedTitle": "Copié", "copied": "Code copié dans le presse-papiers" },
+    "errors": { "title": "Erreur", "copy": "Échec de la copie dans le presse-papiers" },
+    "actions": { "copy": "Copier" },
+    "documentation": "Vous recherchez une intégration de module ES ou headless ? <link>Consultez notre documentation pour des guides d’intégration détaillés.</link>"
+  },
+  "bannerSettingsForm": {
+    "title": "Paramètres",
+    "messages": { "successTitle": "Succès", "updated": "Paramètres de la bannière mis à jour" },
+    "errors": { "title": "Erreur", "update": "Échec de la mise à jour" },
+    "fields": { "name": "Nom", "origin": "URL d’origine", "cookiePolicyUrl": "URL de la politique de cookies", "privacyPolicyUrl": "URL de la politique de confidentialité", "consentExpiryDays": "Expiration du consentement (jours)", "defaultLanguage": "Langue par défaut" },
+    "languages": { "english": "Anglais", "french": "Français", "german": "Allemand", "spanish": "Espagnol" },
+    "actions": { "saving": "Enregistrement...", "save": "Enregistrer" }
+  },
+  "trackerResourceRowEdit": {
+    "fields": { "displayNamePlaceholder": "Nom d’affichage", "descriptionPlaceholder": "Description" },
+    "actions": { "save": "Enregistrer", "cancel": "Annuler" }
+  },
+  "trackerResourceRow": {
+    "messages": { "successTitle": "Succès", "deleted": "Ressource supprimée", "moved": "Ressource déplacée", "updated": "Ressource mise à jour" },
+    "errors": { "title": "Erreur", "delete": "Échec de la suppression de la ressource", "move": "Échec du déplacement de la ressource", "update": "Échec de la mise à jour de la ressource" },
+    "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
+    "actions": { "edit": "Modifier", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
+    "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" }
+  },
+  "resourcesPage": {
+    "filters": { "search": "Rechercher par origine ou chemin..." },
+    "types": { "all": "Tous les types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" },
+    "columns": { "type": "Type", "origin": "Origine", "path": "Chemin", "category": "Catégorie", "lastDetected": "Dernière détection" },
+    "empty": { "title": "Aucune ressource non catégorisée", "description": "Toutes les ressources détectées ont été catégorisées. Les nouvelles ressources apparaîtront ici lorsqu’elles seront détectées." }
+  },
+  "themePreview": {
+    "title": "Thème", "defaultSnippet": "/* Thème par défaut utilisé — aucune surcharge nécessaire */",
+    "messages": { "copiedTitle": "Copié", "copied": "Extrait CSS copié dans le presse-papiers" },
+    "actions": { "reset": "Réinitialiser les valeurs par défaut", "copy": "Copier" },
+    "variables": { "bg": "Arrière-plan", "text": "Texte", "textsecondary": "Texte secondaire", "border": "Bordure", "accent": "Accent", "accenttext": "Texte d’accent", "radius": "Rayon de bordure", "btnradius": "Rayon des boutons", "fontsize": "Taille de police", "fontfamily": "Famille de police", "shadow": "Ombre" },
+    "banner": { "title": "Préférences de cookies", "description": "Nous utilisons des cookies pour améliorer votre expérience et analyser le trafic du site. <policy>Politique de confidentialité</policy>", "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "privacyBy": "Confidentialité par" }
+  },
+  "editCookieRow": {
+    "includeTitle": "Inclure ce cookie dans la bannière",
+    "fields": { "descriptionPlaceholder": "Description" },
+    "actions": { "save": "Enregistrer", "cancel": "Annuler" },
+    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" }
+  },
+  "editCategoryForm": {
+    "fields": { "namePlaceholder": "Nom de la catégorie", "slugPlaceholder": "Identifiant de la catégorie", "descriptionPlaceholder": "Description de la catégorie" },
+    "googleConsentMode": { "title": "Mode de consentement Google", "description": "Sélectionnez les signaux Google Consent Mode contrôlés par cette catégorie." },
+    "posthog": { "title": "PostHog", "description": "Contrôlez le consentement au suivi PostHog selon cette catégorie.", "checkbox": "Activer ou désactiver le suivi PostHog" },
+    "actions": { "saving": "Enregistrement...", "save": "Enregistrer", "cancel": "Annuler" }
+  },
+  "categorySection": {
+    "messages": { "successTitle": "Succès", "updated": "Catégorie mise à jour", "cookieAdded": "Cookie ajouté", "cookieUpdated": "Cookie mis à jour", "cookieDeleted": "Cookie supprimé", "categoryDeleted": "Catégorie supprimée", "cookieMoved": "Cookie déplacé" },
+    "errors": { "title": "Erreur", "updateCategory": "Échec de la mise à jour de la catégorie", "duplicateCookie": "Un cookie portant ce nom existe déjà dans cette bannière", "addCookie": "Échec de l’ajout du cookie", "updateCookie": "Échec de la mise à jour du cookie", "deleteCookie": "Échec de la suppression du cookie", "deleteCategory": "Échec de la suppression de la catégorie", "reorder": "Échec du réordonnancement", "moveCookie": "Échec du déplacement du cookie" },
+    "deleteCookieConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
+    "deleteCategoryConfirmation": "Voulez-vous vraiment supprimer la catégorie \"{{name}}\" ? Tous les cookies de cette catégorie seront déplacés vers Non catégorisé.",
+    "required": "Obligatoire", "blockHint": "Bloquer les éléments jusqu’à l’obtention du consentement :", "googleConsentMode": "Mode de consentement Google :", "posthog": "PostHog :", "trackingConsent": "Consentement au suivi",
+    "columns": { "name": "Nom", "type": "Type", "duration": "Durée" },
+    "actions": { "edit": "Modifier", "delete": "Supprimer", "include": "Inclure", "exclude": "Exclure", "addCookie": "Ajouter un cookie" },
+    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
+    "duration": { "session": "Session", "persistent": "Persistant", "year_one": "{{count}} an", "year_other": "{{count}} ans", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
+  },
+  "categoryDialog": {
+    "title": "Ajouter une catégorie",
+    "messages": { "successTitle": "Succès", "created": "Catégorie créée" },
+    "errors": { "title": "Erreur", "create": "Échec de la création de la catégorie" },
+    "fields": { "name": "Nom", "slug": "Identifiant", "slugHelp": "Utilisé comme valeur de l’attribut data-cookie-consent", "description": "Description" },
+    "actions": { "saving": "Enregistrement...", "create": "Créer" }
+  },
+  "addCookieRow": {
+    "fields": { "namePlaceholder": "Nom du cookie", "descriptionPlaceholder": "Description" },
+    "actions": { "save": "Enregistrer", "cancel": "Annuler" }
+  },
+  "displayPage": {
+    "description": "Organisez les cookies en catégories et déclarez les cookies utilisés par votre site.",
+    "actions": { "addCategory": "Ajouter une catégorie" },
+    "empty": "Aucune catégorie pour le moment. Ajoutez une catégorie pour commencer à gérer les cookies."
+  },
+  "consentRecordsPage": {
+    "filters": { "allActions": "Toutes les actions", "visitorId": "ID du visiteur", "bannerVersion": "Version de la bannière" },
+    "actions": { "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC" },
+    "columns": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "source": "Source", "country": "Pays", "date": "Date" },
+    "empty": { "title": "Aucun enregistrement de consentement", "description": "Les enregistrements de consentement apparaîtront ici dès que des visiteurs interagiront avec votre bannière de cookies." }
+  },
+  "consentRecordPage": {
+    "breadcrumbs": { "index": "Bannières de cookies", "records": "Enregistrements de consentement" },
+    "title": "Enregistrement de consentement",
+    "properties": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "userAgent": "Agent utilisateur", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "regulationSource": "Source réglementaire", "country": "Pays", "date": "Date" },
+    "actions": { "accept_all": "Tout accepter", "reject_all": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC" },
+    "consentData": "Données de consentement",
+    "required": "(Obligatoire)",
+    "consent": { "accepted": "Accepté", "rejected": "Refusé" },
+    "cookies": { "columns": { "cookie": "Cookie", "duration": "Durée", "description": "Description" } },
+    "duration": { "session": "Session", "persistent": "Persistant", "year_one": "{{count}} an", "year_other": "{{count}} ans", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
+  },
+  "configLayout": {
+    "breadcrumbs": { "index": "Bannières de cookies" },
+    "version": "v{{version}}",
+    "draft": " (brouillon)",
+    "metadata": { "origin": "Origine", "id": "ID", "cookiePolicy": "Politique de cookies" },
+    "messages": { "successTitle": "Succès", "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "idCopied": "ID de la bannière copié dans le presse-papiers" },
+    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication" },
+    "status": { "active": "Active", "inactive": "Inactive" },
+    "actions": { "publishing": "Publication...", "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver" },
+    "tabs": { "display": "Affichage", "settings": "Paramètres", "translations": "Traductions", "trackers": "Traceurs", "resources": "Ressources", "consentRecords": "Enregistrements de consentement" }
+  },
+  "newCookieBannerPage": {
+    "pageTitle": "Nouvelle bannière de cookies",
+    "breadcrumbs": { "index": "Bannières de cookies", "new": "Nouvelle" },
+    "title": "Créer une bannière de cookies",
+    "description": "Configurez une nouvelle bannière de consentement aux cookies avec son URL d’origine et ses paramètres de consentement.",
+    "messages": { "successTitle": "Succès", "created": "Bannière de cookies créée avec succès" },
+    "errors": { "title": "Erreur", "create": "Échec de la création de la bannière de cookies" },
+    "fields": {
+      "name": "Nom", "namePlaceholder": "Mon site web",
+      "origin": "URL d’origine", "originPlaceholder": "https://example.com",
+      "cookiePolicyUrl": "URL de la politique de cookies", "cookiePolicyUrlPlaceholder": "https://example.com/cookies",
+      "privacyPolicyUrl": "URL de la politique de confidentialité", "privacyPolicyUrlPlaceholder": "https://example.com/privacy",
+      "consentExpiryDays": "Expiration du consentement (jours)"
+    },
+    "actions": { "creating": "Création...", "create": "Créer la bannière" }
+  }
+}

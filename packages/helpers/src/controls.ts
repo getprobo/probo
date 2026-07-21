@@ -31,19 +31,19 @@ export const controlMaturityLevels = [
 
 export type ControlMaturityLevel = (typeof controlMaturityLevels)[number];
 
-export function getControlMaturityLevelLabel(__: Translator, level: string) {
+export function getControlMaturityLevelLabel(t: Translator, level: string) {
     switch (level) {
         case "NONE":
-            return __("0 - None");
+            return t("helpers.controlMaturityLevel.none");
         case "INITIAL":
-            return __("1 - Initial");
+            return t("helpers.controlMaturityLevel.initial");
         case "MANAGED":
-            return __("2 - Managed");
+            return t("helpers.controlMaturityLevel.managed");
         case "DEFINED":
-            return __("3 - Defined");
+            return t("helpers.controlMaturityLevel.defined");
         case "QUANTITATIVELY_MANAGED":
-            return __("4 - Quantitatively Managed");
+            return t("helpers.controlMaturityLevel.quantitativelyManaged");
         case "OPTIMIZING":
-            return __("5 - Optimizing");
+            return t("helpers.controlMaturityLevel.optimizing");
     }
 }

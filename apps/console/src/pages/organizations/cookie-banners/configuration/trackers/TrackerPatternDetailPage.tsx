@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Breadcrumb, PageHeader } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { TrackerPatternDetailPageQuery } from "#/__generated__/core/TrackerPatternDetailPageQuery.graphql";
@@ -59,7 +59,7 @@ interface TrackerPatternDetailPageProps {
 export default function TrackerPatternDetailPage({
   queryRef,
 }: TrackerPatternDetailPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<TrackerPatternDetailPageQuery>(trackerPatternDetailPageQuery, queryRef);
 
@@ -78,7 +78,7 @@ export default function TrackerPatternDetailPage({
       <Breadcrumb
         items={[
           {
-            label: __("Cookie Banners"),
+            label: t("trackerPatternDetailPage.breadcrumbs.index"),
             to: `/organizations/${organizationId}/cookie-banners`,
           },
           {
@@ -86,7 +86,7 @@ export default function TrackerPatternDetailPage({
             to: `/organizations/${organizationId}/cookie-banners/${cookieBanner.id}/settings`,
           },
           {
-            label: __("Trackers"),
+            label: t("trackerPatternDetailPage.breadcrumbs.trackers"),
             to: `/organizations/${organizationId}/cookie-banners/${cookieBanner.id}/trackers`,
           },
           {

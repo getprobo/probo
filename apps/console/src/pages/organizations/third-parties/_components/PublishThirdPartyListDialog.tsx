@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -67,7 +67,7 @@ export function PublishThirdPartyListDialog({
   defaultApproverIds,
   onPublished,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
@@ -108,10 +108,10 @@ export function PublishThirdPartyListDialog({
         const documentId = response.publishThirdPartyList?.documentEdge?.node?.id;
         if (documentId) {
           toast({
-            title: __("Success"),
+            title: t("publishThirdPartyListDialog.messages.success"),
             description: hasApprovers
-              ? __("Approval requested successfully.")
-              : __("Third parties published successfully."),
+              ? t("publishThirdPartyListDialog.messages.approvalRequested")
+              : t("publishThirdPartyListDialog.messages.published"),
             variant: "success",
           });
           dialogRef.current?.close();
@@ -121,9 +121,9 @@ export function PublishThirdPartyListDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("publishThirdPartyListDialog.messages.error"),
           description: formatError(
-            __("Failed to publish third parties"),
+            t("publishThirdPartyListDialog.errors.publish"),
             error,
           ),
           variant: "error",
@@ -137,20 +137,20 @@ export function PublishThirdPartyListDialog({
       className="max-w-xl"
       ref={dialogRef}
       trigger={children}
-      title={__("Publish third parties")}
+      title={t("publishThirdPartyListDialog.title")}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <div className="space-y-4">
             <p className="text-sm text-txt-secondary">
-              {__("Select approvers to request approval before publishing, or publish directly without approvers.")}
+              {t("publishThirdPartyListDialog.description")}
             </p>
             <PeopleMultiSelectField
               name="approverIds"
-              label={__("Approvers")}
+              label={t("publishThirdPartyListDialog.fields.approvers")}
               control={control}
               organizationId={organizationId}
-              placeholder={__("Add approvers...")}
+              placeholder={t("publishThirdPartyListDialog.placeholders.approvers")}
             />
           </div>
         </DialogContent>
@@ -162,7 +162,7 @@ export function PublishThirdPartyListDialog({
             onClick={() => { minorRef.current = true; }}
             disabled={isPublishing}
           >
-            {__("Publish as minor")}
+            {t("publishThirdPartyListDialog.actions.publishMinor")}
           </Button>
           <Button
             type="submit"
@@ -170,7 +170,7 @@ export function PublishThirdPartyListDialog({
             onClick={() => { minorRef.current = false; }}
             disabled={isPublishing}
           >
-            {hasApprovers ? __("Request approval") : __("Publish")}
+            {hasApprovers ? t("publishThirdPartyListDialog.actions.requestApproval") : t("publishThirdPartyListDialog.actions.publish")}
           </Button>
         </DialogFooter>
       </form>

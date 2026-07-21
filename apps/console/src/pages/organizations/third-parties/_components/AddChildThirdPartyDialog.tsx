@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Combobox,
   ComboboxItem,
@@ -29,6 +28,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
@@ -74,7 +74,7 @@ export function AddChildThirdPartyDialog({
   organizationId,
   connectionId,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [createChild] = useMutation<AddChildThirdPartyDialogCreateMutation>(createChildMutation);
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,9 +124,9 @@ export function AddChildThirdPartyDialog({
   };
 
   return (
-    <Dialog ref={dialogRef} trigger={children} title={__("Add a third party")}>
+    <Dialog ref={dialogRef} trigger={children} title={t("addChildThirdPartyDialog.title")}>
       <DialogContent className="p-6">
-        <Combobox onSearch={handleSearch} placeholder={__("Type third party's name")}>
+        <Combobox onSearch={handleSearch} placeholder={t("addChildThirdPartyDialog.searchPlaceholder")}>
           {searchQuery.trim().length >= 2 && queryRef && (
             <Suspense>
               <CommonThirdPartyCombobox
@@ -139,10 +139,7 @@ export function AddChildThirdPartyDialog({
           {searchQuery.trim().length >= 2 && (
             <ComboboxItem onClick={() => handleCreateNew(searchQuery.trim())}>
               <IconPlusLarge size={20} />
-              {__("Create a new third party")}
-              {" "}
-              :
-              {searchQuery}
+              {t("addChildThirdPartyDialog.createNew", { name: searchQuery })}
             </ComboboxItem>
           )}
         </Combobox>

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Checkbox,
@@ -31,6 +30,7 @@ import {
   Textarea,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -53,20 +53,16 @@ const defaultValues: SAMLConfigurationFormData = {
 
 const getEnforcementPolicyLabel = (
   policy: string,
-  __: (key: string) => string,
+  t: (key: string) => string,
 ) => {
   switch (policy) {
     case "OFF":
-      return __(
-        "Your team members can't use single sign-on and must use their password",
-      );
+      return t("samlConfigurationForm.enforcementDescriptions.off");
     case "REQUIRED":
-      return __("Your team members must use single sign-on to log in");
+      return t("samlConfigurationForm.enforcementDescriptions.required");
     case "OPTIONAL":
     default:
-      return __(
-        "Your team members may use either single sign-on or their password to log in",
-      );
+      return t("samlConfigurationForm.enforcementDescriptions.optional");
   }
 };
 
@@ -107,7 +103,7 @@ export function SAMLConfigurationForm(props: {
     isEditing,
     onSubmit,
   } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const form = useFormWithSchema(samlConfigSchema, {
     defaultValues: initialValues,
@@ -123,29 +119,27 @@ export function SAMLConfigurationForm(props: {
       <DialogContent padded className="space-y-6">
         <div>
           <h3 className="text-base font-medium mb-4">
-            {__("Basic Configuration")}
+            {t("samlConfigurationForm.sections.basic")}
           </h3>
           <div className="space-y-4">
             <div>
               <Field
                 {...form.register("emailDomain")}
-                label={__("Email Domain") + " *"}
+                label={t("samlConfigurationForm.fields.emailDomain")}
                 placeholder="example.com"
                 disabled={isEditing}
                 error={form.formState.errors.emailDomain?.message}
               />
               <p className="text-xs text-gray-600 mt-1">
                 {isEditing
-                  ? __("Email domain cannot be changed after creation")
-                  : __(
-                      "The email domain this SAML configuration applies to (e.g., example.com)",
-                    )}
+                  ? t("samlConfigurationForm.fields.emailDomainLocked")
+                  : t("samlConfigurationForm.fields.emailDomainHelp")}
               </p>
             </div>
             {isEditing && (
               <div>
                 <Label htmlFor="enforcementPolicy">
-                  {__("Enforcement Policy") + " *"}
+                  {t("samlConfigurationForm.fields.enforcementPolicy")}
                 </Label>
                 <Controller
                   control={form.control}
@@ -156,9 +150,9 @@ export function SAMLConfigurationForm(props: {
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <Option value="OPTIONAL">{__("Optional")}</Option>
-                        <Option value="REQUIRED">{__("Required")}</Option>
-                        <Option value="OFF">{__("Off")}</Option>
+                        <Option value="OPTIONAL">{t("samlConfigurationForm.enforcement.optional")}</Option>
+                        <Option value="REQUIRED">{t("samlConfigurationForm.enforcement.required")}</Option>
+                        <Option value="OFF">{t("samlConfigurationForm.enforcement.off")}</Option>
                       </Select>
                     </div>
                   )}
@@ -167,7 +161,7 @@ export function SAMLConfigurationForm(props: {
                   <p className="text-xs text-gray-600 mt-2">
                     {getEnforcementPolicyLabel(
                       form.watch("enforcementPolicy"),
-                      __,
+                      t,
                     )}
                   </p>
                 )}
@@ -178,24 +172,24 @@ export function SAMLConfigurationForm(props: {
 
         <div>
           <h3 className="text-base font-medium mb-4">
-            {__("Identity Provider Configuration")}
+            {t("samlConfigurationForm.sections.identityProvider")}
           </h3>
           <div className="space-y-4">
             <Field
               {...form.register("idpEntityId")}
-              label={__("IdP Entity ID") + " *"}
+              label={t("samlConfigurationForm.fields.idpEntityId")}
               placeholder="https://idp.example.com/metadata"
               error={form.formState.errors.idpEntityId?.message}
             />
             <Field
               {...form.register("idpSsoUrl")}
-              label={__("IdP SSO URL") + " *"}
+              label={t("samlConfigurationForm.fields.idpSsoUrl")}
               placeholder="https://idp.example.com/sso"
               error={form.formState.errors.idpSsoUrl?.message}
             />
             <div>
               <Label htmlFor="idpCertificate">
-                {__("IdP X.509 Certificate") + " *"}
+                {t("samlConfigurationForm.fields.idpCertificate")}
               </Label>
               <Textarea
                 {...form.register("idpCertificate")}
@@ -215,18 +209,18 @@ export function SAMLConfigurationForm(props: {
 
         <div>
           <h3 className="text-base font-medium mb-4">
-            {__("Attribute Mapping")}
+            {t("samlConfigurationForm.sections.attributeMapping")}
           </h3>
           <div className="space-y-4">
             <Field
               {...form.register("attributeMappings.email")}
-              label={__("Email Attribute")}
+              label={t("samlConfigurationForm.fields.emailAttribute")}
               placeholder={defaultValues.attributeMappings.email}
               error={form.formState.errors.attributeMappings?.email?.message}
             />
             <Field
               {...form.register("attributeMappings.firstName")}
-              label={__("First Name Attribute")}
+              label={t("samlConfigurationForm.fields.firstNameAttribute")}
               placeholder={defaultValues.attributeMappings.firstName}
               error={
                 form.formState.errors.attributeMappings?.firstName?.message
@@ -234,13 +228,13 @@ export function SAMLConfigurationForm(props: {
             />
             <Field
               {...form.register("attributeMappings.lastName")}
-              label={__("Last Name Attribute")}
+              label={t("samlConfigurationForm.fields.lastNameAttribute")}
               placeholder={defaultValues.attributeMappings.lastName}
               error={form.formState.errors.attributeMappings?.lastName?.message}
             />
             <Field
               {...form.register("attributeMappings.role")}
-              label={__("Role Attribute")}
+              label={t("samlConfigurationForm.fields.roleAttribute")}
               placeholder={defaultValues.attributeMappings.role}
               error={form.formState.errors.attributeMappings?.role?.message}
             />
@@ -258,7 +252,7 @@ export function SAMLConfigurationForm(props: {
                   onChange={field.onChange}
                 />
                 <Label htmlFor="autoSignupEnabled" className="cursor-pointer">
-                  {__("Enable automatic user signup via SAML")}
+                  {t("samlConfigurationForm.fields.autoSignupEnabled")}
                 </Label>
               </div>
             )}
@@ -267,7 +261,7 @@ export function SAMLConfigurationForm(props: {
       </DialogContent>
       <DialogFooter>
         <Button type="submit" disabled={disabled}>
-          {isEditing ? __("Update Configuration") : __("Create Configuration")}
+          {isEditing ? t("samlConfigurationForm.actions.update") : t("samlConfigurationForm.actions.create")}
         </Button>
       </DialogFooter>
     </form>

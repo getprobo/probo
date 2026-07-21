@@ -18,10 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, getCompliancePageVisibilityOptions } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { getCompliancePageVisibilityOptions } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Button, Field, IconArrowLink, IconPencil, IconTrashCan, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -74,8 +75,8 @@ export function CompliancePageFileListItem(props: {
 }) {
   const { compliancePageFragmentRef, fileFragmentRef, onEdit, onDelete } = props;
 
-  const { __ } = useTranslate();
-  const visibilityOptions = getCompliancePageVisibilityOptions(__);
+  const { t, i18n } = useTranslation("organizations/compliance-page");
+  const visibilityOptions = getCompliancePageVisibilityOptions(t);
 
   const compliancePage = useFragment<CompliancePageFileListItem_compliancePageFragment$key>(
     compliancePageFragment,
@@ -86,8 +87,8 @@ export function CompliancePageFileListItem(props: {
   const [updateFile, isUpdating] = useMutation<CompliancePageFileListItemMutation>(
     updateCompliancePageFileMutation,
     {
-      successMessage: "File updated successfully",
-      errorToast: "Failed to update file",
+      successMessage: t("fileListItem.messages.updated"),
+      errorToast: t("fileListItem.errors.update"),
     },
   );
 
@@ -113,7 +114,7 @@ export function CompliancePageFileListItem(props: {
         <div className="flex gap-4 items-center">{file.name}</div>
       </Td>
       <Td>{file.category}</Td>
-      <Td>{formatDate(file.createdAt)}</Td>
+      <Td>{dateFormat(i18n.language, file.createdAt)}</Td>
       <Td noLink>
         <CompliancePageAliasField
           resourceId={file.id}
@@ -146,7 +147,7 @@ export function CompliancePageFileListItem(props: {
             icon={IconArrowLink}
             onClick={() =>
               window.open(file.file?.downloadUrl, "_blank", "noopener,noreferrer")}
-            title={__("Download")}
+            title={t("fileListItem.actions.download")}
           />
           {file.canUpdate && (
             <Button
@@ -154,7 +155,7 @@ export function CompliancePageFileListItem(props: {
               icon={IconPencil}
               onClick={() => onEdit(file)}
               disabled={isUpdating}
-              title={__("Edit")}
+              title={t("fileListItem.actions.edit")}
             />
           )}
           {file.canDelete && (
@@ -163,7 +164,7 @@ export function CompliancePageFileListItem(props: {
               icon={IconTrashCan}
               onClick={() => onDelete(file.id)}
               disabled={isUpdating}
-              title={__("Delete")}
+              title={t("fileListItem.actions.delete")}
             />
           )}
         </div>

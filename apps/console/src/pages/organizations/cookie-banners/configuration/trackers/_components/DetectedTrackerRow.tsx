@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getTrackerSourceBadge } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { DetectedTrackerRow_detectedTracker$key } from "#/__generated__/core/DetectedTrackerRow_detectedTracker.graphql";
@@ -41,8 +41,18 @@ interface DetectedTrackerRowProps {
 }
 
 export function DetectedTrackerRow({ detectedTrackerKey }: DetectedTrackerRowProps) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
   const tracker = useFragment(detectedTrackerFragment, detectedTrackerKey);
+  const sourceBadges = {
+    SCRIPT: { variant: "info" as const, label: t("detectedTrackerRow.sources.script") },
+    PRE_EXISTING: { variant: "outline" as const, label: t("detectedTrackerRow.sources.preExisting") },
+    HTTP: { variant: "neutral" as const, label: t("detectedTrackerRow.sources.http") },
+    EXTENSION: { variant: "warning" as const, label: t("detectedTrackerRow.sources.extension") },
+  };
+  const sourceBadge = tracker.source
+    ? sourceBadges[tracker.source]
+    ?? { variant: "neutral" as const, label: tracker.source }
+    : null;
 
   return (
     <Tr>
@@ -56,21 +66,21 @@ export function DetectedTrackerRow({ detectedTrackerKey }: DetectedTrackerRowPro
       </Td>
       <Td>
         {tracker.maxAgeSeconds != null
-          ? <span className="text-sm">{tracker.maxAgeSeconds}</span>
+          ? <span className="text-sm">{t("detectedTrackerRow.duration.second", { count: tracker.maxAgeSeconds })}</span>
           : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>
-        {tracker.source
+        {sourceBadge
           ? (
-              <Badge variant={getTrackerSourceBadge(tracker.source, __).variant}>
-                {getTrackerSourceBadge(tracker.source, __).label}
+              <Badge variant={sourceBadge.variant}>
+                {sourceBadge.label}
               </Badge>
             )
           : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>
         <time dateTime={tracker.lastDetectedAt}>
-          {new Date(tracker.lastDetectedAt).toLocaleString()}
+          {dateTimeFormat(i18n.language, tracker.lastDetectedAt)}
         </time>
       </Td>
     </Tr>

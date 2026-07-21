@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { downloadFile, fileSize, formatDate, formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { downloadFile, formatError } from "@probo/helpers";
+import { dateFormat, fileSize } from "@probo/i18n";
 import {
   ActionDropdown,
   DropdownItem,
@@ -30,6 +30,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { ThirdPartyComplianceReportRow_report$key } from "#/__generated__/core/ThirdPartyComplianceReportRow_report.graphql";
@@ -69,7 +70,7 @@ interface ThirdPartyComplianceReportRowProps {
 export function ThirdPartyComplianceReportRow(
   props: ThirdPartyComplianceReportRowProps,
 ) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const report = useFragment(complianceReportRowFragment, props.reportKey);
   const confirm = useConfirm();
   const { toast } = useToast();
@@ -89,9 +90,9 @@ export function ThirdPartyComplianceReportRow(
             onCompleted(_response, errors) {
               if (errors) {
                 toast({
-                  title: __("Error"),
+                  title: t("thirdPartyComplianceReportRow.messages.error"),
                   description: formatError(
-                    __("Failed to delete report"),
+                    t("thirdPartyComplianceReportRow.errors.delete"),
                     errors,
                   ),
                   variant: "error",
@@ -101,9 +102,9 @@ export function ThirdPartyComplianceReportRow(
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("thirdPartyComplianceReportRow.messages.error"),
                 description: formatError(
-                  __("Failed to delete report"),
+                  t("thirdPartyComplianceReportRow.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -113,12 +114,7 @@ export function ThirdPartyComplianceReportRow(
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the report \"%s\". This action cannot be undone.",
-          ),
-          report.reportName,
-        ),
+        message: t("thirdPartyComplianceReportRow.deleteConfirmation", { name: report.reportName }),
       },
     );
   };
@@ -126,9 +122,9 @@ export function ThirdPartyComplianceReportRow(
   return (
     <Tr>
       <Td>{report.reportName}</Td>
-      <Td>{formatDate(report.reportDate)}</Td>
-      <Td>{formatDate(report.validUntil)}</Td>
-      <Td>{fileSize(__, report.file?.size ?? 0)}</Td>
+      <Td>{dateFormat(i18n.language, report.reportDate)}</Td>
+      <Td>{dateFormat(i18n.language, report.validUntil)}</Td>
+      <Td>{fileSize(report.file?.size ?? 0, t)}</Td>
       <Td width={50} className="text-end">
         <ActionDropdown>
           {report.file?.downloadUrl && (
@@ -140,7 +136,7 @@ export function ThirdPartyComplianceReportRow(
                   report.file!.fileName,
                 )}
             >
-              {__("Download")}
+              {t("thirdPartyComplianceReportRow.actions.download")}
             </DropdownItem>
           )}
           {report.canDelete && (
@@ -149,7 +145,7 @@ export function ThirdPartyComplianceReportRow(
               onClick={handleDelete}
               variant="danger"
             >
-              {__("Delete")}
+              {t("thirdPartyComplianceReportRow.actions.delete")}
             </DropdownItem>
           )}
         </ActionDropdown>

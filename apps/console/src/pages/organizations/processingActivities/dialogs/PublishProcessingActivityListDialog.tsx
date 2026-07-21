@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -67,7 +67,7 @@ export function PublishProcessingActivityListDialog({
   defaultApproverIds,
   onPublished,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
@@ -107,10 +107,10 @@ export function PublishProcessingActivityListDialog({
         const documentId = response.publishProcessingActivityList?.documentEdge?.node?.id;
         if (documentId) {
           toast({
-            title: __("Success"),
+            title: t("publishProcessingActivityListDialog.messages.success"),
             description: hasApprovers
-              ? __("Approval requested successfully.")
-              : __("Processing activities published successfully."),
+              ? t("publishProcessingActivityListDialog.messages.approvalRequested")
+              : t("publishProcessingActivityListDialog.messages.published"),
             variant: "success",
           });
           dialogRef.current?.close();
@@ -120,9 +120,9 @@ export function PublishProcessingActivityListDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("publishProcessingActivityListDialog.messages.error"),
           description: formatError(
-            __("Failed to publish processing activities"),
+            t("publishProcessingActivityListDialog.errors.publish"),
             error,
           ),
           variant: "error",
@@ -136,20 +136,20 @@ export function PublishProcessingActivityListDialog({
       className="max-w-xl"
       ref={dialogRef}
       trigger={children}
-      title={__("Publish Processing Activities")}
+      title={t("publishProcessingActivityListDialog.title")}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <div className="space-y-4">
             <p className="text-sm text-txt-secondary">
-              {__("Select approvers to request approval before publishing, or publish directly without approvers.")}
+              {t("publishProcessingActivityListDialog.description")}
             </p>
             <PeopleMultiSelectField
               name="approverIds"
-              label={__("Approvers")}
+              label={t("publishProcessingActivityListDialog.fields.approvers")}
               control={control}
               organizationId={organizationId}
-              placeholder={__("Add approvers...")}
+              placeholder={t("publishProcessingActivityListDialog.fields.approversPlaceholder")}
             />
           </div>
         </DialogContent>
@@ -161,7 +161,7 @@ export function PublishProcessingActivityListDialog({
             onClick={() => { minorRef.current = true; }}
             disabled={isPublishing}
           >
-            {__("Publish as minor")}
+            {t("publishProcessingActivityListDialog.actions.publishMinor")}
           </Button>
           <Button
             type="submit"
@@ -169,7 +169,7 @@ export function PublishProcessingActivityListDialog({
             onClick={() => { minorRef.current = false; }}
             disabled={isPublishing}
           >
-            {hasApprovers ? __("Request approval") : __("Publish")}
+            {hasApprovers ? t("publishProcessingActivityListDialog.actions.requestApproval") : t("publishProcessingActivityListDialog.actions.publish")}
           </Button>
         </DialogFooter>
       </form>

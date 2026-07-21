@@ -18,11 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import { Button, Spinner, Td, Tr, useConfirm, useToast } from "@probo/ui";
 import { clsx } from "clsx";
 import { Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -61,7 +62,7 @@ export function PersonalAPIKeyRow(props: {
   connectionId: string;
 }) {
   const { fKey, connectionId } = props;
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const confirm = useConfirm();
   const { toast } = useToast();
   const now = new Date();
@@ -84,28 +85,28 @@ export function PersonalAPIKeyRow(props: {
             onCompleted: (_response, errors) => {
               if (errors?.length) {
                 toast({
-                  title: __("Error"),
+                  title: t("common.error"),
                   description: formatError(
-                    __("Failed to revoke API key."),
+                    t("personalApiKeyRow.errors.revoke"),
                     errors,
                   ),
                   variant: "error",
                 });
-                reject(new Error(errors[0]?.message ?? __("Failed to revoke API key.")));
+                reject(new Error(errors[0]?.message ?? t("personalApiKeyRow.errors.revoke")));
                 return;
               }
               toast({
-                title: __("Success"),
-                description: __("API key revoked successfully."),
+                title: t("common.success"),
+                description: t("personalApiKeyRow.messages.revoked"),
                 variant: "success",
               });
               resolve();
             },
             onError: (error) => {
               toast({
-                title: __("Error"),
+                title: t("common.error"),
                 description: formatError(
-                  __("Failed to revoke API key."),
+                  t("personalApiKeyRow.errors.revoke"),
                   error,
                 ),
                 variant: "error",
@@ -116,11 +117,9 @@ export function PersonalAPIKeyRow(props: {
         });
       },
       {
-        title: __("Revoke API Key"),
-        message: __(
-          `Are you sure you want to revoke the API key "${key.name}"? This action cannot be undone.`,
-        ),
-        label: __("Revoke"),
+        title: t("personalApiKeyRow.revoke.title"),
+        message: t("personalApiKeyRow.revoke.confirmation", { name: key.name }),
+        label: t("personalApiKeyRow.actions.revoke"),
         variant: "danger",
       },
     );
@@ -131,22 +130,22 @@ export function PersonalAPIKeyRow(props: {
       <Td>
         <div className="font-medium text-txt-primary">{key.name}</div>
         <div className="text-xs text-txt-tertiary">
-          {expired ? __("Expired") : __("Active")}
+          {expired ? t("personalApiKeyRow.status.expired") : t("personalApiKeyRow.status.active")}
         </div>
       </Td>
       <Td>
         <span className="text-sm text-txt-secondary">
-          {key.lastUsedAt ? formatDate(key.lastUsedAt) : __("Never")}
+          {key.lastUsedAt ? dateFormat(i18n.language, key.lastUsedAt) : t("personalApiKeyRow.never")}
         </span>
       </Td>
       <Td>
         <span className="text-sm text-txt-secondary">
-          {formatDate(key.createdAt)}
+          {dateFormat(i18n.language, key.createdAt)}
         </span>
       </Td>
       <Td>
         <span className="text-sm text-txt-secondary">
-          {formatDate(key.expiresAt)}
+          {dateFormat(i18n.language, key.expiresAt)}
         </span>
       </Td>
       <Td width={140} className="text-end">
@@ -155,7 +154,7 @@ export function PersonalAPIKeyRow(props: {
             <PersonalAPIKeyTokenAction fKey={fKey} disabled={isRevoking} />
           </Suspense>
           <Button variant="danger" onClick={handleRevoke} disabled={isRevoking}>
-            {__("Revoke")}
+            {t("personalApiKeyRow.actions.revoke")}
           </Button>
         </div>
       </Td>

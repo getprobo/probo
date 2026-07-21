@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { DropdownSeparator } from "@probo/ui";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsDropdownMenuQuery } from "#/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
@@ -65,7 +65,7 @@ interface MembershipsDropdownMenuProps {
 
 export function MembershipsDropdownMenu(props: MembershipsDropdownMenuProps) {
   const { queryRef, search } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const {
     viewer: {
@@ -102,7 +102,7 @@ export function MembershipsDropdownMenu(props: MembershipsDropdownMenuProps) {
       {invitingOrganizations.length > 0 && (
         <>
           <div className="px-3 py-1 text-xs text-txt-tertiary uppercase">
-            {__("Pending invitations")}
+            {t("membershipsDropdownMenu.pendingInvitations")}
           </div>
           {invitingOrganizations.map(organization => (
             <MembershipsDropdownInvitingItem key={organization.id} fKey={organization} />

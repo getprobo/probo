@@ -21,12 +21,8 @@
 import { formatError, type GraphQLError } from "@probo/helpers";
 import {
   formatDatetime,
-  getObligationStatusLabel,
-  getObligationStatusOptions,
   getObligationStatusVariant,
-  getObligationTypeOptions,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -43,6 +39,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
@@ -62,19 +59,6 @@ import {
   useUpdateObligation,
 } from "../../../hooks/graph/ObligationGraph";
 
-const updateObligationSchema = z.object({
-  area: z.string().optional(),
-  source: z.string().optional(),
-  requirement: z.string().optional(),
-  actionsToBeImplemented: z.string().optional(),
-  regulator: z.string().optional(),
-  type: z.enum(["LEGAL", "CONTRACTUAL"]),
-  lastReviewDate: z.string().optional(),
-  dueDate: z.string().optional(),
-  status: z.enum(["NON_COMPLIANT", "PARTIALLY_COMPLIANT", "COMPLIANT"]),
-  ownerId: z.string().min(1, "Owner is required"),
-});
-
 type Props = {
   queryRef: PreloadedQuery<ObligationGraphNodeQuery>;
 };
@@ -85,15 +69,27 @@ export default function ObligationDetailsPage(props: Props) {
     obligationNodeQuery,
     queryRef,
   );
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
 
   const disabled = !obligation.canUpdate;
 
   const updateObligation = useUpdateObligation();
-  const statusOptions = getObligationStatusOptions(__);
-  const typeOptions = getObligationTypeOptions(__);
+  const statusOptions = ["NON_COMPLIANT", "PARTIALLY_COMPLIANT", "COMPLIANT"] as const;
+  const typeOptions = ["LEGAL", "CONTRACTUAL"] as const;
+  const updateObligationSchema = z.object({
+    area: z.string().optional(),
+    source: z.string().optional(),
+    requirement: z.string().optional(),
+    actionsToBeImplemented: z.string().optional(),
+    regulator: z.string().optional(),
+    type: z.enum(typeOptions),
+    lastReviewDate: z.string().optional(),
+    dueDate: z.string().optional(),
+    status: z.enum(statusOptions),
+    ownerId: z.string().min(1, t("obligationDetailsPage.validation.ownerRequired")),
+  });
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
@@ -148,15 +144,15 @@ export default function ObligationDetailsPage(props: Props) {
       });
 
       toast({
-        title: __("Success"),
-        description: __("Obligation updated successfully"),
+        title: t("obligationDetailsPage.messages.success"),
+        description: t("obligationDetailsPage.messages.updated"),
         variant: "success",
       });
     } catch (error) {
       toast({
-        title: __("Error"),
+        title: t("obligationDetailsPage.messages.error"),
         description: formatError(
-          __("Failed to update obligation"),
+          t("obligationDetailsPage.errors.update"),
           error as GraphQLError,
         ),
         variant: "error",
@@ -173,24 +169,22 @@ export default function ObligationDetailsPage(props: Props) {
           <Breadcrumb
             items={[
               {
-                label: __("Obligations"),
+                label: t("obligationDetailsPage.breadcrumb.obligations"),
                 to: breadcrumbObligationsUrl,
               },
-              { label: __("Obligation Details") },
+              { label: t("obligationDetailsPage.breadcrumb.details") },
             ]}
           />
           <div className="flex items-center gap-3 mt-2">
             <h1 className="text-2xl font-bold">
-              {__("Obligation")}
+              {t("obligationDetailsPage.title")}
             </h1>
             <Badge
               variant={getObligationStatusVariant(
                 obligation.status ?? "NON_COMPLIANT",
               )}
             >
-              {getObligationStatusLabel(
-                obligation.status ?? "NON_COMPLIANT",
-              )}
+              {t(`obligationDetailsPage.statuses.${(obligation.status ?? "NON_COMPLIANT").toLowerCase()}`)}
             </Badge>
           </div>
         </div>
@@ -201,7 +195,7 @@ export default function ObligationDetailsPage(props: Props) {
               icon={IconTrashCan}
               onClick={deleteObligation}
             >
-              {__("Delete")}
+              {t("obligationDetailsPage.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         )}
@@ -211,37 +205,37 @@ export default function ObligationDetailsPage(props: Props) {
         <form onSubmit={e => void onSubmit(e)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field
-              label={__("Area")}
+              label={t("obligationDetailsPage.fields.area")}
               error={formState.errors.area?.message}
             >
               <Input
                 {...register("area")}
-                placeholder={__("Enter area")}
+                placeholder={t("obligationDetailsPage.placeholders.area")}
                 disabled={disabled}
               />
             </Field>
 
             <Field
-              label={__("Source")}
+              label={t("obligationDetailsPage.fields.source")}
               error={formState.errors.source?.message}
             >
               <Input
                 {...register("source")}
-                placeholder={__("Enter source")}
+                placeholder={t("obligationDetailsPage.placeholders.source")}
                 disabled={disabled}
               />
             </Field>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label={__("Status")}>
+            <Field label={t("obligationDetailsPage.fields.status")}>
               <Controller
                 control={control}
                 name="status"
                 render={({ field }) => (
                   <Select
                     variant="editor"
-                    placeholder={__("Select status")}
+                    placeholder={t("obligationDetailsPage.placeholders.status")}
                     onValueChange={field.onChange}
                     value={field.value}
                     className="w-full"
@@ -249,10 +243,10 @@ export default function ObligationDetailsPage(props: Props) {
                   >
                     {statusOptions.map(option => (
                       <Option
-                        key={option.value}
-                        value={option.value}
+                        key={option}
+                        value={option}
                       >
-                        {option.label}
+                        {t(`obligationDetailsPage.statuses.${option.toLowerCase()}`)}
                       </Option>
                     ))}
                   </Select>
@@ -273,7 +267,7 @@ export default function ObligationDetailsPage(props: Props) {
                   organizationId={organizationId}
                   control={control}
                   name="ownerId"
-                  label={__("Owner")}
+                  label={t("obligationDetailsPage.fields.owner")}
                   error={formState.errors.ownerId?.message}
                   required
                   disabled={disabled}
@@ -284,18 +278,18 @@ export default function ObligationDetailsPage(props: Props) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field
-              label={__("Regulator")}
+              label={t("obligationDetailsPage.fields.regulator")}
               error={formState.errors.regulator?.message}
             >
               <Input
                 {...register("regulator")}
-                placeholder={__("Enter regulator")}
+                placeholder={t("obligationDetailsPage.placeholders.regulator")}
                 disabled={disabled}
               />
             </Field>
 
             <Field
-              label={__("Type")}
+              label={t("obligationDetailsPage.fields.type")}
               error={formState.errors.type?.message}
             >
               <Controller
@@ -304,7 +298,7 @@ export default function ObligationDetailsPage(props: Props) {
                 render={({ field }) => (
                   <Select
                     variant="editor"
-                    placeholder={__("Select type")}
+                    placeholder={t("obligationDetailsPage.placeholders.type")}
                     onValueChange={field.onChange}
                     value={field.value}
                     className="w-full"
@@ -312,10 +306,10 @@ export default function ObligationDetailsPage(props: Props) {
                   >
                     {typeOptions.map(option => (
                       <Option
-                        key={option.value}
-                        value={option.value}
+                        key={option}
+                        value={option}
                       >
-                        {option.label}
+                        {t(`obligationDetailsPage.types.${option.toLowerCase()}`)}
                       </Option>
                     ))}
                   </Select>
@@ -326,7 +320,7 @@ export default function ObligationDetailsPage(props: Props) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field
-              label={__("Last Review Date")}
+              label={t("obligationDetailsPage.fields.lastReviewDate")}
               error={formState.errors.lastReviewDate?.message}
             >
               <Input
@@ -337,7 +331,7 @@ export default function ObligationDetailsPage(props: Props) {
             </Field>
 
             <Field
-              label={__("Due Date")}
+              label={t("obligationDetailsPage.fields.dueDate")}
               error={formState.errors.dueDate?.message}
             >
               <Input
@@ -349,24 +343,24 @@ export default function ObligationDetailsPage(props: Props) {
           </div>
 
           <Field
-            label={__("Requirement")}
+            label={t("obligationDetailsPage.fields.requirement")}
             error={formState.errors.requirement?.message}
           >
             <Textarea
               {...register("requirement")}
-              placeholder={__("Enter requirement")}
+              placeholder={t("obligationDetailsPage.placeholders.requirement")}
               rows={4}
               disabled={disabled}
             />
           </Field>
 
           <Field
-            label={__("Actions to be Implemented")}
+            label={t("obligationDetailsPage.fields.actionsToBeImplemented")}
             error={formState.errors.actionsToBeImplemented?.message}
           >
             <Textarea
               {...register("actionsToBeImplemented")}
-              placeholder={__("Enter actions to be implemented")}
+              placeholder={t("obligationDetailsPage.placeholders.actionsToBeImplemented")}
               rows={4}
               disabled={disabled}
             />
@@ -379,8 +373,8 @@ export default function ObligationDetailsPage(props: Props) {
                 disabled={formState.isSubmitting}
               >
                 {formState.isSubmitting
-                  ? __("Saving...")
-                  : __("Save Changes")}
+                  ? t("obligationDetailsPage.actions.saving")
+                  : t("obligationDetailsPage.actions.save")}
               </Button>
             )}
           </div>

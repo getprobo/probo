@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -29,6 +28,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import type { PropsWithChildren } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -76,7 +76,7 @@ const schema = z.object({
 export function NewCompliancePageDomainDialog(props: PropsWithChildren<{ compliancePageId: string }>) {
   const { children, compliancePageId } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const dialogRef = useDialogRef();
 
   const { register, handleSubmit, formState, reset } = useFormWithSchema(
@@ -90,10 +90,8 @@ export function NewCompliancePageDomainDialog(props: PropsWithChildren<{ complia
 
   const [createCustomDomain, isCreating]
     = useMutation<NewCompliancePageDomainDialogMutation>(createCustomDomainMutation, {
-      successMessage: __(
-        "Domain added successfully. Configure the DNS records to verify and activate your domain.",
-      ),
-      errorToast: __("Failed to add domain"),
+      successMessage: t("newDomainDialog.messages.created"),
+      errorToast: t("newDomainDialog.errors.create"),
     });
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
@@ -132,39 +130,34 @@ export function NewCompliancePageDomainDialog(props: PropsWithChildren<{ complia
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Custom Domain"), __("Add Domain")]} />}
+      title={<Breadcrumb items={[t("domainPage.title"), t("newDomainDialog.title")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <div>
             <p className="text-sm text-txt-secondary mb-4">
-              {__(
-                "Enter your domain and we'll generate the DNS records you need to add",
-              )}
+              {t("newDomainDialog.description")}
             </p>
           </div>
 
           <Field
             {...register("domain")}
-            label={__("Domain")}
+            label={t("newDomainDialog.fields.domain")}
             type="text"
-            placeholder="compliance.example.com"
+            placeholder={t("newDomainDialog.fields.domainPlaceholder")}
             error={formState.errors.domain?.message}
             autoFocus
           />
 
           <div className="bg-subtle rounded-lg p-4">
             <p className="text-xs text-txt-secondary">
-              <strong>{__("Examples:")}</strong>
-              {" "}
-              compliance.example.com,
-              trust.example.com
+              {t("newDomainDialog.examples")}
             </p>
           </div>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating || !formState.isValid}>
-            {isCreating ? __("Adding...") : __("Add Domain")}
+            {isCreating ? t("newDomainDialog.actions.adding") : t("newDomainDialog.actions.add")}
           </Button>
         </DialogFooter>
       </form>

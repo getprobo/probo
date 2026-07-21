@@ -36,19 +36,19 @@ export const certifications = {
 } as const;
 
 export const certificationCategoryLabel = (
-    __: Translator,
+    t: Translator,
     category: keyof typeof certifications,
 ) => {
     switch (category) {
         case "securityStandards":
-            return __("Security Standards");
+            return t("helpers.certificationCategory.securityStandards");
         case "regulatoryLegal":
-            return __("Regulatory & Legal");
+            return t("helpers.certificationCategory.regulatoryLegal");
         case "industrySpecific":
-            return __("Industry-Specific");
+            return t("helpers.certificationCategory.industrySpecific");
         case "internationalGov":
-            return __("International & Government");
+            return t("helpers.certificationCategory.internationalGovernment");
         default:
-            return __("Custom certifications");
+            return t("helpers.certificationCategory.custom");
     }
 };

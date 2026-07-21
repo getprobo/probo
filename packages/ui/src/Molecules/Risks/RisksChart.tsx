@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { getRiskImpacts, getRiskLikelihoods, groupBy } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { clsx } from "clsx";
 import { Fragment, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { Card } from "../../Atoms/Card/Card";
@@ -66,12 +66,16 @@ const cellKey = (impact: number, likelihood: number) =>
  * Displays a grid of risk grouped by impact & likelihood
  */
 export function RisksChart({ organizationId, type, risks }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  const legend = [__("Low"), __("High"), __("Critical")];
+  const legend = [
+    t("ui.risk.severity.low"),
+    t("ui.risk.severity.high"),
+    t("ui.risk.severity.critical"),
+  ];
 
-  const impacts = getRiskImpacts(__).reverse();
-  const likelihoods = getRiskLikelihoods(__);
+  const impacts = getRiskImpacts(t).reverse();
+  const likelihoods = getRiskLikelihoods(t);
   const impactField
     = type === "inherent" ? "inherentImpact" : "residualImpact";
   const likelihoodField
@@ -88,8 +92,8 @@ export function RisksChart({ organizationId, type, risks }: Props) {
       <div className="flex justify-between items-center mb-6">
         <h2 className="font-semibold text-lg">
           {type === "inherent"
-            ? __("Initial Risk")
-            : __("Residual Risk")}
+            ? t("ui.risk.initial")
+            : t("ui.risk.residual")}
         </h2>
         <div className="flex gap-3">
           {legend.map((label, i) => (
@@ -114,7 +118,7 @@ export function RisksChart({ organizationId, type, risks }: Props) {
           className="text-xs font-medium flex-none text-center"
           style={{ writingMode: "sideways-lr" }}
         >
-          {__("Impact")}
+          {t("ui.risk.impact.label")}
         </div>
         <div className="grid grid-cols-[90px_1fr_1fr_1fr_1fr_1fr] gap-1 w-full">
           {impacts.map(impact => (
@@ -158,7 +162,7 @@ export function RisksChart({ organizationId, type, risks }: Props) {
               )
               {likelihood.value === 3 && (
                 <div className="text-xs text-txt-primary font-medium flex-none text-center mt-3">
-                  {__("Likelihood")}
+                  {t("ui.risk.likelihood.label")}
                 </div>
               )}
             </div>
@@ -180,7 +184,7 @@ function RisksChartCell({
   likelihood: number;
   organizationId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const level = getLevel(impact * likelihood);
   const baseClass
     = "flex items-center justify-center aspect-square rounded-xl text-txt-invert text-sm font-semibold";
@@ -189,9 +193,9 @@ function RisksChartCell({
   }
 
   const infos = [
-    { label: __("Number of risks"), value: risks.length },
-    { label: __("Impact"), value: impact },
-    { label: __("Likelihood"), value: likelihood },
+    { label: t("ui.risk.numberOfRisks"), value: risks.length },
+    { label: t("ui.risk.impact.label"), value: impact },
+    { label: t("ui.risk.likelihood.label"), value: likelihood },
   ];
 
   return (
@@ -224,7 +228,9 @@ function RisksChartCell({
         <div className="text-txt-primary">{impact * likelihood}</div>
       </div>
       <DropdownSeparator className="my-3" />
-      <div className="text-txt-secondary mb-1">{__("Linked Risks")}</div>
+      <div className="text-txt-secondary mb-1">
+        {t("ui.risk.linkedRisks")}
+      </div>
       {risks.map(risk => (
         <DropdownItem key={risk.id} asChild>
           <Link

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import type { MeasureGraphDeleteMutation } from "#/__generated__/core/MeasureGraphDeleteMutation.graphql";
@@ -39,13 +39,13 @@ const deleteMeasureMutation = graphql`
 `;
 
 export function useDeleteMeasureMutation() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return useMutationWithToasts<MeasureGraphDeleteMutation>(
     deleteMeasureMutation,
     {
-      successMessage: __("Measure deleted successfully."),
-      errorMessage: __("Failed to delete measure"),
+      successMessage: t("measureGraph.messages.deleted"),
+      errorMessage: t("measureGraph.errors.delete"),
     },
   );
 }
@@ -61,10 +61,10 @@ const measureUpdateMutation = graphql`
 `;
 
 export const useUpdateMeasure = () => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return useMutationWithToasts(measureUpdateMutation, {
-    successMessage: __("Measure updated successfully."),
-    errorMessage: __("Failed to update measure"),
+    successMessage: t("measureGraph.messages.updated"),
+    errorMessage: t("measureGraph.errors.update"),
   });
 };

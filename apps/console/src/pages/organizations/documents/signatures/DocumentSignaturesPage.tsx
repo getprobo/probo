@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Checkbox, Spinner } from "@probo/ui";
 import { Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -64,7 +64,7 @@ type SignatureState = "REQUESTED" | "SIGNED";
 export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<DocumentSignaturesPageQuery> }) {
   const { queryRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const {
     organization,
@@ -89,7 +89,7 @@ export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<Documen
     <div className="space-y-4">
       <div className="flex items-center gap-4 pb-2 border-b border-border-solid">
         <span className="text-sm text-txt-secondary">
-          {__("Filter by state:")}
+          {t("documentSignaturesPage.filter.label")}
         </span>
         <div className="flex items-center gap-2">
           <Checkbox
@@ -100,7 +100,7 @@ export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<Documen
             className="text-sm text-txt-secondary cursor-pointer select-none"
             onClick={() => handleSelectState("REQUESTED")}
           >
-            {__("Requested")}
+            {t("documentSignaturesPage.states.requested")}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<Documen
             className="text-sm text-txt-secondary cursor-pointer select-none"
             onClick={() => handleSelectState("SIGNED")}
           >
-            {__("Signed")}
+            {t("documentSignaturesPage.states.signed")}
           </span>
         </div>
       </div>

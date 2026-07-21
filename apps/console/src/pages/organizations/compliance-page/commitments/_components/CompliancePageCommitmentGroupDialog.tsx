@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Dialog, DialogContent, DialogFooter, Field, Spinner, Textarea, useDialogRef } from "@probo/ui";
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -62,12 +62,7 @@ const updateGroupMutation = graphql`
   }
 `;
 
-const groupSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-});
-
-type GroupFormData = z.infer<typeof groupSchema>;
+type GroupFormData = { title: string; description: string };
 
 export type CompliancePageCommitmentGroupDialogRef = {
   openCreate: (compliancePortalId: string) => void;
@@ -78,19 +73,26 @@ export const CompliancePageCommitmentGroupDialog = forwardRef<
   CompliancePageCommitmentGroupDialogRef,
   { onChanged: () => void }
 >(function CompliancePageCommitmentGroupDialog({ onChanged }, ref) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const dialogRef = useDialogRef();
+  const groupSchema = z.object({
+    title: z.string().min(1, t("commitmentGroupDialog.validation.titleRequired")),
+    description: z.string().min(
+      1,
+      t("commitmentGroupDialog.validation.descriptionRequired"),
+    ),
+  });
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [compliancePortalId, setCompliancePortalId] = useState<string>("");
   const [groupId, setGroupId] = useState<string>("");
 
   const [createGroup, isCreating] = useMutationWithToasts<CompliancePageCommitmentGroupDialogCreateMutation>(
     createGroupMutation,
-    { successMessage: __("Group created successfully"), errorMessage: __("Failed to create group") },
+    { successMessage: t("commitmentGroupDialog.messages.created"), errorMessage: t("commitmentGroupDialog.errors.create") },
   );
   const [updateGroup, isUpdating] = useMutationWithToasts<CompliancePageCommitmentGroupDialogUpdateMutation>(
     updateGroupMutation,
-    { successMessage: __("Group updated successfully"), errorMessage: __("Failed to update group") },
+    { successMessage: t("commitmentGroupDialog.messages.updated"), errorMessage: t("commitmentGroupDialog.errors.update") },
   );
 
   const { register, handleSubmit, formState: { errors }, reset } = useFormWithSchema(groupSchema, {
@@ -135,7 +137,9 @@ export const CompliancePageCommitmentGroupDialog = forwardRef<
   };
 
   const isSubmitting = isCreating || isUpdating;
-  const title = mode === "create" ? __("Add Group") : __("Edit Group");
+  const title = mode === "create"
+    ? t("commitmentGroupDialog.title.create")
+    : t("commitmentGroupDialog.title.edit");
 
   return (
     <Dialog ref={dialogRef} title={title} className="max-w-2xl" onClose={() => reset()}>
@@ -143,23 +147,29 @@ export const CompliancePageCommitmentGroupDialog = forwardRef<
         <DialogContent padded className="space-y-6">
           <Field
             {...register("title")}
-            label={__("Title")}
+            label={t("commitmentGroupDialog.fields.title")}
             type="text"
             required
             error={errors.title?.message}
-            placeholder={__("e.g. Data Protection")}
+            placeholder={t("commitmentGroupDialog.fields.titlePlaceholder")}
           />
-          <Field label={__("Description")} error={errors.description?.message} required>
+          <Field
+            label={t("commitmentGroupDialog.fields.description")}
+            error={errors.description?.message}
+            required
+          >
             <Textarea
               {...register("description")}
-              placeholder={__("Describe what this group of commitments covers")}
+              placeholder={t("commitmentGroupDialog.fields.descriptionPlaceholder")}
               rows={3}
             />
           </Field>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? Spinner : undefined}>
-            {mode === "create" ? __("Add Group") : __("Update Group")}
+            {mode === "create"
+              ? t("commitmentGroupDialog.actions.add")
+              : t("commitmentGroupDialog.actions.update")}
           </Button>
         </DialogFooter>
       </form>

@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { downloadFile, formatDate } from "@probo/helpers";
+import { downloadFile } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -32,6 +32,7 @@ import {
   Option,
 } from "@probo/ui";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartyOverviewPageBusinessAssociateAgreementFragment$key } from "#/__generated__/core/ThirdPartyOverviewPageBusinessAssociateAgreementFragment.graphql";
@@ -120,33 +121,33 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
   }
   const thirdParty = data.node;
 
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const thirdPartyCategories: { value: ThirdPartyCategory; label: string }[] = [
-    { value: "ANALYTICS", label: __("Analytics") },
-    { value: "CLOUD_MONITORING", label: __("Cloud Monitoring") },
-    { value: "CLOUD_PROVIDER", label: __("Cloud Provider") },
-    { value: "COLLABORATION", label: __("Collaboration") },
-    { value: "CUSTOMER_SUPPORT", label: __("Customer Support") },
+    { value: "ANALYTICS", label: t("thirdPartyOverviewPage.categories.analytics") },
+    { value: "CLOUD_MONITORING", label: t("thirdPartyOverviewPage.categories.cloudMonitoring") },
+    { value: "CLOUD_PROVIDER", label: t("thirdPartyOverviewPage.categories.cloudProvider") },
+    { value: "COLLABORATION", label: t("thirdPartyOverviewPage.categories.collaboration") },
+    { value: "CUSTOMER_SUPPORT", label: t("thirdPartyOverviewPage.categories.customerSupport") },
     {
       value: "DATA_STORAGE_AND_PROCESSING",
-      label: __("Data Storage and Processing"),
+      label: t("thirdPartyOverviewPage.categories.dataStorageAndProcessing"),
     },
-    { value: "DOCUMENT_MANAGEMENT", label: __("Document Management") },
-    { value: "EMPLOYEE_MANAGEMENT", label: __("Employee Management") },
-    { value: "ENGINEERING", label: __("Engineering") },
-    { value: "FINANCE", label: __("Finance") },
-    { value: "IDENTITY_PROVIDER", label: __("Identity Provider") },
-    { value: "IT", label: __("IT") },
-    { value: "MARKETING", label: __("Marketing") },
-    { value: "OFFICE_OPERATIONS", label: __("Office Operations") },
-    { value: "OTHER", label: __("Other") },
-    { value: "PASSWORD_MANAGEMENT", label: __("Password Management") },
-    { value: "PRODUCT_AND_DESIGN", label: __("Product and Design") },
-    { value: "PROFESSIONAL_SERVICES", label: __("Professional Services") },
-    { value: "RECRUITING", label: __("Recruiting") },
-    { value: "SALES", label: __("Sales") },
-    { value: "SECURITY", label: __("Security") },
-    { value: "VERSION_CONTROL", label: __("Version Control") },
+    { value: "DOCUMENT_MANAGEMENT", label: t("thirdPartyOverviewPage.categories.documentManagement") },
+    { value: "EMPLOYEE_MANAGEMENT", label: t("thirdPartyOverviewPage.categories.employeeManagement") },
+    { value: "ENGINEERING", label: t("thirdPartyOverviewPage.categories.engineering") },
+    { value: "FINANCE", label: t("thirdPartyOverviewPage.categories.finance") },
+    { value: "IDENTITY_PROVIDER", label: t("thirdPartyOverviewPage.categories.identityProvider") },
+    { value: "IT", label: t("thirdPartyOverviewPage.categories.it") },
+    { value: "MARKETING", label: t("thirdPartyOverviewPage.categories.marketing") },
+    { value: "OFFICE_OPERATIONS", label: t("thirdPartyOverviewPage.categories.officeOperations") },
+    { value: "OTHER", label: t("thirdPartyOverviewPage.categories.other") },
+    { value: "PASSWORD_MANAGEMENT", label: t("thirdPartyOverviewPage.categories.passwordManagement") },
+    { value: "PRODUCT_AND_DESIGN", label: t("thirdPartyOverviewPage.categories.productAndDesign") },
+    { value: "PROFESSIONAL_SERVICES", label: t("thirdPartyOverviewPage.categories.professionalServices") },
+    { value: "RECRUITING", label: t("thirdPartyOverviewPage.categories.recruiting") },
+    { value: "SALES", label: t("thirdPartyOverviewPage.categories.sales") },
+    { value: "SECURITY", label: t("thirdPartyOverviewPage.categories.security") },
+    { value: "VERSION_CONTROL", label: t("thirdPartyOverviewPage.categories.versionControl") },
   ];
   const organizationId = useOrganizationId();
 
@@ -174,24 +175,24 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
   const urls = useMemo(
     () =>
       [
-        { name: "statusPageUrl", label: __("Status page URL") },
-        { name: "termsOfServiceUrl", label: __("Terms of service URL") },
-        { name: "privacyPolicyUrl", label: __("Privacy document URL") },
+        { name: "statusPageUrl", label: t("thirdPartyOverviewPage.urlLabels.statusPage") },
+        { name: "termsOfServiceUrl", label: t("thirdPartyOverviewPage.urlLabels.termsOfService") },
+        { name: "privacyPolicyUrl", label: t("thirdPartyOverviewPage.urlLabels.privacyPolicy") },
         {
           name: "serviceLevelAgreementUrl",
-          label: __("Service level agreement URL"),
+          label: t("thirdPartyOverviewPage.urlLabels.serviceLevelAgreement"),
         },
         {
           name: "dataProcessingAgreementUrl",
-          label: __("Data processing agreement URL"),
+          label: t("thirdPartyOverviewPage.urlLabels.dataProcessingAgreement"),
         },
-        { name: "securityPageUrl", label: __("Security page URL") },
-        { name: "trustPageUrl", label: __("Trust page URL") },
+        { name: "securityPageUrl", label: t("thirdPartyOverviewPage.urlLabels.securityPage") },
+        { name: "trustPageUrl", label: t("thirdPartyOverviewPage.urlLabels.trustPage") },
       ] as const,
-    [__],
+    [t],
   );
 
-  usePageTitle(thirdParty.name + " - " + __("Overview"));
+  usePageTitle(t("thirdPartyOverviewPage.pageTitle", { name: thirdParty.name }));
 
   const isFormDisabled = isSubmitting || !thirdParty.canUpdate;
 
@@ -203,18 +204,18 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
       className="space-y-12"
     >
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Third party details")}</h2>
+        <h2 className="text-base font-medium">{t("thirdPartyOverviewPage.sections.details")}</h2>
         <Card className="space-y-4" padded>
           <Field
             {...register("name")}
-            label={__("Name")}
+            label={t("thirdPartyOverviewPage.fields.name")}
             type="text"
             error={errors.name?.message}
             disabled={isFormDisabled}
           />
           <Field
             {...register("description")}
-            label={__("Description")}
+            label={t("thirdPartyOverviewPage.fields.description")}
             type="textarea"
             error={errors.description?.message}
             disabled={isFormDisabled}
@@ -223,8 +224,8 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
             control={control}
             name="category"
             type="select"
-            label={__("Category")}
-            placeholder={__("Select a category")}
+            label={t("thirdPartyOverviewPage.fields.category")}
+            placeholder={t("thirdPartyOverviewPage.placeholders.category")}
             error={errors.category?.message}
             disabled={isFormDisabled}
           >
@@ -236,21 +237,21 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
           </ControlledField>
           <Field
             {...register("legalName")}
-            label={__("Legal name")}
+            label={t("thirdPartyOverviewPage.fields.legalName")}
             type="text"
             error={errors.legalName?.message}
             disabled={isFormDisabled}
           />
           <Field
             {...register("headquarterAddress")}
-            label={__("Headquarter address")}
+            label={t("thirdPartyOverviewPage.fields.headquarterAddress")}
             type="textarea"
             error={errors.headquarterAddress?.message}
             disabled={isFormDisabled}
           />
           <Field
             {...register("websiteUrl")}
-            label={__("Website URL")}
+            label={t("thirdPartyOverviewPage.fields.websiteUrl")}
             type="text"
             error={errors.websiteUrl?.message}
             disabled={isFormDisabled}
@@ -259,7 +260,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Countries")}</h2>
+        <h2 className="text-base font-medium">{t("thirdPartyOverviewPage.sections.countries")}</h2>
         <Card padded>
           <CountriesField
             control={control}
@@ -270,13 +271,13 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Ownership details")}</h2>
+        <h2 className="text-base font-medium">{t("thirdPartyOverviewPage.sections.ownership")}</h2>
         <Card className="space-y-4" padded>
           <PeopleSelectField
             organizationId={organizationId}
             control={control}
             name="businessOwnerId"
-            label={__("Business owner")}
+            label={t("thirdPartyOverviewPage.fields.businessOwner")}
             error={errors.businessOwnerId?.message}
             disabled={isFormDisabled}
             optional={true}
@@ -285,7 +286,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
             organizationId={organizationId}
             control={control}
             name="securityOwnerId"
-            label={__("Security owner")}
+            label={t("thirdPartyOverviewPage.fields.securityOwner")}
             error={errors.securityOwnerId?.message}
             disabled={isFormDisabled}
             optional={true}
@@ -294,7 +295,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
       </div>
 
       <div className="space-y-4 mb-4">
-        <h2 className="text-base font-medium">{__("Links")}</h2>
+        <h2 className="text-base font-medium">{t("thirdPartyOverviewPage.sections.links")}</h2>
         <Card className="divide-y divide-border-low">
           {urls.map(url => (
             <div
@@ -323,26 +324,27 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Data agreements")}</h2>
+        <h2 className="text-base font-medium">{t("thirdPartyOverviewPage.sections.dataAgreements")}</h2>
         <Card className="space-y-4" padded>
           <div className="flex items-center justify-between p-4 border border-border-low rounded-lg">
             <div className="flex-1">
               <h3 className="font-medium text-txt-primary">
-                {__("Business Associate Agreement")}
+                {t("thirdPartyOverviewPage.agreements.businessAssociate")}
               </h3>
               <p className="text-sm text-txt-secondary mt-1">
                 {businessAssociateAgreement
                   ? businessAssociateAgreement.file.fileName
-                  : __("No business associate agreement available")}
+                  : t("thirdPartyOverviewPage.agreements.noBusinessAssociate")}
               </p>
               {(businessAssociateAgreement?.validFrom
                 || businessAssociateAgreement?.validUntil) && (
                 <p className="text-xs text-txt-secondary mt-1">
-                  {__("Valid")}
-                  {businessAssociateAgreement.validFrom
-                    && ` ${__("from")} ${formatDate(businessAssociateAgreement.validFrom)}`}
-                  {businessAssociateAgreement.validUntil
-                    && ` ${__("until")} ${formatDate(businessAssociateAgreement.validUntil)}`}
+                  {formatValidity(
+                    businessAssociateAgreement.validFrom,
+                    businessAssociateAgreement.validUntil,
+                    i18n.language,
+                    t,
+                  )}
                 </p>
               )}
             </div>
@@ -359,7 +361,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
                             businessAssociateAgreement.file.fileName,
                           )}
                       >
-                        {__("Download PDF")}
+                        {t("thirdPartyOverviewPage.actions.downloadPdf")}
                       </Button>
                       {businessAssociateAgreement.canUpdate && (
                         <EditBusinessAssociateAgreementDialog
@@ -391,7 +393,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
                         onSuccess={() => window.location.reload()}
                       >
                         <Button variant="secondary" icon={IconPlusLarge}>
-                          {__("Upload")}
+                          {t("thirdPartyOverviewPage.actions.upload")}
                         </Button>
                       </UploadBusinessAssociateAgreementDialog>
                     )
@@ -402,21 +404,22 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
           <div className="flex items-center justify-between p-4 border border-border-low rounded-lg">
             <div className="flex-1">
               <h3 className="font-medium text-txt-primary">
-                {__("Data Privacy Agreement")}
+                {t("thirdPartyOverviewPage.agreements.dataPrivacy")}
               </h3>
               <p className="text-sm text-txt-secondary mt-1">
                 {dataPrivacyAgreement
                   ? dataPrivacyAgreement.file.fileName
-                  : __("No data privacy agreement available")}
+                  : t("thirdPartyOverviewPage.agreements.noDataPrivacy")}
               </p>
               {(dataPrivacyAgreement?.validFrom
                 || dataPrivacyAgreement?.validUntil) && (
                 <p className="text-xs text-txt-secondary mt-1">
-                  {__("Valid")}
-                  {dataPrivacyAgreement.validFrom
-                    && ` ${__("from")} ${formatDate(dataPrivacyAgreement.validFrom)}`}
-                  {dataPrivacyAgreement.validUntil
-                    && ` ${__("until")} ${formatDate(dataPrivacyAgreement.validUntil)}`}
+                  {formatValidity(
+                    dataPrivacyAgreement.validFrom,
+                    dataPrivacyAgreement.validUntil,
+                    i18n.language,
+                    t,
+                  )}
                 </p>
               )}
             </div>
@@ -433,7 +436,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
                             dataPrivacyAgreement.file.fileName,
                           )}
                       >
-                        {__("Download PDF")}
+                        {t("thirdPartyOverviewPage.actions.downloadPdf")}
                       </Button>
                       {dataPrivacyAgreement.canUpdate && (
                         <EditDataPrivacyAgreementDialog
@@ -465,7 +468,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
                         onSuccess={() => window.location.reload()}
                       >
                         <Button variant="secondary" icon={IconPlusLarge}>
-                          {__("Upload")}
+                          {t("thirdPartyOverviewPage.actions.upload")}
                         </Button>
                       </UploadDataPrivacyAgreementDialog>
                     )
@@ -478,10 +481,27 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
       <div className="flex justify-end">
         {thirdParty.canUpdate && (
           <Button type="submit" disabled={isSubmitting}>
-            {__("Update third party")}
+            {t("thirdPartyOverviewPage.actions.update")}
           </Button>
         )}
       </div>
     </form>
   );
+}
+
+function formatValidity(
+  validFrom: string | null | undefined,
+  validUntil: string | null | undefined,
+  language: string,
+  t: ReturnType<typeof useTranslation>["t"],
+) {
+  if (validFrom && validUntil) {
+    return t("thirdPartyOverviewPage.agreements.validity.range", {
+      from: dateFormat(language, validFrom),
+      until: dateFormat(language, validUntil),
+    });
+  }
+  if (validFrom) return t("thirdPartyOverviewPage.agreements.validity.from", { date: dateFormat(language, validFrom) });
+  if (validUntil) return t("thirdPartyOverviewPage.agreements.validity.until", { date: dateFormat(language, validUntil) });
+  return "";
 }

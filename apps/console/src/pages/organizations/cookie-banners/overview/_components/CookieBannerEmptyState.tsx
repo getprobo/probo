@@ -19,40 +19,40 @@
 // SOFTWARE.
 
 import { CookieIcon } from "@phosphor-icons/react";
-import { useTranslate } from "@probo/i18n";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 interface CookieBannerEmptyStateProps {
   children?: ReactNode;
 }
 
 export function CookieBannerEmptyState({ children }: CookieBannerEmptyStateProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
 
   const steps = [
     {
       step: "1",
-      title: __("Create a banner"),
-      description: __("Set up your cookie consent banner with a name, origin URL, and privacy policy link."),
+      title: t("emptyState.steps.create.title"),
+      description: t("emptyState.steps.create.description"),
     },
     {
       step: "2",
-      title: __("Configure categories"),
-      description: __("Organize your cookies into categories like Analytics, Advertising, and Functional."),
+      title: t("emptyState.steps.categories.title"),
+      description: t("emptyState.steps.categories.description"),
     },
     {
       step: "3",
-      title: __("Install the SDK"),
-      description: __("Add a single script tag or import the ES module to start collecting consent."),
+      title: t("emptyState.steps.sdk.title"),
+      description: t("emptyState.steps.sdk.description"),
     },
   ];
 
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <CookieIcon size={48} weight="duotone" className="mb-2 text-muted-foreground" />
-      <h2 className="text-xl font-semibold mb-2">{__("No cookie banners yet")}</h2>
+      <h2 className="text-xl font-semibold mb-2">{t("emptyState.title")}</h2>
       <p className="text-muted-foreground mb-8 max-w-md">
-        {__("Create your first cookie consent banner to start collecting GDPR-compliant consent from your website visitors.")}
+        {t("emptyState.description")}
       </p>
 
       <div className="grid gap-6 sm:grid-cols-3 mb-8 w-full max-w-2xl">

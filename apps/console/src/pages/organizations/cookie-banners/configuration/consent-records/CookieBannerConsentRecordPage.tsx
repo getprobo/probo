@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, humanizeSeconds } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat, humanizeSeconds } from "@probo/i18n";
 import { Badge, Breadcrumb, Card, PageHeader, PropertyRow } from "@probo/ui";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CookieBannerConsentRecordPageQuery } from "#/__generated__/core/CookieBannerConsentRecordPageQuery.graphql";
@@ -29,7 +29,6 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   formatAnonymizedIp,
-  getActionLabel,
   getActionVariant,
 } from "./_components/consentRecordHelpers";
 
@@ -78,10 +77,16 @@ interface CookieBannerConsentRecordPageProps {
   queryRef: PreloadedQuery<CookieBannerConsentRecordPageQuery>;
 }
 
+const PERSISTENT_TRACKER_TYPES = new Set([
+  "LOCAL_STORAGE",
+  "INDEXED_DB",
+  "CACHE_STORAGE",
+]);
+
 export default function CookieBannerConsentRecordPage({
   queryRef,
 }: CookieBannerConsentRecordPageProps) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<CookieBannerConsentRecordPageQuery>(cookieBannerConsentRecordPageQuery, queryRef);
 
@@ -102,13 +107,21 @@ export default function CookieBannerConsentRecordPage({
   }, [record.consentData]);
 
   const categories = record.cookieBannerVersion.categories;
+  const formatDuration = (seconds: number | null, trackerType?: string | null) => {
+    if (seconds === null || seconds <= 0) {
+      return trackerType && PERSISTENT_TRACKER_TYPES.has(trackerType)
+        ? t("duration.persistent")
+        : t("duration.session");
+    }
+    return humanizeSeconds(seconds, t);
+  };
 
   return (
     <div className="space-y-6">
       <Breadcrumb
         items={[
           {
-            label: __("Cookie Banners"),
+            label: t("consentRecordPage.breadcrumbs.index"),
             to: `/organizations/${organizationId}/cookie-banners`,
           },
           {
@@ -116,7 +129,7 @@ export default function CookieBannerConsentRecordPage({
             to: `/organizations/${organizationId}/cookie-banners/${bannerId}`,
           },
           {
-            label: __("Consent Records"),
+            label: t("consentRecordPage.breadcrumbs.records"),
             to: `/organizations/${organizationId}/cookie-banners/${bannerId}/consent-records`,
           },
           {
@@ -125,18 +138,18 @@ export default function CookieBannerConsentRecordPage({
         ]}
       />
 
-      <PageHeader title={__("Consent Record")} />
+      <PageHeader title={t("consentRecordPage.title")} />
 
       <Card padded>
-        <PropertyRow label={__("Visitor ID")}>
+        <PropertyRow label={t("consentRecordPage.properties.visitorId")}>
           <span className="font-mono text-sm">{record.visitorId}</span>
         </PropertyRow>
-        <PropertyRow label={__("Action")}>
+        <PropertyRow label={t("consentRecordPage.properties.action")}>
           <Badge variant={getActionVariant(record.action)}>
-            {getActionLabel(record.action, __)}
+            {t(`consentRecordPage.actions.${record.action.toLowerCase()}`)}
           </Badge>
         </PropertyRow>
-        <PropertyRow label={__("Banner Version")}>
+        <PropertyRow label={t("consentRecordPage.properties.bannerVersion")}>
           {record.cookieBannerVersion
             ? (
                 <span className="font-mono text-sm">
@@ -147,45 +160,45 @@ export default function CookieBannerConsentRecordPage({
                 <span className="text-txt-tertiary">-</span>
               )}
         </PropertyRow>
-        <PropertyRow label={__("IP Address")}>
+        <PropertyRow label={t("consentRecordPage.properties.ipAddress")}>
           <span className="font-mono text-sm">
             {record.ipAddress
               ? formatAnonymizedIp(record.ipAddress)
               : "-"}
           </span>
         </PropertyRow>
-        <PropertyRow label={__("User Agent")}>
+        <PropertyRow label={t("consentRecordPage.properties.userAgent")}>
           <span className="font-mono text-sm break-all">
             {record.userAgent ?? "-"}
           </span>
         </PropertyRow>
-        <PropertyRow label={__("SDK Version")}>
+        <PropertyRow label={t("consentRecordPage.properties.sdkVersion")}>
           <span className="font-mono text-sm">{record.sdkVersion}</span>
         </PropertyRow>
-        <PropertyRow label={__("Regulation")}>
+        <PropertyRow label={t("consentRecordPage.properties.regulation")}>
           <span className="font-mono text-sm">
             {record.regulation || "-"}
           </span>
         </PropertyRow>
-        <PropertyRow label={__("Regulation Source")}>
+        <PropertyRow label={t("consentRecordPage.properties.regulationSource")}>
           <span className="font-mono text-sm">
             {record.regulationSource || "-"}
           </span>
         </PropertyRow>
-        <PropertyRow label={__("Country")}>
+        <PropertyRow label={t("consentRecordPage.properties.country")}>
           <span className="font-mono text-sm">
             {record.countryCode || "-"}
           </span>
         </PropertyRow>
-        <PropertyRow label={__("Date")}>
+        <PropertyRow label={t("consentRecordPage.properties.date")}>
           <time dateTime={record.createdAt}>
-            {formatDate(record.createdAt)}
+            {dateFormat(i18n.language, record.createdAt)}
           </time>
         </PropertyRow>
       </Card>
 
       <Card padded>
-        <h3 className="text-lg font-semibold mb-4">{__("Consent Data")}</h3>
+        <h3 className="text-lg font-semibold mb-4">{t("consentRecordPage.consentData")}</h3>
         {categories.length > 0
           ? (
               <div className="space-y-4">
@@ -201,9 +214,7 @@ export default function CookieBannerConsentRecordPage({
                           <span className="font-medium">{category.name}</span>
                           {category.kind === "NECESSARY" && (
                             <span className="ml-2 text-xs text-txt-tertiary">
-                              (
-                              {__("Required")}
-                              )
+                              {t("consentRecordPage.required")}
                             </span>
                           )}
                         </div>
@@ -211,7 +222,7 @@ export default function CookieBannerConsentRecordPage({
                           variant={consented ? "success" : "danger"}
                           size="sm"
                         >
-                          {consented ? __("Accepted") : __("Rejected")}
+                          {consented ? t("consentRecordPage.consent.accepted") : t("consentRecordPage.consent.rejected")}
                         </Badge>
                       </div>
                       {category.description && (
@@ -225,13 +236,13 @@ export default function CookieBannerConsentRecordPage({
                             <thead>
                               <tr className="text-left text-txt-tertiary">
                                 <th className="font-medium pb-1 pr-4">
-                                  {__("Cookie")}
+                                  {t("consentRecordPage.cookies.columns.cookie")}
                                 </th>
                                 <th className="font-medium pb-1 pr-4">
-                                  {__("Duration")}
+                                  {t("consentRecordPage.cookies.columns.duration")}
                                 </th>
                                 <th className="font-medium pb-1">
-                                  {__("Description")}
+                                  {t("consentRecordPage.cookies.columns.description")}
                                 </th>
                               </tr>
                             </thead>
@@ -242,7 +253,7 @@ export default function CookieBannerConsentRecordPage({
                                     {cookie.name}
                                   </td>
                                   <td className="py-1 pr-4 text-txt-secondary">
-                                    {humanizeSeconds(cookie.maxAgeSeconds ?? null, cookie.trackerType)}
+                                    {formatDuration(cookie.maxAgeSeconds ?? null, cookie.trackerType)}
                                   </td>
                                   <td className="py-1 text-txt-secondary">
                                     {cookie.description}

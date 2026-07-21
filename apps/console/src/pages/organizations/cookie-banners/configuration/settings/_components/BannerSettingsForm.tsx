@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, Field, Input, Label, Option, Select, useToast } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -73,7 +73,7 @@ interface BannerSettingsFormProps {
 }
 
 export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
 
   const banner = useFragment(bannerSettingsFormFragment, cookieBannerKey);
@@ -103,38 +103,38 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
         },
       },
       onCompleted() {
-        toast({ title: __("Success"), description: __("Banner settings updated"), variant: "success" });
+        toast({ title: t("bannerSettingsForm.messages.successTitle"), description: t("bannerSettingsForm.messages.updated"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update"), error), variant: "error" });
+        toast({ title: t("bannerSettingsForm.errors.title"), description: formatError(t("bannerSettingsForm.errors.update"), error), variant: "error" });
       },
     });
   };
 
   return (
     <div className="space-y-4">
-      <h3 className="font-medium">{__("Settings")}</h3>
+      <h3 className="font-medium">{t("bannerSettingsForm.title")}</h3>
       <Card className="border p-4">
         <form className="space-y-4" onSubmit={e => void handleSubmit(onSubmit)(e)}>
-          <Field label={__("Name")}>
+          <Field label={t("bannerSettingsForm.fields.name")}>
             <Input {...register("name")} required />
           </Field>
 
-          <Field label={__("Origin URL")}>
+          <Field label={t("bannerSettingsForm.fields.origin")}>
             <Input value={banner.origin} disabled />
           </Field>
 
-          <Field label={__("Cookie Policy URL")}>
+          <Field label={t("bannerSettingsForm.fields.cookiePolicyUrl")}>
             <Input {...register("cookiePolicyUrl")} required />
           </Field>
 
-          <Field label={__("Privacy Policy URL")}>
+          <Field label={t("bannerSettingsForm.fields.privacyPolicyUrl")}>
             <Input {...register("privacyPolicyUrl")} />
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{__("Consent Expiry (days)")}</Label>
+              <Label>{t("bannerSettingsForm.fields.consentExpiryDays")}</Label>
               <Input
                 type="number"
                 {...register("consentExpiryDays")}
@@ -143,16 +143,16 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
               />
             </div>
             <div className="space-y-2">
-              <Label>{__("Default Language")}</Label>
+              <Label>{t("bannerSettingsForm.fields.defaultLanguage")}</Label>
               <Controller
                 name="defaultLanguage"
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <Option value="en">{__("English")}</Option>
-                    <Option value="fr">{__("French")}</Option>
-                    <Option value="de">{__("German")}</Option>
-                    <Option value="es">{__("Spanish")}</Option>
+                    <Option value="en">{t("bannerSettingsForm.languages.english")}</Option>
+                    <Option value="fr">{t("bannerSettingsForm.languages.french")}</Option>
+                    <Option value="de">{t("bannerSettingsForm.languages.german")}</Option>
+                    <Option value="es">{t("bannerSettingsForm.languages.spanish")}</Option>
                   </Select>
                 )}
               />
@@ -160,7 +160,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           </div>
 
           <Button type="submit" disabled={isUpdating}>
-            {isUpdating ? __("Saving...") : __("Save")}
+            {isUpdating ? t("bannerSettingsForm.actions.saving") : t("bannerSettingsForm.actions.save")}
           </Button>
         </form>
       </Card>

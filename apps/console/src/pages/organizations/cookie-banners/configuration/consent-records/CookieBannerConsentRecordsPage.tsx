@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Card,
   Input,
@@ -30,6 +29,7 @@ import {
   Tr,
 } from "@probo/ui";
 import { type ComponentProps, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -105,7 +105,7 @@ interface CookieBannerConsentRecordsPageProps {
 export default function CookieBannerConsentRecordsPage({
   queryRef,
 }: CookieBannerConsentRecordsPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const data = usePreloadedQuery<CookieBannerConsentRecordsPageQuery>(cookieBannerConsentRecordsPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -179,14 +179,14 @@ export default function CookieBannerConsentRecordsPage({
           value={actionFilter ?? "ALL"}
           onValueChange={handleActionFilterChange}
         >
-          <Option value="ALL">{__("All actions")}</Option>
-          <Option value="ACCEPT_ALL">{__("Accept All")}</Option>
-          <Option value="REJECT_ALL">{__("Reject All")}</Option>
-          <Option value="CUSTOMIZE">{__("Customize")}</Option>
-          <Option value="GPC">{__("GPC")}</Option>
+          <Option value="ALL">{t("consentRecordsPage.filters.allActions")}</Option>
+          <Option value="ACCEPT_ALL">{t("consentRecordsPage.actions.acceptAll")}</Option>
+          <Option value="REJECT_ALL">{t("consentRecordsPage.actions.rejectAll")}</Option>
+          <Option value="CUSTOMIZE">{t("consentRecordsPage.actions.customize")}</Option>
+          <Option value="GPC">{t("consentRecordsPage.actions.gpc")}</Option>
         </Select>
         <Input
-          placeholder={__("Visitor ID")}
+          placeholder={t("consentRecordsPage.filters.visitorId")}
           value={visitorIdFilter}
           onChange={e => setVisitorIdFilter(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleVisitorIdSubmit()}
@@ -194,7 +194,7 @@ export default function CookieBannerConsentRecordsPage({
           className="w-48"
         />
         <Input
-          placeholder={__("Banner version")}
+          placeholder={t("consentRecordsPage.filters.bannerVersion")}
           value={versionFilter}
           invalid={versionError}
           onChange={(e) => {
@@ -217,15 +217,15 @@ export default function CookieBannerConsentRecordsPage({
               >
                 <Thead>
                   <Tr>
-                    <Th>{__("Visitor ID")}</Th>
-                    <Th>{__("Action")}</Th>
-                    <Th>{__("Banner Version")}</Th>
-                    <Th>{__("IP Address")}</Th>
-                    <Th>{__("SDK Version")}</Th>
-                    <Th>{__("Regulation")}</Th>
-                    <Th>{__("Source")}</Th>
-                    <Th>{__("Country")}</Th>
-                    <SortableTh field="CREATED_AT">{__("Date")}</SortableTh>
+                    <Th>{t("consentRecordsPage.columns.visitorId")}</Th>
+                    <Th>{t("consentRecordsPage.columns.action")}</Th>
+                    <Th>{t("consentRecordsPage.columns.bannerVersion")}</Th>
+                    <Th>{t("consentRecordsPage.columns.ipAddress")}</Th>
+                    <Th>{t("consentRecordsPage.columns.sdkVersion")}</Th>
+                    <Th>{t("consentRecordsPage.columns.regulation")}</Th>
+                    <Th>{t("consentRecordsPage.columns.source")}</Th>
+                    <Th>{t("consentRecordsPage.columns.country")}</Th>
+                    <SortableTh field="CREATED_AT">{t("consentRecordsPage.columns.date")}</SortableTh>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -239,10 +239,10 @@ export default function CookieBannerConsentRecordsPage({
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {__("No consent records")}
+                    {t("consentRecordsPage.empty.title")}
                   </h3>
                   <p className="text-txt-tertiary">
-                    {__("Consent records will appear here once visitors interact with your cookie banner.")}
+                    {t("consentRecordsPage.empty.description")}
                   </p>
                 </div>
               </Card>

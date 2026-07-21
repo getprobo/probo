@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -37,6 +35,7 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -46,18 +45,18 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { LinkedStatementsOfApplicabilityDialog } from "./LinkedStatementsOfApplicabilityDialog";
 
 const linkedStatementOfApplicabilityFragment = graphql`
-    fragment LinkedStatementsOfApplicabilityCardFragment on ApplicabilityStatement {
-        id
-        statementOfApplicability {
-            id
-            name
-        }
-        control {
-            id
-        }
-        applicability
-        justification
+  fragment LinkedStatementsOfApplicabilityCardFragment on ApplicabilityStatement {
+    id
+    statementOfApplicability {
+      id
+      name
     }
+    control {
+      id
+    }
+    applicability
+    justification
+  }
 `;
 
 type AttachMutation<Params> = (p: {
@@ -94,8 +93,10 @@ type Props<Params> = {
   readOnly?: boolean;
 };
 
-export function LinkedStatementsOfApplicabilityCard<Params>(props: Props<Params>) {
-  const { __ } = useTranslate();
+export function LinkedStatementsOfApplicabilityCard<Params>(
+  props: Props<Params>,
+) {
+  const { t } = useTranslation();
 
   const [limit, setLimit] = useState<number | null>(
     props.variant === "card" ? 4 : null,
@@ -171,7 +172,7 @@ export function LinkedStatementsOfApplicabilityCard<Params>(props: Props<Params>
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">
-            {__("Statements of Applicability")}
+            {t("linkedStatementsOfApplicabilityCard.title")}
           </div>
           {!props.readOnly && (
             <LinkedStatementsOfApplicabilityDialog
@@ -182,7 +183,7 @@ export function LinkedStatementsOfApplicabilityCard<Params>(props: Props<Params>
               onUnlink={onDetach}
             >
               <Button variant="tertiary" icon={IconPlusLarge}>
-                {__("Link statement of applicability")}
+                {t("linkedStatementsOfApplicabilityCard.actions.link")}
               </Button>
             </LinkedStatementsOfApplicabilityDialog>
           )}
@@ -191,9 +192,13 @@ export function LinkedStatementsOfApplicabilityCard<Params>(props: Props<Params>
       <Table className={clsx(variant === "card" && "bg-invert")}>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Applicability")}</Th>
-            <Th>{__("Justification")}</Th>
+            <Th>{t("linkedStatementsOfApplicabilityCard.columns.name")}</Th>
+            <Th>
+              {t("linkedStatementsOfApplicabilityCard.columns.applicability")}
+            </Th>
+            <Th>
+              {t("linkedStatementsOfApplicabilityCard.columns.justification")}
+            </Th>
             {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
@@ -204,7 +209,7 @@ export function LinkedStatementsOfApplicabilityCard<Params>(props: Props<Params>
                 colSpan={props.readOnly ? 3 : 4}
                 className="text-center text-txt-secondary"
               >
-                {__("No statements of applicability linked")}
+                {t("linkedStatementsOfApplicabilityCard.empty")}
               </Td>
             </Tr>
           )}
@@ -225,7 +230,7 @@ export function LinkedStatementsOfApplicabilityCard<Params>(props: Props<Params>
               onUnlink={onDetach}
             >
               <TrButton colspan={4} icon={IconPlusLarge}>
-                {__("Link statement of applicability")}
+                {t("linkedStatementsOfApplicabilityCard.actions.link")}
               </TrButton>
             </LinkedStatementsOfApplicabilityDialog>
           )}
@@ -237,10 +242,9 @@ export function LinkedStatementsOfApplicabilityCard<Params>(props: Props<Params>
           icon={IconChevronDown}
           onClick={() => setLimit(null)}
         >
-          {sprintf(
-            __("Show %d more"),
-            props.statementsOfApplicability.length - limit,
-          )}
+          {t("linkedStatementsOfApplicabilityCard.actions.showMore", {
+            count: props.statementsOfApplicability.length - limit,
+          })}
         </Button>
       )}
     </Wrapper>
@@ -256,10 +260,7 @@ function LinkedInfoExtractor(props: {
 }) {
   const { onExtracted, fragment } = props;
 
-  const data = useFragment(
-    linkedStatementOfApplicabilityFragment,
-    fragment,
-  );
+  const data = useFragment(linkedStatementOfApplicabilityFragment, fragment);
 
   useEffect(() => {
     onExtracted({
@@ -283,7 +284,7 @@ function StatementOfApplicabilityRow(props: {
     props.statementOfApplicability,
   );
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Tr
@@ -293,8 +294,8 @@ function StatementOfApplicabilityRow(props: {
       <Td>
         <Badge variant={soa.applicability ? "success" : "danger"}>
           {soa.applicability
-            ? __("Applicable")
-            : __("Not Applicable")}
+            ? t("linkedStatementsOfApplicabilityCard.applicable")
+            : t("linkedStatementsOfApplicabilityCard.notApplicable")}
         </Badge>
       </Td>
       <Td>{soa.justification || "-"}</Td>
@@ -303,13 +304,10 @@ function StatementOfApplicabilityRow(props: {
           <Button
             variant="secondary"
             onClick={() =>
-              props.onClick(
-                soa.statementOfApplicability.id,
-                soa.control.id,
-              )}
+              props.onClick(soa.statementOfApplicability.id, soa.control.id)}
             icon={IconTrashCan}
           >
-            {__("Unlink")}
+            {t("linkedStatementsOfApplicabilityCard.actions.unlink")}
           </Button>
         </Td>
       )}

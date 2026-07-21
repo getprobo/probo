@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Breadcrumb,
@@ -34,6 +33,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -72,20 +72,19 @@ const createDocumentMutation = graphql`
   }
 `;
 
-const documentSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  documentType: z.enum(["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"]),
-  classification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
-  defaultApproverIds: z.array(z.string()),
-});
-
 /**
  * Dialog to create or update a document
  */
 export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { toast } = useToast();
+  const documentSchema = z.object({
+    title: z.string().min(1, t("createDocumentDialog.validation.titleRequired")),
+    documentType: z.enum(["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"]),
+    classification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
+    defaultApproverIds: z.array(z.string()),
+  });
 
   const { control, handleSubmit, register, formState, reset } = useFormWithSchema(
     documentSchema,
@@ -112,15 +111,27 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: formatError(__("Failed to create document"), errors), variant: "error" });
+          toast({
+            title: t("createDocumentDialog.errors.title"),
+            description: formatError(t("createDocumentDialog.errors.create"), errors),
+            variant: "error",
+          });
           return;
         }
-        toast({ title: __("Success"), description: __("Document created successfully."), variant: "success" });
+        toast({
+          title: t("createDocumentDialog.messages.successTitle"),
+          description: t("createDocumentDialog.messages.created"),
+          variant: "success",
+        });
         dialogRef.current?.close();
         reset();
       },
       onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
+        toast({
+          title: t("createDocumentDialog.errors.title"),
+          description: error.message,
+          variant: "error",
+        });
       },
     });
   };
@@ -131,32 +142,39 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
     <Dialog
       ref={dialogRef}
       trigger={trigger}
-      title={<Breadcrumb items={[__("Documents"), __("New Document")]} />}
+      title={(
+        <Breadcrumb
+          items={[
+            t("createDocumentDialog.breadcrumbs.documents"),
+            t("createDocumentDialog.breadcrumbs.new"),
+          ]}
+        />
+      )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
           <div className="py-8 px-10 space-y-4">
             <Input
               id="title"
-              aria-label={__("Title")}
+              aria-label={t("createDocumentDialog.fields.title")}
               required
               variant="title"
-              placeholder={__("Document title")}
+              placeholder={t("createDocumentDialog.fields.titlePlaceholder")}
               {...register("title")}
             />
           </div>
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
-            <Label>{__("Properties")}</Label>
-            <PropertyRow label={__("Status")}>
+            <Label>{t("createDocumentDialog.properties.title")}</Label>
+            <PropertyRow label={t("createDocumentDialog.properties.status")}>
               <Badge variant="neutral" size="md">
-                {__("Draft")}
+                {t("createDocumentDialog.status.draft")}
               </Badge>
             </PropertyRow>
 
             <PropertyRow
               id="documentType"
-              label={__("Type")}
+              label={t("createDocumentDialog.properties.type")}
               error={errors.documentType?.message}
             >
               <ControlledField
@@ -170,7 +188,7 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
 
             <PropertyRow
               id="classification"
-              label={__("Classification")}
+              label={t("createDocumentDialog.properties.classification")}
               error={errors.classification?.message}
             >
               <ControlledField
@@ -182,12 +200,12 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
               </ControlledField>
             </PropertyRow>
 
-            <PropertyRow label={__("Approvers")}>
+            <PropertyRow label={t("createDocumentDialog.properties.approvers")}>
               <PeopleMultiSelectField
                 name="defaultApproverIds"
                 control={control}
                 organizationId={organizationId}
-                placeholder={__("Add approvers...")}
+                placeholder={t("createDocumentDialog.fields.approversPlaceholder")}
               />
             </PropertyRow>
 
@@ -195,7 +213,7 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isLoading}>
-            {__("Create document")}
+            {t("createDocumentDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

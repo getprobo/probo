@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -38,6 +36,7 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -92,7 +91,7 @@ type Props<Params> = {
  * Reusable component that displays a list of linked documents
  */
 export function LinkedDocumentsCard<Params>(props: Props<Params>) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [limit, setLimit] = useState<number | null>(4);
   const documents = useMemo(() => {
     return limit ? props.documents.slice(0, limit) : props.documents;
@@ -130,7 +129,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
     <Wrapper padded className="space-y-[10px]">
       {variant === "card" && (
         <div className="flex justify-between">
-          <div className="text-lg font-semibold">{__("Documents")}</div>
+          <div className="text-lg font-semibold">{t("linkedDocumentsCard.title")}</div>
           {!props.readOnly && (
             <LinkedDocumentDialog
               connectionId={props.connectionId}
@@ -140,7 +139,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
               onUnlink={onDetach}
             >
               <Button variant="tertiary" icon={IconPlusLarge}>
-                {__("Link document")}
+                {t("linkedDocumentsCard.actions.link")}
               </Button>
             </LinkedDocumentDialog>
           )}
@@ -149,9 +148,9 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
       <Table className={clsx(variant === "card" && "bg-invert")}>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Type")}</Th>
-            <Th>{__("State")}</Th>
+            <Th>{t("linkedDocumentsCard.columns.name")}</Th>
+            <Th>{t("linkedDocumentsCard.columns.type")}</Th>
+            <Th>{t("linkedDocumentsCard.columns.state")}</Th>
             {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
@@ -162,7 +161,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
                 colSpan={props.readOnly ? 3 : 4}
                 className="text-center text-txt-secondary"
               >
-                {__("No documents linked")}
+                {t("linkedDocumentsCard.empty")}
               </Td>
             </Tr>
           )}
@@ -183,7 +182,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
               onUnlink={onDetach}
             >
               <TrButton colspan={4} icon={IconPlusLarge}>
-                {__("Link document")}
+                {t("linkedDocumentsCard.actions.link")}
               </TrButton>
             </LinkedDocumentDialog>
           )}
@@ -196,7 +195,9 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
           className="mt-3 mx-auto"
           icon={IconChevronDown}
         >
-          {sprintf(__("Show %s more"), props.documents.length - limit)}
+          {t("linkedDocumentsCard.actions.showMore", {
+            count: props.documents.length - limit,
+          })}
         </Button>
       )}
     </Wrapper>
@@ -210,7 +211,7 @@ function DocumentRow(props: {
 }) {
   const document = useFragment(linkedDocumentFragment, props.document);
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
@@ -239,7 +240,7 @@ function DocumentRow(props: {
             onClick={() => props.onClick(document.id)}
             icon={IconTrashCan}
           >
-            {__("Unlink")}
+            {t("linkedDocumentsCard.actions.unlink")}
           </Button>
         </Td>
       )}

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Button,
@@ -31,6 +30,7 @@ import {
   IconTrashCan,
   PageHeader,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   useFragment,
@@ -101,7 +101,7 @@ type Props = {
 export default function FrameworkDetailPage(props: Props) {
   const { queryRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { controlId } = useParams<{ controlId?: string }>();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<FrameworkGraphNodeQuery>(
@@ -126,9 +126,8 @@ export default function FrameworkDetailPage(props: Props) {
     = useMutationWithToasts<FrameworkDetailPageExportFrameworkMutation>(
       exportFrameworkMutation,
       {
-        errorMessage: "Failed to export framework",
-        successMessage:
-                    "Framework export started successfully. You will receive an email when the export is ready.",
+        errorMessage: t("frameworkDetailPage.errors.export"),
+        successMessage: t("frameworkDetailPage.messages.exportStarted"),
       },
     );
 
@@ -171,7 +170,7 @@ export default function FrameworkDetailPage(props: Props) {
             framework={framework}
           >
             <Button icon={IconPencil} variant="secondary">
-              {__("Edit")}
+              {t("frameworkDetailPage.actions.edit")}
             </Button>
           </FrameworkFormDialog>
         )}
@@ -187,7 +186,7 @@ export default function FrameworkDetailPage(props: Props) {
                     });
                   }}
                 >
-                  {__("Export Framework")}
+                  {t("frameworkDetailPage.actions.export")}
                 </DropdownItem>
               )}
             {framework.canDelete && (
@@ -196,14 +195,14 @@ export default function FrameworkDetailPage(props: Props) {
                 variant="danger"
                 onClick={onDelete}
               >
-                {__("Delete")}
+                {t("frameworkDetailPage.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>
         )}
       </PageHeader>
       <div className="text-lg font-semibold">
-        {__("Requirement categories")}
+        {t("frameworkDetailPage.requirementCategories")}
       </div>
       <div className="divide-x divide-border-low grid grid-cols-[264px_1fr]">
         <div
@@ -229,7 +228,7 @@ export default function FrameworkDetailPage(props: Props) {
                   size={20}
                   className="text-txt-primary"
                 />
-                {__("Add new control")}
+                {t("frameworkDetailPage.actions.addControl")}
               </button>
             </FrameworkControlDialog>
           )}

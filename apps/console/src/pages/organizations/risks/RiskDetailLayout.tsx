@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getTreatment, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Avatar,
@@ -38,6 +36,7 @@ import {
   Tabs,
   useConfirm,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { ConnectionHandler } from "relay-runtime";
@@ -112,7 +111,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
     throw new Error("Cannot load risk detail page without riskId parameter");
   }
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const data = usePreloadedQuery<RiskDetailLayoutQuery>(riskDetailLayoutQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
@@ -147,12 +146,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the risk \"%s\". This action cannot be undone.",
-          ),
-          risk.name,
-        ),
+        message: t("riskDetailLayout.deleteConfirmation", { name: risk.name }),
       },
     );
   };
@@ -172,11 +166,11 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
         <Breadcrumb
           items={[
             {
-              label: __("Risks"),
+              label: t("riskDetailLayout.breadcrumb.risks"),
               to: risksUrl,
             },
             {
-              label: __("Risk detail"),
+              label: t("riskDetailLayout.breadcrumb.detail"),
             },
           ]}
         />
@@ -185,7 +179,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
             <FormRiskDialog
               trigger={(
                 <Button icon={IconPencil} variant="secondary">
-                  {__("Edit")}
+                  {t("riskDetailLayout.actions.edit")}
                 </Button>
               )}
               risk={risk}
@@ -198,7 +192,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
                 icon={IconTrashCan}
                 onClick={onDelete}
               >
-                {__("Delete")}
+                {t("riskDetailLayout.actions.delete")}
               </DropdownItem>
             </ActionDropdown>
           )}
@@ -207,25 +201,25 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
 
       <PageHeader title={risk.name} description={risk.description} />
       <Tabs>
-        <TabLink to={`${baseTabUrl}/overview`}>{__("Overview")}</TabLink>
+        <TabLink to={`${baseTabUrl}/overview`}>{t("riskDetailLayout.tabs.overview")}</TabLink>
         <TabLink to={`${baseTabUrl}/measures`}>
-          {__("Measures")}
+          {t("riskDetailLayout.tabs.measures")}
           <TabBadge>{measuresCount}</TabBadge>
         </TabLink>
         <TabLink to={`${baseTabUrl}/documents`}>
-          {__("Documents")}
+          {t("riskDetailLayout.tabs.documents")}
           <TabBadge>{documentsCount}</TabBadge>
         </TabLink>
         <TabLink to={`${baseTabUrl}/controls`}>
-          {__("Controls")}
+          {t("riskDetailLayout.tabs.controls")}
           <TabBadge>{controlsCount}</TabBadge>
         </TabLink>
         <TabLink to={`${baseTabUrl}/obligations`}>
-          {__("Obligations")}
+          {t("riskDetailLayout.tabs.obligations")}
           <TabBadge>{obligationsCount}</TabBadge>
         </TabLink>
         <TabLink to={`${baseTabUrl}/scenarios`}>
-          {__("Scenarios")}
+          {t("riskDetailLayout.tabs.scenarios")}
           <TabBadge>{scenariosCount}</TabBadge>
         </TabLink>
       </Tabs>
@@ -233,28 +227,28 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
       <Outlet />
 
       <Drawer>
-        <PropertyRow label={__("Owner")}>
+        <PropertyRow label={t("riskDetailLayout.fields.owner")}>
           <Badge variant="highlight" size="md" className="gap-2">
             <Avatar name={risk.owner?.fullName ?? ""} />
             {risk.owner?.fullName}
           </Badge>
         </PropertyRow>
-        <PropertyRow label={__("Treatment")}>
+        <PropertyRow label={t("riskDetailLayout.fields.treatment")}>
           <Badge variant="highlight" size="md" className="gap-2">
-            {getTreatment(__, risk.treatment)}
+            {t(`riskDetailLayout.treatments.${(risk.treatment ?? "UNKNOWN").toLowerCase()}`)}
           </Badge>
         </PropertyRow>
-        <PropertyRow label={__("Initial Risk Score")}>
+        <PropertyRow label={t("riskDetailLayout.fields.initialRiskScore")}>
           <div className="text-sm text-txt-secondary">
             {risk.inherentRiskScore}
           </div>
         </PropertyRow>
-        <PropertyRow label={__("Residual Risk Score")}>
+        <PropertyRow label={t("riskDetailLayout.fields.residualRiskScore")}>
           <div className="text-sm text-txt-secondary">
             {risk.residualRiskScore}
           </div>
         </PropertyRow>
-        <PropertyRow label={__("Note")}>
+        <PropertyRow label={t("riskDetailLayout.fields.note")}>
           <div className="text-sm text-txt-secondary">{risk.note}</div>
         </PropertyRow>
       </Drawer>

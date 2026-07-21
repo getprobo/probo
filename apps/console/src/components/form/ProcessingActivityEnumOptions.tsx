@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Option } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 import type {
   ProcessingActivityDataProtectionImpactAssessment,
@@ -28,16 +28,27 @@ import type {
   ProcessingActivityTransferImpactAssessment,
 } from "#/__generated__/core/ProcessingActivityGraphCreateMutation.graphql";
 
+type Translator = (key: string) => string;
+
 export function SpecialOrCriminalDataOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const options: Array<{
     value: ProcessingActivitySpecialOrCriminalDatum;
     label: string;
   }> = [
-    { value: "YES", label: __("Yes") },
-    { value: "NO", label: __("No") },
-    { value: "POSSIBLE", label: __("Possible") },
+    {
+      value: "YES",
+      label: t("processingActivityEnumOptions.specialOrCriminalData.yes"),
+    },
+    {
+      value: "NO",
+      label: t("processingActivityEnumOptions.specialOrCriminalData.no"),
+    },
+    {
+      value: "POSSIBLE",
+      label: t("processingActivityEnumOptions.specialOrCriminalData.possible"),
+    },
   ];
 
   return (
@@ -52,18 +63,38 @@ export function SpecialOrCriminalDataOptions() {
 }
 
 export function LawfulBasisOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const options: Array<{
     value: ProcessingActivityLawfulBasis;
     label: string;
   }> = [
-    { value: "CONSENT", label: __("Consent") },
-    { value: "CONTRACTUAL_NECESSITY", label: __("Contractual Necessity") },
-    { value: "LEGAL_OBLIGATION", label: __("Legal Obligation") },
-    { value: "LEGITIMATE_INTEREST", label: __("Legitimate Interest") },
-    { value: "PUBLIC_TASK", label: __("Public Task") },
-    { value: "VITAL_INTERESTS", label: __("Vital Interests") },
+    {
+      value: "CONSENT",
+      label: t("processingActivityEnumOptions.lawfulBasis.consent"),
+    },
+    {
+      value: "CONTRACTUAL_NECESSITY",
+      label: t(
+        "processingActivityEnumOptions.lawfulBasis.contractualNecessity",
+      ),
+    },
+    {
+      value: "LEGAL_OBLIGATION",
+      label: t("processingActivityEnumOptions.lawfulBasis.legalObligation"),
+    },
+    {
+      value: "LEGITIMATE_INTEREST",
+      label: t("processingActivityEnumOptions.lawfulBasis.legitimateInterest"),
+    },
+    {
+      value: "PUBLIC_TASK",
+      label: t("processingActivityEnumOptions.lawfulBasis.publicTask"),
+    },
+    {
+      value: "VITAL_INTERESTS",
+      label: t("processingActivityEnumOptions.lawfulBasis.vitalInterests"),
+    },
   ];
 
   return (
@@ -79,17 +110,23 @@ export function LawfulBasisOptions() {
 
 export function getLawfulBasisLabel(
   value: ProcessingActivityLawfulBasis | null | undefined,
-  __: (key: string) => string,
+  t: Translator,
 ): string {
   if (!value) return "-";
 
   const labels = {
-    CONSENT: __("Consent"),
-    CONTRACTUAL_NECESSITY: __("Contractual Necessity"),
-    LEGAL_OBLIGATION: __("Legal Obligation"),
-    LEGITIMATE_INTEREST: __("Legitimate Interest"),
-    PUBLIC_TASK: __("Public Task"),
-    VITAL_INTERESTS: __("Vital Interests"),
+    CONSENT:
+      t("processingActivityEnumOptions.lawfulBasis.consent"),
+    CONTRACTUAL_NECESSITY:
+      t("processingActivityEnumOptions.lawfulBasis.contractualNecessity"),
+    LEGAL_OBLIGATION:
+      t("processingActivityEnumOptions.lawfulBasis.legalObligation"),
+    LEGITIMATE_INTEREST:
+      t("processingActivityEnumOptions.lawfulBasis.legitimateInterest"),
+    PUBLIC_TASK:
+      t("processingActivityEnumOptions.lawfulBasis.publicTask"),
+    VITAL_INTERESTS:
+      t("processingActivityEnumOptions.lawfulBasis.vitalInterests"),
   };
 
   return labels[value] || value;
@@ -97,38 +134,63 @@ export function getLawfulBasisLabel(
 
 export function getResidualRiskLabel(
   value: "LOW" | "MEDIUM" | "HIGH" | null | undefined,
-  __: (key: string) => string,
+  t: Translator,
 ): string {
   if (!value) return "-";
 
   const labels = {
-    LOW: __("Low"),
-    MEDIUM: __("Medium"),
-    HIGH: __("High"),
+    LOW: t("processingActivityEnumOptions.residualRisk.low") || "Low",
+    MEDIUM: t("processingActivityEnumOptions.residualRisk.medium") || "Medium",
+    HIGH: t("processingActivityEnumOptions.residualRisk.high") || "High",
   };
 
   return labels[value] || value;
 }
 
 export function TransferSafeguardsOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const options: Array<{
     value: string;
     label: string;
   }> = [
-    { value: "__NONE__", label: __("None") },
+    {
+      value: "__NONE__",
+      label: t("processingActivityEnumOptions.transferSafeguards.none"),
+    },
     {
       value: "STANDARD_CONTRACTUAL_CLAUSES",
-      label: __("Standard Contractual Clauses"),
+      label: t(
+        "processingActivityEnumOptions.transferSafeguards.standardContractualClauses",
+      ),
     },
-    { value: "BINDING_CORPORATE_RULES", label: __("Binding Corporate Rules") },
-    { value: "ADEQUACY_DECISION", label: __("Adequacy Decision") },
-    { value: "DEROGATIONS", label: __("Derogations") },
-    { value: "CODES_OF_CONDUCT", label: __("Codes of Conduct") },
+    {
+      value: "BINDING_CORPORATE_RULES",
+      label: t(
+        "processingActivityEnumOptions.transferSafeguards.bindingCorporateRules",
+      ),
+    },
+    {
+      value: "ADEQUACY_DECISION",
+      label: t(
+        "processingActivityEnumOptions.transferSafeguards.adequacyDecision",
+      ),
+    },
+    {
+      value: "DEROGATIONS",
+      label: t("processingActivityEnumOptions.transferSafeguards.derogations"),
+    },
+    {
+      value: "CODES_OF_CONDUCT",
+      label: t(
+        "processingActivityEnumOptions.transferSafeguards.codesOfConduct",
+      ),
+    },
     {
       value: "CERTIFICATION_MECHANISMS",
-      label: __("Certification Mechanisms"),
+      label: t(
+        "processingActivityEnumOptions.transferSafeguards.certificationMechanisms",
+      ),
     },
   ];
 
@@ -144,14 +206,24 @@ export function TransferSafeguardsOptions() {
 }
 
 export function DataProtectionImpactAssessmentOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const options: Array<{
     value: ProcessingActivityDataProtectionImpactAssessment;
     label: string;
   }> = [
-    { value: "NEEDED", label: __("Needed") },
-    { value: "NOT_NEEDED", label: __("Not Needed") },
+    {
+      value: "NEEDED",
+      label: t(
+        "processingActivityEnumOptions.dataProtectionImpactAssessment.needed",
+      ),
+    },
+    {
+      value: "NOT_NEEDED",
+      label: t(
+        "processingActivityEnumOptions.dataProtectionImpactAssessment.notNeeded",
+      ),
+    },
   ];
 
   return (
@@ -166,14 +238,22 @@ export function DataProtectionImpactAssessmentOptions() {
 }
 
 export function TransferImpactAssessmentOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const options: Array<{
     value: ProcessingActivityTransferImpactAssessment;
     label: string;
   }> = [
-    { value: "NEEDED", label: __("Needed") },
-    { value: "NOT_NEEDED", label: __("Not Needed") },
+    {
+      value: "NEEDED",
+      label: t("processingActivityEnumOptions.transferImpactAssessment.needed"),
+    },
+    {
+      value: "NOT_NEEDED",
+      label: t(
+        "processingActivityEnumOptions.transferImpactAssessment.notNeeded",
+      ),
+    },
   ];
 
   return (
@@ -188,14 +268,20 @@ export function TransferImpactAssessmentOptions() {
 }
 
 export function RoleOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const options: Array<{
     value: "CONTROLLER" | "PROCESSOR";
     label: string;
   }> = [
-    { value: "CONTROLLER", label: __("Controller") },
-    { value: "PROCESSOR", label: __("Processor") },
+    {
+      value: "CONTROLLER",
+      label: t("processingActivityEnumOptions.roles.controller"),
+    },
+    {
+      value: "PROCESSOR",
+      label: t("processingActivityEnumOptions.roles.processor"),
+    },
   ];
 
   return (

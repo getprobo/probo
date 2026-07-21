@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -38,7 +38,9 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+import type { TFunction } from "i18next";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
 import { z } from "zod";
@@ -200,11 +202,11 @@ const WEBHOOK_EVENT_VALUES = EVENT_TYPES.map(e => e.value) as [
   ...WebhookEventType[],
 ];
 
-const webhookFormSchema = z.object({
+const createWebhookFormSchema = (t: TFunction) => z.object({
   endpointUrl: z
     .string()
-    .min(1, "Endpoint URL is required")
-    .url("Please enter a valid URL")
+    .min(1, t("webhooksSettingsPage.validation.endpointUrlRequired"))
+    .url(t("webhooksSettingsPage.validation.invalidUrl"))
     .refine(
       (val) => {
         try {
@@ -214,14 +216,14 @@ const webhookFormSchema = z.object({
           return false;
         }
       },
-      "URL must use https://",
+      t("webhooksSettingsPage.validation.httpsRequired"),
     ),
   selectedEvents: z
     .array(z.enum(WEBHOOK_EVENT_VALUES))
-    .min(1, "At least one event must be selected"),
+    .min(1, t("webhooksSettingsPage.validation.eventRequired")),
 });
 
-type WebhookFormData = z.infer<typeof webhookFormSchema>;
+type WebhookFormData = z.infer<ReturnType<typeof createWebhookFormSchema>>;
 
 function WebhookFormDialog({
   mode,
@@ -236,10 +238,10 @@ function WebhookFormDialog({
   isSubmitting: boolean;
   trigger: React.ReactNode;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const { register, handleSubmit, formState, setValue, watch, reset }
-    = useFormWithSchema(webhookFormSchema, {
+    = useFormWithSchema(createWebhookFormSchema(t), {
       defaultValues: {
         endpointUrl: initialValues?.endpointUrl ?? "",
         selectedEvents: initialValues?.selectedEvents ?? [],
@@ -268,8 +270,8 @@ function WebhookFormDialog({
       trigger={trigger}
       title={
         mode === "create"
-          ? __("Add Webhook Subscription")
-          : __("Edit Webhook Subscription")
+          ? t("webhooksSettingsPage.dialogs.addTitle")
+          : t("webhooksSettingsPage.dialogs.editTitle")
       }
       className="max-w-lg"
     >
@@ -277,20 +279,20 @@ function WebhookFormDialog({
         <DialogContent padded>
           <div className="space-y-4">
             <Field
-              label={__("Endpoint URL")}
+              label={t("webhooksSettingsPage.fields.endpointUrl")}
               error={formState.errors.endpointUrl?.message}
               required
             >
               <Input
                 {...register("endpointUrl")}
                 type="url"
-                placeholder={__("https://example.com/webhook")}
+                placeholder={t("webhooksSettingsPage.placeholders.endpointUrl")}
               />
             </Field>
             <div>
-              <Label>{__("Events")}</Label>
+              <Label>{t("webhooksSettingsPage.fields.events")}</Label>
               <p className="text-sm text-txt-tertiary mb-2">
-                {__("Select the events that will trigger this webhook.")}
+                {t("webhooksSettingsPage.eventsHelp")}
               </p>
               <div className="space-y-2">
                 {EVENT_TYPES.map(event => (
@@ -322,8 +324,8 @@ function WebhookFormDialog({
             {isSubmitting
               ? <Spinner size={16} />
               : mode === "create"
-                ? __("Create")
-                : __("Save")}
+                ? t("webhooksSettingsPage.actions.create")
+                : t("webhooksSettingsPage.actions.save")}
           </Button>
         </DialogFooter>
       </form>
@@ -332,18 +334,14 @@ function WebhookFormDialog({
 }
 
 function EventStatusBadge({ status }: { status: string }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   if (status === "SUCCEEDED") {
-    return <Badge variant="success" size="sm">{__("Succeeded")}</Badge>;
+    return <Badge variant="success" size="sm">{t("webhooksSettingsPage.status.succeeded")}</Badge>;
   }
   if (status === "PENDING") {
-    return <Badge variant="info" size="sm">{__("Pending")}</Badge>;
+    return <Badge variant="info" size="sm">{t("webhooksSettingsPage.status.pending")}</Badge>;
   }
-  return <Badge variant="danger" size="sm">{__("Failed")}</Badge>;
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString();
+  return <Badge variant="danger" size="sm">{t("webhooksSettingsPage.status.failed")}</Badge>;
 }
 
 function WebhookEventsDialog({
@@ -355,7 +353,7 @@ function WebhookEventsDialog({
   endpointUrl: string;
   onClose: () => void;
 }) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const environment = useRelayEnvironment();
   const dialogRef = useDialogRef();
@@ -392,15 +390,15 @@ function WebhookEventsDialog({
         }
       } catch {
         toast({
-          title: __("Error"),
-          description: __("Failed to load webhook events."),
+          title: t("webhooksSettingsPage.errorTitle"),
+          description: t("webhooksSettingsPage.errors.loadEvents"),
           variant: "error",
         });
       } finally {
         setLoading(false);
       }
     },
-    [environment, webhookSubscriptionId, toast, __],
+    [environment, webhookSubscriptionId, toast, t],
   );
 
   useEffect(() => {
@@ -412,7 +410,7 @@ function WebhookEventsDialog({
   return (
     <Dialog
       ref={dialogRef}
-      title={__("Webhook Events")}
+      title={t("webhooksSettingsPage.dialogs.eventsTitle")}
       className="max-w-2xl"
       onClose={onClose}
     >
@@ -421,14 +419,14 @@ function WebhookEventsDialog({
           {endpointUrl}
           {totalCount > 0 && (
             <span className="text-txt-tertiary ml-2">
-              {`(${totalCount} ${__("total")})`}
+              {t("webhooksSettingsPage.total", { count: totalCount })}
             </span>
           )}
         </p>
         {events.length === 0 && !loading
           ? (
               <p className="text-sm text-txt-tertiary text-center py-8">
-                {__("No webhook events recorded yet.")}
+                {t("webhooksSettingsPage.emptyEvents")}
               </p>
             )
           : (
@@ -441,13 +439,13 @@ function WebhookEventsDialog({
                     <div className="flex items-center justify-between">
                       <EventStatusBadge status={event.status} />
                       <span className="text-xs text-txt-tertiary">
-                        {formatDate(event.createdAt)}
+                        {dateTimeFormat(i18n.language, event.createdAt)}
                       </span>
                     </div>
                     {event.response && (
                       <details className="text-xs">
                         <summary className="cursor-pointer text-txt-link hover:underline">
-                          {__("Response")}
+                          {t("webhooksSettingsPage.response")}
                         </summary>
                         <pre className="mt-1 bg-subtle p-2 rounded text-xs overflow-auto max-h-48 whitespace-pre-wrap break-all">
                           {(() => {
@@ -476,7 +474,7 @@ function WebhookEventsDialog({
             variant="secondary"
             onClick={() => void loadEvents(endCursor)}
           >
-            {__("Load more")}
+            {t("webhooksSettingsPage.actions.loadMore")}
           </Button>
         </DialogFooter>
       )}
@@ -488,7 +486,7 @@ export function WebhooksSettingsPage(props: {
   queryRef: PreloadedQuery<WebhooksSettingsPageQuery>;
 }) {
   const { queryRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const environment = useRelayEnvironment();
   const deleteDialogRef = useDialogRef();
@@ -521,8 +519,8 @@ export function WebhooksSettingsPage(props: {
         return null;
       } catch {
         toast({
-          title: __("Error"),
-          description: __("Failed to load signing secret."),
+          title: t("webhooksSettingsPage.errorTitle"),
+          description: t("webhooksSettingsPage.errors.loadSigningSecret"),
           variant: "error",
         });
         return null;
@@ -534,7 +532,7 @@ export function WebhooksSettingsPage(props: {
         });
       }
     },
-    [environment, revealedSecrets, toast, __],
+    [environment, revealedSecrets, toast, t],
   );
 
   const toggleRevealSecret = (id: string) => {
@@ -554,7 +552,7 @@ export function WebhooksSettingsPage(props: {
     if (secret) {
       void navigator.clipboard.writeText(secret);
       toast({
-        title: __("Copied to clipboard"),
+        title: t("webhooksSettingsPage.copiedToClipboard"),
         description: label,
         variant: "success",
       });
@@ -573,8 +571,8 @@ export function WebhooksSettingsPage(props: {
     = useMutationWithToasts<WebhooksSettingsPage_createMutation>(
       createWebhookSubscriptionMutation,
       {
-        successMessage: __("Webhook created successfully"),
-        errorMessage: __("Failed to create webhook"),
+        successMessage: t("webhooksSettingsPage.messages.created"),
+        errorMessage: t("webhooksSettingsPage.errors.create"),
       },
     );
 
@@ -582,8 +580,8 @@ export function WebhooksSettingsPage(props: {
     = useMutationWithToasts<WebhooksSettingsPage_updateMutation>(
       updateWebhookSubscriptionMutation,
       {
-        successMessage: __("Webhook updated successfully"),
-        errorMessage: __("Failed to update webhook"),
+        successMessage: t("webhooksSettingsPage.messages.updated"),
+        errorMessage: t("webhooksSettingsPage.errors.update"),
       },
     );
 
@@ -591,8 +589,8 @@ export function WebhooksSettingsPage(props: {
     = useMutationWithToasts<WebhooksSettingsPage_deleteMutation>(
       deleteWebhookSubscriptionMutation,
       {
-        successMessage: __("Webhook deleted successfully"),
-        errorMessage: __("Failed to delete webhook"),
+        successMessage: t("webhooksSettingsPage.messages.deleted"),
+        errorMessage: t("webhooksSettingsPage.errors.delete"),
       },
     );
 
@@ -650,11 +648,9 @@ export function WebhooksSettingsPage(props: {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-medium">{__("Webhook Subscriptions")}</h2>
+          <h2 className="text-base font-medium">{t("webhooksSettingsPage.title")}</h2>
           <p className="text-sm text-txt-tertiary">
-            {__(
-              "Configure webhooks to receive notifications when events occur in your organization.",
-            )}
+            {t("webhooksSettingsPage.description")}
           </p>
         </div>
         <WebhookFormDialog
@@ -663,7 +659,7 @@ export function WebhooksSettingsPage(props: {
           isSubmitting={isCreating}
           trigger={(
             <Button icon={IconPlusLarge}>
-              {__("Add Webhook Subscription")}
+              {t("webhooksSettingsPage.actions.add")}
             </Button>
           )}
         />
@@ -674,7 +670,7 @@ export function WebhooksSettingsPage(props: {
             <Card padded>
               <div className="text-center py-8">
                 <p className="text-sm text-txt-tertiary">
-                  {__("No webhook subscriptions yet. Add one to get started.")}
+                  {t("webhooksSettingsPage.empty")}
                 </p>
               </div>
             </Card>
@@ -686,13 +682,13 @@ export function WebhooksSettingsPage(props: {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0 space-y-2">
                       <div>
-                        <Label>{__("Endpoint URL")}</Label>
+                        <Label>{t("webhooksSettingsPage.fields.endpointUrl")}</Label>
                         <p className="text-sm font-mono text-txt-secondary truncate">
                           {webhook.endpointUrl}
                         </p>
                       </div>
                       <div>
-                        <Label>{__("Signing Secret")}</Label>
+                        <Label>{t("webhooksSettingsPage.fields.signingSecret")}</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <code className="flex-1 bg-subtle p-2 rounded text-sm font-mono break-all">
                             {revealedSecrets[webhook.id]
@@ -707,20 +703,20 @@ export function WebhooksSettingsPage(props: {
                             {loadingSecrets.has(webhook.id)
                               ? <Spinner size={16} />
                               : revealedSecrets[webhook.id]
-                                ? __("Hide")
-                                : __("Show")}
+                                ? t("webhooksSettingsPage.actions.hide")
+                                : t("webhooksSettingsPage.actions.show")}
                           </Button>
                           <Button
                             variant="secondary"
-                            onClick={() => void copyToClipboard(webhook.id, __("Signing Secret"))}
+                            onClick={() => void copyToClipboard(webhook.id, t("webhooksSettingsPage.fields.signingSecret"))}
                             disabled={loadingSecrets.has(webhook.id)}
                             icon={IconSquareBehindSquare2}
-                            aria-label={__("Copy signing secret")}
+                            aria-label={t("webhooksSettingsPage.copySigningSecret")}
                           />
                         </div>
                       </div>
                       <div>
-                        <Label>{__("Events")}</Label>
+                        <Label>{t("webhooksSettingsPage.fields.events")}</Label>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {webhook.selectedEvents.map((event) => {
                             const eventLabel
@@ -742,7 +738,7 @@ export function WebhooksSettingsPage(props: {
                         variant="secondary"
                         onClick={() => setViewingEventsId(webhook.id)}
                       >
-                        {`${__("Events")} (${webhook.events.totalCount})`}
+                        {t("webhooksSettingsPage.eventsCount", { count: webhook.events.totalCount })}
                       </Button>
                       <WebhookFormDialog
                         mode="edit"
@@ -756,14 +752,14 @@ export function WebhooksSettingsPage(props: {
                           <Button
                             variant="secondary"
                             icon={IconPencil}
-                            aria-label={__("Edit webhook")}
+                            aria-label={t("webhooksSettingsPage.editWebhook")}
                           />
                         )}
                       />
                       <Button
                         variant="quaternary"
                         icon={IconTrashCan}
-                        aria-label={__("Delete webhook")}
+                        aria-label={t("webhooksSettingsPage.deleteWebhook")}
                         className="text-red-600 hover:text-red-700"
                         onClick={() => {
                           setDeletingId(webhook.id);
@@ -779,17 +775,15 @@ export function WebhooksSettingsPage(props: {
 
       <Dialog
         ref={deleteDialogRef}
-        title={__("Delete Webhook")}
+        title={t("webhooksSettingsPage.dialogs.deleteTitle")}
         className="max-w-md"
       >
         <DialogContent padded>
           <p className="text-txt-secondary">
-            {__(
-              "Are you sure you want to delete this webhook subscription?",
-            )}
+            {t("webhooksSettingsPage.deleteConfirmation")}
           </p>
           <p className="text-txt-secondary mt-2">
-            {__("This action cannot be undone.")}
+            {t("webhooksSettingsPage.cannotUndo")}
           </p>
         </DialogContent>
         <DialogFooter>
@@ -804,10 +798,10 @@ export function WebhooksSettingsPage(props: {
                   <>
                     <Spinner size={16} />
                     {" "}
-                    {__("Deleting...")}
+                    {t("webhooksSettingsPage.actions.deleting")}
                   </>
                 )
-              : __("Delete")}
+              : t("webhooksSettingsPage.actions.delete")}
           </Button>
         </DialogFooter>
       </Dialog>

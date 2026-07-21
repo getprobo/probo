@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPlusLarge,
@@ -31,6 +30,7 @@ import {
   Tr,
   TrButton,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { RiskScenariosPageLinkMutation } from "#/__generated__/core/RiskScenariosPageLinkMutation.graphql";
@@ -98,7 +98,7 @@ interface RiskScenariosPageProps {
 }
 
 export default function RiskScenariosPage(props: RiskScenariosPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<RiskScenariosPageQuery>(riskScenariosPageQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
@@ -160,8 +160,8 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
     <Table>
       <Thead>
         <Tr>
-          <Th>{__("Scenario")}</Th>
-          <Th>{__("Description")}</Th>
+          <Th>{t("riskScenariosPage.columns.scenario")}</Th>
+          <Th>{t("riskScenariosPage.columns.description")}</Th>
           <Th className="w-12" />
         </Tr>
       </Thead>
@@ -169,7 +169,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
         {scenarios.length === 0 && (
           <Tr>
             <Td colSpan={3} className="text-center text-txt-secondary">
-              {__("No scenarios linked to this risk yet.")}
+              {t("riskScenariosPage.empty")}
             </Td>
           </Tr>
         )}
@@ -186,7 +186,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
                 onClick={() => onUnlink(scenario.id)}
                 disabled={isLoading}
               >
-                {__("Unlink")}
+                {t("riskScenariosPage.actions.unlink")}
               </Button>
             </Td>
           </Tr>
@@ -199,7 +199,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
           onUnlink={onUnlink}
         >
           <TrButton colspan={3} icon={IconPlusLarge}>
-            {__("Link Scenario")}
+            {t("riskScenariosPage.actions.linkScenario")}
           </TrButton>
         </LinkScenarioDialog>
       </Tbody>

@@ -20,16 +20,12 @@
 
 import {
   auditStates,
-  fileSize,
-  formatDate,
   formatDatetime,
   formatError,
-  getAuditStateLabel,
   getAuditStateVariant,
   type GraphQLError,
-  sprintf,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat, fileSize } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -47,6 +43,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
@@ -91,7 +88,7 @@ export default function AuditDetailsPage(props: Props) {
     props.queryRef,
   );
   const auditEntry = audit.node;
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
@@ -130,15 +127,15 @@ export default function AuditDetailsPage(props: Props) {
       });
       reset(formData);
       toast({
-        title: __("Success"),
-        description: __("Audit updated successfully"),
+        title: t("auditDetailsPage.messages.success"),
+        description: t("auditDetailsPage.messages.updated"),
         variant: "success",
       });
     } catch (error) {
       toast({
-        title: __("Error"),
+        title: t("auditDetailsPage.messages.error"),
         description: formatError(
-          __("Failed to update audit"),
+          t("auditDetailsPage.errors.update"),
           error as GraphQLError,
         ),
         variant: "error",
@@ -154,12 +151,9 @@ export default function AuditDetailsPage(props: Props) {
         await deleteAuditReport({ auditId: auditEntry.id! });
       },
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the audit report \"%s\". This action cannot be undone.",
-          ),
-          auditEntry.reportFile.fileName,
-        ),
+        message: t("auditDetailsPage.deleteReportConfirmation", {
+          name: auditEntry.reportFile.fileName,
+        }),
       },
     );
   };
@@ -179,13 +173,13 @@ export default function AuditDetailsPage(props: Props) {
       <Breadcrumb
         items={[
           {
-            label: __("Audits"),
+            label: t("auditDetailsPage.breadcrumb.audits"),
             to: `/organizations/${organizationId}/audits`,
           },
           {
             label:
               (auditEntry.name || auditEntry.framework?.name)
-              ?? __("Unknown Audit"),
+              ?? t("auditDetailsPage.unknownAudit"),
           },
         ]}
       />
@@ -203,7 +197,7 @@ export default function AuditDetailsPage(props: Props) {
           <Badge
             variant={getAuditStateVariant(auditEntry.state || "NOT_STARTED")}
           >
-            {getAuditStateLabel(__, auditEntry.state || "NOT_STARTED")}
+            {t(`auditDetailsPage.states.${(auditEntry.state || "NOT_STARTED").toLowerCase()}`)}
           </Badge>
         </div>
         <ActionDropdown variant="secondary">
@@ -213,7 +207,7 @@ export default function AuditDetailsPage(props: Props) {
               icon={IconTrashCan}
               onClick={deleteAudit}
             >
-              {__("Delete")}
+              {t("auditDetailsPage.actions.delete")}
             </DropdownItem>
           )}
         </ActionDropdown>
@@ -221,35 +215,40 @@ export default function AuditDetailsPage(props: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <form onSubmit={e => void onSubmit(e)} className="space-y-6">
-          <Field label={__("Name")}>
-            <Input {...register("name")} placeholder={__("Audit name")} />
+          <Field label={t("auditDetailsPage.fields.name")}>
+            <Input
+              {...register("name")}
+              placeholder={t("auditDetailsPage.fields.namePlaceholder")}
+            />
           </Field>
 
           <ControlledField
             control={control}
             name="state"
             type="select"
-            label={__("State")}
+            label={t("auditDetailsPage.fields.state")}
           >
             {auditStates.map(state => (
               <Option key={state} value={state}>
-                {getAuditStateLabel(__, state)}
+                {t(`auditDetailsPage.states.${state.toLowerCase()}`)}
               </Option>
             ))}
           </ControlledField>
 
-          <Field label={__("Valid From")}>
+          <Field label={t("auditDetailsPage.fields.validFrom")}>
             <Input {...register("validFrom")} type="date" />
           </Field>
 
-          <Field label={__("Valid Until")}>
+          <Field label={t("auditDetailsPage.fields.validUntil")}>
             <Input {...register("validUntil")} type="date" />
           </Field>
 
           <div className="flex justify-end">
             {formState.isDirty && auditEntry.canUpdate && (
               <Button type="submit" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? __("Updating...") : __("Update")}
+                {formState.isSubmitting
+                  ? t("auditDetailsPage.actions.updating")
+                  : t("auditDetailsPage.actions.update")}
               </Button>
             )}
           </div>
@@ -257,7 +256,9 @@ export default function AuditDetailsPage(props: Props) {
 
         <Card padded className="mt-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">{__("Audit Report")}</h3>
+            <h3 className="text-lg font-medium">
+              {t("auditDetailsPage.report.title")}
+            </h3>
 
             {auditEntry.reportFile
               ? (
@@ -270,11 +271,16 @@ export default function AuditDetailsPage(props: Props) {
                             {auditEntry.reportFile.fileName}
                           </p>
                           <div className="flex items-center gap-4 text-sm text-success-700">
-                            <span>{fileSize(__, auditEntry.reportFile.size)}</span>
                             <span>
-                              {__("Uploaded")}
-                              {" "}
-                              {formatDate(auditEntry.reportFile.createdAt)}
+                              {fileSize(auditEntry.reportFile.size, t)}
+                            </span>
+                            <span>
+                              {t("auditDetailsPage.report.uploaded", {
+                                date: dateFormat(
+                                  i18n.language,
+                                  auditEntry.reportFile.createdAt,
+                                ),
+                              })}
                             </span>
                           </div>
                         </div>
@@ -288,14 +294,14 @@ export default function AuditDetailsPage(props: Props) {
                           }}
                           icon={IconArrowInbox}
                         >
-                          {__("Download")}
+                          {t("auditDetailsPage.actions.download")}
                         </DropdownItem>
                         <DropdownItem
                           variant="danger"
                           icon={IconTrashCan}
                           onClick={handleDeleteReport}
                         >
-                          {__("Delete")}
+                          {t("auditDetailsPage.actions.delete")}
                         </DropdownItem>
                       </ActionDropdown>
                     </div>
@@ -304,14 +310,10 @@ export default function AuditDetailsPage(props: Props) {
               : (
                   <div className="space-y-4">
                     <p className="text-neutral-600">
-                      {__(
-                        "Upload the final audit report document (PDF recommended)",
-                      )}
+                      {t("auditDetailsPage.report.uploadDescription")}
                     </p>
                     <Dropzone
-                      description={__(
-                        "Only PDF up to 25MB are allowed",
-                      )}
+                      description={t("auditDetailsPage.report.dropzoneDescription")}
                       isUploading={isUploading}
                       onDrop={files => void handleUploadFile(files)}
                       accept={{ "application/pdf": [".pdf"] }}

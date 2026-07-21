@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   DropdownSeparator,
   IconArrowBoxLeft,
@@ -29,6 +28,7 @@ import {
   UserDropdownItem,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -55,7 +55,7 @@ const signOutMutation = graphql`
 export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
   const { fKey } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const { canListAPIKeys, canListOAuth2AccessTokens, email, fullName }
@@ -70,8 +70,8 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
       onCompleted: (_, e) => {
         if (e) {
           toast({
-            title: __("Request failed"),
-            description: formatError(__("Cannot sign out"), e),
+            title: t("viewerDropdown.errors.requestFailed"),
+            description: formatError(t("viewerDropdown.errors.cannotSignOut"), e),
             variant: "error",
           });
           return;
@@ -80,7 +80,7 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
       },
       onError: (e) => {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: e.message,
           variant: "error",
         });
@@ -94,27 +94,27 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
         <UserDropdownItem
           to="/me/api-keys"
           icon={IconKey}
-          label={__("API Keys")}
+          label={t("apiKeys.title")}
         />
       )}
       {canListOAuth2AccessTokens && (
         <UserDropdownItem
           to="/me/oauth-tokens"
           icon={IconKey}
-          label={__("OAuth tokens")}
+          label={t("viewerDropdown.actions.oauthTokens")}
         />
       )}
       <UserDropdownItem
         to="mailto:support@probo.com"
         icon={IconCircleQuestionmark}
-        label={__("Help")}
+        label={t("viewerDropdown.actions.help")}
       />
       <DropdownSeparator />
       <UserDropdownItem
         variant="danger"
         to="/logout"
         icon={IconArrowBoxLeft}
-        label="Logout"
+        label={t("viewerDropdown.actions.logout")}
         onClick={handleLogout}
       />
     </UserDropdown>

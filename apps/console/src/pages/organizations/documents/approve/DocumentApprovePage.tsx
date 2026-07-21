@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -38,6 +38,7 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   useFragment,
@@ -176,7 +177,7 @@ function VersionRow({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const versionData = useFragment(versionRowFragment, fKey);
   const approvalDecision = versionData.approvalDecision;
   const state = approvalDecision?.state;
@@ -211,20 +212,27 @@ function VersionRow({
           )}
         >
           {versionData.publishedAt
-            ? `v${versionData.major}.${versionData.minor} - ${formatDate(versionData.publishedAt)}`
-            : `v${versionData.major}.${versionData.minor}`}
+            ? t("documentApprovePage.versionWithDate", {
+                major: versionData.major,
+                minor: versionData.minor,
+                date: dateFormat(i18n.language, versionData.publishedAt),
+              })
+            : t("documentApprovePage.version", {
+                major: versionData.major,
+                minor: versionData.minor,
+              })}
         </p>
       </div>
       <div className="flex-shrink-0">
         {isApproved
-          ? <Badge variant="success">{__("Approved")}</Badge>
+          ? <Badge variant="success">{t("documentApprovePage.status.approved")}</Badge>
           : isRejected
-            ? <Badge variant="danger">{__("Rejected")}</Badge>
+            ? <Badge variant="danger">{t("documentApprovePage.status.rejected")}</Badge>
             : isVoided
-              ? <Badge variant="neutral">{__("Voided")}</Badge>
+              ? <Badge variant="neutral">{t("documentApprovePage.status.voided")}</Badge>
               : isSelected
-                ? <Badge variant="info">{__("In review")}</Badge>
-                : <Badge variant="warning">{__("Pending")}</Badge>}
+                ? <Badge variant="info">{t("documentApprovePage.status.inReview")}</Badge>
+                : <Badge variant="warning">{t("documentApprovePage.status.pending")}</Badge>}
       </div>
     </div>
   );
@@ -236,7 +244,7 @@ function ViewerDecision(props: {
   onBack: () => void;
 }) {
   const { fragmentRef, versionId, onBack } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const decision = useFragment(decisionFragment, fragmentRef);
   const rejectDialogRef = useDialogRef();
   const [rejectComment, setRejectComment] = useState("");
@@ -259,10 +267,10 @@ function ViewerDecision(props: {
     return (
       <>
         <div className="flex items-center gap-2 text-sm text-txt-secondary mb-4">
-          <span>{__("Your approval is no longer required for this version.")}</span>
+          <span>{t("documentApprovePage.messages.noLongerRequired")}</span>
         </div>
         <Button onClick={onBack} className="h-10 w-full" variant="secondary">
-          {__("Back to Documents")}
+          {t("documentApprovePage.actions.back")}
         </Button>
       </>
     );
@@ -271,7 +279,7 @@ function ViewerDecision(props: {
   if (!decision.canApprove && !decision.canReject) {
     return (
       <Button onClick={onBack} className="h-10 w-full" variant="secondary">
-        {__("Back to Documents")}
+        {t("documentApprovePage.actions.back")}
       </Button>
     );
   }
@@ -281,10 +289,10 @@ function ViewerDecision(props: {
       <>
         <div className="flex items-center gap-2 text-sm text-txt-accent mb-4">
           <IconCircleCheck size={20} />
-          <span>{__("You have approved this document.")}</span>
+          <span>{t("documentApprovePage.messages.approved")}</span>
         </div>
         <Button onClick={onBack} className="h-10 w-full" variant="secondary">
-          {__("Back to Documents")}
+          {t("documentApprovePage.actions.back")}
         </Button>
       </>
     );
@@ -295,10 +303,10 @@ function ViewerDecision(props: {
       <>
         <div className="flex items-center gap-2 text-sm text-txt-danger mb-4">
           <IconCircleX size={20} />
-          <span>{__("You have rejected this document.")}</span>
+          <span>{t("documentApprovePage.messages.rejected")}</span>
         </div>
         <Button onClick={onBack} className="h-10 w-full" variant="secondary">
-          {__("Back to Documents")}
+          {t("documentApprovePage.actions.back")}
         </Button>
       </>
     );
@@ -319,7 +327,7 @@ function ViewerDecision(props: {
               disabled={isApproving || isRejecting}
               onClick={() => rejectDialogRef.current?.open()}
             >
-              {__("Reject")}
+              {t("documentApprovePage.actions.reject")}
             </Button>
           )}
           {decision.canApprove && (
@@ -337,21 +345,21 @@ function ViewerDecision(props: {
                   onCompleted(_, errors) {
                     if (errors?.length) {
                       toast({
-                        title: __("Error"),
-                        description: formatError(__("Failed to approve document"), errors),
+                        title: t("documentApprovePage.errors.title"),
+                        description: formatError(t("documentApprovePage.errors.approve"), errors),
                         variant: "error",
                       });
                     } else {
                       toast({
-                        title: __("Success"),
-                        description: __("Document approved successfully"),
+                        title: t("documentApprovePage.messages.successTitle"),
+                        description: t("documentApprovePage.messages.approvalSuccess"),
                         variant: "success",
                       });
                     }
                   },
                   onError(error) {
                     toast({
-                      title: __("Error"),
+                      title: t("documentApprovePage.errors.title"),
                       description: error.message,
                       variant: "error",
                     });
@@ -359,7 +367,7 @@ function ViewerDecision(props: {
                 });
               }}
             >
-              {__("Approve")}
+              {t("documentApprovePage.actions.approve")}
             </Button>
           )}
         </div>
@@ -367,17 +375,17 @@ function ViewerDecision(props: {
           {decision.consentText}
         </p>
         <Button onClick={onBack} className="w-full" variant="secondary">
-          {__("Back to Documents")}
+          {t("documentApprovePage.actions.back")}
         </Button>
       </div>
 
-      <Dialog ref={rejectDialogRef} title={__("Reject Document")}>
+      <Dialog ref={rejectDialogRef} title={t("documentApprovePage.rejectDialog.title")}>
         <DialogContent padded>
           <p className="text-sm text-txt-secondary mb-4">
-            {__("Please provide a reason for rejecting this document. The document will be sent back to draft status.")}
+            {t("documentApprovePage.rejectDialog.description")}
           </p>
           <Textarea
-            placeholder={__("Reason for rejection...")}
+            placeholder={t("documentApprovePage.rejectDialog.placeholder")}
             value={rejectComment}
             onChange={e => setRejectComment(e.target.value)}
             rows={4}
@@ -399,14 +407,14 @@ function ViewerDecision(props: {
                 onCompleted(_, errors) {
                   if (errors?.length) {
                     toast({
-                      title: __("Error"),
-                      description: formatError(__("Failed to reject document"), errors),
+                      title: t("documentApprovePage.errors.title"),
+                      description: formatError(t("documentApprovePage.errors.reject"), errors),
                       variant: "error",
                     });
                   } else {
                     toast({
-                      title: __("Success"),
-                      description: __("Document rejected"),
+                      title: t("documentApprovePage.messages.successTitle"),
+                      description: t("documentApprovePage.messages.rejectionSuccess"),
                       variant: "success",
                     });
                     rejectDialogRef.current?.close();
@@ -414,7 +422,7 @@ function ViewerDecision(props: {
                 },
                 onError(error) {
                   toast({
-                    title: __("Error"),
+                    title: t("documentApprovePage.errors.title"),
                     description: error.message,
                     variant: "error",
                   });
@@ -422,7 +430,7 @@ function ViewerDecision(props: {
               });
             }}
           >
-            {__("Reject Document")}
+            {t("documentApprovePage.rejectDialog.submit")}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -435,7 +443,7 @@ function DocumentApproveContent({
 }: {
   fKey: DocumentApprovePageDocumentFragment$key;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { width } = useWindowSize();
   const isMobile = width < 1100;
@@ -452,7 +460,7 @@ function DocumentApproveContent({
 
   const selectedVersion = versions.find(v => v?.id === selectedVersionId);
 
-  usePageTitle(__("Review and Approve Document"));
+  usePageTitle(t("documentApprovePage.pageTitle"));
 
   const [exportPDF] = useMutation<DocumentApprovePageExportEmployeePDFMutation>(
     exportPDFMutation,
@@ -473,9 +481,9 @@ function DocumentApproveContent({
       onCompleted: (data, errors): void => {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("documentApprovePage.errors.title"),
             description: formatError(
-              __("Failed to load PDF"),
+              t("documentApprovePage.errors.loadPdf"),
               errors,
             ),
             variant: "error",
@@ -490,9 +498,9 @@ function DocumentApproveContent({
       },
       onError: (error) => {
         toast({
-          title: __("Error"),
+          title: t("documentApprovePage.errors.title"),
           description: formatError(
-            __("Failed to load PDF"),
+            t("documentApprovePage.errors.loadPdf"),
             error,
           ),
           variant: "error",
@@ -503,7 +511,7 @@ function DocumentApproveContent({
     return () => {
       pdfUrlRef.current = null;
     };
-  }, [selectedVersion?.id, exportPDF, toast, __]);
+  }, [selectedVersion?.id, exportPDF, toast, t]);
 
   if (versions.length === 0) {
     return (
@@ -536,7 +544,7 @@ function DocumentApproveContent({
           </Card>
 
           <p className="text-txt-secondary text-sm mb-6">
-            {__("Please review the document carefully before making your decision.")}
+            {t("documentApprovePage.reviewHint")}
           </p>
 
           <div className="min-h-[60px]">

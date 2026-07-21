@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -88,11 +88,11 @@ const thirdPartyUpdateQuery = graphql`
 
 export function useThirdPartyForm(thirdPartyKey: useThirdPartyFormFragment$key) {
   const thirdParty = useFragment(thirdPartyFormFragment, thirdPartyKey);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const [mutate] = useMutationWithToasts(thirdPartyUpdateQuery, {
-    successMessage: __("Third party updated successfully."),
-    errorMessage: __("Failed to update third party"),
+    successMessage: t("thirdPartyForm.messages.updated"),
+    errorMessage: t("thirdPartyForm.messages.updateError"),
   });
 
   const defaultValues = useMemo(

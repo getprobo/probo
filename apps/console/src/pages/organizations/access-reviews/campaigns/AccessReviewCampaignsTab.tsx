@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -37,6 +37,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
@@ -46,7 +47,7 @@ import type { AccessReviewCampaignsTabPaginationQuery } from "#/__generated__/co
 import type { AccessReviewCampaignsTabQuery } from "#/__generated__/core/AccessReviewCampaignsTabQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { statusBadgeVariant, statusLabel } from "../_components/accessReviewHelpers";
+import { statusBadgeVariant } from "../_components/accessReviewHelpers";
 import { CreateAccessReviewCampaignDialog } from "../dialogs/CreateAccessReviewCampaignDialog";
 
 export const accessReviewCampaignsTabQuery = graphql`
@@ -107,7 +108,7 @@ type Props = {
 };
 
 export default function AccessReviewCampaignsTab({ queryRef }: Props) {
-  const { __, dateFormat } = useTranslate();
+  const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const { toast } = useToast();
@@ -146,9 +147,9 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
           onCompleted(_, errors) {
             if (errors?.length) {
               toast({
-                title: __("Error"),
+                title: t("accessReviewCampaignsTab.messages.error"),
                 description: formatError(
-                  __("Failed to delete campaign"),
+                  t("accessReviewCampaignsTab.errors.delete"),
                   errors,
                 ),
                 variant: "error",
@@ -156,16 +157,16 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
               return;
             }
             toast({
-              title: __("Success"),
-              description: __("Campaign deleted successfully."),
+              title: t("accessReviewCampaignsTab.messages.success"),
+              description: t("accessReviewCampaignsTab.messages.deleted"),
               variant: "success",
             });
           },
           onError(error) {
             toast({
-              title: __("Error"),
+              title: t("accessReviewCampaignsTab.messages.error"),
               description: formatError(
-                __("Failed to delete campaign"),
+                t("accessReviewCampaignsTab.errors.delete"),
                 error,
               ),
               variant: "error",
@@ -174,10 +175,9 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
         });
       },
       {
-        message: sprintf(
-          __("This will permanently delete \"%s\". This action cannot be undone."),
-          campaignName,
-        ),
+        message: t("accessReviewCampaignsTab.deleteConfirmation", {
+          name: campaignName,
+        }),
       },
     );
   };
@@ -195,7 +195,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
             connectionId={accessReviewCampaigns.__id}
           >
             <Button icon={IconPlusLarge}>
-              {__("New campaign")}
+              {t("accessReviewCampaignsTab.actions.new")}
             </Button>
           </CreateAccessReviewCampaignDialog>
         )}
@@ -207,9 +207,9 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Status")}</Th>
-                    <Th>{__("Created at")}</Th>
+                    <Th>{t("accessReviewCampaignsTab.columns.name")}</Th>
+                    <Th>{t("accessReviewCampaignsTab.columns.status")}</Th>
+                    <Th>{t("accessReviewCampaignsTab.columns.createdAt")}</Th>
                     {hasActions && <Th className="w-12"></Th>}
                   </Tr>
                 </Thead>
@@ -225,11 +225,13 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                         <Td>{edge.node.name}</Td>
                         <Td>
                           <Badge variant={statusBadgeVariant(edge.node.status)}>
-                            {statusLabel(__, edge.node.status)}
+                            {t(
+                              `accessReviewCampaignsTab.status.${edge.node.status.toLowerCase()}`,
+                            )}
                           </Badge>
                         </Td>
                         <Td>
-                          {dateFormat(edge.node.createdAt)}
+                          {dateFormat(i18n.language, edge.node.createdAt)}
                         </Td>
                         {hasActions && (
                           <Td noLink width={50} className="text-end">
@@ -244,7 +246,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                                     handleDelete(edge.node.id, edge.node.name);
                                   }}
                                 >
-                                  {__("Delete")}
+                                  {t("accessReviewCampaignsTab.actions.delete")}
                                 </DropdownItem>
                               </ActionDropdown>
                             )}
@@ -264,8 +266,8 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                     disabled={isLoadingNext}
                   >
                     {isLoadingNext
-                      ? __("Loading...")
-                      : __("Load more")}
+                      ? t("accessReviewCampaignsTab.actions.loading")
+                      : t("accessReviewCampaignsTab.actions.loadMore")}
                   </Button>
                 </div>
               )}
@@ -275,7 +277,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
             <Card padded>
               <div className="text-center py-8">
                 <p className="text-txt-tertiary">
-                  {__("No access review campaigns yet. Create your first campaign to start reviewing access.")}
+                  {t("accessReviewCampaignsTab.empty")}
                 </p>
               </div>
             </Card>

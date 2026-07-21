@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
 import {
   ActionDropdown,
   DropdownItem,
@@ -30,6 +29,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { ThirdPartyContactRow_contact$key } from "#/__generated__/core/ThirdPartyContactRow_contact.graphql";
@@ -65,7 +65,7 @@ interface ThirdPartyContactRowProps {
 }
 
 export function ThirdPartyContactRow(props: ThirdPartyContactRowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const contact = useFragment(contactRowFragment, props.contactKey);
   const confirm = useConfirm();
   const { toast } = useToast();
@@ -88,9 +88,9 @@ export function ThirdPartyContactRow(props: ThirdPartyContactRowProps) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("thirdPartyContactRow.messages.error"),
                 description: formatError(
-                  __("Failed to delete contact"),
+                  t("thirdPartyContactRow.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -100,19 +100,16 @@ export function ThirdPartyContactRow(props: ThirdPartyContactRowProps) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the contact \"%s\". This action cannot be undone.",
-          ),
-          contact.fullName || contact.email || __("Unnamed contact"),
-        ),
+        message: t("thirdPartyContactRow.deleteConfirmation", {
+          name: contact.fullName || contact.email || t("thirdPartyContactRow.unnamed"),
+        }),
       },
     );
   };
 
   return (
     <Tr>
-      <Td>{contact.fullName || __("—")}</Td>
+      <Td>{contact.fullName || t("thirdPartyContactRow.emptyValue")}</Td>
       <Td>
         {contact.email
           ? (
@@ -124,7 +121,7 @@ export function ThirdPartyContactRow(props: ThirdPartyContactRowProps) {
               </a>
             )
           : (
-              __("—")
+              t("thirdPartyContactRow.emptyValue")
             )}
       </Td>
       <Td>
@@ -138,10 +135,10 @@ export function ThirdPartyContactRow(props: ThirdPartyContactRowProps) {
               </a>
             )
           : (
-              __("—")
+              t("thirdPartyContactRow.emptyValue")
             )}
       </Td>
-      <Td>{contact.role || __("—")}</Td>
+      <Td>{contact.role || t("thirdPartyContactRow.emptyValue")}</Td>
       {hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
@@ -150,7 +147,7 @@ export function ThirdPartyContactRow(props: ThirdPartyContactRowProps) {
                 icon={IconPencil}
                 onClick={() => props.onEdit()}
               >
-                {__("Edit")}
+                {t("thirdPartyContactRow.actions.edit")}
               </DropdownItem>
             )}
             {contact.canDelete && (
@@ -159,7 +156,7 @@ export function ThirdPartyContactRow(props: ThirdPartyContactRowProps) {
                 onClick={handleDelete}
                 variant="danger"
               >
-                {__("Delete")}
+                {t("thirdPartyContactRow.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>

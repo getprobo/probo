@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge } from "@probo/ui";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
@@ -47,7 +47,7 @@ export const compliancePageReferencesPageQuery = graphql`
 export function CompliancePageReferencesPage(props: { queryRef: PreloadedQuery<CompliancePageReferencesPageQuery> }) {
   const { queryRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const dialogRef = useRef<CompliancePageReferenceDialogRef>(null);
 
   const { organization } = usePreloadedQuery<CompliancePageReferencesPageQuery>(
@@ -80,14 +80,14 @@ export function CompliancePageReferencesPage(props: { queryRef: PreloadedQuery<C
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-medium">{__("References")}</h2>
+              <h2 className="text-base font-medium">{t("referencesPage.title")}</h2>
               <p className="text-sm text-txt-tertiary">
-                {__("Showcase your customers and partners on your compliance page")}
+                {t("referencesPage.description")}
               </p>
             </div>
             {organization.compliancePage?.canCreateReference && (
               <Button icon={IconPlusLarge} onClick={handleCreate}>
-                {__("Add Reference")}
+                {t("referencesPage.actions.add")}
               </Button>
             )}
           </div>

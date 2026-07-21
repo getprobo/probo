@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, Field, IconCircleInfo, Spinner, Textarea } from "@probo/ui";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -84,14 +84,14 @@ type Props = CreateProps | EditProps;
 
 export function ComplianceUpdateFormDialog(props: Props) {
   const { ref, update, mailingListId, connectionId, onCreated } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const isEditMode = update !== undefined;
   const isSent = isEditMode && update?.status !== "DRAFT";
 
   const schemaWithMessages = z.object({
-    title: z.string().trim().min(1, __("Title is required")),
-    body: z.string().trim().min(1, __("Body is required")),
+    title: z.string().trim().min(1, t("updateFormDialog.validation.titleRequired")),
+    body: z.string().trim().min(1, t("updateFormDialog.validation.bodyRequired")),
   });
 
   const form = useFormWithSchema(schemaWithMessages, {
@@ -107,16 +107,16 @@ export function ComplianceUpdateFormDialog(props: Props) {
   const [createUpdate, isCreating] = useMutation<ComplianceUpdateFormDialogCreateMutation>(
     createMutation,
     {
-      successMessage: __("Update created successfully"),
-      errorToast: __("Failed to create update"),
+      successMessage: t("updateFormDialog.messages.created"),
+      errorToast: t("updateFormDialog.errors.create"),
     },
   );
 
   const [saveUpdate, isSaving] = useMutation<ComplianceUpdateFormDialogUpdateMutation>(
     updateMutation,
     {
-      successMessage: __("Update saved successfully"),
-      errorToast: __("Failed to save update"),
+      successMessage: t("updateFormDialog.messages.updated"),
+      errorToast: t("updateFormDialog.errors.update"),
     },
   );
 
@@ -159,22 +159,22 @@ export function ComplianceUpdateFormDialog(props: Props) {
   };
 
   return (
-    <Dialog ref={ref} title={isSent ? __("View Update") : isEditMode ? __("Edit Update") : __("Add Update")}>
+    <Dialog ref={ref} title={isSent ? t("updateFormDialog.title.view") : isEditMode ? t("updateFormDialog.title.edit") : t("updateFormDialog.title.create")}>
       <form onSubmit={e => void form.handleSubmit(handleSubmit)(e)}>
         <DialogContent className="px-6 pt-4 pb-2 space-y-4">
           <div className="flex gap-2.5 rounded-lg bg-surface-secondary p-3 text-sm text-txt-secondary">
             <IconCircleInfo size={16} className="mt-0.5 shrink-0 text-txt-tertiary" />
-            {__("Do not include confidential or sensitive information in this update. Any content that requires protection should be placed behind your NDA-gated documents instead.")}
+            {t("updateFormDialog.confidentialityNotice")}
           </div>
           <Field
-            label={__("Title")}
+            label={t("updateFormDialog.fields.title")}
             required
             disabled={isSent}
             error={form.formState.errors.title?.message}
             {...form.register("title")}
           />
           <Field
-            label={__("Body")}
+            label={t("updateFormDialog.fields.body")}
             required
             error={form.formState.errors.body?.message}
           >
@@ -182,7 +182,7 @@ export function ComplianceUpdateFormDialog(props: Props) {
           </Field>
           {isSent && (
             <p className="text-sm text-txt-tertiary">
-              {__("This update has been sent and can no longer be edited.")}
+              {t("updateFormDialog.sentNotice")}
             </p>
           )}
         </DialogContent>
@@ -190,7 +190,7 @@ export function ComplianceUpdateFormDialog(props: Props) {
           {!isSent && (
             <Button type="submit" disabled={isCreating || isSaving}>
               {(isCreating || isSaving) && <Spinner />}
-              {isEditMode ? __("Save") : __("Create")}
+              {isEditMode ? t("updateFormDialog.actions.save") : t("updateFormDialog.actions.create")}
             </Button>
           )}
         </DialogFooter>
