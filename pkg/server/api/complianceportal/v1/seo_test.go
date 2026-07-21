@@ -60,3 +60,20 @@ func TestSEOFromRequest(t *testing.T) {
 	assert.Equal(t, "https://acme.probopage.localhost/en/documents", enHref)
 	assert.Equal(t, enHref, xDefault)
 }
+
+func TestSEOFromRequest_EscapesPathSegments(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		"https://acme.probopage.localhost/en/docs/foo%20bar",
+		nil,
+	)
+	require.NoError(t, err)
+
+	_, canonical, _ := complianceportal_v1.SEOFromRequest(
+		req,
+		"https://acme.probopage.localhost",
+	)
+	assert.Equal(t, "https://acme.probopage.localhost/en/docs/foo%20bar", canonical)
+}

@@ -22,14 +22,11 @@ package complianceportal_v1
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
-)
 
-// Short locale tags used in compliance-portal URL paths. Keep in sync with the
-// frontend URL_LOCALES list and iam.supportedIdentityLocales.
-var compliancePortalLocales = []string{
-	"en", "fr", "de", "es", "id", "it", "ja", "ko", "pl", "pt", "tr", "uk", "zh",
-}
+	"go.probo.inc/probo/pkg/iam"
+)
 
 const defaultCompliancePortalLocale = "en"
 
@@ -47,8 +44,9 @@ func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical st
 	htmlLang = locale
 	canonical = localizedPageURL(pageBaseURL, locale, rest)
 
-	hreflang = make([]HreflangLink, 0, len(compliancePortalLocales)+1)
-	for _, loc := range compliancePortalLocales {
+	locales := iam.SupportedIdentityLocales
+	hreflang = make([]HreflangLink, 0, len(locales)+1)
+	for _, loc := range locales {
 		hreflang = append(hreflang, HreflangLink{
 			Lang: loc,
 			Href: localizedPageURL(pageBaseURL, loc, rest),
@@ -81,7 +79,7 @@ func splitLocaleFromAppPath(appPath string) (locale, rest string) {
 }
 
 func isCompliancePortalLocale(value string) bool {
-	for _, locale := range compliancePortalLocales {
+	for _, locale := range iam.SupportedIdentityLocales {
 		if locale == value {
 			return true
 		}
@@ -91,11 +89,22 @@ func isCompliancePortalLocale(value string) bool {
 
 func localizedPageURL(pageBaseURL, locale, rest string) string {
 	base := strings.TrimRight(pageBaseURL, "/")
-	if rest == "/" || rest == "" {
-		return base + "/" + locale
+	segments := []string{locale}
+	if rest != "/" && rest != "" {
+		trimmed := strings.Trim(rest, "/")
+		if trimmed != "" {
+			segments = append(segments, strings.Split(trimmed, "/")...)
+		}
 	}
-	if !strings.HasPrefix(rest, "/") {
-		rest = "/" + rest
+
+	escaped := make([]string, len(segments))
+	for i, segment := range segments {
+		escaped[i] = url.PathEscape(segment)
 	}
-	return base + "/" + locale + rest
+
+	joined, err := url.JoinPath(base, escaped...)
+	if err != nil {
+		return base + "/" + strings.Join(escaped, "/")
+	}
+	return joined
 }

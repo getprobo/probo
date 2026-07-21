@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 
 import {
   isUrlLocale,
@@ -30,7 +30,7 @@ import {
 // (/documents) and unknown two-letter tags are rewritten to a guessed locale.
 export function localeLayoutLoader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
-  const appPath = stripBasename(url.pathname);
+  const appPath = url.pathname || "/";
   const segments = appPath.split("/").filter(Boolean);
   const first = segments[0];
 
@@ -41,6 +41,7 @@ export function localeLayoutLoader({ request }: LoaderFunctionArgs) {
   const guess = resolveUrlLocale();
 
   if (segments.length === 0) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- react-router redirect
     throw redirect(`/${guess}${url.search}`);
   }
 
@@ -48,17 +49,11 @@ export function localeLayoutLoader({ request }: LoaderFunctionArgs) {
   if (/^[a-z]{2}$/.test(first)) {
     const rest = segments.slice(1);
     const path = rest.length === 0 ? "/" : `/${rest.join("/")}`;
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- react-router redirect
     throw redirect(localizedPath(guess, path) + url.search);
   }
 
   // First segment is a real route (documents, updates, …) — prefix locale.
+  // eslint-disable-next-line @typescript-eslint/only-throw-error -- react-router redirect
   throw redirect(localizedPath(guess, appPath) + url.search);
-}
-
-function stripBasename(pathname: string): string {
-  const match = pathname.match(/^\/trust\/[^/]+(\/.*)?$/);
-  if (match) {
-    return match[1] && match[1].length > 0 ? match[1] : "/";
-  }
-  return pathname || "/";
 }

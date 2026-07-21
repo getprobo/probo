@@ -24,6 +24,7 @@ import {
 } from "./resolveLanguage";
 
 // Short tags used in URL path segments (and persisted on Identity.locale).
+// Keep in sync with iam.SupportedIdentityLocales.
 export const URL_LOCALES = [
   "en",
   "fr",

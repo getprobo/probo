@@ -36,11 +36,16 @@ import { useLocale } from "#/lib/i18n/useLocale";
 interface LocaleSelectProps {
   // Persist the choice on the signed-in identity when true.
   persist?: boolean;
+  // Called after a locale change is requested (e.g. close the mobile drawer).
+  onLocaleChange?: () => void;
 }
 
 // Compact locale control for the top bar (guest and mobile). Uses the v2 Select
 // (Figma Select / ghost + globe) rather than a custom dropdown.
-export function LocaleSelect({ persist = false }: LocaleSelectProps) {
+export function LocaleSelect({
+  persist = false,
+  onLocaleChange,
+}: LocaleSelectProps) {
   const { t } = useTranslation();
   const locale = useLocale();
   const [changeLocale, isChanging] = useChangeLocale();
@@ -52,6 +57,7 @@ export function LocaleSelect({ persist = false }: LocaleSelectProps) {
         if (value == null || value === locale) {
           return;
         }
+        onLocaleChange?.();
         void changeLocale(value, { persist });
       }}
       disabled={isChanging}

@@ -144,7 +144,10 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
 
         <DrawerFooter>
           <div className="w-full pb-2">
-            <LocaleSelect persist={identity != null} />
+            <LocaleSelect
+              persist={identity != null}
+              onLocaleChange={close}
+            />
           </div>
           {identity == null
             ? (

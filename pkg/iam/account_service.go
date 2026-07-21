@@ -68,9 +68,9 @@ type (
 	}
 )
 
-// Short URL locale tags accepted for Identity.locale (must stay in sync with
-// the compliance-portal URL_LOCALES list).
-var supportedIdentityLocales = []string{
+// SupportedIdentityLocales are short URL locale tags accepted for
+// Identity.locale. Keep in sync with the compliance-portal URL_LOCALES list.
+var SupportedIdentityLocales = []string{
 	"en", "fr", "de", "es", "id", "it", "ja", "ko", "pl", "pt", "tr", "uk", "zh",
 }
 
@@ -106,7 +106,7 @@ func (req UpdateLocaleRequest) Validate() error {
 		"locale",
 		validator.NotEmpty(),
 		validator.MaxLen(8),
-		validator.OneOfSlice(supportedIdentityLocales),
+		validator.OneOfSlice(SupportedIdentityLocales),
 	)
 
 	return v.Error()

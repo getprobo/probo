@@ -100,7 +100,9 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
   };
 
   const adoptUrlLocale = () => {
-    void updateLocale(urlLocale).then(() => setDismissed(true));
+    void updateLocale(urlLocale)
+      .then(() => setDismissed(true))
+      .catch(() => {});
   };
 
   return (

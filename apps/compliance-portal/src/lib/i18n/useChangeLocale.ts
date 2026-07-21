@@ -49,7 +49,8 @@ export function useChangeLocale() {
     // Identity↔URL desync that flashed the mismatch callout.
     startTransition(() => {
       if (options.persist) {
-        void updateLocale(locale);
+        // Mutation notifier already toasts; swallow rejection to avoid noise.
+        void updateLocale(locale).catch(() => {});
       }
       if (locale !== currentLocale) {
         void navigate(replaceLocaleInPathname(pathname, locale) + search);

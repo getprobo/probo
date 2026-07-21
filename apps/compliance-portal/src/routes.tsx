@@ -25,8 +25,8 @@ import { createBrowserRouter, redirect } from "react-router";
 
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
-import { localeLayoutLoader } from "#/lib/i18n/localeRedirect";
 import { resolveUrlLocale } from "#/lib/i18n/locale";
+import { localeLayoutLoader } from "#/lib/i18n/localeRedirect";
 import { authRoutes } from "#/pages/auth/routes";
 import { documentRoutes } from "#/pages/documents/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";

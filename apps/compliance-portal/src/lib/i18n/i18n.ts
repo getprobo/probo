@@ -29,12 +29,7 @@ import {
 import { resolveLanguage, SUPPORTED_LANGUAGES } from "./resolveLanguage";
 
 function initialLanguage() {
-  const pathname = window.location.pathname;
-  const trustMatch = pathname.match(/^\/trust\/[^/]+(\/.*)?$/);
-  const appPath = trustMatch
-    ? (trustMatch[1] && trustMatch[1].length > 0 ? trustMatch[1] : "/")
-    : pathname;
-  const first = appPath.split("/").filter(Boolean)[0];
+  const first = window.location.pathname.split("/").filter(Boolean)[0];
   if (isUrlLocale(first)) {
     return urlLocaleToLanguage(first);
   }
