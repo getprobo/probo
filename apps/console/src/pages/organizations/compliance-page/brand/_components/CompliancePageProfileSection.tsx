@@ -100,7 +100,7 @@ export function CompliancePageProfileSection(props: {
           readOnly={readOnly}
           name="title"
           label={__("Title")}
-          placeholder={__("Your company or product name")}
+          placeholder={__("Compliance at Acme.")}
         />
         <div>
           <Label>{__("Description")}</Label>

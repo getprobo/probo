@@ -57,7 +57,7 @@ export function HomePage({ queryRef }: HomePageProps) {
   return (
     <>
       <Hero
-        title={t("home.heroTitle", { name: title })}
+        title={title}
         description={t("home.heroDescription")}
       >
         <CompliancePortalContactInfo compliancePortalKey={currentCompliancePortal} />

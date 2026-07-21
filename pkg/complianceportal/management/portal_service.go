@@ -76,7 +76,7 @@ func (utcr *UpdateRequest) Validate() error {
 	v.Check(utcr.NonDisclosureAgreementFileID, "non_disclosure_agreement_file_id", validator.GID(coredata.FileEntityType))
 
 	if utcr.Title != nil {
-		v.Check(*utcr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(NameMaxLength))
+		v.Check(*utcr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	}
 
 	if utcr.Description != nil {

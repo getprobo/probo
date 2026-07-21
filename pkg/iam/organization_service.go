@@ -614,7 +614,7 @@ func (s *OrganizationService) CreateOrganization(
 			TenantID:             organization.TenantID,
 			Active:               false,
 			Slug:                 slug.MakeWithEntropy(organization.Name),
-			Title:                organization.Name,
+			Title:                "Compliance at " + organization.Name + ".",
 			SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
 			MailingListID:        &mailingList.ID,
 			CreatedAt:            now,

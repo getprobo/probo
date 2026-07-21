@@ -148,7 +148,7 @@ func New() *Implm {
 			CompliancePortal: CompliancePortalConfig{
 				HTTPAddr:   ":80",
 				HTTPSAddr:  ":443",
-				BaseDomain: "probopage.com",
+				BaseDomain: "probopage.localhost",
 			},
 			AWS: AWSConfig{
 				Region: "us-east-1",

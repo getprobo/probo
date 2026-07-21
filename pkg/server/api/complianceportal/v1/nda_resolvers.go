@@ -7,13 +7,13 @@ package complianceportal_v1
 
 import (
 	"context"
-	"net"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
@@ -28,10 +28,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
 
-	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
-	if signerIP == "" {
-		signerIP = httpReq.RemoteAddr
-	}
+	signerIP := clientip.Extract(httpReq)
 
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
@@ -64,10 +61,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
 
-	actorIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
-	if actorIP == "" {
-		actorIP = httpReq.RemoteAddr
-	}
+	actorIP := clientip.Extract(httpReq)
 
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
