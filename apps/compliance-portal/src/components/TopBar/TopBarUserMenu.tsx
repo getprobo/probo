@@ -18,19 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BellIcon, BellRingingIcon, CaretDownIcon, SignOutIcon, UserIcon } from "@phosphor-icons/react";
+import {
+  BellIcon,
+  BellRingingIcon,
+  CaretDownIcon,
+  GlobeIcon,
+  SignOutIcon,
+  UserIcon,
+} from "@phosphor-icons/react";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownRadioGroup } from "@probo/ui/src/v2/Dropdown/DropdownRadioGroup";
+import { DropdownRadioItem } from "@probo/ui/src/v2/Dropdown/DropdownRadioItem";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
+import { DropdownSubmenu } from "@probo/ui/src/v2/Dropdown/DropdownSubmenu";
+import { DropdownSubmenuTrigger } from "@probo/ui/src/v2/Dropdown/DropdownSubmenuTrigger";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { useSignOut } from "#/lib/auth/useSignOut";
+import {
+  URL_LOCALE_LABELS,
+  URL_LOCALES,
+  type UrlLocale,
+} from "#/lib/i18n/locale";
+import { useChangeLocale } from "#/lib/i18n/useChangeLocale";
+import { useLocale } from "#/lib/i18n/useLocale";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 
 import type { TopBarUserMenu_identity$key } from "./__generated__/TopBarUserMenu_identity.graphql";
@@ -40,6 +58,7 @@ const topBarUserMenuFragment = graphql`
   fragment TopBarUserMenu_identity on Identity {
     fullName
     email
+    locale
   }
 `;
 
@@ -52,6 +71,8 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
   const identity = useFragment(topBarUserMenuFragment, identityKey);
   const { openSubscribe, isSubscribed, unsubscribe, isUnsubscribing } = useSubscribeDialog();
   const [signOut, isSigningOut] = useSignOut();
+  const locale = useLocale();
+  const [changeLocale, isChangingLocale] = useChangeLocale();
 
   // New users may not have set a full name yet; fall back to the email.
   const displayName = identity.fullName.trim() || identity.email;
@@ -103,6 +124,25 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
         >
           {isSubscribed ? t("userMenu.subscribed") : t("userMenu.subscribe")}
         </DropdownItem>
+        <DropdownSubmenu>
+          <DropdownSubmenuTrigger iconStart={<GlobeIcon />}>
+            {t("locale.label")}
+          </DropdownSubmenuTrigger>
+          <DropdownPopup side="left" align="start">
+            <DropdownRadioGroup
+              value={locale}
+              onValueChange={(value: string) => {
+                void changeLocale(value as UrlLocale, { persist: true });
+              }}
+            >
+              {URL_LOCALES.map(code => (
+                <DropdownRadioItem key={code} value={code} disabled={isChangingLocale}>
+                  {URL_LOCALE_LABELS[code]}
+                </DropdownRadioItem>
+              ))}
+            </DropdownRadioGroup>
+          </DropdownPopup>
+        </DropdownSubmenu>
         <DropdownSeparator />
         <DropdownItem
           color="error"

@@ -21,10 +21,10 @@
   "common": {
     "cancel": "Annuler",
     "error": "Une erreur est survenue",
-    "previousPage": "Page pr\u00e9c\u00e9dente",
+    "previousPage": "Page précédente",
     "nextPage": "Page suivante",
     "pageOf": "Page {{current}} sur {{total}}",
-    "zoomOut": "Zoom arri\u00e8re",
+    "zoomOut": "Zoom arrière",
     "zoomIn": "Zoom avant"
   },
   "auth": {
@@ -93,5 +93,15 @@
   "pagination": {
     "previous": "Page précédente",
     "next": "Page suivante"
+  },
+  "locale": {
+    "label": "Langue",
+    "updateFailed": "Impossible de mettre à jour la langue",
+    "mismatch": {
+      "message": "Vous consultez cette page en {{language}}.",
+      "switchToMine": "Passer en {{language}}",
+      "useThis": "Utiliser {{language}} comme ma langue",
+      "dismiss": "Ignorer"
+    }
   }
 }

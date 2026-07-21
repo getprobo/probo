@@ -1,0 +1,2 @@
+ALTER TABLE identities
+ADD COLUMN locale TEXT NULL;

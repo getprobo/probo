@@ -18,6 +18,7 @@ import { Link } from "@probo/ui/src/v2/Button/Link";
 import { ErrorState } from "@probo/ui/src/v2/ErrorState/ErrorState";
 import { useTranslation } from "react-i18next";
 
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { NotFoundError } from "#/lib/relay/errors";
 
 interface ErrorContent {
@@ -64,6 +65,7 @@ interface GlobalErrorProps {
 // actions. Used by the route boundaries (root + page).
 export function GlobalError({ error, onRetry, fullPage = false }: GlobalErrorProps) {
   const { t } = useTranslation();
+  const localizedPath = useLocalizedPath();
   const { code, titleKey, descriptionKey } = resolveContent(error);
 
   return (
@@ -74,7 +76,7 @@ export function GlobalError({ error, onRetry, fullPage = false }: GlobalErrorPro
       description={t(descriptionKey)}
       actions={(
         <>
-          <Link to="/" variant="solid" color="neutral" highContrast size={2}>
+          <Link to={localizedPath("/")} variant="solid" color="neutral" highContrast size={2}>
             {t("errors.actions.backToCompliancePortal")}
           </Link>
           {onRetry && (

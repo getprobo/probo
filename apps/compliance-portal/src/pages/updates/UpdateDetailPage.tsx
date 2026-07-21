@@ -28,6 +28,7 @@ import { graphql, usePreloadedQuery } from "react-relay";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 import { formatDate } from "#/lib/datetime/formatDate";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import type { UpdateDetailPageQuery } from "./__generated__/UpdateDetailPageQuery.graphql";
@@ -53,6 +54,7 @@ interface UpdateDetailPageProps {
 
 export function UpdateDetailPage({ queryRef }: UpdateDetailPageProps) {
   const { t, i18n } = useTranslation("updates");
+  const localizedPath = useLocalizedPath();
   const data = usePreloadedQuery<UpdateDetailPageQuery>(updateDetailPageQuery, queryRef);
 
   if (data.node?.__typename !== "MailingListUpdate") {
@@ -66,7 +68,7 @@ export function UpdateDetailPage({ queryRef }: UpdateDetailPageProps) {
     <>
       <HeaderBand>
         <div className={toolbar()}>
-          <Link to="/updates" variant="soft" color="neutral" highContrast iconStart={<CaretLeftIcon />}>
+          <Link to={localizedPath("/updates")} variant="soft" color="neutral" highContrast iconStart={<CaretLeftIcon />}>
             {t("backToUpdates")}
           </Link>
           <UpdatesSubscribeButton />

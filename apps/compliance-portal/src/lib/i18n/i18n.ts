@@ -22,7 +22,24 @@ import { createInstance } from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import { DEFAULT_NAMESPACE, globBackend } from "./backend";
+import {
+  isUrlLocale,
+  urlLocaleToLanguage,
+} from "./locale";
 import { resolveLanguage, SUPPORTED_LANGUAGES } from "./resolveLanguage";
+
+function initialLanguage() {
+  const pathname = window.location.pathname;
+  const trustMatch = pathname.match(/^\/trust\/[^/]+(\/.*)?$/);
+  const appPath = trustMatch
+    ? (trustMatch[1] && trustMatch[1].length > 0 ? trustMatch[1] : "/")
+    : pathname;
+  const first = appPath.split("/").filter(Boolean)[0];
+  if (isUrlLocale(first)) {
+    return urlLocaleToLanguage(first);
+  }
+  return resolveLanguage();
+}
 
 // Build a dedicated instance rather than mutating i18next's global singleton.
 // Initializing it through initReactI18next still registers it as the instance
@@ -33,7 +50,7 @@ void i18n
   .use(globBackend)
   .use(initReactI18next)
   .init({
-    lng: resolveLanguage(),
+    lng: initialLanguage(),
     fallbackLng: "en-US",
     supportedLngs: SUPPORTED_LANGUAGES,
     load: "currentOnly",

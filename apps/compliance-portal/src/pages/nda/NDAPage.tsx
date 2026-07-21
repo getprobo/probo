@@ -38,6 +38,7 @@ import { Navigate, useSearchParams } from "react-router";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 import { getSafeContinueUrl } from "#/lib/auth/continueUrl";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 import { PdfPreview, type PdfPreviewHandle } from "#/pages/documents/_components/PdfPreview";
 
@@ -114,6 +115,7 @@ interface NDAPageProps {
 // continue URL. Reached from the route boundary on NDA_SIGNATURE_REQUIRED.
 export function NDAPage({ queryRef }: NDAPageProps) {
   const { t } = useTranslation("nda");
+  const localizedPath = useLocalizedPath();
   const [searchParams] = useSearchParams();
   const documentViewedRef = useRef(false);
   const pdfRef = useRef<PdfPreviewHandle>(null);
@@ -212,11 +214,11 @@ export function NDAPage({ queryRef }: NDAPageProps) {
   };
 
   if (!data.viewer) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={localizedPath("/")} replace />;
   }
 
   if (!nda || !signature) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={localizedPath("/")} replace />;
   }
 
   // Signature already sealed: the effect above redirects to the continue URL;

@@ -28,8 +28,10 @@ import { graphql, useFragment } from "react-relay";
 import { Link as RouterLink, useLocation } from "react-router";
 
 import { buildRequestAllContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
 import type { TopBar_query$key } from "./__generated__/TopBar_query.graphql";
+import { LocaleSelect } from "./LocaleSelect";
 import { TOP_BAR_NAV_ITEMS } from "./navItems";
 import { TopBarMobileNav } from "./TopBarMobileNav";
 import { TopBarUserMenu } from "./TopBarUserMenu";
@@ -61,17 +63,19 @@ export function TopBar({ queryKey }: TopBarProps) {
   const data = useFragment(topBarFragment, queryKey);
   const location = useLocation();
   const { pathname } = location;
+  const localizedPath = useLocalizedPath();
 
   const { currentCompliancePortal } = data;
   const title = currentCompliancePortal.title;
   const logoUrl = currentCompliancePortal.themedLogoUrl ?? undefined;
 
   const slots = topBar();
+  const homePath = localizedPath("/");
 
   return (
     <header className={slots.bar()}>
       <div className={slots.inner()}>
-        <RouterLink to="/" className={slots.brand()}>
+        <RouterLink to={homePath} className={slots.brand()}>
           <Avatar
             size={1}
             variant="soft"
@@ -92,31 +96,37 @@ export function TopBar({ queryKey }: TopBarProps) {
         <div className={slots.spacer()} />
 
         <nav className={slots.nav()}>
-          {TOP_BAR_NAV_ITEMS.map(item => (
-            <Link
-              key={item.to}
-              to={item.to}
-              variant="ghost"
-              color="neutral"
-              size={2}
-              active={isActive(pathname, item.to)}
-            >
-              {t(item.labelKey)}
-            </Link>
-          ))}
+          {TOP_BAR_NAV_ITEMS.map((item) => {
+            const to = localizedPath(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={to}
+                variant="ghost"
+                color="neutral"
+                size={2}
+                active={isActive(pathname, to)}
+              >
+                {t(item.labelKey)}
+              </Link>
+            );
+          })}
           {data.viewer == null
             ? (
-                <Button
-                  variant="solid"
-                  color="neutral"
-                  highContrast
-                  iconStart={<LockSimpleIcon />}
-                  onClick={() => {
-                    redirectToInitiate(buildRequestAllContinueUrl());
-                  }}
-                >
-                  {t("topBar.getAccess")}
-                </Button>
+                <>
+                  <LocaleSelect />
+                  <Button
+                    variant="solid"
+                    color="neutral"
+                    highContrast
+                    iconStart={<LockSimpleIcon />}
+                    onClick={() => {
+                      redirectToInitiate(buildRequestAllContinueUrl());
+                    }}
+                  >
+                    {t("topBar.getAccess")}
+                  </Button>
+                </>
               )
             : <TopBarUserMenu identityKey={data.viewer} />}
         </nav>

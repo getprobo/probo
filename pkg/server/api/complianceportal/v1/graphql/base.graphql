@@ -54,6 +54,9 @@ type Identity implements Node {
   email: EmailAddr!
   fullName: String!
   emailVerified: Boolean!
+  # Preferred UI locale as a short URL tag (en, fr, de, …). Null until the
+  # viewer explicitly chooses a language in the portal.
+  locale: String
   createdAt: Datetime!
   updatedAt: Datetime!
 }

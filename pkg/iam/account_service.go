@@ -62,7 +62,17 @@ type (
 	UpdateIdentityRequest struct {
 		FullName string `json:"fullName"`
 	}
+
+	UpdateLocaleRequest struct {
+		Locale string `json:"locale"`
+	}
 )
+
+// Short URL locale tags accepted for Identity.locale (must stay in sync with
+// the compliance-portal URL_LOCALES list).
+var supportedIdentityLocales = []string{
+	"en", "fr", "de", "es", "id", "it", "ja", "ko", "pl", "pt", "tr", "uk", "zh",
+}
 
 const (
 	TokenTypeEmailConfirmation = "email_confirmation"
@@ -84,6 +94,20 @@ func (req UpdateIdentityRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.FullName, "full_name", validator.NotEmpty(), validator.MinLen(2), validator.MaxLen(255))
+
+	return v.Error()
+}
+
+func (req UpdateLocaleRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(
+		req.Locale,
+		"locale",
+		validator.NotEmpty(),
+		validator.MaxLen(8),
+		validator.OneOfSlice(supportedIdentityLocales),
+	)
 
 	return v.Error()
 }
@@ -390,6 +414,42 @@ func (s AccountService) UpdateIdentity(ctx context.Context, identityID gid.GID, 
 
 			if err := identity.Update(ctx, tx); err != nil {
 				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity, nil
+}
+
+func (s AccountService) UpdateLocale(ctx context.Context, identityID gid.GID, req *UpdateLocaleRequest) (*coredata.Identity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	identity := &coredata.Identity{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			err := identity.LoadByID(ctx, tx, identityID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewIdentityNotFoundError(identityID)
+				}
+
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			identity.Locale = &req.Locale
+			identity.UpdatedAt = time.Now()
+
+			if err := identity.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update identity locale: %w", err)
 			}
 
 			return nil

@@ -93,5 +93,15 @@
   "pagination": {
     "previous": "Önceki sayfa",
     "next": "Sonraki sayfa"
+  },
+  "locale": {
+    "label": "Language",
+    "updateFailed": "Couldn't update language",
+    "mismatch": {
+      "message": "You're viewing this page in {{language}}.",
+      "switchToMine": "Switch to {{language}}",
+      "useThis": "Use {{language}} as my language",
+      "dismiss": "Dismiss"
+    }
   }
 }

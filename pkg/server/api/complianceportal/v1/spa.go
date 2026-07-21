@@ -33,10 +33,18 @@ import (
 
 type (
 	HeadData struct {
-		Title       string
-		Description string
-		OGURL       string
-		FaviconURL  string
+		Title        string
+		Description  string
+		OGURL        string
+		FaviconURL   string
+		HtmlLang     string
+		CanonicalURL string
+		Hreflang     []HreflangLink
+	}
+
+	HreflangLink struct {
+		Lang string
+		Href string
 	}
 
 	HeadDataFunc func(r *http.Request) HeadData

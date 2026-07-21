@@ -35,6 +35,7 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
 		Email:         identity.EmailAddress,
 		FullName:      identity.FullName,
 		EmailVerified: identity.EmailAddressVerified,
+		Locale:        identity.Locale,
 		CreatedAt:     identity.CreatedAt,
 		UpdatedAt:     identity.UpdatedAt,
 	}, nil

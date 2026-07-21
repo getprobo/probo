@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{if .HtmlLang}}{{.HtmlLang}}{{else}}en{{end}}">
 
 <head>
   <meta charset="UTF-8" />
@@ -41,6 +41,9 @@
   <meta property="og:description" content="{{.Description}}">
   <meta property="og:url" content="{{.OGURL}}">
   <meta property="og:type" content="website">
+  {{if .CanonicalURL}}<link rel="canonical" href="{{.CanonicalURL}}">{{end}}
+  {{range .Hreflang}}<link rel="alternate" hreflang="{{.Lang}}" href="{{.Href}}">
+  {{end}}
 </head>
 
 <body class="text-sand-12 bg-sand-1">

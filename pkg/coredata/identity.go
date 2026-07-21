@@ -44,6 +44,7 @@ type (
 		HashedPassword       []byte    `db:"hashed_password"`
 		EmailAddressVerified bool      `db:"email_address_verified"`
 		SAMLSubject          *string   `db:"saml_subject"`
+		Locale               *string   `db:"locale"`
 		CreatedAt            time.Time `db:"created_at"`
 		UpdatedAt            time.Time `db:"updated_at"`
 	}
@@ -74,6 +75,7 @@ SELECT
     hashed_password,
     email_address_verified,
     saml_subject,
+    locale,
     created_at,
     updated_at
 FROM
@@ -118,6 +120,7 @@ SELECT
     hashed_password,
     email_address_verified,
     saml_subject,
+    locale,
     created_at,
     updated_at
 FROM
@@ -206,7 +209,17 @@ func (i *Identity) Insert(
 ) error {
 	q := `
 INSERT INTO
-    identities (id, email_address, full_name, hashed_password, email_address_verified, saml_subject, created_at, updated_at)
+    identities (
+        id,
+        email_address,
+        full_name,
+        hashed_password,
+        email_address_verified,
+        saml_subject,
+        locale,
+        created_at,
+        updated_at
+    )
 VALUES (
     @identity_id,
     @email_address,
@@ -214,6 +227,7 @@ VALUES (
     @hashed_password,
     @email_address_verified,
     @saml_subject,
+    @locale,
     @created_at,
     @updated_at
 )
@@ -225,6 +239,7 @@ VALUES (
 		"full_name":              i.FullName,
 		"hashed_password":        i.HashedPassword,
 		"saml_subject":           i.SAMLSubject,
+		"locale":                 i.Locale,
 		"created_at":             i.CreatedAt,
 		"updated_at":             i.UpdatedAt,
 		"email_address_verified": i.EmailAddressVerified,
@@ -254,6 +269,7 @@ SET
     email_address_verified = @email_address_verified,
     saml_subject = @saml_subject,
     hashed_password = @hashed_password,
+    locale = @locale,
     updated_at = @updated_at
 WHERE
     id = @identity_id
@@ -265,8 +281,9 @@ WHERE
 		"full_name":              i.FullName,
 		"email_address_verified": i.EmailAddressVerified,
 		"saml_subject":           i.SAMLSubject,
-		"updated_at":             i.UpdatedAt,
 		"hashed_password":        i.HashedPassword,
+		"locale":                 i.Locale,
+		"updated_at":             i.UpdatedAt,
 	}
 
 	result, err := conn.Exec(ctx, q, args)
@@ -295,6 +312,7 @@ SELECT
     hashed_password,
     email_address_verified,
     saml_subject,
+    locale,
     created_at,
     updated_at
 FROM

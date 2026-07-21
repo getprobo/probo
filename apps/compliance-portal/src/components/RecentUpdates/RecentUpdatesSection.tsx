@@ -27,6 +27,7 @@ import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 import { HomeSection } from "#/components/HomeSection/HomeSection";
 import { MailingListUpdateListItem } from "#/components/MailingListUpdateListItem/MailingListUpdateListItem";
 import { dotPatternStyle } from "#/components/MediaTile/variants";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
 import type { RecentUpdatesSection_compliancePortal$key } from "./__generated__/RecentUpdatesSection_compliancePortal.graphql";
 
@@ -71,6 +72,7 @@ export function RecentUpdatesSection({ compliancePortalKey }: RecentUpdatesSecti
 
 function RecentUpdatesSectionContent({ compliancePortalKey }: RecentUpdatesSectionProps) {
   const { t } = useTranslation();
+  const localizedPath = useLocalizedPath();
   const data = useFragment(recentUpdatesSectionFragment, compliancePortalKey);
   const updates = data.updates.edges.map(edge => edge.node);
 
@@ -82,7 +84,7 @@ function RecentUpdatesSectionContent({ compliancePortalKey }: RecentUpdatesSecti
     <HomeSection
       title={t("home.sections.recentUpdates")}
       action={(
-        <Link to="/updates" variant="ghost" color="neutral" size={2}>
+        <Link to={localizedPath("/updates")} variant="ghost" color="neutral" size={2}>
           {t("home.recentUpdates.viewAll")}
         </Link>
       )}

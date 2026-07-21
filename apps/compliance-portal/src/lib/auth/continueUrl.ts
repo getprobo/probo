@@ -21,6 +21,7 @@
 import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
 
 import { getPathPrefix } from "#/lib/http/pathPrefix";
+import { localizedPath, resolveUrlLocale, type UrlLocale } from "#/lib/i18n/locale";
 
 // Markers appended to a post-auth `continue` URL so the portal fires the pending
 // "request access" mutation once the user lands back authenticated. `request-all`
@@ -41,7 +42,8 @@ export const SUBSCRIBE_PARAM = "subscribe";
 // portal home, so a crafted `?continue=` can never bounce the user off-site.
 export function getSafeContinueUrl(param: string | null | undefined): string {
   const prefix = getPathPrefix();
-  const fallback = window.location.origin + (prefix || "/");
+  const localeHome = localizedPath(resolveUrlLocale(), "/");
+  const fallback = window.location.origin + (prefix || "") + localeHome;
 
   if (!param) {
     return fallback;
@@ -49,10 +51,10 @@ export function getSafeContinueUrl(param: string | null | undefined): string {
 
   try {
     const url = new URL(param, window.location.origin);
-    if (
-      url.origin === window.location.origin
-      && url.pathname.startsWith(`${prefix}/`)
-    ) {
+    const underPrefix = prefix === ""
+      ? url.pathname.startsWith("/")
+      : url.pathname === prefix || url.pathname.startsWith(`${prefix}/`);
+    if (url.origin === window.location.origin && underPrefix) {
       return window.location.origin + url.pathname + url.search;
     }
   } catch {
@@ -99,12 +101,16 @@ export function buildSubscribeContinueUrl(): string {
 // resumes) once the gate is cleared. Returns null for non-gate errors. Shared
 // by the route boundaries and the request-access flows so all gate handling
 // stays in one place.
-export function gateRedirectPath(error: unknown, continueUrl: string): string | null {
+export function gateRedirectPath(
+  error: unknown,
+  continueUrl: string,
+  locale: UrlLocale = resolveUrlLocale(),
+): string | null {
   if (error instanceof FullNameRequiredError) {
-    return `/full-name?continue=${encodeURIComponent(continueUrl)}`;
+    return `${localizedPath(locale, "/full-name")}?continue=${encodeURIComponent(continueUrl)}`;
   }
   if (error instanceof NDASignatureRequiredError) {
-    return `/nda?continue=${encodeURIComponent(continueUrl)}`;
+    return `${localizedPath(locale, "/nda")}?continue=${encodeURIComponent(continueUrl)}`;
   }
   return null;
 }

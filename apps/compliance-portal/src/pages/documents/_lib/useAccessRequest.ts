@@ -34,6 +34,7 @@ import {
   REQUEST_FILE_PARAM,
   REQUEST_REPORT_PARAM,
 } from "#/lib/auth/continueUrl";
+import { useLocale } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useAccessRequestDocumentMutation } from "./__generated__/useAccessRequestDocumentMutation.graphql";
@@ -100,6 +101,7 @@ const fileMutation = graphql`
 // URL so it resumes once the gate is cleared. Everything else is a generic toast.
 function useAccessRequestHandlers(param: string, id: string) {
   const navigate = useNavigate();
+  const locale = useLocale();
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
 
@@ -123,7 +125,7 @@ function useAccessRequestHandlers(param: string, id: string) {
         }
         // Full-name / NDA gate: deep-link to the gate page, preserving the
         // marker so the request resumes afterwards.
-        const gatePath = gateRedirectPath(error, continueUrl);
+        const gatePath = gateRedirectPath(error, continueUrl, locale);
         if (gatePath) {
           void navigate(gatePath);
           return;
@@ -131,7 +133,7 @@ function useAccessRequestHandlers(param: string, id: string) {
         toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
       },
     }),
-    [navigate, toast, t, param, id],
+    [navigate, locale, toast, t, param, id],
   );
 }
 

@@ -20,6 +20,8 @@
 
 import { graphql, useFragment } from "react-relay";
 
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
+
 import { useRequestReportAccess } from "../_lib/useAccessRequest";
 
 import type { AuditReportListItem_audit$key } from "./__generated__/AuditReportListItem_audit.graphql";
@@ -50,6 +52,7 @@ interface AuditReportListItemProps {
 // access action linking to the viewer when authorized. Renders nothing when the
 // audit has no report file.
 export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
+  const localizedPath = useLocalizedPath();
   const audit = useFragment(auditReportListItemFragment, auditKey);
   const report = audit.reportFile;
   // Hook must run unconditionally; the empty id is never used when there is no
@@ -66,7 +69,7 @@ export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
       meta={report.fileName}
       isAuthorized={report.isUserAuthorized}
       requested={report.access?.status === "REQUESTED"}
-      viewHref={`/documents/${encodeURIComponent(report.alias ?? report.id)}`}
+      viewHref={localizedPath(`/documents/${encodeURIComponent(report.alias ?? report.id)}`)}
       onGetAccess={requestAccess}
       isRequesting={isRequesting}
     />

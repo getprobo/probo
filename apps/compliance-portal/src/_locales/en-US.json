@@ -18,6 +18,16 @@
     "signOut": "Sign out",
     "signOutFailed": "Cannot sign out"
   },
+  "locale": {
+    "label": "Language",
+    "updateFailed": "Couldn't update language",
+    "mismatch": {
+      "message": "You're viewing this page in {{language}}.",
+      "switchToMine": "Switch to {{language}}",
+      "useThis": "Use {{language}} as my language",
+      "dismiss": "Dismiss"
+    }
+  },
   "common": {
     "cancel": "Cancel",
     "error": "Something went wrong",

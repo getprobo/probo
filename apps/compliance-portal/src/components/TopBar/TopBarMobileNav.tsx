@@ -45,9 +45,11 @@ import { useLocation } from "react-router";
 
 import { buildRequestAllContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
 import { useSignOut } from "#/lib/auth/useSignOut";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 
 import type { TopBarMobileNav_identity$key } from "./__generated__/TopBarMobileNav_identity.graphql";
+import { LocaleSelect } from "./LocaleSelect";
 import { TOP_BAR_NAV_ITEMS } from "./navItems";
 import { topBar } from "./variants";
 
@@ -75,6 +77,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
   const [signOut, isSigningOut] = useSignOut();
   const [open, setOpen] = useState(false);
   const identity = useFragment(topBarMobileNavFragment, identityKey);
+  const localizedPath = useLocalizedPath();
 
   const barSlots = topBar();
 
@@ -119,24 +122,30 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
 
         <DrawerBody>
           <nav className="contents">
-            {TOP_BAR_NAV_ITEMS.map(item => (
-              <Link
-                key={item.to}
-                to={item.to}
-                variant="ghost"
-                color="neutral"
-                size={3}
-                active={isActive(pathname, item.to)}
-                className="w-full justify-start"
-                onClick={close}
-              >
-                {t(item.labelKey)}
-              </Link>
-            ))}
+            {TOP_BAR_NAV_ITEMS.map((item) => {
+              const to = localizedPath(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={to}
+                  variant="ghost"
+                  color="neutral"
+                  size={3}
+                  active={isActive(pathname, to)}
+                  className="w-full justify-start"
+                  onClick={close}
+                >
+                  {t(item.labelKey)}
+                </Link>
+              );
+            })}
           </nav>
         </DrawerBody>
 
         <DrawerFooter>
+          <div className="w-full pb-2">
+            <LocaleSelect persist={identity != null} />
+          </div>
           {identity == null
             ? (
                 <Button

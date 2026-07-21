@@ -1,6 +1,8 @@
 extend type Mutation {
   updateFullName(input: UpdateFullNameInput!): UpdateFullNamePayload
     @authentication(required: PRESENT) @sessionOnly
+  updateLocale(input: UpdateLocaleInput!): UpdateLocalePayload
+    @authentication(required: PRESENT) @sessionOnly
   signOut: SignOutPayload! @authentication(required: PRESENT) @sessionOnly
 }
 
@@ -10,6 +12,15 @@ input UpdateFullNameInput {
 
 type UpdateFullNamePayload {
   success: Boolean!
+}
+
+input UpdateLocaleInput {
+  # Short URL locale tag (en, fr, de, …).
+  locale: String!
+}
+
+type UpdateLocalePayload {
+  identity: Identity!
 }
 
 type SignOutPayload {

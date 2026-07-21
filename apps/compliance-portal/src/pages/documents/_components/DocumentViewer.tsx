@@ -38,6 +38,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
 import { dataUriMimeType, downloadDataUri } from "../_lib/dataUri";
 
@@ -69,6 +70,7 @@ interface DocumentViewerProps {
 export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerProps) {
   const { t } = useTranslation("documents");
   const toast = Toast.useToastManager();
+  const localizedPath = useLocalizedPath();
 
   const pdfRef = useRef<PdfPreviewHandle>(null);
   const [numPages, setNumPages] = useState(0);
@@ -104,7 +106,7 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
     <div className={slots.root()}>
       <HeaderBand flushBottomSpace>
         <div className={slots.header()}>
-          <Link to="/documents" variant="ghost" color="neutral" size={1} iconStart={<CaretLeftIcon />} className={slots.back()}>
+          <Link to={localizedPath("/documents")} variant="ghost" color="neutral" size={1} iconStart={<CaretLeftIcon />} className={slots.back()}>
             {t("viewer.back")}
           </Link>
           <Heading level={1} size={7} weight="medium" highContrast className="truncate">

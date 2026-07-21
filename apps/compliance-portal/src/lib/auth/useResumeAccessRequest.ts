@@ -34,6 +34,7 @@ import {
   REQUEST_FILE_PARAM,
   REQUEST_REPORT_PARAM,
 } from "#/lib/auth/continueUrl";
+import { useLocale } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useResumeAccessRequest_documentMutation } from "./__generated__/useResumeAccessRequest_documentMutation.graphql";
@@ -105,6 +106,7 @@ const requestFileMutation = graphql`
 export function useResumeAccessRequest(isAuthenticated: boolean) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const locale = useLocale();
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
   const firedRef = useRef(false);
@@ -155,7 +157,7 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
         toast.add({ title: t("auth.requestAccess.success"), type: "success" });
       },
       onError: (error: Error) => {
-        const gatePath = gateRedirectPath(error, continueUrl);
+        const gatePath = gateRedirectPath(error, continueUrl, locale);
         if (gatePath) {
           void navigate(gatePath);
           return;
@@ -208,6 +210,7 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
     }).catch(() => {});
   }, [
     isAuthenticated,
+    locale,
     navigate,
     requestAllAccesses,
     requestDocumentAccess,

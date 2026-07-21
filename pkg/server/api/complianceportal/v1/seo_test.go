@@ -18,33 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Link } from "@probo/ui/src/v2/Button/Link";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
+package complianceportal_v1_test
 
-import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
-import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import (
+	"net/http"
+	"testing"
 
-// Catch-all page for portal paths that match no route, so an unknown URL renders
-// an explicit not-found state inside the layout instead of an empty body.
-export default function NotFoundPage() {
-  const { t } = useTranslation();
-  const localizedPath = useLocalizedPath();
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	complianceportal_v1 "go.probo.inc/probo/pkg/server/api/complianceportal/v1"
+)
 
-  return (
-    <HeaderBand>
-      <div className="flex flex-col items-start gap-4">
-        <Heading level={1} size={7} weight="medium" highContrast>
-          {t("notFound.title")}
-        </Heading>
-        <Text size={2} color="neutral">
-          {t("notFound.description")}
-        </Text>
-        <Link to={localizedPath("/")} variant="soft" color="neutral" highContrast size={2}>
-          {t("notFound.backHome")}
-        </Link>
-      </div>
-    </HeaderBand>
-  );
+func TestSEOFromRequest(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(http.MethodGet, "https://app.example.com/trust/acme/fr/documents", nil)
+	require.NoError(t, err)
+
+	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(req, "https://app.example.com/trust/acme")
+	assert.Equal(t, "fr", lang)
+	assert.Equal(t, "https://app.example.com/trust/acme/fr/documents", canonical)
+	require.NotEmpty(t, hreflang)
+
+	var xDefault string
+	var enHref string
+	for _, link := range hreflang {
+		if link.Lang == "x-default" {
+			xDefault = link.Href
+		}
+		if link.Lang == "en" {
+			enHref = link.Href
+		}
+	}
+	assert.Equal(t, "https://app.example.com/trust/acme/en/documents", enHref)
+	assert.Equal(t, enHref, xDefault)
 }

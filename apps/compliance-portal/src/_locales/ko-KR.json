@@ -93,5 +93,15 @@
   "pagination": {
     "previous": "이전 페이지",
     "next": "다음 페이지"
+  },
+  "locale": {
+    "label": "Language",
+    "updateFailed": "Couldn't update language",
+    "mismatch": {
+      "message": "You're viewing this page in {{language}}.",
+      "switchToMine": "Switch to {{language}}",
+      "useThis": "Use {{language}} as my language",
+      "dismiss": "Dismiss"
+    }
   }
 }

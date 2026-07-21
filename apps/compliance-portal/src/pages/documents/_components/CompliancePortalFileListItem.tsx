@@ -20,6 +20,8 @@
 
 import { graphql, useFragment } from "react-relay";
 
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
+
 import { useRequestFileAccess } from "../_lib/useAccessRequest";
 
 import type { CompliancePortalFileListItem_file$key } from "./__generated__/CompliancePortalFileListItem_file.graphql";
@@ -45,6 +47,7 @@ interface CompliancePortalFileListItemProps {
 // A single uploaded trust-center file entry: name, its category, and an access
 // action linking to the viewer when authorized.
 export function CompliancePortalFileListItem({ fileKey }: CompliancePortalFileListItemProps) {
+  const localizedPath = useLocalizedPath();
   const file = useFragment(compliancePortalFileListItemFragment, fileKey);
   const { requestAccess, isRequesting } = useRequestFileAccess(file.id);
 
@@ -54,7 +57,7 @@ export function CompliancePortalFileListItem({ fileKey }: CompliancePortalFileLi
       meta={file.category}
       isAuthorized={file.isUserAuthorized}
       requested={file.access?.status === "REQUESTED"}
-      viewHref={`/documents/${encodeURIComponent(file.alias ?? file.id)}`}
+      viewHref={localizedPath(`/documents/${encodeURIComponent(file.alias ?? file.id)}`)}
       onGetAccess={requestAccess}
       isRequesting={isRequesting}
     />

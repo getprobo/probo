@@ -18,33 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Link } from "@probo/ui/src/v2/Button/Link";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql } from "react-relay";
 
-import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
-import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import { useMutation } from "#/lib/relay/useMutation";
 
-// Catch-all page for portal paths that match no route, so an unknown URL renders
-// an explicit not-found state inside the layout instead of an empty body.
-export default function NotFoundPage() {
+import type { useUpdateLocaleMutation } from "./__generated__/useUpdateLocaleMutation.graphql";
+import type { UrlLocale } from "./locale";
+
+const updateLocaleMutation = graphql`
+  mutation useUpdateLocaleMutation($input: UpdateLocaleInput!) {
+    updateLocale(input: $input) {
+      identity {
+        id
+        locale
+      }
+    }
+  }
+`;
+
+// Persists the viewer's preferred UI locale on their identity.
+export function useUpdateLocale() {
   const { t } = useTranslation();
-  const localizedPath = useLocalizedPath();
+  const [commit, isUpdating] = useMutation<useUpdateLocaleMutation>(updateLocaleMutation, {
+    errorToast: t("locale.updateFailed"),
+  });
 
-  return (
-    <HeaderBand>
-      <div className="flex flex-col items-start gap-4">
-        <Heading level={1} size={7} weight="medium" highContrast>
-          {t("notFound.title")}
-        </Heading>
-        <Text size={2} color="neutral">
-          {t("notFound.description")}
-        </Text>
-        <Link to={localizedPath("/")} variant="soft" color="neutral" highContrast size={2}>
-          {t("notFound.backHome")}
-        </Link>
-      </div>
-    </HeaderBand>
-  );
+  const updateLocale = useCallback(async (locale: UrlLocale) => {
+    await commit({
+      variables: { input: { locale } },
+    });
+  }, [commit]);
+
+  return [updateLocale, isUpdating] as const;
 }

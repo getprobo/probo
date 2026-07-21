@@ -23,6 +23,7 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 import { Outlet, useMatch } from "react-router";
 
+import { LocaleMismatchCallout } from "#/components/LocaleMismatchCallout";
 import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
 import { useResumeAccessRequest } from "#/lib/auth/useResumeAccessRequest";
@@ -34,6 +35,7 @@ export const mainLayoutQuery = graphql`
   query MainLayoutQuery {
     viewer {
       __typename
+      ...LocaleMismatchCallout_identity
     }
     ...TopBar_query
     ...SubscribeDialogProvider_query
@@ -47,7 +49,7 @@ interface MainLayoutProps {
 export function MainLayout({ queryRef }: MainLayoutProps) {
   const { t } = useTranslation();
   const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
-  const isDocumentViewer = useMatch("documents/:alias") != null;
+  const isDocumentViewer = useMatch("/:lang/documents/:alias") != null;
 
   // Resume a deferred "request access" once the user lands back authenticated.
   useResumeAccessRequest(data.viewer != null);
@@ -65,6 +67,9 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
         }
       >
         <TopBar queryKey={data} />
+        {data.viewer != null
+          ? <LocaleMismatchCallout identityKey={data.viewer} />
+          : null}
         <div
           className={
             isDocumentViewer

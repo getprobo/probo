@@ -25,6 +25,7 @@ import { Link } from "react-router";
 
 import { ComplianceArticleItem } from "#/components/ComplianceArticleItem/ComplianceArticleItem";
 import { formatRelativeTime } from "#/lib/datetime/relativeTime";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
 import type { MailingListUpdateListItem_update$key } from "./__generated__/MailingListUpdateListItem_update.graphql";
 
@@ -44,10 +45,11 @@ interface MailingListUpdateListItemProps {
 // no category, so we show the title and relative date with a generic icon.
 export function MailingListUpdateListItem({ updateKey }: MailingListUpdateListItemProps) {
   const { i18n } = useTranslation();
+  const localizedPath = useLocalizedPath();
   const update = useFragment(mailingListUpdateListItemFragment, updateKey);
 
   return (
-    <Link to={`/updates/${update.id}`} className="block transition-colors hover:bg-sand-a2">
+    <Link to={localizedPath(`/updates/${update.id}`)} className="block transition-colors hover:bg-sand-a2">
       <ComplianceArticleItem
         icon={<NewspaperIcon weight="light" />}
         title={update.title}

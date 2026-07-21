@@ -97,6 +97,42 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 	return &types.UpdateFullNamePayload{Success: true}, nil
 }
 
+// UpdateLocale is the resolver for the updateLocale field.
+func (r *mutationResolver) UpdateLocale(ctx context.Context, input types.UpdateLocaleInput) (*types.UpdateLocalePayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to update locale")
+	}
+
+	identity, err := r.iam.AccountService.UpdateLocale(
+		ctx,
+		identity.ID,
+		&iam.UpdateLocaleRequest{
+			Locale: input.Locale,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update identity locale", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateLocalePayload{
+		Identity: &types.Identity{
+			ID:            identity.ID,
+			Email:         identity.EmailAddress,
+			FullName:      identity.FullName,
+			EmailVerified: identity.EmailAddressVerified,
+			Locale:        identity.Locale,
+			CreatedAt:     identity.CreatedAt,
+			UpdatedAt:     identity.UpdatedAt,
+		},
+	}, nil
+}
+
 // SignOut is the resolver for the signOut field.
 func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, error) {
 	session := authn.SessionFromContext(ctx)

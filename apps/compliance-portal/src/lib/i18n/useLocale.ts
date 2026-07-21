@@ -18,33 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Link } from "@probo/ui/src/v2/Button/Link";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
+import { useParams } from "react-router";
 
-import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
-import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import {
+  defaultUrlLocale,
+  isUrlLocale,
+  localizedPath,
+  type UrlLocale,
+} from "./locale";
 
-// Catch-all page for portal paths that match no route, so an unknown URL renders
-// an explicit not-found state inside the layout instead of an empty body.
-export default function NotFoundPage() {
-  const { t } = useTranslation();
-  const localizedPath = useLocalizedPath();
+// Current URL locale from the `/:lang` route param. Falls back to English when
+// the param is missing (should not happen under the locale layout).
+export function useLocale(): UrlLocale {
+  const { lang } = useParams();
+  if (isUrlLocale(lang)) {
+    return lang;
+  }
+  return defaultUrlLocale();
+}
 
-  return (
-    <HeaderBand>
-      <div className="flex flex-col items-start gap-4">
-        <Heading level={1} size={7} weight="medium" highContrast>
-          {t("notFound.title")}
-        </Heading>
-        <Text size={2} color="neutral">
-          {t("notFound.description")}
-        </Text>
-        <Link to={localizedPath("/")} variant="soft" color="neutral" highContrast size={2}>
-          {t("notFound.backHome")}
-        </Link>
-      </div>
-    </HeaderBand>
-  );
+// Build a locale-prefixed app path for the active URL locale.
+export function useLocalizedPath() {
+  const locale = useLocale();
+  return (path: string) => localizedPath(locale, path);
 }

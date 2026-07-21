@@ -134,16 +134,21 @@ func compliancePageHeadData() HeadDataFunc {
 		}
 
 		compliancePageBaseURL := complianceportal.CompliancePortalBaseURLFromContext(r.Context())
+		pageBase := ref.UnrefOrZero(compliancePageBaseURL)
+		htmlLang, canonical, hreflang := SEOFromRequest(r, pageBase)
 
-		description := tc.Title + " Compliance Page"
+		description := tc.Title
 		if tc.Description != nil && *tc.Description != "" {
 			description = *tc.Description
 		}
 
 		headData := HeadData{
-			Title:       tc.Title,
-			Description: description,
-			OGURL:       ref.UnrefOrZero(compliancePageBaseURL),
+			Title:        tc.Title,
+			Description:  description,
+			OGURL:        pageBase,
+			HtmlLang:     htmlLang,
+			CanonicalURL: canonical,
+			Hreflang:     hreflang,
 		}
 
 		if tc.LogoFileID != nil && compliancePageBaseURL != nil {

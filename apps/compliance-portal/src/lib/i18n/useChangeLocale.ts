@@ -18,33 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Link } from "@probo/ui/src/v2/Button/Link";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
+import { useCallback } from "react";
+import { useLocation, useNavigate } from "react-router";
 
-import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
-import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import {
+  replaceLocaleInPathname,
+  type UrlLocale,
+} from "./locale";
+import { useLocale } from "./useLocale";
+import { useUpdateLocale } from "./useUpdateLocale";
 
-// Catch-all page for portal paths that match no route, so an unknown URL renders
-// an explicit not-found state inside the layout instead of an empty body.
-export default function NotFoundPage() {
-  const { t } = useTranslation();
-  const localizedPath = useLocalizedPath();
+interface ChangeLocaleOptions {
+  // When true, also persist the locale on the signed-in identity.
+  persist?: boolean;
+}
 
-  return (
-    <HeaderBand>
-      <div className="flex flex-col items-start gap-4">
-        <Heading level={1} size={7} weight="medium" highContrast>
-          {t("notFound.title")}
-        </Heading>
-        <Text size={2} color="neutral">
-          {t("notFound.description")}
-        </Text>
-        <Link to={localizedPath("/")} variant="soft" color="neutral" highContrast size={2}>
-          {t("notFound.backHome")}
-        </Link>
-      </div>
-    </HeaderBand>
-  );
+// Navigate to the same path under a new locale; optionally persist for signed-in users.
+export function useChangeLocale() {
+  const currentLocale = useLocale();
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
+  const [updateLocale, isUpdating] = useUpdateLocale();
+
+  const changeLocale = useCallback(async (
+    locale: UrlLocale,
+    options: ChangeLocaleOptions = {},
+  ) => {
+    if (options.persist) {
+      await updateLocale(locale);
+    }
+    if (locale !== currentLocale) {
+      void navigate(replaceLocaleInPathname(pathname, locale) + search);
+    }
+  }, [currentLocale, navigate, pathname, search, updateLocale]);
+
+  return [changeLocale, isUpdating] as const;
 }

@@ -26,9 +26,12 @@ import { createBrowserRouter, redirect } from "react-router";
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { getPathPrefix } from "#/lib/http/pathPrefix";
+import { localeLayoutLoader } from "#/lib/i18n/localeRedirect";
+import { resolveUrlLocale } from "#/lib/i18n/locale";
 import { authRoutes } from "#/pages/auth/routes";
 import { documentRoutes } from "#/pages/documents/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
+import { LocaleLayout } from "#/pages/LocaleLayout";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
 import { ndaRoutes } from "#/pages/nda/routes";
 import { requestRoutes } from "#/pages/requests/routes";
@@ -37,45 +40,64 @@ import { updateRoutes } from "#/pages/updates/routes";
 
 const routes = [
   {
-    path: "/",
-    Fallback: MainLayoutSkeleton,
-    Component: lazy(() => import("#/pages/MainLayoutLoader")),
-    // A layout failure takes down the shell, so it shows a standalone full page.
+    path: "/:lang",
+    loader: localeLayoutLoader,
+    Component: LocaleLayout,
     ErrorBoundary: RootErrorBoundary,
     children: [
       {
-        // Pathless layout route: page failures bubble here and render inside the
-        // MainLayout Outlet, keeping the TopBar and footer chrome.
-        ErrorBoundary: PageErrorBoundary,
+        // Pathless: MainLayout wraps portal pages under /:lang without adding a
+        // segment. (A child path of "/" would be absolute and bypass /:lang.)
+        Fallback: MainLayoutSkeleton,
+        Component: lazy(() => import("#/pages/MainLayoutLoader")),
+        // A layout failure takes down the shell, so it shows a standalone full page.
+        ErrorBoundary: RootErrorBoundary,
         children: [
           {
-            index: true,
-            Fallback: HomePageSkeleton,
-            Component: lazy(() => import("#/pages/HomePageLoader")),
-          },
-          // Legacy trust-app URL; home now lives at the index route.
-          {
-            path: "overview",
-            loader: () => {
-              // eslint-disable-next-line
-              throw redirect("/");
-            },
-            Component: Fragment,
-          },
-          ...documentRoutes,
-          ...subprocessorRoutes,
-          ...updateRoutes,
-          ...requestRoutes,
-          {
-            path: "*",
-            Component: lazy(() => import("#/pages/NotFoundPage")),
+            // Pathless layout route: page failures bubble here and render inside the
+            // MainLayout Outlet, keeping the TopBar and footer chrome.
+            ErrorBoundary: PageErrorBoundary,
+            children: [
+              {
+                index: true,
+                Fallback: HomePageSkeleton,
+                Component: lazy(() => import("#/pages/HomePageLoader")),
+              },
+              // Legacy trust-app URL; home now lives at the index route.
+              {
+                path: "overview",
+                loader: ({ params }) => {
+                  const lang = params.lang ?? resolveUrlLocale();
+                  // eslint-disable-next-line
+                  throw redirect(`/${lang}`);
+                },
+                Component: Fragment,
+              },
+              ...documentRoutes,
+              ...subprocessorRoutes,
+              ...updateRoutes,
+              ...requestRoutes,
+              {
+                path: "*",
+                Component: lazy(() => import("#/pages/NotFoundPage")),
+              },
+            ],
           },
         ],
       },
+      ...authRoutes,
+      ...ndaRoutes,
     ],
   },
-  ...authRoutes,
-  ...ndaRoutes,
+  // Bare basename root (no locale segment) → guessed locale home.
+  {
+    path: "/",
+    loader: () => {
+      // eslint-disable-next-line
+      throw redirect(`/${resolveUrlLocale()}`);
+    },
+    Component: Fragment,
+  },
 ] satisfies AppRoute[];
 
 // The portal is served under a /trust/{slug} path prefix (or a bare custom

@@ -93,5 +93,15 @@
   "pagination": {
     "previous": "Vorherige Seite",
     "next": "Nächste Seite"
+  },
+  "locale": {
+    "label": "Sprache",
+    "updateFailed": "Sprache konnte nicht aktualisiert werden",
+    "mismatch": {
+      "message": "Sie sehen diese Seite auf {{language}}.",
+      "switchToMine": "Zu {{language}} wechseln",
+      "useThis": "{{language}} als meine Sprache verwenden",
+      "dismiss": "Schließen"
+    }
   }
 }

@@ -21,6 +21,8 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
+
 import { useRequestDocumentAccess } from "../_lib/useAccessRequest";
 
 import type { DocumentListItem_document$key } from "./__generated__/DocumentListItem_document.graphql";
@@ -47,6 +49,7 @@ interface DocumentListItemProps {
 // linking to the viewer when authorized.
 export function DocumentListItem({ documentKey }: DocumentListItemProps) {
   const { t } = useTranslation("documents");
+  const localizedPath = useLocalizedPath();
   const document = useFragment(documentListItemFragment, documentKey);
   const { requestAccess, isRequesting } = useRequestDocumentAccess(document.id);
 
@@ -56,7 +59,7 @@ export function DocumentListItem({ documentKey }: DocumentListItemProps) {
       meta={t(`types.${document.documentType}`)}
       isAuthorized={document.isUserAuthorized}
       requested={document.access?.status === "REQUESTED"}
-      viewHref={`/documents/${encodeURIComponent(document.alias ?? document.id)}`}
+      viewHref={localizedPath(`/documents/${encodeURIComponent(document.alias ?? document.id)}`)}
       onGetAccess={requestAccess}
       isRequesting={isRequesting}
     />
