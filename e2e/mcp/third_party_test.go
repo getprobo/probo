@@ -92,6 +92,43 @@ func TestMCP_ThirdParty_CRUD(t *testing.T) {
 	assert.Equal(t, "resource not found", msg)
 }
 
+func TestMCP_ThirdParty_UpdatePreservesCategoryWhenOmitted(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	var addResult struct {
+		ThirdParty struct {
+			ID       string `json:"id"`
+			Category string `json:"category"`
+		} `json:"third_party"`
+	}
+
+	name := factory.SafeName("ThirdParty")
+	mc.CallToolInto("addThirdParty", map[string]any{
+		"organizationId": orgID,
+		"name":           name,
+		"category":       "CLOUD_PROVIDER",
+	}, &addResult)
+	require.NotEmpty(t, addResult.ThirdParty.ID)
+	assert.Equal(t, "CLOUD_PROVIDER", addResult.ThirdParty.Category)
+
+	var updateResult struct {
+		ThirdParty struct {
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+			Category string `json:"category"`
+		} `json:"third_party"`
+	}
+	mc.CallToolInto("updateThirdParty", map[string]any{
+		"id":   addResult.ThirdParty.ID,
+		"name": "Updated ThirdParty",
+	}, &updateResult)
+	assert.Equal(t, "Updated ThirdParty", updateResult.ThirdParty.Name)
+	assert.Equal(t, "CLOUD_PROVIDER", updateResult.ThirdParty.Category)
+}
+
 func TestMCP_ThirdParty_ValidationError(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

@@ -408,8 +408,6 @@ func (s ThirdPartyService) Update(
 
 			if req.Category != nil {
 				thirdParty.Category = *req.Category
-			} else {
-				thirdParty.Category = coredata.ThirdPartyCategoryOther
 			}
 
 			if req.SecurityPageURL != nil {
