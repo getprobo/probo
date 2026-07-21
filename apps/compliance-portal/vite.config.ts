@@ -23,13 +23,56 @@ import { fileURLToPath, URL } from "node:url";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
+
+// index.html is also a Go html/template for the production SPA shell. Vite's
+// dev server does not execute those actions, so bare {{if}}/{{range}} text is
+// moved into <body> by the browser. Substitute safe defaults while serving.
+function goHtmlTemplateDevDefaults(): Plugin {
+  return {
+    name: "go-html-template-dev-defaults",
+    // Only register during `vite` / `vite serve` — production builds must keep
+    // the Go html/template actions for pkg/server/trust.
+    apply: "serve",
+    transformIndexHtml: {
+      order: "pre",
+      handler(html) {
+        return html
+          .replace(
+            /\{\{if \.HtmlLang\}\}\{\{\.HtmlLang\}\}\{\{else\}\}en\{\{end\}\}/g,
+            "en",
+          )
+          .replace(
+            /\{\{if \.FaviconURL\}\}\{\{\.FaviconURL\}\}\{\{else\}\}(\/favicons\/favicon\.ico)\{\{end\}\}/g,
+            "$1",
+          )
+          .replace(
+            /\{\{if \.CanonicalURL\}\}<link rel="canonical" href="\{\{\.CanonicalURL\}\}">\{\{end\}\}\s*/g,
+            "",
+          )
+          .replace(
+            // eslint-disable-next-line @stylistic/max-len
+            /\{\{range \.Hreflang\}\}<link rel="alternate" hreflang="\{\{\.Lang\}\}" href="\{\{\.Href\}\}">\s*\{\{end\}\}\s*/g,
+            "",
+          )
+          .replace(/\{\{\.Title\}\}/g, "Compliance")
+          .replace(/\{\{\.Description\}\}/g, "")
+          .replace(/\{\{\.OGURL\}\}/g, "");
+      },
+    },
+  };
+}
 
 // https://vite.dev/config/
 // @vitejs/plugin-react@6 (Vite 8) no longer runs Babel, so the Relay tagged
 // template transform is applied via @rolldown/plugin-babel instead.
 export default defineConfig({
-  plugins: [react(), babel({ plugins: ["relay"] }), tailwindcss()],
+  plugins: [
+    goHtmlTemplateDevDefaults(),
+    react(),
+    babel({ plugins: ["relay"] }),
+    tailwindcss(),
+  ],
   build: {
     assetsDir: "assets",
     rolldownOptions: {
