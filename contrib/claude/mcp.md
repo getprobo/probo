@@ -71,7 +71,7 @@ if err != nil {
 }
 ```
 
-MCP clients commonly authenticate with OAuth2 access tokens. Every action passed to `Authorize` must also appear in the owning package's `OAuth2ScopeMappings` (see [OAuth2 API scopes](authorization.md#oauth2-api-scopes)). Role policies alone are not enough — unmapped actions fail closed with insufficient scope. Personal API key e2e clients skip this gate, so do not treat a green MCP e2e as proof that OAuth2 works.
+MCP clients commonly authenticate with OAuth2 access tokens. Every action passed to `Authorize` must also appear in the owning package's OAuth2 scope mapping (`OAuth2ScopeMappings`, or `IAMOAuth2ScopeMappings` in `pkg/iam`; see [OAuth2 API scopes](authorization.md#oauth2-api-scopes)). Role policies alone are not enough — unmapped actions fail closed with insufficient scope. Personal API key e2e clients skip this gate, so do not treat a green MCP e2e as proof that OAuth2 works.
 
 ## Common resolver patterns
 
