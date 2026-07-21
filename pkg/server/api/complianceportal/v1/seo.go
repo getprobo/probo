@@ -35,9 +35,14 @@ const defaultCompliancePortalLocale = "en"
 
 // SEOFromRequest derives html lang, a self-referencing canonical URL, and
 // hreflang alternates (including x-default → English) for the SPA shell.
+// Portals are host-routed (slug subdomain / custom domain); the request path
+// is already relative to the portal root.
 func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical string, hreflang []HreflangLink) {
-	appPath := complianceAppPath(r.URL.Path)
-	locale, rest := splitLocaleFromAppPath(appPath)
+	pathname := r.URL.Path
+	if pathname == "" {
+		pathname = "/"
+	}
+	locale, rest := splitLocaleFromAppPath(pathname)
 
 	htmlLang = locale
 	canonical = localizedPageURL(pageBaseURL, locale, rest)
@@ -57,26 +62,6 @@ func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical st
 	return htmlLang, canonical, hreflang
 }
 
-// complianceAppPath returns the path relative to the portal root: under
-// /trust/:slug it strips that prefix; on a custom domain it returns the path as-is.
-func complianceAppPath(pathname string) string {
-	trimmed := strings.TrimPrefix(pathname, "/")
-	if strings.HasPrefix(trimmed, "trust/") {
-		parts := strings.SplitN(trimmed, "/", 3)
-		if len(parts) < 2 {
-			return "/"
-		}
-		if len(parts) == 2 {
-			return "/"
-		}
-		return "/" + parts[2]
-	}
-	if pathname == "" {
-		return "/"
-	}
-	return pathname
-}
-
 func splitLocaleFromAppPath(appPath string) (locale, rest string) {
 	segments := strings.Split(strings.Trim(appPath, "/"), "/")
 	if len(segments) == 0 || segments[0] == "" {
@@ -91,7 +76,7 @@ func splitLocaleFromAppPath(appPath string) (locale, rest string) {
 		return locale, "/" + strings.Join(segments[1:], "/")
 	}
 
-	// Unprefixed legacy path — treat content path as-is; default lang for tags.
+	// Unprefixed path — treat content path as-is; default lang for tags.
 	return defaultCompliancePortalLocale, appPath
 }
 

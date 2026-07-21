@@ -20,7 +20,6 @@
 
 import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
 
-import { getPathPrefix } from "#/lib/http/pathPrefix";
 import { localizedPath, resolveUrlLocale, type UrlLocale } from "#/lib/i18n/locale";
 
 // Markers appended to a post-auth `continue` URL so the portal fires the pending
@@ -38,12 +37,11 @@ export const NEW_REQUEST_PARAM = "new-request";
 export const SUBSCRIBE_PARAM = "subscribe";
 
 // Validates a `continue` target before we navigate to it. Only same-origin URLs
-// under the portal's path prefix are accepted; anything else falls back to the
-// portal home, so a crafted `?continue=` can never bounce the user off-site.
+// are accepted; anything else falls back to the portal home, so a crafted
+// `?continue=` can never bounce the user off-site.
 export function getSafeContinueUrl(param: string | null | undefined): string {
-  const prefix = getPathPrefix();
   const localeHome = localizedPath(resolveUrlLocale(), "/");
-  const fallback = window.location.origin + (prefix || "") + localeHome;
+  const fallback = window.location.origin + localeHome;
 
   if (!param) {
     return fallback;
@@ -51,10 +49,7 @@ export function getSafeContinueUrl(param: string | null | undefined): string {
 
   try {
     const url = new URL(param, window.location.origin);
-    const underPrefix = prefix === ""
-      ? url.pathname.startsWith("/")
-      : url.pathname === prefix || url.pathname.startsWith(`${prefix}/`);
-    if (url.origin === window.location.origin && underPrefix) {
+    if (url.origin === window.location.origin) {
       return window.location.origin + url.pathname + url.search;
     }
   } catch {

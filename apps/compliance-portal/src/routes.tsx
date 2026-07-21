@@ -25,7 +25,6 @@ import { createBrowserRouter, redirect } from "react-router";
 
 import { PageErrorBoundary } from "#/components/errors/PageErrorBoundary";
 import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
-import { getPathPrefix } from "#/lib/http/pathPrefix";
 import { localeLayoutLoader } from "#/lib/i18n/localeRedirect";
 import { resolveUrlLocale } from "#/lib/i18n/locale";
 import { authRoutes } from "#/pages/auth/routes";
@@ -89,7 +88,7 @@ const routes = [
       ...ndaRoutes,
     ],
   },
-  // Bare basename root (no locale segment) → guessed locale home.
+  // Bare root (no locale segment) → guessed locale home.
   {
     path: "/",
     loader: () => {
@@ -100,8 +99,5 @@ const routes = [
   },
 ] satisfies AppRoute[];
 
-// The portal is served under a /trust/{slug} path prefix (or a bare custom
-// domain). Match the router basename to that prefix so the routes resolve.
-export const router = createBrowserRouter(routes.map(routeFromAppRoute), {
-  basename: getPathPrefix() || "/",
-});
+// Host-routed portal (slug subdomain / custom domain); paths are site-root.
+export const router = createBrowserRouter(routes.map(routeFromAppRoute));

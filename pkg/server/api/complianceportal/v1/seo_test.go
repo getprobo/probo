@@ -32,12 +32,19 @@ import (
 func TestSEOFromRequest(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequest(http.MethodGet, "https://app.example.com/trust/acme/fr/documents", nil)
+	req, err := http.NewRequest(
+		http.MethodGet,
+		"https://acme.probopage.localhost/fr/documents",
+		nil,
+	)
 	require.NoError(t, err)
 
-	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(req, "https://app.example.com/trust/acme")
+	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(
+		req,
+		"https://acme.probopage.localhost",
+	)
 	assert.Equal(t, "fr", lang)
-	assert.Equal(t, "https://app.example.com/trust/acme/fr/documents", canonical)
+	assert.Equal(t, "https://acme.probopage.localhost/fr/documents", canonical)
 	require.NotEmpty(t, hreflang)
 
 	var xDefault string
@@ -50,6 +57,6 @@ func TestSEOFromRequest(t *testing.T) {
 			enHref = link.Href
 		}
 	}
-	assert.Equal(t, "https://app.example.com/trust/acme/en/documents", enHref)
+	assert.Equal(t, "https://acme.probopage.localhost/en/documents", enHref)
 	assert.Equal(t, enHref, xDefault)
 }
