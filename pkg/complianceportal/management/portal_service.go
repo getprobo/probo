@@ -133,26 +133,26 @@ func (req *UpdateBrandRequest) Validate() error {
 func (s *Service) Get(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	portalID gid.GID,
 ) (*coredata.CompliancePortal, error) {
-	var compliancePage *coredata.CompliancePortal
+	var portal *coredata.CompliancePortal
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage = &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			portal = &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load compliance page: %w", err)
+		return nil, fmt.Errorf("cannot load compliance portal: %w", err)
 	}
 
-	return compliancePage, nil
+	return portal, nil
 }
 
 func (s *Service) GetByOrganizationID(
@@ -160,14 +160,14 @@ func (s *Service) GetByOrganizationID(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.CompliancePortal, error) {
-	var compliancePage *coredata.CompliancePortal
+	var portal *coredata.CompliancePortal
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage = &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			portal = &coredata.CompliancePortal{}
+			if err := portal.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
 			return nil
@@ -177,7 +177,7 @@ func (s *Service) GetByOrganizationID(
 		return nil, err
 	}
 
-	return compliancePage, nil
+	return portal, nil
 }
 
 func (s *Service) Update(
@@ -190,40 +190,40 @@ func (s *Service) Update(
 	}
 
 	var (
-		compliancePage *coredata.CompliancePortal
-		file           *coredata.File
+		portal *coredata.CompliancePortal
+		file   *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			portal = &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
 			if req.Active != nil {
-				compliancePage.Active = *req.Active
+				portal.Active = *req.Active
 			}
 
 			if req.Slug != nil {
-				compliancePage.Slug = *req.Slug
+				portal.Slug = *req.Slug
 			}
 
 			if req.SearchEngineIndexing != nil {
-				compliancePage.SearchEngineIndexing = *req.SearchEngineIndexing
+				portal.SearchEngineIndexing = *req.SearchEngineIndexing
 			}
 
 			if req.Title != nil {
-				compliancePage.Title = *req.Title
+				portal.Title = *req.Title
 			}
 
 			if req.Description != nil {
-				compliancePage.Description = *req.Description
+				portal.Description = *req.Description
 			}
 
 			if req.WebsiteURL != nil {
-				compliancePage.WebsiteURL = *req.WebsiteURL
+				portal.WebsiteURL = *req.WebsiteURL
 			}
 
 			if req.Email != nil {
@@ -233,22 +233,22 @@ func (s *Service) Update(
 					}
 				}
 
-				compliancePage.Email = *req.Email
+				portal.Email = *req.Email
 			}
 
 			if req.HeadquarterAddress != nil {
-				compliancePage.HeadquarterAddress = *req.HeadquarterAddress
+				portal.HeadquarterAddress = *req.HeadquarterAddress
 			}
 
-			compliancePage.UpdatedAt = time.Now()
+			portal.UpdatedAt = time.Now()
 
-			if err := compliancePage.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update compliance page: %w", err)
+			if err := portal.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance portal: %w", err)
 			}
 
-			if compliancePage.NonDisclosureAgreementFileID != nil {
+			if portal.NonDisclosureAgreementFileID != nil {
 				file = &coredata.File{}
-				if err := file.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
+				if err := file.LoadByID(ctx, conn, scope, *portal.NonDisclosureAgreementFileID); err != nil {
 					return fmt.Errorf("cannot load file: %w", err)
 				}
 			}
@@ -260,7 +260,7 @@ func (s *Service) Update(
 		return nil, nil, err
 	}
 
-	return compliancePage, file, nil
+	return portal, file, nil
 }
 
 func (s *Service) UploadNDA(
@@ -273,20 +273,20 @@ func (s *Service) UploadNDA(
 	}
 
 	var (
-		compliancePage *coredata.CompliancePortal
-		file           *coredata.File
+		portal *coredata.CompliancePortal
+		file   *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, req.CompliancePortalID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			portal = &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, req.CompliancePortalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if compliancePage.OrganizationID == gid.Nil {
-				return fmt.Errorf("compliance page %s has no organization", req.CompliancePortalID)
+			if portal.OrganizationID == gid.Nil {
+				return fmt.Errorf("compliance portal %s has no organization", req.CompliancePortalID)
 			}
 
 			objectKey, err := uuid.NewV7()
@@ -304,7 +304,7 @@ func (s *Service) UploadNDA(
 
 			file = &coredata.File{
 				ID:             fileID,
-				OrganizationID: compliancePage.OrganizationID,
+				OrganizationID: portal.OrganizationID,
 				BucketName:     s.bucket,
 				MimeType:       mimeType,
 				FileName:       req.FileName,
@@ -321,7 +321,7 @@ func (s *Service) UploadNDA(
 				map[string]string{
 					"type":               "compliance-page-nda",
 					"compliance-page-id": req.CompliancePortalID.String(),
-					"organization-id":    compliancePage.OrganizationID.String(),
+					"organization-id":    portal.OrganizationID.String(),
 				},
 			)
 			if err != nil {
@@ -334,11 +334,11 @@ func (s *Service) UploadNDA(
 				return fmt.Errorf("cannot insert file: %w", err)
 			}
 
-			compliancePage.NonDisclosureAgreementFileID = &fileID
-			compliancePage.UpdatedAt = now
+			portal.NonDisclosureAgreementFileID = &fileID
+			portal.UpdatedAt = now
 
-			if err := compliancePage.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update compliance page: %w", err)
+			if err := portal.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance portal: %w", err)
 			}
 
 			return nil
@@ -348,29 +348,29 @@ func (s *Service) UploadNDA(
 		return nil, nil, err
 	}
 
-	return compliancePage, file, nil
+	return portal, file, nil
 }
 
 func (s *Service) DeleteNDA(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	portalID gid.GID,
 ) (*coredata.CompliancePortal, *coredata.File, error) {
-	var compliancePage *coredata.CompliancePortal
+	var portal *coredata.CompliancePortal
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			portal = &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			compliancePage.NonDisclosureAgreementFileID = nil
-			compliancePage.UpdatedAt = time.Now()
+			portal.NonDisclosureAgreementFileID = nil
+			portal.UpdatedAt = time.Now()
 
-			if err := compliancePage.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update compliance page: %w", err)
+			if err := portal.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance portal: %w", err)
 			}
 
 			return nil
@@ -380,7 +380,7 @@ func (s *Service) DeleteNDA(
 		return nil, nil, err
 	}
 
-	return compliancePage, nil, nil
+	return portal, nil, nil
 }
 
 func (s *Service) UpdateBrand(
@@ -393,55 +393,55 @@ func (s *Service) UpdateBrand(
 	}
 
 	var (
-		compliancePage *coredata.CompliancePortal
-		ndaFile        *coredata.File
+		portal  *coredata.CompliancePortal
+		ndaFile *coredata.File
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			compliancePage = &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, req.CompliancePortalID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			portal = &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, req.CompliancePortalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
 			now := time.Now()
 
 			if req.LogoFile != nil {
 				if *req.LogoFile == nil {
-					compliancePage.LogoFileID = nil
+					portal.LogoFileID = nil
 				} else {
-					file, err := s.uploadBrandFile(ctx, scope, conn, *req.LogoFile, "compliance-page-logo", compliancePage)
+					file, err := s.uploadBrandFile(ctx, scope, conn, *req.LogoFile, "compliance-page-logo", portal)
 					if err != nil {
 						return fmt.Errorf("cannot upload logo file: %w", err)
 					}
 
-					compliancePage.LogoFileID = &file.ID
+					portal.LogoFileID = &file.ID
 				}
 			}
 
 			if req.DarkLogoFile != nil {
 				if *req.DarkLogoFile == nil {
-					compliancePage.DarkLogoFileID = nil
+					portal.DarkLogoFileID = nil
 				} else {
-					file, err := s.uploadBrandFile(ctx, scope, conn, *req.DarkLogoFile, "compliance-page-dark-logo", compliancePage)
+					file, err := s.uploadBrandFile(ctx, scope, conn, *req.DarkLogoFile, "compliance-page-dark-logo", portal)
 					if err != nil {
 						return fmt.Errorf("cannot upload dark logo file: %w", err)
 					}
 
-					compliancePage.DarkLogoFileID = &file.ID
+					portal.DarkLogoFileID = &file.ID
 				}
 			}
 
-			compliancePage.UpdatedAt = now
+			portal.UpdatedAt = now
 
-			if err := compliancePage.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update compliance page: %w", err)
+			if err := portal.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update compliance portal: %w", err)
 			}
 
-			if compliancePage.NonDisclosureAgreementFileID != nil {
+			if portal.NonDisclosureAgreementFileID != nil {
 				ndaFile = &coredata.File{}
-				if err := ndaFile.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
+				if err := ndaFile.LoadByID(ctx, conn, scope, *portal.NonDisclosureAgreementFileID); err != nil {
 					return fmt.Errorf("cannot load nda file: %w", err)
 				}
 			}
@@ -453,7 +453,7 @@ func (s *Service) UpdateBrand(
 		return nil, nil, err
 	}
 
-	return compliancePage, ndaFile, nil
+	return portal, ndaFile, nil
 }
 
 func (s *Service) uploadBrandFile(
@@ -462,7 +462,7 @@ func (s *Service) uploadBrandFile(
 	conn pg.Tx,
 	fileUpload *FileUpload,
 	fileType string,
-	compliancePage *coredata.CompliancePortal,
+	portal *coredata.CompliancePortal,
 ) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -482,8 +482,8 @@ func (s *Service) uploadBrandFile(
 		CacheControl: new("max-age=3600, public"),
 		Metadata: map[string]string{
 			"type":               fileType,
-			"compliance-page-id": compliancePage.ID.String(),
-			"organization-id":    compliancePage.OrganizationID.String(),
+			"compliance-page-id": portal.ID.String(),
+			"organization-id":    portal.OrganizationID.String(),
 		},
 	})
 	if err != nil {
@@ -503,7 +503,7 @@ func (s *Service) uploadBrandFile(
 
 	file := &coredata.File{
 		ID:             fileID,
-		OrganizationID: compliancePage.OrganizationID,
+		OrganizationID: portal.OrganizationID,
 		BucketName:     s.bucket,
 		MimeType:       mimeType,
 		FileName:       fileUpload.Filename,
@@ -524,26 +524,26 @@ func (s *Service) uploadBrandFile(
 func (s *Service) GenerateNDAFileURL(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	portalID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
 	var file *coredata.File
 
-	compliancePage := &coredata.CompliancePortal{}
+	portal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := portal.LoadByID(ctx, conn, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if compliancePage.NonDisclosureAgreementFileID == nil {
+			if portal.NonDisclosureAgreementFileID == nil {
 				return nil
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.NonDisclosureAgreementFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *portal.NonDisclosureAgreementFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -554,7 +554,7 @@ func (s *Service) GenerateNDAFileURL(
 		return nil, err
 	}
 
-	if compliancePage.NonDisclosureAgreementFileID == nil {
+	if portal.NonDisclosureAgreementFileID == nil {
 		return nil, nil
 	}
 
@@ -569,24 +569,24 @@ func (s *Service) GenerateNDAFileURL(
 func (s *Service) GenerateLogoURL(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	portalID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
 	file := &coredata.File{}
-	compliancePage := &coredata.CompliancePortal{}
+	portal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := portal.LoadByID(ctx, conn, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if compliancePage.LogoFileID == nil {
+			if portal.LogoFileID == nil {
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *portal.LogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -597,7 +597,7 @@ func (s *Service) GenerateLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.LogoFileID == nil {
+	if portal.LogoFileID == nil {
 		return nil, nil
 	}
 
@@ -616,24 +616,24 @@ func (s *Service) GenerateLogoURL(
 func (s *Service) GenerateDarkLogoURL(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	portalID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
 	file := &coredata.File{}
-	compliancePage := &coredata.CompliancePortal{}
+	portal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := portal.LoadByID(ctx, conn, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if compliancePage.DarkLogoFileID == nil {
+			if portal.DarkLogoFileID == nil {
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.DarkLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *portal.DarkLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -644,7 +644,7 @@ func (s *Service) GenerateDarkLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.DarkLogoFileID == nil {
+	if portal.DarkLogoFileID == nil {
 		return nil, nil
 	}
 
@@ -663,39 +663,39 @@ func (s *Service) GenerateDarkLogoURL(
 func (s *Service) EmailPresenterConfig(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	portalID gid.GID,
 ) (emails.PresenterConfig, error) {
 	var (
-		compliancePage    = &coredata.CompliancePortal{}
+		portal            = &coredata.CompliancePortal{}
 		organization      = &coredata.Organization{}
 		logoFile          = &coredata.File{}
-		compliancePageURL string
+		portalURL         string
 		emailPresenterCfg = emails.DefaultPresenterConfig(s.baseURL)
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := portal.LoadByID(ctx, conn, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if compliancePage.LogoFileID != nil {
-				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+			if portal.LogoFileID != nil {
+				if err := logoFile.LoadByID(ctx, conn, scope, *portal.LogoFileID); err != nil {
 					return fmt.Errorf("cannot load logoFile: %w", err)
 				}
 			}
 
-			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, scope, portal.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			publicURL, err := s.PublicURLForCompliancePortal(ctx, conn, scope, compliancePage)
+			publicURL, err := s.PublicURLForCompliancePortal(ctx, conn, scope, portal)
 			if err != nil {
-				return fmt.Errorf("cannot resolve compliance page URL: %w", err)
+				return fmt.Errorf("cannot resolve compliance portal URL: %w", err)
 			}
 
-			compliancePageURL = publicURL
+			portalURL = publicURL
 
 			return nil
 		},
@@ -704,9 +704,9 @@ func (s *Service) EmailPresenterConfig(
 		return emailPresenterCfg, err
 	}
 
-	emailPresenterCfg.BaseURL = compliancePageURL
+	emailPresenterCfg.BaseURL = portalURL
 
-	if compliancePage.LogoFileID != nil {
+	if portal.LogoFileID != nil {
 		if logoFile.FileKey == "" {
 			return emailPresenterCfg, nil
 		}
@@ -714,12 +714,12 @@ func (s *Service) EmailPresenterConfig(
 		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
-		if compliancePage.WebsiteURL != nil {
-			emailPresenterCfg.SenderCompanyWebsiteURL = *compliancePage.WebsiteURL
+		if portal.WebsiteURL != nil {
+			emailPresenterCfg.SenderCompanyWebsiteURL = *portal.WebsiteURL
 		}
 
-		if compliancePage.HeadquarterAddress != nil {
-			emailPresenterCfg.SenderCompanyHeadquarterAddress = *compliancePage.HeadquarterAddress
+		if portal.HeadquarterAddress != nil {
+			emailPresenterCfg.SenderCompanyHeadquarterAddress = *portal.HeadquarterAddress
 		}
 	}
 
@@ -729,24 +729,24 @@ func (s *Service) EmailPresenterConfig(
 func (s *Service) GetMailingList(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	portalID gid.GID,
 ) (*coredata.MailingList, error) {
 	var mailingList *coredata.MailingList
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			compliancePage := &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			portal := &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if compliancePage.MailingListID == nil {
+			if portal.MailingListID == nil {
 				return nil
 			}
 
 			mailingList = &coredata.MailingList{}
-			if err := mailingList.LoadByID(ctx, conn, scope, *compliancePage.MailingListID); err != nil {
+			if err := mailingList.LoadByID(ctx, conn, scope, *portal.MailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 
