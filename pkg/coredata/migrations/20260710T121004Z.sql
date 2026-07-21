@@ -54,7 +54,7 @@ minted_certificates AS (
         updated_at
     )
     SELECT
-        generate_gid(decode_base64_unpadded(pp.tenant_id), 104),
+        generate_gid(decode_base64_unpadded(pp.tenant_id), 106),
         pp.tenant_id,
         pp.hostname,
         'PENDING'::custom_domain_ssl_status,

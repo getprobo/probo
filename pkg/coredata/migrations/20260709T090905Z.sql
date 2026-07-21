@@ -42,7 +42,7 @@ CREATE INDEX idx_certificates_http_challenge_token ON certificates(http_challeng
     WHERE http_challenge_token IS NOT NULL;
 
 -- Backfill one certificate per existing custom domain. A fresh GID is minted
--- for each row with generate_gid (entity type 104 = CertificateEntityType).
+-- for each row with generate_gid (entity type 106 = CertificateEntityType).
 -- The certificate hostname equals the custom domain name, which lets us link
 -- the two afterwards.
 INSERT INTO certificates (
@@ -65,7 +65,7 @@ INSERT INTO certificates (
     updated_at
 )
 SELECT
-    generate_gid(decode_base64_unpadded(cd.tenant_id), 104),
+    generate_gid(decode_base64_unpadded(cd.tenant_id), 106),
     cd.tenant_id,
     cd.domain,
     cd.ssl_certificate,
