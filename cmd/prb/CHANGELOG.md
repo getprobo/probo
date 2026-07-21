@@ -4,6 +4,17 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.202.0] - 2026-07-21
+
+### Added
+
+- `prb compliance-portal update` gained `--title`, `--description`, `--website-url`, `--email`, and `--headquarter-address` flags to manage the compliance page profile
+- `prb webhook` event choices now include `RIGHT_REQUEST_CREATED`, `RIGHT_REQUEST_UPDATED`, and `RIGHT_REQUEST_DELETED`
+
+### Changed
+
+- Renamed the `prb trust-center` command tree to `prb compliance-portal` to match the product and GraphQL rename
+
 ## [0.201.0] - 2026-07-20
 
 ### Added
