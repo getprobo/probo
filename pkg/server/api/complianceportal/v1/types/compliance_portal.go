@@ -29,7 +29,7 @@ func NewCompliancePortal(cp *coredata.CompliancePortal) *CompliancePortal {
 		ID:                 cp.ID,
 		Active:             cp.Active,
 		Slug:               cp.Slug,
-		Title:              cp.Title,
+		EntityName:         cp.EntityName,
 		Description:        cp.Description,
 		WebsiteURL:         cp.WebsiteURL,
 		Email:              cp.Email,

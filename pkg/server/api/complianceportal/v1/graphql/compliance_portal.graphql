@@ -9,7 +9,7 @@ type CompliancePortal implements Node {
   websiteUrl: String
   email: String
   headquarterAddress: String
-  title: String!
+  entityName: String!
 
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 

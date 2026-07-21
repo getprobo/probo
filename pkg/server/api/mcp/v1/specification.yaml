@@ -8832,7 +8832,7 @@ components:
         - organization_id
         - active
         - search_engine_indexing
-        - title
+        - entity_name
         - created_at
         - updated_at
       properties:
@@ -8870,9 +8870,9 @@ components:
             - string
             - "null"
           description: Compliance page headquarter address
-        title:
+        entity_name:
           type: string
-          description: Public compliance page title
+          description: Entity name shown on the public compliance page
         created_at:
           type: string
           format: date-time
@@ -9079,11 +9079,11 @@ components:
             - "null"
           description: Compliance page headquarter address
           go.probo.inc/mcpgen/omittable: true
-        title:
+        entity_name:
           type:
             - string
             - "null"
-          description: Public compliance page title
+          description: Entity name shown on the public compliance page
           go.probo.inc/mcpgen/omittable: true
 
     UpdateCompliancePortalOutput:

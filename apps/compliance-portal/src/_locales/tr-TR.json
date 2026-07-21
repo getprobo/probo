@@ -45,6 +45,7 @@
     }
   },
   "home": {
+    "heroTitle": "{{name}}'de Güven.",
     "heroDescription": "Uyumluluk Portalımıza hoş geldiniz. Güvenlik belgelerimizi ve sertifikalarımızı burada bulabilirsiniz.",
     "sections": {
       "compliance": "Uyumluluk",

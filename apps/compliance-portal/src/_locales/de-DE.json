@@ -45,6 +45,7 @@
     }
   },
   "home": {
+    "heroTitle": "Vertrauen bei {{name}}.",
     "heroDescription": "Willkommen auf unserem Compliance-Portal. Hier finden Sie unsere Sicherheitsdokumentation und Zertifizierungen.",
     "sections": {
       "compliance": "Compliance",

@@ -24,7 +24,7 @@ import { CompliancePortalContext } from "#/providers/CompliancePortalProvider";
 
 export function useCompliancePortal(): {
   id: string;
-  title: string;
+  entityName: string;
 } {
   const context = useContext(CompliancePortalContext);
   if (!context) {

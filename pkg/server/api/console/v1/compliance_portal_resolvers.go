@@ -804,7 +804,7 @@ func (r *mutationResolver) UpdateCompliancePortal(ctx context.Context, input typ
 			WebsiteURL:           gqlutils.UnwrapOmittable(input.WebsiteURL),
 			Email:                gqlutils.UnwrapOmittable(input.Email),
 			HeadquarterAddress:   gqlutils.UnwrapOmittable(input.HeadquarterAddress),
-			Title:                input.Title,
+			EntityName:           input.EntityName,
 		},
 	)
 	if err != nil {

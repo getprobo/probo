@@ -32,7 +32,7 @@ const updateCompliancePageMutation = graphql`
         id
         active
         searchEngineIndexing
-        title
+        entityName
         description
         websiteUrl
         email

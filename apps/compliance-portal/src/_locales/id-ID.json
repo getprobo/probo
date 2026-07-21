@@ -45,6 +45,7 @@
     }
   },
   "home": {
+    "heroTitle": "Kepercayaan di {{name}}.",
     "heroDescription": "Selamat datang di Portal Kepatuhan kami. Temukan dokumentasi keamanan dan sertifikasi kami di sini.",
     "sections": {
       "compliance": "Kepatuhan",

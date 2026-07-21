@@ -4954,8 +4954,8 @@ func (r *Resolver) UpdateCompliancePortalTool(ctx context.Context, req *mcp.Call
 	updateReq.Email = UnwrapOmittable(input.Email)
 	updateReq.HeadquarterAddress = UnwrapOmittable(input.HeadquarterAddress)
 
-	if title := UnwrapOmittable(input.Title); title != nil {
-		updateReq.Title = *title
+	if entityName := UnwrapOmittable(input.EntityName); entityName != nil {
+		updateReq.EntityName = *entityName
 	}
 
 	compliancePortal, _, err := prb.Update(ctx, scope, updateReq)

@@ -25,7 +25,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 const compliancePageFragment = graphql`
   fragment CompliancePageProfileSection_compliancePageFragment on CompliancePortal {
     id
-    title
+    entityName
     description
     websiteUrl
     email
@@ -35,7 +35,7 @@ const compliancePageFragment = graphql`
 `;
 
 const profileSchema = z.object({
-  title: z.string().min(1),
+  entityName: z.string().min(1),
   description: z.string().optional(),
   websiteUrl: z.string().optional(),
   email: z.string().optional(),
@@ -58,7 +58,7 @@ export function CompliancePageProfileSection(props: {
 
   const { formState, handleSubmit, register } = useFormWithSchema(profileSchema, {
     defaultValues: {
-      title: compliancePage.title,
+      entityName: compliancePage.entityName,
       description: compliancePage.description || "",
       websiteUrl: compliancePage.websiteUrl || "",
       email: compliancePage.email || "",
@@ -73,7 +73,7 @@ export function CompliancePageProfileSection(props: {
       variables: {
         input: {
           compliancePortalId: compliancePage.id,
-          title: data.title,
+          entityName: data.entityName,
           description: data.description || null,
           websiteUrl: data.websiteUrl || null,
           email: data.email || null,
@@ -96,11 +96,11 @@ export function CompliancePageProfileSection(props: {
       </div>
       <Card padded className="space-y-4">
         <Field
-          {...register("title")}
+          {...register("entityName")}
           readOnly={readOnly}
-          name="title"
-          label={__("Title")}
-          placeholder={__("Compliance at Acme.")}
+          name="entityName"
+          label={__("Entity name")}
+          placeholder={__("Acme")}
         />
         <div>
           <Label>{__("Description")}</Label>

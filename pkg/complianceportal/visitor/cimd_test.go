@@ -66,7 +66,7 @@ func TestBuildClientMetadataDocument(t *testing.T) {
 
 	websiteURL := "https://www.acme.com"
 	portal := &coredata.CompliancePortal{
-		Title:      "Acme Compliance Page",
+		EntityName: "Acme",
 		WebsiteURL: &websiteURL,
 	}
 
@@ -76,7 +76,7 @@ func TestBuildClientMetadataDocument(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, "https://acme.example.com/.well-known/oauth-client-metadata", doc.ClientID)
-	assert.Equal(t, "Acme Compliance Page", doc.ClientName)
+	assert.Equal(t, "Compliance at Acme.", doc.ClientName)
 	assert.Equal(t, []string{"https://acme.example.com/callback"}, doc.RedirectURIs)
 	assert.Equal(t, "https://acme.example.com", doc.ClientURI)
 	assert.Equal(t, VisitorOAuthScope, doc.Scope)
@@ -88,7 +88,7 @@ func TestBuildClientMetadataDocument_LogoURIUsesBrandLogoEndpoint(t *testing.T) 
 
 	logoFileID := gid.MustParseGID("WR-qMrB5AAEAGQAAAZ9mIO8B8vDFQ-i3")
 	portal := &coredata.CompliancePortal{
-		Title:      "Acme Compliance Page",
+		EntityName: "Acme",
 		LogoFileID: &logoFileID,
 	}
 

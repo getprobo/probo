@@ -134,7 +134,8 @@ func compliancePageHeadData() HeadDataFunc {
 
 		compliancePageBaseURL := complianceportal.CompliancePortalBaseURLFromContext(r.Context())
 
-		description := tc.Title
+		pageTitle := "Compliance at " + tc.EntityName + "."
+		description := pageTitle
 		if tc.Description != nil && *tc.Description != "" {
 			description = *tc.Description
 		}
@@ -142,7 +143,7 @@ func compliancePageHeadData() HeadDataFunc {
 		htmlLang, canonical, hreflang := SEOFromRequest(r)
 
 		headData := HeadData{
-			Title:        tc.Title,
+			Title:        pageTitle,
 			Description:  description,
 			HTMLLang:     htmlLang,
 			OGURL:        canonical,

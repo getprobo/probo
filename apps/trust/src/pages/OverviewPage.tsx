@@ -107,7 +107,7 @@ export function OverviewPage() {
         url={getCompliancePortalUrl("documents")}
       />
       <Subprocessors
-        title={compliancePortal.title}
+        title={compliancePortal.entityName}
         subprocessors={fragment.subprocessors.edges}
         url={getCompliancePortalUrl("subprocessors")}
       />

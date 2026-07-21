@@ -47,7 +47,7 @@ export const ndaPageQuery = graphql`
       id
     }
     currentCompliancePortal @required(action: THROW) {
-      title
+      entityName
       nonDisclosureAgreement {
         fileName
         fileUrl
@@ -244,7 +244,7 @@ export function NDAPage(props: {
                 __(
                   "%s requires you to sign an NDA before accessing compliance documents.",
                 ),
-                compliancePortal.title,
+                compliancePortal.entityName,
               )}
             </p>
             {isMobile && nda?.fileUrl && (

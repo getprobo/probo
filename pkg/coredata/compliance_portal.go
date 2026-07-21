@@ -49,7 +49,7 @@ type (
 		NonDisclosureAgreementFileID *gid.GID             `db:"non_disclosure_agreement_file_id"`
 		DefaultDomainID              *gid.GID             `db:"default_domain_id"`
 		CustomDomainID               *gid.GID             `db:"custom_domain_id"`
-		Title                        string               `db:"title"`
+		EntityName                   string               `db:"entity_name"`
 		Description                  *string              `db:"description"`
 		WebsiteURL                   *string              `db:"website_url"`
 		Email                        *string              `db:"email"`
@@ -129,7 +129,7 @@ SELECT
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
-	title,
+	entity_name,
 	description,
 	website_url,
 	email,
@@ -188,7 +188,7 @@ SELECT
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
-	title,
+	entity_name,
 	description,
 	website_url,
 	email,
@@ -247,7 +247,7 @@ SELECT
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
-	title,
+	entity_name,
 	description,
 	website_url,
 	email,
@@ -306,7 +306,7 @@ SELECT
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
-	title,
+	entity_name,
 	description,
 	website_url,
 	email,
@@ -365,7 +365,7 @@ SELECT
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
-	title,
+	entity_name,
 	description,
 	website_url,
 	email,
@@ -420,7 +420,7 @@ INSERT INTO trust_centers (
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
-	title,
+	entity_name,
 	description,
 	website_url,
 	email,
@@ -440,7 +440,7 @@ INSERT INTO trust_centers (
 	@non_disclosure_agreement_file_id,
 	@default_domain_id,
 	@custom_domain_id,
-	@title,
+	@entity_name,
 	@description,
 	@website_url,
 	@email,
@@ -463,7 +463,7 @@ INSERT INTO trust_centers (
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,
-		"title":                            tc.Title,
+		"entity_name":                      tc.EntityName,
 		"description":                      tc.Description,
 		"website_url":                      tc.WebsiteURL,
 		"email":                            tc.Email,
@@ -502,7 +502,7 @@ SET
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
 	default_domain_id = @default_domain_id,
 	custom_domain_id = @custom_domain_id,
-	title = @title,
+	entity_name = @entity_name,
 	description = @description,
 	website_url = @website_url,
 	email = @email,
@@ -525,7 +525,7 @@ WHERE
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,
-		"title":                            tc.Title,
+		"entity_name":                      tc.EntityName,
 		"description":                      tc.Description,
 		"website_url":                      tc.WebsiteURL,
 		"email":                            tc.Email,

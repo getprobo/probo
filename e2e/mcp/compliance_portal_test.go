@@ -35,10 +35,10 @@ type mcpFile struct {
 }
 
 type compliancePortal struct {
-	ID     string   `json:"id"`
-	Title  string   `json:"title"`
-	Active bool     `json:"active"`
-	Logo   *mcpFile `json:"logo,omitempty"`
+	ID         string   `json:"id"`
+	EntityName string   `json:"entity_name"`
+	Active     bool     `json:"active"`
+	Logo       *mcpFile `json:"logo,omitempty"`
 }
 
 type compliancePortalReference struct {
@@ -175,7 +175,7 @@ func TestMCP_UpdateCompliancePortal(t *testing.T) {
 	var updateResult struct {
 		CompliancePortal struct {
 			ID                 string  `json:"id"`
-			Title              string  `json:"title"`
+			EntityName         string  `json:"entity_name"`
 			Description        *string `json:"description"`
 			WebsiteURL         *string `json:"website_url"`
 			Email              *string `json:"email"`
@@ -184,7 +184,7 @@ func TestMCP_UpdateCompliancePortal(t *testing.T) {
 	}
 	mc.CallToolInto("updateCompliancePortal", map[string]any{
 		"compliance_portal_id": getResult.CompliancePortal.ID,
-		"title":                "Acme Security",
+		"entity_name":          "Acme Security",
 		"description":          "We keep your data safe.",
 		"website_url":          "https://example.com",
 		"email":                "security@example.com",
@@ -192,7 +192,7 @@ func TestMCP_UpdateCompliancePortal(t *testing.T) {
 	}, &updateResult)
 
 	assert.Equal(t, getResult.CompliancePortal.ID, updateResult.CompliancePortal.ID)
-	assert.Equal(t, "Acme Security", updateResult.CompliancePortal.Title)
+	assert.Equal(t, "Acme Security", updateResult.CompliancePortal.EntityName)
 	require.NotNil(t, updateResult.CompliancePortal.Description)
 	assert.Equal(t, "We keep your data safe.", *updateResult.CompliancePortal.Description)
 	require.NotNil(t, updateResult.CompliancePortal.WebsiteURL)

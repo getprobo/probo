@@ -34,7 +34,7 @@ import type { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
 export const homePageQuery = graphql`
   query HomePageQuery @throwOnFieldError {
     currentCompliancePortal @required(action: THROW) {
-      title
+      entityName
       ...CompliancePortalContactInfo_compliancePortal
       ...ComplianceFrameworksSection_compliancePortal
       ...SecurityCommitmentsSection_compliancePortal
@@ -52,12 +52,12 @@ export function HomePage({ queryRef }: HomePageProps) {
   const { t } = useTranslation();
   const data = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
   const { currentCompliancePortal } = data;
-  const { title } = currentCompliancePortal;
+  const { entityName } = currentCompliancePortal;
 
   return (
     <>
       <Hero
-        title={title}
+        title={t("home.heroTitle", { name: entityName })}
         description={t("home.heroDescription")}
       >
         <CompliancePortalContactInfo compliancePortalKey={currentCompliancePortal} />

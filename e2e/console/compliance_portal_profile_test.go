@@ -61,7 +61,7 @@ func TestCompliancePortal_UpdateProfile(t *testing.T) {
 			updateCompliancePortal(input: $input) {
 				compliancePortal {
 					id
-					title
+					entityName
 					description
 					websiteUrl
 					email
@@ -75,7 +75,7 @@ func TestCompliancePortal_UpdateProfile(t *testing.T) {
 		UpdateCompliancePortal struct {
 			CompliancePortal struct {
 				ID                 string  `json:"id"`
-				Title              string  `json:"title"`
+				EntityName         string  `json:"entityName"`
 				Description        *string `json:"description"`
 				WebsiteURL         *string `json:"websiteUrl"`
 				Email              *string `json:"email"`
@@ -87,7 +87,7 @@ func TestCompliancePortal_UpdateProfile(t *testing.T) {
 	err = owner.Execute(updateMutation, map[string]any{
 		"input": map[string]any{
 			"compliancePortalId": compliancePortalID,
-			"title":              "Acme Security",
+			"entityName":         "Acme Security",
 			"description":        "We keep your data safe.",
 			"websiteUrl":         "https://example.com",
 			"email":              "security@example.com",
@@ -98,7 +98,7 @@ func TestCompliancePortal_UpdateProfile(t *testing.T) {
 
 	tc := result.UpdateCompliancePortal.CompliancePortal
 	assert.Equal(t, compliancePortalID, tc.ID)
-	assert.Equal(t, "Acme Security", tc.Title)
+	assert.Equal(t, "Acme Security", tc.EntityName)
 	require.NotNil(t, tc.Description)
 	assert.Equal(t, "We keep your data safe.", *tc.Description)
 	require.NotNil(t, tc.WebsiteURL)

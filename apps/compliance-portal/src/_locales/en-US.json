@@ -55,6 +55,7 @@
     }
   },
   "home": {
+    "heroTitle": "Compliance at {{name}}.",
     "heroDescription": "Welcome to our Compliance Portal. Find our security documentation and certifications here.",
     "sections": {
       "compliance": "Compliance",

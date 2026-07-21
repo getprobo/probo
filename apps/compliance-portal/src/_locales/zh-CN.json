@@ -45,6 +45,7 @@
     }
   },
   "home": {
+    "heroTitle": "信赖 {{name}}。",
     "heroDescription": "欢迎访问我们的合规门户。您可以在此查看我们的安全文档和认证。",
     "sections": {
       "compliance": "合规",

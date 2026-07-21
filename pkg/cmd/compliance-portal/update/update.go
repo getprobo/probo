@@ -49,7 +49,7 @@ mutation($input: UpdateCompliancePortalInput!) {
       id
       active
       searchEngineIndexing
-      title
+      entityName
       description
       websiteUrl
       email
@@ -74,7 +74,7 @@ type updateResponse struct {
 			ID                   string  `json:"id"`
 			Active               bool    `json:"active"`
 			SearchEngineIndexing string  `json:"searchEngineIndexing"`
-			Title                string  `json:"title"`
+			EntityName           string  `json:"entityName"`
 			Description          *string `json:"description"`
 			WebsiteURL           *string `json:"websiteUrl"`
 			Email                *string `json:"email"`
@@ -92,7 +92,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagWebsiteURL           string
 		flagEmail                string
 		flagHeadquarterAddress   string
-		flagTitle                string
+		flagEntityName           string
 	)
 
 	cmd := &cobra.Command{
@@ -193,8 +193,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["headquarterAddress"] = flagHeadquarterAddress
 			}
 
-			if cmd.Flags().Changed("title") {
-				input["title"] = flagTitle
+			if cmd.Flags().Changed("entity-name") {
+				input["entityName"] = flagEntityName
 			}
 
 			if len(input) == 1 {
@@ -232,7 +232,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagWebsiteURL, "website-url", "", "Compliance page website URL")
 	cmd.Flags().StringVar(&flagEmail, "email", "", "Compliance page contact email")
 	cmd.Flags().StringVar(&flagHeadquarterAddress, "headquarter-address", "", "Compliance page headquarter address")
-	cmd.Flags().StringVar(&flagTitle, "title", "", "Public compliance page title")
+	cmd.Flags().StringVar(&flagEntityName, "entity-name", "", "Entity name shown on the public compliance page")
 
 	return cmd
 }

@@ -45,7 +45,7 @@ const topBarFragment = graphql`
     }
     currentCompliancePortal @required(action: THROW) {
       themedLogoUrl
-      title
+      entityName
     }
   }
 `;
@@ -66,7 +66,7 @@ export function TopBar({ queryKey }: TopBarProps) {
   const localizedPath = useLocalizedPath();
 
   const { currentCompliancePortal } = data;
-  const title = currentCompliancePortal.title;
+  const entityName = currentCompliancePortal.entityName;
   const logoUrl = currentCompliancePortal.themedLogoUrl ?? undefined;
 
   const slots = topBar();
@@ -82,11 +82,11 @@ export function TopBar({ queryKey }: TopBarProps) {
             color="neutral"
             radius="small"
             src={logoUrl}
-            fallback={title.charAt(0) || "?"}
+            fallback={entityName.charAt(0) || "?"}
             className={slots.logo()}
           />
           <Text size={2} weight="medium" color="neutral" highContrast className={slots.brandName()}>
-            {title}
+            {entityName}
           </Text>
           <Text size={2} color="neutral" className={slots.tagline()}>
             {t("topBar.tagline")}

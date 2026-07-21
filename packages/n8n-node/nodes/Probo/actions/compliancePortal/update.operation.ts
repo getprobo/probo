@@ -77,8 +77,8 @@ export const description: INodeProperties[] = [
 		description: 'Whether search engines should index the compliance portal',
 	},
 	{
-		displayName: 'Title',
-		name: 'title',
+		displayName: 'Entity Name',
+		name: 'entityName',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -87,7 +87,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The title shown on the public compliance page',
+		description: 'The entity name shown on the public compliance page',
 	},
 	{
 		displayName: 'Description',
@@ -155,7 +155,7 @@ export async function execute(
 	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
 	const email = this.getNodeParameter('email', itemIndex, '') as string;
 	const headquarterAddress = this.getNodeParameter('headquarterAddress', itemIndex, '') as string;
-	const title = this.getNodeParameter('title', itemIndex, '') as string;
+	const entityName = this.getNodeParameter('entityName', itemIndex, '') as string;
 
 	const query = `
 		mutation UpdateCompliancePortal($input: UpdateCompliancePortalInput!) {
@@ -164,7 +164,7 @@ export async function execute(
 					id
 					active
 					searchEngineIndexing
-					title
+					entityName
 					description
 					websiteUrl
 					email
@@ -178,7 +178,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = {
 		compliancePortalId,
-		title,
+		entityName,
 		description,
 		websiteUrl,
 		email,

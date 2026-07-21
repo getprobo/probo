@@ -45,6 +45,7 @@
     }
   },
   "home": {
+    "heroTitle": "{{name}}의 신뢰.",
     "heroDescription": "컴플라이언스 포털에 오신 것을 환영합니다. 이곳에서 보안 문서와 인증 정보를 확인하실 수 있습니다.",
     "sections": {
       "compliance": "컴플라이언스",

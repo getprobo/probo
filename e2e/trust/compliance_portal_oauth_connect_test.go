@@ -83,20 +83,20 @@ func TestCompliancePortal_VisitorConnectViaCIMD(t *testing.T) {
 	const query = `
 		query {
 			currentCompliancePortal {
-				title
+				entityName
 			}
 		}
 	`
 
 	var result struct {
 		CurrentCompliancePortal struct {
-			Title string `json:"title"`
+			EntityName string `json:"entityName"`
 		} `json:"currentCompliancePortal"`
 	}
 
 	err := visitor.ExecuteTrust(trustHost, query, nil, &result)
 	require.NoError(t, err, "visitor session must authenticate trust GraphQL after CIMD connect")
-	assert.NotEmpty(t, result.CurrentCompliancePortal.Title)
+	assert.NotEmpty(t, result.CurrentCompliancePortal.EntityName)
 }
 
 func TestCompliancePortal_UnknownCIMDClientRejected(t *testing.T) {

@@ -38,7 +38,7 @@ type CompliancePortal struct {
 	WebsiteURL           *string                              `json:"websiteUrl,omitempty"`
 	Email                *string                              `json:"email,omitempty"`
 	HeadquarterAddress   *string                              `json:"headquarterAddress,omitempty"`
-	Title                string                               `json:"title"`
+	EntityName           string                               `json:"entityName"`
 	CreatedAt            time.Time                            `json:"createdAt"`
 	UpdatedAt            time.Time                            `json:"updatedAt"`
 	Organization         *Organization                        `json:"organization"`
@@ -67,7 +67,7 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 		WebsiteURL:           tc.WebsiteURL,
 		Email:                tc.Email,
 		HeadquarterAddress:   tc.HeadquarterAddress,
-		Title:                tc.Title,
+		EntityName:           tc.EntityName,
 		CreatedAt:            tc.CreatedAt,
 		UpdatedAt:            tc.UpdatedAt,
 	}

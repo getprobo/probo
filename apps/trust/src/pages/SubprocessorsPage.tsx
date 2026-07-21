@@ -45,7 +45,7 @@ export function SubprocessorsPage({ queryRef }: Props) {
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          data.currentCompliancePortal?.title ?? "",
+          data.currentCompliancePortal?.entityName ?? "",
         )}
       </p>
       <Rows>

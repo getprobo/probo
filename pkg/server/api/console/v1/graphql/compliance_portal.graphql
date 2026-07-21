@@ -344,7 +344,7 @@ type CompliancePortal implements Node
     websiteUrl: String
     email: String
     headquarterAddress: String
-    title: String!
+    entityName: String!
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
@@ -747,7 +747,7 @@ input UpdateCompliancePortalInput {
     compliancePortalId: ID!
     active: Boolean
     searchEngineIndexing: SearchEngineIndexing
-    title: String
+    entityName: String
     description: String @goField(omittable: true)
     websiteUrl: String @goField(omittable: true)
     email: String @goField(omittable: true)

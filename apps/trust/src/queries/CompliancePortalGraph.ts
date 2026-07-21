@@ -31,7 +31,7 @@ export const currentCompliancePortalGraphQuery = graphql`
     currentCompliancePortal @required(action: THROW) {
       id
       slug
-      title
+      entityName
       description
       websiteUrl
       email
@@ -120,6 +120,7 @@ export const currentTrustSubprocessorsQuery = graphql`
   query CompliancePortalGraphCurrentSubprocessorsQuery {
     currentCompliancePortal {
       id
+      entityName
       subprocessors(first: 50) {
         edges {
           node {

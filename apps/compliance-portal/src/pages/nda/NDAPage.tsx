@@ -63,7 +63,7 @@ export const ndaPageQuery = graphql`
       id
     }
     currentCompliancePortal @required(action: THROW) {
-      title
+      entityName
       nonDisclosureAgreement {
         fileUrl
       }
@@ -238,7 +238,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
               {t("title")}
             </Heading>
             <Text size={2} color="neutral">
-              {t("subtitle", { name: compliancePortal.title })}
+              {t("subtitle", { name: compliancePortal.entityName })}
             </Text>
             {signature.consentText != null && (
               <Text size={1} color="faint" className={slots.consent()}>

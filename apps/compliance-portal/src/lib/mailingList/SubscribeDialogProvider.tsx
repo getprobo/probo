@@ -45,7 +45,7 @@ export const subscribeDialogProviderFragment = graphql`
     }
     currentCompliancePortal @required(action: THROW) {
       id
-      title
+      entityName
       viewerSubscription {
         id
       }
@@ -71,7 +71,7 @@ export function SubscribeDialogProvider({
   const [unsubscribeFromMailingList, isUnsubscribing] = useUnsubscribeFromMailingList();
 
   const viewer = data.viewer;
-  const { id: trustCenterId, title, viewerSubscription } = data.currentCompliancePortal;
+  const { id: trustCenterId, entityName, viewerSubscription } = data.currentCompliancePortal;
   const isSubscribed = viewerSubscription != null;
 
   const openSubscribe = useCallback(() => {
@@ -127,7 +127,7 @@ export function SubscribeDialogProvider({
           onOpenChange={setDialogOpen}
           trustCenterId={trustCenterId}
           viewerEmail={viewer.email}
-          organizationName={title}
+          organizationName={entityName}
         />
       )}
     </SubscribeDialogContextProvider>
