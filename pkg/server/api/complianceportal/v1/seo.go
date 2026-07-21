@@ -23,6 +23,7 @@ package complianceportal_v1
 import (
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"go.probo.inc/probo/pkg/iam"
@@ -39,12 +40,14 @@ func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical st
 	if pathname == "" {
 		pathname = "/"
 	}
+
 	locale, rest := splitLocaleFromAppPath(pathname)
 
 	htmlLang = locale
 	canonical = localizedPageURL(pageBaseURL, locale, rest)
 
 	locales := iam.SupportedIdentityLocales
+
 	hreflang = make([]HreflangLink, 0, len(locales)+1)
 	for _, loc := range locales {
 		hreflang = append(hreflang, HreflangLink{
@@ -52,6 +55,7 @@ func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical st
 			Href: localizedPageURL(pageBaseURL, loc, rest),
 		})
 	}
+
 	hreflang = append(hreflang, HreflangLink{
 		Lang: "x-default",
 		Href: localizedPageURL(pageBaseURL, defaultCompliancePortalLocale, rest),
@@ -71,6 +75,7 @@ func splitLocaleFromAppPath(appPath string) (locale, rest string) {
 		if len(segments) == 1 {
 			return locale, "/"
 		}
+
 		return locale, "/" + strings.Join(segments[1:], "/")
 	}
 
@@ -79,17 +84,13 @@ func splitLocaleFromAppPath(appPath string) (locale, rest string) {
 }
 
 func isCompliancePortalLocale(value string) bool {
-	for _, locale := range iam.SupportedIdentityLocales {
-		if locale == value {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(iam.SupportedIdentityLocales, value)
 }
 
 func localizedPageURL(pageBaseURL, locale, rest string) string {
 	base := strings.TrimRight(pageBaseURL, "/")
 	segments := []string{locale}
+
 	if rest != "/" && rest != "" {
 		trimmed := strings.Trim(rest, "/")
 		if trimmed != "" {
@@ -106,5 +107,6 @@ func localizedPageURL(pageBaseURL, locale, rest string) string {
 	if err != nil {
 		return base + "/" + strings.Join(escaped, "/")
 	}
+
 	return joined
 }

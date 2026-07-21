@@ -117,6 +117,7 @@ func (r *mutationResolver) UpdateLocale(ctx context.Context, input types.UpdateL
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update identity locale", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

@@ -47,16 +47,21 @@ func TestSEOFromRequest(t *testing.T) {
 	assert.Equal(t, "https://acme.probopage.localhost/fr/documents", canonical)
 	require.NotEmpty(t, hreflang)
 
-	var xDefault string
-	var enHref string
+	var (
+		xDefault string
+		enHref   string
+	)
+
 	for _, link := range hreflang {
 		if link.Lang == "x-default" {
 			xDefault = link.Href
 		}
+
 		if link.Lang == "en" {
 			enHref = link.Href
 		}
 	}
+
 	assert.Equal(t, "https://acme.probopage.localhost/en/documents", enHref)
 	assert.Equal(t, enHref, xDefault)
 }
