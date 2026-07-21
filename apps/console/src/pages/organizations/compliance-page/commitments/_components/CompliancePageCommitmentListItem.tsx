@@ -18,16 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Badge, Button, IconChevronDown, IconChevronUp, IconPencil, IconTrashCan, Spinner, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageCommitmentListItemDeleteMutation } from "#/__generated__/core/CompliancePageCommitmentListItemDeleteMutation.graphql";
 import type { CompliancePageCommitmentListItemFragment$data, CompliancePageCommitmentListItemFragment$key } from "#/__generated__/core/CompliancePageCommitmentListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-
-import { COMMITMENT_ICON_LABELS } from "../_lib/commitmentIcons";
 
 const deleteCommitmentMutation = graphql`
   mutation CompliancePageCommitmentListItemDeleteMutation(
@@ -63,12 +61,12 @@ export function CompliancePageCommitmentListItem(props: {
 }) {
   const { fragmentRef, onEdit, onChanged, isFirst, isLast, isReordering, onMoveUp, onMoveDown } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const commitment = useFragment<CompliancePageCommitmentListItemFragment$key>(fragment, fragmentRef);
 
   const [deleteCommitment, isDeleting] = useMutationWithToasts<CompliancePageCommitmentListItemDeleteMutation>(
     deleteCommitmentMutation,
-    { successMessage: __("Commitment deleted successfully"), errorMessage: __("Failed to delete commitment") },
+    { successMessage: t("commitmentListItem.messages.deleted"), errorMessage: t("commitmentListItem.errors.delete") },
   );
 
   const handleDelete = async () => {
@@ -78,7 +76,7 @@ export function CompliancePageCommitmentListItem(props: {
     });
   };
 
-  const iconLabel = COMMITMENT_ICON_LABELS[commitment.icon];
+  const iconLabel = t(`commitmentDialog.icons.${commitment.icon.toLowerCase()}`);
 
   return (
     <Tr>

@@ -19,22 +19,20 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { PageHeader } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 
 export default function ContextLayoutLoader() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(__("Context"));
+  usePageTitle(t("context.title"));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Context")}
-        description={__(
-          "Structured company information for AI assistants and compliance workflows.",
-        )}
+        title={t("context.title")}
+        description={t("context.description")}
       />
       <Outlet />
     </div>

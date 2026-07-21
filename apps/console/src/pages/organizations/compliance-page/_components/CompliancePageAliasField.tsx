@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Field } from "@probo/ui";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageAliasField_removeResourceAliasMutation } from "#/__generated__/core/CompliancePageAliasField_removeResourceAliasMutation.graphql";
@@ -58,7 +58,7 @@ export function CompliancePageAliasField(props: {
 }) {
   const { resourceId, alias, canSetAlias, canRemoveAlias } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const [value, setValue] = useState(alias ?? "");
   const [prevAlias, setPrevAlias] = useState(alias);
 
@@ -70,15 +70,15 @@ export function CompliancePageAliasField(props: {
   const [setResourceAlias, isSettingAlias] = useMutation<CompliancePageAliasField_setResourceAliasMutation>(
     setResourceAliasMutation,
     {
-      successMessage: __("Alias updated successfully."),
-      errorToast: __("Failed to update alias"),
+      successMessage: t("aliasField.messages.updated"),
+      errorToast: t("aliasField.errors.update"),
     },
   );
   const [removeResourceAlias, isRemovingAlias] = useMutation<CompliancePageAliasField_removeResourceAliasMutation>(
     removeResourceAliasMutation,
     {
-      successMessage: __("Alias removed successfully."),
-      errorToast: __("Failed to remove alias"),
+      successMessage: t("aliasField.messages.removed"),
+      errorToast: t("aliasField.errors.remove"),
     },
   );
 
@@ -132,7 +132,7 @@ export function CompliancePageAliasField(props: {
       onChange={event => setValue(event.target.value)}
       onBlur={() => void handleBlur()}
       disabled={!canEdit || isSettingAlias || isRemovingAlias}
-      placeholder={__("e.g. privacy-policy")}
+      placeholder={t("aliasField.placeholder")}
       className="min-w-[160px]"
     />
   );

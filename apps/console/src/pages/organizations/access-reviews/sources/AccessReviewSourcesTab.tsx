@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -32,6 +31,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
@@ -102,7 +102,7 @@ type Props = {
 };
 
 export default function AccessReviewSourcesTab({ queryRef }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -192,9 +192,9 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
             return params;
           }, { replace: true });
           toast({
-            title: __("Error"),
+            title: t("accessReviewSourcesTab.messages.error"),
             description: formatError(
-              __("Failed to create access source"),
+              t("accessReviewSourcesTab.errors.create"),
               errors,
             ),
             variant: "error",
@@ -202,8 +202,8 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Access source created successfully."),
+          title: t("accessReviewSourcesTab.messages.success"),
+          description: t("accessReviewSourcesTab.messages.created"),
           variant: "success",
         });
         setSearchParams((params) => {
@@ -220,9 +220,9 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
           return params;
         }, { replace: true });
         toast({
-          title: __("Error"),
+          title: t("accessReviewSourcesTab.messages.error"),
           description: formatError(
-            __("Failed to create access source"),
+            t("accessReviewSourcesTab.errors.create"),
             error,
           ),
           variant: "error",
@@ -230,7 +230,6 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
       },
     });
   }, [
-    __,
     callbackConnectorId,
     callbackProvider,
     connectorProviderInfos,
@@ -241,6 +240,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     accessReviewSources.__id,
     setSearchParams,
     toast,
+    t,
   ]);
 
   return (
@@ -254,7 +254,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
             existingSourceProviders={existingSourceProviders}
           >
             <Button icon={IconPlusLarge}>
-              {__("Add source")}
+              {t("accessReviewSourcesTab.actions.addSource")}
             </Button>
           </AddAccessReviewSourceDialog>
         )}
@@ -266,11 +266,11 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Source")}</Th>
-                    <Th>{__("Status")}</Th>
-                    <Th>{__("Organization")}</Th>
-                    <Th>{__("Created at")}</Th>
+                    <Th>{t("accessReviewSourcesTab.columns.name")}</Th>
+                    <Th>{t("accessReviewSourcesTab.columns.source")}</Th>
+                    <Th>{t("accessReviewSourcesTab.columns.status")}</Th>
+                    <Th>{t("accessReviewSourcesTab.columns.organization")}</Th>
+                    <Th>{t("accessReviewSourcesTab.columns.createdAt")}</Th>
                     <Th className="w-12"></Th>
                   </Tr>
                 </Thead>
@@ -294,8 +294,8 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
                     disabled={isLoadingNext}
                   >
                     {isLoadingNext
-                      ? __("Loading...")
-                      : __("Load more")}
+                      ? t("accessReviewSourcesTab.actions.loading")
+                      : t("accessReviewSourcesTab.actions.loadMore")}
                   </Button>
                 </div>
               )}
@@ -305,7 +305,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
             <Card padded>
               <div className="text-center py-8">
                 <p className="text-txt-tertiary">
-                  {__("No access sources configured yet. Add your first source to start reviewing access.")}
+                  {t("accessReviewSourcesTab.empty")}
                 </p>
               </div>
             </Card>

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatDuration, formatError, promisifyMutation } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError, promisifyMutation } from "@probo/helpers";
+import { dateFormat, formatDuration } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -38,6 +38,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { Fragment, type ReactNode, useRef, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   readInlineData,
@@ -185,7 +186,7 @@ const updateRankMutation = graphql`
 `;
 
 export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const hash = useLocation().hash.replace("#", "");
   const [, startTransition] = useTransition();
 
@@ -205,13 +206,13 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
   };
 
   const stateHashes = [
-    { hash: "todo", label: __("To do"), state: "TODO" },
-    { hash: "in-progress", label: __("In progress"), state: "IN_PROGRESS" },
-    { hash: "done", label: __("Done"), state: "DONE" },
+    { hash: "todo", label: t("tasksCard.states.todo"), state: "TODO" },
+    { hash: "in-progress", label: t("tasksCard.states.inProgress"), state: "IN_PROGRESS" },
+    { hash: "done", label: t("tasksCard.states.done"), state: "DONE" },
   ] as const;
 
   const hashes = [
-    { hash: "", label: __("All"), state: null },
+    { hash: "", label: t("tasksCard.states.all"), state: null },
     ...stateHashes,
   ] as const;
 
@@ -346,8 +347,8 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
       onCompleted: (_, errors) => {
         if (errors?.length) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to reorder task."), errors),
+            title: t("tasksCard.error.title"),
+            description: formatError(t("tasksCard.error.reorder"), errors),
             variant: "error",
           });
         }
@@ -365,7 +366,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
       onError: () => {
         droppedRef.current = false;
         resetDragState();
-        toast({ title: __("Error"), description: __("Failed to reorder task."), variant: "error" });
+        toast({ title: t("tasksCard.error.title"), description: t("tasksCard.error.reorder"), variant: "error" });
       },
     });
   };
@@ -413,7 +414,7 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
     <div className="space-y-6">
       {tasks.length === 0
         ? (
-            <p className="text-center py-6 text-txt-secondary">{__("No tasks")}</p>
+            <p className="text-center py-6 text-txt-secondary">{t("tasksCard.empty")}</p>
           )
         : (
             <Card>
@@ -463,8 +464,8 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: Props) {
       {canDrag && filteredTasks.length > 1 && (
         <p className="text-sm text-txt-tertiary">
           {hash === ""
-            ? __("Drag and drop to reorder tasks or move them between states")
-            : __("Drag and drop to reorder tasks")}
+            ? t("tasksCard.dragInstructions.all")
+            : t("tasksCard.dragInstructions.state")}
         </p>
       )}
     </div>
@@ -521,7 +522,7 @@ const deleteMutation = graphql`
 function TaskRow(props: TaskRowProps) {
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const confirm = useConfirm();
   const [deleteTask] = useMutation<TasksCardDeleteMutation>(deleteMutation);
   const params = useParams<{ measureId?: string }>();
@@ -542,8 +543,8 @@ function TaskRow(props: TaskRowProps) {
     icon: typeof IconCircleProgress;
     className: string;
   }> = {
-    TODO: { state: "IN_PROGRESS", label: __("Move to In progress"), icon: IconCircleProgress, className: "text-txt-warning" },
-    IN_PROGRESS: { state: "DONE", label: __("Move to Done"), icon: IconCircleCheck, className: "text-txt-accent" },
+    TODO: { state: "IN_PROGRESS", label: t("tasksCard.actions.moveToInProgress"), icon: IconCircleProgress, className: "text-txt-warning" },
+    IN_PROGRESS: { state: "DONE", label: t("tasksCard.actions.moveToDone"), icon: IconCircleCheck, className: "text-txt-accent" },
   };
 
   const onAdvance = async () => {
@@ -581,7 +582,7 @@ function TaskRow(props: TaskRowProps) {
           },
         }),
       {
-        message: "Are you sure you want to delete this task?",
+        message: t("tasksCard.deleteConfirmation"),
       },
     );
   };
@@ -642,11 +643,11 @@ function TaskRow(props: TaskRowProps) {
                 </span>
               )}
               {task.timeEstimate && (
-                <span>{formatDuration(task.timeEstimate, __)}</span>
+                <span>{formatDuration(task.timeEstimate, t)}</span>
               )}
               {task.deadline && (
                 <time dateTime={task.deadline}>
-                  {formatDate(task.deadline)}
+                  {dateFormat(i18n.language, task.deadline)}
                 </time>
               )}
             </div>
@@ -677,7 +678,7 @@ function TaskRow(props: TaskRowProps) {
             <Button
               variant="secondary"
               icon={IconPencil}
-              title={__("Edit")}
+              title={t("tasksCard.actions.edit")}
               onClick={() => dialogRef.current?.open()}
             />
           )}
@@ -685,7 +686,7 @@ function TaskRow(props: TaskRowProps) {
             <Button
               variant="danger"
               icon={IconTrashCan}
-              title={__("Delete")}
+              title={t("tasksCard.actions.delete")}
               onClick={onDelete}
             />
           )}

@@ -21,9 +21,7 @@
 import {
   getObligationStatusLabel,
   getObligationStatusVariant,
-  sprintf,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -41,6 +39,7 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -84,7 +83,7 @@ type Props<Params> = {
 };
 
 export function LinkedObligationsCard<Params>(props: Props<Params>) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [limit, setLimit] = useState<number | null>(
     props.variant === "card" ? 4 : null,
   );
@@ -126,7 +125,9 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
     <Wrapper padded className="space-y-[10px]">
       {variant === "card" && (
         <div className="flex justify-between">
-          <div className="text-lg font-semibold">{__("Obligations")}</div>
+          <div className="text-lg font-semibold">
+            {t("linkedObligationsCard.title")}
+          </div>
           {!props.readOnly && (
             <LinkedObligationDialog
               connectionId={props.connectionId}
@@ -136,7 +137,7 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
               onUnlink={onDetach}
             >
               <Button variant="tertiary" icon={IconPlusLarge}>
-                {__("Link obligation")}
+                {t("linkedObligationsCard.actions.link")}
               </Button>
             </LinkedObligationDialog>
           )}
@@ -145,10 +146,10 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
       <Table className={clsx(variant === "card" && "bg-invert")}>
         <Thead>
           <Tr>
-            <Th>{__("Area")}</Th>
-            <Th>{__("Source")}</Th>
-            <Th>{__("Status")}</Th>
-            <Th>{__("Owner")}</Th>
+            <Th>{t("linkedObligationsCard.columns.area")}</Th>
+            <Th>{t("linkedObligationsCard.columns.source")}</Th>
+            <Th>{t("linkedObligationsCard.columns.status")}</Th>
+            <Th>{t("linkedObligationsCard.columns.owner")}</Th>
             {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
@@ -159,7 +160,7 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
                 colSpan={props.readOnly ? 4 : 5}
                 className="text-center text-txt-secondary"
               >
-                {__("No obligations linked")}
+                {t("linkedObligationsCard.empty")}
               </Td>
             </Tr>
           )}
@@ -180,7 +181,7 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
               onUnlink={onDetach}
             >
               <TrButton colspan={5} icon={IconPlusLarge}>
-                {__("Link obligation")}
+                {t("linkedObligationsCard.actions.link")}
               </TrButton>
             </LinkedObligationDialog>
           )}
@@ -193,7 +194,9 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
           className="mt-3 mx-auto"
           icon={IconChevronDown}
         >
-          {sprintf(__("Show %s more"), props.obligations.length - limit)}
+          {t("linkedObligationsCard.actions.showMore", {
+            count: props.obligations.length - limit,
+          })}
         </Button>
       )}
     </Wrapper>
@@ -205,7 +208,7 @@ function ObligationRow(props: {
   onClick: (obligationId: string) => void;
   readOnly?: boolean;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const obligation = useFragment(linkedObligationFragment, props.obligation);
   const organizationId = useOrganizationId();
 
@@ -217,18 +220,20 @@ function ObligationRow(props: {
 
   return (
     <Tr to={detailsUrl}>
-      <Td>{obligation.area || __("No area specified")}</Td>
-      <Td>{obligation.source || __("No source specified")}</Td>
+      <Td>{obligation.area || t("linkedObligationsCard.noArea")}</Td>
+      <Td>{obligation.source || t("linkedObligationsCard.noSource")}</Td>
       <Td>
         <Badge variant={getObligationStatusVariant(obligation.status)}>
           {getObligationStatusLabel(obligation.status)}
         </Badge>
       </Td>
-      <Td>{obligation.owner?.fullName || __("Unassigned")}</Td>
+      <Td>
+        {obligation.owner?.fullName || t("linkedObligationsCard.unassigned")}
+      </Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">
           <Button variant="secondary" icon={IconTrashCan} onClick={onDetach}>
-            {__("Unlink")}
+            {t("linkedObligationsCard.actions.unlink")}
           </Button>
         </Td>
       )}

@@ -21,9 +21,7 @@
 import {
   getAssetTypeVariant,
   promisifyMutation,
-  sprintf,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -34,6 +32,7 @@ import {
   TextCell,
   useConfirm,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import { Link } from "react-router";
@@ -90,7 +89,7 @@ export function AssetsTable(props: Props) {
   const { connectionId, pagination, assets } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const deleteAsset = useDeleteAsset(connectionId);
 
   return (
@@ -100,17 +99,17 @@ export function AssetsTable(props: Props) {
       pagination={pagination}
       items={assets}
       columns={[
-        __("Name"),
-        __("Type"),
-        __("Data Types stored"),
-        __("Amount"),
-        __("Owner"),
-        __("Third parties"),
+        t("assetsTable.columns.name"),
+        t("assetsTable.columns.type"),
+        t("assetsTable.columns.dataTypesStored"),
+        t("assetsTable.columns.amount"),
+        t("assetsTable.columns.owner"),
+        t("assetsTable.columns.thirdParties"),
       ]}
       schema={schema}
       updateMutation={updateAssetMutation}
       createMutation={createAssetMutation}
-      addLabel={__("Add a new asset")}
+      addLabel={t("assetsTable.actions.add")}
       defaultValue={{
         ...defaultValue,
         organizationId,
@@ -120,7 +119,7 @@ export function AssetsTable(props: Props) {
           <DropdownItem asChild>
             <Link to={`/organizations/${organizationId}/assets/${item.id}`}>
               <IconPencil size={16} />
-              {__("Edit")}
+              {t("assetsTable.actions.edit")}
             </Link>
           </DropdownItem>
           <DropdownItem
@@ -128,7 +127,7 @@ export function AssetsTable(props: Props) {
             variant="danger"
             icon={IconTrashCan}
           >
-            {__("Delete")}
+            {t("assetsTable.actions.delete")}
           </DropdownItem>
         </ActionDropdown>
       )}
@@ -140,7 +139,9 @@ export function AssetsTable(props: Props) {
             items={["VIRTUAL", "PHYSICAL"]}
             itemRenderer={({ item }) => (
               <Badge variant={getAssetTypeVariant(item ?? "VIRTUAL")}>
-                {item === "PHYSICAL" ? __("Physical") : __("Virtual")}
+                {item === "PHYSICAL"
+                  ? t("assetsTable.assetTypes.physical")
+                  : t("assetsTable.assetTypes.virtual")}
               </Badge>
             )}
             defaultValue={item?.assetType ?? defaultValue.assetType}
@@ -174,11 +175,11 @@ export function AssetsTable(props: Props) {
 const useDeleteAsset = (connectionId: string) => {
   const [mutate] = useMutation<AssetGraphDeleteMutation>(deleteAssetMutation);
   const confirm = useConfirm();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (asset: { id: string; name: string }) => {
     if (!asset.id || !asset.name) {
-      return alert(__("Failed to delete asset: missing id or name"));
+      return alert(t("assetsTable.delete.missingIdOrName"));
     }
     confirm(
       () =>
@@ -191,12 +192,7 @@ const useDeleteAsset = (connectionId: string) => {
           },
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete \"%s\". This action cannot be undone.",
-          ),
-          asset.name,
-        ),
+        message: t("assetsTable.delete.confirmation", { name: asset.name }),
       },
     );
   };

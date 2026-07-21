@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -57,7 +57,7 @@ export interface CompliancePageFrameworkListProps {
 }
 
 export function CompliancePageFrameworkList(props: CompliancePageFrameworkListProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const [, startTransition] = useTransition();
 
   const [compliancePage, refetch] = useRefetchableFragment<
@@ -76,7 +76,7 @@ export function CompliancePageFrameworkList(props: CompliancePageFrameworkListPr
   if (edges.length === 0) {
     return (
       <p className="text-sm text-txt-secondary">
-        {__("No frameworks available")}
+        {t("frameworkList.empty")}
       </p>
     );
   }

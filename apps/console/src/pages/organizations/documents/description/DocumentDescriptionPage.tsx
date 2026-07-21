@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { RichEditor, useToast } from "@probo/ui";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
@@ -86,7 +86,7 @@ export function DocumentDescriptionPage(props: {
 }) {
   const { queryRef, versionChangedAt } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { onDocumentUpdated, isEditable } = useOutletContext<{
     onDocumentUpdated: () => void;
@@ -124,8 +124,8 @@ export function DocumentDescriptionPage(props: {
         onCompleted: (data, errors) => {
           if (errors?.length) {
             toast({
-              title: __("Error"),
-              description: formatError(__("Content not saved"), errors),
+              title: t("documentDescriptionPage.errors.title"),
+              description: formatError(t("documentDescriptionPage.errors.save"), errors),
               variant: "error",
             });
             return;
@@ -137,20 +137,20 @@ export function DocumentDescriptionPage(props: {
           }
 
           toast({
-            title: __("Success"),
-            description: __("Content saved"),
+            title: t("documentDescriptionPage.messages.successTitle"),
+            description: t("documentDescriptionPage.messages.saved"),
             variant: "success",
           });
         },
         onError: (error) => {
           toast({
-            title: __("Error"),
-            description: error.message ?? __("Content not saved"),
+            title: t("documentDescriptionPage.errors.title"),
+            description: error.message ?? t("documentDescriptionPage.errors.save"),
             variant: "error",
           });
         },
       });
-    }, [documentId, wasDraft, updateContent, toast, __, onDocumentUpdated]),
+    }, [documentId, wasDraft, updateContent, toast, t, onDocumentUpdated]),
     autoSaveIntervalMs,
   );
 

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatDatetime, formatError, todayAsDateInput } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -33,6 +32,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { z } from "zod";
 
@@ -64,11 +64,6 @@ const uploadComplianceReportMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  reportDate: z.string().min(1, "Report date is required"),
-  validUntil: z.string().optional(),
-});
-
 type Props = {
   children: React.ReactNode;
   thirdPartyId: string;
@@ -82,7 +77,11 @@ export function UploadComplianceReportDialog({
   connectionId,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
+  const schema = z.object({
+    reportDate: z.string().min(1, t("uploadComplianceReportDialog.validation.reportDateRequired")),
+    validUntil: z.string().optional(),
+  });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const ref = useDialogRef();
 
@@ -131,9 +130,9 @@ export function UploadComplianceReportDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("uploadComplianceReportDialog.messages.error"),
             description: formatError(
-              __("Failed to upload compliance report"),
+              t("uploadComplianceReportDialog.errors.upload"),
               errors,
             ),
             variant: "error",
@@ -141,8 +140,8 @@ export function UploadComplianceReportDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Compliance report uploaded successfully"),
+          title: t("uploadComplianceReportDialog.messages.success"),
+          description: t("uploadComplianceReportDialog.messages.uploaded"),
           variant: "success",
         });
         reset();
@@ -152,9 +151,9 @@ export function UploadComplianceReportDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("uploadComplianceReportDialog.messages.error"),
           description: formatError(
-            __("Failed to upload compliance report"),
+            t("uploadComplianceReportDialog.errors.upload"),
             error,
           ),
           variant: "error",
@@ -170,7 +169,7 @@ export function UploadComplianceReportDialog({
 
   return (
     <Dialog
-      title={__("Upload Compliance Report")}
+      title={t("uploadComplianceReportDialog.title")}
       ref={ref}
       trigger={children}
       className="max-w-lg"
@@ -179,7 +178,7 @@ export function UploadComplianceReportDialog({
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Dropzone
-            description={__("Only PDF files up to 30MB are allowed")}
+            description={t("uploadComplianceReportDialog.fileHelp")}
             isUploading={isUploading}
             onDrop={handleDrop}
             accept={{
@@ -191,18 +190,17 @@ export function UploadComplianceReportDialog({
           {uploadedFile && (
             <div className="p-3 bg-tertiary-subtle rounded-lg">
               <p className="text-sm font-medium">
-                {__("Selected file")}
-                :
+                {t("uploadComplianceReportDialog.selectedFile")}
               </p>
               <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label={__("Report date")} required>
+            <Field label={t("uploadComplianceReportDialog.fields.reportDate")} required>
               <Input {...register("reportDate")} type="date" required />
             </Field>
-            <Field label={__("Valid until")}>
+            <Field label={t("uploadComplianceReportDialog.fields.validUntil")}>
               <Input {...register("validUntil")} type="date" />
             </Field>
           </div>
@@ -214,7 +212,7 @@ export function UploadComplianceReportDialog({
             disabled={isUploading || !uploadedFile}
             icon={isUploading ? Spinner : undefined}
           >
-            {__("Upload")}
+            {t("uploadComplianceReportDialog.actions.upload")}
           </Button>
         </DialogFooter>
       </form>

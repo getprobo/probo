@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { parseDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Avatar,
   Badge,
@@ -29,6 +28,7 @@ import {
   IconClock,
   IconLock,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
@@ -65,7 +65,7 @@ interface MembershipCardProps {
 
 export function MembershipCard(props: MembershipCardProps) {
   const { fKey, organizationFragmentRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const { membership, ...user } = useFragment<MembershipCardFragment$key>(
     fragment,
@@ -84,21 +84,21 @@ export function MembershipCard(props: MembershipCardProps) {
       return (
         <Badge variant="success" className="flex items-center gap-1">
           <IconCheckmark1 size={14} />
-          {__("Authenticated")}
+          {t("membershipCard.status.authenticated")}
         </Badge>
       );
     } else if (isExpired) {
       return (
         <Badge variant="warning" className="flex items-center gap-1">
           <IconClock size={14} />
-          {__("Session expired")}
+          {t("membershipCard.status.sessionExpired")}
         </Badge>
       );
     } else {
       return (
         <Badge variant="neutral" className="flex items-center gap-1">
           <IconLock size={14} />
-          {__("Authentication required")}
+          {t("membershipCard.status.authenticationRequired")}
         </Badge>
       );
     }
@@ -123,12 +123,12 @@ export function MembershipCard(props: MembershipCardProps) {
             ? (
                 <Link to={`/organizations/${organization.id}`}>
                   {isAssuming
-                    ? <Button variant="secondary">{__("Start")}</Button>
-                    : <Button>{__("Login")}</Button>}
+                    ? <Button variant="secondary">{t("membershipCard.actions.start")}</Button>
+                    : <Button>{t("membershipCard.actions.login")}</Button>}
                 </Link>
               )
             : (
-                <Button variant="secondary" disabled>{__("Account deactivated")}</Button>
+                <Button variant="secondary" disabled>{t("membershipCard.accountDeactivated")}</Button>
               )}
         </div>
       </div>

@@ -38,6 +38,7 @@
     "cmdk": "^1.1.1",
     "mermaid": "^11.15.0",
     "react-dropzone": "^15.0.0",
+    "react-i18next": "^17.0.10",
     "react-intersection-observer": "^10.0.3",
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",

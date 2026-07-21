@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
-import { useTranslate } from "@probo/i18n";
 import { Button, MermaidDiagram, useToast } from "@probo/ui";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment, useRelayEnvironment } from "react-relay";
 
 import type { ScopeDiagram_scope$key } from "#/__generated__/core/ScopeDiagram_scope.graphql";
@@ -93,7 +93,7 @@ interface ScopeDiagramProps {
 }
 
 export function ScopeDiagram({ scopeKey }: ScopeDiagramProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const environment = useRelayEnvironment();
   const scope = useFragment(scopeDiagramFragment, scopeKey);
   const mermaidChart = scope.mermaidChart;
@@ -129,7 +129,7 @@ export function ScopeDiagram({ scopeKey }: ScopeDiagramProps) {
   if (!mermaidChart) {
     return (
       <div className="text-center text-txt-secondary text-sm py-6">
-        {__("Add nodes and processes to see the diagram.")}
+        {t("scopeDiagram.empty")}
       </div>
     );
   }
@@ -152,15 +152,15 @@ interface CopyChartButtonProps {
 }
 
 function CopyChartButton({ chart }: CopyChartButtonProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
   const onClick = () => {
     const onFailure = () => {
       toast({
-        title: __("Error"),
-        description: __("Failed to copy to clipboard"),
+        title: t("scopeDiagram.errorTitle"),
+        description: t("scopeDiagram.copyError"),
         variant: "error",
       });
     };
@@ -188,8 +188,8 @@ function CopyChartButton({ chart }: CopyChartButtonProps) {
       variant="secondary"
       icon={copied ? CheckIcon : CopyIcon}
       onClick={onClick}
-      aria-label={__("Copy mermaid source")}
-      title={__("Copy mermaid source")}
+      aria-label={t("scopeDiagram.copyMermaidSource")}
+      title={t("scopeDiagram.copyMermaidSource")}
     />
   );
 }
@@ -205,13 +205,13 @@ type LegendItem = {
 };
 
 function Legend() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const items: LegendItem[] = [
-    { label: __("Entity"), shape: "stadium", fill: "#dbeafe", stroke: "#1d4ed8", text: "#1e3a8a" },
-    { label: __("Boundary"), shape: "rectangle", fill: "#ffffff", stroke: "#b45309", text: "#78350f" },
-    { label: __("Asset"), shape: "rectangle", fill: "#e5e7eb", stroke: "#374151", text: "#111827" },
-    { label: __("Data"), shape: "cylinder", fill: "#dcfce7", stroke: "#15803d", text: "#14532d" },
-    { label: __("Threat"), shape: "hexagon", fill: "#fee2e2", stroke: "#b91c1c", text: "#7f1d1d" },
+    { label: t("scopeDiagram.legend.entity"), shape: "stadium", fill: "#dbeafe", stroke: "#1d4ed8", text: "#1e3a8a" },
+    { label: t("scopeDiagram.legend.boundary"), shape: "rectangle", fill: "#ffffff", stroke: "#b45309", text: "#78350f" },
+    { label: t("scopeDiagram.legend.asset"), shape: "rectangle", fill: "#e5e7eb", stroke: "#374151", text: "#111827" },
+    { label: t("scopeDiagram.legend.data"), shape: "cylinder", fill: "#dcfce7", stroke: "#15803d", text: "#14532d" },
+    { label: t("scopeDiagram.legend.threat"), shape: "hexagon", fill: "#fee2e2", stroke: "#b91c1c", text: "#7f1d1d" },
   ];
   return (
     <div className="flex flex-wrap items-center gap-3 mt-3">

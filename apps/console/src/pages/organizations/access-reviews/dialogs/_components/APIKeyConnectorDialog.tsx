@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -30,6 +28,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useRelayEnvironment } from "react-relay";
 import { fetchQuery, graphql } from "relay-runtime";
 
@@ -95,7 +94,7 @@ export function APIKeyConnectorDialog({
   onClose,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const environment = useRelayEnvironment();
@@ -232,13 +231,13 @@ export function APIKeyConnectorDialog({
       onError: () => {
         setIsConnectingAPIKey(false);
         toast({
-          title: __("Connection failed"),
+          title: t("apiKeyConnectorDialog.messages.connectionFailed"),
           // Managed providers (e.g. Crisp) never show an API key field, so
           // pointing the user at their key would be misleading; send them to
           // the settings and verification step instead.
           description: provider.apiKeyManaged
-            ? __("Failed to connect provider. Please check your settings and verification code, then try again.")
-            : __("Failed to connect provider. Please check your API key and try again."),
+            ? t("apiKeyConnectorDialog.errors.managedConnect")
+            : t("apiKeyConnectorDialog.errors.apiKeyConnect"),
           variant: "error",
         });
       },
@@ -266,7 +265,7 @@ export function APIKeyConnectorDialog({
       return (
         <Field
           key={setting.key}
-          label={__(setting.label)}
+          label={setting.label}
           value={value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setExtraSettingValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
@@ -299,8 +298,10 @@ export function APIKeyConnectorDialog({
         onClose();
       }}
       title={provider
-        ? sprintf(__("Connect %s"), provider.displayName)
-        : __("Connect provider")}
+        ? t("apiKeyConnectorDialog.titleWithProvider", {
+            provider: provider.displayName,
+          })
+        : t("apiKeyConnectorDialog.title")}
     >
       <form
         onSubmit={(e) => {
@@ -311,18 +312,16 @@ export function APIKeyConnectorDialog({
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
             {provider?.apiKeyManaged
-              ? sprintf(
-                  __("Connect %s as an access source. Provide the details below to finish."),
-                  provider?.displayName ?? "",
-                )
-              : sprintf(
-                  __("Enter the API key for %s to connect it as an access source."),
-                  provider?.displayName ?? "",
-                )}
+              ? t("apiKeyConnectorDialog.managedDescription", {
+                  provider: provider?.displayName ?? "",
+                })
+              : t("apiKeyConnectorDialog.apiKeyDescription", {
+                  provider: provider?.displayName ?? "",
+                })}
           </p>
           {!provider?.apiKeyManaged && (
             <Field
-              label={__("API Key")}
+              label={t("apiKeyConnectorDialog.apiKey")}
               type="password"
               value={apiKeyValue}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKeyValue(e.target.value)}
@@ -334,15 +333,15 @@ export function APIKeyConnectorDialog({
           {isCrispManaged && (
             <div className="space-y-1.5">
               <label className="text-sm font-medium">
-                {__("Verification code")}
+                {t("apiKeyConnectorDialog.verificationCode.label")}
               </label>
               <p className="text-txt-tertiary text-sm">
-                {__("Paste this code into the Probo plugin settings for this website in your Crisp dashboard, then click Connect. It proves you control this website.")}
+                {t("apiKeyConnectorDialog.verificationCode.description")}
               </p>
               {!crispWebsiteId
                 ? (
                     <p className="text-txt-tertiary text-sm">
-                      {__("Enter your Website ID above to get your verification code.")}
+                      {t("apiKeyConnectorDialog.verificationCode.enterWebsiteId")}
                     </p>
                   )
                 : crispCodeState?.status === "ok"
@@ -357,8 +356,8 @@ export function APIKeyConnectorDialog({
                           onClick={() => {
                             const onCopyFailure = () =>
                               toast({
-                                title: __("Copy failed"),
-                                description: __("Copy the verification code manually."),
+                                title: t("apiKeyConnectorDialog.messages.copyFailed"),
+                                description: t("apiKeyConnectorDialog.errors.copy"),
                                 variant: "error",
                               });
 
@@ -377,8 +376,8 @@ export function APIKeyConnectorDialog({
                               navigator.clipboard.writeText(crispCodeState.code).then(
                                 () =>
                                   toast({
-                                    title: __("Copied to clipboard"),
-                                    description: __("Verification code"),
+                                    title: t("apiKeyConnectorDialog.messages.copied"),
+                                    description: t("apiKeyConnectorDialog.verificationCode.label"),
                                     variant: "success",
                                   }),
                                 onCopyFailure,
@@ -388,7 +387,7 @@ export function APIKeyConnectorDialog({
                             }
                           }}
                         >
-                          {__("Copy")}
+                          {t("apiKeyConnectorDialog.actions.copy")}
                         </Button>
                       </div>
                     )
@@ -396,20 +395,20 @@ export function APIKeyConnectorDialog({
                     ? (
                         <div className="flex items-center gap-2">
                           <p className="text-txt-danger text-sm">
-                            {__("Couldn't generate a verification code. Check the Website ID and try again.")}
+                            {t("apiKeyConnectorDialog.errors.generateCode")}
                           </p>
                           <Button
                             type="button"
                             variant="secondary"
                             onClick={() => setCrispRetry(n => n + 1)}
                           >
-                            {__("Retry")}
+                            {t("apiKeyConnectorDialog.actions.retry")}
                           </Button>
                         </div>
                       )
                     : (
                         <p className="text-txt-tertiary text-sm">
-                          {__("Generating code...")}
+                          {t("apiKeyConnectorDialog.verificationCode.generating")}
                         </p>
                       )}
             </div>
@@ -426,7 +425,9 @@ export function APIKeyConnectorDialog({
               || (isCrispManaged && !crispVerificationCode)
             }
           >
-            {isConnectingAPIKey ? __("Connecting...") : __("Connect")}
+            {isConnectingAPIKey
+              ? t("apiKeyConnectorDialog.actions.connecting")
+              : t("apiKeyConnectorDialog.actions.connect")}
           </Button>
         </DialogFooter>
       </form>

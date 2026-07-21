@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -31,6 +30,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { z } from "zod";
 
@@ -76,7 +76,7 @@ export function EditDataPrivacyAgreementDialog({
   agreement,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const ref = useDialogRef();
 
   const formatDateForForm = (datetime?: string | null) => {
@@ -118,9 +118,9 @@ export function EditDataPrivacyAgreementDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("editDataPrivacyAgreementDialog.messages.error"),
             description: formatError(
-              __("Failed to update Data Privacy Agreement"),
+              t("editDataPrivacyAgreementDialog.errors.update"),
               errors,
             ),
             variant: "error",
@@ -128,8 +128,8 @@ export function EditDataPrivacyAgreementDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Data Privacy Agreement updated successfully"),
+          title: t("editDataPrivacyAgreementDialog.messages.success"),
+          description: t("editDataPrivacyAgreementDialog.messages.updated"),
           variant: "success",
         });
         onSuccess?.();
@@ -137,9 +137,9 @@ export function EditDataPrivacyAgreementDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("editDataPrivacyAgreementDialog.messages.error"),
           description: formatError(
-            __("Failed to update Data Privacy Agreement"),
+            t("editDataPrivacyAgreementDialog.errors.update"),
             error,
           ),
           variant: "error",
@@ -154,7 +154,7 @@ export function EditDataPrivacyAgreementDialog({
 
   return (
     <Dialog
-      title={__("Edit Data Privacy Agreement")}
+      title={t("editDataPrivacyAgreementDialog.title")}
       ref={ref}
       trigger={children}
       className="max-w-lg"
@@ -163,10 +163,10 @@ export function EditDataPrivacyAgreementDialog({
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Field label={__("Valid from")}>
+            <Field label={t("editDataPrivacyAgreementDialog.fields.validFrom")}>
               <Input {...register("validFrom")} type="date" />
             </Field>
-            <Field label={__("Valid until")}>
+            <Field label={t("editDataPrivacyAgreementDialog.fields.validUntil")}>
               <Input {...register("validUntil")} type="date" />
             </Field>
           </div>
@@ -178,7 +178,7 @@ export function EditDataPrivacyAgreementDialog({
             disabled={isUpdating}
             icon={isUpdating ? Spinner : undefined}
           >
-            {__("Update")}
+            {t("editDataPrivacyAgreementDialog.actions.update")}
           </Button>
         </DialogFooter>
       </form>

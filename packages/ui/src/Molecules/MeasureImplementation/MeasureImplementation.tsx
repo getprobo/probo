@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getMeasureStateLabel, measureStates } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { measureStates } from "@probo/helpers";
 import { clsx } from "clsx";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { MeasureBadge } from "../Badge/MeasureBadge";
 
@@ -42,7 +42,7 @@ const stateToColor: Record<MeasureState, string> = {
 };
 
 export function MeasureImplementation({ measures, className }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const counts = measures.reduce(
     (acc, measure) => {
       acc[measure.state] = (acc[measure.state] ?? 0) + 1;
@@ -58,7 +58,7 @@ export function MeasureImplementation({ measures, className }: Props) {
   return (
     <div className={clsx("space-y-3", className)}>
       <h2 className="text-base font-medium">
-        {__("Measure implementation")}
+        {t("ui.measureImplementation.title")}
       </h2>
       <div className="h-2 rounded overflow-hidden bg-highlight flex justify-stretch item-stretch">
         {measureStates.map(state => (
@@ -76,7 +76,7 @@ export function MeasureImplementation({ measures, className }: Props) {
           <div className="mr-auto">
             {percent}
             %
-            {__("Complete")}
+            {t("ui.measureImplementation.complete")}
           </div>
         )}
         {measureStates.map(state => (
@@ -91,7 +91,7 @@ export function MeasureImplementation({ measures, className }: Props) {
               )}
             >
             </div>
-            {getMeasureStateLabel(__, state)}
+            {t(`ui.measureState.${state.toLowerCase()}`)}
           </div>
         ))}
       </div>

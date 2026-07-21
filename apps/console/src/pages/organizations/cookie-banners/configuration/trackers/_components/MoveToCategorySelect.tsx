@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Option, Select } from "@probo/ui";
 import { Suspense, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
@@ -85,7 +85,7 @@ interface MoveToCategoryOptionsProps {
 }
 
 function MoveToCategoryOptions({ queryRef }: MoveToCategoryOptionsProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const data = usePreloadedQuery<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -97,7 +97,7 @@ function MoveToCategoryOptions({ queryRef }: MoveToCategoryOptionsProps) {
   if (categories.length === 0) {
     return (
       <Option value="" disabled className="text-txt-tertiary">
-        {__("No categories")}
+        {t("moveToCategorySelect.empty")}
       </Option>
     );
   }

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError, promisifyMutation, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError, type GraphQLError, promisifyMutation } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   DropdownItem,
@@ -29,6 +29,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -65,7 +66,7 @@ type Props = {
 };
 
 export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const { toast } = useToast();
@@ -77,7 +78,7 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
 
   const handleDelete = () => {
     if (!statementOfApplicability.id || !statementOfApplicability.name) {
-      return alert(__("Failed to delete statement of applicability: missing id or name"));
+      return alert(t("statementOfApplicabilityDetailPage.errors.missingDeleteData"));
     }
     confirm(
       () =>
@@ -90,21 +91,16 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
           },
         }).catch((error) => {
           toast({
-            title: __("Error"),
+            title: t("statementOfApplicabilityDetailPage.messages.error"),
             description: formatError(
-              __("Failed to delete statement of applicability"),
+              t("statementOfApplicabilityDetailPage.errors.delete"),
               error as GraphQLError,
             ),
             variant: "error",
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete \"%s\". This action cannot be undone.",
-          ),
-          statementOfApplicability.name,
-        ),
+        message: t("statementOfApplicabilityDetailPage.deleteConfirmation", { name: statementOfApplicability.name }),
       },
     );
   };
@@ -116,7 +112,7 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
       <Td>{statementOfApplicability.name}</Td>
       <Td>
         <time dateTime={statementOfApplicability.createdAt}>
-          {formatDate(statementOfApplicability.createdAt)}
+          {dateFormat(i18n.language, statementOfApplicability.createdAt)}
         </time>
       </Td>
       <Td>{statementOfApplicability.statementsInfo?.totalCount ?? 0}</Td>
@@ -132,7 +128,7 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
                 handleDelete();
               }}
             >
-              {__("Delete")}
+              {t("statementOfApplicabilityDetailPage.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         </Td>

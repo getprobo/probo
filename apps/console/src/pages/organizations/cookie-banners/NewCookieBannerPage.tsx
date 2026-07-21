@@ -20,7 +20,6 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -51,12 +51,12 @@ const createCookieBannerMutation = graphql`
 `;
 
 export default function NewCookieBannerPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
 
-  usePageTitle(__("New Cookie Banner"));
+  usePageTitle(t("newCookieBannerPage.pageTitle"));
 
   const [createCookieBanner, isCreating]
     = useMutation<NewCookieBannerPageMutation>(createCookieBannerMutation);
@@ -83,8 +83,8 @@ export default function NewCookieBannerPage() {
       },
       onCompleted(data) {
         toast({
-          title: __("Success"),
-          description: __("Cookie banner created successfully"),
+          title: t("newCookieBannerPage.messages.successTitle"),
+          description: t("newCookieBannerPage.messages.created"),
           variant: "success",
         });
         const bannerId = data.createCookieBanner.cookieBannerEdge.node.id;
@@ -92,8 +92,8 @@ export default function NewCookieBannerPage() {
       },
       onError(error) {
         toast({
-          title: __("Error"),
-          description: formatError(__("Failed to create cookie banner"), error),
+          title: t("newCookieBannerPage.errors.title"),
+          description: formatError(t("newCookieBannerPage.errors.create"), error),
           variant: "error",
         });
       },
@@ -105,58 +105,56 @@ export default function NewCookieBannerPage() {
       <Breadcrumb
         items={[
           {
-            label: __("Cookie Banners"),
+            label: t("newCookieBannerPage.breadcrumbs.index"),
             to: `/organizations/${organizationId}/cookie-banners`,
           },
           {
-            label: __("New"),
+            label: t("newCookieBannerPage.breadcrumbs.new"),
           },
         ]}
       />
       <PageHeader
-        title={__("Create Cookie Banner")}
-        description={__(
-          "Set up a new cookie consent banner with its origin URL and consent configuration.",
-        )}
+        title={t("newCookieBannerPage.title")}
+        description={t("newCookieBannerPage.description")}
       />
       <Card padded asChild>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label={__("Name")}>
+          <Field label={t("newCookieBannerPage.fields.name")}>
             <Input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder={__("My Website")}
+              placeholder={t("newCookieBannerPage.fields.namePlaceholder")}
               required
             />
           </Field>
 
-          <Field label={__("Origin URL")}>
+          <Field label={t("newCookieBannerPage.fields.origin")}>
             <Input
               value={origin}
               onChange={e => setOrigin(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t("newCookieBannerPage.fields.originPlaceholder")}
               required
             />
           </Field>
 
-          <Field label={__("Cookie Policy URL")}>
+          <Field label={t("newCookieBannerPage.fields.cookiePolicyUrl")}>
             <Input
               value={cookiePolicyUrl}
               onChange={e => setCookiePolicyUrl(e.target.value)}
-              placeholder="https://example.com/cookies"
+              placeholder={t("newCookieBannerPage.fields.cookiePolicyUrlPlaceholder")}
               required
             />
           </Field>
 
-          <Field label={__("Privacy Policy URL")}>
+          <Field label={t("newCookieBannerPage.fields.privacyPolicyUrl")}>
             <Input
               value={privacyPolicyUrl}
               onChange={e => setPrivacyPolicyUrl(e.target.value)}
-              placeholder="https://example.com/privacy"
+              placeholder={t("newCookieBannerPage.fields.privacyPolicyUrlPlaceholder")}
             />
           </Field>
 
-          <Field label={__("Consent Expiry (days)")}>
+          <Field label={t("newCookieBannerPage.fields.consentExpiryDays")}>
             <Input
               type="number"
               value={consentExpiryDays}
@@ -167,7 +165,7 @@ export default function NewCookieBannerPage() {
           </Field>
 
           <Button type="submit" disabled={isCreating}>
-            {isCreating ? __("Creating...") : __("Create Banner")}
+            {isCreating ? t("newCookieBannerPage.actions.creating") : t("newCookieBannerPage.actions.create")}
           </Button>
         </form>
       </Card>

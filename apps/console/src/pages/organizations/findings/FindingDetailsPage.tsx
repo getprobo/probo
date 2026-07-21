@@ -21,12 +21,8 @@
 import {
   formatDatetime,
   formatError,
-  getStatusLabel,
-  getStatusOptions,
   getStatusVariant,
-  sprintf,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -45,6 +41,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   graphql,
@@ -144,27 +141,12 @@ type Props = {
   queryRef: PreloadedQuery<FindingDetailsPageQuery>;
 };
 
-function getKindLabel(kind: string, __: (s: string) => string): string {
-  switch (kind) {
-    case "MINOR_NONCONFORMITY":
-      return __("Minor nonconformity");
-    case "MAJOR_NONCONFORMITY":
-      return __("Major nonconformity");
-    case "OBSERVATION":
-      return __("Observation");
-    case "EXCEPTION":
-      return __("Exception");
-    default:
-      return kind;
-  }
-}
-
 export default function FindingDetailsPage(props: Props) {
   const { node: finding } = usePreloadedQuery<FindingDetailsPageQuery>(
     findingDetailsPageQuery,
     props.queryRef,
   );
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
@@ -211,17 +193,17 @@ export default function FindingDetailsPage(props: Props) {
             onCompleted(_, error) {
               if (error) {
                 toast({
-                  title: __("Error"),
+                  title: t("findingDetails.errors.title"),
                   description: formatError(
-                    __("Failed to delete finding"),
+                    t("findingDetails.errors.delete"),
                     error,
                   ),
                   variant: "error",
                 });
               } else {
                 toast({
-                  title: __("Success"),
-                  description: __("Finding deleted successfully"),
+                  title: t("findingDetails.messages.successTitle"),
+                  description: t("findingDetails.messages.deleted"),
                   variant: "success",
                 });
               }
@@ -229,9 +211,9 @@ export default function FindingDetailsPage(props: Props) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("findingDetails.errors.title"),
                 description: formatError(
-                  __("Failed to delete finding"),
+                  t("findingDetails.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -241,12 +223,9 @@ export default function FindingDetailsPage(props: Props) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the finding %s. This action cannot be undone.",
-          ),
-          finding.referenceId!,
-        ),
+        message: t("findingDetails.deleteConfirmation", {
+          referenceId: finding.referenceId,
+        }),
       },
     );
   };
@@ -289,16 +268,16 @@ export default function FindingDetailsPage(props: Props) {
       onCompleted() {
         reset(formData);
         toast({
-          title: __("Success"),
-          description: __("Finding updated successfully"),
+          title: t("findingDetails.messages.successTitle"),
+          description: t("findingDetails.messages.updated"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("findingDetails.errors.title"),
           description: formatError(
-            __("Failed to update finding"),
+            t("findingDetails.errors.update"),
             error,
           ),
           variant: "error",
@@ -307,14 +286,12 @@ export default function FindingDetailsPage(props: Props) {
     });
   });
 
-  const statusOptions = getStatusOptions(__).filter(
-    opt => opt.value !== "RISK_ACCEPTED",
-  );
+  const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "MITIGATED", "FALSE_POSITIVE"] as const;
 
   const priorityOptions = [
-    { value: "LOW", label: __("Low") },
-    { value: "MEDIUM", label: __("Medium") },
-    { value: "HIGH", label: __("High") },
+    { value: "LOW", label: t("findingDetails.priority.low") },
+    { value: "MEDIUM", label: t("findingDetails.priority.medium") },
+    { value: "HIGH", label: t("findingDetails.priority.high") },
   ];
 
   const breadcrumbFindingsUrl = `/organizations/${organizationId}/findings`;
@@ -324,11 +301,11 @@ export default function FindingDetailsPage(props: Props) {
       <Breadcrumb
         items={[
           {
-            label: __("Findings"),
+            label: t("findingDetails.breadcrumbs.findings"),
             to: breadcrumbFindingsUrl,
           },
           {
-            label: finding.referenceId || __("Unknown Finding"),
+            label: finding.referenceId || t("findingDetails.unknown"),
           },
         ]}
       />
@@ -339,10 +316,10 @@ export default function FindingDetailsPage(props: Props) {
             {finding.referenceId}
           </div>
           <Badge variant="neutral">
-            {getKindLabel(finding.kind || "", __)}
+            {t(`findingDetails.kinds.${(finding.kind || "").toLowerCase()}`)}
           </Badge>
           <Badge variant={getStatusVariant(finding.status || "OPEN")}>
-            {getStatusLabel(finding.status || "OPEN")}
+            {t(`findingDetails.status.${(finding.status || "OPEN").toLowerCase()}`)}
           </Badge>
           <Badge
             variant={
@@ -354,10 +331,10 @@ export default function FindingDetailsPage(props: Props) {
             }
           >
             {finding.priority === "HIGH"
-              ? __("High")
+              ? t("findingDetails.priority.high")
               : finding.priority === "MEDIUM"
-                ? __("Medium")
-                : __("Low")}
+                ? t("findingDetails.priority.medium")
+                : t("findingDetails.priority.low")}
           </Badge>
         </div>
         <ActionDropdown variant="secondary">
@@ -367,7 +344,7 @@ export default function FindingDetailsPage(props: Props) {
               icon={IconTrashCan}
               onClick={handleDelete}
             >
-              {__("Delete")}
+              {t("findingDetails.actions.delete")}
             </DropdownItem>
           )}
         </ActionDropdown>
@@ -376,22 +353,22 @@ export default function FindingDetailsPage(props: Props) {
       <div className="max-w-4xl">
         <Card padded>
           <form onSubmit={e => void onSubmit(e)} className="space-y-6">
-            <Field label={__("Description")}>
+            <Field label={t("findingDetails.fields.description")}>
               <Textarea
                 {...register("description")}
-                placeholder={__("Enter description")}
+                placeholder={t("findingDetails.placeholders.description")}
                 rows={3}
               />
             </Field>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field
-                label={__("Source")}
+                label={t("findingDetails.fields.source")}
                 error={formState.errors.source?.message}
               >
                 <Input
                   {...register("source")}
-                  placeholder={__("Enter source")}
+                  placeholder={t("findingDetails.placeholders.source")}
                 />
               </Field>
 
@@ -399,7 +376,7 @@ export default function FindingDetailsPage(props: Props) {
                 organizationId={organizationId}
                 control={control}
                 name="ownerId"
-                label={__("Owner")}
+                label={t("findingDetails.fields.owner")}
                 error={formState.errors.ownerId?.message}
                 optional
               />
@@ -410,12 +387,12 @@ export default function FindingDetailsPage(props: Props) {
                 control={control}
                 name="status"
                 type="select"
-                label={__("Status")}
+                label={t("findingDetails.fields.status")}
                 required
               >
-                {statusOptions.map(option => (
-                  <Option key={option.value} value={option.value}>
-                    {option.label}
+                {statusOptions.map(status => (
+                  <Option key={status} value={status}>
+                    {t(`findingDetails.status.${status.toLowerCase()}`)}
                   </Option>
                 ))}
               </ControlledField>
@@ -426,7 +403,7 @@ export default function FindingDetailsPage(props: Props) {
                 render={({ field }) => (
                   <div>
                     <Label>
-                      {__("Priority")}
+                      {t("findingDetails.fields.priority")}
                       {" "}
                       *
                     </Label>
@@ -451,14 +428,14 @@ export default function FindingDetailsPage(props: Props) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={__("Date Identified")}>
+              <Field label={t("findingDetails.fields.dateIdentified")}>
                 <Input
                   {...register("identifiedOn")}
                   type="date"
                 />
               </Field>
 
-              <Field label={__("Due Date")}>
+              <Field label={t("findingDetails.fields.dueDate")}>
                 <Input
                   {...register("dueDate")}
                   type="date"
@@ -466,26 +443,26 @@ export default function FindingDetailsPage(props: Props) {
               </Field>
             </div>
 
-            <Field label={__("Root Cause")}>
+            <Field label={t("findingDetails.fields.rootCause")}>
               <Textarea
                 {...register("rootCause")}
-                placeholder={__("Enter root cause")}
+                placeholder={t("findingDetails.placeholders.rootCause")}
                 rows={3}
               />
             </Field>
 
-            <Field label={__("Corrective Action")}>
+            <Field label={t("findingDetails.fields.correctiveAction")}>
               <Textarea
                 {...register("correctiveAction")}
-                placeholder={__("Enter corrective action")}
+                placeholder={t("findingDetails.placeholders.correctiveAction")}
                 rows={3}
               />
             </Field>
 
-            <Field label={__("Effectiveness Check")}>
+            <Field label={t("findingDetails.fields.effectivenessCheck")}>
               <Textarea
                 {...register("effectivenessCheck")}
-                placeholder={__("Enter effectiveness check details")}
+                placeholder={t("findingDetails.placeholders.effectivenessCheck")}
                 rows={3}
               />
             </Field>
@@ -494,7 +471,9 @@ export default function FindingDetailsPage(props: Props) {
               {formState.isDirty
                 && finding.canUpdate && (
                 <Button type="submit" disabled={formState.isSubmitting}>
-                  {formState.isSubmitting ? __("Updating...") : __("Update")}
+                  {formState.isSubmitting
+                    ? t("findingDetails.actions.updating")
+                    : t("findingDetails.actions.update")}
                 </Button>
               )}
             </div>

@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import { Badge, Spinner } from "@probo/ui";
 import { Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -124,7 +125,7 @@ function DocumentApprovalsPageContent(props: {
   versionFragmentRef: DocumentApprovalsPage_versionFragment$key;
 }) {
   const { approvalListRef, versionFragmentRef } = props;
-  const { __, dateTimeFormat } = useTranslate();
+  const { t, i18n } = useTranslation();
 
   const versionData = useFragment(versionFragment, versionFragmentRef);
   const quorumEdges = versionData.approvalQuorums?.edges ?? [];
@@ -136,15 +137,21 @@ function DocumentApprovalsPageContent(props: {
 
       {pastQuorums.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-txt-secondary">{__("Previous approval requests")}</h3>
+          <h3 className="text-sm font-medium text-txt-secondary">
+            {t("documentApprovalsPage.previousRequests")}
+          </h3>
           {pastQuorums.map(({ node: quorum }) => (
             <div key={quorum.id} className="border border-border-solid rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Badge variant={quorum.status === "APPROVED" ? "success" : quorum.status === "VOIDED" ? "neutral" : "danger"}>
-                  {quorum.status === "APPROVED" ? __("Approved") : quorum.status === "VOIDED" ? __("Voided") : __("Rejected")}
+                  {quorum.status === "APPROVED"
+                    ? t("documentApprovalsPage.status.approved")
+                    : quorum.status === "VOIDED"
+                      ? t("documentApprovalsPage.status.voided")
+                      : t("documentApprovalsPage.status.rejected")}
                 </Badge>
                 <span className="text-xs text-txt-secondary">
-                  {dateTimeFormat(quorum.createdAt)}
+                  {dateTimeFormat(i18n.language, quorum.createdAt)}
                 </span>
               </div>
               <div className="divide-y divide-border-solid">
@@ -155,7 +162,9 @@ function DocumentApprovalsPageContent(props: {
                         {decision.approver.fullName}
                       </div>
                       <div className="text-xs text-txt-secondary">
-                        {decision.decidedAt && (decision.state === "APPROVED" || decision.state === "REJECTED") && dateTimeFormat(decision.decidedAt)}
+                        {decision.decidedAt
+                          && (decision.state === "APPROVED" || decision.state === "REJECTED")
+                          && dateTimeFormat(i18n.language, decision.decidedAt)}
                       </div>
                       {decision.comment && (
                         <div className="text-xs text-txt-secondary italic">{decision.comment}</div>
@@ -163,7 +172,13 @@ function DocumentApprovalsPageContent(props: {
                     </div>
                     <div className="ml-auto">
                       <Badge variant={decision.state === "APPROVED" ? "success" : decision.state === "REJECTED" ? "danger" : decision.state === "VOIDED" ? "neutral" : "warning"}>
-                        {decision.state === "APPROVED" ? __("Approved") : decision.state === "REJECTED" ? __("Rejected") : decision.state === "VOIDED" ? __("Voided") : __("Pending")}
+                        {decision.state === "APPROVED"
+                          ? t("documentApprovalsPage.status.approved")
+                          : decision.state === "REJECTED"
+                            ? t("documentApprovalsPage.status.rejected")
+                            : decision.state === "VOIDED"
+                              ? t("documentApprovalsPage.status.voided")
+                              : t("documentApprovalsPage.status.pending")}
                       </Badge>
                     </div>
                   </div>

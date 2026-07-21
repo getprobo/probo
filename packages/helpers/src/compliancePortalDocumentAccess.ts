@@ -32,16 +32,16 @@ export function getCompliancePortalDocumentAccessStatusBadgeVariant(status: Comp
   }
 }
 
-export function getCompliancePortalDocumentAccessStatusLabel(status: CompliancePortalDocumentAccessStatus, __: (key: string) => string) {
+export function getCompliancePortalDocumentAccessStatusLabel(status: CompliancePortalDocumentAccessStatus, t: (key: string) => string) {
   switch (status) {
     case "REQUESTED":
-      return __("requested");
+      return t("helpers.compliancePortalDocumentAccessStatus.requested");
     case "GRANTED":
-      return __("granted");
+      return t("helpers.compliancePortalDocumentAccessStatus.granted");
     case "REJECTED":
-      return __("rejected");
+      return t("helpers.compliancePortalDocumentAccessStatus.rejected");
     case "REVOKED":
-      return __("revoked");
+      return t("helpers.compliancePortalDocumentAccessStatus.revoked");
   }
 }
 
@@ -68,4 +68,3 @@ export type CompliancePortalDocumentAccessInfo = ICompliancePortalDocumentAccess
     type: "file",
   }
 )
-

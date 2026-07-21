@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import type { measureStates } from "@probo/helpers";
-import { getMeasureStateLabel } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
@@ -42,10 +41,10 @@ const stateToVariant: Record<
 };
 
 export function MeasureBadge({ state }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Badge variant={stateToVariant[state]}>
-      {getMeasureStateLabel(__, state)}
+      {t(`ui.measureState.${state.toLowerCase()}`)}
     </Badge>
   );
 }

@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatDate, formatError } from "@probo/helpers";
 import {
   Badge,
   Button,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import * as Popover from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, useFragment, useMutation } from "react-relay";
 
 import type { OAuthTokenRowFragment$key } from "#/__generated__/iam/OAuthTokenRowFragment.graphql";
@@ -67,7 +67,7 @@ export function OAuthTokenRow(props: {
   identityId: string;
 }) {
   const { tokenKey, identityId } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const token = useFragment(fragment, tokenKey);
@@ -90,9 +90,9 @@ export function OAuthTokenRow(props: {
       onCompleted: (_response, errors) => {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: formatError(
-              __("Failed to revoke OAuth token."),
+              t("oauthTokenRow.errors.revoke"),
               errors,
             ),
             variant: "error",
@@ -100,15 +100,13 @@ export function OAuthTokenRow(props: {
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("OAuth token revoked."),
+          title: t("common.success"), description: t("oauthTokenRow.messages.revoked"),
           variant: "success",
         });
       },
       onError: (error) => {
         toast({
-          title: __("Error"),
-          description: formatError(__("Failed to revoke OAuth token."), error),
+          title: t("common.error"), description: formatError(t("oauthTokenRow.errors.revoke"), error),
           variant: "error",
         });
       },
@@ -154,28 +152,26 @@ export function OAuthTokenRow(props: {
           )}
         </div>
       </Td>
-      <Td>{new Date(token.createdAt).toLocaleDateString()}</Td>
-      <Td>{new Date(token.expiresAt).toLocaleDateString()}</Td>
+      <Td>{formatDate(token.createdAt)}</Td>
+      <Td>{formatDate(token.expiresAt)}</Td>
       <Td>
         {token.canDelete && (
           <Dialog
-            title={__("Revoke OAuth token")}
+            title={t("oauthTokenRow.revoke.title")}
             trigger={(
               <Button variant="danger" disabled={isRevoking}>
-                {__("Revoke")}
+                {t("oauthTokenRow.actions.revoke")}
               </Button>
             )}
           >
             <DialogContent padded>
               <p>
-                {__(
-                  "This token will stop working immediately. This action cannot be undone.",
-                )}
+                {t("oauthTokenRow.revoke.description")}
               </p>
             </DialogContent>
             <DialogFooter>
               <Button variant="danger" onClick={handleRevoke} disabled={isRevoking}>
-                {__("Revoke token")}
+                {t("oauthTokenRow.actions.revokeToken")}
               </Button>
             </DialogFooter>
           </Dialog>

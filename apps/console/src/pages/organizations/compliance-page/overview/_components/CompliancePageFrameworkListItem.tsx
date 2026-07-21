@@ -12,9 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { FrameworkLogo, IconCheckmark1, Spinner } from "@probo/ui";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -77,7 +77,7 @@ export interface CompliancePageFrameworkListItemProps {
 export function CompliancePageFrameworkListItem(props: CompliancePageFrameworkListItemProps) {
   const { complianceFrameworkKey, compliancePageKey, onRefetch } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const [optimisticPublic, setOptimisticPublic] = useState<boolean | null>(null);
 
   const complianceFramework = useFragment(
@@ -100,16 +100,16 @@ export function CompliancePageFrameworkListItem(props: CompliancePageFrameworkLi
   const [createComplianceFramework, isCreating] = useMutation<CompliancePageFrameworkListItem_createMutation>(
     createMutation,
     {
-      successMessage: __("Framework visibility updated successfully."),
-      errorToast: __("Failed to update framework visibility"),
+      successMessage: t("frameworkList.messages.visibilityUpdated"),
+      errorToast: t("frameworkList.errors.visibilityUpdate"),
     },
   );
 
   const [deleteComplianceFramework, isDeleting] = useMutation<CompliancePageFrameworkListItem_deleteMutation>(
     deleteMutation,
     {
-      successMessage: __("Framework visibility updated successfully."),
-      errorToast: __("Failed to update framework visibility"),
+      successMessage: t("frameworkList.messages.visibilityUpdated"),
+      errorToast: t("frameworkList.errors.visibilityUpdate"),
     },
   );
 

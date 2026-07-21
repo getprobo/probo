@@ -18,21 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { ActionDropdown, Button, IconPencil, Skeleton } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 /**
  * Skeleton state for the framework control panel
  */
 export function ControlSkeleton() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="flex justify-between">
         <Skeleton style={{ width: 72, height: 34 }} className="mb-3" />
         <div className="flex gap-2">
           <Button icon={IconPencil} variant="secondary" disabled>
-            {__("Edit control")}
+            {t("controlSkeleton.actions.edit")}
           </Button>
           <ActionDropdown variant="secondary" />
         </div>

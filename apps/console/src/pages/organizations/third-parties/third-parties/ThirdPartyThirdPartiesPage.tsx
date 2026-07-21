@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { faviconUrl, formatDate } from "@probo/helpers";
+import { faviconUrl } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   Avatar,
   Button,
@@ -36,6 +36,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   useMutation,
@@ -134,7 +135,7 @@ interface Props {
 export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
   const { node } = usePreloadedQuery<ThirdPartyThirdPartiesPageQuery>(thirdPartyThirdPartiesPageQuery, queryRef);
   const thirdParty = node.__typename === "ThirdParty" ? node : null;
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
 
@@ -144,7 +145,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
   >(paginatedFragment, thirdParty as ThirdPartyThirdPartiesPageFragment$key);
   const [deleteChild] = useMutation<ThirdPartyThirdPartiesPageDeleteMutation>(deleteChildMutation);
 
-  usePageTitle((thirdParty?.name ?? "") + " - " + __("Third Parties"));
+  usePageTitle(t("thirdPartyThirdPartiesPage.pageTitle", { name: thirdParty?.name ?? "" }));
 
   if (!thirdParty) {
     return null;
@@ -176,7 +177,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
           });
         }),
       {
-        message: `${__("Delete")} "${childName}"?`,
+        message: t("thirdPartyThirdPartiesPage.deleteConfirmation", { name: childName }),
       },
     );
   };
@@ -184,8 +185,8 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Third Parties")}
-        description={__("Manage third parties linked to this third party.")}
+        title={t("thirdPartyThirdPartiesPage.title")}
+        description={t("thirdPartyThirdPartiesPage.description")}
       >
         {thirdParty.canUpdate && thirdParty.level < MAX_THIRD_PARTY_LEVEL && (
           <AddChildThirdPartyDialog
@@ -194,7 +195,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
             organizationId={organizationId}
             connectionId={connectionId}
           >
-            <Button icon={IconPlusLarge}>{__("Add third party")}</Button>
+            <Button icon={IconPlusLarge}>{t("thirdPartyThirdPartiesPage.actions.add")}</Button>
           </AddChildThirdPartyDialog>
         )}
       </PageHeader>
@@ -204,10 +205,10 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
       >
         <Thead>
           <Tr>
-            <SortableTh field="NAME">{__("Third party")}</SortableTh>
-            <Th>{__("Assessed At")}</Th>
-            <Th>{__("Data Risk")}</Th>
-            <Th>{__("Business Risk")}</Th>
+            <SortableTh field="NAME">{t("thirdPartyThirdPartiesPage.columns.thirdParty")}</SortableTh>
+            <Th>{t("thirdPartyThirdPartiesPage.columns.assessedAt")}</Th>
+            <Th>{t("thirdPartyThirdPartiesPage.columns.dataRisk")}</Th>
+            <Th>{t("thirdPartyThirdPartiesPage.columns.businessRisk")}</Th>
             <Th />
           </Tr>
         </Thead>
@@ -228,8 +229,8 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
                 </Td>
                 <Td>
                   {latestAssessment?.createdAt
-                    ? formatDate(latestAssessment.createdAt)
-                    : __("Not assessed")}
+                    ? dateFormat(i18n.language, latestAssessment.createdAt)
+                    : t("thirdPartyThirdPartiesPage.notAssessed")}
                 </Td>
                 <Td>
                   <RiskBadge level={latestAssessment?.dataSensitivity ?? "NONE"} />

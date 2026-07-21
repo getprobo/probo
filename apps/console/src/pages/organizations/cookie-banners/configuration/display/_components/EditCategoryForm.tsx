@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Input, Textarea } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const GCM_CONSENT_TYPES = [
   "analytics_storage",
@@ -63,7 +63,7 @@ export function EditCategoryForm({
   onSave,
   onCancel,
 }: EditCategoryFormProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
 
   const { register, handleSubmit, control } = useForm<CategoryFormValues>({
     defaultValues: {
@@ -83,25 +83,25 @@ export function EditCategoryForm({
     <div className="space-y-3">
       <Input
         {...register("name")}
-        placeholder={__("Category name")}
+        placeholder={t("editCategoryForm.fields.namePlaceholder")}
       />
       <Input
         {...register("slug", {
           pattern: /^[a-z0-9]+(-[a-z0-9]+)*$/,
         })}
-        placeholder={__("Category slug")}
+        placeholder={t("editCategoryForm.fields.slugPlaceholder")}
       />
       <Textarea
         {...register("description")}
-        placeholder={__("Category description")}
+        placeholder={t("editCategoryForm.fields.descriptionPlaceholder")}
         rows={2}
       />
       <div>
         <label className="text-sm font-medium">
-          {__("Google Consent Mode")}
+          {t("editCategoryForm.googleConsentMode.title")}
         </label>
         <p className="text-xs text-muted-foreground mb-2">
-          {__("Select the Google Consent Mode signals this category controls.")}
+          {t("editCategoryForm.googleConsentMode.description")}
         </p>
         <div className="flex flex-wrap gap-2">
           <Controller
@@ -136,10 +136,10 @@ export function EditCategoryForm({
       {kind === "NORMAL" && (
         <div>
           <label className="text-sm font-medium">
-            {__("PostHog")}
+            {t("editCategoryForm.posthog.title")}
           </label>
           <p className="text-xs text-muted-foreground mb-2">
-            {__("Control PostHog tracking consent based on this category.")}
+            {t("editCategoryForm.posthog.description")}
           </p>
           <label className="flex items-center gap-1.5 text-xs cursor-pointer">
             <input
@@ -147,7 +147,7 @@ export function EditCategoryForm({
               {...register("posthogConsent")}
               className="rounded"
             />
-            <span>{__("Opt in/out of PostHog tracking")}</span>
+            <span>{t("editCategoryForm.posthog.checkbox")}</span>
           </label>
         </div>
       )}
@@ -156,13 +156,13 @@ export function EditCategoryForm({
           onClick={() => void handleSubmit(onSubmit)()}
           disabled={isUpdating}
         >
-          {isUpdating ? __("Saving...") : __("Save")}
+          {isUpdating ? t("editCategoryForm.actions.saving") : t("editCategoryForm.actions.save")}
         </Button>
         <Button
           variant="secondary"
           onClick={onCancel}
         >
-          {__("Cancel")}
+          {t("editCategoryForm.actions.cancel")}
         </Button>
       </div>
     </div>

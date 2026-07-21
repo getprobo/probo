@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Card, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { type ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, usePaginationFragment } from "react-relay";
 
 import type { TrackerPatternDetectedTrackersSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternDetectedTrackersSection_trackerPattern.graphql";
@@ -67,7 +67,7 @@ interface TrackerPatternDetectedTrackersSectionProps {
 export function TrackerPatternDetectedTrackersSection({
   trackerPatternKey,
 }: TrackerPatternDetectedTrackersSectionProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
 
   const { data, ...pagination } = usePaginationFragment<
     TrackerPatternDetectedTrackersSectionRefetchQuery,
@@ -84,7 +84,7 @@ export function TrackerPatternDetectedTrackersSection({
 
   return (
     <>
-      <h3 className="text-lg font-semibold">{__("Detected Trackers")}</h3>
+      <h3 className="text-lg font-semibold">{t("detectedTrackersSection.title")}</h3>
 
       {trackers.length > 0
         ? (
@@ -95,11 +95,11 @@ export function TrackerPatternDetectedTrackersSection({
             >
               <Thead>
                 <Tr>
-                  <Th>{__("Identifier")}</Th>
-                  <SortableTh field="INITIATOR_URL">{__("Initiator URL")}</SortableTh>
-                  <Th>{__("Max Age (s)")}</Th>
-                  <Th>{__("Source")}</Th>
-                  <SortableTh field="LAST_DETECTED_AT">{__("Detection Time")}</SortableTh>
+                  <Th>{t("detectedTrackersSection.columns.identifier")}</Th>
+                  <SortableTh field="INITIATOR_URL">{t("detectedTrackersSection.columns.initiatorUrl")}</SortableTh>
+                  <Th>{t("detectedTrackersSection.columns.maxAge")}</Th>
+                  <Th>{t("detectedTrackersSection.columns.source")}</Th>
+                  <SortableTh field="LAST_DETECTED_AT">{t("detectedTrackersSection.columns.detectionTime")}</SortableTh>
                 </Tr>
               </Thead>
               <Tbody>
@@ -116,7 +116,7 @@ export function TrackerPatternDetectedTrackersSection({
             <Card padded>
               <div className="text-center py-12">
                 <p className="text-txt-tertiary">
-                  {__("No detected trackers for this pattern yet.")}
+                  {t("detectedTrackersSection.empty")}
                 </p>
               </div>
             </Card>

@@ -38,12 +38,12 @@ export const getObligationTypeLabel = (type: ObligationType) => {
   }
 };
 
-export function getObligationTypeOptions(__: Translator) {
+export function getObligationTypeOptions(t: Translator) {
   return obligationTypes.map((type) => ({
     value: type,
-    label: __({
-      "LEGAL": "Legal",
-      "CONTRACTUAL": "Contractual",
+    label: t({
+      "LEGAL": "helpers.obligationType.legal",
+      "CONTRACTUAL": "helpers.obligationType.contractual",
     }[type]),
   }));
 }

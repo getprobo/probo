@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { getAssetTypeVariant } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -30,6 +29,7 @@ import {
   IconTrashCan,
   Option,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
@@ -50,15 +50,6 @@ import {
   useUpdateAsset,
 } from "../../../hooks/graph/AssetGraph";
 
-const updateAssetSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  amount: z.number().min(1, "Amount is required"),
-  assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
-  dataTypesStored: z.string().min(1, "Data types stored is required"),
-  ownerId: z.string().min(1, "Owner is required"),
-  thirdPartyIds: z.array(z.string()).optional(),
-});
-
 type Props = {
   queryRef: PreloadedQuery<AssetGraphNodeQuery>;
 };
@@ -69,8 +60,20 @@ export default function AssetDetailsPage(props: Props) {
     props.queryRef,
   );
   const assetEntry = asset.node;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
+
+  const updateAssetSchema = z.object({
+    name: z.string().min(1, t("assetDetailsPage.validation.nameRequired")),
+    amount: z.number().min(1, t("assetDetailsPage.validation.amountRequired")),
+    assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
+    dataTypesStored: z.string().min(
+      1,
+      t("assetDetailsPage.validation.dataTypesStoredRequired"),
+    ),
+    ownerId: z.string().min(1, t("assetDetailsPage.validation.ownerRequired")),
+    thirdPartyIds: z.array(z.string()).optional(),
+  });
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
@@ -105,7 +108,7 @@ export default function AssetDetailsPage(props: Props) {
 
   const breadcrumbItems = [
     {
-      label: __("Assets"),
+      label: t("assetDetailsPage.breadcrumb.assets"),
       to: `/organizations/${organizationId}/assets`,
     },
     {
@@ -124,8 +127,8 @@ export default function AssetDetailsPage(props: Props) {
             variant={getAssetTypeVariant(assetEntry?.assetType ?? "VIRTUAL")}
           >
             {assetEntry?.assetType === "PHYSICAL"
-              ? __("Physical")
-              : __("Virtual")}
+              ? t("assetDetailsPage.assetTypes.physical")
+              : t("assetDetailsPage.assetTypes.virtual")}
           </Badge>
         </div>
         {asset.node.canDelete && (
@@ -135,7 +138,7 @@ export default function AssetDetailsPage(props: Props) {
               icon={IconTrashCan}
               onClick={deleteAsset}
             >
-              {__("Delete")}
+              {t("assetDetailsPage.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         )}
@@ -143,14 +146,14 @@ export default function AssetDetailsPage(props: Props) {
 
       <form onSubmit={e => void onSubmit(e)} className="space-y-6 max-w-2xl">
         <Field
-          label={__("Name")}
+          label={t("assetDetailsPage.fields.name")}
           {...register("name")}
           type="text"
           disabled={!assetEntry.canUpdate}
         />
 
         <Field
-          label={__("Amount")}
+          label={t("assetDetailsPage.fields.amount")}
           {...register("amount", { valueAsNumber: true })}
           type="number"
           disabled={!assetEntry.canUpdate}
@@ -160,15 +163,19 @@ export default function AssetDetailsPage(props: Props) {
           control={control}
           name="assetType"
           type="select"
-          label={__("Asset Type")}
+          label={t("assetDetailsPage.fields.assetType")}
           disabled={!assetEntry.canUpdate}
         >
-          <Option value="VIRTUAL">{__("Virtual")}</Option>
-          <Option value="PHYSICAL">{__("Physical")}</Option>
+          <Option value="VIRTUAL">
+            {t("assetDetailsPage.assetTypes.virtual")}
+          </Option>
+          <Option value="PHYSICAL">
+            {t("assetDetailsPage.assetTypes.physical")}
+          </Option>
         </ControlledField>
 
         <Field
-          label={__("Data Types Stored")}
+          label={t("assetDetailsPage.fields.dataTypesStored")}
           {...register("dataTypesStored")}
           type="text"
           disabled={!assetEntry.canUpdate}
@@ -178,7 +185,7 @@ export default function AssetDetailsPage(props: Props) {
           organizationId={organizationId}
           control={control}
           name="ownerId"
-          label={__("Owner")}
+          label={t("assetDetailsPage.fields.owner")}
           disabled={!assetEntry.canUpdate}
         />
 
@@ -187,14 +194,16 @@ export default function AssetDetailsPage(props: Props) {
           control={control}
           name="thirdPartyIds"
           selectedThirdParties={thirdParties}
-          label={__("Third parties")}
+          label={t("assetDetailsPage.fields.thirdParties")}
           disabled={!assetEntry.canUpdate}
         />
 
         <div className="flex justify-end">
           {formState.isDirty && assetEntry.canUpdate && (
             <Button type="submit" disabled={formState.isSubmitting}>
-              {formState.isSubmitting ? __("Updating...") : __("Update")}
+              {formState.isSubmitting
+                ? t("assetDetailsPage.actions.updating")
+                : t("assetDetailsPage.actions.update")}
             </Button>
           )}
         </div>

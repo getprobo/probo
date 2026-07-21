@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -33,6 +32,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -101,16 +101,16 @@ type Props = {
 };
 
 export function LinkedDocumentDialog({ children, ...props }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
-    <Dialog trigger={children} title={__("Link documents")}>
+    <Dialog trigger={children} title={t("linkedDocumentsDialog.title")}>
       <DialogContent>
         <Suspense fallback={<Spinner centered />}>
           <LinkedDocumentsDialogContent {...props} />
         </Suspense>
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")} />
+      <DialogFooter exitLabel={t("linkedDocumentsDialog.actions.close")} />
     </Dialog>
   );
 }
@@ -129,7 +129,7 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
       documentsFragment,
       query.organization as LinkedDocumentsDialogFragment$key,
     );
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const documents = useMemo(
     () => data.documents?.edges?.map(edge => edge.node) ?? [],
@@ -150,7 +150,7 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
       <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search documents...")}
+          placeholder={t("linkedDocumentsDialog.searchPlaceholder")}
           onValueChange={setSearch}
         />
       </div>
@@ -187,7 +187,7 @@ type RowProps = {
 };
 
 function DocumentRow(props: RowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const isLinked = props.linkedDocuments.has(props.document.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
@@ -209,7 +209,9 @@ function DocumentRow(props: RowProps) {
         <span>
           <IconComponent size={16} />
           {" "}
-          {isLinked ? __("Unlink") : __("Link")}
+          {isLinked
+            ? t("linkedDocumentsDialog.actions.unlink")
+            : t("linkedDocumentsDialog.actions.link")}
         </span>
       </Button>
     </button>

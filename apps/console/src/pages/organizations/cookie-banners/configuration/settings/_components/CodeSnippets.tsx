@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, useToast } from "@probo/ui";
+import { Trans, useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 export function CodeSnippets() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
 
@@ -40,15 +40,15 @@ export function CodeSnippets() {
     navigator.clipboard.writeText(code).then(
       () => {
         toast({
-          title: __("Copied"),
-          description: __("Code copied to clipboard"),
+          title: t("codeSnippets.messages.copiedTitle"),
+          description: t("codeSnippets.messages.copied"),
           variant: "success",
         });
       },
       () => {
         toast({
-          title: __("Error"),
-          description: __("Failed to copy to clipboard"),
+          title: t("codeSnippets.errors.title"),
+          description: t("codeSnippets.errors.copy"),
           variant: "error",
         });
       },
@@ -57,11 +57,11 @@ export function CodeSnippets() {
 
   return (
     <div className="space-y-3">
-      <h3 className="font-medium">{__("JS snippet")}</h3>
+      <h3 className="font-medium">{t("codeSnippets.title")}</h3>
       <Card className="rounded-lg border">
         <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
           <Button variant="secondary" onClick={handleCopy}>
-            {__("Copy")}
+            {t("codeSnippets.actions.copy")}
           </Button>
         </div>
         <pre className="overflow-x-auto p-4 text-sm font-mono rounded-b-lg text-invert bg-accent">
@@ -70,16 +70,20 @@ export function CodeSnippets() {
       </Card>
 
       <p className="text-sm text-txt-secondary">
-        {__("Looking for ES module or headless integration?")}
-        {" "}
-        <a
-          href="https://www.probo.com/docs/product/cookie-banner/javascript-sdk"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-txt-primary underline hover:no-underline"
-        >
-          {__("See our documentation for detailed integration guides.")}
-        </a>
+        <Trans
+          ns="organizations/cookie-banners"
+          i18nKey="codeSnippets.documentation"
+          components={{
+            link: (
+              <a
+                href="https://www.probo.com/docs/product/cookie-banner/javascript-sdk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-txt-primary underline hover:no-underline"
+              />
+            ),
+          }}
+        />
       </p>
     </div>
   );

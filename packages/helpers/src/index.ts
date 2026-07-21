@@ -96,7 +96,6 @@ export {
     type CompliancePortalVisibility as CompliancePageVisibility,
 } from "./compliancePortalVisibility";
 export { promisifyMutation } from "./relay";
-export { fileType, fileSize } from "./file";
 export {
   acceptDocument,
   acceptSpreadsheet,
@@ -112,11 +111,9 @@ export {
   formatDate,
   toDateInput,
   todayAsDateInput,
-  formatDuration,
   parseDate,
 } from "./date";
 export {
-  humanizeSeconds,
   DURATION_UNITS,
   toMaxAgeSeconds,
   fromMaxAgeSeconds,

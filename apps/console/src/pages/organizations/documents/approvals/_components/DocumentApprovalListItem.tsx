@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -27,6 +26,7 @@ import {
   IconCircleX,
   IconClock,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -58,7 +58,7 @@ export function DocumentApprovalListItem(props: {
   fragmentRef: DocumentApprovalListItemFragment$key;
 }) {
   const { fragmentRef } = props;
-  const { __, dateTimeFormat } = useTranslate();
+  const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
 
   const decision = useFragment(fragment, fragmentRef);
@@ -82,10 +82,18 @@ export function DocumentApprovalListItem(props: {
           {isPending && <IconClock size={16} />}
           {isVoided && <IconClock size={16} className="text-txt-secondary" />}
           <span>
-            {isPending && sprintf(__("Requested on %s"), dateTimeFormat(decision.createdAt))}
-            {isApproved && sprintf(__("Approved on %s"), dateTimeFormat(decision.decidedAt))}
-            {isRejected && sprintf(__("Rejected on %s"), dateTimeFormat(decision.decidedAt))}
-            {isVoided && sprintf(__("Requested on %s"), dateTimeFormat(decision.createdAt))}
+            {isPending && t("documentApprovalListItem.dates.requested", {
+              date: dateTimeFormat(i18n.language, decision.createdAt),
+            })}
+            {isApproved && t("documentApprovalListItem.dates.approved", {
+              date: dateTimeFormat(i18n.language, decision.decidedAt),
+            })}
+            {isRejected && t("documentApprovalListItem.dates.rejected", {
+              date: dateTimeFormat(i18n.language, decision.decidedAt),
+            })}
+            {isVoided && t("documentApprovalListItem.dates.requested", {
+              date: dateTimeFormat(i18n.language, decision.createdAt),
+            })}
           </span>
         </div>
         {decision.comment && (
@@ -96,21 +104,29 @@ export function DocumentApprovalListItem(props: {
       </div>
       <div className="ml-auto flex items-center gap-2">
         {isApproved && (
-          <Badge variant="success">{__("Approved")}</Badge>
+          <Badge variant="success">
+            {t("documentApprovalListItem.status.approved")}
+          </Badge>
         )}
         {isRejected && (
-          <Badge variant="danger">{__("Rejected")}</Badge>
+          <Badge variant="danger">
+            {t("documentApprovalListItem.status.rejected")}
+          </Badge>
         )}
         {isPending && (decision.canApprove || decision.canReject) && (
           <Button variant="secondary" to={reviewUrl} target="_blank">
-            {__("Review")}
+            {t("documentApprovalListItem.actions.review")}
           </Button>
         )}
         {isPending && !decision.canApprove && !decision.canReject && (
-          <Badge variant="warning">{__("Pending")}</Badge>
+          <Badge variant="warning">
+            {t("documentApprovalListItem.status.pending")}
+          </Badge>
         )}
         {isVoided && (
-          <Badge variant="neutral">{__("Voided")}</Badge>
+          <Badge variant="neutral">
+            {t("documentApprovalListItem.status.voided")}
+          </Badge>
         )}
       </div>
     </div>

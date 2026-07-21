@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { faviconUrl, formatError, sprintf } from "@probo/helpers";
+import { faviconUrl, formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -36,6 +35,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -104,7 +104,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
   const environment = useRelayEnvironment();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const { toast } = useToast();
 
@@ -151,7 +151,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
     deleteThirdPartyMutation,
   );
 
-  usePageTitle(thirdParty.name ?? __("Third party"));
+  usePageTitle(thirdParty.name ?? t("thirdPartyDetailLayout.title"));
 
   const onDelete = () => {
     if (!thirdParty.name) {
@@ -176,9 +176,9 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("thirdPartyDetailLayout.messages.error"),
                 description: formatError(
-                  __("Failed to delete third party"),
+                  t("thirdPartyDetailLayout.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -188,12 +188,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the third party \"%s\". This action cannot be undone.",
-          ),
-          thirdParty.name,
-        ),
+        message: t("thirdPartyDetailLayout.deleteConfirmation", { name: thirdParty.name }),
       },
     );
   };
@@ -216,18 +211,18 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
             aria-hidden
             className="size-4 shrink-0 animate-spin rounded-full border-2 border-border-warning/30 border-t-border-warning"
           />
-          {__("Vetting is in progress. Results will appear once the analysis is complete.")}
+          {t("thirdPartyDetailLayout.vettingInProgress")}
         </div>
       )}
       {isVettingFailed && (
         <div className="rounded-lg bg-danger px-4 py-3 text-sm text-txt-danger">
-          {__("Vetting failed. You can start vetting again.")}
+          {t("thirdPartyDetailLayout.vettingFailed")}
         </div>
       )}
       <Breadcrumb
         items={[
           {
-            label: __("Third parties"),
+            label: t("thirdPartyDetailLayout.breadcrumb.thirdParties"),
             to: thirdPartiesUrl,
           },
           {
@@ -247,12 +242,12 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
           <div className="flex items-center gap-3">
             <div className="text-2xl">{thirdParty.name}</div>
             <Badge variant={thirdParty.level === 1 ? "info" : "neutral"}>
-              {`${__("Level")} ${thirdParty.level}`}
+              {t("thirdPartyDetailLayout.level", { level: thirdParty.level })}
             </Badge>
           </div>
           {ancestors.length > 0 && (
             <div className="flex items-center gap-1 text-sm text-txt-secondary">
-              <span className="text-txt-tertiary">{__("From:")}</span>
+              <span className="text-txt-tertiary">{t("thirdPartyDetailLayout.from")}</span>
               {ancestors.map((ancestor, i) => (
                 <span key={ancestor.id}>
                   {i > 0 && " / "}
@@ -274,7 +269,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
               websiteUrl={thirdParty.websiteUrl}
             >
               <Button icon={IconPageTextLine} variant="secondary">
-                {__("Start Vetting")}
+                {t("thirdPartyDetailLayout.actions.startVetting")}
               </Button>
             </VettingDialog>
           )}
@@ -285,7 +280,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
                 icon={IconTrashCan}
                 onClick={onDelete}
               >
-                {__("Delete")}
+                {t("thirdPartyDetailLayout.actions.delete")}
               </DropdownItem>
             </ActionDropdown>
           )}
@@ -293,22 +288,22 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
       </div>
 
       <Tabs>
-        <TabLink to={`${baseThirdPartyUrl}/overview`}>{__("Overview")}</TabLink>
+        <TabLink to={`${baseThirdPartyUrl}/overview`}>{t("thirdPartyDetailLayout.tabs.overview")}</TabLink>
         <TabLink to={`${baseThirdPartyUrl}/certifications`}>
-          {__("Certifications")}
+          {t("thirdPartyDetailLayout.tabs.certifications")}
         </TabLink>
         <TabLink to={`${baseThirdPartyUrl}/compliance`}>
-          {__("Compliance reports")}
+          {t("thirdPartyDetailLayout.tabs.complianceReports")}
           {reportsCount > 0 && <TabBadge>{reportsCount}</TabBadge>}
         </TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/risks`}>{__("Risk Assessment")}</TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/contacts`}>{__("Contacts")}</TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/services`}>{__("Services")}</TabLink>
+        <TabLink to={`${baseThirdPartyUrl}/risks`}>{t("thirdPartyDetailLayout.tabs.riskAssessment")}</TabLink>
+        <TabLink to={`${baseThirdPartyUrl}/contacts`}>{t("thirdPartyDetailLayout.tabs.contacts")}</TabLink>
+        <TabLink to={`${baseThirdPartyUrl}/services`}>{t("thirdPartyDetailLayout.tabs.services")}</TabLink>
         <TabLink to={`${baseThirdPartyUrl}/third-parties`}>
-          {__("Third Parties")}
+          {t("thirdPartyDetailLayout.tabs.thirdParties")}
         </TabLink>
         <TabLink to={`${baseThirdPartyUrl}/measures`}>
-          {__("Measures")}
+          {t("thirdPartyDetailLayout.tabs.measures")}
           {measuresCount > 0 && <TabBadge>{measuresCount}</TabBadge>}
         </TabLink>
       </Tabs>

@@ -18,21 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  controlMaturityLevels,
-  getControlMaturityLevelLabel,
-} from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { controlMaturityLevels } from "@probo/helpers";
 import { Option } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export function ControlMaturityLevelOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <>
       {controlMaturityLevels.map(level => (
         <Option key={level} value={level}>
-          {getControlMaturityLevelLabel(__, level)}
+          {t(`controlMaturityLevelOptions.levels.${level}`)}
         </Option>
       ))}
     </>

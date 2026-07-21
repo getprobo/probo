@@ -20,8 +20,8 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -43,12 +43,12 @@ const schema = z.object({
 });
 
 export default function CreatePasswordPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  usePageTitle(__("Create Password"));
+  usePageTitle(t("createPasswordPage.pageTitle"));
 
   const { register, handleSubmit, formState } = useFormWithSchema(schema, {
     defaultValues: {
@@ -69,16 +69,16 @@ export default function CreatePasswordPage() {
       onCompleted: (_, e) => {
         if (e) {
           toast({
-            title: __("Password creation failed"),
-            description: formatError(__("Password creation failed"), e),
+            title: t("createPasswordPage.errors.creationFailed"),
+            description: formatError(t("createPasswordPage.errors.creationFailed"), e),
             variant: "error",
           });
           return;
         }
 
         toast({
-          title: __("Success"),
-          description: __("Account created successfully"),
+          title: t("common.success"),
+          description: t("createPasswordPage.messages.created"),
           variant: "success",
         });
 
@@ -92,7 +92,7 @@ export default function CreatePasswordPage() {
       },
       onError: (e) => {
         toast({
-          title: __("Password creation failed"),
+          title: t("createPasswordPage.errors.creationFailed"),
           description: e.message,
           variant: "error",
         });
@@ -103,15 +103,15 @@ export default function CreatePasswordPage() {
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{__("Create a password")}</h1>
+        <h1 className="text-3xl font-bold">{t("createPasswordPage.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Set a password for your account, with at least 8 characters")}
+          {t("createPasswordPage.description")}
         </p>
       </div>
 
       <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <Field
-          label={__("Password")}
+          label={t("createPasswordPage.fields.password")}
           type="password"
           placeholder="••••••••"
           {...register("password")}
@@ -120,19 +120,19 @@ export default function CreatePasswordPage() {
         />
 
         <Button type="submit" className="w-xs h-10 mx-auto mt-6" disabled={formState.isLoading || isCreatingPassword}>
-          {__("Save")}
+          {t("createPasswordPage.actions.save")}
         </Button>
       </form>
 
       <div className="text-center">
         <p className="text-sm text-txt-tertiary">
-          {__("Already have an account?")}
+          {t("createPasswordPage.alreadyHaveAccount")}
           {" "}
           <Link
             to="/auth/login"
             className="underline text-txt-primary hover:text-txt-secondary"
           >
-            {__("Log in here")}
+            {t("createPasswordPage.actions.logIn")}
           </Link>
         </p>
       </div>

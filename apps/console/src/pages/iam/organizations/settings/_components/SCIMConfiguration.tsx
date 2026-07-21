@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { SCIMConfigurationCreateMutation } from "#/__generated__/iam/SCIMConfigurationCreateMutation.graphql";
@@ -119,7 +119,7 @@ export function SCIMConfiguration(props: {
     scimConfiguration,
   } = organization;
   const hasIdentityProvider = !!scimConfiguration?.bridge;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const [token, setToken] = useState<string | null>(null);
@@ -150,9 +150,9 @@ export function SCIMConfiguration(props: {
         if (e) {
           toast({
             variant: "error",
-            title: __("Error"),
+            title: t("scimConfiguration.errors.title"),
             description: formatError(
-              __("Manual SCIM configuration failed"),
+              t("scimConfiguration.errors.create"),
               e,
             ),
           });
@@ -163,17 +163,15 @@ export function SCIMConfiguration(props: {
           setToken(response.createSCIMConfiguration.token);
         }
         toast({
-          title: __("Manual SCIM Configured"),
-          description: __(
-            "Copy the bearer token now. It will not be shown again.",
-          ),
+          title: t("scimConfiguration.messages.configured.title"),
+          description: t("scimConfiguration.messages.copyToken"),
           variant: "success",
         });
       },
       onError: (error: Error) => {
         toast({
           variant: "error",
-          title: __("Error"),
+          title: t("scimConfiguration.errors.title"),
           description: error.message,
         });
       },
@@ -194,17 +192,15 @@ export function SCIMConfiguration(props: {
         deleteDialogRef.current?.close();
         setToken(null);
         toast({
-          title: __("Manual SCIM Configuration Deleted"),
-          description: __(
-            "All SCIM-provisioned memberships have been changed to manual source.",
-          ),
+          title: t("scimConfiguration.messages.deleted.title"),
+          description: t("scimConfiguration.messages.deleted.description"),
           variant: "success",
         });
       },
       onError: (error: Error) => {
         toast({
           variant: "error",
-          title: __("Error"),
+          title: t("scimConfiguration.errors.title"),
           description: error.message,
         });
       },
@@ -226,17 +222,15 @@ export function SCIMConfiguration(props: {
           setToken(response.regenerateSCIMToken.token);
         }
         toast({
-          title: __("Bearer Token Regenerated"),
-          description: __(
-            "Copy the new bearer token now. It will not be shown again.",
-          ),
+          title: t("scimConfiguration.messages.regenerated.title"),
+          description: t("scimConfiguration.messages.regenerated.description"),
           variant: "success",
         });
       },
       onError: (error: Error) => {
         toast({
           variant: "error",
-          title: __("Error"),
+          title: t("scimConfiguration.errors.title"),
           description: error.message,
         });
       },
@@ -246,7 +240,7 @@ export function SCIMConfiguration(props: {
   const copyToClipboard = (text: string, label: string) => {
     void navigator.clipboard.writeText(text);
     toast({
-      title: __("Copied to clipboard"),
+      title: t("scimConfiguration.messages.copied"),
       description: label,
       variant: "success",
     });
@@ -261,11 +255,11 @@ export function SCIMConfiguration(props: {
       <Card padded>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-medium">{__("Manual SCIM is not configured")}</h3>
+            <h3 className="font-medium">
+              {t("scimConfiguration.empty.title")}
+            </h3>
             <p className="text-sm text-txt-secondary mt-1">
-              {__(
-                "Generate a SCIM endpoint and bearer token to configure your identity provider manually.",
-              )}
+              {t("scimConfiguration.empty.description")}
             </p>
           </div>
           {canCreate && (
@@ -274,8 +268,8 @@ export function SCIMConfiguration(props: {
               disabled={isCreatingSAMLConfiguration}
             >
               {isCreatingSAMLConfiguration
-                ? __("Enabling...")
-                : __("Enable SCIM")}
+                ? t("scimConfiguration.actions.enabling")
+                : t("scimConfiguration.actions.enable")}
             </Button>
           )}
         </div>
@@ -289,11 +283,11 @@ export function SCIMConfiguration(props: {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">{__("Manual SCIM Active")}</h3>
+              <h3 className="font-medium">
+                {t("scimConfiguration.active.title")}
+              </h3>
               <p className="text-sm text-txt-secondary">
-                {__(
-                  "Use these credentials to configure SCIM in your identity provider.",
-                )}
+                {t("scimConfiguration.active.description")}
               </p>
             </div>
           </div>
@@ -301,7 +295,7 @@ export function SCIMConfiguration(props: {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">
-                {__("SCIM Endpoint URL")}
+                {t("scimConfiguration.fields.endpointUrl")}
               </label>
               <div className="flex items-center gap-2 mt-1">
                 <code className="flex-1 bg-subtle p-2 rounded text-sm font-mono">
@@ -312,7 +306,7 @@ export function SCIMConfiguration(props: {
                   onClick={() =>
                     copyToClipboard(
                       scimConfiguration.endpointUrl,
-                      __("SCIM Endpoint URL"),
+                      t("scimConfiguration.fields.endpointUrl"),
                     )}
                   icon={IconSquareBehindSquare2}
                 />
@@ -322,10 +316,10 @@ export function SCIMConfiguration(props: {
             {token && (
               <div>
                 <label className="text-sm font-medium">
-                  {__("Bearer Token")}
+                  {t("scimConfiguration.fields.bearerToken")}
                 </label>
                 <p className="text-xs text-txt-warning mb-1">
-                  {__("This token will only be shown once. Copy it now.")}
+                  {t("scimConfiguration.tokenWarning")}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <code className="flex-1 bg-subtle p-2 rounded text-sm font-mono break-all">
@@ -333,7 +327,11 @@ export function SCIMConfiguration(props: {
                   </code>
                   <Button
                     variant="secondary"
-                    onClick={() => copyToClipboard(token, __("Bearer Token"))}
+                    onClick={() =>
+                      copyToClipboard(
+                        token,
+                        t("scimConfiguration.fields.bearerToken"),
+                      )}
                     icon={IconSquareBehindSquare2}
                   />
                 </div>
@@ -348,8 +346,8 @@ export function SCIMConfiguration(props: {
                 icon={IconRotateCw}
               >
                 {isRegeneratingSCIMToken
-                  ? __("Regenerating...")
-                  : __("Regenerate Token")}
+                  ? t("scimConfiguration.actions.regenerating")
+                  : t("scimConfiguration.actions.regenerateToken")}
               </Button>
               {canDelete && (
                 <Button
@@ -357,7 +355,7 @@ export function SCIMConfiguration(props: {
                   onClick={() => deleteDialogRef.current?.open()}
                   icon={IconTrashCan}
                 >
-                  {__("Delete Configuration")}
+                  {t("scimConfiguration.actions.deleteConfiguration")}
                 </Button>
               )}
             </div>
@@ -367,40 +365,38 @@ export function SCIMConfiguration(props: {
 
       <Dialog
         ref={deleteDialogRef}
-        title={__("Delete Manual SCIM Configuration")}
+        title={t("scimConfiguration.delete.title")}
         onClose={() => deleteDialogRef.current?.close()}
       >
         <div className="p-4 space-y-4">
           <p>
-            {__(
-              "Are you sure you want to delete the manual SCIM configuration? This will:",
-            )}
+            {t("scimConfiguration.delete.description")}
           </p>
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li>{__("Disable manual SCIM provisioning")}</li>
+            <li>{t("scimConfiguration.delete.effects.disable")}</li>
             <li>
-              {__("Change all SCIM-provisioned memberships to manual source")}
+              {t("scimConfiguration.delete.effects.changeMembershipSource")}
             </li>
-            <li>{__("Invalidate the current bearer token")}</li>
+            <li>{t("scimConfiguration.delete.effects.invalidateToken")}</li>
           </ul>
           <p className="text-sm text-txt-secondary">
-            {__(
-              "Existing users will not be removed, only their membership source will change.",
-            )}
+            {t("scimConfiguration.delete.note")}
           </p>
           <div className="flex justify-end gap-2">
             <Button
               variant="secondary"
               onClick={() => deleteDialogRef.current?.close()}
             >
-              {__("Cancel")}
+              {t("scimConfiguration.actions.cancel")}
             </Button>
             <Button
               variant="danger"
               onClick={handleDelete}
               disabled={isDeletingSCIMConfiguration}
             >
-              {isDeletingSCIMConfiguration ? __("Deleting...") : __("Delete")}
+              {isDeletingSCIMConfiguration
+                ? t("scimConfiguration.actions.deleting")
+                : t("scimConfiguration.actions.delete")}
             </Button>
           </div>
         </div>

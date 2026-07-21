@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link, matchPath, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
@@ -43,7 +43,7 @@ export default function PasswordSignInPage() {
   const location = useLocation();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const [signIn, isSigningIn]
@@ -74,9 +74,9 @@ export default function PasswordSignInPage() {
       onCompleted: (_, error) => {
         if (error) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: formatError(
-              __("Failed to login"),
+              t("passwordSignInPage.errors.login"),
               error,
             ),
             variant: "error",
@@ -88,7 +88,7 @@ export default function PasswordSignInPage() {
       },
       onError: (e) => {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: e.message,
           variant: "error",
         });
@@ -103,55 +103,55 @@ export default function PasswordSignInPage() {
         className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
       >
         <IconChevronLeft size={20} />
-        <span className="text-sm">{__("Back")}</span>
+        <span className="text-sm">{t("passwordSignInPage.actions.back")}</span>
       </Link>
 
       <h1 className="text-center text-2xl font-bold">
-        {__("Sign in with password")}
+        {t("passwordSignInPage.title")}
       </h1>
       <p className="text-center text-txt-tertiary mt-1 mb-6">
-        {__("Enter your email and password")}
+        {t("passwordSignInPage.description")}
       </p>
 
       <div className="space-y-4">
         <Field
           required
-          placeholder={__("Email")}
+          placeholder={t("passwordSignInPage.fields.email")}
           name="email"
           type="email"
-          label={__("Email")}
+          label={t("passwordSignInPage.fields.email")}
           autoFocus
         />
 
         <Field
           required
-          placeholder={__("Password")}
+          placeholder={t("passwordSignInPage.fields.password")}
           name="password"
           type="password"
-          label={__("Password")}
+          label={t("passwordSignInPage.fields.password")}
         />
       </div>
 
       <Button className="w-xs h-10 mx-auto mt-6" disabled={isSigningIn}>
-        {isSigningIn ? __("Logging in...") : __("Login")}
+        {isSigningIn ? t("passwordSignInPage.actions.loggingIn") : t("passwordSignInPage.actions.login")}
       </Button>
 
       <div className="text-center mt-6 text-sm text-txt-secondary">
-        {__("Don't have an account ?")}
+        {t("passwordSignInPage.noAccount")}
         {" "}
         <Link to={{ pathname: "/auth/register", search: location.search }} className="underline hover:text-txt-primary">
-          {__("Register")}
+          {t("passwordSignInPage.actions.register")}
         </Link>
       </div>
 
       <div className="text-center text-sm text-txt-secondary">
-        {__("Forgot password?")}
+        {t("passwordSignInPage.forgotPassword")}
         {" "}
         <Link
           to="/auth/forgot-password"
           className="underline hover:text-txt-primary"
         >
-          {__("Reset password")}
+          {t("passwordSignInPage.actions.resetPassword")}
         </Link>
       </div>
     </form>

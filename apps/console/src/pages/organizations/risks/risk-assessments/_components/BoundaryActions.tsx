@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -35,6 +34,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { BoundaryActionsDeleteMutation } from "#/__generated__/core/BoundaryActionsDeleteMutation.graphql";
@@ -65,7 +65,7 @@ export function BoundaryActions(props: {
   boundaries: { id: string; name: string }[];
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
   const [updateBoundary] = useMutation<BoundaryActionsUpdateMutation>(updateBoundaryMutation);
@@ -81,7 +81,7 @@ export function BoundaryActions(props: {
     <>
       <ActionDropdown>
         <DropdownItem icon={IconPencil} onSelect={() => dialogRef.current?.open()}>
-          {__("Edit")}
+          {t("riskAssessmentBoundaryActions.actions.edit")}
         </DropdownItem>
         <DropdownItem
           icon={IconTrashCan}
@@ -95,13 +95,13 @@ export function BoundaryActions(props: {
                 },
               });
             },
-            { message: __("Delete this boundary? Nodes and nested boundaries inside it will be moved to the top level.") },
+            { message: t("riskAssessmentBoundaryActions.deleteConfirmation") },
           )}
         >
-          {__("Delete")}
+          {t("riskAssessmentBoundaryActions.actions.delete")}
         </DropdownItem>
       </ActionDropdown>
-      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Boundaries"), __("Edit")]} />}>
+      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[t("riskAssessmentBoundaryActions.breadcrumb.boundaries"), t("riskAssessmentBoundaryActions.actions.edit")]} />}>
         <form onSubmit={e => void handleSubmit((d) => {
           updateBoundary({
             variables: { input: { id: props.boundary.id, name: d.name, parentBoundaryId: d.parentBoundaryId === "none" ? null : d.parentBoundaryId } },
@@ -110,15 +110,15 @@ export function BoundaryActions(props: {
         })(e)}
         >
           <DialogContent padded className="space-y-4">
-            <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" />
-            <ControlledField label={__("Parent boundary")} name="parentBoundaryId" control={control} type="select">
-              <Option value="none">{__("None (top level)")}</Option>
+            <Field label={t("riskAssessmentBoundaryActions.fields.name")} {...register("name", { required: t("riskAssessmentBoundaryActions.validation.nameRequired") })} type="text" />
+            <ControlledField label={t("riskAssessmentBoundaryActions.fields.parentBoundary")} name="parentBoundaryId" control={control} type="select">
+              <Option value="none">{t("riskAssessmentBoundaryActions.noneTopLevel")}</Option>
               {parentOptions.map(b => (
                 <Option key={b.id} value={b.id}>{b.name}</Option>
               ))}
             </ControlledField>
           </DialogContent>
-          <DialogFooter><Button type="submit">{__("Save")}</Button></DialogFooter>
+          <DialogFooter><Button type="submit">{t("riskAssessmentBoundaryActions.actions.save")}</Button></DialogFooter>
         </form>
       </Dialog>
     </>

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Close,
   Content,
@@ -42,6 +41,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
 import { Button } from "../../Atoms/Button/Button";
@@ -200,12 +200,12 @@ export function DialogFooter({
   exitLabel?: string;
   className?: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { footer } = dialog();
   return (
     <footer className={footer({ className })}>
       <Close asChild>
-        <Button variant="secondary">{exitLabel ?? __("Cancel")}</Button>
+        <Button variant="secondary">{exitLabel ?? t("ui.actions.cancel")}</Button>
       </Close>
       {children}
     </footer>

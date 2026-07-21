@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { fromMaxAgeSeconds, getTrackerTypeBadge, toMaxAgeSeconds } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
 import { Badge, Button, DurationInput, Input, Td, Toggle, Tr } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -58,7 +58,7 @@ export function EditCookieRow({
   onSave,
   onCancel,
 }: EditCookieRowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const cookie = useFragment(editCookieRowFragment, cookieKey);
   const initial = fromMaxAgeSeconds(cookie.maxAgeSeconds ?? null);
 
@@ -79,7 +79,15 @@ export function EditCookieRow({
     });
   };
 
-  const typeBadge = getTrackerTypeBadge(cookie.trackerType, __);
+  const trackerTypeBadges = {
+    COOKIE: { variant: "warning" as const, label: t("editCookieRow.trackerTypes.cookie") },
+    LOCAL_STORAGE: { variant: "info" as const, label: t("editCookieRow.trackerTypes.localStorage") },
+    SESSION_STORAGE: { variant: "highlight" as const, label: t("editCookieRow.trackerTypes.sessionStorage") },
+    INDEXED_DB: { variant: "success" as const, label: t("editCookieRow.trackerTypes.indexedDb") },
+    CACHE_STORAGE: { variant: "outline" as const, label: t("editCookieRow.trackerTypes.cacheStorage") },
+  };
+  const typeBadge = trackerTypeBadges[cookie.trackerType]
+    ?? { variant: "neutral" as const, label: cookie.trackerType };
 
   return (
     <Tr>
@@ -94,7 +102,7 @@ export function EditCookieRow({
                   size="sm"
                   checked={!field.value}
                   onChange={checked => field.onChange(!checked)}
-                  title={__("Include this cookie in the banner")}
+                  title={t("editCookieRow.includeTitle")}
                 />
               )}
             />
@@ -102,7 +110,7 @@ export function EditCookieRow({
           </div>
           <Input
             {...register("description")}
-            placeholder={__("Description")}
+            placeholder={t("editCookieRow.fields.descriptionPlaceholder")}
           />
         </div>
       </Td>
@@ -129,13 +137,13 @@ export function EditCookieRow({
             onClick={() => void handleSubmit(onSubmit)()}
             disabled={isUpdating}
           >
-            {__("Save")}
+            {t("editCookieRow.actions.save")}
           </Button>
           <Button
             variant="secondary"
             onClick={onCancel}
           >
-            {__("Cancel")}
+            {t("editCookieRow.actions.cancel")}
           </Button>
         </div>
       </Td>

@@ -23,8 +23,8 @@ import {
   getRiskLikelihoods,
   getSeverity,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 
 import { Card } from "../../Atoms/Card/Card";
 
@@ -48,29 +48,31 @@ const getColor = (score: number): string => {
 };
 
 export function RiskOverview({ type, risk }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const impact = risk?.[`${type}Impact`] ?? 0;
   const likelihood = risk?.[`${type}Likelihood`] ?? 0;
-  const severity = getSeverity(__, impact * likelihood);
+  const severity = getSeverity(t, impact * likelihood);
   return (
     <Card padded>
       <h2 className="font-semibold text-base mb-6">
-        {type === "inherent" ? __("Initial Risk") : __("Residual Risk")}
+        {type === "inherent"
+          ? t("ui.risk.initial")
+          : t("ui.risk.residual")}
       </h2>
       <div className="grid grid-cols-2 gap-4 mb-4">
         <RiskOverviewBadge
-          label={__("Impact")}
+          label={t("ui.risk.impact.label")}
           textCb={getRiskImpacts}
           score={impact}
         />
         <RiskOverviewBadge
-          label={__("Likelihood")}
+          label={t("ui.risk.likelihood.label")}
           textCb={getRiskLikelihoods}
           score={likelihood}
         />
       </div>
       <div className="space-y-2">
-        <div className="font-medium text-xs">{__("Score")}</div>
+        <div className="font-medium text-xs">{t("ui.risk.score")}</div>
         <div
           className={clsx(
             severity?.bg,
@@ -94,17 +96,17 @@ function RiskOverviewBadge({
   label: string;
   textCb: (t: (s: string) => string) => { value: number; label: string }[];
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
-      <div className="font-medium text-xs">{__(label)}</div>
+      <div className="font-medium text-xs">{label}</div>
       <div
         className={clsx(
           getColor(score),
           "py-2 text-sm font-semibold rounded-lg text-txt-invert text-center",
         )}
       >
-        {textCb(__).find(i => i.value === score)?.label}
+        {textCb(t).find(i => i.value === score)?.label}
         {" "}
         (
         {score}

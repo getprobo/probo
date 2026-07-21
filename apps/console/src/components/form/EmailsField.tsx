@@ -18,10 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge, IconTrashCan, Input, Label } from "@probo/ui";
-import type { ArrayPath, Control, FieldValue, FieldValues, Path, UseFormRegister } from "react-hook-form";
+import type {
+  ArrayPath,
+  Control,
+  FieldValue,
+  FieldValues,
+  Path,
+  UseFormRegister,
+} from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 type Props<TFieldValues extends FieldValues = FieldValues> = {
   disabled: boolean;
@@ -32,10 +39,12 @@ type Props<TFieldValues extends FieldValues = FieldValues> = {
 /**
  * A field to handle multiple emails
  */
-export function EmailsField<
-  TFieldValues extends FieldValues = FieldValues,
->({ control, register, disabled }: Props<TFieldValues>) {
-  const { __ } = useTranslate();
+export function EmailsField<TFieldValues extends FieldValues = FieldValues>({
+  control,
+  register,
+  disabled,
+}: Props<TFieldValues>) {
+  const { t } = useTranslation();
   const { fields, append, remove } = useFieldArray({
     name: "additionalEmailAddresses" as ArrayPath<TFieldValues>,
     control,
@@ -43,12 +52,14 @@ export function EmailsField<
 
   return (
     <fieldset className="space-y-2">
-      {fields.length > 0 && <Label>{__("Additional emails")}</Label>}
+      {fields.length > 0 && <Label>{t("emailsField.additionalEmails")}</Label>}
       {fields.map((field, index) => (
         <div key={field.id} className="flex items-stretch">
           <Input
             className="w-full"
-            {...register(`additionalEmailAddresses.${index}` as Path<TFieldValues>)}
+            {...register(
+              `additionalEmailAddresses.${index}` as Path<TFieldValues>,
+            )}
             type="email"
             disabled={disabled}
           />
@@ -67,7 +78,7 @@ export function EmailsField<
         onClick={() => append("" as FieldValue<TFieldValues>)}
         disabled={disabled}
       >
-        {__("Add email")}
+        {t("emailsField.actions.add")}
       </Button>
     </fieldset>
   );

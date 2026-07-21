@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Cancel,
   Content,
@@ -29,6 +28,7 @@ import {
 } from "@radix-ui/react-alert-dialog";
 import { Root as Portal } from "@radix-ui/react-portal";
 import { type ComponentProps, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
@@ -70,7 +70,7 @@ const useConfirmStore = create(
  */
 export function useConfirm() {
   const open = useConfirmStore(state => state.open);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return useCallback(
     (cb: State["onConfirm"], props: Omit<State, "onConfirm">) => {
@@ -78,12 +78,12 @@ export function useConfirm() {
         onConfirm: cb,
         ...props,
         message: props.message,
-        title: props.title ?? __("Are you sure ?"),
+        title: props.title ?? t("ui.confirmDialog.defaultTitle"),
         variant: props.variant ?? "danger",
-        label: props.label ?? __("Delete"),
+        label: props.label ?? t("ui.actions.delete"),
       });
     },
-    [open, __],
+    [open, t],
   );
 }
 
@@ -109,7 +109,7 @@ function ConfirmDialogContent() {
   const onConfirm = useConfirmStore(state => state.onConfirm);
   const close = useConfirmStore(state => state.close);
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const isOpen = !!message;
 
   const [loading, setLoading] = useState(false);
@@ -156,7 +156,7 @@ function ConfirmDialogContent() {
           <footer className={dialogStyles.footer}>
             <Cancel asChild>
               <Button disabled={loading} variant="tertiary">
-                {__("Cancel")}
+                {t("ui.actions.cancel")}
               </Button>
             </Cancel>
             <Button

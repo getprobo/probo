@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -37,6 +36,7 @@ import {
 } from "@probo/ui";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   graphql,
@@ -120,7 +120,7 @@ export function PersonalAPIKeyList(props: {
   fKey: PersonalAPIKeyListFragment$key;
 }) {
   const { fKey } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const createDialogRef = useDialogRef();
   const tokenDialogRef = useDialogRef();
@@ -162,8 +162,8 @@ export function PersonalAPIKeyList(props: {
       },
       onCompleted: (response) => {
         toast({
-          title: __("Success"),
-          description: __("API key created successfully."),
+          title: t("common.success"),
+          description: t("personalApiKeyList.messages.created"),
           variant: "success",
         });
         const newToken = response.createPersonalAPIKey?.token;
@@ -176,8 +176,8 @@ export function PersonalAPIKeyList(props: {
       },
       onError: (error) => {
         toast({
-          title: __("Error"),
-          description: formatError(__("Failed to create API key."), error),
+          title: t("common.error"),
+          description: formatError(t("personalApiKeyList.errors.create"), error),
           variant: "error",
         });
       },
@@ -188,9 +188,9 @@ export function PersonalAPIKeyList(props: {
     <>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-base font-medium">{__("API Keys")}</h2>
+          <h2 className="text-base font-medium">{t("apiKeys.title")}</h2>
           <Button onClick={() => createDialogRef.current?.open()}>
-            {__("Create API Key")}
+            {t("personalApiKeyList.actions.create")}
           </Button>
         </div>
 
@@ -199,10 +199,10 @@ export function PersonalAPIKeyList(props: {
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {__("No API keys")}
+                    {t("personalApiKeyList.empty.title")}
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    {__("Create an API key to authenticate programmatic access.")}
+                    {t("personalApiKeyList.empty.description")}
                   </p>
                 </div>
               </Card>
@@ -219,21 +219,21 @@ export function PersonalAPIKeyList(props: {
 
       <Dialog
         ref={createDialogRef}
-        title={<Breadcrumb items={[__("API Keys"), __("Create")]} />}
+        title={<Breadcrumb items={[t("apiKeys.title"), t("common.create")]} />}
         onClose={() => reset()}
       >
         <form onSubmit={e => void handleSubmit(handleCreate)(e)}>
           <DialogContent padded className="space-y-5">
             <Field error={formState.errors.name?.message}>
-              <Label>{__("Name")}</Label>
+              <Label>{t("personalApiKeyList.fields.name.label")}</Label>
               <Input
                 {...register("name")}
-                placeholder={__("e.g., Production API Key")}
+                placeholder={t("personalApiKeyList.fields.name.placeholder")}
               />
             </Field>
 
             <Field error={formState.errors.expiresIn?.message}>
-              <Label>{__("Expires In")}</Label>
+              <Label>{t("personalApiKeyList.fields.expiresIn.label")}</Label>
               <Controller
                 control={control}
                 name="expiresIn"
@@ -243,10 +243,18 @@ export function PersonalAPIKeyList(props: {
                     onValueChange={field.onChange}
                     value={field.value}
                   >
-                    <Option value="1month">{__("1 Month")}</Option>
-                    <Option value="3months">{__("3 Months")}</Option>
-                    <Option value="6months">{__("6 Months")}</Option>
-                    <Option value="1year">{__("1 Year")}</Option>
+                    <Option value="1month">
+                      {t("personalApiKeyList.expirations.month", { count: 1 })}
+                    </Option>
+                    <Option value="3months">
+                      {t("personalApiKeyList.expirations.month", { count: 3 })}
+                    </Option>
+                    <Option value="6months">
+                      {t("personalApiKeyList.expirations.month", { count: 6 })}
+                    </Option>
+                    <Option value="1year">
+                      {t("personalApiKeyList.expirations.year", { count: 1 })}
+                    </Option>
                   </Select>
                 )}
               />
@@ -254,7 +262,7 @@ export function PersonalAPIKeyList(props: {
           </DialogContent>
           <DialogFooter>
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? __("Creating...") : __("Create")}
+              {isCreating ? t("personalApiKeyList.actions.creating") : t("common.create")}
             </Button>
           </DialogFooter>
         </form>

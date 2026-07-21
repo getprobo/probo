@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { cleanFormData, formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -64,10 +64,10 @@ export function CreateServiceDialog({
   connectionId,
   thirdPartyId,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const schema = z.object({
-    name: z.string().min(1, __("Service name is required")),
+    name: z.string().min(1, t("createThirdPartyServiceDialog.validation.nameRequired")),
     description: z.string().optional(),
   });
 
@@ -99,15 +99,15 @@ export function CreateServiceDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to create service"), errors),
+            title: t("createThirdPartyServiceDialog.messages.error"),
+            description: formatError(t("createThirdPartyServiceDialog.errors.create"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Service created successfully."),
+          title: t("createThirdPartyServiceDialog.messages.success"),
+          description: t("createThirdPartyServiceDialog.messages.created"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -115,8 +115,8 @@ export function CreateServiceDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
-          description: formatError(__("Failed to create service"), error),
+          title: t("createThirdPartyServiceDialog.messages.error"),
+          description: formatError(t("createThirdPartyServiceDialog.errors.create"), error),
           variant: "error",
         });
       },
@@ -131,30 +131,30 @@ export function CreateServiceDialog({
       ref={dialogRef}
       trigger={children}
       title={
-        <Breadcrumb items={[__("Services"), __("New Service")]} />
+        <Breadcrumb items={[t("createThirdPartyServiceDialog.breadcrumb.services"), t("createThirdPartyServiceDialog.breadcrumb.newService")]} />
       }
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={__("Name")}
+            label={t("createThirdPartyServiceDialog.fields.name")}
             {...register("name")}
             type="text"
             error={formState.errors.name?.message}
-            placeholder={__("Service name")}
+            placeholder={t("createThirdPartyServiceDialog.placeholders.name")}
             required
           />
           <Field
-            label={__("Description")}
+            label={t("createThirdPartyServiceDialog.fields.description")}
             {...register("description")}
             type="textarea"
             error={formState.errors.description?.message}
-            placeholder={__("Brief description of the service")}
+            placeholder={t("createThirdPartyServiceDialog.placeholders.description")}
           />
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>
-            {__("Create")}
+            {t("createThirdPartyServiceDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

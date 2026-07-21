@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -33,6 +32,7 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -103,18 +103,18 @@ const schema = z.object({
 });
 
 export function FrameworkControlDialog(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const frameworkControl = useFragment(controlFragment, props.control);
   const dialogRef = useDialogRef();
   const [mutate, isMutating] = useMutationWithToasts(
     props.control ? updateMutation : createMutation,
     {
-      successMessage: __(
-        `Control ${props.control ? "updated" : "created"} successfully.`,
-      ),
-      errorMessage: __(
-        `Failed to ${props.control ? "update" : "create"} control`,
-      ),
+      successMessage: props.control
+        ? t("frameworkControlDialog.messages.updated")
+        : t("frameworkControlDialog.messages.created"),
+      errorMessage: props.control
+        ? t("frameworkControlDialog.errors.update")
+        : t("frameworkControlDialog.errors.create"),
     },
   );
 
@@ -184,10 +184,10 @@ export function FrameworkControlDialog(props: Props) {
       title={(
         <Breadcrumb
           items={[
-            __("Controls"),
+            t("frameworkControlDialog.breadcrumb.controls"),
             frameworkControl
-              ? __("Edit Control")
-              : __("New Control"),
+              ? t("frameworkControlDialog.breadcrumb.editControl")
+              : t("frameworkControlDialog.breadcrumb.newControl"),
           ]}
         />
       )}
@@ -198,21 +198,21 @@ export function FrameworkControlDialog(props: Props) {
             id="sectionTitle"
             required
             variant="ghost"
-            placeholder={__("Section title")}
+            placeholder={t("frameworkControlDialog.fields.sectionTitle")}
             {...register("sectionTitle")}
           />
           <Input
             id="title"
             required
             variant="title"
-            placeholder={__("Control name")}
+            placeholder={t("frameworkControlDialog.fields.name")}
             {...register("name")}
           />
           <Textarea
             id="content"
             variant="ghost"
             autogrow
-            placeholder={__("Add description")}
+            placeholder={t("frameworkControlDialog.fields.description")}
             {...register("description")}
           />
           <div className="border border-border-low rounded-xl p-3 space-y-3 mt-4">
@@ -222,10 +222,10 @@ export function FrameworkControlDialog(props: Props) {
                 onChange={checked =>
                   setValue("bestPractice", checked)}
               />
-              <span className="text-sm">{__("Best Practice")}</span>
+              <span className="text-sm">{t("frameworkControlDialog.fields.bestPractice")}</span>
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-sm">{__("Maturity level")}</span>
+              <span className="text-sm">{t("frameworkControlDialog.fields.maturityLevel")}</span>
               <Select
                 id="maturityLevel"
                 value={maturityLevelValue}
@@ -240,7 +240,7 @@ export function FrameworkControlDialog(props: Props) {
                 id="notImplementedJustification"
                 variant="ghost"
                 autogrow
-                placeholder={__("Justification for non-implementation")}
+                placeholder={t("frameworkControlDialog.fields.notImplementedJustification")}
                 {...register("notImplementedJustification")}
               />
             )}
@@ -249,8 +249,8 @@ export function FrameworkControlDialog(props: Props) {
         <DialogFooter>
           <Button type="submit" disabled={isMutating}>
             {props.control
-              ? __("Update control")
-              : __("Create control")}
+              ? t("frameworkControlDialog.actions.update")
+              : t("frameworkControlDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

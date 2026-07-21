@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -30,6 +29,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { useParams } from "react-router";
 
@@ -53,7 +53,7 @@ const createScopeMutation = graphql`
 
 export function CreateScopeDialog(props: { connectionId: string }) {
   const { riskAssessmentId } = useParams<{ riskAssessmentId: string }>();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [createScope, isCreating] = useMutation<CreateScopeDialogMutation>(createScopeMutation);
   const { register, handleSubmit, reset, formState } = useForm({
@@ -76,14 +76,14 @@ export function CreateScopeDialog(props: { connectionId: string }) {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={<Button icon={IconPlusLarge} variant="secondary">{__("Add Scope")}</Button>}
-      title={<Breadcrumb items={[__("Scopes"), __("New Scope")]} />}
+      trigger={<Button icon={IconPlusLarge} variant="secondary">{t("createRiskAssessmentScopeDialog.actions.addScope")}</Button>}
+      title={<Breadcrumb items={[t("createRiskAssessmentScopeDialog.breadcrumb.scopes"), t("createRiskAssessmentScopeDialog.breadcrumb.newScope")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" error={formState.errors.name?.message} placeholder={__("e.g. API layer")} />
+          <Field label={t("createRiskAssessmentScopeDialog.fields.name")} {...register("name", { required: t("createRiskAssessmentScopeDialog.validation.nameRequired") })} type="text" error={formState.errors.name?.message} placeholder={t("createRiskAssessmentScopeDialog.placeholders.name")} />
         </DialogContent>
-        <DialogFooter><Button type="submit" disabled={isCreating}>{__("Create")}</Button></DialogFooter>
+        <DialogFooter><Button type="submit" disabled={isCreating}>{t("createRiskAssessmentScopeDialog.actions.create")}</Button></DialogFooter>
       </form>
     </Dialog>
   );

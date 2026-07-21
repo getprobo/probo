@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Card,
   Input,
@@ -30,6 +29,7 @@ import {
   Tr,
 } from "@probo/ui";
 import { type ComponentProps, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -126,7 +126,7 @@ interface CookieBannerTrackersPageProps {
 export default function CookieBannerTrackersPage({
   queryRef,
 }: CookieBannerTrackersPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const data = usePreloadedQuery<CookieBannerTrackersPageQuery>(cookieBannerTrackersPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -216,7 +216,7 @@ export default function CookieBannerTrackersPage({
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Input
-          placeholder={__("Search by name or description...")}
+          placeholder={t("trackersPage.filters.search")}
           value={queryFilter}
           onChange={e => setQueryFilter(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleQuerySubmit()}
@@ -227,7 +227,7 @@ export default function CookieBannerTrackersPage({
           value={thirdPartyFilter ?? "ALL"}
           onValueChange={handleThirdPartyFilterChange}
         >
-          <Option value="ALL">{__("All third parties")}</Option>
+          <Option value="ALL">{t("trackersPage.filters.allThirdParties")}</Option>
           {linkedThirdParties.map(party => (
             <Option key={party.id} value={party.id}>{party.name}</Option>
           ))}
@@ -236,28 +236,28 @@ export default function CookieBannerTrackersPage({
           value={trackerTypeFilter ?? "ALL"}
           onValueChange={handleTrackerTypeFilterChange}
         >
-          <Option value="ALL">{__("All types")}</Option>
-          <Option value="COOKIE">{__("Cookie")}</Option>
-          <Option value="LOCAL_STORAGE">{__("localStorage")}</Option>
-          <Option value="SESSION_STORAGE">{__("sessionStorage")}</Option>
-          <Option value="INDEXED_DB">{__("IndexedDB")}</Option>
-          <Option value="CACHE_STORAGE">{__("Cache Storage")}</Option>
+          <Option value="ALL">{t("trackersPage.types.all")}</Option>
+          <Option value="COOKIE">{t("trackersPage.types.cookie")}</Option>
+          <Option value="LOCAL_STORAGE">{t("trackersPage.types.localStorage")}</Option>
+          <Option value="SESSION_STORAGE">{t("trackersPage.types.sessionStorage")}</Option>
+          <Option value="INDEXED_DB">{t("trackersPage.types.indexedDb")}</Option>
+          <Option value="CACHE_STORAGE">{t("trackersPage.types.cacheStorage")}</Option>
         </Select>
         <Select
           value={sourceFilter ?? "ALL"}
           onValueChange={handleSourceFilterChange}
         >
-          <Option value="ALL">{__("All sources")}</Option>
-          <Option value="SCRIPT">{__("Script")}</Option>
-          <Option value="PRE_EXISTING">{__("Pre-existing")}</Option>
-          <Option value="HTTP">{__("HTTP")}</Option>
-          <Option value="EXTENSION">{__("Extension")}</Option>
+          <Option value="ALL">{t("trackersPage.sources.all")}</Option>
+          <Option value="SCRIPT">{t("trackersPage.sources.script")}</Option>
+          <Option value="PRE_EXISTING">{t("trackersPage.sources.preExisting")}</Option>
+          <Option value="HTTP">{t("trackersPage.sources.http")}</Option>
+          <Option value="EXTENSION">{t("trackersPage.sources.extension")}</Option>
         </Select>
         <Select
           value={categoryFilter ?? "ALL"}
           onValueChange={handleCategoryFilterChange}
         >
-          <Option value="ALL">{__("All categories")}</Option>
+          <Option value="ALL">{t("trackersPage.filters.allCategories")}</Option>
           {categories.map(category => (
             <Option key={category.id} value={category.id}>{category.name}</Option>
           ))}
@@ -274,12 +274,12 @@ export default function CookieBannerTrackersPage({
               >
                 <Thead>
                   <Tr>
-                    <SortableTh field="NAME">{__("Name")}</SortableTh>
-                    <Th>{__("Third party")}</Th>
-                    <SortableTh field="SOURCE">{__("Source")}</SortableTh>
-                    <Th>{__("Category")}</Th>
-                    <Th>{__("Max Age")}</Th>
-                    <SortableTh field="LAST_MATCHED_AT">{__("Last Matched")}</SortableTh>
+                    <SortableTh field="NAME">{t("trackersPage.columns.name")}</SortableTh>
+                    <Th>{t("trackersPage.columns.thirdParty")}</Th>
+                    <SortableTh field="SOURCE">{t("trackersPage.columns.source")}</SortableTh>
+                    <Th>{t("trackersPage.columns.category")}</Th>
+                    <Th>{t("trackersPage.columns.maxAge")}</Th>
+                    <SortableTh field="LAST_MATCHED_AT">{t("trackersPage.columns.lastMatched")}</SortableTh>
                     <Th className="w-px" />
                   </Tr>
                 </Thead>
@@ -298,10 +298,10 @@ export default function CookieBannerTrackersPage({
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {__("No tracker patterns")}
+                    {t("trackersPage.empty.title")}
                   </h3>
                   <p className="text-txt-tertiary">
-                    {__("No cookie patterns have been detected yet. Patterns will appear here when detected.")}
+                    {t("trackersPage.empty.description")}
                   </p>
                 </div>
               </Card>

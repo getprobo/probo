@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Spinner } from "@probo/ui";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery,
   useMutation, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
@@ -73,7 +73,7 @@ export function SCIMSettingsPage(props: {
   queryRef: PreloadedQuery<SCIMSettingsPageQuery>;
 }) {
   const { queryRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const connectorId = searchParams.get("connector_id");
   const mutationTriggeredRef = useRef(false);
@@ -168,12 +168,10 @@ export function SCIMSettingsPage(props: {
 
       {showManualScimSection && (
         <div className="space-y-4">
-          <h2 className="text-base font-medium">{__("Manual SCIM")}</h2>
+          <h2 className="text-base font-medium">{t("scimSettingsPage.manualScim.title")}</h2>
           {!hasManualScim && (
             <p className="text-sm text-txt-secondary">
-              {__(
-                "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider.",
-              )}
+              {t("scimSettingsPage.manualScim.description")}
             </p>
           )}
           <SCIMConfiguration fKey={organization} />
@@ -183,7 +181,7 @@ export function SCIMSettingsPage(props: {
       {showProvisioningEvents && (
         <div className="space-y-4">
           <h2 className="text-base font-medium">
-            {__("Provisioning Event History")}
+            {t("scimSettingsPage.provisioningEventHistory")}
           </h2>
           <SCIMEventList fKey={organization.scimConfiguration} />
         </div>

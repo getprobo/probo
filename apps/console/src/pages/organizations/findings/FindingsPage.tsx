@@ -19,15 +19,11 @@
 // SOFTWARE.
 
 import {
-  formatDate,
   formatError,
-  getStatusLabel,
-  getStatusOptions,
   getStatusVariant,
-  sprintf,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Avatar,
@@ -52,6 +48,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { Suspense, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   graphql,
@@ -175,10 +172,10 @@ interface FindingsPageProps {
 }
 
 export default function FindingsPage({ queryRef }: FindingsPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
 
-  usePageTitle(__("Findings"));
+  usePageTitle(t("findingsPage.pageTitle"));
 
   const navigate = useNavigate();
   const organization = usePreloadedQuery<FindingsPageListQuery>(findingsPageQuery, queryRef);
@@ -271,8 +268,8 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Findings")}
-        description={__("Manage your organization's findings.")}
+        title={t("findingsPage.title")}
+        description={t("findingsPage.description")}
       >
         <div className="flex gap-2">
           {organization.node.findingsDocument?.id && (
@@ -281,7 +278,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
                 to={`/organizations/${organizationId}/documents/${organization.node.findingsDocument.id}`}
               >
                 <IconPageTextLine size={16} />
-                {__("Document")}
+                {t("findingsPage.actions.document")}
               </Link>
             </Button>
           )}
@@ -296,7 +293,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
               }}
             >
               <Button variant="secondary" icon={IconUpload}>
-                {__("Publish")}
+                {t("findingsPage.actions.publish")}
               </Button>
             </PublishFindingListDialog>
           )}
@@ -305,7 +302,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
               organizationId={organizationId}
               connectionIds={createConnectionIds}
             >
-              <Button icon={IconPlusLarge}>{__("Add finding")}</Button>
+              <Button icon={IconPlusLarge}>{t("findingsPage.actions.add")}</Button>
             </CreateFindingDialog>
           )}
         </div>
@@ -316,20 +313,20 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
           value={kindFilter ?? "ALL"}
           onValueChange={handleKindFilterChange}
         >
-          <Option value="ALL">{__("All kinds")}</Option>
-          <Option value="MINOR_NONCONFORMITY">{__("Minor nonconformity")}</Option>
-          <Option value="MAJOR_NONCONFORMITY">{__("Major nonconformity")}</Option>
-          <Option value="OBSERVATION">{__("Observation")}</Option>
-          <Option value="EXCEPTION">{__("Exception")}</Option>
+          <Option value="ALL">{t("findingsPage.filters.allKinds")}</Option>
+          <Option value="MINOR_NONCONFORMITY">{t("findingsPage.kinds.minorNonconformity")}</Option>
+          <Option value="MAJOR_NONCONFORMITY">{t("findingsPage.kinds.majorNonconformity")}</Option>
+          <Option value="OBSERVATION">{t("findingsPage.kinds.observation")}</Option>
+          <Option value="EXCEPTION">{t("findingsPage.kinds.exception")}</Option>
         </Select>
         <Select
           value={statusFilter ?? "ALL"}
           onValueChange={handleStatusFilterChange}
         >
-          <Option value="ALL">{__("All statuses")}</Option>
-          {getStatusOptions(__).map(opt => (
-            <Option key={opt.value} value={opt.value}>
-              {opt.label}
+          <Option value="ALL">{t("findingsPage.filters.allStatuses")}</Option>
+          {(["OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"] as const).map(status => (
+            <Option key={status} value={status}>
+              {t(`findingsPage.status.${status.toLowerCase()}`)}
             </Option>
           ))}
         </Select>
@@ -337,12 +334,12 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
           value={priorityFilter ?? "ALL"}
           onValueChange={handlePriorityFilterChange}
         >
-          <Option value="ALL">{__("All priorities")}</Option>
-          <Option value="LOW">{__("Low")}</Option>
-          <Option value="MEDIUM">{__("Medium")}</Option>
-          <Option value="HIGH">{__("High")}</Option>
+          <Option value="ALL">{t("findingsPage.filters.allPriorities")}</Option>
+          <Option value="LOW">{t("findingsPage.priority.low")}</Option>
+          <Option value="MEDIUM">{t("findingsPage.priority.medium")}</Option>
+          <Option value="HIGH">{t("findingsPage.priority.high")}</Option>
         </Select>
-        <Suspense fallback={<Select loading placeholder={__("Loading...")} />}>
+        <Suspense fallback={<Select loading placeholder={t("findingsPage.loading")} />}>
           <OwnerFilterSelect
             organizationId={organizationId}
             value={ownerFilter}
@@ -358,14 +355,14 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
                 <Table>
                   <Thead>
                     <Tr>
-                      <Th>{__("Kind")}</Th>
-                      <Th>{__("Reference ID")}</Th>
-                      <Th>{__("Description")}</Th>
-                      <Th>{__("Status")}</Th>
-                      <Th>{__("Priority")}</Th>
-                      <Th>{__("Owner")}</Th>
-                      <Th>{__("Due Date")}</Th>
-                      {hasAnyAction && <Th>{__("Actions")}</Th>}
+                      <Th>{t("findingsPage.columns.kind")}</Th>
+                      <Th>{t("findingsPage.columns.referenceId")}</Th>
+                      <Th>{t("findingsPage.columns.description")}</Th>
+                      <Th>{t("findingsPage.columns.status")}</Th>
+                      <Th>{t("findingsPage.columns.priority")}</Th>
+                      <Th>{t("findingsPage.columns.owner")}</Th>
+                      <Th>{t("findingsPage.columns.dueDate")}</Th>
+                      {hasAnyAction && <Th>{t("findingsPage.columns.actions")}</Th>}
                     </Tr>
                   </Thead>
                   <Tbody>
@@ -387,7 +384,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
                       onClick={() => loadNext(10)}
                       disabled={isLoadingNext}
                     >
-                      {isLoadingNext ? __("Loading...") : __("Load more")}
+                      {isLoadingNext ? t("findingsPage.loading") : t("findingsPage.actions.loadMore")}
                     </Button>
                   </div>
                 )}
@@ -397,10 +394,10 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {__("No findings yet")}
+                    {t("findingsPage.empty.title")}
                   </h3>
                   <p className="text-txt-tertiary mb-4">
-                    {__("Create your first finding to get started.")}
+                    {t("findingsPage.empty.description")}
                   </p>
                 </div>
               </Card>
@@ -408,21 +405,6 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
       </div>
     </div>
   );
-}
-
-function getKindLabel(kind: string, __: (s: string) => string): string {
-  switch (kind) {
-    case "MINOR_NONCONFORMITY":
-      return __("Minor nonconformity");
-    case "MAJOR_NONCONFORMITY":
-      return __("Major nonconformity");
-    case "OBSERVATION":
-      return __("Observation");
-    case "EXCEPTION":
-      return __("Exception");
-    default:
-      return kind;
-  }
 }
 
 type FindingRowProps = {
@@ -434,7 +416,7 @@ type FindingRowProps = {
 function FindingRow(props: FindingRowProps) {
   const finding = useFragment(findingRowFragment, props.findingKey);
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const [deleteFinding] = useMutation<FindingsPageDeleteMutation>(deleteFindingMutation);
   const { toast } = useToast();
   const confirm = useConfirm();
@@ -453,17 +435,17 @@ function FindingRow(props: FindingRowProps) {
             onCompleted(_, error) {
               if (error) {
                 toast({
-                  title: __("Error"),
+                  title: t("findingsPage.errors.title"),
                   description: formatError(
-                    __("Failed to delete finding"),
+                    t("findingsPage.errors.delete"),
                     error,
                   ),
                   variant: "error",
                 });
               } else {
                 toast({
-                  title: __("Success"),
-                  description: __("Finding deleted successfully"),
+                  title: t("findingsPage.messages.successTitle"),
+                  description: t("findingsPage.messages.deleted"),
                   variant: "success",
                 });
               }
@@ -471,9 +453,9 @@ function FindingRow(props: FindingRowProps) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("findingsPage.errors.title"),
                 description: formatError(
-                  __("Failed to delete finding"),
+                  t("findingsPage.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -483,12 +465,9 @@ function FindingRow(props: FindingRowProps) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the finding %s. This action cannot be undone.",
-          ),
-          finding.referenceId,
-        ),
+        message: t("findingsPage.deleteConfirmation", {
+          referenceId: finding.referenceId,
+        }),
       },
     );
   };
@@ -499,7 +478,7 @@ function FindingRow(props: FindingRowProps) {
     <Tr to={detailsUrl}>
       <Td>
         <Badge variant="neutral">
-          {getKindLabel(finding.kind, __)}
+          {t(`findingsPage.kinds.${finding.kind.toLowerCase()}`)}
         </Badge>
       </Td>
       <Td>
@@ -508,13 +487,13 @@ function FindingRow(props: FindingRowProps) {
       <Td>
         <div className="min-w-0">
           <p className="whitespace-pre-wrap break-words">
-            {finding.description || __("No description")}
+            {finding.description || t("findingsPage.noDescription")}
           </p>
         </div>
       </Td>
       <Td>
         <Badge variant={getStatusVariant(finding.status)}>
-          {getStatusLabel(finding.status)}
+          {t(`findingsPage.status.${finding.status.toLowerCase()}`)}
         </Badge>
       </Td>
       <Td>
@@ -528,10 +507,10 @@ function FindingRow(props: FindingRowProps) {
           }
         >
           {finding.priority === "HIGH"
-            ? __("High")
+            ? t("findingsPage.priority.high")
             : finding.priority === "MEDIUM"
-              ? __("Medium")
-              : __("Low")}
+              ? t("findingsPage.priority.medium")
+              : t("findingsPage.priority.low")}
         </Badge>
       </Td>
       <Td>{finding.owner?.fullName || "-"}</Td>
@@ -539,11 +518,11 @@ function FindingRow(props: FindingRowProps) {
         {finding.dueDate
           ? (
               <time dateTime={finding.dueDate}>
-                {formatDate(finding.dueDate)}
+                {dateFormat(i18n.language, finding.dueDate)}
               </time>
             )
           : (
-              <span className="text-txt-tertiary">{__("No due date")}</span>
+              <span className="text-txt-tertiary">{t("findingsPage.noDueDate")}</span>
             )}
       </Td>
       {props.hasAnyAction && (
@@ -555,7 +534,7 @@ function FindingRow(props: FindingRowProps) {
                 variant="danger"
                 onSelect={handleDelete}
               >
-                {__("Delete")}
+                {t("findingsPage.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>
@@ -576,12 +555,12 @@ function OwnerFilterSelect({
   value,
   onChange,
 }: OwnerFilterSelectProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const people = usePeople(organizationId, { contractEnded: false });
 
   return (
     <Select value={value ?? "ALL"} onValueChange={onChange}>
-      <Option value="ALL">{__("All owners")}</Option>
+      <Option value="ALL">{t("findingsPage.filters.allOwners")}</Option>
       {people.map(p => (
         <Option key={p.id} value={p.id}>
           <Avatar name={p.fullName} />

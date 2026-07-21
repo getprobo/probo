@@ -12,7 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -23,6 +22,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ChangeEventHandler, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -67,7 +67,7 @@ export interface CompliancePageVisualIdentitySectionProps {
 }
 
 export function CompliancePageVisualIdentitySection(props: CompliancePageVisualIdentitySectionProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const { toast } = useToast();
 
   const compliancePage = useFragment(compliancePageFragment, props.compliancePageRef);
@@ -79,8 +79,8 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
   const [updateBrand, isUpdating] = useMutation<CompliancePageVisualIdentitySection_updateMutation>(
     updateMutation,
     {
-      successMessage: __("Compliance page branding updated successfully"),
-      errorToast: __("Failed to update compliance page branding"),
+      successMessage: t("brandPage.messages.updated"),
+      errorToast: t("brandPage.errors.update"),
     },
   );
 
@@ -97,8 +97,8 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
   const isTooLarge = (file: File) => {
     if (file.size > maxLogoBytes) {
       toast({
-        title: __("File size too large"),
-        description: __("The file size is too large. Please upload a file smaller than 5MB."),
+        title: t("brandPage.errors.fileTooLarge.title"),
+        description: t("brandPage.errors.fileTooLarge.description"),
         variant: "error",
       });
       return true;
@@ -183,9 +183,9 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-medium">{__("Visual identity")}</h2>
+          <h2 className="text-base font-medium">{t("brandPage.visualIdentity.title")}</h2>
           <p className="text-sm text-txt-tertiary">
-            {__("Square logos displayed on your public compliance page.")}
+            {t("brandPage.visualIdentity.description")}
           </p>
         </div>
         {isUpdating && <Spinner />}
@@ -194,9 +194,9 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
       <Card padded className="space-y-4">
         <div className="flex gap-6 items-start">
           <div className="flex-1">
-            <Label>{__("Logo")}</Label>
+            <Label>{t("brandPage.logo.label")}</Label>
             <p className="text-sm text-txt-tertiary mb-3">
-              {__("Upload a square logo for your public compliance page.")}
+              {t("brandPage.logo.description")}
             </p>
 
             <div className="flex items-center gap-4">
@@ -205,14 +205,14 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                     <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
                       <img
                         src={currentLogoUrl}
-                        alt={__("Compliance page logo")}
+                        alt={t("brandPage.logo.alt")}
                         className="h-16 max-w-xs object-contain"
                       />
                     </div>
                   )
                 : (
                     <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-surface-secondary text-xs text-txt-tertiary">
-                      {__("No logo")}
+                      {t("brandPage.actions.noLogo")}
                     </div>
                   )}
               <div className="space-y-1">
@@ -223,14 +223,14 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                   accept={acceptImageMimeTypes}
                 >
                   {isUpdating
-                    ? __("Uploading...")
+                    ? t("brandPage.actions.uploading")
                     : currentLogoUrl
-                      ? __("Change logo")
-                      : __("Upload logo")}
+                      ? t("brandPage.actions.changeLogo")
+                      : t("brandPage.actions.uploadLogo")}
                 </FileButton>
                 {!currentLogoUrl && (
                   <p className="text-xs text-txt-tertiary">
-                    {__("Square format. PNG, JPG, SVG, or WEBP up to 5MB")}
+                    {t("brandPage.logo.uploadDescription")}
                   </p>
                 )}
               </div>
@@ -241,16 +241,16 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                   icon={IconTrashCan}
                   onClick={() => void handleRemoveLogo()}
                   disabled={disabled}
-                  aria-label={__("Remove logo")}
+                  aria-label={t("brandPage.actions.removeLogo")}
                   className="text-red-600 hover:text-red-700"
                 />
               )}
             </div>
           </div>
           <div className="flex-1">
-            <Label>{__("Dark mode logo")}</Label>
+            <Label>{t("brandPage.darkLogo.label")}</Label>
             <p className="text-sm text-txt-tertiary mb-3">
-              {__("Upload a square logo for use when dark mode is enabled.")}
+              {t("brandPage.darkLogo.description")}
             </p>
 
             <div className="flex items-center gap-4">
@@ -259,14 +259,14 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                     <div className="border border-border-solid rounded-md p-4 bg-gray-900">
                       <img
                         src={currentDarkLogoUrl}
-                        alt={__("Compliance page dark logo")}
+                        alt={t("brandPage.darkLogo.alt")}
                         className="h-16 max-w-xs object-contain"
                       />
                     </div>
                   )
                 : (
                     <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-gray-900 text-xs text-txt-tertiary">
-                      {__("No logo")}
+                      {t("brandPage.actions.noLogo")}
                     </div>
                   )}
               <div className="space-y-1">
@@ -277,14 +277,14 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                   accept={acceptImageMimeTypes}
                 >
                   {isUpdating
-                    ? __("Uploading...")
+                    ? t("brandPage.actions.uploading")
                     : currentDarkLogoUrl
-                      ? __("Change dark logo")
-                      : __("Upload dark logo")}
+                      ? t("brandPage.actions.changeDarkLogo")
+                      : t("brandPage.actions.uploadDarkLogo")}
                 </FileButton>
                 {!currentDarkLogoUrl && (
                   <p className="text-xs text-txt-tertiary">
-                    {__("Square format. PNG, JPG, SVG, or WEBP up to 5MB")}
+                    {t("brandPage.darkLogo.uploadDescription")}
                   </p>
                 )}
               </div>
@@ -295,7 +295,7 @@ export function CompliancePageVisualIdentitySection(props: CompliancePageVisualI
                   icon={IconTrashCan}
                   onClick={() => void handleRemoveDarkLogo()}
                   disabled={disabled}
-                  aria-label={__("Remove dark logo")}
+                  aria-label={t("brandPage.actions.removeDarkLogo")}
                   className="text-red-600 hover:text-red-700"
                 />
               )}

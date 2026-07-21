@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -31,6 +30,7 @@ import {
   TrButton,
 } from "@probo/ui";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -84,7 +84,7 @@ type Props<Params> = {
  * Reusable component that displays a list of linked controls
  */
 export function LinkedControlsCard<Params>(props: Props<Params>) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const controls = props.controls;
 
   const onDetach = (controlId: string) => {
@@ -118,8 +118,8 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
     <SortableTable refetch={props.refetch}>
       <Thead>
         <Tr>
-          <SortableTh field="SECTION_TITLE">{__("Reference")}</SortableTh>
-          <Th>{__("Name")}</Th>
+          <SortableTh field="SECTION_TITLE">{t("linkedControlsCard.columns.reference")}</SortableTh>
+          <Th>{t("linkedControlsCard.columns.name")}</Th>
           {!props.readOnly && <Th></Th>}
         </Tr>
       </Thead>
@@ -130,7 +130,7 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
               colSpan={props.readOnly ? 2 : 3}
               className="text-center text-txt-secondary"
             >
-              {__("No controls linked")}
+              {t("linkedControlsCard.empty")}
             </Td>
           </Tr>
         )}
@@ -151,7 +151,7 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
             onLink={onAttach}
             onUnlink={onDetach}
           >
-            <TrButton colspan={3}>{__("Link control")}</TrButton>
+            <TrButton colspan={3}>{t("linkedControlsCard.actions.link")}</TrButton>
           </LinkedControlsDialog>
         )}
       </Tbody>
@@ -167,7 +167,7 @@ function ControlRow(props: {
 }) {
   const control = useFragment(linkedControlFragment, props.control);
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Tr
@@ -188,7 +188,7 @@ function ControlRow(props: {
             onClick={() => props.onClick(control.id)}
             icon={IconTrashCan}
           >
-            {__("Unlink")}
+            {t("linkedControlsCard.actions.unlink")}
           </Button>
         </Td>
       )}

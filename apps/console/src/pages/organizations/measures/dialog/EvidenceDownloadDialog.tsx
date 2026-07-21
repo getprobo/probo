@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { downloadFile } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Breadcrumb, Dialog, DialogContent, Spinner } from "@probo/ui";
 import { Suspense, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 
 import type { EvidenceGraphFileQuery } from "#/__generated__/core/EvidenceGraphFileQuery.graphql";
@@ -32,7 +32,7 @@ type Props = {
   onClose: () => void;
 };
 export function EvidenceDownloadDialog({ evidenceId, onClose }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Dialog
@@ -41,7 +41,7 @@ export function EvidenceDownloadDialog({ evidenceId, onClose }: Props) {
       defaultOpen
       title={(
         <Breadcrumb
-          items={[{ label: __("Evidences") }, { label: __("Download") }]}
+          items={[{ label: t("evidenceDownloadDialog.breadcrumb.evidences") }, { label: t("evidenceDownloadDialog.breadcrumb.download") }]}
         />
       )}
     >
@@ -50,8 +50,7 @@ export function EvidenceDownloadDialog({ evidenceId, onClose }: Props) {
           fallback={(
             <div className="flex gap-2 justify-center">
               <Spinner />
-              {__("Generating download link")}
-              ...
+              {t("evidenceDownloadDialog.generating")}
             </div>
           )}
         >

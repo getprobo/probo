@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { useRefSync } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { type ReactNode, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useInView } from "react-intersection-observer";
 
 import { Spinner } from "../Spinner/Spinner";
@@ -32,7 +32,7 @@ type Props = {
 };
 
 export function InfiniteScrollTrigger({ children, onView, loading }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { ref, inView } = useInView({
     threshold: 0,
   });
@@ -49,7 +49,7 @@ export function InfiniteScrollTrigger({ children, onView, loading }: Props) {
       {children ?? (
         <>
           <Spinner size={16} />
-          {__("Loading")}
+          {t("ui.loading")}
         </>
       )}
     </div>

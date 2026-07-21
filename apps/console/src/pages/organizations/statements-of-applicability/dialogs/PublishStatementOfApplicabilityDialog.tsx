@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -68,7 +68,7 @@ export function PublishStatementOfApplicabilityDialog({
   defaultApproverIds = [],
   onPublished,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
@@ -109,10 +109,10 @@ export function PublishStatementOfApplicabilityDialog({
         const documentId = response.publishStatementOfApplicability?.documentEdge?.node?.id;
         if (documentId) {
           toast({
-            title: __("Success"),
+            title: t("publishStatementOfApplicabilityDialog.messages.success"),
             description: hasApprovers
-              ? __("Approval requested successfully.")
-              : __("Statement of Applicability published successfully."),
+              ? t("publishStatementOfApplicabilityDialog.messages.approvalRequested")
+              : t("publishStatementOfApplicabilityDialog.messages.published"),
             variant: "success",
           });
           dialogRef.current?.close();
@@ -122,9 +122,9 @@ export function PublishStatementOfApplicabilityDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("publishStatementOfApplicabilityDialog.messages.error"),
           description: formatError(
-            __("Failed to publish Statement of Applicability"),
+            t("publishStatementOfApplicabilityDialog.errors.publish"),
             error,
           ),
           variant: "error",
@@ -138,20 +138,20 @@ export function PublishStatementOfApplicabilityDialog({
       className="max-w-xl"
       ref={dialogRef}
       trigger={children}
-      title={__("Publish Statement of Applicability")}
+      title={t("publishStatementOfApplicabilityDialog.title")}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <div className="space-y-4">
             <p className="text-sm text-txt-secondary">
-              {__("Select approvers to request approval before publishing, or publish directly without approvers.")}
+              {t("publishStatementOfApplicabilityDialog.description")}
             </p>
             <PeopleMultiSelectField
               name="approverIds"
-              label={__("Approvers")}
+              label={t("publishStatementOfApplicabilityDialog.fields.approvers")}
               control={control}
               organizationId={organizationId}
-              placeholder={__("Add approvers...")}
+              placeholder={t("publishStatementOfApplicabilityDialog.placeholders.approvers")}
             />
           </div>
         </DialogContent>
@@ -163,7 +163,7 @@ export function PublishStatementOfApplicabilityDialog({
             onClick={() => { minorRef.current = true; }}
             disabled={isPublishing}
           >
-            {__("Publish as minor")}
+            {t("publishStatementOfApplicabilityDialog.actions.publishMinor")}
           </Button>
           <Button
             type="submit"
@@ -171,7 +171,7 @@ export function PublishStatementOfApplicabilityDialog({
             onClick={() => { minorRef.current = false; }}
             disabled={isPublishing}
           >
-            {hasApprovers ? __("Request approval") : __("Publish")}
+            {hasApprovers ? t("publishStatementOfApplicabilityDialog.actions.requestApproval") : t("publishStatementOfApplicabilityDialog.actions.publish")}
           </Button>
         </DialogFooter>
       </form>

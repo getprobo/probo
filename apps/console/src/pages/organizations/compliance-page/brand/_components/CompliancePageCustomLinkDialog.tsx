@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { detectSocialName } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -24,6 +23,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, readInlineData } from "relay-runtime";
 import { z } from "zod";
 
@@ -80,7 +80,7 @@ export interface CompliancePageCustomLinkDialogRef {
 
 export const CompliancePageCustomLinkDialog = forwardRef<CompliancePageCustomLinkDialogRef>(
   function CompliancePageCustomLinkDialog(_, ref) {
-    const { __ } = useTranslate();
+    const { t } = useTranslation("organizations/compliance-page");
     const dialogRef = useDialogRef();
     const [mode, setMode] = useState<"create" | "edit">("create");
     const [compliancePageId, setCompliancePageId] = useState("");
@@ -88,18 +88,18 @@ export const CompliancePageCustomLinkDialog = forwardRef<CompliancePageCustomLin
     const [editId, setEditId] = useState<string | null>(null);
 
     const schema = z.object({
-      name: z.string().min(1, __("Name is required")),
-      url: z.string().url(__("Please enter a valid URL")),
+      name: z.string().min(1, t("externalUrls.validation.nameRequired")),
+      url: z.string().url(t("externalUrls.validation.urlInvalid")),
     });
 
     const [create, isCreating] = useMutation<CompliancePageCustomLinkDialog_createMutation>(
       createMutation,
-      { successMessage: __("Link added successfully."), errorToast: __("Failed to add link.") },
+      { successMessage: t("externalUrls.messages.created"), errorToast: t("externalUrls.errors.create") },
     );
 
     const [update, isUpdating] = useMutation<CompliancePageCustomLinkDialog_updateMutation>(
       updateMutation,
-      { successMessage: __("Link updated successfully."), errorToast: __("Failed to update link.") },
+      { successMessage: t("externalUrls.messages.updated"), errorToast: t("externalUrls.errors.update") },
     );
 
     const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useFormWithSchema(schema, {
@@ -166,7 +166,7 @@ export const CompliancePageCustomLinkDialog = forwardRef<CompliancePageCustomLin
     };
 
     const isSubmitting = isCreating || isUpdating;
-    const title = mode === "create" ? __("Add link") : __("Edit link");
+    const title = mode === "create" ? t("externalUrls.dialog.titleCreate") : t("externalUrls.dialog.titleEdit");
 
     return (
       <Dialog ref={dialogRef} title={title} onClose={() => reset()}>
@@ -174,7 +174,7 @@ export const CompliancePageCustomLinkDialog = forwardRef<CompliancePageCustomLin
           <DialogContent padded className="space-y-6">
             <Field
               {...register("url", { onChange: handleUrlChange })}
-              label={__("URL")}
+              label={t("externalUrls.fields.url")}
               type="url"
               required
               placeholder="https://example.com"
@@ -182,16 +182,16 @@ export const CompliancePageCustomLinkDialog = forwardRef<CompliancePageCustomLin
             />
             <Field
               {...register("name", { onChange: () => setNameAutoDetected(false) })}
-              label={__("Name")}
+              label={t("externalUrls.fields.name")}
               type="text"
               required
-              placeholder={__("e.g. Twitter, LinkedIn")}
+              placeholder={t("externalUrls.fields.namePlaceholder")}
               error={errors.name?.message}
             />
           </DialogContent>
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? Spinner : undefined}>
-              {mode === "create" ? __("Add link") : __("Save changes")}
+              {mode === "create" ? t("externalUrls.actions.add") : t("externalUrls.actions.save")}
             </Button>
           </DialogFooter>
         </form>

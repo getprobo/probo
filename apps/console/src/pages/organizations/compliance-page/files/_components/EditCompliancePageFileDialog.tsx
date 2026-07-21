@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Dialog, DialogContent, DialogFooter, Field, Spinner } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -44,11 +44,11 @@ export function EditCompliancePageFileDialog(props: {
 }) {
   const { file, onClose } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const editSchema = z.object({
-    name: z.string().min(1, __("Name is required")),
-    category: z.string().min(1, __("Category is required")),
+    name: z.string().min(1, t("editFileDialog.validation.nameRequired")),
+    category: z.string().min(1, t("editFileDialog.validation.categoryRequired")),
   });
   const editForm = useFormWithSchema(editSchema, {
     defaultValues: { name: file.name, category: file.category },
@@ -57,8 +57,8 @@ export function EditCompliancePageFileDialog(props: {
   const [updateFile, isUpdating] = useMutation<EditCompliancePageFileDialogMutation>(
     updateCompliancePageFileMutation,
     {
-      successMessage: "File updated successfully",
-      errorToast: "Failed to update file",
+      successMessage: t("editFileDialog.messages.updated"),
+      errorToast: t("editFileDialog.errors.update"),
     },
   );
 
@@ -77,17 +77,17 @@ export function EditCompliancePageFileDialog(props: {
   };
 
   return (
-    <Dialog defaultOpen={true} title={__("Edit File")} onClose={onClose}>
+    <Dialog defaultOpen={true} title={t("editFileDialog.title")} onClose={onClose}>
       <form onSubmit={e => void editForm.handleSubmit(handleUpdate)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={__("Name")}
+            label={t("editFileDialog.fields.name")}
             type="text"
             {...editForm.register("name")}
             error={editForm.formState.errors.name?.message}
           />
           <Field
-            label={__("Category")}
+            label={t("editFileDialog.fields.category")}
             type="text"
             {...editForm.register("category")}
             error={editForm.formState.errors.category?.message}
@@ -96,7 +96,7 @@ export function EditCompliancePageFileDialog(props: {
         <DialogFooter>
           <Button type="submit" disabled={isUpdating}>
             {isUpdating && <Spinner />}
-            {__("Save")}
+            {t("editFileDialog.actions.save")}
           </Button>
         </DialogFooter>
       </form>

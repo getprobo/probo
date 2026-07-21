@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPlusLarge,
@@ -31,6 +30,7 @@ import {
 } from "@probo/ui";
 import type { ComponentProps } from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery, useRefetchableFragment } from "react-relay";
 
 import type { ThirdPartyRiskAssessmentPageFragment$key } from "#/__generated__/core/ThirdPartyRiskAssessmentPageFragment.graphql";
@@ -111,22 +111,22 @@ export default function ThirdPartyRiskAssessmentPage(
   >(riskAssessmentsFragment, queryData.node);
 
   const assessments = data.riskAssessments.edges.map(edge => edge.node);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  usePageTitle(data.name + " - " + __("Risk Assessments"));
+  usePageTitle(t("thirdPartyRiskAssessmentPage.pageTitle", { name: data.name }));
 
   if (assessments.length === 0) {
     return (
       <div className="text-center text-sm py-6 text-txt-secondary flex flex-col items-center gap-2">
-        {__("No risk assessments found")}
+        {t("thirdPartyRiskAssessmentPage.empty")}
         {data.canCreateRiskAssessment && (
           <CreateRiskAssessmentDialog
             thirdPartyId={data.id}
             connection={data.riskAssessments.__id}
           >
             <Button icon={IconPlusLarge} variant="secondary">
-              {__("Add Risk Assessment")}
+              {t("thirdPartyRiskAssessmentPage.actions.add")}
             </Button>
           </CreateRiskAssessmentDialog>
         )}
@@ -142,10 +142,10 @@ export default function ThirdPartyRiskAssessmentPage(
         >
           <Thead>
             <Tr>
-              <SortableTh field="CREATED_AT">{__("Created At")}</SortableTh>
-              <SortableTh field="EXPIRES_AT">{__("Expires")}</SortableTh>
-              <Th>{__("Data sensitivity")}</Th>
-              <Th>{__("Business impact")}</Th>
+              <SortableTh field="CREATED_AT">{t("thirdPartyRiskAssessmentPage.columns.createdAt")}</SortableTh>
+              <SortableTh field="EXPIRES_AT">{t("thirdPartyRiskAssessmentPage.columns.expires")}</SortableTh>
+              <Th>{t("thirdPartyRiskAssessmentPage.columns.dataSensitivity")}</Th>
+              <Th>{t("thirdPartyRiskAssessmentPage.columns.businessImpact")}</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -155,7 +155,7 @@ export default function ThirdPartyRiskAssessmentPage(
                 connection={data.riskAssessments.__id}
               >
                 <TrButton colspan={4} onClick={() => {}}>
-                  {__("Add Risk Assessment")}
+                  {t("thirdPartyRiskAssessmentPage.actions.add")}
                 </TrButton>
               </CreateRiskAssessmentDialog>
             )}

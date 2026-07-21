@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getDocumentTypeLabel } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
@@ -28,6 +27,10 @@ type Props = {
 };
 
 export function DocumentTypeBadge({ type }: Props) {
-  const { __ } = useTranslate();
-  return <Badge variant="neutral">{getDocumentTypeLabel(__, type)}</Badge>;
+  const { t } = useTranslation();
+  return (
+    <Badge variant="neutral">
+      {t(`ui.documentType.${type.toLowerCase()}`)}
+    </Badge>
+  );
 }

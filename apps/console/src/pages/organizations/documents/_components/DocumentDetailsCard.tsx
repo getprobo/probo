@@ -18,10 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { documentClassifications, documentTypes, formatDate, getDocumentClassificationLabel, getDocumentTypeLabel } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { documentClassifications, documentTypes } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Button, Card, IconCheckmark1, IconCrossLargeX, IconPencil, useToast } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -141,7 +142,7 @@ export function DocumentDetailsCard(props: {
     onDocumentUpdated,
   } = props;
 
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
 
   const [isEditingType, setIsEditingType] = useState(false);
@@ -214,15 +215,15 @@ export function DocumentDetailsCard(props: {
         setIsEditingType(false);
         onDocumentUpdated();
         toast({
-          title: __("Success"),
-          description: __("Document type updated successfully"),
+          title: t("documentDetails.messages.successTitle"),
+          description: t("documentDetails.messages.typeUpdated"),
           variant: "success",
         });
       },
       onError: () => {
         toast({
-          title: __("Error"),
-          description: __("Failed to update document type"),
+          title: t("documentDetails.errors.title"),
+          description: t("documentDetails.errors.updateType"),
           variant: "error",
         });
       },
@@ -243,15 +244,15 @@ export function DocumentDetailsCard(props: {
         setIsEditingClassification(false);
         onDocumentUpdated();
         toast({
-          title: __("Success"),
-          description: __("Document classification updated successfully"),
+          title: t("documentDetails.messages.successTitle"),
+          description: t("documentDetails.messages.classificationUpdated"),
           variant: "success",
         });
       },
       onError: () => {
         toast({
-          title: __("Error"),
-          description: __("Failed to update document classification"),
+          title: t("documentDetails.errors.title"),
+          description: t("documentDetails.errors.updateClassification"),
           variant: "error",
         });
       },
@@ -269,15 +270,15 @@ export function DocumentDetailsCard(props: {
       onCompleted: () => {
         setIsEditingApprovers(false);
         toast({
-          title: __("Success"),
-          description: __("Approvers updated successfully"),
+          title: t("documentDetails.messages.successTitle"),
+          description: t("documentDetails.messages.approversUpdated"),
           variant: "success",
         });
       },
       onError: () => {
         toast({
-          title: __("Error"),
-          description: __("Failed to update approvers"),
+          title: t("documentDetails.errors.title"),
+          description: t("documentDetails.errors.updateApprovers"),
           variant: "error",
         });
       },
@@ -289,7 +290,7 @@ export function DocumentDetailsCard(props: {
       <div className="grid grid-cols-3 gap-4">
         <div>
           <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {__("Type")}
+            {t("documentDetails.fields.type")}
           </div>
           {isEditingType
             ? (
@@ -322,7 +323,7 @@ export function DocumentDetailsCard(props: {
             : (
                 <div className="flex items-center gap-2">
                   <div className="text-sm text-txt-primary">
-                    {getDocumentTypeLabel(__, version.documentType)}
+                    {t(`documentDetails.documentTypes.${version.documentType.toLowerCase()}`)}
                   </div>
                   {canEditVersionFields && (
                     <Button
@@ -336,7 +337,7 @@ export function DocumentDetailsCard(props: {
         </div>
         <div>
           <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {__("Classification")}
+            {t("documentDetails.fields.classification")}
           </div>
           {isEditingClassification
             ? (
@@ -369,7 +370,7 @@ export function DocumentDetailsCard(props: {
             : (
                 <div className="flex items-center gap-2">
                   <div className="text-sm text-txt-primary">
-                    {getDocumentClassificationLabel(__, version.classification)}
+                    {t(`documentDetails.classifications.${version.classification.toLowerCase()}`)}
                   </div>
                   {canEditVersionFields && (
                     <Button
@@ -384,7 +385,7 @@ export function DocumentDetailsCard(props: {
         {isLatestVersion && (
           <div>
             <div className="text-xs text-txt-tertiary font-semibold mb-1">
-              {__("Approvers")}
+              {t("documentDetails.fields.approvers")}
             </div>
             {isEditingApprovers
               ? (
@@ -399,7 +400,7 @@ export function DocumentDetailsCard(props: {
                           fullName: a.fullName,
                           emailAddress: a.emailAddress,
                         }))}
-                        placeholder={__("Add approvers...")}
+                        placeholder={t("documentDetails.fields.approversPlaceholder")}
                       />
                     </div>
                     <Button
@@ -423,7 +424,7 @@ export function DocumentDetailsCard(props: {
                     <div className="text-sm text-txt-primary">
                       {document.defaultApprovers.length > 0
                         ? document.defaultApprovers.map(a => a.fullName).join(", ")
-                        : __("None")}
+                        : t("documentDetails.none")}
                     </div>
                     {canEditApprovers && (
                       <Button
@@ -440,7 +441,7 @@ export function DocumentDetailsCard(props: {
       <div className="grid grid-cols-3 gap-4">
         <div>
           <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {__("Version")}
+            {t("documentDetails.fields.version")}
           </div>
           <div className="text-sm text-txt-primary">
             {version.major}
@@ -450,30 +451,30 @@ export function DocumentDetailsCard(props: {
         </div>
         <div>
           <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {__("Last modified")}
+            {t("documentDetails.fields.lastModified")}
           </div>
           <div className="text-sm text-txt-primary">
-            {formatDate(version.updatedAt)}
+            {dateFormat(i18n.language, version.updatedAt)}
           </div>
         </div>
         <div>
           {version.publishedAt && (
             <>
               <div className="text-xs text-txt-tertiary font-semibold mb-1">
-                {__("Published Date")}
+                {t("documentDetails.fields.publishedDate")}
               </div>
               <div className="text-sm text-txt-primary">
-                {formatDate(version.publishedAt)}
+                {dateFormat(i18n.language, version.publishedAt)}
               </div>
             </>
           )}
           {document.archivedAt && (
             <>
               <div className="text-xs text-txt-tertiary font-semibold mb-1">
-                {__("Archived on")}
+                {t("documentDetails.fields.archivedOn")}
               </div>
               <Badge variant="danger" size="md" className="gap-2">
-                {formatDate(document.archivedAt)}
+                {dateFormat(i18n.language, document.archivedAt)}
               </Badge>
             </>
           )}

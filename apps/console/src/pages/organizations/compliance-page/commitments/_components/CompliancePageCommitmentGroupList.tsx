@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconPlusLarge } from "@probo/ui";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -67,7 +67,7 @@ export function CompliancePageCommitmentGroupList(props: {
 }) {
   const { fragmentRef, compliancePortalId, canCreate } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const dialogRef = useRef<CompliancePageCommitmentGroupDialogRef>(null);
 
   const [data, refetch] = useRefetchableFragment<
@@ -77,7 +77,7 @@ export function CompliancePageCommitmentGroupList(props: {
 
   const [updateRank, isReordering] = useMutationWithToasts<CompliancePageCommitmentGroupListUpdateRankMutation>(
     updateRankMutation,
-    { successMessage: __("Order updated successfully"), errorMessage: __("Failed to update order") },
+    { successMessage: t("commitmentGroupList.messages.orderUpdated"), errorMessage: t("commitmentGroupList.errors.updateOrder") },
   );
 
   const onChanged = () => refetch({}, { fetchPolicy: "network-only" });
@@ -100,14 +100,16 @@ export function CompliancePageCommitmentGroupList(props: {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-medium">{__("Security Commitments")}</h2>
+          <h2 className="text-base font-medium">
+            {t("commitmentGroupList.title")}
+          </h2>
           <p className="text-sm text-txt-tertiary">
-            {__("Group commitment cards into sections shown on your compliance page")}
+            {t("commitmentGroupList.description")}
           </p>
         </div>
         {canCreate && (
           <Button icon={IconPlusLarge} onClick={() => dialogRef.current?.openCreate(compliancePortalId)}>
-            {__("Add Group")}
+            {t("commitmentGroupList.actions.addGroup")}
           </Button>
         )}
       </div>
@@ -115,7 +117,7 @@ export function CompliancePageCommitmentGroupList(props: {
       {groups.length === 0
         ? (
             <Card className="p-6 text-center text-sm text-txt-secondary">
-              {__("No commitment groups yet")}
+              {t("commitmentGroupList.empty")}
             </Card>
           )
         : (

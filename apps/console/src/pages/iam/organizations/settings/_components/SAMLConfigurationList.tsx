@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { useCopy } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -32,6 +31,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -84,7 +84,7 @@ export function SAMLConfigurationList(props: {
   const { fKey, onEdit, onVerifyDomain } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const confirm = useConfirm();
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -105,8 +105,8 @@ export function SAMLConfigurationList(props: {
     = useMutationWithToasts<SAMLConfigurationList_deleteMutation>(
       deleteMutation,
       {
-        successMessage: "SAML configuration deleted successfully.",
-        errorMessage: "Failed to delete SAML configuration. Please try again.",
+        successMessage: t("samlConfigurationList.messages.deleted"),
+        errorMessage: t("samlConfigurationList.errors.delete"),
       },
     );
 
@@ -131,13 +131,9 @@ export function SAMLConfigurationList(props: {
         });
       },
       {
-        title: __("Delete SAML Configuration"),
-        message: __(
-          "Are you sure you want to delete the SAML configuration for "
-          + config.emailDomain
-          + "? This action cannot be undone.",
-        ),
-        label: __("Delete"),
+        title: t("samlConfigurationList.delete.title"),
+        message: t("samlConfigurationList.delete.description", { domain: config.emailDomain }),
+        label: t("samlConfigurationList.actions.delete"),
         variant: "danger",
       },
     );
@@ -148,12 +144,10 @@ export function SAMLConfigurationList(props: {
       <Card padded>
         <div className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {__("No SAML Configurations")}
+            {t("samlConfigurationList.empty.title")}
           </h3>
           <p className="text-gray-600 mb-6">
-            {__(
-              "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain.",
-            )}
+            {t("samlConfigurationList.empty.description")}
           </p>
         </div>
       </Card>
@@ -164,12 +158,12 @@ export function SAMLConfigurationList(props: {
     <Table>
       <Thead>
         <Tr>
-          <Th>{__("Configuration ID")}</Th>
-          <Th>{__("Email Domain")}</Th>
-          <Th>{__("Domain Status")}</Th>
-          <Th>{__("SAML Status")}</Th>
-          <Th>{__("Enforcement")}</Th>
-          <Th>{__("SSO URL")}</Th>
+          <Th>{t("samlConfigurationList.columns.configurationId")}</Th>
+          <Th>{t("samlConfigurationList.columns.emailDomain")}</Th>
+          <Th>{t("samlConfigurationList.columns.domainStatus")}</Th>
+          <Th>{t("samlConfigurationList.columns.samlStatus")}</Th>
+          <Th>{t("samlConfigurationList.columns.enforcement")}</Th>
+          <Th>{t("samlConfigurationList.columns.ssoUrl")}</Th>
           <Th></Th>
         </Tr>
       </Thead>
@@ -180,9 +174,9 @@ export function SAMLConfigurationList(props: {
               <button
                 onClick={() => copyId(config.id)}
                 className="font-mono text-xs text-gray-600 hover:text-gray-900"
-                title={__("Click to copy")}
+                title={t("samlConfigurationList.actions.clickToCopy")}
               >
-                {copiedId === config.id ? __("Copied!") : config.id}
+                {copiedId === config.id ? t("samlConfigurationList.actions.copied") : config.id}
               </button>
             </Td>
             <Td>
@@ -202,8 +196,8 @@ export function SAMLConfigurationList(props: {
                 }`}
               >
                 {config.domainVerifiedAt
-                  ? __("Verified")
-                  : __("Pending Verification")}
+                  ? t("samlConfigurationList.status.verified")
+                  : t("samlConfigurationList.status.pendingVerification")}
               </span>
             </Td>
             <Td>
@@ -215,8 +209,8 @@ export function SAMLConfigurationList(props: {
                 }`}
               >
                 {config.enforcementPolicy !== "OFF"
-                  ? __("Enabled")
-                  : __("Disabled")}
+                  ? t("samlConfigurationList.status.enabled")
+                  : t("samlConfigurationList.status.disabled")}
               </span>
             </Td>
             <Td>{config.enforcementPolicy}</Td>
@@ -227,7 +221,7 @@ export function SAMLConfigurationList(props: {
                       onClick={() => copy(config.testLoginUrl)}
                       className="text-blue-600 hover:text-blue-800"
                     >
-                      {isCopied ? __("Copied!") : __("Copy URL")}
+                      {isCopied ? t("samlConfigurationList.actions.copied") : t("samlConfigurationList.actions.copyUrl")}
                     </button>
                   )
                 : (
@@ -244,7 +238,7 @@ export function SAMLConfigurationList(props: {
                             variant="secondary"
                             onClick={() => onEdit(config.id)}
                           >
-                            {__("Edit")}
+                            {t("samlConfigurationList.actions.edit")}
                           </Button>
                         )}
                         {config.canDelete && (
@@ -252,7 +246,7 @@ export function SAMLConfigurationList(props: {
                             variant="danger"
                             onClick={() => handleDelete(config)}
                           >
-                            {__("Delete")}
+                            {t("samlConfigurationList.actions.delete")}
                           </Button>
                         )}
                       </>
@@ -265,7 +259,7 @@ export function SAMLConfigurationList(props: {
                             onClick={() =>
                               onVerifyDomain(config.domainVerificationToken!)}
                           >
-                            {__("Verify Domain")}
+                            {t("samlConfigurationList.actions.verifyDomain")}
                           </Button>
                         )}
                         {config.canDelete && (
@@ -273,7 +267,7 @@ export function SAMLConfigurationList(props: {
                             variant="danger"
                             onClick={() => handleDelete(config)}
                           >
-                            {__("Delete")}
+                            {t("samlConfigurationList.actions.delete")}
                           </Button>
                         )}
                       </>

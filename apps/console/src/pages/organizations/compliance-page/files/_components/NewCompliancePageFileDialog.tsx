@@ -27,9 +27,9 @@ import {
   acceptText,
   getCompliancePageVisibilityOptions,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Dialog, DialogContent, DialogFooter, type DialogRef, Dropzone, Field, Option, Spinner } from "@probo/ui";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type DataID, graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -69,13 +69,13 @@ export function NewCompliancePageFileDialog(props: {
   const { connectionId, ref } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const createSchema = z.object({
-    name: z.string().min(1, __("Name is required")),
-    category: z.string().min(1, __("Category is required")),
+    name: z.string().min(1, t("newFileDialog.validation.nameRequired")),
+    category: z.string().min(1, t("newFileDialog.validation.categoryRequired")),
     compliancePortalVisibility: z.enum(["NONE", "PRIVATE", "PUBLIC"]),
   });
   const createForm = useFormWithSchema(createSchema, {
@@ -90,7 +90,7 @@ export function NewCompliancePageFileDialog(props: {
         if (!Object.keys(acceptedFileTypes).includes(file.type)) {
           createForm.setError("root", {
             type: "manual",
-            message: __("File type is not allowed"),
+            message: t("newFileDialog.validation.fileTypeNotAllowed"),
           });
           return;
         }
@@ -102,13 +102,13 @@ export function NewCompliancePageFileDialog(props: {
         }
       }
     },
-    [createForm, __],
+    [createForm, t],
   );
 
   const [createFile, isCreating] = useMutation<NewCompliancePageFileDialog_createMutation>(
     createCompliancePageFileMutation, {
-      successMessage: "File uploaded successfully",
-      errorToast: "Failed to upload file",
+      successMessage: t("newFileDialog.messages.created"),
+      errorToast: t("newFileDialog.errors.create"),
     },
   );
   const handleCreate = async (data: z.infer<typeof createSchema>) => {
@@ -138,11 +138,11 @@ export function NewCompliancePageFileDialog(props: {
   };
 
   return (
-    <Dialog ref={ref} title={__("Add File")}>
+    <Dialog ref={ref} title={t("newFileDialog.title")}>
       <form onSubmit={e => void createForm.handleSubmit(handleCreate)(e)}>
         <DialogContent padded className="space-y-4">
           <Dropzone
-            description={__("Upload file (max 10MB)")}
+            description={t("newFileDialog.uploadDescription")}
             isUploading={isCreating}
             onDrop={handleFileUpload}
             maxSize={10}
@@ -150,9 +150,7 @@ export function NewCompliancePageFileDialog(props: {
           />
           {uploadedFile && (
             <div className="text-sm text-txt-secondary">
-              {__("Selected file")}
-              :
-              {uploadedFile.name}
+              {t("newFileDialog.selectedFile", { name: uploadedFile.name })}
             </div>
           )}
           {createForm.formState.errors.root && (
@@ -161,19 +159,19 @@ export function NewCompliancePageFileDialog(props: {
             </p>
           )}
           <Field
-            label={__("Name")}
+            label={t("newFileDialog.fields.name")}
             type="text"
             {...createForm.register("name")}
             error={createForm.formState.errors.name?.message}
           />
           <Field
-            label={__("Category")}
+            label={t("newFileDialog.fields.category")}
             type="text"
             {...createForm.register("category")}
             error={createForm.formState.errors.category?.message}
           />
           <Field
-            label={__("Visibility")}
+            label={t("newFileDialog.fields.visibility")}
             type="select"
             value={createForm.watch("compliancePortalVisibility")}
             onValueChange={value =>
@@ -183,7 +181,7 @@ export function NewCompliancePageFileDialog(props: {
               )}
             error={createForm.formState.errors.compliancePortalVisibility?.message}
           >
-            {getCompliancePageVisibilityOptions(__).map(option => (
+            {getCompliancePageVisibilityOptions(t).map(option => (
               <Option key={option.value} value={option.value}>
                 <div className="flex items-center justify-between w-full">
                   <Badge variant={option.variant}>{option.label}</Badge>
@@ -198,7 +196,7 @@ export function NewCompliancePageFileDialog(props: {
             disabled={isCreating || !uploadedFile}
           >
             {isCreating && <Spinner />}
-            {__("Add File")}
+            {t("newFileDialog.actions.add")}
           </Button>
         </DialogFooter>
       </form>

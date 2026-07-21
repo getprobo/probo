@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConnectorListFragment$key } from "#/__generated__/iam/ConnectorListFragment.graphql";
@@ -45,7 +45,7 @@ const connectorListFragment = graphql`
 export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
   const { fKey } = props;
   const data = useFragment<ConnectorListFragment$key>(connectorListFragment, fKey);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const googleWorkspaceScopes
     = data.scimBridgeTypes.find(info => info.type === "GOOGLE_WORKSPACE")?.oauth2Scopes ?? [];
@@ -58,11 +58,9 @@ export function ConnectorList(props: { fKey: ConnectorListFragment$key }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-base font-medium">{__("Identity Provider")}</h2>
+      <h2 className="text-base font-medium">{t("connectorList.title")}</h2>
       <p className="text-sm text-txt-secondary">
-        {__(
-          "Connect your identity provider to automatically sync users to your organization. Once connected, you don't need to configure SCIM manually.",
-        )}
+        {t("connectorList.description")}
       </p>
       {showGoogleWorkspace && (
         <GoogleWorkspaceConnector

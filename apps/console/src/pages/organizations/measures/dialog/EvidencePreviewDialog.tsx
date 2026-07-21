@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { Suspense, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 
 import type { EvidenceGraphFileQuery } from "#/__generated__/core/EvidenceGraphFileQuery.graphql";
@@ -47,14 +47,14 @@ export function EvidencePreviewDialog({
   filename,
   onClose,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const ref = useDialogRef();
   return (
     <Dialog
       ref={ref}
       defaultOpen
       title={
-        <Breadcrumb items={[{ label: __("Evidences") }, { label: filename }]} />
+        <Breadcrumb items={[{ label: t("evidencePreviewDialog.breadcrumb.evidences") }, { label: filename }]} />
       }
       onClose={onClose}
     >
@@ -93,7 +93,7 @@ function EvidencePreviewContent({
     { evidenceId: evidenceId },
     { fetchPolicy: "network-only" },
   ).node;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const isUriFile
     = evidence.file?.mimeType === "text/uri-list"
@@ -115,14 +115,14 @@ function EvidencePreviewContent({
             return;
           }
           toast({
-            title: __("Error"),
-            description: e.message ?? __("Failed to extract URL from URI file"),
+            title: t("evidencePreviewDialog.messages.error"),
+            description: t("evidencePreviewDialog.errors.extractUrl"),
             variant: "error",
           });
         } else {
           toast({
-            title: __("Error"),
-            description: __("Failed to extract URL from URI file"),
+            title: t("evidencePreviewDialog.messages.error"),
+            description: t("evidencePreviewDialog.errors.extractUrl"),
             variant: "error",
           });
         }
@@ -131,7 +131,7 @@ function EvidencePreviewContent({
     return () => {
       abortController.abort();
     };
-  }, [evidence.file?.downloadUrl, isUriFile, onClose, __, toast]);
+  }, [evidence.file?.downloadUrl, isUriFile, onClose, t, toast]);
 
   if (!evidence.file?.downloadUrl) {
     return null;
@@ -168,13 +168,13 @@ function EvidencePreviewContent({
       <div className="flex flex-col items-center gap-2 justify-center">
         <IconWarning size={20} />
         <p className="text-txt-secondary text-center">
-          {__("Preview not available for this file type")
-            + " "
-            + evidence.file.mimeType}
+          {t("evidencePreviewDialog.previewUnavailable", {
+            mimeType: evidence.file.mimeType,
+          })}
         </p>
         <Button asChild variant="secondary" icon={IconArrowInbox}>
           <a href={evidence.file.downloadUrl} target="_blank" rel="noreferrer">
-            {__("Download File")}
+            {t("evidencePreviewDialog.actions.download")}
           </a>
         </Button>
       </div>

@@ -19,11 +19,28 @@
 // SOFTWARE.
 
 import { faviconUrl } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
-import { Avatar, Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Field,
+  IconCrossLargeX,
+  Option,
+  Select,
+} from "@probo/ui";
 import { type ComponentProps, Suspense, useEffect, useState } from "react";
-import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
-import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
+import {
+  type Control,
+  Controller,
+  type FieldValues,
+  type Path,
+} from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import {
+  type PreloadedQuery,
+  usePreloadedQuery,
+  useQueryLoader,
+} from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ThirdPartiesMultiSelectFieldQuery } from "#/__generated__/core/ThirdPartiesMultiSelectFieldQuery.graphql";
@@ -32,10 +49,7 @@ const thirdPartiesQuery = graphql`
   query ThirdPartiesMultiSelectFieldQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        thirdParties(
-          first: 100
-          orderBy: { direction: ASC, field: NAME }
-        ) {
+        thirdParties(first: 100, orderBy: { direction: ASC, field: NAME }) {
           edges {
             node {
               id
@@ -64,12 +78,9 @@ type Props<T extends FieldValues = FieldValues> = {
   selectedThirdParties?: ThirdParty[];
 } & ComponentProps<typeof Field>;
 
-export function ThirdPartiesMultiSelectField<T extends FieldValues = FieldValues>({
-  organizationId,
-  control,
-  selectedThirdParties = [],
-  ...props
-}: Props<T>) {
+export function ThirdPartiesMultiSelectField<
+  T extends FieldValues = FieldValues,
+>({ organizationId, control, selectedThirdParties = [], ...props }: Props<T>) {
   const [queryRef, loadQuery]
     = useQueryLoader<ThirdPartiesMultiSelectFieldQuery>(thirdPartiesQuery);
 
@@ -103,14 +114,21 @@ export function ThirdPartiesMultiSelectField<T extends FieldValues = FieldValues
 }
 
 function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "control" | "name" | "disabled" | "selectedThirdParties"> & {
+  props: Pick<
+    Props<T>,
+    "control" | "name" | "disabled" | "selectedThirdParties"
+  > & {
     queryRef: PreloadedQuery<ThirdPartiesMultiSelectFieldQuery>;
   },
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { name, control, selectedThirdParties = [] } = props;
-  const data = usePreloadedQuery<ThirdPartiesMultiSelectFieldQuery>(thirdPartiesQuery, props.queryRef);
-  const thirdParties = data.organization?.thirdParties?.edges.map(edge => edge.node) ?? [];
+  const data = usePreloadedQuery<ThirdPartiesMultiSelectFieldQuery>(
+    thirdPartiesQuery,
+    props.queryRef,
+  );
+  const thirdParties
+    = data.organization?.thirdParties?.edges.map(edge => edge.node) ?? [];
   const [isOpen, setIsOpen] = useState(false);
 
   const allThirdParties: ThirdParty[] = [...thirdParties];
@@ -128,10 +146,16 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
         control={control}
         name={name as Path<T>}
         render={({ field }) => {
-          const selectedThirdPartyIds = (Array.isArray(field.value) ? field.value : []) as string[];
+          const selectedThirdPartyIds = (
+            Array.isArray(field.value) ? field.value : []
+          ) as string[];
 
-          const selectedThirdParties = allThirdParties.filter(v => selectedThirdPartyIds.includes(v.id));
-          const availableThirdParties = allThirdParties.filter(v => !selectedThirdPartyIds.includes(v.id));
+          const selectedThirdParties = allThirdParties.filter(v =>
+            selectedThirdPartyIds.includes(v.id),
+          );
+          const availableThirdParties = allThirdParties.filter(
+            v => !selectedThirdPartyIds.includes(v.id),
+          );
 
           const handleAddThirdParty = (thirdPartyId: string) => {
             const newValue = [...selectedThirdPartyIds, thirdPartyId];
@@ -140,7 +164,9 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
           };
 
           const handleRemoveThirdParty = (thirdPartyId: string) => {
-            const newValue = selectedThirdPartyIds.filter((id: string) => id !== thirdPartyId);
+            const newValue = selectedThirdPartyIds.filter(
+              (id: string) => id !== thirdPartyId,
+            );
             field.onChange(newValue);
           };
 
@@ -151,7 +177,7 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                   disabled={props.disabled}
                   id={name}
                   variant="editor"
-                  placeholder={__("Add third parties...")}
+                  placeholder={t("thirdPartiesMultiSelectField.addPlaceholder")}
                   onValueChange={handleAddThirdParty}
                   key={`${selectedThirdPartyIds.length}-${thirdParties.length}`}
                   className="w-full"
@@ -160,7 +186,11 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                   onOpenChange={setIsOpen}
                 >
                   {availableThirdParties.map(thirdParty => (
-                    <Option key={thirdParty.id} value={thirdParty.id} className="flex gap-2">
+                    <Option
+                      key={thirdParty.id}
+                      value={thirdParty.id}
+                      className="flex gap-2"
+                    >
                       <Avatar
                         name={thirdParty.name}
                         src={faviconUrl(thirdParty.websiteUrl)}
@@ -182,7 +212,11 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
               {selectedThirdParties.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {selectedThirdParties.map(thirdParty => (
-                    <Badge key={thirdParty.id} variant="neutral" className="flex items-center gap-2">
+                    <Badge
+                      key={thirdParty.id}
+                      variant="neutral"
+                      className="flex items-center gap-2"
+                    >
                       <Avatar
                         name={thirdParty.name}
                         src={faviconUrl(thirdParty.websiteUrl)}
@@ -202,9 +236,10 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                 </div>
               )}
 
-              {selectedThirdParties.length === 0 && availableThirdParties.length === 0 && (
+              {selectedThirdParties.length === 0
+                && availableThirdParties.length === 0 && (
                 <div className="text-sm text-txt-secondary py-2">
-                  {__("No third parties available")}
+                  {t("thirdPartiesMultiSelectField.empty")}
                 </div>
               )}
             </div>

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPlusLarge,
@@ -30,6 +29,7 @@ import {
   Tr,
 } from "@probo/ui";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery, useRefetchableFragment } from "react-relay";
 
 import type { ThirdPartyCompliancePageFragment$key } from "#/__generated__/core/ThirdPartyCompliancePageFragment.graphql";
@@ -102,22 +102,22 @@ export default function ThirdPartyCompliancePage(props: ThirdPartyCompliancePage
 
   const connectionId = data.complianceReports.__id;
   const reports = data.complianceReports.edges.map(edge => edge.node);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(data.name + " - " + __("Compliance reports"));
+  usePageTitle(t("thirdPartyCompliancePage.pageTitle", { name: data.name }));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Compliance reports")}
-        description={__("Track third party compliance certifications and reports.")}
+        title={t("thirdPartyCompliancePage.title")}
+        description={t("thirdPartyCompliancePage.description")}
       >
         {data.canUploadComplianceReport && (
           <UploadComplianceReportDialog
             thirdPartyId={data.id}
             connectionId={connectionId}
           >
-            <Button icon={IconPlusLarge}>{__("Add report")}</Button>
+            <Button icon={IconPlusLarge}>{t("thirdPartyCompliancePage.actions.addReport")}</Button>
           </UploadComplianceReportDialog>
         )}
       </PageHeader>
@@ -127,11 +127,11 @@ export default function ThirdPartyCompliancePage(props: ThirdPartyCompliancePage
       >
         <Thead>
           <Tr>
-            <Th>{__("Report name")}</Th>
-            <SortableTh field="REPORT_DATE">{__("Report date")}</SortableTh>
-            <Th>{__("Valid until")}</Th>
-            <Th>{__("File size")}</Th>
-            {reports.length > 0 && <Th>{__("Actions")}</Th>}
+            <Th>{t("thirdPartyCompliancePage.columns.reportName")}</Th>
+            <SortableTh field="REPORT_DATE">{t("thirdPartyCompliancePage.columns.reportDate")}</SortableTh>
+            <Th>{t("thirdPartyCompliancePage.columns.validUntil")}</Th>
+            <Th>{t("thirdPartyCompliancePage.columns.fileSize")}</Th>
+            {reports.length > 0 && <Th>{t("thirdPartyCompliancePage.columns.actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>

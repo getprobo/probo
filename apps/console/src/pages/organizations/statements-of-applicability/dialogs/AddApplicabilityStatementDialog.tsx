@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Breadcrumb,
@@ -38,6 +37,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, Suspense, useImperativeHandle, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery } from "react-relay";
 
 import type { AddApplicabilityStatementDialogQuery } from "#/__generated__/core/AddApplicabilityStatementDialogQuery.graphql";
@@ -166,7 +166,7 @@ function ControlRow({
   statementOfApplicabilityId: string;
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const isLinked = control.applicabilityStatementId !== null;
   const [selectedState, setSelectedState] = useState<string>(() => {
     if (!isLinked) return "not-linked";
@@ -178,24 +178,24 @@ function ControlRow({
   const [createApplicabilityStatement, isCreating] = useMutationWithToasts(
     createApplicabilityStatementMutation,
     {
-      successMessage: __("Statement created successfully."),
-      errorMessage: __("Failed to create statement"),
+      successMessage: t("addApplicabilityStatementDialog.messages.created"),
+      errorMessage: t("addApplicabilityStatementDialog.errors.create"),
     },
   );
 
   const [deleteApplicabilityStatement, isDeleting] = useMutationWithToasts(
     deleteApplicabilityStatementMutation,
     {
-      successMessage: __("Statement removed successfully."),
-      errorMessage: __("Failed to remove statement"),
+      successMessage: t("addApplicabilityStatementDialog.messages.removed"),
+      errorMessage: t("addApplicabilityStatementDialog.errors.remove"),
     },
   );
 
   const [updateApplicabilityStatement, isUpdating] = useMutationWithToasts(
     updateApplicabilityStatementMutation,
     {
-      successMessage: __("Statement updated successfully."),
-      errorMessage: __("Failed to update statement"),
+      successMessage: t("addApplicabilityStatementDialog.messages.updated"),
+      errorMessage: t("addApplicabilityStatementDialog.errors.update"),
     },
   );
 
@@ -309,9 +309,9 @@ function ControlRow({
             disabled={isCreating || isDeleting || isUpdating}
             className="w-48"
           >
-            <Option value="not-linked">{__("Not Linked")}</Option>
-            <Option value="applicable">{__("Applicable")}</Option>
-            <Option value="not-applicable">{__("Not Applicable")}</Option>
+            <Option value="not-linked">{t("addApplicabilityStatementDialog.applicability.notLinked")}</Option>
+            <Option value="applicable">{t("addApplicabilityStatementDialog.applicability.applicable")}</Option>
+            <Option value="not-applicable">{t("addApplicabilityStatementDialog.applicability.notApplicable")}</Option>
           </Select>
         </div>
       </div>
@@ -320,7 +320,7 @@ function ControlRow({
           <Textarea
             value={justification}
             onChange={e => setJustification(e.target.value)}
-            placeholder={__("Reason for non-applicability")}
+            placeholder={t("addApplicabilityStatementDialog.placeholders.justification")}
             className="flex-1"
             autogrow
           />
@@ -329,7 +329,7 @@ function ControlRow({
             icon={IconCheckmark1}
             onClick={() => void handleSaveJustification()}
             disabled={isCreating || isUpdating}
-            aria-label={__("Save")}
+            aria-label={t("addApplicabilityStatementDialog.actions.save")}
           />
         </div>
       )}
@@ -346,7 +346,7 @@ function AddApplicabilityStatementDialogContent({
   organizationId: string;
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [collapsedFrameworks, setCollapsedFrameworks] = useState<Set<string>>(new Set());
   const data = useLazyLoadQuery<AddApplicabilityStatementDialogQuery>(
@@ -429,7 +429,7 @@ function AddApplicabilityStatementDialogContent({
         <div className="sticky top-0 bg-level-2 p-4 border-b border-border-low z-10">
           <Input
             icon={IconMagnifyingGlass}
-            placeholder={__("Search controls...")}
+            placeholder={t("addApplicabilityStatementDialog.placeholders.search")}
             onValueChange={setSearch}
           />
         </div>
@@ -437,7 +437,7 @@ function AddApplicabilityStatementDialogContent({
           {filteredControls.length === 0
             ? (
                 <div className="p-8 text-center text-txt-secondary">
-                  {__("No controls found")}
+                  {t("addApplicabilityStatementDialog.empty")}
                 </div>
               )
             : (
@@ -453,7 +453,7 @@ function AddApplicabilityStatementDialogContent({
                           variant="tertiary"
                           icon={isCollapsed ? IconChevronDown : IconChevronUp}
                           onClick={() => toggleFramework(frameworkName)}
-                          aria-label={isCollapsed ? __("Expand") : __("Collapse")}
+                          aria-label={isCollapsed ? t("addApplicabilityStatementDialog.actions.expand") : t("addApplicabilityStatementDialog.actions.collapse")}
                         />
                       </div>
                       {!isCollapsed
@@ -477,7 +477,7 @@ function AddApplicabilityStatementDialogContent({
               )}
         </div>
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")}></DialogFooter>
+      <DialogFooter exitLabel={t("addApplicabilityStatementDialog.actions.close")}></DialogFooter>
     </>
   );
 }
@@ -491,7 +491,7 @@ export const AddApplicabilityStatementDialog = forwardRef<
   AddApplicabilityStatementDialogProps
 >(
   ({ onClose }, ref) => {
-    const { __ } = useTranslate();
+    const { t } = useTranslation();
     const dialogRef = useDialogRef();
     const [statementOfApplicabilityId, setStatementOfApplicabilityId] = useState<string | null>(null);
     const [organizationId, setOrganizationId] = useState<string | null>(null);
@@ -523,7 +523,7 @@ export const AddApplicabilityStatementDialog = forwardRef<
         className="max-w-3xl"
         title={(
           <Breadcrumb
-            items={[__("Statements of Applicability"), __("Add Statement")]}
+            items={[t("addApplicabilityStatementDialog.breadcrumb.statementsOfApplicability"), t("addApplicabilityStatementDialog.breadcrumb.addStatement")]}
           />
         )}
         onClose={handleClose}

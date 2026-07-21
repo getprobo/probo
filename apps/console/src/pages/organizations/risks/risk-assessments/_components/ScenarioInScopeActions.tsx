@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -39,6 +38,7 @@ import {
 } from "@probo/ui";
 import { Suspense } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
 import type { ScenarioInScopeActionsDeleteMutation } from "#/__generated__/core/ScenarioInScopeActionsDeleteMutation.graphql";
@@ -135,7 +135,7 @@ function RiskSelector(props: {
   scenarioId: string;
   linkedRiskIds: Set<string>;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const [linkRisk] = useMutation<ScenarioInScopeActionsLinkRiskMutation>(linkRiskMutation);
   const data = useLazyLoadQuery<ScenarioInScopeActionsRisksQuery>(
@@ -147,12 +147,12 @@ function RiskSelector(props: {
   const availableRisks = allRisks.filter(r => !props.linkedRiskIds.has(r.id));
 
   if (availableRisks.length === 0) {
-    return <p className="text-xs text-txt-tertiary">{__("No more risks available.")}</p>;
+    return <p className="text-xs text-txt-tertiary">{t("riskAssessmentScenarioActions.noMoreRisks")}</p>;
   }
 
   return (
     <Select
-      placeholder={__("Select a risk to link...")}
+      placeholder={t("riskAssessmentScenarioActions.placeholders.riskToLink")}
       onValueChange={(riskId) => {
         if (typeof riskId !== "string") return;
         linkRisk({
@@ -178,7 +178,7 @@ export function ScenarioInScopeActions(props: {
   scopeThreats: readonly { id: string; name: string }[];
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
   const [updateScenario] = useMutation<ScenarioInScopeActionsUpdateMutation>(updateScenarioMutation);
@@ -198,7 +198,7 @@ export function ScenarioInScopeActions(props: {
     <>
       <ActionDropdown>
         <DropdownItem icon={IconPencil} onSelect={() => dialogRef.current?.open()}>
-          {__("Edit")}
+          {t("riskAssessmentScenarioActions.actions.edit")}
         </DropdownItem>
         <DropdownItem
           icon={IconTrashCan}
@@ -212,13 +212,13 @@ export function ScenarioInScopeActions(props: {
                 },
               });
             },
-            { message: __("Delete this scenario?") },
+            { message: t("riskAssessmentScenarioActions.deleteConfirmation") },
           )}
         >
-          {__("Delete")}
+          {t("riskAssessmentScenarioActions.actions.delete")}
         </DropdownItem>
       </ActionDropdown>
-      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Scenarios"), __("Edit")]} />}>
+      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[t("riskAssessmentScenarioActions.breadcrumb.scenarios"), t("riskAssessmentScenarioActions.actions.edit")]} />}>
         <form onSubmit={e => void handleSubmit((d) => {
           updateScenario({
             variables: { input: { id: props.scenario.id, name: d.name, description: d.description || null } },
@@ -227,11 +227,11 @@ export function ScenarioInScopeActions(props: {
         })(e)}
         >
           <DialogContent padded className="space-y-4">
-            <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" />
-            <Field label={__("Description")} {...register("description")} type="textarea" rows={3} />
+            <Field label={t("riskAssessmentScenarioActions.fields.name")} {...register("name", { required: t("riskAssessmentScenarioActions.validation.nameRequired") })} type="text" />
+            <Field label={t("riskAssessmentScenarioActions.fields.description")} {...register("description")} type="textarea" rows={3} />
 
             <div>
-              <div className="text-sm font-medium mb-2">{__("Threats")}</div>
+              <div className="text-sm font-medium mb-2">{t("riskAssessmentScenarioActions.fields.threats")}</div>
               {props.scenario.threats.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {props.scenario.threats.map(threat => (
@@ -256,7 +256,7 @@ export function ScenarioInScopeActions(props: {
               )}
               {availableThreats.length > 0 && (
                 <Select
-                  placeholder={__("Select a threat to link...")}
+                  placeholder={t("riskAssessmentScenarioActions.placeholders.threatToLink")}
                   onValueChange={(threatId) => {
                     if (typeof threatId !== "string") return;
                     linkThreat({ variables: { input: { riskAssessmentScenarioId: props.scenario.id, threatId } } });
@@ -270,7 +270,7 @@ export function ScenarioInScopeActions(props: {
             </div>
 
             <div>
-              <div className="text-sm font-medium mb-2">{__("Risks")}</div>
+              <div className="text-sm font-medium mb-2">{t("riskAssessmentScenarioActions.fields.risks")}</div>
               {props.scenario.risks.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {props.scenario.risks.map(risk => (
@@ -293,7 +293,7 @@ export function ScenarioInScopeActions(props: {
                   ))}
                 </div>
               )}
-              <Suspense fallback={<p className="text-xs text-txt-tertiary">{__("Loading risks...")}</p>}>
+              <Suspense fallback={<p className="text-xs text-txt-tertiary">{t("riskAssessmentScenarioActions.loadingRisks")}</p>}>
                 <RiskSelector
                   scenarioId={props.scenario.id}
                   linkedRiskIds={linkedRiskIds}
@@ -301,7 +301,7 @@ export function ScenarioInScopeActions(props: {
               </Suspense>
             </div>
           </DialogContent>
-          <DialogFooter><Button type="submit">{__("Save")}</Button></DialogFooter>
+          <DialogFooter><Button type="submit">{t("riskAssessmentScenarioActions.actions.save")}</Button></DialogFooter>
         </form>
       </Dialog>
     </>

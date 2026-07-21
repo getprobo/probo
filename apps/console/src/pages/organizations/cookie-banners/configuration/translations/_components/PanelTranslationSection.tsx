@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Card, Field, Input, Textarea } from "@probo/ui";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { PanelPreview } from "./PanelPreview";
-import { TRANSLATION_LABELS } from "./translationDefaults";
 import type {
   CategoryInfo,
   TranslationFormValues,
@@ -38,7 +37,7 @@ export function PanelTranslationSection({
   categories,
   necessaryCategoryName,
 }: PanelTranslationSectionProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { control } = useFormContext<TranslationFormValues>();
 
   const panelTitle = useWatch({ control, name: "panel_title" });
@@ -65,7 +64,7 @@ export function PanelTranslationSection({
 
   return (
     <div className="space-y-4">
-      <h3 className="font-medium text-lg">{__("Preferences panel")}</h3>
+      <h3 className="font-medium text-lg">{t("panelTranslationSection.title")}</h3>
       <div className="grid grid-cols-2 gap-6">
         <Card className="border p-4">
           <div className="space-y-4">
@@ -73,7 +72,7 @@ export function PanelTranslationSection({
               control={control}
               name="panel_title"
               render={({ field }) => (
-                <Field label={__(TRANSLATION_LABELS.panel_title)}>
+                <Field label={t("translationEditor.labels.panelTitle")}>
                   <Input {...field} />
                 </Field>
               )}
@@ -83,9 +82,11 @@ export function PanelTranslationSection({
               name="panel_description"
               render={({ field }) => (
                 <Field
-                  label={__(TRANSLATION_LABELS.panel_description)}
+                  label={t("translationEditor.labels.panelDescription")}
                 >
-                  <p className="text-xs text-txt-secondary mb-2">{__("Use {{necessary_category}} to refer to the required cookies category name.")}</p>
+                  <p className="text-xs text-txt-secondary mb-2">
+                    {t("panelTranslationSection.necessaryCategoryHelp")}
+                  </p>
                   <Textarea {...field} rows={3} />
                 </Field>
               )}
@@ -94,7 +95,7 @@ export function PanelTranslationSection({
               control={control}
               name="button_save"
               render={({ field }) => (
-                <Field label={__(TRANSLATION_LABELS.button_save)}>
+                <Field label={t("translationEditor.labels.saveButton")}>
                   <Input {...field} />
                 </Field>
               )}
@@ -102,14 +103,14 @@ export function PanelTranslationSection({
 
             <div className="space-y-4 border-t border-border-low pt-4">
               <h4 className="text-sm font-medium text-txt-secondary">
-                {__("Accessibility labels")}
+                {t("panelTranslationSection.accessibilityLabels")}
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <Controller
                   control={control}
                   name="aria_close"
                   render={({ field }) => (
-                    <Field label={__(TRANSLATION_LABELS.aria_close)}>
+                    <Field label={t("translationEditor.labels.ariaClose")}>
                       <Input {...field} />
                     </Field>
                   )}
@@ -119,7 +120,7 @@ export function PanelTranslationSection({
                   name="aria_cookie_settings"
                   render={({ field }) => (
                     <Field
-                      label={__(TRANSLATION_LABELS.aria_cookie_settings)}
+                      label={t("translationEditor.labels.ariaCookieSettings")}
                     >
                       <Input {...field} />
                     </Field>
@@ -129,7 +130,7 @@ export function PanelTranslationSection({
                   control={control}
                   name="aria_show_details"
                   render={({ field }) => (
-                    <Field label={__(TRANSLATION_LABELS.aria_show_details)}>
+                    <Field label={t("translationEditor.labels.ariaShowDetails")}>
                       <Input {...field} />
                     </Field>
                   )}
@@ -138,7 +139,7 @@ export function PanelTranslationSection({
                   control={control}
                   name="aria_hide_details"
                   render={({ field }) => (
-                    <Field label={__(TRANSLATION_LABELS.aria_hide_details)}>
+                    <Field label={t("translationEditor.labels.ariaHideDetails")}>
                       <Input {...field} />
                     </Field>
                   )}
@@ -164,7 +165,7 @@ export function PanelTranslationSection({
       {categories.length > 0 && (
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-txt-secondary">
-            {__("Category names")}
+            {t("panelTranslationSection.categoryNames")}
           </h4>
           <div className="grid grid-cols-2 gap-4">
             {categories.map(cat => (
@@ -180,7 +181,7 @@ export function PanelTranslationSection({
                   control={control}
                   name={`categories.${cat.id}.name`}
                   render={({ field }) => (
-                    <Field label={__("Translated name")}>
+                    <Field label={t("panelTranslationSection.translatedName")}>
                       <Input {...field} placeholder={cat.name} />
                     </Field>
                   )}
@@ -189,7 +190,9 @@ export function PanelTranslationSection({
                   control={control}
                   name={`categories.${cat.id}.description`}
                   render={({ field }) => (
-                    <Field label={__("Translated description")}>
+                    <Field
+                      label={t("panelTranslationSection.translatedDescription")}
+                    >
                       <Textarea {...field} placeholder={cat.description} rows={2} />
                     </Field>
                   )}

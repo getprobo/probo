@@ -18,22 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { PageHeader, TabLink, Tabs } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 
 export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-6">
-      <PageHeader title={__("Documents")} />
+      <PageHeader title={t("employeeTabsLayout.title")} />
       <Tabs>
         <TabLink to="signatures" end>
-          {__("Signatures")}
+          {t("employeeTabsLayout.tabs.signatures")}
         </TabLink>
         <TabLink to="approvals" end>
-          {__("Approvals")}
+          {t("employeeTabsLayout.tabs.approvals")}
         </TabLink>
       </Tabs>
       <Outlet />

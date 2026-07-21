@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -34,6 +33,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { ThreatActionsDeleteMutation } from "#/__generated__/core/ThreatActionsDeleteMutation.graphql";
@@ -62,7 +62,7 @@ export function ThreatActions(props: {
   threat: { id: string; name: string; category: string };
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
   const [updateThreat] = useMutation<ThreatActionsUpdateMutation>(updateThreatMutation);
@@ -74,7 +74,7 @@ export function ThreatActions(props: {
     <>
       <ActionDropdown>
         <DropdownItem icon={IconPencil} onSelect={() => dialogRef.current?.open()}>
-          {__("Edit")}
+          {t("riskAssessmentThreatActions.actions.edit")}
         </DropdownItem>
         <DropdownItem
           icon={IconTrashCan}
@@ -88,13 +88,13 @@ export function ThreatActions(props: {
                 },
               });
             },
-            { message: __("Delete this threat?") },
+            { message: t("riskAssessmentThreatActions.deleteConfirmation") },
           )}
         >
-          {__("Delete")}
+          {t("riskAssessmentThreatActions.actions.delete")}
         </DropdownItem>
       </ActionDropdown>
-      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Threats"), __("Edit")]} />}>
+      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[t("riskAssessmentThreatActions.breadcrumb.threats"), t("riskAssessmentThreatActions.actions.edit")]} />}>
         <form onSubmit={e => void handleSubmit((d) => {
           updateThreat({
             variables: { input: { id: props.threat.id, name: d.name, category: d.category } },
@@ -103,15 +103,15 @@ export function ThreatActions(props: {
         })(e)}
         >
           <DialogContent padded className="space-y-4">
-            <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" />
+            <Field label={t("riskAssessmentThreatActions.fields.name")} {...register("name", { required: t("riskAssessmentThreatActions.validation.required") })} type="text" />
             <Field
-              label={__("Category")}
-              {...register("category", { required: __("This field is required") })}
+              label={t("riskAssessmentThreatActions.fields.category")}
+              {...register("category", { required: t("riskAssessmentThreatActions.validation.required") })}
               type="text"
-              placeholder={__("e.g. Confidentiality")}
+              placeholder={t("riskAssessmentThreatActions.placeholders.category")}
             />
           </DialogContent>
-          <DialogFooter><Button type="submit">{__("Save")}</Button></DialogFooter>
+          <DialogFooter><Button type="submit">{t("riskAssessmentThreatActions.actions.save")}</Button></DialogFooter>
         </form>
       </Dialog>
     </>

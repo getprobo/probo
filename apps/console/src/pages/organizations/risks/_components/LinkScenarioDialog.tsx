@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { cloneElement, isValidElement, type MouseEvent, type ReactElement, type ReactNode, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePaginationFragment,
@@ -92,7 +92,7 @@ interface LinkScenarioDialogProps {
 }
 
 export function LinkScenarioDialog({ children, ...props }: LinkScenarioDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery]
     = useQueryLoader<LinkScenarioDialogQuery>(scenariosQuery);
@@ -107,7 +107,7 @@ export function LinkScenarioDialog({ children, ...props }: LinkScenarioDialogPro
     : children;
 
   return (
-    <Dialog trigger={trigger} title={__("Link scenarios")}>
+    <Dialog trigger={trigger} title={t("linkScenarioDialog.title")}>
       <DialogContent>
         {queryRef
           ? (
@@ -119,7 +119,7 @@ export function LinkScenarioDialog({ children, ...props }: LinkScenarioDialogPro
               <Spinner centered />
             )}
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")} />
+      <DialogFooter exitLabel={t("linkScenarioDialog.actions.close")} />
     </Dialog>
   );
 }
@@ -135,7 +135,7 @@ function LinkScenarioDialogContent(props: ContentProps) {
       scenariosFragment,
       query.organization as LinkScenarioDialogFragment$key,
     );
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const scenarios = useMemo(
     () => data.riskAssessmentScenarios?.edges?.map(edge => edge.node) ?? [],
@@ -158,7 +158,7 @@ function LinkScenarioDialogContent(props: ContentProps) {
       <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search scenarios...")}
+          placeholder={t("linkScenarioDialog.searchPlaceholder")}
           onValueChange={setSearch}
         />
       </div>
@@ -193,7 +193,7 @@ function ScenarioRow(props: {
   onUnlink: (scenarioId: string) => void;
   disabled?: boolean;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const isLinked = props.linkedScenarios.has(props.scenario.id);
 
   const onToggle = () => {
@@ -211,7 +211,7 @@ function ScenarioRow(props: {
           {props.scenario.name}
         </div>
         <div className="text-xs text-txt-secondary truncate">
-          {props.scenario.description || __("No description")}
+          {props.scenario.description || t("linkScenarioDialog.noDescription")}
         </div>
       </div>
       <Button
@@ -221,7 +221,7 @@ function ScenarioRow(props: {
         disabled={props.disabled}
         className="ml-6"
       >
-        {isLinked ? __("Unlink") : __("Link")}
+        {isLinked ? t("linkScenarioDialog.actions.unlink") : t("linkScenarioDialog.actions.link")}
       </Button>
     </div>
   );

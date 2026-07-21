@@ -20,7 +20,6 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, useToast } from "@probo/ui";
 import {
   type ClipboardEvent,
@@ -29,6 +28,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -56,13 +56,13 @@ const authorizeDeviceMutation = graphql`
 export default function DeviceActivationPage(props: {
   queryRef: PreloadedQuery<DeviceActivationPageQuery>;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   usePreloadedQuery<DeviceActivationPageQuery>(deviceActivationPageQuery, props.queryRef);
-  usePageTitle(__("Device Activation"));
+  usePageTitle(t("deviceActivationPage.pageTitle"));
 
   const preset = (searchParams.get("user_code") ?? "").replace(/-/g, "");
   const [values, setValues] = useState<string[]>(() => {
@@ -132,9 +132,9 @@ export default function DeviceActivationPage(props: {
         onCompleted: (response, errors) => {
           if (errors) {
             toast({
-              title: __("Authorization failed"),
+              title: t("deviceActivationPage.errors.authorizationFailed"),
               description: formatError(
-                __("The code is invalid or has expired."),
+                t("deviceActivationPage.errors.invalidCode"),
                 errors,
               ),
               variant: "error",
@@ -153,14 +153,14 @@ export default function DeviceActivationPage(props: {
         },
         onError: (err) => {
           toast({
-            title: __("Error"),
-            description: err.message || __("Something went wrong. Please try again."),
+            title: t("common.error"),
+            description: err.message || t("deviceActivationPage.errors.generic"),
             variant: "error",
           });
         },
       });
     },
-    [values, authorizeDevice, __, toast, navigate],
+    [values, authorizeDevice, t, toast, navigate],
   );
 
   const isFilled = values.every(v => v.length === 1);
@@ -168,9 +168,9 @@ export default function DeviceActivationPage(props: {
   if (status === "success") {
     return (
       <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{__("Device Authorized")}</h1>
+        <h1 className="text-2xl font-bold">{t("deviceActivationPage.authorized.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Your device has been successfully authorized. You can close this window and return to your device.")}
+          {t("deviceActivationPage.authorized.description")}
         </p>
       </div>
     );
@@ -179,9 +179,9 @@ export default function DeviceActivationPage(props: {
   return (
     <div className="w-full max-w-md mx-auto pt-8 space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">{__("Device Activation")}</h1>
+        <h1 className="text-2xl font-bold">{t("deviceActivationPage.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Enter the code displayed on your device")}
+          {t("deviceActivationPage.description")}
         </p>
       </div>
 
@@ -206,7 +206,7 @@ export default function DeviceActivationPage(props: {
                 autoCapitalize="characters"
                 spellCheck={false}
                 autoFocus={idx === 0}
-                aria-label={`${__("Code character")} ${idx + 1}`}
+                aria-label={t("deviceActivationPage.codeCharacter", { count: idx + 1 })}
                 className="w-11 h-13 text-center text-lg font-mono font-medium uppercase rounded-lg border border-border-mid bg-level-1 text-txt-primary outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
@@ -218,12 +218,12 @@ export default function DeviceActivationPage(props: {
           className="w-full h-10"
           disabled={!isFilled || isInFlight}
         >
-          {isInFlight ? __("Authorizing...") : __("Continue")}
+          {isInFlight ? t("deviceActivationPage.actions.authorizing") : t("deviceActivationPage.actions.continue")}
         </Button>
       </form>
 
       <p className="text-center text-sm text-txt-tertiary">
-        {__("Make sure this code matches the one on your device.")}
+        {t("deviceActivationPage.notice")}
       </p>
     </div>
   );

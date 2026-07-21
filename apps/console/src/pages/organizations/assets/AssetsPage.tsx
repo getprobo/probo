@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPageTextLine,
@@ -27,6 +26,7 @@ import {
   IconUpload,
   PageHeader,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -109,7 +109,7 @@ type Props = {
 };
 
 export default function AssetsPage(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
@@ -126,15 +126,13 @@ export default function AssetsPage(props: Props) {
   const defaultApproverIds = (data.node.assetListDocument?.defaultApprovers ?? []).map(a => a.id);
 
   const canWrite = assets.some(asset => asset.canDelete || asset.canUpdate);
-  usePageTitle(__("Assets"));
+  usePageTitle(t("assetsPage.title"));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Assets")}
-        description={__(
-          "Manage your organization's assets and their classifications.",
-        )}
+        title={t("assetsPage.title")}
+        description={t("assetsPage.description")}
       >
         <div className="flex gap-2">
           {data.node.assetListDocument?.id && (
@@ -143,7 +141,7 @@ export default function AssetsPage(props: Props) {
                 to={`/organizations/${organizationId}/documents/${data.node.assetListDocument.id}`}
               >
                 <IconPageTextLine size={16} />
-                {__("Document")}
+                {t("assetsPage.actions.document")}
               </Link>
             </Button>
           )}
@@ -158,7 +156,7 @@ export default function AssetsPage(props: Props) {
               }}
             >
               <Button variant="secondary" icon={IconUpload}>
-                {__("Publish")}
+                {t("assetsPage.actions.publish")}
               </Button>
             </PublishAssetListDialog>
           )}
@@ -167,7 +165,9 @@ export default function AssetsPage(props: Props) {
               connection={connectionId}
               organizationId={organizationId}
             >
-              <Button icon={IconPlusLarge}>{__("Add asset")}</Button>
+              <Button icon={IconPlusLarge}>
+                {t("assetsPage.actions.addAsset")}
+              </Button>
             </CreateAssetDialog>
           )}
         </div>

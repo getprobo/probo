@@ -19,16 +19,16 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Badge, Checkbox, useToast } from "@probo/ui";
 import * as Popover from "@radix-ui/react-popover";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { AccessReviewEntryFlag, EntryFlagSelectMutation } from "#/__generated__/core/EntryFlagSelectMutation.graphql";
 
-import { flagBadgeVariant, flagGroups, flagLabel } from "./accessReviewHelpers";
+import { flagBadgeVariant, flagGroups } from "./accessReviewHelpers";
 
 const mutation = graphql`
   mutation EntryFlagSelectMutation($input: FlagAccessReviewEntryInput!) {
@@ -48,7 +48,7 @@ type Props = {
 };
 
 export function EntryFlagSelect({ entryId, currentFlags }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [localFlags, setLocalFlags] = useState<AccessReviewEntryFlag[]>([...currentFlags]);
@@ -86,9 +86,9 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
           onCompleted(_, errors) {
             if (errors?.length) {
               toast({
-                title: __("Error"),
+                title: t("entryFlagSelect.messages.error"),
                 description: formatError(
-                  __("Failed to flag entry"),
+                  t("entryFlagSelect.errors.update"),
                   errors,
                 ),
                 variant: "error",
@@ -97,9 +97,9 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
           },
           onError(error) {
             toast({
-              title: __("Error"),
+              title: t("entryFlagSelect.messages.error"),
               description: formatError(
-                __("Failed to flag entry"),
+                t("entryFlagSelect.errors.update"),
                 error,
               ),
               variant: "error",
@@ -129,7 +129,7 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
                 <div className="flex flex-wrap gap-1">
                   {displayFlags.map(f => (
                     <Badge key={f} variant={flagBadgeVariant(f)} size="sm">
-                      {flagLabel(f)}
+                      {t(`entryFlagSelect.flags.${f.toLowerCase()}`)}
                     </Badge>
                   ))}
                 </div>
@@ -144,7 +144,7 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
           {flagGroups.map(group => (
             <div key={group.label} className="mb-2 last:mb-0">
               <div className="px-2 py-1 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">
-                {__(group.label)}
+                {t(`entryFlagSelect.groups.${group.label.toLowerCase()}`)}
               </div>
               {group.flags.map(flag => (
                 <label
@@ -155,7 +155,9 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
                     checked={localFlags.includes(flag.value)}
                     onChange={() => toggleFlag(flag.value)}
                   />
-                  <span className="text-sm text-txt-primary">{__(flag.label)}</span>
+                  <span className="text-sm text-txt-primary">
+                    {t(`entryFlagSelect.flags.${flag.value.toLowerCase()}`)}
+                  </span>
                 </label>
               ))}
             </div>

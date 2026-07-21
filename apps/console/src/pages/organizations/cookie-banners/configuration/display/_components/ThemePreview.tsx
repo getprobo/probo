@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, Field, Input, Logo, useToast } from "@probo/ui";
 import { useCallback, useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -47,13 +47,13 @@ const CSS_VARIABLES: CSSVariable[] = [
   { key: "--probo-shadow", label: "Shadow", defaultValue: "0 4px 24px rgba(0, 0, 0, 0.12)", type: "text" },
 ];
 
-function buildCSSSnippet(values: Record<string, string>): string {
+function buildCSSSnippet(values: Record<string, string>, defaultComment: string): string {
   const overrides = CSS_VARIABLES
     .filter(v => values[v.key] !== v.defaultValue)
     .map(v => `  ${v.key}: ${values[v.key]};`);
 
   if (overrides.length === 0) {
-    return "/* Using default theme — no overrides needed */";
+    return defaultComment;
   }
 
   return `probo-cookie-banner {\n${overrides.join("\n")}\n}`;
@@ -72,7 +72,7 @@ interface ThemePreviewProps {
 export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
   const cookieBanner = useFragment(themePreviewFragment, cookieBannerKey);
   const { showBranding } = cookieBanner;
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
 
   const [values, setValues] = useState<Record<string, string>>(() => {
@@ -95,13 +95,16 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
     setValues(initial);
   }, []);
 
-  const cssSnippet = useMemo(() => buildCSSSnippet(values), [values]);
+  const cssSnippet = useMemo(
+    () => buildCSSSnippet(values, t("themePreview.defaultSnippet")),
+    [values, t],
+  );
 
   const handleCopyCSS = () => {
     void navigator.clipboard.writeText(cssSnippet);
     toast({
-      title: __("Copied"),
-      description: __("CSS snippet copied to clipboard"),
+      title: t("themePreview.messages.copiedTitle"),
+      description: t("themePreview.messages.copied"),
       variant: "success",
     });
   };
@@ -120,9 +123,9 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-lg">{__("Theme")}</h3>
+        <h3 className="font-medium text-lg">{t("themePreview.title")}</h3>
         <Button variant="tertiary" onClick={handleReset}>
-          {__("Reset to defaults")}
+          {t("themePreview.actions.reset")}
         </Button>
       </div>
 
@@ -132,7 +135,7 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
             {colorVariables.map(v => (
               <div key={v.key} className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-txt-primary">
-                  {v.label}
+                  {t(`themePreview.variables.${v.key.replace("--probo-", "").replaceAll("-", "")}`)}
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -152,7 +155,7 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
 
           <div className="grid grid-cols-2 gap-4">
             {textVariables.map(v => (
-              <Field key={v.key} label={v.label}>
+              <Field key={v.key} label={t(`themePreview.variables.${v.key.replace("--probo-", "").replaceAll("-", "")}`)}>
                 <Input
                   value={values[v.key]}
                   onChange={e => setValue(v.key, e.target.value)}
@@ -174,7 +177,7 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
 
       <div className="flex items-center justify-between">
         <Button variant="secondary" onClick={handleCopyCSS}>
-          {__("Copy")}
+          {t("themePreview.actions.copy")}
         </Button>
       </div>
 
@@ -188,6 +191,7 @@ export function ThemePreview({ cookieBannerKey }: ThemePreviewProps) {
 }
 
 function BannerPreview({ showBranding }: { showBranding: boolean }) {
+  const { t } = useTranslation("organizations/cookie-banners");
   return (
     <div
       style={{
@@ -210,7 +214,7 @@ function BannerPreview({ showBranding }: { showBranding: boolean }) {
           margin: "0 0 8px",
         }}
       >
-        Cookie Preferences
+        {t("themePreview.banner.title")}
       </p>
       <p
         style={{
@@ -218,18 +222,22 @@ function BannerPreview({ showBranding }: { showBranding: boolean }) {
           margin: "0 0 20px",
         }}
       >
-        We use cookies to improve your experience and analyze site traffic.
-        {" "}
-        <a
-          href="#"
-          onClick={e => e.preventDefault()}
-          style={{
-            color: "var(--probo-accent, #1a1a1a)",
-            textDecoration: "underline",
+        <Trans
+          ns="organizations/cookie-banners"
+          i18nKey="themePreview.banner.description"
+          components={{
+            policy: (
+              <a
+                href="#"
+                onClick={e => e.preventDefault()}
+                style={{
+                  color: "var(--probo-accent, #1a1a1a)",
+                  textDecoration: "underline",
+                }}
+              />
+            ),
           }}
-        >
-          Privacy Policy
-        </a>
+        />
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: "12px" }}>
         <span>
@@ -249,7 +257,7 @@ function BannerPreview({ showBranding }: { showBranding: boolean }) {
               whiteSpace: "nowrap",
             }}
           >
-            Accept all
+            {t("themePreview.banner.acceptAll")}
           </button>
         </span>
         <span>
@@ -269,7 +277,7 @@ function BannerPreview({ showBranding }: { showBranding: boolean }) {
               whiteSpace: "nowrap",
             }}
           >
-            Reject all
+            {t("themePreview.banner.rejectAll")}
           </button>
         </span>
         <span>
@@ -290,7 +298,7 @@ function BannerPreview({ showBranding }: { showBranding: boolean }) {
               textDecoration: "underline",
             }}
           >
-            Customize
+            {t("themePreview.banner.customize")}
           </button>
         </span>
       </div>
@@ -303,7 +311,7 @@ function BannerPreview({ showBranding }: { showBranding: boolean }) {
             color: "var(--probo-text-secondary, #555555)",
           }}
         >
-          Privacy by
+          {t("themePreview.banner.privacyBy")}
           {" "}
           <Logo withPicto className="inline h-3.5 align-[-3px]" />
         </div>

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePageDocumentsPageQuery } from "#/__generated__/core/CompliancePageDocumentsPageQuery.graphql";
@@ -36,7 +36,7 @@ export const compliancePageDocumentsPageQuery = graphql`
 export function CompliancePageDocumentsPage(props: { queryRef: PreloadedQuery<CompliancePageDocumentsPageQuery> }) {
   const { queryRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const { organization } = usePreloadedQuery<CompliancePageDocumentsPageQuery>(
     compliancePageDocumentsPageQuery,
@@ -47,9 +47,11 @@ export function CompliancePageDocumentsPage(props: { queryRef: PreloadedQuery<Co
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium">{__("Documents")}</h3>
+          <h3 className="text-base font-medium">
+            {t("documentsPage.title")}
+          </h3>
           <p className="text-sm text-txt-tertiary">
-            {__("Manage policies, procedures and compliance documents")}
+            {t("documentsPage.description")}
           </p>
         </div>
       </div>

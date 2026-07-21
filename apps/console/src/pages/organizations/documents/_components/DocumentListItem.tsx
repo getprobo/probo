@@ -18,14 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  formatDate,
-  formatError,
-  getDocumentClassificationLabel,
-  getDocumentTypeLabel,
-  sprintf,
-} from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -39,6 +33,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
@@ -146,7 +141,7 @@ export function DocumentListItem(props: {
   } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [archiveDocument, isArchiving] = useMutation<DocumentListItem_archiveMutation>(archiveDocumentMutation);
   const [unarchiveDocument, isUnarchiving] = useMutation<DocumentListItem_unarchiveMutation>(unarchiveDocumentMutation);
@@ -168,9 +163,9 @@ export function DocumentListItem(props: {
   } as const;
 
   const statusLabel = {
-    DRAFT: __("Draft"),
-    PENDING_APPROVAL: __("Pending approval"),
-    PUBLISHED: __("Published"),
+    DRAFT: t("documentListItem.status.draft"),
+    PENDING_APPROVAL: t("documentListItem.status.pendingApproval"),
+    PUBLISHED: t("documentListItem.status.published"),
   } as const;
 
   const handleArchive = () => {
@@ -188,32 +183,31 @@ export function DocumentListItem(props: {
             onCompleted(_, errors) {
               if (errors?.length) {
                 toast({
-                  title: __("Error"),
-                  description: formatError(__("Failed to archive document"), errors),
+                  title: t("documentListItem.errors.title"),
+                  description: formatError(t("documentListItem.errors.archive"), errors),
                   variant: "error",
                 });
               } else {
                 toast({
-                  title: __("Success"),
-                  description: __("Document archived successfully."),
+                  title: t("documentListItem.messages.successTitle"),
+                  description: t("documentListItem.messages.archived"),
                   variant: "success",
                 });
               }
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: error.message, variant: "error" });
+              toast({ title: t("documentListItem.errors.title"), description: error.message, variant: "error" });
               resolve();
             },
           });
         }),
       {
-        message: sprintf(
-          __("This will archive the document \"%s\". It will no longer be editable."),
-          lastVersion.title,
-        ),
+        message: t("documentListItem.confirmations.archive", {
+          title: lastVersion.title,
+        }),
         variant: "danger",
-        label: __("Archive"),
+        label: t("documentListItem.actions.archive"),
       },
     );
   };
@@ -234,20 +228,20 @@ export function DocumentListItem(props: {
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to unarchive document"), errors),
+            title: t("documentListItem.errors.title"),
+            description: formatError(t("documentListItem.errors.unarchive"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Document unarchived successfully."),
+          title: t("documentListItem.messages.successTitle"),
+          description: t("documentListItem.messages.unarchived"),
           variant: "success",
         });
       },
       onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
+        toast({ title: t("documentListItem.errors.title"), description: error.message, variant: "error" });
       },
     });
   };
@@ -280,17 +274,19 @@ export function DocumentListItem(props: {
           {lastVersion.minor}
         </Td>
         <Td className="w-28">
-          {getDocumentTypeLabel(__, lastVersion.documentType)}
+          {t(`documentListItem.documentTypes.${lastVersion.documentType.toLowerCase()}`)}
         </Td>
         <Td className="w-32">
-          {getDocumentClassificationLabel(__, lastVersion.classification)}
+          {t(`documentListItem.classifications.${lastVersion.classification.toLowerCase()}`)}
         </Td>
         <Td className="w-60">
           {(() => {
             if (lastVersion.status === "PENDING_APPROVAL") {
               const quorum = lastVersion.approvalQuorums?.edges?.[0]?.node;
               if (quorum) {
-                if (quorum.status === "REJECTED") return __("Rejected");
+                if (quorum.status === "REJECTED") {
+                  return t("documentListItem.status.rejected");
+                }
                 return `${quorum.approvedDecisions.totalCount}/${quorum.decisions.totalCount}`;
               }
               return "—";
@@ -299,7 +295,7 @@ export function DocumentListItem(props: {
             return document.defaultApprovers.map(a => a.fullName).join(", ");
           })()}
         </Td>
-        <Td className="w-40">{formatDate(document.updatedAt)}</Td>
+        <Td className="w-40">{dateFormat(i18n.language, document.updatedAt)}</Td>
         <Td className="w-20">
           {lastVersion.signedSignatures.totalCount}
           /
@@ -315,7 +311,7 @@ export function DocumentListItem(props: {
                     disabled={isArchiving}
                     onClick={handleArchive}
                   >
-                    {__("Archive")}
+                    {t("documentListItem.actions.archive")}
                   </DropdownItem>
                 )}
                 {document.canUnarchive && document.status === "ARCHIVED" && (
@@ -324,7 +320,7 @@ export function DocumentListItem(props: {
                     disabled={isUnarchiving}
                     onClick={handleUnarchive}
                   >
-                    {__("Unarchive")}
+                    {t("documentListItem.actions.unarchive")}
                   </DropdownItem>
                 )}
                 {document.canDelete && (
@@ -333,7 +329,7 @@ export function DocumentListItem(props: {
                     icon={IconTrashCan}
                     onClick={handleDelete}
                   >
-                    {__("Delete")}
+                    {t("documentListItem.actions.delete")}
                   </DropdownItem>
                 )}
               </ActionDropdown>

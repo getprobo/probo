@@ -29,21 +29,21 @@ export const measureStates = [
     "NOT_IMPLEMENTED",
 ] as const;
 
-export function getMeasureStateLabel(__: Translator, state: string) {
+export function getMeasureStateLabel(t: Translator, state: string) {
     switch (state) {
         case "IMPLEMENTED":
-            return __("Implemented");
+            return t("helpers.measureState.implemented");
         case "IN_PROGRESS":
-            return __("In Progress");
+            return t("helpers.measureState.inProgress");
         case "NOT_APPLICABLE":
-            return __("Not Applicable");
+            return t("helpers.measureState.notApplicable");
         case "NOT_STARTED":
-            return __("Not Started");
+            return t("helpers.measureState.notStarted");
         case "UNKNOWN":
-            return __("Unknown");
+            return t("helpers.common.unknown");
         case "NOT_IMPLEMENTED":
-            return __("Not Implemented");
+            return t("helpers.measureState.notImplemented");
         default:
-            return __("Unknown");
+            return t("helpers.common.unknown");
     }
 }

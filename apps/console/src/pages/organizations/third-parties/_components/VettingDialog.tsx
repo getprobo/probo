@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -30,16 +29,13 @@ import {
   useToast,
 } from "@probo/ui";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { VettingDialogMutation } from "#/__generated__/core/VettingDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-
-const schema = z.object({
-  url: z.string().url(),
-});
 
 const vetMutation = graphql`
   mutation VettingDialogMutation($input: VetThirdPartyInput!) {
@@ -64,7 +60,10 @@ interface VettingDialogProps {
 }
 
 export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
+  const schema = z.object({
+    url: z.string().url(t("vettingDialog.validation.url")),
+  });
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const { register, handleSubmit, reset, formState } = useFormWithSchema(
@@ -88,9 +87,9 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("vettingDialog.messages.error"),
             description: formatError(
-              __("Failed to start vetting."),
+              t("vettingDialog.errors.start"),
               errors,
             ),
             variant: "error",
@@ -98,8 +97,8 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("The third party is being vetted in the background."),
+          title: t("vettingDialog.messages.success"),
+          description: t("vettingDialog.messages.started"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -107,9 +106,9 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("vettingDialog.messages.error"),
           description: formatError(
-            __("Failed to start vetting."),
+            t("vettingDialog.errors.start"),
             error,
           ),
           variant: "error",
@@ -122,14 +121,14 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={__("Start Vetting")}
+      title={t("vettingDialog.title")}
       className="max-w-lg"
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <Field
             required
-            label={__("Website URL")}
+            label={t("vettingDialog.fields.websiteUrl")}
             type="text"
             {...register("url")}
             error={formState.errors.url?.message}
@@ -137,7 +136,7 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isVetting}>
-            {__("Start Vetting")}
+            {t("vettingDialog.actions.start")}
           </Button>
         </DialogFooter>
       </form>

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,37 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-/**
- * Return the file size in a human readable format
- */
-export function fileSize(__: (s: string) => string, size: number): string {
-    if (size < 0) return "";
-    if (size === 0) return `0 ${__("B")}`;
+import { createInstance } from "i18next";
+import { initReactI18next } from "react-i18next";
 
-    const units = [__("B"), __("KB"), __("MB"), __("GB"), __("TB")];
-    const i = Math.floor(Math.log(size) / Math.log(1024));
+import { DEFAULT_NAMESPACE, globBackend } from "./backend";
+import { resolveLanguage, SUPPORTED_LANGUAGES } from "./resolveLanguage";
 
-    // Don't go beyond available units
-    const unitIndex = Math.min(i, units.length - 1);
+// Build a dedicated instance rather than mutating i18next's global singleton.
+// Initializing it through initReactI18next still registers it as the instance
+// react-i18next's hooks read from, so no I18nextProvider is required.
+const i18n = createInstance();
 
-    // Convert to the appropriate unit with 2 decimal places
-    const convertedSize = size / Math.pow(1024, unitIndex);
-    const formattedSize = Math.round(convertedSize * 100) / 100;
+void i18n
+  .use(globBackend)
+  .use(initReactI18next)
+  .init({
+    lng: resolveLanguage(),
+    fallbackLng: "en-US",
+    supportedLngs: SUPPORTED_LANGUAGES,
+    load: "currentOnly",
+    defaultNS: DEFAULT_NAMESPACE,
+    fallbackNS: DEFAULT_NAMESPACE,
+    ns: [DEFAULT_NAMESPACE],
+    interpolation: { escapeValue: false },
+    react: { useSuspense: true },
+  });
 
-    return `${formattedSize} ${units[unitIndex]}`;
-}
-
-type FileInfo = {
-    type: string;
-    mimeType: string;
-};
-
-export function fileType(__: (s: string) => string, info: FileInfo): string {
-    if (
-        info.type !== "FILE" ||
-        (info.mimeType !== "text/uri-list" && info.mimeType !== "text/uri")
-    ) {
-        return __("Document");
-    }
-    return __("Link");
-}
+export { i18n };

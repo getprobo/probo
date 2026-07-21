@@ -1,0 +1,336 @@
+{
+  "layout": {
+    "title": "Compliance Page",
+    "description": "Configure your public compliance page to showcase your security and compliance posture.",
+    "status": { "active": "Active", "inactive": "Inactive" },
+    "actions": { "open": "Open" },
+    "tabs": {
+      "overview": "Overview",
+      "brand": "Brand",
+      "references": "References",
+      "commitments": "Commitments",
+      "audits": "Audits",
+      "documents": "Documents",
+      "files": "Files",
+      "subprocessors": "Subprocessors",
+      "access": "Access",
+      "mailingList": "Mailing List"
+    }
+  },
+  "aliasField": {
+    "messages": { "updated": "Alias updated successfully.", "removed": "Alias removed successfully." },
+    "errors": { "update": "Failed to update alias", "remove": "Failed to remove alias" },
+    "placeholder": "e.g. privacy-policy"
+  },
+  "accessPage": {
+    "title": "External Access",
+    "description": "Manage who can access your compliance page"
+  },
+  "accessEditDialog": {
+    "title": "Edit Access for {{email}}",
+    "types": { "document": "Document", "report": "Report", "file": "File" },
+    "messages": { "updated": "Access updated successfully" },
+    "errors": { "update": "Failed to update access" },
+    "actions": { "update": "Update Access" }
+  },
+  "accessList": {
+    "empty": "No external access granted yet",
+    "columns": { "name": "Name", "email": "Email", "date": "Date", "access": "Access", "requests": "Requests", "nda": "NDA" },
+    "actions": { "showMore": "Show More" }
+  },
+  "accessListItem": {
+    "actions": { "edit": "Edit" }
+  },
+  "documentAccessList": {
+    "title": "Document Access Permissions",
+    "columns": { "name": "Name", "type": "Type", "category": "Category", "access": "Access" },
+    "actions": { "grantAll": "Grant All", "rejectOrRevokeAll": "Reject/Revoke All", "grant": "Grant", "reject": "Reject", "revoke": "Revoke" },
+    "empty": "No documents available"
+  },
+  "electronicSignature": {
+    "title": "Electronic Signature",
+    "fields": { "status": "Status", "signedAt": "Signed at", "certificate": "Certificate" },
+    "actions": { "download": "Download" },
+    "activity": "Activity"
+  },
+  "eventTypeLabel": {
+    "documentViewed": "Document viewed", "consentGiven": "Consent given", "fullNameTyped": "Full name typed", "signatureAccepted": "Signature accepted", "signatureCompleted": "Signature completed", "sealComputed": "Seal computed", "timestampRequested": "Timestamp requested", "certificateGenerated": "Certificate generated", "processingError": "Processing error"
+  },
+  "ndaSignatureBadge": {
+    "signed": "Signed", "processing": "Processing", "pending": "Pending", "failed": "Failed"
+  },
+  "auditsPage": {
+    "title": "Audits",
+    "description": "Manage audit reports and compliance certifications"
+  },
+  "auditList": {
+    "columns": { "framework": "Framework", "name": "Name", "validUntil": "Valid Until", "state": "State", "visibility": "Visibility" },
+    "empty": "No audits available"
+  },
+  "auditListItem": {
+    "messages": { "visibilityUpdated": "Audit visibility updated successfully." },
+    "errors": { "updateVisibility": "Failed to update audit visibility" },
+    "noExpiry": "No expiry",
+    "untitled": "Untitled",
+    "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" }
+  },
+  "brandPage": {
+    "messages": { "updated": "Compliance page branding updated successfully" },
+    "errors": { "update": "Failed to update compliance page branding", "fileTooLarge": { "title": "File size too large", "description": "The file size is too large. Please upload a file smaller than 5MB." } },
+    "actions": { "uploading": "Uploading...", "updating": "Updating...", "noLogo": "No logo", "uploadLogo": "Upload logo", "uploadDarkLogo": "Upload dark logo", "changeLogo": "Change logo", "removeLogo": "Remove logo", "changeDarkLogo": "Change dark logo", "removeDarkLogo": "Remove dark logo" },
+    "logo": { "label": "Logo", "description": "This logo will be displayed on your public compliance page.", "alt": "Compliance page logo", "uploadDescription": "Upload logo image (PNG, JPG, SVG, WEBP up to 5MB)" },
+    "darkLogo": { "label": "Dark mode logo", "description": "This logo will be used when dark mode is enabled.", "alt": "Compliance page dark logo", "uploadDescription": "Upload dark logo image (PNG, JPG, SVG, WEBP up to 5MB)" },
+    "visualIdentity": { "title": "Visual identity", "description": "Square logos displayed on your public compliance page." },
+    "domains": { "title": "Domains", "description": "Your compliance page is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own.", "actions": { "configure": "Configure" } },
+    "profile": { "title": "General information", "description": "Description and contact details shown to visitors.", "fields": { "entityName": "Entity name", "entityNamePlaceholder": "Acme", "description": "Description", "descriptionPlaceholder": "Brief description for visitors", "websiteUrl": "Website URL", "email": "Email", "emailPlaceholder": "contact@example.com", "address": "Headquarter Address", "addressPlaceholder": "123 Main St, City, Country" } }
+  },
+  "commitmentDialog": {
+    "title": { "create": "Add Commitment", "edit": "Edit Commitment" },
+    "validation": { "iconRequired": "Icon is required", "titleRequired": "Title is required", "descriptionRequired": "Description is required" },
+    "messages": { "created": "Commitment created successfully", "updated": "Commitment updated successfully" },
+    "errors": { "create": "Failed to create commitment", "update": "Failed to update commitment" },
+    "fields": { "icon": "Icon", "iconPlaceholder": "Select an icon", "eyebrow": "Eyebrow", "eyebrowPlaceholder": "Small accent label above the title", "title": "Title", "titlePlaceholder": "Commitment headline", "description": "Description", "descriptionPlaceholder": "Supporting body copy" },
+    "actions": { "add": "Add Commitment", "update": "Update Commitment" },
+    "icons": { "lock_key": "Lock & key", "eye_slash": "Eye slash", "fingerprint": "Fingerprint", "shield_warning": "Shield warning", "shield_check": "Shield check", "siren": "Siren", "key": "Key", "lock": "Lock", "cloud": "Cloud", "database": "Database", "globe": "Globe", "eye": "Eye", "users": "Users", "certificate": "Certificate", "gavel": "Gavel", "heartbeat": "Heartbeat", "bell": "Bell", "bug": "Bug", "code": "Code", "server": "Server" }
+  },
+  "commitmentGroupDialog": {
+    "title": { "create": "Add Group", "edit": "Edit Group" },
+    "validation": { "titleRequired": "Title is required", "descriptionRequired": "Description is required" },
+    "messages": { "created": "Group created successfully", "updated": "Group updated successfully" },
+    "errors": { "create": "Failed to create group", "update": "Failed to update group" },
+    "fields": { "title": "Title", "titlePlaceholder": "e.g. Data Protection", "description": "Description", "descriptionPlaceholder": "Describe what this group of commitments covers" },
+    "actions": { "add": "Add Group", "update": "Update Group" }
+  },
+  "commitmentGroupList": {
+    "title": "Security Commitments",
+    "description": "Group commitment cards into sections shown on your compliance page",
+    "messages": { "orderUpdated": "Order updated successfully" },
+    "errors": { "updateOrder": "Failed to update order" },
+    "actions": { "addGroup": "Add Group" },
+    "empty": "No commitment groups yet"
+  },
+  "commitmentGroupListItem": {
+    "messages": { "deleted": "Group deleted successfully", "orderUpdated": "Order updated successfully" },
+    "errors": { "delete": "Failed to delete group", "updateOrder": "Failed to update order" },
+    "delete": { "title": "Delete Group", "description": "Are you sure you want to delete the group \"{{title}}\"?", "warning": "All commitment cards in this group will also be deleted. This action cannot be undone." },
+    "columns": { "icon": "Icon", "title": "Title", "description": "Description" },
+    "actions": { "deleting": "Deleting...", "delete": "Delete", "addCommitment": "Add Commitment" },
+    "empty": "No commitment cards yet"
+  },
+  "commitmentListItem": {
+    "messages": { "deleted": "Commitment deleted successfully" },
+    "errors": { "delete": "Failed to delete commitment" }
+  },
+  "documentsPage": {
+    "title": "Documents",
+    "description": "Manage policies, procedures and compliance documents"
+  },
+  "documentList": {
+    "columns": { "name": "Name", "type": "Type", "alias": "Alias", "visibility": "Visibility" },
+    "empty": "No documents available"
+  },
+  "documentListItem": {
+    "messages": { "visibilityUpdated": "Document visibility updated successfully." },
+    "errors": { "updateVisibility": "Failed to update document visibility" }
+  },
+  "domainPage": {
+    "title": "Custom Domain",
+    "empty": { "description": "Add your own domain to make your compliance page more professional" }
+  },
+  "thirdPartyListItem": {
+    "messages": { "visibilityUpdated": "Subprocessor visibility updated successfully." },
+    "errors": { "visibilityUpdate": "Failed to update subprocessor visibility" },
+    "visibility": { "visible": "Visible", "none": "None" },
+    "actions": { "hide": "Hide", "show": "Show" }
+  },
+  "thirdPartyList": {
+    "columns": { "name": "Name", "category": "Category", "visibility": "Visibility" },
+    "empty": "No subprocessors available"
+  },
+  "thirdPartiesPage": {
+    "title": "Subprocessors",
+    "description": "Manage subprocessor assessments and third-party risk information"
+  },
+  "referenceList": {
+    "columns": { "name": "Name", "description": "Description" },
+    "empty": "No references available",
+    "dragHint": "Drag and drop references to change their displayed order"
+  },
+  "referencesPage": {
+    "title": "References",
+    "description": "Showcase your customers and partners on your compliance page",
+    "actions": { "add": "Add reference" }
+  },
+  "statusSection": {
+    "title": "Compliance page status",
+    "errors": { "title": "Error", "notFound": "Compliance page not found" },
+    "activation": { "title": "Activate compliance page", "description": "Make your compliance page publicly accessible to build customer confidence" },
+    "indexing": { "title": "Search engine indexing", "description": "Allow search engines to index your compliance page and make it discoverable", "disabledHint": "Activate your compliance page first to enable search engine indexing" }
+  },
+  "slackSection": {
+    "title": "Integrations",
+    "disconnect": { "title": "Disconnect Slack", "description": "Are you sure you want to disconnect this Slack channel? This action cannot be undone." },
+    "emptyDescription": "Manage your compliance page access with Slack",
+    "actions": { "connect": "Connect", "disconnect": "Disconnect" }
+  },
+  "slackConnectionCard": {
+    "title": "Slack",
+    "connected": "Connected on {{date}}",
+    "connectedWithChannel": "Connected on {{date}} • Channel: {{channel}}",
+    "notConfiguredDescription": "Slack is connected, but no channel is set up for the compliance page yet.",
+    "status": { "connected": "Connected", "notConfigured": "Channel not configured" },
+    "actions": { "changeChannel": "Change channel", "connect": "Connect", "disconnect": "Disconnect" }
+  },
+  "ndaSection": {
+    "title": "Non-disclosure agreement",
+    "errors": { "title": "Error", "notFound": "Compliance page not found" },
+    "deleteConfirmation": "Are you sure you want to delete the NDA file?",
+    "uploadDescription": "Upload a Non-Disclosure Agreement that visitors must accept before accessing your compliance page",
+    "acceptanceDescription": "Visitors will need to accept this NDA before accessing your compliance page",
+    "actions": { "download": "Download PDF" },
+    "dropzoneDescription": "Upload PDF files up to 10MB",
+    "empty": "No NDA file uploaded"
+  },
+  "frameworkList": {
+    "messages": { "visibilityUpdated": "Framework visibility updated successfully.", "orderUpdated": "Order updated successfully" },
+    "errors": { "visibilityUpdate": "Failed to update framework visibility", "orderUpdate": "Failed to update order" },
+    "visibility": { "public": "Public", "none": "None" },
+    "columns": { "framework": "Framework", "visibility": "Visibility" },
+    "empty": "No frameworks available",
+    "dragHint": "Drag and drop public frameworks to change their displayed order"
+  },
+  "externalUrls": {
+    "title": "Custom links",
+    "description": "Add external URLs to display on your compliance page",
+    "validation": { "nameRequired": "Name is required", "urlInvalid": "Please enter a valid URL" },
+    "messages": { "created": "Link added successfully.", "updated": "Link updated successfully.", "deleted": "Link removed.", "orderUpdated": "Order updated." },
+    "errors": { "create": "Failed to add link.", "update": "Failed to update link.", "delete": "Failed to remove link.", "orderUpdate": "Failed to update order." },
+    "dialog": { "titleCreate": "Add link", "titleEdit": "Edit link" },
+    "fields": { "url": "URL", "urlPlaceholder": "https://example.com", "name": "Name", "namePlaceholder": "for example, Twitter or LinkedIn" },
+    "actions": { "add": "Add link", "save": "Save changes", "open": "Open link", "remove": "Remove link" },
+    "dragHint": "Drag and drop to change the displayed order"
+  },
+  "sendUpdateDialog": {
+    "title": "Send update to subscribers",
+    "description": "This update will be sent to all current subscribers of this mailing list. This action cannot be undone.",
+    "messages": { "enqueued": "Update enqueued for delivery" },
+    "errors": { "enqueue": "Failed to enqueue update for delivery" },
+    "actions": { "send": "Send" }
+  },
+  "newSubscriberDialog": {
+    "title": "Add subscriber",
+    "description": "Add a person to receive security and compliance updates",
+    "validation": { "fullNameRequired": "Full name is required", "emailRequired": "Email is required", "emailInvalid": "Please enter a valid email address" },
+    "messages": { "created": "Subscriber added successfully" },
+    "errors": { "create": "Failed to add subscriber" },
+    "fields": { "fullName": "Full name", "fullNamePlaceholder": "John Doe", "email": "Email address", "emailPlaceholder": "john@example.com", "skipConfirmation": "Skip confirmation email" },
+    "consentNotice": "By checking this box, you certify that you have obtained verifiable prior consent from this individual to receive these communications, in compliance with applicable data protection regulations (for example, GDPR and CAN-SPAM). You accept full responsibility for demonstrating proof of consent if required.",
+    "actions": { "create": "Add subscriber" }
+  },
+  "updateFormDialog": {
+    "title": { "view": "View update", "edit": "Edit update", "create": "Add update" },
+    "validation": { "titleRequired": "Title is required", "bodyRequired": "Body is required" },
+    "messages": { "created": "Update created successfully", "updated": "Update saved successfully" },
+    "errors": { "create": "Failed to create update", "update": "Failed to save update" },
+    "confidentialityNotice": "Do not include confidential or sensitive information in this update. Any content that requires protection should be placed behind your NDA-gated documents instead.",
+    "fields": { "title": "Title", "body": "Body" },
+    "sentNotice": "This update has been sent and can no longer be edited.",
+    "actions": { "save": "Save", "create": "Create" }
+  },
+  "updatesList": {
+    "messages": { "deleted": "Update deleted successfully" },
+    "errors": { "delete": "Failed to delete update" },
+    "empty": "No updates yet",
+    "columns": { "title": "Title", "status": "Status", "created": "Created" },
+    "status": { "sent": "Sent", "enqueued": "Queued", "processing": "Processing…", "draft": "Draft" },
+    "actions": { "send": "Send", "edit": "Edit update", "view": "View update", "delete": "Delete update", "showMore": "Show more" }
+  },
+  "mailingList": {
+    "messages": { "deleted": "Subscriber removed successfully" },
+    "errors": { "delete": "Failed to delete subscriber" },
+    "empty": "No mailing list subscribers yet",
+    "columns": { "name": "Name", "email": "Email", "status": "Status", "subscribedOn": "Subscribed on" },
+    "status": { "confirmed": "Confirmed", "pending": "Pending" },
+    "actions": { "delete": "Delete subscriber", "showMore": "Show more" }
+  },
+  "mailingListPage": {
+    "messages": { "updated": "Mailing list updated successfully" },
+    "errors": { "update": "Failed to update mailing list" },
+    "settings": { "title": "Settings", "description": "Configure how your mailing list behaves", "replyTo": "Reply-to email", "replyToPlaceholder": "security@example.com" },
+    "tabs": { "updates": "Updates", "subscribers": "Subscribers" },
+    "actions": { "save": "Save", "addUpdate": "Add update", "addSubscriber": "Add subscriber" }
+  },
+  "newFileDialog": {
+    "title": "Add file",
+    "uploadDescription": "Upload file (max 10MB)",
+    "selectedFile": "Selected file: {{name}}",
+    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required", "fileTypeNotAllowed": "File type is not allowed" },
+    "messages": { "created": "File uploaded successfully" },
+    "errors": { "create": "Failed to upload file" },
+    "fields": { "name": "Name", "category": "Category", "visibility": "Visibility" },
+    "actions": { "add": "Add file" }
+  },
+  "editFileDialog": {
+    "title": "Edit file",
+    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required" },
+    "messages": { "updated": "File updated successfully" },
+    "errors": { "update": "Failed to update file" },
+    "fields": { "name": "Name", "category": "Category" },
+    "actions": { "save": "Save" }
+  },
+  "deleteFileDialog": {
+    "title": "Delete file",
+    "description": "Are you sure you want to delete this file? This action cannot be undone.",
+    "messages": { "deleted": "File deleted successfully" },
+    "errors": { "delete": "Failed to delete file" },
+    "actions": { "delete": "Delete" }
+  },
+  "fileListItem": {
+    "messages": { "updated": "File updated successfully" },
+    "errors": { "update": "Failed to update file" },
+    "actions": { "download": "Download", "edit": "Edit", "delete": "Delete" }
+  },
+  "fileList": {
+    "columns": { "name": "Name", "category": "Category", "uploadDate": "Upload date", "alias": "Alias", "visibility": "Visibility" },
+    "empty": "No files available"
+  },
+  "filesPage": {
+    "title": "Files",
+    "description": "Upload and manage files for your compliance page",
+    "actions": { "add": "Add file" }
+  },
+  "newDomainDialog": {
+    "title": "Add domain",
+    "description": "Enter your domain and we'll generate the DNS records you need to add.",
+    "messages": { "created": "Domain added successfully. Configure the DNS records to verify and activate your domain." },
+    "errors": { "create": "Failed to add domain" },
+    "fields": { "domain": "Domain", "domainPlaceholder": "compliance.example.com" },
+    "examples": "Examples: compliance.example.com, trust.example.com",
+    "actions": { "adding": "Adding...", "add": "Add domain" }
+  },
+  "deleteDomainDialog": {
+    "title": "Delete custom domain",
+    "description": "This will permanently delete the custom domain {{domain}} and all its configuration.",
+    "warning": "This action cannot be undone.",
+    "confirmationLabel": "To confirm deletion, type \"{{domain}}\" below:",
+    "messages": { "deleted": "Domain deleted successfully" },
+    "errors": { "delete": "Failed to delete domain" },
+    "actions": { "deleting": "Deleting...", "delete": "Delete domain" }
+  },
+  "domainDialog": {
+    "messages": { "copied": "Copied", "valueCopied": "Value copied to clipboard" },
+    "active": { "title": "Domain is active", "description": "Your custom domain is verified and SSL certificate is active" },
+    "provisioningError": "Provisioning error",
+    "sslExpires": "SSL expires",
+    "dns": { "title": "DNS configuration", "description": "Add these DNS records to your domain to complete verification", "name": "Name", "value": "Value", "ttl": "TTL: {{ttl}}" },
+    "actions": { "copy": "Copy" },
+    "pendingDescription": "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate."
+  },
+  "frameworkList": { "title": "Compliance frameworks", "description": "Select which frameworks to show on your public compliance page.", "empty": "No frameworks available", "messages": { "visibilityUpdated": "Framework visibility updated successfully." }, "errors": { "visibilityUpdate": "Failed to update framework visibility" } },
+  "ndaSection": { "title": "Non-disclosure agreement", "empty": "No NDA file uploaded", "emptyDescription": "Upload a PDF that visitors must accept before they can access your compliance page.", "uploadDescription": "Require visitors to accept a Non-Disclosure Agreement before accessing your compliance page.", "acceptanceDescription": "Visitors must accept this agreement before accessing your compliance page.", "actions": { "download": "Download", "upload": "Upload NDA", "replace": "Replace" }, "delete": { "title": "Delete NDA", "description": "Are you sure you want to delete the NDA file? This action cannot be undone.", "actions": { "delete": "Delete" } }, "errors": { "title": "Error", "notFound": "Compliance page not found", "invalidFileType": { "title": "Unsupported file type", "description": "Please upload a PDF file." }, "fileTooLarge": { "title": "File size too large", "description": "Please upload a file smaller than 10MB." } } },
+  "domainCard": {
+    "managed": "Managed",
+    "status": { "active": "Active", "pending": "Pending" },
+    "actions": { "viewDetails": "View Details", "delete": "Delete" }
+  }
+}

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { useCopy } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -27,6 +26,7 @@ import {
   DialogContent,
   DialogFooter,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export function PersonalAPIKeyTokenDialog(props: {
   dialogRef: React.RefObject<{ open: () => void; close: () => void } | null>;
@@ -34,13 +34,13 @@ export function PersonalAPIKeyTokenDialog(props: {
   onDone: () => void;
 }) {
   const { dialogRef, token, onDone } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [isCopied, copy] = useCopy();
 
   return (
     <Dialog
       ref={dialogRef}
-      title={<Breadcrumb items={[__("API Keys"), __("Token")]} />}
+      title={<Breadcrumb items={[t("apiKeys.title"), t("personalApiKeyTokenDialog.title")]} />}
     >
       <DialogContent padded className="space-y-4">
         <div className="bg-gray-100 p-4 rounded-lg flex items-center gap-2">
@@ -50,12 +50,12 @@ export function PersonalAPIKeyTokenDialog(props: {
             onClick={() => copy(token)}
             disabled={!token}
           >
-            {isCopied ? __("Copied") : __("Copy")}
+            {isCopied ? t("personalApiKeyTokenDialog.actions.copied") : t("personalApiKeyTokenDialog.actions.copy")}
           </Button>
         </div>
       </DialogContent>
       <DialogFooter>
-        <Button onClick={onDone}>{__("Done")}</Button>
+        <Button onClick={onDone}>{t("personalApiKeyTokenDialog.actions.done")}</Button>
       </DialogFooter>
     </Dialog>
   );

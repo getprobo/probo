@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
@@ -84,7 +84,7 @@ export function DocumentSignaturePlaceholder(props: {
 }) {
   const { connectionId, organizationFragmentRef, personFragmentRef, versionFragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const { canRequestSignature } = useFragment<DocumentSignaturePlaceholder_organizationFragment$key>(
     organizationFragment,
@@ -101,8 +101,8 @@ export function DocumentSignaturePlaceholder(props: {
   const [requestSignature, isSendingRequest] = useMutationWithToasts(
     requestSignatureMutation,
     {
-      successMessage: __("Signature request sent successfully"),
-      errorMessage: __("Failed to send signature request"),
+      successMessage: t("documentSignaturePlaceholder.messages.sent"),
+      errorMessage: t("documentSignaturePlaceholder.errors.send"),
     },
   );
 
@@ -133,7 +133,7 @@ export function DocumentSignaturePlaceholder(props: {
             });
           }}
         >
-          {__("Request signature")}
+          {t("documentSignaturePlaceholder.actions.request")}
         </Button>
       )}
     </div>

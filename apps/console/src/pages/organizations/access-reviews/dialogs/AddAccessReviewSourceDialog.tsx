@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -34,6 +33,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { type ReactNode, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
@@ -81,7 +81,7 @@ export function AddAccessReviewSourceDialog({
   providerInfos,
   existingSourceProviders,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -128,7 +128,7 @@ export function AddAccessReviewSourceDialog({
               }
             }}
           >
-            {__("Connect")}
+            {t("addAccessReviewSourceDialog.actions.connect")}
           </Button>
         );
       }
@@ -138,7 +138,9 @@ export function AddAccessReviewSourceDialog({
             variant="secondary"
             onClick={() => setActiveAPIKeyProvider(info)}
           >
-            {info.apiKeyManaged ? __("Connect") : __("API Key")}
+            {info.apiKeyManaged
+              ? t("addAccessReviewSourceDialog.actions.connect")
+              : t("addAccessReviewSourceDialog.actions.apiKey")}
           </Button>
         );
       }
@@ -148,7 +150,7 @@ export function AddAccessReviewSourceDialog({
             variant="secondary"
             onClick={() => setActiveClientCredsProvider(info)}
           >
-            {__("Client Credentials")}
+            {t("addAccessReviewSourceDialog.actions.clientCredentials")}
           </Button>
         );
       }
@@ -164,7 +166,7 @@ export function AddAccessReviewSourceDialog({
         {isConnected
           ? (
               <Badge variant="success" size="md">
-                {__("Connected")}
+                {t("addAccessReviewSourceDialog.status.connected")}
               </Badge>
             )
           : (
@@ -176,14 +178,14 @@ export function AddAccessReviewSourceDialog({
                       <DropdownItem
                         onSelect={() => setActiveAPIKeyProvider(info)}
                       >
-                        {__("Connect with API Key")}
+                        {t("addAccessReviewSourceDialog.actions.connectWithApiKey")}
                       </DropdownItem>
                     )}
                     {info.clientCredentialsSupported && (
                       <DropdownItem
                         onSelect={() => setActiveClientCredsProvider(info)}
                       >
-                        {__("Connect with Client Credentials")}
+                        {t("addAccessReviewSourceDialog.actions.connectWithClientCredentials")}
                       </DropdownItem>
                     )}
                   </ActionDropdown>
@@ -202,15 +204,15 @@ export function AddAccessReviewSourceDialog({
         title={(
           <Breadcrumb
             items={[
-              __("Access Reviews"),
-              __("Add Source"),
+              t("addAccessReviewSourceDialog.breadcrumb.accessReviews"),
+              t("addAccessReviewSourceDialog.breadcrumb.addSource"),
             ]}
           />
         )}
       >
         <DialogContent padded className="space-y-4">
           <Input
-            placeholder={__("Search providers...")}
+            placeholder={t("addAccessReviewSourceDialog.searchPlaceholder")}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -221,9 +223,11 @@ export function AddAccessReviewSourceDialog({
             {(!searchQuery.trim() || "csv".includes(searchQuery.toLowerCase())) && (
               <Card padded className="flex items-center gap-3">
                 <div className="mr-auto">
-                  <h3 className="font-medium">{__("CSV")}</h3>
+                  <h3 className="font-medium">
+                    {t("addAccessReviewSourceDialog.csv.title")}
+                  </h3>
                   <p className="text-sm text-txt-secondary">
-                    {__("Upload CSV data directly as an access source.")}
+                    {t("addAccessReviewSourceDialog.csv.description")}
                   </p>
                 </div>
                 <Button
@@ -232,14 +236,14 @@ export function AddAccessReviewSourceDialog({
                   onClick={() => dialogRef.current?.close()}
                 >
                   <Link to={`/organizations/${organizationId}/access-reviews/sources/new/csv`}>
-                    {__("Open")}
+                    {t("addAccessReviewSourceDialog.actions.open")}
                   </Link>
                 </Button>
               </Card>
             )}
           </div>
         </DialogContent>
-        <DialogFooter exitLabel={__("Close")} />
+        <DialogFooter exitLabel={t("addAccessReviewSourceDialog.actions.close")} />
       </Dialog>
 
       <APIKeyConnectorDialog

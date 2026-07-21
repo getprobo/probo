@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import type { DocumentGraphBulkExportDocumentsMutation } from "#/__generated__/core/DocumentGraphBulkExportDocumentsMutation.graphql";
@@ -40,13 +40,13 @@ const deleteDocumentMutation = graphql`
 `;
 
 export function useDeleteDocumentMutation() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return useMutationWithToasts<DocumentGraphDeleteMutation>(
     deleteDocumentMutation,
     {
-      successMessage: __("Document deleted successfully."),
-      errorMessage: __("Failed to delete document"),
+      successMessage: t("documentGraph.messages.deleted"),
+      errorMessage: t("documentGraph.errors.delete"),
     },
   );
 }
@@ -62,11 +62,11 @@ const bulkDeleteDocumentsMutation = graphql`
 `;
 
 export function useBulkDeleteDocumentsMutation() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return useMutationWithToasts(bulkDeleteDocumentsMutation, {
-    successMessage: __("Documents deleted successfully."),
-    errorMessage: __("Failed to delete documents"),
+    successMessage: t("documentGraph.messages.bulkDeleted"),
+    errorMessage: t("documentGraph.errors.bulkDelete"),
   });
 }
 
@@ -81,15 +81,13 @@ const bulkExportDocumentsMutation = graphql`
 `;
 
 export function useBulkExportDocumentsMutation() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return useMutationWithToasts<DocumentGraphBulkExportDocumentsMutation>(
     bulkExportDocumentsMutation,
     {
-      successMessage: __(
-        "Document export started successfully. You will receive an email when the export is ready.",
-      ),
-      errorMessage: __("Failed to start document export"),
+      successMessage: t("documentGraph.messages.exportStarted"),
+      errorMessage: t("documentGraph.errors.export"),
     },
   );
 }

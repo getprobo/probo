@@ -20,17 +20,17 @@
 
 export function getActionLabel(
   action: string,
-  __: (s: string) => string,
+  t: (key: string) => string,
 ): string {
   switch (action) {
     case "ACCEPT_ALL":
-      return __("Accept All");
+      return t("consentRecordsPage.actions.acceptAll");
     case "REJECT_ALL":
-      return __("Reject All");
+      return t("consentRecordsPage.actions.rejectAll");
     case "CUSTOMIZE":
-      return __("Customize");
+      return t("consentRecordsPage.actions.customize");
     case "GPC":
-      return __("GPC");
+      return t("consentRecordsPage.actions.gpc");
     default:
       return action;
   }
