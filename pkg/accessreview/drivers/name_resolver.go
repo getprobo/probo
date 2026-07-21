@@ -708,7 +708,8 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug))
+	// Trailing slash required; see SentryDriver.ListAccounts.
+	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug)+"/")
 	if err != nil {
 		return "", fmt.Errorf("cannot build sentry organization URL: %w", err)
 	}

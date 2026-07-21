@@ -170,7 +170,7 @@ func TestSentryNameResolver(t *testing.T) {
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, http.MethodGet, r.Method)
-				assert.Equal(t, "/api/0/organizations/acme", r.URL.Path)
+				assert.Equal(t, "/api/0/organizations/acme/", r.URL.Path)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tc.status)
 				_, _ = w.Write([]byte(tc.body))

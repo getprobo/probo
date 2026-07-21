@@ -101,7 +101,10 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 	var records []AccountRecord
 
-	nextURL, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(orgSlug), "members")
+	// The trailing slash is required: Sentry's API only routes slashed
+	// paths and answers 404 (without redirecting) otherwise. url.JoinPath
+	// keeps it only when the last element carries it.
+	nextURL, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(orgSlug), "members/")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build sentry members URL: %w", err)
 	}
