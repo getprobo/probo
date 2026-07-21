@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { Menu } from "@base-ui/react/menu";
+import { CheckIcon } from "@phosphor-icons/react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { useDropdownContext } from "./context";
@@ -31,7 +32,8 @@ export type DropdownRadioItemProps
       shortcut?: ReactNode;
     };
 
-// A menu item with a radio dot indicator. Used inside a DropdownRadioGroup.
+// A menu item with a checkmark for the selected value. Used inside a
+// DropdownRadioGroup (same indicator treatment as DropdownCheckboxItem).
 export function DropdownRadioItem(props: DropdownRadioItemProps) {
   const { className, shortcut, children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();
@@ -42,7 +44,9 @@ export function DropdownRadioItem(props: DropdownRadioItemProps) {
       {...rest}
     >
       <span className={dropdownItemIndicator()}>
-        <Menu.RadioItemIndicator className="size-1.5 rounded-full bg-current" />
+        <Menu.RadioItemIndicator>
+          <CheckIcon weight="bold" />
+        </Menu.RadioItemIndicator>
       </span>
       <span className={dropdownItemLabel()}>{children}</span>
       {shortcut != null && <span className={dropdownItemShortcut()}>{shortcut}</span>}

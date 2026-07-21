@@ -95,13 +95,13 @@
     "next": "Halaman berikutnya"
   },
   "locale": {
-    "label": "Language",
-    "updateFailed": "Couldn't update language",
+    "label": "Bahasa",
+    "updateFailed": "Tidak dapat memperbarui bahasa",
     "mismatch": {
-      "message": "You're viewing this page in {{language}}.",
-      "switchToMine": "Switch to {{language}}",
-      "useThis": "Use {{language}} as my language",
-      "dismiss": "Dismiss"
+      "message": "Anda sedang melihat halaman ini dalam {{language}}.",
+      "switchToMine": "Beralih ke {{language}}",
+      "useThis": "Gunakan {{language}} sebagai bahasa saya",
+      "dismiss": "Tutup"
     }
   }
 }

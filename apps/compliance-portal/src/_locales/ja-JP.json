@@ -95,13 +95,13 @@
     "next": "次のページ"
   },
   "locale": {
-    "label": "Language",
-    "updateFailed": "Couldn't update language",
+    "label": "言語",
+    "updateFailed": "言語を更新できませんでした",
     "mismatch": {
-      "message": "You're viewing this page in {{language}}.",
-      "switchToMine": "Switch to {{language}}",
-      "useThis": "Use {{language}} as my language",
-      "dismiss": "Dismiss"
+      "message": "このページは{{language}}で表示されています。",
+      "switchToMine": "{{language}}に切り替え",
+      "useThis": "{{language}}を自分の言語として使用",
+      "dismiss": "閉じる"
     }
   }
 }

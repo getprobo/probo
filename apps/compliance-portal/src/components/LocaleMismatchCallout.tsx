@@ -22,13 +22,15 @@ import { GlobeIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import { DEFAULT_NAMESPACE } from "#/lib/i18n/backend";
 import {
   isUrlLocale,
   URL_LOCALE_LABELS,
+  urlLocaleToLanguage,
 } from "#/lib/i18n/locale";
 import { useChangeLocale } from "#/lib/i18n/useChangeLocale";
 import { useLocale } from "#/lib/i18n/useLocale";
@@ -49,16 +51,39 @@ interface LocaleMismatchCalloutProps {
 // Full-bleed notice when the URL locale differs from the signed-in identity
 // preference. Dismissed state is React-only (no localStorage/cookies).
 export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const identity = useFragment(localeMismatchCalloutFragment, identityKey);
   const urlLocale = useLocale();
   const [changeLocale, isChanging] = useChangeLocale();
   const [updateLocale, isUpdating] = useUpdateLocale();
   const [dismissed, setDismissed] = useState(false);
+  // Bumps after the identity-locale catalog loads so the switch button can
+  // re-render in that language (it may not be the active i18n language).
+  const [, setSavedCatalogTick] = useState(0);
 
   const savedLocale = isUrlLocale(identity.locale) ? identity.locale : null;
+  const savedLanguage = savedLocale != null ? urlLocaleToLanguage(savedLocale) : null;
+  const visible = !dismissed && savedLocale != null && savedLocale !== urlLocale;
 
-  if (dismissed || savedLocale == null || savedLocale === urlLocale) {
+  useEffect(() => {
+    if (!visible || savedLanguage == null) {
+      return;
+    }
+    if (i18n.hasResourceBundle(savedLanguage, DEFAULT_NAMESPACE)) {
+      return;
+    }
+    let cancelled = false;
+    void i18n.loadLanguages(savedLanguage).then(() => {
+      if (!cancelled) {
+        setSavedCatalogTick(tick => tick + 1);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, savedLanguage, i18n]);
+
+  if (!visible || savedLocale == null || savedLanguage == null) {
     return null;
   }
 
@@ -105,7 +130,12 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
           className="max-md:w-full"
           onClick={switchToSaved}
         >
-          {t("locale.mismatch.switchToMine", { language: savedLabel })}
+          {t("locale.mismatch.switchToMine", {
+            language: savedLabel,
+            // Label this action in the user's saved locale so it reads as
+            // "switch back to my language", not the page they're visiting.
+            lng: savedLanguage,
+          })}
         </Button>
         <Button
           size={1}

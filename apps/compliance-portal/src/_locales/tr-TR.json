@@ -95,13 +95,13 @@
     "next": "Sonraki sayfa"
   },
   "locale": {
-    "label": "Language",
-    "updateFailed": "Couldn't update language",
+    "label": "Dil",
+    "updateFailed": "Dil güncellenemedi",
     "mismatch": {
-      "message": "You're viewing this page in {{language}}.",
-      "switchToMine": "Switch to {{language}}",
-      "useThis": "Use {{language}} as my language",
-      "dismiss": "Dismiss"
+      "message": "Bu sayfayı {{language}} olarak görüntülüyorsunuz.",
+      "switchToMine": "{{language}} diline geç",
+      "useThis": "{{language}} dilini benim dilim olarak kullan",
+      "dismiss": "Kapat"
     }
   }
 }

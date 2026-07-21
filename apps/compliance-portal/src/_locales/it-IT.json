@@ -95,13 +95,13 @@
     "next": "Pagina successiva"
   },
   "locale": {
-    "label": "Language",
-    "updateFailed": "Couldn't update language",
+    "label": "Lingua",
+    "updateFailed": "Impossibile aggiornare la lingua",
     "mismatch": {
-      "message": "You're viewing this page in {{language}}.",
-      "switchToMine": "Switch to {{language}}",
-      "useThis": "Use {{language}} as my language",
-      "dismiss": "Dismiss"
+      "message": "Stai visualizzando questa pagina in {{language}}.",
+      "switchToMine": "Passa a {{language}}",
+      "useThis": "Usa {{language}} come mia lingua",
+      "dismiss": "Ignora"
     }
   }
 }

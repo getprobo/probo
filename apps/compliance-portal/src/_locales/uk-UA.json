@@ -95,13 +95,13 @@
     "next": "Наступна сторінка"
   },
   "locale": {
-    "label": "Language",
-    "updateFailed": "Couldn't update language",
+    "label": "Мова",
+    "updateFailed": "Не вдалося оновити мову",
     "mismatch": {
-      "message": "You're viewing this page in {{language}}.",
-      "switchToMine": "Switch to {{language}}",
-      "useThis": "Use {{language}} as my language",
-      "dismiss": "Dismiss"
+      "message": "Ви переглядаєте цю сторінку мовою {{language}}.",
+      "switchToMine": "Перейти на {{language}}",
+      "useThis": "Використовувати {{language}} як мою мову",
+      "dismiss": "Закрити"
     }
   }
 }

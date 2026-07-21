@@ -95,13 +95,13 @@
     "next": "下一页"
   },
   "locale": {
-    "label": "Language",
-    "updateFailed": "Couldn't update language",
+    "label": "语言",
+    "updateFailed": "无法更新语言",
     "mismatch": {
-      "message": "You're viewing this page in {{language}}.",
-      "switchToMine": "Switch to {{language}}",
-      "useThis": "Use {{language}} as my language",
-      "dismiss": "Dismiss"
+      "message": "您正在以{{language}}查看此页面。",
+      "switchToMine": "切换到{{language}}",
+      "useThis": "将{{language}}设为我的语言",
+      "dismiss": "关闭"
     }
   }
 }
