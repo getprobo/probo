@@ -4,6 +4,21 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.205.0] - 2026-07-21
+
+### Added
+
+- Compliance Portal `Update` operation gained Title, Description, Website URL, Email, and Headquarter Address fields to manage the compliance page profile
+- Webhook event choices now include `RIGHT_REQUEST_CREATED`, `RIGHT_REQUEST_UPDATED`, and `RIGHT_REQUEST_DELETED`
+
+### Changed
+
+- Renamed the `Trust Center` resource to `Compliance Portal`, and its custom link operations to `Create Custom Link`/`Delete Custom Link`, matching the renamed GraphQL API
+
+### Removed
+
+- `Organization` > `Update` no longer exposes Description, Website URL, Email, and Headquarter Address fields; use `Compliance Portal` > `Update` instead
+
 ## [0.204.0] - 2026-07-20
 
 ### Added
