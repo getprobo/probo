@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.229.1] - 2026-07-21
+
+### Fixed
+
+- Mapped commitment and commitment group actions to the `v1:compliance-page` OAuth2 scope so tokens with that scope can create and manage commitments via MCP/API
+
 ## [0.229.0] - 2026-07-20
 
 ### Added
