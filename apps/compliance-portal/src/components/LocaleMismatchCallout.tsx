@@ -20,8 +20,8 @@
 
 import { GlobeIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -46,8 +46,8 @@ interface LocaleMismatchCalloutProps {
   identityKey: LocaleMismatchCallout_identity$key;
 }
 
-// Soft notice when the URL locale differs from the signed-in identity preference.
-// Dismissed state is React-only (no localStorage/cookies).
+// Full-bleed notice when the URL locale differs from the signed-in identity
+// preference. Dismissed state is React-only (no localStorage/cookies).
 export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProps) {
   const { t } = useTranslation();
   const identity = useFragment(localeMismatchCalloutFragment, identityKey);
@@ -75,45 +75,61 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
   };
 
   return (
-    <div className="border-b border-sand-6 bg-sand-2 px-4 py-3">
-      <Callout size={1} variant="soft" color="gold" icon={<GlobeIcon weight="fill" />}>
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="min-w-0 flex-1 text-2 text-sand-12">
-            {t("locale.mismatch.message", { language: urlLabel })}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size={1}
-              variant="soft"
-              color="neutral"
-              disabled={busy}
-              onClick={switchToSaved}
-            >
-              {t("locale.mismatch.switchToMine", { language: savedLabel })}
-            </Button>
-            <Button
-              size={1}
-              variant="solid"
-              color="neutral"
-              highContrast
-              disabled={busy}
-              onClick={adoptUrlLocale}
-            >
-              {t("locale.mismatch.useThis", { language: urlLabel })}
-            </Button>
-            <IconButton
-              size={1}
-              variant="ghost"
-              color="neutral"
-              aria-label={t("locale.mismatch.dismiss")}
-              disabled={busy}
-              onClick={() => setDismissed(true)}
-            >
-              <XIcon />
-            </IconButton>
-          </div>
-        </div>
-      </Callout>
-    </div>
+    <aside
+      className="flex w-full items-center gap-3 bg-gold-3 px-8 py-2.5 max-md:flex-col max-md:items-stretch max-md:gap-3 max-md:px-4 max-md:py-3"
+      role="status"
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-2">
+        <GlobeIcon weight="fill" className="mt-0.5 size-4 shrink-0 text-gold-11" aria-hidden />
+        <Text size={2} color="neutral" highContrast className="min-w-0 flex-1">
+          {t("locale.mismatch.message", { language: urlLabel })}
+        </Text>
+        <IconButton
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label={t("locale.mismatch.dismiss")}
+          disabled={busy}
+          className="md:hidden"
+          onClick={() => setDismissed(true)}
+        >
+          <XIcon />
+        </IconButton>
+      </div>
+      <div className="flex shrink-0 items-center gap-2 max-md:flex-col max-md:items-stretch">
+        <Button
+          size={1}
+          variant="solid"
+          color="gold"
+          disabled={busy}
+          className="max-md:w-full"
+          onClick={switchToSaved}
+        >
+          {t("locale.mismatch.switchToMine", { language: savedLabel })}
+        </Button>
+        <Button
+          size={1}
+          variant="solid"
+          color="neutral"
+          highContrast
+          disabled={busy}
+          className="max-md:w-full"
+          onClick={adoptUrlLocale}
+        >
+          {t("locale.mismatch.useThis", { language: urlLabel })}
+        </Button>
+        <IconButton
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label={t("locale.mismatch.dismiss")}
+          disabled={busy}
+          className="max-md:hidden"
+          onClick={() => setDismissed(true)}
+        >
+          <XIcon />
+        </IconButton>
+      </div>
+    </aside>
   );
 }
