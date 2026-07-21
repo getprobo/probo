@@ -6577,6 +6577,9 @@ components:
         - "obligation:created"
         - "obligation:updated"
         - "obligation:deleted"
+        - "right-request:created"
+        - "right-request:updated"
+        - "right-request:deleted"
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.WebhookEventType
 
     WebhookEventStatus:

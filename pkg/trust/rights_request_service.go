@@ -31,6 +31,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 // RightsRequestDeadlineDays is the number of days a portal-submitted data
@@ -102,6 +104,17 @@ func (s *RightsRequestService) Create(
 
 			if err := request.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert rights request: %w", err)
+			}
+
+			if err := webhook.InsertData(
+				ctx,
+				tx,
+				scope,
+				request.OrganizationID,
+				coredata.WebhookEventTypeRightRequestCreated,
+				webhooktypes.NewRightsRequest(request),
+			); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil

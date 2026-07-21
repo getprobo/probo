@@ -30,6 +30,8 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type RightsRequestService struct {
@@ -147,6 +149,17 @@ func (s *RightsRequestService) Create(
 				return fmt.Errorf("cannot insert rights request: %w", err)
 			}
 
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				scope,
+				request.OrganizationID,
+				coredata.WebhookEventTypeRightRequestCreated,
+				webhooktypes.NewRightsRequest(request),
+			); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -173,6 +186,8 @@ func (s *RightsRequestService) Update(
 			if err := request.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
 			}
+
+			previousRequest := webhooktypes.NewRightsRequest(request)
 
 			if req.RequestType != nil {
 				request.RequestType = *req.RequestType
@@ -208,6 +223,18 @@ func (s *RightsRequestService) Update(
 				return fmt.Errorf("cannot update rights request: %w", err)
 			}
 
+			if err := webhook.InsertUpdateData(
+				ctx,
+				conn,
+				scope,
+				request.OrganizationID,
+				coredata.WebhookEventTypeRightRequestUpdated,
+				webhooktypes.NewRightsRequest(request),
+				previousRequest,
+			); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -228,6 +255,17 @@ func (s *RightsRequestService) Delete(
 			request := &coredata.RightsRequest{}
 			if err := request.LoadByID(ctx, conn, scope, rightsRequestID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
+			}
+
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				scope,
+				request.OrganizationID,
+				coredata.WebhookEventTypeRightRequestDeleted,
+				webhooktypes.NewRightsRequest(request),
+			); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if err := request.Delete(ctx, conn, scope); err != nil {

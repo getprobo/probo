@@ -30,15 +30,18 @@ import (
 type WebhookEventType string
 
 const (
-	WebhookEventTypeThirdPartyCreated WebhookEventType = "third-party:created"
-	WebhookEventTypeThirdPartyUpdated WebhookEventType = "third-party:updated"
-	WebhookEventTypeThirdPartyDeleted WebhookEventType = "third-party:deleted"
-	WebhookEventTypeUserCreated       WebhookEventType = "user:created"
-	WebhookEventTypeUserUpdated       WebhookEventType = "user:updated"
-	WebhookEventTypeUserDeleted       WebhookEventType = "user:deleted"
-	WebhookEventTypeObligationCreated WebhookEventType = "obligation:created"
-	WebhookEventTypeObligationUpdated WebhookEventType = "obligation:updated"
-	WebhookEventTypeObligationDeleted WebhookEventType = "obligation:deleted"
+	WebhookEventTypeThirdPartyCreated   WebhookEventType = "third-party:created"
+	WebhookEventTypeThirdPartyUpdated   WebhookEventType = "third-party:updated"
+	WebhookEventTypeThirdPartyDeleted   WebhookEventType = "third-party:deleted"
+	WebhookEventTypeUserCreated         WebhookEventType = "user:created"
+	WebhookEventTypeUserUpdated         WebhookEventType = "user:updated"
+	WebhookEventTypeUserDeleted         WebhookEventType = "user:deleted"
+	WebhookEventTypeObligationCreated   WebhookEventType = "obligation:created"
+	WebhookEventTypeObligationUpdated   WebhookEventType = "obligation:updated"
+	WebhookEventTypeObligationDeleted   WebhookEventType = "obligation:deleted"
+	WebhookEventTypeRightRequestCreated WebhookEventType = "right-request:created"
+	WebhookEventTypeRightRequestUpdated WebhookEventType = "right-request:updated"
+	WebhookEventTypeRightRequestDeleted WebhookEventType = "right-request:deleted"
 
 	WebhookEventTypeDocumentCreated    WebhookEventType = "document:created"
 	WebhookEventTypeDocumentUpdated    WebhookEventType = "document:updated"
@@ -81,6 +84,9 @@ func (v WebhookEventType) IsValid() bool {
 		WebhookEventTypeObligationCreated,
 		WebhookEventTypeObligationUpdated,
 		WebhookEventTypeObligationDeleted,
+		WebhookEventTypeRightRequestCreated,
+		WebhookEventTypeRightRequestUpdated,
+		WebhookEventTypeRightRequestDeleted,
 		WebhookEventTypeDocumentCreated,
 		WebhookEventTypeDocumentUpdated,
 		WebhookEventTypeDocumentArchived,

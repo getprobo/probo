@@ -18,6 +18,12 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationUpdated")
     OBLIGATION_DELETED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationDeleted")
+    RIGHT_REQUEST_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeRightRequestCreated")
+    RIGHT_REQUEST_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeRightRequestUpdated")
+    RIGHT_REQUEST_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeRightRequestDeleted")
     DOCUMENT_CREATED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeDocumentCreated")
     DOCUMENT_UPDATED
