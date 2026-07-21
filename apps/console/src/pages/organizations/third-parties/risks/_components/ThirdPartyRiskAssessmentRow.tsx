@@ -22,6 +22,7 @@ import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
+  Markdown,
   RiskBadge,
   Td,
   Tr,
@@ -84,15 +85,21 @@ export function ThirdPartyRiskAssessmentRow(props: ThirdPartyRiskAssessmentRowPr
       </Tr>
       {props.isExpanded && (
         <Tr className={clsx("border-none", isExpired && "opacity-50")}>
-          <Td colSpan={4}>
-            <div className="space-y-2">
+          <Td colSpan={4} className="whitespace-normal align-top">
+            <div className="space-y-2 max-w-4xl">
               <div>
                 {__("Notes")}
                 :
               </div>
-              <p className="text-sm text-txt-secondary whitespace-pre-wrap">
-                {assessment.notes}
-              </p>
+              {assessment.notes
+                ? (
+                    <div className="overflow-x-auto">
+                      <div className="prose prose-sm max-w-none [&_.prose]:max-w-none">
+                        <Markdown content={assessment.notes} />
+                      </div>
+                    </div>
+                  )
+                : null}
             </div>
           </Td>
         </Tr>
