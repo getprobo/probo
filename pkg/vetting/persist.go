@@ -136,7 +136,7 @@ func persistVettingRiskAssessment(
 	}
 
 	now := time.Now()
-	notes := buildRiskAssessmentNotes(result.Info)
+	notes := buildRiskAssessmentNotesFromResult(result)
 
 	assessment := &coredata.ThirdPartyRiskAssessment{
 		ID:              gid.New(scope.GetTenantID(), coredata.ThirdPartyRiskAssessmentEntityType),
@@ -155,6 +155,14 @@ func persistVettingRiskAssessment(
 	}
 
 	return nil
+}
+
+func buildRiskAssessmentNotesFromResult(result Result) string {
+	if notes := filterVettingDocumentNotes(result.Document); notes != "" {
+		return notes
+	}
+
+	return buildRiskAssessmentNotes(result.Info)
 }
 
 func buildRiskAssessmentNotes(info ThirdPartyInfo) string {
@@ -178,6 +186,150 @@ func buildRiskAssessmentNotes(info ThirdPartyInfo) string {
 	appendSection(vettingGapsSection(info))
 
 	return strings.Join(sections, "\n\n")
+}
+
+// filterVettingDocumentNotes drops profile-duplicate sections from the report.
+func filterVettingDocumentNotes(document string) string {
+	document = strings.TrimSpace(document)
+	if document == "" {
+		return ""
+	}
+
+	lines := strings.Split(document, "\n")
+	out := make([]string, 0, len(lines))
+	skipUntilLevel := 0
+	inFence := false
+	fenceMarker := byte(0)
+	fenceLen := 0
+
+	for _, line := range lines {
+		if marker, length, isFence := parseMarkdownFence(line); isFence {
+			if !inFence {
+				inFence = true
+				fenceMarker = marker
+				fenceLen = length
+			} else if marker == fenceMarker && length >= fenceLen {
+				inFence = false
+				fenceMarker = 0
+				fenceLen = 0
+			}
+
+			if skipUntilLevel == 0 {
+				out = append(out, line)
+			}
+
+			continue
+		}
+
+		if !inFence {
+			level, title, isHeading := parseMarkdownHeading(line)
+			if isHeading {
+				if skipUntilLevel > 0 && level <= skipUntilLevel {
+					skipUntilLevel = 0
+				}
+
+				if skipUntilLevel == 0 && shouldDropVettingNotesSection(title) {
+					skipUntilLevel = level
+					continue
+				}
+			}
+		}
+
+		if skipUntilLevel > 0 {
+			continue
+		}
+
+		out = append(out, line)
+	}
+
+	return strings.TrimSpace(strings.Join(out, "\n"))
+}
+
+func parseMarkdownFence(line string) (marker byte, length int, ok bool) {
+	rest := line
+
+	indent := 0
+	for indent < len(rest) && indent < 3 && rest[indent] == ' ' {
+		indent++
+	}
+
+	rest = rest[indent:]
+
+	if len(rest) == 0 || (rest[0] != '`' && rest[0] != '~') {
+		return 0, 0, false
+	}
+
+	marker = rest[0]
+	for length < len(rest) && rest[length] == marker {
+		length++
+	}
+
+	if length < 3 {
+		return 0, 0, false
+	}
+
+	return marker, length, true
+}
+
+func parseMarkdownHeading(line string) (level int, title string, ok bool) {
+	rest := line
+
+	indent := 0
+	for indent < len(rest) && indent < 3 && rest[indent] == ' ' {
+		indent++
+	}
+
+	rest = rest[indent:]
+	rest = strings.TrimRight(rest, " \t")
+
+	if rest == "" || rest[0] != '#' {
+		return 0, "", false
+	}
+
+	level = 0
+	for level < len(rest) && rest[level] == '#' {
+		level++
+		if level > 6 {
+			return 0, "", false
+		}
+	}
+
+	if level == 0 || level >= len(rest) {
+		return 0, "", false
+	}
+
+	if rest[level] != ' ' && rest[level] != '\t' {
+		return 0, "", false
+	}
+
+	title = strings.TrimSpace(rest[level+1:])
+	title = strings.TrimRight(title, "#")
+	title = strings.TrimSpace(title)
+
+	if title == "" {
+		return 0, "", false
+	}
+
+	return level, title, true
+}
+
+func shouldDropVettingNotesSection(title string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(title))
+	normalized = strings.Trim(normalized, "*_`")
+	normalized = strings.Join(strings.Fields(strings.ReplaceAll(normalized, "-", " ")), " ")
+
+	switch {
+	case strings.Contains(normalized, "third party classification"),
+		strings.Contains(normalized, "vendor classification"):
+		return true
+	case strings.Contains(normalized, "compliance") && strings.Contains(normalized, "certification"):
+		return true
+	case strings.Contains(normalized, "sub processor"),
+		strings.Contains(normalized, "subprocessor"):
+		return true
+	default:
+		return false
+	}
 }
 
 func vettingBulletSection(title string, lines []string) string {
