@@ -82,3 +82,45 @@ func TestSEOFromRequest_EscapesPathSegments(t *testing.T) {
 	)
 	assert.Equal(t, "https://acme.probopage.localhost/en/docs/foo%20bar", canonical)
 }
+
+func TestSEOFromRequest_StripsPathFromBaseURL(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		"https://trust.acme.com/fr/documents",
+		nil,
+	)
+	require.NoError(t, err)
+
+	// SNI middleware once stored scheme+host+path; SEO must not double it.
+	_, canonical, hreflang := complianceportal_v1.SEOFromRequest(
+		req,
+		"https://trust.acme.com/fr/documents",
+	)
+	assert.Equal(t, "https://trust.acme.com/fr/documents", canonical)
+
+	var enHref string
+	for _, link := range hreflang {
+		if link.Lang == "en" {
+			enHref = link.Href
+		}
+	}
+	assert.Equal(t, "https://trust.acme.com/en/documents", enHref)
+}
+
+func TestSEOFromRequest_EmptyBaseURLOmitsLinks(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		"https://trust.acme.com/fr/documents",
+		nil,
+	)
+	require.NoError(t, err)
+
+	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(req, "")
+	assert.Equal(t, "fr", lang)
+	assert.Empty(t, canonical)
+	assert.Nil(t, hreflang)
+}

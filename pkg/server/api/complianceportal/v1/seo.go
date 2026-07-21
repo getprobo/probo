@@ -34,7 +34,10 @@ const defaultCompliancePortalLocale = "en"
 // SEOFromRequest derives html lang, a self-referencing canonical URL, and
 // hreflang alternates (including x-default → English) for the SPA shell.
 // Portals are host-routed (slug subdomain / custom domain); the request path
-// is already relative to the portal root.
+// is already relative to the portal root. pageBaseURL is normalized to its
+// origin so a stale path in the base cannot double the route. When pageBaseURL
+// has no usable origin, canonical and hreflang are left empty so callers do
+// not emit relative SEO links.
 func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical string, hreflang []HreflangLink) {
 	pathname := r.URL.Path
 	if pathname == "" {
@@ -42,9 +45,16 @@ func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical st
 	}
 
 	locale, rest := splitLocaleFromAppPath(pathname)
-
 	htmlLang = locale
-	canonical = localizedPageURL(pageBaseURL, locale, rest)
+
+	origin := portalOrigin(pageBaseURL)
+	if origin == "" {
+		// No absolute origin — return lang only; callers must not emit
+		// relative canonical/hreflang URLs.
+		return htmlLang, "", nil
+	}
+
+	canonical = localizedPageURL(origin, locale, rest)
 
 	locales := iam.SupportedIdentityLocales
 
@@ -52,16 +62,27 @@ func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical st
 	for _, loc := range locales {
 		hreflang = append(hreflang, HreflangLink{
 			Lang: loc,
-			Href: localizedPageURL(pageBaseURL, loc, rest),
+			Href: localizedPageURL(origin, loc, rest),
 		})
 	}
 
 	hreflang = append(hreflang, HreflangLink{
 		Lang: "x-default",
-		Href: localizedPageURL(pageBaseURL, defaultCompliancePortalLocale, rest),
+		Href: localizedPageURL(origin, defaultCompliancePortalLocale, rest),
 	})
 
 	return htmlLang, canonical, hreflang
+}
+
+// portalOrigin returns scheme://host from pageBaseURL, dropping any path,
+// query, or fragment. Callers may pass a full request URL by mistake.
+func portalOrigin(pageBaseURL string) string {
+	parsed, err := url.Parse(pageBaseURL)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return strings.TrimRight(pageBaseURL, "/")
+	}
+
+	return (&url.URL{Scheme: parsed.Scheme, Host: parsed.Host}).String()
 }
 
 func splitLocaleFromAppPath(appPath string) (locale, rest string) {

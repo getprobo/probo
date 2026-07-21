@@ -39,7 +39,7 @@ function goHtmlTemplateDevDefaults(): Plugin {
       handler(html) {
         return html
           .replace(
-            /\{\{if \.HtmlLang\}\}\{\{\.HtmlLang\}\}\{\{else\}\}en\{\{end\}\}/g,
+            /\{\{if \.HTMLLang\}\}\{\{\.HTMLLang\}\}\{\{else\}\}en\{\{end\}\}/g,
             "en",
           )
           .replace(

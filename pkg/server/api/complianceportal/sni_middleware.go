@@ -97,9 +97,11 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 				}
 			}
 
+			// Origin only — consumers append their own paths (SEO, sitemap,
+			// robots, brand assets, OAuth). Including r.URL.Path here would
+			// duplicate the route (e.g. /fr/documents/fr/documents).
 			baseURL := &url.URL{
 				Host:   r.Host,
-				Path:   r.URL.Path,
 				Scheme: "https",
 			}
 			baseURLString := baseURL.String()

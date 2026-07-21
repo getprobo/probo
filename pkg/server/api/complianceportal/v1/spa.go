@@ -37,7 +37,7 @@ type (
 		Description  string
 		OGURL        string
 		FaviconURL   string
-		HtmlLang     string
+		HTMLLang     string
 		CanonicalURL string
 		Hreflang     []HreflangLink
 	}

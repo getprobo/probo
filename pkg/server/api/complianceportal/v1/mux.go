@@ -134,8 +134,6 @@ func compliancePageHeadData() HeadDataFunc {
 		}
 
 		compliancePageBaseURL := complianceportal.CompliancePortalBaseURLFromContext(r.Context())
-		pageBase := ref.UnrefOrZero(compliancePageBaseURL)
-		htmlLang, canonical, hreflang := SEOFromRequest(r, pageBase)
 
 		description := tc.Title
 		if tc.Description != nil && *tc.Description != "" {
@@ -143,12 +141,18 @@ func compliancePageHeadData() HeadDataFunc {
 		}
 
 		headData := HeadData{
-			Title:        tc.Title,
-			Description:  description,
-			OGURL:        pageBase,
-			HtmlLang:     htmlLang,
-			CanonicalURL: canonical,
-			Hreflang:     hreflang,
+			Title:       tc.Title,
+			Description: description,
+		}
+
+		// Canonical / hreflang / og:url must be absolute. Without a portal
+		// origin in context, skip them rather than emit relative paths.
+		if pageBase := ref.UnrefOrZero(compliancePageBaseURL); pageBase != "" {
+			htmlLang, canonical, hreflang := SEOFromRequest(r, pageBase)
+			headData.HTMLLang = htmlLang
+			headData.OGURL = canonical
+			headData.CanonicalURL = canonical
+			headData.Hreflang = hreflang
 		}
 
 		if tc.LogoFileID != nil && compliancePageBaseURL != nil {
