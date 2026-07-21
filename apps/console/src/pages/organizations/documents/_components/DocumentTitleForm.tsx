@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, Input, useToast } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -48,10 +48,6 @@ const fragment = graphql`
   }
 `;
 
-const schema = z.object({
-  title: z.string().min(1, "Title is required").max(255),
-});
-
 export function DocumentTitleForm(props: {
   fKey: DocumentTitleFormFragment$key;
   documentId: string;
@@ -61,8 +57,11 @@ export function DocumentTitleForm(props: {
 }) {
   const { fKey, documentId, documentStatus, isEditable, onDocumentUpdated } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
+  const schema = z.object({
+    title: z.string().min(1, t("documentTitleForm.validation.titleRequired")).max(255),
+  });
 
   const version = useFragment<DocumentTitleFormFragment$key>(fragment, fKey);
   const [updateDocument, isUpdating]
@@ -91,7 +90,11 @@ export function DocumentTitleForm(props: {
       },
       onCompleted(data, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: formatError(__("Failed to update document"), errors), variant: "error" });
+          toast({
+            title: t("documentTitleForm.errors.title"),
+            description: formatError(t("documentTitleForm.errors.update"), errors),
+            variant: "error",
+          });
           return;
         }
         setIsEditingTitle(false);
@@ -101,7 +104,11 @@ export function DocumentTitleForm(props: {
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
+        toast({
+          title: t("documentTitleForm.errors.title"),
+          description: error.message,
+          variant: "error",
+        });
       },
     });
   };

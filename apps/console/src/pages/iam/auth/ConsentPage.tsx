@@ -20,7 +20,6 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconArrowsClockwise,
@@ -34,6 +33,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -65,10 +65,10 @@ const approveConsentMutation = graphql`
 `;
 
 const scopeLabels: Record<string, string> = {
-  openid: "Verify your identity",
-  email: "View your email address",
-  profile: "View your profile information",
-  offline_access: "Stay signed in and access your data while you're away",
+  openid: "consentPage.scopes.openid",
+  email: "consentPage.scopes.email",
+  profile: "consentPage.scopes.profile",
+  offline_access: "consentPage.scopes.offlineAccess",
 };
 
 const scopeIcons: Record<string, React.ReactNode> = {
@@ -82,8 +82,9 @@ function scopeIcon(name: string): React.ReactNode {
   return scopeIcons[name] ?? <IconKey size={18} className="shrink-0 text-txt-tertiary" />;
 }
 
-function scopeLabel(name: string): string {
-  return scopeLabels[name] ?? formatApiScopeLabel(name);
+function scopeLabel(name: string, translate: (key: string) => string): string {
+  const key = scopeLabels[name];
+  return key ? translate(key) : formatApiScopeLabel(name);
 }
 
 function isApiScope(scope: string): boolean {
@@ -110,8 +111,7 @@ function ConsentScopeRow(props: {
   translate: (label: string) => string;
   nested?: boolean;
 }) {
-  const label = scopeLabel(props.scope);
-  const translated = label !== props.scope ? props.translate(label) : label;
+  const translated = scopeLabel(props.scope, props.translate);
 
   return (
     <li
@@ -163,7 +163,7 @@ function ConsentApiScopesAccordion(props: {
 export default function ConsentPage(props: {
   queryRef: PreloadedQuery<ConsentPageQuery>;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [deviceResult, setDeviceResult] = useState<"authorized" | "denied" | null>(null);
   const [pendingAction, setPendingAction] = useState<"allow" | "deny" | null>(null);
@@ -173,7 +173,7 @@ export default function ConsentPage(props: {
   } | null>(null);
 
   const data = usePreloadedQuery<ConsentPageQuery>(consentPageQuery, props.queryRef);
-  usePageTitle(__("Authorize Application"));
+  usePageTitle(t("consentPage.pageTitle"));
 
   const { node: consent } = data;
 
@@ -185,8 +185,8 @@ export default function ConsentPage(props: {
   );
 
   const apiScopesSummary = useMemo(
-    () => `${__("API access")} (${apiScopes.length})`,
-    [__, apiScopes.length],
+    () => t("consentPage.apiAccess", { count: apiScopes.length }),
+    [t, apiScopes.length],
   );
 
   useEffect(() => {
@@ -212,9 +212,9 @@ export default function ConsentPage(props: {
           if (errors) {
             setPendingAction(null);
             toast({
-              title: __("Authorization failed"),
+              title: t("consentPage.errors.authorizationFailed"),
               description: formatError(
-                __("Something went wrong. Please try again."),
+                t("consentPage.errors.generic"),
                 errors,
               ),
               variant: "error",
@@ -225,8 +225,8 @@ export default function ConsentPage(props: {
           if (!response.approveConsent) {
             setPendingAction(null);
             toast({
-              title: __("Authorization failed"),
-              description: __("Something went wrong. Please try again."),
+              title: t("consentPage.errors.authorizationFailed"),
+              description: t("consentPage.errors.generic"),
               variant: "error",
             });
             return;
@@ -247,23 +247,23 @@ export default function ConsentPage(props: {
         onError: (err) => {
           setPendingAction(null);
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description:
-              err.message || __("Something went wrong. Please try again."),
+              err.message || t("consentPage.errors.generic"),
             variant: "error",
           });
         },
       });
     },
-    [consent, approveConsent, __, toast, pendingAction],
+    [consent, approveConsent, t, toast, pendingAction],
   );
 
   if (!consent.application || !consent.scopes) {
     return (
       <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{__("Invalid Request")}</h1>
+        <h1 className="text-2xl font-bold">{t("consentPage.invalidRequest.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("This consent request is invalid or has expired.")}
+          {t("consentPage.invalidRequest.description")}
         </p>
       </div>
     );
@@ -272,9 +272,9 @@ export default function ConsentPage(props: {
   if (deviceResult === "authorized") {
     return (
       <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{__("Device Authorized")}</h1>
+        <h1 className="text-2xl font-bold">{t("consentPage.deviceAuthorized.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Your device has been successfully authorized. You can close this window and return to your device.")}
+          {t("consentPage.deviceAuthorized.description")}
         </p>
       </div>
     );
@@ -283,9 +283,9 @@ export default function ConsentPage(props: {
   if (deviceResult === "denied") {
     return (
       <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">{__("Access Denied")}</h1>
+        <h1 className="text-2xl font-bold">{t("consentPage.accessDenied.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("You have denied the authorization request. You can close this window.")}
+          {t("consentPage.accessDenied.description")}
         </p>
       </div>
     );
@@ -297,10 +297,10 @@ export default function ConsentPage(props: {
         <Spinner size={24} centered className="text-txt-tertiary" />
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">
-            {redirectState.approved ? __("Authorization Complete") : __("Access Denied")}
+            {redirectState.approved ? t("consentPage.authorizationComplete") : t("consentPage.accessDenied.title")}
           </h1>
           <p className="text-txt-tertiary">
-            {__("You will be redirected to")}
+            {t("consentPage.redirectingTo")}
             {" "}
             <span className="font-medium text-txt-secondary">
               {consent.application.name}
@@ -321,14 +321,12 @@ export default function ConsentPage(props: {
           </div>
         </div>
         <h1 className="text-2xl font-bold">
-          {__("Authorize")}
+          {t("consentPage.authorize")}
           {" "}
           <span className="font-bold">{consent.application.name}</span>
         </h1>
         <p className="text-txt-tertiary text-sm">
-          {__(
-            "This application is requesting access to your account with the following permissions:",
-          )}
+          {t("consentPage.description")}
         </p>
       </div>
 
@@ -339,7 +337,7 @@ export default function ConsentPage(props: {
               <ConsentScopeRow
                 key={scope}
                 scope={scope}
-                translate={__}
+                translate={t}
               />
             ))}
           </ul>
@@ -347,7 +345,7 @@ export default function ConsentPage(props: {
 
         <ConsentApiScopesAccordion
           scopes={apiScopes}
-          translate={__}
+          translate={t}
           summaryLabel={apiScopesSummary}
         />
       </div>
@@ -360,7 +358,7 @@ export default function ConsentPage(props: {
           icon={pendingAction === "deny" ? Spinner : undefined}
           onClick={() => handleAction(false)}
         >
-          {__("Deny")}
+          {t("consentPage.actions.deny")}
         </Button>
         <Button
           className="flex-1 h-10"
@@ -368,12 +366,12 @@ export default function ConsentPage(props: {
           icon={pendingAction === "allow" ? Spinner : undefined}
           onClick={() => handleAction(true)}
         >
-          {__("Allow")}
+          {t("consentPage.actions.allow")}
         </Button>
       </div>
 
       <p className="text-center text-xs text-txt-tertiary">
-        {__("You can revoke access at any time from your account settings.")}
+        {t("consentPage.revokeNotice")}
       </p>
     </div>
   );

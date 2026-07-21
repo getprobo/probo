@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
@@ -27,7 +27,7 @@ type Props = {
 };
 
 export function DocumentVersionBadge(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const variant = {
     DRAFT: "neutral",
@@ -36,9 +36,9 @@ export function DocumentVersionBadge(props: Props) {
   } as const;
 
   const label = {
-    DRAFT: __("Draft"),
-    PENDING_APPROVAL: __("Pending approval"),
-    PUBLISHED: __("Published"),
+    DRAFT: t("ui.documentVersionBadge.draft"),
+    PENDING_APPROVAL: t("ui.documentVersionBadge.pendingApproval"),
+    PUBLISHED: t("ui.documentVersionBadge.published"),
   } as const;
 
   return <Badge variant={variant[props.state]}>{label[props.state]}</Badge>;

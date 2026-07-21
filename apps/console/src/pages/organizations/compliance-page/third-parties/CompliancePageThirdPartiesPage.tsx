@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePageThirdPartiesPageQuery } from "#/__generated__/core/CompliancePageThirdPartiesPageQuery.graphql";
@@ -38,7 +38,7 @@ export function CompliancePageThirdPartiesPage(props: {
 }) {
   const { queryRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const { organization } = usePreloadedQuery<CompliancePageThirdPartiesPageQuery>(
     compliancePageThirdPartiesPageQuery,
@@ -49,9 +49,9 @@ export function CompliancePageThirdPartiesPage(props: {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium">{__("Subprocessors")}</h3>
+          <h3 className="text-base font-medium">{t("thirdPartiesPage.title")}</h3>
           <p className="text-sm text-txt-tertiary">
-            {__("Manage subprocessor assessments and third-party risk information")}
+            {t("thirdPartiesPage.description")}
           </p>
         </div>
       </div>

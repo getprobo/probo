@@ -20,9 +20,12 @@
 
 import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePageDocumentAccessInfo } from "@probo/helpers";
-import { getCompliancePageDocumentAccessStatusBadgeVariant, getCompliancePageDocumentAccessStatusLabel } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import {
+  getCompliancePageDocumentAccessStatusBadgeVariant,
+  getCompliancePageDocumentAccessStatusLabel,
+} from "@probo/helpers";
 import { Badge, Button, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 interface CompliancePageDocumentAccessListProps {
   documentAccesses: CompliancePageDocumentAccessInfo[];
@@ -35,7 +38,7 @@ interface CompliancePageDocumentAccessListProps {
 export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAccessListProps) {
   const { documentAccesses, initialStatusByID, onGrantAll, onRejectOrRevokeAll, onUpdateStatus } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const showGrantCTA = documentAccesses.some(da => da.status !== "GRANTED");
   const showRejectCTA = documentAccesses.some(da => da.status !== "REJECTED" && da.status !== "REVOKED");
@@ -44,7 +47,7 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
     <div>
       <div className="flex justify-between items-center mb-4">
         <h4 className="font-medium text-txt-primary">
-          {__("Document Access Permissions")}
+          {t("documentAccessList.title")}
         </h4>
         <div className="ml-auto flex items-center gap-2">
           {showGrantCTA
@@ -55,7 +58,7 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
                 onClick={onGrantAll}
                 className="text-xs h-7 min-h-7"
               >
-                {__("Grant All")}
+                {t("documentAccessList.actions.grantAll")}
               </Button>
             )}
           {showRejectCTA
@@ -66,7 +69,7 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
                 onClick={onRejectOrRevokeAll}
                 className="text-xs h-7 min-h-7"
               >
-                {__("Reject/Revoke All")}
+                {t("documentAccessList.actions.rejectOrRevokeAll")}
               </Button>
             )}
         </div>
@@ -78,11 +81,11 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Type")}</Th>
-                    <Th>{__("Category")}</Th>
+                    <Th>{t("documentAccessList.columns.name")}</Th>
+                    <Th>{t("documentAccessList.columns.type")}</Th>
+                    <Th>{t("documentAccessList.columns.category")}</Th>
                     <Th>
-                      {__("Access")}
+                      {t("documentAccessList.columns.access")}
                     </Th>
                     <Th></Th>
                   </Tr>
@@ -98,7 +101,7 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
                         </Td>
                         <Td>
                           <Badge variant={docAccess.variant}>
-                            {docAccess.type}
+                            {docAccess.typeLabel}
                           </Badge>
                         </Td>
                         <Td>
@@ -110,7 +113,7 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
                           {(docAccess.persisted || docAccess.status !== "REQUESTED")
                             && (
                               <Badge variant={getCompliancePageDocumentAccessStatusBadgeVariant(docAccess.status)}>
-                                {getCompliancePageDocumentAccessStatusLabel(docAccess.status, __)}
+                                {getCompliancePageDocumentAccessStatusLabel(docAccess.status, t)}
                               </Badge>
                             )}
                         </Td>
@@ -123,7 +126,7 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
                                 onClick={() => onUpdateStatus(docAccess, "GRANTED")}
                                 className="text-xs h-7 min-h-7"
                               >
-                                {__("Grant")}
+                                {t("documentAccessList.actions.grant")}
                               </Button>
                             )}
                           {docAccess.status !== "REJECTED" && docAccess.status !== "REVOKED"
@@ -137,7 +140,10 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
                                 )}
                                 className="text-xs h-7 min-h-7"
                               >
-                                {docAccess.id && initialStatusByID[docAccess.id] === "GRANTED" ? __("Revoke") : __("Reject")}
+                                {docAccess.id
+                                  && initialStatusByID[docAccess.id] === "GRANTED"
+                                  ? t("documentAccessList.actions.revoke")
+                                  : t("documentAccessList.actions.reject")}
                               </Button>
                             )}
                         </Td>
@@ -150,7 +156,7 @@ export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAc
           )
         : (
             <div className="text-center text-txt-tertiary py-8">
-              {__("No documents available")}
+              {t("documentAccessList.empty")}
             </div>
           )}
     </div>

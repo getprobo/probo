@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -34,12 +33,13 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { AccessReviewEntryDecision, EntryDecisionActionsMutation } from "#/__generated__/core/EntryDecisionActionsMutation.graphql";
 
-import { decisionBadgeVariant, decisionLabel } from "./accessReviewHelpers";
+import { decisionBadgeVariant } from "./accessReviewHelpers";
 
 const mutation = graphql`
   mutation EntryDecisionActionsMutation(
@@ -61,7 +61,7 @@ type Props = {
 };
 
 export function EntryDecisionActions({ entryId, decision }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const ref = useDialogRef();
   const [editing, setEditing] = useState(false);
@@ -82,9 +82,9 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("entryDecisionActions.messages.error"),
             description: formatError(
-              __("Failed to record decision"),
+              t("entryDecisionActions.errors.record"),
               errors,
             ),
             variant: "error",
@@ -98,9 +98,9 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("entryDecisionActions.messages.error"),
           description: formatError(
-            __("Failed to record decision"),
+            t("entryDecisionActions.errors.record"),
             error,
           ),
           variant: "error",
@@ -129,13 +129,13 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     return (
       <div className="flex items-center gap-1">
         <Badge variant={decisionBadgeVariant(decision)}>
-          {decisionLabel(__, decision)}
+          {t(`entryDecisionActions.decisions.${decision.toLowerCase()}`)}
         </Badge>
         <button
           type="button"
           className="text-txt-tertiary hover:text-txt-primary cursor-pointer"
           onClick={() => setEditing(true)}
-          title={__("Change decision")}
+          title={t("entryDecisionActions.actions.change")}
         >
           <IconPencil size={14} />
         </button>
@@ -147,23 +147,31 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     <>
       <Select
         variant="editor"
-        placeholder={__("Decide...")}
+        placeholder={t("entryDecisionActions.placeholder")}
         onValueChange={handleDecision}
         disabled={isRecording}
       >
-        <Option value="APPROVED">{__("Approve")}</Option>
-        <Option value="REVOKE">{__("Revoke")}</Option>
-        <Option value="DEFER">{__("Modify")}</Option>
-        <Option value="ESCALATE">{__("Escalate")}</Option>
+        <Option value="APPROVED">
+          {t("entryDecisionActions.actions.approve")}
+        </Option>
+        <Option value="REVOKE">
+          {t("entryDecisionActions.actions.revoke")}
+        </Option>
+        <Option value="DEFER">
+          {t("entryDecisionActions.actions.modify")}
+        </Option>
+        <Option value="ESCALATE">
+          {t("entryDecisionActions.actions.escalate")}
+        </Option>
       </Select>
 
-      <Dialog ref={ref} title={__("Decision note")}>
+      <Dialog ref={ref} title={t("entryDecisionActions.note.title")}>
         <DialogContent padded className="space-y-4">
           <p className="text-sm text-txt-secondary">
-            {__("Please provide a reason for this decision.")}
+            {t("entryDecisionActions.note.description")}
           </p>
           <Field
-            label={__("Note")}
+            label={t("entryDecisionActions.note.label")}
             type="textarea"
             value={note}
             onValueChange={setNote}
@@ -178,7 +186,7 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
               }
             }}
           >
-            {__("Confirm")}
+            {t("entryDecisionActions.actions.confirm")}
           </Button>
         </DialogFooter>
       </Dialog>

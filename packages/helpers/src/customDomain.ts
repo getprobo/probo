@@ -44,42 +44,38 @@ export const getCustomDomainStatusBadgeVariant = (sslStatus: Status) => {
 
 export const getCustomDomainStatusBadgeLabel = (
   sslStatus: Status,
-  __: (key: string) => string,
+  t: (key: string) => string,
 ) => {
   if (sslStatus === "ACTIVE") {
-    return __("Active");
+    return t("helpers.customDomain.status.active");
   }
   if (sslStatus === "PROVISIONING" || sslStatus === "RENEWING") {
-    return __("Provisioning");
+    return t("helpers.customDomain.status.provisioning");
   }
   if (sslStatus === "PENDING") {
-    return __("Pending");
+    return t("helpers.customDomain.status.pending");
   }
   if (sslStatus === "FAILED") {
-    return __("Failed");
+    return t("helpers.customDomain.status.failed");
   }
   if (sslStatus === "EXPIRED") {
-    return __("Expired");
+    return t("helpers.customDomain.status.expired");
   }
-  return __("Unknown");
+  return t("helpers.common.unknown");
 };
 
 const provisioningErrorMessages: Record<string, string> = {
-  DNS_CNAME: "DNS is not configured correctly yet. Check the CNAME record.",
-  DNS_CAA: "DNS CAA records do not allow our certificate authority.",
-  ACME_RATE_LIMITED:
-    "Certificate authority is temporarily rate-limiting. We will retry automatically.",
-  ACME_INVALID_ORDER:
-    "Domain ownership could not be verified. We will retry automatically.",
-  ACME_TEMPORARY:
-    "Certificate provisioning hit a temporary error. We will retry automatically.",
-  ACME_FAILED:
-    "Certificate provisioning failed. Contact support if this persists.",
+  DNS_CNAME: "helpers.customDomain.provisioningError.dnsCname",
+  DNS_CAA: "helpers.customDomain.provisioningError.dnsCaa",
+  ACME_RATE_LIMITED: "helpers.customDomain.provisioningError.rateLimited",
+  ACME_INVALID_ORDER: "helpers.customDomain.provisioningError.invalidOrder",
+  ACME_TEMPORARY: "helpers.customDomain.provisioningError.temporary",
+  ACME_FAILED: "helpers.customDomain.provisioningError.failed",
 };
 
 export const getCertificateProvisioningErrorMessage = (
   provisioningError: string | null | undefined,
-  __: (key: string) => string,
+  t: (key: string) => string,
 ) => {
   if (!provisioningError) {
     return null;
@@ -87,10 +83,8 @@ export const getCertificateProvisioningErrorMessage = (
 
   const knownMessage = provisioningErrorMessages[provisioningError];
   if (knownMessage) {
-    return __(knownMessage);
+    return t(knownMessage);
   }
 
-  return __(
-    "Certificate provisioning failed. Contact support if this persists.",
-  );
+  return t("helpers.customDomain.provisioningError.failed");
 };

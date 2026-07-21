@@ -19,11 +19,8 @@
 // SOFTWARE.
 
 import {
-  getMeasureStateLabel,
   measureStates,
-  sprintf,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -47,6 +44,7 @@ import {
 } from "@probo/ui";
 import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
 import { Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   graphql,
@@ -145,7 +143,7 @@ export default function MeasureDetailPage(props: Props) {
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<MeasureDetailPageNodeQuery>(measureNodeQuery, props.queryRef);
   const measure = data.node;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [deleteMeasure] = useDeleteMeasureMutation();
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -182,12 +180,7 @@ export default function MeasureDetailPage(props: Props) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the measure \"%s\". This action cannot be undone.",
-          ),
-          measure.name,
-        ),
+        message: t("measureDetailPage.deleteConfirmation", { name: measure.name }),
       },
     );
   };
@@ -209,7 +202,7 @@ export default function MeasureDetailPage(props: Props) {
       <Breadcrumb
         items={[
           {
-            label: __("Measures"),
+            label: t("measureDetailPage.breadcrumb.measures"),
             to: `/organizations/${organizationId}/measures`,
           },
           ...(measure.category
@@ -221,7 +214,7 @@ export default function MeasureDetailPage(props: Props) {
               ]
             : []),
           {
-            label: __("Measure detail"),
+            label: t("measureDetailPage.breadcrumb.detail"),
           },
         ]}
       />
@@ -232,20 +225,20 @@ export default function MeasureDetailPage(props: Props) {
           <>
             <MeasureFormDialog measure={measure}>
               <Button variant="secondary" icon={IconPencil}>
-                {__("Edit")}
+                {t("measureDetailPage.actions.edit")}
               </Button>
             </MeasureFormDialog>
             <Select
               disabled={isUpdating}
               onValueChange={state => void onStateChange(state)}
               name="state"
-              placeholder={__("Select state")}
+              placeholder={t("measureDetailPage.fields.selectState")}
               className="rounded-full"
               value={measure.state}
             >
               {measureStates.map(state => (
                 <Option key={state} value={state}>
-                  {getMeasureStateLabel(__, state)}
+                  {t(`measureDetailPage.states.${state.toLowerCase()}`)}
                 </Option>
               ))}
             </Select>
@@ -258,7 +251,7 @@ export default function MeasureDetailPage(props: Props) {
               icon={IconTrashCan}
               onClick={onDelete}
             >
-              {__("Delete")}
+              {t("measureDetailPage.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         )}
@@ -269,7 +262,7 @@ export default function MeasureDetailPage(props: Props) {
           to={`/organizations/${organizationId}/measures/${measureId}/evidences`}
         >
           <IconPageCheck size={20} />
-          {__("Evidences")}
+          {t("measureDetailPage.tabs.evidences")}
           <TabBadge>{evidencesCount}</TabBadge>
         </TabLink>
         {measure.canListTasks && (
@@ -277,7 +270,7 @@ export default function MeasureDetailPage(props: Props) {
             to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
           >
             <IconCheckmark1 size={20} />
-            {__("Tasks")}
+            {t("measureDetailPage.tabs.tasks")}
             <Suspense fallback={<TabBadge>-</TabBadge>}>
               <TasksCountBadge measureId={measureId} />
             </Suspense>
@@ -287,28 +280,28 @@ export default function MeasureDetailPage(props: Props) {
           to={`/organizations/${organizationId}/measures/${measureId}/controls`}
         >
           <IconFrame2 size={20} />
-          {__("Controls")}
+          {t("measureDetailPage.tabs.controls")}
           <TabBadge>{controlsCount}</TabBadge>
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/risks`}
         >
           <IconWarning size={20} />
-          {__("Risks")}
+          {t("measureDetailPage.tabs.risks")}
           <TabBadge>{risksCount}</TabBadge>
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/documents`}
         >
           <IconPageTextLine size={20} />
-          {__("Documents")}
+          {t("measureDetailPage.tabs.documents")}
           <TabBadge>{documentsCount}</TabBadge>
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/third-parties`}
         >
           <IconStore size={20} />
-          {__("Third parties")}
+          {t("measureDetailPage.tabs.thirdParties")}
           <TabBadge>{thirdPartiesCount}</TabBadge>
         </TabLink>
       </Tabs>

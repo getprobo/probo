@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getMeasureStateLabel, measureStates } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { measureStates } from "@probo/helpers";
 import {
   Button,
   Dialog,
@@ -35,6 +34,7 @@ import {
 } from "@probo/ui";
 import { Breadcrumb } from "@probo/ui";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -71,13 +71,6 @@ const measureCreateMutation = graphql`
   }
 `;
 
-const measureSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional().nullable(),
-  category: z.string().min(1, "Category is required"),
-  state: z.enum(measureStates),
-});
-
 type Props = {
   children?: ReactNode;
   measure?: MeasureFormDialogMeasureFragment$key;
@@ -87,17 +80,23 @@ type Props = {
 
 export default function MeasureFormDialog(props: Props) {
   const { children, measure: measureKey, connection, ...rest } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const ref = useDialogRef();
   const dialogRef = rest.ref ?? ref;
   const measure = useFragment(measureFragment, measureKey);
   const organizationId = useOrganizationId();
   const [updateMeasure] = useUpdateMeasure();
   const [createMeasure] = useMutationWithToasts(measureCreateMutation, {
-    successMessage: __("Measure created successfully."),
-    errorMessage: __("Failed to create measure"),
+    successMessage: t("measureFormDialog.messages.created"),
+    errorMessage: t("measureFormDialog.errors.create"),
   });
   const mutate = measureKey ? updateMeasure : createMeasure;
+  const measureSchema = z.object({
+    name: z.string().min(1, t("measureFormDialog.validation.nameRequired")),
+    description: z.string().optional().nullable(),
+    category: z.string().min(1, t("measureFormDialog.validation.categoryRequired")),
+    state: z.enum(measureStates),
+  });
 
   const { control, handleSubmit, register, formState, reset }
     = useFormWithSchema(measureSchema, {
@@ -146,8 +145,8 @@ export default function MeasureFormDialog(props: Props) {
       title={(
         <Breadcrumb
           items={[
-            __("Measures"),
-            measure ? __("Edit Measure") : __("New Measure"),
+            t("measureFormDialog.breadcrumb.measures"),
+            measure ? t("measureFormDialog.breadcrumb.editMeasure") : t("measureFormDialog.breadcrumb.newMeasure"),
           ]}
         />
       )}
@@ -158,44 +157,44 @@ export default function MeasureFormDialog(props: Props) {
             <Field
               {...register("name")}
               error={formState.errors.name?.message}
-              label={__("Measure name")}
-              placeholder={__("Measure title")}
+              label={t("measureFormDialog.fields.name")}
+              placeholder={t("measureFormDialog.fields.namePlaceholder")}
               required
             />
             <Field
               {...register("description")}
               error={formState.errors.description?.message}
-              label={__("Description")}
-              placeholder={__("Add description")}
+              label={t("measureFormDialog.fields.description")}
+              placeholder={t("measureFormDialog.fields.descriptionPlaceholder")}
               type="textarea"
             />
           </div>
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
-            <Label>{__("Properties")}</Label>
+            <Label>{t("measureFormDialog.properties")}</Label>
             <PropertyRow
-              label={__("Category")}
+              label={t("measureFormDialog.fields.category")}
               error={formState.errors.category?.message}
             >
               <Input
                 {...register("category")}
                 required
-                placeholder={__("Select category")}
+                placeholder={t("measureFormDialog.fields.categoryPlaceholder")}
               />
             </PropertyRow>
             {measure && (
               <PropertyRow
-                label={__("State")}
+                label={t("measureFormDialog.fields.state")}
                 error={formState.errors.state?.message}
               >
                 <ControlledSelect
                   control={control}
                   name="state"
-                  placeholder={__("Select state")}
+                  placeholder={t("measureFormDialog.fields.statePlaceholder")}
                 >
                   {measureStates.map(state => (
                     <Option key={state} value={state}>
-                      {getMeasureStateLabel(__, state)}
+                      {t(`measureFormDialog.states.${state.toLowerCase()}`)}
                     </Option>
                   ))}
                 </ControlledSelect>
@@ -205,7 +204,7 @@ export default function MeasureFormDialog(props: Props) {
         </DialogContent>
         <DialogFooter>
           <Button type="submit">
-            {measure ? __("Update measure") : __("Create measure")}
+            {measure ? t("measureFormDialog.actions.update") : t("measureFormDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

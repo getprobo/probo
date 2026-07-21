@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Checkbox,
@@ -30,6 +29,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, type ReactNode, useImperativeHandle } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -60,7 +60,7 @@ export type PdfDownloadDialogRef = {
 
 export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
   ({ children, onDownload, isLoading = false, defaultEmail }, ref) => {
-    const { __ } = useTranslate();
+    const { t } = useTranslation();
     const dialogRef = useDialogRef();
 
     const { register, handleSubmit, formState, watch, setValue }
@@ -95,7 +95,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
         <Dialog
           className="max-w-md"
           ref={dialogRef}
-          title={__("Download PDF Options")}
+          title={t("pdfDownloadDialog.title")}
         >
           <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
             <DialogContent className="space-y-4" padded>
@@ -107,12 +107,10 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
-                      {__("Include signatures")}
+                      {t("pdfDownloadDialog.includeSignatures.label")}
                     </label>
                     <p className="text-xs text-txt-secondary mt-1">
-                      {__(
-                        "Show signature information and approval details in the PDF",
-                      )}
+                      {t("pdfDownloadDialog.includeSignatures.description")}
                     </p>
                   </div>
                 </div>
@@ -124,12 +122,10 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
-                      {__("Add watermark")}
+                      {t("pdfDownloadDialog.watermark.label")}
                     </label>
                     <p className="text-xs text-txt-secondary mt-1">
-                      {__(
-                        "Add confidential watermark with email and timestamp",
-                      )}
+                      {t("pdfDownloadDialog.watermark.description")}
                     </p>
                   </div>
                 </div>
@@ -137,10 +133,10 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                 {watchWatermark && (
                   <div className="ml-6">
                     <Field
-                      label={__("Watermark email")}
+                      label={t("pdfDownloadDialog.watermark.emailLabel")}
                       {...register("watermarkEmail")}
                       type="email"
-                      placeholder={__("Enter email address")}
+                      placeholder={t("pdfDownloadDialog.watermark.emailPlaceholder")}
                       error={formState.errors.watermarkEmail?.message}
                       autoComplete="off"
                       required
@@ -155,11 +151,11 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                   ? (
                       <>
                         <Spinner size={16} />
-                        {__("Downloading...")}
+                        {t("pdfDownloadDialog.actions.downloading")}
                       </>
                     )
                   : (
-                      __("Download PDF")
+                      t("pdfDownloadDialog.actions.download")
                     )}
               </Button>
             </DialogFooter>

@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -29,6 +27,7 @@ import {
   Spinner,
   useDialogRef,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 import { useDeleteCompliancePageReferenceMutation } from "#/pages/organizations/compliance-page/_lib/compliancePageReferenceMutations";
 
@@ -47,7 +46,7 @@ export function DeleteCompliancePageReferenceDialog({
   connectionId,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const ref = useDialogRef();
 
   const [deleteReference, isDeleting] = useDeleteCompliancePageReferenceMutation();
@@ -70,18 +69,15 @@ export function DeleteCompliancePageReferenceDialog({
     <Dialog
       ref={ref}
       trigger={children}
-      title={__("Delete Reference")}
+      title={t("deleteTrustCenterReferenceDialog.title")}
       className="max-w-md"
     >
       <DialogContent padded>
         <p className="text-txt-secondary">
-          {sprintf(
-            __("Are you sure you want to delete the reference \"%s\"?"),
-            referenceName,
-          )}
+          {t("deleteTrustCenterReferenceDialog.description", { referenceName })}
         </p>
         <p className="text-txt-secondary mt-2">
-          {__("This action cannot be undone.")}
+          {t("deleteTrustCenterReferenceDialog.warning")}
         </p>
       </DialogContent>
 
@@ -92,7 +88,7 @@ export function DeleteCompliancePageReferenceDialog({
           disabled={isDeleting}
           icon={isDeleting ? Spinner : IconTrashCan}
         >
-          {isDeleting ? __("Deleting...") : __("Delete")}
+          {isDeleting ? t("deleteTrustCenterReferenceDialog.actions.deleting") : t("deleteTrustCenterReferenceDialog.actions.delete")}
         </Button>
       </DialogFooter>
     </Dialog>

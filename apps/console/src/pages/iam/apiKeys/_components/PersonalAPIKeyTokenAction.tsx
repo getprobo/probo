@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, useDialogRef, useToast } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 
 import type { PersonalAPIKeyRowFragment$key } from "#/__generated__/iam/PersonalAPIKeyRowFragment.graphql";
@@ -34,7 +34,7 @@ export function PersonalAPIKeyTokenAction(props: {
   disabled?: boolean;
 }) {
   const { fKey, disabled } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
@@ -53,9 +53,9 @@ export function PersonalAPIKeyTokenAction(props: {
         onComplete: (error) => {
           if (error) {
             toast({
-              title: __("Error"),
+              title: t("common.error"),
               description: formatError(
-                __("Failed to load API key token."),
+                t("personalApiKeyTokenAction.errors.load"),
                 error,
               ),
               variant: "error",
@@ -70,7 +70,7 @@ export function PersonalAPIKeyTokenAction(props: {
   return (
     <>
       <Button variant="secondary" onClick={handleShow} disabled={!!disabled}>
-        {__("Show")}
+        {t("personalApiKeyTokenAction.actions.show")}
       </Button>
 
       <PersonalAPIKeyTokenDialog

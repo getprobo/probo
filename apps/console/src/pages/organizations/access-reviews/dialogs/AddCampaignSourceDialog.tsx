@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -32,6 +31,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
 import type { AddCampaignSourceDialogMutation } from "#/__generated__/core/AddCampaignSourceDialogMutation.graphql";
@@ -110,7 +110,7 @@ export function AddCampaignSourceDialog({
   campaignId,
   existingCampaignSourceIds,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const ref = useDialogRef();
   const [selectedSourceId, setSelectedSourceId] = useState<string>("");
@@ -131,9 +131,9 @@ export function AddCampaignSourceDialog({
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("addCampaignSourceDialog.messages.error"),
             description: formatError(
-              __("Failed to add source"),
+              t("addCampaignSourceDialog.errors.add"),
               errors,
             ),
             variant: "error",
@@ -141,8 +141,8 @@ export function AddCampaignSourceDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Source added to campaign."),
+          title: t("addCampaignSourceDialog.messages.success"),
+          description: t("addCampaignSourceDialog.messages.added"),
           variant: "success",
         });
         setSelectedSourceId("");
@@ -150,9 +150,9 @@ export function AddCampaignSourceDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("addCampaignSourceDialog.messages.error"),
           description: formatError(
-            __("Failed to add source"),
+            t("addCampaignSourceDialog.errors.add"),
             error,
           ),
           variant: "error",
@@ -165,15 +165,22 @@ export function AddCampaignSourceDialog({
     <Dialog
       ref={ref}
       trigger={children}
-      title={
-        <Breadcrumb items={[__("Campaign"), __("Add Source")]} />
-      }
+      title={(
+        <Breadcrumb items={[
+          t("addCampaignSourceDialog.breadcrumb.campaign"),
+          t("addCampaignSourceDialog.breadcrumb.addSource"),
+        ]}
+        />
+      )}
     >
       <DialogContent padded className="space-y-4">
         <Suspense
-          fallback={
-            <Select disabled placeholder={__("Loading...")} />
-          }
+          fallback={(
+            <Select
+              disabled
+              placeholder={t("addCampaignSourceDialog.loading")}
+            />
+          )}
         >
           <SourceSelect
             organizationId={organizationId}
@@ -188,7 +195,7 @@ export function AddCampaignSourceDialog({
           disabled={isAdding || !selectedSourceId}
           onClick={onSubmit}
         >
-          {__("Add")}
+          {t("addCampaignSourceDialog.actions.add")}
         </Button>
       </DialogFooter>
     </Dialog>
@@ -206,7 +213,7 @@ function SourceSelect({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const data
     = useLazyLoadQuery<AddCampaignSourceDialogSourcesQuery>(
       sourcesQuery,
@@ -225,14 +232,14 @@ function SourceSelect({
   if (sources.length === 0) {
     return (
       <p className="text-sm text-txt-tertiary">
-        {__("All available sources are already added to this campaign.")}
+        {t("addCampaignSourceDialog.allSourcesAdded")}
       </p>
     );
   }
 
   return (
     <Select
-      placeholder={__("Select a source")}
+      placeholder={t("addCampaignSourceDialog.selectSource")}
       value={value}
       onValueChange={onChange}
     >

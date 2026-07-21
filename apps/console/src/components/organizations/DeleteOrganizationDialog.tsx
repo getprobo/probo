@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -30,6 +28,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type DeleteOrganizationDialogProps = {
   children: React.ReactNode;
@@ -44,7 +43,7 @@ export function DeleteOrganizationDialog({
   onConfirm,
   isDeleting = false,
 }: DeleteOrganizationDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const dialogRef = useDialogRef();
   const isConfirmDisabled = inputValue !== organizationName || isDeleting;
@@ -61,25 +60,21 @@ export function DeleteOrganizationDialog({
       className="max-w-lg"
       ref={dialogRef}
       trigger={children}
-      title={__("Delete Organization")}
+      title={t("deleteOrganizationDialog.title")}
     >
       <DialogContent padded className="space-y-4">
         <p className="text-txt-secondary text-sm">
-          {sprintf(
-            __("This will permanently delete the organization %s and all its data."),
-            organizationName,
-          )}
+          {t("deleteOrganizationDialog.description", { organizationName })}
         </p>
 
         <p className="text-red-600 text-sm font-medium">
-          {__("This action cannot be undone.")}
+          {t("deleteOrganizationDialog.warning")}
         </p>
 
         <Field
-          label={sprintf(
-            __("To confirm deletion, type \"%s\" below:"),
+          label={t("deleteOrganizationDialog.confirmationLabel", {
             organizationName,
-          )}
+          })}
           type="text"
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
@@ -96,7 +91,9 @@ export function DeleteOrganizationDialog({
           onClick={handleConfirm}
           disabled={isConfirmDisabled}
         >
-          {isDeleting ? __("Deleting...") : __("Delete Organization")}
+          {isDeleting
+            ? t("deleteOrganizationDialog.actions.deleting")
+            : t("deleteOrganizationDialog.actions.delete")}
         </Button>
       </DialogFooter>
     </Dialog>

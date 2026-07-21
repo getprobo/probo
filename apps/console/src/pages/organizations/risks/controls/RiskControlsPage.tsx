@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -85,7 +85,7 @@ interface RiskControlsPageProps {
 }
 
 export default function RiskControlsPage(props: RiskControlsPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<RiskControlsPageQuery>(riskControlsPageQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
@@ -106,15 +106,15 @@ export default function RiskControlsPage(props: RiskControlsPageProps) {
     >
       <Thead>
         <Tr>
-          <SortableTh field="SECTION_TITLE">{__("Reference")}</SortableTh>
-          <Th>{__("Name")}</Th>
+          <SortableTh field="SECTION_TITLE">{t("riskControlsPage.columns.reference")}</SortableTh>
+          <Th>{t("riskControlsPage.columns.name")}</Th>
         </Tr>
       </Thead>
       <Tbody>
         {controls.length === 0 && (
           <Tr>
             <Td colSpan={2} className="text-center text-txt-secondary">
-              {__("No controls linked")}
+              {t("riskControlsPage.empty")}
             </Td>
           </Tr>
         )}

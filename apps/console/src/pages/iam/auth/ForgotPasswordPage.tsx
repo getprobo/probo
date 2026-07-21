@@ -20,9 +20,9 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
@@ -45,9 +45,9 @@ const schema = z.object({
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(__("Forgot Password"));
+  usePageTitle(t("forgotPasswordPage.pageTitle"));
 
   const [instructionsSent, setInstructionsSent] = useState<boolean>();
   const { register, handleSubmit, formState } = useFormWithSchema(schema, {
@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
       },
       onError: (e: Error) => {
         toast({
-          title: __("Request failed"),
+          title: t("forgotPasswordPage.errors.requestFailed"),
           description: e.message,
           variant: "error",
         });
@@ -75,9 +75,9 @@ export default function ForgotPasswordPage() {
       onCompleted: (_, e) => {
         if (e) {
           toast({
-            title: __("Request failed"),
+            title: t("forgotPasswordPage.errors.requestFailed"),
             description: formatError(
-              __("Failed to send reset instructions"),
+              t("forgotPasswordPage.errors.sendInstructions"),
               e,
             ),
             variant: "error",
@@ -86,8 +86,8 @@ export default function ForgotPasswordPage() {
         }
 
         toast({
-          title: __("Success"),
-          description: __("Password reset instructions sent to your email"),
+          title: t("common.success"),
+          description: t("forgotPasswordPage.messages.instructionsSent"),
           variant: "success",
         });
         setInstructionsSent(true);
@@ -99,34 +99,34 @@ export default function ForgotPasswordPage() {
     ? (
         <div className="space-y-6 w-full max-w-md mx-auto pt-8">
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">{__("Check your email")}</h1>
+            <h1 className="text-3xl font-bold">{t("forgotPasswordPage.sent.title")}</h1>
             <p className="text-txt-tertiary">
-              {__("We've sent password reset instructions to your email address")}
+              {t("forgotPasswordPage.sent.description")}
             </p>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-txt-tertiary">
-              {__("Didn't receive the email?")}
+              {t("forgotPasswordPage.sent.didNotReceive")}
               {" "}
               <button
                 onClick={() => setInstructionsSent(false)}
                 className="underline text-txt-primary hover:text-txt-secondary"
               >
-                {__("Try again")}
+                {t("forgotPasswordPage.actions.tryAgain")}
               </button>
             </p>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-txt-tertiary">
-              {__("Remember your password?")}
+              {t("forgotPasswordPage.rememberPassword")}
               {" "}
               <Link
                 to="/auth/login"
                 className="underline text-txt-primary hover:text-txt-secondary"
               >
-                {__("Back to login")}
+                {t("forgotPasswordPage.actions.backToLogin")}
               </Link>
             </p>
           </div>
@@ -135,19 +135,17 @@ export default function ForgotPasswordPage() {
     : (
         <div className="space-y-6 w-full max-w-md mx-auto pt-8">
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">{__("Forgot Password")}</h1>
+            <h1 className="text-3xl font-bold">{t("forgotPasswordPage.title")}</h1>
             <p className="text-txt-tertiary">
-              {__(
-                "Enter your email address and we'll send you instructions to reset your password",
-              )}
+              {t("forgotPasswordPage.description")}
             </p>
           </div>
 
           <form onSubmit={e => void onSubmit(e)} className="space-y-4">
             <Field
-              label={__("Email")}
+              label={t("forgotPasswordPage.fields.email")}
               type="email"
-              placeholder={__("name@example.com")}
+              placeholder={t("forgotPasswordPage.fields.emailPlaceholder")}
               {...register("email")}
               required
               error={formState.errors.email?.message}
@@ -159,20 +157,20 @@ export default function ForgotPasswordPage() {
               disabled={formState.isSubmitting}
             >
               {formState.isSubmitting
-                ? __("Sending instructions...")
-                : __("Send reset instructions")}
+                ? t("forgotPasswordPage.actions.sendingInstructions")
+                : t("forgotPasswordPage.actions.sendInstructions")}
             </Button>
           </form>
 
           <div className="text-center">
             <p className="text-sm text-txt-tertiary">
-              {__("Remember your password?")}
+              {t("forgotPasswordPage.rememberPassword")}
               {" "}
               <Link
                 to="/auth/login"
                 className="underline text-txt-primary hover:text-txt-secondary"
               >
-                {__("Back to login")}
+                {t("forgotPasswordPage.actions.backToLogin")}
               </Link>
             </p>
           </div>

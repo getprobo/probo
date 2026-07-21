@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Avatar,
   Button,
@@ -34,6 +33,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { type ChangeEventHandler, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -98,7 +98,7 @@ export function OrganizationForm(props: {
   fKey: OrganizationFormFragment$key;
 }) {
   const { fKey } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const deleteDialogRef = useDialogRef();
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -112,14 +112,14 @@ export function OrganizationForm(props: {
   const [updateOrganization, isUpdatingOrganization] = useMutationWithToasts(
     updateOrganizationMutation,
     {
-      successMessage: __("Organization updated successfully"),
-      errorMessage: __("Failed to update organization"),
+      successMessage: t("organizationForm.messages.updated"),
+      errorMessage: t("organizationForm.errors.update"),
     },
   );
   const [deleteHorizontalLogo, isDeletingHorizontalLogo]
     = useMutationWithToasts(deleteHorizontalLogoMutation, {
-      successMessage: __("Horizontal logo deleted successfully"),
-      errorMessage: __("Failed to delete horizontal logo"),
+      successMessage: t("organizationForm.messages.horizontalLogoDeleted"),
+      errorMessage: t("organizationForm.errors.deleteHorizontalLogo"),
     });
 
   const { formState, handleSubmit, register } = useFormWithSchema(
@@ -212,12 +212,12 @@ export function OrganizationForm(props: {
   return (
     <form onSubmit={e => void onSubmit(e)} className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium">{__("Organization details")}</h2>
+        <h2 className="text-base font-medium">{t("organizationForm.title")}</h2>
         {formState.isSubmitting && <Spinner />}
       </div>
       <Card padded className="space-y-4">
         <div>
-          <Label>{__("Organization logo")}</Label>
+          <Label>{t("organizationForm.fields.logo")}</Label>
           <div className="flex w-max items-center gap-4">
             <Avatar
               className={logoPreview || organization.logo?.downloadUrl ? "bg-transparent" : undefined}
@@ -234,18 +234,16 @@ export function OrganizationForm(props: {
                 accept="image/png,image/jpeg,image/jpg,image/svg+xml"
               >
                 {isUpdatingOrganization
-                  ? __("Uploading...")
-                  : __("Change logo")}
+                  ? t("organizationForm.actions.uploading")
+                  : t("organizationForm.actions.changeLogo")}
               </FileButton>
             )}
           </div>
         </div>
         <div>
-          <Label>{__("Horizontal logo")}</Label>
+          <Label>{t("organizationForm.fields.horizontalLogo")}</Label>
           <p className="text-sm text-txt-tertiary mb-2">
-            {__(
-              "Upload a horizontal version of your logo for use in documents",
-            )}
+            {t("organizationForm.fields.horizontalLogoDescription")}
           </p>
           <div className="flex items-center gap-4">
             {(horizontalLogoPreview || organization.horizontalLogo?.downloadUrl) && (
@@ -256,7 +254,7 @@ export function OrganizationForm(props: {
                     || organization.horizontalLogo?.downloadUrl
                     || undefined
                   }
-                  alt={__("Horizontal logo")}
+                  alt={t("organizationForm.fields.horizontalLogo")}
                   className="h-12 max-w-xs object-contain"
                 />
               </div>
@@ -269,10 +267,10 @@ export function OrganizationForm(props: {
                 accept="image/png,image/jpeg,image/jpg,image/svg+xml"
               >
                 {isUpdatingOrganization
-                  ? __("Uploading...")
+                  ? t("organizationForm.actions.uploading")
                   : horizontalLogoPreview || organization.horizontalLogo?.downloadUrl
-                    ? __("Change horizontal logo")
-                    : __("Upload horizontal logo")}
+                    ? t("organizationForm.actions.changeHorizontalLogo")
+                    : t("organizationForm.actions.uploadHorizontalLogo")}
               </FileButton>
             )}
             {canUpdate && organization.horizontalLogo?.downloadUrl && (
@@ -283,19 +281,19 @@ export function OrganizationForm(props: {
                     type="button"
                     variant="quaternary"
                     icon={IconTrashCan}
-                    aria-label={__("Delete horizontal logo")}
+                    aria-label={t("organizationForm.actions.deleteHorizontalLogo")}
                     className="text-red-600 hover:text-red-700"
                   />
                 )}
-                title={__("Delete Horizontal Logo")}
+                title={t("organizationForm.deleteHorizontalLogo.title")}
                 className="max-w-md"
               >
                 <DialogContent padded>
                   <p className="text-txt-secondary">
-                    {__("Are you sure you want to delete the horizontal logo?")}
+                    {t("organizationForm.deleteHorizontalLogo.description")}
                   </p>
                   <p className="text-txt-secondary mt-2">
-                    {__("This action cannot be undone.")}
+                    {t("organizationForm.deleteHorizontalLogo.warning")}
                   </p>
                 </DialogContent>
 
@@ -307,8 +305,8 @@ export function OrganizationForm(props: {
                     icon={isDeletingHorizontalLogo ? Spinner : IconTrashCan}
                   >
                     {isDeletingHorizontalLogo
-                      ? __("Deleting...")
-                      : __("Delete")}
+                      ? t("organizationForm.actions.deleting")
+                      : t("organizationForm.actions.delete")}
                   </Button>
                 </DialogFooter>
               </Dialog>
@@ -320,8 +318,8 @@ export function OrganizationForm(props: {
           readOnly={formState.isSubmitting || !canUpdate}
           name="name"
           type="text"
-          label={__("Organization name")}
-          placeholder={__("Organization name")}
+          label={t("organizationForm.fields.name")}
+          placeholder={t("organizationForm.fields.name")}
         />
 
         {formState.isDirty && canUpdate && (
@@ -331,8 +329,8 @@ export function OrganizationForm(props: {
               disabled={formState.isSubmitting || isUpdatingOrganization}
             >
               {formState.isSubmitting || isUpdatingOrganization
-                ? __("Updating...")
-                : __("Update Organization")}
+                ? t("organizationForm.actions.updating")
+                : t("organizationForm.actions.update")}
             </Button>
           </div>
         )}

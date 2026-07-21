@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Spinner, Table, Tbody, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -45,7 +45,7 @@ export const compliancePageAccessPageQuery = graphql`
 export function CompliancePageAccessPage(props: { queryRef: PreloadedQuery<CompliancePageAccessPageQuery> }) {
   const { queryRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const { organization } = usePreloadedQuery<CompliancePageAccessPageQuery>(compliancePageAccessPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
@@ -56,11 +56,11 @@ export function CompliancePageAccessPage(props: { queryRef: PreloadedQuery<Compl
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium">{__("External Access")}</h3>
+          <h3 className="text-base font-medium">
+            {t("accessPage.title")}
+          </h3>
           <p className="text-sm text-txt-tertiary">
-            {__(
-              "Manage who can access your compliance page",
-            )}
+            {t("accessPage.description")}
           </p>
         </div>
       </div>

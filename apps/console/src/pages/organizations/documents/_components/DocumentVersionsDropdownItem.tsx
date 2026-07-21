@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import { Badge, DropdownItem } from "@probo/ui";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { Link, useParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -48,7 +49,7 @@ export function DocumentVersionsDropdownItem(props: {
 }) {
   const { fragmentRef, active, currentTab } = props;
 
-  const { dateTimeFormat, __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
   const { documentId } = useParams();
   if (!documentId) {
@@ -80,17 +81,17 @@ export function DocumentVersionsDropdownItem(props: {
             <div className="flex items-center gap-2 overflow-hidden">
               {version.status === "DRAFT" && (
                 <Badge variant="neutral" size="sm">
-                  {__("Draft")}
+                  {t("documentVersionsDropdownItem.status.draft")}
                 </Badge>
               )}
               {version.status === "PENDING_APPROVAL" && (
                 <Badge variant="warning" size="sm">
-                  {__("Pending approval")}
+                  {t("documentVersionsDropdownItem.status.pendingApproval")}
                 </Badge>
               )}
             </div>
             <div className="text-xs text-txt-secondary whitespace-nowrap overflow-hidden text-ellipsis">
-              {dateTimeFormat(version.publishedAt ?? version.updatedAt)}
+              {dateTimeFormat(i18n.language, version.publishedAt ?? version.updatedAt)}
             </div>
           </div>
         </div>

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -46,7 +46,7 @@ const fragment = graphql`
 export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAuditListFragment$key }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const { audits, compliancePage } = useFragment<CompliancePageAuditListFragment$key>(fragment, fragmentRef);
 
@@ -55,18 +55,18 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
       <Table>
         <Thead>
           <Tr>
-            <Th>{__("Framework")}</Th>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Valid Until")}</Th>
-            <Th>{__("State")}</Th>
-            <Th>{__("Visibility")}</Th>
+            <Th>{t("auditList.columns.framework")}</Th>
+            <Th>{t("auditList.columns.name")}</Th>
+            <Th>{t("auditList.columns.validUntil")}</Th>
+            <Th>{t("auditList.columns.state")}</Th>
+            <Th>{t("auditList.columns.visibility")}</Th>
           </Tr>
         </Thead>
         <Tbody>
           {audits.edges.length === 0 && (
             <Tr>
               <Td colSpan={5} className="text-center text-txt-secondary">
-                {__("No audits available")}
+                {t("auditList.empty")}
               </Td>
             </Tr>
           )}

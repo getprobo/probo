@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Breadcrumb,
@@ -38,6 +37,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, Suspense, useImperativeHandle, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery } from "react-relay";
 
 import type { LinkControlDialogQuery } from "#/__generated__/core/LinkControlDialogQuery.graphql";
@@ -134,7 +134,7 @@ function ControlRow({
   isLinked: boolean;
   onUpdate?: () => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [selectedState, setSelectedState] = useState<string>(() => {
     if (!isLinked) return "not-linked";
     return control.applicability ? "applicable" : "not-applicable";
@@ -145,13 +145,13 @@ function ControlRow({
   const [showJustification, setShowJustification] = useState(false);
 
   const [linkMutate, isLinking] = useMutationWithToasts(linkControlMutation, {
-    successMessage: __("Control updated successfully."),
-    errorMessage: __("Failed to update control"),
+    successMessage: t("linkControlDialog.messages.updated"),
+    errorMessage: t("linkControlDialog.errors.update"),
   });
 
   const [unlinkMutate, isUnlinking] = useMutationWithToasts(unlinkControlMutation, {
-    successMessage: __("Control removed successfully."),
-    errorMessage: __("Failed to remove control"),
+    successMessage: t("linkControlDialog.messages.removed"),
+    errorMessage: t("linkControlDialog.errors.remove"),
   });
 
   const handleStateChange = async (newState: string) => {
@@ -231,13 +231,13 @@ function ControlRow({
             className="w-48"
           >
             <Option value="not-linked">
-              {__("Not Linked")}
+              {t("linkControlDialog.applicability.notLinked")}
             </Option>
             <Option value="applicable">
-              {__("Applicable")}
+              {t("linkControlDialog.applicability.applicable")}
             </Option>
             <Option value="not-applicable">
-              {__("Not Applicable")}
+              {t("linkControlDialog.applicability.notApplicable")}
             </Option>
           </Select>
         </div>
@@ -247,7 +247,7 @@ function ControlRow({
           <Textarea
             value={justification}
             onChange={e => setJustification(e.target.value)}
-            placeholder={__("Reason for non-applicability")}
+            placeholder={t("linkControlDialog.placeholders.justification")}
             className="flex-1"
             autogrow
           />
@@ -256,7 +256,7 @@ function ControlRow({
             icon={IconCheckmark1}
             onClick={() => void handleSaveJustification()}
             disabled={isLinking}
-            aria-label={__("Save")}
+            aria-label={t("linkControlDialog.actions.save")}
           />
         </div>
       )}
@@ -273,7 +273,7 @@ function LinkControlDialogContent({
   organizationId: string;
   onUpdate?: () => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [collapsedFrameworks, setCollapsedFrameworks] = useState<Set<string>>(new Set());
   const data = useLazyLoadQuery<LinkControlDialogQuery>(
@@ -385,7 +385,7 @@ function LinkControlDialogContent({
         <div className="sticky top-0 bg-level-2 p-4 border-b border-border-low z-10">
           <Input
             icon={IconMagnifyingGlass}
-            placeholder={__("Search controls...")}
+            placeholder={t("linkControlDialog.placeholders.search")}
             onValueChange={setSearch}
           />
         </div>
@@ -393,7 +393,7 @@ function LinkControlDialogContent({
           {filteredControls.length === 0
             ? (
                 <div className="p-8 text-center text-txt-secondary">
-                  {__("No controls found")}
+                  {t("linkControlDialog.empty")}
                 </div>
               )
             : (
@@ -407,7 +407,7 @@ function LinkControlDialogContent({
                           variant="tertiary"
                           icon={isCollapsed ? IconChevronDown : IconChevronUp}
                           onClick={() => toggleFramework(frameworkName)}
-                          aria-label={isCollapsed ? __("Expand") : __("Collapse")}
+                          aria-label={isCollapsed ? t("linkControlDialog.actions.expand") : t("linkControlDialog.actions.collapse")}
                         />
                       </div>
                       {!isCollapsed && Object.entries(sections).map(([sectionTitle, sectionControls]) => (
@@ -429,13 +429,13 @@ function LinkControlDialogContent({
               )}
         </div>
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")}></DialogFooter>
+      <DialogFooter exitLabel={t("linkControlDialog.actions.close")}></DialogFooter>
     </>
   );
 }
 
 export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [statementOfApplicabilityId, setStatementOfApplicabilityId] = useState<string | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
@@ -462,7 +462,7 @@ export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) 
       className="max-w-3xl"
       title={(
         <Breadcrumb
-          items={[__("Statements of Applicability"), __("Add Controls")]}
+          items={[t("linkControlDialog.breadcrumb.statementsOfApplicability"), t("linkControlDialog.breadcrumb.addControls")]}
         />
       )}
       onClose={handleClose}

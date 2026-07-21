@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -31,16 +31,16 @@ export interface CompliancePageCustomLinksSectionProps {
 }
 
 export function CompliancePageCustomLinksSection(props: CompliancePageCustomLinksSectionProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const compliancePage = useFragment(compliancePageFragment, props.compliancePageRef);
 
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-base font-medium">{__("Custom links")}</h2>
+        <h2 className="text-base font-medium">{t("externalUrls.title")}</h2>
         <p className="text-sm text-txt-tertiary">
-          {__("Social profiles and other links shown alongside your contact details.")}
+          {t("externalUrls.description")}
         </p>
       </div>
 

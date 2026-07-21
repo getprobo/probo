@@ -28,20 +28,20 @@ export const auditStates = [
   "OUTDATED",
 ] as const;
 
-export function getAuditStateLabel(__: Translator, state: (typeof auditStates)[number]) {
+export function getAuditStateLabel(t: Translator, state: (typeof auditStates)[number]) {
   switch (state) {
     case "NOT_STARTED":
-      return __("Not Started");
+      return t("helpers.auditState.notStarted");
     case "IN_PROGRESS":
-      return __("In Progress");
+      return t("helpers.auditState.inProgress");
     case "COMPLETED":
-      return __("Completed");
+      return t("helpers.auditState.completed");
     case "REJECTED":
-      return __("Rejected");
+      return t("helpers.auditState.rejected");
     case "OUTDATED":
-      return __("Outdated");
+      return t("helpers.auditState.outdated");
     default:
-      return __("Unknown");
+      return t("helpers.common.unknown");
   }
 }
 

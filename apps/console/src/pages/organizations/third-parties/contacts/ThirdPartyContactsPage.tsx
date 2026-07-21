@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPlusLarge,
@@ -31,6 +29,7 @@ import {
   Tr,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartyContactsPageFragment$key } from "#/__generated__/core/ThirdPartyContactsPageFragment.graphql";
@@ -93,7 +92,7 @@ interface ThirdPartyContactsPageProps {
 }
 
 export default function ThirdPartyContactsPage(props: ThirdPartyContactsPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const queryData = usePreloadedQuery<ThirdPartyContactsPageQuery>(thirdPartyContactsPageQuery, props.queryRef);
   if (queryData.node?.__typename !== "ThirdParty") {
     throw new Error("Third party not found");
@@ -128,17 +127,17 @@ export default function ThirdPartyContactsPage(props: ThirdPartyContactsPageProp
     contact => contact.canUpdate || contact.canDelete,
   );
 
-  usePageTitle(sprintf(__("%s - Contacts"), data.name));
+  usePageTitle(t("thirdPartyContactsPage.pageTitle", { name: data.name }));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Contacts")}
-        description={__("Manage third party contacts and their information.")}
+        title={t("thirdPartyContactsPage.title")}
+        description={t("thirdPartyContactsPage.description")}
       >
         {data.canCreateContact && (
           <CreateContactDialog thirdPartyId={data.id} connectionId={connectionId}>
-            <Button icon={IconPlusLarge}>{__("Add contact")}</Button>
+            <Button icon={IconPlusLarge}>{t("thirdPartyContactsPage.actions.add")}</Button>
           </CreateContactDialog>
         )}
       </PageHeader>
@@ -146,11 +145,11 @@ export default function ThirdPartyContactsPage(props: ThirdPartyContactsPageProp
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
-            <SortableTh field="FULL_NAME">{__("Name")}</SortableTh>
-            <SortableTh field="EMAIL">{__("Email")}</SortableTh>
-            <Th>{__("Phone")}</Th>
-            <Th>{__("Role")}</Th>
-            {hasAnyAction && <Th>{__("Actions")}</Th>}
+            <SortableTh field="FULL_NAME">{t("thirdPartyContactsPage.columns.name")}</SortableTh>
+            <SortableTh field="EMAIL">{t("thirdPartyContactsPage.columns.email")}</SortableTh>
+            <Th>{t("thirdPartyContactsPage.columns.phone")}</Th>
+            <Th>{t("thirdPartyContactsPage.columns.role")}</Th>
+            {hasAnyAction && <Th>{t("thirdPartyContactsPage.columns.actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>

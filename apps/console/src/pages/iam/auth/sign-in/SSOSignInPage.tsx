@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import { type FormEventHandler, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
@@ -40,7 +40,7 @@ const ssoAvailabilityQuery = graphql`
 
 export default function SSOSignInPage() {
   const location = useLocation();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const [queryRef, loadQuery]
     = useQueryLoader<SSOSignInPageQuery>(ssoAvailabilityQuery);
@@ -65,37 +65,37 @@ export default function SSOSignInPage() {
           className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
         >
           <IconChevronLeft size={20} />
-          <span className="text-sm">{__("Back")}</span>
+          <span className="text-sm">{t("ssoSignInPage.actions.back")}</span>
         </Link>
 
         <h1 className="text-center text-2xl font-bold">
-          {__("Login with SSO")}
+          {t("ssoSignInPage.title")}
         </h1>
         <p className="text-center text-txt-tertiary mt-1 mb-6">
-          {__("Enter your work email to continue with SSO")}
+          {t("ssoSignInPage.description")}
         </p>
 
         <Field
           required
-          placeholder={__("Work Email")}
+          placeholder={t("ssoSignInPage.fields.workEmail")}
           name="email"
           type="email"
-          label={__("Work Email")}
+          label={t("ssoSignInPage.fields.workEmail")}
           autoFocus
         />
 
         <Button className="w-xs h-10 mx-auto mt-6" disabled={checking}>
-          {checking ? __("Checking...") : __("Continue with SSO")}
+          {checking ? t("ssoSignInPage.actions.checking") : t("ssoSignInPage.actions.continue")}
         </Button>
 
         <div className="text-center mt-6 text-sm text-txt-secondary">
-          {__("Don't have an account ?")}
+          {t("ssoSignInPage.noAccount")}
           {" "}
           <Link
             to={{ pathname: "/auth/register", search: location.search }}
             className="underline hover:text-txt-primary"
           >
-            {__("Register")}
+            {t("ssoSignInPage.actions.register")}
           </Link>
         </div>
       </form>
@@ -118,7 +118,7 @@ function NavigateToSSOLoginURL(props: {
 }) {
   const { queryRef, loginSearch } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -132,11 +132,11 @@ function NavigateToSSOLoginURL(props: {
   useEffect(() => {
     if (!ssoLoginURL.ok) {
       toast({
-        title: __("Error"),
+        title: t("common.error"),
         description:
           ssoLoginURL.errors[0] instanceof Error
             ? ssoLoginURL.errors[0].message
-            : __("SSO not available for this email domain"),
+            : t("ssoSignInPage.errors.unavailable"),
         variant: "error",
       });
 
@@ -146,8 +146,7 @@ function NavigateToSSOLoginURL(props: {
 
     if (!ssoLoginURL.value) {
       toast({
-        title: __("Error"),
-        description: __("SSO not available for this email domain"),
+        title: t("common.error"), description: t("ssoSignInPage.errors.unavailable"),
         variant: "error",
       });
       return;
@@ -162,7 +161,7 @@ function NavigateToSSOLoginURL(props: {
     }
 
     window.location.href = url.toString();
-  }, [__, loginSearch, navigate, postAuthRedirectUrl, searchParams, ssoLoginURL, toast]);
+  }, [t, loginSearch, navigate, postAuthRedirectUrl, searchParams, ssoLoginURL, toast]);
 
   return null;
 }

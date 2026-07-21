@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { cleanFormData, formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { z } from "zod";
 
@@ -67,14 +67,14 @@ const updateContactMutation = graphql`
 const phoneRegex = /^\+[0-9]{8,15}$/;
 
 export function EditContactDialog({ contactKey, onClose }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const contact = useFragment(editContactDialogFragment, contactKey);
 
   const schema = z.object({
     fullName: z.string().optional(),
     email: z.union([
-      z.string().email(__("Please enter a valid email address")),
+      z.string().email(t("createThirdPartyContactDialog.validation.email")),
       z.literal(""),
     ]),
     phone: z.union([
@@ -82,9 +82,7 @@ export function EditContactDialog({ contactKey, onClose }: Props) {
         .string()
         .regex(
           phoneRegex,
-          __(
-            "Phone number must be in international format (e.g., +1234567890)",
-          ),
+          t("createThirdPartyContactDialog.validation.phone"),
         ),
       z.literal(""),
     ]),
@@ -116,23 +114,23 @@ export function EditContactDialog({ contactKey, onClose }: Props) {
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to update contact"), errors),
+            title: t("editThirdPartyContactDialog.messages.error"),
+            description: formatError(t("editThirdPartyContactDialog.errors.update"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Contact updated successfully."),
+          title: t("editThirdPartyContactDialog.messages.success"),
+          description: t("editThirdPartyContactDialog.messages.updated"),
           variant: "success",
         });
         onClose();
       },
       onError(error) {
         toast({
-          title: __("Error"),
-          description: formatError(__("Failed to update contact"), error),
+          title: t("editThirdPartyContactDialog.messages.error"),
+          description: formatError(t("editThirdPartyContactDialog.errors.update"), error),
           variant: "error",
         });
       },
@@ -150,43 +148,43 @@ export function EditContactDialog({ contactKey, onClose }: Props) {
       className="max-w-lg"
       ref={dialogRef}
       onClose={onClose}
-      title={<Breadcrumb items={[__("Contacts"), __("Edit Contact")]} />}
+      title={<Breadcrumb items={[t("editThirdPartyContactDialog.breadcrumb.contacts"), t("editThirdPartyContactDialog.breadcrumb.editContact")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={__("Name")}
+            label={t("createThirdPartyContactDialog.fields.name")}
             {...register("fullName")}
             type="text"
             error={formState.errors.fullName?.message}
-            placeholder={__("Contact's full name")}
+            placeholder={t("createThirdPartyContactDialog.placeholders.name")}
           />
           <Field
-            label={__("Email")}
+            label={t("createThirdPartyContactDialog.fields.email")}
             {...register("email")}
             type="email"
             error={formState.errors.email?.message}
-            placeholder={__("contact@example.com")}
+            placeholder={t("createThirdPartyContactDialog.placeholders.email")}
           />
           <Field
-            label={__("Phone")}
+            label={t("createThirdPartyContactDialog.fields.phone")}
             {...register("phone")}
             type="text"
             error={formState.errors.phone?.message}
-            placeholder={__("e.g., +1234567890")}
-            help={__("Use international format starting with +")}
+            placeholder={t("createThirdPartyContactDialog.placeholders.phone")}
+            help={t("createThirdPartyContactDialog.help.phone")}
           />
           <Field
-            label={__("Role")}
+            label={t("createThirdPartyContactDialog.fields.role")}
             {...register("role")}
             type="text"
             error={formState.errors.role?.message}
-            placeholder={__("e.g., Account Manager, Technical Support")}
+            placeholder={t("createThirdPartyContactDialog.placeholders.role")}
           />
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isUpdating}>
-            {__("Save")}
+            {t("editThirdPartyContactDialog.actions.save")}
           </Button>
         </DialogFooter>
       </form>

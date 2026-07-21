@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { useStateWithRef } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Command } from "cmdk";
 import { Fragment, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
 import { Badge } from "../../Atoms/Badge/Badge";
@@ -54,7 +54,7 @@ export function SelectCell<T extends NonNullable<unknown>>(props: Props<T>) {
     props.defaultValue,
   );
   const cellRef = useEditableCellRef();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const filteredValue = Array.isArray(value) ? value.filter(v => v !== undefined) : value ? [value] : [];
   const usedKeys = new Set<string>(filteredValue.map(getKey).filter(Boolean) as string[]);
   const { onUpdate } = useEditableRowContext();
@@ -105,7 +105,7 @@ export function SelectCell<T extends NonNullable<unknown>>(props: Props<T>) {
         {props.multiple && (
           <Command.Input
             className={classNames.input()}
-            placeholder={__("Search")}
+            placeholder={t("ui.actions.search")}
           />
         )}
         <Command.List>

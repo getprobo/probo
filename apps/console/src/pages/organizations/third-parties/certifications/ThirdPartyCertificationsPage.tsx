@@ -19,12 +19,10 @@
 // SOFTWARE.
 
 import {
-  certificationCategoryLabel,
   certifications,
   objectEntries,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -37,6 +35,7 @@ import {
 import { clsx } from "clsx";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartyCertificationsPageQuery } from "#/__generated__/core/ThirdPartyCertificationsPageQuery.graphql";
@@ -68,10 +67,10 @@ export default function ThirdPartyCertificationsPage(
   }
   const thirdParty = data.node;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { control, handleSubmit } = useThirdPartyForm(thirdParty);
 
-  usePageTitle(thirdParty.name + " - " + __("Certifications"));
+  usePageTitle(t("thirdPartyCertificationsPage.pageTitle", { name: thirdParty.name }));
 
   return (
     <form
@@ -95,7 +94,7 @@ export default function ThirdPartyCertificationsPage(
       </Card>
       {thirdParty.canUpdate && (
         <div className="flex justify-end">
-          <Button type="submit">{__("Update third party")}</Button>
+          <Button type="submit">{t("thirdPartyCertificationsPage.actions.update")}</Button>
         </div>
       )}
     </form>
@@ -110,7 +109,7 @@ interface CertificationsProps {
 
 function Certifications(props: CertificationsProps) {
   const categorizedCertifications = Object.values(certifications).flat();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [animateBadge, setAnimateBadge] = useState(false);
   const categories = objectEntries(certifications)
     .map(
@@ -138,7 +137,7 @@ function Certifications(props: CertificationsProps) {
       {categories.map(([key, certs]) => (
         <div key={key} className="space-y-2">
           <div className="text-sm font-medium text-txt-secondary">
-            {certificationCategoryLabel(__, key)}
+            {t(`thirdPartyCertificationsPage.categories.${key}`)}
           </div>
           <div className="flex flex-wrap gap-2">
             {certs.map(certification => (
@@ -187,7 +186,7 @@ function CertificationInput({
   certifications: string[];
   onAdd: (name: string) => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const isCustom = !certifications.includes(search.trim());
   const filteredCertifications = certifications.filter(c =>
@@ -201,7 +200,7 @@ function CertificationInput({
         resetValueOnHide
         onSelect={onAdd}
         onSearch={setSearch}
-        placeholder={__("Add a new certification")}
+        placeholder={t("thirdPartyCertificationsPage.placeholders.add")}
       >
         {filteredCertifications.map(certification => (
           <ComboboxItem key={certification} value={certification}>
@@ -211,10 +210,7 @@ function CertificationInput({
         {isCustom && search.trim().length >= 2 && (
           <ComboboxItem value={search.trim()}>
             <IconPlusLarge size={20} />
-            {__("Add a custom certification")}
-            {" "}
-            :
-            {search}
+            {t("thirdPartyCertificationsPage.addCustom", { name: search })}
           </ComboboxItem>
         )}
       </Combobox>

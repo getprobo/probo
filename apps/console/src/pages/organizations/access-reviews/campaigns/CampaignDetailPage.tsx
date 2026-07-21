@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatError, sprintf } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useList } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   Badge,
   Breadcrumb,
@@ -50,6 +50,7 @@ import {
 } from "@probo/ui";
 import * as Popover from "@radix-ui/react-popover";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { useNavigate } from "react-router";
 import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
@@ -65,15 +66,11 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { AccessEntryRolesCell } from "../_components/AccessEntryRolesCell";
 import {
   decisionBadgeVariant,
-  decisionLabel,
   fetchStatusBadgeVariant,
   flagBadgeVariant,
   flagGroups,
-  flagLabel,
-  formatStatus,
   NotAvailable,
   statusBadgeVariant,
-  statusLabel,
 } from "../_components/accessReviewHelpers";
 import { EntryDecisionActions } from "../_components/EntryDecisionActions";
 import { EntryFlagSelect } from "../_components/EntryFlagSelect";
@@ -204,7 +201,7 @@ type Props = {
 };
 
 export default function CampaignDetailPage({ queryRef }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const environment = useRelayEnvironment();
@@ -269,28 +266,22 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
-            description: formatError(
-              __("Failed to start campaign"),
-              errors,
-            ),
+            title: t("campaignDetailPage.messages.error"),
+            description: formatError(t("campaignDetailPage.errors.start"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Campaign started. Sources are being fetched."),
+          title: t("campaignDetailPage.messages.success"),
+          description: t("campaignDetailPage.messages.started"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
-          description: formatError(
-            __("Failed to start campaign"),
-            error,
-          ),
+          title: t("campaignDetailPage.messages.error"),
+          description: formatError(t("campaignDetailPage.errors.start"), error),
           variant: "error",
         });
       },
@@ -315,19 +306,16 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             onCompleted(_, errors) {
               if (errors?.length) {
                 toast({
-                  title: __("Error"),
-                  description: formatError(
-                    __("Failed to delete campaign"),
-                    errors,
-                  ),
+                  title: t("campaignDetailPage.messages.error"),
+                  description: formatError(t("campaignDetailPage.errors.delete"), errors),
                   variant: "error",
                 });
                 resolve();
                 return;
               }
               toast({
-                title: __("Success"),
-                description: __("Campaign deleted successfully."),
+                title: t("campaignDetailPage.messages.success"),
+                description: t("campaignDetailPage.messages.deleted"),
                 variant: "success",
               });
               resolve();
@@ -335,11 +323,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
-                description: formatError(
-                  __("Failed to delete campaign"),
-                  error,
-                ),
+                title: t("campaignDetailPage.messages.error"),
+                description: formatError(t("campaignDetailPage.errors.delete"), error),
                 variant: "error",
               });
               resolve();
@@ -347,11 +332,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           });
         }),
       {
-        message: sprintf(
-          __("This will permanently delete \"%s\". This action cannot be undone."),
-          campaign.name,
-        ),
-        label: __("Delete"),
+        message: t("campaignDetailPage.deleteConfirmation", { name: campaign.name }),
+        label: t("campaignDetailPage.actions.delete"),
         variant: "danger",
       },
     );
@@ -368,30 +350,24 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             onCompleted(_, errors) {
               if (errors?.length) {
                 toast({
-                  title: __("Error"),
-                  description: formatError(
-                    __("Failed to complete campaign"),
-                    errors,
-                  ),
+                  title: t("campaignDetailPage.messages.error"),
+                  description: formatError(t("campaignDetailPage.errors.complete"), errors),
                   variant: "error",
                 });
                 resolve();
                 return;
               }
               toast({
-                title: __("Success"),
-                description: __("Campaign completed successfully."),
+                title: t("campaignDetailPage.messages.success"),
+                description: t("campaignDetailPage.messages.completed"),
                 variant: "success",
               });
               resolve();
             },
             onError(error) {
               toast({
-                title: __("Error"),
-                description: formatError(
-                  __("Failed to complete campaign"),
-                  error,
-                ),
+                title: t("campaignDetailPage.messages.error"),
+                description: formatError(t("campaignDetailPage.errors.complete"), error),
                 variant: "error",
               });
               resolve();
@@ -399,10 +375,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           });
         }),
       {
-        message: __(
-          "Are you sure you want to complete this campaign? This action cannot be undone. All decisions will be finalized.",
-        ),
-        label: __("Complete"),
+        message: t("campaignDetailPage.completeConfirmation"),
+        label: t("campaignDetailPage.actions.complete"),
         variant: "primary",
       },
     );
@@ -413,7 +387,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       <Breadcrumb
         items={[
           {
-            label: __("Access Reviews"),
+            label: t("campaignDetailPage.breadcrumb"),
             to: `/organizations/${organizationId}/access-reviews`,
           },
           { label: campaign.name },
@@ -423,14 +397,16 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-semibold">{campaign.name}</h1>
         <Badge variant={statusBadgeVariant(campaign.status)}>
-          {statusLabel(__, campaign.status)}
+          {t(`campaignDetailPage.status.${campaign.status.toLowerCase()}`)}
         </Badge>
         {isPendingActions && (
           <Button
             onClick={handleComplete}
             disabled={!canComplete || isClosing}
           >
-            {isClosing ? __("Completing...") : __("Complete campaign")}
+            {isClosing
+              ? t("campaignDetailPage.actions.completing")
+              : t("campaignDetailPage.actions.completeCampaign")}
           </Button>
         )}
         {canDelete && (
@@ -441,7 +417,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             disabled={isDeleting}
             className="ml-auto"
           >
-            {isDeleting ? __("Deleting...") : __("Delete")}
+            {isDeleting
+              ? t("campaignDetailPage.actions.deleting")
+              : t("campaignDetailPage.actions.delete")}
           </Button>
         )}
       </div>
@@ -455,7 +433,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
               existingCampaignSourceIds={existingCampaignSourceIds}
             >
               <Button icon={IconPlusLarge} variant="secondary">
-                {__("Add source")}
+                {t("campaignDetailPage.actions.addSource")}
               </Button>
             </AddCampaignSourceDialog>
             {campaign.sources.length > 0 && (
@@ -463,7 +441,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 onClick={handleStart}
                 disabled={isStarting}
               >
-                {isStarting ? __("Starting...") : __("Start campaign")}
+                {isStarting
+                  ? t("campaignDetailPage.actions.starting")
+                  : t("campaignDetailPage.actions.startCampaign")}
               </Button>
             )}
           </div>
@@ -481,7 +461,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           <Card padded>
             <div className="text-center py-8">
               <p className="text-txt-tertiary">
-                {__("No sources configured for this campaign.")}
+                {t("campaignDetailPage.emptySources")}
               </p>
             </div>
           </Card>
@@ -499,7 +479,7 @@ type CampaignSource = NonNullable<
 >[number];
 
 function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSource; isPendingActions: boolean }) {
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation();
   const { toast } = useToast();
   const [expanded, setExpanded] = useState(false);
   const { list: selection, toggle, clear, reset } = useList<string>([]);
@@ -534,9 +514,9 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
         onCompleted(_, errors) {
           if (errors?.length) {
             toast({
-              title: __("Error"),
+              title: t("campaignDetailPage.messages.error"),
               description: formatError(
-                __("Failed to record decisions"),
+                t("campaignDetailPage.errors.recordDecisions"),
                 errors,
               ),
               variant: "error",
@@ -544,17 +524,17 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             return;
           }
           toast({
-            title: __("Success"),
-            description: __("Decisions recorded successfully."),
+            title: t("campaignDetailPage.messages.success"),
+            description: t("campaignDetailPage.messages.decisionsRecorded"),
             variant: "success",
           });
           clear();
         },
         onError(error) {
           toast({
-            title: __("Error"),
+            title: t("campaignDetailPage.messages.error"),
             description: formatError(
-              __("Failed to record decisions"),
+              t("campaignDetailPage.errors.recordDecisions"),
               error,
             ),
             variant: "error",
@@ -607,14 +587,14 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             if (completedCount === total) {
               if (errorCount > 0) {
                 toast({
-                  title: __("Error"),
-                  description: sprintf(__("Failed to update flags for %d entries."), errorCount),
+                  title: t("campaignDetailPage.messages.error"),
+                  description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
                   variant: "error",
                 });
               } else {
                 toast({
-                  title: __("Success"),
-                  description: __("Flags updated for selected entries."),
+                  title: t("campaignDetailPage.messages.success"),
+                  description: t("campaignDetailPage.messages.flagsUpdated"),
                   variant: "success",
                 });
               }
@@ -626,8 +606,8 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             completedCount++;
             if (completedCount === total) {
               toast({
-                title: __("Error"),
-                description: sprintf(__("Failed to update flags for %d entries."), errorCount),
+                title: t("campaignDetailPage.messages.error"),
+                description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
                 variant: "error",
               });
               clear();
@@ -653,12 +633,10 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             : <IconChevronRight className="size-4 text-txt-tertiary" />}
           <span className="font-medium">{source.name}</span>
           <Badge variant="neutral">
-            {fetchedAccountsCount}
-            {" "}
-            {__("accounts")}
+            {t("campaignDetailPage.accounts", { count: fetchedAccountsCount })}
           </Badge>
           <Badge variant={fetchStatusBadgeVariant(fetchStatus)}>
-            {formatStatus(fetchStatus)}
+            {t(`campaignDetailPage.fetchStatus.${fetchStatus.toLowerCase()}`)}
           </Badge>
         </div>
       </button>
@@ -667,7 +645,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
         <div className="flex items-start gap-2 border-t bg-danger px-4 py-3 text-sm text-txt-danger">
           <IconWarning className="mt-0.5 size-4 shrink-0" />
           <div>
-            <p className="font-medium">{__("Fetch failed")}</p>
+            <p className="font-medium">{t("campaignDetailPage.fetchFailed")}</p>
             <p>{lastError}</p>
           </div>
         </div>
@@ -678,7 +656,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
           {entries.length === 0
             ? (
                 <div className="px-4 py-6 text-center text-txt-tertiary">
-                  {__("No entries found for this source.")}
+                  {t("campaignDetailPage.emptyEntries")}
                 </div>
               )
             : (
@@ -694,15 +672,15 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                             />
                           </Th>
                         )}
-                        <Th>{__("Name")}</Th>
-                        <Th>{__("Email")}</Th>
-                        <Th>{__("Role")}</Th>
-                        <Th>{__("Admin")}</Th>
-                        <Th>{__("Status")}</Th>
-                        <Th>{__("MFA")}</Th>
-                        <Th>{__("Last login")}</Th>
-                        <Th>{__("Flag")}</Th>
-                        <Th>{__("Decision")}</Th>
+                        <Th>{t("campaignDetailPage.columns.name")}</Th>
+                        <Th>{t("campaignDetailPage.columns.email")}</Th>
+                        <Th>{t("campaignDetailPage.columns.role")}</Th>
+                        <Th>{t("campaignDetailPage.columns.admin")}</Th>
+                        <Th>{t("campaignDetailPage.columns.status")}</Th>
+                        <Th>{t("campaignDetailPage.columns.mfa")}</Th>
+                        <Th>{t("campaignDetailPage.columns.lastLogin")}</Th>
+                        <Th>{t("campaignDetailPage.columns.flag")}</Th>
+                        <Th>{t("campaignDetailPage.columns.decision")}</Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -726,13 +704,19 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                           </Td>
                           <Td>{edge.node.email || <NotAvailable />}</Td>
                           <AccessEntryRolesCell accessEntryKey={edge.node} />
-                          <Td>{edge.node.isAdmin ? __("Yes") : __("No")}</Td>
+                          <Td>
+                            {edge.node.isAdmin
+                              ? t("campaignDetailPage.values.yes")
+                              : t("campaignDetailPage.values.no")}
+                          </Td>
                           <Td>
                             {edge.node.active == null
                               ? <NotAvailable />
                               : (
                                   <Badge variant={edge.node.active ? "success" : "danger"}>
-                                    {edge.node.active ? __("Active") : __("Disabled")}
+                                    {edge.node.active
+                                      ? t("campaignDetailPage.status.active")
+                                      : t("campaignDetailPage.status.disabled")}
                                   </Badge>
                                 )}
                           </Td>
@@ -741,13 +725,13 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                               ? <NotAvailable />
                               : (
                                   <Badge variant={edge.node.mfaStatus === "ENABLED" ? "success" : "neutral"}>
-                                    {formatStatus(edge.node.mfaStatus)}
+                                    {t(`campaignDetailPage.mfaStatus.${edge.node.mfaStatus.toLowerCase()}`)}
                                   </Badge>
                                 )}
                           </Td>
                           <Td>
                             {edge.node.lastLogin
-                              ? formatDate(edge.node.lastLogin)
+                              ? dateFormat(i18n.language, edge.node.lastLogin)
                               : <NotAvailable />}
                           </Td>
                           <Td>
@@ -762,7 +746,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                                 <div className="flex flex-wrap gap-1">
                                   {edge.node.flags.map(f => (
                                     <Badge key={f} variant={flagBadgeVariant(f)}>
-                                      {flagLabel(f)}
+                                      {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
                                     </Badge>
                                   ))}
                                 </div>
@@ -778,7 +762,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                                 )
                               : edge.node.decision !== "PENDING" && (
                                 <Badge variant={decisionBadgeVariant(edge.node.decision)}>
-                                  {decisionLabel(__, edge.node.decision)}
+                                  {t(`campaignDetailPage.decisions.${edge.node.decision.toLowerCase()}`)}
                                 </Badge>
                               )}
                           </Td>
@@ -792,29 +776,27 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
           {selection.length > 0 && (
             <div className="flex items-center gap-4 p-4 border-t">
               <span className="text-sm text-txt-secondary">
-                {selection.length}
-                {" "}
-                {__("selected")}
+                {t("campaignDetailPage.selected", { count: selection.length })}
               </span>
               <Button variant="secondary" onClick={clear}>
-                {__("Clear")}
+                {t("campaignDetailPage.actions.clear")}
               </Button>
               <Select
                 variant="editor"
-                placeholder={__("Set decision...")}
+                placeholder={t("campaignDetailPage.decisionPlaceholder")}
                 onValueChange={handleBulkDecision}
               >
-                <Option value="APPROVED">{__("Approve")}</Option>
-                <Option value="REVOKE">{__("Revoke")}</Option>
-                <Option value="DEFER">{__("Modify")}</Option>
-                <Option value="ESCALATE">{__("Escalate")}</Option>
+                <Option value="APPROVED">{t("campaignDetailPage.actions.approve")}</Option>
+                <Option value="REVOKE">{t("campaignDetailPage.actions.revoke")}</Option>
+                <Option value="DEFER">{t("campaignDetailPage.actions.modify")}</Option>
+                <Option value="ESCALATE">{t("campaignDetailPage.actions.escalate")}</Option>
               </Select>
               <Popover.Root open={bulkFlagOpen} onOpenChange={handleBulkFlagOpenChange}>
                 <Popover.Trigger asChild>
                   <Button variant="secondary">
                     {bulkFlagSelection.length > 0
-                      ? `${bulkFlagSelection.length} ${__("flags")}`
-                      : __("Set flags...")}
+                      ? t("campaignDetailPage.flagsSelected", { count: bulkFlagSelection.length })
+                      : t("campaignDetailPage.flagsPlaceholder")}
                   </Button>
                 </Popover.Trigger>
                 <Popover.Portal>
@@ -825,7 +807,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                     {flagGroups.map(group => (
                       <div key={group.label} className="mb-2 last:mb-0">
                         <div className="px-2 py-1 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">
-                          {__(group.label)}
+                          {t(`campaignDetailPage.flagGroups.${group.label.toLowerCase()}`)}
                         </div>
                         {group.flags.map(flag => (
                           <label
@@ -836,7 +818,9 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                               checked={bulkFlagSelection.includes(flag.value)}
                               onChange={() => toggleBulkFlag(flag.value)}
                             />
-                            <span className="text-sm text-txt-primary">{__(flag.label)}</span>
+                            <span className="text-sm text-txt-primary">
+                              {t(`campaignDetailPage.flags.${flag.value.toLowerCase()}`)}
+                            </span>
                           </label>
                         ))}
                       </div>
@@ -847,13 +831,13 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             </div>
           )}
 
-          <Dialog ref={bulkNoteRef} title={__("Decision note")}>
+          <Dialog ref={bulkNoteRef} title={t("campaignDetailPage.note.title")}>
             <DialogContent padded className="space-y-4">
               <p className="text-sm text-txt-secondary">
-                {__("Please provide a reason for this decision.")}
+                {t("campaignDetailPage.note.description")}
               </p>
               <Field
-                label={__("Note")}
+                label={t("campaignDetailPage.note.label")}
                 type="textarea"
                 value={bulkNote}
                 onValueChange={setBulkNote}
@@ -877,9 +861,9 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                       onCompleted(_, errors) {
                         if (errors?.length) {
                           toast({
-                            title: __("Error"),
+                            title: t("campaignDetailPage.messages.error"),
                             description: formatError(
-                              __("Failed to record decisions"),
+                              t("campaignDetailPage.errors.recordDecisions"),
                               errors,
                             ),
                             variant: "error",
@@ -887,8 +871,8 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                           return;
                         }
                         toast({
-                          title: __("Success"),
-                          description: __("Decisions recorded successfully."),
+                          title: t("campaignDetailPage.messages.success"),
+                          description: t("campaignDetailPage.messages.decisionsRecorded"),
                           variant: "success",
                         });
                         clear();
@@ -898,9 +882,9 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                       },
                       onError(error) {
                         toast({
-                          title: __("Error"),
+                          title: t("campaignDetailPage.messages.error"),
                           description: formatError(
-                            __("Failed to record decisions"),
+                            t("campaignDetailPage.errors.recordDecisions"),
                             error,
                           ),
                           variant: "error",
@@ -910,7 +894,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                   }
                 }}
               >
-                {__("Confirm")}
+                {t("campaignDetailPage.actions.confirm")}
               </Button>
             </DialogFooter>
           </Dialog>
@@ -918,7 +902,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
           {source.entries?.pageInfo.hasNextPage && (
             <div className="p-4 border-t text-center">
               <p className="text-sm text-txt-tertiary">
-                {sprintf(__("Showing first %d entries. Use the CLI for the full list."), entries.length)}
+                {t("campaignDetailPage.showingFirst", { count: entries.length })}
               </p>
             </div>
           )}

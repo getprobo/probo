@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 import type { PersonalAPIKeyListFragment$data } from "#/__generated__/iam/PersonalAPIKeyListFragment.graphql";
 
@@ -30,16 +30,16 @@ export function PersonalAPIKeysTable(props: {
   connectionId: string;
 }) {
   const { edges, connectionId } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Table>
       <Thead>
         <Tr>
-          <Th>{__("Name")}</Th>
-          <Th>{__("Last used")}</Th>
-          <Th>{__("Created")}</Th>
-          <Th>{__("Expires")}</Th>
+          <Th>{t("personalApiKeysTable.columns.name")}</Th>
+          <Th>{t("personalApiKeysTable.columns.lastUsed")}</Th>
+          <Th>{t("personalApiKeysTable.columns.created")}</Th>
+          <Th>{t("personalApiKeysTable.columns.expires")}</Th>
           <Th></Th>
         </Tr>
       </Thead>

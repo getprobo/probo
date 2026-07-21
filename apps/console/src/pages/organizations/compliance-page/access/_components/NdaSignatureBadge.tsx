@@ -18,23 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Badge } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 type ElectronicSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
 
 export function NdaSignatureBadge({ status }: { status: ElectronicSignatureStatus }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   switch (status) {
     case "COMPLETED":
-      return <Badge variant="success">{__("Signed")}</Badge>;
+      return <Badge variant="success">{t("ndaSignatureBadge.signed")}</Badge>;
     case "ACCEPTED":
     case "PROCESSING":
-      return <Badge variant="info">{__("Processing")}</Badge>;
+      return <Badge variant="info">{t("ndaSignatureBadge.processing")}</Badge>;
     case "PENDING":
-      return <Badge variant="warning">{__("Pending")}</Badge>;
+      return <Badge variant="warning">{t("ndaSignatureBadge.pending")}</Badge>;
     case "FAILED":
-      return <Badge variant="danger">{__("Failed")}</Badge>;
+      return <Badge variant="danger">{t("ndaSignatureBadge.failed")}</Badge>;
   }
 }

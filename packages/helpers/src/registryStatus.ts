@@ -69,16 +69,16 @@ export const getStatusLabel = (status: RegistryStatus) => {
   }
 };
 
-export function getStatusOptions(__: Translator) {
+export function getStatusOptions(t: Translator) {
   return registryStatuses.map((status) => ({
     value: status,
-    label: __({
-      "OPEN": "Open",
-      "IN_PROGRESS": "In Progress",
-      "CLOSED": "Closed",
-      "RISK_ACCEPTED": "Risk Accepted",
-      "MITIGATED": "Mitigated",
-      "FALSE_POSITIVE": "False Positive",
+    label: t({
+      "OPEN": "helpers.registryStatus.open",
+      "IN_PROGRESS": "helpers.registryStatus.inProgress",
+      "CLOSED": "helpers.registryStatus.closed",
+      "RISK_ACCEPTED": "helpers.registryStatus.riskAccepted",
+      "MITIGATED": "helpers.registryStatus.mitigated",
+      "FALSE_POSITIVE": "helpers.registryStatus.falsePositive",
     }[status]),
   }));
 }

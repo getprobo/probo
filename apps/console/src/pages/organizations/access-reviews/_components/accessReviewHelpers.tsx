@@ -53,20 +53,20 @@ export function fetchStatusBadgeVariant(status: string): BadgeVariant {
 }
 
 export function statusLabel(
-  __: (key: string) => string,
+  t: (key: string) => string,
   status: string,
 ): string {
   switch (status) {
     case "DRAFT":
-      return __("Draft");
+      return t("accessReviewCampaignsTab.status.draft");
     case "IN_PROGRESS":
-      return __("In progress");
+      return t("accessReviewCampaignsTab.status.in_progress");
     case "PENDING_ACTIONS":
-      return __("Pending actions");
+      return t("accessReviewCampaignsTab.status.pending_actions");
     case "COMPLETED":
-      return __("Completed");
+      return t("accessReviewCampaignsTab.status.completed");
     case "CANCELLED":
-      return __("Cancelled");
+      return t("accessReviewCampaignsTab.status.cancelled");
     default:
       return status;
   }
@@ -88,20 +88,20 @@ export function decisionBadgeVariant(decision: string): BadgeVariant {
 }
 
 export function decisionLabel(
-  __: (key: string) => string,
+  t: (key: string) => string,
   decision: string,
 ): string {
   switch (decision) {
     case "PENDING":
-      return __("Pending");
+      return t("campaignDetailPage.decisions.pending");
     case "APPROVED":
-      return __("Approved");
+      return t("campaignDetailPage.decisions.approved");
     case "REVOKE":
-      return __("Revoked");
+      return t("campaignDetailPage.decisions.revoke");
     case "DEFER":
-      return __("Modified");
+      return t("campaignDetailPage.decisions.defer");
     case "ESCALATE":
-      return __("Escalated");
+      return t("campaignDetailPage.decisions.escalate");
     default:
       return decision;
   }

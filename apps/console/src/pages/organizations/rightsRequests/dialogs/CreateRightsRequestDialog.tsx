@@ -21,11 +21,8 @@
 import {
   formatDatetime,
   formatError,
-  getRightsRequestStateOptions,
-  getRightsRequestTypeOptions,
   type GraphQLError,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -43,23 +40,14 @@ import {
 } from "@probo/ui";
 import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import { useCreateRightsRequest } from "../../../../hooks/graph/RightsRequestGraph";
 
-const schema = z.object({
-  requestType: z.enum(["ACCESS", "DELETION", "RECTIFICATION", "PORTABILITY", "OBJECTION", "COMPLAINT"]),
-  requestState: z.enum(["TODO", "IN_PROGRESS", "DONE", "REJECTED"]),
-  dataSubject: z.string().optional(),
-  contact: z.string().optional(),
-  details: z.string().optional(),
-  deadline: z.string().optional(),
-  actionTaken: z.string().optional(),
-});
-
-type FormData = z.infer<typeof schema>;
+type FormData = { requestType: "ACCESS" | "DELETION" | "RECTIFICATION" | "PORTABILITY" | "OBJECTION" | "COMPLAINT"; requestState: "TODO" | "IN_PROGRESS" | "DONE" | "REJECTED"; dataSubject?: string; contact?: string; details?: string; deadline?: string; actionTaken?: string };
 
 interface CreateRightsRequestDialogProps {
   children: ReactNode;
@@ -72,11 +60,14 @@ export function CreateRightsRequestDialog({
   organizationId,
   connectionId,
 }: CreateRightsRequestDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
   const createRequest = useCreateRightsRequest(connectionId || "");
+  const schema = z.object({
+    requestType: z.enum(["ACCESS", "DELETION", "RECTIFICATION", "PORTABILITY", "OBJECTION", "COMPLAINT"]), requestState: z.enum(["TODO", "IN_PROGRESS", "DONE", "REJECTED"]), dataSubject: z.string().optional(), contact: z.string().optional(), details: z.string().optional(), deadline: z.string().optional(), actionTaken: z.string().optional(),
+  });
 
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(schema, {
     defaultValues: {
@@ -104,8 +95,8 @@ export function CreateRightsRequestDialog({
       });
 
       toast({
-        title: __("Success"),
-        description: __("Rights request created successfully"),
+        title: t("createRightsRequestDialog.messages.success"),
+        description: t("createRightsRequestDialog.messages.created"),
         variant: "success",
       });
 
@@ -113,21 +104,21 @@ export function CreateRightsRequestDialog({
       dialogRef.current?.close();
     } catch (error) {
       toast({
-        title: __("Error"),
-        description: formatError(__("Failed to create rights request"), error as GraphQLError),
+        title: t("createRightsRequestDialog.messages.error"),
+        description: formatError(t("createRightsRequestDialog.errors.create"), error as GraphQLError),
         variant: "error",
       });
     }
   };
 
-  const typeOptions = getRightsRequestTypeOptions(__);
-  const stateOptions = getRightsRequestStateOptions(__);
+  const typeOptions = ["ACCESS", "DELETION", "RECTIFICATION", "PORTABILITY", "OBJECTION", "COMPLAINT"] as const;
+  const stateOptions = ["TODO", "IN_PROGRESS", "DONE", "REJECTED"] as const;
 
   return (
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Rights Requests"), __("Create Request")]} />}
+      title={<Breadcrumb items={[t("createRightsRequestDialog.breadcrumb.requests"), t("createRightsRequestDialog.breadcrumb.create")]} />}
       className="max-w-2xl"
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
@@ -139,7 +130,7 @@ export function CreateRightsRequestDialog({
               render={({ field }) => (
                 <div>
                   <Label>
-                    {__("Request Type")}
+                    {t("rightsRequestDetailsPage.fields.requestType")}
                     {" "}
                     *
                   </Label>
@@ -148,8 +139,8 @@ export function CreateRightsRequestDialog({
                     onValueChange={field.onChange}
                   >
                     {typeOptions.map(option => (
-                      <Option key={option.value} value={option.value}>
-                        {option.label}
+                      <Option key={option} value={option}>
+                        {t(`rightsRequestDetailsPage.types.${option.toLowerCase()}`)}
                       </Option>
                     ))}
                   </Select>
@@ -168,7 +159,7 @@ export function CreateRightsRequestDialog({
               render={({ field }) => (
                 <div>
                   <Label>
-                    {__("State")}
+                    {t("rightsRequestDetailsPage.fields.state")}
                     {" "}
                     *
                   </Label>
@@ -177,8 +168,8 @@ export function CreateRightsRequestDialog({
                     onValueChange={field.onChange}
                   >
                     {stateOptions.map(option => (
-                      <Option key={option.value} value={option.value}>
-                        {option.label}
+                      <Option key={option} value={option}>
+                        {t(`rightsRequestDetailsPage.states.${option.toLowerCase()}`)}
                       </Option>
                     ))}
                   </Select>
@@ -193,24 +184,24 @@ export function CreateRightsRequestDialog({
           </div>
 
           <Field
-            label={__("Data Subject")}
+            label={t("rightsRequestDetailsPage.fields.dataSubject")}
             {...register("dataSubject")}
-            placeholder={__("Enter data subject name")}
+            placeholder={t("createRightsRequestDialog.placeholders.dataSubject")}
             error={formState.errors.dataSubject?.message}
           />
 
           <Field
-            label={__("Contact")}
+            label={t("rightsRequestDetailsPage.fields.contact")}
             {...register("contact")}
-            placeholder={__("Enter contact information")}
+            placeholder={t("createRightsRequestDialog.placeholders.contact")}
             error={formState.errors.contact?.message}
           />
 
           <div>
-            <Label>{__("Details")}</Label>
+            <Label>{t("rightsRequestDetailsPage.fields.details")}</Label>
             <Textarea
               {...register("details")}
-              placeholder={__("Enter request details")}
+              placeholder={t("rightsRequestDetailsPage.placeholders.details")}
               rows={3}
             />
             {formState.errors.details?.message && (
@@ -222,7 +213,7 @@ export function CreateRightsRequestDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>{__("Deadline")}</Label>
+              <Label>{t("rightsRequestDetailsPage.fields.deadline")}</Label>
               <Input
                 type="date"
                 {...register("deadline")}
@@ -236,10 +227,10 @@ export function CreateRightsRequestDialog({
           </div>
 
           <div>
-            <Label>{__("Action Taken")}</Label>
+            <Label>{t("rightsRequestDetailsPage.fields.actionTaken")}</Label>
             <Textarea
               {...register("actionTaken")}
-              placeholder={__("Enter action taken")}
+              placeholder={t("rightsRequestDetailsPage.placeholders.actionTaken")}
               rows={3}
             />
             {formState.errors.actionTaken?.message && (
@@ -256,7 +247,7 @@ export function CreateRightsRequestDialog({
             variant="primary"
             disabled={formState.isSubmitting}
           >
-            {formState.isSubmitting ? __("Creating...") : __("Create Request")}
+            {formState.isSubmitting ? t("createRightsRequestDialog.actions.creating") : t("createRightsRequestDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

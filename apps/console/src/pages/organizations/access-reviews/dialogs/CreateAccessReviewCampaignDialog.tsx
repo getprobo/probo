@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -32,6 +31,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 import { z } from "zod";
 
@@ -90,7 +90,7 @@ export function CreateAccessReviewCampaignDialog({
   organizationId,
   connectionId,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const ref = useDialogRef();
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
@@ -132,9 +132,9 @@ export function CreateAccessReviewCampaignDialog({
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("createAccessReviewCampaignDialog.messages.error"),
             description: formatError(
-              __("Failed to create campaign"),
+              t("createAccessReviewCampaignDialog.errors.create"),
               errors,
             ),
             variant: "error",
@@ -142,8 +142,8 @@ export function CreateAccessReviewCampaignDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Campaign created successfully."),
+          title: t("createAccessReviewCampaignDialog.messages.success"),
+          description: t("createAccessReviewCampaignDialog.messages.created"),
           variant: "success",
         });
         reset();
@@ -152,9 +152,9 @@ export function CreateAccessReviewCampaignDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("createAccessReviewCampaignDialog.messages.error"),
           description: formatError(
-            __("Failed to create campaign"),
+            t("createAccessReviewCampaignDialog.errors.create"),
             error,
           ),
           variant: "error",
@@ -175,27 +175,30 @@ export function CreateAccessReviewCampaignDialog({
       onClose={handleClose}
       title={(
         <Breadcrumb
-          items={[__("Access Reviews"), __("New Campaign")]}
+          items={[
+            t("createAccessReviewCampaignDialog.breadcrumb.accessReviews"),
+            t("createAccessReviewCampaignDialog.breadcrumb.newCampaign"),
+          ]}
         />
       )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={__("Name")}
+            label={t("createAccessReviewCampaignDialog.fields.name")}
             {...register("name")}
             type="text"
             required
           />
           <Field
-            label={__("Description")}
+            label={t("createAccessReviewCampaignDialog.fields.description")}
             {...register("description")}
             type="textarea"
           />
           <Suspense
             fallback={(
               <div className="text-sm text-txt-tertiary">
-                {__("Loading sources...")}
+                {t("createAccessReviewCampaignDialog.loadingSources")}
               </div>
             )}
           >
@@ -208,7 +211,7 @@ export function CreateAccessReviewCampaignDialog({
         </DialogContent>
         <DialogFooter>
           <Button disabled={isCreating || formState.isSubmitting} type="submit">
-            {__("Create")}
+            {t("createAccessReviewCampaignDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>
@@ -225,7 +228,7 @@ function SourceSelector({
   selectedSourceIds: string[];
   onToggle: (sourceId: string) => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const data = useLazyLoadQuery<CreateAccessReviewCampaignDialogSourcesQuery>(
     sourcesQuery,
     { organizationId },
@@ -240,14 +243,16 @@ function SourceSelector({
   if (sources.length === 0) {
     return (
       <div className="text-sm text-txt-tertiary">
-        {__("No sources available. Add sources in the Sources tab first.")}
+        {t("createAccessReviewCampaignDialog.emptySources")}
       </div>
     );
   }
 
   return (
     <fieldset>
-      <legend className="text-sm font-medium mb-2">{__("Sources")}</legend>
+      <legend className="text-sm font-medium mb-2">
+        {t("createAccessReviewCampaignDialog.fields.sources")}
+      </legend>
       <div className="space-y-2">
         {sources.map(source => (
           <label

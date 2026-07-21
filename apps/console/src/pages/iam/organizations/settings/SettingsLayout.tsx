@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   IconKey,
   IconListStack,
@@ -29,38 +28,39 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 export default function SettingsLayout() {
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-6">
-      <PageHeader title={__("Settings")} />
+      <PageHeader title={t("settingsLayout.title")} />
 
       <Tabs>
         <TabLink to={`/organizations/${organizationId}/settings/general`}>
           <IconSettingsGear2 size={20} />
-          {__("General")}
+          {t("settingsLayout.tabs.general")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/settings/saml-sso`}>
           <IconLock size={20} />
-          {__("SAML SSO")}
+          {t("settingsLayout.tabs.samlSso")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/settings/scim`}>
           <IconKey size={20} />
-          {__("SCIM")}
+          {t("settingsLayout.tabs.scim")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/settings/webhooks`}>
           <IconSend size={20} />
-          {__("Webhooks")}
+          {t("settingsLayout.tabs.webhooks")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/settings/audit-log`}>
           <IconListStack size={20} />
-          {__("Audit Log")}
+          {t("settingsLayout.tabs.auditLog")}
         </TabLink>
       </Tabs>
 

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Card,
@@ -32,6 +31,7 @@ import {
   Tr,
 } from "@probo/ui";
 import { type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
@@ -120,7 +120,7 @@ export function ScopeCard(props: {
   scopeRef: ScopeCardFragment$key;
   scopesConnectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const [isOpen, setIsOpen] = useState(true);
   const scope = useFragment(scopeCardFragment, props.scopeRef);
@@ -154,21 +154,12 @@ export function ScopeCard(props: {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-txt-tertiary">
-            {nodes.length}
-            {" "}
-            {__("nodes")}
-            {" · "}
-            {processes.length}
-            {" "}
-            {__("processes")}
-            {" · "}
-            {threats.length}
-            {" "}
-            {__("threats")}
-            {" · "}
-            {scenarios.length}
-            {" "}
-            {__("scenarios")}
+            {t("scopeCard.summary", {
+              nodes: nodes.length,
+              processes: processes.length,
+              threats: threats.length,
+              scenarios: scenarios.length,
+            })}
           </span>
           <div
             onClick={e => e.stopPropagation()}
@@ -187,9 +178,9 @@ export function ScopeCard(props: {
         <div className="border-t border-border-low px-4 py-4 space-y-6">
           <div>
             <div className="mb-3">
-              <h3 className="text-sm font-semibold">{__("Diagram")}</h3>
+              <h3 className="text-sm font-semibold">{t("scopeCard.diagram.title")}</h3>
               <p className="text-xs text-txt-tertiary mt-1">
-                {__("Visualization of nodes, processes, and threats in this scope.")}
+                {t("scopeCard.diagram.description")}
               </p>
             </div>
             <ScopeDiagram scopeKey={scope} />
@@ -198,17 +189,17 @@ export function ScopeCard(props: {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <SectionHeader
-                title={`${__("Nodes")} (${nodes.length})`}
-                hint={__("Entities, boundaries, assets, and data involved in this scope.")}
+                title={t("scopeCard.sectionTitle.nodes", { count: nodes.length })}
+                hint={t("scopeCard.hints.nodes")}
               >
                 <CreateNodeDialog scopeId={scope.id} connectionId={nodesConnId} boundaries={boundaryOptions} />
               </SectionHeader>
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Type")}</Th>
-                    <Th>{__("Boundary")}</Th>
+                    <Th>{t("scopeCard.columns.name")}</Th>
+                    <Th>{t("scopeCard.columns.type")}</Th>
+                    <Th>{t("scopeCard.columns.boundary")}</Th>
                     <Th className="w-12" />
                   </Tr>
                 </Thead>
@@ -234,7 +225,7 @@ export function ScopeCard(props: {
                   ))}
                   {nodes.length === 0 && (
                     <Tr>
-                      <Td colSpan={4} className="text-center text-txt-secondary">{__("No nodes")}</Td>
+                      <Td colSpan={4} className="text-center text-txt-secondary">{t("scopeCard.empty.nodes")}</Td>
                     </Tr>
                   )}
                 </Tbody>
@@ -243,8 +234,8 @@ export function ScopeCard(props: {
 
             <div>
               <SectionHeader
-                title={`${__("Processes")} (${processes.length})`}
-                hint={__("Data flows and interactions between nodes.")}
+                title={t("scopeCard.sectionTitle.processes", { count: processes.length })}
+                hint={t("scopeCard.hints.processes")}
               >
                 <CreateProcessDialog
                   scopeId={scope.id}
@@ -255,9 +246,9 @@ export function ScopeCard(props: {
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("From")}</Th>
-                    <Th>{__("To")}</Th>
+                    <Th>{t("scopeCard.columns.name")}</Th>
+                    <Th>{t("scopeCard.columns.from")}</Th>
+                    <Th>{t("scopeCard.columns.to")}</Th>
                     <Th className="w-12" />
                   </Tr>
                 </Thead>
@@ -283,7 +274,7 @@ export function ScopeCard(props: {
                   ))}
                   {processes.length === 0 && (
                     <Tr>
-                      <Td colSpan={4} className="text-center text-txt-secondary">{__("No processes")}</Td>
+                      <Td colSpan={4} className="text-center text-txt-secondary">{t("scopeCard.empty.processes")}</Td>
                     </Tr>
                   )}
                 </Tbody>
@@ -293,8 +284,8 @@ export function ScopeCard(props: {
 
           <div>
             <SectionHeader
-              title={`${__("Boundaries")} (${boundaries.length})`}
-              hint={__("Groupings that contain nodes and can be nested inside other boundaries.")}
+              title={t("scopeCard.sectionTitle.boundaries", { count: boundaries.length })}
+              hint={t("scopeCard.hints.boundaries")}
             >
               <CreateBoundaryDialog
                 scopeId={scope.id}
@@ -305,8 +296,8 @@ export function ScopeCard(props: {
             <Table>
               <Thead>
                 <Tr>
-                  <Th>{__("Name")}</Th>
-                  <Th>{__("Parent")}</Th>
+                  <Th>{t("scopeCard.columns.name")}</Th>
+                  <Th>{t("scopeCard.columns.parent")}</Th>
                   <Th className="w-12" />
                 </Tr>
               </Thead>
@@ -330,7 +321,7 @@ export function ScopeCard(props: {
                 ))}
                 {boundaries.length === 0 && (
                   <Tr>
-                    <Td colSpan={3} className="text-center text-txt-secondary">{__("No boundaries")}</Td>
+                    <Td colSpan={3} className="text-center text-txt-secondary">{t("scopeCard.empty.boundaries")}</Td>
                   </Tr>
                 )}
               </Tbody>
@@ -339,8 +330,8 @@ export function ScopeCard(props: {
 
           <div>
             <SectionHeader
-              title={`${__("Threats")} (${threats.length})`}
-              hint={__("Potential threats targeting a process. Link threats to risks via scenarios.")}
+              title={t("scopeCard.sectionTitle.threats", { count: threats.length })}
+              hint={t("scopeCard.hints.threats")}
             >
               <CreateThreatDialog
                 scopeId={scope.id}
@@ -351,9 +342,9 @@ export function ScopeCard(props: {
             <Table>
               <Thead>
                 <Tr>
-                  <Th>{__("Threat")}</Th>
-                  <Th>{__("Category")}</Th>
-                  <Th>{__("Process")}</Th>
+                  <Th>{t("scopeCard.columns.threat")}</Th>
+                  <Th>{t("scopeCard.columns.category")}</Th>
+                  <Th>{t("scopeCard.columns.process")}</Th>
                   <Th className="w-12" />
                 </Tr>
               </Thead>
@@ -376,7 +367,7 @@ export function ScopeCard(props: {
                 })}
                 {threats.length === 0 && (
                   <Tr>
-                    <Td colSpan={4} className="text-center text-txt-secondary">{__("No threats")}</Td>
+                    <Td colSpan={4} className="text-center text-txt-secondary">{t("scopeCard.empty.threats")}</Td>
                   </Tr>
                 )}
               </Tbody>
@@ -385,8 +376,8 @@ export function ScopeCard(props: {
 
           <div>
             <SectionHeader
-              title={`${__("Scenarios")} (${scenarios.length})`}
-              hint={__("Risk scenarios linking threats to risks.")}
+              title={t("scopeCard.sectionTitle.scenarios", { count: scenarios.length })}
+              hint={t("scopeCard.hints.scenarios")}
             >
               <CreateScenarioInScopeDialog
                 scopeId={scope.id}
@@ -397,9 +388,9 @@ export function ScopeCard(props: {
             <Table>
               <Thead>
                 <Tr>
-                  <Th>{__("Scenario")}</Th>
-                  <Th>{__("Risks")}</Th>
-                  <Th>{__("Threats")}</Th>
+                  <Th>{t("scopeCard.columns.scenario")}</Th>
+                  <Th>{t("scopeCard.columns.risks")}</Th>
+                  <Th>{t("scopeCard.columns.threats")}</Th>
                   <Th className="w-12" />
                 </Tr>
               </Thead>
@@ -448,7 +439,7 @@ export function ScopeCard(props: {
                 })}
                 {scenarios.length === 0 && (
                   <Tr>
-                    <Td colSpan={4} className="text-center text-txt-secondary">{__("No scenarios")}</Td>
+                    <Td colSpan={4} className="text-center text-txt-secondary">{t("scopeCard.empty.scenarios")}</Td>
                   </Tr>
                 )}
               </Tbody>

@@ -18,16 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge, PageHeader, Skeleton } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export function RisksPageSkeleton() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
-      <PageHeader title={__("Risks")}>
+      <PageHeader title={t("risksPageSkeleton.title")}>
         <Button icon={IconPlusLarge} disabled>
-          {__("New Risk")}
+          {t("risksPageSkeleton.actions.create")}
         </Button>
       </PageHeader>
       <div className="grid grid-cols-2 gap-4">

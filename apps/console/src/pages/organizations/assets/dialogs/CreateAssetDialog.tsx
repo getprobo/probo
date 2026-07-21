@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -29,6 +28,7 @@ import {
   Option,
   useDialogRef,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { ControlledField } from "#/components/form/ControlledField";
@@ -36,15 +36,6 @@ import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useCreateAsset } from "#/hooks/graph/AssetGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-
-const schema = z.object({
-  name: z.string().min(1, "Name is required"),
-  amount: z.number().min(1, "Amount is required"),
-  assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
-  ownerId: z.string().min(1, "Owner is required"),
-  thirdPartyIds: z.array(z.string()).optional(),
-  dataTypesStored: z.string().min(1, "Data types stored is required"),
-});
 
 type Props = {
   children: React.ReactNode;
@@ -57,7 +48,18 @@ export function CreateAssetDialog({
   connection,
   organizationId,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
+  const schema = z.object({
+    name: z.string().min(1, t("createAssetDialog.validation.nameRequired")),
+    amount: z.number().min(1, t("createAssetDialog.validation.amountRequired")),
+    assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
+    ownerId: z.string().min(1, t("createAssetDialog.validation.ownerRequired")),
+    thirdPartyIds: z.array(z.string()).optional(),
+    dataTypesStored: z.string().min(
+      1,
+      t("createAssetDialog.validation.dataTypesStoredRequired"),
+    ),
+  });
   const { control, handleSubmit, register, formState, reset }
     = useFormWithSchema(schema, {
       defaultValues: {
@@ -88,13 +90,23 @@ export function CreateAssetDialog({
     <Dialog
       ref={ref}
       trigger={children}
-      title={<Breadcrumb items={[__("Assets"), __("New Asset")]} />}
+      title={(
+        <Breadcrumb items={[
+          t("createAssetDialog.breadcrumb.assets"),
+          t("createAssetDialog.breadcrumb.newAsset"),
+        ]}
+        />
+      )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
-          <Field label={__("Name")} {...register("name")} type="text" />
           <Field
-            label={__("Amount")}
+            label={t("createAssetDialog.fields.name")}
+            {...register("name")}
+            type="text"
+          />
+          <Field
+            label={t("createAssetDialog.fields.amount")}
             {...register("amount", { valueAsNumber: true })}
             type="number"
           />
@@ -102,13 +114,17 @@ export function CreateAssetDialog({
             control={control}
             name="assetType"
             type="select"
-            label={__("Asset Type")}
+            label={t("createAssetDialog.fields.assetType")}
           >
-            <Option value="VIRTUAL">{__("Virtual")}</Option>
-            <Option value="PHYSICAL">{__("Physical")}</Option>
+            <Option value="VIRTUAL">
+              {t("createAssetDialog.assetTypes.virtual")}
+            </Option>
+            <Option value="PHYSICAL">
+              {t("createAssetDialog.assetTypes.physical")}
+            </Option>
           </ControlledField>
           <Field
-            label={__("Data Types Stored")}
+            label={t("createAssetDialog.fields.dataTypesStored")}
             {...register("dataTypesStored")}
             type="text"
           />
@@ -116,18 +132,18 @@ export function CreateAssetDialog({
             organizationId={organizationId}
             control={control}
             name="ownerId"
-            label={__("Owner")}
+            label={t("createAssetDialog.fields.owner")}
           />
           <ThirdPartiesMultiSelectField
             organizationId={organizationId}
             control={control}
             name="thirdPartyIds"
-            label={__("Third parties")}
+            label={t("createAssetDialog.fields.thirdParties")}
           />
         </DialogContent>
         <DialogFooter>
           <Button disabled={formState.isSubmitting} type="submit">
-            {__("Create")}
+            {t("createAssetDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

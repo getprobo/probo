@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
@@ -51,30 +51,30 @@ const badgeVariant = (level: string | number) => {
 };
 
 export function RiskBadge({ level }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const label = () => {
     if (typeof level === "number") {
       if (level >= 15) {
-        return __("High");
+        return t("ui.risk.severity.high");
       }
       if (level >= 8) {
-        return __("Medium");
+        return t("ui.risk.severity.medium");
       }
-      return __("Low");
+      return t("ui.risk.severity.low");
     }
     switch (level) {
       case "CRITICAL":
-        return __("Critical");
+        return t("ui.risk.severity.critical");
       case "HIGH":
-        return __("High");
+        return t("ui.risk.severity.high");
       case "LOW":
-        return __("Low");
+        return t("ui.risk.severity.low");
       case "MEDIUM":
-        return __("Medium");
+        return t("ui.risk.severity.medium");
       case "NONE":
-        return __("None");
+        return t("ui.risk.severity.none");
       default:
-        return __("Low");
+        return t("ui.risk.severity.low");
     }
   };
   return <Badge variant={badgeVariant(level)}>{label()}</Badge>;

@@ -24,7 +24,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 
 import { App } from "./App";
-import { TranslatorProvider } from "./providers/TranslatorProvider";
+import "./lib/i18n/i18n";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,8 +36,6 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <TranslatorProvider>
-      <App />
-    </TranslatorProvider>
+    <App />
   </QueryClientProvider>,
 );

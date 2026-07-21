@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -29,6 +28,7 @@ import {
   IconTrashCan,
   Option,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
@@ -48,13 +48,6 @@ import {
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-const updateDatumSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  dataClassification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
-  ownerId: z.string().min(1, "Owner is required"),
-  thirdPartyIds: z.array(z.string()).optional(),
-});
-
 type Props = {
   queryRef: PreloadedQuery<DatumGraphNodeQuery>;
 };
@@ -67,8 +60,14 @@ export default function DatumDetailsPage(props: Props) {
 
   const datumEntry = queryData.node;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const updateDatumSchema = z.object({
+    name: z.string().min(1, t("datumDetails.validation.nameRequired")),
+    dataClassification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
+    ownerId: z.string().min(1, t("datumDetails.validation.ownerRequired")),
+    thirdPartyIds: z.array(z.string()).optional(),
+  });
 
   const deleteDatum = useDeleteDatum(
     datumEntry,
@@ -92,7 +91,7 @@ export default function DatumDetailsPage(props: Props) {
 
   const onSubmit = handleSubmit(async (formData) => {
     if (!datumEntry?.id) {
-      alert("id is missing from data");
+      alert(t("datumDetails.errors.missingId"));
       return;
     }
     try {
@@ -108,7 +107,7 @@ export default function DatumDetailsPage(props: Props) {
 
   const breadcrumbItems = [
     {
-      label: __("Data"),
+      label: t("datumDetails.breadcrumbs.data"),
       to: `/organizations/${organizationId}/data`,
     },
     {
@@ -132,7 +131,7 @@ export default function DatumDetailsPage(props: Props) {
               icon={IconTrashCan}
               onClick={deleteDatum}
             >
-              {__("Delete")}
+              {t("datumDetails.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         )}
@@ -140,7 +139,7 @@ export default function DatumDetailsPage(props: Props) {
 
       <form onSubmit={e => void onSubmit(e)} className="space-y-6 max-w-2xl">
         <Field
-          label={__("Name")}
+          label={t("datumDetails.fields.name")}
           {...register("name")}
           type="text"
           disabled={!datumEntry.canUpdate}
@@ -150,20 +149,22 @@ export default function DatumDetailsPage(props: Props) {
           control={control}
           name="dataClassification"
           type="select"
-          label={__("Classification")}
+          label={t("datumDetails.fields.classification")}
           disabled={!datumEntry.canUpdate}
         >
-          <Option value="PUBLIC">{__("Public")}</Option>
-          <Option value="INTERNAL">{__("Internal")}</Option>
-          <Option value="CONFIDENTIAL">{__("Confidential")}</Option>
-          <Option value="SECRET">{__("Secret")}</Option>
+          <Option value="PUBLIC">{t("datumDetails.classifications.public")}</Option>
+          <Option value="INTERNAL">{t("datumDetails.classifications.internal")}</Option>
+          <Option value="CONFIDENTIAL">
+            {t("datumDetails.classifications.confidential")}
+          </Option>
+          <Option value="SECRET">{t("datumDetails.classifications.secret")}</Option>
         </ControlledField>
 
         <PeopleSelectField
           organizationId={organizationId}
           control={control}
           name="ownerId"
-          label={__("Owner")}
+          label={t("datumDetails.fields.owner")}
           disabled={!datumEntry.canUpdate}
         />
 
@@ -171,7 +172,7 @@ export default function DatumDetailsPage(props: Props) {
           organizationId={organizationId}
           control={control}
           name="thirdPartyIds"
-          label={__("Third parties")}
+          label={t("datumDetails.fields.thirdParties")}
           disabled={!datumEntry.canUpdate}
           selectedThirdParties={thirdParties}
         />
@@ -179,7 +180,9 @@ export default function DatumDetailsPage(props: Props) {
         <div className="flex justify-end">
           {formState.isDirty && datumEntry.canUpdate && (
             <Button type="submit" disabled={formState.isSubmitting}>
-              {formState.isSubmitting ? __("Updating...") : __("Update")}
+              {formState.isSubmitting
+                ? t("datumDetails.actions.updating")
+                : t("datumDetails.actions.update")}
             </Button>
           )}
         </div>

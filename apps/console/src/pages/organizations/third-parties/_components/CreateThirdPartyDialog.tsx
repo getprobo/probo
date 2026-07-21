@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Combobox,
   ComboboxItem,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
@@ -71,7 +71,7 @@ export function CreateThirdPartyDialog({
   organizationId,
   connection,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [createThirdParty] = useMutation<CreateThirdPartyDialogCreateMutation>(createThirdPartyMutation);
   const dialogRef = useDialogRef();
@@ -99,23 +99,23 @@ export function CreateThirdPartyDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to create third party"), errors),
+            title: t("createThirdPartyDialog.messages.error"),
+            description: formatError(t("createThirdPartyDialog.errors.create"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Third party created successfully"),
+          title: t("createThirdPartyDialog.messages.success"),
+          description: t("createThirdPartyDialog.messages.created"),
           variant: "success",
         });
         dialogRef.current?.close();
       },
       onError(error) {
         toast({
-          title: __("Error"),
-          description: formatError(__("Failed to create third party"), error),
+          title: t("createThirdPartyDialog.messages.error"),
+          description: formatError(t("createThirdPartyDialog.errors.create"), error),
           variant: "error",
         });
       },
@@ -141,9 +141,9 @@ export function CreateThirdPartyDialog({
   };
 
   return (
-    <Dialog ref={dialogRef} trigger={children} title={__("Add a third party")}>
+    <Dialog ref={dialogRef} trigger={children} title={t("createThirdPartyDialog.title")}>
       <DialogContent className="p-6">
-        <Combobox onSearch={handleSearch} placeholder={__("Type third party's name")}>
+        <Combobox onSearch={handleSearch} placeholder={t("createThirdPartyDialog.searchPlaceholder")}>
           {searchQuery.trim().length >= 2 && queryRef && (
             <Suspense>
               <CommonThirdPartyCombobox
@@ -156,10 +156,7 @@ export function CreateThirdPartyDialog({
           {searchQuery.trim().length >= 2 && (
             <ComboboxItem onClick={() => onSelect(searchQuery.trim())}>
               <IconPlusLarge size={20} />
-              {__("Create a new third party")}
-              {" "}
-              :
-              {searchQuery}
+              {t("createThirdPartyDialog.createNew", { name: searchQuery })}
             </ComboboxItem>
           )}
         </Combobox>

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, Slack, useConfirm } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -60,7 +60,7 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
   const { fragmentRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const confirm = useConfirm();
 
   const organization = useFragment<CompliancePageSlackSectionFragment$key>(fragment, fragmentRef);
@@ -85,9 +85,9 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
           });
         }),
       {
-        title: __("Disconnect Slack"),
-        message: __("Are you sure you want to disconnect this Slack channel? This action cannot be undone."),
-        label: __("Disconnect"),
+        title: t("slackSection.disconnect.title"),
+        message: t("slackSection.disconnect.description"),
+        label: t("slackSection.actions.disconnect"),
         variant: "danger",
       },
     );
@@ -100,7 +100,7 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
 
   return (
     <div className="space-y-4">
-      <h2 className="text-base font-medium">{__("Integrations")}</h2>
+      <h2 className="text-base font-medium">{t("slackSection.title")}</h2>
       <div className="space-y-2">
         {organization.slackConnections.edges.map(({ node: slackConnection }) => (
           <CompliancePageSlackConnectionCard
@@ -120,14 +120,14 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
               <Slack className="h-6 w-6" />
             </div>
             <div className="mr-auto">
-              <h3 className="text-base font-semibold">Slack</h3>
+              <h3 className="text-base font-semibold">{t("slackConnectionCard.title")}</h3>
               <p className="text-sm text-txt-tertiary">
-                {__("Manage your compliance page access with slack")}
+                {t("slackSection.emptyDescription")}
               </p>
             </div>
             <Button variant="secondary" asChild>
               <a href={buildConnectionUrl()}>
-                {__("Connect")}
+                {t("slackSection.actions.connect")}
               </a>
             </Button>
           </Card>

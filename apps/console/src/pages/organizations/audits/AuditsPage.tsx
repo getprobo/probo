@@ -19,12 +19,10 @@
 // SOFTWARE.
 
 import {
-  formatDate,
-  getAuditStateLabel,
   getAuditStateVariant,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -44,6 +42,7 @@ import {
 } from "@probo/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -111,7 +110,7 @@ type Props = {
 };
 
 export default function AuditsPage(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
 
@@ -124,7 +123,7 @@ export default function AuditsPage(props: Props) {
   const audits = pagination.data.audits?.edges?.map(edge => edge.node) ?? [];
   const connectionId = pagination.data.audits.__id;
 
-  usePageTitle(__("Audits"));
+  usePageTitle(t("auditsPage.title"));
 
   const hasAnyAction = audits.some(
     audit => audit.canDelete || audit.canUpdate,
@@ -142,8 +141,8 @@ export default function AuditsPage(props: Props) {
       dragCounterRef.current = 0;
       if (fileRejections.length > 0) {
         toast({
-          title: __("Unsupported file type"),
-          description: __("Only PDF files are supported."),
+          title: t("auditsPage.errors.unsupportedFileType.title"),
+          description: t("auditsPage.errors.unsupportedFileType.description"),
           variant: "error",
         });
         return;
@@ -152,7 +151,7 @@ export default function AuditsPage(props: Props) {
       setDroppedFile(acceptedFiles[0]);
       dropDialogRef.current?.open();
     },
-    [canCreateAudit, dropDialogRef, toast, __],
+    [canCreateAudit, dropDialogRef, toast, t],
   );
 
   useEffect(() => {
@@ -219,34 +218,34 @@ export default function AuditsPage(props: Props) {
           <input {...getInputProps()} />
           <IconUpload className="text-primary mb-2 size-8" />
           <p className="text-primary text-sm font-medium">
-            {__("Drop a PDF to create an audit with a report")}
+            {t("auditsPage.dropzoneOverlay")}
           </p>
         </div>
       )}
       <PageHeader
-        title={__("Audits")}
-        description={__(
-          "Manage your organization's compliance audits and their progress.",
-        )}
+        title={t("auditsPage.title")}
+        description={t("auditsPage.description")}
       >
         {canCreateAudit && (
           <CreateAuditDialog
             connection={connectionId}
             organizationId={organizationId}
           >
-            <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
+            <Button icon={IconPlusLarge}>
+              {t("auditsPage.actions.addAudit")}
+            </Button>
           </CreateAuditDialog>
         )}
       </PageHeader>
       <SortableTable {...pagination} pageSize={10}>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Framework")}</Th>
-            <Th>{__("State")}</Th>
-            <Th>{__("Valid From")}</Th>
-            <Th>{__("Valid Until")}</Th>
-            <Th>{__("Report")}</Th>
+            <Th>{t("auditsPage.columns.name")}</Th>
+            <Th>{t("auditsPage.columns.framework")}</Th>
+            <Th>{t("auditsPage.columns.state")}</Th>
+            <Th>{t("auditsPage.columns.validFrom")}</Th>
+            <Th>{t("auditsPage.columns.validUntil")}</Th>
+            <Th>{t("auditsPage.columns.report")}</Th>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
@@ -284,29 +283,39 @@ function AuditRow({
   hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation();
   const deleteAudit = useDeleteAudit(entry, connectionId);
 
   return (
     <Tr to={`/organizations/${organizationId}/audits/${entry.id}`}>
-      <Td>{entry.name || __("Untitled")}</Td>
-      <Td>{entry.framework?.name ?? __("Unknown Framework")}</Td>
+      <Td>{entry.name || t("auditsPage.row.untitled")}</Td>
+      <Td>{entry.framework?.name ?? t("auditsPage.row.unknownFramework")}</Td>
       <Td>
         <Badge variant={getAuditStateVariant(entry.state)}>
-          {getAuditStateLabel(__, entry.state)}
+          {t(`auditsPage.states.${entry.state.toLowerCase()}`)}
         </Badge>
       </Td>
-      <Td>{formatDate(entry.validFrom) || __("Not set")}</Td>
-      <Td>{formatDate(entry.validUntil) || __("Not set")}</Td>
+      <Td>
+        {dateFormat(i18n.language, entry.validFrom)
+          || t("auditsPage.row.notSet")}
+      </Td>
+      <Td>
+        {dateFormat(i18n.language, entry.validUntil)
+          || t("auditsPage.row.notSet")}
+      </Td>
       <Td>
         {entry.reportFile
           ? (
               <div className="flex flex-col">
-                <Badge variant="success">{__("Uploaded")}</Badge>
+                <Badge variant="success">
+                  {t("auditsPage.row.uploaded")}
+                </Badge>
               </div>
             )
           : (
-              <Badge variant="neutral">{__("Not uploaded")}</Badge>
+              <Badge variant="neutral">
+                {t("auditsPage.row.notUploaded")}
+              </Badge>
             )}
       </Td>
       {hasAnyAction && (
@@ -318,7 +327,7 @@ function AuditRow({
                 variant="danger"
                 icon={IconTrashCan}
               >
-                {__("Delete")}
+                {t("auditsPage.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>

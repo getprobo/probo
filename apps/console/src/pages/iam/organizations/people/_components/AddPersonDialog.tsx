@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Dialog, DialogContent, useDialogRef } from "@probo/ui";
 import { type PropsWithChildren } from "react";
+import { useTranslation } from "react-i18next";
 import type { DataID } from "relay-runtime";
 
 import { PersonForm } from "./PersonForm";
@@ -30,11 +30,11 @@ export function AddPersonDialog(props: PropsWithChildren<{
 }>) {
   const { children, connectionId } = props;
   const dialogRef = useDialogRef();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Dialog
-      title={__("Add Person")}
+      title={t("addPersonDialog.title")}
       trigger={children}
       className="max-w-xl"
       ref={dialogRef}

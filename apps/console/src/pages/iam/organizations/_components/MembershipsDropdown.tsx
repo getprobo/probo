@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dropdown,
@@ -30,6 +29,7 @@ import {
   Input,
 } from "@probo/ui";
 import { Suspense, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useQueryLoader } from "react-relay";
 import { Link, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
@@ -54,7 +54,7 @@ export function MembershipsDropdown(props: {
   const { organizationFKey } = props;
 
   const location = useLocation();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
   const currentOrganization
@@ -90,7 +90,7 @@ export function MembershipsDropdown(props: {
         <div className="px-3 py-2">
           <Input
             icon={IconMagnifyingGlass}
-            placeholder={__("Search organizations...")}
+            placeholder={t("membershipsDropdown.searchPlaceholder")}
             value={search}
             onValueChange={setSearch}
             onKeyDown={(e) => {
@@ -104,7 +104,7 @@ export function MembershipsDropdown(props: {
             <Suspense
               fallback={(
                 <div className="px-3 py-2 text-gray-500">
-                  {__("Loading organizations...")}
+                  {t("membershipsDropdown.loading")}
                 </div>
               )}
             >
@@ -116,7 +116,7 @@ export function MembershipsDropdown(props: {
         <DropdownItem asChild>
           <Link to="/organizations/new" state={{ from: location.pathname }}>
             <IconPlusLarge size={16} />
-            {__("Add organization")}
+            {t("membershipsDropdown.addOrganization")}
           </Link>
         </DropdownItem>
       </Dropdown>

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { faviconUrl, formatDate, formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { faviconUrl, formatError } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Avatar,
@@ -31,6 +31,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { ThirdPartyRow_thirdParty$key } from "#/__generated__/core/ThirdPartyRow_thirdParty.graphql";
@@ -76,7 +77,7 @@ interface ThirdPartyRowProps {
 }
 
 export function ThirdPartyRow(props: ThirdPartyRowProps) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
   const thirdParty = useFragment(thirdPartyRowFragment, props.thirdPartyKey);
   const [deleteThirdParty] = useMutation<ThirdPartyRowDeleteMutation>(
@@ -102,9 +103,9 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("thirdPartyRow.messages.error"),
                 description: formatError(
-                  __("Failed to delete third party"),
+                  t("thirdPartyRow.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -114,12 +115,9 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the third party \"%s\". This action cannot be undone.",
-          ),
-          thirdParty.name || __("Unnamed third party"),
-        ),
+        message: t("thirdPartyRow.deleteConfirmation", {
+          name: thirdParty.name || t("thirdPartyRow.unnamed"),
+        }),
       },
     );
   };
@@ -134,8 +132,8 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
       </Td>
       <Td>
         {latestAssessment?.createdAt
-          ? formatDate(latestAssessment.createdAt)
-          : __("Not assessed")}
+          ? dateFormat(i18n.language, latestAssessment.createdAt)
+          : t("thirdPartyRow.notAssessed")}
       </Td>
       <Td>
         <RiskBadge level={latestAssessment?.dataSensitivity ?? "NONE"} />
@@ -152,7 +150,7 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
                 variant="danger"
                 icon={IconTrashCan}
               >
-                {__("Delete")}
+                {t("thirdPartyRow.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>

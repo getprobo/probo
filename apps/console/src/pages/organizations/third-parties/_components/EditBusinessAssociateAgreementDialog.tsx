@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -31,6 +30,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { z } from "zod";
 
@@ -76,7 +76,7 @@ export function EditBusinessAssociateAgreementDialog({
   agreement,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const ref = useDialogRef();
 
   const formatDateForForm = (datetime?: string | null) => {
@@ -118,9 +118,9 @@ export function EditBusinessAssociateAgreementDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("editBusinessAssociateAgreementDialog.messages.error"),
             description: formatError(
-              __("Failed to update Business Associate Agreement"),
+              t("editBusinessAssociateAgreementDialog.errors.update"),
               errors,
             ),
             variant: "error",
@@ -128,8 +128,8 @@ export function EditBusinessAssociateAgreementDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Business Associate Agreement updated successfully"),
+          title: t("editBusinessAssociateAgreementDialog.messages.success"),
+          description: t("editBusinessAssociateAgreementDialog.messages.updated"),
           variant: "success",
         });
         onSuccess?.();
@@ -137,9 +137,9 @@ export function EditBusinessAssociateAgreementDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("editBusinessAssociateAgreementDialog.messages.error"),
           description: formatError(
-            __("Failed to update Business Associate Agreement"),
+            t("editBusinessAssociateAgreementDialog.errors.update"),
             error,
           ),
           variant: "error",
@@ -154,7 +154,7 @@ export function EditBusinessAssociateAgreementDialog({
 
   return (
     <Dialog
-      title={__("Edit Business Associate Agreement")}
+      title={t("editBusinessAssociateAgreementDialog.title")}
       ref={ref}
       trigger={children}
       className="max-w-lg"
@@ -163,10 +163,10 @@ export function EditBusinessAssociateAgreementDialog({
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Field label={__("Valid from")}>
+            <Field label={t("editBusinessAssociateAgreementDialog.fields.validFrom")}>
               <Input {...register("validFrom")} type="date" />
             </Field>
-            <Field label={__("Valid until")}>
+            <Field label={t("editBusinessAssociateAgreementDialog.fields.validUntil")}>
               <Input {...register("validUntil")} type="date" />
             </Field>
           </div>
@@ -178,7 +178,7 @@ export function EditBusinessAssociateAgreementDialog({
             disabled={isUpdating}
             icon={isUpdating ? Spinner : undefined}
           >
-            {__("Update")}
+            {t("editBusinessAssociateAgreementDialog.actions.update")}
           </Button>
         </DialogFooter>
       </form>

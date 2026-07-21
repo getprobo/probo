@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -35,6 +34,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { GoogleWorkspaceConnectorDeleteMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorDeleteMutation.graphql";
@@ -93,7 +93,7 @@ export function GoogleWorkspaceConnector(props: {
   const scimConfigurationId = data?.id;
   const bridgeId = bridge?.id;
   const organizationId = useOrganizationId();
-  const { __, dateTimeFormat } = useTranslate();
+  const { t, i18n } = useTranslation();
   const bridgeState = bridge?.state ?? null;
   const latestBridgeError = bridge?.syncError ?? null;
   const isBridgeFailed = bridgeState === "FAILED";
@@ -106,16 +106,14 @@ export function GoogleWorkspaceConnector(props: {
       ? "warning"
       : "success";
   const bridgeStatusLabel = isBridgeDisabled
-    ? __("Disabled")
+    ? t("googleWorkspaceConnector.status.disabled")
     : isBridgeFailed
-      ? __("Error")
+      ? t("googleWorkspaceConnector.status.error")
       : isBridgePending
-        ? __("Syncing")
-        : __("Connected");
+        ? t("googleWorkspaceConnector.status.syncing")
+        : t("googleWorkspaceConnector.status.connected");
   const bridgeErrorMessage = latestBridgeError
-    ?? __(
-      "The bridge is currently failing to sync. Check the provisioning event history for more details.",
-    );
+    ?? t("googleWorkspaceConnector.errors.bridgeSync");
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const excludedUserNamesDialogRef = useDialogRef();
@@ -158,22 +156,22 @@ export function GoogleWorkspaceConnector(props: {
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors.map(e => e.message).join(", "),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Google Workspace / Cloud Identity disconnected successfully"),
+          title: t("common.success"),
+          description: t("googleWorkspaceConnector.messages.disconnected"),
           variant: "success",
         });
         dialogRef.current?.close();
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: error.message,
           variant: "error",
         });
@@ -197,21 +195,21 @@ export function GoogleWorkspaceConnector(props: {
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors.map(e => e.message).join(", "),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Excluded user names updated successfully"),
+          title: t("common.success"),
+          description: t("googleWorkspaceConnector.messages.excludedUsersUpdated"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: error.message,
           variant: "error",
         });
@@ -239,15 +237,13 @@ export function GoogleWorkspaceConnector(props: {
           <Google className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
+          <h3 className="font-medium">{t("googleWorkspaceConnector.name")}</h3>
           <p className="text-sm text-txt-secondary">
-            {__(
-              "Connect Google Workspace or Google Cloud Identity to automatically sync users via SCIM.",
-            )}
+            {t("googleWorkspaceConnector.connectDescription")}
           </p>
         </div>
         <Button variant="secondary" onClick={handleConnect}>
-          {__("Connect")}
+          {t("googleWorkspaceConnector.actions.connect")}
         </Button>
       </Card>
     );
@@ -261,9 +257,9 @@ export function GoogleWorkspaceConnector(props: {
           <Google className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
+          <h3 className="font-medium">{t("googleWorkspaceConnector.name")}</h3>
           <p className="text-sm text-txt-secondary">
-            {sprintf(__("Connected on %s"), dateTimeFormat(connector.createdAt))}
+            {t("googleWorkspaceConnector.connectedOn", { date: dateTimeFormat(i18n.language, connector.createdAt) })}
           </p>
         </div>
         <Badge variant={bridgeStatusBadgeVariant} size="md">
@@ -274,18 +270,18 @@ export function GoogleWorkspaceConnector(props: {
           trigger={(
             <Button variant="secondary">
               <IconSettingsGear2 size={16} />
-              {__("Settings")}
+              {t("googleWorkspaceConnector.actions.settings")}
             </Button>
           )}
-          title={__("Google Workspace / Cloud Identity Settings")}
+          title={t("googleWorkspaceConnector.settings.title")}
           className="max-w-lg"
         >
           <DialogContent padded className="space-y-6">
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium">{__("Excluded user names")}</h4>
+                <h4 className="text-sm font-medium">{t("googleWorkspaceConnector.settings.excludedUserNames")}</h4>
                 <p className="text-sm text-txt-secondary mt-1">
-                  {__("Users with these user names will not be synced from Google Workspace / Cloud Identity.")}
+                  {t("googleWorkspaceConnector.settings.excludedUserNamesDescription")}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -304,7 +300,7 @@ export function GoogleWorkspaceConnector(props: {
                   className="flex-1"
                 />
                 <Button onClick={handleAddUser} variant="secondary" disabled={isUpdating}>
-                  {__("Add")}
+                  {t("googleWorkspaceConnector.actions.add")}
                 </Button>
               </div>
 
@@ -321,7 +317,7 @@ export function GoogleWorkspaceConnector(props: {
                         onClick={() => handleRemoveUser(user)}
                         disabled={isUpdating}
                       >
-                        {__("Remove")}
+                        {t("googleWorkspaceConnector.actions.remove")}
                       </Button>
                     </div>
                   ))}
@@ -330,7 +326,7 @@ export function GoogleWorkspaceConnector(props: {
 
               {currentExcludedUserNames.length === 0 && (
                 <p className="text-sm text-txt-secondary text-center py-4">
-                  {__("No excluded user names. All Google Workspace / Cloud Identity users will be synced.")}
+                  {t("googleWorkspaceConnector.settings.noExcludedUserNames")}
                 </p>
               )}
             </div>
@@ -340,20 +336,18 @@ export function GoogleWorkspaceConnector(props: {
           ref={dialogRef}
           trigger={(
             <Button variant="danger">
-              {__("Disconnect")}
+              {t("googleWorkspaceConnector.actions.disconnect")}
             </Button>
           )}
-          title={__("Disconnect Google Workspace / Cloud Identity")}
+          title={t("googleWorkspaceConnector.disconnect.title")}
           className="max-w-lg"
         >
           <DialogContent padded className="space-y-4">
             <p className="text-txt-secondary text-sm">
-              {__(
-                "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.",
-              )}
+              {t("googleWorkspaceConnector.disconnect.description")}
             </p>
             <p className="text-red-600 text-sm font-medium">
-              {__("This action cannot be undone.")}
+              {t("googleWorkspaceConnector.disconnect.warning")}
             </p>
           </DialogContent>
           <DialogFooter>
@@ -363,8 +357,8 @@ export function GoogleWorkspaceConnector(props: {
               disabled={isDeleting}
             >
               {isDeleting
-                ? __("Disconnecting...")
-                : __("Disconnect")}
+                ? t("googleWorkspaceConnector.actions.disconnecting")
+                : t("googleWorkspaceConnector.actions.disconnect")}
             </Button>
           </DialogFooter>
         </Dialog>
@@ -376,8 +370,8 @@ export function GoogleWorkspaceConnector(props: {
           <div className="space-y-1">
             <p className="text-sm font-medium text-txt-danger">
               {isBridgeDisabled
-                ? __("Bridge is disabled")
-                : __("Bridge is in an error state")}
+                ? t("googleWorkspaceConnector.errors.bridgeDisabled")
+                : t("googleWorkspaceConnector.errors.bridgeFailed")}
             </p>
             <p className="text-sm text-txt-secondary whitespace-pre-wrap break-all">
               {bridgeErrorMessage}

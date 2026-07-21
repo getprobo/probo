@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -30,6 +29,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { CreateRiskAssessmentDialogCreateMutation } from "#/__generated__/core/CreateRiskAssessmentDialogCreateMutation.graphql";
@@ -56,7 +56,7 @@ const createMutation = graphql`
 export function CreateRiskAssessmentDialog(props: {
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const [createRiskAssessment, isCreating] = useMutation<CreateRiskAssessmentDialogCreateMutation>(createMutation);
@@ -87,35 +87,35 @@ export function CreateRiskAssessmentDialog(props: {
       ref={dialogRef}
       trigger={(
         <Button icon={IconPlusLarge} variant="primary">
-          {__("New Risk Assessment")}
+          {t("createRiskAssessmentDialog.title")}
         </Button>
       )}
       title={(
         <Breadcrumb
-          items={[__("Risk Assessments"), __("New Risk Assessment")]}
+          items={[t("createRiskAssessmentDialog.breadcrumb.riskAssessments"), t("createRiskAssessmentDialog.title")]}
         />
       )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={__("Name")}
-            {...register("name", { required: __("This field is required") })}
+            label={t("createRiskAssessmentDialog.fields.name")}
+            {...register("name", { required: t("createRiskAssessmentDialog.validation.nameRequired") })}
             type="text"
             error={formState.errors.name?.message}
-            placeholder={__("e.g. Platform Threat Model 2026")}
+            placeholder={t("createRiskAssessmentDialog.placeholders.name")}
           />
           <Field
-            label={__("Description")}
+            label={t("createRiskAssessmentDialog.fields.description")}
             {...register("description")}
             type="textarea"
             rows={3}
-            placeholder={__("Describe the scope and purpose of this assessment...")}
+            placeholder={t("createRiskAssessmentDialog.placeholders.description")}
           />
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>
-            {__("Create")}
+            {t("createRiskAssessmentDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

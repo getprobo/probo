@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { useCopy } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   IconWarning,
 } from "@probo/ui";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 
 export function OAuthTokenCredentialsDialog(props: {
   dialogRef: React.RefObject<{ open: () => void; close: () => void } | null>;
@@ -38,21 +38,19 @@ export function OAuthTokenCredentialsDialog(props: {
   onDone: () => void;
 }) {
   const { dialogRef, token, onDone } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [isCopied, copy] = useCopy();
 
   return (
     <Dialog
       ref={dialogRef}
-      title={<Breadcrumb items={[__("OAuth tokens"), __("Token")]} />}
+      title={<Breadcrumb items={[t("oauthTokensPage.title"), t("oauthTokenCredentialsDialog.title")]} />}
     >
       <DialogContent padded className="space-y-4">
         <div className="flex items-start gap-2 rounded-lg border border-border-danger bg-danger px-4 py-3 text-sm text-txt-danger">
           <IconWarning size={16} className="shrink-0 mt-0.5" />
           <p>
-            {__(
-              "Copy this bearer token now. You will not be able to see it again.",
-            )}
+            {t("oauthTokenCredentialsDialog.description")}
           </p>
         </div>
         <code className="flex items-start gap-2 rounded-lg bg-subtle p-4 font-mono text-sm">
@@ -65,8 +63,8 @@ export function OAuthTokenCredentialsDialog(props: {
             )}
             onClick={() => copy(token)}
             disabled={!token}
-            aria-label={isCopied ? __("Copied") : __("Copy")}
-            title={isCopied ? __("Copied") : __("Copy")}
+            aria-label={isCopied ? t("oauthTokenCredentialsDialog.actions.copied") : t("oauthTokenCredentialsDialog.actions.copy")}
+            title={isCopied ? t("oauthTokenCredentialsDialog.actions.copied") : t("oauthTokenCredentialsDialog.actions.copy")}
           >
             {isCopied
               ? <IconCheckmark1 size={16} />
@@ -75,7 +73,7 @@ export function OAuthTokenCredentialsDialog(props: {
         </code>
       </DialogContent>
       <DialogFooter>
-        <Button onClick={onDone}>{__("Done")}</Button>
+        <Button onClick={onDone}>{t("oauthTokenCredentialsDialog.actions.done")}</Button>
       </DialogFooter>
     </Dialog>
   );

@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { useConfirm } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
@@ -68,12 +67,12 @@ export const useDeleteFrameworkMutation = (
   framework: { id: string; name: string },
   connectionId: string,
 ) => {
+  const { t } = useTranslation();
   const [commitDelete] = useMutationWithToasts(deleteFrameworkMutation, {
-    errorMessage: "Failed to delete framework",
-    successMessage: "Framework deleted successfully",
+    errorMessage: t("frameworkGraph.errors.delete"),
+    successMessage: t("frameworkGraph.messages.deleted"),
   });
   const confirm = useConfirm();
-  const { __ } = useTranslate();
 
   return useCallback(
     (options?: { onSuccess?: () => void }) => {
@@ -90,16 +89,13 @@ export const useDeleteFrameworkMutation = (
           });
         },
         {
-          message: sprintf(
-            __(
-              "This will permanently delete framework \"%s\". This action cannot be undone.",
-            ),
-            framework.name,
-          ),
+          message: t("frameworkGraph.deleteConfirmation", {
+            name: framework.name,
+          }),
         },
       );
     },
-    [framework, connectionId, commitDelete, confirm, __],
+    [framework, connectionId, commitDelete, confirm, t],
   );
 };
 

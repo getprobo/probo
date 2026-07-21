@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, DurationInput, Input, Td, Tr } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 interface FormValues {
   duration: { value: string; unit: string };
@@ -45,7 +45,7 @@ export function TrackerPatternRowEdit({
   onSave,
   onCancel,
 }: TrackerPatternRowEditProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const initial = fromMaxAgeSeconds(maxAgeSeconds);
 
   const { register, handleSubmit, control } = useForm<FormValues>({
@@ -69,14 +69,14 @@ export function TrackerPatternRowEdit({
           <span className="font-medium wrap-break-word">{pattern}</span>
           <div className="flex items-end gap-2">
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs text-txt-tertiary">{__("Description")}</label>
+              <label className="text-xs text-txt-tertiary">{t("trackerPatternRowEdit.fields.description")}</label>
               <Input
                 {...register("description")}
-                placeholder={__("Description")}
+                placeholder={t("trackerPatternRowEdit.fields.descriptionPlaceholder")}
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-txt-tertiary">{__("Max Age")}</label>
+              <label className="text-xs text-txt-tertiary">{t("trackerPatternRowEdit.fields.maxAge")}</label>
               <Controller
                 name="duration"
                 control={control}
@@ -94,13 +94,13 @@ export function TrackerPatternRowEdit({
               onClick={() => void handleSubmit(onSubmit)()}
               disabled={isUpdating}
             >
-              {__("Save")}
+              {t("trackerPatternRowEdit.actions.save")}
             </Button>
             <Button
               variant="secondary"
               onClick={onCancel}
             >
-              {__("Cancel")}
+              {t("trackerPatternRowEdit.actions.cancel")}
             </Button>
           </div>
         </div>

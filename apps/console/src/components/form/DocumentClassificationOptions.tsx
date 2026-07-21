@@ -18,21 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  documentClassifications,
-  getDocumentClassificationLabel,
-} from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { documentClassifications } from "@probo/helpers";
 import { Option } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export function DocumentClassificationOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <>
       {documentClassifications.map(classification => (
         <Option key={classification} value={classification}>
-          {getDocumentClassificationLabel(__, classification)}
+          {t(`documentClassificationOptions.classifications.${classification}`)}
         </Option>
       ))}
     </>

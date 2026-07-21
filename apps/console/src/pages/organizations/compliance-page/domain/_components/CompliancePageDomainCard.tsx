@@ -23,8 +23,8 @@ import {
   getCustomDomainStatusBadgeLabel,
   getCustomDomainStatusBadgeVariant,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Card } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -52,13 +52,13 @@ export function CompliancePageDomainCard(props: {
 }) {
   const { fKey } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const domain = useFragment<CompliancePageDomainCardFragment$key>(fragment, fKey);
   const sslStatus = domain.certificate?.status ?? "PENDING";
   const provisioningErrorMessage = getCertificateProvisioningErrorMessage(
     domain.certificate?.provisioningError,
-    __,
+    t,
   );
 
   return (
@@ -68,24 +68,24 @@ export function CompliancePageDomainCard(props: {
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">{domain.domain}</span>
             {domain.managed && (
-              <Badge variant="neutral">{__("Managed")}</Badge>
+              <Badge variant="neutral">{t("domainCard.managed")}</Badge>
             )}
             <Badge variant={getCustomDomainStatusBadgeVariant(sslStatus)}>
-              {getCustomDomainStatusBadgeLabel(sslStatus, __)}
+              {getCustomDomainStatusBadgeLabel(sslStatus, t)}
             </Badge>
           </div>
           <p className="text-sm text-txt-secondary">
             {sslStatus === "ACTIVE"
-              ? __("Verified and serving traffic")
+              ? t("domainCard.status.active")
               : provisioningErrorMessage
                 ? provisioningErrorMessage
-                : __("Pending DNS verification")}
+                : t("domainCard.status.pending")}
           </p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
           <CompliancePageDomainDialog fKey={domain}>
-            <Button variant="secondary">{__("View details")}</Button>
+            <Button variant="secondary">{t("domainCard.actions.viewDetails")}</Button>
           </CompliancePageDomainDialog>
 
           {domain.canDelete && (
@@ -93,7 +93,7 @@ export function CompliancePageDomainCard(props: {
               domain={domain.domain}
               customDomainId={domain.id}
             >
-              <Button variant="danger">{__("Delete")}</Button>
+              <Button variant="danger">{t("domainCard.actions.delete")}</Button>
             </DeleteCompliancePageDomainDialog>
           )}
         </div>

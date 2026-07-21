@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { promisifyMutation, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { promisifyMutation } from "@probo/helpers";
 import { useConfirm } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -148,10 +148,10 @@ export const useDeleteAudit = (
   connectionId: string,
   onSuccess?: () => void,
 ) => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [mutate] = useMutationWithToasts(deleteAuditMutation, {
-    successMessage: __("Audit deleted successfully"),
-    errorMessage: __("Failed to delete audit"),
+    successMessage: t("auditGraph.messages.deleted"),
+    errorMessage: t("auditGraph.errors.delete"),
   });
   const confirm = useConfirm();
 
@@ -169,12 +169,7 @@ export const useDeleteAudit = (
         onSuccess?.();
       },
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the audit for %s. This action cannot be undone.",
-          ),
-          audit.framework?.name ?? "",
-        ),
+        message: t("auditGraph.deleteConfirmation", { frameworkName: audit.framework?.name ?? "" }),
       },
     );
   };
@@ -183,7 +178,7 @@ export const useDeleteAudit = (
 export const useCreateAudit = (connectionId: string) => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(createAuditMutation);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (input: {
     organizationId: string;
@@ -196,10 +191,10 @@ export const useCreateAudit = (connectionId: string) => {
     file?: File | null;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create audit: organization is required"));
+      return alert(t("auditGraph.errors.createOrganizationRequired"));
     }
     if (!input.frameworkId) {
-      return alert(__("Failed to create audit: framework is required"));
+      return alert(t("auditGraph.errors.createFrameworkRequired"));
     }
 
     return promisifyMutation(mutate)({
@@ -224,7 +219,7 @@ export const useCreateAudit = (connectionId: string) => {
 export const useUpdateAudit = () => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(updateAuditMutation);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (input: {
     id: string;
@@ -234,7 +229,7 @@ export const useUpdateAudit = () => {
     state?: string;
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update audit: audit ID is required"));
+      return alert(t("auditGraph.errors.updateIdRequired"));
     }
 
     return promisifyMutation(mutate)({
@@ -263,15 +258,15 @@ export const uploadAuditReportMutation = graphql`
 `;
 
 export const useUploadAuditReport = () => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [mutate, isLoading] = useMutationWithToasts(uploadAuditReportMutation, {
-    successMessage: __("Audit report uploaded successfully"),
-    errorMessage: __("Failed to upload audit report"),
+    successMessage: t("auditGraph.messages.reportUploaded"),
+    errorMessage: t("auditGraph.errors.uploadReport"),
   });
 
   const uploadAuditReport = (input: { auditId: string; file: File }) => {
     if (!input.auditId) {
-      return alert(__("Failed to upload report: audit ID is required"));
+      return alert(t("auditGraph.errors.uploadReportIdRequired"));
     }
 
     return mutate({
@@ -308,10 +303,10 @@ export const deleteAuditReportMutation = graphql`
 `;
 
 export const useDeleteAuditReport = () => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [mutate] = useMutationWithToasts(deleteAuditReportMutation, {
-    successMessage: __("Audit report deleted successfully"),
-    errorMessage: __("Failed to delete audit report"),
+    successMessage: t("auditGraph.messages.reportDeleted"),
+    errorMessage: t("auditGraph.errors.deleteReport"),
   });
 
   return (input: { auditId: string }) => {

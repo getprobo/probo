@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getSeverity } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
@@ -28,7 +27,15 @@ type Props = {
 };
 
 export function SeverityBadge({ score }: Props) {
-  const { __ } = useTranslate();
-  const severity = getSeverity(__, score);
-  return <Badge variant={severity?.variant}>{severity?.label}</Badge>;
+  const { t } = useTranslation();
+  const severity = score >= 15
+    ? { variant: "danger" as const, key: "critical" }
+    : score >= 5
+      ? { variant: "warning" as const, key: "high" }
+      : { variant: "neutral" as const, key: "low" };
+  return (
+    <Badge variant={severity.variant}>
+      {t(`ui.risk.severity.${severity.key}`)}
+    </Badge>
+  );
 }

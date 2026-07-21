@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -52,7 +52,7 @@ type Props = {
 };
 
 export default function SignInPage(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
@@ -64,15 +64,15 @@ export default function SignInPage(props: Props) {
 
   const clientBranding = data.oauthClientBranding;
   const authorizeHeading = clientBranding?.name
-    ? __("Sign in")
-    : __("Sign in to continue");
+    ? t("auth.actions.signIn")
+    : t("signInPage.authorize.title");
 
   usePageTitle(
     isAuthorizeFlow
       ? clientBranding?.name
-        ? `${__("Sign in to")} ${clientBranding.name}`
+        ? t("signInPage.authorize.titleWithClient", { name: clientBranding.name })
         : authorizeHeading
-      : __("Sign in to your account"),
+      : t("signInPage.title"),
   );
 
   const oidcContinueURL = isAuthorizeFlow ? postAuthRedirectUrl : undefined;
@@ -94,11 +94,11 @@ export default function SignInPage(props: Props) {
         <h1 className="text-2xl font-bold">
           {isAuthorizeFlow
             ? authorizeHeading
-            : __("Sign in to your account")}
+            : t("signInPage.title")}
         </h1>
         {isAuthorizeFlow && (
           <p className="text-txt-tertiary">
-            {__("Use your email or a connected account to continue")}
+            {t("signInPage.authorize.description")}
           </p>
         )}
       </div>
@@ -114,33 +114,35 @@ export default function SignInPage(props: Props) {
 
         <MagicLinkForm />
 
-        <Divider>{__("Or")}</Divider>
+        <Divider>{t("signInPage.or")}</Divider>
 
         <Button
           variant="secondary"
           className="w-full h-10"
           to={{ pathname: "/auth/sso-login", search: location.search }}
         >
-          {__("Sign in with SSO")}
+          {t("signInPage.actions.signInWithSso")}
         </Button>
+
+        <Divider>{t("signInPage.or")}</Divider>
 
         <Button
           variant="secondary"
           className="w-full h-10"
           to={{ pathname: "/auth/password-login", search: location.search }}
         >
-          {__("Sign in with password")}
+          {t("signInPage.actions.signInWithEmail")}
         </Button>
       </div>
 
-      <p className="text-center text-sm text-txt-secondary">
-        {__("New to Probo?")}
+      <p className="mt-8 text-center text-sm text-txt-secondary">
+        {t("signInPage.newToProbo")}
         {" "}
         <Link
           to={{ pathname: "/auth/register", search: location.search }}
           className="underline hover:text-txt-primary"
         >
-          {__("Create account")}
+          {t("signInPage.actions.createAccount")}
         </Link>
       </p>
     </div>

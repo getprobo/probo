@@ -22,39 +22,39 @@ type Translator = (s: string) => string;
 
 export const documentTypes = ["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE", "STATEMENT_OF_APPLICABILITY"] as const;
 
-export function getDocumentTypeLabel(__: Translator, type: string) {
+export function getDocumentTypeLabel(t: Translator, type: string) {
     switch (type) {
         case "OTHER":
-            return __("Other");
+            return t("helpers.documentType.other");
         case "GOVERNANCE":
-            return __("Governance");
+            return t("helpers.documentType.governance");
         case "POLICY":
-            return __("Policy");
+            return t("helpers.documentType.policy");
         case "PROCEDURE":
-            return __("Procedure");
+            return t("helpers.documentType.procedure");
         case "PLAN":
-            return __("Plan");
+            return t("helpers.documentType.plan");
         case "REGISTER":
-            return __("Register");
+            return t("helpers.documentType.register");
         case "RECORD":
-            return __("Record");
+            return t("helpers.documentType.record");
         case "REPORT":
-            return __("Report");
+            return t("helpers.documentType.report");
         case "TEMPLATE":
-            return __("Template");
+            return t("helpers.documentType.template");
         case "STATEMENT_OF_APPLICABILITY":
-            return __("Statement of Applicability");
+            return t("helpers.documentType.statementOfApplicability");
     }
 }
 
 export const documentWriteModes = ["AUTHORED", "GENERATED"] as const;
 
-export function getDocumentWriteModeLabel(__: Translator, writeMode: string) {
+export function getDocumentWriteModeLabel(t: Translator, writeMode: string) {
     switch (writeMode) {
         case "AUTHORED":
-            return __("Authored");
+            return t("helpers.documentWriteMode.authored");
         case "GENERATED":
-            return __("Generated");
+            return t("helpers.documentWriteMode.generated");
     }
 }
 
@@ -65,15 +65,15 @@ export const documentClassifications = [
     "SECRET",
 ] as const;
 
-export function getDocumentClassificationLabel(__: Translator, classification: string) {
+export function getDocumentClassificationLabel(t: Translator, classification: string) {
     switch (classification) {
         case "PUBLIC":
-            return __("Public");
+            return t("helpers.documentClassification.public");
         case "INTERNAL":
-            return __("Internal");
+            return t("helpers.documentClassification.internal");
         case "CONFIDENTIAL":
-            return __("Confidential");
+            return t("helpers.documentClassification.confidential");
         case "SECRET":
-            return __("Secret");
+            return t("helpers.documentClassification.secret");
     }
 }

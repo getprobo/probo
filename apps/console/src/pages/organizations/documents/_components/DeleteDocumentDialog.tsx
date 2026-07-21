@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -29,6 +27,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, useImperativeHandle } from "react";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, type DataID } from "relay-runtime";
 
 import {
@@ -52,7 +51,7 @@ export const DeleteDocumentDialog = forwardRef<
   DeleteDocumentDialogRef,
   DeleteDocumentDialogProps
 >(({ documentId, documentTitle, connections, onSuccess }, ref) => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
 
@@ -79,18 +78,15 @@ export const DeleteDocumentDialog = forwardRef<
   return (
     <Dialog
       ref={dialogRef}
-      title={__("Delete document")}
+      title={t("deleteDocumentDialog.title.single")}
       className="max-w-md"
     >
       <DialogContent padded>
         <p className="text-txt-secondary">
-          {sprintf(
-            __("Are you sure you want to delete the document \"%s\"?"),
-            documentTitle,
-          )}
+          {t("deleteDocumentDialog.confirmation.single", { title: documentTitle })}
         </p>
         <p className="text-txt-secondary mt-2">
-          {__("This action cannot be undone.")}
+          {t("deleteDocumentDialog.irreversible")}
         </p>
       </DialogContent>
       <DialogFooter>
@@ -100,7 +96,7 @@ export const DeleteDocumentDialog = forwardRef<
           disabled={isDeleting}
           icon={isDeleting ? Spinner : undefined}
         >
-          {__("Delete")}
+          {t("deleteDocumentDialog.actions.delete")}
         </Button>
       </DialogFooter>
     </Dialog>
@@ -119,7 +115,7 @@ export const DeleteDocumentsDialog = forwardRef<
   DeleteDocumentDialogRef,
   DeleteDocumentsDialogProps
 >(({ documentIds, connectionId, onSuccess }, ref) => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [deleteDocuments, isDeleting] = useBulkDeleteDocumentsMutation();
   const documentCount = documentIds.length;
@@ -150,20 +146,17 @@ export const DeleteDocumentsDialog = forwardRef<
   return (
     <Dialog
       ref={dialogRef}
-      title={__("Delete documents")}
+      title={t("deleteDocumentDialog.title.multiple")}
       className="max-w-md"
     >
       <DialogContent padded>
         <p className="text-txt-secondary">
-          {documentCount === 1
-            ? __("Are you sure you want to delete 1 selected document?")
-            : sprintf(
-                __("Are you sure you want to delete %s selected documents?"),
-                documentCount,
-              )}
+          {t("deleteDocumentDialog.confirmation.selected", {
+            count: documentCount,
+          })}
         </p>
         <p className="text-txt-secondary mt-2">
-          {__("This action cannot be undone.")}
+          {t("deleteDocumentDialog.irreversible")}
         </p>
       </DialogContent>
       <DialogFooter>
@@ -173,7 +166,7 @@ export const DeleteDocumentsDialog = forwardRef<
           disabled={isDeleting || documentCount === 0}
           icon={isDeleting ? Spinner : undefined}
         >
-          {__("Delete")}
+          {t("deleteDocumentDialog.actions.delete")}
         </Button>
       </DialogFooter>
     </Dialog>

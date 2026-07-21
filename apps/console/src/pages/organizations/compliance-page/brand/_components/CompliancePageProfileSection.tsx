@@ -12,8 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, Field, Label, Spinner, Textarea } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -47,7 +47,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export function CompliancePageProfileSection(props: {
   compliancePageRef: CompliancePageProfileSection_compliancePageFragment$key;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const { canUpdate, ...compliancePage } = useFragment(
     compliancePageFragment,
@@ -87,9 +87,9 @@ export function CompliancePageProfileSection(props: {
     <form onSubmit={e => void onSubmit(e)} className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-medium">{__("General information")}</h2>
+          <h2 className="text-base font-medium">{t("brandPage.profile.title")}</h2>
           <p className="text-sm text-txt-tertiary">
-            {__("Description and contact details shown to visitors.")}
+            {t("brandPage.profile.description")}
           </p>
         </div>
         {formState.isSubmitting && <Spinner />}
@@ -99,16 +99,16 @@ export function CompliancePageProfileSection(props: {
           {...register("entityName")}
           readOnly={readOnly}
           name="entityName"
-          label={__("Entity name")}
-          placeholder={__("Acme")}
+          label={t("brandPage.profile.fields.entityName")}
+          placeholder={t("brandPage.profile.fields.entityNamePlaceholder")}
         />
         <div>
-          <Label>{__("Description")}</Label>
+          <Label>{t("brandPage.profile.fields.description")}</Label>
           <Textarea
             {...register("description")}
             readOnly={readOnly}
             name="description"
-            placeholder={__("Brief description for visitors")}
+            placeholder={t("brandPage.profile.fields.descriptionPlaceholder")}
             rows={3}
           />
         </div>
@@ -118,32 +118,32 @@ export function CompliancePageProfileSection(props: {
             readOnly={readOnly}
             name="websiteUrl"
             type="url"
-            label={__("Website URL")}
-            placeholder={__("https://example.com")}
+            label={t("brandPage.profile.fields.websiteUrl")}
+            placeholder={t("externalUrls.fields.urlPlaceholder")}
           />
           <Field
             {...register("email")}
             readOnly={readOnly}
             name="email"
             type="email"
-            label={__("Email")}
-            placeholder={__("contact@example.com")}
+            label={t("brandPage.profile.fields.email")}
+            placeholder={t("brandPage.profile.fields.emailPlaceholder")}
           />
         </div>
         <Field
           {...register("headquarterAddress")}
           readOnly={readOnly}
           name="headquarterAddress"
-          label={__("Headquarter Address")}
-          placeholder={__("123 Main St, City, Country")}
+          label={t("brandPage.profile.fields.address")}
+          placeholder={t("brandPage.profile.fields.addressPlaceholder")}
         />
 
         {formState.isDirty && canUpdate && (
           <div className="flex justify-end pt-6">
             <Button type="submit" disabled={formState.isSubmitting || isUpdating}>
               {formState.isSubmitting || isUpdating
-                ? __("Updating...")
-                : __("Save changes")}
+                ? t("brandPage.actions.updating")
+                : t("externalUrls.actions.save")}
             </Button>
           </div>
         )}

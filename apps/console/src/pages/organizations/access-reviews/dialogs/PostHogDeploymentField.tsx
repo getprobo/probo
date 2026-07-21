@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Field, Option, Select } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 // PostHog is a single provider spanning Cloud (region us/eu) and self-hosted
 // (instance URL). The API-key form surfaces this as one deployment choice;
@@ -34,7 +34,7 @@ export function PostHogDeploymentField({
   values,
   onChange,
 }: PostHogDeploymentFieldProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const region = values.region ?? "";
   let deployment = "";
@@ -47,21 +47,29 @@ export function PostHogDeploymentField({
   return (
     <>
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">{__("Deployment")}</label>
+        <label className="text-sm font-medium">
+          {t("postHogDeploymentField.deployment.label")}
+        </label>
         <Select
           value={deployment}
           onValueChange={(val: string) =>
             onChange(val === "SELF_HOSTED" ? { instanceUrl: "" } : { region: val })}
-          placeholder={__("Select a deployment")}
+          placeholder={t("postHogDeploymentField.deployment.placeholder")}
         >
-          <Option value="US">{__("PostHog Cloud (US)")}</Option>
-          <Option value="EU">{__("PostHog Cloud (EU)")}</Option>
-          <Option value="SELF_HOSTED">{__("Self-hosted")}</Option>
+          <Option value="US">
+            {t("postHogDeploymentField.deployment.usCloud")}
+          </Option>
+          <Option value="EU">
+            {t("postHogDeploymentField.deployment.euCloud")}
+          </Option>
+          <Option value="SELF_HOSTED">
+            {t("postHogDeploymentField.deployment.selfHosted")}
+          </Option>
         </Select>
       </div>
       {deployment === "SELF_HOSTED" && (
         <Field
-          label={__("Instance URL")}
+          label={t("postHogDeploymentField.instanceUrl")}
           value={values.instanceUrl ?? ""}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onChange({ instanceUrl: e.target.value })}

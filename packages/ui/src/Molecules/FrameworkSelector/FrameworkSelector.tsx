@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "../../Atoms/Button/Button";
 import { Dropdown, DropdownItem } from "../../Atoms/Dropdown/Dropdown";
@@ -128,7 +128,7 @@ type Props = {
 };
 
 export function FrameworkSelector({ disabled, onSelect }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Dropdown
       toggle={(
@@ -137,7 +137,7 @@ export function FrameworkSelector({ disabled, onSelect }: Props) {
           iconAfter={IconChevronDown}
           disabled={disabled}
         >
-          {__("New framework")}
+          {t("ui.frameworkSelector.new")}
         </Button>
       )}
     >
@@ -154,7 +154,7 @@ export function FrameworkSelector({ disabled, onSelect }: Props) {
 }
 
 function FrameworkItem(props: { framework?: Framework; onClick: () => void }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   if (!props.framework) {
     return (
       <DropdownItem onClick={props.onClick} className="">
@@ -163,10 +163,10 @@ function FrameworkItem(props: { framework?: Framework; onClick: () => void }) {
         </div>
         <div className="space-y-[2px]">
           <div className="text-sm font-medium">
-            {__("Custom framework")}
+            {t("ui.frameworkSelector.custom.title")}
           </div>
           <div className="text-xs text-txt-secondary">
-            {__("Start from scratch")}
+            {t("ui.frameworkSelector.custom.description")}
           </div>
         </div>
       </DropdownItem>

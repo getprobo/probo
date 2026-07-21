@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type Ref, useImperativeHandle, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -110,15 +110,15 @@ export function PublishDialog({
   onSuccess,
 }: PublishDialogProps) {
   const document = useFragment(documentFragment, documentFragmentRef);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
 
   const publishSchema = useMemo(() => z.object({
-    changelog: z.string().min(1, __("Changelog is required")),
+    changelog: z.string().min(1, t("publishDialog.validation.changelogRequired")),
     approverIds: z.array(z.string()),
-  }), [__]);
+  }), [t]);
 
   const defaultApproverIds = document.defaultApprovers.map(a => a.id);
 
@@ -166,17 +166,17 @@ export function PublishDialog({
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to publish document"), errors),
+            title: t("publishDialog.errors.title"),
+            description: formatError(t("publishDialog.errors.publish"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
+          title: t("publishDialog.messages.successTitle"),
           description: !minor && data.approverIds.length > 0
-            ? __("Approval requested successfully.")
-            : __("Document published successfully."),
+            ? t("publishDialog.messages.approvalRequested")
+            : t("publishDialog.messages.published"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -184,13 +184,13 @@ export function PublishDialog({
         onSuccess();
       },
       onError(error) {
-        toast({ title: __("Error"), description: error.message, variant: "error" });
+        toast({ title: t("publishDialog.errors.title"), description: error.message, variant: "error" });
       },
     });
   };
 
   return (
-    <Dialog className="max-w-xl" ref={dialogRef} title={__("Publish document")}>
+    <Dialog className="max-w-xl" ref={dialogRef} title={t("publishDialog.title")}>
       <form
         onSubmit={e => void handleSubmit((data) => {
           const minor = minorRef.current;
@@ -202,14 +202,14 @@ export function PublishDialog({
           <div className="space-y-4">
             <div>
               <label htmlFor="changelog" className="text-sm font-medium text-txt-primary mb-1 block">
-                {__("Changelog")}
+                {t("publishDialog.fields.changelog")}
               </label>
               <Textarea
                 id="changelog"
-                aria-label={__("Changelog")}
+                aria-label={t("publishDialog.fields.changelog")}
                 required
                 autogrow
-                placeholder={__("Describe what changed in this version...")}
+                placeholder={t("publishDialog.fields.changelogPlaceholder")}
                 {...register("changelog")}
               />
               {errors.changelog?.message && (
@@ -218,14 +218,14 @@ export function PublishDialog({
             </div>
             <div>
               <p className="text-xs text-txt-secondary mb-3">
-                {__("Approvers will receive an email and the document will be published as a major version once all have approved. Remove all approvers to publish directly as major.")}
+                {t("publishDialog.approversDescription")}
               </p>
               <PeopleMultiSelectField
                 name="approverIds"
-                label={__("Approvers")}
+                label={t("publishDialog.fields.approvers")}
                 control={control}
                 organizationId={organizationId}
-                placeholder={__("Add approvers...")}
+                placeholder={t("publishDialog.fields.approversPlaceholder")}
               />
             </div>
           </div>
@@ -238,7 +238,7 @@ export function PublishDialog({
             onClick={() => { minorRef.current = true; }}
             disabled={isPublishing}
           >
-            {__("Publish as minor")}
+            {t("publishDialog.actions.publishMinor")}
           </Button>
           <Button
             type="submit"
@@ -246,7 +246,9 @@ export function PublishDialog({
             onClick={() => { minorRef.current = false; }}
             disabled={isPublishing}
           >
-            {hasApprovers ? __("Request approval") : __("Publish as major")}
+            {hasApprovers
+              ? t("publishDialog.actions.requestApproval")
+              : t("publishDialog.actions.publishMajor")}
           </Button>
         </DialogFooter>
       </form>

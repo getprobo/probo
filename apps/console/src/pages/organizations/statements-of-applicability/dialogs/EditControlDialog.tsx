@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Breadcrumb,
@@ -33,6 +32,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { z } from "zod";
 
@@ -68,7 +68,7 @@ const schema = z.object({
 });
 
 export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [control, setControl] = useState<{
     applicabilityStatementId: string;
@@ -82,8 +82,8 @@ export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) 
   const [updateApplicabilityStatement, isUpdating] = useMutationWithToasts(
     updateApplicabilityStatementMutation,
     {
-      successMessage: __("Statement updated successfully."),
-      errorMessage: __("Failed to update statement"),
+      successMessage: t("editApplicabilityStatementDialog.messages.updated"),
+      errorMessage: t("editApplicabilityStatementDialog.errors.update"),
     },
   );
 
@@ -127,7 +127,7 @@ export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) 
       ref={dialogRef}
       className="max-w-lg"
       title={
-        <Breadcrumb items={[__("Statements of Applicability"), __("Edit Statement")]} />
+        <Breadcrumb items={[t("editApplicabilityStatementDialog.breadcrumb.statementsOfApplicability"), t("editApplicabilityStatementDialog.breadcrumb.editStatement")]} />
       }
     >
       {control
@@ -146,23 +146,23 @@ export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) 
                   </div>
                 </div>
 
-                <Field label={__("Applicability")}>
+                <Field label={t("editApplicabilityStatementDialog.fields.applicability")}>
                   <Select
                     variant="editor"
                     value={applicability ? "yes" : "no"}
                     onValueChange={value =>
                       setValue("applicability", value === "yes")}
                   >
-                    <Option value="yes">{__("Yes")}</Option>
-                    <Option value="no">{__("No")}</Option>
+                    <Option value="yes">{t("editApplicabilityStatementDialog.options.yes")}</Option>
+                    <Option value="no">{t("editApplicabilityStatementDialog.options.no")}</Option>
                   </Select>
                 </Field>
 
                 {!applicability && (
-                  <Field label={__("Justification")}>
+                  <Field label={t("editApplicabilityStatementDialog.fields.justification")}>
                     <Textarea
                       {...register("justification")}
-                      placeholder={__("Reason for non-applicability")}
+                      placeholder={t("editApplicabilityStatementDialog.placeholders.justification")}
                       autogrow
                     />
                   </Field>
@@ -170,7 +170,7 @@ export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) 
               </DialogContent>
               <DialogFooter>
                 <Button type="submit" disabled={isUpdating}>
-                  {__("Save")}
+                  {t("editApplicabilityStatementDialog.actions.save")}
                 </Button>
               </DialogFooter>
             </form>

@@ -20,9 +20,9 @@
 
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -42,14 +42,14 @@ const activateAccountMutation = graphql`
 `;
 
 export default function ActivateAccountPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const submittedRef = useRef<boolean>(false);
   const safeContinueUrl = useSafeContinueUrl();
 
-  usePageTitle(__("Activate Account"));
+  usePageTitle(t("activateAccountPage.pageTitle"));
 
   const [activateAccount] = useMutation<ActivateAccountPageMutation>(activateAccountMutation);
 
@@ -72,8 +72,8 @@ export default function ActivateAccountPage() {
             }
           }
           toast({
-            title: __("Activation failed"),
-            description: formatError(__("Activation failed"), errors),
+            title: t("activateAccountPage.errors.activationFailed"),
+            description: formatError(t("activateAccountPage.errors.activationFailed"), errors),
             variant: "error",
           });
 
@@ -81,10 +81,8 @@ export default function ActivateAccountPage() {
         }
 
         toast({
-          title: __("Success"),
-          description: __(
-            "Account activated successfully.",
-          ),
+          title: t("common.success"),
+          description: t("activateAccountPage.messages.activated"),
           variant: "success",
         });
 
@@ -125,13 +123,13 @@ export default function ActivateAccountPage() {
       },
       onError: (e) => {
         toast({
-          title: __("Activation failed"),
+          title: t("activateAccountPage.errors.activationFailed"),
           description: e.message,
           variant: "error",
         });
       },
     });
-  }, [__, toast, activateAccount, navigate, safeContinueUrl]);
+  }, [t, toast, activateAccount, navigate, safeContinueUrl]);
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -144,9 +142,9 @@ export default function ActivateAccountPage() {
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{__("Account Activation")}</h1>
+        <h1 className="text-3xl font-bold">{t("activateAccountPage.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Activating your account…")}
+          {t("activateAccountPage.activating")}
         </p>
       </div>
       <div className="text-center mt-6 text-sm text-txt-secondary">
@@ -154,7 +152,7 @@ export default function ActivateAccountPage() {
           to="/auth/login"
           className="underline hover:text-txt-primary"
         >
-          {__("Go back")}
+          {t("activateAccountPage.actions.goBack")}
         </Link>
       </div>
     </div>

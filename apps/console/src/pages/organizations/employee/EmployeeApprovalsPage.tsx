@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Card, Tbody, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { EmployeeApprovalsPageQuery } from "#/__generated__/core/EmployeeApprovalsPageQuery.graphql";
@@ -50,7 +50,7 @@ export function EmployeeApprovalsPage(props: {
   queryRef: PreloadedQuery<EmployeeApprovalsPageQuery>;
 }) {
   const { queryRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const {
     viewer: { approvableDocuments },
@@ -61,7 +61,7 @@ export function EmployeeApprovalsPage(props: {
 
   const documents = approvableDocuments.edges.map(edge => edge.node);
 
-  usePageTitle(__("Documents"));
+  usePageTitle(t("employeeApprovalsPage.pageTitle"));
 
   return (
     <>
@@ -71,11 +71,11 @@ export function EmployeeApprovalsPage(props: {
               <table className="w-full table-fixed">
                 <Thead>
                   <Tr>
-                    <Th className="text-left">{__("Name")}</Th>
-                    <Th className="w-48 text-left">{__("Type")}</Th>
-                    <Th className="w-36 text-left">{__("Classification")}</Th>
-                    <Th className="w-40 text-left">{__("Last update")}</Th>
-                    <Th className="w-32 text-left">{__("Approved")}</Th>
+                    <Th className="text-left">{t("employeeApprovalsPage.columns.name")}</Th>
+                    <Th className="w-48 text-left">{t("employeeApprovalsPage.columns.type")}</Th>
+                    <Th className="w-36 text-left">{t("employeeApprovalsPage.columns.classification")}</Th>
+                    <Th className="w-40 text-left">{t("employeeApprovalsPage.columns.lastUpdate")}</Th>
+                    <Th className="w-32 text-left">{t("employeeApprovalsPage.columns.approved")}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -93,10 +93,10 @@ export function EmployeeApprovalsPage(props: {
             <Card padded>
               <div className="text-center py-12">
                 <h3 className="text-lg font-semibold mb-2">
-                  {__("No documents yet")}
+                  {t("employeeApprovalsPage.empty.title")}
                 </h3>
                 <p className="text-txt-tertiary mb-4">
-                  {__("No documents have been requested for your approval.")}
+                  {t("employeeApprovalsPage.empty.description")}
                 </p>
               </div>
             </Card>

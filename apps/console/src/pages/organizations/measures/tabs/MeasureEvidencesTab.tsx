@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { fileSize, formatDate, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat, fileSize } from "@probo/i18n";
 import {
   ActionDropdown,
   DropdownItem,
@@ -37,6 +36,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useFragment,
   usePaginationFragment,
@@ -133,22 +133,22 @@ export default function MeasureEvidencesTab() {
   const evidences
     = pagination.data.evidences?.edges?.map(edge => edge.node) ?? [];
   const navigate = useNavigate();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const evidence = evidences.find(e => e.id === evidenceId);
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
 
-  usePageTitle(pagination.data.name + " - " + __("Evidences"));
+  usePageTitle(t("measureEvidencesTab.pageTitle", { name: pagination.data.name }));
 
   return (
     <div className="space-y-6">
       <SortableTable {...pagination}>
         <Thead>
           <Tr>
-            <Th>{__("Description")}</Th>
-            <Th>{__("File type")}</Th>
-            <Th>{__("File size")}</Th>
-            <Th>{__("Created at")}</Th>
+            <Th>{t("measureEvidencesTab.columns.description")}</Th>
+            <Th>{t("measureEvidencesTab.columns.fileType")}</Th>
+            <Th>{t("measureEvidencesTab.columns.fileSize")}</Th>
+            <Th>{t("measureEvidencesTab.columns.createdAt")}</Th>
             <Th width={50}></Th>
           </Tr>
         </Thead>
@@ -168,7 +168,7 @@ export default function MeasureEvidencesTab() {
               onClick={() => dialogRef.current?.open()}
               icon={IconPlusLarge}
             >
-              {__("Add evidence")}
+              {t("measureEvidencesTab.actions.add")}
             </TrButton>
           )}
         </Tbody>
@@ -201,16 +201,15 @@ function EvidenceRow(props: {
   connectionId: string;
 }) {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation();
 
   const [mutateWithToasts, isDeleting] = useMutationWithToasts(
     deleteEvidenceMutation,
     {
-      successMessage: sprintf(
-        __("Evidence \"%s\" has been deleted successfully"),
-        evidence.file?.fileName || __("Link evidence"),
-      ),
-      errorMessage: __("Failed to delete evidence"),
+      successMessage: t("measureEvidencesTab.messages.deleted", {
+        name: evidence.file?.fileName || t("measureEvidencesTab.linkEvidence"),
+      }),
+      errorMessage: t("measureEvidencesTab.errors.delete"),
     },
   );
   const confirm = useConfirm();
@@ -240,12 +239,9 @@ function EvidenceRow(props: {
         });
       },
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the evidence \"%s\". This action cannot be undone.",
-          ),
-          evidence.file?.fileName || __("Link evidence"),
-        ),
+        message: t("measureEvidencesTab.deleteConfirmation", {
+          name: evidence.file?.fileName || t("measureEvidencesTab.linkEvidence"),
+        }),
       },
     );
   };
@@ -267,14 +263,14 @@ function EvidenceRow(props: {
           </span>
         </Td>
         <Td>{evidence.file?.mimeType || "—"}</Td>
-        <Td>{fileSize(__, evidence.file?.size || 0)}</Td>
-        <Td>{formatDate(evidence.createdAt)}</Td>
+        <Td>{fileSize(evidence.file?.size || 0, t)}</Td>
+        <Td>{dateFormat(i18n.language, evidence.createdAt)}</Td>
         <Td noLink>
           <div className="flex gap-2">
             <ActionDropdown>
               <DropdownItem onClick={() => setIsDownloading(true)}>
                 <IconArrowInbox size={16} />
-                {__("Download")}
+                {t("measureEvidencesTab.actions.download")}
               </DropdownItem>
               {evidence.canDelete && (
                 <DropdownItem
@@ -283,7 +279,7 @@ function EvidenceRow(props: {
                   onClick={handleDelete}
                   disabled={isDeleting}
                 >
-                  {__("Delete")}
+                  {t("measureEvidencesTab.actions.delete")}
                 </DropdownItem>
               )}
             </ActionDropdown>

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
 } from "@probo/ui";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -83,7 +83,7 @@ export function CategoryDialog({
   nextRank,
   onOpenChange,
 }: CategoryDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
 
   const [create, isCreating] = useMutation<CategoryDialogCreateMutation>(createMutation);
@@ -120,11 +120,11 @@ export function CategoryDialog({
         connections: [connectionId],
       },
       onCompleted() {
-        toast({ title: __("Success"), description: __("Category created"), variant: "success" });
+        toast({ title: t("categoryDialog.messages.successTitle"), description: t("categoryDialog.messages.created"), variant: "success" });
         onOpenChange(false);
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to create category"), error), variant: "error" });
+        toast({ title: t("categoryDialog.errors.title"), description: formatError(t("categoryDialog.errors.create"), error), variant: "error" });
       },
     });
   };
@@ -133,16 +133,16 @@ export function CategoryDialog({
     <Dialog
       defaultOpen
       onClose={() => onOpenChange(false)}
-      title={__("Add Category")}
+      title={t("categoryDialog.title")}
       className="max-w-lg"
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <Field label={__("Name")}>
+          <Field label={t("categoryDialog.fields.name")}>
             <Input {...register("name")} required />
           </Field>
 
-          <Field label={__("Slug")} help={__("Used as the data-cookie-consent attribute value")}>
+          <Field label={t("categoryDialog.fields.slug")} help={t("categoryDialog.fields.slugHelp")}>
             <Input
               {...register("slug", {
                 pattern: /^[a-z0-9]+(-[a-z0-9]+)*$/,
@@ -151,7 +151,7 @@ export function CategoryDialog({
             />
           </Field>
 
-          <Field label={__("Description")}>
+          <Field label={t("categoryDialog.fields.description")}>
             <Textarea {...register("description")} required rows={2} />
           </Field>
 
@@ -159,7 +159,7 @@ export function CategoryDialog({
 
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>
-            {isCreating ? __("Saving...") : __("Create")}
+            {isCreating ? t("categoryDialog.actions.saving") : t("categoryDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

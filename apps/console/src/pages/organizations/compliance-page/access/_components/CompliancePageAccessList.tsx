@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconChevronDown, Spinner, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -62,7 +62,7 @@ export function CompliancePageAccessList(props: {
 }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const {
     data: { accesses },
@@ -80,7 +80,7 @@ export function CompliancePageAccessList(props: {
           <Tbody>
             <Tr>
               <Td className="text-center text-txt-tertiary py-8">
-                {__("No external access granted yet")}
+                {t("accessList.empty")}
               </Td>
             </Tr>
           </Tbody>
@@ -91,12 +91,16 @@ export function CompliancePageAccessList(props: {
           <Table>
             <Thead>
               <Tr>
-                <Th>{__("Name")}</Th>
-                <Th>{__("Email")}</Th>
-                <Th>{__("Date")}</Th>
-                <Th className="text-center">{__("Access")}</Th>
-                <Th className="text-center">{__("Requests")}</Th>
-                <Th className="text-center">{__("NDA")}</Th>
+                <Th>{t("accessList.columns.name")}</Th>
+                <Th>{t("accessList.columns.email")}</Th>
+                <Th>{t("accessList.columns.date")}</Th>
+                <Th className="text-center">
+                  {t("accessList.columns.access")}
+                </Th>
+                <Th className="text-center">
+                  {t("accessList.columns.requests")}
+                </Th>
+                <Th className="text-center">{t("accessList.columns.nda")}</Th>
                 <Th></Th>
               </Tr>
             </Thead>
@@ -118,7 +122,7 @@ export function CompliancePageAccessList(props: {
               icon={IconChevronDown}
             >
               {isLoadingNext && <Spinner />}
-              {__("Show More")}
+              {t("accessList.actions.showMore")}
             </Button>
           )}
         </>

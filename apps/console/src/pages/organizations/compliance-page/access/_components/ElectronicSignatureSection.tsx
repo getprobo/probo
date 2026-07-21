@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -50,30 +50,36 @@ export function ElectronicSignatureSection({
 }: {
   fragmentRef: ElectronicSignatureSectionFragment$key;
 }) {
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation("organizations/compliance-page");
   const signature = useFragment(fragment, fragmentRef);
 
   return (
     <div>
       <h3 className="text-sm font-medium text-txt-primary mb-3">
-        {__("Electronic Signature")}
+        {t("electronicSignature.title")}
       </h3>
       <div className="rounded-lg border border-border-solid bg-bg-secondary p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-txt-secondary">{__("Status")}</span>
+          <span className="text-sm text-txt-secondary">
+            {t("electronicSignature.fields.status")}
+          </span>
           <NdaSignatureBadge status={signature.status} />
         </div>
         {signature.signedAt && (
           <div className="flex items-center justify-between">
-            <span className="text-sm text-txt-secondary">{__("Signed at")}</span>
+            <span className="text-sm text-txt-secondary">
+              {t("electronicSignature.fields.signedAt")}
+            </span>
             <span className="text-sm text-txt-primary">
-              {formatDatetime(signature.signedAt)}
+              {dateTimeFormat(i18n.language, signature.signedAt)}
             </span>
           </div>
         )}
         {signature.certificate?.downloadUrl && (
           <div className="flex items-center justify-between">
-            <span className="text-sm text-txt-secondary">{__("Certificate")}</span>
+            <span className="text-sm text-txt-secondary">
+              {t("electronicSignature.fields.certificate")}
+            </span>
             <a
               href={signature.certificate.downloadUrl}
               target="_blank"
@@ -81,14 +87,15 @@ export function ElectronicSignatureSection({
               className="text-sm text-txt-primary hover:underline"
               download
             >
-              {signature.certificate.fileName ?? __("Download")}
+              {signature.certificate.fileName
+                ?? t("electronicSignature.actions.download")}
             </a>
           </div>
         )}
         {signature.events.length > 0 && (
           <div className="pt-2 border-t border-border-solid">
             <span className="text-xs font-medium text-txt-secondary uppercase tracking-wider">
-              {__("Activity")}
+              {t("electronicSignature.activity")}
             </span>
             <div className="mt-2 space-y-2">
               {signature.events.map(event => (
@@ -105,7 +112,7 @@ export function ElectronicSignatureSection({
                     </span>
                   </div>
                   <span className="text-txt-tertiary shrink-0 ml-2">
-                    {formatDatetime(event.occurredAt)}
+                    {dateTimeFormat(i18n.language, event.occurredAt)}
                   </span>
                 </div>
               ))}

@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { useRefSync } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { useCallback } from "react";
 import { type FileRejection, useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
 import { IconPageCross, IconUpload } from "../Icons";
@@ -79,7 +79,7 @@ export const dropzone = tv({
 const MB = 1024 * 1024;
 
 export function Dropzone(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const onDropRef = useRefSync(props.onDrop);
   const onDrop = useCallback(
     (files: File[]) => {
@@ -94,7 +94,7 @@ export function Dropzone(props: Props) {
       onDrop,
       maxSize: props.maxSize ? props.maxSize * MB : undefined,
     });
-  const error = getDropzoneError(__, fileRejections);
+  const error = getDropzoneError(t, fileRejections);
   const { wrapper, zone, title, description } = dropzone({
     ...props,
     isDragActive,
@@ -109,7 +109,7 @@ export function Dropzone(props: Props) {
           ? (
               <div className={title({ isDragActive: true })}>
                 <Spinner />
-                {__("Uploading file")}
+                {t("ui.dropzone.uploading")}
               </div>
             )
           : (
@@ -122,7 +122,7 @@ export function Dropzone(props: Props) {
                     : (
                         <IconUpload size={20} />
                       )}
-                  {error ?? __("Drag and drop or browse files")}
+                  {error ?? t("ui.dropzone.browse")}
                 </div>
                 <div className={description()}>{props.description}</div>
               </div>
@@ -133,7 +133,7 @@ export function Dropzone(props: Props) {
 }
 
 function getDropzoneError(
-  __: (s: string) => string,
+  t: (key: string) => string,
   fileRejections: readonly FileRejection[],
 ) {
   if (fileRejections.length === 0) {
@@ -143,10 +143,10 @@ function getDropzoneError(
   const code = fileRejections[0].errors[0].code;
   switch (code) {
     case "file-invalid-type":
-      return __("This file is not supported");
+      return t("ui.dropzone.errors.unsupported");
     case "file-too-large":
-      return __("This file is too large");
+      return t("ui.dropzone.errors.tooLarge");
     default:
-      return __("Something went wrong");
+      return t("ui.dropzone.errors.generic");
   }
 }

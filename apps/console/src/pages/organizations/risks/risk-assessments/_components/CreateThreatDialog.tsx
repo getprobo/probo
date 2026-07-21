@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { CreateThreatDialogMutation } from "#/__generated__/core/CreateThreatDialogMutation.graphql";
@@ -54,7 +54,7 @@ export function CreateThreatDialog(props: {
   processes: { id: string; name: string }[];
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [createThreat, isCreating] = useMutation<CreateThreatDialogMutation>(createThreatMutation);
   const { register, control, handleSubmit, reset, formState } = useForm({
@@ -81,18 +81,18 @@ export function CreateThreatDialog(props: {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={<Button icon={IconPlusLarge} variant="secondary" disabled={props.processes.length === 0}>{__("Add")}</Button>}
-      title={<Breadcrumb items={[__("Threats"), __("Add Threat")]} />}
+      trigger={<Button icon={IconPlusLarge} variant="secondary" disabled={props.processes.length === 0}>{t("createRiskAssessmentThreatDialog.actions.add")}</Button>}
+      title={<Breadcrumb items={[t("createRiskAssessmentThreatDialog.breadcrumb.threats"), t("createRiskAssessmentThreatDialog.breadcrumb.addThreat")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <ControlledField label={__("Process")} name="processId" control={control} rules={{ required: __("This field is required") }} type="select" placeholder={__("Select process")}>
+          <ControlledField label={t("createRiskAssessmentThreatDialog.fields.process")} name="processId" control={control} rules={{ required: t("createRiskAssessmentThreatDialog.validation.required") }} type="select" placeholder={t("createRiskAssessmentThreatDialog.placeholders.process")}>
             {props.processes.map(p => <Option key={p.id} value={p.id}>{p.name}</Option>)}
           </ControlledField>
-          <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" error={formState.errors.name?.message} placeholder={__("e.g. SQL injection")} />
-          <Field label={__("Category")} {...register("category", { required: __("This field is required") })} type="text" error={formState.errors.category?.message} placeholder={__("e.g. Confidentiality")} />
+          <Field label={t("createRiskAssessmentThreatDialog.fields.name")} {...register("name", { required: t("createRiskAssessmentThreatDialog.validation.required") })} type="text" error={formState.errors.name?.message} placeholder={t("createRiskAssessmentThreatDialog.placeholders.name")} />
+          <Field label={t("createRiskAssessmentThreatDialog.fields.category")} {...register("category", { required: t("createRiskAssessmentThreatDialog.validation.required") })} type="text" error={formState.errors.category?.message} placeholder={t("createRiskAssessmentThreatDialog.placeholders.category")} />
         </DialogContent>
-        <DialogFooter><Button type="submit" disabled={isCreating || props.processes.length === 0}>{__("Add")}</Button></DialogFooter>
+        <DialogFooter><Button type="submit" disabled={isCreating || props.processes.length === 0}>{t("createRiskAssessmentThreatDialog.actions.add")}</Button></DialogFooter>
       </form>
     </Dialog>
   );

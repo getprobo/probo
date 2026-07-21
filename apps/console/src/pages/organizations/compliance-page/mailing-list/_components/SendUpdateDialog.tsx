@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, IconSend, Spinner } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import type { SendUpdateDialogMutation } from "#/__generated__/core/SendUpdateDialogMutation.graphql";
@@ -48,11 +48,11 @@ type Props = {
 };
 
 export function SendUpdateDialog({ ref, update, onSent }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const [sendUpdate, isSending] = useMutation<SendUpdateDialogMutation>(sendMutation, {
-    successMessage: __("Update enqueued for delivery"),
-    errorToast: __("Failed to enqueue update for delivery"),
+    successMessage: t("sendUpdateDialog.messages.enqueued"),
+    errorToast: t("sendUpdateDialog.errors.enqueue"),
   });
 
   const handleSend = async () => {
@@ -69,10 +69,10 @@ export function SendUpdateDialog({ ref, update, onSent }: Props) {
   };
 
   return (
-    <Dialog ref={ref} title={__("Send Update to Subscribers")}>
+    <Dialog ref={ref} title={t("sendUpdateDialog.title")}>
       <DialogContent className="px-6 pt-5 pb-2 space-y-4">
         <p className="text-sm text-txt-secondary">
-          {__("This update will be sent to all current subscribers of this mailing list. This action cannot be undone.")}
+          {t("sendUpdateDialog.description")}
         </p>
         {update && (
           <div className="rounded-lg border border-border-low bg-surface-secondary overflow-hidden">
@@ -92,7 +92,7 @@ export function SendUpdateDialog({ ref, update, onSent }: Props) {
           onClick={() => void handleSend()}
         >
           {isSending && <Spinner />}
-          {__("Send")}
+          {t("sendUpdateDialog.actions.send")}
         </Button>
       </DialogFooter>
     </Dialog>

@@ -19,13 +19,13 @@
 // SOFTWARE.
 
 import { useStateWithRef } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { EditableCell, selectCell, SelectValue, Spinner } from "@probo/ui";
 import { useEditableCellRef } from "@probo/ui/src/Molecules/Table/EditableCell";
 import { useEditableRowContext } from "@probo/ui/src/Molecules/Table/EditableRow";
 import { getKey } from "@probo/ui/src/Molecules/Table/utils";
 import { Command } from "cmdk";
 import { type ReactNode, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 import type {
   GraphQLTaggedNode,
@@ -44,14 +44,23 @@ type Props<Q extends OperationType, T> = {
   | { defaultValue: T[]; multiple: true }
 );
 
-export function GraphQLCell<Q extends OperationType, T extends NonNullable<unknown>>(props: Props<Q, T>) {
+export function GraphQLCell<
+  Q extends OperationType,
+  T extends NonNullable<unknown>,
+>(props: Props<Q, T>) {
   const [value, setValue, valueRef] = useStateWithRef<T | T[] | undefined>(
     props.defaultValue,
   );
   const cellRef = useEditableCellRef();
-  const { __ } = useTranslate();
-  const filteredValue = Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
-  const usedKeys = new Set<string>(filteredValue.map(getKey).filter(Boolean) as string[]);
+  const { t } = useTranslation();
+  const filteredValue = Array.isArray(value)
+    ? value.filter(Boolean)
+    : value
+      ? [value]
+      : [];
+  const usedKeys = new Set<string>(
+    filteredValue.map(getKey).filter(Boolean) as string[],
+  );
   const { onUpdate } = useEditableRowContext();
 
   const onSelect = (item: T) => {
@@ -104,7 +113,7 @@ export function GraphQLCell<Q extends OperationType, T extends NonNullable<unkno
         {props.multiple && (
           <Command.Input
             className={classNames.input()}
-            placeholder={__("Search")}
+            placeholder={t("graphQLCell.searchPlaceholder")}
           />
         )}
         <Command.List>

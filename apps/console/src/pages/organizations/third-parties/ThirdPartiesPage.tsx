@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPageTextLine,
@@ -31,6 +30,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -109,7 +109,7 @@ interface ThirdPartiesPageProps {
 }
 
 export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
@@ -138,7 +138,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
   const thirdParties = fragmentData.thirdParties?.edges.map(edge => edge.node) ?? [];
   const connectionId = fragmentData.thirdParties.__id;
 
-  usePageTitle(__("Third parties"));
+  usePageTitle(t("thirdPartiesPage.title"));
 
   const hasAnyAction = thirdParties.some(({ canDelete }) => canDelete);
 
@@ -149,10 +149,8 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Third parties")}
-        description={__(
-          "Third parties are external services and providers that your company uses. Add them to keep track of their risk and compliance status.",
-        )}
+        title={t("thirdPartiesPage.title")}
+        description={t("thirdPartiesPage.description")}
       >
         <div className="flex gap-2">
           {thirdPartiesDocument && (
@@ -163,7 +161,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
                 `/organizations/${organizationId}/documents/${thirdPartiesDocument.id}`,
               )}
             >
-              {__("Document")}
+              {t("thirdPartiesPage.actions.document")}
             </Button>
           )}
           {fragmentData.canPublishThirdParty && (
@@ -175,7 +173,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
               )}
             >
               <Button variant="secondary" icon={IconUpload}>
-                {__("Publish")}
+                {t("thirdPartiesPage.actions.publish")}
               </Button>
             </PublishThirdPartyListDialog>
           )}
@@ -184,7 +182,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
               connection={connectionId}
               organizationId={organizationId}
             >
-              <Button icon={IconPlusLarge}>{__("Add third party")}</Button>
+              <Button icon={IconPlusLarge}>{t("thirdPartiesPage.actions.add")}</Button>
             </CreateThirdPartyDialog>
           )}
         </div>
@@ -192,10 +190,10 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
-            <SortableTh field="NAME">{__("Third party")}</SortableTh>
-            <Th>{__("Assessed At")}</Th>
-            <Th>{__("Data Risk")}</Th>
-            <Th>{__("Business Risk")}</Th>
+            <SortableTh field="NAME">{t("thirdPartiesPage.columns.thirdParty")}</SortableTh>
+            <Th>{t("thirdPartiesPage.columns.assessedAt")}</Th>
+            <Th>{t("thirdPartiesPage.columns.dataRisk")}</Th>
+            <Th>{t("thirdPartiesPage.columns.businessRisk")}</Th>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>

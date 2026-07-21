@@ -19,10 +19,10 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, useToast } from "@probo/ui";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -91,7 +91,7 @@ export function TranslationEditor({
   categories,
   necessaryCategoryName,
 }: TranslationEditorProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
 
   const [upsertTranslation, isUpserting]
@@ -146,16 +146,16 @@ export function TranslationEditor({
       },
       onCompleted() {
         toast({
-          title: __("Success"),
-          description: __("Translation saved"),
+          title: t("translationEditor.messages.successTitle"),
+          description: t("translationEditor.messages.saved"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("translationEditor.errors.title"),
           description: formatError(
-            __("Failed to save translation"),
+            t("translationEditor.errors.save"),
             error,
           ),
           variant: "error",
@@ -176,11 +176,17 @@ export function TranslationEditor({
           necessaryCategoryName={necessaryCategoryName}
         />
         <PlaceholderTranslationSection
-          exampleCategoryName={categories[1]?.name ?? categories[0]?.name ?? "Analytics"}
+          exampleCategoryName={
+            categories[1]?.name
+            ?? categories[0]?.name
+            ?? t("translationEditor.exampleCategory")
+          }
         />
 
         <Button type="submit" disabled={isUpserting}>
-          {isUpserting ? __("Saving...") : __("Save translations")}
+          {isUpserting
+            ? t("translationEditor.actions.saving")
+            : t("translationEditor.actions.save")}
         </Button>
       </form>
     </FormProvider>

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -34,6 +33,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -70,16 +70,16 @@ type Props = {
 };
 
 export function LinkedRisksDialog({ children, ...props }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
-    <Dialog trigger={children} title={__("Link risks")}>
+    <Dialog trigger={children} title={t("linkedRisksDialog.title")}>
       <DialogContent>
         <Suspense fallback={<Spinner centered />}>
           <LinkedRisksDialogContent {...props} />
         </Suspense>
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")} />
+      <DialogFooter exitLabel={t("linkedRisksDialog.actions.close")} />
     </Dialog>
   );
 }
@@ -89,7 +89,7 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
   const data = useLazyLoadQuery<LinkedRisksDialogQuery>(risksQuery, {
     organizationId,
   });
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const risks = useMemo(
@@ -119,12 +119,12 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
       <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search risks...")}
+          placeholder={t("linkedRisksDialog.searchPlaceholder")}
           onValueChange={setSearch}
         />
         <Select
           value={category ?? ""}
-          placeholder={__("All categories")}
+          placeholder={t("linkedRisksDialog.allCategories")}
           onValueChange={setCategory}
           className="max-w-[180px]"
         >
@@ -165,7 +165,7 @@ type RowProps = {
 };
 
 function RiskRow(props: RowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const isLinked = props.linkedRisks.has(props.risk.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
@@ -187,7 +187,9 @@ function RiskRow(props: RowProps) {
         <span>
           <IconComponent size={16} />
           {" "}
-          {isLinked ? __("Unlink") : __("Link")}
+          {isLinked
+            ? t("linkedRisksDialog.actions.unlink")
+            : t("linkedRisksDialog.actions.link")}
         </span>
       </Button>
     </button>

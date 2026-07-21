@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Card, Field, Input } from "@probo/ui";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { PlaceholderPreview } from "./PlaceholderPreview";
-import { TRANSLATION_LABELS } from "./translationDefaults";
 import type { TranslationFormValues } from "./TranslationEditor";
 
 interface PlaceholderTranslationSectionProps {
@@ -33,7 +32,7 @@ interface PlaceholderTranslationSectionProps {
 export function PlaceholderTranslationSection({
   exampleCategoryName,
 }: PlaceholderTranslationSectionProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { control } = useFormContext<TranslationFormValues>();
 
   const placeholderText = useWatch({ control, name: "placeholder_text" });
@@ -41,11 +40,11 @@ export function PlaceholderTranslationSection({
 
   return (
     <div className="space-y-4">
-      <h3 className="font-medium text-lg">{__("Placeholder")}</h3>
+      <h3 className="font-medium text-lg">
+        {t("placeholderTranslationSection.title")}
+      </h3>
       <p className="text-sm text-txt-secondary">
-        {__(
-          "Shown in place of blocked content until the visitor gives consent.",
-        )}
+        {t("placeholderTranslationSection.description")}
       </p>
       <div className="grid grid-cols-2 gap-6">
         <Card className="border p-4">
@@ -55,9 +54,11 @@ export function PlaceholderTranslationSection({
               name="placeholder_text"
               render={({ field }) => (
                 <Field
-                  label={__(TRANSLATION_LABELS.placeholder_text)}
+                  label={t("translationEditor.labels.placeholderText")}
                 >
-                  <p className="text-xs text-txt-secondary mb-2">{__("Use {{category}} to refer to the content category.")}</p>
+                  <p className="text-xs text-txt-secondary mb-2">
+                    {t("placeholderTranslationSection.categoryHelp")}
+                  </p>
                   <Input {...field} />
                 </Field>
               )}
@@ -66,7 +67,7 @@ export function PlaceholderTranslationSection({
               control={control}
               name="placeholder_button"
               render={({ field }) => (
-                <Field label={__(TRANSLATION_LABELS.placeholder_button)}>
+                <Field label={t("translationEditor.labels.placeholderButton")}>
                   <Input {...field} />
                 </Field>
               )}

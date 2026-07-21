@@ -18,33 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Option } from "../../Atoms/Select/Select";
 
 export function SentitivityOptions() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const descriptions = {
     NONE: {
-      label: __("None"),
-      description: __("No sensitive data"),
+      label: t("ui.risk.severity.none"),
+      description: t("ui.sensitivityOptions.none"),
     },
     LOW: {
-      label: __("Low"),
-      description: __("Public or non-sensitive data"),
+      label: t("ui.risk.severity.low"),
+      description: t("ui.sensitivityOptions.low"),
     },
     MEDIUM: {
-      label: __("Medium"),
-      description: __("Internal/restricted data"),
+      label: t("ui.risk.severity.medium"),
+      description: t("ui.sensitivityOptions.medium"),
     },
     HIGH: {
-      label: __("High"),
-      description: __("Confidential data"),
+      label: t("ui.risk.severity.high"),
+      description: t("ui.sensitivityOptions.high"),
     },
     CRITICAL: {
-      label: __("Critical"),
-      description: __("Regulated/PII/financial data"),
+      label: t("ui.risk.severity.critical"),
+      description: t("ui.sensitivityOptions.critical"),
     },
   } as const;
 

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -29,6 +28,7 @@ import {
   Option,
   useDialogRef,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { ControlledField } from "#/components/form/ControlledField";
@@ -37,13 +37,6 @@ import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMult
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import { useCreateDatum } from "../../../../hooks/graph/DatumGraph";
-
-const schema = z.object({
-  name: z.string().min(1, "Name is required"),
-  dataClassification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
-  ownerId: z.string().min(1, "Owner is required"),
-  thirdPartyIds: z.array(z.string()).optional(),
-});
 
 type Props = {
   children: React.ReactNode;
@@ -58,7 +51,13 @@ export function CreateDatumDialog({
   organizationId,
   onCreated,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
+  const schema = z.object({
+    name: z.string().min(1, t("createDatumDialog.validation.nameRequired")),
+    dataClassification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
+    ownerId: z.string().min(1, t("createDatumDialog.validation.ownerRequired")),
+    thirdPartyIds: z.array(z.string()).optional(),
+  });
   const { control, handleSubmit, register, formState, reset }
     = useFormWithSchema(schema, {
       defaultValues: {
@@ -89,38 +88,57 @@ export function CreateDatumDialog({
     <Dialog
       ref={ref}
       trigger={children}
-      title={<Breadcrumb items={[__("Data"), __("New Data")]} />}
+      title={(
+        <Breadcrumb
+          items={[
+            t("createDatumDialog.breadcrumbs.data"),
+            t("createDatumDialog.breadcrumbs.new"),
+          ]}
+        />
+      )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
-          <Field label={__("Name")} {...register("name")} type="text" />
+          <Field
+            label={t("createDatumDialog.fields.name")}
+            {...register("name")}
+            type="text"
+          />
           <ControlledField
             control={control}
             name="dataClassification"
             type="select"
-            label={__("Classification")}
+            label={t("createDatumDialog.fields.classification")}
           >
-            <Option value="PUBLIC">{__("Public")}</Option>
-            <Option value="INTERNAL">{__("Internal")}</Option>
-            <Option value="CONFIDENTIAL">{__("Confidential")}</Option>
-            <Option value="SECRET">{__("Secret")}</Option>
+            <Option value="PUBLIC">
+              {t("createDatumDialog.classifications.public")}
+            </Option>
+            <Option value="INTERNAL">
+              {t("createDatumDialog.classifications.internal")}
+            </Option>
+            <Option value="CONFIDENTIAL">
+              {t("createDatumDialog.classifications.confidential")}
+            </Option>
+            <Option value="SECRET">
+              {t("createDatumDialog.classifications.secret")}
+            </Option>
           </ControlledField>
           <PeopleSelectField
             organizationId={organizationId}
             control={control}
             name="ownerId"
-            label={__("Owner")}
+            label={t("createDatumDialog.fields.owner")}
           />
           <ThirdPartiesMultiSelectField
             organizationId={organizationId}
             control={control}
             name="thirdPartyIds"
-            label={__("Third parties")}
+            label={t("createDatumDialog.fields.thirdParties")}
           />
         </DialogContent>
         <DialogFooter>
           <Button disabled={formState.isSubmitting} type="submit">
-            {__("Create")}
+            {t("createDatumDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

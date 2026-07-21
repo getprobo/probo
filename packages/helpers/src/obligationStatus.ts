@@ -54,13 +54,13 @@ export const getObligationStatusLabel = (status: ObligationStatus) => {
   }
 };
 
-export function getObligationStatusOptions(__: Translator) {
+export function getObligationStatusOptions(t: Translator) {
   return obligationStatuses.map((status) => ({
     value: status,
-    label: __({
-      "NON_COMPLIANT": "Non-compliant",
-      "PARTIALLY_COMPLIANT": "Partially compliant",
-      "COMPLIANT": "Compliant",
+    label: t({
+      "NON_COMPLIANT": "helpers.obligationStatus.nonCompliant",
+      "PARTIALLY_COMPLIANT": "helpers.obligationStatus.partiallyCompliant",
+      "COMPLIANT": "helpers.obligationStatus.compliant",
     }[status]),
   }));
 }

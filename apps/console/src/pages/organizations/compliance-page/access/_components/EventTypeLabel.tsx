@@ -18,30 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 export function EventTypeLabel({ eventType }: { eventType: string }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   switch (eventType) {
     case "DOCUMENT_VIEWED":
-      return __("Document viewed");
+      return t("eventTypeLabel.documentViewed");
     case "CONSENT_GIVEN":
-      return __("Consent given");
+      return t("eventTypeLabel.consentGiven");
     case "FULL_NAME_TYPED":
-      return __("Full name typed");
+      return t("eventTypeLabel.fullNameTyped");
     case "SIGNATURE_ACCEPTED":
-      return __("Signature accepted");
+      return t("eventTypeLabel.signatureAccepted");
     case "SIGNATURE_COMPLETED":
-      return __("Signature completed");
+      return t("eventTypeLabel.signatureCompleted");
     case "SEAL_COMPUTED":
-      return __("Seal computed");
+      return t("eventTypeLabel.sealComputed");
     case "TIMESTAMP_REQUESTED":
-      return __("Timestamp requested");
+      return t("eventTypeLabel.timestampRequested");
     case "CERTIFICATE_GENERATED":
-      return __("Certificate generated");
+      return t("eventTypeLabel.certificateGenerated");
     case "PROCESSING_ERROR":
-      return __("Processing error");
+      return t("eventTypeLabel.processingError");
     default:
       return eventType;
   }

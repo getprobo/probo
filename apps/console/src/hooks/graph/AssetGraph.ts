@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { promisifyMutation, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { promisifyMutation } from "@probo/helpers";
 import { useConfirm } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -163,11 +163,11 @@ export const useDeleteAsset = (
 ) => {
   const [mutate] = useMutation<AssetGraphDeleteMutation>(deleteAssetMutation);
   const confirm = useConfirm();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return () => {
     if (!asset.id || !asset.name) {
-      return alert(__("Failed to delete asset: missing id or name"));
+      return alert(t("assetGraph.errors.deleteMissingIdOrName"));
     }
     confirm(
       () =>
@@ -180,12 +180,7 @@ export const useDeleteAsset = (
           },
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete \"%s\". This action cannot be undone.",
-          ),
-          asset.name,
-        ),
+        message: t("assetGraph.deleteConfirmation", { name: asset.name }),
       },
     );
   };
@@ -193,7 +188,7 @@ export const useDeleteAsset = (
 
 export const useCreateAsset = (connectionId: string) => {
   const [mutate, isMutating] = useMutation<AssetGraphCreateMutation>(createAssetMutation);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return [
     (input: {
@@ -206,18 +201,16 @@ export const useCreateAsset = (connectionId: string) => {
       dataTypesStored: string;
     }) => {
       if (!input.name?.trim()) {
-        return alert(__("Failed to create asset: name is required"));
+        return alert(t("assetGraph.errors.createNameRequired"));
       }
       if (!input.ownerId) {
-        return alert(__("Failed to create asset: owner is required"));
+        return alert(t("assetGraph.errors.createOwnerRequired"));
       }
       if (!input.organizationId) {
-        return alert(__("Failed to create asset: organization is required"));
+        return alert(t("assetGraph.errors.createOrganizationRequired"));
       }
       if (!input.dataTypesStored) {
-        return alert(
-          __("Failed to create asset: data types stored is required"),
-        );
+        return alert(t("assetGraph.errors.createDataTypesStoredRequired"));
       }
 
       return promisifyMutation(mutate)({
@@ -240,7 +233,7 @@ export const useCreateAsset = (connectionId: string) => {
 };
 
 export const useUpdateAsset = () => {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [mutate] = useMutation<AssetGraphUpdateMutation>(updateAssetMutation);
 
   return (input: {
@@ -253,7 +246,7 @@ export const useUpdateAsset = () => {
     thirdPartyIds?: string[];
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update asset: asset ID is required"));
+      return alert(t("assetGraph.errors.updateIdRequired"));
     }
 
     return promisifyMutation(mutate)({

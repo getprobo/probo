@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -43,7 +43,7 @@ const fragment = graphql`
 export function CompliancePageThirdPartyList(props: { fragmentRef: CompliancePageThirdPartyListFragment$key }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const { thirdParties } = useFragment<CompliancePageThirdPartyListFragment$key>(fragment, fragmentRef);
 
@@ -52,9 +52,9 @@ export function CompliancePageThirdPartyList(props: { fragmentRef: CompliancePag
       <Table>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Category")}</Th>
-            <Th>{__("Visibility")}</Th>
+            <Th>{t("thirdPartyList.columns.name")}</Th>
+            <Th>{t("thirdPartyList.columns.category")}</Th>
+            <Th>{t("thirdPartyList.columns.visibility")}</Th>
             <Th></Th>
           </Tr>
         </Thead>
@@ -62,7 +62,7 @@ export function CompliancePageThirdPartyList(props: { fragmentRef: CompliancePag
           {thirdParties.edges.length === 0 && (
             <Tr>
               <Td colSpan={4} className="text-center text-txt-secondary">
-                {__("No subprocessors available")}
+                {t("thirdPartyList.empty")}
               </Td>
             </Tr>
           )}

@@ -13,10 +13,10 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { createUseMutation, type MutationNotifier } from "@probo/relay";
 import { useToast } from "@probo/ui";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Binds the shared awaitable useMutation (`@probo/relay`) to this app's
@@ -28,7 +28,7 @@ import { useMemo } from "react";
  */
 function useMutationNotifier(): MutationNotifier {
   const { toast } = useToast();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return useMemo<MutationNotifier>(
     () => ({
@@ -36,7 +36,7 @@ function useMutationNotifier(): MutationNotifier {
         toast({ title, description: "", variant: "success" });
       },
       notifyError: (error, title) => {
-        const finalTitle = title ?? __("Error");
+        const finalTitle = title ?? t("common.error");
         toast({
           title: finalTitle,
           description: formatError(finalTitle, error),
@@ -44,7 +44,7 @@ function useMutationNotifier(): MutationNotifier {
         });
       },
     }),
-    [toast, __],
+    [toast, t],
   );
 }
 

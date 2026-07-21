@@ -20,11 +20,8 @@
 
 import {
   formatError,
-  getMeasureStateLabel,
-  sprintf,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Button,
@@ -52,6 +49,7 @@ import {
 } from "@probo/ui";
 import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
 import { type ChangeEventHandler, useEffect, useRef, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   graphql,
@@ -174,10 +172,10 @@ interface MeasuresPageProps {
 }
 
 export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
 
-  usePageTitle(__("Measures"));
+  usePageTitle(t("measuresPage.title"));
 
   const { organization } = usePreloadedQuery<MeasuresPageListQuery>(measuresPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
@@ -286,8 +284,8 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   const [importMeasures] = useMutationWithToasts<MeasuresPageImportMutation>(
     importMeasuresMutation,
     {
-      successMessage: __("Measures imported successfully."),
-      errorMessage: __("Failed to import measures"),
+      successMessage: t("measuresPage.messages.imported"),
+      errorMessage: t("measuresPage.errors.import"),
     },
   );
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -321,10 +319,8 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Measures")}
-        description={__(
-          "Measures are actions taken to reduce the risk. Add them to track their implementation status.",
-        )}
+        title={t("measuresPage.title")}
+        description={t("measuresPage.description")}
       >
         {organization.canCreateMeasure && (
           <>
@@ -334,11 +330,11 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
               icon={IconFolderUpload}
               onChange={handleImport}
             >
-              {__("Import")}
+              {t("measuresPage.actions.import")}
             </FileButton>
             <MeasureFormDialog connection={connectionId}>
               <Button variant="primary" icon={IconPlusLarge}>
-                {__("New measure")}
+                {t("measuresPage.actions.newMeasure")}
               </Button>
             </MeasureFormDialog>
           </>
@@ -348,7 +344,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
       <div className="flex items-center gap-4">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search measures...")}
+          placeholder={t("measuresPage.filters.searchPlaceholder")}
           value={queryFilter ?? ""}
           onValueChange={handleQueryFilterChange}
         />
@@ -356,17 +352,17 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
           value={stateFilter ?? "ALL"}
           onValueChange={handleStateFilterChange}
         >
-          <Option value="ALL">{__("All states")}</Option>
-          <Option value="NOT_STARTED">{getMeasureStateLabel(__, "NOT_STARTED")}</Option>
-          <Option value="IN_PROGRESS">{getMeasureStateLabel(__, "IN_PROGRESS")}</Option>
-          <Option value="IMPLEMENTED">{getMeasureStateLabel(__, "IMPLEMENTED")}</Option>
-          <Option value="NOT_APPLICABLE">{getMeasureStateLabel(__, "NOT_APPLICABLE")}</Option>
+          <Option value="ALL">{t("measuresPage.filters.allStates")}</Option>
+          <Option value="NOT_STARTED">{t("measuresPage.states.not_started")}</Option>
+          <Option value="IN_PROGRESS">{t("measuresPage.states.in_progress")}</Option>
+          <Option value="IMPLEMENTED">{t("measuresPage.states.implemented")}</Option>
+          <Option value="NOT_APPLICABLE">{t("measuresPage.states.not_applicable")}</Option>
         </Select>
         <Select
           value={urlCategory ?? "ALL"}
           onValueChange={handleCategoryFilterChange}
         >
-          <Option value="ALL">{__("All categories")}</Option>
+          <Option value="ALL">{t("measuresPage.filters.allCategories")}</Option>
           {categories.map(category => (
             <Option key={category} value={category}>
               {category}
@@ -382,9 +378,9 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
                 <Table>
                   <Thead>
                     <Tr>
-                      <Th>{__("Measure")}</Th>
-                      <Th>{__("Category")}</Th>
-                      <Th>{__("State")}</Th>
+                      <Th>{t("measuresPage.columns.measure")}</Th>
+                      <Th>{t("measuresPage.columns.category")}</Th>
+                      <Th>{t("measuresPage.columns.state")}</Th>
                       {hasAnyAction && <Th />}
                     </Tr>
                   </Thead>
@@ -407,7 +403,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
                       onClick={() => loadNext(20)}
                       disabled={isLoadingNext}
                     >
-                      {isLoadingNext ? __("Loading...") : __("Load more")}
+                      {isLoadingNext ? t("measuresPage.actions.loading") : t("measuresPage.actions.loadMore")}
                     </Button>
                   </div>
                 )}
@@ -417,10 +413,10 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {__("No measures yet")}
+                    {t("measuresPage.empty.title")}
                   </h3>
                   <p className="text-txt-tertiary mb-4">
-                    {__("Create your first measure to get started.")}
+                    {t("measuresPage.empty.description")}
                   </p>
                 </div>
               </Card>
@@ -439,7 +435,7 @@ type MeasureRowProps = {
 function MeasureRow(props: MeasureRowProps) {
   const measure = useFragment(measureRowFragment, props.measureKey);
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [deleteMeasure] = useMutation<MeasuresPageDeleteMutation>(deleteMeasureMutation);
   const { toast } = useToast();
   const confirm = useConfirm();
@@ -457,17 +453,17 @@ function MeasureRow(props: MeasureRowProps) {
             onCompleted(_, error) {
               if (error) {
                 toast({
-                  title: __("Error"),
+                  title: t("measuresPage.messages.error"),
                   description: formatError(
-                    __("Failed to delete measure"),
+                    t("measuresPage.errors.delete"),
                     error,
                   ),
                   variant: "error",
                 });
               } else {
                 toast({
-                  title: __("Success"),
-                  description: __("Measure deleted successfully"),
+                  title: t("measuresPage.messages.success"),
+                  description: t("measuresPage.messages.deleted"),
                   variant: "success",
                 });
               }
@@ -475,9 +471,9 @@ function MeasureRow(props: MeasureRowProps) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("measuresPage.messages.error"),
                 description: formatError(
-                  __("Failed to delete measure"),
+                  t("measuresPage.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -487,12 +483,7 @@ function MeasureRow(props: MeasureRowProps) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the measure \"%s\". This action cannot be undone.",
-          ),
-          measure.name,
-        ),
+        message: t("measuresPage.deleteConfirmation", { name: measure.name }),
       },
     );
   };
@@ -515,7 +506,7 @@ function MeasureRow(props: MeasureRowProps) {
                     icon={IconPencil}
                     onClick={() => dialogRef.current?.open()}
                   >
-                    {__("Edit")}
+                    {t("measuresPage.actions.edit")}
                   </DropdownItem>
                 )}
                 {measure.canDelete && (
@@ -524,7 +515,7 @@ function MeasureRow(props: MeasureRowProps) {
                     variant="danger"
                     icon={IconTrashCan}
                   >
-                    {__("Delete")}
+                    {t("measuresPage.actions.delete")}
                   </DropdownItem>
                 )}
               </ActionDropdown>

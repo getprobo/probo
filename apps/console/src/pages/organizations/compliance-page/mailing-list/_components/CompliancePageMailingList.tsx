@@ -18,13 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Button, IconChevronDown, IconTrashCan, Spinner, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePageMailingListDeleteMutation } from "#/__generated__/core/CompliancePageMailingListDeleteMutation.graphql";
-import type { CompliancePageMailingListFragment$key } from "#/__generated__/core/CompliancePageMailingListFragment.graphql";
+import type {
+  CompliancePageMailingListDeleteMutation,
+} from "#/__generated__/core/CompliancePageMailingListDeleteMutation.graphql";
+import type {
+  CompliancePageMailingListFragment$key,
+} from "#/__generated__/core/CompliancePageMailingListFragment.graphql";
 import type { CompliancePageMailingListQuery } from "#/__generated__/core/CompliancePageMailingListQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -75,7 +80,7 @@ export function CompliancePageMailingList(props: {
   fragmentRef: CompliancePageMailingListFragment$key;
 }) {
   const { fragmentRef } = props;
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/compliance-page");
 
   const {
     data,
@@ -92,8 +97,8 @@ export function CompliancePageMailingList(props: {
   const [deleteSubscriber, isDeleting] = useMutation<CompliancePageMailingListDeleteMutation>(
     deleteMutation,
     {
-      successMessage: __("Subscriber removed successfully"),
-      errorToast: __("Failed to delete subscriber"),
+      successMessage: t("mailingList.messages.deleted"),
+      errorToast: t("mailingList.errors.delete"),
     },
   );
 
@@ -115,7 +120,7 @@ export function CompliancePageMailingList(props: {
               <Tbody>
                 <Tr>
                   <Td className="text-center text-txt-tertiary py-8">
-                    {__("No mailing list subscribers yet")}
+                    {t("mailingList.empty")}
                   </Td>
                 </Tr>
               </Tbody>
@@ -126,10 +131,10 @@ export function CompliancePageMailingList(props: {
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Email")}</Th>
-                    <Th>{__("Status")}</Th>
-                    <Th>{__("Subscribed on")}</Th>
+                    <Th>{t("mailingList.columns.name")}</Th>
+                    <Th>{t("mailingList.columns.email")}</Th>
+                    <Th>{t("mailingList.columns.status")}</Th>
+                    <Th>{t("mailingList.columns.subscribedOn")}</Th>
                     <Th />
                   </Tr>
                 </Thead>
@@ -142,11 +147,11 @@ export function CompliancePageMailingList(props: {
                         <Badge
                           variant={subscriber.status === "CONFIRMED" ? "success" : "warning"}
                         >
-                          {subscriber.status === "CONFIRMED" ? __("Confirmed") : __("Pending")}
+                          {subscriber.status === "CONFIRMED" ? t("mailingList.status.confirmed") : t("mailingList.status.pending")}
                         </Badge>
                       </Td>
                       <Td className="text-txt-tertiary text-sm">
-                        {new Date(subscriber.createdAt).toLocaleDateString()}
+                        {dateFormat(i18n.language, subscriber.createdAt)}
                       </Td>
                       <Td className="w-10">
                         <Button
@@ -154,7 +159,7 @@ export function CompliancePageMailingList(props: {
                           icon={IconTrashCan}
                           disabled={isDeleting}
                           onClick={() => handleDelete(subscriber.id)}
-                          aria-label={__("Delete subscriber")}
+                          aria-label={t("mailingList.actions.delete")}
                         />
                       </Td>
                     </Tr>
@@ -170,7 +175,7 @@ export function CompliancePageMailingList(props: {
                   icon={IconChevronDown}
                 >
                   {isLoadingNext && <Spinner />}
-                  {__("Show More")}
+                  {t("mailingList.actions.showMore")}
                 </Button>
               )}
             </>

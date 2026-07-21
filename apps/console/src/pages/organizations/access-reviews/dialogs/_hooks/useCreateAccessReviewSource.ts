@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
@@ -43,7 +43,7 @@ export function useCreateAccessReviewSource({
   connectionId,
   onSuccess,
 }: UseCreateAccessReviewSourceParams) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const [createAccessReviewSource]
@@ -70,9 +70,9 @@ export function useCreateAccessReviewSource({
         onDone();
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("useCreateAccessReviewSource.messages.error"),
             description: formatError(
-              __("Failed to create access source"),
+              t("useCreateAccessReviewSource.errors.create"),
               errors,
             ),
             variant: "error",
@@ -80,8 +80,8 @@ export function useCreateAccessReviewSource({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Access source created successfully."),
+          title: t("useCreateAccessReviewSource.messages.success"),
+          description: t("useCreateAccessReviewSource.messages.created"),
           variant: "success",
         });
         onSuccess();
@@ -89,9 +89,9 @@ export function useCreateAccessReviewSource({
       onError(error) {
         onDone();
         toast({
-          title: __("Error"),
+          title: t("useCreateAccessReviewSource.messages.error"),
           description: formatError(
-            __("Failed to create access source"),
+            t("useCreateAccessReviewSource.errors.create"),
             error,
           ),
           variant: "error",

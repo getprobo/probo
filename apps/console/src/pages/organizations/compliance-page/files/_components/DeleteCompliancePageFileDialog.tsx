@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, Spinner } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { type DataID, graphql } from "relay-runtime";
 
 import type { DeleteCompliancePageFileDialogMutation } from "#/__generated__/core/DeleteCompliancePageFileDialogMutation.graphql";
@@ -45,13 +45,13 @@ export function DeleteCompliancePageFileDialog(props: {
 }) {
   const { connectionId, fileId, ref, onDelete } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const [deleteFile, isDeleting] = useMutation<DeleteCompliancePageFileDialogMutation>(
     deleteCompliancePageFileMutation,
     {
-      successMessage: "File deleted successfully",
-      errorToast: "Failed to delete file",
+      successMessage: t("deleteFileDialog.messages.deleted"),
+      errorToast: t("deleteFileDialog.errors.delete"),
     },
   );
 
@@ -72,12 +72,10 @@ export function DeleteCompliancePageFileDialog(props: {
   }, [fileId, deleteFile, ref, connectionId, onDelete]);
 
   return (
-    <Dialog ref={ref} title={__("Delete File")}>
+    <Dialog ref={ref} title={t("deleteFileDialog.title")}>
       <DialogContent padded>
         <p>
-          {__(
-            "Are you sure you want to delete this file? This action cannot be undone.",
-          )}
+          {t("deleteFileDialog.description")}
         </p>
       </DialogContent>
       <DialogFooter>
@@ -87,7 +85,7 @@ export function DeleteCompliancePageFileDialog(props: {
           disabled={isDeleting}
         >
           {isDeleting && <Spinner />}
-          {__("Delete")}
+          {t("deleteFileDialog.actions.delete")}
         </Button>
       </DialogFooter>
     </Dialog>

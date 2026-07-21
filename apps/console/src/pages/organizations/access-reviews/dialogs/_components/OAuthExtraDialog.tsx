@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -30,6 +29,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   cleanZendeskSubdomain,
@@ -49,7 +49,7 @@ export function DatadogConnectDialog({
   organizationId,
   onClose,
 }: OAuthExtraDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [datadogSite, setDatadogSite] = useState<string>("US1");
 
@@ -68,7 +68,7 @@ export function DatadogConnectDialog({
         setDatadogSite("US1");
         onClose();
       }}
-      title={__("Connect Datadog")}
+      title={t("oauthExtraDialog.datadog.title")}
     >
       <form
         onSubmit={(e) => {
@@ -80,14 +80,16 @@ export function DatadogConnectDialog({
       >
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
-            {__("Select your Datadog site, then continue to authorize access.")}
+            {t("oauthExtraDialog.datadog.description")}
           </p>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">{__("Datadog site")}</label>
+            <label className="text-sm font-medium">
+              {t("oauthExtraDialog.datadog.siteLabel")}
+            </label>
             <Select
               value={datadogSite}
               onValueChange={setDatadogSite}
-              placeholder={__("Select a site")}
+              placeholder={t("oauthExtraDialog.datadog.sitePlaceholder")}
             >
               {DATADOG_SITES.map(s => (
                 <Option key={s.value} value={s.value}>
@@ -98,7 +100,7 @@ export function DatadogConnectDialog({
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit">{__("Continue")}</Button>
+          <Button type="submit">{t("oauthExtraDialog.actions.continue")}</Button>
         </DialogFooter>
       </form>
     </Dialog>
@@ -110,7 +112,7 @@ export function ZendeskConnectDialog({
   organizationId,
   onClose,
 }: OAuthExtraDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [zendeskSubdomain, setZendeskSubdomain] = useState<string>("");
 
@@ -129,7 +131,7 @@ export function ZendeskConnectDialog({
         setZendeskSubdomain("");
         onClose();
       }}
-      title={__("Connect Zendesk")}
+      title={t("oauthExtraDialog.zendesk.title")}
     >
       <form
         onSubmit={(e) => {
@@ -144,14 +146,14 @@ export function ZendeskConnectDialog({
       >
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
-            {__("Enter your Zendesk subdomain, then continue to authorize access.")}
+            {t("oauthExtraDialog.zendesk.description")}
           </p>
           <Field
-            label={__("Zendesk subdomain")}
-            placeholder={__("acme")}
+            label={t("oauthExtraDialog.zendesk.subdomainLabel")}
+            placeholder={t("oauthExtraDialog.zendesk.subdomainPlaceholder")}
             value={zendeskSubdomain}
             onValueChange={setZendeskSubdomain}
-            help={__("The <subdomain> part of <subdomain>.zendesk.com")}
+            help={t("oauthExtraDialog.zendesk.subdomainHelp")}
             required
             autoFocus
           />
@@ -161,7 +163,7 @@ export function ZendeskConnectDialog({
             type="submit"
             disabled={!cleanZendeskSubdomain(zendeskSubdomain)}
           >
-            {__("Continue")}
+            {t("oauthExtraDialog.actions.continue")}
           </Button>
         </DialogFooter>
       </form>

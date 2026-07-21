@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql } from "react-relay";
 
 import type { NewSAMLConfigurationForm_createMutation } from "#/__generated__/iam/NewSAMLConfigurationForm_createMutation.graphql";
@@ -59,15 +59,15 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
   const { onCreate } = props;
   const organizationId = useOrganizationId();
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const [create, isCreating]
     = useMutationWithToasts<NewSAMLConfigurationForm_createMutation>(
       createSAMLConfigurationMutation,
       {
-        successMessage: "SAML configuration created successfully.",
-        errorMessage: "Failed to create SAML configuration",
+        successMessage: t("newSamlConfigurationForm.messages.created"),
+        errorMessage: t("newSamlConfigurationForm.errors.create"),
       },
     );
 
@@ -95,9 +95,9 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
           if (e) {
             toast({
               variant: "error",
-              title: __("Error"),
+              title: t("common.error"),
               description: formatError(
-                __("Failed to create SAML configuration"),
+                t("newSamlConfigurationForm.errors.create"),
                 e,
               ),
             });
@@ -108,7 +108,7 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
         },
       });
     },
-    [organizationId, create, onCreate, __, toast],
+    [organizationId, create, onCreate, t, toast],
   );
 
   return (

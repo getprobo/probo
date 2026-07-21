@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   CellHead,
@@ -35,6 +34,7 @@ import {
   useContext,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import type { LoadMoreFn } from "react-relay";
 import type { OperationType } from "relay-runtime";
 
@@ -75,7 +75,7 @@ export function SortableDataTable({
   isLoadingNext?: boolean;
   pageSize?: number;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [order, setOrder] = useState(defaultOrder);
   const onOrderChange = (o: Order) => {
     startTransition(() => {
@@ -95,7 +95,7 @@ export function SortableDataTable({
             disabled={isLoadingNext}
             icon={isLoadingNext ? Spinner : IconChevronDown}
           >
-            {__("Show more")}
+            {t("sortableDataTable.actions.showMore")}
           </Button>
         )}
       </div>

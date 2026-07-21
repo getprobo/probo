@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Google, Microsoft } from "@probo/ui";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -50,7 +50,7 @@ export function OIDCButton({
   providerRef: OIDCButtonFragment$key;
   continueURL?: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const safeContinueUrl = useSafeContinueUrl();
   const provider = useFragment(fragment, providerRef);
@@ -74,7 +74,9 @@ export function OIDCButton({
     >
       <span className="flex items-center gap-2">
         {Icon && <Icon width={18} height={18} />}
-        {__(`Sign in with ${provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}`)}
+        {t("oidcButton.signInWith", {
+          provider: provider.name.charAt(0).toUpperCase() + provider.name.slice(1),
+        })}
       </span>
     </Button>
   );

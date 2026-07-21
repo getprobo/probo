@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import { Badge, Button, IconCircleCheck, IconClock } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
@@ -57,17 +57,16 @@ export function DocumentSignatureListItem(props: {
 }) {
   const { connectionId, fragmentRef } = props;
 
-  const { __, dateTimeFormat } = useTranslate();
+  const { t, i18n } = useTranslation();
   const signature = useFragment<DocumentSignatureListItemFragment$key>(fragment, fragmentRef);
 
   const isSigned = signature.state === "SIGNED";
-  const label = isSigned ? __("Signed on %s") : __("Requested on %s");
 
   const [cancelSignature, isCancellingSignature] = useMutationWithToasts(
     cancelSignatureMutation,
     {
-      successMessage: __("Request cancelled successfully"),
-      errorMessage: __("Failed to cancel signature request"),
+      successMessage: t("documentSignatureListItem.messages.cancelled"),
+      errorMessage: t("documentSignatureListItem.errors.cancel"),
     },
   );
 
@@ -86,11 +85,16 @@ export function DocumentSignatureListItem(props: {
                 <IconClock size={16} />
               )}
           <span>
-            {sprintf(
-              label,
-              dateTimeFormat(
-                isSigned ? signature.signedAt : signature.requestedAt,
-              ),
+            {t(
+              isSigned
+                ? "documentSignatureListItem.dates.signed"
+                : "documentSignatureListItem.dates.requested",
+              {
+                date: dateTimeFormat(
+                  i18n.language,
+                  isSigned ? signature.signedAt : signature.requestedAt,
+                ),
+              },
             )}
           </span>
         </div>
@@ -98,7 +102,7 @@ export function DocumentSignatureListItem(props: {
       {isSigned
         ? (
             <Badge variant="success" className="ml-auto">
-              {__("Signed")}
+              {t("documentSignatureListItem.status.signed")}
             </Badge>
           )
         : (
@@ -118,7 +122,7 @@ export function DocumentSignatureListItem(props: {
                   });
                 }}
               >
-                {__("Cancel request")}
+                {t("documentSignatureListItem.actions.cancel")}
               </Button>
             )
           )}

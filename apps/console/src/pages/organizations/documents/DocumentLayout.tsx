@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Badge, Breadcrumb, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -127,7 +127,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const publishDialogRef = useRef<PublishDialogRef>(null);
   const [approvalRequestedAt, setApprovalRequestedAt] = useState(0);
@@ -198,7 +198,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           <Breadcrumb
             items={[
               {
-                label: __("Documents"),
+                label: t("documentLayout.breadcrumbs.documents"),
                 to: `/organizations/${organizationId}/documents`,
               },
               {
@@ -213,7 +213,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
                 icon={IconUpload}
                 onClick={() => publishDialogRef.current?.open()}
               >
-                {__("Publish")}
+                {t("documentLayout.actions.publish")}
               </Button>
             )}
             <DocumentVersionsDropdown currentTab={currentTab} />
@@ -236,11 +236,17 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             />
           )}
         >
-          {isGenerated && <Badge variant="neutral">{__("Generated")}</Badge>}
+          {isGenerated && (
+            <Badge variant="neutral">{t("documentLayout.status.generated")}</Badge>
+          )}
           <Badge
             variant={currentVersion.status === "PUBLISHED" ? "success" : currentVersion.status === "PENDING_APPROVAL" ? "warning" : "highlight"}
           >
-            {currentVersion.status === "PUBLISHED" ? __("Published") : currentVersion.status === "PENDING_APPROVAL" ? __("Pending approval") : __("Draft")}
+            {currentVersion.status === "PUBLISHED"
+              ? t("documentLayout.status.published")
+              : currentVersion.status === "PENDING_APPROVAL"
+                ? t("documentLayout.status.pendingApproval")
+                : t("documentLayout.status.draft")}
           </Badge>
         </PageHeader>
 
@@ -253,24 +259,26 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
         />
 
         <Tabs>
-          <TabLink to={`${urlPrefix}/description`}>{__("Description")}</TabLink>
+          <TabLink to={`${urlPrefix}/description`}>
+            {t("documentLayout.tabs.description")}
+          </TabLink>
           <TabLink to={`${urlPrefix}/controls`}>
-            {__("Controls")}
+            {t("documentLayout.tabs.controls")}
             <TabBadge>{document.controlInfo.totalCount}</TabBadge>
           </TabLink>
           {hasApprovals && (
             <TabLink to={`${urlPrefix}/approvals`}>
-              {__("Approvals")}
+              {t("documentLayout.tabs.approvals")}
               <TabBadge>
                 {lastQuorum?.status === "REJECTED"
-                  ? __("Rejected")
+                  ? t("documentLayout.status.rejected")
                   : `${lastQuorum?.approvedDecisions.totalCount ?? 0}/${lastQuorum?.decisions.totalCount ?? 0}`}
               </TabBadge>
             </TabLink>
           )}
           {isPublished && (
             <TabLink to={`${urlPrefix}/signatures`}>
-              {__("Signatures")}
+              {t("documentLayout.tabs.signatures")}
               <TabBadge>
                 {currentVersion.signedSignatures?.totalCount ?? 0}
                 /

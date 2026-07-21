@@ -18,10 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Combobox, ComboboxItem, Field } from "@probo/ui";
 import { type ComponentProps, Suspense, useMemo, useState } from "react";
-import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { usePaginatedMeasures } from "#/hooks/graph/usePaginatedMeasures";
 
@@ -38,7 +43,9 @@ type Props<
   optional?: boolean;
 } & ComponentProps<typeof Field>;
 
-export function MeasureSelectField<TFieldValues extends FieldValues = FieldValues>({
+export function MeasureSelectField<
+  TFieldValues extends FieldValues = FieldValues,
+>({
   organizationId,
   control,
   disabled,
@@ -48,7 +55,11 @@ export function MeasureSelectField<TFieldValues extends FieldValues = FieldValue
   return (
     <Field {...props}>
       <Suspense
-        fallback={<Combobox onSearch={() => {}} placeholder="Loading..." disabled><div /></Combobox>}
+        fallback={(
+          <Combobox onSearch={() => {}} placeholder="Loading..." disabled>
+            <div />
+          </Combobox>
+        )}
       >
         <MeasureSelectWithQuery<TFieldValues>
           organizationId={organizationId}
@@ -63,9 +74,12 @@ export function MeasureSelectField<TFieldValues extends FieldValues = FieldValue
 }
 
 function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
-  props: Pick<Props<TFieldValues>, "organizationId" | "control" | "name" | "disabled" | "optional">,
+  props: Pick<
+    Props<TFieldValues>,
+    "organizationId" | "control" | "name" | "disabled" | "optional"
+  >,
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { name, organizationId, control, disabled, optional } = props;
   const { data } = usePaginatedMeasures(organizationId);
   const [search, setSearch] = useState("");
@@ -91,12 +105,14 @@ function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
         control={control}
         name={name}
         render={({ field }) => {
-          const selectedMeasure = field.value ? allMeasures?.find(m => m.id === field.value) : null;
+          const selectedMeasure = field.value
+            ? allMeasures?.find(m => m.id === field.value)
+            : null;
 
           return (
             <Combobox
               id={name}
-              placeholder={__("Select a measure")}
+              placeholder={t("measureSelectField.placeholder")}
               value={selectedMeasure ? selectedMeasure.name : search}
               onSearch={setSearch}
               disabled={disabled}
@@ -108,7 +124,7 @@ function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
                     setSearch("");
                   }}
                 >
-                  {__("None")}
+                  {t("measureSelectField.none")}
                 </ComboboxItem>
               )}
               {measures?.map(m => (
@@ -123,7 +139,9 @@ function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
                     <div className="max-w-75 ellipsis overflow-hidden whitespace-pre-wrap">
                       {m.name}
                     </div>
-                    <div className="text-sm text-txt-secondary">{m.category}</div>
+                    <div className="text-sm text-txt-secondary">
+                      {m.category}
+                    </div>
                   </div>
                 </ComboboxItem>
               ))}
