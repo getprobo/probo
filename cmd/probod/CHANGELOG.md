@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.230.0] - 2026-07-21
+
+### Added
+
+- Webhook events now include `RIGHT_REQUEST_CREATED`, `RIGHT_REQUEST_UPDATED`, and `RIGHT_REQUEST_DELETED` for rights requests created via console or compliance portal
+- Compliance portal visitors can now sign in via OAuth/OIDC, with sign-in and consent screens showing the requesting client's branding (logo and name)
+- Compliance portal home page now displays the full custom portal title as its heading, instead of composing it from the organization name
+- Added a configurable trust center base domain (default `probopage.com`) so a managed default domain and certificate are provisioned for every compliance portal at organization creation
+
+### Changed
+
+- Renamed "Trust Center" to "Compliance Portal" across the GraphQL API and MCP tools — notably `ComplianceExternalURL` is now `ComplianceCustomLink` and the visibility field is `compliancePortalVisibility`
+- Moved public-facing profile fields (title, description, website, email, headquarters address) off the organization and onto the compliance portal
+- Custom domains and their certificates now belong to the compliance portal rather than the whole organization, with issuance and renewal handled by a dedicated poll-based worker
+- Console: restructured the brand page into profile, domains, visual identity, and custom link sections, and moved frameworks and the NDA card onto the overview page
+
+### Removed
+
+- Removed the one-time session-transfer authentication flow for custom-domain SSO cookies, now that portal visitors authenticate via OAuth
+
 ## [0.229.1] - 2026-07-21
 
 ### Fixed
