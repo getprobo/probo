@@ -124,3 +124,22 @@ func TestSEOFromRequest_EmptyBaseURLOmitsLinks(t *testing.T) {
 	assert.Empty(t, canonical)
 	assert.Nil(t, hreflang)
 }
+
+func TestSEOFromRequest_RelativeBaseURLOmitsLinks(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		"https://trust.acme.com/fr/documents",
+		nil,
+	)
+	require.NoError(t, err)
+
+	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(
+		req,
+		"/fr/documents",
+	)
+	assert.Equal(t, "fr", lang)
+	assert.Empty(t, canonical)
+	assert.Nil(t, hreflang)
+}

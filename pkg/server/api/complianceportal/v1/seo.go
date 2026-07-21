@@ -76,10 +76,11 @@ func SEOFromRequest(r *http.Request, pageBaseURL string) (htmlLang, canonical st
 
 // portalOrigin returns scheme://host from pageBaseURL, dropping any path,
 // query, or fragment. Callers may pass a full request URL by mistake.
+// Relative or malformed values yield "" so SEO links are omitted.
 func portalOrigin(pageBaseURL string) string {
 	parsed, err := url.Parse(pageBaseURL)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		return strings.TrimRight(pageBaseURL, "/")
+		return ""
 	}
 
 	return (&url.URL{Scheme: parsed.Scheme, Host: parsed.Host}).String()
