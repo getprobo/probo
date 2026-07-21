@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/deviceagent/checks"
+	"golang.org/x/sys/windows"
 )
 
 func runElevatedInstall(opts InstallOptions, enrollmentToken string) error {
@@ -42,31 +43,7 @@ func runElevatedInstall(opts InstallOptions, enrollmentToken string) error {
 		args = append(args, "--dir", opts.ConfigDir)
 	}
 
-	argList := make([]string, len(args))
-	for i, arg := range args {
-		argList[i] = "'" + escapePowerShellSingleQuoted(arg) + "'"
-	}
-
-	script := fmt.Sprintf(
-		`$p = Start-Process -FilePath %s -ArgumentList @(%s) -Verb RunAs -Wait -PassThru; if ($p.ExitCode -ne 0) { exit $p.ExitCode }`,
-		"'"+escapePowerShellSingleQuoted(opts.ExePath)+"'",
-		strings.Join(argList, ","),
-	)
-
-	candidates := checks.CommandCandidates("powershell.exe")
-	if len(candidates) == 0 {
-		return fmt.Errorf("command %q not available at expected absolute path", "powershell.exe")
-	}
-
-	out, err := exec.Command(
-		candidates[0],
-		"-NoProfile",
-		"-NonInteractive",
-		"-Command",
-		script,
-	).CombinedOutput()
-
-	return commandError(out, err)
+	return runPowerShellCommand(elevatedStartProcess(opts.ExePath, args))
 }
 
 func runElevatedUninstall(opts UninstallOptions) error {
@@ -75,17 +52,26 @@ func runElevatedUninstall(opts UninstallOptions) error {
 		args = append(args, "--dir", opts.ConfigDir)
 	}
 
+	return runPowerShellCommand(elevatedStartProcess(opts.ExePath, args))
+}
+
+// elevatedStartProcess builds a PowerShell script that launches exePath elevated
+// via UAC. Launch failures (including UAC cancel) are terminating and exit
+// nonzero before $p.ExitCode is inspected.
+func elevatedStartProcess(exePath string, args []string) string {
 	argList := make([]string, len(args))
 	for i, arg := range args {
-		argList[i] = "'" + escapePowerShellSingleQuoted(arg) + "'"
+		argList[i] = "'" + escapePowerShellSingleQuoted(windows.EscapeArg(arg)) + "'"
 	}
 
-	script := fmt.Sprintf(
-		`$p = Start-Process -FilePath %s -ArgumentList @(%s) -Verb RunAs -Wait -PassThru; if ($p.ExitCode -ne 0) { exit $p.ExitCode }`,
-		"'"+escapePowerShellSingleQuoted(opts.ExePath)+"'",
+	return fmt.Sprintf(
+		`$ErrorActionPreference = 'Stop'; $p = Start-Process -FilePath %s -ArgumentList @(%s) -Verb RunAs -Wait -PassThru; if ($null -eq $p) { exit 1 }; if ($p.ExitCode -ne 0) { exit $p.ExitCode }`,
+		"'"+escapePowerShellSingleQuoted(exePath)+"'",
 		strings.Join(argList, ","),
 	)
+}
 
+func runPowerShellCommand(script string) error {
 	candidates := checks.CommandCandidates("powershell.exe")
 	if len(candidates) == 0 {
 		return fmt.Errorf("command %q not available at expected absolute path", "powershell.exe")
