@@ -28,28 +28,8 @@
     "zoomIn": "Powiększ"
   },
   "auth": {
-    "backToPortal": "Powrót do portalu",
-    "signIn": {
-      "title": "Zaloguj się, aby kontynuować",
-      "description": "Uzyskaj dostęp do zasobów chronionych lub złóż wniosek",
-      "or": "LUB",
-      "withProvider": "Zaloguj się przez {{provider}}",
-      "emailLabel": "Adres e-mail",
-      "emailPlaceholder": "ty@firma.com",
-      "emailRequired": "Adres e-mail jest wymagany",
-      "emailInvalid": "Podaj prawidłowy adres e-mail",
-      "sendMagicLink": "Wyślij magiczny link",
-      "resend": "Wyślij link ponownie",
-      "resendIn": "Wyślij link ponownie za {{seconds}} s",
-      "magicLinkSent": "Magiczny link został wysłany!",
-      "magicLinkSentNote": "Sprawdź skrzynkę e-mail i użyj linku, aby się zalogować."
-    },
     "requestAccess": {
       "success": "Poproszono o dostęp"
-    },
-    "verify": {
-      "title": "Potwierdzanie adresu e-mail",
-      "description": "Proszę czekać, logujemy Cię…"
     },
     "fullName": {
       "title": "Dodaj swoje imię i nazwisko",
@@ -59,17 +39,7 @@
       "tooShort": "Imię i nazwisko jest za krótkie",
       "submit": "Kontynuuj"
     },
-    "magicLinkExpired": {
-      "title": "Link wygasł",
-      "description": "Ten magiczny link wygasł. Poproś o nowy link."
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "Link już wykorzystany",
-      "description": "Ten magiczny link został już wykorzystany. Poproś o nowy link."
-    },
     "errors": {
-      "magicLinkFailed": "Nie udało się wysłać magicznego linku. Spróbuj ponownie.",
-      "verifyFailed": "Nie udało się zweryfikować linku. Spróbuj ponownie.",
       "fullNameFailed": "Nie udało się zapisać Twojego imienia i nazwiska. Spróbuj ponownie.",
       "requestFailed": "Nie udało się zrealizować Twojego wniosku o dostęp. Spróbuj ponownie."
     }

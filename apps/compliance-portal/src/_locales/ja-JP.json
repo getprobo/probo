@@ -28,28 +28,8 @@
     "zoomIn": "ズームイン"
   },
   "auth": {
-    "backToPortal": "ポータルに戻る",
-    "signIn": {
-      "title": "続行するにはサインインしてください",
-      "description": "保護されたリソースにアクセスするか、リクエストを送信してください",
-      "or": "または",
-      "withProvider": "{{provider}}でサインイン",
-      "emailLabel": "メールアドレス",
-      "emailPlaceholder": "you@company.com",
-      "emailRequired": "メールアドレスは必須です",
-      "emailInvalid": "有効なメールアドレスを入力してください",
-      "sendMagicLink": "マジックリンクを送信",
-      "resend": "リンクを再送信",
-      "resendIn": "{{seconds}}秒後にリンクを再送信",
-      "magicLinkSent": "マジックリンクを送信しました。",
-      "magicLinkSentNote": "メールを確認し、リンクからサインインしてください。"
-    },
     "requestAccess": {
       "success": "アクセスをリクエストしました"
-    },
-    "verify": {
-      "title": "メールアドレスを確認しています",
-      "description": "サインイン処理を行っています。少々お待ちください…"
     },
     "fullName": {
       "title": "お名前を入力してください",
@@ -59,17 +39,7 @@
       "tooShort": "氏名が短すぎます",
       "submit": "続ける"
     },
-    "magicLinkExpired": {
-      "title": "リンクの有効期限が切れています",
-      "description": "このマジックリンクは有効期限が切れています。新しいリンクをリクエストしてください。"
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "リンクは既に使用されています",
-      "description": "このマジックリンクは既に使用されています。新しいリンクをリクエストしてください。"
-    },
     "errors": {
-      "magicLinkFailed": "マジックリンクを送信できませんでした。もう一度お試しください。",
-      "verifyFailed": "リンクを確認できませんでした。もう一度お試しください。",
       "fullNameFailed": "お名前を保存できませんでした。もう一度お試しください。",
       "requestFailed": "アクセスリクエストを完了できませんでした。もう一度お試しください。"
     }

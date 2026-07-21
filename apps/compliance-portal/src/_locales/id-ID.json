@@ -28,28 +28,8 @@
     "zoomIn": "Perbesar"
   },
   "auth": {
-    "backToPortal": "Kembali ke portal",
-    "signIn": {
-      "title": "Masuk untuk melanjutkan",
-      "description": "Akses sumber daya yang dilindungi atau ajukan permintaan",
-      "or": "ATAU",
-      "withProvider": "Masuk dengan {{provider}}",
-      "emailLabel": "Alamat Email",
-      "emailPlaceholder": "anda@perusahaan.com",
-      "emailRequired": "Email wajib diisi",
-      "emailInvalid": "Masukkan alamat email yang valid",
-      "sendMagicLink": "Kirim Tautan Ajaib",
-      "resend": "Kirim ulang tautan",
-      "resendIn": "Kirim ulang tautan dalam {{seconds}} detik",
-      "magicLinkSent": "Tautan ajaib terkirim!",
-      "magicLinkSentNote": "Periksa email Anda dan gunakan tautan tersebut untuk masuk."
-    },
     "requestAccess": {
       "success": "Akses telah diminta"
-    },
-    "verify": {
-      "title": "Mengonfirmasi email Anda",
-      "description": "Harap tunggu sementara kami memproses proses masuk Anda…"
     },
     "fullName": {
       "title": "Tambahkan nama Anda",
@@ -59,17 +39,7 @@
       "tooShort": "Nama lengkap terlalu pendek",
       "submit": "Lanjutkan"
     },
-    "magicLinkExpired": {
-      "title": "Tautan kedaluwarsa",
-      "description": "Tautan ajaib ini telah kedaluwarsa. Silakan minta tautan baru."
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "Tautan sudah digunakan",
-      "description": "Tautan ajaib ini sudah digunakan. Silakan minta tautan baru."
-    },
     "errors": {
-      "magicLinkFailed": "Tautan ajaib gagal dikirim. Silakan coba lagi.",
-      "verifyFailed": "Tautan gagal diverifikasi. Silakan coba lagi.",
       "fullNameFailed": "Nama Anda gagal disimpan. Silakan coba lagi.",
       "requestFailed": "Permintaan akses Anda gagal diselesaikan. Silakan coba lagi."
     }

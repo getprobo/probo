@@ -28,28 +28,8 @@
     "zoomIn": "Aumenta zoom"
   },
   "auth": {
-    "backToPortal": "Torna al portale",
-    "signIn": {
-      "title": "Accedi per continuare",
-      "description": "Accedi alle risorse protette o invia una richiesta",
-      "or": "OPPURE",
-      "withProvider": "Accedi con {{provider}}",
-      "emailLabel": "Indirizzo email",
-      "emailPlaceholder": "nome@azienda.com",
-      "emailRequired": "L'indirizzo email è obbligatorio",
-      "emailInvalid": "Inserisci un indirizzo email valido",
-      "sendMagicLink": "Invia link magico",
-      "resend": "Invia di nuovo il link",
-      "resendIn": "Invia di nuovo il link in {{seconds}}s",
-      "magicLinkSent": "Link magico inviato!",
-      "magicLinkSentNote": "Controlli la Sua email e usi il link per accedere."
-    },
     "requestAccess": {
       "success": "Accesso richiesto"
-    },
-    "verify": {
-      "title": "Verifica dell'email in corso",
-      "description": "Attenda mentre effettuiamo il Suo accesso…"
     },
     "fullName": {
       "title": "Aggiunga il Suo nome",
@@ -59,17 +39,7 @@
       "tooShort": "Il nome completo è troppo corto",
       "submit": "Continua"
     },
-    "magicLinkExpired": {
-      "title": "Link scaduto",
-      "description": "Questo link magico è scaduto. La preghiamo di richiederne uno nuovo."
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "Link già utilizzato",
-      "description": "Questo link magico è già stato utilizzato. La preghiamo di richiederne uno nuovo."
-    },
     "errors": {
-      "magicLinkFailed": "Impossibile inviare il link magico. La preghiamo di riprovare.",
-      "verifyFailed": "Impossibile verificare il link. La preghiamo di riprovare.",
       "fullNameFailed": "Impossibile salvare il Suo nome. La preghiamo di riprovare.",
       "requestFailed": "Impossibile completare la Sua richiesta di accesso. La preghiamo di riprovare."
     }

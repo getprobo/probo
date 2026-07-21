@@ -28,28 +28,8 @@
     "zoomIn": "Vergrößern"
   },
   "auth": {
-    "backToPortal": "Zurück zum Portal",
-    "signIn": {
-      "title": "Melden Sie sich an, um fortzufahren",
-      "description": "Greifen Sie auf geschützte Inhalte zu oder stellen Sie eine Anfrage",
-      "or": "ODER",
-      "withProvider": "Mit {{provider}} anmelden",
-      "emailLabel": "E-Mail-Adresse",
-      "emailPlaceholder": "sie@unternehmen.com",
-      "emailRequired": "E-Mail-Adresse ist erforderlich",
-      "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein",
-      "sendMagicLink": "Magic Link senden",
-      "resend": "Link erneut senden",
-      "resendIn": "Link erneut senden in {{seconds}}s",
-      "magicLinkSent": "Magic Link gesendet!",
-      "magicLinkSentNote": "Prüfen Sie Ihre E-Mails und nutzen Sie den Link, um sich anzumelden."
-    },
     "requestAccess": {
       "success": "Zugang angefordert"
-    },
-    "verify": {
-      "title": "Ihre E-Mail-Adresse wird bestätigt",
-      "description": "Bitte warten Sie, während wir Sie anmelden…"
     },
     "fullName": {
       "title": "Geben Sie Ihren Namen an",
@@ -59,17 +39,7 @@
       "tooShort": "Der vollständige Name ist zu kurz",
       "submit": "Weiter"
     },
-    "magicLinkExpired": {
-      "title": "Link abgelaufen",
-      "description": "Dieser Magic Link ist abgelaufen. Bitte fordern Sie einen neuen an."
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "Link bereits verwendet",
-      "description": "Dieser Magic Link wurde bereits verwendet. Bitte fordern Sie einen neuen an."
-    },
     "errors": {
-      "magicLinkFailed": "Der Magic Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
-      "verifyFailed": "Der Link konnte nicht verifiziert werden. Bitte versuchen Sie es erneut.",
       "fullNameFailed": "Ihr Name konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
       "requestFailed": "Ihre Zugangsanfrage konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
     }

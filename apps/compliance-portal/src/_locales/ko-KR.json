@@ -28,28 +28,8 @@
     "zoomIn": "확대"
   },
   "auth": {
-    "backToPortal": "포털로 돌아가기",
-    "signIn": {
-      "title": "계속하려면 로그인하세요",
-      "description": "보호된 리소스에 액세스하거나 요청을 제출하세요",
-      "or": "또는",
-      "withProvider": "{{provider}}로 로그인",
-      "emailLabel": "이메일 주소",
-      "emailPlaceholder": "you@company.com",
-      "emailRequired": "이메일을 입력해 주세요",
-      "emailInvalid": "올바른 이메일 주소를 입력해 주세요",
-      "sendMagicLink": "매직 링크 보내기",
-      "resend": "링크 다시 보내기",
-      "resendIn": "{{seconds}}초 후 링크 다시 보내기",
-      "magicLinkSent": "매직 링크가 전송되었습니다!",
-      "magicLinkSentNote": "이메일을 확인하고 링크를 사용해 로그인하세요."
-    },
     "requestAccess": {
       "success": "액세스가 요청되었습니다"
-    },
-    "verify": {
-      "title": "이메일 확인 중",
-      "description": "로그인 처리 중이니 잠시만 기다려 주세요…"
     },
     "fullName": {
       "title": "이름을 입력하세요",
@@ -59,17 +39,7 @@
       "tooShort": "이름이 너무 짧습니다",
       "submit": "계속"
     },
-    "magicLinkExpired": {
-      "title": "링크가 만료되었습니다",
-      "description": "이 매직 링크는 만료되었습니다. 새 링크를 요청해 주세요."
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "이미 사용된 링크입니다",
-      "description": "이 매직 링크는 이미 사용되었습니다. 새 링크를 요청해 주세요."
-    },
     "errors": {
-      "magicLinkFailed": "매직 링크를 보내지 못했습니다. 다시 시도해 주세요.",
-      "verifyFailed": "링크를 확인하지 못했습니다. 다시 시도해 주세요.",
       "fullNameFailed": "이름을 저장하지 못했습니다. 다시 시도해 주세요.",
       "requestFailed": "액세스 요청을 완료하지 못했습니다. 다시 시도해 주세요."
     }

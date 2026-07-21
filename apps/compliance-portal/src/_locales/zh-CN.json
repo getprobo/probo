@@ -28,28 +28,8 @@
     "zoomIn": "放大"
   },
   "auth": {
-    "backToPortal": "返回门户",
-    "signIn": {
-      "title": "登录以继续",
-      "description": "访问受保护的资源或提交请求",
-      "or": "或",
-      "withProvider": "使用 {{provider}} 登录",
-      "emailLabel": "电子邮箱地址",
-      "emailPlaceholder": "you@company.com",
-      "emailRequired": "请填写电子邮箱地址",
-      "emailInvalid": "请输入有效的电子邮箱地址",
-      "sendMagicLink": "发送登录链接",
-      "resend": "重新发送链接",
-      "resendIn": "{{seconds}} 秒后可重新发送链接",
-      "magicLinkSent": "登录链接已发送！",
-      "magicLinkSentNote": "请查看您的邮箱，并使用链接登录。"
-    },
     "requestAccess": {
       "success": "已提交访问请求"
-    },
-    "verify": {
-      "title": "正在确认您的电子邮箱",
-      "description": "请稍候，我们正在为您登录……"
     },
     "fullName": {
       "title": "添加您的姓名",
@@ -59,17 +39,7 @@
       "tooShort": "姓名过短",
       "submit": "继续"
     },
-    "magicLinkExpired": {
-      "title": "链接已过期",
-      "description": "此登录链接已过期，请重新申请一个。"
-    },
-    "magicLinkAlreadyUsed": {
-      "title": "链接已被使用",
-      "description": "此登录链接已被使用，请重新申请一个。"
-    },
     "errors": {
-      "magicLinkFailed": "登录链接发送失败，请重试。",
-      "verifyFailed": "链接验证失败，请重试。",
       "fullNameFailed": "姓名保存失败，请重试。",
       "requestFailed": "访问请求提交失败，请重试。"
     }
