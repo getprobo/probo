@@ -45,7 +45,7 @@ const documentFragment = graphql`
     alias
     canSetAlias: permission(action: "resourcealias:alias:set")
     canRemoveAlias: permission(action: "resourcealias:alias:remove")
-    compliancePageVisibility: compliancePortalVisibility
+    compliancePortalVisibility
     latestPublishedVersion: versions(
       first: 1
       orderBy: { field: CREATED_AT, direction: DESC }
@@ -137,7 +137,7 @@ export function CompliancePageDocumentListItem(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={document.compliancePageVisibility}
+          value={document.compliancePortalVisibility}
           onValueChange={value => void handleVsibilityChange(value)}
           disabled={isUpdatingDocumentVisibility || !compliancePage.canUpdate}
           className="w-[105px]"

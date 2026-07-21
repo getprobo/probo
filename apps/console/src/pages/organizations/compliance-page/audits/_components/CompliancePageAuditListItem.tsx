@@ -46,7 +46,7 @@ const auditFragment = graphql`
     }
     validUntil
     state
-    compliancePageVisibility: compliancePortalVisibility
+    compliancePortalVisibility
   }
 `;
 
@@ -120,7 +120,7 @@ export function CompliancePageAuditListItem(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={audit.compliancePageVisibility}
+          value={audit.compliancePortalVisibility}
           onValueChange={value => void handleVisibilityChange(value)}
           disabled={isUpdatingAuditVisibility || !compliancePage.canUpdate}
           className="w-[105px]"

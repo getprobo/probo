@@ -76,10 +76,10 @@ export function NewCompliancePageFileDialog(props: {
   const createSchema = z.object({
     name: z.string().min(1, __("Name is required")),
     category: z.string().min(1, __("Category is required")),
-    compliancePageVisibility: z.enum(["NONE", "PRIVATE", "PUBLIC"]),
+    compliancePortalVisibility: z.enum(["NONE", "PRIVATE", "PUBLIC"]),
   });
   const createForm = useFormWithSchema(createSchema, {
-    defaultValues: { name: "", category: "", compliancePageVisibility: "NONE" },
+    defaultValues: { name: "", category: "", compliancePortalVisibility: "NONE" },
   });
 
   const handleFileUpload = useCallback(
@@ -122,7 +122,7 @@ export function NewCompliancePageFileDialog(props: {
           organizationId,
           name: data.name,
           category: data.category,
-          compliancePortalVisibility: data.compliancePageVisibility,
+          compliancePortalVisibility: data.compliancePortalVisibility,
           file: null,
         },
         connections: connectionId ? [connectionId] : [],
@@ -175,13 +175,13 @@ export function NewCompliancePageFileDialog(props: {
           <Field
             label={__("Visibility")}
             type="select"
-            value={createForm.watch("compliancePageVisibility")}
+            value={createForm.watch("compliancePortalVisibility")}
             onValueChange={value =>
               createForm.setValue(
-                "compliancePageVisibility",
+                "compliancePortalVisibility",
                 value as "NONE" | "PRIVATE" | "PUBLIC",
               )}
-            error={createForm.formState.errors.compliancePageVisibility?.message}
+            error={createForm.formState.errors.compliancePortalVisibility?.message}
           >
             {getCompliancePageVisibilityOptions(__).map(option => (
               <Option key={option.value} value={option.value}>

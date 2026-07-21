@@ -49,7 +49,7 @@ const fileFragment = graphql`
     file {
       downloadUrl
     }
-    compliancePageVisibility: compliancePortalVisibility
+    compliancePortalVisibility
     createdAt
     canUpdate: permission(action: "compliance-portal:portal-file:update")
     canDelete: permission(action: "compliance-portal:portal-file:delete")
@@ -125,7 +125,7 @@ export function CompliancePageFileListItem(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={file.compliancePageVisibility}
+          value={file.compliancePortalVisibility}
           onValueChange={value => void handleValueChange(value)}
           disabled={isUpdating || !compliancePage.canUpdate}
           className="w-[105px]"
