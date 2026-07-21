@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback } from "react";
+import { startTransition, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import {
@@ -40,23 +40,21 @@ export function useChangeLocale() {
   const navigate = useNavigate();
   const [updateLocale, isUpdating] = useUpdateLocale();
 
-  const changeLocale = useCallback(async (
+  const changeLocale = useCallback((
     locale: UrlLocale,
     options: ChangeLocaleOptions = {},
   ) => {
-    // Persist and navigate without sequencing them: awaiting the mutation
-    // before navigation left a frame where Identity.locale already matched
-    // the new choice but the URL still had the old prefix, flashing the
-    // mismatch callout. updateLocale writes the store optimistically, and
-    // flushSync applies the URL change in the same paint.
-    if (options.persist) {
-      void updateLocale(locale);
-    }
-    if (locale !== currentLocale) {
-      void navigate(replaceLocaleInPathname(pathname, locale) + search, {
-        flushSync: true,
-      });
-    }
+    // Persist + navigate as one transition so React can keep the previous UI
+    // until both have settled. Await-then-navigate painted a one-frame
+    // Identity↔URL desync that flashed the mismatch callout.
+    startTransition(() => {
+      if (options.persist) {
+        void updateLocale(locale);
+      }
+      if (locale !== currentLocale) {
+        void navigate(replaceLocaleInPathname(pathname, locale) + search);
+      }
+    });
   }, [currentLocale, navigate, pathname, search, updateLocale]);
 
   return [changeLocale, isUpdating] as const;

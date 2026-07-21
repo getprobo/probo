@@ -53,11 +53,6 @@ export function useUpdateLocale() {
     await commit(
       {
         variables: { input: { locale } },
-        // Keep the Relay store in sync with the URL during locale switches so
-        // the mismatch callout never paints a one-frame desync.
-        optimisticUpdater: (store) => {
-          store.getRoot().getLinkedRecord("viewer")?.setValue(locale, "locale");
-        },
       },
       feedback,
     );

@@ -22,7 +22,7 @@ import { GlobeIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -63,7 +63,11 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
 
   const savedLocale = isUrlLocale(identity.locale) ? identity.locale : null;
   const savedLanguage = savedLocale != null ? urlLocaleToLanguage(savedLocale) : null;
-  const visible = !dismissed && savedLocale != null && savedLocale !== urlLocale;
+  const mismatched = savedLocale != null && savedLocale !== urlLocale;
+  // Lag the mismatch flag so a transient desync during startTransition locale
+  // switches never paints the banner; a real mismatch still shows once settled.
+  const deferredMismatched = useDeferredValue(mismatched);
+  const visible = !dismissed && mismatched && deferredMismatched;
 
   useEffect(() => {
     if (!visible || savedLanguage == null) {
