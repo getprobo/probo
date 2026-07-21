@@ -293,7 +293,9 @@ Scopes are namespace- or product-level only — no resource segments (e.g. `v1:p
 
 **Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `oauth2scope.Registry` mappings via `Registry.Allows`. Each domain package exports `OAuth2ScopeMappings` in its `oauth2_scopes.go`; `probod` registers all domain mappings on the shared registry before `iam.NewService`. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
 
-Add new namespace-level scope constants in the owning package's `oauth2_scopes.go`, map their IAM actions in that package's `OAuth2ScopeMappings`, and add the mapping to `probod` wiring alongside the other domain registrations. Write scopes are registered only when their mutating IAM actions are mapped.
+**When adding or extending IAM actions:** every new action used by GraphQL, MCP, CLI, or n8n must be listed in the owning package's `OAuth2ScopeMappings`. Prefer an existing `v1:<namespace>` / `v1:<namespace>:read` pair (e.g. commitment CRUD under `v1:compliance-page`). Only introduce a new namespace-level scope when no existing scope fits — then add constants in `oauth2_scopes.go`, map actions in `OAuth2ScopeMappings`, and register the mapping in `probod` wiring. Write scopes are registered only when their mutating IAM actions are mapped.
+
+E2E MCP tests often authenticate with personal API keys, which skip the OAuth2 scope gate. A green e2e suite does **not** prove OAuth2 clients can call the tool — always update `OAuth2ScopeMappings` when wiring new actions.
 
 **Well-known Probo CLI client:** `iam_oauth2_clients` scopes for `AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp` must match `CLIClientScopes` in `pkg/cli/config/config.go` (requested by `prb auth login`). When adding API scopes, update the client migration, `CLIClientScopes`, and scope registration together.
 
@@ -336,9 +338,10 @@ When adding a new entity that needs authorization:
 
 1. **Action constants** — add `core:<entity>:<verb>` constants in `pkg/probo/actions.go` (get, list, create, update, delete)
 2. **Role policies** — wire actions into the appropriate role policies in `pkg/probo/policies.go` (`OwnerPolicy`, `AdminPolicy`, `ViewerPolicy`, etc.) with `organization_id` condition
-3. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
-4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
-5. **Resolver calls** — add `scope, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `scope, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
+3. **OAuth2 scope mappings** — add every new action to the owning package's `OAuth2ScopeMappings` (`pkg/<service>/oauth2_scopes.go`). Put list/get on `v1:<namespace>:read` and mutating verbs on `v1:<namespace>`. Reuse an existing namespace when the feature belongs to one (e.g. compliance-page commitments → `v1:compliance-page`). Unmapped actions deny all OAuth2 callers (MCP included) even when role policies allow them.
+4. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
+5. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
+6. **Resolver calls** — add `scope, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `scope, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
 
 ## Decision logging
 
