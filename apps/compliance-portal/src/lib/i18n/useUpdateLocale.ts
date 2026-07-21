@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { MutationFeedback } from "@probo/relay";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
@@ -45,10 +46,16 @@ export function useUpdateLocale() {
     errorToast: t("locale.updateFailed"),
   });
 
-  const updateLocale = useCallback(async (locale: UrlLocale) => {
-    await commit({
-      variables: { input: { locale } },
-    });
+  const updateLocale = useCallback(async (
+    locale: UrlLocale,
+    feedback?: MutationFeedback,
+  ) => {
+    await commit(
+      {
+        variables: { input: { locale } },
+      },
+      feedback,
+    );
   }, [commit]);
 
   return [updateLocale, isUpdating] as const;

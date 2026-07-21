@@ -27,6 +27,7 @@ import { LocaleMismatchCallout } from "#/components/LocaleMismatchCallout";
 import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
 import { useResumeAccessRequest } from "#/lib/auth/useResumeAccessRequest";
+import { useEnsureViewerLocale } from "#/lib/i18n/useEnsureViewerLocale";
 import { SubscribeDialogProvider } from "#/lib/mailingList/SubscribeDialogProvider";
 
 import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
@@ -36,6 +37,7 @@ export const mainLayoutQuery = graphql`
     viewer {
       __typename
       ...LocaleMismatchCallout_identity
+      ...useEnsureViewerLocale_identity
     }
     ...TopBar_query
     ...SubscribeDialogProvider_query
@@ -53,6 +55,8 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
 
   // Resume a deferred "request access" once the user lands back authenticated.
   useResumeAccessRequest(data.viewer != null);
+  // First signed-in visit: seed Identity.locale from the URL when still null.
+  useEnsureViewerLocale(data.viewer ?? null);
 
   // Document viewer fills the viewport under the TopBar and scrolls its own
   // stage; every other page uses normal document flow so the footer sits after
