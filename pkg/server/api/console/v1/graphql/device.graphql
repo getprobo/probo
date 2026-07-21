@@ -119,6 +119,22 @@ type DeviceEdge {
     node: Device!
 }
 
+type EmployeeDeviceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDeviceConnection"
+    ) {
+    edges: [EmployeeDeviceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type EmployeeDeviceEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeeDeviceEdge"
+    ) {
+    cursor: CursorKey!
+    node: Device!
+}
+
 type CreateDevicePayload {
     device: Device!
     # enrollmentToken is shown ONCE; exchange via agent REST /enroll.

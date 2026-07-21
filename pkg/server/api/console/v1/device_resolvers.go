@@ -66,21 +66,6 @@ func (r *deviceResolver) LatestPostures(ctx context.Context, obj *types.Device) 
 
 // TotalCount is the resolver for the DeviceConnection.totalCount field.
 func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.DeviceConnection) (int, error) {
-	if obj.OwnerID != nil {
-		scope, err := r.authorize(ctx, obj.ParentID, itam.ActionEmployeeDeviceList)
-		if err != nil {
-			return 0, err
-		}
-
-		count, err := r.itam.CountForOrganizationIDAndOwnerID(ctx, scope, obj.ParentID, *obj.OwnerID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count devices by owner", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
-		}
-
-		return count, nil
-	}
-
 	scope, err := r.authorize(ctx, obj.ParentID, itam.ActionDeviceList)
 	if err != nil {
 		return 0, err

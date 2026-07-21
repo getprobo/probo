@@ -528,6 +528,22 @@ func TestDeviceEnrollment(t *testing.T) {
 		require.Equal(t, "PENDING", result.Node.State)
 	})
 
+	t.Run("employee cannot read another users device via node", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		employeeA := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+		employeeB := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+
+		enrolledB := enrollDevice(t, employeeB, orgID)
+
+		_, err := employeeA.Do(getDeviceQuery, map[string]any{
+			"id": enrolledB.EnrollDevice.Device.ID,
+		})
+		testutil.RequireForbiddenError(t, err, "employee cannot read another users device via node")
+	})
+
 	t.Run("employee cannot list org devices", func(t *testing.T) {
 		t.Parallel()
 

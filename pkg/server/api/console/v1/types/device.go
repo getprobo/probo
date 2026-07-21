@@ -36,7 +36,16 @@ type (
 
 		Resolver any
 		ParentID gid.GID
-		OwnerID  *gid.GID
+	}
+
+	EmployeeDeviceConnection struct {
+		Edges    []*EmployeeDeviceEdge
+		PageInfo *PageInfo
+	}
+
+	EmployeeDeviceEdge struct {
+		Cursor page.CursorKey
+		Node   *Device
 	}
 )
 
@@ -58,20 +67,32 @@ func NewDeviceConnection(
 	}
 }
 
-func NewOwnedDeviceConnection(
+func NewEmployeeDeviceConnection(
 	p *page.Page[*coredata.Device, coredata.DeviceOrderField],
-	parentType any,
-	parentID gid.GID,
-	ownerID gid.GID,
-) *DeviceConnection {
-	conn := NewDeviceConnection(p, parentType, parentID)
-	conn.OwnerID = &ownerID
+) *EmployeeDeviceConnection {
+	edges := make([]*EmployeeDeviceEdge, len(p.Data))
+	for i := range edges {
+		edges[i] = NewEmployeeDeviceEdge(p.Data[i], p.Cursor.OrderBy.Field)
+	}
 
-	return conn
+	return &EmployeeDeviceConnection{
+		Edges:    edges,
+		PageInfo: NewPageInfo(p),
+	}
 }
 
 func NewDeviceEdge(d *coredata.Device, orderBy coredata.DeviceOrderField) *DeviceEdge {
 	return &DeviceEdge{
+		Cursor: d.CursorKey(orderBy),
+		Node:   NewDevice(d),
+	}
+}
+
+func NewEmployeeDeviceEdge(
+	d *coredata.Device,
+	orderBy coredata.DeviceOrderField,
+) *EmployeeDeviceEdge {
+	return &EmployeeDeviceEdge{
 		Cursor: d.CursorKey(orderBy),
 		Node:   NewDevice(d),
 	}

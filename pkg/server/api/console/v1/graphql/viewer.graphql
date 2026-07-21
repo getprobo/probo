@@ -30,7 +30,7 @@ type Viewer {
         last: Int
         before: CursorKey
         orderBy: DeviceOrder
-    ): DeviceConnection! @goField(forceResolver: true)
+    ): EmployeeDeviceConnection! @goField(forceResolver: true)
 
     # Own-device read for self-enrollment status polling before org assumption.
     enrolledDevice(id: ID!): Device @goField(forceResolver: true)

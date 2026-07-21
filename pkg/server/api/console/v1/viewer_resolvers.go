@@ -184,7 +184,7 @@ func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.View
 }
 
 // EnrolledDevices is the resolver for the enrolledDevices field.
-func (r *viewerResolver) EnrolledDevices(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DeviceOrderBy) (*types.DeviceConnection, error) {
+func (r *viewerResolver) EnrolledDevices(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DeviceOrderBy) (*types.EmployeeDeviceConnection, error) {
 	scope, err := r.authorize(ctx, organizationID, itam.ActionEmployeeDeviceList)
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func (r *viewerResolver) EnrolledDevices(ctx context.Context, obj *types.Viewer,
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewOwnedDeviceConnection(devicesPage, r, organizationID, profile.ID), nil
+	return types.NewEmployeeDeviceConnection(devicesPage), nil
 }
 
 // EnrolledDevice is the resolver for the enrolledDevice field.

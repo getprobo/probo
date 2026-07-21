@@ -57,6 +57,8 @@ var ViewerPolicy = policy.NewPolicy(
 ).WithDescription("Read-only ITAM access for organization viewers")
 
 // EmployeePolicy grants self-enrollment access to organization employees.
+// Employee-device list/get mirror core:employee-document:*: a dedicated
+// surface so employees can read their own devices without itam:device:list.
 var EmployeePolicy = policy.NewPolicy(
 	"itam:employee",
 	"ITAM Employee",
