@@ -44,11 +44,18 @@ export function useChangeLocale() {
     locale: UrlLocale,
     options: ChangeLocaleOptions = {},
   ) => {
+    // Persist and navigate without sequencing them: awaiting the mutation
+    // before navigation left a frame where Identity.locale already matched
+    // the new choice but the URL still had the old prefix, flashing the
+    // mismatch callout. updateLocale writes the store optimistically, and
+    // flushSync applies the URL change in the same paint.
     if (options.persist) {
-      await updateLocale(locale);
+      void updateLocale(locale);
     }
     if (locale !== currentLocale) {
-      void navigate(replaceLocaleInPathname(pathname, locale) + search);
+      void navigate(replaceLocaleInPathname(pathname, locale) + search, {
+        flushSync: true,
+      });
     }
   }, [currentLocale, navigate, pathname, search, updateLocale]);
 

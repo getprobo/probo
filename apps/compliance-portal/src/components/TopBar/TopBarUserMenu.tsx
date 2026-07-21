@@ -58,7 +58,6 @@ const topBarUserMenuFragment = graphql`
   fragment TopBarUserMenu_identity on Identity {
     fullName
     email
-    locale
   }
 `;
 
@@ -136,7 +135,12 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
               }}
             >
               {URL_LOCALES.map(code => (
-                <DropdownRadioItem key={code} value={code} disabled={isChangingLocale}>
+                <DropdownRadioItem
+                  key={code}
+                  value={code}
+                  closeOnClick
+                  disabled={isChangingLocale}
+                >
                   {URL_LOCALE_LABELS[code]}
                 </DropdownRadioItem>
               ))}
