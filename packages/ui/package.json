@@ -59,8 +59,8 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
-    "@vitest/browser": "4.1.9",
-    "@vitest/coverage-v8": "4.1.9",
+    "@vitest/browser": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.10",
     "playwright": "^1.55.1",
     "react": "^19.2.7",
     "react-docgen": "^8.0.3",
@@ -69,7 +69,7 @@
     "storybook": "^10.2.10",
     "typescript": "~6.0.3",
     "vite": "^8.1.2",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "react": "^19.2.7",
