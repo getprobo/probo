@@ -1241,7 +1241,11 @@ func (impl *Implm) runApiServer(
 	}
 
 	if len(impl.cfg.Api.ProxyProtocol.TrustedProxies) > 0 {
-		policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.Api.ProxyProtocol.TrustedProxies)
+		policy, err := proxyproto.PolicyFromRanges(
+			impl.cfg.Api.ProxyProtocol.TrustedProxies,
+			proxyproto.USE,
+			proxyproto.REJECT,
+		)
 		if err != nil {
 			span.RecordError(err)
 			return fmt.Errorf("cannot build proxy protocol policy: %w", err)
@@ -1402,7 +1406,11 @@ func (impl *Implm) runCompliancePortalServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
-				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies)
+				policy, err := proxyproto.PolicyFromRanges(
+					impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies,
+					proxyproto.USE,
+					proxyproto.REJECT,
+				)
 				if err != nil {
 					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
 				}
@@ -1493,7 +1501,11 @@ func (impl *Implm) runCompliancePortalServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
-				policy, err := proxyproto.ConnStrictWhiteListPolicy(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies)
+				policy, err := proxyproto.PolicyFromRanges(
+					impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies,
+					proxyproto.USE,
+					proxyproto.REJECT,
+				)
 				if err != nil {
 					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
 				}
