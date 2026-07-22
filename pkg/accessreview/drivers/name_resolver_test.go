@@ -61,6 +61,44 @@ func TestNameStatusError(t *testing.T) {
 	}
 }
 
+// TestNameResolversTerminalOnClientError guards the fix that makes the
+// grafana, metabase and tailscale name resolvers surface a permanent 4xx as
+// ErrTerminalNameResolution. Without it a revoked-credential source hot-loops
+// the source-name worker, which never marks such a source synced.
+func TestNameResolversTerminalOnClientError(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"message":"unauthorized"}`))
+		}),
+	)
+	t.Cleanup(srv.Close)
+
+	cases := []struct {
+		name     string
+		resolver NameResolver
+	}{
+		{name: "grafana", resolver: NewGrafanaNameResolver(srv.Client(), srv.URL)},
+		{name: "metabase", resolver: NewMetabaseNameResolver(srv.Client(), srv.URL)},
+		{name: "tailscale", resolver: NewTailscaleNameResolver(&http.Client{Transport: &hostRewriter{target: srv.URL}})},
+	}
+
+	for _, tc := range cases {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				_, err := tc.resolver.ResolveInstanceName(context.Background())
+				require.Error(t, err)
+				assert.ErrorIs(t, err, ErrTerminalNameResolution)
+			},
+		)
+	}
+}
+
 // hostRewriter redirects requests to the configured target host so that
 // resolvers with hardcoded production URLs (api.notion.com, etc.) can be
 // pointed at an httptest server.
