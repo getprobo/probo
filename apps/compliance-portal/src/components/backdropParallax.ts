@@ -24,14 +24,19 @@ import type { CSSProperties, PointerEvent } from "react";
 // pointer so the blur moves opposite the cursor, symmetric about center.
 const BACKDROP_PARALLAX_PX = 12;
 
-const BACKDROP_EASE = "transform 150ms ease-out";
+const BACKDROP_EASE_MS = 150;
+const BACKDROP_EASE = `transform ${BACKDROP_EASE_MS}ms ease-out`;
 
-// Set on the tracking surface while the pointer is over it so the first move
-// can ease in (avoids a jump when entering at an edge) while later moves stay
-// snappy.
+// Set on the tracking surface while the pointer is over it.
 const PARALLAX_ACTIVE = "data-backdrop-parallax";
 
+// Kept for BACKDROP_EASE_MS after enter so follow-up pointermoves do not flip
+// transition to none mid-ease (that was the edge-enter jump).
+const PARALLAX_EASING = "data-backdrop-parallax-easing";
+
 const BACKDROP_VARIANT = "data-backdrop-variant";
+
+const enterEaseTimeouts = new WeakMap<HTMLElement, number>();
 
 // Per-surface Figma specs. Both use a width-based square centered on the frame
 // (top/left 50% + translate -50%). Logo Tile overflows (~inset -42px on a
@@ -132,21 +137,49 @@ export function onBackdropPointerMove(event: PointerEvent<HTMLElement>) {
   const rect = surface.getBoundingClientRect();
   const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
-
-  // Ease from the frozen pose on enter; disable transition afterward so
-  // tracking stays live.
-  const entering = !surface.hasAttribute(PARALLAX_ACTIVE);
-  surface.setAttribute(PARALLAX_ACTIVE, "");
-  image.style.transition = entering ? BACKDROP_EASE : "none";
-  image.style.transform = backdropTransform(
+  const nextTransform = backdropTransform(
     -nx * BACKDROP_PARALLAX_PX,
     -ny * BACKDROP_PARALLAX_PX,
     backdropScale(frame),
   );
+
+  const entering = !surface.hasAttribute(PARALLAX_ACTIVE);
+  surface.setAttribute(PARALLAX_ACTIVE, "");
+
+  if (entering) {
+    surface.setAttribute(PARALLAX_EASING, "");
+    const previous = enterEaseTimeouts.get(surface);
+    if (previous != null) {
+      window.clearTimeout(previous);
+    }
+    enterEaseTimeouts.set(
+      surface,
+      window.setTimeout(() => {
+        surface.removeAttribute(PARALLAX_EASING);
+        enterEaseTimeouts.delete(surface);
+      }, BACKDROP_EASE_MS),
+    );
+
+    // Apply transition before changing transform so the browser interpolates
+    // from the frozen pose (same-frame transition+transform often snaps).
+    image.style.transition = BACKDROP_EASE;
+    void image.offsetWidth;
+  } else if (!surface.hasAttribute(PARALLAX_EASING)) {
+    image.style.transition = "none";
+  }
+
+  image.style.transform = nextTransform;
 }
 
-// Leave the blur where it is; only clear the active flag so the next enter can
+// Leave the blur where it is; only clear tracking flags so the next enter can
 // ease from that frozen pose instead of jumping.
 export function onBackdropPointerLeave(event: PointerEvent<HTMLElement>) {
-  event.currentTarget.removeAttribute(PARALLAX_ACTIVE);
+  const surface = event.currentTarget;
+  const previous = enterEaseTimeouts.get(surface);
+  if (previous != null) {
+    window.clearTimeout(previous);
+    enterEaseTimeouts.delete(surface);
+  }
+  surface.removeAttribute(PARALLAX_ACTIVE);
+  surface.removeAttribute(PARALLAX_EASING);
 }
