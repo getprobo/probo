@@ -189,10 +189,28 @@ export function onBackdropPointerMove(event: PointerEvent<HTMLElement>) {
   image.style.transform = nextTransform;
 }
 
-// Leave the blur where it is; only clear tracking flags so the next enter can
-// ease from that frozen pose instead of jumping.
+// Freeze the blur at its visible pose. Clearing flags alone is not enough:
+// during enter-ease, transition is still 150ms toward the last target, so the
+// image would keep sliding after leave unless we capture the computed
+// transform and disable the transition.
 export function onBackdropPointerLeave(event: PointerEvent<HTMLElement>) {
   const surface = event.currentTarget;
   clearEaseEnd(surface);
   surface.removeAttribute(PARALLAX_ACTIVE);
+
+  const frame = backdropFrame(surface);
+  if (frame == null) {
+    return;
+  }
+
+  const image = backdropImage(frame);
+  if (image == null) {
+    return;
+  }
+
+  const computed = getComputedStyle(image).transform;
+  image.style.transition = "none";
+  if (computed !== "none") {
+    image.style.transform = computed;
+  }
 }
