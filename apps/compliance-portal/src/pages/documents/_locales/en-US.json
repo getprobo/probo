@@ -25,6 +25,13 @@
     "getAccess": "Get Access",
     "requested": "Access requested"
   },
+  "selection": {
+    "count": "{{count}} selected",
+    "clear": "Clear selection",
+    "selectAll": "Select all",
+    "requestAccess": "Request Access ({{count}})",
+    "selectRow": "Select {{title}}"
+  },
   "empty": {
     "title": "No documents available",
     "description": "This compliance portal has not published any documents yet.",

@@ -22,6 +22,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
+import { useDocumentSelection } from "../_lib/DocumentSelectionContext";
 import { useRequestFileAccess } from "../_lib/useAccessRequest";
 
 import type { CompliancePortalFileListItem_file$key } from "./__generated__/CompliancePortalFileListItem_file.graphql";
@@ -50,6 +51,7 @@ export function CompliancePortalFileListItem({ fileKey }: CompliancePortalFileLi
   const localizedPath = useLocalizedPath();
   const file = useFragment(compliancePortalFileListItemFragment, fileKey);
   const { requestAccess, isRequesting } = useRequestFileAccess(file.id);
+  const { isSelected, toggle } = useDocumentSelection();
 
   return (
     <DocumentEntry
@@ -60,6 +62,8 @@ export function CompliancePortalFileListItem({ fileKey }: CompliancePortalFileLi
       viewHref={localizedPath(`/documents/${encodeURIComponent(file.alias ?? file.id)}`)}
       onGetAccess={requestAccess}
       isRequesting={isRequesting}
+      selected={isSelected(file.id)}
+      onSelectedChange={() => toggle(file.id)}
     />
   );
 }

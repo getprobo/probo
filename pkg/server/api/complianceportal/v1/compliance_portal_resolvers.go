@@ -1108,6 +1108,110 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 	}, nil
 }
 
+// RequestAccesses is the resolver for the requestAccesses field.
+func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.RequestAccessesInput) (*types.RequestAccessesResultPayload, error) {
+	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
+	visitorService := r.visitor
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
+	}
+
+	// Coerce to non-nil slices: an empty list means "none of that type", whereas
+	// a nil slice is interpreted by RequestPortalAccess as "all of that type".
+	documentIDs := input.DocumentIds
+	if documentIDs == nil {
+		documentIDs = []gid.GID{}
+	}
+
+	reportIDs := input.ReportIds
+	if reportIDs == nil {
+		reportIDs = []gid.GID{}
+	}
+
+	compliancePortalFileIDs := input.CompliancePortalFileIds
+	if compliancePortalFileIDs == nil {
+		compliancePortalFileIDs = []gid.GID{}
+	}
+
+	// Load and tenant-check every target before requesting so a foreign or
+	// invisible GID is rejected before any access row is written (mirrors the
+	// per-resource resolvers, which guard with a load ahead of the request).
+	payload := &types.RequestAccessesResultPayload{
+		Documents: make([]*types.Document, 0, len(documentIDs)),
+		Audits:    make([]*types.Audit, 0, len(reportIDs)),
+		Files:     make([]*types.CompliancePortalFile, 0, len(compliancePortalFileIDs)),
+	}
+
+	for _, documentID := range documentIDs {
+		document, err := visitorService.GetDocument(ctx, scope, compliancePortal.OrganizationID, documentID)
+		if err != nil {
+			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "document %q not found", documentID)
+			}
+
+			if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
+				return nil, gqlutils.NotFoundf(ctx, "document %q not found", documentID)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		payload.Documents = append(payload.Documents, types.NewDocument(document))
+	}
+
+	for _, reportID := range reportIDs {
+		audit, err := visitorService.GetAuditByReportFileID(ctx, scope, reportID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "report %q not found", reportID)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		payload.Audits = append(payload.Audits, types.NewAudit(audit))
+	}
+
+	for _, fileID := range compliancePortalFileIDs {
+		portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.OrganizationID, fileID)
+		if err != nil {
+			if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
+				return nil, gqlutils.NotFoundf(ctx, "compliance portal file %q not found", fileID)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load compliance portal file", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		payload.Files = append(payload.Files, types.NewCompliancePortalFile(portalFile))
+	}
+
+	if _, err := visitorService.RequestPortalAccess(
+		ctx, scope,
+		&visitor.PortalAccessRequest{
+			CompliancePortalID:      compliancePortal.ID,
+			IdentityID:              identity.ID,
+			DocumentIDs:             documentIDs,
+			ReportIDs:               reportIDs,
+			CompliancePortalFileIDs: compliancePortalFileIDs,
+		},
+	); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot request accesses", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return payload, nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *types.SubprocessorConnection) (int, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)

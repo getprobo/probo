@@ -25,6 +25,13 @@
     "getAccess": "Uzyskaj dostęp",
     "requested": "Poproszono o dostęp"
   },
+  "selection": {
+    "count": "Zaznaczono: {{count}}",
+    "clear": "Wyczyść zaznaczenie",
+    "selectAll": "Zaznacz wszystko",
+    "requestAccess": "Poproś o dostęp ({{count}})",
+    "selectRow": "Zaznacz {{title}}"
+  },
   "empty": {
     "title": "Brak dostępnych dokumentów",
     "description": "Ten Portal Zgodności nie opublikował jeszcze żadnych dokumentów.",

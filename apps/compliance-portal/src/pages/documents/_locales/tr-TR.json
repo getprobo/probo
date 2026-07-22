@@ -25,6 +25,13 @@
     "getAccess": "Erişim İste",
     "requested": "Erişim talep edildi"
   },
+  "selection": {
+    "count": "{{count}} seçildi",
+    "clear": "Seçimi temizle",
+    "selectAll": "Tümünü seç",
+    "requestAccess": "Erişim İste ({{count}})",
+    "selectRow": "{{title}} öğesini seç"
+  },
   "empty": {
     "title": "Kullanılabilir belge yok",
     "description": "Bu Uyumluluk Portalı henüz herhangi bir belge yayınlamadı.",

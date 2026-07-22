@@ -25,6 +25,13 @@
     "getAccess": "Obter Acesso",
     "requested": "Acesso solicitado"
   },
+  "selection": {
+    "count": "{{count}} selecionados",
+    "clear": "Limpar seleção",
+    "selectAll": "Selecionar tudo",
+    "requestAccess": "Solicitar acesso ({{count}})",
+    "selectRow": "Selecionar {{title}}"
+  },
   "empty": {
     "title": "Nenhum documento disponível",
     "description": "Este portal de conformidade ainda não publicou documentos.",

@@ -25,6 +25,13 @@
     "getAccess": "액세스 요청",
     "requested": "액세스가 요청되었습니다"
   },
+  "selection": {
+    "count": "{{count}}개 선택됨",
+    "clear": "선택 해제",
+    "selectAll": "모두 선택",
+    "requestAccess": "액세스 요청 ({{count}})",
+    "selectRow": "{{title}} 선택"
+  },
   "empty": {
     "title": "이용 가능한 문서가 없습니다",
     "description": "이 컴플라이언스 포털은 아직 문서를 공개하지 않았습니다.",

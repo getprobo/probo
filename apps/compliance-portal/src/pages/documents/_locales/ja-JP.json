@@ -25,6 +25,13 @@
     "getAccess": "アクセスをリクエスト",
     "requested": "アクセスをリクエスト済み"
   },
+  "selection": {
+    "count": "{{count}} 件選択中",
+    "clear": "選択をクリア",
+    "selectAll": "すべて選択",
+    "requestAccess": "アクセスをリクエスト ({{count}})",
+    "selectRow": "{{title}} を選択"
+  },
   "empty": {
     "title": "利用可能なドキュメントはありません",
     "description": "このコンプライアンスポータルでは、まだドキュメントが公開されていません。",

@@ -35,7 +35,10 @@ import { CompliancePortalFileListItem } from "./_components/CompliancePortalFile
 import { DocumentListItem } from "./_components/DocumentListItem";
 import { DocumentSection } from "./_components/DocumentSection";
 import { DocumentsEmpty } from "./_components/DocumentsEmpty";
+import { DocumentsSelectionBar } from "./_components/DocumentsSelectionBar";
 import { DocumentsToolbar } from "./_components/DocumentsToolbar";
+import type { DocumentSelectionEntry } from "./_lib/DocumentSelectionContext";
+import { DocumentSelectionProvider } from "./_lib/DocumentSelectionContext";
 import { toQueryVariables } from "./_lib/toQueryVariables";
 import { useDocumentTab } from "./_lib/useDocumentTab";
 import { documentsLayout } from "./variants";
@@ -56,6 +59,10 @@ const documentsPageFragment = graphql`
           node {
             id
             documentType
+            isUserAuthorized
+            access {
+              status
+            }
             ...DocumentListItem_document
           }
         }
@@ -66,6 +73,10 @@ const documentsPageFragment = graphql`
             id
             reportFile {
               id
+              isUserAuthorized
+              access {
+                status
+              }
             }
             ...AuditReportListItem_audit
           }
@@ -76,6 +87,10 @@ const documentsPageFragment = graphql`
           node {
             id
             category
+            isUserAuthorized
+            access {
+              status
+            }
             ...CompliancePortalFileListItem_file
           }
         }
@@ -149,6 +164,36 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
 
   const total = documentNodes.length + fileNodes.length + auditNodes.length;
 
+  // A row is "locked" (an access request would do something) when the viewer is
+  // not authorized and no request is already pending. Computed at page level so
+  // the selection bar can count locked rows without reaching into each fragment.
+  const isLocked = (isUserAuthorized: boolean, status: string | null | undefined) =>
+    !isUserAuthorized && status !== "REQUESTED";
+
+  const selectionEntries: DocumentSelectionEntry[] = [
+    ...documentNodes.map(node => ({
+      id: node.id,
+      kind: "Document" as const,
+      locked: isLocked(node.isUserAuthorized, node.access?.status),
+    })),
+    ...auditNodes.flatMap((node): DocumentSelectionEntry[] => {
+      const report = node.reportFile;
+      if (report == null) {
+        return [];
+      }
+      return [{
+        id: report.id,
+        kind: "AuditReport",
+        locked: isLocked(report.isUserAuthorized, report.access?.status),
+      }];
+    }),
+    ...fileNodes.map(node => ({
+      id: node.id,
+      kind: "CompliancePortalFile" as const,
+      locked: isLocked(node.isUserAuthorized, node.access?.status),
+    })),
+  ];
+
   const documentGroups = Object.entries(groupBy(documentNodes, node => node.documentType))
     .map(([key, nodes]) => ({ key, nodes }))
     .sort((a, b) => t(`types.${a.key}`).localeCompare(t(`types.${b.key}`)));
@@ -159,7 +204,7 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
   const { page, results } = documentsLayout({ busy: isRefetching });
 
   return (
-    <>
+    <DocumentSelectionProvider resetKey={tab}>
       <PageHeader title={t("title")} count={total} flushBottomSpace>
         <DocumentsToolbar />
       </PageHeader>
@@ -200,6 +245,7 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
           </ListErrorBoundary>
         </div>
       </div>
-    </>
+      <DocumentsSelectionBar entries={selectionEntries} />
+    </DocumentSelectionProvider>
   );
 }

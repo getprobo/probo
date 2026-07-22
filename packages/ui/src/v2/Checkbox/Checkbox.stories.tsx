@@ -18,22 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { tv } from "tailwind-variants/lite";
+import type { Meta, StoryObj } from "@storybook/react";
 
-// Documents page shell: a centered content column below the header band. The
-// `busy` variant dims the current results while a filtered slice refetches.
-export const documentsLayout = tv({
-  slots: {
-    page: "flex w-full flex-col items-center px-8 pt-8 pb-28 max-md:px-4",
-    results: "flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150",
+import { Checkbox } from "./Checkbox";
+import { CheckboxSkeleton } from "./CheckboxSkeleton";
+
+export default {
+  title: "v2/Checkbox",
+  component: Checkbox,
+  args: {
+    "aria-label": "Checkbox",
   },
-  variants: {
-    busy: {
-      true: { results: "opacity-60" },
-      false: {},
-    },
-  },
-  defaultVariants: {
-    busy: false,
-  },
-});
+} satisfies Meta<typeof Checkbox>;
+
+type Story = StoryObj<typeof Checkbox>;
+
+export const Playground: Story = {};
+
+export const States: Story = {
+  render: () => (
+    <div className="flex items-center gap-4">
+      <Checkbox aria-label="Unchecked" />
+      <Checkbox aria-label="Checked" defaultChecked />
+      <Checkbox aria-label="Indeterminate" indeterminate />
+      <Checkbox aria-label="Disabled" disabled />
+      <Checkbox aria-label="Disabled checked" disabled defaultChecked />
+    </div>
+  ),
+};
+
+export const Skeleton: Story = {
+  render: () => (
+    <div className="flex items-center gap-4">
+      <CheckboxSkeleton />
+    </div>
+  ),
+};

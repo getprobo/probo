@@ -25,6 +25,13 @@
     "getAccess": "获取访问权限",
     "requested": "已申请访问权限"
   },
+  "selection": {
+    "count": "已选择 {{count}} 项",
+    "clear": "清除选择",
+    "selectAll": "全选",
+    "requestAccess": "申请访问权限 ({{count}})",
+    "selectRow": "选择 {{title}}"
+  },
   "empty": {
     "title": "暂无可用文档",
     "description": "此合规门户尚未发布任何文档。",

@@ -22,6 +22,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
+import { useDocumentSelection } from "../_lib/DocumentSelectionContext";
 import { useRequestReportAccess } from "../_lib/useAccessRequest";
 
 import type { AuditReportListItem_audit$key } from "./__generated__/AuditReportListItem_audit.graphql";
@@ -58,10 +59,13 @@ export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
   // Hook must run unconditionally; the empty id is never used when there is no
   // report file (the component returns null below).
   const { requestAccess, isRequesting } = useRequestReportAccess(report?.id ?? "");
+  const { isSelected, toggle } = useDocumentSelection();
 
   if (report == null) {
     return null;
   }
+
+  const reportId = report.id;
 
   return (
     <DocumentEntry
@@ -72,6 +76,8 @@ export function AuditReportListItem({ auditKey }: AuditReportListItemProps) {
       viewHref={localizedPath(`/documents/${encodeURIComponent(report.alias ?? report.id)}`)}
       onGetAccess={requestAccess}
       isRequesting={isRequesting}
+      selected={isSelected(reportId)}
+      onSelectedChange={() => toggle(reportId)}
     />
   );
 }
