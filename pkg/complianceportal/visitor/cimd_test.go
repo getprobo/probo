@@ -76,7 +76,7 @@ func TestBuildClientMetadataDocument(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, "https://acme.example.com/.well-known/oauth-client-metadata", doc.ClientID)
-	assert.Equal(t, "Compliance at Acme.", doc.ClientName)
+	assert.Equal(t, "Acme", doc.ClientName)
 	assert.Equal(t, []string{"https://acme.example.com/callback"}, doc.RedirectURIs)
 	assert.Equal(t, "https://acme.example.com", doc.ClientURI)
 	assert.Equal(t, VisitorOAuthScope, doc.Scope)

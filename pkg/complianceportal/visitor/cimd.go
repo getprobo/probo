@@ -85,7 +85,7 @@ func BuildClientMetadataDocument(
 
 	doc := oauth2.ClientMetadataDocument{
 		ClientID:                clientID,
-		ClientName:              "Compliance at " + portal.EntityName + ".",
+		ClientName:              portal.EntityName,
 		ClientURI:               portalRootURL,
 		RedirectURIs:            []string{redirectURI},
 		TokenEndpointAuthMethod: "none",
