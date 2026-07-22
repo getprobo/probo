@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.203.0] - 2026-07-22
+
+### Changed
+
+- `prb compliance-portal update` renamed the `--title` flag to `--entity-name`, matching the compliance portal's short entity-name field
+
 ## [0.202.0] - 2026-07-21
 
 ### Added
