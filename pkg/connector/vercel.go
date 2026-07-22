@@ -77,7 +77,7 @@ func FetchVercelUser(ctx context.Context, client *http.Client) (VercelUser, erro
 // one-shot SSRF-protected client and applies the freshly-minted access
 // token as a Bearer header on the request. The OAuth callback handler
 // uses the returned UID as a synthetic TeamID when the install targets
-// a personal account (no team_id surfaced by the callback).
+// a personal account (no teamId surfaced by the callback).
 func FetchVercelUserID(ctx context.Context, accessToken string) (string, error) {
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()

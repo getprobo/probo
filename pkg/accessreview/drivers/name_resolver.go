@@ -206,6 +206,9 @@ func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (strin
 
 	q := cfURL.Query()
 	q.Set("page", "1")
+	// Cloudflare requires per_page in the range 5..50; per_page=1 is rejected
+	// with a 400 (which, before terminal classification, caused a 400 storm).
+	// Do not "optimize" this back down to 1.
 	q.Set("per_page", "50")
 	cfURL.RawQuery = q.Encode()
 
