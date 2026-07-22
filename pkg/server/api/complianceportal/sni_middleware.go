@@ -30,6 +30,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
@@ -51,6 +52,13 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 					return
 				}
 
+				httpserver.LoggerFromContext(ctx).ErrorCtx(
+					ctx,
+					"cannot get compliance portal by domain name",
+					log.Error(err),
+					log.String("server_name", r.TLS.ServerName),
+				)
+
 				httpserver.RenderJSON(
 					w,
 					http.StatusInternalServerError,
@@ -70,6 +78,13 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 			if !strings.HasPrefix(r.URL.Path, "/.well-known/") {
 				canonicalHost, err := visitorSvc.GetPortalEffectiveCanonicalHost(ctx, compliancePage.ID)
 				if err != nil {
+					httpserver.LoggerFromContext(ctx).ErrorCtx(
+						ctx,
+						"cannot get compliance portal canonical host",
+						log.Error(err),
+						log.String("compliance_portal_id", compliancePage.ID.String()),
+					)
+
 					httpserver.RenderJSON(
 						w,
 						http.StatusInternalServerError,
