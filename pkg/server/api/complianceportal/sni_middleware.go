@@ -21,7 +21,6 @@
 package complianceportal
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/url"
@@ -115,21 +114,15 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 			// Origin only — consumers append their own paths (SEO, sitemap,
 			// robots, brand assets, OAuth). Including r.URL.Path here would
 			// duplicate the route (e.g. /fr/documents/fr/documents).
-			baseURL := &url.URL{
+			baseURL := (&url.URL{
 				Host:   r.Host,
 				Scheme: "https",
-			}
-			baseURLString := baseURL.String()
-
-			ctx = context.WithValue(
-				ctx,
-				compliancePortalBaseURLKey,
-				&baseURLString,
-			)
+			}).String()
+			ctx = ContextWithCompliancePortalBaseURL(ctx, baseURL)
 			r = r.WithContext(ctx)
 
 			if compliancePage.Active {
-				ctx = context.WithValue(ctx, compliancePortalKey, compliancePage)
+				ctx = ContextWithCompliancePortal(ctx, compliancePage)
 				next.ServeHTTP(w, r.WithContext(ctx))
 
 				return

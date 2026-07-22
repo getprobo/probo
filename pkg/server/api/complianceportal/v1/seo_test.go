@@ -26,23 +26,35 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	complianceportal_v1 "go.probo.inc/probo/pkg/server/api/complianceportal/v1"
 )
+
+func requestWithPortalOrigin(t *testing.T, rawURL, origin string) *http.Request {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	require.NoError(t, err)
+
+	if origin != "" {
+		req = req.WithContext(
+			complianceportal.ContextWithCompliancePortalBaseURL(req.Context(), origin),
+		)
+	}
+
+	return req
+}
 
 func TestSEOFromRequest(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequest(
-		http.MethodGet,
+	req := requestWithPortalOrigin(
+		t,
 		"https://acme.probopage.localhost/fr/documents",
-		nil,
-	)
-	require.NoError(t, err)
-
-	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(
-		req,
 		"https://acme.probopage.localhost",
 	)
+
+	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(req)
 	assert.Equal(t, "fr", lang)
 	assert.Equal(t, "https://acme.probopage.localhost/fr/documents", canonical)
 	require.NotEmpty(t, hreflang)
@@ -69,78 +81,22 @@ func TestSEOFromRequest(t *testing.T) {
 func TestSEOFromRequest_EscapesPathSegments(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequest(
-		http.MethodGet,
+	req := requestWithPortalOrigin(
+		t,
 		"https://acme.probopage.localhost/en/docs/foo%20bar",
-		nil,
-	)
-	require.NoError(t, err)
-
-	_, canonical, _ := complianceportal_v1.SEOFromRequest(
-		req,
 		"https://acme.probopage.localhost",
 	)
+
+	_, canonical, _ := complianceportal_v1.SEOFromRequest(req)
 	assert.Equal(t, "https://acme.probopage.localhost/en/docs/foo%20bar", canonical)
 }
 
-func TestSEOFromRequest_StripsPathFromBaseURL(t *testing.T) {
+func TestSEOFromRequest_MissingOriginOmitsLinks(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequest(
-		http.MethodGet,
-		"https://trust.acme.com/fr/documents",
-		nil,
-	)
-	require.NoError(t, err)
+	req := requestWithPortalOrigin(t, "https://trust.acme.com/fr/documents", "")
 
-	// SNI middleware once stored scheme+host+path; SEO must not double it.
-	_, canonical, hreflang := complianceportal_v1.SEOFromRequest(
-		req,
-		"https://trust.acme.com/fr/documents",
-	)
-	assert.Equal(t, "https://trust.acme.com/fr/documents", canonical)
-
-	var enHref string
-
-	for _, link := range hreflang {
-		if link.Lang == "en" {
-			enHref = link.Href
-		}
-	}
-
-	assert.Equal(t, "https://trust.acme.com/en/documents", enHref)
-}
-
-func TestSEOFromRequest_EmptyBaseURLOmitsLinks(t *testing.T) {
-	t.Parallel()
-
-	req, err := http.NewRequest(
-		http.MethodGet,
-		"https://trust.acme.com/fr/documents",
-		nil,
-	)
-	require.NoError(t, err)
-
-	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(req, "")
-	assert.Equal(t, "fr", lang)
-	assert.Empty(t, canonical)
-	assert.Nil(t, hreflang)
-}
-
-func TestSEOFromRequest_RelativeBaseURLOmitsLinks(t *testing.T) {
-	t.Parallel()
-
-	req, err := http.NewRequest(
-		http.MethodGet,
-		"https://trust.acme.com/fr/documents",
-		nil,
-	)
-	require.NoError(t, err)
-
-	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(
-		req,
-		"/fr/documents",
-	)
+	lang, canonical, hreflang := complianceportal_v1.SEOFromRequest(req)
 	assert.Equal(t, "fr", lang)
 	assert.Empty(t, canonical)
 	assert.Nil(t, hreflang)

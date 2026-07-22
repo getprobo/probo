@@ -20,7 +20,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/baseurl"
 	visitor "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
@@ -140,19 +139,15 @@ func compliancePageHeadData() HeadDataFunc {
 			description = *tc.Description
 		}
 
-		headData := HeadData{
-			Title:       tc.Title,
-			Description: description,
-		}
+		htmlLang, canonical, hreflang := SEOFromRequest(r)
 
-		// Canonical / hreflang / og:url must be absolute. Without a portal
-		// origin in context, skip them rather than emit relative paths.
-		if pageBase := ref.UnrefOrZero(compliancePageBaseURL); pageBase != "" {
-			htmlLang, canonical, hreflang := SEOFromRequest(r, pageBase)
-			headData.HTMLLang = htmlLang
-			headData.OGURL = canonical
-			headData.CanonicalURL = canonical
-			headData.Hreflang = hreflang
+		headData := HeadData{
+			Title:        tc.Title,
+			Description:  description,
+			HTMLLang:     htmlLang,
+			OGURL:        canonical,
+			CanonicalURL: canonical,
+			Hreflang:     hreflang,
 		}
 
 		if tc.LogoFileID != nil && compliancePageBaseURL != nil {

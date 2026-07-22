@@ -38,7 +38,17 @@ func CompliancePortalFromContext(ctx context.Context) *coredata.CompliancePortal
 	return page
 }
 
+func ContextWithCompliancePortal(ctx context.Context, page *coredata.CompliancePortal) context.Context {
+	return context.WithValue(ctx, compliancePortalKey, page)
+}
+
 func CompliancePortalBaseURLFromContext(ctx context.Context) *string {
 	page, _ := ctx.Value(compliancePortalBaseURLKey).(*string)
 	return page
+}
+
+// ContextWithCompliancePortalBaseURL stores the portal origin (scheme://host).
+// Callers must not include a path — consumers append their own routes.
+func ContextWithCompliancePortalBaseURL(ctx context.Context, baseURL string) context.Context {
+	return context.WithValue(ctx, compliancePortalBaseURLKey, &baseURL)
 }
