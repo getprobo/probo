@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+	"golang.org/x/crypto/acme"
 )
 
 const (
@@ -56,16 +57,26 @@ const (
 )
 
 type (
-	provisionHandler struct {
-		pg                *pg.Client
-		acmeService       *ACMEService
-		encryptionKey     cipher.EncryptionKey
+	provisionCore struct {
+		pg          *pg.Client
+		acmeService *ACMEService
+		logger      *log.Logger
+		tracer      trace.Tracer
+	}
+
+	beginChallengeHandler struct {
+		provisionCore
+
 		cnameTarget       string
 		caaIssuerDomain   string
 		resolverAddr      string
 		managedBaseDomain string
-		logger            *log.Logger
-		tracer            trace.Tracer
+	}
+
+	pollOrderHandler struct {
+		provisionCore
+
+		encryptionKey cipher.EncryptionKey
 	}
 
 	provisioningOutcome struct {
@@ -77,14 +88,14 @@ type (
 )
 
 var (
-	_ worker.Handler[coredata.Certificate] = (*provisionHandler)(nil)
-	_ worker.StaleRecoverer                = (*provisionHandler)(nil)
+	_ worker.Handler[coredata.Certificate] = (*beginChallengeHandler)(nil)
+	_ worker.Handler[coredata.Certificate] = (*pollOrderHandler)(nil)
+	_ worker.StaleRecoverer                = (*pollOrderHandler)(nil)
 )
 
-func NewProvisionWorker(
+func NewBeginChallengeWorker(
 	pgClient *pg.Client,
 	acmeService *ACMEService,
-	encryptionKey cipher.EncryptionKey,
 	cnameTarget string,
 	caaIssuerDomain string,
 	resolverAddr string,
@@ -92,16 +103,17 @@ func NewProvisionWorker(
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.Certificate] {
-	h := &provisionHandler{
-		pg:                pgClient,
-		acmeService:       acmeService,
-		encryptionKey:     encryptionKey,
+	h := &beginChallengeHandler{
+		provisionCore: provisionCore{
+			pg:          pgClient,
+			acmeService: acmeService,
+			logger:      logger,
+			tracer:      otel.Tracer(tracerName),
+		},
 		cnameTarget:       cnameTarget,
 		caaIssuerDomain:   caaIssuerDomain,
 		resolverAddr:      resolverAddr,
 		managedBaseDomain: managedBaseDomain,
-		logger:            logger,
-		tracer:            otel.Tracer(tracerName),
 	}
 
 	opts = append(opts, worker.WithMaxConcurrency(1))
@@ -114,7 +126,34 @@ func NewProvisionWorker(
 	)
 }
 
-func (h *provisionHandler) Claim(ctx context.Context) (coredata.Certificate, error) {
+func NewPollOrderWorker(
+	pgClient *pg.Client,
+	acmeService *ACMEService,
+	encryptionKey cipher.EncryptionKey,
+	logger *log.Logger,
+	opts ...worker.Option,
+) *worker.Worker[coredata.Certificate] {
+	h := &pollOrderHandler{
+		provisionCore: provisionCore{
+			pg:          pgClient,
+			acmeService: acmeService,
+			logger:      logger,
+			tracer:      otel.Tracer(tracerName),
+		},
+		encryptionKey: encryptionKey,
+	}
+
+	opts = append(opts, worker.WithMaxConcurrency(1))
+
+	return worker.New(
+		"certificate-poll-worker",
+		h,
+		logger,
+		opts...,
+	)
+}
+
+func (h *beginChallengeHandler) Claim(ctx context.Context) (coredata.Certificate, error) {
 	if h.acmeService.InCooldown() {
 		return coredata.Certificate{}, worker.ErrNoTask
 	}
@@ -124,7 +163,7 @@ func (h *provisionHandler) Claim(ctx context.Context) (coredata.Certificate, err
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := certificate.LoadNextForProvisioningForUpdateSkipLocked(ctx, tx, provisioningPollLease); err != nil {
+			if err := certificate.LoadNextForBeginChallengeForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
 			}
 
@@ -148,24 +187,10 @@ func (h *provisionHandler) Claim(ctx context.Context) (coredata.Certificate, err
 	return certificate, nil
 }
 
-func (h *provisionHandler) Process(ctx context.Context, certificate coredata.Certificate) error {
+func (h *beginChallengeHandler) Process(ctx context.Context, certificate coredata.Certificate) error {
 	ctx, cancel := context.WithTimeout(ctx, processTickTimeout)
 	defer cancel()
 
-	switch certificate.Status {
-	case coredata.CertificateStatusPending, coredata.CertificateStatusRenewing:
-		return h.processBeginChallenge(ctx, certificate)
-	case coredata.CertificateStatusProvisioning:
-		return h.processPollOrder(ctx, certificate)
-	default:
-		return nil
-	}
-}
-
-func (h *provisionHandler) processBeginChallenge(
-	ctx context.Context,
-	certificate coredata.Certificate,
-) error {
 	ctx, span := h.tracer.Start(ctx, "certmanager.create_order")
 	defer span.End()
 
@@ -250,7 +275,7 @@ func (h *provisionHandler) processBeginChallenge(
 // once any competing transaction commits; a genuinely deleted row is the only
 // no-op. It reports whether the row was persisted (false when the row is gone or
 // has moved on to another status).
-func (h *provisionHandler) persistChallenge(
+func (h *beginChallengeHandler) persistChallenge(
 	ctx context.Context,
 	certificate coredata.Certificate,
 	challenge *HTTPChallenge,
@@ -299,7 +324,201 @@ func (h *provisionHandler) persistChallenge(
 	return persisted, nil
 }
 
-func (h *provisionHandler) processPollOrder(
+func (h *beginChallengeHandler) loadSkipDNSChecks(ctx context.Context, hostname string) (bool, error) {
+	var skip bool
+
+	err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			skip, err = h.skipsDNSChecks(ctx, conn, hostname)
+
+			return err
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return skip, nil
+}
+
+func (h *beginChallengeHandler) checkDNSConfiguration(ctx context.Context, hostname string) error {
+	customerFQDN := hostname
+	if !strings.HasSuffix(customerFQDN, ".") {
+		customerFQDN = customerFQDN + "."
+	}
+
+	expectedFQDN := h.cnameTarget
+	if !strings.HasSuffix(expectedFQDN, ".") {
+		expectedFQDN = expectedFQDN + "."
+	}
+
+	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: customerFQDN, Class: dns.ClassINET}}}
+
+	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
+	defer cancel()
+
+	client := dns.NewClient()
+
+	resp, _, err := client.Exchange(dnsCtx, msg, "udp", h.resolverAddr)
+	if err != nil {
+		return fmt.Errorf("cannot exchange dns message: %w", err)
+	}
+
+	if len(resp.Answer) == 0 {
+		return fmt.Errorf("no cname records found for domain %q", hostname)
+	}
+
+	if len(resp.Answer) > 1 {
+		return fmt.Errorf("multiple cname records found for domain %q", hostname)
+	}
+
+	resolvedRecord, ok := resp.Answer[0].(*dns.CNAME)
+	if !ok {
+		return fmt.Errorf("first answer is not a cname record for domain %q", hostname)
+	}
+
+	if !strings.EqualFold(expectedFQDN, resolvedRecord.Target) {
+		return fmt.Errorf(
+			"cname target mismatch: domain %q resolves to %q, expected %q",
+			hostname,
+			resolvedRecord.Target,
+			expectedFQDN,
+		)
+	}
+
+	return nil
+}
+
+func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname string) error {
+	fqdn := hostname
+	if !strings.HasSuffix(fqdn, ".") {
+		fqdn = fqdn + "."
+	}
+
+	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+	msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
+
+	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
+	defer cancel()
+
+	client := dns.NewClient()
+
+	resp, _, err := client.Exchange(
+		dnsCtx,
+		msg,
+		"udp",
+		h.resolverAddr,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
+	}
+
+	var caaRecords []*dns.CAA
+
+	for _, rr := range resp.Answer {
+		if caa, ok := rr.(*dns.CAA); ok {
+			caaRecords = append(caaRecords, caa)
+		}
+	}
+
+	if len(caaRecords) == 0 {
+		return nil
+	}
+
+	for _, caa := range caaRecords {
+		if caa.Tag == "issue" {
+			issuer, _, _ := strings.Cut(caa.Value, ";")
+			if strings.EqualFold(strings.TrimSpace(issuer), h.caaIssuerDomain) {
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf(
+		"%w: domain %q by %q",
+		ErrCAANotPermitted,
+		hostname,
+		h.caaIssuerDomain,
+	)
+}
+
+func (h *beginChallengeHandler) skipsDNSChecks(
+	ctx context.Context,
+	conn pg.Querier,
+	hostname string,
+) (bool, error) {
+	if h.managedBaseDomain == "" {
+		return false, nil
+	}
+
+	suffix := "." + h.managedBaseDomain
+	if hostname != h.managedBaseDomain && !strings.HasSuffix(hostname, suffix) {
+		return false, nil
+	}
+
+	domain := &coredata.CustomDomain{}
+
+	err := domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), hostname)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return true, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("cannot load custom domain: %w", err)
+	}
+
+	return domain.Managed, nil
+}
+
+func (h *pollOrderHandler) Claim(ctx context.Context) (coredata.Certificate, error) {
+	// Deliberately NOT gated by acmeService.InCooldown(). A cooldown is entered
+	// when minting a NEW order hits the CA's rate limit (see
+	// beginChallengeHandler.Claim); advancing an order already in flight only
+	// polls/finalizes that specific order and does not mint new ones. Gating
+	// this claim too would stall every other tenant's in-flight provisioning
+	// for up to the cooldown duration just because one unrelated hostname
+	// tripped a limit.
+	var certificate coredata.Certificate
+
+	if err := h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := certificate.LoadNextForPollOrderForUpdateSkipLocked(ctx, tx, provisioningPollLease); err != nil {
+				return err
+			}
+
+			now := time.Now()
+			certificate.SSLLastAttemptAt = &now
+
+			if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot stamp certificate claim: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.Certificate{}, worker.ErrNoTask
+		}
+
+		return coredata.Certificate{}, err
+	}
+
+	return certificate, nil
+}
+
+func (h *pollOrderHandler) Process(ctx context.Context, certificate coredata.Certificate) error {
+	ctx, cancel := context.WithTimeout(ctx, processTickTimeout)
+	defer cancel()
+
+	return h.processPollOrder(ctx, certificate)
+}
+
+func (h *pollOrderHandler) processPollOrder(
 	ctx context.Context,
 	certificate coredata.Certificate,
 ) error {
@@ -337,16 +556,21 @@ func (h *provisionHandler) processPollOrder(
 	case OrderPollStatusNotReady:
 		// Re-accept best-effort: if a prior tick committed the challenge but its
 		// Accept never reached the CA, the order would otherwise stay pending
-		// forever since this path only polls. Re-accepting a pending challenge
-		// starts validation; one already processing is a no-op at the CA.
-		if err := h.acmeService.AcceptHTTPChallenge(ctx, challenge); err != nil {
-			h.logger.WarnCtx(
-				ctx,
-				"re-accepting HTTP challenge for not-ready order failed, will poll again",
-				log.String("hostname", certificate.Hostname),
-				log.String("certificate_id", certificate.ID.String()),
-				log.Error(err),
-			)
+		// forever since this path only polls. Only do this while the order is
+		// still PENDING: once it has moved to PROCESSING, the CA has already
+		// registered the Accept and rejects a second one with
+		// malformed/"Only pending challenges may be validated" (RFC 8555), so
+		// re-accepting there is not a no-op and just produces noisy failures.
+		if poll.Order.Status == acme.StatusPending {
+			if err := h.acmeService.AcceptHTTPChallenge(ctx, challenge); err != nil {
+				h.logger.WarnCtx(
+					ctx,
+					"re-accepting HTTP challenge for not-ready order failed, will poll again",
+					log.String("hostname", certificate.Hostname),
+					log.String("certificate_id", certificate.ID.String()),
+					log.Error(err),
+				)
+			}
 		}
 
 		h.logger.InfoCtx(
@@ -382,7 +606,7 @@ func (h *provisionHandler) processPollOrder(
 
 // abandonRecoveredValidOrder clears the ACME order state and returns the row to
 // PENDING so the next tick mints a fresh order (and a matching private key).
-func (h *provisionHandler) abandonRecoveredValidOrder(
+func (h *pollOrderHandler) abandonRecoveredValidOrder(
 	ctx context.Context,
 	span trace.Span,
 	certificate coredata.Certificate,
@@ -427,7 +651,7 @@ func (h *provisionHandler) abandonRecoveredValidOrder(
 	)
 }
 
-func (h *provisionHandler) issueCertificate(
+func (h *pollOrderHandler) issueCertificate(
 	ctx context.Context,
 	certificate coredata.Certificate,
 	challenge *HTTPChallenge,
@@ -520,7 +744,7 @@ func (h *provisionHandler) issueCertificate(
 	)
 }
 
-func (h *provisionHandler) persistFailure(
+func (h *provisionCore) persistFailure(
 	ctx context.Context,
 	certificateID gid.GID,
 	provisionErr error,
@@ -591,9 +815,9 @@ func isImmediateRetryRateLimit(err error) bool {
 //   - Normal transient errors: ssl_retry_count increments; at maxProvisioningRetries
 //     the domain becomes FAILED.
 //   - Rate limits: never increment ssl_retry_count and never mark FAILED; the
-//     in-process ACME cooldown gates Claim. When an order URL is present
-//     it is preserved so the next tick resumes polling instead of minting a new
-//     order.
+//     in-process ACME cooldown gates the begin-challenge worker's Claim. When an
+//     order URL is present it is preserved so the next tick resumes polling
+//     instead of minting a new order.
 //
 // DNS/CAA misconfig is intentionally non-terminal so customer DNS fixes
 // auto-recover on the claim backoff schedule.
@@ -654,7 +878,7 @@ func decideProvisioningOutcome(
 	}
 }
 
-func (h *provisionHandler) RecoverStale(ctx context.Context) error {
+func (h *pollOrderHandler) RecoverStale(ctx context.Context) error {
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -685,7 +909,7 @@ func (h *provisionHandler) RecoverStale(ctx context.Context) error {
 	)
 }
 
-func (h *provisionHandler) logACMEOutcome(
+func (h *provisionCore) logACMEOutcome(
 	ctx context.Context,
 	certificate coredata.Certificate,
 	phase provisionPhase,
@@ -740,7 +964,7 @@ func (h *provisionHandler) logACMEOutcome(
 	)
 }
 
-func (h *provisionHandler) setCertificateSpanAttributes(span trace.Span, certificate coredata.Certificate) {
+func (h *provisionCore) setCertificateSpanAttributes(span trace.Span, certificate coredata.Certificate) {
 	span.SetAttributes(
 		attribute.String("certificate.id", certificate.ID.String()),
 		attribute.String("certificate.hostname", certificate.Hostname),
@@ -748,7 +972,7 @@ func (h *provisionHandler) setCertificateSpanAttributes(span trace.Span, certifi
 	)
 }
 
-func (h *provisionHandler) recordSpanError(span trace.Span, err error, errorCode string) {
+func (h *provisionCore) recordSpanError(span trace.Span, err error, errorCode string) {
 	if err == nil {
 		return
 	}
@@ -771,26 +995,6 @@ func (h *provisionHandler) recordSpanError(span trace.Span, err error, errorCode
 	)
 }
 
-func (h *provisionHandler) loadSkipDNSChecks(ctx context.Context, hostname string) (bool, error) {
-	var skip bool
-
-	err := h.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var err error
-
-			skip, err = h.skipsDNSChecks(ctx, conn, hostname)
-
-			return err
-		},
-	)
-	if err != nil {
-		return false, err
-	}
-
-	return skip, nil
-}
-
 func stringValue(value *string) string {
 	if value == nil {
 		return ""
@@ -799,137 +1003,7 @@ func stringValue(value *string) string {
 	return *value
 }
 
-func (h *provisionHandler) checkDNSConfiguration(ctx context.Context, hostname string) error {
-	customerFQDN := hostname
-	if !strings.HasSuffix(customerFQDN, ".") {
-		customerFQDN = customerFQDN + "."
-	}
-
-	expectedFQDN := h.cnameTarget
-	if !strings.HasSuffix(expectedFQDN, ".") {
-		expectedFQDN = expectedFQDN + "."
-	}
-
-	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
-	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: customerFQDN, Class: dns.ClassINET}}}
-
-	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
-	defer cancel()
-
-	client := dns.NewClient()
-
-	resp, _, err := client.Exchange(dnsCtx, msg, "udp", h.resolverAddr)
-	if err != nil {
-		return fmt.Errorf("cannot exchange dns message: %w", err)
-	}
-
-	if len(resp.Answer) == 0 {
-		return fmt.Errorf("no cname records found for domain %q", hostname)
-	}
-
-	if len(resp.Answer) > 1 {
-		return fmt.Errorf("multiple cname records found for domain %q", hostname)
-	}
-
-	resolvedRecord, ok := resp.Answer[0].(*dns.CNAME)
-	if !ok {
-		return fmt.Errorf("first answer is not a cname record for domain %q", hostname)
-	}
-
-	if !strings.EqualFold(expectedFQDN, resolvedRecord.Target) {
-		return fmt.Errorf(
-			"cname target mismatch: domain %q resolves to %q, expected %q",
-			hostname,
-			resolvedRecord.Target,
-			expectedFQDN,
-		)
-	}
-
-	return nil
-}
-
-func (h *provisionHandler) checkCAARecords(ctx context.Context, hostname string) error {
-	fqdn := hostname
-	if !strings.HasSuffix(fqdn, ".") {
-		fqdn = fqdn + "."
-	}
-
-	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
-	msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
-
-	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
-	defer cancel()
-
-	client := dns.NewClient()
-
-	resp, _, err := client.Exchange(
-		dnsCtx,
-		msg,
-		"udp",
-		h.resolverAddr,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
-	}
-
-	var caaRecords []*dns.CAA
-
-	for _, rr := range resp.Answer {
-		if caa, ok := rr.(*dns.CAA); ok {
-			caaRecords = append(caaRecords, caa)
-		}
-	}
-
-	if len(caaRecords) == 0 {
-		return nil
-	}
-
-	for _, caa := range caaRecords {
-		if caa.Tag == "issue" {
-			issuer, _, _ := strings.Cut(caa.Value, ";")
-			if strings.EqualFold(strings.TrimSpace(issuer), h.caaIssuerDomain) {
-				return nil
-			}
-		}
-	}
-
-	return fmt.Errorf(
-		"%w: domain %q by %q",
-		ErrCAANotPermitted,
-		hostname,
-		h.caaIssuerDomain,
-	)
-}
-
-func (h *provisionHandler) skipsDNSChecks(
-	ctx context.Context,
-	conn pg.Querier,
-	hostname string,
-) (bool, error) {
-	if h.managedBaseDomain == "" {
-		return false, nil
-	}
-
-	suffix := "." + h.managedBaseDomain
-	if hostname != h.managedBaseDomain && !strings.HasSuffix(hostname, suffix) {
-		return false, nil
-	}
-
-	domain := &coredata.CustomDomain{}
-
-	err := domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), hostname)
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return true, nil
-	}
-
-	if err != nil {
-		return false, fmt.Errorf("cannot load custom domain: %w", err)
-	}
-
-	return domain.Managed, nil
-}
-
-func (h *provisionHandler) resetStaleCertificate(
+func (h *pollOrderHandler) resetStaleCertificate(
 	ctx context.Context,
 	tx pg.Tx,
 	certificate *coredata.Certificate,

@@ -877,20 +877,15 @@ WHERE
 	return nil
 }
 
-func (c *Certificate) LoadNextForProvisioningForUpdateSkipLocked(
+// LoadNextForBeginChallengeForUpdateSkipLocked selects the next PENDING/RENEWING
+// row eligible to start a new ACME order. These rows use exponential backoff
+// from ssl_last_attempt_at: 15m * 2^min(retry,5). Ordinary failures only reach
+// retry counts 0–2 before FAILED; higher exponents are unused by the current
+// failure budget but keep the SQL ceiling defensive.
+func (c *Certificate) LoadNextForBeginChallengeForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
-	pollLease time.Duration,
 ) error {
-	// PROVISIONING rows with an open order become eligible again only after
-	// pollLease elapses since the last attempt. The caller sizes pollLease to
-	// exceed the maximum Process window: the claim's FOR UPDATE lock is released
-	// before Process runs, so a shorter interval would let another worker claim
-	// the same row while its poll/issue is still in flight. Pending/Renewing
-	// rows (and provisioning rows without an order) use exponential backoff from
-	// ssl_last_attempt_at: 15m * 2^min(retry,5). Ordinary failures only reach
-	// retry counts 0–2 before FAILED; higher exponents are unused by the current
-	// failure budget but keep the SQL ceiling defensive.
 	q := `
 SELECT
 	id,
@@ -915,16 +910,88 @@ WHERE
 	status = ANY(@statuses)
 	AND (
 		ssl_last_attempt_at IS NULL
+		OR ssl_last_attempt_at < CURRENT_TIMESTAMP - (
+			INTERVAL '15 minutes' * (POWER(2, LEAST(ssl_retry_count, 5))::int)
+		)
+	)
+ORDER BY
+	updated_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED
+`
+
+	rows, err := tx.Query(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"statuses": []string{
+				string(CertificateStatusPending),
+				string(CertificateStatusRenewing),
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot query certificate begin-challenge queue: %w", err)
+	}
+
+	certificate, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Certificate])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect certificate: %w", err)
+	}
+
+	*c = certificate
+
+	return nil
+}
+
+// LoadNextForPollOrderForUpdateSkipLocked selects the next PROVISIONING row
+// eligible to poll its ACME order. A row with an open order becomes eligible
+// again only after pollLease elapses since the last attempt. The caller sizes
+// pollLease to exceed the maximum Process window: the claim's FOR UPDATE lock
+// is released before Process runs, so a shorter interval would let another
+// worker claim the same row while its poll/issue is still in flight. A row
+// without an open order is a defensive edge case (the state machine always
+// pairs PROVISIONING with an order) and falls back to the same exponential
+// backoff as begin-challenge rows.
+func (c *Certificate) LoadNextForPollOrderForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+	pollLease time.Duration,
+) error {
+	q := `
+SELECT
+	id,
+	hostname,
+	http_challenge_token,
+	http_challenge_key_auth,
+	http_challenge_url,
+	http_order_url,
+	ssl_certificate,
+	encrypted_ssl_private_key,
+	ssl_certificate_chain,
+	status,
+	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
+	provisioning_error,
+	created_at,
+	updated_at
+FROM
+	certificates
+WHERE
+	status = @provisioning_status
+	AND (
+		ssl_last_attempt_at IS NULL
 		OR (
-			status = @provisioning_status
-			AND http_order_url IS NOT NULL
+			http_order_url IS NOT NULL
 			AND ssl_last_attempt_at < CURRENT_TIMESTAMP - make_interval(secs => @poll_lease_seconds)
 		)
 		OR (
-			NOT (
-				status = @provisioning_status
-				AND http_order_url IS NOT NULL
-			)
+			http_order_url IS NULL
 			AND ssl_last_attempt_at < CURRENT_TIMESTAMP - (
 				INTERVAL '15 minutes' * (POWER(2, LEAST(ssl_retry_count, 5))::int)
 			)
@@ -940,17 +1007,12 @@ FOR UPDATE SKIP LOCKED
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"statuses": []string{
-				string(CertificateStatusPending),
-				string(CertificateStatusProvisioning),
-				string(CertificateStatusRenewing),
-			},
 			"provisioning_status": string(CertificateStatusProvisioning),
 			"poll_lease_seconds":  pollLease.Seconds(),
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("cannot query certificate provisioning queue: %w", err)
+		return fmt.Errorf("cannot query certificate poll-order queue: %w", err)
 	}
 
 	certificate, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Certificate])
