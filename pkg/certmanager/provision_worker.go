@@ -119,7 +119,7 @@ func NewBeginChallengeWorker(
 	opts = append(opts, worker.WithMaxConcurrency(1))
 
 	return worker.New(
-		"certificate-provision-worker",
+		"certificate-begin-challenge-worker",
 		h,
 		logger,
 		opts...,
