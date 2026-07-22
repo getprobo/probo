@@ -366,11 +366,9 @@ func handleConnectorComplete(
 				}
 			}
 
-			// Vercel surfaces the customer's team as the `teamId` OAuth
-			// callback query parameter (camelCase, not in the token response
-			// body). When the install targets a personal account no teamId is
-			// sent — fall back to /v2/user.id as a synthetic TeamID; the v3
-			// members endpoint accepts personal-account UIDs.
+			// Personal-account installs send no teamId; fall back to
+			// /v2/user.id as a synthetic TeamID (the v3 members endpoint
+			// accepts personal-account UIDs).
 			if connectorProvider == coredata.ConnectorProviderVercel {
 				teamID := vercelCallbackTeamID(query)
 				if teamID == "" {
@@ -476,10 +474,9 @@ func handleConnectorOAuth2Error(
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
 }
 
-// vercelCallbackTeamID returns the team identifier Vercel surfaces on the
-// OAuth callback. Vercel uses the camelCase `teamId` query parameter (not the
-// snake_case `team_id` most other params use); the name is pinned by a test so
-// it cannot silently regress and leave every Vercel source without a team.
+// vercelCallbackTeamID returns the team identifier from Vercel's OAuth
+// callback. Vercel uses the camelCase `teamId` query param (not snake_case
+// `team_id`); the name is pinned by a test so it cannot silently regress.
 func vercelCallbackTeamID(query url.Values) string {
 	return query.Get("teamId")
 }

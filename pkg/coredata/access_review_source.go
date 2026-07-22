@@ -360,11 +360,8 @@ WHERE
 }
 
 // ClearNameSyncedAtByConnectorID resets name_synced_at to NULL for every
-// access source backed by connectorID so the source-name worker re-resolves
-// the display name. A reconnect (possibly with a new scope/org) or a manual
-// org (re)configuration can change the resolvable instance name; without this
-// a source that was terminal-marked keeps its generic name forever. It is a
-// no-op when no source references the connector.
+// access source backed by connectorID, so the source-name worker re-resolves
+// their display name. No-op when no source references the connector.
 func (sources *AccessReviewSources) ClearNameSyncedAtByConnectorID(
 	ctx context.Context,
 	conn pg.Tx,

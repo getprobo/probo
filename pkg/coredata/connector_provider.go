@@ -58,14 +58,8 @@ const (
 	ConnectorProviderAsana        ConnectorProvider = "ASANA"
 	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
-	// ConnectorProviderClerk is retained for existing connectors but is
-	// no longer a registerable access-review provider: Clerk's Backend API
-	// (secret key) only exposes the customer's application end-users, not
-	// the Clerk workspace/dashboard team who administer the platform, so a
-	// campaign reviews the wrong population. Kept in IsValid and the
-	// GraphQL enum so stored CLERK rows still validate and serialize;
-	// dropped from ConnectorProviders and unregistered from the builtin
-	// registry so it cannot be added or fetched.
+	// ConnectorProviderClerk is disabled (unregistered) but kept in IsValid
+	// and the GraphQL enum so existing stored CLERK rows still validate.
 	ConnectorProviderClerk      ConnectorProvider = "CLERK"
 	ConnectorProviderVercel     ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday     ConnectorProvider = "MONDAY"

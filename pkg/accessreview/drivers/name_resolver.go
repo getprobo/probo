@@ -41,14 +41,10 @@ type NameResolver interface {
 	ResolveInstanceName(ctx context.Context) (string, error)
 }
 
-// ErrTerminalNameResolution marks a name-resolution failure as permanent:
-// an auth or bad-request response that retrying cannot fix. The
-// source-name worker treats it as terminal — it keeps the generic source
-// name and marks the source synced instead of re-claiming it every poll.
-// Transient failures (5xx, network errors) are returned as plain errors so
-// they keep retrying. Name resolution is best-effort display metadata, so a
-// permanent failure must never wedge the worker in a retry loop (a single
-// unauthorized source otherwise produced millions of error logs in prod).
+// ErrTerminalNameResolution marks a permanent name-resolution failure
+// (auth/bad-request) that retrying cannot fix: the source-name worker keeps
+// the generic name and marks the source synced instead of re-claiming it.
+// Transient failures (5xx, network) stay plain errors so they keep retrying.
 var ErrTerminalNameResolution = errors.New("terminal name resolution failure")
 
 // nameStatusError classifies a non-2xx response from a name-resolution

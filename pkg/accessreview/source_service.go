@@ -582,18 +582,14 @@ func (s *Service) SourceNeedsConfiguration(
 	return cfg.SelectedSlug(dbConnector) == "", nil
 }
 
-// AutoSelectDefaultOrganization picks the first workspace/org the connector
-// can see for a freshly linked picker-provider source that has none selected
-// yet. Without it a connected source stays "needs configuration" until the
-// user completes the picker; if they skip it, the first campaign silently
-// resolves no users (the driver requires an org). Defaulting to the first
-// available makes the source immediately usable; the picker stays available
-// to switch when several are listed.
+// AutoSelectDefaultOrganization picks the first workspace/org a freshly linked
+// picker-provider source can see when none is selected yet, so the source is
+// usable immediately instead of failing its first campaign fetch. The picker
+// stays available to switch when several are listed.
 //
-// Best-effort: any failure (provider unreachable, nothing listed) leaves the
-// source in its existing "needs configuration" state, where the picker is the
-// fallback. It never returns an error and must not fail the create/update
-// that triggered it.
+// Best-effort: any failure leaves the source in its "needs configuration"
+// state (the picker is the fallback); it never errors and must not fail the
+// create/update that triggered it.
 func (s *Service) AutoSelectDefaultOrganization(
 	ctx context.Context,
 	scope coredata.Scoper,

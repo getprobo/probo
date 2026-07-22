@@ -146,15 +146,10 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		},
 	)
 	if err != nil {
-		// Setting up the resolver failed: the connector is gone, its
-		// credentials cannot be decrypted, or an eager token refresh failed
-		// on a revoked OAuth refresh token. Returning nil without marking the
-		// source synced leaves name_synced_at NULL, so the worker re-claims
-		// the same row every drain cycle with no delay — a single dead
-		// connector then hot-loops the vendor token endpoint (millions of
-		// error logs in prod). Treat it as terminal: keep the generic name
-		// and mark the source synced so it stops re-claiming. A
-		// reconnect/reconfigure clears name_synced_at to try again.
+		// Resolver setup failed (missing connector, undecryptable credential,
+		// or an eager refresh on a revoked token). Mark the source synced
+		// rather than returning nil: an unsynced row is re-claimed every poll
+		// with no backoff and hot-loops the vendor. A reconnect clears it.
 		h.logger.WarnCtx(
 			ctx,
 			"cannot set up name resolver, keeping generic name",
