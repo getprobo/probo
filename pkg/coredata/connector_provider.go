@@ -58,32 +58,40 @@ const (
 	ConnectorProviderAsana        ConnectorProvider = "ASANA"
 	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
-	ConnectorProviderClerk        ConnectorProvider = "CLERK"
-	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
-	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
-	ConnectorProviderMetabase     ConnectorProvider = "METABASE"
-	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
-	ConnectorProviderAnthropic    ConnectorProvider = "ANTHROPIC"
-	ConnectorProviderCursor       ConnectorProvider = "CURSOR"
-	ConnectorProviderDatadog      ConnectorProvider = "DATADOG"
-	ConnectorProviderOkta         ConnectorProvider = "OKTA"
-	ConnectorProviderZendesk      ConnectorProvider = "ZENDESK"
-	ConnectorProviderQovery       ConnectorProvider = "QOVERY"
-	ConnectorProviderRender       ConnectorProvider = "RENDER"
-	ConnectorProviderNeon         ConnectorProvider = "NEON"
-	ConnectorProviderMercury      ConnectorProvider = "MERCURY"
-	ConnectorProviderApollo       ConnectorProvider = "APOLLO"
-	ConnectorProviderDeepgram     ConnectorProvider = "DEEPGRAM"
-	ConnectorProviderClickHouse   ConnectorProvider = "CLICKHOUSE"
-	ConnectorProviderLangfuse     ConnectorProvider = "LANGFUSE"
-	ConnectorProviderPylon        ConnectorProvider = "PYLON"
-	ConnectorProviderOpenRouter   ConnectorProvider = "OPENROUTER"
-	ConnectorProviderIncidentIO   ConnectorProvider = "INCIDENT_IO"
-	ConnectorProviderBrevo        ConnectorProvider = "BREVO"
-	ConnectorProviderScaleway     ConnectorProvider = "SCALEWAY"
-	ConnectorProviderYousign      ConnectorProvider = "YOUSIGN"
-	ConnectorProviderRailway      ConnectorProvider = "RAILWAY"
-	ConnectorProviderCrisp        ConnectorProvider = "CRISP"
+	// ConnectorProviderClerk is retained for existing connectors but is
+	// no longer a registerable access-review provider: Clerk's Backend API
+	// (secret key) only exposes the customer's application end-users, not
+	// the Clerk workspace/dashboard team who administer the platform, so a
+	// campaign reviews the wrong population. Kept in IsValid and the
+	// GraphQL enum so stored CLERK rows still validate and serialize;
+	// dropped from ConnectorProviders and unregistered from the builtin
+	// registry so it cannot be added or fetched.
+	ConnectorProviderClerk      ConnectorProvider = "CLERK"
+	ConnectorProviderVercel     ConnectorProvider = "VERCEL"
+	ConnectorProviderMonday     ConnectorProvider = "MONDAY"
+	ConnectorProviderMetabase   ConnectorProvider = "METABASE"
+	ConnectorProviderTailscale  ConnectorProvider = "TAILSCALE"
+	ConnectorProviderAnthropic  ConnectorProvider = "ANTHROPIC"
+	ConnectorProviderCursor     ConnectorProvider = "CURSOR"
+	ConnectorProviderDatadog    ConnectorProvider = "DATADOG"
+	ConnectorProviderOkta       ConnectorProvider = "OKTA"
+	ConnectorProviderZendesk    ConnectorProvider = "ZENDESK"
+	ConnectorProviderQovery     ConnectorProvider = "QOVERY"
+	ConnectorProviderRender     ConnectorProvider = "RENDER"
+	ConnectorProviderNeon       ConnectorProvider = "NEON"
+	ConnectorProviderMercury    ConnectorProvider = "MERCURY"
+	ConnectorProviderApollo     ConnectorProvider = "APOLLO"
+	ConnectorProviderDeepgram   ConnectorProvider = "DEEPGRAM"
+	ConnectorProviderClickHouse ConnectorProvider = "CLICKHOUSE"
+	ConnectorProviderLangfuse   ConnectorProvider = "LANGFUSE"
+	ConnectorProviderPylon      ConnectorProvider = "PYLON"
+	ConnectorProviderOpenRouter ConnectorProvider = "OPENROUTER"
+	ConnectorProviderIncidentIO ConnectorProvider = "INCIDENT_IO"
+	ConnectorProviderBrevo      ConnectorProvider = "BREVO"
+	ConnectorProviderScaleway   ConnectorProvider = "SCALEWAY"
+	ConnectorProviderYousign    ConnectorProvider = "YOUSIGN"
+	ConnectorProviderRailway    ConnectorProvider = "RAILWAY"
+	ConnectorProviderCrisp      ConnectorProvider = "CRISP"
 )
 
 var (
@@ -123,7 +131,6 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderAsana,
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
-		ConnectorProviderClerk,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
