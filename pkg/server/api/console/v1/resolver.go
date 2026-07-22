@@ -372,7 +372,7 @@ func handleConnectorComplete(
 			// sent — fall back to /v2/user.id as a synthetic TeamID; the v3
 			// members endpoint accepts personal-account UIDs.
 			if connectorProvider == coredata.ConnectorProviderVercel {
-				teamID := query.Get("teamId")
+				teamID := vercelCallbackTeamID(query)
 				if teamID == "" {
 					if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
 						if uid, err := connector.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
@@ -474,6 +474,14 @@ func handleConnectorOAuth2Error(
 	parsedURL.RawQuery = q.Encode()
 
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+}
+
+// vercelCallbackTeamID returns the team identifier Vercel surfaces on the
+// OAuth callback. Vercel uses the camelCase `teamId` query parameter (not the
+// snake_case `team_id` most other params use); the name is pinned by a test so
+// it cannot silently regress and leave every Vercel source without a team.
+func vercelCallbackTeamID(query url.Values) string {
+	return query.Get("teamId")
 }
 
 // isValidPagerDutySubdomain reports whether s is a single DNS label
