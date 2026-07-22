@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.232.0] - 2026-07-22
+
+### Added
+
+- Exposed a gauge for the ACME rate-limit cooldown end time (`certmanager_certificate_acme_cooldown_until_timestamp_seconds`) and expanded provisioning failure logs with the full ACME error detail (status code, instance, link, subproblems, retry-after), making cooldowns and CA errors diagnosable
+
 ## [0.231.0] - 2026-07-22
 
 ### Added
