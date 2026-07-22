@@ -27,6 +27,9 @@ export type SelectPopupProps
   = & Omit<ComponentProps<typeof BaseSelect.Popup>, "className">
     & {
       className?: string;
+      // Mount inside a modal/drawer so the menu stacks above that layer
+      // (body portal uses z-3, below drawers at z-5).
+      container?: ComponentProps<typeof BaseSelect.Portal>["container"];
       // Positioner placement passthrough.
       side?: ComponentProps<typeof BaseSelect.Positioner>["side"];
       align?: ComponentProps<typeof BaseSelect.Positioner>["align"];
@@ -36,13 +39,13 @@ export type SelectPopupProps
 // Portal + positioner + styled popup holding the select items.
 export function SelectPopup(props: SelectPopupProps) {
   const {
-    className, children,
+    className, children, container,
     side = "bottom", align = "start", sideOffset = 4,
     ...popupProps
   } = props;
 
   return (
-    <BaseSelect.Portal>
+    <BaseSelect.Portal container={container}>
       {/* z-3 on the Positioner so the portaled root wins over in-page z-1. */}
       <BaseSelect.Positioner className="z-3" side={side} align={align} sideOffset={sideOffset}>
         <BaseSelect.Popup className={selectPopup({ className })} {...popupProps}>

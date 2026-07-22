@@ -38,7 +38,7 @@ import { DrawerTitle } from "@probo/ui/src/v2/Drawer/DrawerTitle";
 import { DrawerTrigger } from "@probo/ui/src/v2/Drawer/DrawerTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useLocation } from "react-router";
@@ -76,6 +76,9 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
   const { openSubscribe, isSubscribed, unsubscribe, isUnsubscribing } = useSubscribeDialog();
   const [signOut, isSigningOut] = useSignOut();
   const [open, setOpen] = useState(false);
+  // Select menus portal to body at z-3 by default; mount them on the drawer
+  // popup so they stack inside the modal layer (z-5) instead of under it.
+  const drawerPopupRef = useRef<HTMLDivElement>(null);
   const identity = useFragment(topBarMobileNavFragment, identityKey);
   const localizedPath = useLocalizedPath();
 
@@ -103,7 +106,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
           )}
         />
       </div>
-      <DrawerPopup side="right">
+      <DrawerPopup side="right" ref={drawerPopupRef}>
         <DrawerHeader>
           <DrawerTitle>{t("topBar.menuTitle")}</DrawerTitle>
           <DrawerClose
@@ -147,6 +150,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
             <LocaleSelect
               persist={identity != null}
               onLocaleChange={close}
+              portalContainer={drawerPopupRef}
             />
           </div>
           {identity == null

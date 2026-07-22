@@ -33,15 +33,21 @@ export type DrawerPopupProps
 
 // Portal + dimmed backdrop + edge-aligned popup. Children compose the header /
 // body / footer regions inside Base UI's Content (swipe-safe text selection).
+// `ref` lands on the Popup panel (not the viewport) so nested menus can portal
+// into the drawer stacking context.
 export function DrawerPopup(props: DrawerPopupProps) {
-  const { className, children, side, ...popupProps } = props;
+  const { className, children, side, ref, ...popupProps } = props;
   const slots = drawer({ side });
 
   return (
     <BaseDrawer.Portal>
       <BaseDrawer.Backdrop className={slots.backdrop()} />
       <BaseDrawer.Viewport className={slots.viewport()}>
-        <BaseDrawer.Popup className={slots.popup({ className })} {...popupProps}>
+        <BaseDrawer.Popup
+          ref={ref}
+          className={slots.popup({ className })}
+          {...popupProps}
+        >
           <BaseDrawer.Content className={slots.content()}>
             {children}
           </BaseDrawer.Content>

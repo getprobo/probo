@@ -23,6 +23,7 @@ import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -38,6 +39,9 @@ interface LocaleSelectProps {
   persist?: boolean;
   // Called after a locale change is requested (e.g. close the mobile drawer).
   onLocaleChange?: () => void;
+  // Portal target for the menu. Required inside a Drawer/Dialog so the popup
+  // is not painted under the modal layer (Select defaults to body + z-3).
+  portalContainer?: RefObject<HTMLElement | null>;
 }
 
 // Compact locale control for the top bar (guest and mobile). Uses the v2 Select
@@ -45,6 +49,7 @@ interface LocaleSelectProps {
 export function LocaleSelect({
   persist = false,
   onLocaleChange,
+  portalContainer,
 }: LocaleSelectProps) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -75,7 +80,7 @@ export function LocaleSelect({
           </span>
         )}
       </SelectTrigger>
-      <SelectPopup>
+      <SelectPopup container={portalContainer}>
         {URL_LOCALES.map(code => (
           <SelectItem key={code} value={code}>
             {URL_LOCALE_LABELS[code]}
