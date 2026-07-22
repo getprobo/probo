@@ -4,6 +4,20 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.231.0] - 2026-07-22
+
+### Added
+
+- Compliance portal URLs are now locale-prefixed (e.g. `/fr/documents`), with self-canonical and hreflang SEO tags and a persisted identity locale that reconciles the browser locale against a saved preference via a mismatch banner
+
+### Changed
+
+- Compliance portal home page now shows a short entity name instead of the full portal title as its heading (API field renamed `title` -> `entityName`), restoring the localized hero composition and using the entity name as the OAuth client name
+
+### Fixed
+
+- Hardened automatic TLS certificate provisioning: fixed several race conditions and correctness gaps in the ACME worker (challenge acceptance ordering, write-back locking, Retry-After parsing, stale-order reset scoping, poll lease sizing, CAA error classification, and duplicate metrics registration) that could leave certificates stuck, unissued, or crash the provisioning worker
+
 ## [0.230.0] - 2026-07-21
 
 ### Added
