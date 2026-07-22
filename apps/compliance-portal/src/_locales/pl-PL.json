@@ -45,7 +45,7 @@
     }
   },
   "home": {
-    "heroTitle": "Zaufanie w {{name}}.",
+    "heroTitle": "Zgodność w {{name}}.",
     "heroDescription": "Witamy w naszym Portalu Zgodności. Znajdziesz tu naszą dokumentację bezpieczeństwa i certyfikaty.",
     "sections": {
       "compliance": "Zgodność",

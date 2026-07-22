@@ -45,7 +45,7 @@
     }
   },
   "home": {
-    "heroTitle": "{{name}}における信頼。",
+    "heroTitle": "{{name}}におけるコンプライアンス。",
     "heroDescription": "コンプライアンスポータルへようこそ。セキュリティに関する文書や認証はこちらからご確認いただけます。",
     "sections": {
       "compliance": "コンプライアンス",

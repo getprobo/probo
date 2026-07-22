@@ -45,7 +45,7 @@
     }
   },
   "home": {
-    "heroTitle": "Confianza en {{name}}.",
+    "heroTitle": "Cumplimiento en {{name}}.",
     "heroDescription": "Bienvenido a nuestro Portal de cumplimiento. Aquí encontrará nuestra documentación de seguridad y nuestras certificaciones.",
     "sections": {
       "compliance": "Cumplimiento",

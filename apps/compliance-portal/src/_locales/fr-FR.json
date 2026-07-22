@@ -45,7 +45,7 @@
     }
   },
   "home": {
-    "heroTitle": "La confiance chez {{name}}.",
+    "heroTitle": "La conformité chez {{name}}.",
     "heroDescription": "Bienvenue dans notre Portail de conformité. Retrouvez ici notre documentation et nos certifications de sécurité.",
     "sections": {
       "compliance": "Conformité",
