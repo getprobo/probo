@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import {
+  getCertificateProvisioningErrorMessage,
   getCustomDomainStatusBadgeLabel,
   getCustomDomainStatusBadgeVariant,
 } from "@probo/helpers";
@@ -55,7 +56,10 @@ export function CompliancePageDomainCard(props: {
 
   const domain = useFragment<CompliancePageDomainCardFragment$key>(fragment, fKey);
   const sslStatus = domain.certificate?.status ?? "PENDING";
-  const provisioningError = domain.certificate?.provisioningError;
+  const provisioningErrorMessage = getCertificateProvisioningErrorMessage(
+    domain.certificate?.provisioningError,
+    __,
+  );
 
   return (
     <Card padded>
@@ -73,8 +77,8 @@ export function CompliancePageDomainCard(props: {
           <p className="text-sm text-txt-secondary">
             {sslStatus === "ACTIVE"
               ? __("Verified and serving traffic")
-              : provisioningError
-                ? provisioningError
+              : provisioningErrorMessage
+                ? provisioningErrorMessage
                 : __("Pending DNS verification")}
           </p>
         </div>

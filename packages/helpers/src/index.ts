@@ -21,6 +21,7 @@
 export { objectKeys, objectEntries, cleanFormData } from "./object";
 export { sprintf, faviconUrl, slugify } from "./string";
 export {
+  getCertificateProvisioningErrorMessage,
   getCustomDomainStatusBadgeLabel,
   getCustomDomainStatusBadgeVariant,
 } from "./customDomain";

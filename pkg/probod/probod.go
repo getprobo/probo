@@ -524,6 +524,7 @@ func (impl *Implm) Run(
 		accountKey,
 		rootCAs,
 		l,
+		r,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot initialize ACME service: %w", err)

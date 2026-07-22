@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import {
+  getCertificateProvisioningErrorMessage,
   getCustomDomainStatusBadgeLabel,
   getCustomDomainStatusBadgeVariant,
 } from "@probo/helpers";
@@ -76,7 +77,10 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
   const domain = useFragment<CompliancePageDomainDialogFragment$key>(fragment, fKey);
   const sslStatus = domain.certificate?.status ?? "PENDING";
   const expiresAt = domain.certificate?.expiresAt;
-  const provisioningError = domain.certificate?.provisioningError;
+  const provisioningErrorMessage = getCertificateProvisioningErrorMessage(
+    domain.certificate?.provisioningError,
+    __,
+  );
 
   return (
     <Dialog
@@ -127,10 +131,10 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
             )
           : (
               <div>
-                {provisioningError && (
+                {provisioningErrorMessage && (
                   <div className="bg-danger-subtle text-danger rounded-lg p-4 mb-4">
                     <p className="text-sm font-medium mb-1">{__("Provisioning error")}</p>
-                    <p className="text-sm">{provisioningError}</p>
+                    <p className="text-sm">{provisioningErrorMessage}</p>
                   </div>
                 )}
 

@@ -25,23 +25,48 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const maxProvisioningRetries = 3
+const (
+	// maxProvisioningRetries is the failure budget for ordinary transient ACME
+	// errors. Rate limits do not consume this budget; they use the in-process
+	// ACME cooldown instead. Claim SQL still caps the exponential backoff
+	// exponent at 5 (LEAST(ssl_retry_count, 5)), so normal retries only reach
+	// exponents 0–2 before FAILED.
+	maxProvisioningRetries = 3
+	dnsExchangeTimeout     = 10 * time.Second
+	processTickTimeout     = 90 * time.Second
 
-type provisionHandler struct {
-	pg                *pg.Client
-	acmeService       *ACMEService
-	encryptionKey     cipher.EncryptionKey
-	cnameTarget       string
-	caaIssuerDomain   string
-	resolverAddr      string
-	managedBaseDomain string
-	logger            *log.Logger
-}
+	tracerName = "go.probo.inc/probo/pkg/certmanager"
+)
+
+type (
+	provisionHandler struct {
+		pg                *pg.Client
+		acmeService       *ACMEService
+		encryptionKey     cipher.EncryptionKey
+		cnameTarget       string
+		caaIssuerDomain   string
+		resolverAddr      string
+		managedBaseDomain string
+		logger            *log.Logger
+		tracer            trace.Tracer
+	}
+
+	provisioningOutcome struct {
+		status         coredata.CertificateStatus
+		retryCount     int
+		clearACMEState bool
+		errorCode      string
+	}
+)
 
 var (
 	_ worker.Handler[coredata.Certificate] = (*provisionHandler)(nil)
@@ -68,7 +93,10 @@ func NewProvisionWorker(
 		resolverAddr:      resolverAddr,
 		managedBaseDomain: managedBaseDomain,
 		logger:            logger,
+		tracer:            otel.Tracer(tracerName),
 	}
+
+	opts = append(opts, worker.WithMaxConcurrency(1))
 
 	return worker.New(
 		"certificate-provision-worker",
@@ -79,6 +107,10 @@ func NewProvisionWorker(
 }
 
 func (h *provisionHandler) Claim(ctx context.Context) (coredata.Certificate, error) {
+	if h.acmeService.InCooldown() {
+		return coredata.Certificate{}, worker.ErrNoTask
+	}
+
 	var certificate coredata.Certificate
 
 	if err := h.pg.WithTx(
@@ -86,6 +118,13 @@ func (h *provisionHandler) Claim(ctx context.Context) (coredata.Certificate, err
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := certificate.LoadNextForProvisioningForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
+			}
+
+			now := time.Now()
+			certificate.SSLLastAttemptAt = &now
+
+			if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot stamp certificate claim: %w", err)
 			}
 
 			return nil
@@ -102,57 +141,372 @@ func (h *provisionHandler) Claim(ctx context.Context) (coredata.Certificate, err
 }
 
 func (h *provisionHandler) Process(ctx context.Context, certificate coredata.Certificate) error {
-	challengeInitiated, err := h.runProvisionCertificate(ctx, certificate.ID)
-	if err != nil {
-		h.logger.ErrorCtx(
-			ctx,
-			"cannot provision certificate",
-			log.String("hostname", certificate.Hostname),
-			log.Error(err),
-		)
+	ctx, cancel := context.WithTimeout(ctx, processTickTimeout)
+	defer cancel()
 
-		return err
-	}
-
-	if !challengeInitiated {
+	switch certificate.Status {
+	case coredata.CertificateStatusPending, coredata.CertificateStatusRenewing:
+		return h.processBeginChallenge(ctx, certificate)
+	case coredata.CertificateStatusProvisioning:
+		return h.processPollOrder(ctx, certificate)
+	default:
 		return nil
 	}
+}
 
-	if _, err := h.runProvisionCertificate(ctx, certificate.ID); err != nil {
-		h.logger.ErrorCtx(
-			ctx,
-			"cannot complete certificate challenge",
-			log.String("hostname", certificate.Hostname),
-			log.Error(err),
-		)
+func (h *provisionHandler) processBeginChallenge(
+	ctx context.Context,
+	certificate coredata.Certificate,
+) error {
+	ctx, span := h.tracer.Start(ctx, "certmanager.create_order")
+	defer span.End()
 
+	h.setCertificateSpanAttributes(span, certificate)
+
+	skipDNSChecks, err := h.loadSkipDNSChecks(ctx, certificate.Hostname)
+	if err != nil {
+		h.recordSpanError(span, err, "")
 		return err
 	}
 
-	return nil
-}
+	if !skipDNSChecks {
+		dnsCtx, dnsSpan := h.tracer.Start(ctx, "certmanager.dns_check")
+		dnsStarted := time.Now()
 
-func (h *provisionHandler) runProvisionCertificate(
-	ctx context.Context,
-	certificateID gid.GID,
-) (bool, error) {
-	var challengeInitiated bool
+		if err := h.checkDNSConfiguration(dnsCtx, certificate.Hostname); err != nil {
+			h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultDNSError, dnsStarted)
+			h.recordSpanError(dnsSpan, err, classifyProvisioningError(err))
+			dnsSpan.End()
+			h.recordSpanError(span, err, classifyProvisioningError(err))
+			// DNS/CAA misconfig is intentionally non-terminal: retry forever so a
+			// customer DNS fix auto-recovers without marking the domain FAILED.
+			return h.persistFailure(ctx, certificate.ID, err)
+		}
 
-	err := h.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var err error
+		if err := h.checkCAARecords(dnsCtx, certificate.Hostname); err != nil {
+			h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultDNSError, dnsStarted)
+			h.recordSpanError(dnsSpan, err, classifyProvisioningError(err))
+			dnsSpan.End()
+			h.recordSpanError(span, err, classifyProvisioningError(err))
+			// DNS/CAA misconfig is intentionally non-terminal (see above).
+			return h.persistFailure(ctx, certificate.ID, err)
+		}
 
-			challengeInitiated, err = h.provisionCertificate(ctx, tx, certificateID)
-
-			return err
-		},
-	)
-	if err != nil {
-		return false, err
+		h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultOK, dnsStarted)
+		dnsSpan.End()
 	}
 
-	return challengeInitiated, nil
+	challenge, err := h.acmeService.StartHTTPChallenge(ctx, certificate.Hostname)
+	if err != nil {
+		errorCode := classifyProvisioningError(err)
+		h.logACMEOutcome(ctx, certificate, provisionPhaseCreateOrder, err, errorCode)
+		h.recordSpanError(span, err, errorCode)
+
+		return h.persistFailure(ctx, certificate.ID, err)
+	}
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			row := &coredata.Certificate{}
+			if err := row.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), certificate.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load certificate %q: %w", certificate.ID, err)
+			}
+
+			if row.Status != coredata.CertificateStatusPending &&
+				row.Status != coredata.CertificateStatusRenewing {
+				return nil
+			}
+
+			row.HTTPChallengeToken = &challenge.Token
+			row.HTTPChallengeKeyAuth = &challenge.KeyAuth
+			row.HTTPChallengeURL = &challenge.URL
+			row.HTTPOrderURL = &challenge.OrderURL
+			row.Status = coredata.CertificateStatusProvisioning
+			row.ProvisioningError = nil
+
+			if err := row.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot update certificate with challenge: %w", err)
+			}
+
+			h.logger.InfoCtx(
+				ctx,
+				"HTTP challenge accepted, waiting for order validation",
+				log.String("hostname", row.Hostname),
+				log.String("certificate_id", row.ID.String()),
+			)
+
+			return nil
+		},
+	)
+}
+
+func (h *provisionHandler) processPollOrder(
+	ctx context.Context,
+	certificate coredata.Certificate,
+) error {
+	ctx, span := h.tracer.Start(ctx, "certmanager.poll_order")
+	defer span.End()
+
+	h.setCertificateSpanAttributes(span, certificate)
+
+	if certificate.HTTPOrderURL == nil {
+		return h.persistFailure(
+			ctx,
+			certificate.ID,
+			fmt.Errorf("provisioning certificate missing order URL"),
+		)
+	}
+
+	challenge := &HTTPChallenge{
+		Domain:   certificate.Hostname,
+		Token:    stringValue(certificate.HTTPChallengeToken),
+		KeyAuth:  stringValue(certificate.HTTPChallengeKeyAuth),
+		URL:      stringValue(certificate.HTTPChallengeURL),
+		OrderURL: *certificate.HTTPOrderURL,
+	}
+
+	poll, err := h.acmeService.PollOrder(ctx, *certificate.HTTPOrderURL)
+	if err != nil {
+		errorCode := classifyProvisioningError(err)
+		h.logACMEOutcome(ctx, certificate, provisionPhasePollOrder, err, errorCode)
+		h.recordSpanError(span, err, errorCode)
+
+		return h.persistFailure(ctx, certificate.ID, err)
+	}
+
+	switch poll.Status {
+	case OrderPollStatusNotReady:
+		h.logger.InfoCtx(
+			ctx,
+			"ACME order not ready yet, will poll again",
+			log.String("hostname", certificate.Hostname),
+			log.String("certificate_id", certificate.ID.String()),
+			log.String("order_status", poll.Order.Status),
+		)
+
+		return nil
+	case OrderPollStatusInvalid:
+		err := ErrOrderInvalid
+		errorCode := classifyProvisioningError(err)
+		h.logACMEOutcome(ctx, certificate, provisionPhasePollOrder, err, errorCode)
+		h.recordSpanError(span, err, errorCode)
+
+		return h.persistFailure(ctx, certificate.ID, err)
+	case OrderPollStatusReady, OrderPollStatusValid:
+		return h.issueCertificate(ctx, certificate, challenge, poll)
+	default:
+		return nil
+	}
+}
+
+func (h *provisionHandler) issueCertificate(
+	ctx context.Context,
+	certificate coredata.Certificate,
+	challenge *HTTPChallenge,
+	poll *OrderPollResult,
+) error {
+	ctx, span := h.tracer.Start(ctx, "certmanager.issue_cert")
+	defer span.End()
+
+	h.setCertificateSpanAttributes(span, certificate)
+
+	cert, err := h.acmeService.IssueCertificate(ctx, challenge, poll)
+	if err != nil {
+		if errors.Is(err, ErrOrderNotReady) {
+			h.logger.InfoCtx(
+				ctx,
+				"ACME order not ready to issue yet, will poll again",
+				log.String("hostname", certificate.Hostname),
+				log.String("certificate_id", certificate.ID.String()),
+			)
+
+			return nil
+		}
+
+		errorCode := classifyProvisioningError(err)
+		h.logACMEOutcome(ctx, certificate, provisionPhaseIssueCert, err, errorCode)
+		h.recordSpanError(span, err, errorCode)
+
+		return h.persistFailure(ctx, certificate.ID, err)
+	}
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			row := &coredata.Certificate{}
+			if err := row.LoadByIDForUpdate(ctx, tx, coredata.NewNoScope(), certificate.ID); err != nil {
+				return fmt.Errorf("cannot load certificate %q: %w", certificate.ID, err)
+			}
+
+			h.logger.InfoCtx(
+				ctx,
+				"certificate obtained successfully",
+				log.String("hostname", row.Hostname),
+				log.String("certificate_id", row.ID.String()),
+				log.Time("expires_at", cert.ExpiresAt),
+			)
+
+			row.ProvisioningError = nil
+			row.SSLCertificatePEM = cert.CertPEM
+
+			if err := row.EncryptPrivateKey(cert.KeyPEM, h.encryptionKey); err != nil {
+				return fmt.Errorf("cannot encrypt private key: %w", err)
+			}
+
+			chainStr := string(cert.ChainPEM)
+			row.SSLCertificateChain = &chainStr
+			row.SSLExpiresAt = &cert.ExpiresAt
+			row.Status = coredata.CertificateStatusActive
+			row.SSLRetryCount = 0
+			row.SSLLastAttemptAt = nil
+			row.HTTPChallengeToken = nil
+			row.HTTPChallengeKeyAuth = nil
+			row.HTTPChallengeURL = nil
+			row.HTTPOrderURL = nil
+
+			if err := row.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot update certificate: %w", err)
+			}
+
+			cache := &coredata.CachedCertificate{
+				Domain:           row.Hostname,
+				CertificatePEM:   string(cert.CertPEM),
+				PrivateKeyPEM:    string(cert.KeyPEM),
+				CertificateChain: &chainStr,
+				ExpiresAt:        cert.ExpiresAt,
+				CachedAt:         time.Now(),
+				CertificateID:    row.ID,
+			}
+
+			if err := cache.Upsert(ctx, tx); err != nil {
+				h.logger.ErrorCtx(
+					ctx,
+					"cannot update certificate cache",
+					log.String("hostname", row.Hostname),
+					log.Error(err),
+				)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (h *provisionHandler) persistFailure(
+	ctx context.Context,
+	certificateID gid.GID,
+	provisionErr error,
+) error {
+	errorCode := classifyProvisioningError(provisionErr)
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			row := &coredata.Certificate{}
+			if err := row.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), certificateID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load certificate %q: %w", certificateID, err)
+			}
+
+			outcome := decideProvisioningOutcome(row, errorCode)
+
+			row.ProvisioningError = provisioningErrorCodePtr(outcome.errorCode)
+			now := time.Now()
+			row.SSLLastAttemptAt = &now
+			row.Status = outcome.status
+			row.SSLRetryCount = outcome.retryCount
+
+			if outcome.clearACMEState {
+				row.HTTPChallengeToken = nil
+				row.HTTPChallengeKeyAuth = nil
+				row.HTTPChallengeURL = nil
+				row.HTTPOrderURL = nil
+			}
+
+			if err := row.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot update certificate with provisioning error: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+// decideProvisioningOutcome computes status/retry/clear policy for a failed step.
+//
+// Two backoff regimes:
+//   - Normal transient errors: ssl_retry_count increments; at maxProvisioningRetries
+//     the domain becomes FAILED.
+//   - Rate limits: never increment ssl_retry_count and never mark FAILED; the
+//     in-process ACME cooldown gates Claim. When an order URL is present
+//     it is preserved so the next tick resumes polling instead of minting a new
+//     order.
+//
+// DNS/CAA misconfig is intentionally non-terminal so customer DNS fixes
+// auto-recover on the claim backoff schedule.
+func decideProvisioningOutcome(
+	certificate *coredata.Certificate,
+	errorCode string,
+) provisioningOutcome {
+	retryCount := certificate.SSLRetryCount
+	hasResumableOrder := certificate.HTTPOrderURL != nil && *certificate.HTTPOrderURL != ""
+
+	switch errorCode {
+	case ProvisioningErrorACMERateLimited:
+		status := coredata.CertificateStatusPending
+		if hasResumableOrder {
+			status = coredata.CertificateStatusProvisioning
+		}
+
+		return provisioningOutcome{
+			status:         status,
+			retryCount:     retryCount,
+			clearACMEState: false,
+			errorCode:      errorCode,
+		}
+
+	case ProvisioningErrorDNSCNAME, ProvisioningErrorDNSCAA:
+		return provisioningOutcome{
+			status:         coredata.CertificateStatusPending,
+			retryCount:     retryCount,
+			clearACMEState: true,
+			errorCode:      errorCode,
+		}
+	}
+
+	retryCount++
+	if retryCount >= maxProvisioningRetries {
+		return provisioningOutcome{
+			status:         coredata.CertificateStatusFailed,
+			retryCount:     retryCount,
+			clearACMEState: true,
+			errorCode:      ProvisioningErrorACMEFailed,
+		}
+	}
+
+	if errorCode == ProvisioningErrorACMEInvalidOrder || !hasResumableOrder {
+		return provisioningOutcome{
+			status:         coredata.CertificateStatusPending,
+			retryCount:     retryCount,
+			clearACMEState: true,
+			errorCode:      errorCode,
+		}
+	}
+
+	return provisioningOutcome{
+		status:         coredata.CertificateStatusProvisioning,
+		retryCount:     retryCount,
+		clearACMEState: false,
+		errorCode:      errorCode,
+	}
 }
 
 func (h *provisionHandler) RecoverStale(ctx context.Context) error {
@@ -186,7 +540,103 @@ func (h *provisionHandler) RecoverStale(ctx context.Context) error {
 	)
 }
 
-func (h *provisionHandler) checkDNSConfiguration(hostname string) error {
+func (h *provisionHandler) logACMEOutcome(
+	ctx context.Context,
+	certificate coredata.Certificate,
+	phase provisionPhase,
+	err error,
+	errorCode string,
+) {
+	var (
+		problemType string
+		detail      string
+	)
+	if acmeErr, ok := errors.AsType[*ACMEError](err); ok {
+		problemType = acmeErr.ProblemType()
+		detail = acmeErr.Detail()
+	}
+
+	level := h.logger.WarnCtx
+
+	if errorCode == ProvisioningErrorACMETemporary {
+		level = h.logger.ErrorCtx
+	}
+
+	level(
+		ctx,
+		"certificate provisioning step failed",
+		log.String("hostname", certificate.Hostname),
+		log.String("certificate_id", certificate.ID.String()),
+		log.String("phase", string(phase)),
+		log.String("error_code", errorCode),
+		log.String("acme_problem_type", problemType),
+		log.String("acme_detail", detail),
+		log.Int("retry_count", certificate.SSLRetryCount),
+		log.Time("cool_down_until", h.acmeService.CooldownUntil()),
+		log.Error(err),
+	)
+}
+
+func (h *provisionHandler) setCertificateSpanAttributes(span trace.Span, certificate coredata.Certificate) {
+	span.SetAttributes(
+		attribute.String("certificate.id", certificate.ID.String()),
+		attribute.String("certificate.hostname", certificate.Hostname),
+		attribute.String("certificate.status", string(certificate.Status)),
+	)
+}
+
+func (h *provisionHandler) recordSpanError(span trace.Span, err error, errorCode string) {
+	if err == nil {
+		return
+	}
+
+	var (
+		problemType string
+		detail      string
+	)
+	if acmeErr, ok := errors.AsType[*ACMEError](err); ok {
+		problemType = acmeErr.ProblemType()
+		detail = acmeErr.Detail()
+	}
+
+	span.RecordError(err)
+	span.SetStatus(codes.Error, errorCode)
+	span.SetAttributes(
+		attribute.String("provisioning.error_code", errorCode),
+		attribute.String("acme.problem_type", problemType),
+		attribute.String("acme.detail", detail),
+	)
+}
+
+func (h *provisionHandler) loadSkipDNSChecks(ctx context.Context, hostname string) (bool, error) {
+	var skip bool
+
+	err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			skip, err = h.skipsDNSChecks(ctx, conn, hostname)
+
+			return err
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return skip, nil
+}
+
+func stringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+
+	return *value
+}
+
+func (h *provisionHandler) checkDNSConfiguration(ctx context.Context, hostname string) error {
 	customerFQDN := hostname
 	if !strings.HasSuffix(customerFQDN, ".") {
 		customerFQDN = customerFQDN + "."
@@ -200,9 +650,12 @@ func (h *provisionHandler) checkDNSConfiguration(hostname string) error {
 	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
 	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: customerFQDN, Class: dns.ClassINET}}}
 
+	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
+	defer cancel()
+
 	client := dns.NewClient()
 
-	resp, _, err := client.Exchange(context.Background(), msg, "udp", h.resolverAddr)
+	resp, _, err := client.Exchange(dnsCtx, msg, "udp", h.resolverAddr)
 	if err != nil {
 		return fmt.Errorf("cannot exchange dns message: %w", err)
 	}
@@ -232,7 +685,7 @@ func (h *provisionHandler) checkDNSConfiguration(hostname string) error {
 	return nil
 }
 
-func (h *provisionHandler) checkCAARecords(hostname string) error {
+func (h *provisionHandler) checkCAARecords(ctx context.Context, hostname string) error {
 	fqdn := hostname
 	if !strings.HasSuffix(fqdn, ".") {
 		fqdn = fqdn + "."
@@ -241,10 +694,13 @@ func (h *provisionHandler) checkCAARecords(hostname string) error {
 	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
 	msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
 
+	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
+	defer cancel()
+
 	client := dns.NewClient()
 
 	resp, _, err := client.Exchange(
-		context.Background(),
+		dnsCtx,
 		msg,
 		"udp",
 		h.resolverAddr,
@@ -357,216 +813,4 @@ func (h *provisionHandler) resetStaleCertificate(
 	}
 
 	return nil
-}
-
-func (h *provisionHandler) provisionCertificate(
-	ctx context.Context,
-	tx pg.Tx,
-	certificateID gid.GID,
-) (bool, error) {
-	certificate := &coredata.Certificate{}
-	if err := certificate.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), certificateID); err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("cannot load by id for update %q certificate: %w", certificateID, err)
-	}
-
-	if certificate.Status == coredata.CertificateStatusPending || certificate.Status == coredata.CertificateStatusRenewing {
-		skipDNSChecks, err := h.skipsDNSChecks(ctx, tx, certificate.Hostname)
-		if err != nil {
-			return false, fmt.Errorf("cannot check managed domain: %w", err)
-		}
-
-		if !skipDNSChecks {
-			if err := h.checkDNSConfiguration(certificate.Hostname); err != nil {
-				h.logger.WarnCtx(
-					ctx,
-					"dns configuration check failed",
-					log.String("hostname", certificate.Hostname),
-					log.Error(err),
-				)
-
-				errMsg := err.Error()
-
-				certificate.ProvisioningError = &errMsg
-				if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
-					return false, fmt.Errorf("cannot update certificate with provisioning error: %w", err)
-				}
-
-				return false, nil
-			}
-
-			if err := h.checkCAARecords(certificate.Hostname); err != nil {
-				h.logger.WarnCtx(
-					ctx,
-					"caa record check failed",
-					log.String("hostname", certificate.Hostname),
-					log.Error(err),
-				)
-
-				errMsg := err.Error()
-
-				certificate.ProvisioningError = &errMsg
-				if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
-					return false, fmt.Errorf("cannot update certificate with provisioning error: %w", err)
-				}
-
-				return false, nil
-			}
-		}
-
-		certificate.ProvisioningError = nil
-		if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
-			return false, fmt.Errorf("cannot clear provisioning error: %w", err)
-		}
-
-		h.logger.InfoCtx(ctx, "DNS configuration verified, initiating HTTP challenge for hostname", log.String("hostname", certificate.Hostname))
-
-		challenge, err := h.acmeService.GetHTTPChallenge(ctx, certificate.Hostname)
-		if err != nil {
-			h.logger.ErrorCtx(
-				ctx,
-				"cannot get HTTP challenge",
-				log.String("hostname", certificate.Hostname),
-				log.Error(err),
-			)
-
-			return false, err
-		}
-
-		certificate.HTTPChallengeToken = &challenge.Token
-		certificate.HTTPChallengeKeyAuth = &challenge.KeyAuth
-		certificate.HTTPChallengeURL = &challenge.URL
-		certificate.HTTPOrderURL = &challenge.OrderURL
-		certificate.Status = coredata.CertificateStatusProvisioning
-
-		if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
-			return false, fmt.Errorf("cannot update certificate with challenge: %w", err)
-		}
-
-		h.logger.InfoCtx(
-			ctx,
-			"HTTP challenge initiated, completing in same cycle",
-			log.String("hostname", certificate.Hostname),
-			log.String("token", challenge.Token),
-		)
-
-		return true, nil
-	}
-
-	if certificate.HTTPChallengeToken == nil ||
-		certificate.HTTPChallengeKeyAuth == nil ||
-		certificate.HTTPChallengeURL == nil ||
-		certificate.HTTPOrderURL == nil {
-		certificate.Status = coredata.CertificateStatusPending
-
-		if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
-			return false, fmt.Errorf("cannot reset certificate without challenge data: %w", err)
-		}
-
-		return false, nil
-	}
-
-	challenge := &HTTPChallenge{
-		Domain:   certificate.Hostname,
-		Token:    *certificate.HTTPChallengeToken,
-		KeyAuth:  *certificate.HTTPChallengeKeyAuth,
-		URL:      *certificate.HTTPChallengeURL,
-		OrderURL: *certificate.HTTPOrderURL,
-	}
-
-	cert, err := h.acmeService.CompleteHTTPChallenge(ctx, challenge)
-	if err != nil {
-		h.logger.WarnCtx(
-			ctx,
-			"cannot complete HTTP challenge",
-			log.String("hostname", certificate.Hostname),
-			log.Int("retry_count", certificate.SSLRetryCount),
-			log.Error(err),
-		)
-
-		errMsg := err.Error()
-		certificate.ProvisioningError = &errMsg
-		certificate.SSLRetryCount = certificate.SSLRetryCount + 1
-		now := time.Now()
-		certificate.SSLLastAttemptAt = &now
-
-		certificate.HTTPChallengeToken = nil
-		certificate.HTTPChallengeKeyAuth = nil
-		certificate.HTTPChallengeURL = nil
-		certificate.HTTPOrderURL = nil
-
-		if certificate.SSLRetryCount >= maxProvisioningRetries {
-			h.logger.ErrorCtx(
-				ctx,
-				"certificate has exceeded max retry attempts, marking as failed",
-				log.String("hostname", certificate.Hostname),
-				log.Int("retry_count", certificate.SSLRetryCount),
-			)
-
-			certificate.Status = coredata.CertificateStatusFailed
-		} else {
-			certificate.Status = coredata.CertificateStatusPending
-		}
-
-		if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
-			return false, fmt.Errorf("cannot update certificate: %w", err)
-		}
-
-		return false, nil
-	}
-
-	h.logger.InfoCtx(
-		ctx,
-		"certificate obtained successfully",
-		log.String("hostname", certificate.Hostname),
-		log.Time("expires_at", cert.ExpiresAt),
-	)
-
-	certificate.ProvisioningError = nil
-
-	certificate.SSLCertificatePEM = cert.CertPEM
-	if err := certificate.EncryptPrivateKey(cert.KeyPEM, h.encryptionKey); err != nil {
-		return false, fmt.Errorf("cannot encrypt private key: %w", err)
-	}
-
-	chainStr := string(cert.ChainPEM)
-	certificate.SSLCertificateChain = &chainStr
-	certificate.SSLExpiresAt = &cert.ExpiresAt
-	certificate.Status = coredata.CertificateStatusActive
-
-	certificate.SSLRetryCount = 0
-	certificate.SSLLastAttemptAt = nil
-
-	certificate.HTTPChallengeToken = nil
-	certificate.HTTPChallengeKeyAuth = nil
-	certificate.HTTPChallengeURL = nil
-	certificate.HTTPOrderURL = nil
-
-	if err := certificate.Update(ctx, tx, coredata.NewNoScope()); err != nil {
-		return false, fmt.Errorf("cannot update certificate: %w", err)
-	}
-
-	cache := &coredata.CachedCertificate{
-		Domain:           certificate.Hostname,
-		CertificatePEM:   string(cert.CertPEM),
-		PrivateKeyPEM:    string(cert.KeyPEM),
-		CertificateChain: &chainStr,
-		ExpiresAt:        cert.ExpiresAt,
-		CachedAt:         time.Now(),
-		CertificateID:    certificate.ID,
-	}
-
-	if err := cache.Upsert(ctx, tx); err != nil {
-		h.logger.ErrorCtx(
-			ctx,
-			"cannot update certificate cache",
-			log.String("hostname", certificate.Hostname),
-			log.Error(err),
-		)
-	}
-
-	return false, nil
 }

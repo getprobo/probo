@@ -30,8 +30,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/crypto/keys"
@@ -49,10 +51,13 @@ type (
 	}
 
 	ACMEService struct {
-		client  *acme.Client
-		email   string
-		keyType keys.Type
-		logger  *log.Logger
+		client        *acme.Client
+		email         string
+		keyType       keys.Type
+		logger        *log.Logger
+		metrics       *metrics
+		cooldownMu    sync.RWMutex
+		cooldownUntil time.Time
 	}
 
 	HTTPChallenge struct {
@@ -62,7 +67,21 @@ type (
 		URL      string
 		OrderURL string
 	}
+
+	OrderPollStatus string
 )
+
+const (
+	OrderPollStatusNotReady OrderPollStatus = "not_ready"
+	OrderPollStatusReady    OrderPollStatus = "ready"
+	OrderPollStatusValid    OrderPollStatus = "valid"
+	OrderPollStatusInvalid  OrderPollStatus = "invalid"
+)
+
+type OrderPollResult struct {
+	Status OrderPollStatus
+	Order  *acme.Order
+}
 
 func NewACMEService(
 	email string,
@@ -71,6 +90,7 @@ func NewACMEService(
 	accountKey crypto.Signer,
 	rootCAs *x509.CertPool,
 	logger *log.Logger,
+	registerer prometheus.Registerer,
 ) (*ACMEService, error) {
 	if accountKey == nil {
 		var err error
@@ -110,6 +130,7 @@ func NewACMEService(
 		email:   email,
 		keyType: keyType,
 		logger:  logger.Named("acme"),
+		metrics: newMetrics(registerer),
 	}
 
 	ctx := context.Background()
@@ -118,6 +139,35 @@ func NewACMEService(
 	}
 
 	return service, nil
+}
+
+func (s *ACMEService) InCooldown() bool {
+	s.cooldownMu.RLock()
+	defer s.cooldownMu.RUnlock()
+
+	active := time.Now().Before(s.cooldownUntil)
+
+	s.metrics.setCooldown(active)
+
+	return active
+}
+
+func (s *ACMEService) CooldownUntil() time.Time {
+	s.cooldownMu.RLock()
+	defer s.cooldownMu.RUnlock()
+
+	return s.cooldownUntil
+}
+
+func (s *ACMEService) enterCooldown(until time.Time) {
+	s.cooldownMu.Lock()
+	defer s.cooldownMu.Unlock()
+
+	if until.After(s.cooldownUntil) {
+		s.cooldownUntil = until
+	}
+
+	s.metrics.setCooldown(time.Now().Before(s.cooldownUntil))
 }
 
 func (s *ACMEService) registerAccount(ctx context.Context) error {
@@ -132,10 +182,14 @@ func (s *ACMEService) registerAccount(ctx context.Context) error {
 	return nil
 }
 
-func (s *ACMEService) GetHTTPChallenge(ctx context.Context, domain string) (*HTTPChallenge, error) {
+// StartHTTPChallenge creates an ACME order, accepts the HTTP-01 challenge, and
+// returns the persisted challenge metadata. It never waits for order completion.
+func (s *ACMEService) StartHTTPChallenge(ctx context.Context, domain string) (*HTTPChallenge, error) {
+	started := time.Now()
+
 	order, err := s.client.AuthorizeOrder(ctx, acme.DomainIDs(domain))
 	if err != nil {
-		return nil, fmt.Errorf("cannot create order: %w", err)
+		return nil, s.handleError(provisionPhaseCreateOrder, started, "cannot create order", err)
 	}
 
 	var challenge *acme.Challenge
@@ -143,7 +197,7 @@ func (s *ACMEService) GetHTTPChallenge(ctx context.Context, domain string) (*HTT
 	for _, auth := range order.AuthzURLs {
 		authz, err := s.client.GetAuthorization(ctx, auth)
 		if err != nil {
-			return nil, fmt.Errorf("cannot get authorization: %w", err)
+			return nil, s.handleError(provisionPhaseCreateOrder, started, "cannot get authorization", err)
 		}
 
 		for _, ch := range authz.Challenges {
@@ -159,13 +213,26 @@ func (s *ACMEService) GetHTTPChallenge(ctx context.Context, domain string) (*HTT
 	}
 
 	if challenge == nil {
+		s.metrics.observeStep(provisionPhaseCreateOrder, provisionResultError, started)
 		return nil, fmt.Errorf("no HTTP-01 challenge found")
 	}
 
 	keyAuth, err := s.client.HTTP01ChallengeResponse(challenge.Token)
 	if err != nil {
+		s.metrics.observeStep(provisionPhaseCreateOrder, provisionResultError, started)
 		return nil, fmt.Errorf("cannot get challenge response: %w", err)
 	}
+
+	challenge1 := &acme.Challenge{
+		URI:   challenge.URI,
+		Token: challenge.Token,
+	}
+
+	if _, err := s.client.Accept(ctx, challenge1); err != nil && !isChallengeAlreadyValid(err) {
+		return nil, s.handleError(provisionPhaseCreateOrder, started, "cannot accept challenge", err)
+	}
+
+	s.metrics.observeStep(provisionPhaseCreateOrder, provisionResultOK, started)
 
 	return &HTTPChallenge{
 		Domain:   domain,
@@ -176,41 +243,85 @@ func (s *ACMEService) GetHTTPChallenge(ctx context.Context, domain string) (*HTT
 	}, nil
 }
 
-func (s *ACMEService) CompleteHTTPChallenge(
-	ctx context.Context,
-	challenge0 *HTTPChallenge,
-) (*Certificate, error) {
-	challenge1 := &acme.Challenge{
-		URI:   challenge0.URL,
-		Token: challenge0.Token,
-	}
+// PollOrder performs a single GetOrder call and classifies the result.
+func (s *ACMEService) PollOrder(ctx context.Context, orderURL string) (*OrderPollResult, error) {
+	started := time.Now()
 
-	if _, err := s.client.Accept(ctx, challenge1); err != nil && !isChallengeAlreadyValid(err) {
-		return nil, fmt.Errorf("cannot accept challenge: %w", err)
-	}
-
-	order, err := s.client.WaitOrder(ctx, challenge0.OrderURL)
+	order, err := s.client.GetOrder(ctx, orderURL)
 	if err != nil {
-		return nil, fmt.Errorf("cannot wait for order: %w", err)
+		return nil, s.handleError(provisionPhasePollOrder, started, "cannot get order", err)
+	}
+
+	result := &OrderPollResult{Order: order}
+
+	switch order.Status {
+	case acme.StatusPending, acme.StatusProcessing:
+		result.Status = OrderPollStatusNotReady
+
+		s.metrics.observeStep(provisionPhasePollOrder, provisionResultNotReady, started)
+	case acme.StatusReady:
+		result.Status = OrderPollStatusReady
+
+		s.metrics.observeStep(provisionPhasePollOrder, provisionResultOK, started)
+	case acme.StatusValid:
+		result.Status = OrderPollStatusValid
+
+		s.metrics.observeStep(provisionPhasePollOrder, provisionResultOK, started)
+	case acme.StatusInvalid:
+		result.Status = OrderPollStatusInvalid
+
+		s.metrics.observeStep(provisionPhasePollOrder, provisionResultError, started)
+	default:
+		s.metrics.observeStep(provisionPhasePollOrder, provisionResultError, started)
+		return nil, fmt.Errorf("order is in unexpected status %q", order.Status)
+	}
+
+	return result, nil
+}
+
+// IssueCertificate finalizes a ready order or fetches a valid certificate.
+func (s *ACMEService) IssueCertificate(
+	ctx context.Context,
+	challenge *HTTPChallenge,
+	poll *OrderPollResult,
+) (*Certificate, error) {
+	started := time.Now()
+
+	if poll == nil || poll.Order == nil {
+		s.metrics.observeStep(provisionPhaseIssueCert, provisionResultError, started)
+		return nil, fmt.Errorf("missing order to issue certificate")
+	}
+
+	if poll.Status == OrderPollStatusInvalid {
+		s.metrics.observeStep(provisionPhaseIssueCert, provisionResultError, started)
+		return nil, ErrOrderInvalid
+	}
+
+	if poll.Status != OrderPollStatusReady && poll.Status != OrderPollStatusValid {
+		s.metrics.observeStep(provisionPhaseIssueCert, provisionResultNotReady, started)
+		return nil, ErrOrderNotReady
 	}
 
 	certKey, err := keys.Generate(s.keyType)
 	if err != nil {
+		s.metrics.observeStep(provisionPhaseIssueCert, provisionResultError, started)
 		return nil, fmt.Errorf("cannot generate certificate key: %w", err)
 	}
 
-	csr, err := createCSR(challenge0.Domain, certKey)
+	csr, err := createCSR(challenge.Domain, certKey)
 	if err != nil {
+		s.metrics.observeStep(provisionPhaseIssueCert, provisionResultError, started)
 		return nil, fmt.Errorf("cannot create CSR: %w", err)
 	}
 
-	der, err := s.issueOrderCertificate(ctx, order, challenge0.OrderURL, csr)
+	der, err := s.issueOrderCertificate(ctx, poll.Order, challenge.OrderURL, csr)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create certificate: %w", err)
+		return nil, s.handleError(provisionPhaseIssueCert, started, "cannot create certificate", err)
 	}
 
 	cert, err := x509.ParseCertificate(der[0])
 	if err != nil {
+		s.metrics.observeStep(provisionPhaseIssueCert, provisionResultError, started)
 		return nil, fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
@@ -218,6 +329,7 @@ func (s *ACMEService) CompleteHTTPChallenge(
 
 	keyPEM, err := pem.EncodePrivateKey(certKey)
 	if err != nil {
+		s.metrics.observeStep(provisionPhaseIssueCert, provisionResultError, started)
 		return nil, fmt.Errorf("cannot encode key: %w", err)
 	}
 
@@ -227,6 +339,8 @@ func (s *ACMEService) CompleteHTTPChallenge(
 	}
 
 	chainPEM := pem.EncodeCertificateChain(chainDER)
+
+	s.metrics.observeStep(provisionPhaseIssueCert, provisionResultOK, started)
 
 	return &Certificate{
 		CertPEM:   certPEM,
@@ -238,6 +352,27 @@ func (s *ACMEService) CompleteHTTPChallenge(
 
 func (s *ACMEService) CheckRenewalNeeded(expiresAt time.Time, threshold time.Duration) bool {
 	return time.Until(expiresAt) <= threshold
+}
+
+func (s *ACMEService) handleError(
+	phase provisionPhase,
+	started time.Time,
+	op string,
+	err error,
+) error {
+	acmeErr := newACMEError(op, err)
+	s.metrics.recordACMEError(acmeErr.problemType)
+
+	result := provisionResultError
+	if acmeErr.rateLimited {
+		result = provisionResultRateLimited
+
+		s.enterCooldown(time.Now().Add(acmeErr.RetryAfter()))
+	}
+
+	s.metrics.observeStep(phase, result, started)
+
+	return acmeErr
 }
 
 func isChallengeAlreadyValid(err error) bool {
@@ -271,10 +406,6 @@ func (s *ACMEService) issueOrderCertificate(
 			return der, nil
 		}
 
-		// CreateOrderCert finalizes the order but may fail to download the
-		// certificate when the CA marks the order valid before the certificate
-		// URL is populated. Poll the order using the known order URL because
-		// some CAs omit the Location header on poll responses, leaving order.URI empty.
 		return s.fetchOrderCertificateAfterFinalize(ctx, pollURL, err)
 	default:
 		return nil, fmt.Errorf("order is in unexpected status %q", order.Status)
@@ -300,10 +431,7 @@ func (s *ACMEService) fetchOrderCertificateAfterFinalize(
 	}
 
 	if refreshed.Status != acme.StatusValid {
-		refreshed, err = s.client.WaitOrder(ctx, orderURL)
-		if err != nil {
-			return nil, fmt.Errorf("cannot wait for order after finalize: %w", err)
-		}
+		return nil, fmt.Errorf("%w: order status %q after finalize", ErrOrderNotReady, refreshed.Status)
 	}
 
 	der, err := s.fetchOrderCertificate(ctx, orderURL, refreshed)
@@ -319,7 +447,7 @@ func (s *ACMEService) fetchOrderCertificate(
 	orderURL string,
 	order *acme.Order,
 ) ([][]byte, error) {
-	orderWithCertURL, err := s.waitForCertificateURL(ctx, orderURL, order)
+	orderWithCertURL, err := s.refreshOrderCertificateURL(ctx, orderURL, order)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +460,7 @@ func (s *ACMEService) fetchOrderCertificate(
 	return der, nil
 }
 
-func (s *ACMEService) waitForCertificateURL(
+func (s *ACMEService) refreshOrderCertificateURL(
 	ctx context.Context,
 	orderURL string,
 	order *acme.Order,
@@ -341,30 +469,20 @@ func (s *ACMEService) waitForCertificateURL(
 		return order, nil
 	}
 
-	deadline := time.Now().Add(30 * time.Second)
-
-	for time.Now().Before(deadline) {
-		refreshed, err := s.client.GetOrder(ctx, orderURL)
-		if err != nil {
-			return nil, fmt.Errorf("cannot refresh order: %w", err)
-		}
-
-		if refreshed.CertURL != "" {
-			return refreshed, nil
-		}
-
-		if refreshed.Status != acme.StatusValid {
-			return nil, fmt.Errorf("order left valid state while waiting for certificate URL")
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(500 * time.Millisecond):
-		}
+	refreshed, err := s.client.GetOrder(ctx, orderURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot refresh order: %w", err)
 	}
 
-	return nil, fmt.Errorf("timed out waiting for certificate URL")
+	if refreshed.CertURL != "" {
+		return refreshed, nil
+	}
+
+	if refreshed.Status != acme.StatusValid {
+		return nil, fmt.Errorf("%w: order left valid state while waiting for certificate URL", ErrOrderNotReady)
+	}
+
+	return nil, fmt.Errorf("%w: certificate URL not yet available", ErrOrderNotReady)
 }
 
 func createCSR(domain string, key crypto.Signer) ([]byte, error) {

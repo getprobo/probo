@@ -63,3 +63,34 @@ export const getCustomDomainStatusBadgeLabel = (
   }
   return __("Unknown");
 };
+
+const provisioningErrorMessages: Record<string, string> = {
+  DNS_CNAME: "DNS is not configured correctly yet. Check the CNAME record.",
+  DNS_CAA: "DNS CAA records do not allow our certificate authority.",
+  ACME_RATE_LIMITED:
+    "Certificate authority is temporarily rate-limiting. We will retry automatically.",
+  ACME_INVALID_ORDER:
+    "Domain ownership could not be verified. We will retry automatically.",
+  ACME_TEMPORARY:
+    "Certificate provisioning hit a temporary error. We will retry automatically.",
+  ACME_FAILED:
+    "Certificate provisioning failed. Contact support if this persists.",
+};
+
+export const getCertificateProvisioningErrorMessage = (
+  provisioningError: string | null | undefined,
+  __: (key: string) => string,
+) => {
+  if (!provisioningError) {
+    return null;
+  }
+
+  const knownMessage = provisioningErrorMessages[provisioningError];
+  if (knownMessage) {
+    return __(knownMessage);
+  }
+
+  return __(
+    "Certificate provisioning failed. Contact support if this persists.",
+  );
+};

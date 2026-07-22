@@ -242,6 +242,66 @@ FOR UPDATE SKIP LOCKED
 	return nil
 }
 
+// LoadByIDForUpdate locks the row with a blocking FOR UPDATE. Prefer this for
+// write-backs that must not be dropped (e.g. persisting a freshly issued cert).
+// Use LoadByIDForUpdateSkipLocked when skipping a locked row is acceptable.
+func (c *Certificate) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	certificateID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	hostname,
+	http_challenge_token,
+	http_challenge_key_auth,
+	http_challenge_url,
+	http_order_url,
+	ssl_certificate,
+	encrypted_ssl_private_key,
+	ssl_certificate_chain,
+	status,
+	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
+	provisioning_error,
+	created_at,
+	updated_at
+FROM
+	certificates
+WHERE
+	%s
+	AND id = @id
+LIMIT 1
+FOR UPDATE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"id": certificateID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query certificate for update: %w", err)
+	}
+
+	certificate, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Certificate])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect certificate: %w", err)
+	}
+
+	*c = certificate
+
+	return nil
+}
+
 func (c *Certificate) LoadByHostname(
 	ctx context.Context,
 	conn pg.Querier,
@@ -772,7 +832,7 @@ FROM
 WHERE
 	%s
 	AND (
-		(status IN (@provisioning_status, @renewing_status) AND updated_at < CURRENT_TIMESTAMP - INTERVAL '4 hours')
+		(status IN (@provisioning_status, @renewing_status) AND updated_at < CURRENT_TIMESTAMP - INTERVAL '10 minutes')
 		OR
 		(ssl_retry_count > 0 AND ssl_last_attempt_at < CURRENT_TIMESTAMP - INTERVAL '24 hours')
 	)
@@ -809,6 +869,11 @@ func (c *Certificate) LoadNextForProvisioningForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
 ) error {
+	// PROVISIONING rows with an open order poll every ~30s. Pending/Renewing
+	// rows (and provisioning rows without an order) use exponential backoff
+	// from ssl_last_attempt_at: 15m * 2^min(retry,5). Ordinary failures only
+	// reach retry counts 0–2 before FAILED; higher exponents are unused by the
+	// current failure budget but keep the SQL ceiling defensive.
 	q := `
 SELECT
 	id,
@@ -831,6 +896,23 @@ FROM
 	certificates
 WHERE
 	status = ANY(@statuses)
+	AND (
+		ssl_last_attempt_at IS NULL
+		OR (
+			status = @provisioning_status
+			AND http_order_url IS NOT NULL
+			AND ssl_last_attempt_at < CURRENT_TIMESTAMP - INTERVAL '30 seconds'
+		)
+		OR (
+			NOT (
+				status = @provisioning_status
+				AND http_order_url IS NOT NULL
+			)
+			AND ssl_last_attempt_at < CURRENT_TIMESTAMP - (
+				INTERVAL '15 minutes' * (POWER(2, LEAST(ssl_retry_count, 5))::int)
+			)
+		)
+	)
 ORDER BY
 	updated_at ASC
 LIMIT 1
@@ -846,6 +928,7 @@ FOR UPDATE SKIP LOCKED
 				string(CertificateStatusProvisioning),
 				string(CertificateStatusRenewing),
 			},
+			"provisioning_status": string(CertificateStatusProvisioning),
 		},
 	)
 	if err != nil {
