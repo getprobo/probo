@@ -122,7 +122,6 @@ export {
   fromMaxAgeSeconds,
 } from "./duration";
 export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
-export { getCompliancePortalUrl } from "./compliancePortalUrl";
 export { detectSocialName } from "./socialUrl";
 export { formatError, type GraphQLError } from "./error";
 export { Role, roles, getAssignableRoles } from "./roles";

@@ -72,7 +72,6 @@ GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 
 EMBEDDED= apps/console/dist/index.html \
 	apps/compliance-portal/dist/index.html \
-	apps/trust/dist/index.html \
 	@probo/emails
 
 PROBOD_BIN_EXTRA_DEPS=
@@ -138,7 +137,7 @@ go-lint: generate
 	$(GOLINTCMD) run ./...
 
 .PHONY: test
-test: generate apps/trust/dist/index.html
+test: generate
 test: CGO_ENABLED=1
 test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
 	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list ./... | grep -v /e2e/))
@@ -211,7 +210,7 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/step-ca/certs/r
 	PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
 	PROBOD_AUTH_COOKIE_SECURE=false; \
 	PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
-	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174,http://localhost:5175"; \
+	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
 	PROBOD_PG_ADDR=localhost:5432; \
 	PROBOD_PG_USERNAME=postgres; \
 	PROBOD_PG_PASSWORD=postgres; \
@@ -387,7 +386,7 @@ fmt-go: ## Format Go code
 clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf bin/*
 	$(RM) -rf node_modules
-	$(RM) -rf apps/{console,compliance-portal,trust}/{dist,node_modules}
+	$(RM) -rf apps/{console,compliance-portal}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
 	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
@@ -443,7 +442,7 @@ compose/keycloak/probo-realm.json: compose/keycloak/probo-realm.json.tmpl compos
 	-e "s|PRIVATE_KEY_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/private-key.pem)|g" \
 	$@.tmpl > $@
 
-apps/console/dist/index.html apps/compliance-portal/dist/index.html apps/trust/dist/index.html:
+apps/console/dist/index.html apps/compliance-portal/dist/index.html:
 	$(MKDIR) $(dir $@)
 	$(ECHO) dev-server > $@
 

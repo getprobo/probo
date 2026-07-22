@@ -245,10 +245,9 @@ jobs:
           node: "false"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist apps/trust/dist packages/emails/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
-          echo dev-server > apps/trust/dist/index.html
           echo dev-server > packages/emails/dist/placeholder
       - name: "Generate Go code"
         run: |
@@ -310,10 +309,9 @@ jobs:
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist apps/trust/dist packages/emails/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
-          echo dev-server > apps/trust/dist/index.html
           echo dev-server > packages/emails/dist/placeholder
       - name: "Generate Go code"
         run: |
@@ -371,7 +369,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for dir in apps/console apps/trust apps/compliance-portal packages/ui packages/eslint-config; do
+          for dir in apps/console apps/compliance-portal packages/ui packages/eslint-config; do
             (cd "$dir" && npx eslint . --concurrency 4 --format stylish 2>/dev/null) | \
               reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -name="eslint ($dir)" || true
           done
@@ -389,10 +387,9 @@ jobs:
       - uses: "./.github/actions/setup"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist apps/trust/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
-          echo dev-server > apps/trust/dist/index.html
       - run: "npm --workspace @probo/emails run build"
       - run: "make test"
         env:

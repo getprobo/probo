@@ -120,7 +120,7 @@ PROBOD_AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-3
 PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
 PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
 PROBOD_OAUTH2_SERVER_SIGNING_KEY="$(cat "${OAUTH2_SIGNING_KEY_PATH}")" \
-PROBOD_API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174,http://${VM_IP}:5175" \
+PROBOD_API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
 PROBOD_AWS_ENDPOINT="http://127.0.0.1:8333" \
 PROBOD_AWS_ACCESS_KEY_ID="probod" \
 PROBOD_AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
