@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -30,6 +31,35 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNameStatusError(t *testing.T) {
+	t.Parallel()
+
+	terminal := []int{
+		http.StatusBadRequest,
+		http.StatusUnauthorized,
+		http.StatusForbidden,
+		http.StatusNotFound,
+	}
+	for _, code := range terminal {
+		err := nameStatusError("thing", code)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrTerminalNameResolution, "status %d must be terminal", code)
+	}
+
+	retryable := []int{
+		http.StatusTooManyRequests,
+		http.StatusInternalServerError,
+		http.StatusBadGateway,
+		http.StatusServiceUnavailable,
+		http.StatusGatewayTimeout,
+	}
+	for _, code := range retryable {
+		err := nameStatusError("thing", code)
+		require.Error(t, err)
+		assert.False(t, errors.Is(err, ErrTerminalNameResolution), "status %d must be retryable", code)
+	}
+}
 
 // hostRewriter redirects requests to the configured target host so that
 // resolvers with hardcoded production URLs (api.notion.com, etc.) can be

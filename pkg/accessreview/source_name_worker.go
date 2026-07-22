@@ -172,6 +172,23 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
+		// A permanent failure (auth/bad-request) cannot be fixed by
+		// retrying: keep the generic name and mark the source synced so the
+		// worker stops re-claiming it every poll. Returning the error here
+		// would leave name_synced_at NULL and re-enqueue the source forever
+		// (a single unauthorized source produced millions of error logs).
+		if errors.Is(err, drivers.ErrTerminalNameResolution) {
+			h.logger.WarnCtx(
+				ctx,
+				"permanent name resolution failure, keeping generic name",
+				log.String("source_id", source.ID.String()),
+				log.String("provider", dbConnector.Provider.String()),
+				log.Error(err),
+			)
+
+			return h.markNameSynced(ctx, &source)
+		}
+
 		h.logger.WarnCtx(
 			ctx,
 			"cannot resolve instance name",
