@@ -25,7 +25,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Organization represents a tenant/workspace/team/group surfaced by a
@@ -469,4 +471,79 @@ func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client) ([]O
 	}
 
 	return result, nil
+}
+
+// ListGoogleAnalyticsOrganizations fetches the GA4 accounts the authenticated
+// Google user can access, surfacing each account's numeric ID as the picker
+// slug. Listing accounts requires the analytics.readonly scope.
+func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	var orgs []Organization
+
+	pageToken := ""
+
+	for range maxPaginationPages {
+		q := url.Values{}
+		q.Set("pageSize", strconv.Itoa(googleAnalyticsPageSize))
+
+		if pageToken != "" {
+			q.Set("pageToken", pageToken)
+		}
+
+		endpoint := url.URL{
+			Scheme:   "https",
+			Host:     googleAnalyticsAPIHost,
+			Path:     "/v1alpha/accounts",
+			RawQuery: q.Encode(),
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create google analytics accounts request: %w", err)
+		}
+
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("cannot fetch google analytics accounts: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
+
+			return nil, fmt.Errorf("cannot fetch google analytics accounts: unexpected status %d", resp.StatusCode)
+		}
+
+		var out struct {
+			Accounts []struct {
+				Name        string `json:"name"`
+				DisplayName string `json:"displayName"`
+			} `json:"accounts"`
+			NextPageToken string `json:"nextPageToken"`
+		}
+
+		decodeErr := json.NewDecoder(resp.Body).Decode(&out)
+		_ = resp.Body.Close()
+
+		if decodeErr != nil {
+			return nil, fmt.Errorf("cannot decode google analytics accounts response: %w", decodeErr)
+		}
+
+		for _, a := range out.Accounts {
+			id := strings.TrimPrefix(a.Name, "accounts/")
+			if id == "" {
+				continue
+			}
+
+			orgs = append(orgs, Organization{Slug: id, DisplayName: a.DisplayName})
+		}
+
+		if out.NextPageToken == "" {
+			return orgs, nil
+		}
+
+		pageToken = out.NextPageToken
+	}
+
+	return nil, fmt.Errorf("cannot list all google analytics accounts: %w", ErrPaginationLimitReached)
 }

@@ -66,6 +66,14 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
+	coredata.ConnectorProviderGoogleAnalytics: {
+		ListOrgs: drivers.ListGoogleAnalyticsOrganizations,
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](c)
+			return s.AccountID
+		},
+		NeedsPicker: true,
+	},
 	coredata.ConnectorProviderGitLab: {
 		ListOrgs: drivers.ListGitLabOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {

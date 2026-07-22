@@ -137,6 +137,19 @@ func TestBuildScalewayProbeURL(t *testing.T) {
 	)
 }
 
+func TestBuildSegmentProbeURL(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderSegment}
+	require.NoError(t, conn.SetSettings(&coredata.SegmentConnectorSettings{
+		BaseURL: "https://eu1.api.segmentapis.com",
+	}))
+
+	probeURL, err := buildSegmentProbeURL(conn)
+	require.NoError(t, err)
+	assert.Equal(t, "https://eu1.api.segmentapis.com/users?pagination.count=1", probeURL)
+}
+
 func TestProbeOpenRouter(t *testing.T) {
 	t.Parallel()
 

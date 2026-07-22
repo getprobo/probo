@@ -99,6 +99,15 @@ enum ConnectorProvider
     RAILWAY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRailway")
     CRISP @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCrisp")
+    DOTFILE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDotfile")
+    SEGMENT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSegment")
+    SQUARE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSquare")
+    GOOGLE_ANALYTICS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleAnalytics"
+        )
 }
 
 type ConnectorProviderInfo {
@@ -197,6 +206,7 @@ input CreateAPIKeyConnectorInput {
     langfuseBaseUrl: String
     scalewayOrganizationId: String
     crispWebsiteId: String
+    segmentRegion: String
 }
 
 type CreateAPIKeyConnectorPayload {

@@ -83,6 +83,9 @@ export function mapAPIKeyExtraSettingToField(
     case "SCALEWAY":
       if (settingKey === "organizationId") return "scalewayOrganizationId";
       break;
+    case "SEGMENT":
+      if (settingKey === "region") return "segmentRegion";
+      break;
     case "CRISP":
       if (settingKey === "websiteId") return "crispWebsiteId";
       break;

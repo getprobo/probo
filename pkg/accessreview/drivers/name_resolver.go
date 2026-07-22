@@ -1639,3 +1639,102 @@ func (r *crispNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 
 	return resp.Data.Name, nil
 }
+
+// squareNameResolver resolves the Square merchant's business name via
+// GET /v2/merchants/me. A Square token — OAuth or PAT — is scoped to a single
+// merchant, so "me" resolves it for both connection kinds.
+type squareNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewSquareNameResolver(httpClient *http.Client) NameResolver {
+	return &squareNameResolver{httpClient: httpClient}
+}
+
+func (r *squareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://connect.squareup.com/v2/merchants/me", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create square merchant request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Square-Version", squareAPIVersion)
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute square merchant request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	// A non-2xx (revoked token, missing scope) is terminal: keep the generic
+	// source name rather than make the source-name worker retry forever.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Merchant struct {
+			BusinessName string `json:"business_name"`
+		} `json:"merchant"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode square merchant response: %w", err)
+	}
+
+	return resp.Merchant.BusinessName, nil
+}
+
+// googleAnalyticsNameResolver resolves a GA4 account's display name.
+type googleAnalyticsNameResolver struct {
+	httpClient *http.Client
+	accountID  string
+}
+
+func NewGoogleAnalyticsNameResolver(httpClient *http.Client, accountID string) NameResolver {
+	return &googleAnalyticsNameResolver{httpClient: httpClient, accountID: accountID}
+}
+
+func (r *googleAnalyticsNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.accountID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://"+googleAnalyticsAPIHost, "v1alpha", "accounts", url.PathEscape(r.accountID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build google analytics account URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create google analytics account request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute google analytics account request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	// A non-2xx (revoked token, renamed/deleted account) is terminal: keep the
+	// generic source name rather than retry forever.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		DisplayName string `json:"displayName"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode google analytics account response: %w", err)
+	}
+
+	return resp.DisplayName, nil
+}

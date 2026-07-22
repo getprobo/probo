@@ -734,3 +734,137 @@ type roundTripperFunc func(*http.Request) (*http.Response, error)
 func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return f(r)
 }
+
+func TestSquareNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   string
+	}{
+		{
+			name:   "200 returns business name",
+			status: http.StatusOK,
+			body:   `{"merchant":{"business_name":"Acme Coffee"}}`,
+			want:   "Acme Coffee",
+		},
+		{
+			name:   "401 is terminal (no name)",
+			status: http.StatusUnauthorized,
+			body:   `{"errors":[{"code":"UNAUTHORIZED"}]}`,
+			want:   "",
+		},
+		{
+			name:   "403 is terminal (no name)",
+			status: http.StatusForbidden,
+			body:   `{"errors":[{"code":"FORBIDDEN"}]}`,
+			want:   "",
+		},
+		{
+			name:   "500 is terminal (no name)",
+			status: http.StatusInternalServerError,
+			body:   `{"errors":[{"code":"INTERNAL_SERVER_ERROR"}]}`,
+			want:   "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/v2/merchants/me", r.URL.Path)
+				assert.Equal(t, squareAPIVersion, r.Header.Get("Square-Version"))
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewSquareNameResolver(client).ResolveInstanceName(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestGoogleAnalyticsNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty account id returns nothing without HTTP call", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatalf("resolver should not make an HTTP call for an empty account id")
+			return nil, nil
+		})}
+
+		got, err := NewGoogleAnalyticsNameResolver(client, "").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   string
+	}{
+		{
+			name:   "200 returns display name",
+			status: http.StatusOK,
+			body:   `{"displayName":"Acme Analytics"}`,
+			want:   "Acme Analytics",
+		},
+		{
+			name:   "401 is terminal (no name)",
+			status: http.StatusUnauthorized,
+			body:   `{"error":{"code":401}}`,
+			want:   "",
+		},
+		{
+			name:   "403 is terminal (no name)",
+			status: http.StatusForbidden,
+			body:   `{"error":{"code":403}}`,
+			want:   "",
+		},
+		{
+			name:   "404 is terminal (no name)",
+			status: http.StatusNotFound,
+			body:   `{"error":{"code":404}}`,
+			want:   "",
+		},
+		{
+			name:   "500 is terminal (no name)",
+			status: http.StatusInternalServerError,
+			body:   `{"error":{"code":500}}`,
+			want:   "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/v1alpha/accounts/123456", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewGoogleAnalyticsNameResolver(client, "123456").ResolveInstanceName(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

@@ -484,6 +484,8 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"DATADOG",
 		"ZENDESK",
 		"LINEAR",
+		"GOOGLE_ANALYTICS",
+		"SQUARE",
 	} {
 		clientID := b.resolver.getEnv("PROBOD_CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -608,6 +610,8 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_DATADOG", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_ZENDESK", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_LINEAR", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_GOOGLE_ANALYTICS", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_SQUARE", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 	}
 
