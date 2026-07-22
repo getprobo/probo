@@ -106,6 +106,16 @@ func AccountAlreadyActivated(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
+func InvalidCredentials(ctx context.Context) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: "invalid email or password",
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "INVALID_CREDENTIALS",
+		},
+	}
+}
+
 func Forbidden(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),

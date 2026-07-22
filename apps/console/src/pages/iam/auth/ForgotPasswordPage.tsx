@@ -24,7 +24,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useState } from "react";
 import { useMutation } from "react-relay";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -46,13 +46,14 @@ const schema = z.object({
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
   const { __ } = useTranslate();
+  const [searchParams] = useSearchParams();
 
   usePageTitle(__("Forgot Password"));
 
   const [instructionsSent, setInstructionsSent] = useState<boolean>();
   const { register, handleSubmit, formState } = useFormWithSchema(schema, {
     defaultValues: {
-      email: "",
+      email: searchParams.get("email") ?? "",
     },
   });
 

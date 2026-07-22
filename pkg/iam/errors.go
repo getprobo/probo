@@ -426,6 +426,16 @@ func (e ErrInvalidCredentials) Error() string {
 	return e.message
 }
 
+type ErrPasswordNotSet struct{ message string }
+
+func NewPasswordNotSetError() error {
+	return &ErrPasswordNotSet{"password is not set for this account"}
+}
+
+func (e ErrPasswordNotSet) Error() string {
+	return e.message
+}
+
 type ErrPasswordAuthenticationRequired struct {
 	Reason string
 }

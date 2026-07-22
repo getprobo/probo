@@ -527,6 +527,10 @@ func (s AuthService) CheckCredentials(
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
+			if identity.HashedPassword == nil {
+				return NewPasswordNotSetError()
+			}
+
 			isPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(password), identity.HashedPassword)
 			if err != nil {
 				return fmt.Errorf("cannot verify password: %w", err)
