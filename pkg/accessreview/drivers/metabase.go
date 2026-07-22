@@ -236,7 +236,7 @@ func (r *metabaseNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	}()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch metabase session properties: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("metabase session properties", httpResp.StatusCode)
 	}
 
 	var props metabaseSessionProperties

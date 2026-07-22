@@ -208,7 +208,7 @@ func (r *grafanaNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	}()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch grafana organization: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("grafana organization", httpResp.StatusCode)
 	}
 
 	var org grafanaOrg

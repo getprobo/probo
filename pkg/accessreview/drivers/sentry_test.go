@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -54,12 +55,48 @@ func TestSentryDriver(t *testing.T) {
 	assert.NotEmpty(t, r.Roles)
 }
 
+// TestSentryDriverRequestsTrailingSlashPaths pins the exact request paths
+// against Sentry's real routing: its API is Django-based and only matches
+// paths ending in a slash, answering 404 (no redirect) otherwise. A 404 is
+// indistinguishable from a revoked membership here, so dropping the slash
+// silently turns every campaign fetch into a bogus "reconnect" error.
+func TestSentryDriverRequestsTrailingSlashPaths(t *testing.T) {
+	t.Parallel()
+
+	var gotPaths []string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPaths = append(gotPaths, r.URL.Path)
+
+		// Mimic Sentry: unslashed paths do not route.
+		if !strings.HasSuffix(r.URL.Path, "/") {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"detail":"The requested resource does not exist"}`))
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`[{"id":"42","email":"alice@example.com","name":"Alice","orgRole":"member"}]`))
+	}))
+	defer srv.Close()
+
+	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+	records, err := NewSentryDriver(client, "acme-corp").ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, "alice@example.com", records[0].Email)
+	assert.Equal(t, []string{"/api/0/organizations/acme-corp/members/"}, gotPaths)
+}
+
 func TestSentryDriverListAccountsStaleSlug(t *testing.T) {
 	t.Parallel()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodGet, r.Method)
-		assert.Equal(t, "/api/0/organizations/acme-old/members", r.URL.Path)
+		assert.Equal(t, "/api/0/organizations/acme-old/members/", r.URL.Path)
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`{"detail":"The requested resource does not exist"}`))
 	}))
@@ -88,7 +125,7 @@ func TestSentryDriverListAccountsAutoDiscoversSlug(t *testing.T) {
 			assert.Equal(t, "true", r.URL.Query().Get("member"))
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`[{"slug":"` + discoveredSlug + `","name":"Discovered Org"}]`))
-		case "/api/0/organizations/" + discoveredSlug + "/members":
+		case "/api/0/organizations/" + discoveredSlug + "/members/":
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`[{"id":"42","email":"alice@example.com","name":"Alice","orgRole":"member"}]`))
 		default:

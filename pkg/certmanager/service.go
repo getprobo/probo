@@ -34,12 +34,13 @@ type (
 	// a generic core service and knows nothing about the resources a
 	// certificate protects; callers reference a certificate by its ID.
 	Service struct {
-		pg              *pg.Client
-		acmeService     *ACMEService
-		encryptionKey   cipher.EncryptionKey
-		logger          *log.Logger
-		provisionWorker *worker.Worker[coredata.Certificate]
-		renewWorker     *worker.Worker[coredata.Certificate]
+		pg                   *pg.Client
+		acmeService          *ACMEService
+		encryptionKey        cipher.EncryptionKey
+		logger               *log.Logger
+		beginChallengeWorker *worker.Worker[coredata.Certificate]
+		pollOrderWorker      *worker.Worker[coredata.Certificate]
+		renewWorker          *worker.Worker[coredata.Certificate]
 	}
 
 	// Config holds the SSL provisioning parameters for the service workers.
@@ -75,15 +76,21 @@ func NewService(
 		acmeService:   acmeService,
 		encryptionKey: encryptionKey,
 		logger:        logger,
-		provisionWorker: NewProvisionWorker(
+		beginChallengeWorker: NewBeginChallengeWorker(
 			pgClient,
 			acmeService,
-			encryptionKey,
 			cfg.CnameTarget,
 			cfg.CAAIssuerDomain,
 			cfg.ResolverAddr,
 			cfg.ManagedBaseDomain,
-			logger.Named("provision-worker"),
+			logger.Named("begin-challenge-worker"),
+			worker.WithInterval(provisionInterval),
+		),
+		pollOrderWorker: NewPollOrderWorker(
+			pgClient,
+			acmeService,
+			encryptionKey,
+			logger.Named("poll-order-worker"),
 			worker.WithInterval(provisionInterval),
 		),
 		renewWorker: NewRenewWorker(
@@ -100,7 +107,13 @@ func (s *Service) Run(ctx context.Context) error {
 
 	g.Go(
 		func() error {
-			return s.provisionWorker.Run(gctx)
+			return s.beginChallengeWorker.Run(gctx)
+		},
+	)
+
+	g.Go(
+		func() error {
+			return s.pollOrderWorker.Run(gctx)
 		},
 	)
 

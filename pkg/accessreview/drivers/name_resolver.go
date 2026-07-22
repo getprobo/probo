@@ -41,6 +41,24 @@ type NameResolver interface {
 	ResolveInstanceName(ctx context.Context) (string, error)
 }
 
+// ErrTerminalNameResolution marks a permanent name-resolution failure
+// (auth/bad-request) that retrying cannot fix: the source-name worker keeps
+// the generic name and marks the source synced instead of re-claiming it.
+// Transient failures (5xx, network) stay plain errors so they keep retrying.
+var ErrTerminalNameResolution = errors.New("terminal name resolution failure")
+
+// nameStatusError classifies a non-2xx response from a name-resolution
+// request. Permanent client errors (400, 401, 403, 404) wrap
+// ErrTerminalNameResolution; everything else (notably 5xx) stays retryable.
+func nameStatusError(what string, statusCode int) error {
+	switch statusCode {
+	case http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound:
+		return fmt.Errorf("cannot fetch %s: unexpected status %d: %w", what, statusCode, ErrTerminalNameResolution)
+	default:
+		return fmt.Errorf("cannot fetch %s: unexpected status %d", what, statusCode)
+	}
+}
+
 // slackNameResolver resolves the Slack workspace name via auth.test.
 type slackNameResolver struct {
 	httpClient *http.Client
@@ -143,7 +161,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch linear organization: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("linear organization", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -184,7 +202,10 @@ func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (strin
 
 	q := cfURL.Query()
 	q.Set("page", "1")
-	q.Set("per_page", "1")
+	// Cloudflare requires per_page in the range 5..50; per_page=1 is rejected
+	// with a 400 (which, before terminal classification, caused a 400 storm).
+	// Do not "optimize" this back down to 1.
+	q.Set("per_page", "50")
 	cfURL.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfURL.String(), nil)
@@ -202,7 +223,7 @@ func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (strin
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch cloudflare accounts: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("cloudflare accounts", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -251,7 +272,7 @@ func (r *brexNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch brex company: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("brex company", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -298,7 +319,7 @@ func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch tally organization: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("tally organization", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -505,7 +526,7 @@ func (r *hubspotNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch hubspot account info: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("hubspot account info", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -708,7 +729,8 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug))
+	// Trailing slash required; see SentryDriver.ListAccounts.
+	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug)+"/")
 	if err != nil {
 		return "", fmt.Errorf("cannot build sentry organization URL: %w", err)
 	}
@@ -735,7 +757,7 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch sentry organization: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("sentry organization", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -783,7 +805,7 @@ func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch github organization: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("github organization", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -915,7 +937,7 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch gitlab group: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("gitlab group", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -968,7 +990,7 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch bitbucket workspace: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("bitbucket workspace", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -1027,7 +1049,7 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch heroku team: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("heroku team", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -1177,7 +1199,7 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch asana workspace: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("asana workspace", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -1227,7 +1249,7 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch netlify account: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("netlify account", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -1275,7 +1297,7 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch clickup team: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("clickup team", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -1344,7 +1366,7 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	if teamResp.StatusCode != http.StatusNotFound {
-		return "", fmt.Errorf("cannot fetch vercel team: unexpected status %d", teamResp.StatusCode)
+		return "", nameStatusError("vercel team", teamResp.StatusCode)
 	}
 
 	// Personal-account fallback: /v2/teams/<uid> returns 404, but
@@ -1398,7 +1420,7 @@ func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch monday account: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("monday account", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -1451,7 +1473,7 @@ func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch notion users/me: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("notion users/me", httpResp.StatusCode)
 	}
 
 	var resp struct {
@@ -1501,7 +1523,7 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch microsoft 365 organization: unexpected status %d", httpResp.StatusCode)
+		return "", nameStatusError("microsoft 365 organization", httpResp.StatusCode)
 	}
 
 	var resp struct {

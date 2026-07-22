@@ -448,21 +448,7 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 		return []*types.ProviderOrganization{}, nil
 	}
 
-	httpClient, dbConnector, err := r.accessReview.ConnectorHTTPClient(ctx, scope, *obj.ConnectorID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return []*types.ProviderOrganization{}, nil
-		}
-
-		return nil, fmt.Errorf("cannot get connector HTTP client: %w", err)
-	}
-
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || cfg.ListOrgs == nil {
-		return []*types.ProviderOrganization{}, nil
-	}
-
-	orgs, err := cfg.ListOrgs(ctx, httpClient)
+	orgs, err := r.accessReview.ProviderOrganizations(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		return nil, err
 	}
@@ -491,23 +477,18 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 		return false, nil
 	}
 
-	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	needsConfiguration, err := r.accessReview.SourceNeedsConfiguration(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot determine access source configuration", log.Error(err))
 
 		return false, gqlutils.Internal(ctx)
 	}
 
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !cfg.NeedsPicker {
-		return false, nil
-	}
-
-	return cfg.SelectedSlug(dbConnector) == "", nil
+	return needsConfiguration, nil
 }
 
 // ConnectionStatus is the resolver for the connectionStatus field.
@@ -552,23 +533,17 @@ func (r *accessReviewSourceResolver) SelectedOrganization(ctx context.Context, o
 		return nil, nil
 	}
 
-	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	slug, err := r.accessReview.SelectedOrganizationSlug(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get selected organization", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok {
-		return nil, nil
-	}
-
-	slug := cfg.SelectedSlug(dbConnector)
 	if slug == "" {
 		return nil, nil
 	}
@@ -628,6 +603,8 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
+
 	return &types.CreateAccessReviewSourcePayload{
 		AccessReviewSourceEdge: types.NewAccessReviewSourceEdge(source, coredata.AccessReviewSourceOrderFieldCreatedAt),
 	}, nil
@@ -658,6 +635,13 @@ func (r *mutationResolver) UpdateAccessReviewSource(ctx context.Context, input t
 		r.logger.ErrorCtx(ctx, "cannot update access source", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	// A connector was just (re)linked: default its org so the source is usable
+	// right away. Skipped on name/CSV-only updates to avoid a needless
+	// provider round-trip.
+	if input.ConnectorID.IsSet() {
+		r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
 	}
 
 	return &types.UpdateAccessReviewSourcePayload{

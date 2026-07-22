@@ -3679,6 +3679,8 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 		return nil, types.CreateAccessReviewSourceOutput{}, fmt.Errorf("cannot create access source: %w", err)
 	}
 
+	r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
+
 	return nil, types.CreateAccessReviewSourceOutput{
 		AccessReviewSource: types.NewAccessReviewSource(source),
 	}, nil
@@ -3700,7 +3702,11 @@ func (r *Resolver) UpdateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 		updateReq.Name = &input.Name
 	}
 
+	connectorSet := false
+
 	if rawConnectorID := UnwrapOmittable(input.ConnectorID); rawConnectorID != nil {
+		connectorSet = true
+
 		if *rawConnectorID != nil {
 			id, err := gid.ParseGID(**rawConnectorID)
 			if err != nil {
@@ -3723,6 +3729,13 @@ func (r *Resolver) UpdateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 	source, err := r.accessReview.UpdateSource(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateAccessReviewSourceOutput{}, fmt.Errorf("cannot update access source: %w", err)
+	}
+
+	// A connector was just (re)linked: default its org so the source is
+	// usable right away. Matches the GraphQL surface; skipped on name/CSV-only
+	// updates to avoid a needless provider round-trip.
+	if connectorSet {
+		r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
 	}
 
 	return nil, types.UpdateAccessReviewSourceOutput{

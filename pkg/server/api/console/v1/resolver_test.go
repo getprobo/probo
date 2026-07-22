@@ -18,39 +18,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package provider_test
+package console_v1
 
 import (
-	"context"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.gearno.de/kit/httpclient"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector/provider"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestClerkRegistration(t *testing.T) {
+// TestVercelCallbackTeamID pins the exact OAuth-callback query-parameter name
+// Vercel uses. It is camelCase `teamId`; a regression to the snake_case
+// `team_id` used by most other providers would silently drop the team on every
+// Vercel connect and leave the source resolving nobody.
+func TestVercelCallbackTeamID(t *testing.T) {
 	t.Parallel()
 
-	r := provider.NewBuiltinRegistry()
-	reg, ok := r.Get(coredata.ConnectorProviderClerk)
-	require.True(t, ok, "clerk provider must be registered")
+	cases := []struct {
+		name  string
+		query url.Values
+		want  string
+	}{
+		{
+			name:  "camelCase teamId is read",
+			query: url.Values{"teamId": {"team_abc123"}},
+			want:  "team_abc123",
+		},
+		{
+			name:  "snake_case team_id is ignored",
+			query: url.Values{"team_id": {"team_abc123"}},
+			want:  "",
+		},
+		{
+			name:  "absent parameter yields empty",
+			query: url.Values{},
+			want:  "",
+		},
+	}
 
-	assert.Equal(t, "Clerk", reg.DisplayName)
-	assert.True(t, reg.SupportsAPIKey)
-	assert.Equal(t, "", reg.APIKeyHeader)
-	assert.False(t, reg.APIKeyBasicAuth)
-	require.NotNil(t, reg.NewDriver, "clerk NewDriver closure must be wired")
+	for _, tc := range cases {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-	drv, err := reg.NewDriver(
-		context.Background(),
-		httpclient.DefaultClient(httpclient.WithSSRFProtection()),
-		&coredata.Connector{Provider: coredata.ConnectorProviderClerk},
-		nil,
-	)
-	require.NoError(t, err)
-	assert.IsType(t, &drivers.ClerkDriver{}, drv)
+				assert.Equal(t, tc.want, vercelCallbackTeamID(tc.query))
+			},
+		)
+	}
 }

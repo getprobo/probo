@@ -155,6 +155,7 @@ func NewMux(
 				logger,
 				baseURL,
 				proboSvc,
+				accessReviewSvc,
 				connectorRegistry,
 				safeRedirect,
 			),
@@ -174,6 +175,7 @@ func handleConnectorComplete(
 	logger *log.Logger,
 	baseURL *baseurl.BaseURL,
 	proboSvc *probo.Service,
+	accessReviewSvc *accessreview.Service,
 	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
 ) http.HandlerFunc {
@@ -309,6 +311,14 @@ func handleConnectorComplete(
 
 				return
 			}
+
+			// The reconnect may carry a different scope/org, changing the
+			// resolvable instance name. Clear the synced-name flag so the
+			// source-name worker re-resolves it. Best-effort: a failure here
+			// must not fail the OAuth callback redirect.
+			if err := accessReviewSvc.ResetSourceNameSyncForConnector(r.Context(), scope, cnnctr.ID); err != nil {
+				logger.WarnCtx(r.Context(), "cannot reset access source name sync after reconnect", log.Error(err))
+			}
 		} else {
 			createReq := probo.CreateConnectorRequest{
 				OrganizationID: organizationID,
@@ -356,13 +366,11 @@ func handleConnectorComplete(
 				}
 			}
 
-			// Vercel surfaces the customer's team_id as an OAuth callback
-			// query parameter (not in the token response body). When the
-			// install targets a personal account no team_id is sent — fall
-			// back to /v2/user.id as a synthetic TeamID; the v3 members
-			// endpoint accepts personal-account UIDs.
+			// Personal-account installs send no teamId; fall back to
+			// /v2/user.id as a synthetic TeamID (the v3 members endpoint
+			// accepts personal-account UIDs).
 			if connectorProvider == coredata.ConnectorProviderVercel {
-				teamID := query.Get("team_id")
+				teamID := vercelCallbackTeamID(query)
 				if teamID == "" {
 					if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
 						if uid, err := connector.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
@@ -464,6 +472,13 @@ func handleConnectorOAuth2Error(
 	parsedURL.RawQuery = q.Encode()
 
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+}
+
+// vercelCallbackTeamID returns the team identifier from Vercel's OAuth
+// callback. Vercel uses the camelCase `teamId` query param (not snake_case
+// `team_id`); the name is pinned by a test so it cannot silently regress.
+func vercelCallbackTeamID(query url.Values) string {
+	return query.Get("teamId")
 }
 
 // isValidPagerDutySubdomain reports whether s is a single DNS label

@@ -35,7 +35,6 @@ func NewBuiltinRegistry() *Registry {
 		bitbucketRegistration(),
 		brevoRegistration(),
 		brexRegistration(),
-		clerkRegistration(),
 		clickhouseRegistration(),
 		clickupRegistration(),
 		cloudflareRegistration(),

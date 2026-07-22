@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package console_v1
+package accessreview
 
 import (
 	"context"
@@ -45,10 +45,11 @@ type providerOrgConfig struct {
 	NeedsPicker  bool
 }
 
-// providerOrgConfigs is the single source of truth that the three
-// AccessReviewSource picker resolvers (ProviderOrganizations,
-// SelectedOrganization, NeedsConfiguration) dispatch through. Adding a
-// provider takes one entry here, not three switch arms.
+// providerOrgConfigs is the single source of truth that the access-source
+// picker paths dispatch through: the console/MCP picker resolvers
+// (ProviderOrganizations, SelectedOrganization, NeedsConfiguration) and the
+// AutoSelectDefaultOrganization defaulting run on create/update. Adding a
+// provider takes one entry here.
 var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	coredata.ConnectorProviderGitHub: {
 		ListOrgs: drivers.ListGitHubOrganizations,
@@ -123,7 +124,7 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
-	// (subdomain for PagerDuty, team_id or fallback /v2/user.id for
+	// (subdomain for PagerDuty, teamId or fallback /v2/user.id for
 	// Vercel). No picker UI; NeedsPicker = false.
 	coredata.ConnectorProviderPagerDuty: {
 		SelectedSlug: func(c *coredata.Connector) string {

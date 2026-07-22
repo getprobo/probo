@@ -150,8 +150,12 @@ func (d *TailscaleDriver) fetchUsers(ctx context.Context) ([]tailscaleUser, erro
 		_ = httpResp.Body.Close()
 	}()
 
+	// Classify the status so the source-name worker (which reuses this via
+	// tailscaleNameResolver) treats an auth/not-found 4xx as terminal instead
+	// of hot-looping. The sentinel is inert on the ListAccounts sync path,
+	// which does not inspect it.
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot fetch tailscale users: unexpected status %d", httpResp.StatusCode)
+		return nil, nameStatusError("tailscale users", httpResp.StatusCode)
 	}
 
 	var resp tailscaleUsersResponse

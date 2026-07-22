@@ -31,12 +31,16 @@ import (
 
 func brexRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderBrex,
-		DisplayName:    "Brex",
-		AuthURL:        "https://accounts-api.brex.com/oauth2/default/v1/authorize",
-		TokenURL:       "https://accounts-api.brex.com/oauth2/default/v1/token",
-		ProbeURL:       "https://platform.brexapis.com/v2/users/me",
-		OAuth2Scopes:   []string{"openid", "offline_access", "users.readonly"},
+		Provider:    coredata.ConnectorProviderBrex,
+		DisplayName: "Brex",
+		AuthURL:     "https://accounts-api.brex.com/oauth2/default/v1/authorize",
+		TokenURL:    "https://accounts-api.brex.com/oauth2/default/v1/token",
+		ProbeURL:    "https://platform.brexapis.com/v2/users/me",
+		// companies.readonly is required by the name resolver's GET /v2/company
+		// call; without it Brex 403s that endpoint (users.readonly covers only
+		// /v2/users, which the driver uses). Existing Brex connectors must
+		// reconnect to re-consent to the added scope.
+		OAuth2Scopes:   []string{"openid", "offline_access", "users.readonly", "companies.readonly"},
 		SupportsAPIKey: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewBrexDriver(c), nil

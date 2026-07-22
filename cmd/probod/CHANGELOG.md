@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.233.0] - 2026-07-22
+
+### Added
+
+- Added pointer parallax to logo backdrops (`MediaTile`/`BackdropCard`), with eased entry and a frozen pose when the pointer leaves
+
+### Fixed
+
+- Split certificate provisioning into separate begin-challenge and poll-order workers so the global ACME rate-limit cooldown no longer blocks polling of in-flight orders
+- Fixed several access-review connector defects that silently synced zero users or hammered vendor APIs (Sentry trailing-slash routing, Vercel OAuth team parameter, Brex company-read scope, Cloudflare `per_page` floor, picker providers now auto-select their first workspace, org defaulting now also applied via MCP, and the source-name worker no longer re-claims permanently-failed sources or loses a resolved name after reconnect)
+
+### Removed
+
+- Disabled the Clerk access-review connector: its Backend API only exposes application end-users, not workspace admins, so reviews targeted the wrong population
+
 ## [0.232.0] - 2026-07-22
 
 ### Added
