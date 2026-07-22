@@ -4,6 +4,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Fixed
+
+- Organization Get/Get Many/Create no longer query removed Connect `Organization` profile fields (`description`, `websiteUrl`, `email`, `headquarterAddress`), which broke Organization Get Many. Use Compliance Portal Get/Update for those fields instead
+- Compliance Portal Get now returns `entityName`, `description`, `websiteUrl`, `email`, and `headquarterAddress`, matching Compliance Portal Update, and selects `logo`/`darkLogo`/`nda` as File objects instead of removed URL scalars
+
 ## [0.206.0] - 2026-07-22
 
 ### Changed

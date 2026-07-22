@@ -50,10 +50,6 @@ export async function execute(
 				organization {
 					id
 					name
-					description
-					websiteUrl
-					email
-					headquarterAddress
 					logo {
 						id
 						fileName
@@ -71,17 +67,14 @@ export async function execute(
 		}
 	`;
 
-	const variables = {
+	const responseData = await proboConnectApiRequest.call(this, query, {
 		input: {
 			name,
 		},
-	};
-
-	const responseData = await proboConnectApiRequest.call(this, query, variables);
+	});
 
 	return {
 		json: responseData,
 		pairedItem: { item: itemIndex },
 	};
 }
-

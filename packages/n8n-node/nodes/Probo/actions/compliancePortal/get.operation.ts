@@ -52,10 +52,26 @@ export async function execute(
 						id
 						active
 						searchEngineIndexing
-						logoFileUrl
-						darkLogoFileUrl
-						ndaFileName
-						ndaFileUrl
+						entityName
+						description
+						websiteUrl
+						email
+						headquarterAddress
+						logo {
+							id
+							fileName
+							downloadUrl
+						}
+						darkLogo {
+							id
+							fileName
+							downloadUrl
+						}
+						nda {
+							id
+							fileName
+							downloadUrl
+						}
 						createdAt
 						updatedAt
 					}
