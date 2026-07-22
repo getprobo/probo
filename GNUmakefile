@@ -335,12 +335,6 @@ pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceport
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
-.PHONY: @probo/compliance-portal
-@probo/compliance-portal: NODE_ENV=production
-@probo/compliance-portal: relay
-	$(NPM) --workspace $@ run check
-	$(NPM) --workspace $@ run build
-
 .PHONY: generate
 generate: $(GENERATED)
 
