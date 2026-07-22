@@ -45,7 +45,7 @@
     }
   },
   "home": {
-    "heroTitle": "{{name}}'de Uyumluluk.",
+    "heroTitle": "{{name}} için Uyumluluk.",
     "heroDescription": "Uyumluluk Portalımıza hoş geldiniz. Güvenlik belgelerimizi ve sertifikalarımızı burada bulabilirsiniz.",
     "sections": {
       "compliance": "Uyumluluk",
