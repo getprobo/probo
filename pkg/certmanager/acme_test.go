@@ -43,6 +43,7 @@ func TestNewMetrics_SharedRegistererDoesNotPanic(t *testing.T) {
 	// A second ACMEService sharing the registerer re-registers fixed-name
 	// collectors; this must reuse the existing ones instead of panicking.
 	var second *metrics
+
 	require.NotPanics(t, func() {
 		second = newMetrics(registerer)
 	})
