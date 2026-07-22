@@ -356,13 +356,13 @@ func handleConnectorComplete(
 				}
 			}
 
-			// Vercel surfaces the customer's team_id as an OAuth callback
-			// query parameter (not in the token response body). When the
-			// install targets a personal account no team_id is sent — fall
-			// back to /v2/user.id as a synthetic TeamID; the v3 members
-			// endpoint accepts personal-account UIDs.
+			// Vercel surfaces the customer's team as the `teamId` OAuth
+			// callback query parameter (camelCase, not in the token response
+			// body). When the install targets a personal account no teamId is
+			// sent — fall back to /v2/user.id as a synthetic TeamID; the v3
+			// members endpoint accepts personal-account UIDs.
 			if connectorProvider == coredata.ConnectorProviderVercel {
-				teamID := query.Get("team_id")
+				teamID := query.Get("teamId")
 				if teamID == "" {
 					if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
 						if uid, err := connector.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
