@@ -151,12 +151,12 @@ func parseRetryAfter(header http.Header) (time.Duration, bool) {
 	}
 
 	// The delta-seconds form is an unsigned decimal integer (RFC 9110 §10.2.3).
-	// Parsing it as unsigned rejects negative or otherwise malformed values so
-	// they fall back to the caller's default cooldown instead of collapsing to a
-	// zero/negative duration that would disable the rate-limit cooldown. A value
+	// Parse as signed 64-bit to match time.Duration's underlying type and avoid
+	// unsigned-to-signed narrowing conversions. Negative or malformed values are
+	// treated as unparseable so callers can apply their default cooldown. A value
 	// larger than time.Duration can hold is clamped to the maximum duration.
-	if seconds, err := strconv.ParseUint(value, 10, 64); err == nil {
-		maxSeconds := uint64(math.MaxInt64 / int64(time.Second))
+	if seconds, err := strconv.ParseInt(value, 10, 64); err == nil && seconds >= 0 {
+		maxSeconds := int64(math.MaxInt64 / int64(time.Second))
 		if seconds > maxSeconds {
 			return time.Duration(math.MaxInt64), true
 		}
