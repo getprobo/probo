@@ -101,11 +101,13 @@ func TestSEOFromRequest_StripsPathFromBaseURL(t *testing.T) {
 	assert.Equal(t, "https://trust.acme.com/fr/documents", canonical)
 
 	var enHref string
+
 	for _, link := range hreflang {
 		if link.Lang == "en" {
 			enHref = link.Href
 		}
 	}
+
 	assert.Equal(t, "https://trust.acme.com/en/documents", enHref)
 }
 
