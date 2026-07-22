@@ -43,10 +43,14 @@ const (
 	maxProvisioningRetries = 3
 	dnsExchangeTimeout     = 10 * time.Second
 	processTickTimeout     = 90 * time.Second
-	// persistFailureTimeout bounds the retry-outcome write-back. It runs on a
-	// context detached from the process tick deadline so a timed-out attempt can
-	// still record its failure.
-	persistFailureTimeout = 15 * time.Second
+	persistFailureTimeout  = 15 * time.Second
+
+	// provisioningPollLease is how long a claimed PROVISIONING row with an open
+	// order stays ineligible for re-claim after each attempt. It must exceed
+	// processTickTimeout: the claim's row lock is released before Process runs,
+	// so a lease shorter than the maximum processing window would let another
+	// worker claim and process the same row concurrently.
+	provisioningPollLease = processTickTimeout + 30*time.Second
 
 	tracerName = "go.probo.inc/probo/pkg/certmanager"
 )
@@ -120,7 +124,7 @@ func (h *provisionHandler) Claim(ctx context.Context) (coredata.Certificate, err
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := certificate.LoadNextForProvisioningForUpdateSkipLocked(ctx, tx); err != nil {
+			if err := certificate.LoadNextForProvisioningForUpdateSkipLocked(ctx, tx, provisioningPollLease); err != nil {
 				return err
 			}
 
@@ -209,11 +213,57 @@ func (h *provisionHandler) processBeginChallenge(
 		return h.persistFailure(ctx, certificate.ID, err)
 	}
 
-	return h.pg.WithTx(
+	persisted, err := h.persistChallenge(ctx, certificate, challenge)
+	if err != nil {
+		h.recordSpanError(span, err, classifyProvisioningError(err))
+		return err
+	}
+
+	if !persisted {
+		return nil
+	}
+
+	// The key authorization is now committed and served by the challenge
+	// handler, so it is safe to ask the CA to begin validation. Accepting
+	// earlier risks the CA hitting the token before this instance can serve it,
+	// yielding a 404 and an invalid order.
+	if err := h.acmeService.AcceptHTTPChallenge(ctx, challenge); err != nil {
+		errorCode := classifyProvisioningError(err)
+		h.logACMEOutcome(ctx, certificate, provisionPhaseCreateOrder, err, errorCode)
+		h.recordSpanError(span, err, errorCode)
+
+		return h.persistFailure(ctx, certificate.ID, err)
+	}
+
+	h.logger.InfoCtx(
+		ctx,
+		"HTTP challenge accepted, waiting for order validation",
+		log.String("hostname", certificate.Hostname),
+		log.String("certificate_id", certificate.ID.String()),
+	)
+
+	return nil
+}
+
+// persistChallenge stores the HTTP-01 challenge metadata and flips the row to
+// PROVISIONING. It takes a blocking write-back lock so the metadata is persisted
+// once any competing transaction commits; a genuinely deleted row is the only
+// no-op. It reports whether the row was persisted (false when the row is gone or
+// has moved on to another status).
+func (h *provisionHandler) persistChallenge(
+	ctx context.Context,
+	certificate coredata.Certificate,
+	challenge *HTTPChallenge,
+) (bool, error) {
+	persisted := false
+
+	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			persisted = false
+
 			row := &coredata.Certificate{}
-			if err := row.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), certificate.ID); err != nil {
+			if err := row.LoadByIDForUpdate(ctx, tx, coredata.NewNoScope(), certificate.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return nil
 				}
@@ -237,16 +287,16 @@ func (h *provisionHandler) processBeginChallenge(
 				return fmt.Errorf("cannot update certificate with challenge: %w", err)
 			}
 
-			h.logger.InfoCtx(
-				ctx,
-				"HTTP challenge accepted, waiting for order validation",
-				log.String("hostname", row.Hostname),
-				log.String("certificate_id", row.ID.String()),
-			)
+			persisted = true
 
 			return nil
 		},
 	)
+	if err != nil {
+		return false, err
+	}
+
+	return persisted, nil
 }
 
 func (h *provisionHandler) processPollOrder(
@@ -301,11 +351,66 @@ func (h *provisionHandler) processPollOrder(
 		h.recordSpanError(span, err, errorCode)
 
 		return h.persistFailure(ctx, certificate.ID, err)
-	case OrderPollStatusReady, OrderPollStatusValid:
+	case OrderPollStatusReady:
 		return h.issueCertificate(ctx, certificate, challenge, poll)
+	case OrderPollStatusValid:
+		// A VALID order observed while polling means a previous attempt already
+		// finalized it at the CA but the certificate/private-key write never
+		// landed (crash or a failed transaction). The private key generated for
+		// that finalize is gone, so fetching the issued certificate now would
+		// pair it with a freshly generated key and break TLS loading. Abandon
+		// the unrecoverable order and start a new one.
+		return h.abandonRecoveredValidOrder(ctx, span, certificate)
 	default:
 		return nil
 	}
+}
+
+// abandonRecoveredValidOrder clears the ACME order state and returns the row to
+// PENDING so the next tick mints a fresh order (and a matching private key).
+func (h *provisionHandler) abandonRecoveredValidOrder(
+	ctx context.Context,
+	span trace.Span,
+	certificate coredata.Certificate,
+) error {
+	h.logger.WarnCtx(
+		ctx,
+		"abandoning recovered valid ACME order without a matching private key, restarting provisioning",
+		log.String("hostname", certificate.Hostname),
+		log.String("certificate_id", certificate.ID.String()),
+	)
+	span.AddEvent("abandoned recovered valid order without matching private key")
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			row := &coredata.Certificate{}
+			if err := row.LoadByIDForUpdate(ctx, tx, coredata.NewNoScope(), certificate.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load certificate %q: %w", certificate.ID, err)
+			}
+
+			if row.Status != coredata.CertificateStatusProvisioning {
+				return nil
+			}
+
+			row.HTTPChallengeToken = nil
+			row.HTTPChallengeKeyAuth = nil
+			row.HTTPChallengeURL = nil
+			row.HTTPOrderURL = nil
+			row.ProvisioningError = nil
+			row.Status = coredata.CertificateStatusPending
+
+			if err := row.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot reset certificate after abandoning valid order: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 func (h *provisionHandler) issueCertificate(
@@ -408,12 +513,6 @@ func (h *provisionHandler) persistFailure(
 ) error {
 	errorCode := classifyProvisioningError(provisionErr)
 
-	// Process runs each tick under processTickTimeout. When that deadline fires
-	// mid-attempt, the same expired context reaches here, and the write-back
-	// silently fails — so the retry budget never advances and the certificate
-	// stays retriable forever. Detach from the tick deadline (and cancellation)
-	// and bound the write with its own timeout so repeated timeouts still make
-	// progress toward FAILED.
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), persistFailureTimeout)
 	defer cancel()
 
@@ -527,7 +626,7 @@ func (h *provisionHandler) RecoverStale(ctx context.Context) error {
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var certificates coredata.Certificates
-			if err := certificates.ListStaleProvisioning(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := certificates.ListStaleProvisioning(ctx, tx, coredata.NewNoScope(), ProvisioningErrorACMERateLimited); err != nil {
 				return fmt.Errorf("cannot load stale provisioning certificates: %w", err)
 			}
 

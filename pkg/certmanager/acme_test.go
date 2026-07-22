@@ -52,7 +52,7 @@ func TestNewMetrics_SharedRegistererDoesNotPanic(t *testing.T) {
 	assert.Same(t, first.provisionSteps, second.provisionSteps)
 	assert.Same(t, first.acmeErrors, second.acmeErrors)
 	assert.Same(t, first.stepDuration, second.stepDuration)
-	assert.Equal(t, first.acmeCooldown, second.acmeCooldown)
+	assert.Same(t, first.acmeCooldown, second.acmeCooldown)
 }
 
 func TestNewACMEError_RateLimited(t *testing.T) {

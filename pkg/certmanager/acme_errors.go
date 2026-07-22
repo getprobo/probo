@@ -23,6 +23,7 @@ package certmanager
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -72,11 +73,6 @@ func (e *ACMEError) Is(target error) bool {
 	return e != nil && e.rateLimited && target == ErrACMERateLimited
 }
 
-// RetryAfter returns how long callers should wait before retrying.
-// For rate-limited errors it honors the ACME Retry-After value whenever the
-// header is present and parseable — including a zero (or past) value, which the
-// CA uses to permit an immediate retry. It falls back to defaultCooldown only
-// when the header is absent or invalid. Non-rate-limited errors return 0.
 func (e *ACMEError) RetryAfter() time.Duration {
 	if e == nil || !e.rateLimited {
 		return 0
@@ -131,10 +127,6 @@ func newACMEError(op string, err error) *ACMEError {
 	if _, ok := acme.RateLimit(acmeErr); ok {
 		out.rateLimited = true
 
-		// acme.RateLimit collapses "Retry-After: 0", an invalid header, and a
-		// missing header all to a zero duration, so inspect the header directly
-		// to tell an explicit zero (immediate retry) apart from an absent one
-		// (fall back to defaultCooldown in RetryAfter).
 		if retryAfter, ok := parseRetryAfter(acmeErr.Header); ok {
 			out.retryAfter = retryAfter
 			out.retryAfterSet = true
@@ -158,7 +150,17 @@ func parseRetryAfter(header http.Header) (time.Duration, bool) {
 		return 0, false
 	}
 
-	if seconds, err := strconv.Atoi(value); err == nil {
+	// The delta-seconds form is an unsigned decimal integer (RFC 9110 §10.2.3).
+	// Parsing it as unsigned rejects negative or otherwise malformed values so
+	// they fall back to the caller's default cooldown instead of collapsing to a
+	// zero/negative duration that would disable the rate-limit cooldown. A value
+	// larger than time.Duration can hold is clamped to the maximum duration.
+	if seconds, err := strconv.ParseUint(value, 10, 64); err == nil {
+		maxSeconds := uint64(math.MaxInt64 / int64(time.Second))
+		if seconds > maxSeconds {
+			return time.Duration(math.MaxInt64), true
+		}
+
 		return time.Duration(seconds) * time.Second, true
 	}
 

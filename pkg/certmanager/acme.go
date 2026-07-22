@@ -182,8 +182,6 @@ func (s *ACMEService) registerAccount(ctx context.Context) error {
 	return nil
 }
 
-// StartHTTPChallenge creates an ACME order, accepts the HTTP-01 challenge, and
-// returns the persisted challenge metadata. It never waits for order completion.
 func (s *ACMEService) StartHTTPChallenge(ctx context.Context, domain string) (*HTTPChallenge, error) {
 	started := time.Now()
 
@@ -223,15 +221,6 @@ func (s *ACMEService) StartHTTPChallenge(ctx context.Context, domain string) (*H
 		return nil, fmt.Errorf("cannot get challenge response: %w", err)
 	}
 
-	challenge1 := &acme.Challenge{
-		URI:   challenge.URI,
-		Token: challenge.Token,
-	}
-
-	if _, err := s.client.Accept(ctx, challenge1); err != nil && !isChallengeAlreadyValid(err) {
-		return nil, s.handleError(provisionPhaseCreateOrder, started, "cannot accept challenge", err)
-	}
-
 	s.metrics.observeStep(provisionPhaseCreateOrder, provisionResultOK, started)
 
 	return &HTTPChallenge{
@@ -243,7 +232,23 @@ func (s *ACMEService) StartHTTPChallenge(ctx context.Context, domain string) (*H
 	}, nil
 }
 
-// PollOrder performs a single GetOrder call and classifies the result.
+func (s *ACMEService) AcceptHTTPChallenge(ctx context.Context, challenge *HTTPChallenge) error {
+	started := time.Now()
+
+	acceptChallenge := &acme.Challenge{
+		URI:   challenge.URL,
+		Token: challenge.Token,
+	}
+
+	if _, err := s.client.Accept(ctx, acceptChallenge); err != nil && !isChallengeAlreadyValid(err) {
+		return s.handleError(provisionPhaseCreateOrder, started, "cannot accept challenge", err)
+	}
+
+	s.metrics.observeStep(provisionPhaseCreateOrder, provisionResultOK, started)
+
+	return nil
+}
+
 func (s *ACMEService) PollOrder(ctx context.Context, orderURL string) (*OrderPollResult, error) {
 	started := time.Now()
 
@@ -279,7 +284,6 @@ func (s *ACMEService) PollOrder(ctx context.Context, orderURL string) (*OrderPol
 	return result, nil
 }
 
-// IssueCertificate finalizes a ready order or fetches a valid certificate.
 func (s *ACMEService) IssueCertificate(
 	ctx context.Context,
 	challenge *HTTPChallenge,

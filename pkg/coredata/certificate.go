@@ -808,7 +808,14 @@ func (certificates *Certificates) ListStaleProvisioning(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
+	rateLimitedErrorCode string,
 ) error {
+	// Rate-limited rows are intentionally left in PROVISIONING with their order
+	// URL preserved so the next attempt resumes the same order once the ACME
+	// cooldown (up to an hour) elapses. Resetting them at the 10-minute stale
+	// threshold would discard that resumable order and mint a new one straight
+	// into the same rate limit, so exclude them from that branch. They are still
+	// recoverable via the 24-hour safety net if they get truly stuck.
 	q := `
 SELECT
 	id,
@@ -832,7 +839,11 @@ FROM
 WHERE
 	%s
 	AND (
-		(status IN (@provisioning_status, @renewing_status) AND updated_at < CURRENT_TIMESTAMP - INTERVAL '10 minutes')
+		(
+			status IN (@provisioning_status, @renewing_status)
+			AND updated_at < CURRENT_TIMESTAMP - INTERVAL '10 minutes'
+			AND (provisioning_error IS NULL OR provisioning_error != @rate_limited_error_code)
+		)
 		OR
 		(ssl_retry_count > 0 AND ssl_last_attempt_at < CURRENT_TIMESTAMP - INTERVAL '24 hours')
 	)
@@ -843,10 +854,11 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"provisioning_status": string(CertificateStatusProvisioning),
-		"renewing_status":     string(CertificateStatusRenewing),
-		"failed_status":       string(CertificateStatusFailed),
-		"active_status":       string(CertificateStatusActive),
+		"provisioning_status":     string(CertificateStatusProvisioning),
+		"renewing_status":         string(CertificateStatusRenewing),
+		"failed_status":           string(CertificateStatusFailed),
+		"active_status":           string(CertificateStatusActive),
+		"rate_limited_error_code": rateLimitedErrorCode,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -868,12 +880,17 @@ WHERE
 func (c *Certificate) LoadNextForProvisioningForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
+	pollLease time.Duration,
 ) error {
-	// PROVISIONING rows with an open order poll every ~30s. Pending/Renewing
-	// rows (and provisioning rows without an order) use exponential backoff
-	// from ssl_last_attempt_at: 15m * 2^min(retry,5). Ordinary failures only
-	// reach retry counts 0–2 before FAILED; higher exponents are unused by the
-	// current failure budget but keep the SQL ceiling defensive.
+	// PROVISIONING rows with an open order become eligible again only after
+	// pollLease elapses since the last attempt. The caller sizes pollLease to
+	// exceed the maximum Process window: the claim's FOR UPDATE lock is released
+	// before Process runs, so a shorter interval would let another worker claim
+	// the same row while its poll/issue is still in flight. Pending/Renewing
+	// rows (and provisioning rows without an order) use exponential backoff from
+	// ssl_last_attempt_at: 15m * 2^min(retry,5). Ordinary failures only reach
+	// retry counts 0–2 before FAILED; higher exponents are unused by the current
+	// failure budget but keep the SQL ceiling defensive.
 	q := `
 SELECT
 	id,
@@ -901,7 +918,7 @@ WHERE
 		OR (
 			status = @provisioning_status
 			AND http_order_url IS NOT NULL
-			AND ssl_last_attempt_at < CURRENT_TIMESTAMP - INTERVAL '30 seconds'
+			AND ssl_last_attempt_at < CURRENT_TIMESTAMP - make_interval(secs => @poll_lease_seconds)
 		)
 		OR (
 			NOT (
@@ -929,6 +946,7 @@ FOR UPDATE SKIP LOCKED
 				string(CertificateStatusRenewing),
 			},
 			"provisioning_status": string(CertificateStatusProvisioning),
+			"poll_lease_seconds":  pollLease.Seconds(),
 		},
 	)
 	if err != nil {

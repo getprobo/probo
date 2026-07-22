@@ -22,6 +22,7 @@ package certmanager
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -127,11 +128,49 @@ func (m *metrics) observeStep(phase provisionPhase, result provisionResult, star
 }
 
 func (m *metrics) recordACMEError(problemType string) {
-	if problemType == "" {
-		problemType = "unknown"
+	m.acmeErrors.WithLabelValues(normalizeProblemType(problemType)).Inc()
+}
+
+const acmeProblemTypePrefix = "urn:ietf:params:acme:error:"
+
+var knownACMEProblemTypes = map[string]struct{}{
+	"accountdoesnotexist":     {},
+	"alreadyrevoked":          {},
+	"badcsr":                  {},
+	"badnonce":                {},
+	"badpublickey":            {},
+	"badrevocationreason":     {},
+	"badsignaturealgorithm":   {},
+	"caa":                     {},
+	"compound":                {},
+	"connection":              {},
+	"dns":                     {},
+	"externalaccountrequired": {},
+	"incorrectresponse":       {},
+	"invalidcontact":          {},
+	"malformed":               {},
+	"ordernotready":           {},
+	"ratelimited":             {},
+	"rejectedidentifier":      {},
+	"serverinternal":          {},
+	"tls":                     {},
+	"unauthorized":            {},
+	"unsupportedcontact":      {},
+	"unsupportedidentifier":   {},
+	"useractionrequired":      {},
+}
+
+func normalizeProblemType(problemType string) string {
+	suffix, ok := strings.CutPrefix(strings.ToLower(problemType), acmeProblemTypePrefix)
+	if !ok {
+		return "unknown"
 	}
 
-	m.acmeErrors.WithLabelValues(problemType).Inc()
+	if _, ok := knownACMEProblemTypes[suffix]; !ok {
+		return "unknown"
+	}
+
+	return suffix
 }
 
 func (m *metrics) setCooldown(active bool) {
