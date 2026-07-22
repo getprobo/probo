@@ -693,12 +693,25 @@ func (h *provisionHandler) logACMEOutcome(
 	errorCode string,
 ) {
 	var (
+		statusCode  int
 		problemType string
 		detail      string
+		instance    string
+		link        string
+		subproblems string
+		retryAfter  time.Duration
 	)
 	if acmeErr, ok := errors.AsType[*ACMEError](err); ok {
+		statusCode = acmeErr.StatusCode()
 		problemType = acmeErr.ProblemType()
 		detail = acmeErr.Detail()
+		instance = acmeErr.Instance()
+		link = acmeErr.Link()
+
+		subproblems = acmeErr.Subproblems()
+		if errors.Is(acmeErr, ErrACMERateLimited) {
+			retryAfter = acmeErr.RetryAfter()
+		}
 	}
 
 	level := h.logger.WarnCtx
@@ -710,14 +723,19 @@ func (h *provisionHandler) logACMEOutcome(
 	level(
 		ctx,
 		"certificate provisioning step failed",
-		log.String("hostname", certificate.Hostname),
-		log.String("certificate_id", certificate.ID.String()),
-		log.String("phase", string(phase)),
-		log.String("error_code", errorCode),
+		log.String("acme_hostname", certificate.Hostname),
+		log.String("acme_certificate_id", certificate.ID.String()),
+		log.String("acme_phase", string(phase)),
+		log.String("acme_error_code", errorCode),
+		log.Int("acme_status_code", statusCode),
 		log.String("acme_problem_type", problemType),
 		log.String("acme_detail", detail),
-		log.Int("retry_count", certificate.SSLRetryCount),
-		log.Time("cool_down_until", h.acmeService.CooldownUntil()),
+		log.String("acme_instance", instance),
+		log.Duration("acme_retry_after", retryAfter),
+		log.String("acme_link", link),
+		log.String("acme_subproblems", subproblems),
+		log.Int("acme_retry_count", certificate.SSLRetryCount),
+		log.Time("acme_cooldown_until", h.acmeService.CooldownUntil()),
 		log.Error(err),
 	)
 }

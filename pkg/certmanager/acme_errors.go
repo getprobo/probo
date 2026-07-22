@@ -26,6 +26,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/acme"
@@ -42,18 +43,18 @@ var (
 type ACMEError struct {
 	op            string
 	err           error
+	statusCode    int
 	problemType   string
 	detail        string
+	instance      string
+	header        http.Header
+	subproblems   string
 	rateLimited   bool
 	retryAfter    time.Duration
 	retryAfterSet bool
 }
 
 func (e *ACMEError) Error() string {
-	if e == nil {
-		return ""
-	}
-
 	if e.err != nil {
 		return fmt.Sprintf("%s: %v", e.op, e.err)
 	}
@@ -62,10 +63,6 @@ func (e *ACMEError) Error() string {
 }
 
 func (e *ACMEError) Unwrap() error {
-	if e == nil {
-		return nil
-	}
-
 	return e.err
 }
 
@@ -74,7 +71,7 @@ func (e *ACMEError) Is(target error) bool {
 }
 
 func (e *ACMEError) RetryAfter() time.Duration {
-	if e == nil || !e.rateLimited {
+	if !e.rateLimited {
 		return 0
 	}
 
@@ -89,20 +86,32 @@ func (e *ACMEError) RetryAfter() time.Duration {
 	return defaultCooldown
 }
 
-func (e *ACMEError) ProblemType() string {
-	if e == nil {
-		return ""
-	}
+func (e *ACMEError) StatusCode() int {
+	return e.statusCode
+}
 
+func (e *ACMEError) ProblemType() string {
 	return e.problemType
 }
 
 func (e *ACMEError) Detail() string {
-	if e == nil {
+	return e.detail
+}
+
+func (e *ACMEError) Instance() string {
+	return e.instance
+}
+
+func (e *ACMEError) Link() string {
+	if e.header == nil {
 		return ""
 	}
 
-	return e.detail
+	return e.header.Get("Link")
+}
+
+func (e *ACMEError) Subproblems() string {
+	return e.subproblems
 }
 
 func newACMEError(op string, err error) *ACMEError {
@@ -121,8 +130,12 @@ func newACMEError(op string, err error) *ACMEError {
 		return out
 	}
 
+	out.statusCode = acmeErr.StatusCode
 	out.problemType = acmeErr.ProblemType
 	out.detail = acmeErr.Detail
+	out.instance = acmeErr.Instance
+	out.header = acmeErr.Header
+	out.subproblems = formatACMESubproblems(acmeErr.Subproblems)
 
 	if _, ok := acme.RateLimit(acmeErr); ok {
 		out.rateLimited = true
@@ -134,6 +147,30 @@ func newACMEError(op string, err error) *ACMEError {
 	}
 
 	return out
+}
+
+func formatACMESubproblems(subproblems []acme.Subproblem) string {
+	if len(subproblems) == 0 {
+		return ""
+	}
+
+	parts := make([]string, 0, len(subproblems))
+	for _, subproblem := range subproblems {
+		parts = append(parts, formatACMESubproblem(subproblem))
+	}
+
+	return strings.Join(parts, "; ")
+}
+
+// formatACMESubproblem mirrors acme.Subproblem.String but also includes
+// Instance, which String omits.
+func formatACMESubproblem(subproblem acme.Subproblem) string {
+	formatted := subproblem.String()
+	if subproblem.Instance == "" {
+		return formatted
+	}
+
+	return formatted + " (instance: " + subproblem.Instance + ")"
 }
 
 // parseRetryAfter reports the Retry-After delay and whether the header was

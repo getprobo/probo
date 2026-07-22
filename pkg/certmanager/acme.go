@@ -147,11 +147,9 @@ func (s *ACMEService) InCooldown() bool {
 	s.cooldownMu.RLock()
 	defer s.cooldownMu.RUnlock()
 
-	active := time.Now().Before(s.cooldownUntil)
+	s.metrics.setCooldown(s.cooldownUntil)
 
-	s.metrics.setCooldown(active)
-
-	return active
+	return time.Now().Before(s.cooldownUntil)
 }
 
 func (s *ACMEService) CooldownUntil() time.Time {
@@ -169,7 +167,7 @@ func (s *ACMEService) enterCooldown(until time.Time) {
 		s.cooldownUntil = until
 	}
 
-	s.metrics.setCooldown(time.Now().Before(s.cooldownUntil))
+	s.metrics.setCooldown(s.cooldownUntil)
 }
 
 func (s *ACMEService) registerAccount(ctx context.Context) error {

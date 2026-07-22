@@ -47,10 +47,11 @@ const (
 )
 
 type metrics struct {
-	provisionSteps *prometheus.CounterVec
-	acmeErrors     *prometheus.CounterVec
-	acmeCooldown   prometheus.Gauge
-	stepDuration   *prometheus.HistogramVec
+	provisionSteps    *prometheus.CounterVec
+	acmeErrors        *prometheus.CounterVec
+	acmeCooldown      prometheus.Gauge
+	acmeCooldownUntil prometheus.Gauge
+	stepDuration      *prometheus.HistogramVec
 }
 
 func newMetrics(registerer prometheus.Registerer) *metrics {
@@ -88,6 +89,16 @@ func newMetrics(registerer prometheus.Registerer) *metrics {
 					Subsystem: "certmanager",
 					Name:      "certificate_acme_cooldown",
 					Help:      "1 while the ACME client is in a global rate-limit cooldown.",
+				},
+			),
+		),
+		acmeCooldownUntil: registerCollector(
+			registerer,
+			prometheus.NewGauge(
+				prometheus.GaugeOpts{
+					Subsystem: "certmanager",
+					Name:      "certificate_acme_cooldown_until_timestamp_seconds",
+					Help:      "Unix timestamp when the global ACME rate-limit cooldown ends; 0 when not cooling down.",
 				},
 			),
 		),
@@ -173,11 +184,14 @@ func normalizeProblemType(problemType string) string {
 	return suffix
 }
 
-func (m *metrics) setCooldown(active bool) {
-	if active {
+func (m *metrics) setCooldown(until time.Time) {
+	if time.Now().Before(until) {
 		m.acmeCooldown.Set(1)
+		m.acmeCooldownUntil.Set(float64(until.Unix()))
+
 		return
 	}
 
 	m.acmeCooldown.Set(0)
+	m.acmeCooldownUntil.Set(0)
 }
