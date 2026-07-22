@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.206.0] - 2026-07-22
+
+### Changed
+
+- Compliance Portal `Update` operation renamed the `Title` field to `Entity Name`, matching the compliance portal's short entity-name field
+
 ## [0.205.0] - 2026-07-21
 
 ### Added
