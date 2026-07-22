@@ -135,6 +135,7 @@ func compliancePageHeadData() HeadDataFunc {
 		compliancePageBaseURL := complianceportal.CompliancePortalBaseURLFromContext(r.Context())
 
 		pageTitle := "Compliance at " + tc.EntityName + "."
+
 		description := pageTitle
 		if tc.Description != nil && *tc.Description != "" {
 			description = *tc.Description
