@@ -448,21 +448,7 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 		return []*types.ProviderOrganization{}, nil
 	}
 
-	httpClient, dbConnector, err := r.accessReview.ConnectorHTTPClient(ctx, scope, *obj.ConnectorID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return []*types.ProviderOrganization{}, nil
-		}
-
-		return nil, fmt.Errorf("cannot get connector HTTP client: %w", err)
-	}
-
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || cfg.ListOrgs == nil {
-		return []*types.ProviderOrganization{}, nil
-	}
-
-	orgs, err := cfg.ListOrgs(ctx, httpClient)
+	orgs, err := r.accessReview.ProviderOrganizations(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		return nil, err
 	}
@@ -491,23 +477,18 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 		return false, nil
 	}
 
-	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	needsConfiguration, err := r.accessReview.SourceNeedsConfiguration(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot determine access source configuration", log.Error(err))
 
 		return false, gqlutils.Internal(ctx)
 	}
 
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !cfg.NeedsPicker {
-		return false, nil
-	}
-
-	return cfg.SelectedSlug(dbConnector) == "", nil
+	return needsConfiguration, nil
 }
 
 // ConnectionStatus is the resolver for the connectionStatus field.
@@ -552,23 +533,17 @@ func (r *accessReviewSourceResolver) SelectedOrganization(ctx context.Context, o
 		return nil, nil
 	}
 
-	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	slug, err := r.accessReview.SelectedOrganizationSlug(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get selected organization", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok {
-		return nil, nil
-	}
-
-	slug := cfg.SelectedSlug(dbConnector)
 	if slug == "" {
 		return nil, nil
 	}
@@ -628,7 +603,7 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	r.autoSelectDefaultOrganization(ctx, scope, source)
+	r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
 
 	return &types.CreateAccessReviewSourcePayload{
 		AccessReviewSourceEdge: types.NewAccessReviewSourceEdge(source, coredata.AccessReviewSourceOrderFieldCreatedAt),
@@ -666,7 +641,7 @@ func (r *mutationResolver) UpdateAccessReviewSource(ctx context.Context, input t
 	// right away. Skipped on name/CSV-only updates to avoid a needless
 	// provider round-trip.
 	if input.ConnectorID.IsSet() {
-		r.autoSelectDefaultOrganization(ctx, scope, source)
+		r.accessReview.AutoSelectDefaultOrganization(ctx, scope, source)
 	}
 
 	return &types.UpdateAccessReviewSourcePayload{
@@ -724,80 +699,6 @@ func (r *mutationResolver) ConfigureAccessReviewSource(ctx context.Context, inpu
 	return &types.ConfigureAccessReviewSourcePayload{
 		AccessReviewSource: types.NewAccessReviewSource(source),
 	}, nil
-}
-
-// autoSelectDefaultOrganization picks the first workspace/org the connector can
-// see for a freshly linked picker-provider source that has none selected yet.
-// Without it a connected source stays "needs configuration" until the user
-// completes the picker step; if they skip it, the first campaign silently
-// resolves no users (the driver requires an org). Defaulting to the first
-// available makes the source immediately usable; the picker UI stays available
-// to switch when several are listed.
-//
-// Best-effort: any failure (provider unreachable, nothing listed) leaves the
-// source in its existing "needs configuration" state, where the picker is the
-// fallback. It never fails the create/update mutation that triggered it.
-func (r *mutationResolver) autoSelectDefaultOrganization(
-	ctx context.Context,
-	scope coredata.Scoper,
-	source *coredata.AccessReviewSource,
-) {
-	if source == nil || source.ConnectorID == nil {
-		return
-	}
-
-	httpClient, dbConnector, err := r.accessReview.ConnectorHTTPClient(ctx, scope, *source.ConnectorID)
-	if err != nil {
-		// A missing connector is not an error worth logging: the picker
-		// simply never surfaces a default.
-		if !errors.Is(err, coredata.ErrResourceNotFound) {
-			r.logger.WarnCtx(ctx, "cannot load connector for default organization", log.Error(err))
-		}
-
-		return
-	}
-
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !cfg.NeedsPicker || cfg.ListOrgs == nil {
-		return
-	}
-
-	// Never override an org the user (or an earlier default) already picked.
-	if cfg.SelectedSlug(dbConnector) != "" {
-		return
-	}
-
-	orgs, err := cfg.ListOrgs(ctx, httpClient)
-	if err != nil {
-		r.logger.WarnCtx(
-			ctx,
-			"cannot list provider organizations for default selection",
-			log.String("provider", dbConnector.Provider.String()),
-			log.Error(err),
-		)
-
-		return
-	}
-
-	if len(orgs) == 0 {
-		return
-	}
-
-	if _, err := r.accessReview.ConfigureAccessReviewSource(
-		ctx,
-		scope,
-		accessreview.ConfigureAccessReviewSourceRequest{
-			AccessReviewSourceID: source.ID,
-			OrganizationSlug:     orgs[0].Slug,
-		},
-	); err != nil {
-		r.logger.WarnCtx(
-			ctx,
-			"cannot apply default provider organization",
-			log.String("provider", dbConnector.Provider.String()),
-			log.Error(err),
-		)
-	}
 }
 
 // CreateAccessReviewCampaign is the resolver for the createAccessReviewCampaign field.

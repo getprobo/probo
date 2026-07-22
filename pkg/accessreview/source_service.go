@@ -22,11 +22,14 @@ package accessreview
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -56,6 +59,12 @@ type (
 	ConfigureAccessReviewSourceRequest struct {
 		AccessReviewSourceID gid.GID
 		OrganizationSlug     string
+
+		// OnlyIfUnset makes the configure a no-op when the connector already
+		// has an org selected. AutoSelectDefaultOrganization sets it so a
+		// concurrent user pick made while ListOrgs was in flight is not
+		// silently overwritten by the first listed org.
+		OnlyIfUnset bool
 	}
 )
 
@@ -434,6 +443,15 @@ func (s *Service) ConfigureAccessReviewSource(
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
+			// TOCTOU guard for the auto-default path: if the org was set (e.g.
+			// by a concurrent user pick) after the caller observed it as unset,
+			// leave the existing selection untouched.
+			if req.OnlyIfUnset {
+				if cfg, ok := providerOrgConfigs[dbConnector.Provider]; ok && cfg.SelectedSlug(dbConnector) != "" {
+					return nil
+				}
+			}
+
 			reg, ok := s.providerRegistry.Get(dbConnector.Provider)
 			if !ok || reg.SetOrganizationSettings == nil {
 				return fmt.Errorf("cannot configure access source: provider %s does not support organization configuration", dbConnector.Provider)
@@ -467,6 +485,196 @@ func (s *Service) ConfigureAccessReviewSource(
 	}
 
 	return source, nil
+}
+
+// loadConnectorMetadata loads a connector's metadata (provider, settings)
+// without decrypting the connection. The raw ErrResourceNotFound is
+// propagated so callers can decide how to treat a missing connector.
+func (s *Service) loadConnectorMetadata(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (*coredata.Connector, error) {
+	dbConnector := &coredata.Connector{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return dbConnector.LoadMetadataByID(ctx, conn, scope, connectorID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbConnector, nil
+}
+
+// ProviderOrganizations lists the orgs/workspaces the connector backing the
+// source can be scoped to, for the picker UI. Returns an empty list when the
+// connector is gone or the provider has no picker.
+func (s *Service) ProviderOrganizations(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) ([]drivers.Organization, error) {
+	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, connectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot get connector HTTP client: %w", err)
+	}
+
+	cfg, ok := providerOrgConfigs[dbConnector.Provider]
+	if !ok || cfg.ListOrgs == nil {
+		return nil, nil
+	}
+
+	orgs, err := cfg.ListOrgs(ctx, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return orgs, nil
+}
+
+// SelectedOrganizationSlug returns the org identifier currently configured on
+// the connector backing the source, or "" when none is set or the provider
+// has no picker. ErrResourceNotFound is propagated for a missing connector.
+func (s *Service) SelectedOrganizationSlug(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (string, error) {
+	dbConnector, err := s.loadConnectorMetadata(ctx, scope, connectorID)
+	if err != nil {
+		return "", err
+	}
+
+	cfg, ok := providerOrgConfigs[dbConnector.Provider]
+	if !ok {
+		return "", nil
+	}
+
+	return cfg.SelectedSlug(dbConnector), nil
+}
+
+// SourceNeedsConfiguration reports whether the connector backing the source
+// has a picker UI and no org selected yet. ErrResourceNotFound is propagated
+// for a missing connector.
+func (s *Service) SourceNeedsConfiguration(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (bool, error) {
+	dbConnector, err := s.loadConnectorMetadata(ctx, scope, connectorID)
+	if err != nil {
+		return false, err
+	}
+
+	cfg, ok := providerOrgConfigs[dbConnector.Provider]
+	if !ok || !cfg.NeedsPicker {
+		return false, nil
+	}
+
+	return cfg.SelectedSlug(dbConnector) == "", nil
+}
+
+// AutoSelectDefaultOrganization picks the first workspace/org the connector
+// can see for a freshly linked picker-provider source that has none selected
+// yet. Without it a connected source stays "needs configuration" until the
+// user completes the picker; if they skip it, the first campaign silently
+// resolves no users (the driver requires an org). Defaulting to the first
+// available makes the source immediately usable; the picker stays available
+// to switch when several are listed.
+//
+// Best-effort: any failure (provider unreachable, nothing listed) leaves the
+// source in its existing "needs configuration" state, where the picker is the
+// fallback. It never returns an error and must not fail the create/update
+// that triggered it.
+func (s *Service) AutoSelectDefaultOrganization(
+	ctx context.Context,
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
+) {
+	if source == nil || source.ConnectorID == nil {
+		return
+	}
+
+	// Resolve the provider from cheap metadata first: only picker providers
+	// that still need defaulting should pay for the connector decrypt, token
+	// refresh, and HTTP-client build below (all ~50 other providers skip it).
+	dbMeta, err := s.loadConnectorMetadata(ctx, scope, *source.ConnectorID)
+	if err != nil {
+		// A missing connector is not worth logging: the picker simply never
+		// surfaces a default.
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			s.logger.WarnCtx(ctx, "cannot load connector metadata for default organization", log.Error(err))
+		}
+
+		return
+	}
+
+	cfg, ok := providerOrgConfigs[dbMeta.Provider]
+	if !ok || !cfg.NeedsPicker || cfg.ListOrgs == nil {
+		return
+	}
+
+	// Never override an org the user (or an earlier default) already picked.
+	if cfg.SelectedSlug(dbMeta) != "" {
+		return
+	}
+
+	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, *source.ConnectorID)
+	if err != nil {
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			s.logger.WarnCtx(ctx, "cannot load connector for default organization", log.Error(err))
+		}
+
+		return
+	}
+
+	// Bound the outbound provider call so a hung provider cannot stall the
+	// create/update mutation that triggered the defaulting.
+	listCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	orgs, err := cfg.ListOrgs(listCtx, httpClient)
+	if err != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot list provider organizations for default selection",
+			log.String("provider", dbConnector.Provider.String()),
+			log.Error(err),
+		)
+
+		return
+	}
+
+	if len(orgs) == 0 {
+		return
+	}
+
+	// OnlyIfUnset guards against a user picking an org while ListOrgs was in
+	// flight: the configure re-checks inside its tx and does not overwrite.
+	if _, err := s.ConfigureAccessReviewSource(
+		ctx,
+		scope,
+		ConfigureAccessReviewSourceRequest{
+			AccessReviewSourceID: source.ID,
+			OrganizationSlug:     orgs[0].Slug,
+			OnlyIfUnset:          true,
+		},
+	); err != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot apply default provider organization",
+			log.String("provider", dbConnector.Provider.String()),
+			log.Error(err),
+		)
+	}
 }
 
 // ResetSourceNameSyncForConnector clears the synced-name flag on every access
