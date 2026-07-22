@@ -34,6 +34,13 @@ const (
 	ProvisioningErrorACMEFailed       = "ACME_FAILED"
 )
 
+// ErrCAANotPermitted marks a CAA policy that actively forbids issuance by our
+// CA. This is a customer-side misconfiguration and is intentionally
+// non-terminal. It must stay distinct from a CAA resolver/transport failure,
+// which shares the "caa records" wording but is a transient error that has to
+// consume the normal retry budget instead of retrying forever.
+var ErrCAANotPermitted = errors.New("caa records do not permit issuance")
+
 func classifyProvisioningError(err error) string {
 	if err == nil {
 		return ""
@@ -47,12 +54,14 @@ func classifyProvisioningError(err error) string {
 		return ProvisioningErrorACMEInvalidOrder
 	}
 
+	if errors.Is(err, ErrCAANotPermitted) {
+		return ProvisioningErrorDNSCAA
+	}
+
 	msg := strings.ToLower(err.Error())
 	switch {
 	case strings.Contains(msg, "cname"):
 		return ProvisioningErrorDNSCNAME
-	case strings.Contains(msg, "caa record"):
-		return ProvisioningErrorDNSCAA
 	case strings.Contains(msg, "status: invalid"), strings.Contains(msg, "order is in unexpected status \"invalid\""):
 		return ProvisioningErrorACMEInvalidOrder
 	default:

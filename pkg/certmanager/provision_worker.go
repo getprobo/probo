@@ -43,6 +43,10 @@ const (
 	maxProvisioningRetries = 3
 	dnsExchangeTimeout     = 10 * time.Second
 	processTickTimeout     = 90 * time.Second
+	// persistFailureTimeout bounds the retry-outcome write-back. It runs on a
+	// context detached from the process tick deadline so a timed-out attempt can
+	// still record its failure.
+	persistFailureTimeout = 15 * time.Second
 
 	tracerName = "go.probo.inc/probo/pkg/certmanager"
 )
@@ -404,6 +408,15 @@ func (h *provisionHandler) persistFailure(
 ) error {
 	errorCode := classifyProvisioningError(provisionErr)
 
+	// Process runs each tick under processTickTimeout. When that deadline fires
+	// mid-attempt, the same expired context reaches here, and the write-back
+	// silently fails — so the retry budget never advances and the certificate
+	// stays retriable forever. Detach from the tick deadline (and cancellation)
+	// and bound the write with its own timeout so repeated timeouts still make
+	// progress toward FAILED.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), persistFailureTimeout)
+	defer cancel()
+
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -731,7 +744,8 @@ func (h *provisionHandler) checkCAARecords(ctx context.Context, hostname string)
 	}
 
 	return fmt.Errorf(
-		"caa records for domain %q do not permit issuance by %q",
+		"%w: domain %q by %q",
+		ErrCAANotPermitted,
 		hostname,
 		h.caaIssuerDomain,
 	)

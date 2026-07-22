@@ -22,6 +22,7 @@ package certmanager
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,8 +36,11 @@ func TestClassifyProvisioningError(t *testing.T) {
 	assert.Equal(t, ProvisioningErrorACMERateLimited, classifyProvisioningError(ErrACMERateLimited))
 	assert.Equal(t, ProvisioningErrorACMEInvalidOrder, classifyProvisioningError(ErrOrderInvalid))
 	assert.Equal(t, ProvisioningErrorDNSCNAME, classifyProvisioningError(errors.New("cname target mismatch")))
-	assert.Equal(t, ProvisioningErrorDNSCAA, classifyProvisioningError(errors.New("caa records for domain")))
+	assert.Equal(t, ProvisioningErrorDNSCAA, classifyProvisioningError(fmt.Errorf("%w: domain %q", ErrCAANotPermitted, "example.com")))
 	assert.Equal(t, ProvisioningErrorACMETemporary, classifyProvisioningError(errors.New("network timeout")))
+	// A CAA resolver/transport failure shares the "caa records" wording with a
+	// real CAA misconfiguration but must consume the normal retry budget.
+	assert.Equal(t, ProvisioningErrorACMETemporary, classifyProvisioningError(errors.New("cannot exchange dns message for caa records: i/o timeout")))
 }
 
 func TestDecideProvisioningOutcome_RateLimitKeepsRetryCountAndOrder(t *testing.T) {

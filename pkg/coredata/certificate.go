@@ -220,7 +220,7 @@ FOR UPDATE SKIP LOCKED
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"id": certificateID}
+	args := pgx.StrictNamedArgs{"id": certificateID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -280,7 +280,7 @@ FOR UPDATE
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"id": certificateID}
+	args := pgx.StrictNamedArgs{"id": certificateID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

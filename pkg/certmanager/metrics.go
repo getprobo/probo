@@ -21,6 +21,7 @@
 package certmanager
 
 import (
+	"errors"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -56,48 +57,68 @@ func newMetrics(registerer prometheus.Registerer) *metrics {
 		registerer = prometheus.DefaultRegisterer
 	}
 
-	m := &metrics{
-		provisionSteps: prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Subsystem: "certmanager",
-				Name:      "certificate_provision_steps_total",
-				Help:      "Certificate provisioning steps by phase and result.",
-			},
-			[]string{"phase", "result"},
+	return &metrics{
+		provisionSteps: registerCollector(
+			registerer,
+			prometheus.NewCounterVec(
+				prometheus.CounterOpts{
+					Subsystem: "certmanager",
+					Name:      "certificate_provision_steps_total",
+					Help:      "Certificate provisioning steps by phase and result.",
+				},
+				[]string{"phase", "result"},
+			),
 		),
-		acmeErrors: prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Subsystem: "certmanager",
-				Name:      "certificate_acme_errors_total",
-				Help:      "ACME errors by problem type.",
-			},
-			[]string{"problem_type"},
+		acmeErrors: registerCollector(
+			registerer,
+			prometheus.NewCounterVec(
+				prometheus.CounterOpts{
+					Subsystem: "certmanager",
+					Name:      "certificate_acme_errors_total",
+					Help:      "ACME errors by problem type.",
+				},
+				[]string{"problem_type"},
+			),
 		),
-		acmeCooldown: prometheus.NewGauge(
-			prometheus.GaugeOpts{
-				Subsystem: "certmanager",
-				Name:      "certificate_acme_cooldown",
-				Help:      "1 while the ACME client is in a global rate-limit cooldown.",
-			},
+		acmeCooldown: registerCollector(
+			registerer,
+			prometheus.NewGauge(
+				prometheus.GaugeOpts{
+					Subsystem: "certmanager",
+					Name:      "certificate_acme_cooldown",
+					Help:      "1 while the ACME client is in a global rate-limit cooldown.",
+				},
+			),
 		),
-		stepDuration: prometheus.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Subsystem: "certmanager",
-				Name:      "certificate_provision_step_duration_seconds",
-				Help:      "Duration of certificate provisioning steps in seconds.",
-			},
-			[]string{"phase"},
+		stepDuration: registerCollector(
+			registerer,
+			prometheus.NewHistogramVec(
+				prometheus.HistogramOpts{
+					Subsystem: "certmanager",
+					Name:      "certificate_provision_step_duration_seconds",
+					Help:      "Duration of certificate provisioning steps in seconds.",
+				},
+				[]string{"phase"},
+			),
 		),
 	}
+}
 
-	registerer.MustRegister(
-		m.provisionSteps,
-		m.acmeErrors,
-		m.acmeCooldown,
-		m.stepDuration,
-	)
+func registerCollector[T prometheus.Collector](
+	registerer prometheus.Registerer,
+	collector T,
+) T {
+	if err := registerer.Register(collector); err != nil {
+		if already, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
+			if existing, ok := already.ExistingCollector.(T); ok {
+				return existing
+			}
+		}
 
-	return m
+		panic(err)
+	}
+
+	return collector
 }
 
 func (m *metrics) observeStep(phase provisionPhase, result provisionResult, started time.Time) {

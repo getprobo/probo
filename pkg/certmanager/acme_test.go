@@ -26,10 +26,33 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/acme"
 )
+
+func TestNewMetrics_SharedRegistererDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	registerer := prometheus.NewRegistry()
+
+	first := newMetrics(registerer)
+	require.NotNil(t, first)
+
+	// A second ACMEService sharing the registerer re-registers fixed-name
+	// collectors; this must reuse the existing ones instead of panicking.
+	var second *metrics
+	require.NotPanics(t, func() {
+		second = newMetrics(registerer)
+	})
+	require.NotNil(t, second)
+
+	assert.Same(t, first.provisionSteps, second.provisionSteps)
+	assert.Same(t, first.acmeErrors, second.acmeErrors)
+	assert.Same(t, first.stepDuration, second.stepDuration)
+	assert.Equal(t, first.acmeCooldown, second.acmeCooldown)
+}
 
 func TestNewACMEError_RateLimited(t *testing.T) {
 	t.Parallel()
@@ -60,6 +83,41 @@ func TestNewACMEError_RateLimitedDefaultCooldown(t *testing.T) {
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, ErrACMERateLimited)
+	assert.Equal(t, defaultCooldown, err.RetryAfter())
+}
+
+func TestNewACMEError_RateLimitedRetryAfterZero(t *testing.T) {
+	t.Parallel()
+
+	err := newACMEError(
+		"cannot create order",
+		&acme.Error{
+			ProblemType: "urn:ietf:params:acme:error:rateLimited",
+			Header:      http.Header{"Retry-After": []string{"0"}},
+		},
+	)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, ErrACMERateLimited)
+	// An explicit Retry-After: 0 permits an immediate retry and must not be
+	// promoted to the one-hour default cooldown.
+	assert.Equal(t, time.Duration(0), err.RetryAfter())
+}
+
+func TestNewACMEError_RateLimitedRetryAfterInvalid(t *testing.T) {
+	t.Parallel()
+
+	err := newACMEError(
+		"cannot create order",
+		&acme.Error{
+			ProblemType: "urn:ietf:params:acme:error:rateLimited",
+			Header:      http.Header{"Retry-After": []string{"not-a-date"}},
+		},
+	)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, ErrACMERateLimited)
+	// An unparseable header falls back to the default cooldown.
 	assert.Equal(t, defaultCooldown, err.RetryAfter())
 }
 

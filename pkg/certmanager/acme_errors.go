@@ -23,6 +23,8 @@ package certmanager
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/acme"
@@ -37,12 +39,13 @@ var (
 )
 
 type ACMEError struct {
-	op          string
-	err         error
-	problemType string
-	detail      string
-	rateLimited bool
-	retryAfter  time.Duration
+	op            string
+	err           error
+	problemType   string
+	detail        string
+	rateLimited   bool
+	retryAfter    time.Duration
+	retryAfterSet bool
 }
 
 func (e *ACMEError) Error() string {
@@ -70,14 +73,20 @@ func (e *ACMEError) Is(target error) bool {
 }
 
 // RetryAfter returns how long callers should wait before retrying.
-// For rate-limited errors it prefers the ACME Retry-After value and falls back
-// to defaultCooldown when the header is absent. Non-rate-limited errors return 0.
+// For rate-limited errors it honors the ACME Retry-After value whenever the
+// header is present and parseable — including a zero (or past) value, which the
+// CA uses to permit an immediate retry. It falls back to defaultCooldown only
+// when the header is absent or invalid. Non-rate-limited errors return 0.
 func (e *ACMEError) RetryAfter() time.Duration {
 	if e == nil || !e.rateLimited {
 		return 0
 	}
 
-	if e.retryAfter > 0 {
+	if e.retryAfterSet {
+		if e.retryAfter < 0 {
+			return 0
+		}
+
 		return e.retryAfter
 	}
 
@@ -119,10 +128,43 @@ func newACMEError(op string, err error) *ACMEError {
 	out.problemType = acmeErr.ProblemType
 	out.detail = acmeErr.Detail
 
-	if retryAfter, ok := acme.RateLimit(acmeErr); ok {
+	if _, ok := acme.RateLimit(acmeErr); ok {
 		out.rateLimited = true
-		out.retryAfter = retryAfter
+
+		// acme.RateLimit collapses "Retry-After: 0", an invalid header, and a
+		// missing header all to a zero duration, so inspect the header directly
+		// to tell an explicit zero (immediate retry) apart from an absent one
+		// (fall back to defaultCooldown in RetryAfter).
+		if retryAfter, ok := parseRetryAfter(acmeErr.Header); ok {
+			out.retryAfter = retryAfter
+			out.retryAfterSet = true
+		}
 	}
 
 	return out
+}
+
+// parseRetryAfter reports the Retry-After delay and whether the header was
+// present and parseable. It mirrors the delta-seconds and HTTP-date forms the
+// ACME client understands. An absent or unparseable value returns ok=false so
+// callers can apply their own fallback.
+func parseRetryAfter(header http.Header) (time.Duration, bool) {
+	if header == nil {
+		return 0, false
+	}
+
+	value := header.Get("Retry-After")
+	if value == "" {
+		return 0, false
+	}
+
+	if seconds, err := strconv.Atoi(value); err == nil {
+		return time.Duration(seconds) * time.Second, true
+	}
+
+	if date, err := http.ParseTime(value); err == nil {
+		return time.Until(date), true
+	}
+
+	return 0, false
 }
