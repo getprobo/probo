@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -118,6 +119,91 @@ func TestBuildPostHogProbeURL(t *testing.T) {
 	probeURL, err := buildPostHogProbeURL(conn)
 	require.NoError(t, err)
 	assert.Equal(t, "https://us.posthog.com/api/organizations/@current/", probeURL)
+}
+
+func TestProbePostHog(t *testing.T) {
+	t.Parallel()
+
+	// A cloud OAuth connection carries no region (empty BaseURL): the token is
+	// valid on exactly one PostHog region and the other rejects it with
+	// 401/403. The probe must try every region and only report the credential
+	// rejected when none accept it — mirroring the access-review driver — so an
+	// EU token hitting us.posthog.com (probed first) does not falsely mark the
+	// source disconnected while its access reviews keep working. A transient
+	// 5xx on the token's own region is inconclusive, not a rejection.
+	cases := []struct {
+		name         string
+		baseURL      string
+		hostStatus   map[string]int
+		wantErr      bool
+		wantRejected bool
+	}{
+		{
+			name:       "explicit region accepts",
+			baseURL:    "https://us.posthog.com",
+			hostStatus: map[string]int{"us.posthog.com": http.StatusOK},
+			wantErr:    false,
+		},
+		{
+			name:       "explicit region rejects",
+			baseURL:    "https://us.posthog.com",
+			hostStatus: map[string]int{"us.posthog.com": http.StatusUnauthorized},
+			wantErr:    true,
+		},
+		{
+			name:       "oauth EU token: US refuses, EU accepts",
+			baseURL:    "",
+			hostStatus: map[string]int{"us.posthog.com": http.StatusUnauthorized, "eu.posthog.com": http.StatusOK},
+			wantErr:    false,
+		},
+		{
+			name:       "oauth transient: US refuses, EU errors",
+			baseURL:    "",
+			hostStatus: map[string]int{"us.posthog.com": http.StatusUnauthorized, "eu.posthog.com": http.StatusInternalServerError},
+			wantErr:    false,
+		},
+		{
+			name:         "oauth dead token: every region refuses",
+			baseURL:      "",
+			hostStatus:   map[string]int{"us.posthog.com": http.StatusForbidden, "eu.posthog.com": http.StatusForbidden},
+			wantErr:      true,
+			wantRejected: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				status, ok := tc.hostStatus[r.URL.Host]
+				if !ok {
+					status = http.StatusNotFound
+				}
+
+				return &http.Response{StatusCode: status, Body: http.NoBody, Header: make(http.Header)}, nil
+			})}
+
+			conn := &coredata.Connector{Provider: coredata.ConnectorProviderPostHog}
+			require.NoError(t, conn.SetSettings(&coredata.PostHogConnectorSettings{BaseURL: tc.baseURL}))
+
+			err := probePostHog(context.Background(), client, conn)
+
+			if !tc.wantErr {
+				require.NoError(t, err)
+
+				return
+			}
+
+			require.Error(t, err)
+
+			// A credential every region refused must surface the sentinel so the
+			// probe distinguishes it from an inconclusive/transient failure.
+			if tc.wantRejected {
+				require.ErrorIs(t, err, drivers.ErrPostHogCredentialRejected)
+			}
+		})
+	}
 }
 
 func TestBuildScalewayProbeURL(t *testing.T) {

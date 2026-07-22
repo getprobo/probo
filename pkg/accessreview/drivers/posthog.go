@@ -23,7 +23,9 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -40,10 +42,14 @@ type PostHogDriver struct {
 
 var _ Driver = (*PostHogDriver)(nil)
 
+// PostHogOrganizationPath is the @current organization endpoint. It is the
+// single source of truth shared with the connection probe so the two never
+// duplicate the path.
+const PostHogOrganizationPath = "/api/organizations/@current/"
+
 const (
-	posthogMembersPath      = "/api/organizations/@current/members/"
-	posthogOrganizationPath = "/api/organizations/@current/"
-	posthogMembersPageSize  = 100
+	posthogMembersPath     = "/api/organizations/@current/members/"
+	posthogMembersPageSize = 100
 
 	// PostHog Cloud regional data hosts. OAuth connections carry no region
 	// (empty baseURL): the region-agnostic oauth.posthog.com gateway used
@@ -58,6 +64,13 @@ const (
 	posthogMembershipLevelAdmin  = 8
 	posthogMembershipLevelOwner  = 15
 )
+
+// ErrPostHogCredentialRejected reports that every PostHog Cloud region refused
+// the token with 401/403 — a definitively dead or revoked credential, as
+// opposed to a transient failure (5xx/network) on the token's own region. The
+// connection probe uses it to tell a rejected credential apart from an
+// inconclusive result, which must not flap the source to disconnected.
+var ErrPostHogCredentialRejected = errors.New("posthog rejected the credential on every region")
 
 type (
 	posthogMembersResponse struct {
@@ -100,7 +113,7 @@ func (d *PostHogDriver) resolveBaseURL(ctx context.Context) error {
 		return nil
 	}
 
-	host, err := resolvePostHogRegion(ctx, d.httpClient)
+	host, err := ResolvePostHogRegion(ctx, d.httpClient)
 	if err != nil {
 		return err
 	}
@@ -221,20 +234,32 @@ func PostHogRegionBaseURL(region string) (string, bool) {
 	}
 }
 
-// resolvePostHogRegion probes the PostHog Cloud region hosts with the given
+// ResolvePostHogRegion probes the PostHog Cloud region hosts with the given
 // token-bearing client and returns the first that answers 2xx on the @current
 // organization endpoint. OAuth connections authenticate via the region-agnostic
 // oauth.posthog.com gateway, which does not serve /api, so the actual data
 // region (us/eu) must be discovered against the regional hosts directly.
-func resolvePostHogRegion(ctx context.Context, client *http.Client) (string, error) {
+//
+// A token is valid on exactly one region; the other rejects it with 401/403.
+// The result distinguishes the two failure classes the connection probe needs:
+// ErrPostHogCredentialRejected when every region refused the token (dead/revoked
+// credential), and a generic error when a region was merely unreachable or
+// errored transiently, which must not be read as a rejection.
+func ResolvePostHogRegion(ctx context.Context, client *http.Client) (string, error) {
+	allRejected := true
+
 	for _, host := range []string{posthogUSBaseURL, posthogEUBaseURL} {
-		endpoint, err := url.JoinPath(host, posthogOrganizationPath)
+		endpoint, err := url.JoinPath(host, PostHogOrganizationPath)
 		if err != nil {
+			allRejected = false
+
 			continue
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 		if err != nil {
+			allRejected = false
+
 			continue
 		}
 
@@ -248,15 +273,28 @@ func resolvePostHogRegion(ctx context.Context, client *http.Client) (string, err
 				return "", fmt.Errorf("cannot resolve posthog region: %w", ctx.Err())
 			}
 
+			allRejected = false
+
 			continue
 		}
 
 		status := resp.StatusCode
+		_, _ = io.Copy(io.Discard, resp.Body)
 		_ = resp.Body.Close()
 
 		if status >= http.StatusOK && status < http.StatusMultipleChoices {
 			return host, nil
 		}
+
+		// Only 401/403 is a credential rejection; a 5xx/429 is transient and
+		// leaves the verdict inconclusive rather than rejected.
+		if status != http.StatusUnauthorized && status != http.StatusForbidden {
+			allRejected = false
+		}
+	}
+
+	if allRejected {
+		return "", fmt.Errorf("cannot resolve posthog region: %w", ErrPostHogCredentialRejected)
 	}
 
 	return "", fmt.Errorf("cannot resolve posthog region: no region accepted the connection")
@@ -375,7 +413,7 @@ func NewPostHogNameResolver(httpClient *http.Client, baseURL string) NameResolve
 func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
 	baseURL := r.baseURL
 	if baseURL == "" {
-		host, err := resolvePostHogRegion(ctx, r.httpClient)
+		host, err := ResolvePostHogRegion(ctx, r.httpClient)
 		if err != nil {
 			// Terminal: cannot determine the region (e.g. revoked token).
 			// Keep the generic source name rather than making the
@@ -386,7 +424,7 @@ func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		baseURL = host
 	}
 
-	endpoint, err := url.JoinPath(baseURL, posthogOrganizationPath)
+	endpoint, err := url.JoinPath(baseURL, PostHogOrganizationPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot build posthog organization URL: %w", err)
 	}

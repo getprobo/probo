@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,6 +32,7 @@ import (
 	"slices"
 	"strings"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -43,9 +45,6 @@ const (
 	linearGraphQLEndpoint     = "https://api.linear.app/graphql"
 	mondayGraphQLEndpoint     = "https://api.monday.com/v2"
 	railwayGraphQLEndpoint    = "https://backboard.railway.com/graphql/v2"
-	posthogOrganizationPath   = "/api/organizations/@current/"
-	posthogUSBaseURL          = "https://us.posthog.com"
-	posthogEUBaseURL          = "https://eu.posthog.com"
 	crispAPIBaseURL           = "https://api.crisp.chat/v1"
 	crispTierHeader           = "X-Crisp-Tier"
 	crispTierValue            = "plugin"
@@ -406,7 +405,7 @@ func buildPostHogProbeURL(conn *coredata.Connector) (string, error) {
 		return "", nil
 	}
 
-	return url.JoinPath(baseURL, posthogOrganizationPath)
+	return url.JoinPath(baseURL, drivers.PostHogOrganizationPath)
 }
 
 func probeLinear(
@@ -597,44 +596,22 @@ func probePostHog(
 		return err
 	}
 
+	// Explicit host (API-key region or self-hosted): probe it directly.
 	if probeURL != "" {
 		return probeGET(ctx, httpClient, probeURL)
 	}
 
-	for _, host := range []string{posthogUSBaseURL, posthogEUBaseURL} {
-		endpoint, err := url.JoinPath(host, posthogOrganizationPath)
-		if err != nil {
-			continue
+	// Cloud OAuth (empty BaseURL): reuse the driver's region resolver so the
+	// probe and the campaign never drift. Only a credential every region
+	// rejected is disconnected; a transient failure on the token's own region
+	// stays connected rather than flapping the badge.
+	if _, err := drivers.ResolvePostHogRegion(ctx, httpClient); err != nil {
+		if errors.Is(err, drivers.ErrPostHogCredentialRejected) {
+			return fmt.Errorf("cannot probe posthog: %w", err)
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-		if err != nil {
-			continue
-		}
-
-		req.Header.Set("Accept", "application/json")
-
-		resp, err := httpClient.Do(req)
-		if err != nil {
-			if ctx.Err() != nil {
-				return fmt.Errorf("cannot probe posthog region: %w", ctx.Err())
-			}
-
-			continue
-		}
-
-		status := resp.StatusCode
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-
-		if status == http.StatusUnauthorized || status == http.StatusForbidden {
-			return fmt.Errorf("credential rejected: status %d", status)
-		}
-
-		if status >= http.StatusOK && status < http.StatusMultipleChoices {
-			return nil
-		}
+		return nil
 	}
 
-	return fmt.Errorf("credential rejected: no posthog region accepted the connection")
+	return nil
 }
