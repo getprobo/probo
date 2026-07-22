@@ -22,6 +22,14 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import type { ReactNode } from "react";
 import type { VariantProps } from "tailwind-variants/lite";
 
+import {
+  backdropFrameProps,
+  blurBackdropClassName,
+  blurBackdropStyle,
+  onBackdropPointerLeave,
+  onBackdropPointerMove,
+} from "#/components/backdropParallax";
+
 import { dotPatternStyle, mediaTile } from "./variants";
 
 export type MediaTileProps = VariantProps<typeof mediaTile> & {
@@ -40,12 +48,27 @@ export type MediaTileProps = VariantProps<typeof mediaTile> & {
 // for its skeleton.
 export function MediaTile({ media, label, variant = "icon", backdropSrc }: MediaTileProps) {
   const slots = mediaTile({ variant });
+  const parallax = backdropSrc != null;
 
   return (
-    <Card variant="soft" size={3} padding="none">
-      <div className={slots.media()}>
+    <Card
+      variant="soft"
+      size={3}
+      padding="none"
+      onPointerMove={parallax ? onBackdropPointerMove : undefined}
+      onPointerLeave={parallax ? onBackdropPointerLeave : undefined}
+    >
+      <div className={slots.media()} {...(parallax ? backdropFrameProps("logoTile") : undefined)}>
         {backdropSrc != null
-          ? <img src={backdropSrc} alt="" aria-hidden className={slots.blurBackdrop()} />
+          ? (
+              <img
+                src={backdropSrc}
+                alt=""
+                aria-hidden
+                className={blurBackdropClassName("logoTile")}
+                style={blurBackdropStyle("logoTile")}
+              />
+            )
           : <div className={slots.backdrop()} style={dotPatternStyle} />}
         <div className={slots.backdropFade()} />
         <div className={slots.mediaContent()}>{media}</div>

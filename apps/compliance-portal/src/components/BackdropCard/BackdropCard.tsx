@@ -21,6 +21,13 @@
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import type { ReactNode } from "react";
 
+import {
+  backdropFrameProps,
+  blurBackdropClassName,
+  blurBackdropStyle,
+  onBackdropPointerLeave,
+  onBackdropPointerMove,
+} from "#/components/backdropParallax";
 import { dotPatternStyle } from "#/components/MediaTile/variants";
 
 import { backdropCard } from "./variants";
@@ -41,12 +48,27 @@ interface BackdropCardProps {
 // presentational, so it doubles as the layout for its consumers' skeletons.
 export function BackdropCard({ media, backdropSrc, children }: BackdropCardProps) {
   const slots = backdropCard();
+  const parallax = backdropSrc != null;
 
   return (
-    <Card variant="soft" size={3} padding="none">
-      <div className={slots.header()}>
+    <Card
+      variant="soft"
+      size={3}
+      padding="none"
+      onPointerMove={parallax ? onBackdropPointerMove : undefined}
+      onPointerLeave={parallax ? onBackdropPointerLeave : undefined}
+    >
+      <div className={slots.header()} {...(parallax ? backdropFrameProps("card") : undefined)}>
         {backdropSrc != null
-          ? <img src={backdropSrc} alt="" aria-hidden className={slots.blurBackdrop()} />
+          ? (
+              <img
+                src={backdropSrc}
+                alt=""
+                aria-hidden
+                className={blurBackdropClassName("card")}
+                style={blurBackdropStyle("card")}
+              />
+            )
           : <div className={slots.backdrop()} style={dotPatternStyle} />}
         <div className={slots.backdropFade()} />
         {media}
