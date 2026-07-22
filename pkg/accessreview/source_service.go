@@ -184,6 +184,11 @@ func (s *Service) UpdateSource(
 				}
 
 				source.ConnectorID = *req.ConnectorID
+
+				// A (re)linked connector may resolve to a different instance
+				// name; clear the synced flag so the source-name worker picks
+				// the row up and re-resolves it.
+				source.NameSyncedAt = nil
 			}
 
 			if req.CsvData != nil {
@@ -444,6 +449,16 @@ func (s *Service) ConfigureAccessReviewSource(
 				return fmt.Errorf("cannot update connector: %w", err)
 			}
 
+			// The selected org changed, so the resolvable instance name may
+			// have too; clear the synced flag so the source-name worker
+			// re-resolves the display name.
+			source.NameSyncedAt = nil
+			source.UpdatedAt = time.Now()
+
+			if err := source.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot reset access source name sync: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -452,4 +467,23 @@ func (s *Service) ConfigureAccessReviewSource(
 	}
 
 	return source, nil
+}
+
+// ResetSourceNameSyncForConnector clears the synced-name flag on every access
+// source backed by connectorID so the source-name worker re-resolves the
+// display name. Called after a connector is reconnected — the new grant may
+// scope a different org/workspace, changing the resolvable name.
+func (s *Service) ResetSourceNameSyncForConnector(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			sources := &coredata.AccessReviewSources{}
+
+			return sources.ClearNameSyncedAtByConnectorID(ctx, conn, scope, connectorID)
+		},
+	)
 }

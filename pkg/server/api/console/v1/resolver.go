@@ -155,6 +155,7 @@ func NewMux(
 				logger,
 				baseURL,
 				proboSvc,
+				accessReviewSvc,
 				connectorRegistry,
 				safeRedirect,
 			),
@@ -174,6 +175,7 @@ func handleConnectorComplete(
 	logger *log.Logger,
 	baseURL *baseurl.BaseURL,
 	proboSvc *probo.Service,
+	accessReviewSvc *accessreview.Service,
 	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
 ) http.HandlerFunc {
@@ -308,6 +310,14 @@ func handleConnectorComplete(
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
 
 				return
+			}
+
+			// The reconnect may carry a different scope/org, changing the
+			// resolvable instance name. Clear the synced-name flag so the
+			// source-name worker re-resolves it. Best-effort: a failure here
+			// must not fail the OAuth callback redirect.
+			if err := accessReviewSvc.ResetSourceNameSyncForConnector(r.Context(), scope, cnnctr.ID); err != nil {
+				logger.WarnCtx(r.Context(), "cannot reset access source name sync after reconnect", log.Error(err))
 			}
 		} else {
 			createReq := probo.CreateConnectorRequest{

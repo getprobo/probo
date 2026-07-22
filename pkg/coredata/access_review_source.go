@@ -359,6 +359,43 @@ WHERE
 	return count, nil
 }
 
+// ClearNameSyncedAtByConnectorID resets name_synced_at to NULL for every
+// access source backed by connectorID so the source-name worker re-resolves
+// the display name. A reconnect (possibly with a new scope/org) or a manual
+// org (re)configuration can change the resolvable instance name; without this
+// a source that was terminal-marked keeps its generic name forever. It is a
+// no-op when no source references the connector.
+func (sources *AccessReviewSources) ClearNameSyncedAtByConnectorID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	connectorID gid.GID,
+) error {
+	q := `
+UPDATE access_review_sources
+SET
+    name_synced_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND connector_id = @connector_id
+    AND name_synced_at IS NOT NULL
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"connector_id": connectorID,
+		"updated_at":   time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot clear access source name sync: %w", err)
+	}
+
+	return nil
+}
+
 // ErrNoAccessReviewSourceNameSyncAvailable is returned when no access source
 // needs its name synced from its connector.
 var ErrNoAccessReviewSourceNameSyncAvailable = fmt.Errorf("no access source name sync available")
