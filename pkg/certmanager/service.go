@@ -141,42 +141,6 @@ func (s *Service) EnsureCertificate(
 	return certificate, nil
 }
 
-// UpdateHostname renames a certificate and resets its lifecycle so a fresh
-// certificate is provisioned for the new hostname. It returns the certificate
-// unchanged when the hostname already matches.
-func (s *Service) UpdateHostname(
-	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	certificateID gid.GID,
-	newHostname string,
-) (*coredata.Certificate, error) {
-	certificate := &coredata.Certificate{}
-	if err := certificate.LoadByID(ctx, tx, scope, certificateID); err != nil {
-		return nil, fmt.Errorf("cannot load certificate: %w", err)
-	}
-
-	if certificate.Hostname == newHostname {
-		return certificate, nil
-	}
-
-	certificate.Hostname = newHostname
-	certificate.Status = coredata.CertificateStatusPending
-	certificate.SSLRetryCount = 0
-	certificate.SSLLastAttemptAt = nil
-	certificate.ProvisioningError = nil
-	certificate.HTTPChallengeToken = nil
-	certificate.HTTPChallengeKeyAuth = nil
-	certificate.HTTPChallengeURL = nil
-	certificate.HTTPOrderURL = nil
-
-	if err := certificate.Update(ctx, tx, scope); err != nil {
-		return nil, fmt.Errorf("cannot update certificate: %w", err)
-	}
-
-	return certificate, nil
-}
-
 // Get returns a certificate by ID.
 func (s *Service) Get(
 	ctx context.Context,

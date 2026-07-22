@@ -335,6 +335,20 @@ func (h *provisionHandler) processPollOrder(
 
 	switch poll.Status {
 	case OrderPollStatusNotReady:
+		// Re-accept best-effort: if a prior tick committed the challenge but its
+		// Accept never reached the CA, the order would otherwise stay pending
+		// forever since this path only polls. Re-accepting a pending challenge
+		// starts validation; one already processing is a no-op at the CA.
+		if err := h.acmeService.AcceptHTTPChallenge(ctx, challenge); err != nil {
+			h.logger.WarnCtx(
+				ctx,
+				"re-accepting HTTP challenge for not-ready order failed, will poll again",
+				log.String("hostname", certificate.Hostname),
+				log.String("certificate_id", certificate.ID.String()),
+				log.Error(err),
+			)
+		}
+
 		h.logger.InfoCtx(
 			ctx,
 			"ACME order not ready yet, will poll again",
@@ -531,10 +545,18 @@ func (h *provisionHandler) persistFailure(
 			outcome := decideProvisioningOutcome(row, errorCode)
 
 			row.ProvisioningError = provisioningErrorCodePtr(outcome.errorCode)
-			now := time.Now()
-			row.SSLLastAttemptAt = &now
 			row.Status = outcome.status
 			row.SSLRetryCount = outcome.retryCount
+
+			if isImmediateRetryRateLimit(provisionErr) {
+				// Retry-After: 0 permits an immediate retry; clearing the
+				// timestamp exempts the row from the claim query's backoff gates
+				// that would otherwise hold it despite the zero cooldown.
+				row.SSLLastAttemptAt = nil
+			} else {
+				now := time.Now()
+				row.SSLLastAttemptAt = &now
+			}
 
 			if outcome.clearACMEState {
 				row.HTTPChallengeToken = nil
@@ -550,6 +572,17 @@ func (h *provisionHandler) persistFailure(
 			return nil
 		},
 	)
+}
+
+// isImmediateRetryRateLimit reports whether err is an ACME rate limit with an
+// explicit Retry-After of zero, i.e. the CA permits an immediate retry.
+func isImmediateRetryRateLimit(err error) bool {
+	acmeErr, ok := errors.AsType[*ACMEError](err)
+	if !ok {
+		return false
+	}
+
+	return errors.Is(acmeErr, ErrACMERateLimited) && acmeErr.RetryAfter() == 0
 }
 
 // decideProvisioningOutcome computes status/retry/clear policy for a failed step.

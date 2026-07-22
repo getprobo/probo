@@ -78,6 +78,8 @@ const (
 	OrderPollStatusInvalid  OrderPollStatus = "invalid"
 )
 
+const certificateURLPollInterval = 2 * time.Second
+
 type OrderPollResult struct {
 	Status OrderPollStatus
 	Order  *acme.Order
@@ -435,7 +437,14 @@ func (s *ACMEService) fetchOrderCertificateAfterFinalize(
 	}
 
 	if refreshed.Status != acme.StatusValid {
-		return nil, fmt.Errorf("%w: order status %q after finalize", ErrOrderNotReady, refreshed.Status)
+		// Keep finalizeErr in the chain so a rate-limited finalize still reaches
+		// handleError and triggers the ACME cooldown.
+		return nil, fmt.Errorf(
+			"%w: order status %q after finalize: %w",
+			ErrOrderNotReady,
+			refreshed.Status,
+			finalizeErr,
+		)
 	}
 
 	der, err := s.fetchOrderCertificate(ctx, orderURL, refreshed)
@@ -473,20 +482,29 @@ func (s *ACMEService) refreshOrderCertificateURL(
 		return order, nil
 	}
 
-	refreshed, err := s.client.GetOrder(ctx, orderURL)
-	if err != nil {
-		return nil, fmt.Errorf("cannot refresh order: %w", err)
-	}
+	for {
+		refreshed, err := s.client.GetOrder(ctx, orderURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot refresh order: %w", err)
+		}
 
-	if refreshed.CertURL != "" {
-		return refreshed, nil
-	}
+		if refreshed.CertURL != "" {
+			return refreshed, nil
+		}
 
-	if refreshed.Status != acme.StatusValid {
-		return nil, fmt.Errorf("%w: order left valid state while waiting for certificate URL", ErrOrderNotReady)
-	}
+		if refreshed.Status != acme.StatusValid {
+			return nil, fmt.Errorf("%w: order left valid state while waiting for certificate URL", ErrOrderNotReady)
+		}
 
-	return nil, fmt.Errorf("%w: certificate URL not yet available", ErrOrderNotReady)
+		// Order is VALID but CertURL not published yet; keep polling within this
+		// tick so we fetch the certificate while we still hold the key that
+		// finalized it, rather than abandoning the order next tick.
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("%w: certificate URL not yet available: %w", ErrOrderNotReady, ctx.Err())
+		case <-time.After(certificateURLPollInterval):
+		}
+	}
 }
 
 func createCSR(domain string, key crypto.Signer) ([]byte, error) {
