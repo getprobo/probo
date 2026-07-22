@@ -489,6 +489,10 @@ extend type Mutation {
   requestCompliancePortalFileAccess(
     input: RequestCompliancePortalFileAccessInput!
   ): RequestFileAccessPayload! @authentication(required: PRESENT) @nda
+
+  requestAccesses(
+    input: RequestAccessesInput!
+  ): RequestAccessesResultPayload! @authentication(required: PRESENT) @nda
 }
 
 type RequestDocumentAccessPayload {
@@ -505,6 +509,14 @@ type RequestFileAccessPayload {
 
 type RequestAccessesPayload {
   compliancePortalAccess: CompliancePortalAccess!
+}
+
+# Returns the affected nodes so the client can update each row in place. Mirrors
+# the per-resource payloads but for a selection-scoped batch request.
+type RequestAccessesResultPayload {
+  documents: [Document!]!
+  audits: [Audit!]!
+  files: [CompliancePortalFile!]!
 }
 
 input ExportDocumentPDFInput {
@@ -525,6 +537,12 @@ input RequestReportAccessInput {
 
 input RequestCompliancePortalFileAccessInput {
   compliancePortalFileId: ID!
+}
+
+input RequestAccessesInput {
+  documentIds: [ID!]!
+  reportIds: [ID!]!
+  compliancePortalFileIds: [ID!]!
 }
 
 input ExportCompliancePortalFileInput {

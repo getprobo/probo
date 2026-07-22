@@ -23,6 +23,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
+import { useDocumentSelection } from "../_lib/DocumentSelectionContext";
 import { useRequestDocumentAccess } from "../_lib/useAccessRequest";
 
 import type { DocumentListItem_document$key } from "./__generated__/DocumentListItem_document.graphql";
@@ -52,6 +53,7 @@ export function DocumentListItem({ documentKey }: DocumentListItemProps) {
   const localizedPath = useLocalizedPath();
   const document = useFragment(documentListItemFragment, documentKey);
   const { requestAccess, isRequesting } = useRequestDocumentAccess(document.id);
+  const { isSelected, toggle } = useDocumentSelection();
 
   return (
     <DocumentEntry
@@ -62,6 +64,8 @@ export function DocumentListItem({ documentKey }: DocumentListItemProps) {
       viewHref={localizedPath(`/documents/${encodeURIComponent(document.alias ?? document.id)}`)}
       onGetAccess={requestAccess}
       isRequesting={isRequesting}
+      selected={isSelected(document.id)}
+      onSelectedChange={() => toggle(document.id)}
     />
   );
 }

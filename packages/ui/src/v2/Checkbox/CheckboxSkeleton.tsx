@@ -18,22 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { tv } from "tailwind-variants/lite";
+import type { ComponentProps } from "react";
 
-// Documents page shell: a centered content column below the header band. The
-// `busy` variant dims the current results while a filtered slice refetches.
-export const documentsLayout = tv({
-  slots: {
-    page: "flex w-full flex-col items-center px-8 pt-8 pb-28 max-md:px-4",
-    results: "flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150",
-  },
-  variants: {
-    busy: {
-      true: { results: "opacity-60" },
-      false: {},
-    },
-  },
-  defaultVariants: {
-    busy: false,
-  },
-});
+import { checkboxSkeleton } from "./variants";
+
+export type CheckboxSkeletonProps = Omit<ComponentProps<"span">, "children">;
+
+// Loading placeholder paired with Checkbox: a pulse block matching its box.
+export function CheckboxSkeleton(props: CheckboxSkeletonProps) {
+  const { className, ...rest } = props;
+
+  return <span className={checkboxSkeleton({ className })} {...rest} aria-hidden />;
+}

@@ -25,6 +25,13 @@
     "getAccess": "Dapatkan Akses",
     "requested": "Akses telah diminta"
   },
+  "selection": {
+    "count": "{{count}} dipilih",
+    "clear": "Hapus pilihan",
+    "selectAll": "Pilih semua",
+    "requestAccess": "Minta Akses ({{count}})",
+    "selectRow": "Pilih {{title}}"
+  },
   "empty": {
     "title": "Belum ada dokumen yang tersedia",
     "description": "Portal kepatuhan ini belum mempublikasikan dokumen apa pun.",

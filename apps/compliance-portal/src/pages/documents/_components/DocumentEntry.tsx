@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -42,6 +43,11 @@ interface DocumentEntryProps {
   onGetAccess: () => void;
   // Whether the access request is in flight.
   isRequesting: boolean;
+  // Whether this row is currently part of the multi-selection.
+  selected?: boolean;
+  // Toggles this row's membership in the multi-selection. When provided, a
+  // leading checkbox is rendered; omit it to render a non-selectable row.
+  onSelectedChange?: () => void;
 }
 
 // Presentational row shared by the document / file / report list items: a title
@@ -55,6 +61,8 @@ export function DocumentEntry({
   viewHref,
   onGetAccess,
   isRequesting,
+  selected,
+  onSelectedChange,
 }: DocumentEntryProps) {
   const { t } = useTranslation("documents");
 
@@ -71,6 +79,17 @@ export function DocumentEntry({
         mobileHitLabel != null ? "max-sm:cursor-pointer max-sm:hover:bg-sand-2" : "",
       ].filter(Boolean).join(" ")}
     >
+      {onSelectedChange != null && (
+        // Sit above the mobile full-row overlay (z-1) so ticking a row never
+        // triggers the row's view / request-access activation.
+        <Checkbox
+          className="relative z-2"
+          checked={selected ?? false}
+          onCheckedChange={onSelectedChange}
+          aria-label={t("selection.selectRow", { title: typeof title === "string" ? title : "" })}
+        />
+      )}
+
       <ListItemContent>
         <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
           {title}

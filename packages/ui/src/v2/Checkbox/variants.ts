@@ -20,20 +20,22 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Documents page shell: a centered content column below the header band. The
-// `busy` variant dims the current results while a filtered slice refetches.
-export const documentsLayout = tv({
-  slots: {
-    page: "flex w-full flex-col items-center px-8 pt-8 pb-28 max-md:px-4",
-    results: "flex w-full max-w-5xl flex-col gap-8 transition-opacity duration-150",
-  },
-  variants: {
-    busy: {
-      true: { results: "opacity-60" },
-      false: {},
-    },
-  },
-  defaultVariants: {
-    busy: false,
-  },
+// A 20px control box (Radix "Checkbox"). The checked/indeterminate surface and
+// the disabled treatment resolve off Base UI's data-* state attributes.
+export const checkbox = tv({
+  base: [
+    "inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-2 border border-sand-a7 bg-sand-1 text-gold-1 outline-none transition-colors",
+    "focus-visible:ring-2 focus-visible:ring-gold-8",
+    "data-[checked]:border-gold-12 data-[checked]:bg-gold-12",
+    "data-[indeterminate]:border-gold-12 data-[indeterminate]:bg-gold-12",
+    "data-[disabled]:cursor-not-allowed data-[disabled]:border-sand-a3 data-[disabled]:bg-sand-2",
+  ],
+});
+
+export const checkboxIndicator = tv({
+  base: "flex items-center justify-center text-current [&_svg]:size-3.5",
+});
+
+export const checkboxSkeleton = tv({
+  base: "inline-block size-5 shrink-0 animate-pulse rounded-2 bg-sand-3 align-middle",
 });

@@ -25,6 +25,13 @@
     "getAccess": "Zugang anfordern",
     "requested": "Zugang angefordert"
   },
+  "selection": {
+    "count": "{{count}} ausgewählt",
+    "clear": "Auswahl aufheben",
+    "selectAll": "Alle auswählen",
+    "requestAccess": "Zugang anfordern ({{count}})",
+    "selectRow": "{{title}} auswählen"
+  },
   "empty": {
     "title": "Keine Dokumente verfügbar",
     "description": "Dieses Compliance-Portal hat noch keine Dokumente veröffentlicht.",
