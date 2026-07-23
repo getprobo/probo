@@ -108,6 +108,8 @@ enum ConnectorProvider
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleAnalytics"
         )
+    UPCLOUD
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUpCloud")
 }
 
 type ConnectorProviderInfo {

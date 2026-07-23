@@ -90,6 +90,7 @@ const (
 	ConnectorProviderSegment         ConnectorProvider = "SEGMENT"
 	ConnectorProviderSquare          ConnectorProvider = "SQUARE"
 	ConnectorProviderGoogleAnalytics ConnectorProvider = "GOOGLE_ANALYTICS"
+	ConnectorProviderUpCloud         ConnectorProvider = "UPCLOUD"
 )
 
 var (
@@ -158,6 +159,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderSegment,
 		ConnectorProviderSquare,
 		ConnectorProviderGoogleAnalytics,
+		ConnectorProviderUpCloud,
 	}
 }
 
@@ -222,7 +224,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderDotfile,
 		ConnectorProviderSegment,
 		ConnectorProviderSquare,
-		ConnectorProviderGoogleAnalytics:
+		ConnectorProviderGoogleAnalytics,
+		ConnectorProviderUpCloud:
 		return true
 	}
 

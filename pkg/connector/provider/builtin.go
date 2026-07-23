@@ -83,6 +83,7 @@ func NewBuiltinRegistry() *Registry {
 		supabaseRegistration(),
 		tailscaleRegistration(),
 		tallyRegistration(),
+		upcloudRegistration(),
 		vercelRegistration(),
 		yousignRegistration(),
 		zendeskRegistration(),
