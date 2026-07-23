@@ -77,6 +77,7 @@ import { Square } from "./Square";
 import { Supabase } from "./Supabase";
 import { Tailscale } from "./Tailscale";
 import { Tally } from "./Tally";
+import { UpCloud } from "./UpCloud";
 import { Vercel } from "./Vercel";
 import { Yousign } from "./Yousign";
 import { Zendesk } from "./Zendesk";
@@ -142,6 +143,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   SUPABASE: Supabase,
   TAILSCALE: Tailscale,
   TALLY: Tally,
+  UPCLOUD: UpCloud,
   VERCEL: Vercel,
   YOUSIGN: Yousign,
   ZENDESK: Zendesk,
