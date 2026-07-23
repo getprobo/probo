@@ -177,6 +177,10 @@ func (d *UpCloudDriver) fetchAccountDetails(ctx context.Context, username string
 
 	defer func() { _ = httpResp.Body.Close() }()
 
+	if httpResp.StatusCode == http.StatusNotFound {
+		return &upcloudAccountDetails{}, nil
+	}
+
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return nil, fmt.Errorf("cannot fetch upcloud account details: unexpected status %d", httpResp.StatusCode)
 	}
