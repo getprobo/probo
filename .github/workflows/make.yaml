@@ -281,12 +281,6 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
-      - name: "Lint install.sh"
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck
-          sh -n cmd/probo-agent/installer/install.sh
-          shellcheck cmd/probo-agent/installer/install.sh
       - name: "Build probo-agent"
         env:
           CGO_ENABLED: "0"
@@ -396,8 +390,12 @@ jobs:
           swift-version: "6.0"
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
       - name: "Install SwiftLint"
+        env:
+          SWIFTLINT_VERSION: "0.65.0"
+          SWIFTLINT_SHA256: "79306a34e5c7cc55a220cd108cbb861dcad5f10138dcdf261e2624ae8b0a486b"
         run: |
-          curl -sL "https://github.com/realm/SwiftLint/releases/download/0.65.0/swiftlint_linux_amd64.zip" -o /tmp/swiftlint.zip
+          curl -sL "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/swiftlint_linux_amd64.zip" -o /tmp/swiftlint.zip
+          echo "${SWIFTLINT_SHA256}  /tmp/swiftlint.zip" | sha256sum -c -
           sudo unzip -o /tmp/swiftlint.zip -d /usr/local/bin
           sudo chmod +x /usr/local/bin/swiftlint
           swiftlint version
@@ -414,6 +412,35 @@ jobs:
         run: |
           swiftlint lint --config .swiftlint.yml --cache-path /tmp/swiftlint-cache 2>&1 | \
             reviewdog -f=swiftlint -reporter=github-pr-review -filter-mode=nofilter -name="swiftlint" || true
+
+  lint-shell:
+    name: "lint-shell"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - name: "Install shellcheck and shfmt"
+        env:
+          SHELLCHECK_VERSION: "v0.11.0"
+          SHELLCHECK_SHA256: "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198"
+          SHFMT_VERSION: "v3.13.1"
+          SHFMT_SHA256: "fb096c5d1ac6beabbdbaa2874d025badb03ee07929f0c9ff67563ce8c75398b1"
+        run: |
+          curl -sL "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" -o /tmp/shellcheck.tar.xz
+          echo "${SHELLCHECK_SHA256}  /tmp/shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/shellcheck.tar.xz -C /tmp
+          sudo install -m 755 "/tmp/shellcheck-${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+          curl -sL "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64" -o /tmp/shfmt
+          echo "${SHFMT_SHA256}  /tmp/shfmt" | sha256sum -c -
+          sudo install -m 755 /tmp/shfmt /usr/local/bin/shfmt
+          shellcheck --version
+          shfmt --version
+      - name: "Run make lint-shell"
+        run: make lint-shell
 
   test:
     name: "test"

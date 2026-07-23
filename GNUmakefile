@@ -25,6 +25,24 @@ SWIFTLINT_CONFIG ?= .swiftlint.yml
 
 swift_sources = $(shell find $(SWIFT_ENROLL_UI) \( -name '*.swift' ! -name '*.generated.swift' ! -path '*/.build/*' \) | sort)
 
+SHELLCHECKCMD ?= shellcheck
+SHFMTCMD ?= shfmt
+SHFMTFLAGS ?= -i 2 -ci -bn
+
+# First-party shell scripts linted by lint-shell / fmt-shell (CI).
+# Add every new first-party *.sh here; do not include vendored/submodule scripts.
+SHELL_SCRIPTS := \
+	cmd/probo-agent/installer/install.sh \
+	cmd/probo-agent/installer/macos/build.sh \
+	cmd/probo-agent/installer/macos/reinstall.sh \
+	cmd/probo-agent/installer/macos/uninstall.sh \
+	compose/postgres/01_probod.sh \
+	contrib/lima/provision.sh \
+	contrib/lima/sandbox.sh \
+	contrib/merge-graphql-schema.sh \
+	contrib/seed.sh \
+	entrypoint.sh
+
 DOCKER_BUILD_FLAGS?=
 DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
 
@@ -136,6 +154,15 @@ swift-fmt: ## Check Swift formatting with swift format
 swift-lint: ## Lint Swift with SwiftLint
 	@command -v $(SWIFTLINTCMD) >/dev/null 2>&1 || { echo "error: '$(SWIFTLINTCMD)' not found; install SwiftLint (e.g. brew install swiftlint)"; exit 1; }
 	$(SWIFTLINTCMD) lint --strict --config $(SWIFTLINT_CONFIG) --cache-path .cache/swiftlint
+
+.PHONY: lint-shell
+lint-shell: ## Lint first-party shell scripts (shfmt + shellcheck)
+	@if [ -z "$(SHELL_SCRIPTS)" ]; then \
+		echo "error: no shell scripts found"; \
+		exit 1; \
+	fi
+	$(SHFMTCMD) -d $(SHFMTFLAGS) $(SHELL_SCRIPTS)
+	$(SHELLCHECKCMD) $(SHELL_SCRIPTS)
 
 .PHONY: vet
 vet: generate embed
@@ -417,6 +444,14 @@ fmt-swift: ## Format Swift enroll-ui sources
 	@if command -v $(SWIFTLINTCMD) >/dev/null 2>&1; then \
 		$(SWIFTLINTCMD) lint --fix --config $(SWIFTLINT_CONFIG) --cache-path .cache/swiftlint; \
 	fi
+
+.PHONY: fmt-shell
+fmt-shell: ## Format first-party shell scripts with shfmt
+	@if [ -z "$(SHELL_SCRIPTS)" ]; then \
+		echo "error: no shell scripts found"; \
+		exit 1; \
+	fi
+	$(SHFMTCMD) -w $(SHFMTFLAGS) $(SHELL_SCRIPTS)
 
 .PHONY: clean
 clean: ## Clean the project (node_modules and build artifacts)

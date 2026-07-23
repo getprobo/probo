@@ -19,6 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# GraphQL documents are intentional single-quoted literals (no expansion).
+# shellcheck disable=SC2016
+
 set -euo pipefail
 
 BASE_URL="${PROBO_SEED_URL:-http://localhost:8080}"
@@ -58,7 +61,8 @@ check_error() {
 }
 
 prb_api() {
-  local context="$1"; shift
+  local context="$1"
+  shift
   local resp
   resp=$($PRB api "$@")
   check_error "$resp" "$context"
@@ -66,13 +70,17 @@ prb_api() {
 }
 
 curl -sf -o /dev/null "$BASE_URL/healthz" \
-  || { echo "ERROR: API at $BASE_URL is not available" >&2; exit 1; }
+  || {
+    echo "ERROR: API at $BASE_URL is not available" >&2
+    exit 1
+  }
 
 echo "==> Bootstrapping user and organization..."
-vars=$(jo input="$(jo \
-  email="$EMAIL" \
-  password="$PASSWORD" \
-  fullName="$FULL_NAME" \
+vars=$(jo input="$(
+  jo \
+    email="$EMAIL" \
+    password="$PASSWORD" \
+    fullName="$FULL_NAME"
 )")
 resp=$(gql_connect '
   mutation($input: SignUpInput!) {
@@ -96,9 +104,10 @@ check_error "$resp" "createOrganization"
 ORG_ID=$(echo "$resp" | jq -r '.data.createOrganization.organization.id')
 echo "  Created organization $ORG_NAME ($ORG_ID)"
 
-vars=$(jo input="$(jo \
-  organizationId="$ORG_ID" \
-  continue="$BASE_URL" \
+vars=$(jo input="$(
+  jo \
+    organizationId="$ORG_ID" \
+    continue="$BASE_URL"
 )")
 resp=$(gql_connect '
   mutation($input: AssumeOrganizationSessionInput!) {
@@ -116,9 +125,10 @@ echo "  Assumed organization session"
 
 EXPIRES_AT=$(date -u -v+1y +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
   || date -u -d "+1 year" +"%Y-%m-%dT%H:%M:%SZ")
-vars=$(jo input="$(jo \
-  name=seed \
-  expiresAt="$EXPIRES_AT" \
+vars=$(jo input="$(
+  jo \
+    name=seed \
+    expiresAt="$EXPIRES_AT"
 )")
 resp=$(gql_connect '
   mutation($input: CreatePersonalAPIKeyInput!) {
@@ -148,14 +158,15 @@ create_person() {
   local email="$3"
 
   local vars
-  vars=$(jo input="$(jo \
-    organizationId="$ORG_ID" \
-    emailAddress="$email" \
-    fullName="$full_name" \
-    role=EMPLOYEE \
-    kind=EMPLOYEE \
-    additionalEmailAddresses="$(jo -a < /dev/null)" \
-    position="$position" \
+  vars=$(jo input="$(
+    jo \
+      organizationId="$ORG_ID" \
+      emailAddress="$email" \
+      fullName="$full_name" \
+      role=EMPLOYEE \
+      kind=EMPLOYEE \
+      additionalEmailAddresses="$(jo -a </dev/null)" \
+      position="$position"
   )")
   resp=$(gql_connect '
     mutation($input: CreateUserInput!) {
@@ -219,10 +230,11 @@ create_framework() {
         }
       }
     }
-  ' -f input="$(jo \
-    organizationId="$ORG_ID" \
-    name="$name" \
-    description="$desc" \
+  ' -f input="$(
+    jo \
+      organizationId="$ORG_ID" \
+      name="$name" \
+      description="$desc"
   )")
   local id
   id=$(echo "$resp" | jq -r '.data.createFramework.frameworkEdge.node.id // empty')
@@ -243,7 +255,7 @@ create_control() {
     --framework "$framework_id" \
     --section-title "$section" \
     --name "$name" \
-    --description "$desc" > /dev/null
+    --description "$desc" >/dev/null
 }
 
 # ISO 27001:2022
@@ -457,7 +469,7 @@ create_risk() {
     --category "$category" \
     --treatment "$treatment" \
     --inherent-likelihood "$likelihood" \
-    --inherent-impact "$impact" > /dev/null
+    --inherent-impact "$impact" >/dev/null
 }
 
 create_risk \
@@ -586,11 +598,12 @@ create_third_party() {
         }
       }
     }
-  ' -f input="$(jo \
+  ' -f input="$(
+    jo \
       organizationId="$ORG_ID" \
       name="$name" \
-      description="$description" \
-    )")
+      description="$description"
+  )")
   local id
   id=$(echo "$resp" | jq -r '.data.createThirdParty.thirdPartyEdge.node.id // empty')
   if [ -z "$id" ]; then
@@ -657,11 +670,12 @@ create_measure() {
         }
       }
     }
-  ' -f input="$(jo \
+  ' -f input="$(
+    jo \
       organizationId="$ORG_ID" \
       name="$name" \
-      category="$category" \
-    )")
+      category="$category"
+  )")
   local id
   id=$(echo "$resp" | jq -r '.data.createMeasure.measureEdge.node.id // empty')
   if [ -z "$id" ]; then
@@ -796,7 +810,8 @@ agent_heartbeat() {
 
 # agent_postures <api_key> <CHECK_KEY:STATUS>...
 agent_postures() {
-  local api_key="$1"; shift
+  local api_key="$1"
+  shift
 
   local now
   now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -827,7 +842,7 @@ revoke_device() {
         device { id }
       }
     }
-  ' -f input="$(jo deviceId="$device_id")" > /dev/null
+  ' -f input="$(jo deviceId="$device_id")" >/dev/null
 }
 
 # seed_device <owner_id> <hostname> <platform> <os_version> <serial> <CHECK_KEY:STATUS>...
@@ -863,35 +878,35 @@ seed_device() {
 seed_device "${PROFILE_IDS[0]}" "jane-macbook-pro" "DARWIN" "14.5" "C02XY1Z2JGH7" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
   OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:PASS > /dev/null
+  MALWARE_PROTECTION:PASS >/dev/null
 
 seed_device "${PROFILE_IDS[1]}" "marcus-thinkpad" "LINUX" "Ubuntu 24.04" "PF3ABCDE" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:FAIL TIME_SYNC:PASS \
   OS_VERSION:PASS AUTO_UPDATE:UNKNOWN PASSWORD_POLICY:PASS REMOTE_LOGIN:FAIL \
-  MALWARE_PROTECTION:NOT_APPLICABLE > /dev/null
+  MALWARE_PROTECTION:NOT_APPLICABLE >/dev/null
 
 seed_device "${PROFILE_IDS[4]}" "emily-macbook-air" "DARWIN" "14.4" "C02AB3C4JGH8" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:FAIL FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
   OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:FAIL REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:PASS > /dev/null
+  MALWARE_PROTECTION:PASS >/dev/null
 
 seed_device "${PROFILE_IDS[7]}" "alex-devbox" "LINUX" "Debian 12" "PF9ZYXWV" \
   DISK_ENCRYPTION:FAIL SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
   OS_VERSION:UNKNOWN AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:NOT_APPLICABLE > /dev/null
+  MALWARE_PROTECTION:NOT_APPLICABLE >/dev/null
 
 seed_device "${PROFILE_IDS[3]}" "david-surface" "WINDOWS" "Windows 11 23H2" "5CD1234ABC" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:FAIL \
   OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:PASS > /dev/null
+  MALWARE_PROTECTION:PASS >/dev/null
 
 seed_device "${PROFILE_IDS[2]}" "sofia-latitude" "WINDOWS" "Windows 11 22H2" "5CD9876ZYX" \
   DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:FAIL TIME_SYNC:PASS \
   OS_VERSION:FAIL AUTO_UPDATE:FAIL PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
-  MALWARE_PROTECTION:UNKNOWN > /dev/null
+  MALWARE_PROTECTION:UNKNOWN >/dev/null
 
 # 1 pending device: created and assigned, but never enrolled/activated.
-create_device "${PROFILE_IDS[6]}" > /dev/null
+create_device "${PROFILE_IDS[6]}" >/dev/null
 
 # 1 revoked device: fully activated, then revoked.
 revoked_id=$(seed_device "${PROFILE_IDS[5]}" "james-old-macbook" "DARWIN" "12.7" "C02OLD1JGH9" \

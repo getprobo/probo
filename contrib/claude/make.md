@@ -16,8 +16,10 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | `make test-e2e`              | Run console end-to-end tests (requires `bin/probod`)                                                   |
 | `make lint`                  | Run Go + JS linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `lint-js`                              |
 | `make lint-swift`            | Opt-in: lint Swift enroll-ui (`swift-fmt` + `swift-lint`; needs Swift + SwiftLint; CI runs this on Linux) |
+| `make lint-shell`            | Opt-in: lint `SHELL_SCRIPTS` (`shfmt -d` + `shellcheck`; CI runs this)                                 |
 | `make fmt`                   | Format Go code                                                                                         |
 | `make fmt-swift`             | Opt-in: format Swift enroll-ui (`swift format` + SwiftLint `--fix`; needs Swift)                     |
+| `make fmt-shell`             | Opt-in: format `SHELL_SCRIPTS` with `shfmt`                                                             |
 | `make clean`                 | Remove all build artifacts, `node_modules`, generated files, and coverage                              |
 | `make help`                  | List targets with `##` doc comments                                                                    |
 
@@ -86,3 +88,10 @@ Individual codegen is driven by `go generate`:
 | `SWIFTLINTCMD`       | `swiftlint`                               | SwiftLint binary                           |
 | `SWIFTCMD`           | `swift`                                   | Swift toolchain binary (`swift format`)    |
 | `SWIFT_ENROLL_UI`    | `cmd/probo-agent/installer/macos/enroll-ui` | Path to the Swift SPM package            |
+| `SHELLCHECKCMD`      | `shellcheck`                              | ShellCheck binary                          |
+| `SHFMTCMD`           | `shfmt`                                   | shfmt binary                               |
+| `SHFMTFLAGS`         | `-i 2 -ci -bn`                            | Flags passed to `shfmt`                    |
+
+## Shell scripts
+
+`make lint-shell` / `make fmt-shell` only touch the static `SHELL_SCRIPTS` list in the root `GNUmakefile` (not a recursive `find`). When you add a new first-party `*.sh` file, append it to that list so CI formats and lint it. Do not add vendored or git-submodule scripts (for example under `pkg/validator/data/disposable-email-domains`).
