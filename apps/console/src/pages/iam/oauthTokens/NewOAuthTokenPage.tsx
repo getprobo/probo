@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -35,6 +34,7 @@ import {
 } from "@probo/ui";
 import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, useLazyLoadQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -106,12 +106,12 @@ function computeExpiresAt(expiresIn: CreateFormData["expiresIn"]) {
 }
 
 export function NewOAuthTokenPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const tokenDialogRef = useDialogRef();
   const [token, setToken] = useState("");
 
-  usePageTitle(__("New OAuth token"));
+  usePageTitle(t("newOAuthTokenPage.pageTitle"));
 
   const data = useLazyLoadQuery<NewOAuthTokenPageQuery>(pageQuery, {});
 
@@ -136,8 +136,8 @@ export function NewOAuthTokenPage() {
   const [create, isCreating] = useMutationWithToasts<NewOAuthTokenPageCreateMutation>(
     createMutation,
     {
-      successMessage: "OAuth token created successfully.",
-      errorMessage: "Failed to create OAuth token",
+      successMessage: t("newOAuthTokenPage.messages.created"),
+      errorMessage: t("newOAuthTokenPage.errors.create"),
     },
   );
 
@@ -202,25 +202,23 @@ export function NewOAuthTokenPage() {
       <Breadcrumb
         items={[
           {
-            label: __("OAuth tokens"),
+            label: t("oauthTokensPage.title"),
             to: "/me/oauth-tokens",
           },
-          { label: __("New token") },
+          { label: t("newOAuthTokenPage.breadcrumb") },
         ]}
       />
 
       <PageHeader
-        title={__("New OAuth token")}
-        description={__(
-          "Create a bearer token with scoped access to the Probo API.",
-        )}
+        title={t("newOAuthTokenPage.title")}
+        description={t("newOAuthTokenPage.description")}
       />
 
       <Card padded>
         <form className="space-y-6" onSubmit={e => void handleSubmit(handleCreate)(e)}>
           <div className="max-w-xl space-y-6">
             <Field>
-              <Label htmlFor="name">{__("Name")}</Label>
+              <Label htmlFor="name">{t("newOAuthTokenPage.fields.name")}</Label>
               <Input id="name" {...register("name")} />
               {formState.errors.name && (
                 <p className="text-sm text-danger mt-1">
@@ -230,7 +228,7 @@ export function NewOAuthTokenPage() {
             </Field>
 
             <Field>
-              <Label htmlFor="expiresIn">{__("Expiration")}</Label>
+              <Label htmlFor="expiresIn">{t("newOAuthTokenPage.fields.expiration")}</Label>
               <Controller
                 name="expiresIn"
                 control={control}
@@ -240,10 +238,10 @@ export function NewOAuthTokenPage() {
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    <Option value="1month">{__("1 month")}</Option>
-                    <Option value="3months">{__("3 months")}</Option>
-                    <Option value="6months">{__("6 months")}</Option>
-                    <Option value="1year">{__("1 year")}</Option>
+                    <Option value="1month">{t("newOAuthTokenPage.expirations.month", { count: 1 })}</Option>
+                    <Option value="3months">{t("newOAuthTokenPage.expirations.month", { count: 3 })}</Option>
+                    <Option value="6months">{t("newOAuthTokenPage.expirations.month", { count: 6 })}</Option>
+                    <Option value="1year">{t("newOAuthTokenPage.expirations.year", { count: 1 })}</Option>
                   </Select>
                 )}
               />
@@ -251,7 +249,7 @@ export function NewOAuthTokenPage() {
           </div>
 
           <Field>
-            <Label>{__("Scopes")}</Label>
+            <Label>{t("newOAuthTokenPage.fields.scopes")}</Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
               {supportedScopes.map(scope => (
                 <label key={scope} className="flex items-start gap-2">
@@ -279,18 +277,18 @@ export function NewOAuthTokenPage() {
 
           <div className="flex gap-3 max-w-xl">
             <Button type="submit" disabled={isCreating}>
-              {__("Create token")}
+              {t("newOAuthTokenPage.actions.create")}
             </Button>
             <Button
               type="button"
               variant="secondary"
               onClick={toggleAllScopes}
             >
-              {allScopesSelected ? __("Deselect all") : __("Select all")}
+              {allScopesSelected ? t("newOAuthTokenPage.actions.deselectAll") : t("newOAuthTokenPage.actions.selectAll")}
             </Button>
             <Button variant="secondary" asChild>
               <Link to="/me/oauth-tokens">
-                {__("Cancel")}
+                {t("newOAuthTokenPage.actions.cancel")}
               </Link>
             </Button>
           </div>

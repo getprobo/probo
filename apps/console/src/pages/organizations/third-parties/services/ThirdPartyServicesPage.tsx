@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPlusLarge,
@@ -30,6 +29,7 @@ import {
   Tr,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartyServicesPageFragment$key } from "#/__generated__/core/ThirdPartyServicesPageFragment.graphql";
@@ -92,7 +92,7 @@ interface ThirdPartyServicesPageProps {
 }
 
 export default function ThirdPartyServicesPage(props: ThirdPartyServicesPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const queryData = usePreloadedQuery<ThirdPartyServicesPageQuery>(thirdPartyServicesPageQuery, props.queryRef);
   if (queryData.node?.__typename !== "ThirdParty") {
     throw new Error("Third party not found");
@@ -127,17 +127,17 @@ export default function ThirdPartyServicesPage(props: ThirdPartyServicesPageProp
     service => service.canUpdate || service.canDelete,
   );
 
-  usePageTitle(data.name + " - " + __("Services"));
+  usePageTitle(t("thirdPartyServicesPage.pageTitle", { name: data.name }));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Services")}
-        description={__("Manage services provided by this third party.")}
+        title={t("thirdPartyServicesPage.title")}
+        description={t("thirdPartyServicesPage.description")}
       >
         {data.canCreateService && (
           <CreateServiceDialog thirdPartyId={data.id} connectionId={connectionId}>
-            <Button icon={IconPlusLarge}>{__("Add service")}</Button>
+            <Button icon={IconPlusLarge}>{t("thirdPartyServicesPage.actions.add")}</Button>
           </CreateServiceDialog>
         )}
       </PageHeader>
@@ -145,9 +145,9 @@ export default function ThirdPartyServicesPage(props: ThirdPartyServicesPageProp
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
-            <SortableTh field="NAME">{__("Name")}</SortableTh>
-            <Th>{__("Description")}</Th>
-            {hasAnyAction && <Th>{__("Actions")}</Th>}
+            <SortableTh field="NAME">{t("thirdPartyServicesPage.columns.name")}</SortableTh>
+            <Th>{t("thirdPartyServicesPage.columns.description")}</Th>
+            {hasAnyAction && <Th>{t("thirdPartyServicesPage.columns.actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { APIKeysPageQuery } from "#/__generated__/iam/APIKeysPageQuery.graphql";
@@ -37,13 +37,13 @@ export function APIKeysPage(props: {
   queryRef: PreloadedQuery<APIKeysPageQuery>;
 }) {
   const { queryRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const data = usePreloadedQuery<APIKeysPageQuery>(apiKeysPageQuery, queryRef);
 
   return (
     <div className="space-y-6 w-full py-6">
-      <h1 className="text-3xl font-bold text-center">{__("API Keys")}</h1>
+      <h1 className="text-3xl font-bold text-center">{t("apiKeys.title")}</h1>
       {data.viewer && <PersonalAPIKeyList fKey={data.viewer} />}
     </div>
   );

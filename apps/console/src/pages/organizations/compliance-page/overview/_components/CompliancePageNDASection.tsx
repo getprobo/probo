@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconChevronRight, useConfirm, useToast } from "@probo/ui";
 import { type ChangeEventHandler, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -49,7 +49,7 @@ export interface CompliancePageNDASectionProps {
 export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const { toast } = useToast();
   const confirm = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,8 +62,8 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
   const handleNDAUpload = async (file: File) => {
     if (!organization.compliancePage?.id) {
       toast({
-        title: __("Error"),
-        description: __("Compliance page not found"),
+        title: t("ndaSection.errors.title"),
+        description: t("ndaSection.errors.notFound"),
         variant: "error",
       });
       return;
@@ -91,8 +91,8 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
 
     if (file.type !== "application/pdf") {
       toast({
-        title: __("Unsupported file type"),
-        description: __("Please upload a PDF file."),
+        title: t("ndaSection.errors.invalidFileType.title"),
+        description: t("ndaSection.errors.invalidFileType.description"),
         variant: "error",
       });
       return;
@@ -100,8 +100,8 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
 
     if (file.size > 10 * 1024 * 1024) {
       toast({
-        title: __("File size too large"),
-        description: __("Please upload a file smaller than 10MB."),
+        title: t("ndaSection.errors.fileTooLarge.title"),
+        description: t("ndaSection.errors.fileTooLarge.description"),
         variant: "error",
       });
       return;
@@ -114,8 +114,8 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
     const compliancePortalId = organization.compliancePage?.id;
     if (!compliancePortalId) {
       toast({
-        title: __("Error"),
-        description: __("Compliance page not found"),
+        title: t("ndaSection.errors.title"),
+        description: t("ndaSection.errors.notFound"),
         variant: "error",
       });
       return;
@@ -124,9 +124,9 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
     confirm(
       () => deleteNDA({ variables: { input: { compliancePortalId } } }),
       {
-        title: __("Delete NDA"),
-        message: __("Are you sure you want to delete the NDA file? This action cannot be undone."),
-        label: __("Delete"),
+        title: t("ndaSection.delete.title"),
+        message: t("ndaSection.delete.description"),
+        label: t("ndaSection.delete.actions.delete"),
         variant: "danger",
       },
     );
@@ -141,12 +141,10 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
     <section className="space-y-4">
       <div>
         <h2 className="text-base font-medium">
-          {__("Non-Disclosure Agreement")}
+          {t("ndaSection.title")}
         </h2>
         <p className="text-sm text-txt-tertiary">
-          {__(
-            "Require visitors to accept a Non-Disclosure Agreement before accessing your compliance page.",
-          )}
+          {t("ndaSection.uploadDescription")}
         </p>
       </div>
 
@@ -165,16 +163,14 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
             ? (
                 <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-solid px-4 py-8">
                   <p className="max-w-md text-center text-sm text-txt-tertiary">
-                    {__(
-                      "Upload a PDF that visitors must accept before they can access your compliance page.",
-                    )}
+                    {t("ndaSection.emptyDescription")}
                   </p>
                   <Button
                     iconAfter={IconChevronRight}
                     disabled={isBusy}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {isUploadingNDA ? __("Uploading...") : __("Upload NDA")}
+                    {isUploadingNDA ? t("brandPage.actions.uploading") : t("ndaSection.actions.upload")}
                   </Button>
                   <input
                     ref={fileInputRef}
@@ -187,7 +183,7 @@ export function CompliancePageNDASection(props: CompliancePageNDASectionProps) {
               )
             : (
                 <p className="text-sm text-txt-tertiary">
-                  {__("No NDA file uploaded")}
+                  {t("ndaSection.empty")}
                 </p>
               )}
       </div>

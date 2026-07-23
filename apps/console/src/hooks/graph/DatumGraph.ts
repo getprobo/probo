@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { promisifyMutation, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { promisifyMutation } from "@probo/helpers";
 import { useConfirm } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -154,11 +154,11 @@ export const useDeleteDatum = (
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(deleteDatumMutation);
   const confirm = useConfirm();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return () => {
     if (!datum.id || !datum.name) {
-      return alert(__("Failed to delete data: missing id or name"));
+      return alert(t("datumGraph.errors.deleteMissingIdOrName"));
     }
     confirm(
       () =>
@@ -171,12 +171,7 @@ export const useDeleteDatum = (
           },
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete \"%s\". This action cannot be undone.",
-          ),
-          datum.name,
-        ),
+        message: t("datumGraph.deleteConfirmation", { name: datum.name }),
       },
     );
   };
@@ -185,7 +180,7 @@ export const useDeleteDatum = (
 export const useCreateDatum = (connectionId: string) => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(createDatumMutation);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (input: {
     name: string;
@@ -195,13 +190,13 @@ export const useCreateDatum = (connectionId: string) => {
     thirdPartyIds?: string[];
   }) => {
     if (!input.name?.trim()) {
-      return alert(__("Failed to create data: name is required"));
+      return alert(t("datumGraph.errors.createNameRequired"));
     }
     if (!input.ownerId) {
-      return alert(__("Failed to create data: owner is required"));
+      return alert(t("datumGraph.errors.createOwnerRequired"));
     }
     if (!input.organizationId) {
-      return alert(__("Failed to create data: organization is required"));
+      return alert(t("datumGraph.errors.createOrganizationRequired"));
     }
 
     return promisifyMutation(mutate)({
@@ -216,7 +211,7 @@ export const useCreateDatum = (connectionId: string) => {
 export const useUpdateDatum = () => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(updateDatumMutation);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (input: {
     id: string;
@@ -226,7 +221,7 @@ export const useUpdateDatum = () => {
     thirdPartyIds?: string[];
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update data: missing id"));
+      return alert(t("datumGraph.errors.updateMissingId"));
     }
 
     return promisifyMutation(mutate)({

@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { faviconUrl, getAssetTypeVariant } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Avatar, Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import type { OperationType } from "relay-runtime";
 
@@ -46,17 +46,17 @@ type Props = {
 
 export function ReadOnlyAssetsTable(props: Props) {
   const { pagination, assets } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <SortableTable {...pagination} pageSize={10}>
       <Thead>
         <Tr>
-          <Th>{__("Name")}</Th>
-          <Th>{__("Type")}</Th>
-          <Th>{__("Amount")}</Th>
-          <Th>{__("Owner")}</Th>
-          <Th>{__("Third parties")}</Th>
+          <Th>{t("readOnlyAssetsTable.columns.name")}</Th>
+          <Th>{t("readOnlyAssetsTable.columns.type")}</Th>
+          <Th>{t("readOnlyAssetsTable.columns.amount")}</Th>
+          <Th>{t("readOnlyAssetsTable.columns.owner")}</Th>
+          <Th>{t("readOnlyAssetsTable.columns.thirdParties")}</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -70,7 +70,7 @@ export function ReadOnlyAssetsTable(props: Props) {
 
 function AssetRow({ entry }: { entry: AssetEntry }) {
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const thirdParties = entry.thirdParties?.edges.map(edge => edge.node) ?? [];
 
   return (
@@ -78,11 +78,13 @@ function AssetRow({ entry }: { entry: AssetEntry }) {
       <Td>{entry.name}</Td>
       <Td>
         <Badge variant={getAssetTypeVariant(entry.assetType)}>
-          {entry.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
+          {entry.assetType === "PHYSICAL"
+            ? t("readOnlyAssetsTable.assetTypes.physical")
+            : t("readOnlyAssetsTable.assetTypes.virtual")}
         </Badge>
       </Td>
       <Td>{entry.amount}</Td>
-      <Td>{entry.owner?.fullName ?? __("Unassigned")}</Td>
+      <Td>{entry.owner?.fullName ?? t("readOnlyAssetsTable.unassigned")}</Td>
       <Td>
         {thirdParties.length > 0
           ? (
@@ -110,7 +112,7 @@ function AssetRow({ entry }: { entry: AssetEntry }) {
               </div>
             )
           : (
-              <span className="text-txt-secondary text-sm">{__("None")}</span>
+              <span className="text-txt-secondary text-sm">{t("readOnlyAssetsTable.none")}</span>
             )}
       </Td>
     </Tr>

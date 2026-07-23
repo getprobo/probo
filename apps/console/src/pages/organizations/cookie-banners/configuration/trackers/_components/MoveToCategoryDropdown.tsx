@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { DropdownItem } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
@@ -52,7 +52,7 @@ export function MoveToCategoryDropdown({
   queryRef,
   onMove,
 }: MoveToCategoryDropdownProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const data = usePreloadedQuery<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -64,7 +64,7 @@ export function MoveToCategoryDropdown({
   if (categories.length === 0) {
     return (
       <DropdownItem className="text-sm text-txt-tertiary" disabled>
-        {__("No categories")}
+        {t("moveToCategoryDropdown.empty")}
       </DropdownItem>
     );
   }

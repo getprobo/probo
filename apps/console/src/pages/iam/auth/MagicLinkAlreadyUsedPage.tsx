@@ -19,26 +19,24 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export default function MagicLinkAlreadyUsedPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(__("Link Already Used"));
+  usePageTitle(t("magicLinkAlreadyUsed.title"));
 
   return (
     <div className="space-y-6 w-full">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">{__("Link Already Used")}</h1>
+        <h1 className="text-2xl font-bold">{t("magicLinkAlreadyUsed.title")}</h1>
         <p className="text-txt-tertiary">
-          {__(
-            "This magic link has already been used. Please request a new one.",
-          )}
+          {t("magicLinkAlreadyUsed.description")}
         </p>
       </div>
       <Button className="w-full h-10" to="/auth/login">
-        {__("Sign in")}
+        {t("auth.actions.signIn")}
       </Button>
     </div>
   );

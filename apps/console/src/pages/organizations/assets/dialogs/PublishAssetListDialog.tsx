@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -67,7 +67,7 @@ export function PublishAssetListDialog({
   defaultApproverIds,
   onPublished,
 }: PublishAssetListDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
@@ -107,10 +107,10 @@ export function PublishAssetListDialog({
         const documentId = response.publishAssetList?.documentEdge?.node?.id;
         if (documentId) {
           toast({
-            title: __("Success"),
+            title: t("publishAssetListDialog.messages.success"),
             description: hasApprovers
-              ? __("Approval requested successfully.")
-              : __("Asset list published successfully."),
+              ? t("publishAssetListDialog.messages.approvalRequested")
+              : t("publishAssetListDialog.messages.published"),
             variant: "success",
           });
           dialogRef.current?.close();
@@ -120,9 +120,9 @@ export function PublishAssetListDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("publishAssetListDialog.messages.error"),
           description: formatError(
-            __("Failed to publish asset list"),
+            t("publishAssetListDialog.errors.publish"),
             error,
           ),
           variant: "error",
@@ -136,20 +136,20 @@ export function PublishAssetListDialog({
       className="max-w-xl"
       ref={dialogRef}
       trigger={children}
-      title={__("Publish Asset List")}
+      title={t("publishAssetListDialog.title")}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <div className="space-y-4">
             <p className="text-sm text-txt-secondary">
-              {__("Select approvers to request approval before publishing, or publish directly without approvers.")}
+              {t("publishAssetListDialog.description")}
             </p>
             <PeopleMultiSelectField
               name="approverIds"
-              label={__("Approvers")}
+              label={t("publishAssetListDialog.fields.approvers")}
               control={control}
               organizationId={organizationId}
-              placeholder={__("Add approvers...")}
+              placeholder={t("publishAssetListDialog.fields.approversPlaceholder")}
             />
           </div>
         </DialogContent>
@@ -161,7 +161,7 @@ export function PublishAssetListDialog({
             onClick={() => { minorRef.current = true; }}
             disabled={isPublishing}
           >
-            {__("Publish as minor")}
+            {t("publishAssetListDialog.actions.publishMinor")}
           </Button>
           <Button
             type="submit"
@@ -169,7 +169,9 @@ export function PublishAssetListDialog({
             onClick={() => { minorRef.current = false; }}
             disabled={isPublishing}
           >
-            {hasApprovers ? __("Request approval") : __("Publish")}
+            {hasApprovers
+              ? t("publishAssetListDialog.actions.requestApproval")
+              : t("publishAssetListDialog.actions.publish")}
           </Button>
         </DialogFooter>
       </form>

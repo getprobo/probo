@@ -20,9 +20,9 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Card, useToast } from "@probo/ui";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   useFragment,
@@ -124,7 +124,7 @@ function DocumentSignatureContent({
 }: {
   fKey: EmployeeDocumentSignaturePageDocumentFragment$key;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { width } = useWindowSize();
   const isMobile = width < 1100;
@@ -145,7 +145,7 @@ function DocumentSignatureContent({
 
   const selectedVersion = versions.find(v => v?.id === selectedVersionId);
 
-  usePageTitle(__("Sign Document"));
+  usePageTitle(t("employeeDocumentSignaturePage.pageTitle"));
   const { toast } = useToast();
 
   const [signDocument, isSigning]
@@ -177,17 +177,17 @@ function DocumentSignatureContent({
       },
       onCompleted: () => {
         toast({
-          title: __("Success"),
-          description: __("Document signed successfully"),
+          title: t("employeeDocumentSignaturePage.messages.successTitle"),
+          description: t("employeeDocumentSignaturePage.messages.signed"),
           variant: "success",
         });
         void navigate(`/organizations/${organizationId}/employee/signatures`);
       },
       onError: (error) => {
         toast({
-          title: __("Error"),
+          title: t("employeeDocumentSignaturePage.errors.title"),
           description: formatError(
-            __("Failed to sign document"),
+            t("employeeDocumentSignaturePage.errors.sign"),
             error,
           ),
           variant: "error",
@@ -208,9 +208,9 @@ function DocumentSignatureContent({
       onCompleted: (data, errors): void => {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("employeeDocumentSignaturePage.errors.title"),
             description: formatError(
-              __("Failed to load PDF"),
+              t("employeeDocumentSignaturePage.errors.loadPdf"),
               errors,
             ),
             variant: "error",
@@ -225,9 +225,9 @@ function DocumentSignatureContent({
       },
       onError: (error) => {
         toast({
-          title: __("Error"),
+          title: t("employeeDocumentSignaturePage.errors.title"),
           description: formatError(
-            __("Failed to load PDF"),
+            t("employeeDocumentSignaturePage.errors.loadPdf"),
             error,
           ),
           variant: "error",
@@ -238,7 +238,7 @@ function DocumentSignatureContent({
     return () => {
       pdfUrlRef.current = null;
     };
-  }, [selectedVersion?.id, exportEmployeeDocumentVersionPDF, toast, __]);
+  }, [selectedVersion?.id, exportEmployeeDocumentVersionPDF, toast, t]);
 
   if (versions.length === 0) {
     return (
@@ -276,7 +276,7 @@ function DocumentSignatureContent({
           </Card>
 
           <p className="text-txt-secondary text-sm mb-6">
-            {__("Please review the document carefully before signing.")}
+            {t("employeeDocumentSignaturePage.reviewHint")}
           </p>
 
           <div className="min-h-[60px]">

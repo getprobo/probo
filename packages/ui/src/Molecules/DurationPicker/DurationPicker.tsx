@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import type { HTMLAttributes } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "../../Atoms/Button/Button";
 import { IconPlusLarge } from "../../Atoms/Icons";
@@ -60,7 +60,7 @@ const parse = (value: string): { amount: number; unit: string } => {
 };
 
 export function DurationPicker({ value, onValueChange, ...props }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   if (!value) {
     return (
       <div>
@@ -92,10 +92,10 @@ export function DurationPicker({ value, onValueChange, ...props }: Props) {
         onValueChange={(v: string) =>
           onValueChange(stringify(amount, v))}
       >
-        <Option value="M">{__("Minutes")}</Option>
-        <Option value="H">{__("Hours")}</Option>
-        <Option value="D">{__("Days")}</Option>
-        <Option value="W">{__("Weeks")}</Option>
+        <Option value="M">{t("ui.durationPicker.minutes")}</Option>
+        <Option value="H">{t("ui.durationPicker.hours")}</Option>
+        <Option value="D">{t("ui.durationPicker.days")}</Option>
+        <Option value="W">{t("ui.durationPicker.weeks")}</Option>
       </Select>
     </div>
   );

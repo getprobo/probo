@@ -20,7 +20,6 @@
 
 import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePageDocumentAccessInfo } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -29,6 +28,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
@@ -78,15 +78,15 @@ const documentAccessFragment = graphql`
 
 function getCompliancePageDocumentAccessInfo(
   fragmentRef: CompliancePageAccessEditDialogDocumentAccessFragment$key,
-  __: (key: string) => string,
+  t: (key: string) => string,
 ): CompliancePageDocumentAccessInfo {
   const node = readInlineData(documentAccessFragment, fragmentRef);
-  return toDocumentAccessInfo(node, __);
+  return toDocumentAccessInfo(node, t);
 }
 
 function toDocumentAccessInfo(
   node: CompliancePageAccessEditDialogDocumentAccessFragment$data,
-  __: (key: string) => string,
+  t: (key: string) => string,
 ): CompliancePageDocumentAccessInfo {
   if (node.document) {
     return {
@@ -94,7 +94,7 @@ function toDocumentAccessInfo(
       variant: "info",
       name: node.document.versions?.edges[0]?.node.title ?? "",
       type: "document",
-      typeLabel: __("Document"),
+      typeLabel: t("accessEditDialog.types.document"),
       category: node.document.versions?.edges[0]?.node.documentType ?? "",
       id: node.document.id,
       status: node.status,
@@ -106,7 +106,7 @@ function toDocumentAccessInfo(
       variant: "success",
       name: node.reportFile.fileName,
       type: "report",
-      typeLabel: __("Report"),
+      typeLabel: t("accessEditDialog.types.report"),
       category: node.audit?.framework?.name ?? "",
       id: node.reportFile.id,
       status: node.status,
@@ -118,7 +118,7 @@ function toDocumentAccessInfo(
       variant: "highlight",
       name: node.compliancePortalFile.name,
       type: "file",
-      typeLabel: __("File"),
+      typeLabel: t("accessEditDialog.types.file"),
       category: node.compliancePortalFile.category,
       id: node.compliancePortalFile.id,
       status: node.status,
@@ -172,7 +172,7 @@ export function CompliancePageAccessEditDialog(props: {
 }) {
   const { access, onClose } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const [queryRef, loadQuery]
     = useQueryLoader<CompliancePageAccessEditDialogQueryType>(
@@ -191,7 +191,11 @@ export function CompliancePageAccessEditDialog(props: {
   }, [access.id, loadQuery]);
 
   return (
-    <Dialog defaultOpen={true} title={__(`Edit Access for ${access.profile.emailAddress}`)} onClose={onClose}>
+    <Dialog
+      defaultOpen={true}
+      title={t("accessEditDialog.title", { email: access.profile.emailAddress })}
+      onClose={onClose}
+    >
       {queryRef && (
         <Suspense>
           <CompliancePageAccessEditForm
@@ -212,7 +216,7 @@ function CompliancePageAccessEditForm(props: {
 }) {
   const { access, onSubmit, queryRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const data
     = usePreloadedQuery<CompliancePageAccessEditDialogQueryType>(
       compliancePageAccessEditDialogQuery,
@@ -221,7 +225,7 @@ function CompliancePageAccessEditForm(props: {
 
   const initialDocumentAccesses
     = data.node.availableDocumentAccesses?.edges.map(edge =>
-      getCompliancePageDocumentAccessInfo(edge.node, __),
+      getCompliancePageDocumentAccessInfo(edge.node, t),
     ) ?? [];
   const initialStatusByID = initialDocumentAccesses.reduce<
     Record<string, CompliancePortalDocumentAccessStatus>
@@ -272,8 +276,8 @@ function CompliancePageAccessEditForm(props: {
   const [updateCompliancePageAccess, isUpdating] = useMutation<CompliancePageAccessEditDialogUpdateMutation>(
     updateAccessMutation,
     {
-      successMessage: __("Access updated successfully"),
-      errorToast: __("Failed to update access"),
+      successMessage: t("accessEditDialog.messages.updated"),
+      errorToast: t("accessEditDialog.errors.update"),
     },
   );
 
@@ -339,7 +343,7 @@ function CompliancePageAccessEditForm(props: {
       <DialogFooter>
         <Button type="button" disabled={isUpdating} onClick={() => void handleSubmit()}>
           {isUpdating && <Spinner />}
-          {__("Update Access")}
+          {t("accessEditDialog.actions.update")}
         </Button>
       </DialogFooter>
     </>

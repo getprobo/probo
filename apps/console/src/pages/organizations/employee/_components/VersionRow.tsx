@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import { IconCircleCheck, IconRadioUnchecked } from "@probo/ui";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { VersionRowFragment$key } from "#/__generated__/core/VersionRowFragment.graphql";
@@ -45,7 +46,7 @@ export function VersionRow({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const versionData = useFragment<VersionRowFragment$key>(fragment, fKey);
   const isVersionSigned = versionData.signed;
 
@@ -76,14 +77,15 @@ export function VersionRow({
           )}
         >
           {versionData.publishedAt
-            ? `v${versionData.major}.${versionData.minor} - ${(() => {
-              const date = new Date(versionData.publishedAt);
-              const day = String(date.getDate()).padStart(2, "0");
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const year = date.getFullYear();
-              return `${day}/${month}/${year}`;
-            })()}`
-            : `v${versionData.major}.${versionData.minor}`}
+            ? t("versionRow.versionWithDate", {
+                major: versionData.major,
+                minor: versionData.minor,
+                date: dateFormat(i18n.language, versionData.publishedAt),
+              })
+            : t("versionRow.version", {
+                major: versionData.major,
+                minor: versionData.minor,
+              })}
         </p>
       </div>
       <div className="flex-shrink-0">
@@ -98,10 +100,10 @@ export function VersionRow({
           )}
         >
           {isVersionSigned
-            ? __("Signed")
+            ? t("versionRow.status.signed")
             : isSelected
-              ? __("In review")
-              : __("Waiting signature")}
+              ? t("versionRow.status.inReview")
+              : t("versionRow.status.waitingSignature")}
         </span>
       </div>
     </div>

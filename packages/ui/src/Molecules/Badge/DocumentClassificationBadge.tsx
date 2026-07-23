@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getDocumentClassificationLabel } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
@@ -28,7 +27,7 @@ type Props = {
 };
 
 export function DocumentClassificationBadge({ classification }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   // Choose badge variant based on classification level
   const variant = (() => {
@@ -48,7 +47,7 @@ export function DocumentClassificationBadge({ classification }: Props) {
 
   return (
     <Badge variant={variant}>
-      {getDocumentClassificationLabel(__, classification)}
+      {t(`ui.documentClassification.${classification.toLowerCase()}`)}
     </Badge>
   );
 }

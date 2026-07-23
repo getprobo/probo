@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -29,6 +28,7 @@ import {
   Textarea,
 } from "@probo/ui";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -81,40 +81,40 @@ type Props = {
 };
 
 export default function ContextPage(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organization = useFragment(fragment, props.organization);
   const context = organization.context;
 
   const sections: SectionConfig[] = [
     {
       key: "product",
-      title: __("Product"),
-      description: __("Describe what your product does, its main features, and value proposition."),
-      placeholder: __("Describe your product in markdown format..."),
+      title: t("context.sections.product.title"),
+      description: t("context.sections.product.description"),
+      placeholder: t("context.sections.product.placeholder"),
     },
     {
       key: "architecture",
-      title: __("Architecture"),
-      description: __("Describe your technical architecture, infrastructure, and key design decisions."),
-      placeholder: __("Describe your architecture in markdown format..."),
+      title: t("context.sections.architecture.title"),
+      description: t("context.sections.architecture.description"),
+      placeholder: t("context.sections.architecture.placeholder"),
     },
     {
       key: "team",
-      title: __("Team"),
-      description: __("Describe your team structure, roles, and responsibilities."),
-      placeholder: __("Describe your team in markdown format..."),
+      title: t("context.sections.team.title"),
+      description: t("context.sections.team.description"),
+      placeholder: t("context.sections.team.placeholder"),
     },
     {
       key: "processes",
-      title: __("Processes"),
-      description: __("Describe your key processes, workflows, and operational procedures."),
-      placeholder: __("Describe your processes in markdown format..."),
+      title: t("context.sections.processes.title"),
+      description: t("context.sections.processes.description"),
+      placeholder: t("context.sections.processes.placeholder"),
     },
     {
       key: "customers",
-      title: __("Customers"),
-      description: __("Describe your target market, customer segments, and use cases."),
-      placeholder: __("Describe your customers in markdown format..."),
+      title: t("context.sections.customers.title"),
+      description: t("context.sections.customers.description"),
+      placeholder: t("context.sections.customers.placeholder"),
     },
   ];
 
@@ -152,7 +152,7 @@ function ContextSection({
   value: string | null;
   canEdit: boolean;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(value ?? "");
   const [displayedValue, setDisplayedValue] = useState(value ?? "");
@@ -162,8 +162,8 @@ function ContextSection({
     = useMutationWithToasts<ContextPage_UpdateMutation>(
       updateMutation,
       {
-        successMessage: __("Context updated successfully"),
-        errorMessage: __("Failed to update context"),
+        successMessage: t("context.messages.updated"),
+        errorMessage: t("context.errors.update"),
       },
     );
 
@@ -227,14 +227,14 @@ function ContextSection({
                   onClick={handleCancel}
                   disabled={isUpdating}
                 >
-                  {__("Cancel")}
+                  {t("context.actions.cancel")}
                 </Button>
                 <Button
                   icon={IconCheckmark1}
                   onClick={() => void handleSave()}
                   disabled={isUpdating}
                 >
-                  {__("Save")}
+                  {t("context.actions.save")}
                 </Button>
               </div>
             </div>
@@ -257,7 +257,7 @@ function ContextSection({
                       setIsEditing(true);
                     }}
                   >
-                    {__("Edit")}
+                    {t("context.actions.edit")}
                   </Button>
                 )}
               </div>
@@ -270,7 +270,7 @@ function ContextSection({
                     )
                   : (
                       <div className="text-txt-tertiary text-sm italic">
-                        {__("No content yet. Click Edit to add one.")}
+                        {t("context.empty")}
                       </div>
                     )}
               </div>

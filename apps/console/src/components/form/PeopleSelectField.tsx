@@ -18,10 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Avatar, Field, Option, Select } from "@probo/ui";
 import { type ComponentProps, Suspense } from "react";
-import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { usePeople } from "#/hooks/graph/PeopleGraph";
 
@@ -37,11 +42,9 @@ type Props<
   optional?: boolean;
 } & ComponentProps<typeof Field>;
 
-export function PeopleSelectField<TFieldValues extends FieldValues = FieldValues>({
-  organizationId,
-  control,
-  ...props
-}: Props<TFieldValues>) {
+export function PeopleSelectField<
+  TFieldValues extends FieldValues = FieldValues,
+>({ organizationId, control, ...props }: Props<TFieldValues>) {
   return (
     <Field {...props}>
       <Suspense
@@ -65,7 +68,7 @@ function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
     "organizationId" | "control" | "name" | "disabled" | "optional"
   >,
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { name, organizationId, control } = props;
   const people = usePeople(organizationId, { contractEnded: false });
 
@@ -78,7 +81,7 @@ function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
           disabled={props.disabled}
           id={name}
           variant="editor"
-          placeholder={__("Select an owner")}
+          placeholder={t("peopleSelectField.placeholder")}
           onValueChange={value =>
             field.onChange(value === "__NONE__" ? null : value)}
           key={people?.length.toString() ?? "0"}
@@ -86,7 +89,9 @@ function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
           className="w-full"
           value={field.value ?? (props.optional ? "__NONE__" : "")}
         >
-          {props.optional && <Option value="__NONE__">{__("None")}</Option>}
+          {props.optional && (
+            <Option value="__NONE__">{t("peopleSelectField.none")}</Option>
+          )}
           {people?.map(p => (
             <Option key={p.id} value={p.id} className="flex gap-2">
               <Avatar name={p.fullName} />

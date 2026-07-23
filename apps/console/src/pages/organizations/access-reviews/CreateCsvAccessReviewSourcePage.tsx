@@ -20,7 +20,6 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -28,6 +27,7 @@ import {
   PageHeader,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
@@ -62,7 +62,7 @@ export default function CreateCsvAccessReviewSourcePage({
 }: {
   queryRef: PreloadedQuery<CreateCsvAccessReviewSourcePageQuery>;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
@@ -74,7 +74,7 @@ export default function CreateCsvAccessReviewSourcePage({
       },
     });
 
-  usePageTitle(__("Add CSV Access Source"));
+  usePageTitle(t("createCsvAccessReviewSourcePage.pageTitle"));
 
   const { organization } = usePreloadedQuery<CreateCsvAccessReviewSourcePageQuery>(
     createCsvAccessReviewSourcePageQuery,
@@ -98,7 +98,7 @@ export default function CreateCsvAccessReviewSourcePage({
     return (
       <Card padded>
         <p className="text-txt-secondary text-sm">
-          {__("You do not have permission to create access sources.")}
+          {t("createCsvAccessReviewSourcePage.permissionDenied")}
         </p>
       </Card>
     );
@@ -118,9 +118,9 @@ export default function CreateCsvAccessReviewSourcePage({
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("createCsvAccessReviewSourcePage.messages.error"),
             description: formatError(
-              __("Failed to create access source"),
+              t("createCsvAccessReviewSourcePage.errors.create"),
               errors,
             ),
             variant: "error",
@@ -128,17 +128,17 @@ export default function CreateCsvAccessReviewSourcePage({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Access source created successfully."),
+          title: t("createCsvAccessReviewSourcePage.messages.success"),
+          description: t("createCsvAccessReviewSourcePage.messages.created"),
           variant: "success",
         });
         void navigate(`/organizations/${organizationId}/access-reviews/sources`);
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("createCsvAccessReviewSourcePage.messages.error"),
           description: formatError(
-            __("Failed to create access source"),
+            t("createCsvAccessReviewSourcePage.errors.create"),
             error,
           ),
           variant: "error",
@@ -150,40 +150,38 @@ export default function CreateCsvAccessReviewSourcePage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Add CSV access source")}
-        description={__(
-          "Paste CSV content with a header row. This source will be saved and available in Access Reviews.",
-        )}
+        title={t("createCsvAccessReviewSourcePage.title")}
+        description={t("createCsvAccessReviewSourcePage.description")}
       />
 
       <Card padded>
         <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
           <Field
-            label={__("Name")}
+            label={t("createCsvAccessReviewSourcePage.fields.name")}
             {...register("name")}
             type="text"
             required
           />
 
           <Field
-            label={__("CSV Data")}
+            label={t("createCsvAccessReviewSourcePage.fields.csvData")}
             {...register("csvData")}
             type="textarea"
-            placeholder="email,full_name,role,job_title,is_admin,active,external_id"
+            placeholder={t("createCsvAccessReviewSourcePage.fields.csvPlaceholder")}
             required
           />
           <p className="text-txt-secondary text-sm">
-            {__("Supported columns: email, full_name, role, job_title, is_admin, active, external_id.")}
+            {t("createCsvAccessReviewSourcePage.supportedColumns")}
           </p>
 
           <div className="flex items-center justify-end gap-2">
             <Button variant="secondary" asChild>
               <Link to={`/organizations/${organizationId}/access-reviews/sources`}>
-                {__("Back")}
+                {t("createCsvAccessReviewSourcePage.actions.back")}
               </Link>
             </Button>
             <Button disabled={isCreating} type="submit">
-              {__("Create")}
+              {t("createCsvAccessReviewSourcePage.actions.create")}
             </Button>
           </div>
         </form>

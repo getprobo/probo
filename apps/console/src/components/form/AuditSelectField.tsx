@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { getAuditStateLabel, getAuditStateVariant } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Badge, Field, Option, Select } from "@probo/ui";
 import { type ComponentProps, Suspense } from "react";
 import {
@@ -28,6 +27,7 @@ import {
   type FieldValues,
   type Path,
 } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery } from "react-relay";
 
 import type { AuditSelectFieldQuery } from "#/__generated__/core/AuditSelectFieldQuery.graphql";
@@ -86,7 +86,7 @@ export function AuditSelectField<T extends FieldValues = FieldValues>({
 function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
   props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled">,
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { name, organizationId, control } = props;
   const data = useLazyLoadQuery<AuditSelectFieldQuery>(
     auditsQuery,
@@ -109,7 +109,7 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
           disabled={props.disabled}
           id={name}
           variant="editor"
-          placeholder={__("Select an audit")}
+          placeholder={t("auditSelectField.placeholder")}
           onValueChange={value =>
             field.onChange(value === NONE_VALUE ? "" : value)}
           key={audits?.length.toString() ?? "0"}
@@ -118,7 +118,7 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
           value={field.value || NONE_VALUE}
         >
           <Option value={NONE_VALUE}>
-            <span className="text-txt-tertiary">{__("None")}</span>
+            <span className="text-txt-tertiary">{t("auditSelectField.none")}</span>
           </Option>
           {audits?.map(audit => (
             <Option key={audit.id} value={audit.id}>
@@ -130,7 +130,7 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
                 </span>
                 <div className="ml-3">
                   <Badge variant={getAuditStateVariant(audit.state)}>
-                    {getAuditStateLabel(__, audit.state)}
+                    {getAuditStateLabel(t, audit.state)}
                   </Badge>
                 </div>
               </div>

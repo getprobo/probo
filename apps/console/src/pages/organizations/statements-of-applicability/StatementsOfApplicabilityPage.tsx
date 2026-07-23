@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -31,6 +30,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -94,9 +94,9 @@ export default function StatementsOfApplicabilityPage({
 }: {
   queryRef: PreloadedQuery<StatementsOfApplicabilityPageQuery>;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(__("Statements of Applicability"));
+  usePageTitle(t("statementsOfApplicabilityPage.title"));
 
   const { organization } = usePreloadedQuery<StatementsOfApplicabilityPageQuery>(
     statementsOfApplicabilityPageQuery,
@@ -120,17 +120,15 @@ export default function StatementsOfApplicabilityPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Statements of Applicability")}
-        description={__(
-          "Manage statements of applicability for your organization's frameworks.",
-        )}
+        title={t("statementsOfApplicabilityPage.title")}
+        description={t("statementsOfApplicabilityPage.description")}
       >
         {organization.canCreateStatementOfApplicability && (
           <CreateStatementOfApplicabilityDialog
             connectionId={statementsOfApplicability.__id}
           >
             <Button icon={IconPlusLarge}>
-              {__("Add statement of applicability")}
+              {t("statementsOfApplicabilityPage.actions.add")}
             </Button>
           </CreateStatementOfApplicabilityDialog>
         )}
@@ -142,9 +140,9 @@ export default function StatementsOfApplicabilityPage({
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Created at")}</Th>
-                    <Th>{__("Controls")}</Th>
+                    <Th>{t("statementsOfApplicabilityPage.columns.name")}</Th>
+                    <Th>{t("statementsOfApplicabilityPage.columns.createdAt")}</Th>
+                    <Th>{t("statementsOfApplicabilityPage.columns.controls")}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -166,8 +164,8 @@ export default function StatementsOfApplicabilityPage({
                     disabled={isLoadingNext}
                   >
                     {isLoadingNext
-                      ? __("Loading...")
-                      : __("Load more")}
+                      ? t("statementsOfApplicabilityPage.actions.loading")
+                      : t("statementsOfApplicabilityPage.actions.loadMore")}
                   </Button>
                 </div>
               )}
@@ -177,12 +175,10 @@ export default function StatementsOfApplicabilityPage({
             <Card padded>
               <div className="text-center py-12">
                 <h3 className="text-lg font-semibold mb-2">
-                  {__("No statements of applicability yet")}
+                  {t("statementsOfApplicabilityPage.empty.title")}
                 </h3>
                 <p className="text-txt-tertiary mb-4">
-                  {__(
-                    "Create your first statement of applicability to get started.",
-                  )}
+                  {t("statementsOfApplicabilityPage.empty.description")}
                 </p>
               </div>
             </Card>

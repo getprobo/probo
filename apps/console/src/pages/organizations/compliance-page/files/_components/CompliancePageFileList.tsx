@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -52,7 +52,7 @@ const fragment = graphql`
 export function CompliancePageFileList(props: { fragmentRef: CompliancePageFileListFragment$key }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const deleteDialogRef = useDialogRef();
 
   const {
@@ -77,11 +77,11 @@ export function CompliancePageFileList(props: { fragmentRef: CompliancePageFileL
       <Table>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Category")}</Th>
-            <Th>{__("Upload Date")}</Th>
-            <Th>{__("Alias")}</Th>
-            <Th>{__("Visibility")}</Th>
+            <Th>{t("fileList.columns.name")}</Th>
+            <Th>{t("fileList.columns.category")}</Th>
+            <Th>{t("fileList.columns.uploadDate")}</Th>
+            <Th>{t("fileList.columns.alias")}</Th>
+            <Th>{t("fileList.columns.visibility")}</Th>
             <Th></Th>
           </Tr>
         </Thead>
@@ -89,7 +89,7 @@ export function CompliancePageFileList(props: { fragmentRef: CompliancePageFileL
           {files.edges.length === 0 && (
             <Tr>
               <Td colSpan={6} className="text-center text-txt-secondary">
-                {__("No files available")}
+                {t("fileList.empty")}
               </Td>
             </Tr>
           )}

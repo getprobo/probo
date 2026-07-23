@@ -33,23 +33,23 @@ type Badge = {
   variant: BadgeVariant;
 };
 
-export function getTrackerTypeBadge(type: string, __: Translator): Badge {
+export function getTrackerTypeBadge(type: string, t: Translator): Badge {
   switch (type) {
-    case "COOKIE": return { label: __("Cookie"), variant: "warning" };
-    case "LOCAL_STORAGE": return { label: __("localStorage"), variant: "info" };
-    case "SESSION_STORAGE": return { label: __("sessionStorage"), variant: "highlight" };
-    case "INDEXED_DB": return { label: __("IndexedDB"), variant: "success" };
-    case "CACHE_STORAGE": return { label: __("Cache Storage"), variant: "outline" };
+    case "COOKIE": return { label: t("helpers.trackerType.cookie"), variant: "warning" };
+    case "LOCAL_STORAGE": return { label: t("helpers.trackerType.localStorage"), variant: "info" };
+    case "SESSION_STORAGE": return { label: t("helpers.trackerType.sessionStorage"), variant: "highlight" };
+    case "INDEXED_DB": return { label: t("helpers.trackerType.indexedDb"), variant: "success" };
+    case "CACHE_STORAGE": return { label: t("helpers.trackerType.cacheStorage"), variant: "outline" };
     default: return { label: type, variant: "neutral" };
   }
 }
 
-export function getTrackerSourceBadge(source: string, __: Translator): Badge {
+export function getTrackerSourceBadge(source: string, t: Translator): Badge {
   switch (source) {
-    case "SCRIPT": return { label: __("Script"), variant: "info" };
-    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" };
-    case "HTTP": return { label: __("HTTP"), variant: "neutral" };
-    case "EXTENSION": return { label: __("Extension"), variant: "warning" };
+    case "SCRIPT": return { label: t("helpers.trackerSource.script"), variant: "info" };
+    case "PRE_EXISTING": return { label: t("helpers.trackerSource.preExisting"), variant: "outline" };
+    case "HTTP": return { label: t("helpers.trackerSource.http"), variant: "neutral" };
+    case "EXTENSION": return { label: t("helpers.trackerSource.extension"), variant: "warning" };
     default: return { label: source, variant: "neutral" };
   }
 }

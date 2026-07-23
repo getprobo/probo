@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { UnAuthenticatedError } from "@probo/relay";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -67,7 +67,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const safeContinueUrl = useSafeContinueUrl(`/organizations/${organizationId}`);
 
@@ -126,9 +126,9 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
     <AuthLayout>
       <div className="space-y-6 w-full max-w-md mx-auto pt-8">
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">{__("Sign in Redirection")}</h1>
+          <h1 className="text-3xl font-bold">{t("assumePage.title")}</h1>
           <p className="text-txt-tertiary">
-            {__("Redirecting you to your authentication URL…")}
+            {t("assumePage.description")}
           </p>
         </div>
       </div>

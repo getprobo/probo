@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -32,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -73,7 +72,7 @@ export function ClientCredentialsConnectorDialog({
   onClose,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
@@ -139,8 +138,8 @@ export function ClientCredentialsConnectorDialog({
         if (!connector) {
           setIsConnectingClientCredentials(false);
           toast({
-            title: __("Connection failed"),
-            description: __("Failed to connect provider. Please check your credentials and try again."),
+            title: t("clientCredentialsConnectorDialog.messages.connectionFailed"),
+            description: t("clientCredentialsConnectorDialog.errors.connect"),
             variant: "error",
           });
           return;
@@ -164,8 +163,8 @@ export function ClientCredentialsConnectorDialog({
       onError: () => {
         setIsConnectingClientCredentials(false);
         toast({
-          title: __("Connection failed"),
-          description: __("Failed to connect provider. Please check your credentials and try again."),
+          title: t("clientCredentialsConnectorDialog.messages.connectionFailed"),
+          description: t("clientCredentialsConnectorDialog.errors.connect"),
           variant: "error",
         });
       },
@@ -191,8 +190,10 @@ export function ClientCredentialsConnectorDialog({
         onClose();
       }}
       title={provider
-        ? sprintf(__("Connect %s"), provider.displayName)
-        : __("Connect provider")}
+        ? t("clientCredentialsConnectorDialog.titleWithProvider", {
+            provider: provider.displayName,
+          })
+        : t("clientCredentialsConnectorDialog.title")}
     >
       <form
         onSubmit={(e) => {
@@ -202,33 +203,32 @@ export function ClientCredentialsConnectorDialog({
       >
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
-            {sprintf(
-              __("Enter the client credentials for %s to connect it as an access source."),
-              provider?.displayName ?? "",
-            )}
+            {t("clientCredentialsConnectorDialog.description", {
+              provider: provider?.displayName ?? "",
+            })}
           </p>
           <Field
-            label={__("Client ID")}
+            label={t("clientCredentialsConnectorDialog.fields.clientId")}
             value={clientId}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientId(e.target.value)}
             required
             autoFocus
           />
           <Field
-            label={__("Client Secret")}
+            label={t("clientCredentialsConnectorDialog.fields.clientSecret")}
             type="password"
             value={clientSecret}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientSecret(e.target.value)}
             required
           />
           <Field
-            label={__("Token URL")}
+            label={t("clientCredentialsConnectorDialog.fields.tokenUrl")}
             value={tokenUrl}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTokenUrl(e.target.value)}
             required
           />
           <Field
-            label={__("Scope")}
+            label={t("clientCredentialsConnectorDialog.fields.scope")}
             value={scope}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScope(e.target.value)}
           />
@@ -236,7 +236,7 @@ export function ClientCredentialsConnectorDialog({
             setting.key === "region"
               ? (
                   <div key={setting.key} className="space-y-1.5">
-                    <label className="text-sm font-medium">{__(setting.label)}</label>
+                    <label className="text-sm font-medium">{setting.label}</label>
                     <Select
                       value={clientCredentialsExtraValues[setting.key] ?? ""}
                       onValueChange={(val: string) =>
@@ -244,18 +244,24 @@ export function ClientCredentialsConnectorDialog({
                           ...prev,
                           [setting.key]: val,
                         }))}
-                      placeholder={__("Select a region")}
+                      placeholder={t("clientCredentialsConnectorDialog.region.placeholder")}
                     >
-                      <Option value="US">United States (US)</Option>
-                      <Option value="CA">Canada (CA)</Option>
-                      <Option value="EU">Europe (EU)</Option>
+                      <Option value="US">
+                        {t("clientCredentialsConnectorDialog.region.us")}
+                      </Option>
+                      <Option value="CA">
+                        {t("clientCredentialsConnectorDialog.region.ca")}
+                      </Option>
+                      <Option value="EU">
+                        {t("clientCredentialsConnectorDialog.region.eu")}
+                      </Option>
                     </Select>
                   </div>
                 )
               : (
                   <Field
                     key={setting.key}
-                    label={__(setting.label)}
+                    label={setting.label}
                     value={clientCredentialsExtraValues[setting.key] ?? ""}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setClientCredentialsExtraValues(prev => ({
@@ -278,7 +284,9 @@ export function ClientCredentialsConnectorDialog({
               || !clientCredentialsExtraSettingsValid
             }
           >
-            {isConnectingClientCredentials ? __("Connecting...") : __("Connect")}
+            {isConnectingClientCredentials
+              ? t("clientCredentialsConnectorDialog.actions.connecting")
+              : t("clientCredentialsConnectorDialog.actions.connect")}
           </Button>
         </DialogFooter>
       </form>

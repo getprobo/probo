@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -35,6 +34,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { usePaginatedMeasures } from "#/hooks/graph/usePaginatedMeasures";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -49,16 +49,16 @@ type Props = {
 };
 
 export function LinkedMeasureDialog({ children, ...props }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
-    <Dialog trigger={children} title={__("Link measures")}>
+    <Dialog trigger={children} title={t("linkedMeasuresDialog.title")}>
       <DialogContent>
         <Suspense fallback={<Spinner centered />}>
           <LinkedMeasuresDialogContent {...props} />
         </Suspense>
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")} />
+      <DialogFooter exitLabel={t("linkedMeasuresDialog.actions.close")} />
     </Dialog>
   );
 }
@@ -67,10 +67,13 @@ function LinkedMeasuresDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
   const { data, loadNext, hasNext, isLoadingNext }
     = usePaginatedMeasures(organizationId);
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  const measures = useMemo(() => data.measures?.edges?.map(edge => edge.node) ?? [], [data.measures]);
+  const measures = useMemo(
+    () => data.measures?.edges?.map(edge => edge.node) ?? [],
+    [data.measures],
+  );
   const linkedIds = useMemo(() => {
     return new Set(props.linkedMeasures?.map(m => m.id) ?? []);
   }, [props.linkedMeasures]);
@@ -94,12 +97,12 @@ function LinkedMeasuresDialogContent(props: Omit<Props, "children">) {
       <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search measures...")}
+          placeholder={t("linkedMeasuresDialog.searchPlaceholder")}
           onValueChange={setSearch}
         />
         <Select
           value={category ?? ""}
-          placeholder={__("All categories")}
+          placeholder={t("linkedMeasuresDialog.allCategories")}
           onValueChange={setCategory}
           className="max-w-[180px]"
         >
@@ -141,7 +144,7 @@ type RowProps = {
 };
 
 function MeasureRow(props: RowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const isLinked = props.linkedMeasures.has(props.measure.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
@@ -163,7 +166,9 @@ function MeasureRow(props: RowProps) {
         <span>
           <IconComponent size={16} />
           {" "}
-          {isLinked ? __("Unlink") : __("Link")}
+          {isLinked
+            ? t("linkedMeasuresDialog.actions.unlink")
+            : t("linkedMeasuresDialog.actions.link")}
         </span>
       </Button>
     </button>

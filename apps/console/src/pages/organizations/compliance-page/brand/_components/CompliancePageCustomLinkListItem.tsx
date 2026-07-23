@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { detectSocialName, safeOpenUrl } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
@@ -23,6 +22,7 @@ import {
   SocialIcon,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -73,14 +73,14 @@ export function CompliancePageCustomLinkListItem(props: CompliancePageCustomLink
     onEdit,
   } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const [isMouseDown, setIsMouseDown] = useState(false);
 
   const customLink = useFragment(customLinkFragment, customLinkKey);
 
   const [deleteLink] = useMutation<CompliancePageCustomLinkListItem_deleteMutation>(
     deleteMutation,
-    { successMessage: __("Link removed."), errorToast: __("Failed to remove link.") },
+    { successMessage: t("externalUrls.messages.deleted"), errorToast: t("externalUrls.errors.delete") },
   );
 
   const handleDelete = () => {
@@ -136,7 +136,7 @@ export function CompliancePageCustomLinkListItem(props: CompliancePageCustomLink
               variant="secondary"
               icon={IconArrowLink}
               onClick={() => safeOpenUrl(customLink.url)}
-              aria-label={__("Open link")}
+              aria-label={t("externalUrls.actions.open")}
             />
 
             {!readOnly && (
@@ -145,13 +145,13 @@ export function CompliancePageCustomLinkListItem(props: CompliancePageCustomLink
                   variant="secondary"
                   icon={IconPencil}
                   onClick={onEdit}
-                  aria-label={__("Edit link")}
+                  aria-label={t("externalUrls.dialog.titleEdit")}
                 />
                 <Button
                   variant="danger"
                   icon={IconTrashCan}
                   onClick={handleDelete}
-                  aria-label={__("Remove link")}
+                  aria-label={t("externalUrls.actions.remove")}
                 />
               </>
             )}

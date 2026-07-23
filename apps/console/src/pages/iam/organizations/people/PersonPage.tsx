@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { ActionDropdown, Avatar, Badge, Breadcrumb, Card, DropdownItem, IconArchive, IconTrashCan, useConfirm } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -73,7 +72,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
   const { queryRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const navigate = useNavigate();
 
@@ -85,15 +84,15 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
   const [archiveUser, isArchiving] = useMutationWithToasts(
     archiveUserMutation,
     {
-      successMessage: __("Person archived successfully"),
-      errorMessage: __("Failed to archive person"),
+      successMessage: t("personPage.messages.archived"),
+      errorMessage: t("personPage.errors.archive"),
     },
   );
   const [removeUser, isRemoving] = useMutationWithToasts(
     removeUserMutation,
     {
-      successMessage: __("Person removed successfully"),
-      errorMessage: __("Failed to remove person"),
+      successMessage: t("personPage.messages.removed"),
+      errorMessage: t("personPage.errors.remove"),
     },
   );
   const isMutating = isArchiving || isRemoving;
@@ -114,10 +113,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
         });
       },
       {
-        message: sprintf(
-          __("Are you sure you want to archive %s?"),
-          person.fullName,
-        ),
+        message: t("personPage.confirmations.archive", { name: person.fullName }),
       },
     );
   };
@@ -138,10 +134,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
         });
       },
       {
-        message: sprintf(
-          __("Are you sure you want to remove %s?"),
-          person.fullName,
-        ),
+        message: t("personPage.confirmations.remove", { name: person.fullName }),
       },
     );
   };
@@ -154,7 +147,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
       <Breadcrumb
         items={[
           {
-            label: __("People"),
+            label: t("personPage.breadcrumb.people"),
             to: `/organizations/${organizationId}/people`,
           },
           {
@@ -181,7 +174,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
                 onClick={handleArchive}
                 disabled={isMutating}
               >
-                {__("Archive")}
+                {t("personPage.actions.archive")}
               </DropdownItem>
             )}
             {canRemove && (
@@ -191,7 +184,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
                 onClick={handleRemove}
                 disabled={isMutating}
               >
-                {__("Remove")}
+                {t("personPage.actions.remove")}
               </DropdownItem>
             )}
           </ActionDropdown>

@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { promisifyMutation, sprintf } from "@probo/helpers";
+import { promisifyMutation } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -43,6 +42,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   graphql,
@@ -193,14 +193,14 @@ const tiaListPageFragment = graphql`
 export default function ProcessingActivitiesPage({
   queryRef,
 }: ProcessingActivitiesPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"activities" | "dpia" | "tia">(
     "activities",
   );
 
-  usePageTitle(__("Processing Activities"));
+  usePageTitle(t("processingActivitiesPage.title"));
 
   const organization = usePreloadedQuery<ProcessingActivityGraphListQuery>(processingActivitiesQuery, queryRef);
 
@@ -274,8 +274,8 @@ export default function ProcessingActivitiesPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Processing Activities")}
-        description={__("Manage your processing activities under GDPR")}
+        title={t("processingActivitiesPage.title")}
+        description={t("processingActivitiesPage.description")}
       >
         {activeTab === "activities"
           && organization.node.canCreateProcessingActivity && (
@@ -284,7 +284,7 @@ export default function ProcessingActivitiesPage({
             connectionId={connectionId}
           >
             <Button icon={IconPlusLarge}>
-              {__("Add processing activity")}
+              {t("processingActivitiesPage.actions.add")}
             </Button>
           </CreateProcessingActivityDialog>
         )}
@@ -295,19 +295,19 @@ export default function ProcessingActivitiesPage({
           active={activeTab === "activities"}
           onClick={() => setActiveTab("activities")}
         >
-          {__("Processing Activities")}
+          {t("processingActivitiesPage.tabs.activities")}
         </TabItem>
         <TabItem
           active={activeTab === "dpia"}
           onClick={() => setActiveTab("dpia")}
         >
-          {__("Data Protection Impact Assessments")}
+          {t("processingActivitiesPage.tabs.dpia")}
         </TabItem>
         <TabItem
           active={activeTab === "tia"}
           onClick={() => setActiveTab("tia")}
         >
-          {__("Transfer Impact Assessments")}
+          {t("processingActivitiesPage.tabs.tia")}
         </TabItem>
       </Tabs>
 
@@ -320,7 +320,7 @@ export default function ProcessingActivitiesPage({
                   to={`/organizations/${organizationId}/documents/${paDocument.id}`}
                 >
                   <IconPageTextLine size={16} />
-                  {__("Document")}
+                  {t("processingActivitiesPage.actions.document")}
                 </Link>
               </Button>
             )}
@@ -331,7 +331,7 @@ export default function ProcessingActivitiesPage({
                 onPublished={goToDocument}
               >
                 <Button variant="secondary" icon={IconUpload}>
-                  {__("Publish")}
+                  {t("processingActivitiesPage.actions.publish")}
                 </Button>
               </PublishProcessingActivityListDialog>
             )}
@@ -345,7 +345,7 @@ export default function ProcessingActivitiesPage({
                   to={`/organizations/${organizationId}/documents/${dpiaDocument.id}`}
                 >
                   <IconPageTextLine size={16} />
-                  {__("Document")}
+                  {t("processingActivitiesPage.actions.document")}
                 </Link>
               </Button>
             )}
@@ -356,7 +356,7 @@ export default function ProcessingActivitiesPage({
                 onPublished={goToDocument}
               >
                 <Button variant="secondary" icon={IconUpload}>
-                  {__("Publish")}
+                  {t("processingActivitiesPage.actions.publish")}
                 </Button>
               </PublishDataProtectionImpactAssessmentListDialog>
             )}
@@ -370,7 +370,7 @@ export default function ProcessingActivitiesPage({
                   to={`/organizations/${organizationId}/documents/${tiaDocument.id}`}
                 >
                   <IconPageTextLine size={16} />
-                  {__("Document")}
+                  {t("processingActivitiesPage.actions.document")}
                 </Link>
               </Button>
             )}
@@ -381,7 +381,7 @@ export default function ProcessingActivitiesPage({
                 onPublished={goToDocument}
               >
                 <Button variant="secondary" icon={IconUpload}>
-                  {__("Publish")}
+                  {t("processingActivitiesPage.actions.publish")}
                 </Button>
               </PublishTransferImpactAssessmentListDialog>
             )}
@@ -397,25 +397,25 @@ export default function ProcessingActivitiesPage({
                   <Table>
                     <Thead>
                       <Tr>
-                        <Th className="px-3">{__("Name")}</Th>
+                        <Th className="px-3">{t("processingActivitiesPage.columns.name")}</Th>
                         <Th className="px-3">
-                          {__("Purpose")}
+                          {t("processingActivitiesPage.columns.purpose")}
                         </Th>
                         <Th className="px-3">
-                          {__("Data Subject")}
+                          {t("processingActivitiesPage.columns.dataSubject")}
                         </Th>
                         <Th className="px-3">
-                          {__("Lawful Basis")}
+                          {t("processingActivitiesPage.columns.lawfulBasis")}
                         </Th>
                         <Th className="px-3">
-                          {__("Location")}
+                          {t("processingActivitiesPage.columns.location")}
                         </Th>
                         <Th className="px-3">
-                          {__("International Transfers")}
+                          {t("processingActivitiesPage.columns.internationalTransfers")}
                         </Th>
                         {hasAnyAction && (
                           <Th className="px-3">
-                            {__("Actions")}
+                            {t("processingActivitiesPage.columns.actions")}
                           </Th>
                         )}
                       </Tr>
@@ -440,8 +440,8 @@ export default function ProcessingActivitiesPage({
                         disabled={isLoadingNextActivities}
                       >
                         {isLoadingNextActivities
-                          ? __("Loading...")
-                          : __("Load more")}
+                          ? t("processingActivitiesPage.actions.loading")
+                          : t("processingActivitiesPage.actions.loadMore")}
                       </Button>
                     </div>
                   )}
@@ -451,12 +451,10 @@ export default function ProcessingActivitiesPage({
                 <Card padded>
                   <div className="text-center py-12">
                     <h3 className="text-lg font-semibold mb-2">
-                      {__("No processing activities yet")}
+                      {t("processingActivitiesPage.empty.activitiesTitle")}
                     </h3>
                     <p className="text-txt-tertiary mb-4">
-                      {__(
-                        "Create your first processing activity to get started with GDPR compliance.",
-                      )}
+                      {t("processingActivitiesPage.empty.activitiesDescription")}
                     </p>
                   </div>
                 </Card>
@@ -472,10 +470,10 @@ export default function ProcessingActivitiesPage({
                   <Table>
                     <Thead>
                       <Tr>
-                        <Th>{__("Processing Activity")}</Th>
-                        <Th>{__("Description")}</Th>
-                        <Th>{__("Potential Risk")}</Th>
-                        <Th>{__("Residual Risk")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.processingActivity")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.description")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.potentialRisk")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.residualRisk")}</Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -493,8 +491,8 @@ export default function ProcessingActivitiesPage({
                         disabled={isLoadingNextDPIAs}
                       >
                         {isLoadingNextDPIAs
-                          ? __("Loading...")
-                          : __("Load more")}
+                          ? t("processingActivitiesPage.actions.loading")
+                          : t("processingActivitiesPage.actions.loadMore")}
                       </Button>
                     </div>
                   )}
@@ -504,14 +502,10 @@ export default function ProcessingActivitiesPage({
                 <Card padded>
                   <div className="text-center py-12">
                     <h3 className="text-lg font-semibold mb-2">
-                      {__(
-                        "No Data Protection Impact Assessments yet",
-                      )}
+                      {t("processingActivitiesPage.empty.dpiaTitle")}
                     </h3>
                     <p className="text-txt-tertiary mb-4">
-                      {__(
-                        "DPIAs are created from within individual processing activities.",
-                      )}
+                      {t("processingActivitiesPage.empty.dpiaDescription")}
                     </p>
                   </div>
                 </Card>
@@ -527,10 +521,10 @@ export default function ProcessingActivitiesPage({
                   <Table>
                     <Thead>
                       <Tr>
-                        <Th>{__("Processing Activity")}</Th>
-                        <Th>{__("Data Subjects")}</Th>
-                        <Th>{__("Transfer")}</Th>
-                        <Th>{__("Local Law Risk")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.processingActivity")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.dataSubjects")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.transfer")}</Th>
+                        <Th>{t("processingActivitiesPage.columns.localLawRisk")}</Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -548,8 +542,8 @@ export default function ProcessingActivitiesPage({
                         disabled={isLoadingNextTIAs}
                       >
                         {isLoadingNextTIAs
-                          ? __("Loading...")
-                          : __("Load more")}
+                          ? t("processingActivitiesPage.actions.loading")
+                          : t("processingActivitiesPage.actions.loadMore")}
                       </Button>
                     </div>
                   )}
@@ -559,12 +553,10 @@ export default function ProcessingActivitiesPage({
                 <Card padded>
                   <div className="text-center py-12">
                     <h3 className="text-lg font-semibold mb-2">
-                      {__("No Transfer Impact Assessments yet")}
+                      {t("processingActivitiesPage.empty.tiaTitle")}
                     </h3>
                     <p className="text-txt-tertiary mb-4">
-                      {__(
-                        "TIAs are created from within individual processing activities.",
-                      )}
+                      {t("processingActivitiesPage.empty.tiaDescription")}
                     </p>
                   </div>
                 </Card>
@@ -589,7 +581,7 @@ function ActivityRow({
   hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [deleteActivity] = useMutation<ProcessingActivityGraphDeleteMutation>(deleteProcessingActivityMutation);
   const confirm = useConfirm();
 
@@ -605,12 +597,7 @@ function ActivityRow({
           },
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the processing activity %s. This action cannot be undone.",
-          ),
-          activity.name,
-        ),
+        message: t("processingActivitiesPage.deleteConfirmation", { name: activity.name }),
       },
     );
   };
@@ -629,7 +616,7 @@ function ActivityRow({
         </span>
       </Td>
       <Td>{activity.dataSubjectCategory || "-"}</Td>
-      <Td>{getLawfulBasisLabel(activity.lawfulBasis, __)}</Td>
+      <Td>{getLawfulBasisLabel(activity.lawfulBasis, t)}</Td>
       <Td>{activity.location || "-"}</Td>
       <Td>
         <Badge
@@ -637,7 +624,7 @@ function ActivityRow({
             activity.internationalTransfers ? "warning" : "success"
           }
         >
-          {activity.internationalTransfers ? __("Yes") : __("No")}
+          {activity.internationalTransfers ? t("processingActivitiesPage.answers.yes") : t("processingActivitiesPage.answers.no")}
         </Badge>
       </Td>
       {hasAnyAction && (
@@ -649,7 +636,7 @@ function ActivityRow({
                 variant="danger"
                 onSelect={handleDelete}
               >
-                {__("Delete")}
+                {t("processingActivitiesPage.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>
@@ -669,7 +656,7 @@ function DPIARow({
   >;
 }) {
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const activityUrl
     = `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
@@ -703,7 +690,7 @@ function DPIARow({
                       : "danger"
                 }
               >
-                {getResidualRiskLabel(dpia.residualRisk, __)}
+                {getResidualRiskLabel(dpia.residualRisk, t)}
               </Badge>
             )
           : (

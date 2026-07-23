@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -33,7 +33,7 @@ export function CompliancePageFrameworksSection(props: {
 }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const organization = useFragment(fragment, fragmentRef);
 
@@ -44,9 +44,9 @@ export function CompliancePageFrameworksSection(props: {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-base font-medium">{__("Compliance frameworks")}</h2>
+        <h2 className="text-base font-medium">{t("frameworkList.title")}</h2>
         <p className="text-sm text-txt-tertiary">
-          {__("Select which frameworks to show on your public compliance page.")}
+          {t("frameworkList.description")}
         </p>
       </div>
 

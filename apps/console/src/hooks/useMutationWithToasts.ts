@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, type UseMutationConfig } from "react-relay";
 import type { GraphQLTaggedNode, MutationParameters } from "relay-runtime";
 
@@ -37,7 +37,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
 ) {
   const [mutate, isLoading] = useMutation<T>(query);
   const { toast } = useToast();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const mutateWithToast = useCallback(
     (
       queryOptions: UseMutationConfig<T> & {
@@ -53,9 +53,9 @@ export function useMutationWithToasts<T extends MutationParameters>(
           onCompleted: (response, error) => {
             options.onCompleted?.(response, error);
             if (error) {
-              const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
+              const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
               toast({
-                title: __("Error"),
+                title: t("common.error"),
                 description: formatError(errorTitle, error),
                 variant: "error",
               });
@@ -67,19 +67,19 @@ export function useMutationWithToasts<T extends MutationParameters>(
               : options.successMessage;
 
             toast({
-              title: __("Success"),
+              title: t("common.success"),
               description:
                 successMessage
-                ?? __("Operation completed successfully"),
+                ?? t("mutation.messages.completed"),
               variant: "success",
             });
             options.onSuccess?.();
             resolve();
           },
           onError: (error) => {
-            const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
+            const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
             toast({
-              title: __("Error"),
+              title: t("common.error"),
               description: formatError(errorTitle, error),
               variant: "error",
             });
@@ -88,7 +88,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
         }),
       );
     },
-    [mutate, toast, __, baseOptions],
+    [mutate, toast, t, baseOptions],
   );
 
   return [mutateWithToast, isLoading] as const;

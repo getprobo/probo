@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -31,6 +30,7 @@ import {
   useToast,
 } from "@probo/ui";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -73,7 +73,7 @@ export function CreateStatementOfApplicabilityDialog({
   children,
   connectionId,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
@@ -101,8 +101,8 @@ export function CreateStatementOfApplicabilityDialog({
       },
       onCompleted(response) {
         toast({
-          title: __("Success"),
-          description: __("Statement of applicability created successfully."),
+          title: t("createStatementOfApplicabilityDialog.messages.success"),
+          description: t("createStatementOfApplicabilityDialog.messages.created"),
           variant: "success",
         });
         reset();
@@ -116,9 +116,9 @@ export function CreateStatementOfApplicabilityDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("createStatementOfApplicabilityDialog.messages.error"),
           description: formatError(
-            __("Failed to create statement of applicability"),
+            t("createStatementOfApplicabilityDialog.errors.create"),
             error,
           ),
           variant: "error",
@@ -134,8 +134,8 @@ export function CreateStatementOfApplicabilityDialog({
       title={(
         <Breadcrumb
           items={[
-            __("Statements of Applicability"),
-            __("New Statement of Applicability"),
+            t("createStatementOfApplicabilityDialog.breadcrumb.statementsOfApplicability"),
+            t("createStatementOfApplicabilityDialog.breadcrumb.newStatement"),
           ]}
         />
       )}
@@ -143,7 +143,7 @@ export function CreateStatementOfApplicabilityDialog({
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={__("Name")}
+            label={t("createStatementOfApplicabilityDialog.fields.name")}
             {...register("name")}
             type="text"
             required
@@ -151,7 +151,7 @@ export function CreateStatementOfApplicabilityDialog({
         </DialogContent>
         <DialogFooter>
           <Button disabled={isCreating} type="submit">
-            {__("Create")}
+            {t("createStatementOfApplicabilityDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

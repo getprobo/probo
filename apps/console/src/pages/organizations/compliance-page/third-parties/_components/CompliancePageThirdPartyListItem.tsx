@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Badge, Button, IconCheckmark1, IconCrossLargeX, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -56,7 +56,7 @@ export function CompliancePageThirdPartyListItem(props: {
   const { thirdPartyFragmentRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const thirdParty = useFragment<CompliancePageThirdPartyListItem_thirdPartyFragment$key>(
     thirdPartyFragment,
@@ -67,8 +67,8 @@ export function CompliancePageThirdPartyListItem(props: {
   >(
     updateThirdPartyVisibilityMutation,
     {
-      successMessage: __("Subprocessor visibility updated successfully."),
-      errorToast: __("Failed to update subprocessor visibility"),
+      successMessage: t("thirdPartyListItem.messages.visibilityUpdated"),
+      errorToast: t("thirdPartyListItem.errors.visibilityUpdate"),
     },
   );
 
@@ -82,7 +82,7 @@ export function CompliancePageThirdPartyListItem(props: {
       </Td>
       <Td>
         <Badge variant={thirdParty.showOnCompliancePage ? "success" : "danger"}>
-          {thirdParty.showOnCompliancePage ? __("Visible") : __("None")}
+          {thirdParty.showOnCompliancePage ? t("thirdPartyListItem.visibility.visible") : t("thirdPartyListItem.visibility.none")}
         </Badge>
       </Td>
       <Td noLink width={100} className="text-end">
@@ -101,7 +101,7 @@ export function CompliancePageThirdPartyListItem(props: {
             icon={thirdParty.showOnCompliancePage ? IconCrossLargeX : IconCheckmark1}
             disabled={isUpadtingThirdPartyVisibility}
           >
-            {thirdParty.showOnCompliancePage ? __("Hide") : __("Show")}
+            {thirdParty.showOnCompliancePage ? t("thirdPartyListItem.actions.hide") : t("thirdPartyListItem.actions.show")}
           </Button>
         )}
       </Td>

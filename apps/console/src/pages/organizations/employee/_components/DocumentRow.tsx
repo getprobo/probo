@@ -18,13 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  formatDate,
-  getDocumentClassificationLabel,
-  getDocumentTypeLabel,
-} from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { DocumentRowFragment$key } from "#/__generated__/core/DocumentRowFragment.graphql";
@@ -55,23 +51,25 @@ export function DocumentRow({
 }) {
   const document = useFragment<DocumentRowFragment$key>(fragment, fKey);
   const lastVersion = document.lastVersion.edges[0].node;
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
 
   return (
     <Tr to={`/organizations/${organizationId}/employee/signatures/${document.id}`}>
       <Td>{document.title}</Td>
       <Td className="w-48">
-        {getDocumentTypeLabel(__, lastVersion.documentType)}
+        {t(`employeeDocumentRow.documentTypes.${lastVersion.documentType.toLowerCase()}`)}
       </Td>
       <Td className="w-36">
         <Badge variant="neutral">
-          {getDocumentClassificationLabel(__, lastVersion.classification)}
+          {t(`employeeDocumentRow.classifications.${lastVersion.classification.toLowerCase()}`)}
         </Badge>
       </Td>
-      <Td className="w-40">{formatDate(document.updatedAt)}</Td>
+      <Td className="w-40">{dateFormat(i18n.language, document.updatedAt)}</Td>
       <Td className="w-32">
         <Badge variant={document.signed ? "success" : "danger"}>
-          {document.signed ? __("Yes") : __("No")}
+          {document.signed
+            ? t("employeeDocumentRow.signed.yes")
+            : t("employeeDocumentRow.signed.no")}
         </Badge>
       </Td>
     </Tr>

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -52,7 +52,7 @@ const tasksQuery = graphql`
 `;
 
 export default function MeasureTasksTab() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { measureId } = useParams<{ measureId: string }>();
   if (!measureId) {
     throw new Error("Missing :measureId param in route");
@@ -73,7 +73,7 @@ export default function MeasureTasksTab() {
             icon={IconPlusLarge}
             className="absolute top-3 right-6"
           >
-            {__("New task")}
+            {t("measureTasksTab.actions.newTask")}
           </Button>
         </TaskFormDialog>
       )}

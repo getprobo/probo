@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useToggle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -39,6 +38,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -124,7 +124,7 @@ export function FormRiskDialog({
   ref: refProps,
   onSuccess,
 }: FormRiskDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
@@ -174,17 +174,17 @@ export function FormRiskDialog({
         },
         onCompleted() {
           toast({
-            title: __("Success"),
-            description: __("Risk updated successfully."),
+            title: t("formRiskDialog.messages.success"),
+            description: t("formRiskDialog.messages.updated"),
             variant: "success",
           });
           ref?.current?.close();
         },
         onError(error) {
           toast({
-            title: __("Error"),
+            title: t("formRiskDialog.messages.error"),
             description: formatError(
-              __("Failed to update risk"),
+              t("formRiskDialog.errors.update"),
               error,
             ),
             variant: "error",
@@ -204,8 +204,8 @@ export function FormRiskDialog({
       },
       onCompleted() {
         toast({
-          title: __("Success"),
-          description: __("Risk created successfully."),
+          title: t("formRiskDialog.messages.success"),
+          description: t("formRiskDialog.messages.created"),
           variant: "success",
         });
         ref?.current?.close();
@@ -214,9 +214,9 @@ export function FormRiskDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("formRiskDialog.messages.error"),
           description: formatError(
-            __("Failed to create risk"),
+            t("formRiskDialog.errors.create"),
             error,
           ),
           variant: "error",
@@ -233,7 +233,7 @@ export function FormRiskDialog({
       trigger={trigger}
       title={(
         <Breadcrumb
-          items={[__("Risks"), risk ? __("Edit Risk") : __("New Risk")]}
+          items={[t("formRiskDialog.breadcrumb.risks"), risk ? t("formRiskDialog.breadcrumb.edit") : t("formRiskDialog.breadcrumb.new")]}
         />
       )}
     >
@@ -249,14 +249,14 @@ export function FormRiskDialog({
               type="text"
               {...register("name")}
               error={errors.name?.message}
-              label={__("Risk name")}
-              placeholder={__("Service Outage")}
+              label={t("formRiskDialog.fields.name")}
+              placeholder={t("formRiskDialog.placeholders.name")}
             />
             <Field
               {...register("description")}
               error={errors.description?.message}
-              label={__("Description")}
-              placeholder={__("Type your description here")}
+              label={t("formRiskDialog.fields.description")}
+              placeholder={t("formRiskDialog.placeholders.description")}
               type="textarea"
             />
 
@@ -264,24 +264,24 @@ export function FormRiskDialog({
               <ImpactAndLikelihood
                 errors={errors}
                 control={control}
-                label={__("Initial Risk")}
+                label={t("formRiskDialog.fields.initialRisk")}
                 prefix="inherent"
               />
               <ImpactAndLikelihood
                 errors={errors}
                 control={control}
-                label={__("Residual Risk")}
+                label={t("formRiskDialog.fields.residualRisk")}
                 prefix="residual"
               />
             </div>
           </div>
 
           <div className="py-5 px-6 bg-subtle">
-            <Label>{__("Properties")}</Label>
+            <Label>{t("formRiskDialog.properties")}</Label>
 
             <PropertyRow
               id="ownerId"
-              label={__("Owner")}
+              label={t("formRiskDialog.fields.owner")}
               error={errors.ownerId?.message}
             >
               <PeopleSelectField
@@ -293,25 +293,25 @@ export function FormRiskDialog({
 
             <PropertyRow
               id="treatment"
-              label={__("Treatment strategy")}
+              label={t("formRiskDialog.fields.treatment")}
               error={errors.treatment?.message}
             >
               <ControlledSelect
                 control={control}
                 name="treatment"
                 variant="editor"
-                placeholder={__("Select a treatment strategy")}
+                placeholder={t("formRiskDialog.placeholders.treatment")}
               >
-                <Option value="AVOIDED">Avoid</Option>
-                <Option value="MITIGATED">Mitigate</Option>
-                <Option value="TRANSFERRED">Transfer</Option>
-                <Option value="ACCEPTED">Accept</Option>
+                <Option value="AVOIDED">{t("formRiskDialog.treatments.avoided")}</Option>
+                <Option value="MITIGATED">{t("formRiskDialog.treatments.mitigated")}</Option>
+                <Option value="TRANSFERRED">{t("formRiskDialog.treatments.transferred")}</Option>
+                <Option value="ACCEPTED">{t("formRiskDialog.treatments.accepted")}</Option>
               </ControlledSelect>
             </PropertyRow>
 
             <PropertyRow
               id="note"
-              label={__("Note")}
+              label={t("formRiskDialog.fields.note")}
               error={errors.note?.message}
             >
               <Button
@@ -324,7 +324,7 @@ export function FormRiskDialog({
                 <Textarea
                   {...register("note")}
                   className="animate-in slide-in-from-top-2"
-                  placeholder={__("Add any additional notes about this risk")}
+                  placeholder={t("formRiskDialog.placeholders.note")}
                 />
               )}
             </PropertyRow>
@@ -332,7 +332,7 @@ export function FormRiskDialog({
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isLoading}>
-            {risk ? __("Update risk") : __("Create risk")}
+            {risk ? t("formRiskDialog.actions.update") : t("formRiskDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>
@@ -351,7 +351,7 @@ function ImpactAndLikelihood({
   control: RiskForm["control"];
   errors: RiskForm["formState"]["errors"];
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div>
       <Label>{label}</Label>
@@ -360,16 +360,13 @@ function ImpactAndLikelihood({
           control={control}
           name={`${prefix}Impact`}
           type="select"
-          label={__("Impact")}
-          placeholder={__("Select impact level")}
+          label={t("formRiskDialog.fields.impact")}
+          placeholder={t("formRiskDialog.placeholders.impact")}
           error={errors?.[`${prefix}Impact`]?.message}
         >
-          {getRiskImpacts(__).map(i => (
-            <Option key={i.value} value={i.value.toString()}>
-              {i.value}
-              {" "}
-              -
-              {i.label}
+          {[1, 2, 3, 4, 5].map(value => (
+            <Option key={value} value={value.toString()}>
+              {t("formRiskDialog.scoreOption", { value, label: t(`formRiskDialog.impacts.${value}`) })}
             </Option>
           ))}
         </ControlledField>
@@ -377,16 +374,13 @@ function ImpactAndLikelihood({
           control={control}
           name={`${prefix}Likelihood`}
           type="select"
-          label={__("Likelihood")}
-          placeholder={__("Select likelihood level")}
+          label={t("formRiskDialog.fields.likelihood")}
+          placeholder={t("formRiskDialog.placeholders.likelihood")}
           error={errors?.[`${prefix}Likelihood`]?.message}
         >
-          {getRiskLikelihoods(__).map(l => (
-            <Option key={l.value} value={l.value.toString()}>
-              {l.value}
-              {" "}
-              -
-              {l.label}
+          {[1, 2, 3, 4, 5].map(value => (
+            <Option key={value} value={value.toString()}>
+              {t("formRiskDialog.scoreOption", { value, label: t(`formRiskDialog.likelihoods.${value}`) })}
             </Option>
           ))}
         </ControlledField>
@@ -404,7 +398,7 @@ function TemplateSelector({
   control: RiskForm["control"];
   watch: RiskForm["watch"];
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { data: risks } = useFetchQuery<RiskTemplate[]>(
     "/data/risks/risks.json",
     {
@@ -433,12 +427,12 @@ function TemplateSelector({
   };
   return (
     <div>
-      <Label>{__("Risk category")}</Label>
+      <Label>{t("formRiskDialog.fields.category")}</Label>
       <div className="grid grid-cols-2 gap-2">
         <ControlledSelect
           control={control}
           name="category"
-          placeholder={__("Select a category")}
+          placeholder={t("formRiskDialog.placeholders.category")}
         >
           {categories.map(category => (
             <Option key={category} value={category}>
@@ -449,7 +443,7 @@ function TemplateSelector({
         <Select
           key={selectedCategory}
           variant={templates?.length === 0 ? "dashed" : "default"}
-          placeholder={__("Select template")}
+          placeholder={t("formRiskDialog.placeholders.template")}
           onValueChange={onTemplateChange}
         >
           {templates?.map(template => (

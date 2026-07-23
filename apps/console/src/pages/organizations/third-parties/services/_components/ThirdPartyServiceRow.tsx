@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
 import {
   ActionDropdown,
   DropdownItem,
@@ -30,6 +29,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { ThirdPartyServiceRow_service$key } from "#/__generated__/core/ThirdPartyServiceRow_service.graphql";
@@ -63,7 +63,7 @@ interface ThirdPartyServiceRowProps {
 }
 
 export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const service = useFragment(serviceRowFragment, props.serviceKey);
   const confirm = useConfirm();
   const { toast } = useToast();
@@ -84,9 +84,9 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
             onCompleted(_response, errors) {
               if (errors) {
                 toast({
-                  title: __("Error"),
+                  title: t("thirdPartyServiceRow.messages.error"),
                   description: formatError(
-                    __("Failed to delete service"),
+                    t("thirdPartyServiceRow.errors.delete"),
                     errors,
                   ),
                   variant: "error",
@@ -96,9 +96,9 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("thirdPartyServiceRow.messages.error"),
                 description: formatError(
-                  __("Failed to delete service"),
+                  t("thirdPartyServiceRow.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -108,12 +108,7 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the service \"%s\". This action cannot be undone.",
-          ),
-          service.name,
-        ),
+        message: t("thirdPartyServiceRow.deleteConfirmation", { name: service.name }),
       },
     );
   };
@@ -121,7 +116,7 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
   return (
     <Tr>
       <Td>{service.name}</Td>
-      <Td>{service.description || __("—")}</Td>
+      <Td>{service.description || t("thirdPartyServiceRow.emptyValue")}</Td>
       {hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
@@ -130,7 +125,7 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
                 icon={IconPencil}
                 onClick={() => props.onEdit()}
               >
-                {__("Edit")}
+                {t("thirdPartyServiceRow.actions.edit")}
               </DropdownItem>
             )}
             {service.canDelete && (
@@ -139,7 +134,7 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
                 onClick={handleDelete}
                 variant="danger"
               >
-                {__("Delete")}
+                {t("thirdPartyServiceRow.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>

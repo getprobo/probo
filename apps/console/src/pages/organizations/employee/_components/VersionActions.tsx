@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Spinner } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { VersionActionsFragment$key } from "#/__generated__/core/VersionActionsFragment.graphql";
@@ -43,7 +43,7 @@ export function VersionActions({
   onSign: (versionId: string) => void;
   onBack: () => void;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const versionData = useFragment<VersionActionsFragment$key>(fragment, fKey);
   const isSigned = versionData.signed;
 
@@ -51,7 +51,7 @@ export function VersionActions({
     return (
       <>
         <Button onClick={onBack} className="h-10 w-full" variant="secondary">
-          {__("Back to Documents")}
+          {t("versionActions.actions.back")}
         </Button>
         <p className="text-xs text-txt-tertiary mt-2 h-5" />
       </>
@@ -66,7 +66,7 @@ export function VersionActions({
         disabled={isSigning}
         icon={isSigning ? Spinner : undefined}
       >
-        {__("Review and sign")}
+        {t("versionActions.actions.reviewAndSign")}
       </Button>
       <p className="text-xs text-txt-tertiary mt-2">
         {versionData.consentText}

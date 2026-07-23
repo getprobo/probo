@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPageTextLine,
@@ -32,6 +31,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -112,7 +112,7 @@ interface RisksPageProps {
 }
 
 export default function RisksPage(props: RisksPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
@@ -167,7 +167,7 @@ export default function RisksPage(props: RisksPageProps) {
     );
   };
 
-  usePageTitle(__("Risks"));
+  usePageTitle(t("risksPage.title"));
 
   const hasAnyAction = risks.some(
     ({ canDelete, canUpdate }) => canUpdate || canDelete,
@@ -179,10 +179,8 @@ export default function RisksPage(props: RisksPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Risks")}
-        description={__(
-          "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
-        )}
+        title={t("risksPage.title")}
+        description={t("risksPage.description")}
       >
         <div className="flex gap-2">
           {risksDocument && (
@@ -193,7 +191,7 @@ export default function RisksPage(props: RisksPageProps) {
                 `/organizations/${organizationId}/documents/${risksDocument.id}`,
               )}
             >
-              {__("Document")}
+              {t("risksPage.actions.document")}
             </Button>
           )}
           {canPublishRisk && (
@@ -205,7 +203,7 @@ export default function RisksPage(props: RisksPageProps) {
               )}
             >
               <Button variant="secondary" icon={IconUpload}>
-                {__("Publish")}
+                {t("risksPage.actions.publish")}
               </Button>
             </PublishRiskListDialog>
           )}
@@ -215,7 +213,7 @@ export default function RisksPage(props: RisksPageProps) {
               onSuccess={() => {
                 pagination.refetch({});
               }}
-              trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
+              trigger={<Button icon={IconPlusLarge}>{t("risksPage.actions.newRisk")}</Button>}
             />
           )}
         </div>
@@ -236,16 +234,16 @@ export default function RisksPage(props: RisksPageProps) {
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
-            <SortableTh field="NAME">{__("Risk name")}</SortableTh>
-            <SortableTh field="CATEGORY">{__("Category")}</SortableTh>
-            <SortableTh field="TREATMENT">{__("Treatment")}</SortableTh>
+            <SortableTh field="NAME">{t("risksPage.columns.name")}</SortableTh>
+            <SortableTh field="CATEGORY">{t("risksPage.columns.category")}</SortableTh>
+            <SortableTh field="TREATMENT">{t("risksPage.columns.treatment")}</SortableTh>
             <SortableTh field="INHERENT_RISK_SCORE">
-              {__("Initial Risk")}
+              {t("risksPage.columns.initialRisk")}
             </SortableTh>
             <SortableTh field="RESIDUAL_RISK_SCORE">
-              {__("Residual Risk")}
+              {t("risksPage.columns.residualRisk")}
             </SortableTh>
-            <SortableTh field="OWNER_FULL_NAME">{__("Owner")}</SortableTh>
+            <SortableTh field="OWNER_FULL_NAME">{t("risksPage.columns.owner")}</SortableTh>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>

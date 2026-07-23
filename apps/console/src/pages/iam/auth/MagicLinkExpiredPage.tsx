@@ -19,26 +19,24 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export default function MagicLinkExpiredPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(__("Link Expired"));
+  usePageTitle(t("magicLinkExpired.title"));
 
   return (
     <div className="space-y-6 w-full">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">{__("Link Expired")}</h1>
+        <h1 className="text-2xl font-bold">{t("magicLinkExpired.title")}</h1>
         <p className="text-txt-tertiary">
-          {__(
-            "This magic link has expired. Magic links are only valid for 15 minutes. Please request a new one.",
-          )}
+          {t("magicLinkExpired.description")}
         </p>
       </div>
       <Button className="w-full h-10" to="/auth/login">
-        {__("Sign in")}
+        {t("auth.actions.signIn")}
       </Button>
     </div>
   );

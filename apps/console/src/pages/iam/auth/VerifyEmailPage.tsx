@@ -20,9 +20,9 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -44,11 +44,11 @@ const confirmEmailSchema = z.object({
 });
 
 export default function VerifyEmailPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  usePageTitle(__("Confirm Email"));
+  usePageTitle(t("verifyEmailPage.pageTitle"));
 
   const [isConfirmed, setIsConfirmed] = useState(false);
 
@@ -71,8 +71,7 @@ export default function VerifyEmailPage() {
       onCompleted: (_, errors) => {
         if (errors) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to confirm email"), errors),
+            title: t("common.error"), description: formatError(t("verifyEmailPage.errors.confirm"), errors),
             variant: "error",
           });
           return;
@@ -80,15 +79,13 @@ export default function VerifyEmailPage() {
 
         setIsConfirmed(true);
         toast({
-          title: __("Success"),
-          description: __("Your email has been confirmed successfully"),
+          title: t("common.success"), description: t("verifyEmailPage.messages.confirmed"),
           variant: "success",
         });
       },
       onError: (err) => {
         toast({
-          title: __("Error"),
-          description: err.message || __("Failed to confirm email"),
+          title: t("common.error"), description: err.message || t("verifyEmailPage.errors.confirm"),
           variant: "error",
         });
       },
@@ -98,9 +95,9 @@ export default function VerifyEmailPage() {
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{__("Email Confirmation")}</h1>
+        <h1 className="text-3xl font-bold">{t("verifyEmailPage.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Confirm your email address to complete registration")}
+          {t("verifyEmailPage.description")}
         </p>
       </div>
 
@@ -108,25 +105,23 @@ export default function VerifyEmailPage() {
         ? (
             <div className="space-y-4 text-center">
               <p className="text-green-600 dark:text-green-400">
-                {__("Your email has been confirmed successfully!")}
+                {t("verifyEmailPage.messages.confirmedWithExclamation")}
               </p>
               <Button to="/auth/login" className="w-full">
-                {__("Proceed to Login")}
+                {t("verifyEmailPage.actions.proceedToLogin")}
               </Button>
             </div>
           )
         : (
             <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
               <Field
-                label={__("Confirmation Token")}
+                label={t("verifyEmailPage.fields.token")}
                 type="text"
-                placeholder={__("Enter your confirmation token")}
+                placeholder={t("verifyEmailPage.fields.tokenPlaceholder")}
                 {...form.register("token")}
                 error={form.formState.errors.token?.message}
                 disabled={form.formState.isSubmitting}
-                help={__(
-                  "The token has been automatically filled from the URL if available",
-                )}
+                help={t("verifyEmailPage.fields.tokenHelp")}
               />
 
               <Button
@@ -135,8 +130,8 @@ export default function VerifyEmailPage() {
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting
-                  ? __("Confirming...")
-                  : __("Confirm Email")}
+                  ? t("verifyEmailPage.actions.confirming")
+                  : t("verifyEmailPage.actions.confirm")}
               </Button>
             </form>
           )}
@@ -148,7 +143,7 @@ export default function VerifyEmailPage() {
               to="/auth/login"
               className="underline text-txt-primary hover:text-txt-secondary"
             >
-              {__("Back to Login")}
+              {t("verifyEmailPage.actions.backToLogin")}
             </Link>
           </p>
         )}

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getAssignableRoles, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { getAssignableRoles } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -35,6 +35,7 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import { use } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
@@ -131,7 +132,7 @@ export function PeopleListItem(props: {
   const { fKey, connectionId, onRefetch } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const confirm = useConfirm();
 
   const { role } = use(CurrentUser);
@@ -152,28 +153,28 @@ export function PeopleListItem(props: {
 
   const [inviteUser]
     = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
-      successMessage: __("Invitation sent successfully"),
-      errorMessage: __("Failed to send invitation"),
+      successMessage: t("peopleListItem.messages.invitationSent"),
+      errorMessage: t("peopleListItem.errors.sendInvitation"),
     });
   const [updateMembership, isUpdatingRole] = useMutationWithToasts(
     updateRoleMutation,
     {
-      successMessage: __("Role updated successfully"),
-      errorMessage: __("Failed to update role"),
+      successMessage: t("peopleListItem.messages.roleUpdated"),
+      errorMessage: t("peopleListItem.errors.updateRole"),
     },
   );
   const [archiveUser, isArchiving] = useMutationWithToasts(
     archiveUserMutation,
     {
-      successMessage: __("Person archived successfully"),
-      errorMessage: __("Failed to archive person"),
+      successMessage: t("peopleListItem.messages.archived"),
+      errorMessage: t("peopleListItem.errors.archive"),
     },
   );
   const [removeUser, isRemoving] = useMutationWithToasts(
     removeUserMutation,
     {
-      successMessage: __("Person removed successfully"),
-      errorMessage: __("Failed to remove person"),
+      successMessage: t("peopleListItem.messages.removed"),
+      errorMessage: t("peopleListItem.errors.remove"),
     },
   );
   const isMutating = isArchiving || isRemoving;
@@ -192,12 +193,9 @@ export function PeopleListItem(props: {
         });
       },
       {
-        label: __("Send"),
+        label: t("peopleListItem.actions.send"),
         variant: "primary",
-        message: sprintf(
-          __("Send the activation email to %s?"),
-          profile.fullName,
-        ),
+        message: t("peopleListItem.confirmations.sendActivationEmail", { name: profile.fullName }),
       },
     );
   };
@@ -228,10 +226,7 @@ export function PeopleListItem(props: {
         });
       },
       {
-        message: sprintf(
-          __("Are you sure you want to archive %s?"),
-          profile.fullName,
-        ),
+        message: t("peopleListItem.confirmations.archive", { name: profile.fullName }),
       },
     );
   };
@@ -252,10 +247,7 @@ export function PeopleListItem(props: {
         });
       },
       {
-        message: sprintf(
-          __("Are you sure you want to remove %s?"),
-          profile.fullName,
-        ),
+        message: t("peopleListItem.confirmations.remove", { name: profile.fullName }),
       },
     );
   };
@@ -297,19 +289,19 @@ export function PeopleListItem(props: {
             onValueChange={role => void handleUpdateRole(role)}
           >
             {roleOptions.includes("OWNER") && (
-              <Option value="OWNER">{__("Owner")}</Option>
+              <Option value="OWNER">{t("peopleListItem.roles.owner")}</Option>
             )}
             {roleOptions.includes("ADMIN") && (
-              <Option value="ADMIN">{__("Admin")}</Option>
+              <Option value="ADMIN">{t("peopleListItem.roles.admin")}</Option>
             )}
             {roleOptions.includes("VIEWER") && (
-              <Option value="VIEWER">{__("Viewer")}</Option>
+              <Option value="VIEWER">{t("peopleListItem.roles.viewer")}</Option>
             )}
             {roleOptions.includes("AUDITOR") && (
-              <Option value="AUDITOR">{__("Auditor")}</Option>
+              <Option value="AUDITOR">{t("peopleListItem.roles.auditor")}</Option>
             )}
             {roleOptions.includes("EMPLOYEE") && (
-              <Option value="EMPLOYEE">{__("Employee")}</Option>
+              <Option value="EMPLOYEE">{t("peopleListItem.roles.employee")}</Option>
             )}
           </Select>
         </Td>
@@ -319,7 +311,7 @@ export function PeopleListItem(props: {
         isInactive && "opacity-50",
       )}
       >
-        {new Date(profile.createdAt).toLocaleDateString()}
+        {dateFormat(i18n.language, profile.createdAt)}
       </Td>
       <Td noLink width={160} className="text-end">
         {(canSendActivationMail || canArchive || canRemove) && (
@@ -329,7 +321,7 @@ export function PeopleListItem(props: {
                 onClick={handleInvite}
                 icon={IconMail}
               >
-                {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
+                {lastInvitation ? t("peopleListItem.actions.resendActivationMail") : t("peopleListItem.actions.sendActivationMail")}
               </DropdownItem>
             )}
             {canArchive && (
@@ -337,7 +329,7 @@ export function PeopleListItem(props: {
                 onClick={handleArchive}
                 icon={IconArchive}
               >
-                {__("Archive person")}
+                {t("peopleListItem.actions.archivePerson")}
               </DropdownItem>
             )}
             {canRemove && (
@@ -346,7 +338,7 @@ export function PeopleListItem(props: {
                 variant="danger"
                 icon={IconTrashCan}
               >
-                {__("Remove person")}
+                {t("peopleListItem.actions.removePerson")}
               </DropdownItem>
             )}
           </ActionDropdown>

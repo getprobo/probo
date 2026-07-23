@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Badge, Card, IconMail } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -37,7 +37,7 @@ interface InvitingOrganizationCardProps {
 
 export function InvitingOrganizationCard(props: InvitingOrganizationCardProps) {
   const { fKey } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const organization = useFragment<InvitingOrganizationCardFragment$key>(
     fragment,
@@ -50,7 +50,7 @@ export function InvitingOrganizationCard(props: InvitingOrganizationCardProps) {
         <h2 className="font-semibold text-xl">{organization.name}</h2>
         <Badge variant="neutral" className="flex items-center gap-1">
           <IconMail size={14} />
-          {__("Check your email")}
+          {t("invitingOrganizationCard.checkEmail")}
         </Badge>
       </div>
     </Card>

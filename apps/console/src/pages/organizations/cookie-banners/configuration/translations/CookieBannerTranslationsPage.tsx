@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Option, Select } from "@probo/ui";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -65,7 +65,7 @@ interface CookieBannerTranslationsPageProps {
 export default function CookieBannerTranslationsPage({
   queryRef,
 }: CookieBannerTranslationsPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const data = usePreloadedQuery<CookieBannerTranslationsPageQuery>(cookieBannerTranslationsPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
@@ -118,8 +118,8 @@ export default function CookieBannerTranslationsPage({
   );
 
   const necessaryCategoryName = useMemo(
-    () => categories.find(c => c.kind === "NECESSARY")?.name ?? "Necessary",
-    [categories],
+    () => categories.find(c => c.kind === "NECESSARY")?.name ?? t("translationsPage.necessaryFallback"),
+    [categories, t],
   );
 
   return (
@@ -131,8 +131,9 @@ export default function CookieBannerTranslationsPage({
         >
           {SUPPORTED_LANGUAGES.map(l => (
             <Option key={l.code} value={l.code}>
-              {l.label}
-              {l.code === banner.defaultLanguage ? ` (${__("default")})` : ""}
+              {l.code === banner.defaultLanguage
+                ? t("translationsPage.languageDefault", { language: l.label })
+                : l.label}
             </Option>
           ))}
         </Select>
@@ -151,9 +152,7 @@ export default function CookieBannerTranslationsPage({
 
       {selectedLanguage === banner.defaultLanguage && (
         <p className="text-sm text-txt-secondary">
-          {__(
-            "This is the default language. These translations are shown when a visitor's language is not available.",
-          )}
+          {t("translationsPage.defaultLanguageDescription")}
         </p>
       )}
     </div>

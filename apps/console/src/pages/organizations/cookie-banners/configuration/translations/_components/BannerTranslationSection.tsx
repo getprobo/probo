@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Card, Field, Input, Textarea } from "@probo/ui";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { BannerPreview } from "./BannerPreview";
-import { TRANSLATION_LABELS } from "./translationDefaults";
 import type { TranslationFormValues } from "./TranslationEditor";
 
 interface BannerTranslationSectionProps {
@@ -33,7 +32,7 @@ interface BannerTranslationSectionProps {
 export function BannerTranslationSection({
   showBranding,
 }: BannerTranslationSectionProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/cookie-banners");
   const { control } = useFormContext<TranslationFormValues>();
 
   const bannerTitle = useWatch({ control, name: "banner_title" });
@@ -52,7 +51,7 @@ export function BannerTranslationSection({
 
   return (
     <div className="space-y-4">
-      <h3 className="font-medium text-lg">{__("Banner")}</h3>
+      <h3 className="font-medium text-lg">{t("bannerTranslationSection.title")}</h3>
       <div className="grid grid-cols-2 gap-6">
         <Card className="border p-4">
           <div className="space-y-4">
@@ -60,7 +59,7 @@ export function BannerTranslationSection({
               control={control}
               name="banner_title"
               render={({ field }) => (
-                <Field label={__(TRANSLATION_LABELS.banner_title)}>
+                <Field label={t("translationEditor.labels.bannerTitle")}>
                   <Input {...field} />
                 </Field>
               )}
@@ -70,9 +69,9 @@ export function BannerTranslationSection({
               name="banner_description"
               render={({ field }) => (
                 <Field
-                  label={__(TRANSLATION_LABELS.banner_description)}
+                  label={t("translationEditor.labels.bannerDescription")}
                 >
-                  <p className="text-xs text-txt-secondary mb-2">{"Use {{cookie_policy_link}} and {{privacy_policy_link}} to insert policy links."}</p>
+                  <p className="text-xs text-txt-secondary mb-2">{t("bannerTranslationSection.policyLinkHelp")}</p>
                   <Textarea {...field} rows={3} />
                 </Field>
               )}
@@ -82,7 +81,7 @@ export function BannerTranslationSection({
                 control={control}
                 name="button_accept_all"
                 render={({ field }) => (
-                  <Field label={__(TRANSLATION_LABELS.button_accept_all)}>
+                  <Field label={t("translationEditor.labels.acceptAllButton")}>
                     <Input {...field} />
                   </Field>
                 )}
@@ -91,7 +90,7 @@ export function BannerTranslationSection({
                 control={control}
                 name="button_reject_all"
                 render={({ field }) => (
-                  <Field label={__(TRANSLATION_LABELS.button_reject_all)}>
+                  <Field label={t("translationEditor.labels.rejectAllButton")}>
                     <Input {...field} />
                   </Field>
                 )}
@@ -101,7 +100,7 @@ export function BannerTranslationSection({
               control={control}
               name="button_customize"
               render={({ field }) => (
-                <Field label={__(TRANSLATION_LABELS.button_customize)}>
+                <Field label={t("translationEditor.labels.customizeButton")}>
                   <Input {...field} />
                 </Field>
               )}
@@ -112,7 +111,7 @@ export function BannerTranslationSection({
                 name="cookie_policy_link_text"
                 render={({ field }) => (
                   <Field
-                    label={__(TRANSLATION_LABELS.cookie_policy_link_text)}
+                    label={t("translationEditor.labels.cookiePolicyLinkText")}
                   >
                     <Input {...field} />
                   </Field>
@@ -123,7 +122,7 @@ export function BannerTranslationSection({
                 name="privacy_policy_link_text"
                 render={({ field }) => (
                   <Field
-                    label={__(TRANSLATION_LABELS.privacy_policy_link_text)}
+                    label={t("translationEditor.labels.privacyPolicyLinkText")}
                   >
                     <Input {...field} />
                   </Field>

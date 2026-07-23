@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -59,7 +59,7 @@ export function CompliancePageReferenceList(props: {
 }) {
   const { fragmentRef, onEdit } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const [{ references }, refetch] = useRefetchableFragment<
     CompliancePageReferenceListQuery,
@@ -116,8 +116,8 @@ export function CompliancePageReferenceList(props: {
       <Table>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Description")}</Th>
+            <Th>{t("referenceList.columns.name")}</Th>
+            <Th>{t("referenceList.columns.description")}</Th>
             <Th></Th>
           </Tr>
         </Thead>
@@ -125,7 +125,7 @@ export function CompliancePageReferenceList(props: {
           {references.edges.length === 0 && (
             <Tr>
               <Td colSpan={3} className="text-center text-txt-secondary">
-                {__("No references available")}
+                {t("referenceList.empty")}
               </Td>
             </Tr>
           )}
@@ -147,7 +147,7 @@ export function CompliancePageReferenceList(props: {
       </Table>
 
       <p className="text-sm text-txt-tertiary">
-        {__("Drag and drop references to change their displayed order")}
+        {t("referenceList.dragHint")}
       </p>
     </>
   );

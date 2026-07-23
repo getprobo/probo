@@ -20,8 +20,8 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -49,13 +49,13 @@ const schema = z
   });
 
 export default function ResetPasswordPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
 
-  usePageTitle(__("Reset password"));
+  usePageTitle(t("resetPasswordPage.pageTitle"));
 
   const { register, handleSubmit, formState } = useFormWithSchema(schema, {
     defaultValues: {
@@ -71,8 +71,8 @@ export default function ResetPasswordPage() {
   const onSubmit = handleSubmit((data) => {
     if (!token) {
       toast({
-        title: __("Reset failed"),
-        description: __("Invalid or missing reset token"),
+        title: t("resetPasswordPage.errors.resetFailed"),
+        description: t("resetPasswordPage.errors.invalidToken"),
         variant: "error",
       });
       return;
@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
       },
       onError: (e: Error) => {
         toast({
-          title: __("Reset failed"),
+          title: t("resetPasswordPage.errors.resetFailed"),
           description: e.message,
           variant: "error",
         });
@@ -95,9 +95,9 @@ export default function ResetPasswordPage() {
       onCompleted: (_, e) => {
         if (e) {
           toast({
-            title: __("Reset failed"),
+            title: t("resetPasswordPage.errors.resetFailed"),
             description: formatError(
-              __("Password reset failed"),
+              t("resetPasswordPage.errors.reset"),
               e,
             ),
             variant: "error",
@@ -105,8 +105,8 @@ export default function ResetPasswordPage() {
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Password reset successfully"),
+          title: t("common.success"),
+          description: t("resetPasswordPage.messages.reset"),
           variant: "success",
         });
         void navigate("/auth/login", { replace: true });
@@ -117,15 +117,15 @@ export default function ResetPasswordPage() {
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{__("Reset password")}</h1>
+        <h1 className="text-3xl font-bold">{t("resetPasswordPage.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Enter your new password to reset your account")}
+          {t("resetPasswordPage.description")}
         </p>
       </div>
 
       <form onSubmit={e => void onSubmit(e)} className="space-y-4">
         <Field
-          label={__("New Password")}
+          label={t("resetPasswordPage.fields.newPassword")}
           type="password"
           placeholder="••••••••"
           {...register("password")}
@@ -134,7 +134,7 @@ export default function ResetPasswordPage() {
         />
 
         <Field
-          label={__("Confirm Password")}
+          label={t("resetPasswordPage.fields.confirmPassword")}
           type="password"
           placeholder="••••••••"
           {...register("confirmPassword")}
@@ -144,20 +144,20 @@ export default function ResetPasswordPage() {
 
         <Button type="submit" className="w-xs h-10 mx-auto mt-6" disabled={formState.isLoading}>
           {formState.isLoading
-            ? __("Resetting password...")
-            : __("Reset password")}
+            ? t("resetPasswordPage.actions.resetting")
+            : t("resetPasswordPage.actions.reset")}
         </Button>
       </form>
 
       <div className="text-center">
         <p className="text-sm text-txt-tertiary">
-          {__("Remember your password?")}
+          {t("resetPasswordPage.rememberPassword")}
           {" "}
           <Link
             to="/auth/login"
             className="underline text-txt-primary hover:text-txt-secondary"
           >
-            {__("Log in here")}
+            {t("resetPasswordPage.actions.logIn")}
           </Link>
         </p>
       </div>

@@ -46,23 +46,23 @@ export const rightsRequestStates = [
   "REJECTED",
 ] as const;
 
-const rightsRequestTypeLabels: Record<RightsRequestType, string> = {
-  "ACCESS": "Access",
-  "DELETION": "Deletion",
-  "RECTIFICATION": "Rectification",
-  "PORTABILITY": "Portability",
-  "OBJECTION": "Objection",
-  "COMPLAINT": "Complaint",
+const rightsRequestTypeKeys: Record<RightsRequestType, string> = {
+  "ACCESS": "helpers.rightsRequestType.access",
+  "DELETION": "helpers.rightsRequestType.deletion",
+  "RECTIFICATION": "helpers.rightsRequestType.rectification",
+  "PORTABILITY": "helpers.rightsRequestType.portability",
+  "OBJECTION": "helpers.rightsRequestType.objection",
+  "COMPLAINT": "helpers.rightsRequestType.complaint",
 };
 
-export function getRightsRequestTypeLabel(__: Translator, type: RightsRequestType) {
-  return __(rightsRequestTypeLabels[type] ?? type);
+export function getRightsRequestTypeLabel(t: Translator, type: RightsRequestType) {
+  return t(rightsRequestTypeKeys[type]);
 }
 
-export function getRightsRequestTypeOptions(__: Translator) {
+export function getRightsRequestTypeOptions(t: Translator) {
   return rightsRequestTypes.map((type) => ({
     value: type,
-    label: __(rightsRequestTypeLabels[type]),
+    label: t(rightsRequestTypeKeys[type]),
   }));
 }
 
@@ -83,20 +83,20 @@ export const getRightsRequestStateVariant = (
   }
 };
 
-const rightsRequestStateLabels: Record<RightsRequestState, string> = {
-  "TODO": "To Do",
-  "IN_PROGRESS": "In Progress",
-  "DONE": "Done",
-  "REJECTED": "Rejected",
+const rightsRequestStateKeys: Record<RightsRequestState, string> = {
+  "TODO": "helpers.rightsRequestState.todo",
+  "IN_PROGRESS": "helpers.rightsRequestState.inProgress",
+  "DONE": "helpers.rightsRequestState.done",
+  "REJECTED": "helpers.rightsRequestState.rejected",
 };
 
-export function getRightsRequestStateLabel(__: Translator, state: RightsRequestState) {
-  return __(rightsRequestStateLabels[state] ?? state);
+export function getRightsRequestStateLabel(t: Translator, state: RightsRequestState) {
+  return t(rightsRequestStateKeys[state]);
 }
 
-export function getRightsRequestStateOptions(__: Translator) {
+export function getRightsRequestStateOptions(t: Translator) {
   return rightsRequestStates.map((state) => ({
     value: state,
-    label: __(rightsRequestStateLabels[state]),
+    label: t(rightsRequestStateKeys[state]),
   }));
 }

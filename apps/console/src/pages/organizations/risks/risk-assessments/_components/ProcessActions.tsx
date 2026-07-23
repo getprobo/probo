@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -35,6 +34,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { ProcessActionsDeleteMutation } from "#/__generated__/core/ProcessActionsDeleteMutation.graphql";
@@ -65,7 +65,7 @@ export function ProcessActions(props: {
   nodes: { id: string; name: string }[];
   connectionId: string;
 }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
   const [updateProcess] = useMutation<ProcessActionsUpdateMutation>(updateProcessMutation);
@@ -81,7 +81,7 @@ export function ProcessActions(props: {
     <>
       <ActionDropdown>
         <DropdownItem icon={IconPencil} onSelect={() => dialogRef.current?.open()}>
-          {__("Edit")}
+          {t("riskAssessmentProcessActions.actions.edit")}
         </DropdownItem>
         <DropdownItem
           icon={IconTrashCan}
@@ -95,13 +95,13 @@ export function ProcessActions(props: {
                 },
               });
             },
-            { message: __("Delete this process?") },
+            { message: t("riskAssessmentProcessActions.deleteConfirmation") },
           )}
         >
-          {__("Delete")}
+          {t("riskAssessmentProcessActions.actions.delete")}
         </DropdownItem>
       </ActionDropdown>
-      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Processes"), __("Edit")]} />}>
+      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[t("riskAssessmentProcessActions.breadcrumb.processes"), t("riskAssessmentProcessActions.actions.edit")]} />}>
         <form onSubmit={e => void handleSubmit((d) => {
           updateProcess({
             variables: {
@@ -117,15 +117,15 @@ export function ProcessActions(props: {
         })(e)}
         >
           <DialogContent padded className="space-y-4">
-            <ControlledField label={__("Source")} name="sourceNodeId" control={control} type="select" placeholder={__("Select source node")}>
+            <ControlledField label={t("riskAssessmentProcessActions.fields.source")} name="sourceNodeId" control={control} type="select" placeholder={t("riskAssessmentProcessActions.placeholders.sourceNode")}>
               {props.nodes.map(n => <Option key={n.id} value={n.id}>{n.name}</Option>)}
             </ControlledField>
-            <ControlledField label={__("Target")} name="targetNodeId" control={control} type="select" placeholder={__("Select target node")}>
+            <ControlledField label={t("riskAssessmentProcessActions.fields.target")} name="targetNodeId" control={control} type="select" placeholder={t("riskAssessmentProcessActions.placeholders.targetNode")}>
               {props.nodes.map(n => <Option key={n.id} value={n.id}>{n.name}</Option>)}
             </ControlledField>
-            <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" />
+            <Field label={t("riskAssessmentProcessActions.fields.name")} {...register("name", { required: t("riskAssessmentProcessActions.validation.nameRequired") })} type="text" />
           </DialogContent>
-          <DialogFooter><Button type="submit">{__("Save")}</Button></DialogFooter>
+          <DialogFooter><Button type="submit">{t("riskAssessmentProcessActions.actions.save")}</Button></DialogFooter>
         </form>
       </Dialog>
     </>

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge, useDialogRef } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePageFilesPageQuery } from "#/__generated__/core/CompliancePageFilesPageQuery.graphql";
@@ -45,7 +45,7 @@ export function CompliancePageFilesPage(props: {
   const { queryRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const createDialogRef = useDialogRef();
 
   const { organization } = usePreloadedQuery<CompliancePageFilesPageQuery>(compliancePageFilesPageQuery, queryRef);
@@ -59,9 +59,9 @@ export function CompliancePageFilesPage(props: {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium">{__("Files")}</h3>
+          <h3 className="text-base font-medium">{t("filesPage.title")}</h3>
           <p className="text-sm text-txt-tertiary">
-            {__("Upload and manage files for your compliance page")}
+            {t("filesPage.description")}
           </p>
         </div>
         {organization.canCreateCompliancePageFile && (
@@ -69,7 +69,7 @@ export function CompliancePageFilesPage(props: {
             icon={IconPlusLarge}
             onClick={() => createDialogRef.current?.open()}
           >
-            {__("Add File")}
+            {t("filesPage.actions.add")}
           </Button>
         )}
       </div>

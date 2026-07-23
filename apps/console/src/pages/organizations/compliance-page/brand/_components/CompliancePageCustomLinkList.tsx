@@ -12,9 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, IconChevronRight, IconPlusLarge } from "@probo/ui";
 import { useCallback, useRef, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -69,7 +69,7 @@ export interface CompliancePageCustomLinkListProps {
 }
 
 export function CompliancePageCustomLinkList(props: CompliancePageCustomLinkListProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const [, startTransition] = useTransition();
   const dialogRef = useRef<CompliancePageCustomLinkDialogRef>(null);
 
@@ -83,7 +83,7 @@ export function CompliancePageCustomLinkList(props: CompliancePageCustomLinkList
 
   const [updateRank] = useMutation<CompliancePageCustomLinkList_updateRankMutation>(
     updateRankMutation,
-    { successMessage: __("Order updated."), errorToast: __("Failed to update order.") },
+    { successMessage: t("externalUrls.messages.orderUpdated"), errorToast: t("externalUrls.errors.orderUpdate") },
   );
 
   const edges = compliancePage.customLinks.edges;
@@ -152,7 +152,7 @@ export function CompliancePageCustomLinkList(props: CompliancePageCustomLinkList
       {!readOnly && hasLinks && (
         <div className="flex justify-end">
           <Button icon={IconPlusLarge} onClick={handleCreate}>
-            {__("Add link")}
+            {t("externalUrls.actions.add")}
           </Button>
         </div>
       )}
@@ -179,19 +179,17 @@ export function CompliancePageCustomLinkList(props: CompliancePageCustomLinkList
       {!hasLinks && !readOnly && (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-solid px-4 py-8">
           <p className="max-w-md text-center text-sm text-txt-tertiary">
-            {__(
-              "Add links to your social profiles, website, or other resources visitors can explore.",
-            )}
+            {t("externalUrls.description")}
           </p>
           <Button iconAfter={IconChevronRight} onClick={handleCreate}>
-            {__("Add link")}
+            {t("externalUrls.actions.add")}
           </Button>
         </div>
       )}
 
       {edges.length > 1 && !readOnly && (
         <p className="text-sm text-txt-tertiary">
-          {__("Drag and drop to change the displayed order")}
+          {t("externalUrls.dragHint")}
         </p>
       )}
 

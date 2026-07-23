@@ -21,9 +21,7 @@
 import {
   formatDatetime,
   formatError,
-  getStatusOptions,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -41,6 +39,7 @@ import {
 } from "@probo/ui";
 import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { z } from "zod";
 
@@ -108,25 +107,23 @@ export function CreateFindingDialog({
   organizationId,
   connectionIds,
 }: CreateFindingDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const [createFinding] = useMutation<CreateFindingDialogMutation>(createFindingMutation);
-  const statusOptions = getStatusOptions(__).filter(
-    opt => opt.value !== "RISK_ACCEPTED",
-  );
+  const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "MITIGATED", "FALSE_POSITIVE"] as const;
 
   const kindOptions = [
-    { value: "MINOR_NONCONFORMITY", label: __("Minor nonconformity") },
-    { value: "MAJOR_NONCONFORMITY", label: __("Major nonconformity") },
-    { value: "OBSERVATION", label: __("Observation") },
-    { value: "EXCEPTION", label: __("Exception") },
+    { value: "MINOR_NONCONFORMITY", label: t("createFindingDialog.kinds.minorNonconformity") },
+    { value: "MAJOR_NONCONFORMITY", label: t("createFindingDialog.kinds.majorNonconformity") },
+    { value: "OBSERVATION", label: t("createFindingDialog.kinds.observation") },
+    { value: "EXCEPTION", label: t("createFindingDialog.kinds.exception") },
   ];
 
   const priorityOptions = [
-    { value: "LOW", label: __("Low") },
-    { value: "MEDIUM", label: __("Medium") },
-    { value: "HIGH", label: __("High") },
+    { value: "LOW", label: t("createFindingDialog.priority.low") },
+    { value: "MEDIUM", label: t("createFindingDialog.priority.medium") },
+    { value: "HIGH", label: t("createFindingDialog.priority.high") },
   ];
 
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(schema, {
@@ -166,8 +163,8 @@ export function CreateFindingDialog({
       },
       onCompleted() {
         toast({
-          title: __("Success"),
-          description: __("Finding created successfully"),
+          title: t("createFindingDialog.messages.successTitle"),
+          description: t("createFindingDialog.messages.created"),
           variant: "success",
         });
         reset();
@@ -175,8 +172,8 @@ export function CreateFindingDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
-          description: formatError(__("Failed to create finding"), error),
+          title: t("createFindingDialog.errors.title"),
+          description: formatError(t("createFindingDialog.errors.create"), error),
           variant: "error",
         });
       },
@@ -187,7 +184,7 @@ export function CreateFindingDialog({
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Findings"), __("Create")]} />}
+      title={<Breadcrumb items={[t("createFindingDialog.breadcrumbs.findings"), t("createFindingDialog.breadcrumbs.create")]} />}
       className="max-w-2xl"
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
@@ -196,10 +193,10 @@ export function CreateFindingDialog({
             control={control}
             name="kind"
             render={({ field }) => (
-              <Field label={__("Kind")} required>
+              <Field label={t("createFindingDialog.fields.kind")} required>
                 <Select
                   variant="editor"
-                  placeholder={__("Select kind")}
+                  placeholder={t("createFindingDialog.placeholders.selectKind")}
                   onValueChange={field.onChange}
                   value={field.value}
                   className="w-full"
@@ -218,20 +215,20 @@ export function CreateFindingDialog({
           />
 
           <div className="space-y-2">
-            <Label htmlFor="description">{__("Description")}</Label>
+            <Label htmlFor="description">{t("createFindingDialog.fields.description")}</Label>
             <Textarea
               id="description"
               {...register("description")}
-              placeholder={__("Brief description of the finding...")}
+              placeholder={t("createFindingDialog.placeholders.description")}
               rows={2}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Field
-              label={__("Source")}
+              label={t("createFindingDialog.fields.source")}
               {...register("source")}
-              placeholder={__("Enter source")}
+              placeholder={t("createFindingDialog.placeholders.source")}
               error={formState.errors.source?.message}
             />
 
@@ -239,28 +236,28 @@ export function CreateFindingDialog({
               organizationId={organizationId}
               control={control}
               name="ownerId"
-              label={__("Owner")}
+              label={t("createFindingDialog.fields.owner")}
               error={formState.errors.ownerId?.message}
               optional
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label={__("Status")}>
+            <Field label={t("createFindingDialog.fields.status")}>
               <Controller
                 control={control}
                 name="status"
                 render={({ field }) => (
                   <Select
                     variant="editor"
-                    placeholder={__("Select status")}
+                    placeholder={t("createFindingDialog.placeholders.selectStatus")}
                     onValueChange={field.onChange}
                     value={field.value}
                     className="w-full"
                   >
-                    {statusOptions.map(option => (
-                      <Option key={option.value} value={option.value}>
-                        {option.label}
+                    {statusOptions.map(status => (
+                      <Option key={status} value={status}>
+                        {t(`createFindingDialog.status.${status.toLowerCase()}`)}
                       </Option>
                     ))}
                   </Select>
@@ -277,7 +274,7 @@ export function CreateFindingDialog({
               render={({ field }) => (
                 <div>
                   <Label>
-                    {__("Priority")}
+                    {t("createFindingDialog.fields.priority")}
                     {" "}
                     *
                   </Label>
@@ -303,7 +300,7 @@ export function CreateFindingDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="identifiedOn">{__("Date Identified")}</Label>
+              <Label htmlFor="identifiedOn">{t("createFindingDialog.fields.dateIdentified")}</Label>
               <Input
                 id="identifiedOn"
                 type="date"
@@ -315,7 +312,7 @@ export function CreateFindingDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">{__("Due Date")}</Label>
+              <Label htmlFor="dueDate">{t("createFindingDialog.fields.dueDate")}</Label>
               <Input
                 id="dueDate"
                 type="date"
@@ -328,11 +325,11 @@ export function CreateFindingDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="rootCause">{__("Root Cause")}</Label>
+            <Label htmlFor="rootCause">{t("createFindingDialog.fields.rootCause")}</Label>
             <Textarea
               id="rootCause"
               {...register("rootCause")}
-              placeholder={__("Detailed analysis of the root cause...")}
+              placeholder={t("createFindingDialog.placeholders.rootCause")}
               rows={3}
             />
             {formState.errors.rootCause && (
@@ -341,21 +338,21 @@ export function CreateFindingDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="correctiveAction">{__("Corrective Action")}</Label>
+            <Label htmlFor="correctiveAction">{t("createFindingDialog.fields.correctiveAction")}</Label>
             <Textarea
               id="correctiveAction"
               {...register("correctiveAction")}
-              placeholder={__("Proposed corrective actions...")}
+              placeholder={t("createFindingDialog.placeholders.correctiveAction")}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="effectivenessCheck">{__("Effectiveness Check")}</Label>
+            <Label htmlFor="effectivenessCheck">{t("createFindingDialog.fields.effectivenessCheck")}</Label>
             <Textarea
               id="effectivenessCheck"
               {...register("effectivenessCheck")}
-              placeholder={__("Assessment of corrective action effectiveness...")}
+              placeholder={t("createFindingDialog.placeholders.effectivenessCheck")}
               rows={2}
             />
           </div>
@@ -363,7 +360,9 @@ export function CreateFindingDialog({
 
         <DialogFooter>
           <Button type="submit" disabled={formState.isSubmitting}>
-            {formState.isSubmitting ? __("Creating...") : __("Create Finding")}
+            {formState.isSubmitting
+              ? t("createFindingDialog.actions.creating")
+              : t("createFindingDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

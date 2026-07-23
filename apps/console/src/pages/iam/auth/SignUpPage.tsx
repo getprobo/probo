@@ -20,9 +20,9 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -57,11 +57,11 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQueryLoader<SignUpPageQuery>>[0]> }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  usePageTitle(__("Sign up"));
+  usePageTitle(t("signUpPage.pageTitle"));
 
   const data = usePreloadedQuery<SignUpPageQuery>(signUpPageQuery, props.queryRef);
 
@@ -87,23 +87,22 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
       onCompleted: (_, e) => {
         if (e) {
           toast({
-            title: __("Sign up failed"),
-            description: formatError(__("Sign up failed"), e),
+            title: t("signUpPage.errors.failed"),
+            description: formatError(t("signUpPage.errors.failed"), e),
             variant: "error",
           });
           return;
         }
 
         toast({
-          title: __("Success"),
-          description: __("Account created successfully"),
+          title: t("common.success"), description: t("signUpPage.messages.created"),
           variant: "success",
         });
         void navigate("/", { replace: true });
       },
       onError: (e) => {
         toast({
-          title: __("Sign up failed"),
+          title: t("signUpPage.errors.failed"),
           description: e.message,
           variant: "error",
         });
@@ -115,9 +114,9 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
     return (
       <div className="space-y-6 w-full max-w-md mx-auto pt-8 text-center">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">{__("Registration unavailable")}</h1>
+          <h1 className="text-3xl font-bold">{t("signUpPage.unavailable.title")}</h1>
           <p className="text-txt-tertiary">
-            {__("New account registration is currently disabled. Please contact your administrator or reach out to Probo for assistance.")}
+            {t("signUpPage.unavailable.description")}
           </p>
         </div>
 
@@ -127,7 +126,7 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
             className="w-xs h-10 mx-auto"
             to="/auth/login"
           >
-            {__("Back to login")}
+            {t("signUpPage.actions.backToLogin")}
           </Button>
         </div>
       </div>
@@ -137,33 +136,33 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{__("Sign up")}</h1>
+        <h1 className="text-3xl font-bold">{t("signUpPage.title")}</h1>
         <p className="text-txt-tertiary">
-          {__("Enter your information to create an account")}
+          {t("signUpPage.description")}
         </p>
       </div>
 
       <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <Field
-          label={__("Full Name")}
+          label={t("signUpPage.fields.fullName")}
           type="text"
-          placeholder={__("John Doe")}
+          placeholder={t("signUpPage.fields.fullNamePlaceholder")}
           {...register("fullName")}
           required
           error={formState.errors.fullName?.message}
         />
 
         <Field
-          label={__("Email")}
+          label={t("signUpPage.fields.email")}
           type="email"
-          placeholder={__("name@example.com")}
+          placeholder={t("signUpPage.fields.emailPlaceholder")}
           {...register("email")}
           required
           error={formState.errors.email?.message}
         />
 
         <Field
-          label={__("Password")}
+          label={t("signUpPage.fields.password")}
           type="password"
           placeholder="••••••••"
           {...register("password")}
@@ -173,20 +172,20 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
 
         <Button type="submit" className="w-xs h-10 mx-auto mt-6" disabled={formState.isLoading}>
           {formState.isLoading
-            ? __("Creating account...")
-            : __("Sign up with email")}
+            ? t("signUpPage.actions.creating")
+            : t("signUpPage.actions.signUpWithEmail")}
         </Button>
       </form>
 
       <div className="text-center">
         <p className="text-sm text-txt-tertiary">
-          {__("Already have an account?")}
+          {t("signUpPage.alreadyHaveAccount")}
           {" "}
           <Link
             to="/auth/login"
             className="underline text-txt-primary hover:text-txt-secondary"
           >
-            {__("Log in here")}
+            {t("signUpPage.actions.logIn")}
           </Link>
         </p>
       </div>

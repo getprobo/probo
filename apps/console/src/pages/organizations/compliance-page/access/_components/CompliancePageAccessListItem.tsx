@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import { ActionDropdown, DropdownItem, IconPencil, Td, Tr } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -53,7 +53,7 @@ export function CompliancePageAccessListItem(props: {
 }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation("organizations/compliance-page");
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 
   const access = useFragment<CompliancePageAccessListItemFragment$key>(fragment, fragmentRef);
@@ -69,7 +69,7 @@ export function CompliancePageAccessListItem(props: {
       >
         <Td className="font-medium">{access.profile.fullName}</Td>
         <Td>{access.profile.emailAddress}</Td>
-        <Td>{formatDate(access.createdAt)}</Td>
+        <Td>{dateFormat(i18n.language, access.createdAt)}</Td>
         <Td className="text-center">{access.activeCount}</Td>
         <Td className="text-center">
           {access.pendingRequestCount > 0 ? access.pendingRequestCount : ""}
@@ -97,7 +97,7 @@ export function CompliancePageAccessListItem(props: {
                     icon={IconPencil}
                     onClick={() => setDialogOpen(true)}
                   >
-                    {__("Edit")}
+                    {t("accessListItem.actions.edit")}
                   </DropdownItem>
                 )}
               </ActionDropdown>

@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import { Badge, Button, Card, Slack } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -45,7 +45,7 @@ interface Props {
 
 export function CompliancePageSlackConnectionCard(props: Props) {
   const { slackConnectionKey, canConnect, buildConnectionUrl, onDisconnect } = props;
-  const { __, dateTimeFormat } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/compliance-page");
 
   const slackConnection = useFragment(fragment, slackConnectionKey);
 
@@ -59,25 +59,22 @@ export function CompliancePageSlackConnectionCard(props: Props) {
         <Slack className="h-6 w-6" />
       </div>
       <div className="mr-auto">
-        <h3 className="text-base font-semibold">Slack</h3>
+        <h3 className="text-base font-semibold">{t("slackConnectionCard.title")}</h3>
         <p className="text-sm text-txt-tertiary">
           {isConfigured
             ? (
-                <>
-                  {sprintf(
-                    __("Connected on %s"),
-                    dateTimeFormat(slackConnection.createdAt),
-                  )}
-                  {slackConnection.channel && (
-                    <>
-                      {" • "}
-                      {sprintf(__("Channel: %s"), slackConnection.channel)}
-                    </>
-                  )}
-                </>
+                t(
+                  slackConnection.channel
+                    ? "slackConnectionCard.connectedWithChannel"
+                    : "slackConnectionCard.connected",
+                  {
+                    date: dateTimeFormat(i18n.language, slackConnection.createdAt),
+                    channel: slackConnection.channel,
+                  },
+                )
               )
             : (
-                __("Slack is connected, but no channel is set up for the compliance page yet.")
+                t("slackConnectionCard.notConfiguredDescription")
               )}
         </p>
       </div>
@@ -85,18 +82,18 @@ export function CompliancePageSlackConnectionCard(props: Props) {
         {isConfigured
           ? (
               <Badge variant="success" size="md">
-                {__("Connected")}
+                {t("slackConnectionCard.status.connected")}
               </Badge>
             )
           : (
               <Badge variant="warning" size="md">
-                {__("Channel not configured")}
+                {t("slackConnectionCard.status.notConfigured")}
               </Badge>
             )}
         {canConnect && (
           <Button variant="secondary" asChild>
             <a href={buildConnectionUrl(slackConnection.id)}>
-              {isConfigured ? __("Change channel") : __("Connect")}
+              {isConfigured ? t("slackConnectionCard.actions.changeChannel") : t("slackConnectionCard.actions.connect")}
             </a>
           </Button>
         )}
@@ -105,7 +102,7 @@ export function CompliancePageSlackConnectionCard(props: Props) {
             variant="secondary"
             onClick={() => onDisconnect(slackConnection.id)}
           >
-            {__("Disconnect")}
+            {t("slackConnectionCard.actions.disconnect")}
           </Button>
         )}
       </div>

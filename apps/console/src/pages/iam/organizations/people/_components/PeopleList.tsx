@@ -19,10 +19,10 @@
 // SOFTWARE.
 
 import { getAssignableRoles } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import type { ComponentProps } from "react";
 import { use } from "react";
+import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
 
 import type { PeopleListFragment$key } from "#/__generated__/iam/PeopleListFragment.graphql";
@@ -72,7 +72,7 @@ export function PeopleList(props: {
   const { fKey, onConnectionIdChange } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { role } = use(CurrentUser);
   const canManageRoles = getAssignableRoles(role).length > 0;
 
@@ -107,11 +107,11 @@ export function PeopleList(props: {
     >
       <Thead>
         <Tr>
-          <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{__("Name")}</SortableTh>
-          <SortableTh field="STATE">{__("Status")}</SortableTh>
-          <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{__("Email")}</SortableTh>
-          {canManageRoles && <Th>{__("Role")}</Th>}
-          <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{__("Created on")}</SortableTh>
+          <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{t("peopleList.columns.name")}</SortableTh>
+          <SortableTh field="STATE">{t("peopleList.columns.status")}</SortableTh>
+          <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{t("peopleList.columns.email")}</SortableTh>
+          {canManageRoles && <Th>{t("peopleList.columns.role")}</Th>}
+          <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{t("peopleList.columns.createdOn")}</SortableTh>
           <Th></Th>
         </Tr>
       </Thead>
@@ -120,7 +120,7 @@ export function PeopleList(props: {
           ? (
               <Tr>
                 <Td colSpan={7} className="text-center text-txt-secondary">
-                  {__("No people")}
+                  {t("peopleList.empty")}
                 </Td>
               </Tr>
             )

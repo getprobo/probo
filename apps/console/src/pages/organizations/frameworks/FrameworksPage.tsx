@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Card,
@@ -34,6 +33,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { type ChangeEventHandler, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -73,8 +73,8 @@ const importFrameworkMutation = graphql`
 `;
 
 export default function FrameworksPage(props: Props) {
-  const { __ } = useTranslate();
-  usePageTitle(__("Frameworks"));
+  const { t } = useTranslation();
+  usePageTitle(t("frameworksPage.title"));
   const data = usePreloadedQuery<FrameworkGraphListQuery>(frameworksQuery, props.queryRef);
   const connectionId = data.organization.frameworks!.__id;
   const frameworks
@@ -82,8 +82,8 @@ export default function FrameworksPage(props: Props) {
   const [commitImport, isImporting] = useMutationWithToasts(
     importFrameworkMutation,
     {
-      successMessage: __("Framework imported successfully"),
-      errorMessage: __("Failed to import framework"),
+      successMessage: t("frameworksPage.messages.imported"),
+      errorMessage: t("frameworksPage.errors.import"),
     },
   );
   const [isUploading, setUploading] = useState(false);
@@ -152,8 +152,8 @@ export default function FrameworksPage(props: Props) {
         organizationId={data.organization.id!}
       />
       <PageHeader
-        title={__("Frameworks")}
-        description={__("Manage your compliance frameworks")}
+        title={t("frameworksPage.title")}
+        description={t("frameworksPage.description")}
       >
         {data.organization.canCreateFramework && (
           <>
@@ -163,7 +163,7 @@ export default function FrameworksPage(props: Props) {
               onChange={handleUpload}
               disabled={isLoading}
             >
-              {__("Import")}
+              {t("frameworksPage.actions.import")}
             </FileButton>
             <FrameworkSelector
               onSelect={name => void importNamedFramework(name)}
@@ -217,7 +217,7 @@ function FrameworkCard(props: FrameworkCardProps) {
     framework,
     props.connectionId,
   );
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const dialogRef = useDialogRef();
   return (
     <Card padded className="p-6 bg-white rounded shadow relative">
@@ -242,7 +242,7 @@ function FrameworkCard(props: FrameworkCardProps) {
                   dialogRef.current?.open();
                 }}
               >
-                {__("Edit")}
+                {t("frameworksPage.actions.edit")}
               </DropdownItem>
             )}
             {framework.canDelete && (
@@ -251,7 +251,7 @@ function FrameworkCard(props: FrameworkCardProps) {
                 onClick={() => deleteFramework()}
                 variant="danger"
               >
-                {__("Delete")}
+                {t("frameworksPage.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>

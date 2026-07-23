@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -30,6 +28,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { type PropsWithChildren, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import type { DeleteCompliancePageDomainDialogMutation } from "#/__generated__/core/DeleteCompliancePageDomainDialogMutation.graphql";
@@ -51,7 +50,7 @@ type DeleteCompliancePageDomainDialogProps = PropsWithChildren<{
 export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDomainDialogProps) {
   const { children, domain, customDomainId } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const dialogRef = useDialogRef();
   const [inputValue, setInputValue] = useState("");
 
@@ -59,8 +58,8 @@ export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDoma
     = useMutation<DeleteCompliancePageDomainDialogMutation>(
       deleteCustomDomainMutation,
       {
-        successMessage: __("Domain deleted successfully"),
-        errorToast: __("Failed to delete domain"),
+        successMessage: t("deleteDomainDialog.messages.deleted"),
+        errorToast: t("deleteDomainDialog.errors.delete"),
       },
     );
 
@@ -83,24 +82,19 @@ export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDoma
       className="max-w-lg"
       ref={dialogRef}
       trigger={children}
-      title={__("Delete Custom Domain")}
+      title={t("deleteDomainDialog.title")}
     >
       <DialogContent padded className="space-y-4">
         <p className="text-txt-secondary text-sm">
-          {sprintf(
-            __(
-              "This will permanently delete the custom domain %s and all its configuration.",
-            ),
-            domain,
-          )}
+          {t("deleteDomainDialog.description", { domain })}
         </p>
 
         <p className="text-red-600 text-sm font-medium">
-          {__("This action cannot be undone.")}
+          {t("deleteDomainDialog.warning")}
         </p>
 
         <Field
-          label={sprintf(__("To confirm deletion, type \"%s\" below:"), domain)}
+          label={t("deleteDomainDialog.confirmationLabel", { domain })}
           type="text"
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
@@ -117,7 +111,7 @@ export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDoma
           onClick={() => void handleDeleteDomain()}
           disabled={isDeleting || inputValue !== domain}
         >
-          {isDeleting ? __("Deleting...") : __("Delete Domain")}
+          {isDeleting ? t("deleteDomainDialog.actions.deleting") : t("deleteDomainDialog.actions.delete")}
         </Button>
       </DialogFooter>
     </Dialog>

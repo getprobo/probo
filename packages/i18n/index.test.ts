@@ -18,15 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { describe, it, expect } from "vitest";
-import { fileSize } from "./file";
+import { describe, expect, it } from "vitest";
 
-describe("file", () => {
-    it("should display a file size in a human readable format", () => {
-        const fakeTranslator = (s: string) => s;
-        expect(fileSize(fakeTranslator, 4911)).toMatchInlineSnapshot(
-            `"4.8 KB"`,
-        );
-        expect(fileSize(fakeTranslator, 20)).toMatchInlineSnapshot(`"20 B"`);
-    });
+import { fileSize, humanizeSeconds } from "./index";
+
+describe("fileSize", () => {
+  it("formats byte counts with translated units", () => {
+    const t = (key: string) => key.replace("size.", "");
+
+    expect(fileSize(4911, t)).toBe("4.8 KB");
+    expect(fileSize(20, t)).toBe("20 B");
+  });
+});
+
+describe("humanizeSeconds", () => {
+  const t = (key: string, options?: { count?: number }) => {
+    const unit = key.replace("duration.", "");
+    if (unit === "session" || unit === "persistent") return unit;
+    return options?.count === 1 ? unit.slice(0, -1) : unit;
+  };
+
+  it("formats durations with translated plural units", () => {
+    expect(humanizeSeconds(4570, t)).toBe("1 hour, 16 minutes, 10 seconds");
+    expect(humanizeSeconds(120, t)).toBe("2 minutes");
+  });
+
+  it("formats trackers without a max age as session or persistent", () => {
+    expect(humanizeSeconds(null, t)).toBe("session");
+    expect(humanizeSeconds(0, t, "LOCAL_STORAGE")).toBe("persistent");
+  });
 });

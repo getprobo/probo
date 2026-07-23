@@ -13,9 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { safeOpenUrl } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, Card } from "@probo/ui";
 import { type ChangeEventHandler, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -43,7 +43,7 @@ export interface CompliancePageNDACardProps {
 export function CompliancePageNDACard(props: CompliancePageNDACardProps) {
   const { compliancePageKey, isBusy, isUploading, onFileChange, onDelete } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const compliancePage = useFragment(fragment, compliancePageKey);
@@ -59,9 +59,7 @@ export function CompliancePageNDACard(props: CompliancePageNDACardProps) {
         <div className="space-y-1">
           <span className="font-medium">{fileName}</span>
           <p className="text-sm text-txt-secondary">
-            {__(
-              "Visitors must accept this agreement before accessing your compliance page.",
-            )}
+            {t("ndaSection.acceptanceDescription")}
           </p>
         </div>
 
@@ -75,7 +73,7 @@ export function CompliancePageNDACard(props: CompliancePageNDACardProps) {
               }
             }}
           >
-            {__("Download")}
+            {t("ndaSection.actions.download")}
           </Button>
 
           {compliancePage.canUploadNDA && (
@@ -86,7 +84,7 @@ export function CompliancePageNDACard(props: CompliancePageNDACardProps) {
                 disabled={isBusy}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {isUploading ? __("Uploading...") : __("Replace")}
+                {isUploading ? t("brandPage.actions.uploading") : t("ndaSection.actions.replace")}
               </Button>
               <input
                 ref={fileInputRef}
@@ -105,7 +103,7 @@ export function CompliancePageNDACard(props: CompliancePageNDACardProps) {
               disabled={isBusy}
               onClick={onDelete}
             >
-              {__("Delete")}
+              {t("ndaSection.delete.actions.delete")}
             </Button>
           )}
         </div>

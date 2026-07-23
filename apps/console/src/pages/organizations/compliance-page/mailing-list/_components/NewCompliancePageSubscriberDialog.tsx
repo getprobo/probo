@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Checkbox, Dialog, DialogContent, DialogFooter, type DialogRef, Field, Spinner } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { type DataID, graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -53,15 +53,15 @@ export function NewCompliancePageSubscriberDialog(props: {
   ref: DialogRef;
 }) {
   const { mailingListId, connectionId, ref } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const schema = z.object({
-    fullName: z.string().trim().min(1, __("Full name is required")),
+    fullName: z.string().trim().min(1, t("newSubscriberDialog.validation.fullNameRequired")),
     email: z
       .string()
-      .min(1, __("Email is required"))
+      .min(1, t("newSubscriberDialog.validation.emailRequired"))
       .trim()
-      .email(__("Please enter a valid email address")),
+      .email(t("newSubscriberDialog.validation.emailInvalid")),
     confirmed: z.boolean(),
   });
 
@@ -72,8 +72,8 @@ export function NewCompliancePageSubscriberDialog(props: {
   const [createSubscriber, isCreating] = useMutation<NewCompliancePageSubscriberDialogMutation>(
     createSubscriberMutation,
     {
-      successMessage: __("Subscriber added successfully"),
-      errorToast: __("Failed to add subscriber"),
+      successMessage: t("newSubscriberDialog.messages.created"),
+      errorToast: t("newSubscriberDialog.errors.create"),
     },
   );
 
@@ -102,27 +102,27 @@ export function NewCompliancePageSubscriberDialog(props: {
   };
 
   return (
-    <Dialog ref={ref} title={__("Add Subscriber")}>
+    <Dialog ref={ref} title={t("newSubscriberDialog.title")}>
       <form onSubmit={e => void form.handleSubmit(handleSubmit)(e)}>
         <DialogContent padded className="space-y-6">
           <p className="text-txt-secondary text-sm">
-            {__("Add a person to receive security and compliance updates")}
+            {t("newSubscriberDialog.description")}
           </p>
           <Field
-            label={__("Full Name")}
+            label={t("newSubscriberDialog.fields.fullName")}
             required
             error={form.formState.errors.fullName?.message}
             type="text"
             {...form.register("fullName")}
-            placeholder={__("John Doe")}
+            placeholder={t("newSubscriberDialog.fields.fullNamePlaceholder")}
           />
           <Field
-            label={__("Email Address")}
+            label={t("newSubscriberDialog.fields.email")}
             required
             error={form.formState.errors.email?.message}
             type="email"
             {...form.register("email")}
-            placeholder={__("john@example.com")}
+            placeholder={t("newSubscriberDialog.fields.emailPlaceholder")}
           />
           <div className="space-y-2">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -131,12 +131,12 @@ export function NewCompliancePageSubscriberDialog(props: {
                 onChange={checked => form.setValue("confirmed", checked)}
               />
               <span className="text-sm font-medium">
-                {__("Skip confirmation email")}
+                {t("newSubscriberDialog.fields.skipConfirmation")}
               </span>
             </label>
             {form.watch("confirmed") && (
               <p className="text-txt-secondary text-xs pl-6">
-                {__("By checking this box, you certify that you have obtained verifiable prior consent from this individual to receive these communications, in compliance with applicable data protection regulations (e.g. GDPR, CAN-SPAM). You accept full responsibility for demonstrating proof of consent if required.")}
+                {t("newSubscriberDialog.consentNotice")}
               </p>
             )}
           </div>
@@ -144,7 +144,7 @@ export function NewCompliancePageSubscriberDialog(props: {
         <DialogFooter>
           <Button type="submit" disabled={isCreating}>
             {isCreating && <Spinner />}
-            {__("Add Subscriber")}
+            {t("newSubscriberDialog.actions.create")}
           </Button>
         </DialogFooter>
       </form>

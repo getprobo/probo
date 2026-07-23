@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, Dialog, DialogContent, DialogFooter, IconChevronDown, IconChevronUp, IconPencil, IconPlusLarge, IconTrashCan, Spinner, Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -88,20 +87,20 @@ export function CompliancePageCommitmentGroupListItem(props: {
 }) {
   const { fragmentRef, onEdit, onChanged, isFirst, isLast, isReordering, onMoveUp, onMoveDown } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const group = useFragment<CompliancePageCommitmentGroupListItemFragment$key>(fragment, fragmentRef);
   const commitmentDialogRef = useRef<CompliancePageCommitmentDialogRef>(null);
   const deleteDialogRef = useDialogRef();
 
   const [deleteGroup, isDeleting] = useMutationWithToasts<CompliancePageCommitmentGroupListItemDeleteMutation>(
     deleteGroupMutation,
-    { successMessage: __("Group deleted successfully"), errorMessage: __("Failed to delete group") },
+    { successMessage: t("commitmentGroupListItem.messages.deleted"), errorMessage: t("commitmentGroupListItem.errors.delete") },
   );
   const [updateCommitmentRank, isReorderingCommitment] = useMutationWithToasts<
     CompliancePageCommitmentGroupListItemUpdateRankMutation
   >(
     updateCommitmentRankMutation,
-    { successMessage: __("Order updated successfully"), errorMessage: __("Failed to update order") },
+    { successMessage: t("commitmentGroupListItem.messages.orderUpdated"), errorMessage: t("commitmentGroupListItem.errors.updateOrder") },
   );
 
   const commitments = group.commitments.edges.map(edge => edge.node);
@@ -156,13 +155,19 @@ export function CompliancePageCommitmentGroupListItem(props: {
           {group.canDelete && (
             <>
               <Button variant="danger" icon={IconTrashCan} onClick={() => deleteDialogRef.current?.open()} />
-              <Dialog ref={deleteDialogRef} title={__("Delete Group")} className="max-w-md">
+              <Dialog
+                ref={deleteDialogRef}
+                title={t("commitmentGroupListItem.delete.title")}
+                className="max-w-md"
+              >
                 <DialogContent padded>
                   <p className="text-txt-secondary">
-                    {sprintf(__("Are you sure you want to delete the group \"%s\"?"), group.title)}
+                    {t("commitmentGroupListItem.delete.description", {
+                      title: group.title,
+                    })}
                   </p>
                   <p className="text-txt-secondary mt-2">
-                    {__("All commitment cards in this group will also be deleted. This action cannot be undone.")}
+                    {t("commitmentGroupListItem.delete.warning")}
                   </p>
                 </DialogContent>
                 <DialogFooter>
@@ -172,7 +177,9 @@ export function CompliancePageCommitmentGroupListItem(props: {
                     disabled={isDeleting}
                     icon={isDeleting ? Spinner : IconTrashCan}
                   >
-                    {isDeleting ? __("Deleting...") : __("Delete")}
+                    {isDeleting
+                      ? t("commitmentGroupListItem.actions.deleting")
+                      : t("commitmentGroupListItem.actions.delete")}
                   </Button>
                 </DialogFooter>
               </Dialog>
@@ -184,9 +191,9 @@ export function CompliancePageCommitmentGroupListItem(props: {
       <Table>
         <Thead>
           <Tr>
-            <Th>{__("Icon")}</Th>
-            <Th>{__("Title")}</Th>
-            <Th>{__("Description")}</Th>
+            <Th>{t("commitmentGroupListItem.columns.icon")}</Th>
+            <Th>{t("commitmentGroupListItem.columns.title")}</Th>
+            <Th>{t("commitmentGroupListItem.columns.description")}</Th>
             <Th></Th>
           </Tr>
         </Thead>
@@ -194,7 +201,7 @@ export function CompliancePageCommitmentGroupListItem(props: {
           {commitments.length === 0 && (
             <Tr>
               <Td colSpan={4} className="text-center text-txt-secondary">
-                {__("No commitment cards yet")}
+                {t("commitmentGroupListItem.empty")}
               </Td>
             </Tr>
           )}
@@ -220,7 +227,7 @@ export function CompliancePageCommitmentGroupListItem(props: {
           icon={IconPlusLarge}
           onClick={() => commitmentDialogRef.current?.openCreate(group.id)}
         >
-          {__("Add Commitment")}
+          {t("commitmentGroupListItem.actions.addCommitment")}
         </Button>
       )}
 

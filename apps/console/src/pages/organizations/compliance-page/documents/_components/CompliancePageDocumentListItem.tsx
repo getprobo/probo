@@ -19,15 +19,21 @@
 // SOFTWARE.
 
 import { getCompliancePageVisibilityOptions } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { Badge, DocumentTypeBadge, Field, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePageDocumentListItem_compliancePageFragment$key } from "#/__generated__/core/CompliancePageDocumentListItem_compliancePageFragment.graphql";
-import type { CompliancePageDocumentListItem_documentFragment$key } from "#/__generated__/core/CompliancePageDocumentListItem_documentFragment.graphql";
-import type { CompliancePageDocumentListItem_updateVisibilityMutation } from "#/__generated__/core/CompliancePageDocumentListItem_updateVisibilityMutation.graphql";
+import type {
+  CompliancePageDocumentListItem_compliancePageFragment$key,
+} from "#/__generated__/core/CompliancePageDocumentListItem_compliancePageFragment.graphql";
+import type {
+  CompliancePageDocumentListItem_documentFragment$key,
+} from "#/__generated__/core/CompliancePageDocumentListItem_documentFragment.graphql";
+import type {
+  CompliancePageDocumentListItem_updateVisibilityMutation,
+} from "#/__generated__/core/CompliancePageDocumentListItem_updateVisibilityMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -80,8 +86,8 @@ export function CompliancePageDocumentListItem(props: {
   const { compliancePageFragmentRef, documentFragmentRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
-  const visibilityOptions = getCompliancePageVisibilityOptions(__);
+  const { t } = useTranslation("organizations/compliance-page");
+  const visibilityOptions = getCompliancePageVisibilityOptions(t);
 
   const compliancePage = useFragment<CompliancePageDocumentListItem_compliancePageFragment$key>(
     compliancePageFragment,
@@ -95,8 +101,8 @@ export function CompliancePageDocumentListItem(props: {
     = useMutation<CompliancePageDocumentListItem_updateVisibilityMutation>(
       updateDocumentVisibilityMutation,
       {
-        successMessage: __("Document visibility updated successfully."),
-        errorToast: __("Failed to update document visibility"),
+        successMessage: t("documentListItem.messages.visibilityUpdated"),
+        errorToast: t("documentListItem.errors.updateVisibility"),
       },
     );
   const handleVsibilityChange = useCallback(

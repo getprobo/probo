@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -35,7 +35,7 @@ type FormData = z.infer<typeof schema>;
 const timerDurationSeconds = 60;
 
 export function MagicLinkForm() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
@@ -83,8 +83,8 @@ export function MagicLinkForm() {
       });
     } catch {
       toast({
-        title: __("Error"),
-        description: __("Cannot send magic link"),
+        title: t("common.error"),
+        description: t("magicLinkForm.errors.send"),
         variant: "error",
       });
       return;
@@ -92,16 +92,16 @@ export function MagicLinkForm() {
 
     if (!response.ok) {
       toast({
-        title: __("Error"),
-        description: __("Cannot send magic link"),
+        title: t("common.error"),
+        description: t("magicLinkForm.errors.send"),
         variant: "error",
       });
       return;
     }
 
     toast({
-      title: __("Success"),
-      description: __("Magic link sent!"),
+      title: t("common.success"),
+      description: t("magicLinkForm.messages.sent"),
       variant: "success",
     });
     setTimer(timerDurationSeconds);
@@ -111,7 +111,7 @@ export function MagicLinkForm() {
   return (
     <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
       <Field
-        label={__("Email")}
+        label={t("magicLinkForm.fields.email")}
         placeholder="john.doe@acme.com"
         {...register("email")}
         type="email"
@@ -121,9 +121,7 @@ export function MagicLinkForm() {
 
       {magicLinkSent && (
         <p className="text-txt-primary text-sm">
-          {__(
-            "Magic link sent! Check your email and use the link to continue.",
-          )}
+          {t("magicLinkForm.sentDescription")}
         </p>
       )}
 
@@ -134,9 +132,9 @@ export function MagicLinkForm() {
       >
         {magicLinkSent
           ? timer === 0
-            ? __("Resend Link")
-            : `${__("Resend Link in")} ${timer}s`
-          : __("Send Magic Link")}
+            ? t("magicLinkForm.actions.resend")
+            : t("magicLinkForm.actions.resendIn", { count: timer })
+          : t("magicLinkForm.actions.send")}
       </Button>
     </form>
   );

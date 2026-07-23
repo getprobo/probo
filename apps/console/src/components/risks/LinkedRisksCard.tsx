@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconTrashCan,
@@ -31,6 +30,7 @@ import {
   Tr,
   TrButton,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -77,7 +77,7 @@ type Props<Params> = {
  * Reusable component that displays a list of linked risks
  */
 export function LinkedRisksCard<Params>(props: Props<Params>) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const onAttach = (riskId: string) => {
     props.onAttach({
@@ -108,9 +108,9 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
       <Table>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Initial Risk")}</Th>
-            <Th>{__("Residual Risk")}</Th>
+            <Th>{t("linkedRisksCard.columns.name")}</Th>
+            <Th>{t("linkedRisksCard.columns.initialRisk")}</Th>
+            <Th>{t("linkedRisksCard.columns.residualRisk")}</Th>
             {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
@@ -121,7 +121,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
                 colSpan={props.readOnly ? 3 : 4}
                 className="text-center text-txt-secondary"
               >
-                {__("No risks linked")}
+                {t("linkedRisksCard.empty")}
               </Td>
             </Tr>
           )}
@@ -141,7 +141,9 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
               onLink={onAttach}
               onUnlink={onDetach}
             >
-              <TrButton colspan={4}>{__("Link risk")}</TrButton>
+              <TrButton colspan={4}>
+                {t("linkedRisksCard.actions.link")}
+              </TrButton>
             </LinkedRisksDialog>
           )}
         </Tbody>
@@ -157,7 +159,7 @@ function RiskRow(props: {
 }) {
   const risk = useFragment(linkedRiskFragment, props.risk);
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Tr to={`/organizations/${organizationId}/risks/${risk.id}`}>
@@ -175,7 +177,7 @@ function RiskRow(props: {
             onClick={() => props.onClick(risk.id)}
             icon={IconTrashCan}
           >
-            {__("Unlink")}
+            {t("linkedRisksCard.actions.unlink")}
           </Button>
         </Td>
       )}

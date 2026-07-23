@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat, relativeDateFormat } from "@probo/i18n";
 import {
   Badge,
   Markdown,
@@ -28,6 +27,7 @@ import {
   Tr,
 } from "@probo/ui";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ThirdPartyRiskAssessmentRow_assessment$key } from "#/__generated__/core/ThirdPartyRiskAssessmentRow_assessment.graphql";
@@ -50,9 +50,8 @@ interface ThirdPartyRiskAssessmentRowProps {
 }
 
 export function ThirdPartyRiskAssessmentRow(props: ThirdPartyRiskAssessmentRowProps) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const assessment = useFragment(riskAssessmentRowFragment, props.assessmentKey);
-  const { relativeDateFormat } = useTranslate();
   const isExpired = new Date(assessment.expiresAt) < new Date();
 
   return (
@@ -67,13 +66,15 @@ export function ThirdPartyRiskAssessmentRow(props: ThirdPartyRiskAssessmentRowPr
       >
         <Td>
           <span className="text-xs text-txt-secondary ml-1">
-            {formatDate(assessment.createdAt)}
+            {dateFormat(i18n.language, assessment.createdAt)}
           </span>
         </Td>
         <Td>
           <div className="flex items-center gap-2">
-            {relativeDateFormat(assessment.expiresAt)}
-            {isExpired && <Badge variant="neutral">{__("Expired")}</Badge>}
+            {relativeDateFormat(i18n.language, assessment.expiresAt)}
+            {isExpired && (
+              <Badge variant="neutral">{t("thirdPartyRiskAssessmentRow.expired")}</Badge>
+            )}
           </div>
         </Td>
         <Td>
@@ -88,7 +89,7 @@ export function ThirdPartyRiskAssessmentRow(props: ThirdPartyRiskAssessmentRowPr
           <Td colSpan={4} className="whitespace-normal align-top">
             <div className="space-y-2 max-w-4xl">
               <div>
-                {__("Notes")}
+                {t("thirdPartyRiskAssessmentRow.notes")}
                 :
               </div>
               {assessment.notes

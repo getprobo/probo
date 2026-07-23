@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   ErrorDetailMessage,
@@ -26,6 +25,7 @@ import {
   ErrorLayout,
 } from "@probo/ui";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useRouteError } from "react-router";
 
 type Props = {
@@ -36,7 +36,7 @@ type Props = {
 export function PageError({ resetErrorBoundary, error: propsError }: Props) {
   const routeError = useRouteError();
   const error = routeError ?? propsError;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const location = useLocation();
   const baseLocation = useRef(location);
 
@@ -56,7 +56,7 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
 
   const actions = (
     <Button asChild>
-      <Link to="/">{__("Go home")}</Link>
+      <Link to="/">{t("pageError.actions.goHome")}</Link>
     </Button>
   );
 
@@ -70,8 +70,8 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     return (
       <ErrorLayout
         {...layoutProps}
-        title={__("Page not found")}
-        description={__("The page you are looking for does not exist.")}
+        title={t("pageError.notFound.title")}
+        description={t("pageError.notFound.description")}
       />
     );
   }
@@ -80,8 +80,8 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     return (
       <ErrorLayout
         {...layoutProps}
-        title={__("Page not found")}
-        description={__("The page you are looking for does not exist.")}
+        title={t("pageError.notFound.title")}
+        description={t("pageError.notFound.description")}
       />
     );
   }
@@ -89,11 +89,11 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
   return (
     <ErrorLayout
       {...layoutProps}
-      title={__("Something went wrong")}
-      description={__("We hit an unexpected error. Head back home to continue.")}
+      title={t("pageError.unexpected.title")}
+      description={t("pageError.unexpected.description")}
     >
       {error instanceof Error && (
-        <ErrorDetails summary={__("Technical details")}>
+        <ErrorDetails summary={t("pageError.technicalDetails")}>
           <ErrorDetailMessage>{error.message}</ErrorDetailMessage>
         </ErrorDetails>
       )}

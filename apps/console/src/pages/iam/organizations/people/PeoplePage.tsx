@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, PageHeader } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
@@ -49,7 +49,7 @@ export function PeoplePage(props: {
   const { queryRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const [connectionId, setConnectionId] = useState<DataID>(
     ConnectionHandler.getConnectionID(
@@ -69,11 +69,11 @@ export function PeoplePage(props: {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={__("People")}>
+      <PageHeader title={t("peoplePage.title")}>
         {organization.canCreateUser
           && (
             <AddPersonDialog connectionId={connectionId}>
-              <Button variant="secondary">{__("Add Person")}</Button>
+              <Button variant="secondary">{t("peoplePage.actions.add")}</Button>
             </AddPersonDialog>
           )}
       </PageHeader>

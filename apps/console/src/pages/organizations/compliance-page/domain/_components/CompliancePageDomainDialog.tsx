@@ -23,7 +23,6 @@ import {
   getCustomDomainStatusBadgeLabel,
   getCustomDomainStatusBadgeVariant,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -33,6 +32,7 @@ import {
   useToast,
 } from "@probo/ui";
 import type { PropsWithChildren } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -61,15 +61,15 @@ type CompliancePageDomainDialogProps = PropsWithChildren<{ fKey: CompliancePageD
 export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProps) {
   const { children, fKey } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const dialogRef = useDialogRef();
   const { toast } = useToast();
 
   const copyToClipboard = (text: string) => {
     void navigator.clipboard.writeText(text);
     toast({
-      title: __("Copied"),
-      description: __("Value copied to clipboard"),
+      title: t("domainDialog.messages.copied"),
+      description: t("domainDialog.messages.valueCopied"),
       variant: "success",
     });
   };
@@ -79,7 +79,7 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
   const expiresAt = domain.certificate?.expiresAt;
   const provisioningErrorMessage = getCertificateProvisioningErrorMessage(
     domain.certificate?.provisioningError,
-    __,
+    t,
   );
 
   return (
@@ -90,7 +90,7 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
         <div className="flex items-center gap-3">
           <span>{domain.domain}</span>
           <Badge variant={getCustomDomainStatusBadgeVariant(sslStatus)}>
-            {getCustomDomainStatusBadgeLabel(sslStatus, __)}
+            {getCustomDomainStatusBadgeLabel(sslStatus, t)}
           </Badge>
         </div>
       )}
@@ -112,15 +112,13 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="font-medium mb-1">{__("Domain is active")}</p>
+                    <p className="font-medium mb-1">{t("domainDialog.active.title")}</p>
                     <p className="text-sm text-txt-secondary">
-                      {__(
-                        "Your custom domain is verified and SSL certificate is active",
-                      )}
+                      {t("domainDialog.active.description")}
                     </p>
                     {expiresAt && (
                       <p className="text-xs text-txt-tertiary mt-2">
-                        {__("SSL expires")}
+                        {t("domainDialog.sslExpires")}
                         {" "}
                         {new Date(expiresAt).toLocaleDateString()}
                       </p>
@@ -133,16 +131,14 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
               <div>
                 {provisioningErrorMessage && (
                   <div className="bg-danger-subtle text-danger rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium mb-1">{__("Provisioning error")}</p>
+                    <p className="text-sm font-medium mb-1">{t("domainDialog.provisioningError")}</p>
                     <p className="text-sm">{provisioningErrorMessage}</p>
                   </div>
                 )}
 
-                <h4 className="font-medium mb-3">{__("DNS Configuration")}</h4>
+                <h4 className="font-medium mb-3">{t("domainDialog.dns.title")}</h4>
                 <p className="text-sm text-txt-secondary mb-4">
-                  {__(
-                    "Add these DNS records to your domain to complete verification",
-                  )}
+                  {t("domainDialog.dns.description")}
                 </p>
 
                 <div className="space-y-3">
@@ -155,7 +151,7 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                       <div className="space-y-2">
                         <div>
                           <label className="text-xs text-txt-tertiary">
-                            {__("Name")}
+                            {t("domainDialog.dns.name")}
                           </label>
                           <div className="flex items-center gap-2 mt-1">
                             <code className="flex-1 text-sm bg-subtle px-2 py-1 rounded">
@@ -165,13 +161,13 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                               variant="secondary"
                               onClick={() => copyToClipboard(record.name)}
                             >
-                              {__("Copy")}
+                              {t("domainDialog.actions.copy")}
                             </Button>
                           </div>
                         </div>
                         <div>
                           <label className="text-xs text-txt-tertiary">
-                            {__("Value")}
+                            {t("domainDialog.dns.value")}
                           </label>
                           <div className="flex items-center gap-2 mt-1">
                             <code className="flex-1 text-sm bg-subtle px-2 py-1 rounded break-all">
@@ -181,15 +177,13 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                               variant="secondary"
                               onClick={() => copyToClipboard(record.value)}
                             >
-                              {__("Copy")}
+                              {t("domainDialog.actions.copy")}
                             </Button>
                           </div>
                         </div>
                         {record.ttl && (
                           <div className="text-xs text-txt-tertiary">
-                            TTL:
-                            {" "}
-                            {record.ttl}
+                            {t("domainDialog.dns.ttl", { ttl: record.ttl })}
                           </div>
                         )}
                       </div>
@@ -200,9 +194,7 @@ export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProp
                 {sslStatus === "PENDING" && (
                   <div className="bg-subtle rounded-lg p-4 mt-4">
                     <p className="text-sm">
-                      {__(
-                        "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate.",
-                      )}
+                      {t("domainDialog.pendingDescription")}
                     </p>
                   </div>
                 )}

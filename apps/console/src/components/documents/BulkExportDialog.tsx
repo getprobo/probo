@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Checkbox,
@@ -31,6 +29,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { forwardRef, type ReactNode, useImperativeHandle } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -69,7 +68,7 @@ export type BulkExportDialogRef = {
 
 export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
   ({ children, onExport, isLoading = false, defaultEmail, selectedCount }, ref) => {
-    const { __ } = useTranslate();
+    const { t } = useTranslation();
     const dialogRef = useDialogRef();
 
     const { register, handleSubmit, formState, watch, setValue } = useFormWithSchema(
@@ -106,7 +105,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
         <Dialog
           className="max-w-md"
           ref={dialogRef}
-          title={sprintf(__("Export %s Documents"), selectedCount)}
+          title={t("bulkExportDialog.title", { count: selectedCount })}
         >
           <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
             <DialogContent className="space-y-4" padded>
@@ -118,10 +117,10 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
-                      {__("Include signatures")}
+                      {t("bulkExportDialog.includeSignatures.label")}
                     </label>
                     <p className="text-xs text-txt-secondary mt-1">
-                      {__("Show signature information and approval details in the PDFs")}
+                      {t("bulkExportDialog.includeSignatures.description")}
                     </p>
                   </div>
                 </div>
@@ -133,10 +132,10 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
-                      {__("Add watermark")}
+                      {t("bulkExportDialog.watermark.label")}
                     </label>
                     <p className="text-xs text-txt-secondary mt-1">
-                      {__("Add confidential watermark with email and timestamp to all PDFs")}
+                      {t("bulkExportDialog.watermark.description")}
                     </p>
                   </div>
                 </div>
@@ -144,10 +143,10 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                 {watchWatermark && (
                   <div className="ml-6">
                     <Field
-                      label={__("Watermark email")}
+                      label={t("bulkExportDialog.watermark.emailLabel")}
                       {...register("watermarkEmail")}
                       type="email"
-                      placeholder={__("Enter email address")}
+                      placeholder={t("bulkExportDialog.watermark.emailPlaceholder")}
                       error={formState.errors.watermarkEmail?.message}
                       autoComplete="off"
                       required
@@ -158,7 +157,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
 
               <div className="bg-level-1 p-3 rounded-lg border border-border-subtle">
                 <p className="text-sm text-txt-secondary">
-                  {__("The documents will be exported as individual PDFs in a ZIP file. You will receive an email when the export is ready for download.")}
+                  {t("bulkExportDialog.notice")}
                 </p>
               </div>
             </DialogContent>
@@ -171,11 +170,11 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                   ? (
                       <>
                         <Spinner size={16} />
-                        {__("Exporting...")}
+                        {t("bulkExportDialog.actions.exporting")}
                       </>
                     )
                   : (
-                      __("Export Documents")
+                      t("bulkExportDialog.actions.export")
                     )}
               </Button>
             </DialogFooter>

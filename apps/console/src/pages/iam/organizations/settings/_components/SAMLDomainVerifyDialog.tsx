@@ -19,15 +19,15 @@
 // SOFTWARE.
 
 import { useCopy } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import { Button, DialogContent } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 export function SAMLDomainVerifyDialog(props: {
   domainVerificationToken: string;
 }) {
   const { domainVerificationToken } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const dnsRecord = `probo-verification=${domainVerificationToken}`;
   const [isCopied, copy] = useCopy();
@@ -37,34 +37,36 @@ export function SAMLDomainVerifyDialog(props: {
       <DialogContent padded className="space-y-6">
         <div>
           <h3 className="text-base font-medium mb-4">
-            {__("Verify Domain Ownership")}
+            {t("samlDomainVerifyDialog.title")}
           </h3>
           <p className="text-sm text-gray-600 mb-4">
-            {__(
-              "Add the following TXT record to your domain's DNS configuration to verify ownership:",
-            )}
+            {t("samlDomainVerifyDialog.description")}
           </p>
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
             <div className="space-y-2">
               <div>
                 <span className="font-semibold text-sm">
-                  {__("Host/Name:")}
+                  {t("samlDomainVerifyDialog.fields.hostName")}
                 </span>
                 <code className="ml-2 bg-white px-2 py-1 rounded text-sm">
                   @
                 </code>
                 <span className="ml-2 text-xs text-gray-600">
-                  {__("or use your domain name")}
+                  {t("samlDomainVerifyDialog.hostHint")}
                 </span>
               </div>
               <div>
-                <span className="font-semibold text-sm">{__("Type:")}</span>
+                <span className="font-semibold text-sm">
+                  {t("samlDomainVerifyDialog.fields.type")}
+                </span>
                 <code className="ml-2 bg-white px-2 py-1 rounded text-sm">
                   TXT
                 </code>
               </div>
               <div>
-                <span className="font-semibold text-sm">{__("Value:")}</span>
+                <span className="font-semibold text-sm">
+                  {t("samlDomainVerifyDialog.fields.value")}
+                </span>
                 <div className="mt-1 flex items-center gap-2">
                   <code className="flex-1 bg-white px-2 py-1 rounded text-sm break-all font-mono">
                     {dnsRecord}
@@ -74,7 +76,9 @@ export function SAMLDomainVerifyDialog(props: {
                     variant="secondary"
                     onClick={() => copy(dnsRecord)}
                   >
-                    {isCopied ? __("Copied!") : __("Copy")}
+                    {isCopied
+                      ? t("samlDomainVerifyDialog.actions.copied")
+                      : t("samlDomainVerifyDialog.actions.copy")}
                   </Button>
                 </div>
               </div>
@@ -82,11 +86,9 @@ export function SAMLDomainVerifyDialog(props: {
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              <strong>{__("Note:")}</strong>
+              <strong>{t("samlDomainVerifyDialog.note.label")}</strong>
               {" "}
-              {__(
-                "DNS changes may take up to 48 hours to propagate, but typically complete within a few minutes.",
-              )}
+              {t("samlDomainVerifyDialog.note.description")}
             </p>
           </div>
         </div>

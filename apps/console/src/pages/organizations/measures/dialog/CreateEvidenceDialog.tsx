@@ -26,7 +26,6 @@ import {
   acceptSpreadsheet,
   acceptText,
 } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -41,6 +40,7 @@ import {
   Tabs,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useRelayEnvironment } from "react-relay";
 import { z } from "zod";
 
@@ -72,15 +72,15 @@ type Props = {
 
 export function CreateEvidenceDialog(props: Props) {
   const { ref, ...rest } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [tab, setTab] = useState("upload");
   return (
     <Dialog
       title={(
         <Breadcrumb
           items={[
-            { label: __("Measures detail") },
-            { label: __("Create Evidence") },
+            { label: t("createEvidenceDialog.breadcrumb.measureDetail") },
+            { label: t("createEvidenceDialog.breadcrumb.createEvidence") },
           ]}
         />
       )}
@@ -89,10 +89,10 @@ export function CreateEvidenceDialog(props: Props) {
     >
       <Tabs className="px-6">
         <TabItem active={tab === "upload"} onClick={() => setTab("upload")}>
-          {__("Upload")}
+          {t("createEvidenceDialog.tabs.upload")}
         </TabItem>
         <TabItem active={tab === "link"} onClick={() => setTab("link")}>
-          {__("Link")}
+          {t("createEvidenceDialog.tabs.link")}
         </TabItem>
       </Tabs>
       {tab === "upload" && <EvidenceUpload {...rest} />}
@@ -102,12 +102,12 @@ export function CreateEvidenceDialog(props: Props) {
 }
 
 function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const relayEnv = useRelayEnvironment();
   const [mutate, isUpdating] = useMutationWithToasts(uploadEvidenceMutation, {
-    successMessage: __("Evidence uploaded successfully"),
-    errorMessage: __("Failed to create evidence"),
+    successMessage: t("createEvidenceDialog.messages.uploaded"),
+    errorMessage: t("createEvidenceDialog.errors.create"),
   });
   const handleDrop = async (files: File[]) => {
     for (const file of files) {
@@ -132,9 +132,7 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
     <>
       <DialogContent padded>
         <Dropzone
-          description={__(
-            "Documents, spreadsheets, presentations, images, and text files up to 20MB",
-          )}
+          description={t("createEvidenceDialog.uploadDescription")}
           isUploading={isUpdating}
           onDrop={files => void handleDrop(files)}
           accept={{
@@ -158,7 +156,7 @@ const linkSchema = z.object({
 });
 
 function EvidenceLink({ measureId, connectionId, ref }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { handleSubmit, register, formState, reset } = useFormWithSchema(
     linkSchema,
     {
@@ -170,8 +168,8 @@ function EvidenceLink({ measureId, connectionId, ref }: Props) {
   );
 
   const [mutate] = useMutationWithToasts(uploadEvidenceMutation, {
-    successMessage: __("Evidence created successfully"),
-    errorMessage: __("Failed to create evidence"),
+    successMessage: t("createEvidenceDialog.messages.created"),
+    errorMessage: t("createEvidenceDialog.errors.create"),
   });
   const onSubmit = async (data: z.infer<typeof linkSchema>) => {
     const fileName = `${data.name.trim()}.uri`;
@@ -200,19 +198,19 @@ function EvidenceLink({ measureId, connectionId, ref }: Props) {
         <Field
           required
           type="text"
-          label={__("Name")}
-          placeholder={__("Evidence name")}
+          label={t("createEvidenceDialog.fields.name")}
+          placeholder={t("createEvidenceDialog.fields.namePlaceholder")}
           {...register("name")}
           error={formState.errors.name?.message}
         />
         <Field
           required
           type="url"
-          label={__("URL")}
-          placeholder={__("Evidence URL")}
+          label={t("createEvidenceDialog.fields.url")}
+          placeholder={t("createEvidenceDialog.fields.urlPlaceholder")}
           {...register("url")}
           error={formState.errors.url?.message}
-          help={__("This will create a .uri file with the URL inside")}
+          help={t("createEvidenceDialog.fields.urlHelp")}
         />
       </DialogContent>
       <DialogFooter>
@@ -221,7 +219,7 @@ function EvidenceLink({ measureId, connectionId, ref }: Props) {
           disabled={formState.isSubmitting}
           icon={formState.isSubmitting ? Spinner : undefined}
         >
-          {__("Create")}
+          {t("createEvidenceDialog.actions.create")}
         </Button>
       </DialogFooter>
     </form>

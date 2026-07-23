@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Dialog, DialogContent, DialogFooter, Field, Label, Option, Spinner, Textarea, useDialogRef } from "@probo/ui";
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -31,7 +31,7 @@ import { ControlledSelect } from "#/components/form/ControlledField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
-import { COMMITMENT_ICON_LABELS, COMMITMENT_ICON_VALUES } from "../_lib/commitmentIcons";
+import { COMMITMENT_ICON_VALUES } from "../_lib/commitmentIcons";
 
 const createCommitmentMutation = graphql`
   mutation CompliancePageCommitmentDialogCreateMutation(
@@ -69,14 +69,12 @@ const updateCommitmentMutation = graphql`
   }
 `;
 
-const commitmentSchema = z.object({
-  icon: z.string().min(1, "Icon is required"),
-  eyebrow: z.string(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-});
-
-type CommitmentFormData = z.infer<typeof commitmentSchema>;
+type CommitmentFormData = {
+  icon: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+};
 
 export type CompliancePageCommitmentDialogRef = {
   openCreate: (groupId: string) => void;
@@ -87,19 +85,28 @@ export const CompliancePageCommitmentDialog = forwardRef<
   CompliancePageCommitmentDialogRef,
   { onChanged: () => void }
 >(function CompliancePageCommitmentDialog({ onChanged }, ref) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const dialogRef = useDialogRef();
+  const commitmentSchema = z.object({
+    icon: z.string().min(1, t("commitmentDialog.validation.iconRequired")),
+    eyebrow: z.string(),
+    title: z.string().min(1, t("commitmentDialog.validation.titleRequired")),
+    description: z.string().min(
+      1,
+      t("commitmentDialog.validation.descriptionRequired"),
+    ),
+  });
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [groupId, setGroupId] = useState<string>("");
   const [commitmentId, setCommitmentId] = useState<string>("");
 
   const [createCommitment, isCreating] = useMutationWithToasts<CompliancePageCommitmentDialogCreateMutation>(
     createCommitmentMutation,
-    { successMessage: __("Commitment created successfully"), errorMessage: __("Failed to create commitment") },
+    { successMessage: t("commitmentDialog.messages.created"), errorMessage: t("commitmentDialog.errors.create") },
   );
   const [updateCommitment, isUpdating] = useMutationWithToasts<CompliancePageCommitmentDialogUpdateMutation>(
     updateCommitmentMutation,
-    { successMessage: __("Commitment updated successfully"), errorMessage: __("Failed to update commitment") },
+    { successMessage: t("commitmentDialog.messages.updated"), errorMessage: t("commitmentDialog.errors.update") },
   );
 
   const { register, handleSubmit, control, formState: { errors }, reset } = useFormWithSchema(commitmentSchema, {
@@ -155,18 +162,24 @@ export const CompliancePageCommitmentDialog = forwardRef<
   };
 
   const isSubmitting = isCreating || isUpdating;
-  const title = mode === "create" ? __("Add Commitment") : __("Edit Commitment");
+  const title = mode === "create"
+    ? t("commitmentDialog.title.create")
+    : t("commitmentDialog.title.edit");
 
   return (
     <Dialog ref={dialogRef} title={title} className="max-w-2xl" onClose={() => reset()}>
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-6">
           <div className="space-y-1.5">
-            <Label>{__("Icon")}</Label>
-            <ControlledSelect control={control} name="icon" placeholder={__("Select an icon")}>
+            <Label>{t("commitmentDialog.fields.icon")}</Label>
+            <ControlledSelect
+              control={control}
+              name="icon"
+              placeholder={t("commitmentDialog.fields.iconPlaceholder")}
+            >
               {COMMITMENT_ICON_VALUES.map(value => (
                 <Option key={value} value={value}>
-                  {COMMITMENT_ICON_LABELS[value]}
+                  {t(`commitmentDialog.icons.${value.toLowerCase()}`)}
                 </Option>
               ))}
             </ControlledSelect>
@@ -174,32 +187,38 @@ export const CompliancePageCommitmentDialog = forwardRef<
 
           <Field
             {...register("eyebrow")}
-            label={__("Eyebrow")}
+            label={t("commitmentDialog.fields.eyebrow")}
             type="text"
             error={errors.eyebrow?.message}
-            placeholder={__("Small accent label above the title")}
+            placeholder={t("commitmentDialog.fields.eyebrowPlaceholder")}
           />
 
           <Field
             {...register("title")}
-            label={__("Title")}
+            label={t("commitmentDialog.fields.title")}
             type="text"
             required
             error={errors.title?.message}
-            placeholder={__("Commitment headline")}
+            placeholder={t("commitmentDialog.fields.titlePlaceholder")}
           />
 
-          <Field label={__("Description")} error={errors.description?.message} required>
+          <Field
+            label={t("commitmentDialog.fields.description")}
+            error={errors.description?.message}
+            required
+          >
             <Textarea
               {...register("description")}
-              placeholder={__("Supporting body copy")}
+              placeholder={t("commitmentDialog.fields.descriptionPlaceholder")}
               rows={3}
             />
           </Field>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? Spinner : undefined}>
-            {mode === "create" ? __("Add Commitment") : __("Update Commitment")}
+            {mode === "create"
+              ? t("commitmentDialog.actions.add")
+              : t("commitmentDialog.actions.update")}
           </Button>
         </DialogFooter>
       </form>

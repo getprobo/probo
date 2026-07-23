@@ -20,7 +20,6 @@
 
 import { faviconUrl } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Avatar,
@@ -38,6 +37,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
@@ -111,7 +111,7 @@ type Props = {
 };
 
 export default function DataPage(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
@@ -142,7 +142,7 @@ export default function DataPage(props: Props) {
     });
   };
 
-  usePageTitle(__("Data"));
+  usePageTitle(t("dataPage.pageTitle"));
 
   const hasAnyAction
     = dataEntries.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
@@ -150,10 +150,8 @@ export default function DataPage(props: Props) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Data")}
-        description={__(
-          "Manage your organization's data assets and their classifications.",
-        )}
+        title={t("dataPage.title")}
+        description={t("dataPage.description")}
       >
         <div className="flex gap-2">
           {data.dataListDocument?.id && (
@@ -162,7 +160,7 @@ export default function DataPage(props: Props) {
                 to={`/organizations/${organizationId}/documents/${data.dataListDocument.id}`}
               >
                 <IconPageTextLine size={16} />
-                {__("Document")}
+                {t("dataPage.actions.document")}
               </Link>
             </Button>
           )}
@@ -177,7 +175,7 @@ export default function DataPage(props: Props) {
               }}
             >
               <Button variant="secondary" icon={IconUpload}>
-                {__("Publish")}
+                {t("dataPage.actions.publish")}
               </Button>
             </PublishDataListDialog>
           )}
@@ -187,7 +185,7 @@ export default function DataPage(props: Props) {
               organizationId={organizationId}
               onCreated={() => pagination.refetch({})}
             >
-              <Button icon={IconPlusLarge}>{__("Add data")}</Button>
+              <Button icon={IconPlusLarge}>{t("dataPage.actions.add")}</Button>
             </CreateDatumDialog>
           )}
         </div>
@@ -195,10 +193,10 @@ export default function DataPage(props: Props) {
       <SortableTable {...pagination} refetch={refetch} pageSize={10}>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Classification")}</Th>
-            <Th>{__("Owner")}</Th>
-            <Th>{__("Third parties")}</Th>
+            <Th>{t("dataPage.columns.name")}</Th>
+            <Th>{t("dataPage.columns.classification")}</Th>
+            <Th>{t("dataPage.columns.owner")}</Th>
+            <Th>{t("dataPage.columns.thirdParties")}</Th>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
@@ -227,7 +225,7 @@ function DataRow({
   hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const deleteDatum = useDeleteDatum(entry, connectionId);
   const thirdParties = entry.thirdParties?.edges.map(edge => edge.node) ?? [];
   const detailUrl = `/organizations/${organizationId}/data/${entry.id}`;
@@ -238,7 +236,7 @@ function DataRow({
       <Td>
         <Badge variant="info">{entry.dataClassification}</Badge>
       </Td>
-      <Td>{entry.owner?.fullName ?? __("Unassigned")}</Td>
+      <Td>{entry.owner?.fullName ?? t("dataPage.unassigned")}</Td>
       <Td>
         {thirdParties.length > 0
           ? (
@@ -266,7 +264,7 @@ function DataRow({
               </div>
             )
           : (
-              <span className="text-txt-secondary text-sm">{__("None")}</span>
+              <span className="text-txt-secondary text-sm">{t("dataPage.none")}</span>
             )}
       </Td>
       {hasAnyAction && (
@@ -278,7 +276,7 @@ function DataRow({
                 variant="danger"
                 icon={IconTrashCan}
               >
-                {__("Delete")}
+                {t("dataPage.actions.delete")}
               </DropdownItem>
             )}
           </ActionDropdown>

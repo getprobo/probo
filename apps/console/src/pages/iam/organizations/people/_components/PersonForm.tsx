@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime, getAssignableRoles, getRoles } from "@probo/helpers";
+import { formatDatetime, getAssignableRoles, peopleRoles } from "@probo/helpers";
 import { roles } from "@probo/helpers/src/roles";
-import { useTranslate } from "@probo/i18n";
 import { Button, Field, Input, Option } from "@probo/ui";
 import { use } from "react";
 import { useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 import { z } from "zod";
@@ -120,7 +120,7 @@ export function PersonForm(props: {
   } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { role } = use(CurrentUser);
   const availableRoles = getAssignableRoles(role);
 
@@ -134,15 +134,15 @@ export function PersonForm(props: {
   const [createPerson, isCreating] = useMutationWithToasts<PersonForm_createMutation>(
     createPersonMutation,
     {
-      successMessage: __("Person created successfully."),
-      errorMessage: __("Failed to create person"),
+      successMessage: t("personForm.messages.created"),
+      errorMessage: t("personForm.errors.create"),
     },
   );
   const [updatePerson, isUpdating] = useMutationWithToasts<PersonForm_updateMutation>(
     updatePersonMutation,
     {
-      successMessage: __("Person updated successfully."),
-      errorMessage: __("Failed to update person"),
+      successMessage: t("personForm.messages.updated"),
+      errorMessage: t("personForm.errors.update"),
     },
   );
   const handleSubmit = handleSubmitWrapper(async (data: z.infer<typeof schema>) => {
@@ -184,7 +184,7 @@ export function PersonForm(props: {
 
   return (
     <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-      <Field label={__("Full name *")} {...register("fullName")} type="text" disabled={disabled || scimManaged} />
+      <Field label={t("personForm.fields.fullName")} {...register("fullName")} type="text" disabled={disabled || scimManaged} />
       {id
         ? (
             <>
@@ -194,48 +194,48 @@ export function PersonForm(props: {
           )
         : (
             <>
-              <Field label={__("Email Address *")} {...register("emailAddress")} type="email" disabled={disabled || !!id} />
+              <Field label={t("personForm.fields.emailAddress")} {...register("emailAddress")} type="email" disabled={disabled || !!id} />
               <ControlledField
                 control={control}
                 name="role"
                 type="select"
-                label={__("Role *")}
+                label={t("personForm.fields.role")}
                 disabled={disabled || !!id}
               >
                 {availableRoles.includes("OWNER") && (
-                  <Option value="OWNER">{__("Owner")}</Option>
+                  <Option value="OWNER">{t("personForm.roles.owner")}</Option>
                 )}
                 {availableRoles.includes("ADMIN") && (
-                  <Option value="ADMIN">{__("Admin")}</Option>
+                  <Option value="ADMIN">{t("personForm.roles.admin")}</Option>
                 )}
                 {availableRoles.includes("VIEWER") && (
-                  <Option value="VIEWER">{__("Viewer")}</Option>
+                  <Option value="VIEWER">{t("personForm.roles.viewer")}</Option>
                 )}
                 {availableRoles.includes("AUDITOR") && (
-                  <Option value="AUDITOR">{__("Auditor")}</Option>
+                  <Option value="AUDITOR">{t("personForm.roles.auditor")}</Option>
                 )}
                 {availableRoles.includes("EMPLOYEE") && (
-                  <Option value="EMPLOYEE">{__("Employee")}</Option>
+                  <Option value="EMPLOYEE">{t("personForm.roles.employee")}</Option>
                 )}
               </ControlledField>
 
               <div className="mt-4 space-y-2 text-sm text-txt-tertiary">
                 {watchedRole === "OWNER" && (
-                  <p>{__("Full access to everything")}</p>
+                  <p>{t("personForm.roleDescriptions.owner")}</p>
                 )}
                 {watchedRole === "ADMIN" && (
                   <p>
-                    {__("Full access except organization setup and API keys")}
+                    {t("personForm.roleDescriptions.admin")}
                   </p>
                 )}
-                {watchedRole === "VIEWER" && <p>{__("Read-only access")}</p>}
+                {watchedRole === "VIEWER" && <p>{t("personForm.roleDescriptions.viewer")}</p>}
                 {watchedRole === "AUDITOR" && (
                   <p>
-                    {__("Read-only access without settings and tasks")}
+                    {t("personForm.roleDescriptions.auditor")}
                   </p>
                 )}
                 {watchedRole === "EMPLOYEE" && (
-                  <p>{__("Access to employee page")}</p>
+                  <p>{t("personForm.roleDescriptions.employee")}</p>
                 )}
               </div>
             </>
@@ -244,31 +244,31 @@ export function PersonForm(props: {
         control={control}
         name="kind"
         type="select"
-        label={__("Type")}
+        label={t("personForm.fields.type")}
         disabled={disabled || scimManaged}
       >
-        {getRoles(__).map(role => (
-          <Option key={role.value} value={role.value}>
-            {role.label}
+        {peopleRoles.map(role => (
+          <Option key={role} value={role}>
+            {t(`personForm.kinds.${role}`)}
           </Option>
         ))}
       </ControlledField>
       <Field
-        label={__("Position")}
+        label={t("personForm.fields.position")}
         {...register("position")}
         type="text"
-        placeholder={__("e.g. CEO, CFO, etc.")}
+        placeholder={t("personForm.fields.positionPlaceholder")}
         disabled={disabled || scimManaged}
       />
       <EmailsField control={control} register={register} disabled={disabled || scimManaged} />
-      <Field label={__("Contract start date")}>
+      <Field label={t("personForm.fields.contractStartDate")}>
         <Input
           {...register("contractStartDate")}
           type="date"
           disabled={disabled}
         />
       </Field>
-      <Field label={__("Contract end date")}>
+      <Field label={t("personForm.fields.contractEndDate")}>
         <Input
           {...register("contractEndDate")}
           type="date"
@@ -278,7 +278,7 @@ export function PersonForm(props: {
       <div className="flex justify-end">
         {(!id || formState.isDirty) && !disabled && (
           <Button type="submit" disabled={isUpdating || isCreating || !formState.isValid}>
-            {id ? __("Update") : __("Create")}
+            {id ? t("personForm.actions.update") : t("personForm.actions.create")}
           </Button>
         )}
       </div>

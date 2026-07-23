@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -47,7 +47,7 @@ const fragment = graphql`
 export function CompliancePageDocumentList(props: { fragmentRef: CompliancePageDocumentListFragment$key }) {
   const { fragmentRef } = props;
 
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
 
   const { compliancePage, documents } = useFragment<CompliancePageDocumentListFragment$key>(fragment, fragmentRef);
   const publishedDocuments = documents.edges.filter(({ node }) => node.currentPublishedMajor != null);
@@ -57,17 +57,17 @@ export function CompliancePageDocumentList(props: { fragmentRef: CompliancePageD
       <Table>
         <Thead>
           <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Type")}</Th>
-            <Th>{__("Alias")}</Th>
-            <Th>{__("Visibility")}</Th>
+            <Th>{t("documentList.columns.name")}</Th>
+            <Th>{t("documentList.columns.type")}</Th>
+            <Th>{t("documentList.columns.alias")}</Th>
+            <Th>{t("documentList.columns.visibility")}</Th>
           </Tr>
         </Thead>
         <Tbody>
           {publishedDocuments.length === 0 && (
             <Tr>
               <Td colSpan={4} className="text-center text-txt-secondary">
-                {__("No documents available")}
+                {t("documentList.empty")}
               </Td>
             </Tr>
           )}

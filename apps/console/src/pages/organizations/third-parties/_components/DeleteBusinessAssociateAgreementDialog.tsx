@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
 import {
   Button,
   Dialog,
@@ -29,6 +28,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { DeleteBusinessAssociateAgreementDialogMutation } from "#/__generated__/core/DeleteBusinessAssociateAgreementDialogMutation.graphql";
@@ -56,7 +56,7 @@ export function DeleteBusinessAssociateAgreementDialog({
   fileName,
   onSuccess,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const ref = useDialogRef();
 
   const { toast } = useToast();
@@ -75,9 +75,9 @@ export function DeleteBusinessAssociateAgreementDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast({
-            title: __("Error"),
+            title: t("deleteBusinessAssociateAgreementDialog.messages.error"),
             description: formatError(
-              __("Failed to delete Business Associate Agreement"),
+              t("deleteBusinessAssociateAgreementDialog.errors.delete"),
               errors,
             ),
             variant: "error",
@@ -85,8 +85,8 @@ export function DeleteBusinessAssociateAgreementDialog({
           return;
         }
         toast({
-          title: __("Success"),
-          description: __("Business Associate Agreement deleted successfully"),
+          title: t("deleteBusinessAssociateAgreementDialog.messages.success"),
+          description: t("deleteBusinessAssociateAgreementDialog.messages.deleted"),
           variant: "success",
         });
         onSuccess?.();
@@ -94,9 +94,9 @@ export function DeleteBusinessAssociateAgreementDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("deleteBusinessAssociateAgreementDialog.messages.error"),
           description: formatError(
-            __("Failed to delete Business Associate Agreement"),
+            t("deleteBusinessAssociateAgreementDialog.errors.delete"),
             error,
           ),
           variant: "error",
@@ -109,18 +109,15 @@ export function DeleteBusinessAssociateAgreementDialog({
     <Dialog
       ref={ref}
       trigger={children}
-      title={__("Delete Business Associate Agreement")}
+      title={t("deleteBusinessAssociateAgreementDialog.title")}
       className="max-w-md"
     >
       <DialogContent padded>
         <p className="text-txt-secondary">
-          {sprintf(
-            __("Are you sure you want to delete the Business Associate Agreement \"%s\"?"),
-            fileName,
-          )}
+          {t("deleteBusinessAssociateAgreementDialog.confirmation", { fileName })}
         </p>
         <p className="text-txt-secondary mt-2">
-          {__("This action cannot be undone.")}
+          {t("deleteBusinessAssociateAgreementDialog.cannotUndo")}
         </p>
       </DialogContent>
 
@@ -131,7 +128,7 @@ export function DeleteBusinessAssociateAgreementDialog({
           disabled={isDeleting}
           icon={isDeleting ? Spinner : undefined}
         >
-          {__("Delete")}
+          {t("deleteBusinessAssociateAgreementDialog.actions.delete")}
         </Button>
       </DialogFooter>
     </Dialog>

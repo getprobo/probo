@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useMutation,
   type UseMutationConfig,
@@ -55,7 +55,7 @@ export function useMutationWithIncrement<T extends MutationParameters>(
   const [mutate, isLoading] = useMutation<T>(query);
   const relayEnv = useRelayEnvironment();
   const { toast } = useToast();
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const options = { ...defaultOptions, ...baseOptions };
   const mutateAndIncrement = useCallback(
     (queryOptions: UseMutationConfig<T>) => {
@@ -63,9 +63,9 @@ export function useMutationWithIncrement<T extends MutationParameters>(
         ...queryOptions,
         onCompleted: (response, error) => {
           if (error) {
-            const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
+            const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
             toast({
-              title: __("Error"),
+              title: t("common.error"),
               description: formatError(errorTitle, error),
               variant: "error",
             });
@@ -81,9 +81,9 @@ export function useMutationWithIncrement<T extends MutationParameters>(
           queryOptions.onCompleted?.(response, error);
         },
         onError: (error) => {
-          const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
+          const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: formatError(errorTitle, error),
             variant: "error",
           });
@@ -91,7 +91,7 @@ export function useMutationWithIncrement<T extends MutationParameters>(
         },
       });
     },
-    [mutate, options.id, options.node, options.field, options.value, options.errorMessage, relayEnv, toast, __],
+    [mutate, options.id, options.node, options.field, options.value, options.errorMessage, relayEnv, toast, t],
   );
 
   return [mutateAndIncrement, isLoading] as const;

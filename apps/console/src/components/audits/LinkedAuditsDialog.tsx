@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { getAuditStateVariant } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -34,6 +33,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -98,16 +98,16 @@ type Props = {
 };
 
 export function LinkedAuditsDialog({ children, ...props }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
-    <Dialog trigger={children} title={__("Link audits")}>
+    <Dialog trigger={children} title={t("linkedAuditsDialog.title")}>
       <DialogContent>
         <Suspense fallback={<Spinner centered />}>
           <LinkedAuditsDialogContent {...props} />
         </Suspense>
       </DialogContent>
-      <DialogFooter exitLabel={__("Close")} />
+      <DialogFooter exitLabel={t("linkedAuditsDialog.actions.close")} />
     </Dialog>
   );
 }
@@ -122,7 +122,7 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
       auditsFragment,
       query.organization as LinkedAuditsDialogFragment$key,
     );
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const audits = useMemo(
     () => data.audits?.edges?.map(edge => edge.node) ?? [],
@@ -143,7 +143,7 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
       <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search audits...")}
+          placeholder={t("linkedAuditsDialog.searchPlaceholder")}
           onValueChange={setSearch}
         />
       </div>
@@ -180,7 +180,7 @@ type RowProps = {
 };
 
 function AuditRow(props: RowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const isLinked = props.linkedAudits.has(props.audit.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
@@ -209,7 +209,9 @@ function AuditRow(props: RowProps) {
         <span>
           <IconComponent size={16} />
           {" "}
-          {isLinked ? __("Unlink") : __("Link")}
+          {isLinked
+            ? t("linkedAuditsDialog.actions.unlink")
+            : t("linkedAuditsDialog.actions.link")}
         </span>
       </Button>
     </button>

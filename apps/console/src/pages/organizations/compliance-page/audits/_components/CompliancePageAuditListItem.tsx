@@ -18,16 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, getAuditStateLabel, getAuditStateVariant, getCompliancePageVisibilityOptions } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { getAuditStateVariant, getCompliancePageVisibilityOptions } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Field, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePageAuditListItem_auditFragment$key } from "#/__generated__/core/CompliancePageAuditListItem_auditFragment.graphql";
-import type { CompliancePageAuditListItem_compliancePageFragment$key } from "#/__generated__/core/CompliancePageAuditListItem_compliancePageFragment.graphql";
-import type { CompliancePageAuditListItem_updateAuditVisibilityMutation } from "#/__generated__/core/CompliancePageAuditListItem_updateAuditVisibilityMutation.graphql";
+import type {
+  CompliancePageAuditListItem_auditFragment$key,
+} from "#/__generated__/core/CompliancePageAuditListItem_auditFragment.graphql";
+import type {
+  CompliancePageAuditListItem_compliancePageFragment$key,
+} from "#/__generated__/core/CompliancePageAuditListItem_compliancePageFragment.graphql";
+import type {
+  CompliancePageAuditListItem_updateAuditVisibilityMutation,
+} from "#/__generated__/core/CompliancePageAuditListItem_updateAuditVisibilityMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -67,7 +74,7 @@ export function CompliancePageAuditListItem(props: {
   const { auditFragmentRef, compliancePageFragmentRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { i18n, t } = useTranslation("organizations/compliance-page");
 
   const compliancePage = useFragment<CompliancePageAuditListItem_compliancePageFragment$key>(
     compliancePageFragment,
@@ -80,8 +87,8 @@ export function CompliancePageAuditListItem(props: {
   >(
     updateAuditVisibilityMutation,
     {
-      successMessage: __("Audit visibility updated successfully."),
-      errorToast: __("Failed to update audit visibility"),
+      successMessage: t("auditListItem.messages.visibilityUpdated"),
+      errorToast: t("auditListItem.errors.updateVisibility"),
     },
   );
   const handleVisibilityChange = useCallback(
@@ -100,21 +107,21 @@ export function CompliancePageAuditListItem(props: {
     [audit.id, updateAuditVisibility],
   );
 
-  const visibilityOptions = getCompliancePageVisibilityOptions(__);
+  const visibilityOptions = getCompliancePageVisibilityOptions(t);
   const validUntilFormatted = audit.validUntil
-    ? formatDate(audit.validUntil)
-    : __("No expiry");
+    ? dateFormat(i18n.language, audit.validUntil)
+    : t("auditListItem.noExpiry");
 
   return (
     <Tr to={`/organizations/${organizationId}/audits/${audit.id}`}>
       <Td>
         <div className="flex gap-4 items-center">{audit.framework?.name}</div>
       </Td>
-      <Td>{audit.name || __("Untitled")}</Td>
+      <Td>{audit.name || t("auditListItem.untitled")}</Td>
       <Td>{validUntilFormatted}</Td>
       <Td>
         <Badge variant={getAuditStateVariant(audit.state)}>
-          {getAuditStateLabel(__, audit.state)}
+          {t(`auditListItem.states.${audit.state.toLowerCase()}`)}
         </Badge>
       </Td>
       <Td noLink width={130} className="pr-0">

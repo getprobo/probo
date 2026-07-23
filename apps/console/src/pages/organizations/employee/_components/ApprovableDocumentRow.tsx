@@ -18,13 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  formatDate,
-  getDocumentClassificationLabel,
-  getDocumentTypeLabel,
-} from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ApprovableDocumentRowFragment$key } from "#/__generated__/core/ApprovableDocumentRowFragment.graphql";
@@ -53,7 +49,7 @@ export function ApprovableDocumentRow({
   fKey: ApprovableDocumentRowFragment$key;
 }) {
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation();
   const document = useFragment<ApprovableDocumentRowFragment$key>(fragment, fKey);
 
   const lastVersionEdge = document.lastVersion.edges[0];
@@ -69,25 +65,25 @@ export function ApprovableDocumentRow({
         : "warning";
 
   const stateLabel = document.approvalState === "APPROVED"
-    ? __("Approved")
+    ? t("approvableDocumentRow.states.approved")
     : document.approvalState === "REJECTED"
-      ? __("Rejected")
+      ? t("approvableDocumentRow.states.rejected")
       : document.approvalState === "VOIDED"
-        ? __("No longer required")
-        : __("Pending");
+        ? t("approvableDocumentRow.states.noLongerRequired")
+        : t("approvableDocumentRow.states.pending");
 
   return (
     <Tr to={`/organizations/${organizationId}/employee/approvals/${document.id}`}>
       <Td>{document.title}</Td>
       <Td className="w-48">
-        {getDocumentTypeLabel(__, lastVersion.documentType)}
+        {t(`approvableDocumentRow.documentTypes.${lastVersion.documentType.toLowerCase()}`)}
       </Td>
       <Td className="w-36">
         <Badge variant="neutral">
-          {getDocumentClassificationLabel(__, lastVersion.classification)}
+          {t(`approvableDocumentRow.classifications.${lastVersion.classification.toLowerCase()}`)}
         </Badge>
       </Td>
-      <Td className="w-40">{formatDate(document.updatedAt)}</Td>
+      <Td className="w-40">{dateFormat(i18n.language, document.updatedAt)}</Td>
       <Td className="w-32">
         <Badge variant={stateVariant}>
           {stateLabel}

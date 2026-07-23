@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
 import {
   IconFolder2,
   IconKey,
@@ -27,33 +26,32 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 export default function AccessReviewLayout() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
 
-  usePageTitle(__("Access Reviews"));
+  usePageTitle(t("accessReviewLayout.title"));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Access Reviews")}
-        description={__(
-          "Review and manage user access across your organization's systems and applications.",
-        )}
+        title={t("accessReviewLayout.title")}
+        description={t("accessReviewLayout.description")}
       />
 
       <Tabs>
         <TabLink to={`/organizations/${organizationId}/access-reviews`} end>
           <IconKey className="size-4" />
-          {__("Campaigns")}
+          {t("accessReviewLayout.tabs.campaigns")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/access-reviews/sources`}>
           <IconFolder2 className="size-4" />
-          {__("Sources")}
+          {t("accessReviewLayout.tabs.sources")}
         </TabLink>
       </Tabs>
 

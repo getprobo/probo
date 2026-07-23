@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
 import {
   Button,
   Dialog,
@@ -32,6 +31,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
@@ -66,13 +66,13 @@ export function PublishDocumentsDialog({
   children,
   onSave,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const minorRef = useRef(false);
 
   const schema = z.object({
-    changelog: z.string().min(1, __("Changelog is required")),
+    changelog: z.string().min(1, t("publishDocumentsDialog.validation.changelogRequired")),
   });
 
   const [publish, isPublishing]
@@ -102,15 +102,17 @@ export function PublishDocumentsDialog({
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
-            description: formatError(__("Failed to publish documents"), [...errors]),
+            title: t("publishDocumentsDialog.errors.title"),
+            description: formatError(t("publishDocumentsDialog.errors.publish"), [...errors]),
             variant: "error",
           });
           return;
         }
         toast({
-          title: __("Success"),
-          description: sprintf(__("%s documents published"), documentIds.length),
+          title: t("publishDocumentsDialog.messages.successTitle"),
+          description: t("publishDocumentsDialog.messages.published", {
+            count: documentIds.length,
+          }),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -118,7 +120,7 @@ export function PublishDocumentsDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("publishDocumentsDialog.errors.title"),
           description: error.message,
           variant: "error",
         });
@@ -131,7 +133,7 @@ export function PublishDocumentsDialog({
       className="max-w-xl"
       ref={dialogRef}
       trigger={children}
-      title={__("Publish documents")}
+      title={t("publishDocumentsDialog.title")}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
@@ -139,20 +141,20 @@ export function PublishDocumentsDialog({
             <div className="flex items-start gap-2 rounded-lg bg-bg-warning/10 border border-border-warning p-3">
               <IconWarning size={16} className="text-txt-warning shrink-0 mt-0.5" />
               <div className="text-sm text-txt-warning space-y-1">
-                <p>{__("Publishing as major will request approval for documents that have default approvers configured. Approvers will receive an email notification.")}</p>
-                <p>{__("Documents already published and pending approval will be skipped.")}</p>
+                <p>{t("publishDocumentsDialog.warning.approval")}</p>
+                <p>{t("publishDocumentsDialog.warning.skipped")}</p>
               </div>
             </div>
             <div>
               <label htmlFor="changelog" className="text-sm font-medium text-txt-primary mb-1 block">
-                {__("Changelog")}
+                {t("publishDocumentsDialog.fields.changelog")}
               </label>
               <Textarea
                 id="changelog"
-                aria-label={__("Changelog")}
+                aria-label={t("publishDocumentsDialog.fields.changelog")}
                 required
                 autogrow
-                placeholder={__("Describe what changed in this version...")}
+                placeholder={t("publishDocumentsDialog.fields.changelogPlaceholder")}
                 {...register("changelog")}
               />
               {errors.changelog?.message && (
@@ -169,14 +171,14 @@ export function PublishDocumentsDialog({
             disabled={isPublishing}
             onClick={() => { minorRef.current = true; }}
           >
-            {__("Publish as minor")}
+            {t("publishDocumentsDialog.actions.publishMinor")}
           </Button>
           <Button
             type="submit"
             disabled={isPublishing}
             onClick={() => { minorRef.current = false; }}
           >
-            {sprintf(__("Publish %s documents"), documentIds.length)}
+            {t("publishDocumentsDialog.actions.publish", { count: documentIds.length })}
           </Button>
         </DialogFooter>
       </form>

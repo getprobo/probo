@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
 import { Button, Card, Field, IconPlusLarge, Spinner, TabItem, Tabs, useDialogRef } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
@@ -69,7 +69,7 @@ export function CompliancePageMailingListPage(props: {
   queryRef: PreloadedQuery<CompliancePageMailingListPageQuery>;
 }) {
   const { queryRef } = props;
-  const { __ } = useTranslate();
+  const { t } = useTranslation("organizations/compliance-page");
   const subscriberDialogRef = useDialogRef();
   const newUpdateDialogRef = useDialogRef();
   const editUpdateDialogRef = useDialogRef();
@@ -104,8 +104,8 @@ export function CompliancePageMailingListPage(props: {
     = useMutation<CompliancePageMailingListPage_updateMailingListMutation>(
       updateMailingListMutation,
       {
-        successMessage: __("Mailing list updated successfully"),
-        errorToast: __("Failed to update mailing list"),
+        successMessage: t("mailingListPage.messages.updated"),
+        errorToast: t("mailingListPage.errors.update"),
       },
     );
 
@@ -131,17 +131,17 @@ export function CompliancePageMailingListPage(props: {
       {mailingListId && (
         <Card className="p-6 space-y-4">
           <div>
-            <h3 className="text-base font-medium">{__("Settings")}</h3>
+            <h3 className="text-base font-medium">{t("mailingListPage.settings.title")}</h3>
             <p className="text-sm text-txt-tertiary">
-              {__("Configure how your mailing list behaves")}
+              {t("mailingListPage.settings.description")}
             </p>
           </div>
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <Field
-                label={__("Reply-to email")}
+                label={t("mailingListPage.settings.replyTo")}
                 type="email"
-                placeholder={__("security@example.com")}
+                placeholder={t("mailingListPage.settings.replyToPlaceholder")}
                 value={replyTo}
                 onChange={e => setReplyTo(e.target.value)}
               />
@@ -152,7 +152,7 @@ export function CompliancePageMailingListPage(props: {
               className="shrink-0"
             >
               {isUpdating && <Spinner />}
-              {__("Save")}
+              {t("mailingListPage.actions.save")}
             </Button>
           </div>
         </Card>
@@ -162,21 +162,21 @@ export function CompliancePageMailingListPage(props: {
         <div className="flex items-center justify-between">
           <Tabs>
             <TabItem active={activeTab === "updates"} onClick={() => setActiveTab("updates")}>
-              {__("Updates")}
+              {t("mailingListPage.tabs.updates")}
             </TabItem>
             <TabItem active={activeTab === "subscribers"} onClick={() => setActiveTab("subscribers")}>
-              {__("Subscribers")}
+              {t("mailingListPage.tabs.subscribers")}
             </TabItem>
           </Tabs>
 
           {activeTab === "updates" && mailingListId && (
             <Button icon={IconPlusLarge} onClick={() => newUpdateDialogRef.current?.open()}>
-              {__("Add Update")}
+              {t("mailingListPage.actions.addUpdate")}
             </Button>
           )}
           {activeTab === "subscribers" && mailingListId && (
             <Button icon={IconPlusLarge} onClick={() => subscriberDialogRef.current?.open()}>
-              {__("Add Subscriber")}
+              {t("mailingListPage.actions.addSubscriber")}
             </Button>
           )}
         </div>

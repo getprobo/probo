@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { DownloadSimpleIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, humanizeSeconds } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
+import { dateTimeFormat, humanizeSeconds } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -33,6 +33,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
@@ -162,7 +163,7 @@ interface TrackerPatternRowProps {
 }
 
 export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRowProps) {
-  const { __ } = useTranslate();
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
   const confirm = useConfirm();
   const organizationId = useOrganizationId();
@@ -190,22 +191,22 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+                toast({ title: t("trackerPatternRow.errors.title"), description: errors[0].message, variant: "error" });
               } else {
-                toast({ title: __("Success"), description: __("Cookie deleted"), variant: "success" });
+                toast({ title: t("trackerPatternRow.messages.successTitle"), description: t("trackerPatternRow.messages.cookieDeleted"), variant: "success" });
               }
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: formatError(__("Failed to delete cookie"), error), variant: "error" });
+              toast({ title: t("trackerPatternRow.errors.title"), description: formatError(t("trackerPatternRow.errors.deleteCookie"), error), variant: "error" });
               resolve();
             },
           });
         }),
       {
-        message: __("Are you sure you want to delete \"%s\"?").replace("%s", pattern.displayName),
+        message: t("trackerPatternRow.deleteConfirmation", { name: pattern.displayName }),
         variant: "danger",
-        label: __("Delete"),
+        label: t("trackerPatternRow.actions.delete"),
       },
     );
   };
@@ -223,13 +224,13 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          toast({ title: t("trackerPatternRow.errors.title"), description: errors[0].message, variant: "error" });
           return;
         }
-        toast({ title: __("Success"), description: __("Cookie moved"), variant: "success" });
+        toast({ title: t("trackerPatternRow.messages.successTitle"), description: t("trackerPatternRow.messages.cookieMoved"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error), variant: "error" });
+        toast({ title: t("trackerPatternRow.errors.title"), description: formatError(t("trackerPatternRow.errors.moveCookie"), error), variant: "error" });
       },
     });
   };
@@ -244,12 +245,12 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          toast({ title: t("trackerPatternRow.errors.title"), description: errors[0].message, variant: "error" });
           return;
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error), variant: "error" });
+        toast({ title: t("trackerPatternRow.errors.title"), description: formatError(t("trackerPatternRow.errors.updateCookie"), error), variant: "error" });
       },
     });
   };
@@ -286,13 +287,13 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          toast({ title: t("trackerPatternRow.errors.title"), description: errors[0].message, variant: "error" });
           return;
         }
-        toast({ title: __("Success"), description: __("Third party imported"), variant: "success" });
+        toast({ title: t("trackerPatternRow.messages.successTitle"), description: t("trackerPatternRow.messages.thirdPartyImported"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to import third party"), error), variant: "error" });
+        toast({ title: t("trackerPatternRow.errors.title"), description: formatError(t("trackerPatternRow.errors.importThirdParty"), error), variant: "error" });
       },
     });
   };
@@ -308,14 +309,14 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          toast({ title: t("trackerPatternRow.errors.title"), description: errors[0].message, variant: "error" });
           return;
         }
-        toast({ title: __("Success"), description: __("Cookie updated"), variant: "success" });
+        toast({ title: t("trackerPatternRow.messages.successTitle"), description: t("trackerPatternRow.messages.cookieUpdated"), variant: "success" });
         setIsEditing(false);
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error), variant: "error" });
+        toast({ title: t("trackerPatternRow.errors.title"), description: formatError(t("trackerPatternRow.errors.updateCookie"), error), variant: "error" });
       },
     });
   };
@@ -333,8 +334,35 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     );
   }
 
-  const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
-  const srcBadge = pattern.source ? getTrackerSourceBadge(pattern.source, __) : null;
+  const typeBadges = {
+    COOKIE: { variant: "warning" as const, label: t("trackerPatternRow.types.cookie") },
+    LOCAL_STORAGE: { variant: "info" as const, label: t("trackerPatternRow.types.localStorage") },
+    SESSION_STORAGE: { variant: "highlight" as const, label: t("trackerPatternRow.types.sessionStorage") },
+    INDEXED_DB: { variant: "success" as const, label: t("trackerPatternRow.types.indexedDb") },
+    CACHE_STORAGE: { variant: "outline" as const, label: t("trackerPatternRow.types.cacheStorage") },
+  };
+  const sourceBadges = {
+    SCRIPT: { variant: "info" as const, label: t("trackerPatternRow.sources.script") },
+    PRE_EXISTING: { variant: "outline" as const, label: t("trackerPatternRow.sources.preExisting") },
+    HTTP: { variant: "neutral" as const, label: t("trackerPatternRow.sources.http") },
+    EXTENSION: { variant: "warning" as const, label: t("trackerPatternRow.sources.extension") },
+  };
+  const typeBadge = typeBadges[pattern.trackerType]
+    ?? { variant: "neutral" as const, label: pattern.trackerType };
+  const srcBadge = pattern.source
+    ? sourceBadges[pattern.source]
+    ?? { variant: "neutral" as const, label: pattern.source }
+    : null;
+  const formatDuration = (seconds: number | null) => {
+    if (seconds === null || seconds <= 0) {
+      return ["LOCAL_STORAGE", "INDEXED_DB", "CACHE_STORAGE"].includes(pattern.trackerType)
+        ? t("trackerPatternRow.duration.persistent")
+        : t("trackerPatternRow.duration.session");
+    }
+
+    return humanizeSeconds(seconds, t);
+  };
+  const duration = formatDuration(pattern.maxAgeSeconds ?? null);
 
   return (
     <Tr
@@ -366,7 +394,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
           : pattern.commonThirdParty
             ? (
                 <div>
-                  <Badge variant="info">{__("Common catalog")}</Badge>
+                  <Badge variant="info">{t("trackerPatternRow.commonCatalog")}</Badge>
                   <span className="truncate">{pattern.commonThirdParty.name}</span>
                 </div>
               )
@@ -388,13 +416,13 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         </div>
       </Td>
       <Td>
-        <span className="pl-2">{humanizeSeconds(pattern.maxAgeSeconds ?? null, pattern.trackerType)}</span>
+        <span className="pl-2">{duration}</span>
       </Td>
       <Td>
         {pattern.lastMatchedAt
           ? (
               <time dateTime={pattern.lastMatchedAt}>
-                {new Date(pattern.lastMatchedAt).toLocaleString()}
+                {dateTimeFormat(i18n.language, pattern.lastMatchedAt)}
               </time>
             )
           : <span className="text-txt-tertiary">-</span>}
@@ -405,7 +433,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             type="button"
             onClick={() => setIsEditing(true)}
             className="p-1 rounded cursor-pointer"
-            title={__("Edit")}
+            title={t("trackerPatternRow.actions.edit")}
           >
             <IconPencil size={14} />
           </button>
@@ -415,21 +443,21 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
                 icon={DownloadSimpleIcon}
                 onSelect={handleImport}
               >
-                {__("Import to third parties")}
+                {t("trackerPatternRow.actions.importThirdParties")}
               </DropdownItem>
             )}
             <DropdownItem
               icon={pattern.excluded ? EyeIcon : EyeSlashIcon}
               onSelect={handleToggleExcluded}
             >
-              {pattern.excluded ? __("Include") : __("Exclude")}
+              {pattern.excluded ? t("trackerPatternRow.actions.include") : t("trackerPatternRow.actions.exclude")}
             </DropdownItem>
             <DropdownItem
               variant="danger"
               icon={IconTrashCan}
               onSelect={handleDelete}
             >
-              {__("Delete")}
+              {t("trackerPatternRow.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
         </div>

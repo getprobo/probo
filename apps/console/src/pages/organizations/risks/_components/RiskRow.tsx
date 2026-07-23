@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, getTreatment, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
 import {
   ActionDropdown,
   DropdownItem,
@@ -32,6 +31,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { RiskRow_risk$key } from "#/__generated__/core/RiskRow_risk.graphql";
@@ -76,7 +76,7 @@ interface RiskRowProps {
 }
 
 export function RiskRow(props: RiskRowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const risk = useFragment(riskRowFragment, props.riskKey);
   const [deleteRisk] = useMutation<RiskRowDeleteMutation>(deleteRiskMutation);
@@ -98,9 +98,9 @@ export function RiskRow(props: RiskRowProps) {
             },
             onError(error) {
               toast({
-                title: __("Error"),
+                title: t("riskRow.messages.error"),
                 description: formatError(
-                  __("Failed to delete risk"),
+                  t("riskRow.errors.delete"),
                   error,
                 ),
                 variant: "error",
@@ -110,12 +110,7 @@ export function RiskRow(props: RiskRowProps) {
           });
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the risk \"%s\". This action cannot be undone.",
-          ),
-          risk.name,
-        ),
+        message: t("riskRow.deleteConfirmation", { name: risk.name }),
       },
     );
   };
@@ -132,14 +127,14 @@ export function RiskRow(props: RiskRowProps) {
       <Tr to={riskUrl}>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>
-        <Td>{getTreatment(__, risk.treatment)}</Td>
+        <Td>{t(`riskRow.treatments.${(risk.treatment ?? "UNKNOWN").toLowerCase()}`)}</Td>
         <Td>
           <SeverityBadge score={risk.inherentRiskScore} />
         </Td>
         <Td>
           <SeverityBadge score={risk.residualRiskScore} />
         </Td>
-        <Td>{risk.owner?.fullName || __("Unassigned")}</Td>
+        <Td>{risk.owner?.fullName || t("riskRow.unassigned")}</Td>
         {props.hasAnyAction && (
           <Td noLink className="text-end">
             <ActionDropdown>
@@ -148,7 +143,7 @@ export function RiskRow(props: RiskRowProps) {
                   icon={IconPencil}
                   onClick={() => formDialogRef.current?.open()}
                 >
-                  {__("Edit")}
+                  {t("riskRow.actions.edit")}
                 </DropdownItem>
               )}
 
@@ -158,7 +153,7 @@ export function RiskRow(props: RiskRowProps) {
                   icon={IconTrashCan}
                   onClick={onDelete}
                 >
-                  {__("Delete")}
+                  {t("riskRow.actions.delete")}
                 </DropdownItem>
               )}
             </ActionDropdown>

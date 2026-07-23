@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { faviconUrl } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -41,6 +40,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
@@ -106,7 +106,7 @@ type Props = {
 type SearchRef = RefObject<{ search: (v: string) => void } | null>;
 
 export function LinkedThirdPartiesDialog(props: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const searchRef: SearchRef = useRef(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [minHeight, setMinHeight] = useState(0);
@@ -115,12 +115,12 @@ export function LinkedThirdPartiesDialog(props: Props) {
     searchRef.current?.search(v);
   };
   return (
-    <Dialog trigger={props.children} title={__("Link third parties")}>
+    <Dialog trigger={props.children} title={t("linkedThirdPartiesDialog.title")}>
       <DialogContent>
         <div className="flex items-center gap-2 sticky top-0 py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
           <Input
             icon={IconMagnifyingGlass}
-            placeholder={__("Search third parties...")}
+            placeholder={t("linkedThirdPartiesDialog.searchPlaceholder")}
             onValueChange={onSearch}
           />
         </div>
@@ -204,7 +204,7 @@ function ThirdPartyRow(
     linkedIds: Set<string>;
   } & Props,
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const isLinked = props.linkedIds.has(props.thirdParty.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
   const IconComponent = isLinked ? IconTrashCan : IconPlusLarge;
@@ -230,7 +230,7 @@ function ThirdPartyRow(
         <span>
           <IconComponent size={16} />
           {" "}
-          {isLinked ? __("Unlink") : __("Link")}
+          {isLinked ? t("linkedThirdPartiesDialog.actions.unlink") : t("linkedThirdPartiesDialog.actions.link")}
         </span>
       </Button>
     </button>
