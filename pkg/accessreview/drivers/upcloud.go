@@ -116,10 +116,9 @@ func (d *UpCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 	records := make([]AccountRecord, 0, len(resp.Accounts.Account))
 
-	for _, a := range resp.Accounts.Account {
 		username := strings.TrimSpace(a.Username)
 		if username == "" {
-			continue
+			return nil, fmt.Errorf("upcloud returned an account with an empty username")
 		}
 
 		fullName := username
