@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import { Badge, IconChevronDown, IconChevronRight, Td, Tr } from "@probo/ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -70,6 +71,7 @@ export function SCIMEventListItem(props: {
 }) {
   const { fKey } = props;
   const [isExpanded, setIsExpanded] = useState(false);
+  const { i18n } = useTranslation();
 
   const event = useFragment<SCIMEventListItemFragment$key>(
     SCIMEventListItemFragment,
@@ -93,7 +95,7 @@ export function SCIMEventListItem(props: {
               : (
                   <IconChevronRight size={16} className="text-txt-secondary" />
                 )}
-            {formatDate(event.createdAt)}
+            {dateFormat(i18n.language, event.createdAt)}
           </div>
         </Td>
         <Td>{getMethodBadge(event.method)}</Td>

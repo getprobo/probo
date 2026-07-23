@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate, formatError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
+import { dateFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -67,7 +68,7 @@ export function OAuthTokenRow(props: {
   identityId: string;
 }) {
   const { tokenKey, identityId } = props;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
 
   const token = useFragment(fragment, tokenKey);
@@ -152,8 +153,8 @@ export function OAuthTokenRow(props: {
           )}
         </div>
       </Td>
-      <Td>{formatDate(token.createdAt)}</Td>
-      <Td>{formatDate(token.expiresAt)}</Td>
+      <Td>{dateFormat(i18n.language, token.createdAt)}</Td>
+      <Td>{dateFormat(i18n.language, token.expiresAt)}</Td>
       <Td>
         {token.canDelete && (
           <Dialog
