@@ -1351,6 +1351,156 @@ WHERE %s
 	return nil
 }
 
+func (v *ThirdParties) CountByBusinessFunctionID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	businessFunctionID gid.GID,
+) (int, error) {
+	q := `
+WITH vend AS (
+	SELECT
+		v.id,
+		v.tenant_id
+	FROM
+		third_parties v
+	INNER JOIN
+		business_function_third_parties bftp ON v.id = bftp.third_party_id
+	WHERE
+		bftp.business_function_id = @business_function_id
+)
+SELECT
+	COUNT(id)
+FROM
+	vend
+WHERE %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"business_function_id": businessFunctionID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count thirdParties: %w", err)
+	}
+
+	return count, nil
+}
+
+func (v *ThirdParties) LoadByBusinessFunctionID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	businessFunctionID gid.GID,
+	cursor *page.Cursor[ThirdPartyOrderField],
+) error {
+	q := `
+WITH vend AS (
+	SELECT
+		v.id,
+		v.tenant_id,
+		v.organization_id,
+		v.parent_third_party_id,
+		v.common_third_party_id,
+		v.name,
+		v.description,
+		v.category,
+		v.headquarter_address,
+		v.legal_name,
+		v.website_url,
+		v.privacy_policy_url,
+		v.service_level_agreement_url,
+		v.data_processing_agreement_url,
+		v.business_associate_agreement_url,
+		v.subprocessors_list_url,
+		v.certifications,
+		v.countries,
+		v.business_owner_profile_id,
+		v.security_owner_profile_id,
+		v.status_page_url,
+		v.terms_of_service_url,
+		v.security_page_url,
+		v.trust_page_url,
+		v.show_on_trust_center,
+		v.level,
+		v.vetting_status,
+		v.vetting_website_url,
+		v.vetting_procedure,
+		v.vetting_processing_started_at,
+		v.vetting_error_message,
+		v.created_at,
+		v.updated_at
+	FROM
+		third_parties v
+	INNER JOIN
+		business_function_third_parties bftp ON v.id = bftp.third_party_id
+	WHERE
+		bftp.business_function_id = @business_function_id
+)
+SELECT
+	id,
+	organization_id,
+	parent_third_party_id,
+	common_third_party_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	countries,
+	business_owner_profile_id,
+	security_owner_profile_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
+	created_at,
+	updated_at
+FROM
+	vend
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"business_function_id": businessFunctionID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query thirdParties: %w", err)
+	}
+
+	thirdParties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect thirdParties: %w", err)
+	}
+
+	*v = thirdParties
+
+	return nil
+}
+
 func (v *ThirdParties) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Querier,

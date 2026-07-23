@@ -412,6 +412,110 @@ WHERE
 	return nil
 }
 
+func (a *Assets) CountByBusinessFunctionID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	businessFunctionID gid.GID,
+) (int, error) {
+	q := `
+WITH a AS (
+	SELECT
+		assets.id,
+		assets.tenant_id
+	FROM
+		assets
+	INNER JOIN
+		business_function_assets bfa ON assets.id = bfa.asset_id
+	WHERE
+		bfa.business_function_id = @business_function_id
+)
+SELECT
+	COUNT(id)
+FROM
+	a
+WHERE %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"business_function_id": businessFunctionID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count assets: %w", err)
+	}
+
+	return count, nil
+}
+
+func (a *Assets) LoadByBusinessFunctionID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	businessFunctionID gid.GID,
+	cursor *page.Cursor[AssetOrderField],
+) error {
+	q := `
+WITH a AS (
+	SELECT
+		assets.id,
+		assets.tenant_id,
+		assets.name,
+		assets.organization_id,
+		assets.owner_profile_id,
+		assets.amount,
+		assets.asset_type,
+		assets.data_types_stored,
+		assets.created_at,
+		assets.updated_at
+	FROM
+		assets
+	INNER JOIN
+		business_function_assets bfa ON assets.id = bfa.asset_id
+	WHERE
+		bfa.business_function_id = @business_function_id
+)
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	created_at,
+	updated_at
+FROM
+	a
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"business_function_id": businessFunctionID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query assets: %w", err)
+	}
+
+	assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+	if err != nil {
+		return fmt.Errorf("cannot collect assets: %w", err)
+	}
+
+	*a = assets
+
+	return nil
+}
+
 func (a Asset) GetGeneratedDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

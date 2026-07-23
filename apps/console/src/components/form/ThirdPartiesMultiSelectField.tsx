@@ -114,13 +114,11 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
   const [isOpen, setIsOpen] = useState(false);
 
   const allThirdParties: ThirdParty[] = [...thirdParties];
-  if (props.disabled) {
-    selectedThirdParties.forEach((selectedThirdParty) => {
-      if (!allThirdParties.find(v => v.id === selectedThirdParty.id)) {
-        allThirdParties.push(selectedThirdParty);
-      }
-    });
-  }
+  selectedThirdParties.forEach((selectedThirdParty) => {
+    if (!allThirdParties.find(v => v.id === selectedThirdParty.id)) {
+      allThirdParties.push(selectedThirdParty);
+    }
+  });
 
   return (
     <>
@@ -191,6 +189,7 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                       <span>{thirdParty.name}</span>
                       {!props.disabled && (
                         <Button
+                          type="button"
                           variant="tertiary"
                           icon={IconCrossLargeX}
                           onClick={() => handleRemoveThirdParty(thirdParty.id)}

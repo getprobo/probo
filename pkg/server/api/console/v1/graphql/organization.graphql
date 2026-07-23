@@ -253,6 +253,17 @@ type Organization implements Node {
         orderBy: ObligationOrder
     ): ObligationConnection! @goField(forceResolver: true)
 
+    businessFunctionsDocument: Document @goField(forceResolver: true)
+
+    businessFunctions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: BusinessFunctionOrder
+        filter: BusinessFunctionFilter
+    ): BusinessFunctionConnection! @goField(forceResolver: true)
+
     processingActivities(
         first: Int
         after: CursorKey

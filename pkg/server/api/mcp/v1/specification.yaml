@@ -3803,6 +3803,306 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted obligation ID
 
+    BusinessFunctionClassification:
+      type: string
+      enum:
+        - CRITICAL
+        - IMPORTANT
+        - SECONDARY
+        - STANDARD
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BusinessFunctionClassification
+
+    BusinessFunctionOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - REFERENCE_ID
+        - NAME
+        - CLASSIFICATION
+        - MTD_MINUTES
+        - RTO_MINUTES
+        - RPO_MINUTES
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderField
+
+    BusinessFunctionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/BusinessFunctionOrderField"
+          description: Business function order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Business function order direction
+
+    BusinessFunction:
+      type: object
+      required:
+        - id
+        - organization_id
+        - reference_id
+        - name
+        - classification
+        - mtd_minutes
+        - rto_minutes
+        - rpo_minutes
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        reference_id:
+          type: string
+          description: Reference ID
+        name:
+          type: string
+          description: Name
+        classification:
+          $ref: "#/components/schemas/BusinessFunctionClassification"
+          description: Classification
+        mtd_minutes:
+          type: integer
+          description: Maximum tolerable downtime in minutes
+        rto_minutes:
+          type: integer
+          description: Recovery time objective in minutes
+        rpo_minutes:
+          type: integer
+          description: Recovery point objective in minutes
+        impact_tolerance:
+          type:
+            - string
+            - "null"
+          description: Impact tolerance
+        notes:
+          type:
+            - string
+            - "null"
+          description: Notes
+        owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListBusinessFunctionsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/BusinessFunctionOrderBy"
+          description: Business function order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            classification:
+              anyOf:
+                - $ref: "#/components/schemas/BusinessFunctionClassification"
+                - type: "null"
+              description: Filter by classification. Defaults to null which returns all classifications.
+            owner_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by owner profile ID. Defaults to null which returns all owners.
+            cif_only:
+              type:
+                - boolean
+                - "null"
+              description: When true, return only critical and important business functions.
+
+    ListBusinessFunctionsOutput:
+      type: object
+      required:
+        - business_functions
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        business_functions:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessFunction"
+
+    GetBusinessFunctionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+
+    GetBusinessFunctionOutput:
+      type: object
+      required:
+        - business_function
+      properties:
+        business_function:
+          $ref: "#/components/schemas/BusinessFunction"
+
+    AddBusinessFunctionInput:
+      type: object
+      required:
+        - organization_id
+        - reference_id
+        - name
+        - classification
+        - mtd_minutes
+        - rto_minutes
+        - rpo_minutes
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        reference_id:
+          type: string
+          description: Reference ID
+        name:
+          type: string
+          description: Name
+        classification:
+          $ref: "#/components/schemas/BusinessFunctionClassification"
+          description: Classification
+        mtd_minutes:
+          type: integer
+          description: Maximum tolerable downtime in minutes
+        rto_minutes:
+          type: integer
+          description: Recovery time objective in minutes
+        rpo_minutes:
+          type: integer
+          description: Recovery point objective in minutes
+        impact_tolerance:
+          type: string
+          description: Impact tolerance
+        notes:
+          type: string
+          description: Notes
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        asset_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Asset IDs
+        third_party_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Third party IDs
+
+    AddBusinessFunctionOutput:
+      type: object
+      required:
+        - business_function
+      properties:
+        business_function:
+          $ref: "#/components/schemas/BusinessFunction"
+
+    UpdateBusinessFunctionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+        reference_id:
+          type: string
+          description: Reference ID
+        name:
+          type: string
+          description: Name
+        classification:
+          $ref: "#/components/schemas/BusinessFunctionClassification"
+          description: Classification
+        mtd_minutes:
+          type: integer
+          description: Maximum tolerable downtime in minutes
+        rto_minutes:
+          type: integer
+          description: Recovery time objective in minutes
+        rpo_minutes:
+          type: integer
+          description: Recovery point objective in minutes
+        impact_tolerance:
+          type: ["string", "null"]
+          description: Impact tolerance
+          go.probo.inc/mcpgen/omittable: true
+        notes:
+          type: ["string", "null"]
+          description: Notes
+          go.probo.inc/mcpgen/omittable: true
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        asset_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Asset IDs
+        third_party_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Third party IDs
+
+    UpdateBusinessFunctionOutput:
+      type: object
+      required:
+        - business_function
+      properties:
+        business_function:
+          $ref: "#/components/schemas/BusinessFunction"
+
+    DeleteBusinessFunctionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+
+    DeleteBusinessFunctionOutput:
+      type: object
+      required:
+        - deleted_business_function_id
+      properties:
+        deleted_business_function_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted business function ID
+
     ProcessingActivityRole:
       type: string
       enum:
@@ -7108,6 +7408,37 @@ components:
           description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishObligationListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishBusinessFunctionListInput:
+      type: object
+      required:
+        - organization_id
+        - minor
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+
+    PublishBusinessFunctionListOutput:
       type: object
       required:
         - document_id
@@ -13068,6 +13399,49 @@ tools:
       $ref: "#/components/schemas/DeleteObligationInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteObligationOutput"
+  - name: listBusinessFunctions
+    description: List all business functions for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListBusinessFunctionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListBusinessFunctionsOutput"
+  - name: getBusinessFunction
+    description: Get a business function by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetBusinessFunctionOutput"
+  - name: addBusinessFunction
+    description: Add a new business function to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddBusinessFunctionOutput"
+  - name: updateBusinessFunction
+    description: Update an existing business function
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateBusinessFunctionOutput"
+  - name: deleteBusinessFunction
+    description: Delete a business function
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteBusinessFunctionOutput"
   - name: listProcessingActivities
     description: List all processing activities for the organization
     hints:
@@ -13629,6 +14003,14 @@ tools:
       $ref: "#/components/schemas/PublishObligationListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishObligationListOutput"
+  - name: publishBusinessFunctionList
+    description: Publish the business function register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishBusinessFunctionListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishBusinessFunctionListOutput"
   - name: publishProcessingActivityList
     description: Publish the processing activity register for an organization as a document. If a document already exists, a new version is created.
     hints:

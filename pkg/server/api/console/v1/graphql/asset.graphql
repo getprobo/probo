@@ -11,6 +11,8 @@ enum AssetOrderField
         )
     AMOUNT
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldAmount")
+    NAME
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldName")
 }
 
 enum DatumOrderField

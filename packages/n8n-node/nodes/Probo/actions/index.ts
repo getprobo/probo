@@ -23,6 +23,7 @@ import * as accessReview from './accessReview';
 import * as asset from './asset';
 import * as audit from './audit';
 import * as auditLog from './auditLog';
+import * as businessFunction from './businessFunction';
 import * as control from './control';
 import * as cookieBanner from './cookieBanner';
 import * as cookieCategory from './cookieCategory';
@@ -67,6 +68,7 @@ export const resources: Record<string, ResourceModule> = {
 	asset: asset as ResourceModule,
 	audit: audit as ResourceModule,
 	auditLog: auditLog as ResourceModule,
+	businessFunction: businessFunction as ResourceModule,
 	control: control as ResourceModule,
 	cookieBanner: cookieBanner as ResourceModule,
 	cookieCategory: cookieCategory as ResourceModule,
