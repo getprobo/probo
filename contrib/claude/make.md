@@ -14,8 +14,10 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | `make test-short`            | Short tests only                                                                                       |
 | `make test-bench`            | Run benchmarks                                                                                         |
 | `make test-e2e`              | Run console end-to-end tests (requires `bin/probod`)                                                   |
-| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `lint-js`                                   |
+| `make lint`                  | Run Go + JS linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `lint-js`                               |
+| `make lint-shell`            | Opt-in: lint first-party shell scripts (`shfmt -d` + `shellcheck`; CI runs this)                       |
 | `make fmt`                   | Format Go code (`go fmt ./...`)                                                                        |
+| `make fmt-shell`             | Opt-in: format first-party shell scripts with `shfmt`                                                  |
 | `make clean`                 | Remove all build artifacts, `node_modules`, generated files, and coverage                              |
 | `make help`                  | List targets with `##` doc comments                                                                    |
 
@@ -81,3 +83,6 @@ Individual codegen is driven by `go generate`:
 | `GOOS`               | (host)                                    | Cross-compile target OS                    |
 | `TEST_FLAGS`         | `-race -cover -coverprofile=coverage.out` | Extra flags passed to `go test`            |
 | `DOCKER_BUILD_FLAGS` | (empty)                                   | Extra flags for `docker build`             |
+| `SHELLCHECKCMD`      | `shellcheck`                              | ShellCheck binary                          |
+| `SHFMTCMD`           | `shfmt`                                   | shfmt binary                               |
+| `SHFMTFLAGS`         | `-i 2 -ci -bn`                            | Flags passed to `shfmt`                    |

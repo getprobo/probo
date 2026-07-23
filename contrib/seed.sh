@@ -19,6 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# GraphQL documents are intentional single-quoted literals (no expansion).
+# shellcheck disable=SC2016
+
 set -euo pipefail
 
 BASE_URL="${PROBO_SEED_URL:-http://localhost:8080}"
@@ -58,7 +61,8 @@ check_error() {
 }
 
 prb_api() {
-  local context="$1"; shift
+  local context="$1"
+  shift
   local resp
   resp=$($PRB api "$@")
   check_error "$resp" "$context"
@@ -66,13 +70,17 @@ prb_api() {
 }
 
 curl -sf -o /dev/null "$BASE_URL/healthz" \
-  || { echo "ERROR: API at $BASE_URL is not available" >&2; exit 1; }
+  || {
+    echo "ERROR: API at $BASE_URL is not available" >&2
+    exit 1
+  }
 
 echo "==> Bootstrapping user and organization..."
-vars=$(jo input="$(jo \
-  email="$EMAIL" \
-  password="$PASSWORD" \
-  fullName="$FULL_NAME" \
+vars=$(jo input="$(
+  jo \
+    email="$EMAIL" \
+    password="$PASSWORD" \
+    fullName="$FULL_NAME"
 )")
 resp=$(gql_connect '
   mutation($input: SignUpInput!) {
@@ -96,9 +104,10 @@ check_error "$resp" "createOrganization"
 ORG_ID=$(echo "$resp" | jq -r '.data.createOrganization.organization.id')
 echo "  Created organization $ORG_NAME ($ORG_ID)"
 
-vars=$(jo input="$(jo \
-  organizationId="$ORG_ID" \
-  continue="$BASE_URL" \
+vars=$(jo input="$(
+  jo \
+    organizationId="$ORG_ID" \
+    continue="$BASE_URL"
 )")
 resp=$(gql_connect '
   mutation($input: AssumeOrganizationSessionInput!) {
@@ -116,9 +125,10 @@ echo "  Assumed organization session"
 
 EXPIRES_AT=$(date -u -v+1y +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
   || date -u -d "+1 year" +"%Y-%m-%dT%H:%M:%SZ")
-vars=$(jo input="$(jo \
-  name=seed \
-  expiresAt="$EXPIRES_AT" \
+vars=$(jo input="$(
+  jo \
+    name=seed \
+    expiresAt="$EXPIRES_AT"
 )")
 resp=$(gql_connect '
   mutation($input: CreatePersonalAPIKeyInput!) {
@@ -146,14 +156,15 @@ create_person() {
   local email="$3"
 
   local vars
-  vars=$(jo input="$(jo \
-    organizationId="$ORG_ID" \
-    emailAddress="$email" \
-    fullName="$full_name" \
-    role=EMPLOYEE \
-    kind=EMPLOYEE \
-    additionalEmailAddresses="$(jo -a < /dev/null)" \
-    position="$position" \
+  vars=$(jo input="$(
+    jo \
+      organizationId="$ORG_ID" \
+      emailAddress="$email" \
+      fullName="$full_name" \
+      role=EMPLOYEE \
+      kind=EMPLOYEE \
+      additionalEmailAddresses="$(jo -a </dev/null)" \
+      position="$position"
   )")
   resp=$(gql_connect '
     mutation($input: CreateUserInput!) {
@@ -209,10 +220,11 @@ create_framework() {
         }
       }
     }
-  ' -f input="$(jo \
-    organizationId="$ORG_ID" \
-    name="$name" \
-    description="$desc" \
+  ' -f input="$(
+    jo \
+      organizationId="$ORG_ID" \
+      name="$name" \
+      description="$desc"
   )")
   local id
   id=$(echo "$resp" | jq -r '.data.createFramework.frameworkEdge.node.id // empty')
@@ -233,7 +245,7 @@ create_control() {
     --framework "$framework_id" \
     --section-title "$section" \
     --name "$name" \
-    --description "$desc" > /dev/null
+    --description "$desc" >/dev/null
 }
 
 # ISO 27001:2022
@@ -447,7 +459,7 @@ create_risk() {
     --category "$category" \
     --treatment "$treatment" \
     --inherent-likelihood "$likelihood" \
-    --inherent-impact "$impact" > /dev/null
+    --inherent-impact "$impact" >/dev/null
 }
 
 create_risk \
@@ -576,11 +588,12 @@ create_third_party() {
         }
       }
     }
-  ' -f input="$(jo \
+  ' -f input="$(
+    jo \
       organizationId="$ORG_ID" \
       name="$name" \
-      description="$description" \
-    )")
+      description="$description"
+  )")
   local id
   id=$(echo "$resp" | jq -r '.data.createThirdParty.thirdPartyEdge.node.id // empty')
   if [ -z "$id" ]; then
@@ -647,11 +660,12 @@ create_measure() {
         }
       }
     }
-  ' -f input="$(jo \
+  ' -f input="$(
+    jo \
       organizationId="$ORG_ID" \
       name="$name" \
-      category="$category" \
-    )")
+      category="$category"
+  )")
   local id
   id=$(echo "$resp" | jq -r '.data.createMeasure.measureEdge.node.id // empty')
   if [ -z "$id" ]; then
