@@ -110,6 +110,7 @@ type (
 		WebhookSubscriptions                  *WebhookSubscriptionService
 		Findings                              *FindingService
 		Obligations                           *ObligationService
+		BusinessFunctions                     *BusinessFunctionService
 		RightsRequests                        *RightsRequestService
 		ProcessingActivities                  *ProcessingActivityService
 		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
@@ -223,6 +224,7 @@ func NewService(
 	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}
 	svc.Findings = &FindingService{svc: svc}
 	svc.Obligations = &ObligationService{svc: svc}
+	svc.BusinessFunctions = &BusinessFunctionService{svc: svc}
 	svc.RightsRequests = &RightsRequestService{svc: svc}
 	svc.ProcessingActivities = &ProcessingActivityService{svc: svc}
 	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}

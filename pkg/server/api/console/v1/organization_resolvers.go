@@ -880,6 +880,80 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 	return types.NewObligationConnection(page, r, obj.ID), nil
 }
 
+// BusinessFunctionsDocument is the resolver for the businessFunctionsDocument field.
+func (r *organizationResolver) BusinessFunctionsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	businessFunctionDocumentID, err := r.probo.GeneratedDocuments.GetBusinessFunctionsDocumentID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get business function list document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if businessFunctionDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := r.probo.Documents.Get(ctx, scope, *businessFunctionDocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load business function list document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
+// BusinessFunctions is the resolver for the businessFunctions field.
+func (r *organizationResolver) BusinessFunctions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.BusinessFunctionOrderBy, filter *types.BusinessFunctionFilter) (*types.BusinessFunctionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionBusinessFunctionList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.BusinessFunctionOrderField]{
+		Field:     coredata.BusinessFunctionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.BusinessFunctionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var (
+		classification *coredata.BusinessFunctionClassification
+		ownerID        *gid.GID
+		cifOnly        *bool
+	)
+	if filter != nil {
+		classification = filter.Classification
+		ownerID = filter.OwnerID
+		cifOnly = filter.CifOnly
+	}
+
+	businessFunctionFilter := coredata.NewBusinessFunctionFilter(classification, ownerID, cifOnly)
+
+	pageResult, err := r.probo.BusinessFunctions.ListForOrganizationID(ctx, scope, obj.ID, cursor, businessFunctionFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization business functions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewBusinessFunctionConnection(pageResult, r, obj.ID, filter), nil
+}
+
 // ProcessingActivities is the resolver for the processingActivities field.
 func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy) (*types.ProcessingActivityConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList)

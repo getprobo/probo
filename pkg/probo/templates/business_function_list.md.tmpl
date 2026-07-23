@@ -1,0 +1,28 @@
+# 1. Purpose
+
+This register is the authoritative record of business functions classified as critical or important functions (CIFs) within the meaning of DORA, together with their recovery objectives and impact tolerance levels. Values are derived from the Business Impact Analysis (BIA).
+
+---
+
+# 2. Business Function List
+
+| Reference | Function | Classification | MTD | RTO | RPO | Impact Tolerance | Notes | Owner |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+{{ range .Rows }}| {{ .ReferenceID }} | {{ .Name }} | {{ .Classification }} | {{ .MTD }} | {{ .RTO }} | {{ .RPO }} | {{ .ImpactTolerance }} | {{ .Notes }} | {{ .Owner }} |
+{{ end }}
+---
+
+# 3. Definitions
+
+### Classification
+
+- **Critical:** Irreversible impact within 24 hours (DORA CIF perimeter).
+- **Important:** Irreversible impact within 3 days (DORA CIF perimeter).
+- **Secondary:** Irreversible impact within 1 week (outside DORA CIF perimeter).
+- **Standard:** Irreversible impact beyond 1 week (outside DORA CIF perimeter).
+
+### Recovery objectives
+
+- **MTD:** Maximum Tolerable Downtime — earliest horizon at which impact becomes irreversible.
+- **RTO:** Recovery Time Objective — recovery target set shorter than the MTD.
+- **RPO:** Recovery Point Objective — tolerable data-loss window.

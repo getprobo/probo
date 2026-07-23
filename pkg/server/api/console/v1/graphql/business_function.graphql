@@ -1,0 +1,183 @@
+enum BusinessFunctionClassification
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.BusinessFunctionClassification") {
+    CRITICAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionClassificationCritical"
+        )
+    IMPORTANT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionClassificationImportant"
+        )
+    SECONDARY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionClassificationSecondary"
+        )
+    STANDARD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionClassificationStandard"
+        )
+}
+
+enum BusinessFunctionOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderFieldCreatedAt"
+        )
+    REFERENCE_ID
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderFieldReferenceID"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderFieldName"
+        )
+    CLASSIFICATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderFieldClassification"
+        )
+    MTD_MINUTES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderFieldMTDMinutes"
+        )
+    RTO_MINUTES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderFieldRTOMinutes"
+        )
+    RPO_MINUTES
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderFieldRPOMinutes"
+        )
+}
+
+input BusinessFunctionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.BusinessFunctionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: BusinessFunctionOrderField!
+}
+
+input BusinessFunctionFilter {
+    classification: BusinessFunctionClassification
+    ownerId: ID
+    cifOnly: Boolean
+}
+
+type BusinessFunction implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    referenceId: String!
+    name: String!
+    classification: BusinessFunctionClassification!
+    mtdMinutes: Int!
+    rtoMinutes: Int!
+    rpoMinutes: Int!
+    impactTolerance: String
+    notes: String
+    owner: Profile @goField(forceResolver: true)
+    assets(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AssetOrder
+    ): AssetConnection! @goField(forceResolver: true)
+    thirdParties(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type BusinessFunctionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.BusinessFunctionConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [BusinessFunctionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type BusinessFunctionEdge {
+    cursor: CursorKey!
+    node: BusinessFunction!
+}
+
+extend type Mutation {
+    createBusinessFunction(
+        input: CreateBusinessFunctionInput!
+    ): CreateBusinessFunctionPayload!
+    updateBusinessFunction(
+        input: UpdateBusinessFunctionInput!
+    ): UpdateBusinessFunctionPayload!
+    deleteBusinessFunction(
+        input: DeleteBusinessFunctionInput!
+    ): DeleteBusinessFunctionPayload!
+    publishBusinessFunctionList(
+        input: PublishBusinessFunctionListInput!
+    ): PublishBusinessFunctionListPayload!
+}
+
+input PublishBusinessFunctionListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+    minor: Boolean!
+}
+
+type PublishBusinessFunctionListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
+}
+
+input CreateBusinessFunctionInput {
+    organizationId: ID!
+    referenceId: String!
+    name: String!
+    classification: BusinessFunctionClassification!
+    mtdMinutes: Int!
+    rtoMinutes: Int!
+    rpoMinutes: Int!
+    impactTolerance: String
+    notes: String
+    ownerId: ID
+    assetIds: [ID!]
+    thirdPartyIds: [ID!]
+}
+
+input UpdateBusinessFunctionInput {
+    id: ID!
+    referenceId: String
+    name: String
+    classification: BusinessFunctionClassification
+    mtdMinutes: Int
+    rtoMinutes: Int
+    rpoMinutes: Int
+    impactTolerance: String @goField(omittable: true)
+    notes: String @goField(omittable: true)
+    ownerId: ID @goField(omittable: true)
+    assetIds: [ID!]
+    thirdPartyIds: [ID!]
+}
+
+input DeleteBusinessFunctionInput {
+    businessFunctionId: ID!
+}
+
+type CreateBusinessFunctionPayload {
+    businessFunctionEdge: BusinessFunctionEdge!
+}
+
+type UpdateBusinessFunctionPayload {
+    businessFunction: BusinessFunction!
+}
+
+type DeleteBusinessFunctionPayload {
+    deletedBusinessFunctionId: ID!
+}

@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
+	businessfunction "go.probo.inc/probo/pkg/cmd/businessfunction"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/completion"
 	complianceportal "go.probo.inc/probo/pkg/cmd/compliance-portal"
@@ -103,6 +104,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))
+	cmd.AddCommand(businessfunction.NewCmdBusinessFunction(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f))
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	cmd.AddCommand(consentrecord.NewCmdConsentRecord(f))
