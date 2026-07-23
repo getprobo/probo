@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/dnsverify"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -227,7 +228,7 @@ func (v *SAMLDomainVerifier) checkDNSTXTRecord(ctx context.Context, emailDomain 
 
 	for _, answer := range resp.Answer {
 		txt, ok := answer.(*dns.TXT)
-		if !ok {
+		if !ok || !dnsverify.EqualNames(txt.Hdr.Name, emailDomain) {
 			continue
 		}
 

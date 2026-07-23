@@ -31,6 +31,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/dnsverify"
 	"go.probo.inc/probo/pkg/gid"
 	"golang.org/x/crypto/acme"
 )
@@ -345,15 +346,8 @@ func (h *beginChallengeHandler) loadSkipDNSChecks(ctx context.Context, hostname 
 }
 
 func (h *beginChallengeHandler) checkDNSConfiguration(ctx context.Context, hostname string) error {
-	customerFQDN := hostname
-	if !strings.HasSuffix(customerFQDN, ".") {
-		customerFQDN = customerFQDN + "."
-	}
-
-	expectedFQDN := h.cnameTarget
-	if !strings.HasSuffix(expectedFQDN, ".") {
-		expectedFQDN = expectedFQDN + "."
-	}
+	customerFQDN := dnsverify.ToFQDN(hostname)
+	expectedFQDN := dnsverify.ToFQDN(h.cnameTarget)
 
 	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
 	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: customerFQDN, Class: dns.ClassINET}}}
@@ -381,7 +375,15 @@ func (h *beginChallengeHandler) checkDNSConfiguration(ctx context.Context, hostn
 		return fmt.Errorf("first answer is not a cname record for domain %q", hostname)
 	}
 
-	if !strings.EqualFold(expectedFQDN, resolvedRecord.Target) {
+	if !dnsverify.EqualNames(resolvedRecord.Hdr.Name, customerFQDN) {
+		return fmt.Errorf(
+			"cname owner mismatch: domain %q has record owned by %q",
+			hostname,
+			strings.TrimSuffix(resolvedRecord.Hdr.Name, "."),
+		)
+	}
+
+	if !dnsverify.EqualNames(resolvedRecord.Target, expectedFQDN) {
 		return fmt.Errorf(
 			"cname target mismatch: domain %q resolves to %q, expected %q",
 			hostname,
@@ -394,56 +396,65 @@ func (h *beginChallengeHandler) checkDNSConfiguration(ctx context.Context, hostn
 }
 
 func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname string) error {
-	fqdn := hostname
-	if !strings.HasSuffix(fqdn, ".") {
-		fqdn = fqdn + "."
+	checkNames, err := dnsverify.CheckNames(hostname)
+	if err != nil {
+		return err
 	}
-
-	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
-	msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
 
 	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
 	defer cancel()
 
 	client := dns.NewClient()
 
-	resp, _, err := client.Exchange(
-		dnsCtx,
-		msg,
-		"udp",
-		h.resolverAddr,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
-	}
+	for _, checkName := range checkNames {
+		fqdn := dnsverify.ToFQDN(checkName)
 
-	var caaRecords []*dns.CAA
+		msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+		msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
 
-	for _, rr := range resp.Answer {
-		if caa, ok := rr.(*dns.CAA); ok {
+		resp, _, err := client.Exchange(
+			dnsCtx,
+			msg,
+			"udp",
+			h.resolverAddr,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
+		}
+
+		var caaRecords []*dns.CAA
+
+		for _, rr := range resp.Answer {
+			caa, ok := rr.(*dns.CAA)
+			if !ok || !dnsverify.EqualNames(caa.Hdr.Name, fqdn) {
+				continue
+			}
+
 			caaRecords = append(caaRecords, caa)
 		}
-	}
 
-	if len(caaRecords) == 0 {
-		return nil
-	}
+		if len(caaRecords) == 0 {
+			continue
+		}
 
-	for _, caa := range caaRecords {
-		if caa.Tag == "issue" {
-			issuer, _, _ := strings.Cut(caa.Value, ";")
-			if strings.EqualFold(strings.TrimSpace(issuer), h.caaIssuerDomain) {
-				return nil
+		for _, caa := range caaRecords {
+			if caa.Tag == "issue" {
+				issuer, _, _ := strings.Cut(caa.Value, ";")
+				if strings.EqualFold(strings.TrimSpace(issuer), h.caaIssuerDomain) {
+					return nil
+				}
 			}
 		}
+
+		return fmt.Errorf(
+			"%w: domain %q by %q",
+			ErrCAANotPermitted,
+			hostname,
+			h.caaIssuerDomain,
+		)
 	}
 
-	return fmt.Errorf(
-		"%w: domain %q by %q",
-		ErrCAANotPermitted,
-		hostname,
-		h.caaIssuerDomain,
-	)
+	return nil
 }
 
 func (h *beginChallengeHandler) skipsDNSChecks(
