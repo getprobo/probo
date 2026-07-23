@@ -1,0 +1,132 @@
+# Hand-authored fixture for the UpCloud account-listing flow: GET
+# /1.3/account/list returns the main account plus its sub-accounts in one
+# call, then GET /1.3/account/details/{username} is called per account to
+# enrich with name/email. my_temp_account's details call 404s to exercise
+# the driver's fallback to list-only fields. Synthetic usernames only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.upcloud.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.upcloud.com/1.3/account/list
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"accounts":{"account":[{"labels":[],"roles":{"role":["technical"]},"type":"mymain","username":"test"},{"labels":[],"roles":{"role":["technical"]},"type":"sub","username":"my_sub_account"},{"labels":[{"key":"to_be_removed","value":"after 2022-31-12"}],"roles":{"role":[]},"type":"sub","username":"my_temp_account"},{"labels":[],"roles":{"role":["billing"]},"type":"sub","username":"my_billing_account"}]}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 110ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.upcloud.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.upcloud.com/1.3/account/details/test
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"account":{"main_account":"","type":"mymain","username":"test","first_name":"Main","last_name":"Account","email":"main@example.com","roles":{"role":["technical"]}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 90ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.upcloud.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.upcloud.com/1.3/account/details/my_sub_account
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"account":{"main_account":"test","type":"sub","username":"my_sub_account","first_name":"Sub","last_name":"Account","email":"sub@example.com","roles":{"role":["technical"]}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 90ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.upcloud.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.upcloud.com/1.3/account/details/my_temp_account
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"error":{"error_code":"ACCOUNT_NOT_FOUND","error_message":"Account not found"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 404 Not Found
+        code: 404
+        duration: 90ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.upcloud.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.upcloud.com/1.3/account/details/my_billing_account
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"account":{"main_account":"test","type":"sub","username":"my_billing_account","first_name":"Billing","last_name":"Account","email":"billing@example.com","roles":{"role":["billing"]}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 90ms

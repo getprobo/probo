@@ -99,6 +99,8 @@ enum ConnectorProvider
     RAILWAY
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRailway")
     CRISP @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCrisp")
+    UPCLOUD
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUpCloud")
 }
 
 type ConnectorProviderInfo {

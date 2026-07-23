@@ -86,6 +86,7 @@ const (
 	ConnectorProviderYousign    ConnectorProvider = "YOUSIGN"
 	ConnectorProviderRailway    ConnectorProvider = "RAILWAY"
 	ConnectorProviderCrisp      ConnectorProvider = "CRISP"
+	ConnectorProviderUpCloud    ConnectorProvider = "UPCLOUD"
 )
 
 var (
@@ -150,6 +151,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderYousign,
 		ConnectorProviderRailway,
 		ConnectorProviderCrisp,
+		ConnectorProviderUpCloud,
 	}
 }
 
@@ -210,7 +212,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderScaleway,
 		ConnectorProviderYousign,
 		ConnectorProviderRailway,
-		ConnectorProviderCrisp:
+		ConnectorProviderCrisp,
+		ConnectorProviderUpCloud:
 		return true
 	}
 
