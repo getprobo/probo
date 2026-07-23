@@ -1,0 +1,5 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+# SPDX-License-Identifier: MIT
+
+# Prefer shebang-detected dialect (sh vs bash).
+external-sources=false

@@ -16,7 +16,7 @@ schema_body=$(mktemp)
 trap 'rm -f "$mutation_fields" "$schema_body"' EXIT
 
 process_file() {
-    awk -v mf="$mutation_fields" '
+  awk -v mf="$mutation_fields" '
     /^type Mutation$/ { next }
     /^(extend )?type Mutation \{/ { skip=1; depth=1; next }
     skip {
@@ -29,16 +29,16 @@ process_file() {
 }
 
 {
-    process_file "$base"
-    for f in "$graphql_dir"/*.graphql; do
-        [ "$f" = "$base" ] && continue
-        process_file "$f"
-    done
-} > "$schema_body"
+  process_file "$base"
+  for f in "$graphql_dir"/*.graphql; do
+    [ "$f" = "$base" ] && continue
+    process_file "$f"
+  done
+} >"$schema_body"
 
 {
-    cat "$schema_body"
-    printf '\ntype Mutation {\n'
-    cat "$mutation_fields"
-    printf '}\n'
-} > "$output"
+  cat "$schema_body"
+  printf '\ntype Mutation {\n'
+  cat "$mutation_fields"
+  printf '}\n'
+} >"$output"

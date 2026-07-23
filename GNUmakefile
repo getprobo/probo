@@ -16,6 +16,14 @@ SYFT ?=	syft
 TAIL ?= tail
 ECHO ?= echo
 GOLINTCMD ?= golangci-lint
+SHELLCHECKCMD ?= shellcheck
+SHFMTCMD ?= shfmt
+SHFMTFLAGS ?= -i 2 -ci -bn
+
+# First-party shell scripts (exclude vendored trees).
+SHELL_SCRIPTS := $(shell find . \
+	\( -path ./node_modules -o -path ./.git -o -path './.*/*' \) -prune -o \
+	-name '*.sh' -print | sort)
 
 DOCKER_BUILD_FLAGS?=
 DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
@@ -109,6 +117,15 @@ lint-go: vet go-fmt go-fix go-lint
 .PHONY: lint-js
 lint-js:
 	$(NPM) run lint
+
+.PHONY: lint-shell
+lint-shell: ## Lint first-party shell scripts (shfmt + shellcheck)
+	@if [ -z "$(SHELL_SCRIPTS)" ]; then \
+		echo "error: no shell scripts found"; \
+		exit 1; \
+	fi
+	$(SHFMTCMD) -d $(SHFMTFLAGS) $(SHELL_SCRIPTS)
+	$(SHELLCHECKCMD) $(SHELL_SCRIPTS)
 
 .PHONY: vet
 vet: generate embed
@@ -381,6 +398,14 @@ fmt: fmt-go ## Format Go code
 .PHONY: fmt-go
 fmt-go: ## Format Go code
 	go fmt ./...
+
+.PHONY: fmt-shell
+fmt-shell: ## Format first-party shell scripts with shfmt
+	@if [ -z "$(SHELL_SCRIPTS)" ]; then \
+		echo "error: no shell scripts found"; \
+		exit 1; \
+	fi
+	$(SHFMTCMD) -w $(SHFMTFLAGS) $(SHELL_SCRIPTS)
 
 .PHONY: clean
 clean: ## Clean the project (node_modules and build artifacts)
