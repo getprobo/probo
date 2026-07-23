@@ -126,6 +126,10 @@ func (d *UpCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 		details, err := d.fetchAccountDetails(ctx, username)
 		if err != nil {
+			if ctx.Err() != nil {
+				return nil, fmt.Errorf("cannot list upcloud accounts: %w", ctx.Err())
+			}
+
 			d.logger.WarnCtx(ctx, "cannot fetch upcloud account details, using list fields only", log.Error(err))
 		} else {
 			if name := strings.TrimSpace(details.FirstName + " " + details.LastName); name != "" {

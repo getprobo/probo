@@ -22,7 +22,11 @@ package drivers
 
 import (
 	"context"
+	"errors"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -76,4 +80,45 @@ func TestUpCloudDriver(t *testing.T) {
 	assert.Equal(t, "billing@example.com", billing.Email)
 	assert.Equal(t, []string{"billing"}, billing.Roles)
 	assert.False(t, billing.IsAdmin)
+}
+
+// upcloudRoundTripFunc adapts a function to http.RoundTripper.
+type upcloudRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f upcloudRoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+// TestUpCloudDriverContextCancellation verifies that a context canceled
+// mid-run aborts ListAccounts with the cancellation error instead of being
+// swallowed as a best-effort per-account detail failure, which would let a
+// caller mistake a truncated run for a complete, successful sync.
+func TestUpCloudDriverContextCancellation(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	client := &http.Client{
+		Transport: upcloudRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+			if strings.Contains(req.URL.Path, "/account/details/") {
+				cancel()
+
+				return nil, ctx.Err()
+			}
+
+			body := `{"accounts":{"account":[{"labels":[],"roles":{"role":["technical"]},"type":"mymain","username":"test"}]}}`
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}, nil
+		}),
+	}
+
+	driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")))
+	records, err := driver.ListAccounts(ctx)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, context.Canceled))
+	assert.Nil(t, records)
 }
