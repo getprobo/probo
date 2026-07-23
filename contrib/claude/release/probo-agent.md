@@ -36,8 +36,8 @@ and FreeBSD builds stay pure Go (no tray).
 
 CI builds binaries for linux, windows, and freebsd (amd64/arm64) on
 Linux runners, and builds **CGO-enabled** darwin archives plus a
-signed/notarized **universal** `.pkg` on a macOS runner. The GitHub
-Release includes those archives, `probo-agent_*_darwin_universal.pkg`,
+signed/notarized fat `.pkg` on a macOS runner. The GitHub
+Release includes those archives, `probo-agent_*_darwin.pkg`,
 `install.sh`, signed checksums, SBOM, and build attestations. The agent
 auto-update path downloads the matching archive plus `checksums.txt` and
 verifies the cosign bundle before installing.
@@ -53,15 +53,16 @@ and the `.pkg` are built on macOS with `CGO_ENABLED=1`.
 
 Release and local builds use
 `cmd/probo-agent/installer/macos/build.sh` (requires macOS, a
-pre-built binary — preferably universal via `lipo` — and the Swift
-toolchain). **Signing is mandatory:** `CODESIGN_IDENTITY` and
-`APPLE_TEAM_ID` must be set. The script compiles `Probo Agent.app`
-(the headless `probo://` URL handler + privileged helper) from
-`cmd/probo-agent/installer/macos/enroll-ui/`, signs the binary and
-app, optionally signs the product with `INSTALLER_IDENTITY`, and
-notarizes/staples when `APPLE_ID` and `APPLE_ID_PASSWORD` are set
-(password is stored into a keychain profile; submits use
-`--keychain-profile` so the secret is not on `notarytool submit` argv).
+pre-built fat binary via `lipo`, and the Swift toolchain).
+**Signing is mandatory:** `CODESIGN_IDENTITY` and `APPLE_TEAM_ID`
+must be set. The script compiles `Probo Agent.app` (the headless
+`probo://` URL handler + privileged helper) from
+`cmd/probo-agent/installer/macos/enroll-ui/`, signs nested Mach-Os
+then the app bundle, optionally signs the product with
+`INSTALLER_IDENTITY`, and notarizes/staples when `APPLE_ID` and
+`APPLE_ID_PASSWORD` are set (password is stored into a keychain
+profile; submits use `--keychain-profile` so the secret is not on
+`notarytool submit` argv).
 
 There is no unsigned PKG path and no osascript elevation fallback.
 Local testing of browser enrollment requires a Developer ID–signed
@@ -78,7 +79,6 @@ GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -o dist/probo-agent_amd64 ./cmd/
 lipo -create dist/probo-agent_arm64 dist/probo-agent_amd64 -output dist/probo-agent_universal
 cmd/probo-agent/installer/macos/build.sh \
   --binary dist/probo-agent_universal \
-  --arch universal \
   --version "$(cat cmd/probo-agent/VERSION)"
 ```
 
@@ -103,7 +103,7 @@ Manual QA checklist (macOS PKG):
 4. `sudo make -C cmd/probo-agent uninstall` removes daemon, tray, helper, app, and state.
 5. MDM `/tmp/probo-agent.conf` postinstall still enrolls without a browser prompt.
 6. Notarized PKG passes Gatekeeper; `codesign --verify --deep` succeeds on the app bundle.
-7. Unsigned `build-app.sh` / `build.sh` exits with an error requiring `CODESIGN_IDENTITY`.
+7. Unsigned `build.sh` exits with an error requiring `CODESIGN_IDENTITY`.
 
 ### Apple signing secrets (GitHub)
 

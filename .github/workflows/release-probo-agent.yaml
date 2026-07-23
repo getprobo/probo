@@ -80,7 +80,7 @@ jobs:
           retention-days: 1
 
   build-macos:
-    name: "macos (universal pkg + darwin archives)"
+    name: "macos (darwin pkg + darwin archives)"
     runs-on: "macos-26"
     permissions:
       contents: "read"
@@ -112,7 +112,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychain -d user -s "$KEYCHAIN_PATH"
           rm certificate.p12
-      - name: "Build CGO darwin binaries and universal pkg"
+      - name: "Build CGO darwin binaries and darwin pkg"
         env:
           CGO_ENABLED: "1"
           CODESIGN_IDENTITY: "${{ secrets.CODESIGN_IDENTITY }}"
@@ -151,18 +151,16 @@ jobs:
           done
 
           chmod +x cmd/probo-agent/installer/macos/build.sh \
-            cmd/probo-agent/installer/macos/enroll-ui/build-app.sh \
             cmd/probo-agent/installer/macos/scripts/preinstall \
             cmd/probo-agent/installer/macos/scripts/postinstall
 
           cmd/probo-agent/installer/macos/build.sh \
             --binary dist/probo-agent_universal \
-            --arch universal \
             --version "${VERSION}" \
-            --output "archives/probo-agent_${VERSION}_darwin_universal.pkg"
+            --output "archives/probo-agent_${VERSION}_darwin.pkg"
       - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
-          name: "archive-darwin-universal"
+          name: "archive-darwin"
           path: "archives/"
           retention-days: 1
 

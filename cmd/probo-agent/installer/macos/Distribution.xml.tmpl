@@ -6,10 +6,9 @@
   Placeholders are substituted by build.sh:
 
     @@VERSION@@       agent version, e.g. 0.1.0
-    @@PKG_ARCH@@      reserved (legacy; host filter uses @@HOST_ARCHS@@)
-    @@HOST_ARCHS@@    host arch filter used by Installer.app
-                      (e.g. arm64 or arm64,x86_64 for universal)
     @@IDENTIFIER@@    package identifier (default com.probo.agent)
+
+  hostArchitectures is fixed to arm64,x86_64 (fat binary installer).
 -->
 <installer-gui-script minSpecVersion="2">
     <title>Probo Device Posture Agent @@VERSION@@</title>
@@ -22,7 +21,7 @@
     <options customize="never"
              require-scripts="true"
              rootVolumeOnly="true"
-             hostArchitectures="@@HOST_ARCHS@@"/>
+             hostArchitectures="arm64,x86_64"/>
 
     <!--
       Refuse installation on macOS older than 11 (Big Sur). The agent

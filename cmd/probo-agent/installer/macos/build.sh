@@ -1,15 +1,14 @@
 #!/bin/bash
 #
 # Build a Probo device posture agent macOS installer (.pkg) from a
-# pre-built `probo-agent` binary.
+# pre-built fat `probo-agent` binary (arm64 + x86_64).
 #
 # Required arguments:
-#   --binary  PATH    Path to a compiled probo-agent binary.
-#   --arch    ARCH    Target architecture: amd64, arm64, or universal.
+#   --binary  PATH    Path to a compiled probo-agent fat binary.
 #   --version VER     Agent version, e.g. 0.1.0. Defaults to the
 #                     content of cmd/probo-agent/VERSION.
 #   --output  PATH    Output .pkg path. Defaults to
-#                     dist/probo-agent_${VER}_darwin_${ARCH}.pkg.
+#                     dist/probo-agent_${VER}_darwin.pkg.
 #
 # Required environment variables:
 #   CODESIGN_IDENTITY    Developer ID Application identity. Signs the
@@ -34,18 +33,21 @@
 #
 # Must run on macOS: pkgbuild, productbuild, and swift build are
 # Apple-only tools. The build also compiles Probo Agent.app (the
-# probo:// URL handler) from enroll-ui/.
+# probo:// URL handler + privileged helper) from enroll-ui/.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+ENROLL_UI_DIR="${SCRIPT_DIR}/enroll-ui"
 
 BINARY=""
-ARCH=""
 VERSION=""
 OUTPUT=""
 IDENTIFIER="com.probo.agent"
+APP_NAME="Probo Agent.app"
+URL_HANDLER_NAME="probo-agent-url-handler"
+HELPER_LABEL="com.probo.agent.helper"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
 INSTALLER_IDENTITY="${INSTALLER_IDENTITY:-}"
 APPLE_ID="${APPLE_ID:-}"
@@ -60,7 +62,6 @@ usage() {
 while [ $# -gt 0 ]; do
     case "$1" in
         --binary)     BINARY="$2";     shift 2 ;;
-        --arch)       ARCH="$2";       shift 2 ;;
         --version)    VERSION="$2";    shift 2 ;;
         --output)     OUTPUT="$2";     shift 2 ;;
         --identifier) IDENTIFIER="$2"; shift 2 ;;
@@ -73,35 +74,10 @@ if [ -z "${BINARY}" ] || [ ! -x "${BINARY}" ]; then
     echo "error: --binary <path-to-probo-agent> is required and must be executable" >&2
     exit 2
 fi
-case "${ARCH}" in
-    amd64)
-        PKG_ARCH="x86_64"
-        HOST_ARCHS="x86_64"
-        OUTPUT_ARCH="x86_64"
-        ;;
-    arm64)
-        PKG_ARCH="arm64"
-        HOST_ARCHS="arm64"
-        OUTPUT_ARCH="arm64"
-        ;;
-    universal)
-        PKG_ARCH="arm64"
-        HOST_ARCHS="arm64,x86_64"
-        OUTPUT_ARCH="universal"
-        ;;
-    "")
-        echo "error: --arch (amd64|arm64|universal) is required" >&2
-        exit 2
-        ;;
-    *)
-        echo "error: unsupported --arch '${ARCH}' (want amd64, arm64, or universal)" >&2
-        exit 2
-        ;;
-esac
 
-# --arch sets hostArchitectures in Distribution.xml. Refuse a binary that
-# lacks the advertised slice(s) so Installer cannot install on a CPU the
-# agent cannot run on.
+# Distribution.xml advertises hostArchitectures=arm64,x86_64. Refuse a
+# binary that lacks either slice so Installer cannot install on a CPU
+# the agent cannot run on.
 if ! command -v lipo >/dev/null 2>&1; then
     echo "error: lipo is required to validate --binary architecture (run on macOS)" >&2
     exit 1
@@ -115,33 +91,17 @@ for arch_slice in ${BINARY_ARCHS}; do
         x86_64) has_x86_64=true ;;
     esac
 done
-case "${ARCH}" in
-    amd64)
-        if [ "${has_x86_64}" != true ]; then
-            echo "error: --arch amd64 requires a binary with an x86_64 slice (got: ${BINARY_ARCHS})" >&2
-            exit 2
-        fi
-        ;;
-    arm64)
-        if [ "${has_arm64}" != true ]; then
-            echo "error: --arch arm64 requires a binary with an arm64 slice (got: ${BINARY_ARCHS})" >&2
-            exit 2
-        fi
-        ;;
-    universal)
-        if [ "${has_arm64}" != true ] || [ "${has_x86_64}" != true ]; then
-            echo "error: --arch universal requires a fat binary with arm64 and x86_64 slices (got: ${BINARY_ARCHS}); use lipo -create" >&2
-            exit 2
-        fi
-        ;;
-esac
+if [ "${has_arm64}" != true ] || [ "${has_x86_64}" != true ]; then
+    echo "error: --binary must be a fat binary with arm64 and x86_64 slices (got: ${BINARY_ARCHS}); use lipo -create" >&2
+    exit 2
+fi
 
 if [ -z "${VERSION}" ]; then
     VERSION="$(cat "${REPO_ROOT}/cmd/probo-agent/VERSION")"
 fi
 if [ -z "${OUTPUT}" ]; then
     mkdir -p "${REPO_ROOT}/dist"
-    OUTPUT="${REPO_ROOT}/dist/probo-agent_${VERSION}_darwin_${OUTPUT_ARCH}.pkg"
+    OUTPUT="${REPO_ROOT}/dist/probo-agent_${VERSION}_darwin.pkg"
 fi
 
 if ! command -v pkgbuild >/dev/null 2>&1 || ! command -v productbuild >/dev/null 2>&1; then
@@ -170,7 +130,7 @@ if [ "${notarize_enabled}" = true ] && [ -z "${INSTALLER_IDENTITY}" ]; then
     exit 2
 fi
 
-sign_macho() {
+codesign_runtime() {
     local path="$1"
     codesign \
         --force \
@@ -181,44 +141,130 @@ sign_macho() {
     codesign --verify --verbose=2 "${path}"
 }
 
-sign_app_bundle() {
-    local app_path="$1"
-    local helper_path="${app_path}/Contents/Library/LaunchServices/com.probo.agent.helper"
-    if [ -x "${helper_path}" ]; then
-        codesign \
-            --force \
-            --options runtime \
-            --timestamp \
-            --sign "${CODESIGN_IDENTITY}" \
-            "${helper_path}"
-        codesign --verify --verbose=2 "${helper_path}"
-    fi
-    codesign \
-        --force \
-        --options runtime \
-        --timestamp \
-        --sign "${CODESIGN_IDENTITY}" \
-        "${app_path}/Contents/MacOS/probo-agent-url-handler"
-    codesign \
-        --force \
-        --options runtime \
-        --timestamp \
-        --sign "${CODESIGN_IDENTITY}" \
-        "${app_path}"
-    codesign --verify --verbose=2 "${app_path}"
+client_requirement() {
+    printf 'anchor apple generic and identifier "com.probo.agent.url-handler" and certificate leaf[subject.OU] = "%s"' "${APPLE_TEAM_ID}"
 }
 
-ensure_notarytool_credentials() {
-    if [ -z "${APPLE_ID}" ] || [ -z "${APPLE_ID_PASSWORD}" ]; then
-        echo "error: APPLE_ID and APPLE_ID_PASSWORD are required to store notarytool credentials" >&2
-        exit 2
+team_id_option() {
+    printf '"%s"' "${APPLE_TEAM_ID}"
+}
+
+# Build Probo Agent.app (URL handler + embedded privileged helper) into
+# parent_dir. Signs nested Mach-Os then the .app bundle (bottom-up).
+build_probo_agent_app() {
+    local parent_dir="$1"
+    local build_dir render_dir
+    local helper_info_plist helper_launchd_plist
+    local helper_binary url_handler_binary bin_dir
+    local app_root contents macos launch_services launch_daemons
+    local plist embedded_helper embedded_launchd
+    local helper_requirement
+    local -a helper_linker_flags swift_arch_args
+
+    build_dir="${STAGE}/enroll-ui-build"
+    render_dir="${build_dir}/rendered"
+    mkdir -p "${render_dir}"
+
+    swift_arch_args=(--arch arm64 --arch x86_64)
+
+    sed \
+        -e "s|@@VERSION@@|${VERSION}|g" \
+        "${ENROLL_UI_DIR}/Shared/HelperVersion.generated.swift.tmpl" \
+        > "${ENROLL_UI_DIR}/Shared/HelperVersion.generated.swift"
+
+    sed \
+        -e "s|@@TEAM_ID_OPTION@@|$(team_id_option)|g" \
+        "${ENROLL_UI_DIR}/Shared/SigningConstants.generated.swift.tmpl" \
+        > "${ENROLL_UI_DIR}/Shared/SigningConstants.generated.swift"
+
+    helper_info_plist="${render_dir}/helper-info.plist"
+    helper_launchd_plist="${render_dir}/helper-launchd.plist"
+
+    sed \
+        -e "s|@@VERSION@@|${VERSION}|g" \
+        -e "s|@@CLIENT_DESIGNATED_REQUIREMENT@@|$(client_requirement)|g" \
+        "${ENROLL_UI_DIR}/HelperTool/Info.plist.tmpl" > "${helper_info_plist}"
+
+    cp "${ENROLL_UI_DIR}/HelperTool/Launchd.plist.tmpl" "${helper_launchd_plist}"
+
+    helper_linker_flags=(
+        -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist
+        -Xlinker "${helper_info_plist}"
+        -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __launchd_plist
+        -Xlinker "${helper_launchd_plist}"
+    )
+
+    pushd "${ENROLL_UI_DIR}" >/dev/null
+    swift build -c release "${swift_arch_args[@]}" \
+        --scratch-path "${build_dir}/swift" \
+        --product "${HELPER_LABEL}" \
+        "${helper_linker_flags[@]}"
+
+    swift build -c release "${swift_arch_args[@]}" \
+        --scratch-path "${build_dir}/swift" \
+        --product "${URL_HANDLER_NAME}"
+
+    bin_dir="$(swift build -c release "${swift_arch_args[@]}" \
+        --scratch-path "${build_dir}/swift" --show-bin-path)"
+    helper_binary="${bin_dir}/${HELPER_LABEL}"
+    url_handler_binary="${bin_dir}/${URL_HANDLER_NAME}"
+    popd >/dev/null
+
+    if [ ! -x "${helper_binary}" ] || [ ! -x "${url_handler_binary}" ]; then
+        echo "error: expected release binaries were not produced" >&2
+        exit 1
     fi
-    # Password appears on argv only for this short-lived store. Submits
-    # use --keychain-profile so concurrent processes cannot read it.
-    xcrun notarytool store-credentials "${NOTARYTOOL_KEYCHAIN_PROFILE}" \
-        --apple-id "${APPLE_ID}" \
-        --password "${APPLE_ID_PASSWORD}" \
-        --team-id "${APPLE_TEAM_ID}"
+
+    app_root="${parent_dir}/${APP_NAME}"
+    contents="${app_root}/Contents"
+    macos="${contents}/MacOS"
+    launch_services="${contents}/Library/LaunchServices"
+    launch_daemons="${contents}/Library/LaunchDaemons"
+    plist="${contents}/Info.plist"
+    embedded_helper="${launch_services}/${HELPER_LABEL}"
+    embedded_launchd="${launch_daemons}/${HELPER_LABEL}.plist"
+
+    rm -rf "${app_root}"
+    mkdir -p "${macos}" "${launch_services}" "${launch_daemons}"
+
+    install -m 0755 "${url_handler_binary}" "${macos}/${URL_HANDLER_NAME}"
+    install -m 0755 "${helper_binary}" "${embedded_helper}"
+    install -m 0644 "${helper_launchd_plist}" "${embedded_launchd}"
+
+    # Sign helper before writing Info.plist so SMPrivilegedExecutables
+    # can embed the helper's designated requirement.
+    codesign_runtime "${embedded_helper}"
+    # codesign prints "Executable=…" on stderr and either
+    # "# designated => …" (modern) or "designated => …" (older) on stdout.
+    helper_requirement="$(
+        codesign -d -r- "${embedded_helper}" 2>&1 \
+            | sed -n -e 's/^# designated => //p' -e 's/^designated => //p'
+    )"
+    if [ -z "${helper_requirement}" ]; then
+        echo "error: cannot extract designated requirement from signed helper" >&2
+        codesign -d -r- "${embedded_helper}" 2>&1 >&2 || true
+        exit 1
+    fi
+    echo "Helper designated requirement: ${helper_requirement}"
+
+    sed \
+        -e "s|@@VERSION@@|${VERSION}|g" \
+        -e "s|@@HELPER_DESIGNATED_REQUIREMENT@@|${helper_requirement}|g" \
+        "${ENROLL_UI_DIR}/Info.plist.tmpl" > "${plist}"
+
+    if ! plutil -lint "${plist}" >/dev/null; then
+        echo "error: rendered Info.plist failed plutil -lint" >&2
+        exit 1
+    fi
+    if ! grep -q '<string>probo</string>' "${plist}"; then
+        echo "error: Info.plist is missing probo URL scheme" >&2
+        exit 1
+    fi
+
+    codesign_runtime "${macos}/${URL_HANDLER_NAME}"
+    codesign_runtime "${app_root}"
+
+    echo "Built ${app_root}"
 }
 
 notarytool_submit() {
@@ -227,79 +273,6 @@ notarytool_submit() {
         --keychain-profile "${NOTARYTOOL_KEYCHAIN_PROFILE}" \
         --wait
 }
-
-notarize_and_staple_app() {
-    local app_path="$1"
-    local zip_path
-
-    zip_path="${STAGE}/probo-agent-app.zip"
-    ditto -c -k --keepParent "${app_path}" "${zip_path}"
-    notarytool_submit "${zip_path}"
-    rm -f "${zip_path}"
-    xcrun stapler staple "${app_path}"
-}
-
-notarize_and_staple_pkg() {
-    local pkg_path="$1"
-    notarytool_submit "${pkg_path}"
-    xcrun stapler staple "${pkg_path}"
-}
-
-STAGE="$(mktemp -d -t probo-agent-pkg)"
-trap 'rm -rf "${STAGE}"' EXIT
-
-PAYLOAD="${STAGE}/payload"
-SCRIPTS="${STAGE}/scripts"
-RESOURCES="${STAGE}/Resources"
-mkdir -p "${PAYLOAD}/usr/local/bin" "${SCRIPTS}" "${RESOURCES}"
-
-install -m 0755 "${BINARY}" "${PAYLOAD}/usr/local/bin/probo-agent"
-sign_macho "${PAYLOAD}/usr/local/bin/probo-agent"
-
-mkdir -p "${PAYLOAD}/Applications"
-"${SCRIPT_DIR}/enroll-ui/build-app.sh" \
-    --arch "${ARCH}" \
-    --version "${VERSION}" \
-    --output "${PAYLOAD}/Applications"
-
-APP_PATH="${PAYLOAD}/Applications/Probo Agent.app"
-sign_app_bundle "${APP_PATH}"
-
-if [ "${notarize_enabled}" = true ]; then
-    ensure_notarytool_credentials
-    echo "Notarizing Probo Agent.app before packaging..."
-    notarize_and_staple_app "${APP_PATH}"
-fi
-
-# Avoid AppleDouble (._*) and resource-fork noise in the package.
-export COPYFILE_DISABLE=1
-
-# ditto --norsrc/--noextattr copies without resource forks / xattrs.
-ditto --norsrc --noextattr "${SCRIPT_DIR}/scripts/preinstall" "${SCRIPTS}/preinstall"
-ditto --norsrc --noextattr "${SCRIPT_DIR}/scripts/postinstall" "${SCRIPTS}/postinstall"
-ditto --norsrc --noextattr \
-    "${REPO_ROOT}/pkg/deviceagent/tray/launchagent.plist.tmpl" \
-    "${SCRIPTS}/launchagent.plist.tmpl"
-chmod 0755 "${SCRIPTS}/preinstall" "${SCRIPTS}/postinstall"
-chmod 0644 "${SCRIPTS}/launchagent.plist.tmpl"
-
-ditto --norsrc --noextattr "${SCRIPT_DIR}/Resources/welcome.html"    "${RESOURCES}/welcome.html"
-ditto --norsrc --noextattr "${SCRIPT_DIR}/Resources/conclusion.html" "${RESOURCES}/conclusion.html"
-ditto --norsrc --noextattr "${REPO_ROOT}/LICENSE"                    "${RESOURCES}/license.txt"
-
-# Strip any xattrs that tools may have reattached (codesign, etc.).
-xattr -cr "${PAYLOAD}" "${SCRIPTS}" "${RESOURCES}" 2>/dev/null || true
-find "${PAYLOAD}" "${SCRIPTS}" "${RESOURCES}" -name '._*' -delete 2>/dev/null || true
-
-# Component package: payload + scripts only.
-COMPONENT_PKG="${STAGE}/probo-agent-component.pkg"
-pkgbuild \
-    --root "${PAYLOAD}" \
-    --scripts "${SCRIPTS}" \
-    --identifier "${IDENTIFIER}" \
-    --version "${VERSION}" \
-    --install-location "/" \
-    "${COMPONENT_PKG}"
 
 # pkgbuild records protected com.apple.provenance xattrs as empty
 # AppleDouble (._*) Bom entries. Rewrite the Bom with mkbom so the
@@ -331,14 +304,70 @@ rewrite_component_bom() {
     mv "${flat_pkg}" "${pkg}"
 }
 
+STAGE="$(mktemp -d -t probo-agent-pkg)"
+trap 'rm -rf "${STAGE}"' EXIT
+
+PAYLOAD="${STAGE}/payload"
+SCRIPTS="${STAGE}/scripts"
+RESOURCES="${STAGE}/Resources"
+mkdir -p "${PAYLOAD}/usr/local/bin" "${SCRIPTS}" "${RESOURCES}"
+
+install -m 0755 "${BINARY}" "${PAYLOAD}/usr/local/bin/probo-agent"
+codesign_runtime "${PAYLOAD}/usr/local/bin/probo-agent"
+
+mkdir -p "${PAYLOAD}/Applications"
+build_probo_agent_app "${PAYLOAD}/Applications"
+APP_PATH="${PAYLOAD}/Applications/${APP_NAME}"
+
+if [ "${notarize_enabled}" = true ]; then
+    # Password appears on argv only for this short-lived store. Submits
+    # use --keychain-profile so concurrent processes cannot read it.
+    xcrun notarytool store-credentials "${NOTARYTOOL_KEYCHAIN_PROFILE}" \
+        --apple-id "${APPLE_ID}" \
+        --password "${APPLE_ID_PASSWORD}" \
+        --team-id "${APPLE_TEAM_ID}"
+    echo "Notarizing Probo Agent.app before packaging..."
+    zip_path="${STAGE}/probo-agent-app.zip"
+    ditto -c -k --keepParent "${APP_PATH}" "${zip_path}"
+    notarytool_submit "${zip_path}"
+    rm -f "${zip_path}"
+    xcrun stapler staple "${APP_PATH}"
+fi
+
+# AppleDouble / xattr hygiene: COPYFILE_DISABLE + ditto --norsrc/--noextattr
+# avoid forks on copy; xattr -cr / find '._*' strip anything codesign
+# reattached; rewrite_component_bom drops provenance stubs from the Bom.
+export COPYFILE_DISABLE=1
+
+ditto --norsrc --noextattr "${SCRIPT_DIR}/scripts/preinstall" "${SCRIPTS}/preinstall"
+ditto --norsrc --noextattr "${SCRIPT_DIR}/scripts/postinstall" "${SCRIPTS}/postinstall"
+ditto --norsrc --noextattr \
+    "${REPO_ROOT}/pkg/deviceagent/tray/launchagent.plist.tmpl" \
+    "${SCRIPTS}/launchagent.plist.tmpl"
+chmod 0755 "${SCRIPTS}/preinstall" "${SCRIPTS}/postinstall"
+chmod 0644 "${SCRIPTS}/launchagent.plist.tmpl"
+
+ditto --norsrc --noextattr "${SCRIPT_DIR}/Resources/welcome.html"    "${RESOURCES}/welcome.html"
+ditto --norsrc --noextattr "${SCRIPT_DIR}/Resources/conclusion.html" "${RESOURCES}/conclusion.html"
+ditto --norsrc --noextattr "${REPO_ROOT}/LICENSE"                    "${RESOURCES}/license.txt"
+
+xattr -cr "${PAYLOAD}" "${SCRIPTS}" "${RESOURCES}" 2>/dev/null || true
+find "${PAYLOAD}" "${SCRIPTS}" "${RESOURCES}" -name '._*' -delete 2>/dev/null || true
+
+COMPONENT_PKG="${STAGE}/probo-agent-component.pkg"
+pkgbuild \
+    --root "${PAYLOAD}" \
+    --scripts "${SCRIPTS}" \
+    --identifier "${IDENTIFIER}" \
+    --version "${VERSION}" \
+    --install-location "/" \
+    "${COMPONENT_PKG}"
+
 rewrite_component_bom "${COMPONENT_PKG}"
 
-# Render Distribution.xml from its template.
 DISTRIBUTION="${STAGE}/Distribution.xml"
 sed \
     -e "s|@@VERSION@@|${VERSION}|g" \
-    -e "s|@@PKG_ARCH@@|${PKG_ARCH}|g" \
-    -e "s|@@HOST_ARCHS@@|${HOST_ARCHS}|g" \
     -e "s|@@IDENTIFIER@@|${IDENTIFIER}|g" \
     "${SCRIPT_DIR}/Distribution.xml.tmpl" > "${DISTRIBUTION}"
 
@@ -358,7 +387,8 @@ productbuild "${PRODUCTBUILD_ARGS[@]}"
 
 if [ "${notarize_enabled}" = true ]; then
     echo "Notarizing ${OUTPUT}..."
-    notarize_and_staple_pkg "${OUTPUT}"
+    notarytool_submit "${OUTPUT}"
+    xcrun stapler staple "${OUTPUT}"
 fi
 
 echo "Built ${OUTPUT}"

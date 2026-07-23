@@ -69,7 +69,12 @@ ARCHIVE_PATH=		$(RELEASE_DIR)/$(ARCHIVE_NAME)
 STAGING_DIR=		$(CACHE_ROOT)/staging/$(AGENT_DIR)
 BUILD_BINARY=		$(STAGING_DIR)/probo-agent
 
-PKG=			$(REPO_ROOT)/dist/probo-agent_$(VERSION)_darwin_$(ARCH_LABEL).pkg
+# Fat binary required by installer/macos/build.sh (arm64 + x86_64).
+FAT_BINARY=		$(REPO_ROOT)/dist/probo-agent_fat
+THIN_ARM64=		$(REPO_ROOT)/dist/probo-agent_arm64
+THIN_AMD64=		$(REPO_ROOT)/dist/probo-agent_amd64
+PKG=			$(REPO_ROOT)/dist/probo-agent_$(VERSION)_darwin.pkg
+AGENT_LDFLAGS=		-ldflags "-X 'main.version=$(VERSION)'"
 
 INSTALL_ARGS?=		--skip-service --dir "$(STATE_DIR)"
 INSTALL_ENV=		PROBO_AGENT_RELEASE_TAG="$(DEV_TAG)" \
@@ -80,7 +85,7 @@ INSTALL_ENV=		PROBO_AGENT_RELEASE_TAG="$(DEV_TAG)" \
 			PROBO_ENROLLMENT_TOKEN="$(PROBO_ENROLLMENT_TOKEN)"
 
 .PHONY: help all pkg install uninstall clean clean-build install-cli run
-.PHONY: $(PROBO_AGENT_BIN)
+.PHONY: $(PROBO_AGENT_BIN) $(FAT_BINARY)
 
 all: help
 
@@ -122,8 +127,7 @@ clean: uninstall clean-build ## uninstall + wipe build caches
 
 clean-build: ## Wipe local build caches (no sudo)
 	$(RMRF) "$(STATE_DIR)" "$(CACHE_ROOT)" "$(ENROLL_UI_BUILD)"
-	@# Unquoted globs so the shell can expand dist artifacts.
-	-$(RMRF) $(REPO_ROOT)/dist/probo-agent_*.pkg
+	-$(RMRF) "$(PKG)" "$(FAT_BINARY)" "$(THIN_ARM64)" "$(THIN_AMD64)"
 	@# Native binary under /usr/local is owned by root after install; leave it
 	@# to `uninstall`. Never remove it here without sudo.
 
@@ -131,16 +135,26 @@ clean-build: ## Wipe local build caches (no sudo)
 
 pkg: $(PKG) ## Build signed .pkg into dist/
 
-$(PKG): $(PROBO_AGENT_BIN)
+$(FAT_BINARY):
+ifeq ($(UNAME_S),Darwin)
+	@$(MKDIR) "$(dir $(FAT_BINARY))"
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build $(AGENT_LDFLAGS) \
+		-o "$(THIN_ARM64)" "$(REPO_ROOT)/cmd/probo-agent"
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build $(AGENT_LDFLAGS) \
+		-o "$(THIN_AMD64)" "$(REPO_ROOT)/cmd/probo-agent"
+	lipo -create "$(THIN_ARM64)" "$(THIN_AMD64)" -output "$(FAT_BINARY)"
+else
+	@echo 'error: fat binary target is macOS-only' >&2
+	@exit 1
+endif
+
+$(PKG): $(FAT_BINARY)
 ifeq ($(UNAME_S),Darwin)
 	@if [ -z "$(CODESIGN_IDENTITY)" ]; then \
 		echo 'error: CODESIGN_IDENTITY is required' >&2; exit 2; \
 	fi
 	@if [ -z "$(APPLE_TEAM_ID)" ]; then \
 		echo 'error: APPLE_TEAM_ID is required' >&2; exit 2; \
-	fi
-	@if [ -z "$(BUILD_ARCH)" ]; then \
-		echo 'error: unsupported arch $(UNAME_M)' >&2; exit 2; \
 	fi
 	@$(MKDIR) "$(dir $(PKG))"
 	@CODESIGN_IDENTITY="$(CODESIGN_IDENTITY)" \
@@ -150,8 +164,7 @@ ifeq ($(UNAME_S),Darwin)
 	APPLE_ID_PASSWORD="$(APPLE_ID_PASSWORD)" \
 	NOTARYTOOL_KEYCHAIN_PROFILE="$(NOTARYTOOL_KEYCHAIN_PROFILE)" \
 	sh "$(MACOS_BUILD_SCRIPT)" \
-		--binary "$(PROBO_AGENT_BIN)" \
-		--arch "$(BUILD_ARCH)" \
+		--binary "$(FAT_BINARY)" \
 		--version "$(VERSION)" \
 		--output "$(PKG)"
 else
