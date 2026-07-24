@@ -21,11 +21,8 @@
 package connect_v1
 
 import (
-	"errors"
 	"net/http"
 	"net/url"
-
-	"go.probo.inc/probo/pkg/iam/saml"
 )
 
 const (
@@ -48,40 +45,4 @@ func redirectAuthError(w http.ResponseWriter, r *http.Request, code string) {
 	}
 
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
-}
-
-func authErrorCodeFromSAML(err error) (string, bool) {
-	if _, ok := errors.AsType[*saml.ErrSAMLDisabled](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	if _, ok := errors.AsType[*saml.ErrSAMLConfigurationNotFound](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	if _, ok := errors.AsType[*saml.ErrEmailDomainMismatch](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	if _, ok := errors.AsType[*saml.ErrSAMLAutoSignupDisabled](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	if _, ok := errors.AsType[*saml.ErrUserInactive](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	if _, ok := errors.AsType[*saml.ErrSAMLSubjectAlreadyInUse](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	if _, ok := errors.AsType[*saml.ErrInvalidAssertion](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	if _, ok := errors.AsType[*saml.ErrReplayAttackDetected](err); ok {
-		return authErrorAuthenticationFailed, true
-	}
-
-	return "", false
 }
