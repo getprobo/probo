@@ -48,6 +48,8 @@ import {
   PostHogDeploymentField,
 } from "../PostHogDeploymentField";
 
+import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
+
 const createAPIKeyConnectorMutation = graphql`
   mutation APIKeyConnectorDialogCreateAPIKeyConnectorMutation(
     $input: CreateAPIKeyConnectorInput!
@@ -415,7 +417,18 @@ export function APIKeyConnectorDialog({
             </div>
           )}
         </DialogContent>
-        <DialogFooter>
+        <DialogFooter
+          start={
+            provider?.documentationUrl
+              ? (
+                  <ConnectorDocumentationLink
+                    url={provider.documentationUrl}
+                    variant="button"
+                  />
+                )
+              : undefined
+          }
+        >
           <Button
             type="submit"
             disabled={

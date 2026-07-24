@@ -29,7 +29,6 @@ import {
   DialogContent,
   DialogFooter,
   DropdownItem,
-  IconArrowLink,
   Input,
   ThirdPartyLogo,
   useDialogRef,
@@ -42,6 +41,7 @@ import type { AddAccessReviewSourceDialogConnectorProviderInfoFragment$data } fr
 
 import { APIKeyConnectorDialog } from "./_components/APIKeyConnectorDialog";
 import { ClientCredentialsConnectorDialog } from "./_components/ClientCredentialsConnectorDialog";
+import { ConnectorDocumentationLink } from "./_components/ConnectorDocumentationLink";
 import {
   DatadogConnectDialog,
   ZendeskConnectDialog,
@@ -162,17 +162,7 @@ export function AddAccessReviewSourceDialog({
         <ThirdPartyLogo thirdParty={info.provider} tint className="size-6 shrink-0" />
         <div className="mr-auto">
           <h3 className="font-medium">{info.displayName}</h3>
-          {info.documentationUrl && (
-            <a
-              href={info.documentationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-txt-tertiary underline hover:no-underline"
-            >
-              {__("Documentation")}
-              <IconArrowLink size={12} />
-            </a>
-          )}
+          <ConnectorDocumentationLink url={info.documentationUrl} />
         </div>
         {isConnected
           ? (
