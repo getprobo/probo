@@ -127,6 +127,12 @@ const routes = [
         path: "magic-link-already-used",
         Component: lazy(() => import("./pages/iam/auth/MagicLinkAlreadyUsedPage")),
       },
+      {
+        path: "personal-account-not-allowed",
+        Component: lazy(
+          () => import("./pages/iam/auth/PersonalAccountNotAllowedPage"),
+        ),
+      },
     ],
   },
   {

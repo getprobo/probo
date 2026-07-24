@@ -165,6 +165,30 @@ func (c *idTokenClaims) isEmailDomainOwnerVerified() bool {
 	return false
 }
 
+// validateIDTokenClaims enforces provider-specific account requirements.
+// Enterprise eligibility is checked before email-verification claims so
+// personal Google/Microsoft accounts surface ErrPersonalAccountNotAllowed
+// rather than a generic email-verification failure (e.g. missing xms_edov).
+func validateIDTokenClaims(info *providerInfo, claims *idTokenClaims) error {
+	if claims.Email == "" {
+		return NewMissingEmailClaimError()
+	}
+
+	if !info.enterpriseChecker(claims) {
+		return NewPersonalAccountNotAllowedError()
+	}
+
+	if !info.trustProviderEmail && !claims.isEmailVerified() {
+		return NewEmailNotVerifiedError()
+	}
+
+	if info.requireEmailDomainOwnerVerified && !claims.isEmailDomainOwnerVerified() {
+		return NewEmailNotVerifiedError()
+	}
+
+	return nil
+}
+
 var (
 	googleEndpoint = oauth2.Endpoint{
 		AuthURL:  "https://accounts.google.com/o/oauth2/v2/auth",
@@ -423,20 +447,8 @@ func (s *Service) HandleCallback(
 		return nil, "", nil, fmt.Errorf("cannot verify id token: %w", err)
 	}
 
-	if claims.Email == "" {
-		return nil, "", nil, NewMissingEmailClaimError()
-	}
-
-	if !info.trustProviderEmail && !claims.isEmailVerified() {
-		return nil, "", nil, NewEmailNotVerifiedError()
-	}
-
-	if info.requireEmailDomainOwnerVerified && !claims.isEmailDomainOwnerVerified() {
-		return nil, "", nil, NewEmailNotVerifiedError()
-	}
-
-	if !info.enterpriseChecker(claims) {
-		return nil, "", nil, NewPersonalAccountNotAllowedError()
+	if err := validateIDTokenClaims(info, claims); err != nil {
+		return nil, "", nil, err
 	}
 
 	email, err := mail.ParseAddr(claims.Email)

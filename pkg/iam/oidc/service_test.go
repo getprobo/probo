@@ -21,6 +21,7 @@
 package oidc
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -88,4 +89,66 @@ func TestIsEmailDomainOwnerVerified(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestValidateIDTokenClaims_PersonalAccounts(t *testing.T) {
+	t.Parallel()
+
+	s := newTestService(t)
+
+	t.Run("rejects Google personal account without hosted domain", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderGoogle],
+			&idTokenClaims{
+				Email:         "user@gmail.com",
+				EmailVerified: true,
+			},
+		)
+		_, ok := errors.AsType[*ErrPersonalAccountNotAllowed](err)
+		assert.True(t, ok, "got %T: %v", err, err)
+	})
+
+	t.Run("rejects Microsoft personal account before xms_edov check", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderMicrosoft],
+			&idTokenClaims{
+				Issuer: "https://login.microsoftonline.com/" + microsoftConsumerTenantID + "/v2.0",
+				Email:  "user@outlook.com",
+			},
+		)
+		_, ok := errors.AsType[*ErrPersonalAccountNotAllowed](err)
+		assert.True(t, ok, "got %T: %v", err, err)
+	})
+
+	t.Run("accepts Google Workspace account with hosted domain", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderGoogle],
+			&idTokenClaims{
+				Email:         "user@acme.com",
+				EmailVerified: true,
+				HostedDomain:  "acme.com",
+			},
+		)
+		assert.NoError(t, err)
+	})
+
+	t.Run("rejects Microsoft enterprise account missing xms_edov", func(t *testing.T) {
+		t.Parallel()
+
+		err := validateIDTokenClaims(
+			s.providers[coredata.OIDCProviderMicrosoft],
+			&idTokenClaims{
+				Issuer: "https://login.microsoftonline.com/tenant-id/v2.0",
+				Email:  "user@acme.com",
+			},
+		)
+		_, ok := errors.AsType[*ErrEmailNotVerified](err)
+		assert.True(t, ok, "got %T: %v", err, err)
+	})
 }

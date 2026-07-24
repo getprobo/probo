@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -130,6 +131,13 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	identity, continueURL, organizationID, err := h.iam.OIDCService.HandleCallback(ctx, provider, stateParam, code)
 	if err != nil {
+		if _, ok := errors.AsType[*oidc.ErrPersonalAccountNotAllowed](err); ok {
+			h.logger.WarnCtx(ctx, "OIDC login rejected: personal account not allowed")
+			http.Redirect(w, r, "/auth/personal-account-not-allowed", http.StatusFound)
+
+			return
+		}
+
 		h.logger.ErrorCtx(ctx, "cannot handle OIDC callback", log.Error(err))
 		httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication failed"))
 
