@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package dnsverify
+package domaindns
 
 import (
 	"fmt"
@@ -45,20 +45,20 @@ func EqualNames(a, b string) bool {
 	return ToFQDN(a) == ToFQDN(b)
 }
 
-// CheckNames returns the DNS names to evaluate for CAA, starting at the exact
-// hostname being verified and walking up through each parent to the
+// HostnamesForCAA returns the DNS names to evaluate for CAA, starting at the
+// exact hostname being verified and walking up through each parent to the
 // registrable apex (eTLD+1). The first entry is always the requested hostname
 // itself, not its apex.
-func CheckNames(hostname string) ([]string, error) {
+func HostnamesForCAA(hostname string) ([]string, error) {
 	hostname = strings.ToLower(strings.TrimSpace(hostname))
 	hostname = strings.TrimSuffix(hostname, ".")
 	if hostname == "" {
-		return nil, fmt.Errorf("cannot build DNS check names: empty hostname")
+		return nil, fmt.Errorf("cannot build CAA hostnames: empty hostname")
 	}
 
 	apex, err := publicsuffix.EffectiveTLDPlusOne(hostname)
 	if err != nil {
-		return nil, fmt.Errorf("cannot build DNS check names for %q: %w", hostname, err)
+		return nil, fmt.Errorf("cannot build CAA hostnames for %q: %w", hostname, err)
 	}
 
 	names := []string{hostname}

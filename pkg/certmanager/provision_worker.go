@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/miekg/dns"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
@@ -31,7 +30,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.probo.inc/probo/pkg/dnsverify"
+	"go.probo.inc/probo/pkg/domaindns"
 	"go.probo.inc/probo/pkg/gid"
 	"golang.org/x/crypto/acme"
 )
@@ -70,7 +69,7 @@ type (
 
 		cnameTarget       string
 		caaIssuerDomain   string
-		resolverAddr      string
+		dnsClient         *domaindns.Client
 		managedBaseDomain string
 	}
 
@@ -113,7 +112,7 @@ func NewBeginChallengeWorker(
 		},
 		cnameTarget:       cnameTarget,
 		caaIssuerDomain:   caaIssuerDomain,
-		resolverAddr:      resolverAddr,
+		dnsClient:         domaindns.NewClient(resolverAddr),
 		managedBaseDomain: managedBaseDomain,
 	}
 
@@ -346,115 +345,20 @@ func (h *beginChallengeHandler) loadSkipDNSChecks(ctx context.Context, hostname 
 }
 
 func (h *beginChallengeHandler) checkDNSConfiguration(ctx context.Context, hostname string) error {
-	customerFQDN := dnsverify.ToFQDN(hostname)
-	expectedFQDN := dnsverify.ToFQDN(h.cnameTarget)
-
-	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
-	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: customerFQDN, Class: dns.ClassINET}}}
-
-	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
-	defer cancel()
-
-	client := dns.NewClient()
-
-	resp, _, err := client.Exchange(dnsCtx, msg, "udp", h.resolverAddr)
-	if err != nil {
-		return fmt.Errorf("cannot exchange dns message: %w", err)
-	}
-
-	if len(resp.Answer) == 0 {
-		return fmt.Errorf("no cname records found for domain %q", hostname)
-	}
-
-	if len(resp.Answer) > 1 {
-		return fmt.Errorf("multiple cname records found for domain %q", hostname)
-	}
-
-	resolvedRecord, ok := resp.Answer[0].(*dns.CNAME)
-	if !ok {
-		return fmt.Errorf("first answer is not a cname record for domain %q", hostname)
-	}
-
-	if !dnsverify.EqualNames(resolvedRecord.Hdr.Name, customerFQDN) {
-		return fmt.Errorf(
-			"cname owner mismatch: domain %q has record owned by %q",
-			hostname,
-			strings.TrimSuffix(resolvedRecord.Hdr.Name, "."),
-		)
-	}
-
-	if !dnsverify.EqualNames(resolvedRecord.Target, expectedFQDN) {
-		return fmt.Errorf(
-			"cname target mismatch: domain %q resolves to %q, expected %q",
-			hostname,
-			resolvedRecord.Target,
-			expectedFQDN,
-		)
-	}
-
-	return nil
+	return h.dnsClient.CheckCNAME(ctx, hostname, h.cnameTarget)
 }
 
 func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname string) error {
-	checkNames, err := dnsverify.CheckNames(hostname)
-	if err != nil {
-		return err
+	err := h.dnsClient.CheckCAA(ctx, hostname, h.caaIssuerDomain)
+	if err == nil {
+		return nil
 	}
 
-	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
-	defer cancel()
-
-	client := dns.NewClient()
-
-	for _, checkName := range checkNames {
-		fqdn := dnsverify.ToFQDN(checkName)
-
-		msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
-		msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
-
-		resp, _, err := client.Exchange(
-			dnsCtx,
-			msg,
-			"udp",
-			h.resolverAddr,
-		)
-		if err != nil {
-			return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
-		}
-
-		var caaRecords []*dns.CAA
-
-		for _, rr := range resp.Answer {
-			caa, ok := rr.(*dns.CAA)
-			if !ok || !dnsverify.EqualNames(caa.Hdr.Name, fqdn) {
-				continue
-			}
-
-			caaRecords = append(caaRecords, caa)
-		}
-
-		if len(caaRecords) == 0 {
-			continue
-		}
-
-		for _, caa := range caaRecords {
-			if caa.Tag == "issue" {
-				issuer, _, _ := strings.Cut(caa.Value, ";")
-				if strings.EqualFold(strings.TrimSpace(issuer), h.caaIssuerDomain) {
-					return nil
-				}
-			}
-		}
-
-		return fmt.Errorf(
-			"%w: domain %q by %q",
-			ErrCAANotPermitted,
-			hostname,
-			h.caaIssuerDomain,
-		)
+	if errors.Is(err, domaindns.ErrCAADenied) {
+		return fmt.Errorf("%w: domain %q by %q", ErrCAANotPermitted, hostname, h.caaIssuerDomain)
 	}
 
-	return nil
+	return err
 }
 
 func (h *beginChallengeHandler) skipsDNSChecks(
