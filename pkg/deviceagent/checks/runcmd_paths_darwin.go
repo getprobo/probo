@@ -21,16 +21,15 @@
 package checks
 
 var darwinCommandPaths = map[string][]string{
-	"defaults":       {"/usr/bin/defaults"},
-	"fdesetup":       {"/usr/bin/fdesetup"},
-	"osascript":      {"/usr/bin/osascript"},
-	"pwpolicy":       {"/usr/bin/pwpolicy"},
-	"softwareupdate": {"/usr/sbin/softwareupdate"},
-	"stat":           {"/usr/bin/stat"},
-	"sudo":           {"/usr/bin/sudo"},
-	"sw_vers":        {"/usr/bin/sw_vers"},
-	"sysadminctl":    {"/usr/sbin/sysadminctl"},
-	"systemsetup":    {"/usr/sbin/systemsetup"},
+	"defaults":    {"/usr/bin/defaults"},
+	"fdesetup":    {"/usr/bin/fdesetup"},
+	"osascript":   {"/usr/bin/osascript"},
+	"pwpolicy":    {"/usr/bin/pwpolicy"},
+	"stat":        {"/usr/bin/stat"},
+	"sudo":        {"/usr/bin/sudo"},
+	"sw_vers":     {"/usr/bin/sw_vers"},
+	"sysadminctl": {"/usr/sbin/sysadminctl"},
+	"systemsetup": {"/usr/sbin/systemsetup"},
 }
 
 func commandCandidates(cmd string) []string {
