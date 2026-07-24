@@ -120,14 +120,6 @@ const routes = [
         ),
       },
       {
-        path: "magic-link-expired",
-        Component: lazy(() => import("./pages/iam/auth/MagicLinkExpiredPage")),
-      },
-      {
-        path: "magic-link-already-used",
-        Component: lazy(() => import("./pages/iam/auth/MagicLinkAlreadyUsedPage")),
-      },
-      {
         path: "error",
         Component: lazy(() => import("./pages/iam/auth/AuthErrorPage")),
       },

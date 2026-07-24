@@ -39,6 +39,76 @@ function useAuthErrorContent(code: string | null): AuthErrorContent {
           "Personal Google and Microsoft accounts cannot be used to sign in. Please use your work or school account instead.",
         ),
       };
+    case "email_not_verified":
+      return {
+        title: __("Email not verified"),
+        description: __(
+          "Your email address is not verified with the identity provider. Please verify it, then try signing in again.",
+        ),
+      };
+    case "magic_link_expired":
+      return {
+        title: __("Link Expired"),
+        description: __(
+          "This magic link has expired. Magic links are only valid for 15 minutes. Please request a new one.",
+        ),
+      };
+    case "magic_link_already_used":
+      return {
+        title: __("Link Already Used"),
+        description: __(
+          "This magic link has already been used. Please request a new one.",
+        ),
+      };
+    case "magic_link_invalid":
+      return {
+        title: __("Invalid link"),
+        description: __(
+          "This magic link is invalid. Please request a new one.",
+        ),
+      };
+    case "saml_disabled":
+      return {
+        title: __("SSO unavailable"),
+        description: __(
+          "Single sign-on is disabled for this organization. Please contact your administrator.",
+        ),
+      };
+    case "saml_configuration_not_found":
+      return {
+        title: __("SSO configuration not found"),
+        description: __(
+          "This single sign-on configuration could not be found. Please contact your administrator.",
+        ),
+      };
+    case "saml_email_domain_mismatch":
+      return {
+        title: __("Email domain not allowed"),
+        description: __(
+          "Your email domain is not allowed for this organization's single sign-on. Please use an account from the configured domain.",
+        ),
+      };
+    case "saml_auto_signup_disabled":
+      return {
+        title: __("Account not found"),
+        description: __(
+          "No account exists for this email, and automatic signup is disabled. Please contact your administrator.",
+        ),
+      };
+    case "saml_user_inactive":
+      return {
+        title: __("Account inactive"),
+        description: __(
+          "Your account is inactive. Please contact your administrator.",
+        ),
+      };
+    case "saml_subject_already_in_use":
+      return {
+        title: __("Account already linked"),
+        description: __(
+          "This single sign-on identity is already linked to another account. Please contact your administrator.",
+        ),
+      };
     default:
       return {
         title: __("Authentication failed"),

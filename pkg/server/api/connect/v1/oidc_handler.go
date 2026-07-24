@@ -138,6 +138,13 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if _, ok := errors.AsType[*oidc.ErrEmailNotVerified](err); ok {
+			h.logger.WarnCtx(ctx, "OIDC login rejected: email not verified")
+			redirectAuthError(w, r, authErrorEmailNotVerified)
+
+			return
+		}
+
 		h.logger.ErrorCtx(ctx, "cannot handle OIDC callback", log.Error(err))
 		redirectAuthError(w, r, authErrorAuthenticationFailed)
 
@@ -301,29 +308,29 @@ func (h *MagicLinkHandler) VerifyHandler(w http.ResponseWriter, r *http.Request)
 
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		httpserver.RenderError(w, http.StatusBadRequest, errors.New("missing token"))
+		redirectAuthError(w, r, authErrorMagicLinkInvalid)
 		return
 	}
 
 	identity, session, continueURL, err := h.iam.AuthService.OpenSessionWithMagicLink(ctx, token)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
-			http.Redirect(w, r, "/auth/magic-link-expired", http.StatusFound)
+			redirectAuthError(w, r, authErrorMagicLinkExpired)
 			return
 		}
 
 		if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
-			http.Redirect(w, r, "/auth/magic-link-already-used", http.StatusFound)
+			redirectAuthError(w, r, authErrorMagicLinkAlreadyUsed)
 			return
 		}
 
 		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
-			httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid token"))
+			redirectAuthError(w, r, authErrorMagicLinkInvalid)
 			return
 		}
 
 		h.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
-		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+		redirectAuthError(w, r, authErrorAuthenticationFailed)
 
 		return
 	}

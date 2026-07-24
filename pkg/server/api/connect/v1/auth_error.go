@@ -21,13 +21,26 @@
 package connect_v1
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
+
+	"go.probo.inc/probo/pkg/iam/saml"
 )
 
 const (
 	authErrorPersonalAccountNotAllowed = "personal_account_not_allowed"
+	authErrorEmailNotVerified          = "email_not_verified"
 	authErrorAuthenticationFailed      = "authentication_failed"
+	authErrorMagicLinkExpired          = "magic_link_expired"
+	authErrorMagicLinkAlreadyUsed      = "magic_link_already_used"
+	authErrorMagicLinkInvalid          = "magic_link_invalid"
+	authErrorSAMLDisabled              = "saml_disabled"
+	authErrorSAMLConfigurationNotFound = "saml_configuration_not_found"
+	authErrorSAMLEmailDomainMismatch   = "saml_email_domain_mismatch"
+	authErrorSAMLAutoSignupDisabled    = "saml_auto_signup_disabled"
+	authErrorSAMLUserInactive          = "saml_user_inactive"
+	authErrorSAMLSubjectAlreadyInUse   = "saml_subject_already_in_use"
 )
 
 func redirectAuthError(w http.ResponseWriter, r *http.Request, code string) {
@@ -40,4 +53,40 @@ func redirectAuthError(w http.ResponseWriter, r *http.Request, code string) {
 	}
 
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+}
+
+func authErrorCodeFromSAML(err error) (string, bool) {
+	if _, ok := errors.AsType[*saml.ErrSAMLDisabled](err); ok {
+		return authErrorSAMLDisabled, true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrSAMLConfigurationNotFound](err); ok {
+		return authErrorSAMLConfigurationNotFound, true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrEmailDomainMismatch](err); ok {
+		return authErrorSAMLEmailDomainMismatch, true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrSAMLAutoSignupDisabled](err); ok {
+		return authErrorSAMLAutoSignupDisabled, true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrUserInactive](err); ok {
+		return authErrorSAMLUserInactive, true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrSAMLSubjectAlreadyInUse](err); ok {
+		return authErrorSAMLSubjectAlreadyInUse, true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrInvalidAssertion](err); ok {
+		return authErrorAuthenticationFailed, true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrReplayAttackDetected](err); ok {
+		return authErrorAuthenticationFailed, true
+	}
+
+	return "", false
 }
