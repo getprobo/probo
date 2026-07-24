@@ -110,7 +110,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	errParam := r.URL.Query().Get("error")
 	if errParam != "" {
-		h.logger.WarnCtx(
+		h.logger.ErrorCtx(
 			ctx,
 			"OIDC provider returned error",
 			log.String("error", errParam),
@@ -125,7 +125,6 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
 	if stateParam == "" || code == "" {
-		h.logger.WarnCtx(ctx, "OIDC callback missing state or code")
 		redirectAuthError(w, r, authErrorInvalidState)
 
 		return
@@ -134,21 +133,18 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	identity, continueURL, organizationID, err := h.iam.OIDCService.HandleCallback(ctx, provider, stateParam, code)
 	if err != nil {
 		if _, ok := errors.AsType[*oidc.ErrPersonalAccountNotAllowed](err); ok {
-			h.logger.WarnCtx(ctx, "OIDC login rejected: personal account not allowed")
 			redirectAuthError(w, r, authErrorPersonalAccountNotAllowed)
 
 			return
 		}
 
 		if _, ok := errors.AsType[*oidc.ErrEmailNotVerified](err); ok {
-			h.logger.WarnCtx(ctx, "OIDC login rejected: email not verified")
 			redirectAuthError(w, r, authErrorEmailNotVerified)
 
 			return
 		}
 
 		if _, ok := errors.AsType[*oidc.ErrInvalidState](err); ok {
-			h.logger.WarnCtx(ctx, "OIDC login rejected: invalid or expired state")
 			redirectAuthError(w, r, authErrorInvalidState)
 
 			return

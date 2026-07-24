@@ -61,7 +61,6 @@ func (h *SAMLHandler) renderInternalServerError(w http.ResponseWriter) {
 
 func (h *SAMLHandler) renderAssertionError(w http.ResponseWriter, r *http.Request, err error) {
 	if code, ok := authErrorCodeFromSAML(err); ok {
-		h.logger.WarnCtx(r.Context(), "SAML login rejected", log.Error(err), log.String("error_code", code))
 		redirectAuthError(w, r, code)
 
 		return
