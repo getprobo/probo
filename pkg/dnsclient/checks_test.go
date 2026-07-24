@@ -503,6 +503,7 @@ func TestCheckCAA(t *testing.T) {
 			exchange: func(ctx context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
 				deadline, ok := ctx.Deadline()
 				require.True(t, ok)
+
 				deadlines = append(deadlines, deadline)
 
 				name := msg.Question[0].Header().Name
