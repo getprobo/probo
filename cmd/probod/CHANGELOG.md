@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.234.0] - 2026-07-24
+
+### Changed
+
+- Render longer vetting notes as markdown, keeping more of the orchestrator assessment text and skipping profile fields already on the third party
+
+### Fixed
+
+- Reject empty SAML NameIDs during assertion validation, preventing duplicate-key failures on later logins, and return a clear error when a NameID is already linked to another account
+- Require portal redirect hosts to have a verified certificate (Active/Renewing) before allowing OIDC, magic-link, and compliance-portal OAuth `continue` redirects, closing an open redirect on newly claimed custom domains
+- Fixed PostHog access-review sources being marked disconnected for EU cloud OAuth tokens by delegating region discovery to the shared resolver used by the access-review driver
+
 ## [0.233.0] - 2026-07-22
 
 ### Added

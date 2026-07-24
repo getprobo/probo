@@ -23,6 +23,7 @@ package checks
 var darwinCommandPaths = map[string][]string{
 	"defaults":       {"/usr/bin/defaults"},
 	"fdesetup":       {"/usr/bin/fdesetup"},
+	"osascript":      {"/usr/bin/osascript"},
 	"pwpolicy":       {"/usr/bin/pwpolicy"},
 	"softwareupdate": {"/usr/sbin/softwareupdate"},
 	"stat":           {"/usr/bin/stat"},

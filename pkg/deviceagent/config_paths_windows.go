@@ -35,3 +35,14 @@ func DefaultConfigDir() string {
 
 	return filepath.Join(programData, "Probo", "agent")
 }
+
+// DefaultEnrollmentRunDir returns the runtime directory for the public
+// enrollment marker and enrolling.lock on Windows.
+func DefaultEnrollmentRunDir() string {
+	programData := os.Getenv("ProgramData")
+	if programData == "" {
+		programData = `C:\ProgramData`
+	}
+
+	return filepath.Join(programData, "Probo", "run")
+}

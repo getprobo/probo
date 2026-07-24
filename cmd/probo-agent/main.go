@@ -25,17 +25,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
+	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/deviceagent"
+	"go.probo.inc/probo/pkg/deviceagent/elevate"
 	"go.probo.inc/probo/pkg/deviceagent/service"
+	"go.probo.inc/probo/pkg/deviceagent/tray"
 	"go.probo.inc/probo/pkg/deviceagent/update"
 
 	// Side-effect import: registers per-OS posture checks.
@@ -56,6 +59,12 @@ func main() {
 	// a Windows self-update. No-op on Unix.
 	if exe, err := os.Executable(); err == nil {
 		update.CleanupAfterRestart(exe)
+	}
+
+	if len(os.Args) == 2 {
+		if _, _, err := deviceagent.ParseEnrollURL(os.Args[1]); err == nil {
+			os.Args = []string{os.Args[0], "enroll-url", os.Args[1]}
+		}
 	}
 
 	if err := newRootCmd().Execute(); err != nil {
@@ -86,8 +95,120 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newStatusCmd())
 	root.AddCommand(newCollectCmd())
 	root.AddCommand(newUpdateCmd())
+	root.AddCommand(newEnrollURLCmd())
+	registerPlatformCommands(root)
 
 	return root
+}
+
+func newEnrollURLCmd() *cobra.Command {
+	var preflight bool
+
+	cmd := &cobra.Command{
+		Use:    "enroll-url [url]",
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			serverURL, enrollmentToken, err := deviceagent.ParseEnrollURL(args[0])
+			if err != nil {
+				return err
+			}
+
+			dir := resolveDir(cmd)
+
+			if preflight {
+				enrolled, err := deviceagent.IsEnrolled(deviceagent.EnrollmentRunDir(dir))
+				if err != nil {
+					return fmt.Errorf("cannot check enrollment state: %w", err)
+				}
+
+				return writeEnrollPreflight(cmd.OutOrStdout(), serverURL, enrollmentToken, dir, enrolled)
+			}
+
+			already, err := reportIfAlreadyEnrolled(dir)
+			if err != nil {
+				return err
+			}
+
+			if already {
+				return nil
+			}
+
+			if runtime.GOOS == "darwin" {
+				return fmt.Errorf(
+					"macOS browser enrollment must use the signed Probo Agent.app " +
+						"(probo:// deeplink); for CLI use: sudo probo-agent install " +
+						"--server … --enrollment-token …",
+				)
+			}
+
+			exePath, err := os.Executable()
+			if err != nil {
+				return fmt.Errorf("cannot resolve current executable path: %w", err)
+			}
+
+			if err := elevate.RunElevatedInstall(exePath, serverURL, enrollmentToken, dir); err != nil {
+				return fmt.Errorf("cannot start elevated enrollment install: %w", err)
+			}
+
+			fmt.Println("Enrollment started.")
+
+			return nil
+		},
+	}
+
+	cmd.Flags().BoolVar(&preflight, "preflight", false, "validate enrollment URL and print JSON for the macOS URL handler")
+
+	return cmd
+}
+
+type enrollPreflightResponse struct {
+	Server          string `json:"server"`
+	Token           string `json:"token"`
+	AlreadyEnrolled bool   `json:"alreadyEnrolled"`
+	ConfigDir       string `json:"configDir"`
+}
+
+func writeEnrollPreflight(
+	w io.Writer,
+	serverURL, enrollmentToken, dir string,
+	alreadyEnrolled bool,
+) error {
+	payload := enrollPreflightResponse{
+		Server:          serverURL,
+		Token:           enrollmentToken,
+		AlreadyEnrolled: alreadyEnrolled,
+		ConfigDir:       dir,
+	}
+
+	out, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("cannot encode enrollment preflight response: %w", err)
+	}
+
+	if _, err := fmt.Fprintln(w, string(out)); err != nil {
+		return fmt.Errorf("cannot write enrollment preflight response: %w", err)
+	}
+
+	return nil
+}
+
+// reportIfAlreadyEnrolled prints a success message and returns true when
+// the local enrollment marker is already present. Deep-link retries must
+// exit 0 so the macOS URL handler does not show "Enrollment failed".
+func reportIfAlreadyEnrolled(dir string) (bool, error) {
+	enrolled, err := deviceagent.IsEnrolled(deviceagent.EnrollmentRunDir(dir))
+	if err != nil {
+		return false, fmt.Errorf("cannot check enrollment state: %w", err)
+	}
+
+	if !enrolled {
+		return false, nil
+	}
+
+	fmt.Println("Device is already enrolled.")
+
+	return true, nil
 }
 
 // newUpdater returns an Updater scoped to the running binary, or nil
@@ -142,29 +263,56 @@ func newInstallCmd() *cobra.Command {
 				return errors.New("--server is required")
 			}
 
+			var err error
+
+			serverURL, err = deviceagent.NormalizeServerURL(serverURL)
+			if err != nil {
+				return fmt.Errorf("invalid --server: %w", err)
+			}
+
 			if enrollmentToken == "" {
-				if v := os.Getenv("PROBO_TOKEN"); v != "" {
+				if v := os.Getenv("PROBO_ENROLLMENT_TOKEN"); v != "" {
 					enrollmentToken = v
 				}
 			}
 
 			if enrollmentToken == "" {
-				return errors.New("--enrollment-token (or PROBO_TOKEN env var) is required")
+				return errors.New("--enrollment-token (or PROBO_ENROLLMENT_TOKEN env var) is required")
 			}
 
 			dir := resolveDir(cmd)
 
+			already, err := reportIfAlreadyEnrolled(dir)
+			if err != nil {
+				return err
+			}
+
+			if already {
+				return nil
+			}
+
 			ctx, cancel := context.WithTimeout(cmd.Context(), 60*time.Second)
 			defer cancel()
 
-			agent := deviceagent.New(dir, version, newAgentLogger())
+			client := deviceagent.NewClient(
+				serverURL,
+				"",
+				fmt.Sprintf("probo-agent/%s", version),
+			)
 
-			resp, err := agent.EnrollNewDevice(ctx, strings.TrimRight(serverURL, "/"), enrollmentToken)
+			apiKey, err := deviceagent.LoadOrExchangeAPIKey(ctx, dir, client, serverURL, enrollmentToken)
 			if err != nil {
-				return fmt.Errorf("enrollment failed: %w", err)
+				return fmt.Errorf("cannot obtain device api key: %w", err)
 			}
 
-			fmt.Printf("Enrolled device %s (heartbeat %ds, posture %ds)\n",
+			agent := deviceagent.New(dir, version, newAgentLogger())
+
+			resp, err := agent.ConfigureDevice(ctx, serverURL, apiKey)
+			if err != nil {
+				return fmt.Errorf("device configuration failed: %w", err)
+			}
+
+			fmt.Printf("Configured device %s (heartbeat %ds, posture %ds)\n",
 				resp.DeviceID, resp.HeartbeatSeconds, resp.PostureSeconds)
 
 			if noAutoUpdate {
@@ -191,21 +339,40 @@ func newInstallCmd() *cobra.Command {
 					Dir:     dir,
 				},
 			); err != nil {
-				return fmt.Errorf("cannot install OS service: %w", err)
+				return clearEnrollmentMarkerOnSetupFailure(
+					dir,
+					fmt.Errorf("cannot install OS service: %w", err),
+				)
 			}
 
 			fmt.Println("Service installed and started.")
+
+			if err := registerTrayAutoStart(exePath, deviceagent.EnrollmentRunDir(dir)); err != nil {
+				return clearEnrollmentMarkerOnSetupFailure(dir, err)
+			}
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&serverURL, "server", "", "Probo server base URL (e.g. https://app.getprobo.com)")
-	cmd.Flags().StringVar(&enrollmentToken, "enrollment-token", "", "device enrollment token issued by an admin")
+	cmd.Flags().StringVar(&serverURL, "server", "", "Probo server base URL (e.g. https://your-probo-host.example.com)")
+	cmd.Flags().StringVar(&enrollmentToken, "enrollment-token", "", "one-shot enrollment token issued when the device was created")
 	cmd.Flags().BoolVar(&skipService, "skip-service", false, "register the device but do not install the OS service")
 	cmd.Flags().BoolVar(&noAutoUpdate, "no-auto-update", false, "disable automatic upgrades of the agent binary")
 
 	return cmd
+}
+
+// clearEnrollmentMarkerOnSetupFailure drops the public enrollment marker
+// so a later install can retry service/tray setup after ConfigureDevice
+// already succeeded. Credentials, config, and any already-installed OS
+// service are left in place; service.Install is idempotent on retry.
+func clearEnrollmentMarkerOnSetupFailure(dir string, setupErr error) error {
+	if clearErr := deviceagent.ClearEnrollmentMarker(deviceagent.EnrollmentRunDir(dir)); clearErr != nil {
+		return fmt.Errorf("%w (also cannot clear enrollment marker: %v)", setupErr, clearErr)
+	}
+
+	return setupErr
 }
 
 // persistAutoUpdate flips the UpdatesDisabled flag in the agent's
@@ -228,6 +395,10 @@ func newUninstallCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := resolveDir(cmd)
 
+			if runtime.GOOS == "darwin" && os.Geteuid() != 0 {
+				return errors.New("macOS uninstall requires root; re-run as: sudo probo-agent uninstall")
+			}
+
 			ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 			defer cancel()
 
@@ -240,7 +411,13 @@ func newUninstallCmd() *cobra.Command {
 				fmt.Fprintf(os.Stderr, "warning: service uninstall failed: %v\n", err)
 			}
 
-			_ = os.Remove(deviceagent.ConfigPath(dir))
+			if err := tray.UnregisterAutoStart(); err != nil {
+				fmt.Fprintf(os.Stderr, "warning: tray uninstall failed: %v\n", err)
+			}
+
+			if err := deviceagent.RemoveLocalState(dir); err != nil {
+				return fmt.Errorf("cannot remove agent state: %w", err)
+			}
 
 			fmt.Println("Uninstalled.")
 

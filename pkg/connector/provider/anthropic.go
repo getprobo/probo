@@ -31,9 +31,10 @@ import (
 
 func anthropicRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderAnthropic,
-		DisplayName:    "Anthropic",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderAnthropic,
+		DisplayName:      "Anthropic",
+		DocumentationURL: accessReviewDocsURL("anthropic"),
+		SupportsAPIKey:   true,
 		// Anthropic's Admin API authenticates with the admin key in the
 		// x-api-key header; it rejects Authorization: Bearer and returns
 		// 400 when both headers are present. APIKeyHeader makes the

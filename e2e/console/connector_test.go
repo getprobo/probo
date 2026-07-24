@@ -37,6 +37,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 			accessReviewDrivers {
 				provider
 				displayName
+				documentationUrl
 				oauthConfigured
 				apiKeySupported
 				clientCredentialsSupported
@@ -51,11 +52,12 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	var result struct {
 		AccessReviewDrivers []struct {
-			Provider                   string `json:"provider"`
-			DisplayName                string `json:"displayName"`
-			OauthConfigured            bool   `json:"oauthConfigured"`
-			APIKeySupported            bool   `json:"apiKeySupported"`
-			ClientCredentialsSupported bool   `json:"clientCredentialsSupported"`
+			Provider                   string  `json:"provider"`
+			DisplayName                string  `json:"displayName"`
+			DocumentationURL           *string `json:"documentationUrl"`
+			OauthConfigured            bool    `json:"oauthConfigured"`
+			APIKeySupported            bool    `json:"apiKeySupported"`
+			ClientCredentialsSupported bool    `json:"clientCredentialsSupported"`
 			ExtraSettings              []struct {
 				Key      string `json:"key"`
 				Label    string `json:"label"`
@@ -69,16 +71,28 @@ func TestAccessReviewDrivers(t *testing.T) {
 	assert.NotEmpty(t, result.AccessReviewDrivers)
 
 	providerNames := make(map[string]bool)
+	docURLByProvider := make(map[string]*string)
 
 	for _, info := range result.AccessReviewDrivers {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
 		assert.NotNil(t, info.ExtraSettings)
 		providerNames[info.Provider] = true
+		docURLByProvider[info.Provider] = info.DocumentationURL
 	}
 
 	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
+
+	// A documented provider exposes its probo.com docs URL; an undocumented one
+	// exposes null. See pkg/connector/provider/docs.go.
+	require.Contains(t, docURLByProvider, "ANTHROPIC")
+
+	if url := docURLByProvider["ANTHROPIC"]; assert.NotNil(t, url) {
+		assert.Equal(t, "https://www.probo.com/docs/product/access-review/anthropic", *url)
+	}
+
+	assert.Nil(t, docURLByProvider["BREX"], "BREX has no doc page, documentationUrl must be null")
 
 	t.Run("viewer can list access review drivers", func(t *testing.T) {
 		t.Parallel()

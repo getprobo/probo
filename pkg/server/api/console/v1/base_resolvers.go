@@ -17,6 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -394,6 +395,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAgentRun(run), nil
 		}
+	case coredata.DeviceEntityType:
+		action = itam.ActionDeviceGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			device, err := r.itam.GetDevice(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewDevice(device), nil
+		}
 	case coredata.AccessReviewCampaignEntityType:
 		action = accessreview.ActionCampaignGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
@@ -607,9 +618,15 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			)
 		}
 
+		var documentationURL *string
+		if reg.DocumentationURL != "" {
+			documentationURL = new(reg.DocumentationURL)
+		}
+
 		infos = append(infos, &types.ConnectorProviderInfo{
 			Provider:                   provider,
 			DisplayName:                reg.DisplayName,
+			DocumentationURL:           documentationURL,
 			OauthConfigured:            oauthConfigured,
 			APIKeySupported:            apiKeySupported,
 			APIKeyManaged:              apiKeyManaged,

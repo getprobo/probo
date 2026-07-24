@@ -1,0 +1,30 @@
+# Small opt-in set (mirrors .golangci.yml default: none + few linters).
+# Syntax-only rules so lint runs on Linux without SourceKit/macOS SDKs.
+only_rules:
+  - duplicate_imports
+  - empty_count
+  - empty_parameters
+  - empty_string
+  - force_cast
+  - force_try
+  - force_unwrapping
+  - orphaned_doc_comment
+  - redundant_nil_coalescing
+  - statement_position
+  - trailing_newline
+  - trailing_whitespace
+  - unused_closure_parameter
+  - unused_optional_binding
+  - vertical_whitespace
+
+included:
+  - cmd/probo-agent/installer/macos/enroll-ui
+
+excluded:
+  - cmd/probo-agent/installer/macos/enroll-ui/.build
+  - "**/*.generated.swift"
+  - "**/*.tmpl"
+
+force_cast: error
+force_try: error
+force_unwrapping: error

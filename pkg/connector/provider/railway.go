@@ -31,9 +31,10 @@ import (
 
 func railwayRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderRailway,
-		DisplayName:    "Railway",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderRailway,
+		DisplayName:      "Railway",
+		DocumentationURL: accessReviewDocsURL("railway"),
+		SupportsAPIKey:   true,
 		// Railway authenticates with an account API token as Authorization:
 		// Bearer. A single GraphQL call resolves the account's workspaces and
 		// their members, so there is nothing to pick (Pattern 3). Railway

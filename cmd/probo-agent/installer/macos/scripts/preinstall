@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# probo-agent macOS PKG preinstall script.
+#
+# Runs as root before the payload is laid down. Used to stop previous
+# LaunchAgent / LaunchDaemon instances so upgrades replace cleanly.
+# Failures here are non-fatal: a stuck launchctl must not block install.
+
+set -u
+
+LOG_FILE="/var/log/probo-agent-install.log"
+TRAY_LABEL="com.probo.agent.tray"
+TRAY_PLIST="/Library/LaunchAgents/${TRAY_LABEL}.plist"
+DAEMON_PLIST="/Library/LaunchDaemons/com.probo.agent.plist"
+HELPER_LABEL="com.probo.agent.helper"
+HELPER_PLIST="/Library/LaunchDaemons/${HELPER_LABEL}.plist"
+HELPER_BINARY="/Library/PrivilegedHelperTools/${HELPER_LABEL}"
+
+mkdir -p "$(dirname "${LOG_FILE}")"
+exec > >(tee -a "${LOG_FILE}") 2>&1
+
+echo
+echo "=== probo-agent preinstall $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+
+bootout_tray_for_user() {
+    local username="$1"
+    local user_uid
+
+    if [ -z "${username}" ] || \
+       [ "${username}" = "root" ] || \
+       [ "${username}" = "loginwindow" ]; then
+        return 0
+    fi
+
+    user_uid="$(id -u "${username}" 2>/dev/null || true)"
+    if [ -z "${user_uid}" ]; then
+        return 0
+    fi
+
+    launchctl bootout "gui/${user_uid}/${TRAY_LABEL}" 2>/dev/null || true
+}
+
+seen_users=" "
+for username in $(users 2>/dev/null || true); do
+    case "${seen_users}" in
+        *" ${username} "*) continue ;;
+    esac
+    seen_users="${seen_users}${username} "
+    bootout_tray_for_user "${username}"
+done
+
+console_user=$(stat -f "%Su" /dev/console 2>/dev/null || true)
+bootout_tray_for_user "${console_user}"
+
+if [ -f "${DAEMON_PLIST}" ]; then
+    launchctl bootout system "${DAEMON_PLIST}" 2>/dev/null || true
+    echo "Booted out LaunchDaemon at ${DAEMON_PLIST}."
+fi
+
+if [ -f "${HELPER_PLIST}" ]; then
+    launchctl bootout system "${HELPER_PLIST}" 2>/dev/null || true
+    rm -f "${HELPER_PLIST}"
+    echo "Removed privileged helper LaunchDaemon at ${HELPER_PLIST}."
+fi
+
+if [ -f "${HELPER_BINARY}" ]; then
+    rm -f "${HELPER_BINARY}"
+    echo "Removed privileged helper binary at ${HELPER_BINARY}."
+fi
+
+if [ -f "${TRAY_PLIST}" ]; then
+    echo "Existing tray LaunchAgent will be replaced by postinstall."
+fi
+
+echo "=== preinstall done ==="
+exit 0

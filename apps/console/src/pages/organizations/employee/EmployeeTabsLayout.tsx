@@ -35,6 +35,9 @@ export default function EmployeeTabsLayout() {
         <TabLink to="approvals" end>
           {__("Approvals")}
         </TabLink>
+        <TabLink to="devices" end>
+          {__("Devices")}
+        </TabLink>
       </Tabs>
       <Outlet />
     </div>

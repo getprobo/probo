@@ -37,6 +37,7 @@ import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
+import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
@@ -161,6 +162,12 @@ const routes = [
             ),
           },
           {
+            path: "enroll",
+            Component: lazy(
+              () => import("./pages/iam/enroll/EnrollDevicePageLoader"),
+            ),
+          },
+          {
             Component: CenteredLayout,
             children: [
               {
@@ -214,6 +221,13 @@ const routes = [
                 Component: lazy(
                   () =>
                     import("./pages/organizations/employee/EmployeeApprovalsPageLoader"),
+                ),
+              },
+              {
+                path: "devices",
+                Component: lazy(
+                  () =>
+                    import("./pages/organizations/employee/EmployeeDevicesPageLoader"),
                 ),
               },
             ],
@@ -318,6 +332,7 @@ const routes = [
           ...measureRoutes,
           ...documentsRoutes,
           ...thirdPartyRoutes,
+          ...deviceRoutes,
           ...frameworkRoutes,
           ...taskRoutes,
           ...assetRoutes,

@@ -120,6 +120,22 @@ func Forbiddenf(ctx context.Context, format string, a ...any) *gqlerror.Error {
 	return Forbidden(ctx, fmt.Errorf(format, a...))
 }
 
+// IsForbidden reports whether err is a GraphQL error with code FORBIDDEN.
+func IsForbidden(err error) bool {
+	return hasCode(err, "FORBIDDEN")
+}
+
+func hasCode(err error, code string) bool {
+	gqlErr, ok := errors.AsType[*gqlerror.Error](err)
+	if !ok {
+		return false
+	}
+
+	got, _ := gqlErr.Extensions["code"].(string)
+
+	return got == code
+}
+
 func NotFound(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),

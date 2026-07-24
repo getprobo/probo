@@ -140,6 +140,8 @@ PRB="./bin/prb"
 
 echo "  Creating people..."
 
+PROFILE_IDS=()
+
 create_person() {
   local full_name="$1"
   local position="$2"
@@ -165,6 +167,14 @@ create_person() {
     }
   ' "$vars")
   check_error "$resp" "createPerson: $full_name"
+
+  local profile_id
+  profile_id=$(echo "$resp" | jq -r '.data.createUser.profileEdge.node.id // empty')
+  if [ -z "$profile_id" ]; then
+    echo "ERROR (createPerson: $full_name): no profile id in response" >&2
+    exit 1
+  fi
+  PROFILE_IDS+=("$profile_id")
 }
 
 create_person "Jane Cooper" \
@@ -695,6 +705,203 @@ create_measure "Tabletop Disaster Recovery Exercises" \
 
 echo "    15 measures created"
 
+echo "  Creating devices..."
+
+AGENT_API="$BASE_URL/api/agent/v1"
+
+create_device() {
+  local owner_id="$1"
+
+  local input
+  if [ -n "$owner_id" ]; then
+    input=$(jo organizationId="$ORG_ID" ownerId="$owner_id")
+  else
+    input=$(jo organizationId="$ORG_ID")
+  fi
+
+  local resp
+  resp=$(prb_api "createDevice" '
+    mutation($input: CreateDeviceInput!) {
+      createDevice(input: $input) {
+        device { id }
+        enrollmentToken
+      }
+    }
+  ' -f input="$input")
+
+  local device_id token
+  device_id=$(echo "$resp" | jq -r '.data.createDevice.device.id // empty')
+  token=$(echo "$resp" | jq -r '.data.createDevice.enrollmentToken // empty')
+  if [ -z "$device_id" ] || [ -z "$token" ]; then
+    echo "ERROR (createDevice): missing device id or enrollment token in response" >&2
+    exit 1
+  fi
+
+  echo "$device_id $token"
+}
+
+agent_enroll() {
+  local token="$1"
+
+  local resp api_key
+  resp=$(curl -s -X POST \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg t "$token" '{token: $t}')" \
+    "$AGENT_API/enroll")
+  api_key=$(echo "$resp" | jq -r '.api_key // empty')
+  if [ -z "$api_key" ]; then
+    echo "ERROR (agent_enroll): no api_key in response: $resp" >&2
+    exit 1
+  fi
+
+  echo "$api_key"
+}
+
+agent_heartbeat() {
+  local api_key="$1"
+  local hardware_uuid="$2"
+  local hostname="$3"
+  local platform="$4"
+  local os_version="$5"
+  local agent_version="$6"
+  local serial="${7:-}"
+
+  # Build with jq (not jo) so numeric-looking values like os_version "14.5"
+  # stay JSON strings; jo would coerce them to numbers and fail decoding.
+  local body
+  body=$(jq -n \
+    --arg hw "$hardware_uuid" \
+    --arg sn "$serial" \
+    --arg hn "$hostname" \
+    --arg pf "$platform" \
+    --arg ov "$os_version" \
+    --arg av "$agent_version" \
+    '{hardware_uuid: $hw, hostname: $hn, platform: $pf, os_version: $ov, agent_version: $av}
+      + (if $sn == "" then {} else {serial_number: $sn} end)')
+
+  local resp code
+  resp=$(curl -s -w '\n%{http_code}' -X POST \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $api_key" \
+    -d "$body" \
+    "$AGENT_API/heartbeat")
+  code=$(echo "$resp" | tail -n1)
+  if [ "$code" != "200" ]; then
+    echo "ERROR (agent_heartbeat $hostname): HTTP $code" >&2
+    echo "  request: $body" >&2
+    echo "  response: $(echo "$resp" | sed '$d')" >&2
+    exit 1
+  fi
+}
+
+# agent_postures <api_key> <CHECK_KEY:STATUS>...
+agent_postures() {
+  local api_key="$1"; shift
+
+  local now
+  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  local body
+  body=$(printf '%s\n' "$@" \
+    | jq -R --arg o "$now" 'split(":") | {check_key: .[0], status: .[1], observed_at: $o}' \
+    | jq -s '{results: .}')
+
+  local code
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $api_key" \
+    -d "$body" \
+    "$AGENT_API/postures")
+  if [ "$code" != "204" ] && [ "$code" != "200" ]; then
+    echo "ERROR (agent_postures): HTTP $code" >&2
+    exit 1
+  fi
+}
+
+revoke_device() {
+  local device_id="$1"
+
+  prb_api "revokeDevice" '
+    mutation($input: RevokeDeviceInput!) {
+      revokeDevice(input: $input) {
+        device { id }
+      }
+    }
+  ' -f input="$(jo deviceId="$device_id")" > /dev/null
+}
+
+# seed_device <owner_id> <hostname> <platform> <os_version> <serial> <CHECK_KEY:STATUS>...
+# Creates a device, enrolls it, sends a heartbeat (activating it) and posts
+# posture results. Prints the device id.
+seed_device() {
+  local owner_id="$1"
+  local hostname="$2"
+  local platform="$3"
+  local os_version="$4"
+  local serial="$5"
+  shift 5
+
+  local out device_id token
+  out=$(create_device "$owner_id")
+  device_id="${out%% *}"
+  token="${out#* }"
+
+  local api_key
+  api_key=$(agent_enroll "$token")
+
+  local hardware_uuid
+  hardware_uuid="hw-$(echo "$hostname" | tr '[:upper:]' '[:lower:]')"
+
+  agent_heartbeat "$api_key" "$hardware_uuid" "$hostname" "$platform" "$os_version" "1.0.0" "$serial"
+  agent_postures "$api_key" "$@"
+
+  echo "$device_id"
+}
+
+# 6 active devices across platforms, each owned by a seeded person with a
+# varied posture mix so the UI shows every badge state.
+seed_device "${PROFILE_IDS[0]}" "jane-macbook-pro" "DARWIN" "14.5" "C02XY1Z2JGH7" \
+  DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
+  OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
+  MALWARE_PROTECTION:PASS > /dev/null
+
+seed_device "${PROFILE_IDS[1]}" "marcus-thinkpad" "LINUX" "Ubuntu 24.04" "PF3ABCDE" \
+  DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:FAIL TIME_SYNC:PASS \
+  OS_VERSION:PASS AUTO_UPDATE:UNKNOWN PASSWORD_POLICY:PASS REMOTE_LOGIN:FAIL \
+  MALWARE_PROTECTION:NOT_APPLICABLE > /dev/null
+
+seed_device "${PROFILE_IDS[4]}" "emily-macbook-air" "DARWIN" "14.4" "C02AB3C4JGH8" \
+  DISK_ENCRYPTION:PASS SCREEN_LOCK:FAIL FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
+  OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:FAIL REMOTE_LOGIN:PASS \
+  MALWARE_PROTECTION:PASS > /dev/null
+
+seed_device "${PROFILE_IDS[7]}" "alex-devbox" "LINUX" "Debian 12" "PF9ZYXWV" \
+  DISK_ENCRYPTION:FAIL SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
+  OS_VERSION:UNKNOWN AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
+  MALWARE_PROTECTION:NOT_APPLICABLE > /dev/null
+
+seed_device "${PROFILE_IDS[3]}" "david-surface" "WINDOWS" "Windows 11 23H2" "5CD1234ABC" \
+  DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:FAIL \
+  OS_VERSION:PASS AUTO_UPDATE:PASS PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
+  MALWARE_PROTECTION:PASS > /dev/null
+
+seed_device "${PROFILE_IDS[2]}" "sofia-latitude" "WINDOWS" "Windows 11 22H2" "5CD9876ZYX" \
+  DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:FAIL TIME_SYNC:PASS \
+  OS_VERSION:FAIL AUTO_UPDATE:FAIL PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
+  MALWARE_PROTECTION:UNKNOWN > /dev/null
+
+# 1 pending device: created and assigned, but never enrolled/activated.
+create_device "${PROFILE_IDS[6]}" > /dev/null
+
+# 1 revoked device: fully activated, then revoked.
+revoked_id=$(seed_device "${PROFILE_IDS[5]}" "james-old-macbook" "DARWIN" "12.7" "C02OLD1JGH9" \
+  DISK_ENCRYPTION:PASS SCREEN_LOCK:PASS FIREWALL_ENABLED:PASS TIME_SYNC:PASS \
+  OS_VERSION:FAIL AUTO_UPDATE:FAIL PASSWORD_POLICY:PASS REMOTE_LOGIN:PASS \
+  MALWARE_PROTECTION:PASS)
+revoke_device "$revoked_id"
+
+echo "    8 devices created (6 active, 1 pending, 1 revoked)"
+
 echo ""
 echo "Seed complete!"
 echo "  Email:    $EMAIL"
@@ -707,6 +914,7 @@ echo "    35 risks"
 echo "    20 third parties"
 echo "    15 measures"
 echo "    8 people"
+echo "    8 devices (6 active, 1 pending, 1 revoked)"
 echo ""
 echo "  To use the CLI:"
 echo "    export PROBO_HOST=$BASE_URL"

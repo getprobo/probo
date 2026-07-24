@@ -42,10 +42,19 @@ export function PeopleSelectField<TFieldValues extends FieldValues = FieldValues
   control,
   ...props
 }: Props<TFieldValues>) {
+  const { __ } = useTranslate();
+
   return (
     <Field {...props}>
       <Suspense
-        fallback={<Select variant="editor" loading placeholder="Loading..." />}
+        fallback={(
+          <Select
+            variant="editor"
+            loading
+            placeholder={__("Select an owner")}
+            className="w-full"
+          />
+        )}
       >
         <PeopleSelectWithQuery<TFieldValues>
           organizationId={organizationId}
@@ -81,7 +90,6 @@ function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
           placeholder={__("Select an owner")}
           onValueChange={value =>
             field.onChange(value === "__NONE__" ? null : value)}
-          key={people?.length.toString() ?? "0"}
           {...field}
           className="w-full"
           value={field.value ?? (props.optional ? "__NONE__" : "")}

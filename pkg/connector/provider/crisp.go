@@ -32,8 +32,9 @@ import (
 
 func crispRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderCrisp,
-		DisplayName: "Crisp",
+		Provider:         coredata.ConnectorProviderCrisp,
+		DisplayName:      "Crisp",
+		DocumentationURL: accessReviewDocsURL("crisp"),
 		// Model B: the plugin token is Probo's own Crisp Marketplace plugin
 		// credential, held server-side in bootstrap config, not pasted by
 		// the customer. ManagedAPIKey injects it at connect time; the

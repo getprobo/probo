@@ -31,9 +31,10 @@ import (
 
 func yousignRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderYousign,
-		DisplayName:    "Yousign",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderYousign,
+		DisplayName:      "Yousign",
+		DocumentationURL: accessReviewDocsURL("yousign"),
+		SupportsAPIKey:   true,
 		// Yousign authenticates with an API key as Authorization: Bearer. The
 		// key is bound to one organization, so GET /v3/users returns everyone
 		// with nothing to pick (Pattern 3). The connector targets Yousign

@@ -31,7 +31,13 @@ import (
 	"text/template"
 )
 
-const plistPath = "/Library/LaunchDaemons/com.getprobo.agent.plist"
+const (
+	plistPath = "/Library/LaunchDaemons/com.probo.agent.plist"
+
+	helperLabel      = "com.probo.agent.helper"
+	helperPlistPath  = "/Library/LaunchDaemons/" + helperLabel + ".plist"
+	helperBinaryPath = "/Library/PrivilegedHelperTools/" + helperLabel
+)
 
 const launchdPlistTmpl = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -70,6 +76,40 @@ func xmlEscape(v string) (string, error) {
 	}
 
 	return sb.String(), nil
+}
+
+func removeLaunchDaemonPlist(path string) error {
+	_ = exec.Command("launchctl", "bootout", "system", path).Run()
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("cannot remove plist %s: %w", path, err)
+	}
+
+	return nil
+}
+
+func removeManagedPath(path string) error {
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("cannot remove %s: %w", path, err)
+	}
+
+	return nil
+}
+
+// removePrivilegedHelper boots out and deletes the PKG-installed XPC helper.
+// Missing artifacts are treated as success so uninstall stays idempotent.
+func removePrivilegedHelper() error {
+	_ = exec.Command("launchctl", "bootout", "system/"+helperLabel).Run()
+	_ = exec.Command("launchctl", "bootout", "system", helperPlistPath).Run()
+
+	if err := removeManagedPath(helperPlistPath); err != nil {
+		return fmt.Errorf("cannot remove privileged helper plist: %w", err)
+	}
+
+	if err := removeManagedPath(helperBinaryPath); err != nil {
+		return fmt.Errorf("cannot remove privileged helper binary: %w", err)
+	}
+
+	return nil
 }
 
 // Install writes and boots the launchd plist.
@@ -115,11 +155,17 @@ func Install(cfg Config) error {
 	return nil
 }
 
-// Uninstall bootouts and removes the launchd plist.
+// Uninstall bootouts and removes the agent LaunchDaemon and the privileged
+// XPC helper installed by the macOS PKG.
 func Uninstall(cfg Config) error {
-	_ = exec.Command("launchctl", "bootout", "system", plistPath).Run()
-	if err := os.Remove(plistPath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("cannot remove plist: %w", err)
+	_ = cfg
+
+	if err := removeLaunchDaemonPlist(plistPath); err != nil {
+		return err
+	}
+
+	if err := removePrivilegedHelper(); err != nil {
+		return fmt.Errorf("cannot remove privileged helper: %w", err)
 	}
 
 	return nil

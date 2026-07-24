@@ -22,41 +22,60 @@
         pre { padding: 8px 10px; overflow-x: auto; }
         ul { margin: 4px 0 8px 18px; padding: 0; }
         li { margin: 2px 0; }
+        @media (prefers-color-scheme: dark) {
+            body { color: #f5f5f7; }
+            code, pre {
+                background: #3a3a3c;
+                color: #f5f5f7;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Welcome to the Probo Device Posture Agent</h1>
     <p>
-        This installer adds <code>probo-agent</code> to your Mac and starts it
-        as a system service. The agent reports device posture &mdash; disk
-        encryption, screen lock, firewall, OS version, and similar
-        signals &mdash; back to your Probo workspace over HTTPS.
+        This installer adds <code>probo-agent</code>, the menu bar helper, and
+        the <code>probo://</code> enrollment app to your Mac. After enrollment,
+        the agent reports device posture &mdash; disk encryption, screen lock,
+        firewall, OS version, and similar signals &mdash; to your Probo
+        workspace over HTTPS.
     </p>
 
     <h2>What the installer does</h2>
     <ul>
         <li>Installs the <code>probo-agent</code> binary to
             <code>/usr/local/bin/probo-agent</code>.</li>
-        <li>Registers the launchd unit
-            <code>com.probo.agent</code> in
-            <code>/Library/LaunchDaemons</code>.</li>
+        <li>Installs <code>Probo Agent.app</code> to
+            <code>/Applications</code> so browser enrollment deep links
+            (<code>probo://</code>) work.</li>
+        <li>Installs the privileged helper
+            <code>com.probo.agent.helper</code> so browser enrollment can
+            finish without a second admin password prompt.</li>
+        <li>Registers the menu bar helper LaunchAgent
+            <code>com.probo.agent.tray</code> in
+            <code>/Library/LaunchAgents</code>.</li>
         <li>Creates the persistent state directory
             <code>/var/lib/probo-agent</code> (root-owned, mode 0700).</li>
-        <li>Enrolls the device automatically when an admin has pre-staged
-            <code>/tmp/probo-agent.conf</code> (typically via an MDM).</li>
+        <li>Enrolls the device and starts the
+            <code>com.probo.agent</code> LaunchDaemon when an admin has
+            pre-staged <code>/tmp/probo-agent.conf</code> (typically via
+            MDM). Otherwise, finish enrollment from the menu bar icon.</li>
     </ul>
 
     <h2>What you will need</h2>
     <ul>
         <li>Administrator privileges on this Mac.</li>
-        <li>The Probo server URL (e.g.
-            <code>https://app.getprobo.com</code>).</li>
+        <li>The Probo server URL for your deployment (the URL of your Probo
+            console, e.g. <code>https://your-probo-host.example.com</code>).
+            Hosted Probo workspaces use the URL shown in your browser when you
+            sign in.</li>
         <li>A device enrollment token issued by a workspace administrator.</li>
     </ul>
 
     <p>
         Click <strong>Continue</strong> to review the license, then
-        <strong>Install</strong> to proceed.
+        <strong>Install</strong> to proceed. After installation, enroll from
+        the menu bar unless MDM already staged a configuration file.
     </p>
 </body>
 </html>

@@ -41,6 +41,7 @@ import type { AddAccessReviewSourceDialogConnectorProviderInfoFragment$data } fr
 
 import { APIKeyConnectorDialog } from "./_components/APIKeyConnectorDialog";
 import { ClientCredentialsConnectorDialog } from "./_components/ClientCredentialsConnectorDialog";
+import { ConnectorDocumentationLink } from "./_components/ConnectorDocumentationLink";
 import {
   DatadogConnectDialog,
   ZendeskConnectDialog,
@@ -51,6 +52,7 @@ export const addAccessReviewSourceDialogConnectorProviderInfoFragment = graphql`
   fragment AddAccessReviewSourceDialogConnectorProviderInfoFragment on ConnectorProviderInfo @relay(plural: true) {
     provider
     displayName
+    documentationUrl
     oauthConfigured
     apiKeySupported
     apiKeyManaged
@@ -160,6 +162,7 @@ export function AddAccessReviewSourceDialog({
         <ThirdPartyLogo thirdParty={info.provider} tint className="size-6 shrink-0" />
         <div className="mr-auto">
           <h3 className="font-medium">{info.displayName}</h3>
+          <ConnectorDocumentationLink url={info.documentationUrl} />
         </div>
         {isConnected
           ? (

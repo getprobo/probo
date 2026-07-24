@@ -12,9 +12,12 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -178,6 +181,84 @@ func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.View
 		UpdatedAt:    document.UpdatedAt,
 		FilterMode:   types.EmployeeDocumentFilterModeApproval,
 	}, nil
+}
+
+// EnrolledDevices is the resolver for the enrolledDevices field.
+func (r *viewerResolver) EnrolledDevices(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DeviceOrderBy) (*types.EmployeeDeviceConnection, error) {
+	scope, err := r.authorize(ctx, organizationID, itam.ActionEmployeeDeviceList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DeviceOrderField]{
+		Field:     coredata.DeviceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DeviceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	identity := authn.IdentityFromContext(ctx)
+
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(
+		ctx,
+		identity.ID,
+		organizationID,
+	)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get enrolled devices owner profile", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	devicesPage, err := r.itam.ListForOrganizationIDAndOwnerID(
+		ctx, scope, organizationID, profile.ID, cursor,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list enrolled devices", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewEmployeeDeviceConnection(devicesPage), nil
+}
+
+// EnrolledDevice is the resolver for the enrolledDevice field.
+func (r *viewerResolver) EnrolledDevice(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.Device, error) {
+	scope, err := r.authorize(
+		ctx,
+		id,
+		itam.ActionEmployeeDeviceGet,
+		authz.WithSkipAssumptionCheck(),
+	)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, gqlutils.NotFoundf(ctx, "resource not found")
+		}
+
+		return nil, err
+	}
+
+	device, err := r.itam.GetDevice(ctx, scope, id)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get enrolled device", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDevice(device), nil
 }
 
 // Viewer returns schema.ViewerResolver implementation.

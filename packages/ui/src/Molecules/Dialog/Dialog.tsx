@@ -72,6 +72,7 @@ type Props = {
   className?: string;
   ref?: DialogRef;
   onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   closable?: boolean;
 };
 
@@ -89,6 +90,7 @@ export function Dialog({
   ref,
   defaultOpen,
   onClose,
+  onOpenChange: onOpenChangeProp,
   closable = true,
 }: Props) {
   const { overlay, content, header, title: titleClassname } = dialog();
@@ -100,9 +102,11 @@ export function Dialog({
       ref.current = {
         open() {
           setOpen(true);
+          onOpenChangeProp?.(true);
         },
         close() {
           setOpen(false);
+          onOpenChangeProp?.(false);
         },
       };
     }
@@ -113,6 +117,7 @@ export function Dialog({
       return;
     }
     setOpen(open);
+    onOpenChangeProp?.(open);
     if (!open) {
       onClose?.();
     }
@@ -195,19 +200,27 @@ export function DialogFooter({
   children,
   exitLabel,
   className,
+  start,
 }: {
   children?: ReactNode;
   exitLabel?: string;
   className?: string;
+  // Optional content aligned to the footer's left edge (e.g. a documentation
+  // link), on the same line as the Cancel/confirm buttons. When set, the footer
+  // switches to justify-between; otherwise it keeps the default right alignment.
+  start?: ReactNode;
 }) {
   const { __ } = useTranslate();
   const { footer } = dialog();
   return (
-    <footer className={footer({ className })}>
-      <Close asChild>
-        <Button variant="secondary">{exitLabel ?? __("Cancel")}</Button>
-      </Close>
-      {children}
+    <footer className={footer({ className: clsx(start != null && "justify-between", className) })}>
+      {start != null && <div className="flex items-center gap-2">{start}</div>}
+      <div className="flex items-center gap-2">
+        <Close asChild>
+          <Button variant="secondary">{exitLabel ?? __("Cancel")}</Button>
+        </Close>
+        {children}
+      </div>
     </footer>
   );
 }

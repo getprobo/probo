@@ -83,6 +83,11 @@ func CommandExists(cmd string) bool {
 	return exists
 }
 
+// CommandCandidates returns absolute paths for known commands on the current platform.
+func CommandCandidates(cmd string) []string {
+	return commandCandidates(cmd)
+}
+
 func resolveCommandPath(cmd string) (string, bool) {
 	if filepath.IsAbs(cmd) {
 		return cmd, isExecutableFile(cmd)

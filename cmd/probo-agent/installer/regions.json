@@ -1,0 +1,27 @@
+{
+  "regions": [
+    {
+      "id": "us",
+      "title": "United States",
+      "subtitle": "us.probo.com",
+      "flag": "🇺🇸",
+      "server_url": "https://us.probo.com"
+    },
+    {
+      "id": "eu",
+      "title": "European Union",
+      "subtitle": "eu.probo.com",
+      "flag": "🇪🇺",
+      "server_url": "https://eu.probo.com"
+    },
+    {
+      "id": "self_hosted",
+      "title": "Self hosted",
+      "subtitle": "Your own Probo instance",
+      "flag": "🌐",
+      "server_url": null
+    }
+  ],
+  "employee_page_hint": "Open browser enrollment, choose your organization, then click the enroll button.",
+  "self_hosted_hostname_hint": "Enter your hostname above to continue enrollment in your browser."
+}

@@ -71,6 +71,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -144,6 +145,9 @@ func New() *Implm {
 					DomainVerificationIntervalSeconds: 60,
 					DomainVerificationResolverAddr:    "8.8.8.8:53",
 				},
+			},
+			ITAM: ITAMConfig{
+				DeviceEnrollmentTokenValidity: 604800,
 			},
 			CompliancePortal: CompliancePortalConfig{
 				HTTPAddr:   ":80",
@@ -720,6 +724,15 @@ func (impl *Implm) Run(
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
 
+	itamService := itam.NewService(
+		pgClient,
+		iamService,
+		itam.ServiceConfig{
+			EnrollmentTokenValidity: time.Duration(impl.cfg.ITAM.DeviceEnrollmentTokenValidity) * time.Second,
+		},
+		l.Named("itam"),
+	)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
@@ -739,6 +752,7 @@ func (impl *Implm) Run(
 			Geoloc:            geolocService,
 			ThirdParty:        thirdPartyService,
 			RiskManagement:    riskManagementService,
+			ITAM:              itamService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			ProviderRegistry:  providerRegistry,
@@ -951,6 +965,17 @@ func (impl *Implm) Run(
 		func() {
 			if err := iamService.Run(iamServiceCtx); err != nil {
 				cancel(fmt.Errorf("iam service crashed: %w", err))
+			}
+		},
+	)
+
+	itamGC := itam.NewGarbageCollector(pgClient, l.Named("itam"))
+	itamGCCtx, stopITAMGC := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := itamGC.Run(itamGCCtx); err != nil {
+				cancel(fmt.Errorf("itam garbage collector crashed: %w", err))
 			}
 		},
 	)
@@ -1174,6 +1199,7 @@ func (impl *Implm) Run(
 	stopExportJobExporter()
 	stopAccessReviewWorker()
 	stopIAMService()
+	stopITAMGC()
 	stopMailer()
 	stopSlackSender()
 

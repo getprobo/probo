@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -67,6 +68,7 @@ func NewGraphQLHandler(
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 	limits gqlutils.Limits,
+	itamSvc *itam.Service,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -90,6 +92,7 @@ func NewGraphQLHandler(
 			tokenSecret:       tokenSecret,
 			fileManager:       fileManagerSvc,
 			baseURL:           baseURL,
+			itam:              itamSvc,
 			logger:            logger,
 		},
 	}

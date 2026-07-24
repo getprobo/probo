@@ -31,9 +31,10 @@ import (
 
 func deepgramRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderDeepgram,
-		DisplayName:    "Deepgram",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderDeepgram,
+		DisplayName:      "Deepgram",
+		DocumentationURL: accessReviewDocsURL("deepgram"),
+		SupportsAPIKey:   true,
 		// Deepgram authenticates with an API key under the `Token` scheme
 		// (`Authorization: Token <key>`), not Bearer. APIKeyAuthScheme makes
 		// the APIKeyConnection use that scheme. There is no third-party

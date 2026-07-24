@@ -257,14 +257,16 @@ func (s *Service) HandleAssertion(
 				return NewEmailDomainMismatchError(email, config.EmailDomain)
 			}
 
+			samlSubject := strings.TrimSpace(assertion.Subject.NameID.Value)
+
 			err = identity.LoadByEmail(ctx, tx, email)
-			if err == coredata.ErrResourceNotFound && !config.AutoSignupEnabled {
+			if errors.Is(err, coredata.ErrResourceNotFound) && !config.AutoSignupEnabled {
 				return NewSAMLAutoSignupDisabledError(config.ID)
-			} else if err == coredata.ErrResourceNotFound && config.AutoSignupEnabled {
+			} else if errors.Is(err, coredata.ErrResourceNotFound) && config.AutoSignupEnabled {
 				*identity = coredata.Identity{
 					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         email,
-					SAMLSubject:          &assertion.Subject.NameID.Value,
+					SAMLSubject:          &samlSubject,
 					FullName:             fullname,
 					HashedPassword:       nil,
 					EmailAddressVerified: true,
@@ -272,8 +274,11 @@ func (s *Service) HandleAssertion(
 					UpdatedAt:            now,
 				}
 
-				err := identity.Insert(ctx, tx)
-				if err != nil {
+				if err := identity.Insert(ctx, tx); err != nil {
+					if errors.Is(err, coredata.ErrSAMLSubjectAlreadyExists) {
+						return NewSAMLSubjectAlreadyInUseError(assertion.ID)
+					}
+
 					return fmt.Errorf("cannot insert identity: %w", err)
 				}
 			} else if err != nil {
@@ -282,16 +287,18 @@ func (s *Service) HandleAssertion(
 				identity.EmailAddress = email
 				identity.FullName = fullname
 
-				// Identity can exist (e.g. provisioned via SCIM) but not have a SAML subject
-				if identity.SAMLSubject == nil {
-					identity.SAMLSubject = &assertion.Subject.NameID.Value
+				if !hasSAMLSubject(identity) {
+					identity.SAMLSubject = &samlSubject
 				}
 
 				identity.EmailAddressVerified = true
 				identity.UpdatedAt = now
 
-				err = identity.Update(ctx, tx)
-				if err != nil {
+				if err = identity.Update(ctx, tx); err != nil {
+					if errors.Is(err, coredata.ErrSAMLSubjectAlreadyExists) {
+						return NewSAMLSubjectAlreadyInUseError(assertion.ID)
+					}
+
 					return fmt.Errorf("cannot update identity: %w", err)
 				}
 			}
@@ -415,6 +422,10 @@ func (s *Service) validateAssertion(assertion *saml.Assertion, config *coredata.
 		return fmt.Errorf("subject or NameID missing")
 	}
 
+	if strings.TrimSpace(assertion.Subject.NameID.Value) == "" {
+		return NewSAMLSubjectRequiredError()
+	}
+
 	if assertion.Issuer.Value != config.IdPEntityID {
 		return fmt.Errorf("assertion issuer %q does not match expected issuer %q",
 			assertion.Issuer.Value, config.IdPEntityID)
@@ -478,4 +489,8 @@ func (s *Service) baseServiceProvider() *saml.ServiceProvider {
 		AuthnNameIDFormat: saml.EmailAddressNameIDFormat,
 		AllowIDPInitiated: true,
 	}
+}
+
+func hasSAMLSubject(identity *coredata.Identity) bool {
+	return identity.SAMLSubject != nil && strings.TrimSpace(*identity.SAMLSubject) != ""
 }

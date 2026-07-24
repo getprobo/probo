@@ -12,14 +12,24 @@
 #
 # We intentionally do not abort the install if enrollment fails:
 # the binary is laid down regardless, and the operator can finish
-# enrollment with `sudo probo-agent install ...` from Terminal.
+# enrollment from the menu bar helper.
 
 set -u
 
 LOG_FILE="/var/log/probo-agent-install.log"
 BINARY="/usr/local/bin/probo-agent"
 STATE_DIR="/var/lib/probo-agent"
+RUN_DIR="/var/run/probo-agent"
 CONF_FILE="/tmp/probo-agent.conf"
+DAEMON_PLIST="/Library/LaunchDaemons/com.probo.agent.plist"
+HELPER_LABEL="com.probo.agent.helper"
+HELPER_PLIST="/Library/LaunchDaemons/${HELPER_LABEL}.plist"
+HELPER_BINARY="/Library/PrivilegedHelperTools/${HELPER_LABEL}"
+APP_PATH="/Applications/Probo Agent.app"
+TRAY_LABEL="com.probo.agent.tray"
+TRAY_PLIST_NAME="${TRAY_LABEL}.plist"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TRAY_PLIST_TMPL="${SCRIPT_DIR}/launchagent.plist.tmpl"
 
 # Mirror everything to the install log. We keep stdout/stderr open
 # too so failures still surface in macOS Installer.app's log pane.
@@ -39,11 +49,194 @@ mkdir -p "${STATE_DIR}"
 chown root:wheel "${STATE_DIR}"
 chmod 0700 "${STATE_DIR}"
 
+mkdir -p "${RUN_DIR}"
+chown root:wheel "${RUN_DIR}"
+chmod 0755 "${RUN_DIR}"
+
+# Render the shared Go LaunchAgent template (pkg/deviceagent/tray/
+# launchagent.plist.tmpl) with fixed install paths. Values are
+# installer constants, so XML metacharacters are not expected.
+render_tray_plist() {
+    local tmpl="$1"
+    local out="$2"
+
+    sed \
+        -e "s|{{xml \.Label}}|${TRAY_LABEL}|g" \
+        -e "s|{{xml \.ExePath}}|${BINARY}|g" \
+        -e "s|{{xml \.RunDir}}|${RUN_DIR}|g" \
+        "${tmpl}" > "${out}"
+}
+
+register_tray_launchagent() {
+    local current_user user_uid agents_dir plist_path
+
+    agents_dir="/Library/LaunchAgents"
+    plist_path="${agents_dir}/${TRAY_PLIST_NAME}"
+
+    if [ ! -f "${TRAY_PLIST_TMPL}" ]; then
+        echo "error: tray LaunchAgent template missing at ${TRAY_PLIST_TMPL}"
+        return 1
+    fi
+
+    mkdir -p "${agents_dir}"
+    render_tray_plist "${TRAY_PLIST_TMPL}" "${plist_path}"
+
+    chmod 0644 "${plist_path}"
+    echo "Installed tray LaunchAgent at ${plist_path}."
+
+    bootstrap_tray_for_user() {
+        local username="$1"
+        local user_uid
+
+        if [ -z "${username}" ] || \
+           [ "${username}" = "root" ] || \
+           [ "${username}" = "loginwindow" ]; then
+            return 1
+        fi
+
+        user_uid="$(id -u "${username}" 2>/dev/null || true)"
+        if [ -z "${user_uid}" ]; then
+            echo "warning: cannot resolve uid for ${username}; skipping tray bootstrap."
+            return 1
+        fi
+
+        launchctl bootout "gui/${user_uid}/${TRAY_LABEL}" 2>/dev/null || true
+        if ! launchctl bootstrap "gui/${user_uid}" "${plist_path}"; then
+            echo "warning: could not start tray helper for ${username}; it will start at next GUI login."
+            return 1
+        fi
+
+        echo "Started tray LaunchAgent for ${username}."
+        return 0
+    }
+
+    started_any=false
+    seen_users=" "
+
+    for username in $(users 2>/dev/null || true); do
+        case "${seen_users}" in
+            *" ${username} "*) continue ;;
+        esac
+        seen_users="${seen_users}${username} "
+
+        if bootstrap_tray_for_user "${username}"; then
+            started_any=true
+        fi
+    done
+
+    if [ "${started_any}" = false ]; then
+        current_user=$(stat -f "%Su" /dev/console 2>/dev/null || true)
+        if bootstrap_tray_for_user "${current_user}"; then
+            started_any=true
+        fi
+    fi
+
+    if [ "${started_any}" = false ]; then
+        echo "No active GUI session found; tray helper will start at next GUI login."
+    fi
+}
+
+register_enrollment_url_scheme() {
+    local lsregister
+
+    if [ ! -d "${APP_PATH}" ]; then
+        echo "warning: ${APP_PATH} not found; cannot register probo:// URL scheme."
+        return 0
+    fi
+
+    lsregister="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+    if [ ! -x "${lsregister}" ]; then
+        echo "warning: lsregister is unavailable; URL scheme registration skipped."
+        return 0
+    fi
+
+    if ! "${lsregister}" -f "${APP_PATH}"; then
+        echo "warning: failed to register probo:// URL scheme."
+        return 0
+    fi
+
+    echo "Registered probo:// URL scheme."
+}
+
+# Install the privileged helper as root during PKG install so browser
+# enrollment can use XPC without SMJobBless / an admin password prompt.
+install_privileged_helper() {
+    local src_helper="${APP_PATH}/Contents/Library/LaunchServices/${HELPER_LABEL}"
+
+    if [ ! -x "${src_helper}" ]; then
+        echo "error: privileged helper missing at ${src_helper}"
+        return 1
+    fi
+
+    mkdir -p /Library/PrivilegedHelperTools /Library/LaunchDaemons
+
+    if [ -f "${HELPER_PLIST}" ]; then
+        launchctl bootout system "${HELPER_PLIST}" 2>/dev/null || true
+    fi
+
+    # Match SMJobBless-style permissions (root:wheel, not world-writable).
+    install -m 0544 -o root -g wheel "${src_helper}" "${HELPER_BINARY}"
+
+    cat > "${HELPER_PLIST}" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>${HELPER_LABEL}</string>
+	<key>Program</key>
+	<string>${HELPER_BINARY}</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>${HELPER_BINARY}</string>
+	</array>
+	<key>MachServices</key>
+	<dict>
+		<key>${HELPER_LABEL}</key>
+		<true/>
+	</dict>
+	<key>AssociatedBundleIdentifiers</key>
+	<array>
+		<string>com.probo.agent.url-handler</string>
+	</array>
+</dict>
+</plist>
+EOF
+    chmod 0644 "${HELPER_PLIST}"
+    chown root:wheel "${HELPER_PLIST}"
+
+    if ! launchctl bootstrap system "${HELPER_PLIST}"; then
+        echo "warning: could not bootstrap ${HELPER_LABEL}; first XPC connect may start it."
+        return 0
+    fi
+
+    echo "Installed privileged helper at ${HELPER_BINARY}."
+    return 0
+}
+
+# Restart a previously enrolled LaunchDaemon after upgrades. Preinstall
+# boots it out so the binary can be replaced; without /tmp/probo-agent.conf
+# enrollment is skipped and nothing else would load it again.
+restart_existing_daemon() {
+    if [ ! -f "${DAEMON_PLIST}" ]; then
+        return 0
+    fi
+
+    launchctl bootout system "${DAEMON_PLIST}" 2>/dev/null || true
+    if ! launchctl bootstrap system "${DAEMON_PLIST}"; then
+        echo "warning: could not start LaunchDaemon at ${DAEMON_PLIST}; it may start after reboot."
+        return 1
+    fi
+
+    echo "Started LaunchDaemon at ${DAEMON_PLIST}."
+    return 0
+}
+
 # An admin (or MDM) may stage /tmp/probo-agent.conf to drive an
 # unattended enrollment. Recognized keys (shell-style):
 #
-#   PROBO_SERVER_URL=https://app.getprobo.com
-#   PROBO_ENROLLMENT_TOKEN=<token>
+#   PROBO_SERVER_URL=https://your-probo-host.example.com
+#   PROBO_ENROLLMENT_TOKEN=<enrollment-token>
 #   PROBO_NO_AUTO_UPDATE=true
 #
 # Parse KEY=VALUE lines without sourcing or eval so a crafted conf
@@ -61,7 +254,7 @@ if [ -f "${CONF_FILE}" ]; then
     echo "Found ${CONF_FILE}, attempting unattended enrollment."
 
     CONF_SERVER=""
-    CONF_TOKEN=""
+    CONF_ENROLLMENT_TOKEN=""
     CONF_NOUPDATE=""
     while IFS= read -r line || [ -n "$line" ]; do
         line="${line%%#*}"
@@ -74,7 +267,7 @@ if [ -f "${CONF_FILE}" ]; then
                 CONF_SERVER="$(strip_conf_value "${line#PROBO_SERVER_URL=}")"
                 ;;
             PROBO_ENROLLMENT_TOKEN=*)
-                CONF_TOKEN="$(strip_conf_value "${line#PROBO_ENROLLMENT_TOKEN=}")"
+                CONF_ENROLLMENT_TOKEN="$(strip_conf_value "${line#PROBO_ENROLLMENT_TOKEN=}")"
                 ;;
             PROBO_NO_AUTO_UPDATE=*)
                 CONF_NOUPDATE="$(strip_conf_value "${line#PROBO_NO_AUTO_UPDATE=}")"
@@ -82,32 +275,44 @@ if [ -f "${CONF_FILE}" ]; then
         esac
     done < "${CONF_FILE}"
 
-    if [ -z "${CONF_SERVER}" ] || [ -z "${CONF_TOKEN}" ]; then
+    if [ -z "${CONF_SERVER}" ] || [ -z "${CONF_ENROLLMENT_TOKEN}" ]; then
         echo "warning: ${CONF_FILE} is missing PROBO_SERVER_URL or PROBO_ENROLLMENT_TOKEN; skipping enrollment."
     else
-        EXTRA_FLAGS=()
+        # Build argv from the first element so "${INSTALL_ARGS[@]}"
+        # is never empty — macOS /bin/bash 3.2 treats an unset empty
+        # array as unbound under `set -u`.
+        INSTALL_ARGS=(
+            install
+            --server "${CONF_SERVER}"
+            --enrollment-token "${CONF_ENROLLMENT_TOKEN}"
+        )
         case "${CONF_NOUPDATE}" in
-            1|true|TRUE|yes|YES) EXTRA_FLAGS+=("--no-auto-update") ;;
+            1|true|TRUE|yes|YES) INSTALL_ARGS+=(--no-auto-update) ;;
         esac
 
-        if "${BINARY}" install \
-                --server "${CONF_SERVER}" \
-                --enrollment-token "${CONF_TOKEN}" \
-                "${EXTRA_FLAGS[@]}"; then
+        if "${BINARY}" "${INSTALL_ARGS[@]}"; then
             echo "Device enrolled and service installed."
         else
             echo "warning: probo-agent install failed; the binary is in place and can be re-run by an admin."
         fi
     fi
 
-    # The token in the conf file is sensitive; clear it whatever
+    # The enrollment token in the conf file is sensitive; clear it
     # the outcome so a successful install does not leave secrets
     # in /tmp.
     rm -f "${CONF_FILE}"
 else
-    echo "No ${CONF_FILE} found; skipping automatic enrollment."
-    echo "Finish setup with: sudo ${BINARY} install --server <URL> --enrollment-token <TOKEN>"
+    echo "No ${CONF_FILE} found; enrollment can be completed from the menu bar icon."
 fi
+
+if ! install_privileged_helper; then
+    echo "error: privileged helper installation failed; browser enrollment will not work."
+    exit 1
+fi
+
+restart_existing_daemon
+register_tray_launchagent
+register_enrollment_url_scheme
 
 echo "=== postinstall done ==="
 exit 0

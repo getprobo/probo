@@ -21,35 +21,41 @@
 package checks
 
 import (
+	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
+var windowsCommandPaths = map[string][]string{
+	"manage-bde": {`%s\System32\manage-bde.exe`},
+	"net":        {`%s\System32\net.exe`},
+	"netsh":      {`%s\System32\netsh.exe`},
+	"powershell": {`%s\System32\WindowsPowerShell\v1.0\powershell.exe`},
+	"sc":         {`%s\System32\sc.exe`},
+	"w32tm":      {`%s\System32\w32tm.exe`},
+}
+
 func commandCandidates(cmd string) []string {
+	templates := windowsCommandPaths[normalizeWindowsCommand(cmd)]
+	if len(templates) == 0 {
+		return nil
+	}
+
 	systemRoot := os.Getenv("SystemRoot")
 	if systemRoot == "" {
 		systemRoot = `C:\Windows`
 	}
 
-	system32 := filepath.Join(systemRoot, "System32")
-
-	switch strings.ToLower(cmd) {
-	case "powershell", "powershell.exe":
-		return []string{
-			filepath.Join(system32, "WindowsPowerShell", "v1.0", "powershell.exe"),
-		}
-	case "manage-bde", "manage-bde.exe":
-		return []string{filepath.Join(system32, "manage-bde.exe")}
-	case "netsh", "netsh.exe":
-		return []string{filepath.Join(system32, "netsh.exe")}
-	case "w32tm", "w32tm.exe":
-		return []string{filepath.Join(system32, "w32tm.exe")}
-	case "sc", "sc.exe":
-		return []string{filepath.Join(system32, "sc.exe")}
-	case "net", "net.exe":
-		return []string{filepath.Join(system32, "net.exe")}
-	default:
-		return nil
+	paths := make([]string, len(templates))
+	for i, template := range templates {
+		paths[i] = fmt.Sprintf(template, systemRoot)
 	}
+
+	return paths
+}
+
+func normalizeWindowsCommand(name string) string {
+	name = strings.ToLower(strings.TrimSpace(name))
+
+	return strings.TrimSuffix(name, ".exe")
 }

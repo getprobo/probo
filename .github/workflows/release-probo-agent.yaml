@@ -20,8 +20,6 @@ jobs:
         include:
           - { goos: linux, goarch: amd64 }
           - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
           - { goos: windows, goarch: amd64 }
           - { goos: windows, goarch: arm64 }
           - { goos: freebsd, goarch: amd64 }
@@ -45,7 +43,7 @@ jobs:
           if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
 
           go build -ldflags "-s -w -X 'main.version=${VERSION}'" \
-            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent/main.go
+            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent
       - name: "Create archive"
         env:
           GOOS: "${{ matrix.goos }}"
@@ -53,7 +51,6 @@ jobs:
         run: |
           case "$GOOS" in
             linux)   OS="Linux" ;;
-            darwin)  OS="Darwin" ;;
             windows) OS="Windows" ;;
             freebsd) OS="Freebsd" ;;
           esac
@@ -82,9 +79,94 @@ jobs:
           path: "archives/"
           retention-days: 1
 
+  build-macos:
+    name: "macos (darwin pkg + darwin archives)"
+    runs-on: "macos-26"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+        with:
+          submodules: recursive
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Select Xcode version"
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+          xcode-select -p
+          swift --version
+      - name: "Import signing certificate"
+        env:
+          CERTIFICATE_BASE64: "${{ secrets.APPLE_CERTIFICATE }}"
+          CERTIFICATE_PASSWORD: "${{ secrets.APPLE_CERTIFICATE_PASSWORD }}"
+          KEYCHAIN_PASSWORD: "${{ secrets.KEYCHAIN_PASSWORD }}"
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          security import certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          rm certificate.p12
+      - name: "Build CGO darwin binaries and darwin pkg"
+        env:
+          CGO_ENABLED: "1"
+          CODESIGN_IDENTITY: "${{ secrets.CODESIGN_IDENTITY }}"
+          INSTALLER_IDENTITY: "${{ secrets.INSTALLER_IDENTITY }}"
+          APPLE_ID: "${{ secrets.APPLE_ID }}"
+          APPLE_ID_PASSWORD: "${{ secrets.APPLE_ID_PASSWORD }}"
+          APPLE_TEAM_ID: "${{ secrets.APPLE_TEAM_ID }}"
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          LDFLAGS="-s -w -X 'main.version=${VERSION}'"
+
+          mkdir -p dist archives staging
+
+          GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" \
+            -gcflags="-e" -o dist/probo-agent_arm64 ./cmd/probo-agent
+          GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" \
+            -gcflags="-e" -o dist/probo-agent_amd64 ./cmd/probo-agent
+
+          lipo -create \
+            dist/probo-agent_arm64 \
+            dist/probo-agent_amd64 \
+            -output dist/probo-agent_universal
+
+          for pair in "arm64:arm64" "amd64:x86_64"; do
+            GOARCH="${pair%%:*}"
+            ARCH="${pair##*:}"
+            AGENT_DIR="probo-agent_Darwin_${ARCH}"
+            mkdir -p "staging/${AGENT_DIR}"
+            cp "dist/probo-agent_${GOARCH}" "staging/${AGENT_DIR}/probo-agent"
+            cp README.md LICENSE "staging/${AGENT_DIR}/"
+            if [ -f cmd/probo-agent/CHANGELOG.md ]; then
+              cp cmd/probo-agent/CHANGELOG.md "staging/${AGENT_DIR}/"
+            fi
+            tar -czf "archives/${AGENT_DIR}.tar.gz" -C staging "${AGENT_DIR}"
+          done
+
+          chmod +x cmd/probo-agent/installer/macos/build.sh \
+            cmd/probo-agent/installer/macos/scripts/preinstall \
+            cmd/probo-agent/installer/macos/scripts/postinstall
+
+          cmd/probo-agent/installer/macos/build.sh \
+            --binary dist/probo-agent_universal \
+            --version "${VERSION}" \
+            --output "archives/probo-agent_${VERSION}_darwin.pkg"
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        with:
+          name: "archive-darwin"
+          path: "archives/"
+          retention-days: 1
+
   github-release:
     name: "github-release"
-    needs: [build-binary]
+    needs: [build-binary, build-macos]
     runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "write"
@@ -104,8 +186,35 @@ jobs:
       - name: "Generate checksums and sign"
         run: |
           cd archives
-          sha256sum *.tar.gz *.zip > checksums.txt
+          sha256sum *.tar.gz *.zip *.pkg > checksums.txt
           cosign sign-blob --bundle="checksums.txt.bundle" checksums.txt --yes
+      - name: "Inject release checksums into install.sh"
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          cp cmd/probo-agent/installer/install.sh archives/install.sh
+          sed -i "s|^RELEASE_TAG=\"__PROBO_AGENT_RELEASE_TAG__\"|RELEASE_TAG=\"${TAG}\"|" archives/install.sh
+          grep 'probo-agent_.*\.tar\.gz' archives/checksums.txt > archives/probo-agent-checksums.txt
+          awk '
+            /# __PROBO_AGENT_CHECKSUMS_BEGIN__/ {
+              print
+              while ((getline line < "archives/probo-agent-checksums.txt") > 0) print line
+              skip = 1
+              next
+            }
+            /# __PROBO_AGENT_CHECKSUMS_END__/ {
+              skip = 0
+              print
+              next
+            }
+            !skip { print }
+            END {
+              if (skip) {
+                print "install.sh injection failed: missing # __PROBO_AGENT_CHECKSUMS_END__ marker" > "/dev/stderr"
+                exit 1
+              }
+            }
+          ' archives/install.sh > archives/install.sh.tmp
+          mv archives/install.sh.tmp archives/install.sh
       - name: "Generate SBOM"
         uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
         with:
@@ -121,12 +230,12 @@ jobs:
       - name: "Attest SBOM for archives"
         uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
         with:
-          subject-path: "archives/*.tar.gz, archives/*.zip"
+          subject-path: "archives/*.tar.gz, archives/*.zip, archives/*.pkg"
           sbom-path: "sbom.json"
       - name: "Attest build provenance for archives"
         uses: "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373" # v4
         with:
-          subject-path: "archives/*.tar.gz, archives/*.zip"
+          subject-path: "archives/*.tar.gz, archives/*.zip, archives/*.pkg"
       - name: "Extract release notes"
         run: |
           VERSION="${GITHUB_REF_NAME##*/v}"
@@ -140,7 +249,7 @@ jobs:
           fi
       - name: "Create GitHub release"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
           PRERELEASE_FLAG=""
           if echo "${GITHUB_REF_NAME}" | grep -qE '(alpha|beta|rc)'; then

@@ -31,9 +31,10 @@ import (
 
 func apolloRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderApollo,
-		DisplayName:    "Apollo.io",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderApollo,
+		DisplayName:      "Apollo.io",
+		DocumentationURL: accessReviewDocsURL("apollo"),
+		SupportsAPIKey:   true,
 		// Apollo's REST API authenticates with a master API key in the
 		// x-api-key header; it rejects Authorization: Bearer (and, since
 		// Sept 2024, query/body key params). APIKeyHeader makes the

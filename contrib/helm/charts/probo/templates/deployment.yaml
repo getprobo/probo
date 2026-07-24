@@ -149,6 +149,8 @@ spec:
             {{- end }}
             - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
+            - name: PROBOD_ITAM_DEVICE_ENROLLMENT_TOKEN_VALIDITY
+              value: {{ .Values.probo.itam.deviceEnrollmentTokenValidity | quote }}
             {{- if .Values.probo.saml.enabled }}
             # SAML Authentication
             - name: PROBOD_SAML_SESSION_DURATION

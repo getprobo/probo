@@ -67,8 +67,7 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 	r.Get("/sitemap.xml", markdownHandler.HandleSitemap)
 
 	allowedHost := func(ctx context.Context, host string) bool {
-		_, err := cfg.Visitor.GetPortalByDomainName(ctx, host)
-		return err == nil
+		return cfg.Visitor.IsVerifiedRedirectHost(ctx, host)
 	}
 
 	oauthInitiateHandler := NewOAuthInitiateHandler(
