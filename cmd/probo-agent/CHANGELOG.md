@@ -3,6 +3,20 @@
 All notable changes to the `probo-agent` device posture agent will be
 documented in this file.
 
+## [0.3.0] - 2026-07-24
+
+### Added
+
+- Branded Finder icon for `Probo Agent.app` (generated from a master PNG
+  via `sips`/`iconutil` at PKG build time).
+
+### Fixed
+
+- macOS auto-update posture check now reads all five Software Update
+  preferences backing the System Settings toggles, resolving managed
+  (MDM) values before system ones, so disabled downloads/installs are
+  correctly reported as failing instead of PASS.
+
 ## [0.2.0] - 2026-07-24
 
 ### Added
