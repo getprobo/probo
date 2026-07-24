@@ -22,6 +22,7 @@ package accessreview
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -61,11 +62,15 @@ func (s *Service) CreateCampaign(
 			for _, sourceID := range req.AccessReviewSourceIDs {
 				source := &coredata.AccessReviewSource{}
 				if err := source.LoadByID(ctx, conn, scope, sourceID); err != nil {
-					return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
+					if errors.Is(err, coredata.ErrResourceNotFound) {
+						return coredata.ErrResourceNotFound
+					}
+
+					return fmt.Errorf("cannot load access source: %w", err)
 				}
 
 				if source.OrganizationID != campaign.OrganizationID {
-					return fmt.Errorf("cannot create campaign: access source %s does not belong to the same organization", sourceID)
+					return coredata.ErrResourceNotFound
 				}
 
 				if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
@@ -154,7 +159,7 @@ func (s *Service) UpdateCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot update campaign: status is %s, expected DRAFT", campaign.Status)
+				return fmt.Errorf("cannot update campaign: %w", CampaignStatusError(campaign.Status))
 			}
 
 			if req.Name != nil && *req.Name != nil {
@@ -169,6 +174,12 @@ func (s *Service) UpdateCampaign(
 
 			if err := campaign.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update campaign: %w", err)
+			}
+
+			if req.AccessReviewSourceIDs != nil {
+				if err := s.syncCampaignSources(ctx, conn, scope, campaign, *req.AccessReviewSourceIDs); err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -231,16 +242,18 @@ func (s *Service) AddCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot add scope source: campaign status is %s, expected %s", campaign.Status, coredata.AccessReviewCampaignStatusDraft)
+				return fmt.Errorf("cannot add scope source: %w", CampaignStatusError(campaign.Status))
 			}
-
-			source := &coredata.AccessReviewSource{}
 			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
-				return fmt.Errorf("cannot load access source %s: %w", req.AccessReviewSourceID, err)
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return coredata.ErrResourceNotFound
+				}
+
+				return fmt.Errorf("cannot load access source: %w", err)
 			}
 
 			if source.OrganizationID != campaign.OrganizationID {
-				return fmt.Errorf("cannot add scope source: access source %q does not belong to the same organization", req.AccessReviewSourceID)
+				return coredata.ErrResourceNotFound
 			}
 
 			if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
@@ -276,10 +289,8 @@ func (s *Service) RemoveCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot remove scope source: campaign status is %s, expected DRAFT", campaign.Status)
+				return fmt.Errorf("cannot remove scope source: %w", CampaignStatusError(campaign.Status))
 			}
-
-			campaignSource := &coredata.AccessReviewCampaignSource{}
 			if err := campaignSource.DeleteByCampaignIDAndAccessReviewSourceID(ctx, conn, scope, campaign.ID, req.AccessReviewSourceID); err != nil {
 				return fmt.Errorf("cannot delete campaign source: %w", err)
 			}
@@ -292,6 +303,78 @@ func (s *Service) RemoveCampaignSource(
 	}
 
 	return campaign, nil
+}
+
+func (s *Service) syncCampaignSources(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	campaign *coredata.AccessReviewCampaign,
+	sourceIDs []gid.GID,
+) error {
+	var campaignSources coredata.AccessReviewCampaignSources
+	if err := campaignSources.LoadByCampaignID(ctx, conn, scope, campaign.ID); err != nil {
+		return fmt.Errorf("cannot load campaign sources: %w", err)
+	}
+
+	existingSourceIDs := make([]gid.GID, 0, len(campaignSources))
+	for _, campaignSource := range campaignSources {
+		if campaignSource.AccessReviewSourceID != nil {
+			existingSourceIDs = append(existingSourceIDs, *campaignSource.AccessReviewSourceID)
+		}
+	}
+
+	for _, sourceID := range sourceIDs {
+		if containsGID(existingSourceIDs, sourceID) {
+			continue
+		}
+
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, conn, scope, sourceID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return coredata.ErrResourceNotFound
+			}
+
+			return fmt.Errorf("cannot load access source: %w", err)
+		}
+
+		if source.OrganizationID != campaign.OrganizationID {
+			return coredata.ErrResourceNotFound
+		}
+
+		if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
+			return fmt.Errorf("cannot snapshot scope source: %w", err)
+		}
+	}
+
+	for _, existingSourceID := range existingSourceIDs {
+		if containsGID(sourceIDs, existingSourceID) {
+			continue
+		}
+
+		campaignSource := &coredata.AccessReviewCampaignSource{}
+		if err := campaignSource.DeleteByCampaignIDAndAccessReviewSourceID(
+			ctx,
+			conn,
+			scope,
+			campaign.ID,
+			existingSourceID,
+		); err != nil {
+			return fmt.Errorf("cannot delete campaign source: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func containsGID(ids []gid.GID, id gid.GID) bool {
+	for _, candidate := range ids {
+		if candidate == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Service) StartCampaign(
@@ -313,7 +396,7 @@ func (s *Service) StartCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot start campaign: status is %s, expected %s", campaign.Status, coredata.AccessReviewCampaignStatusDraft)
+				return fmt.Errorf("cannot start campaign: %w", CampaignStatusError(campaign.Status))
 			}
 
 			var campaignSources coredata.AccessReviewCampaignSources
@@ -322,7 +405,7 @@ func (s *Service) StartCampaign(
 			}
 
 			if len(campaignSources) == 0 {
-				return fmt.Errorf("cannot start campaign: no scope sources configured")
+				return ErrCampaignMissingSources
 			}
 
 			now := time.Now()

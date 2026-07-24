@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { accessReviewSourceIdsField } from './sources.fields';
 
 export const description: INodeProperties[] = [
 	{
@@ -63,6 +64,7 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The description of the access review campaign',
 	},
+	accessReviewSourceIdsField,
 ];
 
 export async function execute(
@@ -72,6 +74,7 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
+	const accessReviewSourceIds = this.getNodeParameter('accessReviewSourceIds', itemIndex, []) as string[];
 
 	const query = `
 		mutation CreateAccessReviewCampaign($input: CreateAccessReviewCampaignInput!) {
@@ -97,6 +100,7 @@ export async function execute(
 			organizationId,
 			name,
 			...(description && { description }),
+			...(accessReviewSourceIds.length > 0 && { accessReviewSourceIds }),
 		},
 	};
 

@@ -396,6 +396,59 @@ func TestAccessReviewCampaign_Update(t *testing.T) {
 	assert.Equal(t, "Renamed Campaign", result.UpdateAccessReviewCampaign.AccessReviewCampaign.Name)
 }
 
+func TestAccessReviewCampaign_UpdateSources(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	source1ID := factory.NewAccessReviewSource(owner, orgID).
+		WithName("Slack Source").
+		Create()
+	source2ID := factory.NewAccessReviewSource(owner, orgID).
+		WithName("GitHub Source").
+		Create()
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("Campaign Sources Update").
+		WithAccessReviewSourceIDs([]string{source1ID}).
+		Create()
+
+	const query = `
+		mutation($input: UpdateAccessReviewCampaignInput!) {
+			updateAccessReviewCampaign(input: $input) {
+				accessReviewCampaign {
+					id
+					sources {
+						sourceId
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		UpdateAccessReviewCampaign struct {
+			AccessReviewCampaign struct {
+				ID      string `json:"id"`
+				Sources []struct {
+					SourceID *string `json:"sourceId"`
+				} `json:"sources"`
+			} `json:"accessReviewCampaign"`
+		} `json:"updateAccessReviewCampaign"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+			"accessReviewSourceIds":  []string{source2ID},
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	assert.Equal(t, campaignID, result.UpdateAccessReviewCampaign.AccessReviewCampaign.ID)
+	require.Len(t, result.UpdateAccessReviewCampaign.AccessReviewCampaign.Sources, 1)
+	require.NotNil(t, result.UpdateAccessReviewCampaign.AccessReviewCampaign.Sources[0].SourceID)
+	assert.Equal(t, source2ID, *result.UpdateAccessReviewCampaign.AccessReviewCampaign.Sources[0].SourceID)
+}
+
 func TestAccessReviewCampaign_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
