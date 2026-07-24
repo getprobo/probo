@@ -24,24 +24,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
-	"codeberg.org/miekg/dns"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/dnsclient"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	SAMLDomainVerifier struct {
-		pg           *pg.Client
-		interval     time.Duration
-		resolverAddr string
-		logger       *log.Logger
-		tracer       trace.Tracer
+		pg        *pg.Client
+		interval  time.Duration
+		dnsClient *dnsclient.Client
+		logger    *log.Logger
+		tracer    trace.Tracer
 	}
 )
 
@@ -62,11 +61,11 @@ func NewSAMLDomainVerifier(
 	resolverAddr string,
 ) *SAMLDomainVerifier {
 	return &SAMLDomainVerifier{
-		pg:           pgClient,
-		interval:     interval,
-		resolverAddr: resolverAddr,
-		logger:       logger.Named("saml-domain-verifier"),
-		tracer:       tp.Tracer("go.probo.inc/probo/pkg/iam/saml_domain_verifier"),
+		pg:        pgClient,
+		interval:  interval,
+		dnsClient: dnsclient.NewClient(resolverAddr),
+		logger:    logger.Named("saml-domain-verifier"),
+		tracer:    tp.Tracer("go.probo.inc/probo/pkg/iam/saml_domain_verifier"),
 	}
 }
 
@@ -201,40 +200,18 @@ func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.G
 }
 
 func (v *SAMLDomainVerifier) checkDNSTXTRecord(ctx context.Context, emailDomain string, expectedValue string) error {
-	msg := dns.NewMsg(emailDomain, dns.TypeTXT)
-
-	client := dns.NewClient()
-
-	resp, _, err := client.Exchange(ctx, msg, "udp", v.resolverAddr)
-	if err != nil {
-		return fmt.Errorf("cannot query TXT record for %q: %w", emailDomain, err)
+	err := v.dnsClient.CheckTXT(ctx, emailDomain, expectedValue)
+	if err == nil {
+		return nil
 	}
 
-	if resp.Truncated {
-		resp, _, err = client.Exchange(ctx, msg, "tcp", v.resolverAddr)
-		if err != nil {
-			return fmt.Errorf("cannot query TXT record for %q over TCP: %w", emailDomain, err)
-		}
-	}
-
-	if resp.Rcode != dns.RcodeSuccess {
-		return fmt.Errorf("cannot query TXT record for %q: %s", emailDomain, dns.RcodeToString[resp.Rcode])
-	}
-
-	if len(resp.Answer) == 0 {
+	if errors.Is(err, dnsclient.ErrTXTNotFound) {
 		return fmt.Errorf("%w for %q", errDomainTXTRecordNotFound, emailDomain)
 	}
 
-	for _, answer := range resp.Answer {
-		txt, ok := answer.(*dns.TXT)
-		if !ok {
-			continue
-		}
-
-		if strings.Join(txt.Txt, "") == expectedValue {
-			return nil
-		}
+	if errors.Is(err, dnsclient.ErrTXTMismatch) {
+		return fmt.Errorf("%w for %q", errDomainTXTRecordMismatch, emailDomain)
 	}
 
-	return fmt.Errorf("%w for %q", errDomainTXTRecordMismatch, emailDomain)
+	return err
 }
