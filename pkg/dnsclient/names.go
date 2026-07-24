@@ -52,6 +52,7 @@ func EqualNames(a, b string) bool {
 func HostnamesForCAA(hostname string) ([]string, error) {
 	hostname = strings.ToLower(strings.TrimSpace(hostname))
 	hostname = strings.TrimSuffix(hostname, ".")
+
 	if hostname == "" {
 		return nil, fmt.Errorf("cannot build CAA hostnames: empty hostname")
 	}
