@@ -206,7 +206,7 @@ func (h *beginChallengeHandler) Process(ctx context.Context, certificate coredat
 		dnsCtx, dnsSpan := h.tracer.Start(ctx, "certmanager.dns_check")
 		dnsStarted := time.Now()
 
-		if err := h.checkDNSConfiguration(dnsCtx, certificate.Hostname); err != nil {
+		if err := h.dnsClient.CheckCNAME(dnsCtx, certificate.Hostname, h.cnameTarget); err != nil {
 			h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultDNSError, dnsStarted)
 			h.recordSpanError(dnsSpan, err, classifyProvisioningError(err))
 			dnsSpan.End()
@@ -342,10 +342,6 @@ func (h *beginChallengeHandler) loadSkipDNSChecks(ctx context.Context, hostname 
 	}
 
 	return skip, nil
-}
-
-func (h *beginChallengeHandler) checkDNSConfiguration(ctx context.Context, hostname string) error {
-	return h.dnsClient.CheckCNAME(ctx, hostname, h.cnameTarget)
 }
 
 func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname string) error {
