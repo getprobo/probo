@@ -18,28 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
-import { Button } from "@probo/ui";
+package connect_v1
 
-export default function PersonalAccountNotAllowedPage() {
-  const { __ } = useTranslate();
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
-  usePageTitle(__("Enterprise account required"));
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-  return (
-    <div className="space-y-6 w-full">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">{__("Enterprise account required")}</h1>
-        <p className="text-txt-tertiary">
-          {__(
-            "Personal Google and Microsoft accounts cannot be used to sign in. Please use your work or school account instead.",
-          )}
-        </p>
-      </div>
-      <Button className="w-full h-10" to="/auth/login">
-        {__("Sign in")}
-      </Button>
-    </div>
-  );
+func TestRedirectAuthError(t *testing.T) {
+	t.Parallel()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/connect/v1/oidc/google/callback", nil)
+	rec := httptest.NewRecorder()
+
+	redirectAuthError(rec, req, authErrorPersonalAccountNotAllowed)
+
+	assert.Equal(t, http.StatusFound, rec.Code)
+	location, err := rec.Result().Location()
+	require.NoError(t, err)
+	assert.Equal(t, "/auth/error", location.Path)
+	assert.Equal(t, authErrorPersonalAccountNotAllowed, location.Query().Get("error"))
 }

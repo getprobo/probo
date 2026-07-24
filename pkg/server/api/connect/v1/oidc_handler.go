@@ -116,7 +116,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			log.String("error", errParam),
 			log.String("error_description", r.URL.Query().Get("error_description")),
 		)
-		httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication failed"))
+		redirectAuthError(w, r, authErrorAuthenticationFailed)
 
 		return
 	}
@@ -133,13 +133,13 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if _, ok := errors.AsType[*oidc.ErrPersonalAccountNotAllowed](err); ok {
 			h.logger.WarnCtx(ctx, "OIDC login rejected: personal account not allowed")
-			http.Redirect(w, r, "/auth/personal-account-not-allowed", http.StatusFound)
+			redirectAuthError(w, r, authErrorPersonalAccountNotAllowed)
 
 			return
 		}
 
 		h.logger.ErrorCtx(ctx, "cannot handle OIDC callback", log.Error(err))
-		httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication failed"))
+		redirectAuthError(w, r, authErrorAuthenticationFailed)
 
 		return
 	}

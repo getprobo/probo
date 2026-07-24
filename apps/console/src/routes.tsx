@@ -128,10 +128,8 @@ const routes = [
         Component: lazy(() => import("./pages/iam/auth/MagicLinkAlreadyUsedPage")),
       },
       {
-        path: "personal-account-not-allowed",
-        Component: lazy(
-          () => import("./pages/iam/auth/PersonalAccountNotAllowedPage"),
-        ),
+        path: "error",
+        Component: lazy(() => import("./pages/iam/auth/AuthErrorPage")),
       },
     ],
   },
