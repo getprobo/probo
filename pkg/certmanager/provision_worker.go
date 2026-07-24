@@ -348,7 +348,10 @@ func (h *beginChallengeHandler) loadSkipDNSChecks(ctx context.Context, hostname 
 }
 
 func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname string) error {
-	err := h.dnsClient.CheckCAA(ctx, hostname, h.caaIssuerDomain)
+	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
+	defer cancel()
+
+	err := h.dnsClient.CheckCAA(dnsCtx, hostname, h.caaIssuerDomain)
 	if err == nil {
 		return nil
 	}
