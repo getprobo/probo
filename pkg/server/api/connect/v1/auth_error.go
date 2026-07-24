@@ -36,12 +36,6 @@ const (
 	authErrorMagicLinkExpired          = "magic_link_expired"
 	authErrorMagicLinkAlreadyUsed      = "magic_link_already_used"
 	authErrorMagicLinkInvalid          = "magic_link_invalid"
-	authErrorSAMLDisabled              = "saml_disabled"
-	authErrorSAMLConfigurationNotFound = "saml_configuration_not_found"
-	authErrorSAMLEmailDomainMismatch   = "saml_email_domain_mismatch"
-	authErrorSAMLAutoSignupDisabled    = "saml_auto_signup_disabled"
-	authErrorSAMLUserInactive          = "saml_user_inactive"
-	authErrorSAMLSubjectAlreadyInUse   = "saml_subject_already_in_use"
 )
 
 func redirectAuthError(w http.ResponseWriter, r *http.Request, code string) {
@@ -56,29 +50,32 @@ func redirectAuthError(w http.ResponseWriter, r *http.Request, code string) {
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 
+// authErrorCodeFromSAML maps known SAML assertion failures to a browser error
+// code. Specific SAML reasons stay server-side only; users see a generic
+// authentication failure to avoid leaking org/account state.
 func authErrorCodeFromSAML(err error) (string, bool) {
 	if _, ok := errors.AsType[*saml.ErrSAMLDisabled](err); ok {
-		return authErrorSAMLDisabled, true
+		return authErrorAuthenticationFailed, true
 	}
 
 	if _, ok := errors.AsType[*saml.ErrSAMLConfigurationNotFound](err); ok {
-		return authErrorSAMLConfigurationNotFound, true
+		return authErrorAuthenticationFailed, true
 	}
 
 	if _, ok := errors.AsType[*saml.ErrEmailDomainMismatch](err); ok {
-		return authErrorSAMLEmailDomainMismatch, true
+		return authErrorAuthenticationFailed, true
 	}
 
 	if _, ok := errors.AsType[*saml.ErrSAMLAutoSignupDisabled](err); ok {
-		return authErrorSAMLAutoSignupDisabled, true
+		return authErrorAuthenticationFailed, true
 	}
 
 	if _, ok := errors.AsType[*saml.ErrUserInactive](err); ok {
-		return authErrorSAMLUserInactive, true
+		return authErrorAuthenticationFailed, true
 	}
 
 	if _, ok := errors.AsType[*saml.ErrSAMLSubjectAlreadyInUse](err); ok {
-		return authErrorSAMLSubjectAlreadyInUse, true
+		return authErrorAuthenticationFailed, true
 	}
 
 	if _, ok := errors.AsType[*saml.ErrInvalidAssertion](err); ok {

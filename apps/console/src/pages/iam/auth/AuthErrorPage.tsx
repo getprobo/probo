@@ -74,48 +74,6 @@ function useAuthErrorContent(code: string | null): AuthErrorContent {
           "This magic link is invalid. Please request a new one.",
         ),
       };
-    case "saml_disabled":
-      return {
-        title: __("SSO unavailable"),
-        description: __(
-          "Single sign-on is disabled for this organization. Please contact your administrator.",
-        ),
-      };
-    case "saml_configuration_not_found":
-      return {
-        title: __("SSO configuration not found"),
-        description: __(
-          "This single sign-on configuration could not be found. Please contact your administrator.",
-        ),
-      };
-    case "saml_email_domain_mismatch":
-      return {
-        title: __("Email domain not allowed"),
-        description: __(
-          "Your email domain is not allowed for this organization's single sign-on. Please use an account from the configured domain.",
-        ),
-      };
-    case "saml_auto_signup_disabled":
-      return {
-        title: __("Account not found"),
-        description: __(
-          "No account exists for this email, and automatic signup is disabled. Please contact your administrator.",
-        ),
-      };
-    case "saml_user_inactive":
-      return {
-        title: __("Account inactive"),
-        description: __(
-          "Your account is inactive. Please contact your administrator.",
-        ),
-      };
-    case "saml_subject_already_in_use":
-      return {
-        title: __("Account already linked"),
-        description: __(
-          "This single sign-on identity is already linked to another account. Please contact your administrator.",
-        ),
-      };
     default:
       return {
         title: __("Authentication failed"),
