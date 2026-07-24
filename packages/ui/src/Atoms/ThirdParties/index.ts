@@ -52,6 +52,7 @@ export { Supabase } from "./Supabase";
 export { Tally } from "./Tally";
 export { Tailscale } from "./Tailscale";
 export { ThirdPartyLogo } from "./ThirdPartyLogo";
+export { UpCloud } from "./UpCloud";
 export { Vercel } from "./Vercel";
 export { Yousign } from "./Yousign";
 export { Zendesk } from "./Zendesk";
