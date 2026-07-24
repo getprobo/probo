@@ -165,10 +165,6 @@ func (c *idTokenClaims) isEmailDomainOwnerVerified() bool {
 	return false
 }
 
-// validateIDTokenClaims enforces provider-specific account requirements.
-// Enterprise eligibility is checked before email-verification claims so
-// personal Google/Microsoft accounts surface ErrPersonalAccountNotAllowed
-// rather than a generic email-verification failure (e.g. missing xms_edov).
 func validateIDTokenClaims(info *providerInfo, claims *idTokenClaims) error {
 	if claims.Email == "" {
 		return NewMissingEmailClaimError()
