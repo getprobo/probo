@@ -61,7 +61,7 @@ export async function execute(
 					createdAt
 					updatedAt
 					identity { id email fullName emailVerified }
-					organization { id name email }
+					organization { id name }
 					membership { id role createdAt }
 				}
 			}
