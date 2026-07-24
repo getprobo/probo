@@ -47,6 +47,7 @@ const (
 		"v1:agent " +
 		"v1:asset " +
 		"v1:audit " +
+		"v1:business-function " +
 		"v1:common-third-party " +
 		"v1:compliance-page " +
 		"v1:connector " +

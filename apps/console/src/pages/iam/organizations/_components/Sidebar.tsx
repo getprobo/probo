@@ -26,6 +26,7 @@ import {
   IconBox,
   IconCircleProgress,
   IconFire3,
+  IconFrame2,
   IconGroup1,
   IconInboxEmpty,
   IconKey,
@@ -63,6 +64,7 @@ const fragment = graphql`
         canListData: permission(action: "core:datum:list")
         canListAudits: permission(action: "core:audit:list")
         canListFindings: permission(action: "core:finding:list")
+        canListBusinessFunctions: permission(action: "core:business-function:list")
         canListObligations: permission(action: "core:obligation:list")
         canListProcessingActivities: permission(
             action: "core:processing-activity:list"
@@ -175,6 +177,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Findings")}
           icon={IconMagnifyingGlass}
           to={`${prefix}/findings`}
+        />
+      )}
+      {organization.canListBusinessFunctions && (
+        <SidebarItem
+          label={__("Business functions")}
+          icon={IconFrame2}
+          to={`${prefix}/business-functions`}
         />
       )}
       {organization.canListObligations && (

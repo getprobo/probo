@@ -123,6 +123,14 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 		}
 
 		return count, nil
+	case *businessFunctionResolver:
+		count, err := r.probo.BusinessFunctions.CountAssets(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count business function assets", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")

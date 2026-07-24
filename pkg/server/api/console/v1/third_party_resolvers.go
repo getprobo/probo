@@ -1146,6 +1146,14 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 
 		return count, nil
+	case *businessFunctionResolver:
+		count, err := r.probo.BusinessFunctions.CountThirdParties(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count business function third parties", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")

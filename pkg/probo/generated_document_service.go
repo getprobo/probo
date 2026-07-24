@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 type GeneratedDocumentService struct {
@@ -1201,6 +1202,299 @@ func BuildFindingListDocument(data docgen.FindingListData) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+func (s *GeneratedDocumentService) PublishBusinessFunctionList(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+	minor bool,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildBusinessFunctionListDocumentData(ctx, scope, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildBusinessFunctionListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			businessFunction := coredata.BusinessFunction{}
+
+			businessFunctionDocumentID, err := businessFunction.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+
+			if businessFunctionDocumentID != nil {
+				doc := &coredata.Document{}
+
+				err = doc.LoadByID(ctx, tx, scope, *businessFunctionDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load business function list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := businessFunction.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*businessFunctionDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			if existingDoc == nil {
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:                         documentID,
+					OrganizationID:             organizationID,
+					WriteMode:                  coredata.DocumentWriteModeGenerated,
+					CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
+					Status:                     coredata.DocumentStatusActive,
+					CreatedAt:                  now,
+					UpdatedAt:                  now,
+				}
+
+				if err := document.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := businessFunction.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "Business Functions",
+				Content:        prosemirrorJSON,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationLandscape,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetBusinessFunctionsDocumentID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var businessFunctionDocumentID *gid.GID
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			businessFunction := coredata.BusinessFunction{}
+
+			var err error
+
+			businessFunctionDocumentID, err = businessFunction.GetGeneratedDocumentID(ctx, conn, organizationID)
+
+			return err
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get business function list document ID: %w", err)
+	}
+
+	return businessFunctionDocumentID, nil
+}
+
+func (s *GeneratedDocumentService) buildBusinessFunctionListDocumentData(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.BusinessFunctionListData, error) {
+	businessFunctions, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.BusinessFunctionOrderField]{
+			Field:     coredata.BusinessFunctionOrderFieldReferenceID,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.BusinessFunctionOrderField]) ([]*coredata.BusinessFunction, error) {
+			var batch coredata.BusinessFunctions
+			// Published register is the DORA CIF perimeter (Critical + Important only).
+			cifOnly := true
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewBusinessFunctionFilter(nil, nil, &cifOnly)); err != nil {
+				return nil, fmt.Errorf("cannot load business functions: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return docgen.BusinessFunctionListData{}, err
+	}
+
+	if len(businessFunctions) == 0 {
+		return docgen.BusinessFunctionListData{
+			Title:                  "Business Functions",
+			OrganizationName:       organization.Name,
+			CreatedAt:              time.Now(),
+			TotalBusinessFunctions: 0,
+		}, nil
+	}
+
+	ownerIDs := make([]gid.GID, 0, len(businessFunctions))
+	ownerIDSet := make(map[gid.GID]struct{})
+
+	for _, bf := range businessFunctions {
+		if bf.OwnerID != nil {
+			if _, ok := ownerIDSet[*bf.OwnerID]; !ok {
+				ownerIDs = append(ownerIDs, *bf.OwnerID)
+				ownerIDSet[*bf.OwnerID] = struct{}{}
+			}
+		}
+	}
+
+	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
+
+	if len(ownerIDs) > 0 {
+		var profiles coredata.MembershipProfiles
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return docgen.BusinessFunctionListData{}, fmt.Errorf("cannot load profiles: %w", err)
+		}
+
+		for _, p := range profiles {
+			profileMap[p.ID] = p
+		}
+	}
+
+	rows := make([]docgen.BusinessFunctionListRow, 0, len(businessFunctions))
+	for _, bf := range businessFunctions {
+		ownerName := "-"
+
+		if bf.OwnerID != nil {
+			if p, ok := profileMap[*bf.OwnerID]; ok && p.FullName != "" {
+				ownerName = p.FullName
+			}
+		}
+
+		impactTolerance := "-"
+		if bf.ImpactTolerance != nil && *bf.ImpactTolerance != "" {
+			impactTolerance = *bf.ImpactTolerance
+		}
+
+		notes := "-"
+		if bf.Notes != nil && *bf.Notes != "" {
+			notes = *bf.Notes
+		}
+
+		rows = append(
+			rows,
+			docgen.BusinessFunctionListRow{
+				ReferenceID:     sanitizeTrackerCell(bf.ReferenceID),
+				Name:            sanitizeTrackerCell(bf.Name),
+				Classification:  sanitizeTrackerCell(formatBusinessFunctionClassification(bf.Classification)),
+				MTD:             sanitizeTrackerCell(formatDurationMinutes(bf.MTDMinutes)),
+				RTO:             sanitizeTrackerCell(formatDurationMinutes(bf.RTOMinutes)),
+				RPO:             sanitizeTrackerCell(formatDurationMinutes(bf.RPOMinutes)),
+				ImpactTolerance: sanitizeTrackerCell(impactTolerance),
+				Notes:           sanitizeTrackerCell(notes),
+				Owner:           sanitizeTrackerCell(ownerName),
+			},
+		)
+	}
+
+	return docgen.BusinessFunctionListData{
+		Title:                  "Business Functions",
+		OrganizationName:       organization.Name,
+		CreatedAt:              time.Now(),
+		TotalBusinessFunctions: len(businessFunctions),
+		Rows:                   rows,
+	}, nil
+}
+
+func formatBusinessFunctionClassification(classification coredata.BusinessFunctionClassification) string {
+	switch classification {
+	case coredata.BusinessFunctionClassificationCritical:
+		return "Critical"
+	case coredata.BusinessFunctionClassificationImportant:
+		return "Important"
+	case coredata.BusinessFunctionClassificationSecondary:
+		return "Secondary"
+	case coredata.BusinessFunctionClassificationStandard:
+		return "Standard"
+	default:
+		return string(classification)
+	}
+}
+
+func formatDurationMinutes(minutes int) string {
+	if minutes <= 0 {
+		return "0m"
+	}
+
+	if minutes%1440 == 0 {
+		return fmt.Sprintf("%dd", minutes/1440)
+	}
+
+	if minutes%60 == 0 {
+		return fmt.Sprintf("%dh", minutes/60)
+	}
+
+	return fmt.Sprintf("%dm", minutes)
+}
+
+var businessFunctionListTemplate = template.Must(
+	template.New("business_function_list.md.tmpl").
+		ParseFS(Templates, "templates/business_function_list.md.tmpl"),
+)
+
+func BuildBusinessFunctionListDocument(data docgen.BusinessFunctionListData) (string, error) {
+	var buf bytes.Buffer
+	if err := businessFunctionListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute business function list template: %w", err)
+	}
+
+	node, err := prosemirror.ParseMarkdown(buf.String())
+	if err != nil {
+		return "", fmt.Errorf("cannot convert business function list markdown: %w", err)
+	}
+
+	out, err := json.Marshal(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal business function list prosemirror node: %w", err)
+	}
+
+	return string(out), nil
 }
 
 func (s *GeneratedDocumentService) PublishObligationList(

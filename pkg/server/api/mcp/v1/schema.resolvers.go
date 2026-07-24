@@ -7333,3 +7333,177 @@ func (r *Resolver) DeleteCommitmentTool(ctx context.Context, req *mcp.CallToolRe
 
 	return nil, types.DeleteCommitmentOutput{DeletedCommitmentID: input.ID}, nil
 }
+
+func (r *Resolver) ListBusinessFunctionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListBusinessFunctionsInput) (*mcp.CallToolResult, types.ListBusinessFunctionsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionBusinessFunctionList)
+	if err != nil {
+		return nil, types.ListBusinessFunctionsOutput{}, err
+	}
+
+	prb := r.proboSvc
+
+	pageOrderBy := page.OrderBy[coredata.BusinessFunctionOrderField]{
+		Field:     coredata.BusinessFunctionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.BusinessFunctionOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	businessFunctionFilter := coredata.NewBusinessFunctionFilter(nil, nil, nil)
+	if input.Filter != nil {
+		businessFunctionFilter = coredata.NewBusinessFunctionFilter(
+			input.Filter.Classification,
+			input.Filter.OwnerID,
+			input.Filter.CifOnly,
+		)
+	}
+
+	pageResult, err := prb.BusinessFunctions.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, businessFunctionFilter)
+	if err != nil {
+		return nil, types.ListBusinessFunctionsOutput{}, fmt.Errorf("cannot list organization business functions: %w", err)
+	}
+
+	return nil, types.NewListBusinessFunctionsOutput(pageResult), nil
+}
+
+func (r *Resolver) GetBusinessFunctionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetBusinessFunctionInput) (*mcp.CallToolResult, types.GetBusinessFunctionOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionBusinessFunctionGet)
+	if err != nil {
+		return nil, types.GetBusinessFunctionOutput{}, err
+	}
+
+	prb := r.proboSvc
+
+	businessFunction, err := prb.BusinessFunctions.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetBusinessFunctionOutput{}, fmt.Errorf("cannot get business function: %w", err)
+	}
+
+	return nil, types.GetBusinessFunctionOutput{
+		BusinessFunction: types.NewBusinessFunction(businessFunction),
+	}, nil
+}
+
+func (r *Resolver) AddBusinessFunctionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddBusinessFunctionInput) (*mcp.CallToolResult, types.AddBusinessFunctionOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionBusinessFunctionCreate)
+	if err != nil {
+		return nil, types.AddBusinessFunctionOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	businessFunction, err := svc.BusinessFunctions.Create(
+		ctx,
+		scope,
+		&probo.CreateBusinessFunctionRequest{
+			OrganizationID:  input.OrganizationID,
+			ReferenceID:     input.ReferenceID,
+			Name:            input.Name,
+			Classification:  input.Classification,
+			MTDMinutes:      input.MtdMinutes,
+			RTOMinutes:      input.RtoMinutes,
+			RPOMinutes:      input.RpoMinutes,
+			ImpactTolerance: input.ImpactTolerance,
+			Notes:           input.Notes,
+			OwnerID:         input.OwnerID,
+			AssetIDs:        input.AssetIds,
+			ThirdPartyIDs:   input.ThirdPartyIds,
+		},
+	)
+	if err != nil {
+		return nil, types.AddBusinessFunctionOutput{}, fmt.Errorf("cannot create business function: %w", err)
+	}
+
+	return nil, types.AddBusinessFunctionOutput{
+		BusinessFunction: types.NewBusinessFunction(businessFunction),
+	}, nil
+}
+
+func (r *Resolver) UpdateBusinessFunctionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateBusinessFunctionInput) (*mcp.CallToolResult, types.UpdateBusinessFunctionOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionBusinessFunctionUpdate)
+	if err != nil {
+		return nil, types.UpdateBusinessFunctionOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	updateReq := &probo.UpdateBusinessFunctionRequest{
+		ID:              input.ID,
+		ReferenceID:     input.ReferenceID,
+		Name:            input.Name,
+		Classification:  input.Classification,
+		MTDMinutes:      input.MtdMinutes,
+		RTOMinutes:      input.RtoMinutes,
+		RPOMinutes:      input.RpoMinutes,
+		ImpactTolerance: UnwrapOmittable(input.ImpactTolerance),
+		Notes:           UnwrapOmittable(input.Notes),
+		OwnerID:         UnwrapOmittable(input.OwnerID),
+	}
+
+	if input.AssetIds != nil {
+		updateReq.AssetIDs = &input.AssetIds
+	}
+
+	if input.ThirdPartyIds != nil {
+		updateReq.ThirdPartyIDs = &input.ThirdPartyIds
+	}
+
+	businessFunction, err := svc.BusinessFunctions.Update(ctx, scope, updateReq)
+	if err != nil {
+		return nil, types.UpdateBusinessFunctionOutput{}, fmt.Errorf("cannot update business function: %w", err)
+	}
+
+	return nil, types.UpdateBusinessFunctionOutput{
+		BusinessFunction: types.NewBusinessFunction(businessFunction),
+	}, nil
+}
+
+func (r *Resolver) DeleteBusinessFunctionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteBusinessFunctionInput) (*mcp.CallToolResult, types.DeleteBusinessFunctionOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionBusinessFunctionDelete)
+	if err != nil {
+		return nil, types.DeleteBusinessFunctionOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	err = svc.BusinessFunctions.Delete(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteBusinessFunctionOutput{}, fmt.Errorf("cannot delete business function: %w", err)
+	}
+
+	return nil, types.DeleteBusinessFunctionOutput{
+		DeletedBusinessFunctionID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishBusinessFunctionListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishBusinessFunctionListInput) (*mcp.CallToolResult, types.PublishBusinessFunctionListOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionBusinessFunctionPublish)
+	if err != nil {
+		return nil, types.PublishBusinessFunctionListOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishBusinessFunctionList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
+	if err != nil {
+		return nil, types.PublishBusinessFunctionListOutput{}, fmt.Errorf("cannot publish business function list: %w", err)
+	}
+
+	return nil, types.PublishBusinessFunctionListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}

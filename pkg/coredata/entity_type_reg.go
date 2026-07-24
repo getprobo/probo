@@ -136,6 +136,7 @@ const (
 	CompliancePortalCommitmentGroupEntityType        uint16 = 104
 	CompliancePortalCommitmentEntityType             uint16 = 105
 	CertificateEntityType                            uint16 = 106
+	BusinessFunctionEntityType                       uint16 = 107
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -336,6 +337,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CompliancePortalCommitment{ID: id}, true
 	case CertificateEntityType:
 		return &Certificate{ID: id}, true
+	case BusinessFunctionEntityType:
+		return &BusinessFunction{ID: id}, true
 	default:
 		return nil, false
 	}
