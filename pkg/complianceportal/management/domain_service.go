@@ -140,6 +140,24 @@ func (s *Service) RemoveCustomDomain(
 	)
 }
 
+func (s *Service) IsCustomDomainVerified(ctx context.Context, host string) (bool, error) {
+	certificate, err := s.certManager.GetByHostname(ctx, host)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("cannot load certificate: %w", err)
+	}
+
+	switch certificate.Status {
+	case coredata.CertificateStatusActive, coredata.CertificateStatusRenewing:
+		return true, nil
+	default:
+		return false, nil
+	}
+}
+
 // GetDomain returns a custom domain by ID.
 func (s *Service) GetDomain(
 	ctx context.Context,

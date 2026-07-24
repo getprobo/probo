@@ -220,6 +220,20 @@ func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*co
 	return compliancePage, err
 }
 
+func (s *Service) IsVerifiedRedirectHost(ctx context.Context, host string) bool {
+	if _, err := s.GetPortalByDomainName(ctx, host); err != nil {
+		return false
+	}
+
+	verified, err := s.management.IsCustomDomainVerified(ctx, host)
+	if err != nil {
+		s.logger.ErrorCtx(ctx, "cannot check custom domain verification", log.Error(err), log.String("host", host))
+		return false
+	}
+
+	return verified
+}
+
 // GetPortalEmailPresenterConfigByOrganizationID resolves the emails.PresenterConfig for
 // the compliance page that belongs to the given organization. This is used by the
 // esign certificate worker which needs per-org branding at render time.

@@ -257,9 +257,7 @@ func NewServer(cfg Config) (*Server, error) {
 					return true
 				}
 
-				_, err := cfg.Visitor.GetPortalByDomainName(ctx, host)
-
-				return err == nil
+				return cfg.Visitor.IsVerifiedRedirectHost(ctx, host)
 			},
 			cfg.GraphQLLimits,
 		),
