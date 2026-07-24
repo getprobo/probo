@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.206.2] - 2026-07-24
+
+### Fixed
+
+- User Get no longer queries Connect `Organization.email`, which was removed and broke the operation; organization selection now matches User list/create/update
+
 ## [0.206.1] - 2026-07-22
 
 ### Fixed
