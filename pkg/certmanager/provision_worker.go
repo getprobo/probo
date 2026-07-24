@@ -208,7 +208,9 @@ func (h *beginChallengeHandler) Process(ctx context.Context, certificate coredat
 
 		cnameCtx, cnameCancel := context.WithTimeout(dnsCtx, dnsExchangeTimeout)
 		err := h.dnsClient.CheckCNAME(cnameCtx, certificate.Hostname, h.cnameTarget)
+
 		cnameCancel()
+
 		if err != nil {
 			h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultDNSError, dnsStarted)
 			h.recordSpanError(dnsSpan, err, classifyProvisioningError(err))
