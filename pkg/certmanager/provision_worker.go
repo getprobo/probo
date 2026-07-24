@@ -30,7 +30,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.probo.inc/probo/pkg/domaindns"
+	"go.probo.inc/probo/pkg/dnsclient"
 	"go.probo.inc/probo/pkg/gid"
 	"golang.org/x/crypto/acme"
 )
@@ -69,7 +69,7 @@ type (
 
 		cnameTarget       string
 		caaIssuerDomain   string
-		dnsClient         *domaindns.Client
+		dnsClient         *dnsclient.Client
 		managedBaseDomain string
 	}
 
@@ -112,7 +112,7 @@ func NewBeginChallengeWorker(
 		},
 		cnameTarget:       cnameTarget,
 		caaIssuerDomain:   caaIssuerDomain,
-		dnsClient:         domaindns.NewClient(resolverAddr),
+		dnsClient:         dnsclient.NewClient(resolverAddr),
 		managedBaseDomain: managedBaseDomain,
 	}
 
@@ -354,7 +354,7 @@ func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname st
 		return nil
 	}
 
-	if errors.Is(err, domaindns.ErrCAADenied) {
+	if errors.Is(err, dnsclient.ErrCAADenied) {
 		return fmt.Errorf("%w: domain %q by %q", ErrCAANotPermitted, hostname, h.caaIssuerDomain)
 	}
 

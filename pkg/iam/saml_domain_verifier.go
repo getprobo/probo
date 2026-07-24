@@ -30,7 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/domaindns"
+	"go.probo.inc/probo/pkg/dnsclient"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -38,7 +38,7 @@ type (
 	SAMLDomainVerifier struct {
 		pg        *pg.Client
 		interval  time.Duration
-		dnsClient *domaindns.Client
+		dnsClient *dnsclient.Client
 		logger    *log.Logger
 		tracer    trace.Tracer
 	}
@@ -63,7 +63,7 @@ func NewSAMLDomainVerifier(
 	return &SAMLDomainVerifier{
 		pg:        pgClient,
 		interval:  interval,
-		dnsClient: domaindns.NewClient(resolverAddr),
+		dnsClient: dnsclient.NewClient(resolverAddr),
 		logger:    logger.Named("saml-domain-verifier"),
 		tracer:    tp.Tracer("go.probo.inc/probo/pkg/iam/saml_domain_verifier"),
 	}
@@ -205,11 +205,11 @@ func (v *SAMLDomainVerifier) checkDNSTXTRecord(ctx context.Context, emailDomain 
 		return nil
 	}
 
-	if errors.Is(err, domaindns.ErrTXTNotFound) {
+	if errors.Is(err, dnsclient.ErrTXTNotFound) {
 		return fmt.Errorf("%w for %q", errDomainTXTRecordNotFound, emailDomain)
 	}
 
-	if errors.Is(err, domaindns.ErrTXTMismatch) {
+	if errors.Is(err, dnsclient.ErrTXTMismatch) {
 		return fmt.Errorf("%w for %q", errDomainTXTRecordMismatch, emailDomain)
 	}
 

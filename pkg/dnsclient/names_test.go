@@ -18,22 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package domaindns_test
+package dnsclient_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/domaindns"
+	"go.probo.inc/probo/pkg/dnsclient"
 )
 
 func TestEqualNames(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, domaindns.EqualNames("trust.example.com", "trust.example.com."))
-	assert.True(t, domaindns.EqualNames("Trust.Example.COM", "trust.example.com"))
-	assert.False(t, domaindns.EqualNames("trust.example.com", "example.com"))
+	assert.True(t, dnsclient.EqualNames("trust.example.com", "trust.example.com."))
+	assert.True(t, dnsclient.EqualNames("Trust.Example.COM", "trust.example.com"))
+	assert.False(t, dnsclient.EqualNames("trust.example.com", "example.com"))
 }
 
 func TestHostnamesForCAA(t *testing.T) {
@@ -42,7 +42,7 @@ func TestHostnamesForCAA(t *testing.T) {
 	t.Run("subdomain starts at child then walks to apex", func(t *testing.T) {
 		t.Parallel()
 
-		names, err := domaindns.HostnamesForCAA("trust.example.com")
+		names, err := dnsclient.HostnamesForCAA("trust.example.com")
 
 		require.NoError(t, err)
 		assert.Equal(t, []string{"trust.example.com", "example.com"}, names)
@@ -51,7 +51,7 @@ func TestHostnamesForCAA(t *testing.T) {
 	t.Run("apex stays on apex", func(t *testing.T) {
 		t.Parallel()
 
-		names, err := domaindns.HostnamesForCAA("example.com")
+		names, err := dnsclient.HostnamesForCAA("example.com")
 
 		require.NoError(t, err)
 		assert.Equal(t, []string{"example.com"}, names)
@@ -60,7 +60,7 @@ func TestHostnamesForCAA(t *testing.T) {
 	t.Run("nested subdomain walks each parent", func(t *testing.T) {
 		t.Parallel()
 
-		names, err := domaindns.HostnamesForCAA("portal.trust.example.com")
+		names, err := dnsclient.HostnamesForCAA("portal.trust.example.com")
 
 		require.NoError(t, err)
 		assert.Equal(
