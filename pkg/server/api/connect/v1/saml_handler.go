@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -57,6 +58,52 @@ func NewSAMLHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL 
 
 func (h *SAMLHandler) renderInternalServerError(w http.ResponseWriter) {
 	httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+}
+
+func (h *SAMLHandler) renderAssertionError(w http.ResponseWriter, r *http.Request, err error) {
+	if isClientSAMLError(err) {
+		httpserver.RenderError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	h.logger.ErrorCtx(r.Context(), "cannot handle SAML assertion", log.Error(err))
+	httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication failed"))
+}
+
+func isClientSAMLError(err error) bool {
+	if _, ok := errors.AsType[*saml.ErrSAMLConfigurationNotFound](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrSAMLDisabled](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrInvalidAssertion](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrReplayAttackDetected](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrEmailDomainMismatch](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrSAMLAutoSignupDisabled](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrUserInactive](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*saml.ErrSAMLSubjectAlreadyInUse](err); ok {
+		return true
+	}
+
+	return false
 }
 
 func (h *SAMLHandler) MetadataHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +148,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, membership, err := h.iam.SAMLService.HandleAssertion(ctx, samlResponse, configID)
 	if err != nil {
-		httpserver.RenderError(w, http.StatusUnauthorized, err)
+		h.renderAssertionError(w, r, err)
 		return
 	}
 

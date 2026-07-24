@@ -104,3 +104,25 @@ func NewUserInactiveError(profileID gid.GID) error {
 func (e ErrUserInactive) Error() string {
 	return fmt.Sprintf("user %q is inactive", e.ProfileID)
 }
+
+type ErrSAMLSubjectAlreadyInUse struct {
+	AssertionID string
+}
+
+func NewSAMLSubjectAlreadyInUseError(assertionID string) error {
+	return &ErrSAMLSubjectAlreadyInUse{AssertionID: assertionID}
+}
+
+func (e ErrSAMLSubjectAlreadyInUse) Error() string {
+	return fmt.Sprintf("SAML NameID is already linked to another account (assertion %q)", e.AssertionID)
+}
+
+type ErrSAMLSubjectRequired struct{}
+
+func NewSAMLSubjectRequiredError() error {
+	return &ErrSAMLSubjectRequired{}
+}
+
+func (e ErrSAMLSubjectRequired) Error() string {
+	return "NameID value is required"
+}

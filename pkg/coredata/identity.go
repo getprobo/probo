@@ -52,6 +52,10 @@ type (
 	Identities []*Identity
 )
 
+var (
+	ErrSAMLSubjectAlreadyExists = errors.New("saml subject already exists")
+)
+
 func (i Identity) CursorKey(orderBy IdentityOrderField) page.CursorKey {
 	switch orderBy {
 	case IdentityOrderFieldCreatedAt:
@@ -247,8 +251,11 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && strings.Contains(pgErr.ConstraintName, "email_address") {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "idx_users_saml_subject":
+				return ErrSAMLSubjectAlreadyExists
+			case "usrmgr_users_email_address_key":
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -288,6 +295,15 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "idx_users_saml_subject":
+				return ErrSAMLSubjectAlreadyExists
+			case "usrmgr_users_email_address_key":
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot update identity: %w", err)
 	}
 
@@ -304,6 +320,10 @@ func (i *Identity) LoadBySAMLSubject(
 	conn pg.Querier,
 	samlSubject string,
 ) error {
+	if strings.TrimSpace(samlSubject) == "" {
+		return ErrResourceNotFound
+	}
+
 	q := `
 SELECT
     id,
