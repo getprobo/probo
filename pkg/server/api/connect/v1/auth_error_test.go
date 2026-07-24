@@ -52,7 +52,7 @@ func TestRedirectAuthError(t *testing.T) {
 func TestAuthErrorCodeFromSAML(t *testing.T) {
 	t.Parallel()
 
-	configID := gid.New(gid.TenantID(1), coredata.SAMLConfigurationEntityType)
+	configID := gid.New(gid.NewTenantID(), coredata.SAMLConfigurationEntityType)
 	email, err := mail.ParseAddr("user@example.com")
 	require.NoError(t, err)
 
