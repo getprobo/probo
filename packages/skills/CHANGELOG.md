@@ -5,6 +5,13 @@ this file.
 
 ## Unreleased
 
+### Added
+
+- Skill: `compliance-portal-commitments` — create or update the public
+  commitments shown on a Probo compliance portal, grounded strictly in the
+  organization's own published Probo policies and written in a factual,
+  understated engineering voice (references: `voice.md`, `portal-mechanics.md`)
+
 ## [0.1.0] - 2026-07-10
 
 ### Added
