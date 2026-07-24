@@ -122,7 +122,7 @@ export function ViewerMembershipDropdown(props: {
       <UserDropdownItem
         to={`/organizations/${organizationId}/employee`}
         icon={IconPageTextLine}
-        label={__("My Signatures")}
+        label={__("Employee Portal")}
       />
       <UserDropdownItem
         to="mailto:support@probo.com"
