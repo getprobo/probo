@@ -50,9 +50,6 @@ func redirectAuthError(w http.ResponseWriter, r *http.Request, code string) {
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 
-// authErrorCodeFromSAML maps known SAML assertion failures to a browser error
-// code. Specific SAML reasons stay server-side only; users see a generic
-// authentication failure to avoid leaking org/account state.
 func authErrorCodeFromSAML(err error) (string, bool) {
 	if _, ok := errors.AsType[*saml.ErrSAMLDisabled](err); ok {
 		return authErrorAuthenticationFailed, true
