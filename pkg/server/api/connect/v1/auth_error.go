@@ -31,6 +31,7 @@ import (
 const (
 	authErrorPersonalAccountNotAllowed = "personal_account_not_allowed"
 	authErrorEmailNotVerified          = "email_not_verified"
+	authErrorInvalidState              = "invalid_state"
 	authErrorAuthenticationFailed      = "authentication_failed"
 	authErrorMagicLinkExpired          = "magic_link_expired"
 	authErrorMagicLinkAlreadyUsed      = "magic_link_already_used"

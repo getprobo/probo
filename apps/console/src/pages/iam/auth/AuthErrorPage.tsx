@@ -46,6 +46,13 @@ function useAuthErrorContent(code: string | null): AuthErrorContent {
           "Your email address is not verified with the identity provider. Please verify it, then try signing in again.",
         ),
       };
+    case "invalid_state":
+      return {
+        title: __("Sign-in session expired"),
+        description: __(
+          "This sign-in attempt is no longer valid. Please start again from the sign-in page.",
+        ),
+      };
     case "magic_link_expired":
       return {
         title: __("Link Expired"),

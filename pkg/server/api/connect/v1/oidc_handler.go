@@ -125,7 +125,9 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
 	if stateParam == "" || code == "" {
-		httpserver.RenderError(w, http.StatusBadRequest, errors.New("missing state or code"))
+		h.logger.WarnCtx(ctx, "OIDC callback missing state or code")
+		redirectAuthError(w, r, authErrorInvalidState)
+
 		return
 	}
 
@@ -141,6 +143,13 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		if _, ok := errors.AsType[*oidc.ErrEmailNotVerified](err); ok {
 			h.logger.WarnCtx(ctx, "OIDC login rejected: email not verified")
 			redirectAuthError(w, r, authErrorEmailNotVerified)
+
+			return
+		}
+
+		if _, ok := errors.AsType[*oidc.ErrInvalidState](err); ok {
+			h.logger.WarnCtx(ctx, "OIDC login rejected: invalid or expired state")
+			redirectAuthError(w, r, authErrorInvalidState)
 
 			return
 		}
