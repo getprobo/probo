@@ -233,8 +233,8 @@ func isCAAIssuerDomainName(name string) bool {
 		return false
 	}
 
-	labels := strings.Split(name, ".")
-	for _, label := range labels {
+	labels := strings.SplitSeq(name, ".")
+	for label := range labels {
 		if !isCAAIssuerLabel(label) {
 			return false
 		}
