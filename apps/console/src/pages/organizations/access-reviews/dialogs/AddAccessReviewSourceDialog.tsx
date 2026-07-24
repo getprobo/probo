@@ -29,6 +29,7 @@ import {
   DialogContent,
   DialogFooter,
   DropdownItem,
+  IconArrowLink,
   Input,
   ThirdPartyLogo,
   useDialogRef,
@@ -51,6 +52,7 @@ export const addAccessReviewSourceDialogConnectorProviderInfoFragment = graphql`
   fragment AddAccessReviewSourceDialogConnectorProviderInfoFragment on ConnectorProviderInfo @relay(plural: true) {
     provider
     displayName
+    documentationUrl
     oauthConfigured
     apiKeySupported
     apiKeyManaged
@@ -160,6 +162,17 @@ export function AddAccessReviewSourceDialog({
         <ThirdPartyLogo thirdParty={info.provider} tint className="size-6 shrink-0" />
         <div className="mr-auto">
           <h3 className="font-medium">{info.displayName}</h3>
+          {info.documentationUrl && (
+            <a
+              href={info.documentationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-txt-tertiary underline hover:no-underline"
+            >
+              {__("Documentation")}
+              <IconArrowLink size={12} />
+            </a>
+          )}
         </div>
         {isConnected
           ? (

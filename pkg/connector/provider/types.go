@@ -39,6 +39,10 @@ type Registration struct {
 	// Identity.
 	Provider    coredata.ConnectorProvider
 	DisplayName string
+	// DocumentationURL is the public probo.com docs page for connecting this
+	// provider as an access source. Empty for providers with no doc page yet;
+	// surfaced (nullable) on ConnectorProviderInfo so the console renders a link.
+	DocumentationURL string
 
 	// OAuth2 metadata.
 	AuthURL                 string

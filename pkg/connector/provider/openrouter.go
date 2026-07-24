@@ -31,9 +31,10 @@ import (
 
 func openrouterRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderOpenRouter,
-		DisplayName:    "OpenRouter",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderOpenRouter,
+		DisplayName:      "OpenRouter",
+		DocumentationURL: accessReviewDocsURL("openrouter"),
+		SupportsAPIKey:   true,
 		// OpenRouter authenticates with an organization management
 		// (provisioning) API key presented as Authorization: Bearer, the
 		// default APIKeyConnection scheme. The key is bound to one

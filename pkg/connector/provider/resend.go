@@ -31,10 +31,11 @@ import (
 
 func resendRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderResend,
-		DisplayName:    "Resend",
-		ProbeURL:       "https://api.resend.com/domains",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderResend,
+		DisplayName:      "Resend",
+		DocumentationURL: accessReviewDocsURL("resend"),
+		ProbeURL:         "https://api.resend.com/domains",
+		SupportsAPIKey:   true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewResendDriver(c), nil
 		},

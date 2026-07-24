@@ -32,9 +32,10 @@ import (
 
 func scalewayRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderScaleway,
-		DisplayName:    "Scaleway",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderScaleway,
+		DisplayName:      "Scaleway",
+		DocumentationURL: accessReviewDocsURL("scaleway"),
+		SupportsAPIKey:   true,
 		// Scaleway authenticates with the secret key in the X-Auth-Token header
 		// rather than Authorization: Bearer. APIKeyHeader makes the
 		// APIKeyConnection send that header and omit Authorization. The key is

@@ -31,10 +31,11 @@ import (
 
 func cloudflareRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderCloudflare,
-		DisplayName:    "Cloudflare",
-		ProbeURL:       "https://api.cloudflare.com/client/v4/user/tokens/verify",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderCloudflare,
+		DisplayName:      "Cloudflare",
+		DocumentationURL: accessReviewDocsURL("cloudflare"),
+		ProbeURL:         "https://api.cloudflare.com/client/v4/user/tokens/verify",
+		SupportsAPIKey:   true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewCloudflareDriver(c), nil
 		},

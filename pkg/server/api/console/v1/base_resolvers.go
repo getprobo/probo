@@ -607,9 +607,15 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			)
 		}
 
+		var documentationURL *string
+		if reg.DocumentationURL != "" {
+			documentationURL = new(reg.DocumentationURL)
+		}
+
 		infos = append(infos, &types.ConnectorProviderInfo{
 			Provider:                   provider,
 			DisplayName:                reg.DisplayName,
+			DocumentationURL:           documentationURL,
 			OauthConfigured:            oauthConfigured,
 			APIKeySupported:            apiKeySupported,
 			APIKeyManaged:              apiKeyManaged,

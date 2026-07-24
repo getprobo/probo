@@ -33,9 +33,10 @@ const cursorMembersEndpoint = "https://api.cursor.com/teams/members"
 
 func cursorRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderCursor,
-		DisplayName:    "Cursor",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderCursor,
+		DisplayName:      "Cursor",
+		DocumentationURL: accessReviewDocsURL("cursor"),
+		SupportsAPIKey:   true,
 		// Cursor's Admin API has no third-party OAuth2 flow; it
 		// authenticates with a team admin key (key_...) presented as the
 		// HTTP Basic auth username with an empty password ("-u <key>:")

@@ -20,32 +20,14 @@
 
 package provider
 
-import (
-	"context"
-	"net/http"
+// accessReviewDocsBaseURL is the public probo.com docs root for access-review
+// connectors; each documented provider's page lives at this base + its slug.
+const accessReviewDocsBaseURL = "https://www.probo.com/docs/product/access-review/"
 
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/coredata"
-)
-
-func railwayRegistration() *Registration {
-	return &Registration{
-		Provider:         coredata.ConnectorProviderRailway,
-		DisplayName:      "Railway",
-		DocumentationURL: accessReviewDocsURL("railway"),
-		SupportsAPIKey:   true,
-		// Railway authenticates with an account API token as Authorization:
-		// Bearer. A single GraphQL call resolves the account's workspaces and
-		// their members, so there is nothing to pick (Pattern 3). Railway
-		// returns HTTP 200 with an errors body for a rejected token, so the
-		// probe must inspect the body — hence a custom Probe.
-		Probe: probeRailway,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
-			return drivers.NewRailwayDriver(c), nil
-		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
-			return drivers.NewRailwayNameResolver(c)
-		},
-	}
+// accessReviewDocsURL builds the public documentation URL for an access-review
+// connector from its page slug (e.g. "anthropic"). The slug is passed explicitly
+// by each registration rather than derived from the provider enum, so an enum
+// containing an underscore (e.g. BETTER_STACK) cannot produce a wrong URL.
+func accessReviewDocsURL(slug string) string {
+	return accessReviewDocsBaseURL + slug
 }

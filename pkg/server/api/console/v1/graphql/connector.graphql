@@ -104,6 +104,11 @@ enum ConnectorProvider
 type ConnectorProviderInfo {
     provider: ConnectorProvider!
     displayName: String!
+    """
+    documentationUrl is the public probo.com docs page for connecting this
+    provider as an access source, or null when no doc page exists yet.
+    """
+    documentationUrl: String
     oauthConfigured: Boolean!
     apiKeySupported: Boolean!
     """
