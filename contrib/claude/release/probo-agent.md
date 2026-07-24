@@ -64,6 +64,14 @@ then the app bundle, optionally signs the product with
 profile; submits use `--keychain-profile` so the secret is not on
 `notarytool submit` argv).
 
+The Finder/Dock icon for `Probo Agent.app` comes from a single master
+PNG, `cmd/probo-agent/installer/macos/enroll-ui/Resources/icon-original.png`
+(Probo square mark). At PKG build time `build.sh` pads/resizes it with
+`sips`, compiles `AppIcon.icns` with `iconutil` under the build stage
+directory, and installs it into `Contents/Resources/`. `Info.plist`
+sets `CFBundleIconFile` to `AppIcon`. Do not commit generated
+`.icns` / iconset PNGs.
+
 There is no unsigned PKG path and no osascript elevation fallback.
 Local testing of browser enrollment requires a Developer ID–signed
 build. CLI enrollment without the app uses `sudo probo-agent install`.

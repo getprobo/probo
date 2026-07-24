@@ -149,6 +149,59 @@ team_id_option() {
     printf '"%s"' "${APPLE_TEAM_ID}"
 }
 
+# Build AppIcon.icns from the single committed master PNG
+# (enroll-ui/Resources/icon-original.png), matching auditor-mode's
+# pad-then-resize pipeline. Writes under STAGE; does not touch the
+# source tree.
+generate_app_icon_icns() {
+    local icon_original="$1"
+    local icns_out="$2"
+    local icon_dir padded tmp iconset
+
+    if [ ! -f "${icon_original}" ]; then
+        echo "error: missing app icon source ${icon_original}" >&2
+        exit 1
+    fi
+
+    icon_dir="${STAGE}/app-icon"
+    padded="${icon_dir}/icon-padded.png"
+    tmp="${icon_dir}/icon-padded.tmp.png"
+    iconset="${icon_dir}/AppIcon.iconset"
+    rm -rf "${icon_dir}"
+    mkdir -p "${iconset}"
+
+    # 10% padding on all sides (960 content inside 1200 canvas).
+    sips -z 960 960 "${icon_original}" --out "${tmp}" >/dev/null
+    sips --padToHeightWidth 1200 1200 "${tmp}" --out "${padded}" >/dev/null
+    rm -f "${tmp}"
+
+    # Write through temp names: sips mishandles @2x suffixes in --out paths.
+    sips -z 16 16 "${padded}" --out "${icon_dir}/16.png" >/dev/null
+    sips -z 32 32 "${padded}" --out "${icon_dir}/32.png" >/dev/null
+    sips -z 64 64 "${padded}" --out "${icon_dir}/64.png" >/dev/null
+    sips -z 128 128 "${padded}" --out "${icon_dir}/128.png" >/dev/null
+    sips -z 256 256 "${padded}" --out "${icon_dir}/256.png" >/dev/null
+    sips -z 512 512 "${padded}" --out "${icon_dir}/512.png" >/dev/null
+    sips -z 1024 1024 "${padded}" --out "${icon_dir}/1024.png" >/dev/null
+
+    # Build @2x names via concatenation so the shell never treats @ as a
+    # glob qualifier (and sips is never asked to write those paths).
+    local at2x
+    at2x='@2x.png'
+    cp "${icon_dir}/16.png" "${iconset}/icon_16x16.png"
+    cp "${icon_dir}/32.png" "${iconset}/icon_16x16${at2x}"
+    cp "${icon_dir}/32.png" "${iconset}/icon_32x32.png"
+    cp "${icon_dir}/64.png" "${iconset}/icon_32x32${at2x}"
+    cp "${icon_dir}/128.png" "${iconset}/icon_128x128.png"
+    cp "${icon_dir}/256.png" "${iconset}/icon_128x128${at2x}"
+    cp "${icon_dir}/256.png" "${iconset}/icon_256x256.png"
+    cp "${icon_dir}/512.png" "${iconset}/icon_256x256${at2x}"
+    cp "${icon_dir}/512.png" "${iconset}/icon_512x512.png"
+    cp "${icon_dir}/1024.png" "${iconset}/icon_512x512${at2x}"
+
+    iconutil -c icns "${iconset}" -o "${icns_out}"
+}
+
 # Build Probo Agent.app (URL handler + embedded privileged helper) into
 # parent_dir. Signs nested Mach-Os then the .app bundle (bottom-up).
 build_probo_agent_app() {
@@ -156,9 +209,9 @@ build_probo_agent_app() {
     local build_dir render_dir
     local helper_info_plist helper_launchd_plist
     local helper_binary url_handler_binary bin_dir
-    local app_root contents macos launch_services launch_daemons
+    local app_root contents macos resources launch_services launch_daemons
     local plist embedded_helper embedded_launchd
-    local helper_requirement
+    local helper_requirement app_icon_original app_icon_icns
     local -a helper_linker_flags swift_arch_args
 
     build_dir="${STAGE}/enroll-ui-build"
@@ -218,18 +271,24 @@ build_probo_agent_app() {
     app_root="${parent_dir}/${APP_NAME}"
     contents="${app_root}/Contents"
     macos="${contents}/MacOS"
+    resources="${contents}/Resources"
     launch_services="${contents}/Library/LaunchServices"
     launch_daemons="${contents}/Library/LaunchDaemons"
     plist="${contents}/Info.plist"
     embedded_helper="${launch_services}/${HELPER_LABEL}"
     embedded_launchd="${launch_daemons}/${HELPER_LABEL}.plist"
+    app_icon_original="${ENROLL_UI_DIR}/Resources/icon-original.png"
+    app_icon_icns="${STAGE}/AppIcon.icns"
 
     rm -rf "${app_root}"
-    mkdir -p "${macos}" "${launch_services}" "${launch_daemons}"
+    mkdir -p "${macos}" "${resources}" "${launch_services}" "${launch_daemons}"
+
+    generate_app_icon_icns "${app_icon_original}" "${app_icon_icns}"
 
     install -m 0755 "${url_handler_binary}" "${macos}/${URL_HANDLER_NAME}"
     install -m 0755 "${helper_binary}" "${embedded_helper}"
     install -m 0644 "${helper_launchd_plist}" "${embedded_launchd}"
+    ditto --norsrc --noextattr "${app_icon_icns}" "${resources}/AppIcon.icns"
 
     # Sign helper before writing Info.plist so SMPrivilegedExecutables
     # can embed the helper's designated requirement.

@@ -51,6 +51,7 @@ func EqualNames(a, b string) bool {
 // itself, not its apex.
 func CheckNames(hostname string) ([]string, error) {
 	hostname = strings.ToLower(strings.TrimSpace(hostname))
+
 	hostname = strings.TrimSuffix(hostname, ".")
 	if hostname == "" {
 		return nil, fmt.Errorf("cannot build DNS check names: empty hostname")
