@@ -3,7 +3,7 @@
 All notable changes to the `probo-agent` device posture agent will be
 documented in this file.
 
-## Unreleased
+## [0.2.0] - 2026-07-24
 
 ### Added
 
@@ -24,6 +24,13 @@ documented in this file.
 - macOS `probo-agent uninstall` requires root (`sudo`).
 - PKG preinstall removes stale privileged helper files on upgrade;
   postinstall reinstalls the helper as root.
+- macOS release now ships a single universal (arm64 + x86_64) fat
+  `probo-agent_<version>_darwin.pkg` instead of separate per-arch packages.
+
+### Fixed
+
+- Windows elevated install/uninstall no longer reports success when the
+  user cancels the UAC prompt.
 
 ## [0.1.1] - 2026-06-11
 
