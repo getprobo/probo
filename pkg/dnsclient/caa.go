@@ -43,7 +43,11 @@ func (c *Client) CheckCAA(ctx context.Context, hostname, permittedIssuer string)
 		msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
 		msg.Question = []dns.RR{&dns.CAA{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
 
-		resp, err := c.query(ctx, msg)
+		// Each label gets its own exchange budget so a slow empty answer at a
+		// child name cannot starve the parent lookup that holds the policy.
+		queryCtx, cancel := c.withExchangeTimeout(ctx)
+		resp, err := c.query(queryCtx, msg)
+		cancel()
 		if err != nil {
 			return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
 		}

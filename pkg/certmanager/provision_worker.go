@@ -348,10 +348,9 @@ func (h *beginChallengeHandler) loadSkipDNSChecks(ctx context.Context, hostname 
 }
 
 func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname string) error {
-	dnsCtx, cancel := context.WithTimeout(ctx, dnsExchangeTimeout)
-	defer cancel()
-
-	err := h.dnsClient.CheckCAA(dnsCtx, hostname, h.caaIssuerDomain)
+	// Exchange timeouts are applied per CAA label inside dnsclient.CheckCAA so
+	// the parent-climb budget is not shared across every lookup.
+	err := h.dnsClient.CheckCAA(ctx, hostname, h.caaIssuerDomain)
 	if err == nil {
 		return nil
 	}

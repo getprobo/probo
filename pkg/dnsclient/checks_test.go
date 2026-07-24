@@ -23,6 +23,7 @@ package dnsclient
 import (
 	"context"
 	"testing"
+	"time"
 
 	"codeberg.org/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -483,6 +484,43 @@ func TestCheckCAA(t *testing.T) {
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrCAADenied)
+	})
+
+	t.Run("applies exchange timeout per label", func(t *testing.T) {
+		t.Parallel()
+
+		var deadlines []time.Time
+		client := &Client{
+			ExchangeTimeout: 2 * time.Second,
+			exchange: func(ctx context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				deadline, ok := ctx.Deadline()
+				require.True(t, ok)
+				deadlines = append(deadlines, deadline)
+
+				name := msg.Question[0].Header().Name
+				if name != "example.com." {
+					return &dns.Msg{MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess}}, nil
+				}
+
+				caa := caaRecord("issue", "letsencrypt.org", 0)
+				caa.Hdr.Name = name
+
+				return &dns.Msg{
+					MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess},
+					Answer:    []dns.RR{caa},
+				}, nil
+			},
+		}
+
+		err := client.CheckCAA(context.Background(), "trust.example.com", "letsencrypt.org")
+
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(deadlines), 2)
+		assert.True(
+			t,
+			deadlines[1].After(deadlines[0]),
+			"expected a fresh per-label deadline, got shared climb deadline",
+		)
 	})
 }
 

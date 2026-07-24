@@ -23,16 +23,24 @@ package dnsclient
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"codeberg.org/miekg/dns"
+)
+
+const (
+	// DefaultExchangeTimeout is the per-lookup budget for a single DNS
+	// exchange (UDP, with optional TCP retry on truncation).
+	DefaultExchangeTimeout = 10 * time.Second
 )
 
 type (
 	// Client performs DNS lookups used to verify domain ownership and
 	// certificate prerequisites.
 	Client struct {
-		ResolverAddr string
-		exchange     exchangeFunc
+		ResolverAddr    string
+		ExchangeTimeout time.Duration
+		exchange        exchangeFunc
 	}
 
 	exchangeFunc func(ctx context.Context, msg *dns.Msg, network string) (*dns.Msg, error)
@@ -40,7 +48,20 @@ type (
 
 // NewClient returns a client that resolves names through resolverAddr.
 func NewClient(resolverAddr string) *Client {
-	return &Client{ResolverAddr: resolverAddr}
+	return &Client{
+		ResolverAddr:    resolverAddr,
+		ExchangeTimeout: DefaultExchangeTimeout,
+	}
+}
+
+// withExchangeTimeout returns a child context limited to ExchangeTimeout for a
+// single DNS lookup. A zero or negative timeout leaves ctx unchanged.
+func (c *Client) withExchangeTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	if c.ExchangeTimeout <= 0 {
+		return ctx, func() {}
+	}
+
+	return context.WithTimeout(ctx, c.ExchangeTimeout)
 }
 
 func (c *Client) exchangeUDP(ctx context.Context, msg *dns.Msg) (*dns.Msg, error) {
