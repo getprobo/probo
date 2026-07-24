@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package dnsverify
+package dnsclient
 
 import (
 	"fmt"
 	"strings"
-
-	"golang.org/x/net/publicsuffix"
 )
 
 // ToFQDN normalizes a DNS name to lowercase FQDN form with a trailing dot.
@@ -45,33 +43,35 @@ func EqualNames(a, b string) bool {
 	return ToFQDN(a) == ToFQDN(b)
 }
 
-// CheckNames returns the DNS names to evaluate for CAA, starting at the exact
-// hostname being verified and walking up through each parent to the
-// registrable apex (eTLD+1). The first entry is always the requested hostname
-// itself, not its apex.
-func CheckNames(hostname string) ([]string, error) {
+// HostnamesForCAA returns the DNS names to evaluate for CAA, starting at the
+// exact hostname being verified and walking each parent label toward the root
+// (RFC 8659 tree climbing). The walk includes public-suffix / TLD labels and
+// stops after the final single label (e.g. "com"); the DNS root "." is omitted
+// because ToFQDN maps an empty name to "." awkwardly for queries. The first
+// entry is always the requested hostname itself.
+func HostnamesForCAA(hostname string) ([]string, error) {
 	hostname = strings.ToLower(strings.TrimSpace(hostname))
 
 	hostname = strings.TrimSuffix(hostname, ".")
-	if hostname == "" {
-		return nil, fmt.Errorf("cannot build DNS check names: empty hostname")
-	}
 
-	apex, err := publicsuffix.EffectiveTLDPlusOne(hostname)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build DNS check names for %q: %w", hostname, err)
+	if hostname == "" {
+		return nil, fmt.Errorf("cannot build CAA hostnames: empty hostname")
 	}
 
 	names := []string{hostname}
 	current := hostname
 
-	for !strings.EqualFold(current, apex) {
+	for {
 		dot := strings.Index(current, ".")
 		if dot < 0 {
 			break
 		}
 
 		current = current[dot+1:]
+		if current == "" {
+			break
+		}
+
 		names = append(names, current)
 	}
 
