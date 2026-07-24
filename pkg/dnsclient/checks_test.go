@@ -72,6 +72,7 @@ func TestCheckCNAME(t *testing.T) {
 		t.Parallel()
 
 		var networks []string
+
 		client := &Client{
 			exchange: func(_ context.Context, msg *dns.Msg, network string) (*dns.Msg, error) {
 				networks = append(networks, network)
@@ -181,6 +182,7 @@ func TestCheckTXT(t *testing.T) {
 		t.Parallel()
 
 		var networks []string
+
 		client := &Client{
 			exchange: func(_ context.Context, _ *dns.Msg, network string) (*dns.Msg, error) {
 				networks = append(networks, network)
@@ -341,6 +343,7 @@ func TestCheckCAA(t *testing.T) {
 		t.Parallel()
 
 		var networks []string
+
 		client := &Client{
 			exchange: func(_ context.Context, msg *dns.Msg, network string) (*dns.Msg, error) {
 				networks = append(networks, network)
@@ -411,10 +414,12 @@ func TestCheckCAA(t *testing.T) {
 		t.Parallel()
 
 		var queried []string
+
 		client := &Client{
 			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
 				name := msg.Question[0].Header().Name
 				queried = append(queried, name)
+
 				if name != "example.com." {
 					return &dns.Msg{MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess}}, nil
 				}
@@ -439,10 +444,12 @@ func TestCheckCAA(t *testing.T) {
 		t.Parallel()
 
 		var queried []string
+
 		client := &Client{
 			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
 				name := msg.Question[0].Header().Name
 				queried = append(queried, name)
+
 				if name == "trust.example.com." {
 					return &dns.Msg{MsgHeader: dns.MsgHeader{Rcode: dns.RcodeSuccess}}, nil
 				}
@@ -490,6 +497,7 @@ func TestCheckCAA(t *testing.T) {
 		t.Parallel()
 
 		var deadlines []time.Time
+
 		client := &Client{
 			ExchangeTimeout: 2 * time.Second,
 			exchange: func(ctx context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {

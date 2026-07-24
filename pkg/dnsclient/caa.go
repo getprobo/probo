@@ -47,7 +47,9 @@ func (c *Client) CheckCAA(ctx context.Context, hostname, permittedIssuer string)
 		// child name cannot starve the parent lookup that holds the policy.
 		queryCtx, cancel := c.withExchangeTimeout(ctx)
 		resp, err := c.query(queryCtx, msg)
+
 		cancel()
+
 		if err != nil {
 			return fmt.Errorf("cannot exchange dns message for caa records: %w", err)
 		}
