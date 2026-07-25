@@ -24,6 +24,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,6 +50,10 @@ func TestSquareDriver(t *testing.T) {
 	assert.Equal(t, []string{"Member"}, member.Roles)
 	require.NotNil(t, member.Active)
 	assert.True(t, *member.Active)
+	// parseRFC3339Ptr nils on any format mismatch, so pin the parsed instant:
+	// a silently dropped created_at would otherwise look like a clean pass.
+	require.NotNil(t, member.CreatedAt)
+	assert.Equal(t, "2020-03-24T18:14:26Z", member.CreatedAt.UTC().Format(time.RFC3339))
 
 	// Owner → is_owner drives IsAdmin directly.
 	owner := records[1]

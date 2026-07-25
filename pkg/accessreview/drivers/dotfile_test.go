@@ -24,6 +24,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,6 +51,10 @@ func TestDotfileDriver(t *testing.T) {
 	require.NotNil(t, owner.Active)
 	assert.True(t, *owner.Active)
 	assert.Equal(t, []string{"owner"}, owner.Roles)
+	// parseRFC3339Ptr nils on any format mismatch, so pin the parsed instant:
+	// a silently dropped created_at would otherwise look like a clean pass.
+	require.NotNil(t, owner.CreatedAt)
+	assert.Equal(t, "2023-01-31T13:30:00Z", owner.CreatedAt.UTC().Format(time.RFC3339))
 
 	// Admin: also administrative.
 	admin := records[1]
