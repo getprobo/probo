@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.11.0] - 2026-07-25
+
+### Added
+
+- `probo.itam.deviceEnrollmentTokenValidity` Helm value to configure the device enrollment token lifetime (default: 604800 seconds / 7 days)
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.235.0`
+
 ## [0.10.0] - 2026-06-30
 
 ### Added
