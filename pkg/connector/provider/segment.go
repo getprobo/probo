@@ -33,9 +33,10 @@ import (
 
 func segmentRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderSegment,
-		DisplayName:    "Segment",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderSegment,
+		DisplayName:      "Segment",
+		DocumentationURL: accessReviewDocsURL("segment"),
+		SupportsAPIKey:   true,
 		// Segment authenticates with a Public API token as the default
 		// Authorization: Bearer scheme, so no APIKeyHeader. The token is bound
 		// to one workspace, but the workspace's region selects the API host

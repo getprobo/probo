@@ -32,9 +32,10 @@ import (
 
 func dotfileRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderDotfile,
-		DisplayName:    "Dotfile",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderDotfile,
+		DisplayName:      "Dotfile",
+		DocumentationURL: accessReviewDocsURL("dotfile"),
+		SupportsAPIKey:   true,
 		// Dotfile authenticates with the API key in the X-DOTFILE-API-KEY
 		// header rather than Authorization: Bearer. APIKeyHeader makes the
 		// APIKeyConnection send that header and omit Authorization. The key is
