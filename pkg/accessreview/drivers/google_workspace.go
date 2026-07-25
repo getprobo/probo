@@ -21,10 +21,8 @@
 package drivers
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -48,49 +46,6 @@ func NewGoogleWorkspaceDriver(httpClient *http.Client) *GoogleWorkspaceDriver {
 			},
 		},
 	}
-}
-
-// retryRoundTripper retries requests that receive 5xx or 429 responses
-// with exponential backoff.
-type retryRoundTripper struct {
-	next       http.RoundTripper
-	maxRetries int
-}
-
-func (rt *retryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	transport := rt.next
-	if transport == nil {
-		transport = http.DefaultTransport
-	}
-
-	var lastResp *http.Response
-
-	for attempt := range rt.maxRetries {
-		resp, err := transport.RoundTrip(req)
-		if err != nil {
-			return nil, err
-		}
-
-		if resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode < 500 {
-			return resp, nil
-		}
-
-		// Buffer and re-attach the body so the caller can still read it
-		// if this turns out to be the final (retry-exhausted) response.
-		body, _ := io.ReadAll(resp.Body)
-		_ = resp.Body.Close()
-		resp.Body = io.NopCloser(bytes.NewReader(body))
-		lastResp = resp
-
-		backoff := time.Duration(250*(1<<attempt)) * time.Millisecond
-		select {
-		case <-req.Context().Done():
-			return nil, req.Context().Err()
-		case <-time.After(backoff):
-		}
-	}
-
-	return lastResp, nil
 }
 
 func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {

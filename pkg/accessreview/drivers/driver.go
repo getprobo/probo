@@ -21,8 +21,12 @@
 package drivers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -136,4 +140,111 @@ func ownerMemberRoles(role string) []string {
 // owner/member model that grants administrative access.
 func isOwnerRole(role string) bool {
 	return strings.EqualFold(strings.TrimSpace(role), "owner")
+}
+
+// retryRoundTripper retries 429 and 5xx responses with exponential backoff.
+//
+// The retry budget is bounded by what can still produce a useful answer: a
+// fetch runs under a per-source deadline, so a sleep that outlives the
+// deadline, or that follows the final attempt, only converts a reportable
+// provider status into an opaque timeout. Every wait below is therefore
+// guarded.
+type retryRoundTripper struct {
+	next       http.RoundTripper
+	maxRetries int
+}
+
+const (
+	// retryBaseBackoff is the first backoff step; it doubles per attempt.
+	retryBaseBackoff = 250 * time.Millisecond
+	// maxRetryWait caps a single wait. A provider asking for longer (via
+	// Retry-After) cannot be accommodated inside a per-source budget, so the
+	// throttled response is returned instead and the caller reports it.
+	maxRetryWait = 5 * time.Second
+)
+
+func (rt *retryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	transport := rt.next
+	if transport == nil {
+		transport = http.DefaultTransport
+	}
+
+	var lastResp *http.Response
+
+	for attempt := range rt.maxRetries {
+		resp, err := transport.RoundTrip(req)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode < 500 {
+			return resp, nil
+		}
+
+		// Buffer and re-attach the body so the caller can still read it
+		// if this turns out to be the final (retry-exhausted) response.
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		resp.Body = io.NopCloser(bytes.NewReader(body))
+		lastResp = resp
+
+		// Nothing follows the last attempt, so waiting here would burn the
+		// caller's deadline to return the response it already has.
+		if attempt == rt.maxRetries-1 {
+			break
+		}
+
+		wait := retryBaseBackoff << attempt
+		// Retry-After is authoritative on 429: retrying sooner just earns
+		// another 429 and spends an attempt doing it.
+		if after, ok := retryAfter(resp); ok {
+			wait = after
+		}
+
+		if wait > maxRetryWait {
+			break
+		}
+
+		// Sleeping past the deadline guarantees a context error that hides
+		// the provider's actual status from the caller.
+		if deadline, ok := req.Context().Deadline(); ok && time.Until(deadline) <= wait {
+			break
+		}
+
+		timer := time.NewTimer(wait)
+
+		select {
+		case <-req.Context().Done():
+			timer.Stop()
+
+			return nil, req.Context().Err()
+		case <-timer.C:
+		}
+	}
+
+	return lastResp, nil
+}
+
+// retryAfter reads a Retry-After header in either documented form —
+// delta-seconds or an HTTP-date. The bool reports whether the header was
+// present and parseable; a date already in the past yields a zero wait.
+func retryAfter(resp *http.Response) (time.Duration, bool) {
+	value := strings.TrimSpace(resp.Header.Get("Retry-After"))
+	if value == "" {
+		return 0, false
+	}
+
+	if seconds, err := strconv.Atoi(value); err == nil {
+		if seconds < 0 {
+			return 0, false
+		}
+
+		return time.Duration(seconds) * time.Second, true
+	}
+
+	if at, err := http.ParseTime(value); err == nil {
+		return max(time.Until(at), 0), true
+	}
+
+	return 0, false
 }
