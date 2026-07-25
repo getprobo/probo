@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 )
@@ -482,21 +481,12 @@ func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Clie
 	pageToken := ""
 
 	for range maxPaginationPages {
-		q := url.Values{}
-		q.Set("pageSize", strconv.Itoa(googleAnalyticsPageSize))
-
-		if pageToken != "" {
-			q.Set("pageToken", pageToken)
+		endpoint, err := googleAnalyticsURL(pageToken, nil, "v1alpha", "accounts")
+		if err != nil {
+			return nil, err
 		}
 
-		endpoint := url.URL{
-			Scheme:   "https",
-			Host:     googleAnalyticsAPIHost,
-			Path:     "/v1alpha/accounts",
-			RawQuery: q.Encode(),
-		}
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create google analytics accounts request: %w", err)
 		}
@@ -535,7 +525,12 @@ func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Clie
 				continue
 			}
 
-			orgs = append(orgs, Organization{Slug: id, DisplayName: a.DisplayName})
+			displayName := a.DisplayName
+			if displayName == "" {
+				displayName = id
+			}
+
+			orgs = append(orgs, Organization{Slug: id, DisplayName: displayName})
 		}
 
 		if out.NextPageToken == "" {

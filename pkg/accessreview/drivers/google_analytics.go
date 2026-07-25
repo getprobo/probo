@@ -23,6 +23,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -101,7 +102,7 @@ func (d *GoogleAnalyticsDriver) ListAccounts(ctx context.Context) ([]AccountReco
 
 	// Account-level bindings.
 	if err := d.collectBindings(ctx, members, "v1alpha", "accounts", url.PathEscape(d.accountID), "accessBindings"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot list google analytics access bindings for account %q: %w", d.accountID, err)
 	}
 
 	// Property-level bindings, one loop per property beneath the account.
@@ -111,9 +112,21 @@ func (d *GoogleAnalyticsDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	}
 
 	for _, propertyID := range propertyIDs {
-		if err := d.collectBindings(ctx, members, "v1alpha", "properties", url.PathEscape(propertyID), "accessBindings"); err != nil {
-			return nil, err
+		err := d.collectBindings(ctx, members, "v1alpha", "properties", url.PathEscape(propertyID), "accessBindings")
+		if err == nil {
+			continue
 		}
+
+		// A property the token cannot read, or one deleted between the list
+		// and the read, must not discard the bindings already collected: an
+		// account whose properties are 49/50 readable is still worth
+		// reviewing. Anything else invalidates the whole fetch.
+		if e, ok := errors.AsType[*googleAnalyticsStatusError](err); ok &&
+			(e.status == http.StatusForbidden || e.status == http.StatusNotFound) {
+			continue
+		}
+
+		return nil, fmt.Errorf("cannot list google analytics access bindings for property %q: %w", propertyID, err)
 	}
 
 	return googleAnalyticsRecords(members), nil
@@ -187,6 +200,17 @@ func (d *GoogleAnalyticsDriver) listProperties(ctx context.Context) ([]string, e
 	return nil, fmt.Errorf("cannot list all google analytics properties: %w", ErrPaginationLimitReached)
 }
 
+// googleAnalyticsStatusError carries the HTTP status of a failed Admin API call
+// so callers can tell a per-resource permission problem apart from a failure
+// that invalidates the whole fetch.
+type googleAnalyticsStatusError struct {
+	status int
+}
+
+func (e *googleAnalyticsStatusError) Error() string {
+	return fmt.Sprintf("unexpected status %d", e.status)
+}
+
 func (d *GoogleAnalyticsDriver) getJSON(ctx context.Context, endpoint string, out any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -205,7 +229,7 @@ func (d *GoogleAnalyticsDriver) getJSON(ctx context.Context, endpoint string, ou
 	}()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return fmt.Errorf("cannot fetch google analytics resource: unexpected status %d", httpResp.StatusCode)
+		return &googleAnalyticsStatusError{status: httpResp.StatusCode}
 	}
 
 	if err := json.NewDecoder(httpResp.Body).Decode(out); err != nil {
@@ -217,6 +241,7 @@ func (d *GoogleAnalyticsDriver) getJSON(ctx context.Context, endpoint string, ou
 
 // googleAnalyticsURL builds a v1alpha Admin API URL from path segments, adding
 // the shared pageSize, an optional page token, and any extra query values.
+// Keys present in extra replace the default rather than adding to it.
 func googleAnalyticsURL(pageToken string, extra url.Values, segments ...string) (string, error) {
 	joined, err := url.JoinPath("https://"+googleAnalyticsAPIHost, segments...)
 	if err != nil {
@@ -232,6 +257,8 @@ func googleAnalyticsURL(pageToken string, extra url.Values, segments ...string) 
 	q.Set("pageSize", strconv.Itoa(googleAnalyticsPageSize))
 
 	for k, vs := range extra {
+		q.Del(k)
+
 		for _, v := range vs {
 			q.Add(k, v)
 		}
@@ -244,6 +271,19 @@ func googleAnalyticsURL(pageToken string, extra url.Values, segments ...string) 
 	parsed.RawQuery = q.Encode()
 
 	return parsed.String(), nil
+}
+
+// GoogleAnalyticsAccountBindingsProbeURL builds a single-item account-level
+// accessBindings request for accountID. The connection probe uses it so the
+// check exercises the permission the driver actually needs — Administrator on
+// the account, granted through analytics.manage.users.readonly — instead of the
+// accounts list, which any analytics.readonly grant can call.
+func GoogleAnalyticsAccountBindingsProbeURL(accountID string) (string, error) {
+	return googleAnalyticsURL(
+		"",
+		url.Values{"pageSize": {"1"}},
+		"v1alpha", "accounts", url.PathEscape(accountID), "accessBindings",
+	)
 }
 
 // addGoogleAnalyticsBinding folds one access binding into the per-email member

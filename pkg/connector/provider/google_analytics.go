@@ -50,7 +50,12 @@ func googleAnalyticsRegistration() *Registration {
 			"https://www.googleapis.com/auth/analytics.readonly",
 			"https://www.googleapis.com/auth/analytics.manage.users.readonly",
 		},
-		ProbeURL: "https://analyticsadmin.googleapis.com/v1alpha/accounts?pageSize=1",
+		// BuildProbeURL targets the selected account's accessBindings rather
+		// than the accounts list: listing accounts only needs
+		// analytics.readonly, so a non-Administrator connection (or one where
+		// the user declined manage.users.readonly on Google's granular consent
+		// screen) would probe green and then 403 on every fetch.
+		BuildProbeURL: buildGoogleAnalyticsProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
 			if err != nil {

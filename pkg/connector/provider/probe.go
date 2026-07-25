@@ -642,6 +642,22 @@ func buildSegmentProbeURL(conn *coredata.Connector) (string, error) {
 	return u.String(), nil
 }
 
+// buildGoogleAnalyticsProbeURL targets the selected account's accessBindings,
+// the driver's first call, so the probe fails for a connection that can list
+// accounts but cannot read access bindings.
+func buildGoogleAnalyticsProbeURL(conn *coredata.Connector) (string, error) {
+	s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read google analytics connector settings: %w", err)
+	}
+
+	if s.AccountID == "" {
+		return "", fmt.Errorf("missing google analytics account ID")
+	}
+
+	return drivers.GoogleAnalyticsAccountBindingsProbeURL(s.AccountID)
+}
+
 // probeSquare checks a Square credential (OAuth Bearer token or Personal Access
 // Token) with a GET /v2/merchants/me, sending the required Square-Version
 // header. The endpoint returns 401 on a dead token and works for both OAuth and

@@ -38,7 +38,7 @@ func TestGoogleAnalyticsDriver(t *testing.T) {
 	driver := NewGoogleAnalyticsDriver(client, "123456")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.Len(t, records, 3)
+	require.Len(t, records, 4)
 
 	// alice holds an account-level admin binding AND a property-level viewer
 	// binding: roles are merged, deduplicated, sorted, prefix-stripped, and the
@@ -62,4 +62,14 @@ func TestGoogleAnalyticsDriver(t *testing.T) {
 	assert.Equal(t, "carol@example.com", carol.Email)
 	assert.False(t, carol.IsAdmin)
 	assert.Equal(t, []string{"analyst"}, carol.Roles)
+
+	// dave holds a binding only on properties/99999, a subproperty parented to
+	// another property rather than to the account. He is reachable only through
+	// the ancestor filter, so his presence is what proves subproperties are
+	// walked. A third property (55555) returns 403 and is skipped rather than
+	// failing the whole account — otherwise these four records would be zero.
+	dave := records[3]
+	assert.Equal(t, "dave@example.com", dave.Email)
+	assert.False(t, dave.IsAdmin)
+	assert.Equal(t, []string{"analyst"}, dave.Roles)
 }
