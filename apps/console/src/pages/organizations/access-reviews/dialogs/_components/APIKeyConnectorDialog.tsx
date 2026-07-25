@@ -26,6 +26,8 @@ import {
   DialogContent,
   DialogFooter,
   Field,
+  Option,
+  Select,
   useDialogRef,
   useToast,
 } from "@probo/ui";
@@ -248,7 +250,8 @@ export function APIKeyConnectorDialog({
   };
 
   // PostHog renders a dedicated deployment selector (Cloud region or
-  // self-hosted URL); every other provider falls back to generic fields.
+  // self-hosted URL) and Segment a region selector; every other provider falls
+  // back to generic fields.
   const renderAPIKeyExtraSettings = () => {
     if (!provider) {
       return null;
@@ -260,6 +263,25 @@ export function APIKeyConnectorDialog({
           values={extraSettingValues}
           onChange={setExtraSettingValues}
         />
+      );
+    }
+
+    // The server maps this to a regional API host and rejects anything outside
+    // the allow-list, so it must not be typed by hand.
+    if (provider.provider === "SEGMENT") {
+      return (
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">{__("Region")}</label>
+          <Select
+            value={extraSettingValues.region ?? ""}
+            onValueChange={(val: string) =>
+              setExtraSettingValues(prev => ({ ...prev, region: val }))}
+            placeholder={__("Select a region")}
+          >
+            <Option value="US">{__("United States")}</Option>
+            <Option value="EU">{__("Europe")}</Option>
+          </Select>
+        </div>
       );
     }
 

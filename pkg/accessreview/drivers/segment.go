@@ -116,6 +116,7 @@ func (d *SegmentDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 	}
 
 	records := make([]AccountRecord, 0, len(users))
+	seen := make(map[string]struct{}, len(users))
 
 	for _, u := range users {
 		email := strings.TrimSpace(u.Email)
@@ -123,9 +124,11 @@ func (d *SegmentDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			continue
 		}
 
+		seen[strings.ToLower(email)] = struct{}{}
+
 		perms, err := d.userPermissions(ctx, base, u.ID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot list segment permissions for user %q: %w", u.ID, err)
 		}
 
 		roles, isAdmin := segmentRolesAndAdmin(perms)
@@ -157,15 +160,22 @@ func (d *SegmentDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			continue
 		}
 
+		// An invite that has already been accepted can still be listed; the
+		// member record above is the authoritative one, so skip the duplicate
+		// rather than emit two rows for the same person.
+		if _, ok := seen[strings.ToLower(email)]; ok {
+			continue
+		}
+
 		// A pending invite carries no role and no stable id at the workspace
 		// level, so it is surfaced as an inactive member keyed by email.
-		inactive := false
+		active := false
 
 		records = append(records, AccountRecord{
 			Email:       email,
 			FullName:    email,
 			Roles:       []string{},
-			Active:      &inactive,
+			Active:      &active,
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

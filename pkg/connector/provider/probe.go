@@ -636,8 +636,11 @@ func buildSegmentProbeURL(conn *coredata.Connector) (string, error) {
 		return "", fmt.Errorf("cannot parse segment base URL: %w", err)
 	}
 
+	q := url.Values{}
+	q.Set("pagination.count", "1")
+
 	u.Path = "/users"
-	u.RawQuery = "pagination.count=1"
+	u.RawQuery = q.Encode()
 
 	return u.String(), nil
 }
