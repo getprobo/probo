@@ -4,6 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.235.0] - 2026-07-25
+
+### Added
+
+- Device management: enroll employee devices via the new `probo-agent`, view posture and admin the device fleet with owner assignment from the console, and let employees confirm enrollment and check their own device status without an assumed session
+- "Documentation" links for connector setup: the API-key connect dialog and access-review Add Source dialog now link to a connector's docs page when available
+
+### Changed
+
+- Renamed the "My Signatures" console menu item to "Employee Portal"
+- Auth failures (SAML, OIDC, magic-link) now redirect to a shared `/auth/error` page with a stable error code and a clear explanation instead of raw JSON or one-off pages; SAML failures always show a generic reason to avoid leaking account or org state
+
+### Fixed
+
+- Hardened custom-domain verification: CNAME/TXT checks now require the record owner to match the verified hostname, and CAA checks climb to the registrable domain and validate RFC 8659 syntax, closing a bypass where an apex record could satisfy verification for a subdomain
+- Third-party category is no longer reset to "Other" when omitted from a partial update via MCP, GraphQL, or CLI
+
 ## [0.234.0] - 2026-07-24
 
 ### Changed
