@@ -5,6 +5,8 @@ this file.
 
 ## Unreleased
 
+## [0.2.0] - 2026-07-25
+
 ### Added
 
 - Skill: `compliance-portal-commitments` — create or update the public
