@@ -59,6 +59,13 @@ type segmentUser struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
+	// Permissions is declared on the shared UserV1 schema that both /users
+	// and /users/{id} return, but is optional and today only populated by
+	// the single-user read. Decoding it here means the driver uses whatever
+	// the list gives it rather than assuming: nil (field absent) triggers the
+	// per-user fetch, non-nil — including an empty array for a user with no
+	// roles — is taken as authoritative.
+	Permissions []segmentPermission `json:"permissions"`
 }
 
 type segmentPermission struct {
@@ -126,9 +133,12 @@ func (d *SegmentDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 		seen[strings.ToLower(email)] = struct{}{}
 
-		perms, err := d.userPermissions(ctx, base, u.ID)
-		if err != nil {
-			return nil, fmt.Errorf("cannot list segment permissions for user %q: %w", u.ID, err)
+		perms := u.Permissions
+		if perms == nil {
+			perms, err = d.userPermissions(ctx, base, u.ID)
+			if err != nil {
+				return nil, fmt.Errorf("cannot list segment permissions for user %q: %w", u.ID, err)
+			}
 		}
 
 		roles, isAdmin := segmentRolesAndAdmin(perms)

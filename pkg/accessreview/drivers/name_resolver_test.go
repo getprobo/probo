@@ -936,3 +936,109 @@ func TestGoogleAnalyticsNameResolver(t *testing.T) {
 		})
 	}
 }
+
+func TestSegmentNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("reads the workspace name from the API root", func(t *testing.T) {
+		t.Parallel()
+
+		var gotPath string
+
+		srv := httptest.NewServer(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotPath = r.URL.Path
+				_, _ = w.Write([]byte(`{"data":{"workspace":{"id":"9aQ1Lj62S4bomZKLF4DPqW","name":"Acme Prod","slug":"acme-prod"}}}`))
+			}),
+		)
+		t.Cleanup(srv.Close)
+
+		name, err := NewSegmentNameResolver(srv.Client(), srv.URL).ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, "Acme Prod", name)
+		// Get Workspace is the API root, not /workspace or /workspaces/{id}.
+		assert.Equal(t, "/", gotPath)
+	})
+
+	// A revoked token must not make the source-name worker retry forever.
+	t.Run("a client error is terminal", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusUnauthorized)
+			}),
+		)
+		t.Cleanup(srv.Close)
+
+		_, err := NewSegmentNameResolver(srv.Client(), srv.URL).ResolveInstanceName(context.Background())
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrTerminalNameResolution)
+	})
+
+	t.Run("a server error stays retryable", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusBadGateway)
+			}),
+		)
+		t.Cleanup(srv.Close)
+
+		_, err := NewSegmentNameResolver(srv.Client(), srv.URL).ResolveInstanceName(context.Background())
+		require.Error(t, err)
+		assert.False(t, errors.Is(err, ErrTerminalNameResolution))
+	})
+
+	t.Run("an unset base URL resolves to nothing", func(t *testing.T) {
+		t.Parallel()
+
+		name, err := NewSegmentNameResolver(http.DefaultClient, "").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Empty(t, name)
+	})
+}
+
+// The Segment Public API declares permissions on the shared UserV1 schema but
+// today only populates it on the single-user read, so the driver falls back to
+// GET /users/{id}. This pins the other branch: when the list does carry
+// permissions, no per-user request is made. The httptest server fails the test
+// if one is.
+func TestSegmentDriverUsesInlinePermissions(t *testing.T) {
+	t.Parallel()
+
+	var perUserCalls int
+
+	srv := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/users":
+				_, _ = w.Write([]byte(`{"data":{"users":[{"id":"u1","name":"Ada","email":"ada@example.com","permissions":[{"roleName":"Workspace Owner"}]},{"id":"u2","name":"Bob","email":"bob@example.com","permissions":[]}],"pagination":{}}}`))
+			case "/invites":
+				_, _ = w.Write([]byte(`{"data":{"invites":[],"pagination":{}}}`))
+			default:
+				perUserCalls++
+
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}),
+	)
+	t.Cleanup(srv.Close)
+
+	records, err := NewSegmentDriver(srv.Client(), srv.URL).ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 2)
+
+	assert.Zero(t, perUserCalls, "inline permissions must not trigger the per-user fetch")
+
+	assert.Equal(t, "ada@example.com", records[0].Email)
+	assert.True(t, records[0].IsAdmin)
+	assert.Equal(t, []string{"Workspace Owner"}, records[0].Roles)
+
+	// An empty (but present) permissions array is authoritative: the user
+	// genuinely has no roles, so it must not be mistaken for "not populated".
+	assert.Equal(t, "bob@example.com", records[1].Email)
+	assert.False(t, records[1].IsAdmin)
+	assert.Empty(t, records[1].Roles)
+}

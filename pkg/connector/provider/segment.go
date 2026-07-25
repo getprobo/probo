@@ -46,8 +46,6 @@ func segmentRegistration() *Registration {
 			{Key: "region", Label: "Region", Required: true},
 		},
 		BuildProbeURL: buildSegmentProbeURL,
-		// No NewNameResolver: the Public API exposes no read-only workspace-name
-		// endpoint on the token's scope, so the source keeps its generic name.
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
 			if err != nil {
@@ -59,6 +57,16 @@ func segmentRegistration() *Registration {
 			}
 
 			return drivers.NewSegmentDriver(c, s.BaseURL), nil
+		},
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+			s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
+			if err != nil {
+				logger.ErrorCtx(ctx, "cannot read segment connector settings", log.Error(err))
+
+				return nil
+			}
+
+			return drivers.NewSegmentNameResolver(c, s.BaseURL)
 		},
 	}
 }
