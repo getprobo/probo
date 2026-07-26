@@ -39,7 +39,7 @@ func sentryRegistration() *Registration {
 		ProbeURL:       "https://sentry.io/api/0/organizations/",
 		OAuth2Scopes:   []string{"org:read", "member:read"},
 		SupportsAPIKey: true,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

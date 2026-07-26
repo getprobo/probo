@@ -39,7 +39,7 @@ func metabaseRegistration() *Registration {
 		SupportsAPIKey: true,
 		APIKeyHeader:   "x-api-key",
 		BuildProbeURL:  buildMetabaseProbeURL,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "instanceUrl", Label: "Instance URL", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

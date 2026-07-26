@@ -50,10 +50,10 @@ func TestRenderRegistrationMetadata(t *testing.T) {
 	assert.Empty(t, reg.AuthURL)
 	assert.Nil(t, reg.SetOrganizationSettings)
 
-	require.Len(t, reg.ExtraSettings, 1)
-	assert.Equal(t, "workspaceId", reg.ExtraSettings[0].Key)
-	assert.Equal(t, "Workspace ID", reg.ExtraSettings[0].Label)
-	assert.True(t, reg.ExtraSettings[0].Required)
+	require.Len(t, reg.APIKeyExtraSettings, 1)
+	assert.Equal(t, "workspaceId", reg.APIKeyExtraSettings[0].Key)
+	assert.Equal(t, "Workspace ID", reg.APIKeyExtraSettings[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings[0].Required)
 }
 
 func TestRenderNewDriver(t *testing.T) {

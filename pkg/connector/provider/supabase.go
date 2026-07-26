@@ -36,7 +36,7 @@ func supabaseRegistration() *Registration {
 		DisplayName:    "Supabase",
 		ProbeURL:       "https://api.supabase.com/v1/organizations",
 		SupportsAPIKey: true,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

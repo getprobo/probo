@@ -58,7 +58,12 @@ export const addAccessReviewSourceDialogConnectorProviderInfoFragment = graphql`
     apiKeyManaged
     clientCredentialsSupported
     oauth2Scopes
-    extraSettings {
+    apiKeyExtraSettings {
+      key
+      label
+      required
+    }
+    clientCredentialsExtraSettings {
       key
       label
       required

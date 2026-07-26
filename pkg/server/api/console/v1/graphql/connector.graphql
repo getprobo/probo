@@ -130,7 +130,20 @@ type ConnectorProviderInfo {
     apiKeyManaged: Boolean!
     clientCredentialsSupported: Boolean!
     oauth2Scopes: [String!]!
-    extraSettings: [ConnectorProviderSettingInfo!]!
+    """
+    apiKeyExtraSettings lists the per-provider settings the API-key connect
+    form must render and submit, in render order. Empty when the provider needs
+    none or has no API-key path.
+    """
+    apiKeyExtraSettings: [ConnectorProviderSettingInfo!]!
+    """
+    clientCredentialsExtraSettings lists the settings the client-credentials
+    connect form must render and submit. A provider offering both paths
+    (1Password) returns different fields here than in apiKeyExtraSettings,
+    because a different settings struct and driver sits behind each — so a
+    client cannot render one path's settings on the other.
+    """
+    clientCredentialsExtraSettings: [ConnectorProviderSettingInfo!]!
 }
 
 type ConnectorProviderSettingInfo {

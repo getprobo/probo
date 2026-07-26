@@ -38,7 +38,7 @@ func grafanaRegistration() *Registration {
 		DisplayName:    "Grafana",
 		SupportsAPIKey: true,
 		BuildProbeURL:  buildGrafanaProbeURL,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

@@ -43,10 +43,10 @@ func TestMetabaseRegistrationMetadata(t *testing.T) {
 	assert.Equal(t, "Metabase", reg.DisplayName)
 	assert.True(t, reg.SupportsAPIKey)
 	assert.Equal(t, "x-api-key", reg.APIKeyHeader)
-	require.Len(t, reg.ExtraSettings, 1)
-	assert.Equal(t, "instanceUrl", reg.ExtraSettings[0].Key)
-	assert.Equal(t, "Instance URL", reg.ExtraSettings[0].Label)
-	assert.True(t, reg.ExtraSettings[0].Required)
+	require.Len(t, reg.APIKeyExtraSettings, 1)
+	assert.Equal(t, "instanceUrl", reg.APIKeyExtraSettings[0].Key)
+	assert.Equal(t, "Instance URL", reg.APIKeyExtraSettings[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings[0].Required)
 }
 
 func TestMetabaseNewDriver(t *testing.T) {

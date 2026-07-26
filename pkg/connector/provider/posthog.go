@@ -64,7 +64,7 @@ func posthogRegistration() *Registration {
 		// self-hosted (an instance URL). The two are mutually exclusive, so
 		// neither is individually Required; apiKeyConnectorSettings enforces
 		// that exactly one is supplied.
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "region", Label: "Region"},
 			{Key: "instanceUrl", Label: "Instance URL"},
 		},

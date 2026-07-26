@@ -45,7 +45,7 @@ func langfuseRegistration() *Registration {
 		// there is nothing to pick; only the regional/self-hosted base URL
 		// is per-tenant and is surfaced as an extra setting.
 		APIKeyBasicAuthUserPass: true,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},
 		// BuildProbeURL derives the probe endpoint from the per-connection

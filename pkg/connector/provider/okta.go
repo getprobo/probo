@@ -44,7 +44,7 @@ func oktaRegistration() *Registration {
 		SupportsAPIKey:   true,
 		APIKeyAuthScheme: "SSWS",
 		BuildProbeURL:    buildOktaProbeURL,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "domain", Label: "Okta Domain", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

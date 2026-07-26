@@ -89,7 +89,20 @@ type Registration struct {
 	// Protocol support / GraphQL surface.
 	SupportsAPIKey            bool
 	SupportsClientCredentials bool
-	ExtraSettings             []ExtraSetting
+	// APIKeyExtraSettings declares the per-provider settings fields the
+	// console's API-key connect dialog renders and submits, in render order.
+	// It covers a ManagedAPIKey provider too (Crisp): the customer supplies
+	// the settings, Probo supplies the key. Nil for a provider with no
+	// API-key path.
+	APIKeyExtraSettings []ExtraSetting
+	// ClientCredentialsExtraSettings declares the settings fields the
+	// client-credentials connect dialog renders and submits. The two lists are
+	// independent because a different create resolver and a different driver
+	// sit behind each path: 1Password needs SCIMBridgeURL on the API key
+	// (SCIM-bridge driver) and AccountID + Region on client credentials (Users
+	// API driver). A setting genuinely needed on both paths is declared in
+	// both lists.
+	ClientCredentialsExtraSettings []ExtraSetting
 	// APIKeyHeader selects how an API-key connection presents its key
 	// on outbound requests. Empty (the default) uses the standard
 	// `Authorization: Bearer <key>` scheme; a value such as "x-api-key"
@@ -125,13 +138,13 @@ type Registration struct {
 	// ManagedAPIKey marks a provider whose API key is supplied by Probo
 	// from bootstrap config (a single, Probo-held credential shared across
 	// all connections) rather than pasted per-connection by the customer.
-	// The connection carries only the ExtraSettings (e.g. a Crisp Website
-	// ID); the create-connector resolver injects the managed key registered
-	// via (*Registry).SetManagedAPIKey. Such a provider stays hidden from
-	// the driver catalog until the operator configures the key, so it ships
-	// deactivated and activates with no code change. Orthogonal to the
-	// APIKey*/SupportsAPIKey auth-mode flags, which still select how the
-	// injected key is presented on the wire.
+	// The connection carries only the APIKeyExtraSettings (e.g. a Crisp
+	// Website ID); the create-connector resolver injects the managed key
+	// registered via (*Registry).SetManagedAPIKey. Such a provider stays
+	// hidden from the driver catalog until the operator configures the key,
+	// so it ships deactivated and activates with no code change. Orthogonal
+	// to the APIKey*/SupportsAPIKey auth-mode flags, which still select how
+	// the injected key is presented on the wire.
 	ManagedAPIKey bool
 
 	// RequiresManagedResourceID marks a ManagedAPIKey provider that also needs

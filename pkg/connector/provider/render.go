@@ -35,14 +35,15 @@ import (
 // read-scoped API key plus their Workspace ID (Render's owner ID). The key
 // authenticates with the default Authorization: Bearer scheme, so no
 // APIKeyAuthScheme override is set. There is no picker — the workspace is
-// captured up front via ExtraSettings — so SetOrganizationSettings is omitted.
+// captured up front via APIKeyExtraSettings — so SetOrganizationSettings is
+// omitted.
 func renderRegistration() *Registration {
 	return &Registration{
 		Provider:       coredata.ConnectorProviderRender,
 		DisplayName:    "Render",
 		SupportsAPIKey: true,
 		BuildProbeURL:  buildRenderProbeURL,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "workspaceId", Label: "Workspace ID", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

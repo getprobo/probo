@@ -43,10 +43,10 @@ func TestSigNozRegistrationMetadata(t *testing.T) {
 	assert.Equal(t, "SigNoz", reg.DisplayName)
 	assert.True(t, reg.SupportsAPIKey)
 	assert.Equal(t, "SIGNOZ-API-KEY", reg.APIKeyHeader)
-	require.Len(t, reg.ExtraSettings, 1)
-	assert.Equal(t, "baseUrl", reg.ExtraSettings[0].Key)
-	assert.Equal(t, "Base URL", reg.ExtraSettings[0].Label)
-	assert.True(t, reg.ExtraSettings[0].Required)
+	require.Len(t, reg.APIKeyExtraSettings, 1)
+	assert.Equal(t, "baseUrl", reg.APIKeyExtraSettings[0].Key)
+	assert.Equal(t, "Base URL", reg.APIKeyExtraSettings[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings[0].Required)
 	require.NotNil(t, reg.NewNameResolver, "signoz NewNameResolver closure must be wired")
 }
 

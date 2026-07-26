@@ -54,11 +54,11 @@ func crispRegistration() *Registration {
 		// APIKeyBasicAuthUserPass base64-encodes it (the empty-password
 		// APIKeyBasicAuth cannot carry the key). A plugin token can serve
 		// several websites, so the reviewed website is captured via
-		// ExtraSettings. Every request also needs the non-auth X-Crisp-Tier
+		// APIKeyExtraSettings. Every request also needs the non-auth X-Crisp-Tier
 		// header (set by the driver/probe/name resolver), so the probe is a
 		// custom closure.
 		APIKeyBasicAuthUserPass: true,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "websiteId", Label: "Website ID", Required: true},
 		},
 		Probe: probeCrisp,

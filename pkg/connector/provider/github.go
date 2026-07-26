@@ -39,7 +39,7 @@ func githubRegistration() *Registration {
 		ProbeURL:       "https://api.github.com/user",
 		OAuth2Scopes:   []string{"read:org"},
 		SupportsAPIKey: true,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organization", Label: "Organization", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) (drivers.Driver, error) {

@@ -43,7 +43,7 @@ func segmentRegistration() *Registration {
 		// (US vs EU) and is not discoverable from the token, so it is captured
 		// as an extra setting and resolved to a base URL (Pattern 3 + region);
 		// there is nothing to pick.
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "region", Label: "Region", Required: true},
 		},
 		BuildProbeURL: buildSegmentProbeURL,

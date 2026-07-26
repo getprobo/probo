@@ -38,18 +38,23 @@ func onePasswordRegistration() *Registration {
 		ProbeURL:                  "https://events.1password.com/api/v1/auditevents",
 		SupportsAPIKey:            true,
 		SupportsClientCredentials: true,
-		ExtraSettings: []ExtraSetting{
+		// Two settings shapes, one per connect path, because a different
+		// driver sits behind each:
+		//  - API key:            SCIMBridgeURL      (SCIM-bridge driver).
+		//  - Client credentials: AccountID + Region (Users API driver).
+		APIKeyExtraSettings: []ExtraSetting{
+			{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
+		},
+		ClientCredentialsExtraSettings: []ExtraSetting{
 			{Key: "accountId", Label: "Account ID", Required: true},
 			{Key: "region", Label: "Region", Required: true},
 		},
-		// 1Password has two settings shapes selected by protocol:
-		//  - Client-credentials: AccountID + Region (Users API driver).
-		//  - API key:            SCIMBridgeURL      (SCIM-bridge driver).
-		// The create resolvers build the matching settings; only one
-		// path is possible for any given request.
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
-			// Client credentials grant uses the Users API driver; the
-			// authorization-code grant uses the SCIM-bridge driver.
+			// The client-credentials grant uses the Users API driver.
+			// Everything else is the API-key connection, whose
+			// *APIKeyConnection makes GrantType() return "": it uses the
+			// SCIM-bridge driver. 1Password declares no AuthURL/TokenURL, so
+			// the authorization-code path is unreachable.
 			if conn.GrantType() == string(connector.OAuth2GrantTypeClientCredentials) {
 				s, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](conn)
 				if err != nil {

@@ -41,7 +41,12 @@ func TestAccessReviewDrivers(t *testing.T) {
 				oauthConfigured
 				apiKeySupported
 				clientCredentialsSupported
-				extraSettings {
+				apiKeyExtraSettings {
+					key
+					label
+					required
+				}
+				clientCredentialsExtraSettings {
 					key
 					label
 					required
@@ -50,19 +55,22 @@ func TestAccessReviewDrivers(t *testing.T) {
 		}
 	`
 
+	type settingInfo struct {
+		Key      string `json:"key"`
+		Label    string `json:"label"`
+		Required bool   `json:"required"`
+	}
+
 	var result struct {
 		AccessReviewDrivers []struct {
-			Provider                   string  `json:"provider"`
-			DisplayName                string  `json:"displayName"`
-			DocumentationURL           *string `json:"documentationUrl"`
-			OauthConfigured            bool    `json:"oauthConfigured"`
-			APIKeySupported            bool    `json:"apiKeySupported"`
-			ClientCredentialsSupported bool    `json:"clientCredentialsSupported"`
-			ExtraSettings              []struct {
-				Key      string `json:"key"`
-				Label    string `json:"label"`
-				Required bool   `json:"required"`
-			} `json:"extraSettings"`
+			Provider                       string        `json:"provider"`
+			DisplayName                    string        `json:"displayName"`
+			DocumentationURL               *string       `json:"documentationUrl"`
+			OauthConfigured                bool          `json:"oauthConfigured"`
+			APIKeySupported                bool          `json:"apiKeySupported"`
+			ClientCredentialsSupported     bool          `json:"clientCredentialsSupported"`
+			APIKeyExtraSettings            []settingInfo `json:"apiKeyExtraSettings"`
+			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
 		} `json:"accessReviewDrivers"`
 	}
 
@@ -72,17 +80,39 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
+	apiKeySettingKeys := make(map[string][]string)
+	clientCredentialsSettingKeys := make(map[string][]string)
 
 	for _, info := range result.AccessReviewDrivers {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
-		assert.NotNil(t, info.ExtraSettings)
+		assert.NotNil(t, info.APIKeyExtraSettings)
+		assert.NotNil(t, info.ClientCredentialsExtraSettings)
 		providerNames[info.Provider] = true
 		docURLByProvider[info.Provider] = info.DocumentationURL
+
+		for _, s := range info.APIKeyExtraSettings {
+			apiKeySettingKeys[info.Provider] = append(apiKeySettingKeys[info.Provider], s.Key)
+		}
+
+		for _, s := range info.ClientCredentialsExtraSettings {
+			clientCredentialsSettingKeys[info.Provider] = append(clientCredentialsSettingKeys[info.Provider], s.Key)
+		}
 	}
 
 	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
+
+	// 1Password is the only provider offering both connect paths, and each path
+	// needs different settings: the SCIM-bridge driver behind the API key, the
+	// Users API driver behind client credentials. A client rendering one path's
+	// settings on the other would collect fields the create resolver rejects.
+	assert.Equal(t, []string{"scimBridgeUrl"}, apiKeySettingKeys["ONE_PASSWORD"])
+	assert.Equal(t, []string{"accountId", "region"}, clientCredentialsSettingKeys["ONE_PASSWORD"])
+
+	// A single-path provider declares its settings on that path only.
+	assert.Equal(t, []string{"baseUrl"}, apiKeySettingKeys["LANGFUSE"])
+	assert.Empty(t, clientCredentialsSettingKeys["LANGFUSE"])
 
 	// A documented provider exposes its probo.com docs URL; an undocumented one
 	// exposes null. See pkg/connector/provider/docs.go.

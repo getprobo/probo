@@ -40,10 +40,10 @@ func scalewayRegistration() *Registration {
 		// rather than Authorization: Bearer. APIKeyHeader makes the
 		// APIKeyConnection send that header and omit Authorization. The key is
 		// bound to one Organization, but GET /iam/v1alpha1/users requires the
-		// organization_id explicitly, so it is captured via ExtraSettings rather
-		// than discovered — hence no picker and a BuildProbeURL.
+		// organization_id explicitly, so it is captured via APIKeyExtraSettings
+		// rather than discovered — hence no picker and a BuildProbeURL.
 		APIKeyHeader: "X-Auth-Token",
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
 		BuildProbeURL: buildScalewayProbeURL,

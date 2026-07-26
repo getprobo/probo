@@ -55,6 +55,9 @@ export function mapAPIKeyExtraSettingToField(
     case "SIGNOZ":
       if (settingKey === "baseUrl") return "signozBaseUrl";
       break;
+    case "LANGFUSE":
+      if (settingKey === "baseUrl") return "langfuseBaseUrl";
+      break;
     case "ONE_PASSWORD":
       if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
       break;
@@ -115,22 +118,25 @@ export function hasRequiredExtraSettings(
     .every(s => values[s.key]?.trim());
 }
 
-// buildExtraFields flattens a provider's extra settings into the input-field map
-// the create mutations expect: each non-empty, trimmed value keyed by its
-// provider-specific input field name (via mapFn), skipping settings that map to
-// nothing. Shared by the API-key and client-credentials dialogs.
+// buildExtraFields flattens one connect path's extra settings into the
+// input-field map that path's create mutation expects: each non-empty, trimmed
+// value keyed by its provider-specific input field name (via mapFn), skipping
+// settings that map to nothing. Each dialog passes the settings list for its own
+// path together with the matching mapFn — a provider offering both paths
+// (1Password) declares different settings on each.
 export function buildExtraFields(
-  provider: ProviderInfo,
+  provider: string,
+  settings: ReadonlyArray<{ readonly key: string }>,
   values: Record<string, string>,
   mapFn: (provider: string, settingKey: string) => string | null,
 ): Record<string, string> {
   const extraFields: Record<string, string> = {};
-  for (const setting of provider.extraSettings) {
+  for (const setting of settings) {
     const value = values[setting.key]?.trim();
     if (!value) {
       continue;
     }
-    const fieldName = mapFn(provider.provider, setting.key);
+    const fieldName = mapFn(provider, setting.key);
     if (fieldName) {
       extraFields[fieldName] = value;
     }

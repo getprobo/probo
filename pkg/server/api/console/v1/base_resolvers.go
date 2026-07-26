@@ -606,33 +606,26 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			scopes = []string{}
 		}
 
-		extraSettings := make([]*types.ConnectorProviderSettingInfo, 0, len(reg.ExtraSettings))
-		for _, setting := range reg.ExtraSettings {
-			extraSettings = append(
-				extraSettings,
-				&types.ConnectorProviderSettingInfo{
-					Key:      setting.Key,
-					Label:    setting.Label,
-					Required: setting.Required,
-				},
-			)
-		}
-
 		var documentationURL *string
 		if reg.DocumentationURL != "" {
 			documentationURL = new(reg.DocumentationURL)
 		}
 
+		// The two settings lists are surfaced separately, never merged: a
+		// provider offering both connect paths (1Password) needs different
+		// fields on each, so a client that saw one flat list would render the
+		// wrong fields on one of the two dialogs.
 		infos = append(infos, &types.ConnectorProviderInfo{
-			Provider:                   provider,
-			DisplayName:                reg.DisplayName,
-			DocumentationURL:           documentationURL,
-			OauthConfigured:            oauthConfigured,
-			APIKeySupported:            apiKeySupported,
-			APIKeyManaged:              apiKeyManaged,
-			ClientCredentialsSupported: clientCredentialsSupported,
-			Oauth2Scopes:               scopes,
-			ExtraSettings:              extraSettings,
+			Provider:                       provider,
+			DisplayName:                    reg.DisplayName,
+			DocumentationURL:               documentationURL,
+			OauthConfigured:                oauthConfigured,
+			APIKeySupported:                apiKeySupported,
+			APIKeyManaged:                  apiKeyManaged,
+			ClientCredentialsSupported:     clientCredentialsSupported,
+			Oauth2Scopes:                   scopes,
+			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings),
+			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings),
 		})
 	}
 

@@ -21,38 +21,19 @@
 package console_v1
 
 import (
-	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
-func (r *Resolver) providerDisplayName(p coredata.ConnectorProvider) string {
-	return r.providerRegistry.ProviderDisplayName(p)
-}
+// connectorProviderSettingInfos projects one connect path's settings list onto
+// the GraphQL type. A Registration declares one list per connect path, so
+// AccessReviewDrivers calls this once per path. The result is never nil: both
+// schema fields are non-null lists, and a provider with no settings on a path
+// returns an empty one.
+func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.ConnectorProviderSettingInfo {
+	out := make([]*types.ConnectorProviderSettingInfo, 0, len(settings))
 
-func (r *Resolver) providerSupportsAPIKey(p coredata.ConnectorProvider) bool {
-	if reg, ok := r.providerRegistry.Get(p); ok {
-		return reg.SupportsAPIKey
-	}
-
-	return false
-}
-
-func (r *Resolver) providerSupportsClientCredentials(p coredata.ConnectorProvider) bool {
-	if reg, ok := r.providerRegistry.Get(p); ok {
-		return reg.SupportsClientCredentials
-	}
-
-	return false
-}
-
-func (r *Resolver) providerExtraSettings(p coredata.ConnectorProvider) []*types.ConnectorProviderSettingInfo {
-	reg, ok := r.providerRegistry.Get(p)
-	if !ok || len(reg.ExtraSettings) == 0 {
-		return []*types.ConnectorProviderSettingInfo{}
-	}
-
-	out := make([]*types.ConnectorProviderSettingInfo, 0, len(reg.ExtraSettings))
-	for _, s := range reg.ExtraSettings {
+	for _, s := range settings {
 		out = append(out, &types.ConnectorProviderSettingInfo{
 			Key:      s.Key,
 			Label:    s.Label,

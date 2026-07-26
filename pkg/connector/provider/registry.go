@@ -142,6 +142,45 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: BuildTokenURLForDomain and BuildTokenURLForSite are mutually exclusive", reg.Provider)
 	}
 
+	// A per-path settings list for a path the provider cannot offer is a dead
+	// declaration: no dialog will ever render it. ManagedAPIKey counts as an
+	// API-key path — the customer supplies the settings, Probo the key.
+	if len(reg.APIKeyExtraSettings) > 0 && !reg.SupportsAPIKey && !reg.ManagedAPIKey {
+		return fmt.Errorf("cannot register connector provider %q: APIKeyExtraSettings requires SupportsAPIKey or ManagedAPIKey", reg.Provider)
+	}
+
+	if len(reg.ClientCredentialsExtraSettings) > 0 && !reg.SupportsClientCredentials {
+		return fmt.Errorf("cannot register connector provider %q: ClientCredentialsExtraSettings requires SupportsClientCredentials", reg.Provider)
+	}
+
+	// The console keys both its form state and its submitted values by setting
+	// key within one dialog, so a duplicate key silently collapses two fields
+	// into one and an empty key produces an unlabelled field bound to nothing.
+	// Reject both at startup. A key repeated across the two lists is fine and
+	// intended: that is how a dual-path provider declares one setting both
+	// dialogs need.
+	for _, list := range []struct {
+		field    string
+		settings []ExtraSetting
+	}{
+		{"APIKeyExtraSettings", reg.APIKeyExtraSettings},
+		{"ClientCredentialsExtraSettings", reg.ClientCredentialsExtraSettings},
+	} {
+		seen := make(map[string]bool, len(list.settings))
+
+		for _, s := range list.settings {
+			if s.Key == "" || s.Label == "" {
+				return fmt.Errorf("cannot register connector provider %q: %s declares a setting with an empty Key or Label", reg.Provider, list.field)
+			}
+
+			if seen[s.Key] {
+				return fmt.Errorf("cannot register connector provider %q: %s declares duplicate setting key %q", reg.Provider, list.field, s.Key)
+			}
+
+			seen[s.Key] = true
+		}
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

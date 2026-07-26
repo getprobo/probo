@@ -196,7 +196,7 @@ export function APIKeyConnectorDialog({
       return;
     }
 
-    const requiredSettings = provider.extraSettings.filter(s => s.required);
+    const requiredSettings = provider.apiKeyExtraSettings.filter(s => s.required);
     if (!hasRequiredExtraSettings(requiredSettings, extraSettingValues)) {
       return;
     }
@@ -204,7 +204,8 @@ export function APIKeyConnectorDialog({
     setIsConnectingAPIKey(true);
 
     const extraFields = buildExtraFields(
-      provider,
+      provider.provider,
+      provider.apiKeyExtraSettings,
       extraSettingValues,
       mapAPIKeyExtraSettingToField,
     );
@@ -285,7 +286,7 @@ export function APIKeyConnectorDialog({
       );
     }
 
-    return provider.extraSettings.map((setting) => {
+    return provider.apiKeyExtraSettings.map((setting) => {
       const value = extraSettingValues[setting.key] ?? "";
       return (
         <Field
@@ -307,7 +308,7 @@ export function APIKeyConnectorDialog({
       || isPostHogDeploymentSelected(extraSettingValues);
 
   const apiKeyExtraSettingsValid = provider
-    ? hasRequiredExtraSettings(provider.extraSettings, extraSettingValues)
+    ? hasRequiredExtraSettings(provider.apiKeyExtraSettings, extraSettingValues)
     : true;
 
   return (

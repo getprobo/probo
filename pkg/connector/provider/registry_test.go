@@ -54,6 +54,43 @@ func TestEveryProviderRegistered(t *testing.T) {
 	}
 }
 
+// TestEveryProviderSettingsReachADialog asserts that every builtin
+// registration declares its extra settings on a connect path it actually
+// offers. A list on an unoffered path is a dead declaration: no dialog reads
+// it, so the settings never reach the create mutation and the connect attempt
+// fails on a field the customer was never asked for. Register rejects the same
+// condition at startup; this pins it per provider so the failure names the
+// offender rather than panicking inside NewBuiltinRegistry.
+func TestEveryProviderSettingsReachADialog(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+
+	for _, reg := range r.All() {
+		t.Run(string(reg.Provider), func(t *testing.T) {
+			t.Parallel()
+
+			if len(reg.APIKeyExtraSettings) > 0 {
+				assert.Truef(
+					t,
+					reg.SupportsAPIKey || reg.ManagedAPIKey,
+					"provider %q declares APIKeyExtraSettings but offers no API-key path",
+					reg.Provider,
+				)
+			}
+
+			if len(reg.ClientCredentialsExtraSettings) > 0 {
+				assert.Truef(
+					t,
+					reg.SupportsClientCredentials,
+					"provider %q declares ClientCredentialsExtraSettings but offers no client-credentials path",
+					reg.Provider,
+				)
+			}
+		})
+	}
+}
+
 // TestRegistry_Register exercises the validation and duplicate-detection
 // paths on Register. Programmer errors at NewBuiltinRegistry time —
 // nil, empty Provider, empty DisplayName, duplicate — must all surface
@@ -142,6 +179,110 @@ func TestRegistry_Register(t *testing.T) {
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "mutually exclusive")
+	})
+
+	t.Run("APIKeyExtraSettings requires an API-key path", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:            coredata.ConnectorProviderSlack,
+			DisplayName:         "Slack",
+			APIKeyExtraSettings: []provider.ExtraSetting{{Key: "baseUrl", Label: "Base URL"}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "APIKeyExtraSettings requires SupportsAPIKey or ManagedAPIKey")
+	})
+
+	// A ManagedAPIKey provider (Crisp) collects settings without a customer
+	// key, so its API-key list is legitimate even with SupportsAPIKey false.
+	t.Run("APIKeyExtraSettings accepted on a ManagedAPIKey provider", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:            coredata.ConnectorProviderSlack,
+			DisplayName:         "Slack",
+			ManagedAPIKey:       true,
+			APIKeyExtraSettings: []provider.ExtraSetting{{Key: "websiteId", Label: "Website ID"}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("ClientCredentialsExtraSettings requires SupportsClientCredentials", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:                       coredata.ConnectorProviderSlack,
+			DisplayName:                    "Slack",
+			SupportsAPIKey:                 true,
+			ClientCredentialsExtraSettings: []provider.ExtraSetting{{Key: "region", Label: "Region"}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "ClientCredentialsExtraSettings requires SupportsClientCredentials")
+	})
+
+	t.Run("duplicate setting key within one list", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:       coredata.ConnectorProviderSlack,
+			DisplayName:    "Slack",
+			SupportsAPIKey: true,
+			APIKeyExtraSettings: []provider.ExtraSetting{
+				{Key: "region", Label: "Region"},
+				{Key: "region", Label: "Region (again)"},
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `APIKeyExtraSettings declares duplicate setting key "region"`)
+	})
+
+	// One setting both dialogs need is declared in both lists; that is not a
+	// duplicate, because each list keys a separate form.
+	t.Run("setting key repeated across the two lists", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:                       coredata.ConnectorProviderSlack,
+			DisplayName:                    "Slack",
+			SupportsAPIKey:                 true,
+			SupportsClientCredentials:      true,
+			APIKeyExtraSettings:            []provider.ExtraSetting{{Key: "region", Label: "Region"}},
+			ClientCredentialsExtraSettings: []provider.ExtraSetting{{Key: "region", Label: "Region"}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("setting with an empty Key", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:            coredata.ConnectorProviderSlack,
+			DisplayName:         "Slack",
+			SupportsAPIKey:      true,
+			APIKeyExtraSettings: []provider.ExtraSetting{{Label: "Region"}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "APIKeyExtraSettings declares a setting with an empty Key or Label")
+	})
+
+	t.Run("setting with an empty Label", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:                       coredata.ConnectorProviderSlack,
+			DisplayName:                    "Slack",
+			SupportsClientCredentials:      true,
+			ClientCredentialsExtraSettings: []provider.ExtraSetting{{Key: "region"}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "ClientCredentialsExtraSettings declares a setting with an empty Key or Label")
 	})
 
 	t.Run("RequiresManagedResourceID requires ManagedAPIKey", func(t *testing.T) {

@@ -109,7 +109,7 @@ export function ClientCredentialsConnectorDialog({
       return;
     }
 
-    const requiredSettings = provider.extraSettings.filter(s => s.required);
+    const requiredSettings = provider.clientCredentialsExtraSettings.filter(s => s.required);
     if (!hasRequiredExtraSettings(requiredSettings, clientCredentialsExtraValues)) {
       return;
     }
@@ -117,7 +117,8 @@ export function ClientCredentialsConnectorDialog({
     setIsConnectingClientCredentials(true);
 
     const extraFields = buildExtraFields(
-      provider,
+      provider.provider,
+      provider.clientCredentialsExtraSettings,
       clientCredentialsExtraValues,
       mapClientCredentialsExtraSettingToField,
     );
@@ -173,7 +174,7 @@ export function ClientCredentialsConnectorDialog({
   };
 
   const clientCredentialsExtraSettingsValid = provider
-    ? hasRequiredExtraSettings(provider.extraSettings, clientCredentialsExtraValues)
+    ? hasRequiredExtraSettings(provider.clientCredentialsExtraSettings, clientCredentialsExtraValues)
     : true;
 
   return (
@@ -232,7 +233,7 @@ export function ClientCredentialsConnectorDialog({
             value={scope}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScope(e.target.value)}
           />
-          {provider?.extraSettings.map(setting =>
+          {provider?.clientCredentialsExtraSettings.map(setting =>
             setting.key === "region"
               ? (
                   <div key={setting.key} className="space-y-1.5">

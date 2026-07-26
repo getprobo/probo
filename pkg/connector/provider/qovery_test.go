@@ -43,10 +43,10 @@ func TestQoveryRegistrationMetadata(t *testing.T) {
 	assert.Equal(t, "Qovery", reg.DisplayName)
 	assert.True(t, reg.SupportsAPIKey)
 	assert.Equal(t, "Token", reg.APIKeyAuthScheme)
-	require.Len(t, reg.ExtraSettings, 1)
-	assert.Equal(t, "organizationId", reg.ExtraSettings[0].Key)
-	assert.Equal(t, "Organization ID", reg.ExtraSettings[0].Label)
-	assert.True(t, reg.ExtraSettings[0].Required)
+	require.Len(t, reg.APIKeyExtraSettings, 1)
+	assert.Equal(t, "organizationId", reg.APIKeyExtraSettings[0].Key)
+	assert.Equal(t, "Organization ID", reg.APIKeyExtraSettings[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings[0].Required)
 }
 
 func TestQoveryNewDriver(t *testing.T) {

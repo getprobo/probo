@@ -36,7 +36,7 @@ func tallyRegistration() *Registration {
 		DisplayName:    "Tally",
 		ProbeURL:       "https://api.tally.so/me",
 		SupportsAPIKey: true,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

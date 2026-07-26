@@ -37,7 +37,7 @@ func qoveryRegistration() *Registration {
 		SupportsAPIKey:   true,
 		APIKeyAuthScheme: "Token",
 		BuildProbeURL:    buildQoveryProbeURL,
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

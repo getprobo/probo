@@ -42,7 +42,7 @@ func betterStackRegistration() *Registration {
 		DisplayName:    "Better Stack",
 		SupportsAPIKey: true,
 		ProbeURL:       "https://betterstack.com/api/v2/team-members",
-		ExtraSettings: []ExtraSetting{
+		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "teamName", Label: "Team Name", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
