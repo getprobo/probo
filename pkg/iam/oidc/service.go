@@ -417,11 +417,11 @@ func (s *Service) HandleCallback(
 	}
 
 	if time.Now().After(oidcState.ExpiresAt) {
-		return nil, "", nil, NewInvalidStateError()
+		return nil, oidcState.ContinueURL, nil, NewInvalidStateError()
 	}
 
 	if oidcState.Provider != provider {
-		return nil, "", nil, NewInvalidStateError()
+		return nil, oidcState.ContinueURL, nil, NewInvalidStateError()
 	}
 
 	token, err := info.oauth2Config.Exchange(
@@ -430,26 +430,26 @@ func (s *Service) HandleCallback(
 		oauth2.SetAuthURLParam("code_verifier", oidcState.CodeVerifier),
 	)
 	if err != nil {
-		return nil, "", nil, NewCodeExchangeError(err)
+		return nil, oidcState.ContinueURL, nil, NewCodeExchangeError(err)
 	}
 
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
-		return nil, "", nil, NewIDTokenMissingError()
+		return nil, oidcState.ContinueURL, nil, NewIDTokenMissingError()
 	}
 
 	claims, err := s.verifyAndParseIDToken(ctx, info, rawIDToken, oidcState.Nonce)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot verify id token: %w", err)
+		return nil, oidcState.ContinueURL, nil, fmt.Errorf("cannot verify id token: %w", err)
 	}
 
 	if err := validateIDTokenClaims(info, claims); err != nil {
-		return nil, "", nil, err
+		return nil, oidcState.ContinueURL, nil, err
 	}
 
 	email, err := mail.ParseAddr(claims.Email)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot parse email from id token: %w", err)
+		return nil, oidcState.ContinueURL, nil, fmt.Errorf("cannot parse email from id token: %w", err)
 	}
 
 	var identity *coredata.Identity
@@ -496,7 +496,7 @@ func (s *Service) HandleCallback(
 		},
 	)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, oidcState.ContinueURL, nil, err
 	}
 
 	return identity, oidcState.ContinueURL, oidcState.OrganizationID, nil

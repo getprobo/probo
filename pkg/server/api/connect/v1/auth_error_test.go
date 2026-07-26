@@ -35,11 +35,29 @@ func TestRedirectAuthError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/connect/v1/oidc/google/callback", nil)
 	rec := httptest.NewRecorder()
 
-	redirectAuthError(rec, req, authErrorPersonalAccountNotAllowed)
+	redirectAuthError(rec, req, authErrorPersonalAccountNotAllowed, "")
 
 	assert.Equal(t, http.StatusFound, rec.Code)
 	location, err := rec.Result().Location()
 	require.NoError(t, err)
 	assert.Equal(t, "/auth/error", location.Path)
 	assert.Equal(t, authErrorPersonalAccountNotAllowed, location.Query().Get("error"))
+	assert.Empty(t, location.Query().Get("continue"))
+}
+
+func TestRedirectAuthErrorWithContinue(t *testing.T) {
+	t.Parallel()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/connect/v1/oidc/google/callback", nil)
+	rec := httptest.NewRecorder()
+
+	continueURL := "/overview"
+	redirectAuthError(rec, req, authErrorAuthenticationFailed, continueURL)
+
+	assert.Equal(t, http.StatusFound, rec.Code)
+	location, err := rec.Result().Location()
+	require.NoError(t, err)
+	assert.Equal(t, "/auth/error", location.Path)
+	assert.Equal(t, authErrorAuthenticationFailed, location.Query().Get("error"))
+	assert.Equal(t, continueURL, location.Query().Get("continue"))
 }
