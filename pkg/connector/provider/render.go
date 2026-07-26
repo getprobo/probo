@@ -39,10 +39,11 @@ import (
 // omitted.
 func renderRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderRender,
-		DisplayName:    "Render",
-		SupportsAPIKey: true,
-		BuildProbeURL:  buildRenderProbeURL,
+		Provider:         coredata.ConnectorProviderRender,
+		DisplayName:      "Render",
+		DocumentationURL: accessReviewDocsURL("render"),
+		SupportsAPIKey:   true,
+		BuildProbeURL:    buildRenderProbeURL,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "workspaceId", Label: "Workspace ID", Required: true},
 		},

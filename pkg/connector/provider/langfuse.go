@@ -34,9 +34,10 @@ import (
 
 func langfuseRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderLangfuse,
-		DisplayName:    "Langfuse",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderLangfuse,
+		DisplayName:      "Langfuse",
+		DocumentationURL: accessReviewDocsURL("langfuse"),
+		SupportsAPIKey:   true,
 		// Langfuse's organization-scoped public API authenticates with HTTP
 		// Basic auth where the credential is publicKey:secretKey.
 		// APIKeyBasicAuthUserPass base64s the verbatim "publicKey:secretKey" the

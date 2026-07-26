@@ -38,10 +38,11 @@ import (
 // name that scopes the team-members listing.
 func betterStackRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderBetterStack,
-		DisplayName:    "Better Stack",
-		SupportsAPIKey: true,
-		ProbeURL:       "https://betterstack.com/api/v2/team-members",
+		Provider:         coredata.ConnectorProviderBetterStack,
+		DisplayName:      "Better Stack",
+		DocumentationURL: accessReviewDocsURL("better-stack"),
+		SupportsAPIKey:   true,
+		ProbeURL:         "https://betterstack.com/api/v2/team-members",
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "teamName", Label: "Team Name", Required: true},
 		},

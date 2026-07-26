@@ -31,9 +31,10 @@ import (
 
 func clickhouseRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderClickHouse,
-		DisplayName:    "ClickHouse Cloud",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderClickHouse,
+		DisplayName:      "ClickHouse Cloud",
+		DocumentationURL: accessReviewDocsURL("clickhouse"),
+		SupportsAPIKey:   true,
 		// ClickHouse Cloud's control-plane API authenticates with HTTP Basic
 		// auth where the credential is keyId:keySecret. APIKeyBasicAuthUserPass
 		// makes the APIKeyConnection base64 the verbatim "keyId:keySecret"

@@ -34,10 +34,11 @@ import (
 
 func grafanaRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderGrafana,
-		DisplayName:    "Grafana",
-		SupportsAPIKey: true,
-		BuildProbeURL:  buildGrafanaProbeURL,
+		Provider:         coredata.ConnectorProviderGrafana,
+		DisplayName:      "Grafana",
+		DocumentationURL: accessReviewDocsURL("grafana"),
+		SupportsAPIKey:   true,
+		BuildProbeURL:    buildGrafanaProbeURL,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},

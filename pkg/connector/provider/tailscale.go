@@ -31,10 +31,11 @@ import (
 
 func tailscaleRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderTailscale,
-		DisplayName:    "Tailscale",
-		SupportsAPIKey: true,
-		ProbeURL:       "https://api.tailscale.com/api/v2/tailnet/-/users",
+		Provider:         coredata.ConnectorProviderTailscale,
+		DisplayName:      "Tailscale",
+		DocumentationURL: accessReviewDocsURL("tailscale"),
+		SupportsAPIKey:   true,
+		ProbeURL:         "https://api.tailscale.com/api/v2/tailnet/-/users",
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewTailscaleDriver(c), nil
 		},

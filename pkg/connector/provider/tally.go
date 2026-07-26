@@ -32,10 +32,11 @@ import (
 
 func tallyRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderTally,
-		DisplayName:    "Tally",
-		ProbeURL:       "https://api.tally.so/me",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderTally,
+		DisplayName:      "Tally",
+		DocumentationURL: accessReviewDocsURL("tally"),
+		ProbeURL:         "https://api.tally.so/me",
+		SupportsAPIKey:   true,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},

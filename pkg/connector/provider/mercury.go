@@ -31,9 +31,10 @@ import (
 
 func mercuryRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderMercury,
-		DisplayName:    "Mercury",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderMercury,
+		DisplayName:      "Mercury",
+		DocumentationURL: accessReviewDocsURL("mercury"),
+		SupportsAPIKey:   true,
 		// Mercury authenticates with a self-serve API token presented as
 		// Authorization: Bearer, the default APIKeyConnection scheme. There
 		// is no third-party OAuth2 flow for the Users API. The token is

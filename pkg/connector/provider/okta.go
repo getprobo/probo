@@ -41,6 +41,7 @@ func oktaRegistration() *Registration {
 	return &Registration{
 		Provider:         coredata.ConnectorProviderOkta,
 		DisplayName:      "Okta",
+		DocumentationURL: accessReviewDocsURL("okta"),
 		SupportsAPIKey:   true,
 		APIKeyAuthScheme: "SSWS",
 		BuildProbeURL:    buildOktaProbeURL,

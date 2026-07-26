@@ -32,8 +32,9 @@ import (
 
 func neonRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderNeon,
-		DisplayName: "Neon",
+		Provider:         coredata.ConnectorProviderNeon,
+		DisplayName:      "Neon",
+		DocumentationURL: accessReviewDocsURL("neon"),
 		// Neon's API authenticates with an API key (napi_...) presented
 		// as Authorization: Bearer, the default APIKeyConnection scheme.
 		// Neon's OAuth is partner-gated (manual application), so the

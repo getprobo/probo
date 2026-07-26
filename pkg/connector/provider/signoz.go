@@ -34,11 +34,12 @@ import (
 
 func signozRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderSigNoz,
-		DisplayName:    "SigNoz",
-		SupportsAPIKey: true,
-		APIKeyHeader:   "SIGNOZ-API-KEY",
-		BuildProbeURL:  buildSigNozProbeURL,
+		Provider:         coredata.ConnectorProviderSigNoz,
+		DisplayName:      "SigNoz",
+		DocumentationURL: accessReviewDocsURL("signoz"),
+		SupportsAPIKey:   true,
+		APIKeyHeader:     "SIGNOZ-API-KEY",
+		BuildProbeURL:    buildSigNozProbeURL,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},

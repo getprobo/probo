@@ -34,6 +34,7 @@ func qoveryRegistration() *Registration {
 	return &Registration{
 		Provider:         coredata.ConnectorProviderQovery,
 		DisplayName:      "Qovery",
+		DocumentationURL: accessReviewDocsURL("qovery"),
 		SupportsAPIKey:   true,
 		APIKeyAuthScheme: "Token",
 		BuildProbeURL:    buildQoveryProbeURL,

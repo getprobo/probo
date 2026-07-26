@@ -31,9 +31,10 @@ import (
 
 func incidentioRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderIncidentIO,
-		DisplayName:    "incident.io",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderIncidentIO,
+		DisplayName:      "incident.io",
+		DocumentationURL: accessReviewDocsURL("incident-io"),
+		SupportsAPIKey:   true,
 		// incident.io publishes an OAuth2 flow, but it is outbound-only (for
 		// incident.io to call other apps), so access review authenticates
 		// with an API key presented as Authorization: Bearer, the default

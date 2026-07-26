@@ -34,11 +34,12 @@ import (
 
 func metabaseRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderMetabase,
-		DisplayName:    "Metabase",
-		SupportsAPIKey: true,
-		APIKeyHeader:   "x-api-key",
-		BuildProbeURL:  buildMetabaseProbeURL,
+		Provider:         coredata.ConnectorProviderMetabase,
+		DisplayName:      "Metabase",
+		DocumentationURL: accessReviewDocsURL("metabase"),
+		SupportsAPIKey:   true,
+		APIKeyHeader:     "x-api-key",
+		BuildProbeURL:    buildMetabaseProbeURL,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "instanceUrl", Label: "Instance URL", Required: true},
 		},

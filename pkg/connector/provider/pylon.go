@@ -31,9 +31,10 @@ import (
 
 func pylonRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderPylon,
-		DisplayName:    "Pylon",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderPylon,
+		DisplayName:      "Pylon",
+		DocumentationURL: accessReviewDocsURL("pylon"),
+		SupportsAPIKey:   true,
 		// Pylon authenticates with an account API token presented as
 		// Authorization: Bearer, the default APIKeyConnection scheme. There
 		// is no third-party OAuth2 flow for the Users API. The token is bound

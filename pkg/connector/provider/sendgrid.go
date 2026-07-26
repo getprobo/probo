@@ -31,10 +31,11 @@ import (
 
 func sendgridRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderSendGrid,
-		DisplayName:    "SendGrid",
-		ProbeURL:       "https://api.sendgrid.com/v3/teammates?limit=1&offset=0",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderSendGrid,
+		DisplayName:      "SendGrid",
+		DocumentationURL: accessReviewDocsURL("sendgrid"),
+		ProbeURL:         "https://api.sendgrid.com/v3/teammates?limit=1&offset=0",
+		SupportsAPIKey:   true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger) (drivers.Driver, error) {
 			return drivers.NewSendGridDriver(c, logger.Named("sendgrid")), nil
 		},

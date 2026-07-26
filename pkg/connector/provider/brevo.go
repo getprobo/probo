@@ -31,9 +31,10 @@ import (
 
 func brevoRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderBrevo,
-		DisplayName:    "Brevo",
-		SupportsAPIKey: true,
+		Provider:         coredata.ConnectorProviderBrevo,
+		DisplayName:      "Brevo",
+		DocumentationURL: accessReviewDocsURL("brevo"),
+		SupportsAPIKey:   true,
 		// Brevo authenticates with an API key sent in the api-key header
 		// rather than Authorization: Bearer. APIKeyHeader makes the
 		// APIKeyConnection send api-key instead and omit Authorization. There

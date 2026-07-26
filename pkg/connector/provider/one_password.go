@@ -35,6 +35,7 @@ func onePasswordRegistration() *Registration {
 	return &Registration{
 		Provider:                  coredata.ConnectorProviderOnePassword,
 		DisplayName:               "1Password",
+		DocumentationURL:          accessReviewDocsURL("one-password"),
 		ProbeURL:                  "https://events.1password.com/api/v1/auditevents",
 		SupportsAPIKey:            true,
 		SupportsClientCredentials: true,
