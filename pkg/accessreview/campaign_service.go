@@ -158,8 +158,18 @@ func (s *Service) UpdateCampaign(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return campaignNotDraftError(campaign.Status)
+			switch campaign.Status {
+			case coredata.AccessReviewCampaignStatusDraft:
+			case coredata.AccessReviewCampaignStatusInProgress:
+				return ErrCampaignInProgress
+			case coredata.AccessReviewCampaignStatusPendingActions:
+				return ErrCampaignPendingActions
+			case coredata.AccessReviewCampaignStatusCompleted:
+				return ErrCampaignCompleted
+			case coredata.AccessReviewCampaignStatusCancelled:
+				return ErrCampaignCancelled
+			default:
+				return ErrCampaignInProgress
 			}
 
 			if req.Name != nil && *req.Name != nil {
@@ -211,7 +221,16 @@ func (s *Service) DeleteCampaign(
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft &&
 				campaign.Status != coredata.AccessReviewCampaignStatusCancelled {
-				return fmt.Errorf("cannot delete campaign: status is %s, expected %s or %s", campaign.Status, coredata.AccessReviewCampaignStatusDraft, coredata.AccessReviewCampaignStatusCancelled)
+				switch campaign.Status {
+				case coredata.AccessReviewCampaignStatusInProgress:
+					return ErrCampaignInProgress
+				case coredata.AccessReviewCampaignStatusPendingActions:
+					return ErrCampaignPendingActions
+				case coredata.AccessReviewCampaignStatusCompleted:
+					return ErrCampaignCompleted
+				default:
+					return ErrCampaignInProgress
+				}
 			}
 
 			if err := campaign.Delete(ctx, conn, scope); err != nil {
@@ -241,8 +260,18 @@ func (s *Service) AddCampaignSource(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return campaignNotDraftError(campaign.Status)
+			switch campaign.Status {
+			case coredata.AccessReviewCampaignStatusDraft:
+			case coredata.AccessReviewCampaignStatusInProgress:
+				return ErrCampaignInProgress
+			case coredata.AccessReviewCampaignStatusPendingActions:
+				return ErrCampaignPendingActions
+			case coredata.AccessReviewCampaignStatusCompleted:
+				return ErrCampaignCompleted
+			case coredata.AccessReviewCampaignStatusCancelled:
+				return ErrCampaignCancelled
+			default:
+				return ErrCampaignInProgress
 			}
 			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -288,8 +317,18 @@ func (s *Service) RemoveCampaignSource(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return campaignNotDraftError(campaign.Status)
+			switch campaign.Status {
+			case coredata.AccessReviewCampaignStatusDraft:
+			case coredata.AccessReviewCampaignStatusInProgress:
+				return ErrCampaignInProgress
+			case coredata.AccessReviewCampaignStatusPendingActions:
+				return ErrCampaignPendingActions
+			case coredata.AccessReviewCampaignStatusCompleted:
+				return ErrCampaignCompleted
+			case coredata.AccessReviewCampaignStatusCancelled:
+				return ErrCampaignCancelled
+			default:
+				return ErrCampaignInProgress
 			}
 			if err := campaignSource.DeleteByCampaignIDAndAccessReviewSourceID(ctx, conn, scope, campaign.ID, req.AccessReviewSourceID); err != nil {
 				return fmt.Errorf("cannot delete campaign source: %w", err)
@@ -395,8 +434,18 @@ func (s *Service) StartCampaign(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return campaignNotDraftError(campaign.Status)
+			switch campaign.Status {
+			case coredata.AccessReviewCampaignStatusDraft:
+			case coredata.AccessReviewCampaignStatusInProgress:
+				return ErrCampaignInProgress
+			case coredata.AccessReviewCampaignStatusPendingActions:
+				return ErrCampaignPendingActions
+			case coredata.AccessReviewCampaignStatusCompleted:
+				return ErrCampaignCompleted
+			case coredata.AccessReviewCampaignStatusCancelled:
+				return ErrCampaignCancelled
+			default:
+				return ErrCampaignInProgress
 			}
 
 			var campaignSources coredata.AccessReviewCampaignSources
@@ -450,7 +499,18 @@ func (s *Service) CloseCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
-				return fmt.Errorf("cannot close campaign: status is %s, expected %s", campaign.Status, coredata.AccessReviewCampaignStatusPendingActions)
+				switch campaign.Status {
+				case coredata.AccessReviewCampaignStatusInProgress:
+					return ErrCampaignInProgress
+				case coredata.AccessReviewCampaignStatusCompleted:
+					return ErrCampaignCompleted
+				case coredata.AccessReviewCampaignStatusCancelled:
+					return ErrCampaignCancelled
+				case coredata.AccessReviewCampaignStatusDraft:
+					return ErrCampaignInProgress
+				default:
+					return ErrCampaignInProgress
+				}
 			}
 
 			entries := coredata.AccessReviewEntries{}
@@ -729,19 +789,4 @@ func (s *Service) CountCampaignsForOrganizationID(
 	}
 
 	return count, nil
-}
-
-func campaignNotDraftError(status coredata.AccessReviewCampaignStatus) error {
-	switch status {
-	case coredata.AccessReviewCampaignStatusInProgress:
-		return ErrCampaignInProgress
-	case coredata.AccessReviewCampaignStatusPendingActions:
-		return ErrCampaignPendingActions
-	case coredata.AccessReviewCampaignStatusCompleted:
-		return ErrCampaignCompleted
-	case coredata.AccessReviewCampaignStatusCancelled:
-		return ErrCampaignCancelled
-	default:
-		return ErrCampaignInProgress
-	}
 }
