@@ -50,8 +50,22 @@ export const countries = [
 
 export type CountryCode = typeof countries[number];
 
+// Pseudo-regions accepted by our CountryCode enum but not by Intl.DisplayNames.
+const pseudoRegionNames: Partial<Record<CountryCode, string>> = {
+    GLOBAL: "Global",
+};
+
 export function getCountryName(language: string, code: CountryCode): string {
-    return new Intl.DisplayNames(language, { type: "region" }).of(code) ?? code;
+    const pseudoName = pseudoRegionNames[code];
+    if (pseudoName) {
+        return pseudoName;
+    }
+
+    try {
+        return new Intl.DisplayNames(language, { type: "region" }).of(code) ?? code;
+    } catch {
+        return code;
+    }
 }
 
 export function getCountryOptions(lang: string) {

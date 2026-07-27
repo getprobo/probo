@@ -63,8 +63,16 @@ type CountriesFieldInputProps = {
 };
 
 function CountriesFieldInput(props: CountriesFieldInputProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [animateBadge, setAnimateBadge] = useState(false);
+
+  const countryLabel = (code: CountryCode) => {
+    // GLOBAL is not a valid Intl region code; use the translated label.
+    if (code === "GLOBAL") {
+      return t("country.GLOBAL");
+    }
+    return getCountryName(i18n.language, code);
+  };
 
   const addCountry = (code: string) => {
     setAnimateBadge(true);
@@ -94,7 +102,7 @@ function CountriesFieldInput(props: CountriesFieldInputProps) {
                     && "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent",
                   )}
                 >
-                  {getCountryName(i18n.language, countryCode as CountryCode)}
+                  {countryLabel(countryCode as CountryCode)}
                   <div className="w-0 overflow-hidden group-hover:w-4 duration-200">
                     <IconCrossLargeX size={12} />
                   </div>
@@ -110,6 +118,7 @@ function CountriesFieldInput(props: CountriesFieldInputProps) {
             (c: CountryCode) => !props.value.includes(c),
           )}
           onAdd={addCountry}
+          countryLabel={countryLabel}
         />
       )}
     </div>
@@ -119,15 +128,16 @@ function CountriesFieldInput(props: CountriesFieldInputProps) {
 type CountryInputProps = {
   availableCountries: readonly CountryCode[];
   onAdd: (code: string) => void;
+  countryLabel: (code: CountryCode) => string;
 };
 
-function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
-  const { t, i18n } = useTranslation();
+function CountryInput({ availableCountries, onAdd, countryLabel }: CountryInputProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const countryOptions = availableCountries.map(code => ({
     value: code,
-    label: getCountryName(i18n.language, code),
+    label: countryLabel(code),
   }));
 
   useEffect(() => {
