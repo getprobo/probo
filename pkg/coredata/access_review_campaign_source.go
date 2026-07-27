@@ -149,6 +149,143 @@ RETURNING id
 	return nil
 }
 
+// MergeByCampaignID syncs scoped access-review source snapshots for a campaign:
+// upserts snapshots for the given live source IDs and deletes snapshots no
+// longer in the set.
+func (sources *AccessReviewCampaignSources) MergeByCampaignID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	campaignID gid.GID,
+	accessReviewSourceIDs []gid.GID,
+) error {
+	uniqueSourceIDs := uniqueGIDs(accessReviewSourceIDs)
+
+	if len(uniqueSourceIDs) > 0 {
+		countQ := `
+SELECT COUNT(DISTINCT id)
+FROM access_review_sources
+WHERE
+	%s
+	AND id = ANY(@access_review_source_ids::text[])
+`
+		countQ = fmt.Sprintf(countQ, scope.SQLFragment())
+
+		sourceIDStrings := make([]string, len(uniqueSourceIDs))
+		for i, id := range uniqueSourceIDs {
+			sourceIDStrings[i] = id.String()
+		}
+
+		countArgs := pgx.StrictNamedArgs{"access_review_source_ids": sourceIDStrings}
+		maps.Copy(countArgs, scope.SQLArguments())
+
+		var found int
+		if err := conn.QueryRow(ctx, countQ, countArgs).Scan(&found); err != nil {
+			return fmt.Errorf("cannot count access review sources: %w", err)
+		}
+
+		if found != len(uniqueSourceIDs) {
+			return ErrResourceNotFound
+		}
+	}
+
+	sourceIDStrings := make([]string, len(uniqueSourceIDs))
+	for i, id := range uniqueSourceIDs {
+		sourceIDStrings[i] = id.String()
+	}
+
+	now := time.Now()
+
+	q := `
+WITH desired_sources AS (
+	SELECT
+		id AS access_review_source_id,
+		organization_id,
+		name,
+		connector_id
+	FROM access_review_sources
+	WHERE
+		%s
+		AND id = ANY(@access_review_source_ids::text[])
+)
+MERGE INTO access_review_campaign_sources AS target
+USING desired_sources AS source
+ON
+	%s
+	AND target.access_review_campaign_id = @access_review_campaign_id
+	AND target.access_review_source_id = source.access_review_source_id
+WHEN MATCHED THEN
+	UPDATE SET
+		name         = source.name,
+		connector_id = source.connector_id,
+		updated_at   = @now
+WHEN NOT MATCHED THEN
+	INSERT (
+		id,
+		organization_id,
+		tenant_id,
+		access_review_campaign_id,
+		access_review_source_id,
+		name,
+		connector_id,
+		created_at,
+		updated_at
+	)
+	VALUES (
+		generate_gid(decode_base64_unpadded(@tenant_id), @access_review_campaign_source_entity_type),
+		source.organization_id,
+		@tenant_id,
+		@access_review_campaign_id,
+		source.access_review_source_id,
+		source.name,
+		source.connector_id,
+		@now,
+		@now
+	)
+WHEN NOT MATCHED BY SOURCE
+	AND %s
+	AND target.access_review_campaign_id = @access_review_campaign_id THEN
+	DELETE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"access_review_campaign_id":                 campaignID,
+		"access_review_source_ids":                  sourceIDStrings,
+		"access_review_campaign_source_entity_type": AccessReviewCampaignSourceEntityType,
+		"tenant_id": scope.GetTenantID(),
+		"now":       now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot merge campaign sources: %w", err)
+	}
+
+	return nil
+}
+
+func uniqueGIDs(ids []gid.GID) []gid.GID {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	seen := make(map[gid.GID]struct{}, len(ids))
+	unique := make([]gid.GID, 0, len(ids))
+
+	for _, id := range ids {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+
+		seen[id] = struct{}{}
+		unique = append(unique, id)
+	}
+
+	return unique
+}
+
 func (s *AccessReviewCampaignSource) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,

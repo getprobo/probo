@@ -307,64 +307,15 @@ func (s *Service) syncCampaignSources(
 	sourceIDs []gid.GID,
 ) error {
 	var campaignSources coredata.AccessReviewCampaignSources
-	if err := campaignSources.LoadByCampaignID(ctx, conn, scope, campaign.ID); err != nil {
-		return fmt.Errorf("cannot load campaign sources: %w", err)
-	}
-
-	existingSourceIDs := make([]gid.GID, 0, len(campaignSources))
-	for _, campaignSource := range campaignSources {
-		if campaignSource.AccessReviewSourceID != nil {
-			existingSourceIDs = append(existingSourceIDs, *campaignSource.AccessReviewSourceID)
-		}
-	}
-
-	for _, sourceID := range sourceIDs {
-		if containsGID(existingSourceIDs, sourceID) {
-			continue
+	if err := campaignSources.MergeByCampaignID(ctx, conn, scope, campaign.ID, sourceIDs); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.ErrResourceNotFound
 		}
 
-		source := &coredata.AccessReviewSource{}
-		if err := source.LoadByID(ctx, conn, scope, sourceID); err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return coredata.ErrResourceNotFound
-			}
-
-			return fmt.Errorf("cannot load access source: %w", err)
-		}
-
-		if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
-			return fmt.Errorf("cannot snapshot scope source: %w", err)
-		}
-	}
-
-	for _, existingSourceID := range existingSourceIDs {
-		if containsGID(sourceIDs, existingSourceID) {
-			continue
-		}
-
-		campaignSource := &coredata.AccessReviewCampaignSource{}
-		if err := campaignSource.DeleteByCampaignIDAndAccessReviewSourceID(
-			ctx,
-			conn,
-			scope,
-			campaign.ID,
-			existingSourceID,
-		); err != nil {
-			return fmt.Errorf("cannot delete campaign source: %w", err)
-		}
+		return fmt.Errorf("cannot merge campaign sources: %w", err)
 	}
 
 	return nil
-}
-
-func containsGID(ids []gid.GID, id gid.GID) bool {
-	for _, candidate := range ids {
-		if candidate == id {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (s *Service) StartCampaign(
