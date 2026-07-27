@@ -974,11 +974,8 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 			CompliancePortalFileIDs: []gid.GID{},
 		},
 	); err != nil {
-		if errors.Is(err, visitor.ErrNoAccessTargets) {
-			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot request document access", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1000,6 +997,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1032,11 +1030,8 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 			CompliancePortalFileIDs: []gid.GID{},
 		},
 	); err != nil {
-		if errors.Is(err, visitor.ErrNoAccessTargets) {
-			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot request report access", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1084,11 +1079,8 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 			CompliancePortalFileIDs: []gid.GID{input.CompliancePortalFileID},
 		},
 	); err != nil {
-		if errors.Is(err, visitor.ErrNoAccessTargets) {
-			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot request compliance portal file access", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
