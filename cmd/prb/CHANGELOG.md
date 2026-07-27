@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.204.0] - 2026-07-27
+
+### Added
+
+- `prb user list` gained `--filter` (search by name/email), `--role`, and `--kind` flags, with the default page size raised to 100
+
 ## [0.203.0] - 2026-07-22
 
 ### Changed
