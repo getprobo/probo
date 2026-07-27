@@ -62,6 +62,7 @@ func NewOIDCHandler(
 
 func (h *OIDCHandler) redirectAuthError(w http.ResponseWriter, r *http.Request, code string, continueURL string) {
 	safeContinue := ""
+
 	if continueURL != "" {
 		if validated, ok := h.safeRedirect.Validate(r.Context(), continueURL); ok {
 			safeContinue = validated
@@ -272,6 +273,7 @@ func NewMagicLinkHandler(
 
 func (h *MagicLinkHandler) redirectAuthError(w http.ResponseWriter, r *http.Request, code string, token string) {
 	safeContinue := ""
+
 	if token != "" {
 		continueURL, err := h.iam.AuthService.MagicLinkContinueFromToken(token)
 		if err == nil && continueURL != nil && *continueURL != "" {

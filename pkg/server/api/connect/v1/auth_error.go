@@ -38,6 +38,7 @@ const (
 func redirectAuthError(w http.ResponseWriter, r *http.Request, code string, continueURL string) {
 	q := url.Values{}
 	q.Set("error", code)
+
 	if continueURL != "" {
 		q.Set("continue", continueURL)
 	}
