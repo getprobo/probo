@@ -3,6 +3,13 @@
 All notable changes to the `probo-agent` device posture agent will be
 documented in this file.
 
+## [0.3.1] - 2026-07-27
+
+### Fixed
+
+- Removed the white frame around the `Probo Agent.app` Finder/Dock icon by
+  swapping in artwork with transparent corners.
+
 ## [0.3.0] - 2026-07-24
 
 ### Added
