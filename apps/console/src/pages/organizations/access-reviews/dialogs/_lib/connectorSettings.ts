@@ -21,7 +21,7 @@
 import type { ProviderInfo } from "../AddAccessReviewSourceDialog";
 
 // DATADOG_SITES labels are technical identifiers (region code + hostname),
-// intentionally not wrapped in __(). The dialog's prose strings are.
+// intentionally not translated. The dialog's prose strings are.
 export const DATADOG_SITES: { value: string; label: string }[] = [
   { value: "US1", label: "US1 (app.datadoghq.com)" },
   { value: "US3", label: "US3 (us3.datadoghq.com)" },

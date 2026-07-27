@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslation } from "react-i18next";
 import { Button, Card, IconPlusLarge, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,

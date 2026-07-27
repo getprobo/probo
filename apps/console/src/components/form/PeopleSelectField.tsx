@@ -21,9 +21,9 @@
 import { Avatar, Field, Option, Select } from "@probo/ui";
 import { type ComponentProps, Suspense } from "react";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { usePeople } from "#/hooks/graph/PeopleGraph";
-import { useTranslation } from "react-i18next";
 
 type Props<
   TFieldValues extends FieldValues = FieldValues,

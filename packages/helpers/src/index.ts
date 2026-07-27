@@ -108,7 +108,6 @@ export {
 } from "./fileAccept";
 export {
   formatDatetime,
-  formatDate,
   toDateInput,
   todayAsDateInput,
   parseDate,

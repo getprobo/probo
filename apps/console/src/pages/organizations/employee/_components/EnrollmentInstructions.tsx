@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslation } from "react-i18next";
 import { Button, Card, useToast } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 
 const RELEASE_BASE_URL
   = "https://github.com/getprobo/probo/releases/latest/download";

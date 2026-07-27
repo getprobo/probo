@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslation } from "react-i18next";
 import {
   Button,
   IconArrowsClockwise,
@@ -27,6 +26,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchQuery, useMutation, useRelayEnvironment } from "react-relay";
 import { graphql } from "relay-runtime";
 

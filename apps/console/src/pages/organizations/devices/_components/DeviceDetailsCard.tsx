@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
-import { useTranslation } from "react-i18next";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Card } from "@probo/ui";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -48,7 +48,7 @@ const deviceFragment = graphql`
 export function DeviceDetailsCard(props: {
   deviceFragmentRef: DeviceDetailsCard_deviceFragment$key;
 }) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const pendingLabel = t("devices.values.pending");
   const device = useFragment(deviceFragment, props.deviceFragmentRef);
 
@@ -88,12 +88,18 @@ export function DeviceDetailsCard(props: {
         <DetailField
           label={t("devices.fields.enrolledAt")}
           value={
-            device.enrolledAt ? formatDate(device.enrolledAt) : pendingLabel
+            device.enrolledAt
+              ? dateFormat(i18n.language, device.enrolledAt)
+              : pendingLabel
           }
         />
         <DetailField
           label={t("devices.fields.lastSeen")}
-          value={device.lastSeenAt ? formatDate(device.lastSeenAt) : t("devices.values.never")}
+          value={
+            device.lastSeenAt
+              ? dateFormat(i18n.language, device.lastSeenAt)
+              : t("devices.values.never")
+          }
         />
       </div>
     </Card>
