@@ -18,41 +18,67 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package accessreview
+package errorx_test
 
 import (
 	"errors"
+	"fmt"
+	"testing"
 
-	"go.probo.inc/probo/pkg/coredata"
+	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/errorx"
 )
 
-var (
-	ErrCampaignMissingSources = errors.New("cannot start campaign: no scope sources configured")
-	ErrCampaignInProgress     = errors.New("campaign is in progress")
-	ErrCampaignPendingActions = errors.New("campaign is pending actions")
-	ErrCampaignCompleted      = errors.New("campaign is completed")
-	ErrCampaignCancelled      = errors.New("campaign is cancelled")
-)
+func TestAnyOf(t *testing.T) {
+	t.Parallel()
 
-// CampaignStatusErrors are client-facing invalid-state errors for non-draft campaigns.
-var CampaignStatusErrors = []error{
-	ErrCampaignInProgress,
-	ErrCampaignPendingActions,
-	ErrCampaignCompleted,
-	ErrCampaignCancelled,
-}
+	sentinelA := errors.New("a")
+	sentinelB := errors.New("b")
+	sentinelC := errors.New("c")
 
-func CampaignStatusError(status coredata.AccessReviewCampaignStatus) error {
-	switch status {
-	case coredata.AccessReviewCampaignStatusInProgress:
-		return ErrCampaignInProgress
-	case coredata.AccessReviewCampaignStatusPendingActions:
-		return ErrCampaignPendingActions
-	case coredata.AccessReviewCampaignStatusCompleted:
-		return ErrCampaignCompleted
-	case coredata.AccessReviewCampaignStatusCancelled:
-		return ErrCampaignCancelled
-	default:
-		return ErrCampaignInProgress
+	tests := []struct {
+		name    string
+		err     error
+		targets []error
+		want    bool
+	}{
+		{
+			name:    "nil error",
+			err:     nil,
+			targets: []error{sentinelA},
+			want:    false,
+		},
+		{
+			name:    "no targets",
+			err:     sentinelA,
+			targets: nil,
+			want:    false,
+		},
+		{
+			name:    "direct match",
+			err:     sentinelA,
+			targets: []error{sentinelA},
+			want:    true,
+		},
+		{
+			name:    "wrapped match",
+			err:     fmt.Errorf("outer: %w", sentinelB),
+			targets: []error{sentinelA, sentinelB},
+			want:    true,
+		},
+		{
+			name:    "no match",
+			err:     fmt.Errorf("outer: %w", sentinelC),
+			targets: []error{sentinelA, sentinelB},
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, errorx.AnyOf(tt.err, tt.targets...))
+		})
 	}
 }

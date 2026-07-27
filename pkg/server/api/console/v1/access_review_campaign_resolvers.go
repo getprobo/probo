@@ -14,6 +14,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/errorx"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -760,10 +761,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.Is(err, accessreview.ErrCampaignInProgress) ||
-			errors.Is(err, accessreview.ErrCampaignPendingActions) ||
-			errors.Is(err, accessreview.ErrCampaignCompleted) ||
-			errors.Is(err, accessreview.ErrCampaignCancelled) {
+		if errorx.AnyOf(err, accessreview.CampaignStatusErrors...) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -808,11 +806,8 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
-		if errors.Is(err, accessreview.ErrCampaignMissingSources) ||
-			errors.Is(err, accessreview.ErrCampaignInProgress) ||
-			errors.Is(err, accessreview.ErrCampaignPendingActions) ||
-			errors.Is(err, accessreview.ErrCampaignCompleted) ||
-			errors.Is(err, accessreview.ErrCampaignCancelled) {
+		if errorx.AnyOf(err, accessreview.ErrCampaignMissingSources) ||
+			errorx.AnyOf(err, accessreview.CampaignStatusErrors...) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -884,10 +879,7 @@ func (r *mutationResolver) AddAccessReviewCampaignSource(ctx context.Context, in
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.Is(err, accessreview.ErrCampaignInProgress) ||
-			errors.Is(err, accessreview.ErrCampaignPendingActions) ||
-			errors.Is(err, accessreview.ErrCampaignCompleted) ||
-			errors.Is(err, accessreview.ErrCampaignCancelled) {
+		if errorx.AnyOf(err, accessreview.CampaignStatusErrors...) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
