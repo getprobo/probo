@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.237.0] - 2026-07-27
+
+### Added
+
+- Compliance portal documents page supports bulk requesting access: select several locked documents, reports, or files and request access to all of them in one call
+- `updateAccessReviewCampaign` now accepts `accessReviewSourceIds` to sync a campaign's scope sources alongside other updates in the same call
+- People list gained search and status/role/type filters across GraphQL, MCP, and CLI, with the default page size raised to 100
+- Third-party selector fields on measures and other forms now show only first-level third parties
+
+### Fixed
+
+- Fixed a crash on the third-party detail page when a third party's country was set to the global pseudo-region
+- Empty toast viewport no longer blocks pointer events (hover/click) over content underneath it, such as bottom action bar buttons
+
+### Security
+
+- Bumped `postcss` to 8.5.23 and `react-router` to 8.3.0 to remediate high-severity npm audit findings
+
 ## [0.236.0] - 2026-07-27
 
 ### Added
