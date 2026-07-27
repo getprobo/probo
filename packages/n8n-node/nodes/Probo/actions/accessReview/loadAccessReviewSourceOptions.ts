@@ -22,15 +22,19 @@ import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n
 import { proboApiRequest } from '../../GenericFunctions';
 
 const organizationSourcesQuery = `
-	query AccessReviewSources($organizationId: ID!) {
+	query AccessReviewSources($organizationId: ID!, $after: CursorKey) {
 		organization: node(id: $organizationId) {
 			... on Organization {
-				accessReviewSources(first: 500) {
+				accessReviewSources(first: 100, after: $after) {
 					edges {
 						node {
 							id
 							name
 						}
+					}
+					pageInfo {
+						hasNextPage
+						endCursor
 					}
 				}
 			}
@@ -51,10 +55,9 @@ const campaignOrganizationQuery = `
 `;
 
 function mapSources(responseData: IDataObject): INodePropertyOptions[] {
-	const data = responseData.data as IDataObject | undefined;
-	const organization = data?.organization as IDataObject | undefined;
-	const accessReviewSources = organization?.accessReviewSources as IDataObject | undefined;
-	const edges = accessReviewSources?.edges as Array<{ node: IDataObject }> | undefined;
+	const edges = getAccessReviewSourcesConnection(responseData)?.edges as
+		| Array<{ node: IDataObject }>
+		| undefined;
 
 	return (edges ?? [])
 		.map((edge) => edge.node)
@@ -63,6 +66,24 @@ function mapSources(responseData: IDataObject): INodePropertyOptions[] {
 			name: String(node.name ?? node.id),
 			value: String(node.id),
 		}));
+}
+
+function getAccessReviewSourcesConnection(responseData: IDataObject): IDataObject | undefined {
+	const data = responseData.data as IDataObject | undefined;
+	const organization = data?.organization as IDataObject | undefined;
+
+	return organization?.accessReviewSources as IDataObject | undefined;
+}
+
+function getPageInfo(responseData: IDataObject): { hasNextPage: boolean; endCursor?: string } {
+	const pageInfo = getAccessReviewSourcesConnection(responseData)?.pageInfo as
+		| IDataObject
+		| undefined;
+
+	return {
+		hasNextPage: pageInfo?.hasNextPage === true,
+		endCursor: typeof pageInfo?.endCursor === 'string' ? pageInfo.endCursor : undefined,
+	};
 }
 
 async function resolveOrganizationId(
@@ -96,9 +117,20 @@ export async function getAccessReviewSources(
 		return [];
 	}
 
-	const responseData = await proboApiRequest.call(this, organizationSourcesQuery, {
-		organizationId,
-	});
+	const options: INodePropertyOptions[] = [];
+	let after: string | undefined;
 
-	return mapSources(responseData);
+	do {
+		const responseData = await proboApiRequest.call(this, organizationSourcesQuery, {
+			organizationId,
+			after,
+		});
+
+		options.push(...mapSources(responseData));
+
+		const pageInfo = getPageInfo(responseData);
+		after = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
+	} while (after);
+
+	return options;
 }
