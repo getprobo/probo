@@ -98,18 +98,6 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		CreatedAt:                     v.CreatedAt,
 	}
 
-	if v.BusinessOwnerID != nil {
-		object.BusinessOwner = &Profile{
-			ID: *v.BusinessOwnerID,
-		}
-	}
-
-	if v.SecurityOwnerID != nil {
-		object.SecurityOwner = &Profile{
-			ID: *v.SecurityOwnerID,
-		}
-	}
-
 	if v.ParentThirdPartyID != nil {
 		object.ParentThirdParty = &ThirdParty{
 			ID: *v.ParentThirdPartyID,

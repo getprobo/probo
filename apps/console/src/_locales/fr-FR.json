@@ -5743,7 +5743,7 @@
     "sections": {
       "details": "Détails du tiers",
       "countries": "Pays",
-      "ownership": "Détails de la propriété",
+      "administrators": "Administrateurs",
       "links": "Liens",
       "dataAgreements": "Accords de données"
     },
@@ -5754,11 +5754,11 @@
       "legalName": "Nom légal",
       "headquarterAddress": "Adresse du siège",
       "websiteUrl": "URL du site web",
-      "businessOwner": "Propriétaire métier",
-      "securityOwner": "Propriétaire sécurité"
+      "administrators": "Administrateurs"
     },
     "placeholders": {
-      "category": "Sélectionner une catégorie"
+      "category": "Sélectionner une catégorie",
+      "administrators": "Ajouter des administrateurs..."
     },
     "categories": {
       "analytics": "Analytique",

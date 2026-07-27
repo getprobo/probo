@@ -32,7 +32,7 @@ import (
 const updateMutation = `
 mutation($input: UpdateThirdPartyInput!) {
   updateThirdParty(input: $input) {
-    third_party {
+    thirdParty {
       id
       name
       category
@@ -47,18 +47,19 @@ type updateResponse struct {
 			ID       string `json:"id"`
 			Name     string `json:"name"`
 			Category string `json:"category"`
-		} `json:"third_party"`
+		} `json:"thirdParty"`
 	} `json:"updateThirdParty"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName        string
-		flagDescription string
-		flagCategory    string
-		flagLegalName   string
-		flagAddress     string
-		flagWebsite     string
+		flagName            string
+		flagDescription     string
+		flagCategory        string
+		flagLegalName       string
+		flagAddress         string
+		flagWebsite         string
+		flagAdministratorID []string
 	)
 
 	cmd := &cobra.Command{
@@ -112,6 +113,17 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["websiteUrl"] = flagWebsite
 			}
 
+			if cmd.Flags().Changed("administrator-id") {
+				administratorIDs := make([]string, 0, len(flagAdministratorID))
+				for _, id := range flagAdministratorID {
+					if id != "" {
+						administratorIDs = append(administratorIDs, id)
+					}
+				}
+
+				input["administratorIds"] = administratorIDs
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -147,6 +159,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagLegalName, "legal-name", "", "Legal name")
 	cmd.Flags().StringVar(&flagAddress, "address", "", "Headquarter address")
 	cmd.Flags().StringVar(&flagWebsite, "website", "", "Website URL")
+	cmd.Flags().StringArrayVar(&flagAdministratorID, "administrator-id", nil, "Administrator profile ID (can be repeated; empty clears)")
 
 	return cmd
 }

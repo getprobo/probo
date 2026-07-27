@@ -14,6 +14,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -58,8 +59,7 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 			Certifications:                input.Certifications,
 			SecurityPageURL:               input.SecurityPageURL,
 			TrustPageURL:                  input.TrustPageURL,
-			BusinessOwnerID:               input.BusinessOwnerID,
-			SecurityOwnerID:               input.SecurityOwnerID,
+			AdministratorIDs:              input.AdministratorIds,
 			Countries:                     input.Countries,
 			ParentThirdPartyID:            input.ParentThirdPartyID,
 		},
@@ -120,6 +120,11 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 		return nil, err
 	}
 
+	var administratorIDs *[]gid.GID
+	if input.AdministratorIds != nil {
+		administratorIDs = &input.AdministratorIds
+	}
+
 	thirdParty, err := r.probo.ThirdParties.Update(
 		ctx, scope,
 		probo.UpdateThirdPartyRequest{
@@ -140,8 +145,7 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 			WebsiteURL:                    gqlutils.UnwrapOmittable(input.WebsiteURL),
 			Category:                      input.Category,
 			Certifications:                input.Certifications,
-			BusinessOwnerID:               gqlutils.UnwrapOmittable(input.BusinessOwnerID),
-			SecurityOwnerID:               gqlutils.UnwrapOmittable(input.SecurityOwnerID),
+			AdministratorIDs:              administratorIDs,
 			ShowOnCompliancePortal:        input.ShowOnCompliancePortal,
 			Countries:                     input.Countries,
 		},
@@ -855,56 +859,45 @@ func (r *thirdPartyResolver) Measures(ctx context.Context, obj *types.ThirdParty
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
 }
 
-// BusinessOwner is the resolver for the businessOwner field.
-func (r *thirdPartyResolver) BusinessOwner(ctx context.Context, obj *types.ThirdParty) (*types.Profile, error) {
-	if obj.BusinessOwner == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, obj.BusinessOwner.ID, iam.ActionMembershipProfileGet); err != nil {
+// Administrators is the resolver for the administrators field.
+func (r *thirdPartyResolver) Administrators(ctx context.Context, obj *types.ThirdParty) ([]*types.Profile, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet); err != nil {
 		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
 
-	businessOwner, err := loaders.Profile.Load(ctx, obj.BusinessOwner.ID)
+	administratorIDs, err := loaders.ThirdPartyAdministratorIDs.Load(ctx, obj.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get business owner", log.Error(err))
-
+		r.logger.ErrorCtx(ctx, "cannot get third party administrator ids", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProfile(businessOwner), nil
-}
-
-// SecurityOwner is the resolver for the securityOwner field.
-func (r *thirdPartyResolver) SecurityOwner(ctx context.Context, obj *types.ThirdParty) (*types.Profile, error) {
-	if obj.SecurityOwner == nil {
-		return nil, nil
+	if len(administratorIDs) == 0 {
+		return []*types.Profile{}, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.SecurityOwner.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.batchAuthorize(ctx, iam.ActionMembershipProfileGet, administratorIDs); err != nil {
 		return nil, err
 	}
 
-	loaders := dataloader.FromContext(ctx)
-
-	securityOwner, err := loaders.Profile.Load(ctx, obj.SecurityOwner.ID)
+	profiles, err := loaders.Profile.LoadAll(ctx, administratorIDs)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get security owner", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get third party administrators", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProfile(securityOwner), nil
+	result := make([]*types.Profile, len(profiles))
+	for i, p := range profiles {
+		result[i] = types.NewProfile(p)
+	}
+
+	return result, nil
 }
 
 // ParentThirdParty is the resolver for the parentThirdParty field.

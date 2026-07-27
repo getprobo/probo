@@ -57,18 +57,11 @@ export const description: INodeProperties[] = [
 				description: 'Whether to include organization in the response',
 			},
 			{
-				displayName: 'Include Business Owner',
-				name: 'includeBusinessOwner',
+				displayName: 'Include Administrators',
+				name: 'includeAdministrators',
 				type: 'boolean',
 				default: false,
-				description: 'Whether to include business owner in the response',
-			},
-			{
-				displayName: 'Include Security Owner',
-				name: 'includeSecurityOwner',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to include security owner in the response',
+				description: 'Whether to include administrators details',
 			},
 		],
 	},
@@ -81,8 +74,7 @@ export async function execute(
 	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOrganization?: boolean;
-		includeBusinessOwner?: boolean;
-		includeSecurityOwner?: boolean;
+		includeAdministrators?: boolean;
 	};
 
 	const organizationFragment = options.includeOrganization
@@ -92,16 +84,8 @@ export async function execute(
 		}`
 		: '';
 
-	const businessOwnerFragment = options.includeBusinessOwner
-		? `businessOwner {
-			id
-			fullName
-			emailAddress
-		}`
-		: '';
-
-	const securityOwnerFragment = options.includeSecurityOwner
-		? `securityOwner {
+	const administratorsFragment = options.includeAdministrators
+		? `administrators {
 			id
 			fullName
 			emailAddress
@@ -132,8 +116,7 @@ export async function execute(
 					countries
 					showOnCompliancePortal
 					${organizationFragment}
-					${businessOwnerFragment}
-					${securityOwnerFragment}
+					${administratorsFragment}
 					createdAt
 					updatedAt
 				}

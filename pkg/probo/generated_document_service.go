@@ -2534,41 +2534,39 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 		}, nil
 	}
 
-	ownerIDSet := make(map[gid.GID]struct{})
-	ownerIDs := make([]gid.GID, 0)
+	thirdPartyIDs := make([]gid.GID, len(thirdParties))
+	for i, v := range thirdParties {
+		thirdPartyIDs[i] = v.ID
+	}
 
-	for _, v := range thirdParties {
-		if v.BusinessOwnerID != nil {
-			if _, ok := ownerIDSet[*v.BusinessOwnerID]; !ok {
-				ownerIDs = append(ownerIDs, *v.BusinessOwnerID)
-				ownerIDSet[*v.BusinessOwnerID] = struct{}{}
-			}
-		}
+	var allAdministrators coredata.ThirdPartyAdministrators
+	if err := allAdministrators.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load third party administrators: %w", err)
+	}
 
-		if v.SecurityOwnerID != nil {
-			if _, ok := ownerIDSet[*v.SecurityOwnerID]; !ok {
-				ownerIDs = append(ownerIDs, *v.SecurityOwnerID)
-				ownerIDSet[*v.SecurityOwnerID] = struct{}{}
-			}
+	administratorsByThirdParty := make(map[gid.GID][]gid.GID, len(thirdParties))
+	adminIDSet := make(map[gid.GID]struct{})
+	adminIDs := make([]gid.GID, 0)
+
+	for _, a := range allAdministrators {
+		administratorsByThirdParty[a.ThirdPartyID] = append(administratorsByThirdParty[a.ThirdPartyID], a.AdministratorProfileID)
+		if _, ok := adminIDSet[a.AdministratorProfileID]; !ok {
+			adminIDs = append(adminIDs, a.AdministratorProfileID)
+			adminIDSet[a.AdministratorProfileID] = struct{}{}
 		}
 	}
 
 	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
 
-	if len(ownerIDs) > 0 {
+	if len(adminIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load owner profiles: %w", err)
+		if err := profiles.LoadByIDs(ctx, conn, scope, adminIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load administrator profiles: %w", err)
 		}
 
 		for _, p := range profiles {
 			profileMap[p.ID] = p
 		}
-	}
-
-	thirdPartyIDs := make([]gid.GID, len(thirdParties))
-	for i, v := range thirdParties {
-		thirdPartyIDs[i] = v.ID
 	}
 
 	var allServices coredata.ThirdPartyServices
@@ -2651,8 +2649,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 			TrustPageURL:                  derefStringOrNotSpecified(v.TrustPageURL),
 			Certifications:                joinOrNotSpecified(v.Certifications),
 			Countries:                     formatCountries(v.Countries),
-			BusinessOwner:                 lookupProfileName(profileMap, v.BusinessOwnerID),
-			SecurityOwner:                 lookupProfileName(profileMap, v.SecurityOwnerID),
+			Administrators:                lookupProfileNames(profileMap, administratorsByThirdParty[v.ID]),
 		}
 
 		for _, vs := range servicesByThirdParty[v.ID] {
@@ -2767,6 +2764,25 @@ func lookupProfileName(profiles map[gid.GID]*coredata.MembershipProfile, id *gid
 	}
 
 	return "Not assigned"
+}
+
+func lookupProfileNames(profiles map[gid.GID]*coredata.MembershipProfile, ids []gid.GID) string {
+	if len(ids) == 0 {
+		return "Not assigned"
+	}
+
+	names := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if p, ok := profiles[id]; ok && p.FullName != "" {
+			names = append(names, p.FullName)
+		}
+	}
+
+	if len(names) == 0 {
+		return "Not assigned"
+	}
+
+	return strings.Join(names, ", ")
 }
 
 func formatDataSensitivity(s coredata.DataSensitivity) string {

@@ -23,15 +23,19 @@ package factory
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"maps"
 	"net/http"
 	"strings"
+	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/internal/test"
 )
 
 func SafeName(prefix string) string {
@@ -225,6 +229,10 @@ func CreateThirdParty(c *testutil.Client, attrs ...Attrs) string {
 		input["category"] = *cat
 	}
 
+	if v, ok := a["administratorIds"]; ok {
+		input["administratorIds"] = v
+	}
+
 	var result struct {
 		CreateThirdParty struct {
 			ThirdPartyEdge struct {
@@ -239,6 +247,41 @@ func CreateThirdParty(c *testutil.Client, attrs ...Attrs) string {
 	require.NoError(c.T, err, "createThirdParty mutation failed")
 
 	return result.CreateThirdParty.ThirdPartyEdge.Node.ID
+}
+
+// InjectCrossTenantThirdPartyAdministrator bypasses the application and writes a
+// third_party_administrators row for a foreign profile, for read-gap security tests.
+func InjectCrossTenantThirdPartyAdministrator(t *testing.T, thirdPartyID, foreignProfileID string) {
+	t.Helper()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		_, err := conn.Exec(ctx, `
+INSERT INTO third_party_administrators (
+	third_party_id,
+	administrator_profile_id,
+	tenant_id,
+	organization_id,
+	created_at,
+	updated_at
+)
+SELECT
+	id,
+	$1,
+	tenant_id,
+	organization_id,
+	NOW(),
+	NOW()
+FROM third_parties
+WHERE id = $2
+ON CONFLICT DO NOTHING
+`, foreignProfileID, thirdPartyID)
+
+		return err
+	})
+	require.NoError(t, err, "test setup: cannot inject cross-tenant third party administrator")
 }
 
 func CreateFramework(c *testutil.Client, attrs ...Attrs) string {

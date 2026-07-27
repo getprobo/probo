@@ -42,6 +42,10 @@ query($id: ID!) {
       legalName
       headquarterAddress
       websiteUrl
+      administrators {
+        id
+        fullName
+      }
       createdAt
       updatedAt
     }
@@ -59,8 +63,12 @@ type viewResponse struct {
 		LegalName          *string `json:"legalName"`
 		HeadquarterAddress *string `json:"headquarterAddress"`
 		WebsiteUrl         *string `json:"websiteUrl"`
-		CreatedAt          string  `json:"createdAt"`
-		UpdatedAt          string  `json:"updatedAt"`
+		Administrators     []struct {
+			ID       string `json:"id"`
+			FullName string `json:"fullName"`
+		} `json:"administrators"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -144,6 +152,24 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if v.WebsiteUrl != nil && *v.WebsiteUrl != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Website:"), *v.WebsiteUrl)
+			}
+
+			if len(v.Administrators) > 0 {
+				_, _ = fmt.Fprintf(out, "%s", label.Render("Administrators:"))
+
+				for i, a := range v.Administrators {
+					if i > 0 {
+						_, _ = fmt.Fprint(out, ", ")
+					}
+
+					if a.FullName != "" {
+						_, _ = fmt.Fprintf(out, "%s (%s)", a.FullName, a.ID)
+					} else {
+						_, _ = fmt.Fprint(out, a.ID)
+					}
+				}
+
+				_, _ = fmt.Fprintln(out)
 			}
 
 			_, _ = fmt.Fprintln(out)

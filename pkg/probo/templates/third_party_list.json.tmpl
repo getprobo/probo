@@ -146,20 +146,13 @@
     {
       "type": "heading",
       "attrs": { "level": 3 },
-      "content": [{ "type": "text", "text": {{json (printf "2.%d.3 Owners" (add $i 1))}} }]
+      "content": [{ "type": "text", "text": {{json (printf "2.%d.3 Administrators" (add $i 1))}} }]
     },
     {
       "type": "paragraph",
       "content": [
-        { "type": "text", "text": "Business Owner: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json (default "—" $r.BusinessOwner)}} }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "content": [
-        { "type": "text", "text": "Security Owner: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json (default "—" $r.SecurityOwner)}} }
+        { "type": "text", "text": "Administrators: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json (default "—" $r.Administrators)}} }
       ]
     },
     {

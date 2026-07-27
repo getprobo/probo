@@ -825,16 +825,11 @@ components:
           items:
             type: string
           description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
-        business_owner_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Business owner ID
-        security_owner_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Security owner ID
+        administrator_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Administrator profile IDs
         status_page_url:
           type:
             - string
@@ -1051,12 +1046,11 @@ components:
           items:
             type: string
           description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
-        business_owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Business owner ID
-        security_owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Security owner ID
+        administrator_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Administrator profile IDs
         status_page_url:
           type: string
           description: Status page URL
@@ -1152,12 +1146,11 @@ components:
           items:
             type: string
           description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
-        business_owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Business owner ID
-        security_owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Security owner ID
+        administrator_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Administrator profile IDs
         status_page_url:
           type: string
           description: Status page URL

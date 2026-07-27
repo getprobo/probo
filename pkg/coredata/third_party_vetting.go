@@ -53,8 +53,6 @@ SELECT
     subprocessors_list_url,
     certifications,
     countries,
-    business_owner_profile_id,
-    security_owner_profile_id,
     status_page_url,
     terms_of_service_url,
     security_page_url,

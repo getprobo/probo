@@ -45,8 +45,7 @@ const schema = z.object({
   countries: z.array(z.string()),
   securityPageUrl: z.string().optional().nullable(),
   trustPageUrl: z.string().optional().nullable(),
-  businessOwnerId: z.string().nullish(),
-  securityOwnerId: z.string().nullish(),
+  administratorIds: z.array(z.string()),
 });
 
 const thirdPartyFormFragment = graphql`
@@ -67,11 +66,10 @@ const thirdPartyFormFragment = graphql`
     countries
     securityPageUrl
     trustPageUrl
-    businessOwner {
+    administrators {
       id
-    }
-    securityOwner {
-      id
+      fullName
+      emailAddress
     }
   }
 `;
@@ -112,8 +110,7 @@ export function useThirdPartyForm(thirdPartyKey: useThirdPartyFormFragment$key) 
       countries: [...(thirdParty.countries ?? [])],
       securityPageUrl: thirdParty.securityPageUrl || null,
       trustPageUrl: thirdParty.trustPageUrl || null,
-      businessOwnerId: thirdParty.businessOwner?.id,
-      securityOwnerId: thirdParty.securityOwner?.id,
+      administratorIds: thirdParty.administrators.map(a => a.id),
     }),
     [thirdParty],
   );
@@ -151,5 +148,6 @@ export function useThirdPartyForm(thirdPartyKey: useThirdPartyFormFragment$key) 
   return {
     ...form,
     handleSubmit,
+    administrators: thirdParty.administrators,
   };
 }

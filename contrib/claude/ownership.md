@@ -35,7 +35,6 @@ Use the same shape across DB, services, GraphQL, and console pickers.
 ### Resources that follow this pattern
 
 - Assets, data (datum), risks, obligations, findings
-- Third parties (`business_owner_profile_id`, `security_owner_profile_id`)
 - Devices (ITAM) — aligned with compliance resources as of the devices table
   introduction
 
@@ -47,7 +46,7 @@ resource for the `owner` field (parent access is already established).
 
 Default for new work is a **nullable** owner (`OwnerID *gid.GID`, GraphQL
 `owner: Profile`). Set the embedded profile only when present so the resolver
-nil guard is live (device, risk, finding, third-party owners):
+nil guard is live (device, risk, finding):
 
 ```go
 // types — set only when present

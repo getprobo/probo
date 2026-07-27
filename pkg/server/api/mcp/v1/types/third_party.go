@@ -22,6 +22,7 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -64,10 +65,14 @@ func NewAddThirdPartyRiskAssessmentOutput(v *coredata.ThirdPartyRiskAssessment) 
 	}
 }
 
-func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
+func NewThirdParty(v *coredata.ThirdParty, administratorIDs []gid.GID) *ThirdParty {
 	countries := make([]string, len(v.Countries))
 	for i, c := range v.Countries {
 		countries[i] = string(c)
+	}
+
+	if administratorIDs == nil {
+		administratorIDs = []gid.GID{}
 	}
 
 	return &ThirdParty{
@@ -86,8 +91,7 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		SubprocessorsListURL:          v.SubprocessorsListURL,
 		Certifications:                v.Certifications,
 		Countries:                     countries,
-		BusinessOwnerID:               v.BusinessOwnerID,
-		SecurityOwnerID:               v.SecurityOwnerID,
+		AdministratorIds:              administratorIDs,
 		StatusPageURL:                 v.StatusPageURL,
 		TermsOfServiceURL:             v.TermsOfServiceURL,
 		SecurityPageURL:               v.SecurityPageURL,
@@ -98,10 +102,13 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 	}
 }
 
-func NewListThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField]) ListThirdPartiesOutput {
+func NewListThirdPartiesOutput(
+	thirdPartyPage *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField],
+	administratorIDsByThirdPartyID map[gid.GID][]gid.GID,
+) ListThirdPartiesOutput {
 	thirdParties := make([]*ThirdParty, 0, len(thirdPartyPage.Data))
 	for _, v := range thirdPartyPage.Data {
-		thirdParties = append(thirdParties, NewThirdParty(v))
+		thirdParties = append(thirdParties, NewThirdParty(v, administratorIDsByThirdPartyID[v.ID]))
 	}
 
 	var nextCursor *page.CursorKey
@@ -117,10 +124,13 @@ func NewListThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdParty, c
 	}
 }
 
-func NewListChildThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField]) ListChildThirdPartiesOutput {
+func NewListChildThirdPartiesOutput(
+	thirdPartyPage *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField],
+	administratorIDsByThirdPartyID map[gid.GID][]gid.GID,
+) ListChildThirdPartiesOutput {
 	thirdParties := make([]*ThirdParty, 0, len(thirdPartyPage.Data))
 	for _, v := range thirdPartyPage.Data {
-		thirdParties = append(thirdParties, NewThirdParty(v))
+		thirdParties = append(thirdParties, NewThirdParty(v, administratorIDsByThirdPartyID[v.ID]))
 	}
 
 	var nextCursor *page.CursorKey
@@ -136,15 +146,15 @@ func NewListChildThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdPar
 	}
 }
 
-func NewAddThirdPartyOutput(v *coredata.ThirdParty) AddThirdPartyOutput {
+func NewAddThirdPartyOutput(v *coredata.ThirdParty, administratorIDs []gid.GID) AddThirdPartyOutput {
 	return AddThirdPartyOutput{
-		ThirdParty: NewThirdParty(v),
+		ThirdParty: NewThirdParty(v, administratorIDs),
 	}
 }
 
-func NewUpdateThirdPartyOutput(v *coredata.ThirdParty) UpdateThirdPartyOutput {
+func NewUpdateThirdPartyOutput(v *coredata.ThirdParty, administratorIDs []gid.GID) UpdateThirdPartyOutput {
 	return UpdateThirdPartyOutput{
-		ThirdParty: NewThirdParty(v),
+		ThirdParty: NewThirdParty(v, administratorIDs),
 	}
 }
 

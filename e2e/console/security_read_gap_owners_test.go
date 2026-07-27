@@ -25,12 +25,11 @@
 // authorization shape (authorizing the parent obj.ID with the child's
 // ActionMembershipProfileGet, then loading the child through the scope-by-key
 // Profile dataloader) also existed on asset.owner, datum.owner, finding.owner,
-// obligation.owner, risk.owner, task.assignedTo, thirdParty.businessOwner and
-// thirdParty.securityOwner. Each of those write paths validates the owner FK
-// today, so these tests use injectCrossTenantFK to plant a foreign profile id
-// directly in the row -- proving the read resolver now authorizes the actual
-// child profile id and refuses cross-tenant PII independently of the write
-// check (a future write regression, migration bug, or direct DB access).
+// obligation.owner, risk.owner, task.assignedTo, and
+// thirdParty.administrators. Each of those write paths validates the owner FK
+// today, so these tests plant a foreign profile id directly -- proving the
+// read resolver refuses cross-tenant PII independently of the write check
+// (a future write regression, migration bug, or direct DB access).
 package console_test
 
 import (
@@ -333,24 +332,24 @@ func TestSecurity_ReadGap_TaskAssignedTo(t *testing.T) {
 	testutil.AssertNodeNotAccessible(t, err, readResult.Node.AssignedTo == nil, "cross-tenant profile PII via task.assignedTo")
 }
 
-func TestSecurity_ReadGap_ThirdPartyBusinessOwner(t *testing.T) {
+func TestSecurity_ReadGap_ThirdPartyAdministrators(t *testing.T) {
 	t.Parallel()
 
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Secret Business Owner (read-gap probe)"})
+	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Secret Administrator (read-gap probe)"})
 
 	thirdPartyID := factory.CreateThirdParty(org1Owner, factory.Attrs{"name": "Org1 ThirdParty for read-gap probe"})
 
-	injectCrossTenantFK(t, "third_parties", "business_owner_profile_id", thirdPartyID, org2ProfileID)
+	factory.InjectCrossTenantThirdPartyAdministrator(t, thirdPartyID, org2ProfileID)
 
 	var readResult struct {
 		Node struct {
-			BusinessOwner *struct {
+			Administrators []struct {
 				ID       string `json:"id"`
 				FullName string `json:"fullName"`
-			} `json:"businessOwner"`
+			} `json:"administrators"`
 		} `json:"node"`
 	}
 
@@ -358,45 +357,20 @@ func TestSecurity_ReadGap_ThirdPartyBusinessOwner(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on ThirdParty {
-					businessOwner { id fullName }
+					administrators { id fullName }
 				}
 			}
 		}
 	`, map[string]any{"id": thirdPartyID}, &readResult)
 
-	testutil.AssertNodeNotAccessible(t, err, readResult.Node.BusinessOwner == nil, "cross-tenant profile PII via thirdParty.businessOwner")
-}
+	leaked := false
 
-func TestSecurity_ReadGap_ThirdPartySecurityOwner(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Secret Security Owner (read-gap probe)"})
-
-	thirdPartyID := factory.CreateThirdParty(org1Owner, factory.Attrs{"name": "Org1 ThirdParty for read-gap probe"})
-
-	injectCrossTenantFK(t, "third_parties", "security_owner_profile_id", thirdPartyID, org2ProfileID)
-
-	var readResult struct {
-		Node struct {
-			SecurityOwner *struct {
-				ID       string `json:"id"`
-				FullName string `json:"fullName"`
-			} `json:"securityOwner"`
-		} `json:"node"`
+	for _, a := range readResult.Node.Administrators {
+		if a.ID == org2ProfileID || a.FullName != "" && a.ID == org2ProfileID {
+			leaked = true
+			break
+		}
 	}
 
-	err := org1Owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on ThirdParty {
-					securityOwner { id fullName }
-				}
-			}
-		}
-	`, map[string]any{"id": thirdPartyID}, &readResult)
-
-	testutil.AssertNodeNotAccessible(t, err, readResult.Node.SecurityOwner == nil, "cross-tenant profile PII via thirdParty.securityOwner")
+	testutil.AssertNodeNotAccessible(t, err, !leaked && len(readResult.Node.Administrators) == 0, "cross-tenant profile PII via thirdParty.administrators")
 }

@@ -59,8 +59,7 @@ type (
 		TrustPageURL                  *string
 		TermsOfServiceURL             *string
 		StatusPageURL                 *string
-		BusinessOwnerID               *gid.GID
-		SecurityOwnerID               *gid.GID
+		AdministratorIDs              []gid.GID
 		ParentThirdPartyID            *gid.GID
 	}
 
@@ -83,8 +82,7 @@ type (
 		SecurityPageURL               **string
 		TrustPageURL                  **string
 		StatusPageURL                 **string
-		BusinessOwnerID               **gid.GID
-		SecurityOwnerID               **gid.GID
+		AdministratorIDs              *[]gid.GID
 		ShowOnCompliancePortal        *bool
 	}
 
@@ -130,8 +128,11 @@ func (cvr *CreateThirdPartyRequest) Validate() error {
 	v.Check(cvr.TrustPageURL, "trust_page_url", validator.SafeText(2048))
 	v.Check(cvr.TermsOfServiceURL, "terms_of_service_url", validator.SafeText(2048))
 	v.Check(cvr.StatusPageURL, "status_page_url", validator.SafeText(2048))
-	v.Check(cvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(cvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(len(cvr.AdministratorIDs), "administrator_ids", validator.Max(100))
+	v.Check(cvr.AdministratorIDs, "administrator_ids", validator.NoDuplicates())
+	v.CheckEach(cvr.AdministratorIDs, "administrator_ids", func(_ int, item any) {
+		v.Check(item, "administrator_ids", validator.GID(coredata.MembershipProfileEntityType))
+	})
 
 	return v.Error()
 }
@@ -155,8 +156,14 @@ func (uvr *UpdateThirdPartyRequest) Validate() error {
 	v.Check(uvr.TrustPageURL, "trust_page_url", validator.SafeText(2048))
 	v.Check(uvr.TermsOfServiceURL, "terms_of_service_url", validator.SafeText(2048))
 	v.Check(uvr.StatusPageURL, "status_page_url", validator.SafeText(2048))
-	v.Check(uvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(uvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.MembershipProfileEntityType))
+
+	if uvr.AdministratorIDs != nil {
+		v.Check(len(*uvr.AdministratorIDs), "administrator_ids", validator.Max(100))
+		v.Check(*uvr.AdministratorIDs, "administrator_ids", validator.NoDuplicates())
+		v.CheckEach(*uvr.AdministratorIDs, "administrator_ids", func(_ int, item any) {
+			v.Check(item, "administrator_ids", validator.GID(coredata.MembershipProfileEntityType))
+		})
+	}
 
 	return v.Error()
 }
@@ -368,7 +375,12 @@ func (s ThirdPartyService) Update(
 				return fmt.Errorf("cannot load thirdParty %q: %w", req.ID, err)
 			}
 
-			previousThirdParty := webhooktypes.NewThirdParty(thirdParty)
+			previousAdministratorIDs, err := loadThirdPartyAdministratorIDs(ctx, conn, scope, thirdParty.ID)
+			if err != nil {
+				return err
+			}
+
+			previousThirdParty := webhooktypes.NewThirdParty(thirdParty, previousAdministratorIDs)
 
 			if req.Name != nil {
 				thirdParty.Name = *req.Name
@@ -446,29 +458,24 @@ func (s ThirdPartyService) Update(
 				thirdParty.Countries = req.Countries
 			}
 
-			if req.BusinessOwnerID != nil {
-				if *req.BusinessOwnerID != nil {
-					businessOwner := &coredata.MembershipProfile{}
-					if err := businessOwner.LoadByID(ctx, conn, scope, **req.BusinessOwnerID); err != nil {
-						return fmt.Errorf("cannot load business owner profile: %w", err)
+			if req.AdministratorIDs != nil {
+				if len(*req.AdministratorIDs) > 0 {
+					profiles := coredata.MembershipProfiles{}
+					if err := profiles.LoadByIDs(ctx, conn, scope, *req.AdministratorIDs); err != nil {
+						return fmt.Errorf("cannot load administrator profiles: %w", err)
 					}
-
-					thirdParty.BusinessOwnerID = &businessOwner.ID
-				} else {
-					thirdParty.BusinessOwnerID = nil
 				}
-			}
 
-			if req.SecurityOwnerID != nil {
-				if *req.SecurityOwnerID != nil {
-					securityOwner := &coredata.MembershipProfile{}
-					if err := securityOwner.LoadByID(ctx, conn, scope, **req.SecurityOwnerID); err != nil {
-						return fmt.Errorf("cannot load security owner profile: %w", err)
-					}
-
-					thirdParty.SecurityOwnerID = &securityOwner.ID
-				} else {
-					thirdParty.SecurityOwnerID = nil
+				administrators := &coredata.ThirdPartyAdministrators{}
+				if err := administrators.MergeByThirdPartyID(
+					ctx,
+					conn,
+					scope,
+					thirdParty.ID,
+					thirdParty.OrganizationID,
+					*req.AdministratorIDs,
+				); err != nil {
+					return fmt.Errorf("cannot merge third party administrators: %w", err)
 				}
 			}
 
@@ -478,13 +485,18 @@ func (s ThirdPartyService) Update(
 				return fmt.Errorf("cannot update thirdParty: %w", err)
 			}
 
+			administratorIDs, err := loadThirdPartyAdministratorIDs(ctx, conn, scope, thirdParty.ID)
+			if err != nil {
+				return err
+			}
+
 			if err := webhook.InsertUpdateData(
 				ctx,
 				conn,
 				scope,
 				thirdParty.OrganizationID,
 				coredata.WebhookEventTypeThirdPartyUpdated,
-				webhooktypes.NewThirdParty(thirdParty),
+				webhooktypes.NewThirdParty(thirdParty, administratorIDs),
 				previousThirdParty,
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
@@ -560,13 +572,18 @@ func (s ThirdPartyService) Delete(
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
+			administratorIDs, err := loadThirdPartyAdministratorIDs(ctx, conn, scope, thirdParty.ID)
+			if err != nil {
+				return err
+			}
+
 			if err := webhook.InsertData(
 				ctx,
 				conn,
 				scope,
 				thirdParty.OrganizationID,
 				coredata.WebhookEventTypeThirdPartyDeleted,
-				webhooktypes.NewThirdParty(thirdParty),
+				webhooktypes.NewThirdParty(thirdParty, administratorIDs),
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
@@ -642,24 +659,6 @@ func (s ThirdPartyService) Create(
 				return err
 			}
 
-			if req.BusinessOwnerID != nil {
-				businessOwner := &coredata.MembershipProfile{}
-				if err := businessOwner.LoadByID(ctx, conn, scope, *req.BusinessOwnerID); err != nil {
-					return fmt.Errorf("cannot load business owner profile: %w", err)
-				}
-
-				thirdParty.BusinessOwnerID = &businessOwner.ID
-			}
-
-			if req.SecurityOwnerID != nil {
-				securityOwner := &coredata.MembershipProfile{}
-				if err := securityOwner.LoadByID(ctx, conn, scope, *req.SecurityOwnerID); err != nil {
-					return fmt.Errorf("cannot load security owner profile: %w", err)
-				}
-
-				thirdParty.SecurityOwnerID = &securityOwner.ID
-			}
-
 			if req.Category != nil {
 				thirdParty.Category = *req.Category
 			} else {
@@ -670,13 +669,32 @@ func (s ThirdPartyService) Create(
 				return fmt.Errorf("cannot insert thirdParty: %w", err)
 			}
 
+			if len(req.AdministratorIDs) > 0 {
+				profiles := coredata.MembershipProfiles{}
+				if err := profiles.LoadByIDs(ctx, conn, scope, req.AdministratorIDs); err != nil {
+					return fmt.Errorf("cannot load administrator profiles: %w", err)
+				}
+
+				administrators := &coredata.ThirdPartyAdministrators{}
+				if err := administrators.MergeByThirdPartyID(
+					ctx,
+					conn,
+					scope,
+					thirdParty.ID,
+					organization.ID,
+					req.AdministratorIDs,
+				); err != nil {
+					return fmt.Errorf("cannot merge third party administrators: %w", err)
+				}
+			}
+
 			if err := webhook.InsertData(
 				ctx,
 				conn,
 				scope,
 				organization.ID,
 				coredata.WebhookEventTypeThirdPartyCreated,
-				webhooktypes.NewThirdParty(thirdParty),
+				webhooktypes.NewThirdParty(thirdParty, req.AdministratorIDs),
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
@@ -786,7 +804,7 @@ func (s ThirdPartyService) ImportFromCommon(
 					scope,
 					organization.ID,
 					coredata.WebhookEventTypeThirdPartyCreated,
-					webhooktypes.NewThirdParty(thirdParty),
+					webhooktypes.NewThirdParty(thirdParty, nil),
 				); err != nil {
 					return fmt.Errorf("cannot insert webhook event: %w", err)
 				}
@@ -1075,4 +1093,51 @@ func (s ThirdPartyService) ListForParentThirdPartyID(
 	}
 
 	return page.NewPage(thirdParties, cursor), nil
+}
+
+func (s ThirdPartyService) MapAdministratorIDsForThirdPartyIDs(
+	ctx context.Context, scope coredata.Scoper,
+	thirdPartyIDs []gid.GID,
+) (map[gid.GID][]gid.GID, error) {
+	result := make(map[gid.GID][]gid.GID, len(thirdPartyIDs))
+	if len(thirdPartyIDs) == 0 {
+		return result, nil
+	}
+
+	var administrators coredata.ThirdPartyAdministrators
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return administrators.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load third party administrators: %w", err)
+	}
+
+	for _, a := range administrators {
+		result[a.ThirdPartyID] = append(result[a.ThirdPartyID], a.AdministratorProfileID)
+	}
+
+	return result, nil
+}
+
+func loadThirdPartyAdministratorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	thirdPartyID gid.GID,
+) ([]gid.GID, error) {
+	administrators := &coredata.ThirdPartyAdministrators{}
+	if err := administrators.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+		return nil, fmt.Errorf("cannot load third party administrators: %w", err)
+	}
+
+	ids := make([]gid.GID, len(*administrators))
+	for i, a := range *administrators {
+		ids[i] = a.AdministratorProfileID
+	}
+
+	return ids, nil
 }

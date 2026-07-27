@@ -118,8 +118,8 @@ export const description: INodeProperties[] = [
 		description: 'The headquarter address of the thirdParty',
 	},
 	{
-		displayName: 'Business Owner ID',
-		name: 'businessOwnerId',
+		displayName: 'Administrator IDs',
+		name: 'administratorIds',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -128,20 +128,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the business owner (People ID)',
-	},
-	{
-		displayName: 'Security Owner ID',
-		name: 'securityOwnerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the security owner (People ID)',
+		description: 'Comma-separated administrator profile IDs (omit to leave unchanged)',
 	},
 	{
 		displayName: 'Show on Compliance Portal',
@@ -253,8 +240,7 @@ export async function execute(
 	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
 	const legalName = this.getNodeParameter('legalName', itemIndex, '') as string;
 	const headquarterAddress = this.getNodeParameter('headquarterAddress', itemIndex, '') as string;
-	const businessOwnerId = this.getNodeParameter('businessOwnerId', itemIndex, '') as string;
-	const securityOwnerId = this.getNodeParameter('securityOwnerId', itemIndex, '') as string;
+	const administratorIds = this.getNodeParameter('administratorIds', itemIndex, '') as string;
 	const showOnCompliancePortal = this.getNodeParameter('showOnCompliancePortal', itemIndex) as boolean | undefined;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		statusPageUrl?: string;
@@ -307,8 +293,9 @@ export async function execute(
 	if (websiteUrl !== undefined) input.websiteUrl = websiteUrl === '' ? null : websiteUrl;
 	if (legalName !== undefined) input.legalName = legalName === '' ? null : legalName;
 	if (headquarterAddress !== undefined) input.headquarterAddress = headquarterAddress === '' ? null : headquarterAddress;
-	if (businessOwnerId !== undefined) input.businessOwnerId = businessOwnerId === '' ? null : businessOwnerId;
-	if (securityOwnerId !== undefined) input.securityOwnerId = securityOwnerId === '' ? null : securityOwnerId;
+	if (administratorIds) {
+		input.administratorIds = administratorIds.split(',').map(id => id.trim()).filter(Boolean);
+	}
 	if (showOnCompliancePortal !== undefined) input.showOnCompliancePortal = showOnCompliancePortal;
 	if (additionalFields.statusPageUrl !== undefined) input.statusPageUrl = additionalFields.statusPageUrl === '' ? null : additionalFields.statusPageUrl;
 	if (additionalFields.termsOfServiceUrl !== undefined) input.termsOfServiceUrl = additionalFields.termsOfServiceUrl === '' ? null : additionalFields.termsOfServiceUrl;

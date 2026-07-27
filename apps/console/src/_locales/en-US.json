@@ -2462,9 +2462,9 @@
   },
   "thirdPartyOverviewPage": {
     "pageTitle": "{{name}} - Overview",
-    "sections": { "details": "Third party details", "countries": "Countries", "ownership": "Ownership details", "links": "Links", "dataAgreements": "Data agreements" },
-    "fields": { "name": "Name", "description": "Description", "category": "Category", "legalName": "Legal name", "headquarterAddress": "Headquarter address", "websiteUrl": "Website URL", "businessOwner": "Business owner", "securityOwner": "Security owner" },
-    "placeholders": { "category": "Select a category" },
+    "sections": { "details": "Third party details", "countries": "Countries", "administrators": "Administrators", "links": "Links", "dataAgreements": "Data agreements" },
+    "fields": { "name": "Name", "description": "Description", "category": "Category", "legalName": "Legal name", "headquarterAddress": "Headquarter address", "websiteUrl": "Website URL", "administrators": "Administrators" },
+    "placeholders": { "category": "Select a category", "administrators": "Add administrators..." },
     "categories": { "analytics": "Analytics", "cloudMonitoring": "Cloud Monitoring", "cloudProvider": "Cloud Provider", "collaboration": "Collaboration", "customerSupport": "Customer Support", "dataStorageAndProcessing": "Data Storage and Processing", "documentManagement": "Document Management", "employeeManagement": "Employee Management", "engineering": "Engineering", "finance": "Finance", "identityProvider": "Identity Provider", "it": "IT", "marketing": "Marketing", "officeOperations": "Office Operations", "other": "Other", "passwordManagement": "Password Management", "productAndDesign": "Product and Design", "professionalServices": "Professional Services", "recruiting": "Recruiting", "sales": "Sales", "security": "Security", "versionControl": "Version Control" },
     "urlLabels": { "statusPage": "Status page URL", "termsOfService": "Terms of service URL", "privacyPolicy": "Privacy document URL", "serviceLevelAgreement": "Service level agreement URL", "dataProcessingAgreement": "Data processing agreement URL", "securityPage": "Security page URL", "trustPage": "Trust page URL" },
     "agreements": { "businessAssociate": "Business Associate Agreement", "dataPrivacy": "Data Privacy Agreement", "noBusinessAssociate": "No business associate agreement available", "noDataPrivacy": "No data privacy agreement available", "validity": { "range": "Valid from {{from}} until {{until}}", "from": "Valid from {{date}}", "until": "Valid until {{date}}" } },

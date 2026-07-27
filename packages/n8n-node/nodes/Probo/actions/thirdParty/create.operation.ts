@@ -119,8 +119,8 @@ export const description: INodeProperties[] = [
 		description: 'The headquarter address of the thirdParty',
 	},
 	{
-		displayName: 'Business Owner ID',
-		name: 'businessOwnerId',
+		displayName: 'Administrator IDs',
+		name: 'administratorIds',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -129,20 +129,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the business owner (People ID)',
-	},
-	{
-		displayName: 'Security Owner ID',
-		name: 'securityOwnerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the security owner (People ID)',
+		description: 'Comma-separated administrator profile IDs',
 	},
 	{
 		displayName: 'Additional Fields',
@@ -248,8 +235,7 @@ export async function execute(
 	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
 	const legalName = this.getNodeParameter('legalName', itemIndex, '') as string;
 	const headquarterAddress = this.getNodeParameter('headquarterAddress', itemIndex, '') as string;
-	const businessOwnerId = this.getNodeParameter('businessOwnerId', itemIndex, '') as string;
-	const securityOwnerId = this.getNodeParameter('securityOwnerId', itemIndex, '') as string;
+	const administratorIds = this.getNodeParameter('administratorIds', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		statusPageUrl?: string;
 		termsOfServiceUrl?: string;
@@ -307,8 +293,7 @@ export async function execute(
 	if (websiteUrl) input.websiteUrl = websiteUrl;
 	if (legalName) input.legalName = legalName;
 	if (headquarterAddress) input.headquarterAddress = headquarterAddress;
-	if (businessOwnerId) input.businessOwnerId = businessOwnerId;
-	if (securityOwnerId) input.securityOwnerId = securityOwnerId;
+	if (administratorIds) input.administratorIds = administratorIds.split(',').map(id => id.trim()).filter(Boolean);
 	if (additionalFields.statusPageUrl) input.statusPageUrl = additionalFields.statusPageUrl;
 	if (additionalFields.termsOfServiceUrl) input.termsOfServiceUrl = additionalFields.termsOfServiceUrl;
 	if (additionalFields.privacyPolicyUrl) input.privacyPolicyUrl = additionalFields.privacyPolicyUrl;

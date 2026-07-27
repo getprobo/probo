@@ -41,7 +41,7 @@ import type { ThirdPartyOverviewPageQuery } from "#/__generated__/core/ThirdPart
 import type { ThirdPartyCategory } from "#/__generated__/core/useThirdPartyFormFragment.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { CountriesField } from "#/components/form/CountriesField";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useThirdPartyForm } from "#/hooks/forms/useThirdPartyForm";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -156,6 +156,7 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    administrators,
   } = useThirdPartyForm(thirdParty);
 
   const thirdPartyWithBAA
@@ -271,25 +272,21 @@ export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProp
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{t("thirdPartyOverviewPage.sections.ownership")}</h2>
+        <h2 className="text-base font-medium">{t("thirdPartyOverviewPage.sections.administrators")}</h2>
         <Card className="space-y-4" padded>
-          <PeopleSelectField
+          <PeopleMultiSelectField
             organizationId={organizationId}
             control={control}
-            name="businessOwnerId"
-            label={t("thirdPartyOverviewPage.fields.businessOwner")}
-            error={errors.businessOwnerId?.message}
+            name="administratorIds"
+            label={t("thirdPartyOverviewPage.fields.administrators")}
+            error={errors.administratorIds?.message}
             disabled={isFormDisabled}
-            optional={true}
-          />
-          <PeopleSelectField
-            organizationId={organizationId}
-            control={control}
-            name="securityOwnerId"
-            label={t("thirdPartyOverviewPage.fields.securityOwner")}
-            error={errors.securityOwnerId?.message}
-            disabled={isFormDisabled}
-            optional={true}
+            selectedPeople={administrators.map(a => ({
+              id: a.id,
+              fullName: a.fullName,
+              emailAddress: a.emailAddress,
+            }))}
+            placeholder={t("thirdPartyOverviewPage.placeholders.administrators")}
           />
         </Card>
       </div>

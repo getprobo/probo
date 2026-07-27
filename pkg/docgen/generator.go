@@ -435,8 +435,7 @@ type (
 		TrustPageURL                  string
 		Certifications                string
 		Countries                     string
-		BusinessOwner                 string
-		SecurityOwner                 string
+		Administrators                string
 		Services                      []ThirdPartyListService
 		Contacts                      []ThirdPartyListContact
 		RiskAssessments               []ThirdPartyListRiskAssessment

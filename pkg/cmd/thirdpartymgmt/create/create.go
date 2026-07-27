@@ -58,13 +58,14 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg         string
-		flagName        string
-		flagCategory    string
-		flagDescription string
-		flagLegalName   string
-		flagAddress     string
-		flagWebsite     string
+		flagOrg             string
+		flagName            string
+		flagCategory        string
+		flagDescription     string
+		flagLegalName       string
+		flagAddress         string
+		flagWebsite         string
+		flagAdministratorID []string
 	)
 
 	cmd := &cobra.Command{
@@ -178,6 +179,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["websiteUrl"] = flagWebsite
 			}
 
+			if len(flagAdministratorID) > 0 {
+				input["administratorIds"] = flagAdministratorID
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -210,6 +215,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagLegalName, "legal-name", "", "Legal name")
 	cmd.Flags().StringVar(&flagAddress, "address", "", "Headquarter address")
 	cmd.Flags().StringVar(&flagWebsite, "website", "", "Website URL")
+	cmd.Flags().StringArrayVar(&flagAdministratorID, "administrator-id", nil, "Administrator profile ID (can be repeated)")
 
 	return cmd
 }

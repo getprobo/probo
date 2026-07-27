@@ -46,13 +46,16 @@ type ThirdParty struct {
 	HeadquarterAddress            *string                     `json:"headquarterAddress"`
 	LegalName                     *string                     `json:"legalName"`
 	WebsiteURL                    *string                     `json:"websiteUrl"`
-	BusinessOwnerID               *gid.GID                    `json:"businessOwnerId"`
-	SecurityOwnerID               *gid.GID                    `json:"securityOwnerId"`
+	AdministratorIDs              []gid.GID                   `json:"administratorIds"`
 	CreatedAt                     time.Time                   `json:"createdAt"`
 	UpdatedAt                     time.Time                   `json:"updatedAt"`
 }
 
-func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
+func NewThirdParty(v *coredata.ThirdParty, administratorIDs []gid.GID) *ThirdParty {
+	if administratorIDs == nil {
+		administratorIDs = []gid.GID{}
+	}
+
 	return &ThirdParty{
 		ID:                            v.ID,
 		Name:                          v.Name,
@@ -72,8 +75,7 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		HeadquarterAddress:            v.HeadquarterAddress,
 		LegalName:                     v.LegalName,
 		WebsiteURL:                    v.WebsiteURL,
-		BusinessOwnerID:               v.BusinessOwnerID,
-		SecurityOwnerID:               v.SecurityOwnerID,
+		AdministratorIDs:              administratorIDs,
 		CreatedAt:                     v.CreatedAt,
 		UpdatedAt:                     v.UpdatedAt,
 	}
