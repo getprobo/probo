@@ -1,8 +1,15 @@
-# Hand-authored fixture for the UpCloud account-listing flow: GET
-# /1.3/account/list returns the main account plus its sub-accounts in one
-# call, then GET /1.3/account/details/{username} is called per account to
-# enrich with name/email. my_temp_account's details call 404s to exercise
-# the driver's fallback to list-only fields. Synthetic usernames only.
+---
+# Fixture for the UpCloud account-listing flow: GET /1.3/account/list returns
+# the main account plus its sub-accounts in one call, then GET
+# /1.3/account/details/{username} enriches each with name and email.
+# my_temp_account's details call returns 403 ACCOUNT_FORBIDDEN, the status the
+# live API gives for an account the token cannot read, exercising the driver's
+# fallback to list-only fields.
+#
+# Response shapes mirror a live capture (the main account carries no
+# main_account or allow_gui; sub-accounts add them plus the access lists) and
+# the primary account's type is "main", as the API returns it, not the
+# "mymain" of the published docs example. All values are synthetic.
 version: 2
 interactions:
     - id: 0
@@ -23,7 +30,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"accounts":{"account":[{"labels":[],"roles":{"role":["technical"]},"type":"mymain","username":"test"},{"labels":[],"roles":{"role":["technical"]},"type":"sub","username":"my_sub_account"},{"labels":[{"key":"to_be_removed","value":"after 2022-31-12"}],"roles":{"role":[]},"type":"sub","username":"my_temp_account"},{"labels":[],"roles":{"role":["billing"]},"type":"sub","username":"my_billing_account"}]}}'
+        body: '{"accounts":{"account":[{"labels":[],"roles":{"role":["technical"]},"type":"main","username":"test"},{"labels":[],"roles":{"role":["technical"]},"type":"sub","username":"my_sub_account"},{"labels":[{"key":"to_be_removed","value":"after 2022-31-12"}],"roles":{"role":[]},"type":"sub","username":"my_temp_account"},{"labels":[],"roles":{"role":["billing"]},"type":"sub","username":"my_billing_account"}]}}'
         headers:
             Content-Type:
                 - application/json
@@ -48,7 +55,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"account":{"main_account":"","type":"mymain","username":"test","first_name":"Main","last_name":"Account","email":"main@example.com","roles":{"role":["technical"]}}}'
+        body: '{"account":{"abuse_email":"","address":"","allow_api":"no","campaigns":{"campaign":[]},"city":"","company":"","country":"FIN","currency":"EUR","email":"main@example.com","enable_3rd_party_services":"yes","first_name":"Main","ip_filters":{"ip_filter":[]},"labels":[],"language":"en","last_name":"Account","phone":"+358.31245434","postal_code":"","roles":{"role":["technical"]},"simple_backup":"no","state":"","timezone":"UTC","type":"main","username":"test","vat_number":""}}'
         headers:
             Content-Type:
                 - application/json
@@ -73,7 +80,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"account":{"main_account":"test","type":"sub","username":"my_sub_account","first_name":"Sub","last_name":"Account","email":"sub@example.com","roles":{"role":["technical"]}}}'
+        body: '{"account":{"address":"","allow_api":"yes","allow_gui":"no","campaigns":{"campaign":[]},"city":"","company":"","country":"FIN","currency":"EUR","email":"sub@example.com","enable_3rd_party_services":"yes","first_name":"Sub","ip_filters":{"ip_filter":[]},"labels":[],"language":"en","last_name":"Account","main_account":"test","network_access":{"network":[]},"phone":"+358.31245434","postal_code":"","roles":{"role":["technical"]},"server_access":{"server":[{"storage":"no","uuid":"*"}]},"state":"","storage_access":{"storage":["*"]},"tag_access":{"tag":[]},"timezone":"UTC","type":"sub","username":"my_sub_account","vat_number":""}}'
         headers:
             Content-Type:
                 - application/json
@@ -98,12 +105,12 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"error":{"error_code":"ACCOUNT_NOT_FOUND","error_message":"Account not found"}}'
+        body: '{"error":{"error_code":"ACCOUNT_FORBIDDEN","error_message":"You have no permission to access the account my_temp_account."}}'
         headers:
             Content-Type:
                 - application/json
-        status: 404 Not Found
-        code: 404
+        status: 403 Forbidden
+        code: 403
         duration: 90ms
     - id: 4
       request:
@@ -123,7 +130,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"account":{"main_account":"test","type":"sub","username":"my_billing_account","first_name":"Billing","last_name":"Account","email":"billing@example.com","roles":{"role":["billing"]}}}'
+        body: '{"account":{"address":"","allow_api":"yes","allow_gui":"no","campaigns":{"campaign":[]},"city":"","company":"","country":"FIN","currency":"EUR","email":"billing@example.com","enable_3rd_party_services":"yes","first_name":"Billing","ip_filters":{"ip_filter":[]},"labels":[],"language":"en","last_name":"Account","main_account":"test","network_access":{"network":[]},"phone":"+358.31245434","postal_code":"","roles":{"role":["billing"]},"server_access":{"server":[{"storage":"no","uuid":"*"}]},"state":"","storage_access":{"storage":["*"]},"tag_access":{"tag":[]},"timezone":"UTC","type":"sub","username":"my_billing_account","vat_number":""}}'
         headers:
             Content-Type:
                 - application/json

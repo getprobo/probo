@@ -1042,3 +1042,70 @@ func TestSegmentDriverUsesInlinePermissions(t *testing.T) {
 	assert.False(t, records[1].IsAdmin)
 	assert.Empty(t, records[1].Roles)
 }
+
+func TestUpCloudNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name       string
+		status     int
+		body       string
+		want       string
+		wantErr    bool
+		isTerminal bool
+	}{
+		{
+			name:   "main account username",
+			status: http.StatusOK,
+			body:   `{"account":{"credits":50000,"username":"aureliens"}}`,
+			want:   "aureliens",
+		},
+		{
+			name:   "no username in payload",
+			status: http.StatusOK,
+			body:   `{"account":{"credits":0}}`,
+			want:   "",
+		},
+		{
+			name:       "revoked token is terminal",
+			status:     http.StatusUnauthorized,
+			body:       `{"error":{"error_code":"AUTHENTICATION_FAILED"}}`,
+			wantErr:    true,
+			isTerminal: true,
+		},
+		{
+			name:    "server error stays retryable",
+			status:  http.StatusInternalServerError,
+			body:    `{"error":{"error_code":"BOOM"}}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/1.3/account", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewUpCloudNameResolver(client).ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				assert.Equal(t, tc.isTerminal, errors.Is(err, ErrTerminalNameResolution))
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

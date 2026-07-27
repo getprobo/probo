@@ -65,8 +65,8 @@ func TestUpCloudDriver(t *testing.T) {
 	assert.Equal(t, []string{"technical"}, sub.Roles)
 	assert.False(t, sub.IsAdmin)
 
-	// no roles assigned; details fetch fails (404), so the record falls back
-	// to list-only fields rather than being dropped.
+	// no roles assigned; details answers 403, which is a stable "no details"
+	// rather than an error, so the record keeps its list-only fields.
 	temp := records[2]
 	assert.Equal(t, "my_temp_account", temp.ExternalID)
 	assert.Equal(t, "my_temp_account", temp.FullName)
@@ -82,13 +82,6 @@ func TestUpCloudDriver(t *testing.T) {
 	assert.False(t, billing.IsAdmin)
 }
 
-// upcloudRoundTripFunc adapts a function to http.RoundTripper.
-type upcloudRoundTripFunc func(*http.Request) (*http.Response, error)
-
-func (f upcloudRoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req)
-}
-
 // TestUpCloudDriverContextCancellation verifies that a context canceled
 // mid-run aborts ListAccounts with the cancellation error instead of being
 // swallowed as a best-effort per-account detail failure, which would let a
@@ -99,7 +92,7 @@ func TestUpCloudDriverContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	client := &http.Client{
-		Transport: upcloudRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			if strings.Contains(req.URL.Path, "/account/details/") {
 				cancel()
 
@@ -120,5 +113,126 @@ func TestUpCloudDriverContextCancellation(t *testing.T) {
 	records, err := driver.ListAccounts(ctx)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, context.Canceled))
+	assert.Nil(t, records)
+}
+
+func TestUpCloudIsMainAccount(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		accountType string
+		want        bool
+	}{
+		{accountType: "main", want: true},   // live API
+		{accountType: "mymain", want: true}, // published docs example
+		{accountType: "MAIN", want: true},
+		{accountType: "sub", want: false},
+		{accountType: "SUB", want: false},
+		{accountType: " sub ", want: false},
+		{accountType: "", want: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.accountType, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tc.want, upcloudIsMainAccount(tc.accountType))
+		})
+	}
+}
+
+func TestUpCloudFetchAccountDetails(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		status    int
+		wantNil   bool
+		wantError bool
+	}{
+		{name: "forbidden yields no details", status: http.StatusForbidden, wantNil: true},
+		{name: "not found yields no details", status: http.StatusNotFound, wantNil: true},
+		{name: "server error is fatal", status: http.StatusInternalServerError, wantError: true},
+		{name: "rate limited is fatal", status: http.StatusTooManyRequests, wantError: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: tc.status,
+					Body:       io.NopCloser(strings.NewReader(`{"error":{"error_code":"X"}}`)),
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+				}, nil
+			})}
+
+			driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")))
+
+			details, err := driver.fetchAccountDetails(context.Background(), "someone")
+			if tc.wantError {
+				require.Error(t, err)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantNil, details == nil)
+		})
+	}
+}
+
+// TestUpCloudDriverTransientDetailFailureAborts pins the identity guarantee:
+// the review keys accounts on email plus external ID, so a record emitted
+// with a blank email after a transient failure would read as one account
+// removed and another added.
+func TestUpCloudDriverTransientDetailFailureAborts(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		body := `{"accounts":{"account":[{"roles":{"role":["technical"]},"type":"main","username":"test"}]}}`
+		status := http.StatusOK
+
+		if strings.Contains(req.URL.Path, "/account/details/") {
+			body = `{"error":{"error_code":"INTERNAL"}}`
+			status = http.StatusInternalServerError
+		}
+
+		return &http.Response{
+			StatusCode: status,
+			Body:       io.NopCloser(strings.NewReader(body)),
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+		}, nil
+	})}
+
+	records, err := NewUpCloudDriver(client, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
+	require.Error(t, err)
+	assert.Nil(t, records)
+}
+
+// TestUpCloudDriverBlankUsernameAborts pins the malformed-list guarantee:
+// username is the only stable identifier, so silently dropping a blank row
+// would hide an account the source still exposes and mark it removed on the
+// next review.
+func TestUpCloudDriverBlankUsernameAborts(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		if strings.Contains(req.URL.Path, "/account/details/") {
+			t.Errorf("driver must not fetch details after a malformed list row")
+		}
+
+		body := `{"accounts":{"account":[{"roles":{"role":[]},"type":"sub","username":"  "}]}}`
+
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(body)),
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+		}, nil
+	})}
+
+	records, err := NewUpCloudDriver(client, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
+	require.Error(t, err)
 	assert.Nil(t, records)
 }

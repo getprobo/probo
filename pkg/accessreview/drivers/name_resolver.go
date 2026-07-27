@@ -1809,3 +1809,46 @@ func (r *segmentNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 
 	return resp.Data.Workspace.Name, nil
 }
+
+// upcloudNameResolver names the source after the username the API token
+// belongs to, via GET /1.3/account. UpCloud exposes no organisation or
+// workspace name, and account/list carries no marker for which of its rows
+// the token authenticated as.
+type upcloudNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewUpCloudNameResolver(httpClient *http.Client) NameResolver {
+	return &upcloudNameResolver{httpClient: httpClient}
+}
+
+func (r *upcloudNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, upcloudAPIBaseURL+"/account", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create upcloud account request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute upcloud account request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("upcloud account", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Account struct {
+			Username string `json:"username"`
+		} `json:"account"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode upcloud account response: %w", err)
+	}
+
+	return resp.Account.Username, nil
+}

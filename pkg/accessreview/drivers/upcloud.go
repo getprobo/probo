@@ -32,7 +32,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const upcloudAccountListURL = "https://api.upcloud.com/1.3/account/list"
+const (
+	upcloudAPIBaseURL     = "https://api.upcloud.com/1.3"
+	upcloudAccountListURL = upcloudAPIBaseURL + "/account/list"
+)
 
 // UpCloudDriver lists the main account and its sub-accounts via UpCloud's
 // account/list endpoint, then enriches each with account/details/{username}
@@ -40,14 +43,12 @@ const upcloudAccountListURL = "https://api.upcloud.com/1.3/account/list"
 // token) attached by the connection transport.
 //
 // Notes on data quality:
-//   - account/details has no explicit account-status field, so Active is
-//     left nil (no signal).
-//   - Neither endpoint exposes per-account MFA status, so MFAStatus is left
-//     Unknown.
-//   - If the details fetch for an account fails, the account is still
-//     returned (per Driver contract, no account may be dropped) with just
-//     the list fields; Email stays blank and FullName falls back to the
-//     username.
+//   - Neither endpoint exposes an account-status or MFA field, so Active
+//     stays nil and MFAStatus Unknown.
+//   - An account the token cannot read (403/404) keeps its list-only
+//     fields, with a blank email and the username as its name. Any other
+//     details failure aborts the run rather than emit a half-identified
+//     record.
 type UpCloudDriver struct {
 	httpClient *http.Client
 	logger     *log.Logger
@@ -115,30 +116,28 @@ func (d *UpCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 	}
 
 	records := make([]AccountRecord, 0, len(resp.Accounts.Account))
+	unreadable := 0
 
 	for _, a := range resp.Accounts.Account {
+		// The username is the account's only stable identifier. Dropping a
+		// blank row would hide an account the source still exposes and mark
+		// it removed on the next review, so a malformed list fails the sync.
 		username := strings.TrimSpace(a.Username)
 		if username == "" {
-			return nil, fmt.Errorf("upcloud returned an account with an empty username")
+			return nil, fmt.Errorf("cannot list upcloud accounts: account with an empty username")
 		}
 
-		fullName := username
-
+		// The review keys accounts on email plus external ID, so a detail
+		// fetch that fails for a transient reason must abort rather than
+		// yield a record with a blank email: that record would land under a
+		// different key and read as one account removed and another added.
 		details, err := d.fetchAccountDetails(ctx, username)
 		if err != nil {
-			if ctx.Err() != nil {
-				return nil, fmt.Errorf("cannot list upcloud accounts: %w", ctx.Err())
-			}
-
-			d.logger.WarnCtx(ctx, "cannot fetch upcloud account details, using list fields only", log.Error(err))
-		} else {
-			if name := strings.TrimSpace(details.FirstName + " " + details.LastName); name != "" {
-				fullName = name
-			}
+			return nil, fmt.Errorf("cannot list upcloud accounts: %w", err)
 		}
 
 		record := AccountRecord{
-			FullName:    fullName,
+			FullName:    username,
 			Roles:       upcloudRoles(a.Roles.Role),
 			IsAdmin:     upcloudIsMainAccount(a.Type),
 			MFAStatus:   coredata.MFAStatusUnknown,
@@ -147,18 +146,28 @@ func (d *UpCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			ExternalID:  username,
 		}
 
-		if details != nil {
+		if details == nil {
+			unreadable++
+		} else {
 			record.Email = strings.TrimSpace(details.Email)
+
+			if name := strings.TrimSpace(details.FirstName + " " + details.LastName); name != "" {
+				record.FullName = name
+			}
 		}
 
 		records = append(records, record)
+	}
+
+	if unreadable > 0 {
+		d.logger.WarnCtx(ctx, "upcloud accounts listed without readable details", log.Int("count", unreadable))
 	}
 
 	return records, nil
 }
 
 func (d *UpCloudDriver) fetchAccountDetails(ctx context.Context, username string) (*upcloudAccountDetails, error) {
-	endpoint, err := url.JoinPath("https://api.upcloud.com", "1.3", "account", "details", url.PathEscape(username))
+	endpoint, err := url.JoinPath(upcloudAPIBaseURL, "account", "details", url.PathEscape(username))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build upcloud account details URL: %w", err)
 	}
@@ -177,8 +186,12 @@ func (d *UpCloudDriver) fetchAccountDetails(ctx context.Context, username string
 
 	defer func() { _ = httpResp.Body.Close() }()
 
-	if httpResp.StatusCode == http.StatusNotFound {
-		return &upcloudAccountDetails{}, nil
+	// 403 ACCOUNT_FORBIDDEN (out of the token's reach) and 404 (gone) are
+	// stable answers, not failures: the list call already proved the
+	// credential, and both give the same blank email on every run, so the
+	// account keeps a consistent key across campaigns.
+	if httpResp.StatusCode == http.StatusForbidden || httpResp.StatusCode == http.StatusNotFound {
+		return nil, nil
 	}
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -202,9 +215,10 @@ func upcloudRoles(roles []string) []string {
 	return out
 }
 
-// upcloudIsMainAccount reports whether the account is the primary account on
-// the contract ("mymain"), as opposed to a "sub" account. The main account
-// holds full administrative access; sub-accounts are scoped by their roles.
+// upcloudIsMainAccount reports whether the account is the contract's primary
+// account, which holds full administrative access. The docs call it "mymain"
+// and the live API "main", so classify off "sub" — the only other kind, and
+// the one both agree on.
 func upcloudIsMainAccount(accountType string) bool {
-	return strings.EqualFold(strings.TrimSpace(accountType), "mymain")
+	return !strings.EqualFold(strings.TrimSpace(accountType), "sub")
 }

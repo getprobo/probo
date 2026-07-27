@@ -31,24 +31,29 @@ import (
 
 func upcloudRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderUpCloud,
-		DisplayName:    "UpCloud",
-		SupportsAPIKey: true,
-		// UpCloud's newer API tokens (the "ucat_..." personal access tokens
-		// created under People > API access) authenticate as a standard
-		// Bearer token, so the default APIKeyConnection mode (Authorization:
-		// Bearer <key>) applies; no Header/Scheme/BasicAuth override is
-		// needed. There is no OAuth2 flow; account/list already returns the
-		// main account plus every sub-account reachable with the token, so
-		// there is nothing to pick or configure: no settings struct, no
+		Provider:         coredata.ConnectorProviderUpCloud,
+		DisplayName:      "UpCloud",
+		DocumentationURL: accessReviewDocsURL("upcloud"),
+		SupportsAPIKey:   true,
+		// UpCloud API tokens ("ucat_...", created under Account > API
+		// tokens) authenticate as a standard Bearer token, so the default
+		// APIKeyConnection mode applies; no Header/Scheme/BasicAuth
+		// override is needed. There is no OAuth2 flow, and account/list
+		// already returns the main account plus every sub-account the token
+		// reaches, so there is nothing to pick: no settings struct, no
 		// picker.
 		//
 		// ProbeURL lets the connection-status check confirm the token with
-		// the same lightweight GET the driver uses; an invalid token returns
-		// 401.
+		// the same lightweight GET the driver uses; a bad token returns 401.
+		// account/list is main-account-only, so it also rejects a
+		// sub-account token, which authenticates but sees nothing.
 		ProbeURL: "https://api.upcloud.com/1.3/account/list",
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger) (drivers.Driver, error) {
-			return drivers.NewUpCloudDriver(c, logger), nil
+			return drivers.NewUpCloudDriver(c, logger.Named("upcloud")), nil
+		},
+		// GET /1.3/account names the source after the token's own account.
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+			return drivers.NewUpCloudNameResolver(c)
 		},
 	}
 }
