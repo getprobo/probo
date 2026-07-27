@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import {
   Breadcrumb,
   Button,
@@ -67,7 +67,7 @@ export function CreateDeviceDialog({
   organizationId,
   onCreated,
 }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const [enrollment, setEnrollment] = useState<{
@@ -115,7 +115,7 @@ export function CreateDeviceDialog({
       onCompleted(response, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors[0].message,
             variant: "error",
           });
@@ -127,18 +127,16 @@ export function CreateDeviceDialog({
           serverUrl: response.createDevice.serverUrl,
         });
         toast({
-          title: __("Success"),
-          description: __(
-            "Device created. Copy the enrollment token now — it will not be shown again.",
-          ),
+          title: t("common.success"),
+          description: t("deviceEnrollment.messages.created"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: formatError(
-            __("Failed to create device"),
+            t("devices.errors.create"),
             error,
           ),
           variant: "error",
@@ -153,7 +151,7 @@ export function CreateDeviceDialog({
       trigger={children}
       onClose={handleClose}
       closable={!isCreating}
-      title={<Breadcrumb items={[__("Devices"), __("New device")]} />}
+      title={<Breadcrumb items={[t("devices.title"), t("devices.actions.new")]} />}
     >
       <form onSubmit={e => void onSubmit(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
@@ -169,7 +167,7 @@ export function CreateDeviceDialog({
                   organizationId={organizationId}
                   control={control}
                   name="ownerId"
-                  label={__("Owner")}
+                  label={t("devices.fields.owner")}
                   optional
                 />
               )}
@@ -181,14 +179,14 @@ export function CreateDeviceDialog({
                   type="button"
                   onClick={closeDialog}
                 >
-                  {__("Close")}
+                  {t("common.actions.close")}
                 </Button>
               </footer>
             )
           : (
               <DialogFooter>
                 <Button disabled={formState.isSubmitting || isCreating} type="submit">
-                  {__("Create")}
+                  {t("common.create")}
                 </Button>
               </DialogFooter>
             )}

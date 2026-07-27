@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Button } from "@probo/ui";
 import { useSearchParams } from "react-router";
 
@@ -29,63 +29,49 @@ type AuthErrorContent = {
 };
 
 function useAuthErrorContent(code: string | null): AuthErrorContent {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   switch (code) {
     case "personal_account_not_allowed":
       return {
-        title: __("Enterprise account required"),
-        description: __(
-          "Personal Google and Microsoft accounts cannot be used to sign in. Please use your work or school account instead.",
-        ),
+        title: t("authError.enterpriseAccountRequired.title"),
+        description: t("authError.enterpriseAccountRequired.description"),
       };
     case "email_not_verified":
       return {
-        title: __("Email not verified"),
-        description: __(
-          "Your email address is not verified with the identity provider. Please verify it, then try signing in again.",
-        ),
+        title: t("authError.emailNotVerified.title"),
+        description: t("authError.emailNotVerified.description"),
       };
     case "invalid_state":
       return {
-        title: __("Sign-in session expired"),
-        description: __(
-          "This sign-in attempt is no longer valid. Please start again from the sign-in page.",
-        ),
+        title: t("authError.signInSessionExpired.title"),
+        description: t("authError.signInSessionExpired.description"),
       };
     case "magic_link_expired":
       return {
-        title: __("Link Expired"),
-        description: __(
-          "This magic link has expired. Magic links are only valid for 15 minutes. Please request a new one.",
-        ),
+        title: t("authError.magicLinkExpired.title"),
+        description: t("authError.magicLinkExpired.description"),
       };
     case "magic_link_already_used":
       return {
-        title: __("Link Already Used"),
-        description: __(
-          "This magic link has already been used. Please request a new one.",
-        ),
+        title: t("authError.magicLinkAlreadyUsed.title"),
+        description: t("authError.magicLinkAlreadyUsed.description"),
       };
     case "magic_link_invalid":
       return {
-        title: __("Invalid link"),
-        description: __(
-          "This magic link is invalid. Please request a new one.",
-        ),
+        title: t("authError.invalidLink.title"),
+        description: t("authError.invalidLink.description"),
       };
     default:
       return {
-        title: __("Authentication failed"),
-        description: __(
-          "We could not complete your sign-in. Please try again.",
-        ),
+        title: t("authError.default.title"),
+        description: t("authError.default.description"),
       };
   }
 }
 
 export default function AuthErrorPage() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const content = useAuthErrorContent(searchParams.get("error"));
 
@@ -98,7 +84,7 @@ export default function AuthErrorPage() {
         <p className="text-txt-tertiary">{content.description}</p>
       </div>
       <Button className="w-full h-10" to="/auth/login">
-        {__("Sign in")}
+        {t("auth.actions.signIn")}
       </Button>
     </div>
   );

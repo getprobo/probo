@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { LaptopIcon } from "@phosphor-icons/react";
-import { sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Button, Card } from "@probo/ui";
 import { useCallback, useMemo, useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -65,8 +64,8 @@ interface EnrollDevicePageProps {
 }
 
 export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
-  const { __ } = useTranslate();
-  usePageTitle(__("Enroll device"));
+  const { t } = useTranslation();
+  usePageTitle(t("deviceEnrollment.pageTitle"));
 
   const { viewer } = usePreloadedQuery<EnrollDevicePageQuery>(
     enrollDevicePageQuery,
@@ -125,18 +124,18 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
   const steps = [
     {
       key: "intro",
-      title: __("Privacy"),
-      description: __("Review collected data"),
+      title: t("deviceEnrollment.steps.privacy.title"),
+      description: t("deviceEnrollment.steps.privacy.description"),
     },
     {
       key: "organization",
-      title: __("Organization"),
-      description: __("Choose destination workspace"),
+      title: t("devices.fields.organization"),
+      description: t("deviceEnrollment.steps.organization.description"),
     },
     {
       key: "enroll",
-      title: __("Open and wait"),
-      description: __("Finish setup in the desktop agent"),
+      title: t("deviceEnrollment.steps.enroll.title"),
+      description: t("deviceEnrollment.steps.enroll.description"),
     },
   ] as const;
 
@@ -147,16 +146,14 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
             <Card className="space-y-4 border-border-low p-6">
               <div className="space-y-1">
                 <h2 className="text-lg font-medium">
-                  {__("Enrollment unavailable")}
+                  {t("deviceEnrollment.unavailable.title")}
                 </h2>
                 <p className="text-sm text-txt-secondary">
-                  {__(
-                    "You do not have permission to enroll devices in any organization.",
-                  )}
+                  {t("deviceEnrollment.unavailable.description")}
                 </p>
               </div>
               <Button variant="secondary" asChild>
-                <Link to="/">{__("Back to organizations")}</Link>
+                <Link to="/">{t("deviceEnrollment.actions.backToOrganizations")}</Link>
               </Button>
             </Card>
           )
@@ -169,8 +166,8 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                       <LaptopIcon size={18} weight="duotone" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-txt-primary">{__("Device enrollment")}</p>
-                      <p className="text-xs text-txt-secondary">{__("Setup")}</p>
+                      <p className="text-sm font-semibold text-txt-primary">{t("deviceEnrollment.title")}</p>
+                      <p className="text-xs text-txt-secondary">{t("deviceEnrollment.setup")}</p>
                     </div>
                   </div>
 
@@ -211,7 +208,7 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
 
                   <div className="mt-8 md:mt-auto">
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-txt-secondary">
-                      {sprintf(__("Step %s of %s"), activeStepIndex, steps.length)}
+                      {t("deviceEnrollment.stepProgress", { current: activeStepIndex, total: steps.length })}
                     </p>
                     <div className="mt-3 flex gap-2">
                       {steps.map((item, index) => (
@@ -231,21 +228,19 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                   {step === "intro" && (
                     <section className="space-y-5">
                       <header className="space-y-2">
-                        <h1 className="text-2xl font-semibold tracking-tight">{__("Before you start")}</h1>
+                        <h1 className="text-2xl font-semibold tracking-tight">{t("deviceEnrollment.intro.title")}</h1>
                         <p className="text-sm leading-6 text-txt-secondary">
-                          {__(
-                            "Probo collects the following device metadata for inventory and posture reporting:",
-                          )}
+                          {t("deviceEnrollment.intro.description")}
                         </p>
                       </header>
                       <ul className="list-disc space-y-1.5 pl-5 text-sm text-txt-secondary">
-                        <li>{__("Device identity: hardware UUID, hostname, and serial number (when available).")}</li>
-                        <li>{__("System details: platform, OS version, and Probo agent version.")}</li>
-                        <li>{__("Activity signals: enrollment time, heartbeats, and posture check results.")}</li>
+                        <li>{t("deviceEnrollment.privacy.identity")}</li>
+                        <li>{t("deviceEnrollment.privacy.systemDetails")}</li>
+                        <li>{t("deviceEnrollment.privacy.activitySignals")}</li>
                       </ul>
                       <div className="flex flex-wrap gap-3 pt-2">
                         <Button onClick={() => setStep("organization")}>
-                          {__("Continue")}
+                          {t("common.actions.continue")}
                         </Button>
                       </div>
                     </section>
@@ -254,11 +249,9 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                   {step === "organization" && (
                     <section className="space-y-5">
                       <header className="space-y-2">
-                        <h1 className="text-2xl font-semibold tracking-tight">{__("Choose organization")}</h1>
+                        <h1 className="text-2xl font-semibold tracking-tight">{t("deviceEnrollment.organization.title")}</h1>
                         <p className="text-sm leading-6 text-txt-secondary">
-                          {__(
-                            "Pick which organization will own and manage this device.",
-                          )}
+                          {t("deviceEnrollment.organization.description")}
                         </p>
                       </header>
                       <EnrollOrganizationPicker
@@ -274,10 +267,10 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                           onClick={() => setStep("enroll")}
                           disabled={selectedOrganizationId == null}
                         >
-                          {__("Continue")}
+                          {t("common.actions.continue")}
                         </Button>
                         <Button variant="secondary" onClick={() => setStep("intro")}>
-                          {__("Back")}
+                          {t("common.actions.back")}
                         </Button>
                       </div>
                     </section>
@@ -286,11 +279,9 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                   {step === "enroll" && (
                     <section className="space-y-5">
                       <header className="space-y-2">
-                        <h1 className="text-2xl font-semibold tracking-tight">{__("Open the Probo agent")}</h1>
+                        <h1 className="text-2xl font-semibold tracking-tight">{t("deviceEnrollment.openAgent.title")}</h1>
                         <p className="text-sm leading-6 text-txt-secondary">
-                          {__(
-                            "Open the desktop agent to finish setup, then keep this page open until enrollment is confirmed.",
-                          )}
+                          {t("deviceEnrollment.openAgent.description")}
                         </p>
                       </header>
                       <CoreRelayProvider>
@@ -304,7 +295,7 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                       {!isEnrollmentComplete && (
                         <div>
                           <Button variant="secondary" onClick={() => setStep("organization")}>
-                            {__("Back")}
+                            {t("common.actions.back")}
                           </Button>
                         </div>
                       )}

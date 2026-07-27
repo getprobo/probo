@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Dialog,
@@ -53,7 +53,7 @@ interface CreateDeviceFormProps {
 }
 
 export function CreateDeviceForm({ onDeviceCreated }: CreateDeviceFormProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
@@ -90,7 +90,7 @@ export function CreateDeviceForm({ onDeviceCreated }: CreateDeviceFormProps) {
       onCompleted(response, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors[0].message,
             variant: "error",
           });
@@ -104,18 +104,16 @@ export function CreateDeviceForm({ onDeviceCreated }: CreateDeviceFormProps) {
         });
         dialogRef.current?.open();
         toast({
-          title: __("Success"),
-          description: __(
-            "Device created. Copy the enrollment token now — it will not be shown again.",
-          ),
+          title: t("common.success"),
+          description: t("deviceEnrollment.messages.created"),
           variant: "success",
         });
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: formatError(
-            __("Failed to create device"),
+            t("devices.errors.create"),
             error,
           ),
           variant: "error",
@@ -135,7 +133,7 @@ export function CreateDeviceForm({ onDeviceCreated }: CreateDeviceFormProps) {
   return (
     <>
       <p className="text-center text-xs text-txt-secondary">
-        {__("Can't enroll new device?")}
+        {t("deviceEnrollment.manual.cannotEnroll")}
         {" "}
         <button
           type="button"
@@ -143,7 +141,7 @@ export function CreateDeviceForm({ onDeviceCreated }: CreateDeviceFormProps) {
           disabled={isCreating}
           className="text-txt-primary underline hover:no-underline disabled:opacity-60"
         >
-          {__("Try creating it manually")}
+          {t("deviceEnrollment.manual.tryCreating")}
         </button>
       </p>
 
@@ -151,11 +149,11 @@ export function CreateDeviceForm({ onDeviceCreated }: CreateDeviceFormProps) {
         ref={dialogRef}
         onClose={handleClose}
         closable={!(isCreating && !enrollment)}
-        title={__("Manual enrollment")}
+        title={t("deviceEnrollment.manual.title")}
       >
         <DialogContent padded className="space-y-4">
           {isCreating && !enrollment
-            ? <p>{__("Creating device…")}</p>
+            ? <p>{t("deviceEnrollment.manual.creating")}</p>
             : null}
           {enrollment
             ? (
@@ -170,7 +168,7 @@ export function CreateDeviceForm({ onDeviceCreated }: CreateDeviceFormProps) {
           ? (
               <footer className="flex items-center justify-end gap-2 border-t border-t-border-low p-3">
                 <Button type="button" onClick={closeDialog}>
-                  {__("Close")}
+                  {t("common.actions.close")}
                 </Button>
               </footer>
             )

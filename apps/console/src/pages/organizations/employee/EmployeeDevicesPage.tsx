@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Button, Card, IconPlusLarge, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { useTransition } from "react";
 import {
@@ -74,9 +74,9 @@ interface EmployeeDevicesPageProps {
 }
 
 export function EmployeeDevicesPage({ queryRef }: EmployeeDevicesPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
-  usePageTitle(__("Devices"));
+  usePageTitle(t("devices.title"));
 
   const { viewer, organization } = usePreloadedQuery<EmployeeDevicesPageQuery>(
     employeeDevicesPageQuery,
@@ -105,10 +105,10 @@ export function EmployeeDevicesPage({ queryRef }: EmployeeDevicesPageProps) {
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{__("Your devices")}</h1>
+        <h1 className="text-2xl font-semibold">{t("employeeDevices.title")}</h1>
         {canEnrollDevice && (
           <Button to="/enroll" icon={IconPlusLarge}>
-            {__("Enroll new device")}
+            {t("deviceEnrollment.actions.enrollNew")}
           </Button>
         )}
       </header>
@@ -119,11 +119,11 @@ export function EmployeeDevicesPage({ queryRef }: EmployeeDevicesPageProps) {
               <table className="w-full table-fixed">
                 <Thead>
                   <Tr>
-                    <Th className="text-left">{__("Hostname")}</Th>
-                    <Th className="w-32 text-left">{__("State")}</Th>
-                    <Th className="w-32 text-left">{__("Platform")}</Th>
-                    <Th className="w-40 text-left">{__("OS version")}</Th>
-                    <Th className="w-40 text-left">{__("Last seen")}</Th>
+                    <Th className="text-left">{t("devices.fields.hostname")}</Th>
+                    <Th className="w-32 text-left">{t("devices.fields.state")}</Th>
+                    <Th className="w-32 text-left">{t("devices.fields.platform")}</Th>
+                    <Th className="w-40 text-left">{t("devices.fields.osVersion")}</Th>
+                    <Th className="w-40 text-left">{t("devices.fields.lastSeen")}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -139,7 +139,7 @@ export function EmployeeDevicesPage({ queryRef }: EmployeeDevicesPageProps) {
           : (
               <div className="px-4 py-12 text-center">
                 <h3 className="text-lg font-semibold">
-                  {__("No devices enrolled yet")}
+                  {t("devices.empty")}
                 </h3>
               </div>
             )}

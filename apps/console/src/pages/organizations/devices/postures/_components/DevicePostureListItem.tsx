@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Badge, Td, Tr } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -42,19 +42,19 @@ interface DevicePostureListItemProps {
 }
 
 export function DevicePostureListItem({ postureKey }: DevicePostureListItemProps) {
-  const { __, dateTimeFormat } = useTranslate();
+  const { i18n, t } = useTranslation();
   const posture = useFragment(postureFragment, postureKey);
 
   return (
     <Tr>
-      <Td>{getPostureCheckLabel(__, posture.checkKey)}</Td>
+      <Td>{getPostureCheckLabel(t, posture.checkKey)}</Td>
       <Td>
         <Badge variant={statusVariant(posture.status)}>
-          {getPostureStatusLabel(__, posture.status)}
+          {getPostureStatusLabel(t, posture.status)}
         </Badge>
       </Td>
       <Td className="text-end whitespace-nowrap">
-        {dateTimeFormat(posture.observedAt, {
+        {new Intl.DateTimeFormat(i18n.language, {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -62,7 +62,7 @@ export function DevicePostureListItem({ postureKey }: DevicePostureListItemProps
           minute: "2-digit",
           second: "2-digit",
           hour12: false,
-        })}
+        }).format(posture.observedAt)}
       </Td>
     </Tr>
   );

@@ -18,16 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-type Translator = (s: string) => string;
+type Translator = (key: string) => string;
 
 const statusLabels: Record<string, string> = {
-  PASS: "Pass",
-  FAIL: "Fail",
-  UNKNOWN: "Unknown",
-  NOT_APPLICABLE: "Not applicable",
+  PASS: "devices.postures.status.pass",
+  FAIL: "devices.postures.status.fail",
+  UNKNOWN: "devices.postures.status.unknown",
+  NOT_APPLICABLE: "devices.postures.status.notApplicable",
 };
 
-export function getPostureStatusLabel(__: Translator, status: string) {
+export function getPostureStatusLabel(t: Translator, status: string) {
   const label = statusLabels[status];
-  return label ? __(label) : status;
+  return label ? t(label) : status;
 }

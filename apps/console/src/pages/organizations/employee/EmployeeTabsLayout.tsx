@@ -36,7 +36,7 @@ export default function EmployeeTabsLayout() {
           {t("employeeTabsLayout.tabs.approvals")}
         </TabLink>
         <TabLink to="devices" end>
-          {__("Devices")}
+          {t("devices.title")}
         </TabLink>
       </Tabs>
       <Outlet />

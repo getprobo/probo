@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import {
   ActionDropdown,
   Badge,
@@ -67,10 +67,10 @@ interface DeviceRowProps {
 }
 
 export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const reassignDialogRef = useDialogRef();
-  const pendingLabel = __("(pending)");
+  const pendingLabel = t("devices.values.pending");
 
   const device = useFragment(deviceRowFragment, fKey);
 
@@ -89,13 +89,13 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
       />
       <Tr to={`/organizations/${organizationId}/devices/${device.id}`}>
         <Td>{displayValue(device.hostname, pendingLabel)}</Td>
-        <Td>{device.owner?.fullName ?? __("Unassigned")}</Td>
+        <Td>{device.owner?.fullName ?? t("devices.values.unassigned")}</Td>
         <Td>
           <Badge variant={stateVariant(device.state)}>{device.state}</Badge>
         </Td>
         <Td>{displayValue(device.platform, pendingLabel)}</Td>
         <Td>{displayValue(device.osVersion, pendingLabel)}</Td>
-        <Td>{device.lastSeenAt ? formatDate(device.lastSeenAt) : __("Never")}</Td>
+        <Td>{device.lastSeenAt ? formatDate(device.lastSeenAt) : t("devices.values.never")}</Td>
         <Td>
           <span className="text-txt-success">{summary.pass}</span>
           {" / "}
@@ -113,7 +113,7 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
                   icon={IconUser}
                   onClick={() => reassignDialogRef.current?.open()}
                 >
-                  {__("Re-assign")}
+                  {t("devices.actions.reassign")}
                 </DropdownItem>
               )}
               {canRevoke && (
@@ -124,7 +124,7 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
                   variant="danger"
                   icon={IconTrashCan}
                 >
-                  {__("Revoke")}
+                  {t("devices.actions.revoke")}
                 </DropdownItem>
               )}
             </ActionDropdown>

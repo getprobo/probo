@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Badge, Td, Tr } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -54,8 +54,8 @@ function stateVariant(state: string): "success" | "warning" | "info" {
 }
 
 export function EmployeeDeviceListItem({ deviceKey }: EmployeeDeviceListItemProps) {
-  const { __ } = useTranslate();
-  const pendingLabel = __("(pending)");
+  const { t } = useTranslation();
+  const pendingLabel = t("devices.values.pending");
 
   const device = useFragment(employeeDeviceListItemFragment, deviceKey);
 
@@ -67,7 +67,7 @@ export function EmployeeDeviceListItem({ deviceKey }: EmployeeDeviceListItemProp
       </Td>
       <Td>{displayValue(device.platform, pendingLabel)}</Td>
       <Td>{displayValue(device.osVersion, pendingLabel)}</Td>
-      <Td>{device.lastSeenAt ? formatDate(device.lastSeenAt) : __("Never")}</Td>
+      <Td>{device.lastSeenAt ? formatDate(device.lastSeenAt) : t("devices.values.never")}</Td>
     </Tr>
   );
 }

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 
 interface OrganizationOption {
   id: string;
@@ -38,12 +38,12 @@ export function EnrollOrganizationPicker(
     onChange,
   }: EnrollOrganizationPickerProps,
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <section className="space-y-4">
       <label htmlFor="organization-select" className="space-y-2 text-xs font-medium text-txt-secondary">
-        <span>{__("Organization")}</span>
+        <span>{t("devices.fields.organization")}</span>
         <select
           id="organization-select"
           value={selectedOrganizationId ?? ""}

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Button, IconArrowLink } from "@probo/ui";
 
 type Props = {
@@ -33,7 +33,7 @@ type Props = {
 // the provider has no documentation URL. Shared by the provider card and the
 // connect dialogs so the URL/label/target markup lives in one place.
 export function ConnectorDocumentationLink({ url, variant = "link" }: Props) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   if (!url) {
     return null;
@@ -45,7 +45,7 @@ export function ConnectorDocumentationLink({ url, variant = "link" }: Props) {
     return (
       <Button variant="secondary" asChild>
         <a href={url} target="_blank" rel="noopener noreferrer">
-          {__("Documentation")}
+          {t("accessReviewSource.documentation")}
           <IconArrowLink size={16} />
         </a>
       </Button>
@@ -59,7 +59,7 @@ export function ConnectorDocumentationLink({ url, variant = "link" }: Props) {
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-xs text-txt-tertiary underline hover:no-underline"
     >
-      {__("Documentation")}
+      {t("accessReviewSource.documentation")}
       <IconArrowLink size={12} />
     </a>
   );

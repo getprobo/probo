@@ -271,15 +271,15 @@ export function APIKeyConnectorDialog({
     if (provider.provider === "SEGMENT") {
       return (
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">{__("Region")}</label>
+          <label className="text-sm font-medium">{t("accessReviewSource.regions.label")}</label>
           <Select
             value={extraSettingValues.region ?? ""}
             onValueChange={(val: string) =>
               setExtraSettingValues(prev => ({ ...prev, region: val }))}
-            placeholder={__("Select a region")}
+            placeholder={t("accessReviewSource.regions.placeholder")}
           >
-            <Option value="US">{__("United States")}</Option>
-            <Option value="EU">{__("Europe")}</Option>
+            <Option value="US">{t("accessReviewSource.regions.unitedStates")}</Option>
+            <Option value="EU">{t("accessReviewSource.regions.europe")}</Option>
           </Select>
         </div>
       );

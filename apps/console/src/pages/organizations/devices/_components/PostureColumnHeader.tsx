@@ -18,22 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { IconCircleInfo } from "@probo/ui";
 import * as Popover from "@radix-ui/react-popover";
 
 export function PostureColumnHeader() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <span className="inline-flex items-center gap-1">
-      {__("Posture")}
+      {t("devices.postures.title")}
       <Popover.Root>
         <Popover.Trigger asChild>
           <button
             type="button"
             className="inline-flex text-txt-tertiary hover:text-txt-secondary"
-            aria-label={__("How posture summary is calculated")}
+            aria-label={t("devices.postures.summaryHelp")}
           >
             <IconCircleInfo size={14} />
           </button>
@@ -45,9 +45,7 @@ export function PostureColumnHeader() {
             align="start"
           >
             <p>
-              {__(
-                "Shown as pass / fail / total.",
-              )}
+              {t("devices.postures.summaryDescription")}
             </p>
           </Popover.Content>
         </Popover.Portal>

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Button, Card, useToast } from "@probo/ui";
 
 const RELEASE_BASE_URL
@@ -32,7 +32,7 @@ interface EnrollmentInstructionsProps {
 export function EnrollmentInstructions(
   { enrollmentToken, serverUrl }: EnrollmentInstructionsProps,
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
 
   const unixCommand = `# 1. Download and install the probo-agent binary
 OS=$(uname -s); ARCH=$(uname -m | sed 's/aarch64/arm64/; s/amd64/x86_64/')
@@ -65,42 +65,34 @@ Remove-Item -Recurse -Force $zip, "$env:TEMP\\$name"
 
   return (
     <div className="space-y-4">
-      <h2 className="font-medium">{__("Enrollment token generated")}</h2>
+      <h2 className="font-medium">{t("deviceEnrollment.token.title")}</h2>
       <p className="text-sm text-txt-secondary">
-        {__(
-          "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.",
-        )}
+        {t("deviceEnrollment.token.description")}
       </p>
       <CopyableCodeBlock code={enrollmentToken} />
 
       <details>
         <summary className="cursor-pointer text-sm font-medium">
-          {__("Manual install (CLI / MDM)")}
+          {t("deviceEnrollment.token.manualInstall")}
         </summary>
 
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
             <h3 className="text-sm font-medium">
-              {__(
-                "Install on macOS or Linux (run from a shell with sudo access)",
-              )}
+              {t("deviceEnrollment.token.installUnix")}
             </h3>
             <CopyableCodeBlock code={unixCommand} />
           </div>
 
           <div className="space-y-2">
             <h3 className="text-sm font-medium">
-              {__(
-                "Install on Windows (run from an elevated PowerShell session)",
-              )}
+              {t("deviceEnrollment.token.installWindows")}
             </h3>
             <CopyableCodeBlock code={windowsCommand} />
           </div>
 
           <p className="text-xs text-txt-secondary">
-            {__(
-              "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification.",
-            )}
+            {t("deviceEnrollment.token.securityNotice")}
           </p>
         </div>
       </details>
@@ -109,22 +101,22 @@ Remove-Item -Recurse -Force $zip, "$env:TEMP\\$name"
 }
 
 function CopyableCodeBlock({ code }: { code: string }) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(
       () => {
         toast({
-          title: __("Copied"),
-          description: __("Copied to clipboard"),
+          title: t("common.messages.copied"),
+          description: t("common.messages.copiedToClipboard"),
           variant: "success",
         });
       },
       () => {
         toast({
-          title: __("Error"),
-          description: __("Failed to copy to clipboard"),
+          title: t("common.error"),
+          description: t("deviceEnrollment.errors.copyToClipboard"),
           variant: "error",
         });
       },
@@ -135,7 +127,7 @@ function CopyableCodeBlock({ code }: { code: string }) {
     <Card className="rounded-lg border">
       <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
         <Button type="button" variant="secondary" onClick={handleCopy}>
-          {__("Copy")}
+          {t("common.actions.copy")}
         </Button>
       </div>
       <pre className="overflow-x-auto whitespace-pre p-4 text-sm font-mono rounded-b-lg text-invert bg-accent">

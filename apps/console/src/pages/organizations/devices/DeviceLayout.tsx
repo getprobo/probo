@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import {
   Breadcrumb,
   Button,
@@ -67,9 +67,9 @@ interface DeviceLayoutProps {
 }
 
 export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const pendingLabel = __("(pending)");
+  const pendingLabel = t("devices.values.pending");
 
   const { device, organization } = usePreloadedQuery<DeviceLayoutQuery>(
     deviceLayoutQuery,
@@ -96,7 +96,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
       <Breadcrumb
         items={[
           {
-            label: __("Devices"),
+            label: t("devices.title"),
             to: `/organizations/${organizationId}/devices`,
           },
           { label: hostnameLabel },
@@ -113,7 +113,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
               confirmRevoke({ id: device.id, hostname: device.hostname })}
             disabled={isRevoking}
           >
-            {__("Revoke")}
+            {t("devices.actions.revoke")}
           </Button>
         )}
       </PageHeader>
@@ -124,7 +124,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
         <TabLink
           to={`/organizations/${organizationId}/devices/${device.id}/postures`}
         >
-          {__("Postures")}
+          {t("devices.postures.navigation")}
         </TabLink>
       </Tabs>
 

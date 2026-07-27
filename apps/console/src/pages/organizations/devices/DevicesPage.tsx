@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Button, IconPlusLarge, PageHeader, Tbody, Th, Thead, Tr } from "@probo/ui";
 import type { ComponentProps } from "react";
 import {
@@ -89,10 +89,10 @@ interface DevicesPageProps {
 }
 
 export function DevicesPage({ queryRef }: DevicesPageProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
 
-  usePageTitle(__("Devices"));
+  usePageTitle(t("devices.title"));
 
   const { organization } = usePreloadedQuery<DevicesPageQuery>(
     devicesPageQuery,
@@ -112,10 +112,8 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={__("Devices")}
-        description={__(
-          "Manage computers enrolled with the Probo posture agent.",
-        )}
+        title={t("devices.title")}
+        description={t("devices.description")}
       >
         {organization.canCreateDevice && (
           <CreateDeviceDialog
@@ -124,7 +122,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
               pagination.refetch({}, { fetchPolicy: "store-and-network" });
             }}
           >
-            <Button icon={IconPlusLarge}>{__("Add device")}</Button>
+            <Button icon={IconPlusLarge}>{t("devices.actions.add")}</Button>
           </CreateDeviceDialog>
         )}
       </PageHeader>
@@ -137,12 +135,12 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
       >
         <Thead>
           <Tr>
-            <SortableTh field="HOSTNAME">{__("Hostname")}</SortableTh>
-            <Th>{__("Owner")}</Th>
-            <Th>{__("State")}</Th>
-            <Th>{__("Platform")}</Th>
-            <Th>{__("OS version")}</Th>
-            <SortableTh field="LAST_SEEN_AT">{__("Last seen")}</SortableTh>
+            <SortableTh field="HOSTNAME">{t("devices.fields.hostname")}</SortableTh>
+            <Th>{t("devices.fields.owner")}</Th>
+            <Th>{t("devices.fields.state")}</Th>
+            <Th>{t("devices.fields.platform")}</Th>
+            <Th>{t("devices.fields.osVersion")}</Th>
+            <SortableTh field="LAST_SEEN_AT">{t("devices.fields.lastSeen")}</SortableTh>
             <Th>
               <PostureColumnHeader />
             </Th>
