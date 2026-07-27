@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslation } from "react-i18next";
 import { Button } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 
 type AuthErrorContent = {

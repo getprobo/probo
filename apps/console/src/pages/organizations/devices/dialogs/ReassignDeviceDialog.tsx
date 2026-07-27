@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslation } from "react-i18next";
 import {
   Breadcrumb,
   Button,
@@ -30,6 +29,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";

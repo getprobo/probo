@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
-import { useTranslation } from "react-i18next";
+import { dateFormat } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -54,7 +54,7 @@ function stateVariant(state: string): "success" | "warning" | "info" {
 }
 
 export function EmployeeDeviceListItem({ deviceKey }: EmployeeDeviceListItemProps) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const pendingLabel = t("devices.values.pending");
 
   const device = useFragment(employeeDeviceListItemFragment, deviceKey);
@@ -67,7 +67,11 @@ export function EmployeeDeviceListItem({ deviceKey }: EmployeeDeviceListItemProp
       </Td>
       <Td>{displayValue(device.platform, pendingLabel)}</Td>
       <Td>{displayValue(device.osVersion, pendingLabel)}</Td>
-      <Td>{device.lastSeenAt ? formatDate(device.lastSeenAt) : t("devices.values.never")}</Td>
+      <Td>
+        {device.lastSeenAt
+          ? dateFormat(i18n.language, device.lastSeenAt)
+          : t("devices.values.never")}
+      </Td>
     </Tr>
   );
 }

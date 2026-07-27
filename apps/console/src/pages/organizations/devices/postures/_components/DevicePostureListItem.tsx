@@ -18,12 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslation } from "react-i18next";
+import { dateTimeFormat } from "@probo/i18n/date";
 import { Badge, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DevicePostureListItem_postureFragment$key } from "#/__generated__/core/DevicePostureListItem_postureFragment.graphql";
+import type {
+  DevicePostureListItem_postureFragment$key,
+} from "#/__generated__/core/DevicePostureListItem_postureFragment.graphql";
 
 import { statusVariant } from "../../_lib/deviceDisplay";
 import { getPostureCheckLabel } from "../_lib/getPostureCheckLabel";
@@ -54,15 +57,7 @@ export function DevicePostureListItem({ postureKey }: DevicePostureListItemProps
         </Badge>
       </Td>
       <Td className="text-end whitespace-nowrap">
-        {new Intl.DateTimeFormat(i18n.language, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        }).format(posture.observedAt)}
+        {dateTimeFormat(i18n.language, posture.observedAt)}
       </Td>
     </Tr>
   );

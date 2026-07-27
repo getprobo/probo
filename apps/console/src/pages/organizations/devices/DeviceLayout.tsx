@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslation } from "react-i18next";
 import {
   Breadcrumb,
   Button,
@@ -27,6 +26,7 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePreloadedQuery,

@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslation } from "react-i18next";
 import { useConfirm, useToast } from "@probo/ui";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 

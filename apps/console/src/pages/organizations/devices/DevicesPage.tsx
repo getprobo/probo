@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useTranslation } from "react-i18next";
 import { Button, IconPlusLarge, PageHeader, Tbody, Th, Thead, Tr } from "@probo/ui";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePaginationFragment,

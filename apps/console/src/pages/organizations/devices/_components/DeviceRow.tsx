@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDate } from "@probo/helpers";
-import { useTranslation } from "react-i18next";
+import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -30,6 +29,7 @@ import {
   Tr,
   useDialogRef,
 } from "@probo/ui";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -67,7 +67,7 @@ interface DeviceRowProps {
 }
 
 export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const reassignDialogRef = useDialogRef();
   const pendingLabel = t("devices.values.pending");
@@ -95,7 +95,11 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
         </Td>
         <Td>{displayValue(device.platform, pendingLabel)}</Td>
         <Td>{displayValue(device.osVersion, pendingLabel)}</Td>
-        <Td>{device.lastSeenAt ? formatDate(device.lastSeenAt) : t("devices.values.never")}</Td>
+        <Td>
+          {device.lastSeenAt
+            ? dateFormat(i18n.language, device.lastSeenAt)
+            : t("devices.values.never")}
+        </Td>
         <Td>
           <span className="text-txt-success">{summary.pass}</span>
           {" / "}

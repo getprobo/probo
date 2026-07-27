@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslation } from "react-i18next";
 import { IconCircleInfo } from "@probo/ui";
 import * as Popover from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 
 export function PostureColumnHeader() {
   const { t } = useTranslation();

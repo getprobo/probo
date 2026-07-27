@@ -20,9 +20,9 @@
 
 import { LaptopIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { useTranslation } from "react-i18next";
 import { Button, Card } from "@probo/ui";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
