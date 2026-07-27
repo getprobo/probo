@@ -42,17 +42,18 @@ export function DocumentsSelectionBar({ entries }: DocumentsSelectionBarProps) {
   const { selectedIds, selectAll, clear } = useDocumentSelection();
   const { requestAccess, isRequesting } = useBulkRequestAccess(clear);
 
-  if (selectedIds.size === 0) {
+  // Resolve the selection against the live rows so the bar reflects reality even
+  // if the selection set still holds stale ids: once a request succeeds Relay
+  // flips those rows to a pending state (locked: false), which must drop them
+  // from the count immediately rather than waiting on a clear that may not run.
+  const lockedSelected = entries.filter(entry => entry.locked && selectedIds.has(entry.id));
+  const lockedCount = lockedSelected.length;
+
+  if (lockedCount === 0) {
     return null;
   }
 
-  const lockedSelected = entries.filter(entry => selectedIds.has(entry.id) && entry.locked);
-  const lockedCount = lockedSelected.length;
-
   const handleRequestAccess = () => {
-    if (lockedCount === 0) {
-      return;
-    }
     requestAccess(lockedSelected.map(entry => ({ id: entry.id, kind: entry.kind })));
   };
 
@@ -62,7 +63,7 @@ export function DocumentsSelectionBar({ entries }: DocumentsSelectionBarProps) {
     <div className={bar()}>
       <div className={inner()}>
         <Text size={2} weight="medium" color="neutral" highContrast>
-          {t("selection.count", { count: selectedIds.size })}
+          {t("selection.count", { count: lockedCount })}
         </Text>
         <div className={actions()}>
           <Button variant="ghost" color="neutral" onClick={clear}>
@@ -81,7 +82,6 @@ export function DocumentsSelectionBar({ entries }: DocumentsSelectionBarProps) {
             highContrast
             iconStart={<LockSimpleIcon />}
             loading={isRequesting}
-            disabled={lockedCount === 0}
             onClick={handleRequestAccess}
           >
             {t("selection.requestAccess", { count: lockedCount })}
