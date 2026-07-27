@@ -21,6 +21,7 @@
 package connect_v1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -59,9 +60,28 @@ func (h *SAMLHandler) renderInternalServerError(w http.ResponseWriter) {
 	httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
 }
 
-func (h *SAMLHandler) renderAssertionError(w http.ResponseWriter, r *http.Request, err error) {
+func (h *SAMLHandler) continueURLFromRelayState(ctx context.Context, relayState string) string {
+	if len(relayState) <= gid.EncodedGIDSize {
+		return ""
+	}
+
+	unescapedContinueURL, err := url.QueryUnescape(relayState[gid.EncodedGIDSize:])
+	if err != nil {
+		return ""
+	}
+
+	safeContinue, ok := h.safeRedirect.Validate(ctx, unescapedContinueURL)
+	if !ok {
+		return ""
+	}
+
+	return safeContinue
+}
+
+func (h *SAMLHandler) renderAssertionError(w http.ResponseWriter, r *http.Request, relayState string, err error) {
 	h.logger.ErrorCtx(r.Context(), "cannot handle SAML assertion", log.Error(err))
-	redirectAuthError(w, r, authErrorAuthenticationFailed)
+	continueURL := h.continueURLFromRelayState(r.Context(), relayState)
+	redirectAuthError(w, r, authErrorAuthenticationFailed, continueURL)
 }
 
 func (h *SAMLHandler) MetadataHandler(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +126,8 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, membership, err := h.iam.SAMLService.HandleAssertion(ctx, samlResponse, configID)
 	if err != nil {
-		h.renderAssertionError(w, r, err)
+		h.renderAssertionError(w, r, relayState, err)
+
 		return
 	}
 

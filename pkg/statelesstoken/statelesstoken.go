@@ -128,6 +128,25 @@ func DecodePayload[T any](tokenString string) (*Payload[T], error) {
 // ValidateToken validates a token and unmarshals the payload
 // It returns an error if the token is invalid or expired
 func ValidateToken[T any](secret string, tokenType string, tokenString string) (*Payload[T], error) {
+	payload, err := parseSignedToken[T](secret, tokenType, tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Now().After(payload.ExpiresAt) {
+		return nil, &ErrExpiredToken{message: "token has expired"}
+	}
+
+	return payload, nil
+}
+
+// ValidateTokenAllowExpired validates signature and type but ignores expiration.
+// Use only when recovering non-sensitive metadata (e.g. post-auth redirect URLs).
+func ValidateTokenAllowExpired[T any](secret string, tokenType string, tokenString string) (*Payload[T], error) {
+	return parseSignedToken[T](secret, tokenType, tokenString)
+}
+
+func parseSignedToken[T any](secret string, tokenType string, tokenString string) (*Payload[T], error) {
 	parts := strings.Split(tokenString, ".")
 	if len(parts) != 2 {
 		return nil, &ErrInvalidToken{message: "invalid token format"}
@@ -152,10 +171,6 @@ func ValidateToken[T any](secret string, tokenType string, tokenString string) (
 	var payload Payload[T]
 	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal token payload: %w", err)
-	}
-
-	if time.Now().After(payload.ExpiresAt) {
-		return nil, &ErrExpiredToken{message: "token has expired"}
 	}
 
 	if payload.Type != tokenType {

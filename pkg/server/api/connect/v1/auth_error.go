@@ -35,9 +35,13 @@ const (
 	authErrorMagicLinkInvalid          = "magic_link_invalid"
 )
 
-func redirectAuthError(w http.ResponseWriter, r *http.Request, code string) {
+func redirectAuthError(w http.ResponseWriter, r *http.Request, code string, continueURL string) {
 	q := url.Values{}
 	q.Set("error", code)
+
+	if continueURL != "" {
+		q.Set("continue", continueURL)
+	}
 
 	redirectURL := url.URL{
 		Path:     "/auth/error",
