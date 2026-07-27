@@ -18,21 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-type Translator = (s: string) => string;
+type Translator = (key: string) => string;
 
 const checkKeyLabels: Record<string, string> = {
-  DISK_ENCRYPTION: "Disk encryption",
-  SCREEN_LOCK: "Screen lock",
-  FIREWALL_ENABLED: "Firewall enabled",
-  TIME_SYNC: "Time sync",
-  OS_VERSION: "OS version",
-  AUTO_UPDATE: "Auto update",
-  PASSWORD_POLICY: "Password policy",
-  REMOTE_LOGIN: "Remote login",
-  MALWARE_PROTECTION: "Malware protection",
+  DISK_ENCRYPTION: "devices.postures.checks.diskEncryption",
+  SCREEN_LOCK: "devices.postures.checks.screenLock",
+  FIREWALL_ENABLED: "devices.postures.checks.firewallEnabled",
+  TIME_SYNC: "devices.postures.checks.timeSync",
+  OS_VERSION: "devices.postures.checks.osVersion",
+  AUTO_UPDATE: "devices.postures.checks.autoUpdate",
+  PASSWORD_POLICY: "devices.postures.checks.passwordPolicy",
+  REMOTE_LOGIN: "devices.postures.checks.remoteLogin",
+  MALWARE_PROTECTION: "devices.postures.checks.malwareProtection",
 };
 
-export function getPostureCheckLabel(__: Translator, checkKey: string) {
+export function getPostureCheckLabel(t: Translator, checkKey: string) {
   const label = checkKeyLabels[checkKey];
-  return label ? __(label) : checkKey;
+  return label ? t(label) : checkKey;
 }

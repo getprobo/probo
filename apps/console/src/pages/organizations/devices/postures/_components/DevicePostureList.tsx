@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -41,23 +41,23 @@ interface DevicePostureListProps {
 }
 
 export function DevicePostureList({ deviceFragmentRef }: DevicePostureListProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const device = useFragment(deviceFragment, deviceFragmentRef);
 
   return (
     <Table>
       <Thead>
         <Tr>
-          <Th>{__("Check")}</Th>
-          <Th>{__("Status")}</Th>
-          <Th className="text-end">{__("Observed at")}</Th>
+          <Th>{t("devices.postures.columns.check")}</Th>
+          <Th>{t("devices.postures.columns.status")}</Th>
+          <Th className="text-end">{t("devices.postures.columns.observedAt")}</Th>
         </Tr>
       </Thead>
       <Tbody>
         {device.latestPostures.length === 0 && (
           <Tr>
             <Td colSpan={3} className="text-center text-txt-secondary">
-              {__("No posture checks recorded")}
+              {t("devices.postures.empty")}
             </Td>
           </Tr>
         )}

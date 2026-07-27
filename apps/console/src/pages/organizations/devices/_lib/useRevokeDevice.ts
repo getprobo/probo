@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
+import { useTranslation } from "react-i18next";
 import { useConfirm, useToast } from "@probo/ui";
 import { useCallback } from "react";
 import { useMutation } from "react-relay";
@@ -48,10 +48,10 @@ interface RevokeDeviceInput {
 }
 
 export function useRevokeDevice() {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const confirm = useConfirm();
-  const pendingLabel = __("(pending)");
+  const pendingLabel = t("devices.values.pending");
 
   const [revokeDevice, isRevoking] = useMutation<useRevokeDeviceMutation>(
     revokeDeviceMutation,
@@ -67,14 +67,14 @@ export function useRevokeDevice() {
               onCompleted(_, errors) {
                 if (errors?.length) {
                   toast({
-                    title: __("Error"),
+                    title: t("common.error"),
                     description: errors[0].message,
                     variant: "error",
                   });
                 } else {
                   toast({
-                    title: __("Success"),
-                    description: __("Device revoked"),
+                    title: t("common.success"),
+                    description: t("devices.messages.revoked"),
                     variant: "success",
                   });
                 }
@@ -82,9 +82,9 @@ export function useRevokeDevice() {
               },
               onError(error) {
                 toast({
-                  title: __("Error"),
+                  title: t("common.error"),
                   description: formatError(
-                    __("Failed to revoke device"),
+                    t("devices.errors.revoke"),
                     error,
                   ),
                   variant: "error",
@@ -94,18 +94,13 @@ export function useRevokeDevice() {
             });
           }),
         {
-          message: sprintf(
-            __(
-              "Revoke device \"%s\"? The agent on the device will stop reporting and must be re-enrolled.",
-            ),
-            displayValue(device.hostname, pendingLabel),
-          ),
+          message: t("devices.confirmations.revoke", { hostname: displayValue(device.hostname, pendingLabel) }),
           variant: "danger",
-          label: __("Revoke"),
+          label: t("devices.actions.revoke"),
         },
       );
     },
-    [__, confirm, pendingLabel, revokeDevice, toast],
+    [t, confirm, pendingLabel, revokeDevice, toast],
   );
 
   return [confirmRevoke, isRevoking] as const;

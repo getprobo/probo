@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatDate } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import { Badge, Card } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useFragment } from "react-relay";
@@ -48,52 +48,52 @@ const deviceFragment = graphql`
 export function DeviceDetailsCard(props: {
   deviceFragmentRef: DeviceDetailsCard_deviceFragment$key;
 }) {
-  const { __ } = useTranslate();
-  const pendingLabel = __("(pending)");
+  const { t } = useTranslation();
+  const pendingLabel = t("devices.values.pending");
   const device = useFragment(deviceFragment, props.deviceFragmentRef);
 
   return (
     <Card className="space-y-4" padded>
       <div className="grid grid-cols-3 gap-4">
         <DetailField
-          label={__("State")}
+          label={t("devices.fields.state")}
           value={
             <Badge variant={stateVariant(device.state)}>{device.state}</Badge>
           }
         />
         <DetailField
-          label={__("Owner")}
-          value={device.owner?.fullName ?? __("Unassigned")}
+          label={t("devices.fields.owner")}
+          value={device.owner?.fullName ?? t("devices.values.unassigned")}
         />
         <DetailField
-          label={__("Hardware UUID")}
+          label={t("devices.fields.hardwareUuid")}
           value={displayValue(device.hardwareUuid, pendingLabel)}
         />
         <DetailField
-          label={__("Serial number")}
+          label={t("devices.fields.serialNumber")}
           value={displayValue(device.serialNumber, pendingLabel)}
         />
         <DetailField
-          label={__("Platform")}
+          label={t("devices.fields.platform")}
           value={displayValue(device.platform, pendingLabel)}
         />
         <DetailField
-          label={__("OS version")}
+          label={t("devices.fields.osVersion")}
           value={displayValue(device.osVersion, pendingLabel)}
         />
         <DetailField
-          label={__("Agent version")}
+          label={t("devices.fields.agentVersion")}
           value={displayValue(device.agentVersion, pendingLabel)}
         />
         <DetailField
-          label={__("Enrolled at")}
+          label={t("devices.fields.enrolledAt")}
           value={
             device.enrolledAt ? formatDate(device.enrolledAt) : pendingLabel
           }
         />
         <DetailField
-          label={__("Last seen")}
-          value={device.lastSeenAt ? formatDate(device.lastSeenAt) : __("Never")}
+          label={t("devices.fields.lastSeen")}
+          value={device.lastSeenAt ? formatDate(device.lastSeenAt) : t("devices.values.never")}
         />
       </div>
     </Card>

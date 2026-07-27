@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError, sprintf } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { formatError } from "@probo/helpers";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   IconArrowsClockwise,
@@ -80,7 +80,7 @@ function EnrollDeviceButtonContent(
     onComplete,
   }: EnrollDeviceButtonProps,
 ) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const environment = useRelayEnvironment();
   const matchingSession
@@ -212,7 +212,7 @@ function EnrollDeviceButtonContent(
       onCompleted(response, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors[0].message,
             variant: "error",
           });
@@ -232,9 +232,9 @@ function EnrollDeviceButtonContent(
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: formatError(
-            __("Failed to create device"),
+            t("devices.errors.create"),
             error,
           ),
           variant: "error",
@@ -249,11 +249,11 @@ function EnrollDeviceButtonContent(
         <div className="flex items-center gap-2 text-sm font-medium text-txt-success">
           <IconCircleCheck size={18} />
           {deviceHostname
-            ? sprintf(__("%s is enrolled."), deviceHostname)
-            : __("This device is enrolled.")}
+            ? t("deviceEnrollment.status.enrolledWithHostname", { hostname: deviceHostname })
+            : t("deviceEnrollment.status.enrolled")}
         </div>
         <p className="text-sm text-txt-secondary">
-          {__("You can close this window.")}
+          {t("deviceEnrollment.status.closeWindow")}
         </p>
       </div>
     );
@@ -263,7 +263,7 @@ function EnrollDeviceButtonContent(
     return (
       <div className="flex items-center gap-2 text-sm text-txt-secondary">
         <IconArrowsClockwise size={18} className="animate-spin" />
-        {__("Waiting for the agent's first check-in…")}
+        {t("deviceEnrollment.status.waitingForCheckIn")}
       </div>
     );
   }
@@ -272,9 +272,7 @@ function EnrollDeviceButtonContent(
     <div className="space-y-2">
       {hasTimedOut && (
         <p className="text-sm text-txt-secondary">
-          {__(
-            "We haven't heard from the agent yet. Make sure the desktop agent is installed and running, then try again.",
-          )}
+          {t("deviceEnrollment.status.timedOut")}
         </p>
       )}
       <Button
@@ -282,10 +280,10 @@ function EnrollDeviceButtonContent(
         disabled={isCreating || organizationId == null}
       >
         {isCreating
-          ? __("Preparing…")
+          ? t("deviceEnrollment.actions.preparing")
           : hasTimedOut
-            ? __("Try again")
-            : __("Open Probo agent")}
+            ? t("common.actions.tryAgain")
+            : t("deviceEnrollment.actions.openAgent")}
       </Button>
     </div>
   );

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { useTranslation } from "react-i18next";
 import {
   Breadcrumb,
   Button,
@@ -77,7 +77,7 @@ export function ReassignDeviceDialog({
   organizationId,
   ref: refProps,
 }: ReassignDeviceDialogProps) {
-  const { __ } = useTranslate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const ref = refProps ?? dialogRef;
@@ -121,7 +121,7 @@ export function ReassignDeviceDialog({
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
-            title: __("Error"),
+            title: t("common.error"),
             description: errors[0].message,
             variant: "error",
           });
@@ -129,8 +129,8 @@ export function ReassignDeviceDialog({
         }
 
         toast({
-          title: __("Success"),
-          description: __("Device owner updated"),
+          title: t("common.success"),
+          description: t("devices.messages.ownerUpdated"),
           variant: "success",
         });
         handleClose();
@@ -138,9 +138,9 @@ export function ReassignDeviceDialog({
       },
       onError(error) {
         toast({
-          title: __("Error"),
+          title: t("common.error"),
           description: formatError(
-            __("Failed to re-assign device"),
+            t("devices.errors.reassign"),
             error,
           ),
           variant: "error",
@@ -154,7 +154,7 @@ export function ReassignDeviceDialog({
       ref={ref}
       onClose={handleClose}
       onOpenChange={setOpen}
-      title={<Breadcrumb items={[__("Devices"), __("Re-assign")]} />}
+      title={<Breadcrumb items={[t("devices.title"), t("devices.actions.reassign")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
@@ -163,14 +163,14 @@ export function ReassignDeviceDialog({
               organizationId={organizationId}
               control={control}
               name="ownerId"
-              label={__("Owner")}
+              label={t("devices.fields.owner")}
               optional
             />
           )}
         </DialogContent>
         <DialogFooter>
           <Button disabled={formState.isSubmitting || isInFlight} type="submit">
-            {__("Re-assign")}
+            {t("devices.actions.reassign")}
           </Button>
         </DialogFooter>
       </form>
