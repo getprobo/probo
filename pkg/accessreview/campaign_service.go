@@ -69,10 +69,6 @@ func (s *Service) CreateCampaign(
 					return fmt.Errorf("cannot load access source: %w", err)
 				}
 
-				if source.OrganizationID != campaign.OrganizationID {
-					return coredata.ErrResourceNotFound
-				}
-
 				if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
 					return fmt.Errorf("cannot snapshot scope source: %w", err)
 				}
@@ -252,10 +248,6 @@ func (s *Service) AddCampaignSource(
 				return fmt.Errorf("cannot load access source: %w", err)
 			}
 
-			if source.OrganizationID != campaign.OrganizationID {
-				return coredata.ErrResourceNotFound
-			}
-
 			if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
 				return fmt.Errorf("cannot snapshot scope source: %w", err)
 			}
@@ -338,10 +330,6 @@ func (s *Service) syncCampaignSources(
 			}
 
 			return fmt.Errorf("cannot load access source: %w", err)
-		}
-
-		if source.OrganizationID != campaign.OrganizationID {
-			return coredata.ErrResourceNotFound
 		}
 
 		if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {

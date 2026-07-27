@@ -67,10 +67,6 @@ func (s *Service) FetchSource(
 				return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 			}
 
-			if source.OrganizationID != campaign.OrganizationID {
-				return fmt.Errorf("cannot process access source: %s does not belong to campaign organization", sourceID)
-			}
-
 			var err error
 
 			driver, err = s.resolveDriver(ctx, tx, scope, source)
