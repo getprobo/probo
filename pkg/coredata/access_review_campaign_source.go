@@ -238,26 +238,6 @@ WHEN NOT MATCHED BY SOURCE
 	return nil
 }
 
-func uniqueGIDs(ids []gid.GID) []gid.GID {
-	if len(ids) == 0 {
-		return nil
-	}
-
-	seen := make(map[gid.GID]struct{}, len(ids))
-	unique := make([]gid.GID, 0, len(ids))
-
-	for _, id := range ids {
-		if _, ok := seen[id]; ok {
-			continue
-		}
-
-		seen[id] = struct{}{}
-		unique = append(unique, id)
-	}
-
-	return unique
-}
-
 func (s *AccessReviewCampaignSource) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
