@@ -4,6 +4,10 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+### Fixed
+
+- Grant all Google Consent Mode types when the banner config is unavailable (discovery mode), so GTM-managed tags can fire and be detected instead of staying blocked by the eager deny-all bootstrap
+
 ## [0.10.0] - 2026-06-19
 
 ### Changed

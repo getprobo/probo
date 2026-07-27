@@ -45,17 +45,32 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     };
   }
 
+  private static readonly ALL_TYPES = [
+    "ad_storage",
+    "ad_user_data",
+    "ad_personalization",
+    "analytics_storage",
+    "functionality_storage",
+    "personalization_storage",
+    "security_storage",
+  ] as const;
+
   bootstrap(): void {
     const consentFn = this.getConsentFn();
-    consentFn("consent", "default", {
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-      analytics_storage: "denied",
-      functionality_storage: "denied",
-      personalization_storage: "denied",
-      security_storage: "denied",
-    });
+    const defaults: Record<string, string> = {};
+    for (const type of GoogleConsentModeIntegration.ALL_TYPES) {
+      defaults[type] = "denied";
+    }
+    consentFn("consent", "default", defaults);
+  }
+
+  grantAll(): void {
+    const consentFn = this.getConsentFn();
+    const update: Record<string, string> = {};
+    for (const type of GoogleConsentModeIntegration.ALL_TYPES) {
+      update[type] = "granted";
+    }
+    consentFn("consent", "update", update);
   }
 
   setDefaults(categories: Category[]): void {

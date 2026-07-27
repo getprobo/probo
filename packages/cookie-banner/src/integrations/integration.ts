@@ -24,6 +24,12 @@ export interface ConsentIntegration {
   /** Called eagerly before config fetch to deny all tracking by default. */
   bootstrap(): void;
 
+  /**
+   * Called when the banner config is unavailable (discovery mode).
+   * Grants all consent types so trackers can fire and be detected.
+   */
+  grantAll(): void;
+
   /** Called once after config is loaded, before any consent is applied. */
   setDefaults(categories: Category[]): void;
 
