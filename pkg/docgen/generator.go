@@ -344,6 +344,28 @@ type (
 		DueDate                string
 	}
 
+	BusinessFunctionListData struct {
+		Title                  string
+		OrganizationName       string
+		CreatedAt              time.Time
+		TotalBusinessFunctions int
+		Rows                   []BusinessFunctionListRow
+	}
+
+	BusinessFunctionListRow struct {
+		ReferenceID     string
+		Name            string
+		Classification  string
+		MTD             string
+		RTO             string
+		RPO             string
+		ImpactTolerance string
+		Notes           string
+		Owner           string
+		Assets          string
+		ThirdParties    string
+	}
+
 	ProcessingActivityListData struct {
 		Title                     string
 		OrganizationName          string

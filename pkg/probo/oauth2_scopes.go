@@ -31,6 +31,9 @@ const (
 	ScopeV1AuditRead coredata.OAuth2Scope = "v1:audit:read"
 	ScopeV1Audit     coredata.OAuth2Scope = "v1:audit"
 
+	ScopeV1BusinessFunctionRead coredata.OAuth2Scope = "v1:business-function:read"
+	ScopeV1BusinessFunction     coredata.OAuth2Scope = "v1:business-function"
+
 	ScopeV1CommonThirdPartyRead coredata.OAuth2Scope = "v1:common-third-party:read"
 	ScopeV1CommonThirdParty     coredata.OAuth2Scope = "v1:common-third-party"
 
@@ -111,6 +114,18 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionFindingAuditMappingCreate,
 		ActionFindingAuditMappingDelete,
 		ActionFindingPublish,
+	},
+	ScopeV1BusinessFunctionRead: {
+		ActionBusinessFunctionGet,
+		ActionBusinessFunctionList,
+	},
+	ScopeV1BusinessFunction: {
+		ActionBusinessFunctionGet,
+		ActionBusinessFunctionList,
+		ActionBusinessFunctionCreate,
+		ActionBusinessFunctionUpdate,
+		ActionBusinessFunctionDelete,
+		ActionBusinessFunctionPublish,
 	},
 	ScopeV1CommonThirdPartyRead: {
 		ActionCommonThirdPartyGet,

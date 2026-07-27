@@ -18,27 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  IconSend,
-  IconUpload,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
 import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { PublishTransferImpactAssessmentListDialogMutation } from "#/__generated__/core/PublishTransferImpactAssessmentListDialogMutation.graphql";
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import {
+  PublishListDialog,
+  type PublishListDialogInput,
+} from "#/components/dialogs/PublishListDialog";
 
 const publishMutation = graphql`
   mutation PublishTransferImpactAssessmentListDialogMutation(
@@ -68,111 +57,42 @@ export function PublishTransferImpactAssessmentListDialog({
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const dialogRef = useDialogRef();
+  const [publish, isPublishing] = useMutation<PublishTransferImpactAssessmentListDialogMutation>(publishMutation);
 
-  const schema = useMemo(() => z.object({
-    approverIds: z.array(z.string()),
-  }), []);
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      approverIds: defaultApproverIds ?? [],
-    },
-  });
-
-  const [publish, isPublishing]
-    = useMutation<PublishTransferImpactAssessmentListDialogMutation>(publishMutation);
-
-  const minorRef = useRef(false);
-
-  const approverIds = watch("approverIds");
-  const hasApprovers = approverIds.length > 0;
-
-  const onSubmit = (data: z.infer<typeof schema>) => {
-    publish({
-      variables: {
-        input: {
-          minor: minorRef.current,
-          organizationId,
-          approverIds: !minorRef.current && data.approverIds.length > 0 ? data.approverIds : undefined,
+  const onPublish = (input: PublishListDialogInput) =>
+    new Promise<string | null | undefined>((resolve, reject) => {
+      publish({
+        variables: { input },
+        onCompleted: (response) => {
+          resolve(response.publishTransferImpactAssessmentList?.documentEdge?.node?.id);
         },
-      },
-      onCompleted(response) {
-        const documentId = response.publishTransferImpactAssessmentList?.documentEdge?.node?.id;
-        if (documentId) {
-          toast({
-            title: t("publishTiaListDialog.messages.success"),
-            description: hasApprovers
-              ? t("publishTiaListDialog.messages.approvalRequested")
-              : t("publishTiaListDialog.messages.published"),
-            variant: "success",
-          });
-          dialogRef.current?.close();
-          reset();
-          onPublished?.(documentId);
-        }
-      },
-      onError(error) {
-        toast({
-          title: t("publishTiaListDialog.messages.error"),
-          description: formatError(
-            t("publishTiaListDialog.errors.publish"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
+        onError: reject,
+      });
     });
-  };
 
   return (
-    <Dialog
-      className="max-w-xl"
-      ref={dialogRef}
-      trigger={children}
-      title={t("publishTiaListDialog.title")}
+    <PublishListDialog
+      organizationId={organizationId}
+      defaultApproverIds={defaultApproverIds}
+      isPublishing={isPublishing}
+      onPublish={onPublish}
+      onPublished={onPublished}
+      labels={{
+        title: t("publishTiaListDialog.title"),
+        description: t("publishTiaListDialog.description"),
+        approvers: t("publishTiaListDialog.fields.approvers"),
+        approversPlaceholder: t("publishTiaListDialog.fields.approversPlaceholder"),
+        publishMinor: t("publishTiaListDialog.actions.publishMinor"),
+        publish: t("publishTiaListDialog.actions.publish"),
+        requestApproval: t("publishTiaListDialog.actions.requestApproval"),
+        successTitle: t("publishTiaListDialog.messages.success"),
+        published: t("publishTiaListDialog.messages.published"),
+        approvalRequested: t("publishTiaListDialog.messages.approvalRequested"),
+        errorTitle: t("publishTiaListDialog.messages.error"),
+        publishError: t("publishTiaListDialog.errors.publish"),
+      }}
     >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
-          <div className="space-y-4">
-            <p className="text-sm text-txt-secondary">
-              {t("publishTiaListDialog.description")}
-            </p>
-            <PeopleMultiSelectField
-              name="approverIds"
-              label={t("publishTiaListDialog.fields.approvers")}
-              control={control}
-              organizationId={organizationId}
-              placeholder={t("publishTiaListDialog.fields.approversPlaceholder")}
-            />
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { minorRef.current = true; }}
-            disabled={isPublishing}
-          >
-            {t("publishTiaListDialog.actions.publishMinor")}
-          </Button>
-          <Button
-            type="submit"
-            icon={hasApprovers ? IconSend : IconUpload}
-            onClick={() => { minorRef.current = false; }}
-            disabled={isPublishing}
-          >
-            {hasApprovers ? t("publishTiaListDialog.actions.requestApproval") : t("publishTiaListDialog.actions.publish")}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+      {children}
+    </PublishListDialog>
   );
 }

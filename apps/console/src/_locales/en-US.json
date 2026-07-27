@@ -604,7 +604,8 @@
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Add people...",
-    "empty": "No people available"
+    "empty": "No people available",
+    "remove": "Remove {{name}}"
   },
   "peopleSelectField": {
     "placeholder": "Select an owner",
@@ -657,7 +658,8 @@
   },
   "thirdPartiesMultiSelectField": {
     "addPlaceholder": "Add third parties...",
-    "empty": "No third parties available"
+    "empty": "No third parties available",
+    "remove": "Remove {{name}}"
   },
   "linkedMeasuresCard": {
     "title": "Measures",
@@ -1353,7 +1355,7 @@
   "membershipsDropdown": { "searchPlaceholder": "Search organizations...", "loading": "Loading organizations...", "addOrganization": "Add organization" },
   "membershipsDropdownInvitingItem": { "title": "Check your email to accept the invitation" },
   "membershipsDropdownMenu": { "pendingInvitations": "Pending invitations" },
-  "sidebar": { "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "accessReviews": "Access Reviews", "compliancePortals": "Compliance Portals", "cookieBanners": "Cookie Banners", "settings": "Settings" },
+  "sidebar": { "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "businessFunctions": "Business Functions", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "accessReviews": "Access Reviews", "compliancePortals": "Compliance Portals", "cookieBanners": "Cookie Banners", "settings": "Settings" },
   "viewerMembershipDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "apiKeys": "API Keys", "oauthTokens": "OAuth tokens", "mySignatures": "My Signatures", "employeePortal": "Employee Portal", "help": "Help", "logout": "Logout" }
@@ -1687,6 +1689,60 @@
     "title": "Assets",
     "description": "Manage your organization's assets and their classifications.",
     "actions": { "document": "Document", "publish": "Publish", "addAsset": "Add asset" }
+  },
+  "assetsMultiSelectField": {
+    "addPlaceholder": "Add assets...",
+    "empty": "No assets available",
+    "remove": "Remove {{name}}"
+  },
+  "businessFunctionsPage": {
+    "title": "Business Functions",
+    "description": "Manage your organization's business functions register.",
+    "actions": { "document": "Document", "publish": "Publish", "add": "Add Business Function", "loadMore": "Load more", "loading": "Loading..." },
+    "filters": { "allClassifications": "All classifications" },
+    "classifications": { "critical": "Critical", "important": "Important", "secondary": "Secondary", "standard": "Standard" },
+    "columns": { "referenceId": "Reference ID", "name": "Name", "classification": "Classification", "mtd": "MTD", "rto": "RTO", "rpo": "RPO", "owner": "Owner", "assets": "Assets", "thirdParties": "Third parties", "actions": "Actions" },
+    "none": "None",
+    "empty": {
+      "title": "No Business Functions yet",
+      "description": "Create your first Business Function to get started.",
+      "filteredTitle": "No matching Business Functions",
+      "filteredDescription": "No Business Functions match the selected classification."
+    }
+  },
+  "businessFunctionListItem": {
+    "actions": { "delete": "Delete" },
+    "messages": { "success": "Success", "error": "Error", "deleted": "Business Function deleted successfully" },
+    "errors": { "delete": "Failed to delete business function" },
+    "deleteConfirmation": "This will permanently delete the business function {{referenceId}}. This action cannot be undone."
+  },
+  "businessFunctionDetailsPage": {
+    "breadcrumb": { "businessFunctions": "Business Functions", "unknown": "Unknown Business Function" },
+    "validation": { "referenceIdRequired": "Reference ID is required", "nameRequired": "Name is required" },
+    "fields": { "referenceId": "Reference ID", "referenceIdPlaceholder": "e.g. F-10", "name": "Name", "namePlaceholder": "Enter name", "classification": "Classification", "classificationPlaceholder": "Select classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Common values: 1h = 60, 12h = 720, 24h = 1440, 3d = 4320 minutes", "impactTolerance": "Impact tolerance", "impactTolerancePlaceholder": "Describe acceptable impact during disruption", "notes": "Notes", "notesPlaceholder": "Dependencies and other notes", "owner": "Owner", "assets": "Assets", "thirdParties": "Third parties" },
+    "classifications": { "critical": "Critical", "important": "Important", "secondary": "Secondary", "standard": "Standard" },
+    "actions": { "delete": "Delete", "update": "Update", "updating": "Updating..." },
+    "messages": { "success": "Success", "error": "Error", "updated": "Business Function updated successfully", "deleted": "Business Function deleted successfully" },
+    "errors": { "update": "Failed to update business function", "delete": "Failed to delete business function" },
+    "dependenciesTruncated": "This Business Function has more than 100 linked assets or third parties. Dependency editing is disabled so saving cannot silently remove relationships that were not loaded.",
+    "deleteConfirmation": "This will permanently delete the business function {{referenceId}}. This action cannot be undone."
+  },
+  "createBusinessFunctionDialog": {
+    "breadcrumb": { "businessFunctions": "Business Functions", "create": "Create" },
+    "validation": { "nameRequired": "Name is required" },
+    "fields": { "referenceId": "Reference ID", "referenceIdPlaceholder": "e.g. F-10", "name": "Name", "namePlaceholder": "Enter name", "classification": "Classification", "classificationPlaceholder": "Select classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Common values: 1h = 60, 12h = 720, 24h = 1440, 3d = 4320 minutes", "impactTolerance": "Impact tolerance", "impactTolerancePlaceholder": "Describe the impact tolerance", "notes": "Notes", "notesPlaceholder": "Dependencies and other notes", "owner": "Owner", "assets": "Assets", "thirdParties": "Third parties" },
+    "classifications": { "critical": "Critical", "important": "Important", "secondary": "Secondary", "standard": "Standard" },
+    "actions": { "create": "Create Business Function", "creating": "Creating..." },
+    "messages": { "success": "Success", "error": "Error", "created": "Business Function created successfully" },
+    "errors": { "create": "Failed to create business function" }
+  },
+  "publishBusinessFunctionListDialog": {
+    "title": "Publish Business Function List",
+    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
+    "errors": { "publish": "Failed to publish business function list" },
+    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Business Function list published successfully." },
+    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
+    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
   },
   "createAssetDialog": {
     "breadcrumb": { "assets": "Assets", "newAsset": "New Asset" },

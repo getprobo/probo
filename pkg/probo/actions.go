@@ -229,6 +229,14 @@ const (
 	ActionObligationDelete  = "core:obligation:delete"
 	ActionObligationPublish = "core:obligation:publish"
 
+	// BusinessFunction actions
+	ActionBusinessFunctionGet     = "core:business-function:get"
+	ActionBusinessFunctionList    = "core:business-function:list"
+	ActionBusinessFunctionCreate  = "core:business-function:create"
+	ActionBusinessFunctionUpdate  = "core:business-function:update"
+	ActionBusinessFunctionDelete  = "core:business-function:delete"
+	ActionBusinessFunctionPublish = "core:business-function:publish"
+
 	// ProcessingActivity actions
 	ActionProcessingActivityList    = "core:processing-activity:list"
 	ActionProcessingActivityGet     = "core:processing-activity:get"

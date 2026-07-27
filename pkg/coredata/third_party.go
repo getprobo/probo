@@ -1359,6 +1359,113 @@ WHERE %s
 	return nil
 }
 
+func (v *ThirdParties) CountByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyIDs []gid.GID,
+) (int, error) {
+	if len(thirdPartyIDs) == 0 {
+		return 0, nil
+	}
+
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	third_parties
+WHERE
+	%s
+	AND id = ANY(@third_party_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_ids": thirdPartyIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count thirdParties: %w", err)
+	}
+
+	return count, nil
+}
+
+func (v *ThirdParties) LoadByIDsWithCursor(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyIDs []gid.GID,
+	cursor *page.Cursor[ThirdPartyOrderField],
+) error {
+	if len(thirdPartyIDs) == 0 {
+		*v = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	parent_third_party_id,
+	common_third_party_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	countries,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
+	created_at,
+	updated_at
+FROM
+	third_parties
+WHERE
+	%s
+	AND id = ANY(@third_party_ids)
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_ids": thirdPartyIDs}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query thirdParties: %w", err)
+	}
+
+	thirdParties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect thirdParties: %w", err)
+	}
+
+	*v = thirdParties
+
+	return nil
+}
+
 func (v *ThirdParties) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -115,6 +115,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "MailingListUpdate"
 	case AuditLogEntryEntityType:
 		return "AuditLogEntry"
+	case BusinessFunctionEntityType:
+		return "BusinessFunction"
 	default:
 		return "Unknown"
 	}

@@ -1131,7 +1131,8 @@
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Ajouter des personnes...",
-    "empty": "Aucune personne disponible"
+    "empty": "Aucune personne disponible",
+    "remove": "Retirer {{name}}"
   },
   "peopleSelectField": {
     "placeholder": "Sélectionner un propriétaire",
@@ -1180,7 +1181,8 @@
   },
   "thirdPartiesMultiSelectField": {
     "addPlaceholder": "Ajouter des tiers...",
-    "empty": "Aucun tiers disponible"
+    "empty": "Aucun tiers disponible",
+    "remove": "Retirer {{name}}"
   },
   "linkedMeasuresCard": {
     "title": "Mesures",
@@ -2393,6 +2395,7 @@
     "data": "Données",
     "audits": "Audits",
     "findings": "Constats",
+    "businessFunctions": "Fonctions métier",
     "obligations": "Obligations",
     "processingActivities": "Activités de traitement",
     "statementsOfApplicability": "Déclarations d’applicabilité",
@@ -3408,6 +3411,60 @@
       "publish": "Publier",
       "addAsset": "Ajouter un actif"
     }
+  },
+  "assetsMultiSelectField": {
+    "addPlaceholder": "Ajouter des actifs…",
+    "empty": "Aucun actif disponible",
+    "remove": "Retirer {{name}}"
+  },
+  "businessFunctionsPage": {
+    "title": "Fonctions métier",
+    "description": "Gérez le registre des fonctions métier de votre organisation.",
+    "actions": { "document": "Document", "publish": "Publier", "add": "Ajouter une fonction métier", "loadMore": "Charger plus", "loading": "Chargement…" },
+    "filters": { "allClassifications": "Toutes les classifications" },
+    "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
+    "columns": { "referenceId": "ID de référence", "name": "Nom", "classification": "Classification", "mtd": "MTD", "rto": "RTO", "rpo": "RPO", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers", "actions": "Actions" },
+    "none": "Aucun",
+    "empty": {
+      "title": "Aucune fonction métier",
+      "description": "Créez votre première fonction métier pour commencer.",
+      "filteredTitle": "Aucune fonction métier correspondante",
+      "filteredDescription": "Aucune fonction métier ne correspond à la classification sélectionnée."
+    }
+  },
+  "businessFunctionListItem": {
+    "actions": { "delete": "Supprimer" },
+    "messages": { "success": "Succès", "error": "Erreur", "deleted": "Fonction métier supprimée avec succès" },
+    "errors": { "delete": "Échec de la suppression de la fonction métier" },
+    "deleteConfirmation": "Cela supprimera définitivement la fonction métier {{referenceId}}. Cette action est irréversible."
+  },
+  "businessFunctionDetailsPage": {
+    "breadcrumb": { "businessFunctions": "Fonctions métier", "unknown": "Fonction métier inconnue" },
+    "validation": { "referenceIdRequired": "L'ID de référence est requis", "nameRequired": "Le nom est requis" },
+    "fields": { "referenceId": "ID de référence", "referenceIdPlaceholder": "ex. F-10", "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire l'impact acceptable en cas de perturbation", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
+    "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
+    "actions": { "delete": "Supprimer", "update": "Mettre à jour", "updating": "Mise à jour…" },
+    "messages": { "success": "Succès", "error": "Erreur", "updated": "Fonction métier mise à jour avec succès", "deleted": "Fonction métier supprimée avec succès" },
+    "errors": { "update": "Échec de la mise à jour de la fonction métier", "delete": "Échec de la suppression de la fonction métier" },
+    "dependenciesTruncated": "Cette fonction métier a plus de 100 actifs ou tiers liés. L'édition des dépendances est désactivée afin qu'une sauvegarde ne puisse pas supprimer silencieusement des relations non chargées.",
+    "deleteConfirmation": "Cela supprimera définitivement la fonction métier {{referenceId}}. Cette action est irréversible."
+  },
+  "createBusinessFunctionDialog": {
+    "breadcrumb": { "businessFunctions": "Fonctions métier", "create": "Créer" },
+    "validation": { "nameRequired": "Le nom est requis" },
+    "fields": { "referenceId": "ID de référence", "referenceIdPlaceholder": "ex. F-10", "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire la tolérance d'impact", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
+    "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
+    "actions": { "create": "Créer la fonction métier", "creating": "Création…" },
+    "messages": { "success": "Succès", "error": "Erreur", "created": "Fonction métier créée avec succès" },
+    "errors": { "create": "Échec de la création de la fonction métier" }
+  },
+  "publishBusinessFunctionListDialog": {
+    "title": "Publier la liste des fonctions métier",
+    "description": "Sélectionnez des approbateurs pour demander une approbation avant publication, ou publiez directement sans approbateurs.",
+    "errors": { "publish": "Échec de la publication de la liste des fonctions métier" },
+    "messages": { "success": "Succès", "error": "Erreur", "approvalRequested": "Approbation demandée avec succès.", "published": "Liste des fonctions métier publiée avec succès." },
+    "fields": { "approvers": "Approbateurs", "approversPlaceholder": "Ajouter des approbateurs…" },
+    "actions": { "publishMinor": "Publier en mineur", "requestApproval": "Demander une approbation", "publish": "Publier" }
   },
   "createAssetDialog": {
     "breadcrumb": {

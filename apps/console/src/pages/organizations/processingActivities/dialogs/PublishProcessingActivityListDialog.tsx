@@ -18,27 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  IconSend,
-  IconUpload,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
 import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { PublishProcessingActivityListDialogMutation } from "#/__generated__/core/PublishProcessingActivityListDialogMutation.graphql";
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import {
+  PublishListDialog,
+  type PublishListDialogInput,
+} from "#/components/dialogs/PublishListDialog";
 
 const publishMutation = graphql`
   mutation PublishProcessingActivityListDialogMutation(
@@ -68,111 +57,42 @@ export function PublishProcessingActivityListDialog({
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const dialogRef = useDialogRef();
+  const [publish, isPublishing] = useMutation<PublishProcessingActivityListDialogMutation>(publishMutation);
 
-  const schema = useMemo(() => z.object({
-    approverIds: z.array(z.string()),
-  }), []);
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      approverIds: defaultApproverIds ?? [],
-    },
-  });
-
-  const [publish, isPublishing]
-    = useMutation<PublishProcessingActivityListDialogMutation>(publishMutation);
-
-  const minorRef = useRef(false);
-
-  const approverIds = watch("approverIds");
-  const hasApprovers = approverIds.length > 0;
-
-  const onSubmit = (data: z.infer<typeof schema>) => {
-    publish({
-      variables: {
-        input: {
-          minor: minorRef.current,
-          organizationId,
-          approverIds: !minorRef.current && data.approverIds.length > 0 ? data.approverIds : undefined,
+  const onPublish = (input: PublishListDialogInput) =>
+    new Promise<string | null | undefined>((resolve, reject) => {
+      publish({
+        variables: { input },
+        onCompleted: (response) => {
+          resolve(response.publishProcessingActivityList?.documentEdge?.node?.id);
         },
-      },
-      onCompleted(response) {
-        const documentId = response.publishProcessingActivityList?.documentEdge?.node?.id;
-        if (documentId) {
-          toast({
-            title: t("publishProcessingActivityListDialog.messages.success"),
-            description: hasApprovers
-              ? t("publishProcessingActivityListDialog.messages.approvalRequested")
-              : t("publishProcessingActivityListDialog.messages.published"),
-            variant: "success",
-          });
-          dialogRef.current?.close();
-          reset();
-          onPublished?.(documentId);
-        }
-      },
-      onError(error) {
-        toast({
-          title: t("publishProcessingActivityListDialog.messages.error"),
-          description: formatError(
-            t("publishProcessingActivityListDialog.errors.publish"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
+        onError: reject,
+      });
     });
-  };
 
   return (
-    <Dialog
-      className="max-w-xl"
-      ref={dialogRef}
-      trigger={children}
-      title={t("publishProcessingActivityListDialog.title")}
+    <PublishListDialog
+      organizationId={organizationId}
+      defaultApproverIds={defaultApproverIds}
+      isPublishing={isPublishing}
+      onPublish={onPublish}
+      onPublished={onPublished}
+      labels={{
+        title: t("publishProcessingActivityListDialog.title"),
+        description: t("publishProcessingActivityListDialog.description"),
+        approvers: t("publishProcessingActivityListDialog.fields.approvers"),
+        approversPlaceholder: t("publishProcessingActivityListDialog.fields.approversPlaceholder"),
+        publishMinor: t("publishProcessingActivityListDialog.actions.publishMinor"),
+        publish: t("publishProcessingActivityListDialog.actions.publish"),
+        requestApproval: t("publishProcessingActivityListDialog.actions.requestApproval"),
+        successTitle: t("publishProcessingActivityListDialog.messages.success"),
+        published: t("publishProcessingActivityListDialog.messages.published"),
+        approvalRequested: t("publishProcessingActivityListDialog.messages.approvalRequested"),
+        errorTitle: t("publishProcessingActivityListDialog.messages.error"),
+        publishError: t("publishProcessingActivityListDialog.errors.publish"),
+      }}
     >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
-          <div className="space-y-4">
-            <p className="text-sm text-txt-secondary">
-              {t("publishProcessingActivityListDialog.description")}
-            </p>
-            <PeopleMultiSelectField
-              name="approverIds"
-              label={t("publishProcessingActivityListDialog.fields.approvers")}
-              control={control}
-              organizationId={organizationId}
-              placeholder={t("publishProcessingActivityListDialog.fields.approversPlaceholder")}
-            />
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { minorRef.current = true; }}
-            disabled={isPublishing}
-          >
-            {t("publishProcessingActivityListDialog.actions.publishMinor")}
-          </Button>
-          <Button
-            type="submit"
-            icon={hasApprovers ? IconSend : IconUpload}
-            onClick={() => { minorRef.current = false; }}
-            disabled={isPublishing}
-          >
-            {hasApprovers ? t("publishProcessingActivityListDialog.actions.requestApproval") : t("publishProcessingActivityListDialog.actions.publish")}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+      {children}
+    </PublishListDialog>
   );
 }
