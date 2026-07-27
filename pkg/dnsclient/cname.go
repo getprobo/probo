@@ -28,49 +28,133 @@ import (
 	"codeberg.org/miekg/dns"
 )
 
-// CheckCNAME verifies that hostname has a single CNAME record owned by that
-// name and pointing at expectedTarget.
+const (
+	maxCNAMELookups = 4
+)
+
 func (c *Client) CheckCNAME(ctx context.Context, hostname, expectedTarget string) error {
 	owner := ToFQDN(hostname)
 	target := ToFQDN(expectedTarget)
 
+	current := owner
+	visited := map[string]struct{}{owner: {}}
+
+	for range maxCNAMELookups {
+		queryCtx, cancel := c.withExchangeTimeout(ctx)
+		resp, err := c.queryCNAME(queryCtx, current)
+
+		cancel()
+
+		if err != nil {
+			return err
+		}
+
+		edges, err := cnameEdges(resp)
+		if err != nil {
+			return err
+		}
+
+		next, ok := edges[current]
+		if !ok {
+			return cnameChainStopError(resp, hostname, owner, current, target)
+		}
+
+		// Resolvers disagree on QTYPE=CNAME: some answer with the first hop
+		// only, others chase and return every hop, so consume the hops this
+		// answer already carries before spending another lookup.
+		for {
+			if _, seen := visited[next]; seen {
+				return fmt.Errorf(
+					"cname chain for domain %q loops back to %q",
+					hostname,
+					trimRootDot(next),
+				)
+			}
+
+			visited[next] = struct{}{}
+
+			if EqualNames(next, target) {
+				return nil
+			}
+
+			following, ok := edges[next]
+			if !ok {
+				break
+			}
+
+			next = following
+		}
+
+		current = next
+	}
+
+	return fmt.Errorf(
+		"cname chain for domain %q does not reach %q within %d lookups",
+		hostname,
+		trimRootDot(target),
+		maxCNAMELookups,
+	)
+}
+
+func (c *Client) queryCNAME(ctx context.Context, name string) (*dns.Msg, error) {
 	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
-	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: owner, Class: dns.ClassINET}}}
+	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: name, Class: dns.ClassINET}}}
 
-	resp, err := c.query(ctx, msg)
-	if err != nil {
-		return err
+	return c.query(ctx, msg)
+}
+
+func cnameEdges(resp *dns.Msg) (map[string]string, error) {
+	edges := make(map[string]string)
+
+	for _, rr := range resp.Answer {
+		cname, ok := rr.(*dns.CNAME)
+		if !ok {
+			continue
+		}
+
+		name := ToFQDN(cname.Hdr.Name)
+		if _, duplicate := edges[name]; duplicate {
+			return nil, fmt.Errorf("multiple cname records found for domain %q", trimRootDot(name))
+		}
+
+		edges[name] = ToFQDN(cname.Target)
 	}
 
-	if len(resp.Answer) == 0 {
-		return fmt.Errorf("no cname records found for domain %q", hostname)
+	return edges, nil
+}
+
+func cnameChainStopError(
+	resp *dns.Msg,
+	hostname string,
+	owner string,
+	current string,
+	target string,
+) error {
+	if !EqualNames(current, owner) {
+		return fmt.Errorf(
+			"cname chain for domain %q stops at %q, expected %q",
+			hostname,
+			trimRootDot(current),
+			trimRootDot(target),
+		)
 	}
 
-	if len(resp.Answer) > 1 {
-		return fmt.Errorf("multiple cname records found for domain %q", hostname)
-	}
+	for _, rr := range resp.Answer {
+		cname, ok := rr.(*dns.CNAME)
+		if !ok {
+			continue
+		}
 
-	resolvedRecord, ok := resp.Answer[0].(*dns.CNAME)
-	if !ok {
-		return fmt.Errorf("first answer is not a cname record for domain %q", hostname)
-	}
-
-	if !EqualNames(resolvedRecord.Hdr.Name, owner) {
 		return fmt.Errorf(
 			"cname owner mismatch: domain %q has record owned by %q",
 			hostname,
-			strings.TrimSuffix(resolvedRecord.Hdr.Name, "."),
+			trimRootDot(cname.Hdr.Name),
 		)
 	}
 
-	if !EqualNames(resolvedRecord.Target, target) {
-		return fmt.Errorf(
-			"cname target mismatch: domain %q resolves to %q, expected %q",
-			hostname,
-			strings.TrimSuffix(resolvedRecord.Target, "."),
-			strings.TrimSuffix(expectedTarget, "."),
-		)
-	}
+	return fmt.Errorf("no cname records found for domain %q", hostname)
+}
 
-	return nil
+func trimRootDot(name string) string {
+	return strings.TrimSuffix(name, ".")
 }

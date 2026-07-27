@@ -42,7 +42,6 @@ const (
 	// exponent at 5 (LEAST(ssl_retry_count, 5)), so normal retries only reach
 	// exponents 0–2 before FAILED.
 	maxProvisioningRetries = 3
-	dnsExchangeTimeout     = 10 * time.Second
 	processTickTimeout     = 90 * time.Second
 	persistFailureTimeout  = 15 * time.Second
 
@@ -206,11 +205,10 @@ func (h *beginChallengeHandler) Process(ctx context.Context, certificate coredat
 		dnsCtx, dnsSpan := h.tracer.Start(ctx, "certmanager.dns_check")
 		dnsStarted := time.Now()
 
-		cnameCtx, cnameCancel := context.WithTimeout(dnsCtx, dnsExchangeTimeout)
-		err := h.dnsClient.CheckCNAME(cnameCtx, certificate.Hostname, h.cnameTarget)
-
-		cnameCancel()
-
+		// Exchange timeouts are applied per chain hop inside
+		// dnsclient.CheckCNAME so the alias walk does not share one budget
+		// across every lookup.
+		err := h.dnsClient.CheckCNAME(dnsCtx, certificate.Hostname, h.cnameTarget)
 		if err != nil {
 			h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultDNSError, dnsStarted)
 			h.recordSpanError(dnsSpan, err, classifyProvisioningError(err))
