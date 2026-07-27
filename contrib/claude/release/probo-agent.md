@@ -72,6 +72,11 @@ directory, and installs it into `Contents/Resources/`. `Info.plist`
 sets `CFBundleIconFile` to `AppIcon`. Do not commit generated
 `.icns` / iconset PNGs.
 
+The master PNG must have the rounded-square mark pre-baked with fully
+transparent corners. macOS composites legacy `.icns` icons onto a light
+rounded plate, so any opaque pixel outside the rounded square renders as
+a visible square frame around the mark.
+
 There is no unsigned PKG path and no osascript elevation fallback.
 Local testing of browser enrollment requires a Developer ID–signed
 build. CLI enrollment without the app uses `sudo probo-agent install`.
