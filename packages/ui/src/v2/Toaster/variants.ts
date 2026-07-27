@@ -26,12 +26,15 @@ import { tv } from "tailwind-variants/lite";
 // read as one family. Meaning is carried by the icon too, not color alone.
 export const toaster = tv({
   slots: {
+    // `pointer-events-none` so the always-mounted (even when empty) fixed
+    // viewport never intercepts hover/clicks over the content beneath it (e.g. a
+    // bottom action bar); individual toasts re-enable events on `root`.
     viewport: [
-      "fixed bottom-0 right-0 z-6 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 p-4",
+      "pointer-events-none fixed bottom-0 right-0 z-6 flex w-95 max-w-[calc(100vw-2rem)] flex-col gap-2 p-4",
       "outline-none",
     ],
     root: [
-      "flex items-start gap-3 rounded-4 border p-4 shadow-4",
+      "pointer-events-auto flex items-start gap-3 rounded-4 border p-4 shadow-4",
       "transition-all duration-150",
       "data-starting-style:translate-y-2 data-starting-style:opacity-0",
       "data-ending-style:translate-y-2 data-ending-style:opacity-0",
