@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import type { DocumentSelectionEntry } from "../_lib/DocumentSelectionContext";
 import { useDocumentSelection } from "../_lib/DocumentSelectionContext";
 import { useBulkRequestAccess } from "../_lib/useBulkRequestAccess";
+import { selectionBar } from "../variants";
 
 interface DocumentsSelectionBarProps {
   // Every selectable row on the page, used to resolve the current selection into
@@ -55,13 +56,15 @@ export function DocumentsSelectionBar({ entries }: DocumentsSelectionBarProps) {
     requestAccess(lockedSelected.map(entry => ({ id: entry.id, kind: entry.kind })));
   };
 
+  const { bar, inner, actions } = selectionBar();
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-10 border-t border-sand-a3 bg-sand-1/80 px-8 py-4 backdrop-blur max-md:px-4">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
+    <div className={bar()}>
+      <div className={inner()}>
         <Text size={2} weight="medium" color="neutral" highContrast>
           {t("selection.count", { count: selectedIds.size })}
         </Text>
-        <div className="flex items-center gap-2">
+        <div className={actions()}>
           <Button variant="ghost" color="neutral" onClick={clear}>
             {t("selection.clear")}
           </Button>

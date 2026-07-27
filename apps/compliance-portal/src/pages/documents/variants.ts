@@ -37,3 +37,13 @@ export const documentsLayout = tv({
     busy: false,
   },
 });
+
+// Bottom selection action bar, shown while rows are selected. A fixed, blurred
+// band whose inner column aligns with the results column above it.
+export const selectionBar = tv({
+  slots: {
+    bar: "fixed inset-x-0 bottom-0 z-10 border-t border-sand-a3 bg-sand-1/80 px-8 py-4 backdrop-blur max-md:px-4",
+    inner: "mx-auto flex w-full max-w-5xl items-center justify-between gap-4",
+    actions: "flex items-center gap-2",
+  },
+});
