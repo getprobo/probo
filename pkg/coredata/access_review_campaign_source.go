@@ -149,21 +149,40 @@ RETURNING id
 	return nil
 }
 
-// MergeByCampaignID syncs scoped access-review source snapshots for a campaign:
-// upserts snapshots for the given live source IDs and deletes snapshots no
-// longer in the set.
+// MergeByCampaignID syncs scoped campaign source snapshots against the given,
+// already-loaded and validated live access sources: upserts a snapshot for
+// each source and deletes snapshots no longer in the set. Callers are
+// responsible for resolving accessReviewSources (existence, tenant, and
+// organization checks) before calling this method.
 func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 	campaignID gid.GID,
-	accessReviewSourceIDs []gid.GID,
+	accessReviewSources AccessReviewSources,
 ) error {
-	sourceIDs := gid.NewSet(accessReviewSourceIDs...)
+	ids := make([]string, 0, len(accessReviewSources))
+	organizationIDs := make([]string, 0, len(accessReviewSources))
+	names := make([]string, 0, len(accessReviewSources))
+	connectorIDs := make([]*string, 0, len(accessReviewSources))
 
-	sourceIDStrings := make([]string, 0, len(sourceIDs))
-	for id := range sourceIDs {
-		sourceIDStrings = append(sourceIDStrings, id.String())
+	seen := make(map[gid.GID]struct{}, len(accessReviewSources))
+	for _, source := range accessReviewSources {
+		if _, ok := seen[source.ID]; ok {
+			continue
+		}
+		seen[source.ID] = struct{}{}
+
+		var connectorID *string
+		if source.ConnectorID != nil {
+			s := source.ConnectorID.String()
+			connectorID = &s
+		}
+
+		ids = append(ids, source.ID.String())
+		organizationIDs = append(organizationIDs, source.OrganizationID.String())
+		names = append(names, source.Name)
+		connectorIDs = append(connectorIDs, connectorID)
 	}
 
 	now := time.Now()
@@ -175,10 +194,12 @@ WITH desired_sources AS (
 		organization_id,
 		name,
 		connector_id
-	FROM access_review_sources
-	WHERE
-		%s
-		AND id = ANY(@access_review_source_ids::text[])
+	FROM unnest(
+		@access_review_source_ids::text[],
+		@organization_ids::text[],
+		@names::text[],
+		@connector_ids::text[]
+	) AS t(id, organization_id, name, connector_id)
 )
 MERGE INTO access_review_campaign_sources AS target
 USING desired_sources AS source
@@ -220,11 +241,14 @@ WHEN NOT MATCHED BY SOURCE
 	DELETE
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"access_review_campaign_id":                 campaignID,
-		"access_review_source_ids":                  sourceIDStrings,
+		"access_review_campaign_id": campaignID,
+		"access_review_source_ids":  ids,
+		"organization_ids":          organizationIDs,
+		"names":                     names,
+		"connector_ids":             connectorIDs,
 		"access_review_campaign_source_entity_type": AccessReviewCampaignSourceEntityType,
 		"tenant_id": scope.GetTenantID(),
 		"now":       now,
