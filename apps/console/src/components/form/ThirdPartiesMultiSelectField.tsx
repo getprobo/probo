@@ -49,7 +49,11 @@ const thirdPartiesQuery = graphql`
   query ThirdPartiesMultiSelectFieldQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        thirdParties(first: 100, orderBy: { direction: ASC, field: NAME }) {
+        thirdParties(
+          first: 100
+          orderBy: { direction: ASC, field: NAME }
+          filter: { level: 1 }
+        ) {
           edges {
             node {
               id

@@ -32,6 +32,7 @@ const thirdPartiesCellQuery = graphql`
         thirdParties(
           first: 100
           orderBy: { direction: ASC, field: NAME }
+          filter: { level: 1 }
         ) {
           edges {
             node {
