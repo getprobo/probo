@@ -761,13 +761,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errorx.AnyOf(
-			err,
-			accessreview.ErrCampaignInProgress,
-			accessreview.ErrCampaignPendingActions,
-			accessreview.ErrCampaignCompleted,
-			accessreview.ErrCampaignCancelled,
-		) {
+		if errorx.AnyOf(err, accessreview.ErrCampaignNotDraft) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -793,6 +787,10 @@ func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
+		if errors.Is(err, accessreview.ErrCampaignNotDeletable) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -815,10 +813,7 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 		if errorx.AnyOf(
 			err,
 			accessreview.ErrCampaignMissingSources,
-			accessreview.ErrCampaignInProgress,
-			accessreview.ErrCampaignPendingActions,
-			accessreview.ErrCampaignCompleted,
-			accessreview.ErrCampaignCancelled,
+			accessreview.ErrCampaignNotDraft,
 		) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
@@ -842,6 +837,10 @@ func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.CloseCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
+		if errors.Is(err, accessreview.ErrCampaignNotPendingActions) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot close access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -895,13 +894,7 @@ func (r *mutationResolver) AddAccessReviewCampaignSource(ctx context.Context, in
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errorx.AnyOf(
-			err,
-			accessreview.ErrCampaignInProgress,
-			accessreview.ErrCampaignPendingActions,
-			accessreview.ErrCampaignCompleted,
-			accessreview.ErrCampaignCancelled,
-		) {
+		if errors.Is(err, accessreview.ErrCampaignNotDraft) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -931,6 +924,10 @@ func (r *mutationResolver) RemoveAccessReviewCampaignSource(ctx context.Context,
 		},
 	)
 	if err != nil {
+		if errors.Is(err, accessreview.ErrCampaignNotDraft) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot remove scope source from access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
