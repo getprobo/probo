@@ -161,25 +161,6 @@ func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 ) error {
 	uniqueSourceIDs := uniqueGIDs(accessReviewSourceIDs)
 
-	if len(uniqueSourceIDs) == 0 {
-		q := `
-DELETE FROM access_review_campaign_sources
-WHERE
-	%s
-	AND access_review_campaign_id = @access_review_campaign_id
-`
-		q = fmt.Sprintf(q, scope.SQLFragment())
-
-		args := pgx.StrictNamedArgs{"access_review_campaign_id": campaignID}
-		maps.Copy(args, scope.SQLArguments())
-
-		if _, err := conn.Exec(ctx, q, args); err != nil {
-			return fmt.Errorf("cannot delete campaign sources: %w", err)
-		}
-
-		return nil
-	}
-
 	sourceIDStrings := make([]string, len(uniqueSourceIDs))
 	for i, id := range uniqueSourceIDs {
 		sourceIDStrings[i] = id.String()
