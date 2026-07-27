@@ -149,11 +149,6 @@ RETURNING id
 	return nil
 }
 
-// MergeByCampaignID syncs scoped campaign source snapshots against the given,
-// already-loaded and validated live access sources: upserts a snapshot for
-// each source and deletes snapshots no longer in the set. Callers are
-// responsible for resolving accessReviewSources (existence, tenant, and
-// organization checks) before calling this method.
 func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 	ctx context.Context,
 	conn pg.Tx,
