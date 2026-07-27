@@ -81,6 +81,7 @@ func TestCompliancePortal_RequestAccesses_Batch(t *testing.T) {
 	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
 
 	var result requestAccessesResult
+
 	err := visitor.ExecuteTrust(trustHost, requestAccessesMutation, map[string]any{
 		"input": map[string]any{
 			"documentIds":             []string{documentID},
