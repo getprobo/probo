@@ -66,7 +66,7 @@
     "react": "^19.2.7",
     "react-docgen": "^8.0.3",
     "react-dom": "^19.2.7",
-    "react-router": "^8.1.0",
+    "react-router": "^8.3.0",
     "storybook": "^10.2.10",
     "typescript": "~6.0.3",
     "vite": "^8.1.2",
@@ -75,7 +75,7 @@
   "peerDependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router": "^8.1.0"
+    "react-router": "^8.3.0"
   },
   "volta": {
     "node": "24.4.0"

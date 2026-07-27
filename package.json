@@ -26,7 +26,9 @@
   "overrides": {
     "uuid": "^14.0.0",
     "js-yaml": "^4.2.0",
-    "glob": "^13.0.6"
+    "glob": "^13.0.6",
+    "postcss": "8.5.23",
+    "react-router": "^8.3.0"
   },
   "allowScripts": {
     "esbuild": true,
