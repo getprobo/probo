@@ -166,9 +166,11 @@ func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 		if _, ok := seen[source.ID]; ok {
 			continue
 		}
+
 		seen[source.ID] = struct{}{}
 
 		var connectorID *string
+
 		if source.ConnectorID != nil {
 			s := source.ConnectorID.String()
 			connectorID = &s
