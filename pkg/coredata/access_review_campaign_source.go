@@ -161,37 +161,49 @@ func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 ) error {
 	uniqueSourceIDs := uniqueGIDs(accessReviewSourceIDs)
 
-	if len(uniqueSourceIDs) > 0 {
-		countQ := `
+	if len(uniqueSourceIDs) == 0 {
+		q := `
+DELETE FROM access_review_campaign_sources
+WHERE
+	%s
+	AND access_review_campaign_id = @access_review_campaign_id
+`
+		q = fmt.Sprintf(q, scope.SQLFragment())
+
+		args := pgx.StrictNamedArgs{"access_review_campaign_id": campaignID}
+		maps.Copy(args, scope.SQLArguments())
+
+		if _, err := conn.Exec(ctx, q, args); err != nil {
+			return fmt.Errorf("cannot delete campaign sources: %w", err)
+		}
+
+		return nil
+	}
+
+	sourceIDStrings := make([]string, len(uniqueSourceIDs))
+	for i, id := range uniqueSourceIDs {
+		sourceIDStrings[i] = id.String()
+	}
+
+	countQ := `
 SELECT COUNT(DISTINCT id)
 FROM access_review_sources
 WHERE
 	%s
 	AND id = ANY(@access_review_source_ids::text[])
 `
-		countQ = fmt.Sprintf(countQ, scope.SQLFragment())
+	countQ = fmt.Sprintf(countQ, scope.SQLFragment())
 
-		sourceIDStrings := make([]string, len(uniqueSourceIDs))
-		for i, id := range uniqueSourceIDs {
-			sourceIDStrings[i] = id.String()
-		}
+	countArgs := pgx.StrictNamedArgs{"access_review_source_ids": sourceIDStrings}
+	maps.Copy(countArgs, scope.SQLArguments())
 
-		countArgs := pgx.StrictNamedArgs{"access_review_source_ids": sourceIDStrings}
-		maps.Copy(countArgs, scope.SQLArguments())
-
-		var found int
-		if err := conn.QueryRow(ctx, countQ, countArgs).Scan(&found); err != nil {
-			return fmt.Errorf("cannot count access review sources: %w", err)
-		}
-
-		if found != len(uniqueSourceIDs) {
-			return ErrResourceNotFound
-		}
+	var found int
+	if err := conn.QueryRow(ctx, countQ, countArgs).Scan(&found); err != nil {
+		return fmt.Errorf("cannot count access review sources: %w", err)
 	}
 
-	sourceIDStrings := make([]string, len(uniqueSourceIDs))
-	for i, id := range uniqueSourceIDs {
-		sourceIDStrings[i] = id.String()
+	if found != len(uniqueSourceIDs) {
+		return ErrResourceNotFound
 	}
 
 	now := time.Now()
