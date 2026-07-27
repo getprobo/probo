@@ -82,6 +82,10 @@ const ipCountryBlocksStagingTable = "common_ip_country_blocks_staging"
 func CreateIPCountryBlocksStaging(ctx context.Context, conn pg.Querier) error {
 	q := `
 DROP TABLE IF EXISTS common_ip_country_blocks_staging;
+
+ALTER INDEX IF EXISTS idx_common_ip_country_blocks_staging_cidr
+    RENAME TO idx_common_ip_country_blocks_cidr;
+
 CREATE TABLE common_ip_country_blocks_staging (LIKE common_ip_country_blocks INCLUDING DEFAULTS);
 `
 
@@ -126,6 +130,8 @@ func SwapIPCountryBlocksStaging(ctx context.Context, conn pg.Querier) error {
 	q := `
 DROP TABLE common_ip_country_blocks;
 ALTER TABLE common_ip_country_blocks_staging RENAME TO common_ip_country_blocks;
+ALTER INDEX idx_common_ip_country_blocks_staging_cidr
+    RENAME TO idx_common_ip_country_blocks_cidr;
 `
 
 	if _, err := conn.Exec(ctx, q); err != nil {
