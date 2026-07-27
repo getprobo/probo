@@ -68,7 +68,7 @@ export function DocumentsSelectionBar({ entries }: DocumentsSelectionBarProps) {
           <Button
             variant="ghost"
             color="neutral"
-            onClick={() => selectAll(entries.map(entry => entry.id))}
+            onClick={() => selectAll(entries.filter(entry => entry.locked).map(entry => entry.id))}
           >
             {t("selection.selectAll")}
           </Button>

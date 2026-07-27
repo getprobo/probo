@@ -66,6 +66,11 @@ export function DocumentEntry({
 }: DocumentEntryProps) {
   const { t } = useTranslation("documents");
 
+  // Only locked rows (not yet authorized, no pending request) can be requested,
+  // so only they are selectable — the checkbox is disabled otherwise to avoid a
+  // selection that wouldn't contribute to "Request Access".
+  const selectable = !isAuthorized && !requested;
+
   const mobileHitLabel = requested
     ? null
     : isAuthorized
@@ -84,8 +89,9 @@ export function DocumentEntry({
         // triggers the row's view / request-access activation.
         <Checkbox
           className="relative z-2"
-          checked={selected ?? false}
-          onCheckedChange={onSelectedChange}
+          checked={selectable && (selected ?? false)}
+          disabled={!selectable}
+          onCheckedChange={selectable ? onSelectedChange : undefined}
           aria-label={t("selection.selectRow", { title: typeof title === "string" ? title : "" })}
         />
       )}
