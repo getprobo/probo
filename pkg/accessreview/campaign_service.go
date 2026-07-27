@@ -59,16 +59,16 @@ func (s *Service) CreateCampaign(
 				return fmt.Errorf("cannot insert access review campaign: %w", err)
 			}
 
-			for _, sourceID := range req.AccessReviewSourceIDs {
-				source := &coredata.AccessReviewSource{}
-				if err := source.LoadByID(ctx, conn, scope, sourceID); err != nil {
-					if errors.Is(err, coredata.ErrResourceNotFound) {
-						return coredata.ErrResourceNotFound
-					}
-
-					return fmt.Errorf("cannot load access source: %w", err)
+			var sources coredata.AccessReviewSources
+			if err := sources.LoadByIDs(ctx, conn, scope, req.AccessReviewSourceIDs); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return coredata.ErrResourceNotFound
 				}
 
+				return fmt.Errorf("cannot load access sources: %w", err)
+			}
+
+			for _, source := range sources {
 				if err := s.upsertCampaignSource(ctx, conn, scope, campaign.ID, source); err != nil {
 					return fmt.Errorf("cannot snapshot scope source: %w", err)
 				}
@@ -308,12 +308,17 @@ func (s *Service) syncCampaignSources(
 	campaign *coredata.AccessReviewCampaign,
 	sourceIDs []gid.GID,
 ) error {
-	var campaignSources coredata.AccessReviewCampaignSources
-	if err := campaignSources.MergeByCampaignID(ctx, conn, scope, campaign.ID, sourceIDs); err != nil {
+	var sources coredata.AccessReviewSources
+	if err := sources.LoadByIDs(ctx, conn, scope, sourceIDs); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.ErrResourceNotFound
 		}
 
+		return fmt.Errorf("cannot load access sources: %w", err)
+	}
+
+	var campaignSources coredata.AccessReviewCampaignSources
+	if err := campaignSources.MergeByCampaignID(ctx, conn, scope, campaign.ID, sources); err != nil {
 		return fmt.Errorf("cannot merge campaign sources: %w", err)
 	}
 

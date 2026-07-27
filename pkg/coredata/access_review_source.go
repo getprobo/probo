@@ -144,6 +144,52 @@ LIMIT 1;
 	return nil
 }
 
+func (sources *AccessReviewSources) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	ids []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    connector_id,
+    name,
+    csv_data,
+    name_synced_at,
+    created_at,
+    updated_at
+FROM
+    access_review_sources
+WHERE
+    %s
+    AND id = ANY(@ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_review_sources: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessReviewSource])
+	if err != nil {
+		return fmt.Errorf("cannot collect access_review_sources: %w", err)
+	}
+
+	*sources = result
+
+	if len(result) != len(gid.NewSet(ids...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (as *AccessReviewSource) Insert(
 	ctx context.Context,
 	conn pg.Tx,
