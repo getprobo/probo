@@ -20,12 +20,102 @@
 
 package accessreview
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/gid"
+)
 
 var (
-	ErrCampaignMissingSources = errors.New("cannot start campaign: no scope sources configured")
-	ErrCampaignInProgress     = errors.New("campaign is in progress")
-	ErrCampaignPendingActions = errors.New("campaign is pending actions")
-	ErrCampaignCompleted      = errors.New("campaign is completed")
-	ErrCampaignCancelled      = errors.New("campaign is cancelled")
+	ErrCampaignMissingSources = errors.New("access review campaign missing scope sources")
+	ErrCampaignInProgress     = errors.New("access review campaign in progress")
+	ErrCampaignPendingActions = errors.New("access review campaign pending actions")
+	ErrCampaignCompleted      = errors.New("access review campaign completed")
+	ErrCampaignCancelled      = errors.New("access review campaign cancelled")
 )
+
+type (
+	CampaignMissingSourcesError struct {
+		CampaignID gid.GID
+	}
+
+	CampaignInProgressError struct {
+		CampaignID gid.GID
+	}
+
+	CampaignPendingActionsError struct {
+		CampaignID gid.GID
+	}
+
+	CampaignCompletedError struct {
+		CampaignID gid.GID
+	}
+
+	CampaignCancelledError struct {
+		CampaignID gid.GID
+	}
+)
+
+func NewCampaignMissingSourcesError(campaignID gid.GID) error {
+	return &CampaignMissingSourcesError{CampaignID: campaignID}
+}
+
+func (e *CampaignMissingSourcesError) Error() string {
+	return fmt.Sprintf(
+		"access review campaign %q cannot be started: no scope sources configured",
+		e.CampaignID,
+	)
+}
+
+func (e *CampaignMissingSourcesError) Is(target error) bool {
+	return target == ErrCampaignMissingSources
+}
+
+func NewCampaignInProgressError(campaignID gid.GID) error {
+	return &CampaignInProgressError{CampaignID: campaignID}
+}
+
+func (e *CampaignInProgressError) Error() string {
+	return fmt.Sprintf("access review campaign %q is in progress", e.CampaignID)
+}
+
+func (e *CampaignInProgressError) Is(target error) bool {
+	return target == ErrCampaignInProgress
+}
+
+func NewCampaignPendingActionsError(campaignID gid.GID) error {
+	return &CampaignPendingActionsError{CampaignID: campaignID}
+}
+
+func (e *CampaignPendingActionsError) Error() string {
+	return fmt.Sprintf("access review campaign %q is pending actions", e.CampaignID)
+}
+
+func (e *CampaignPendingActionsError) Is(target error) bool {
+	return target == ErrCampaignPendingActions
+}
+
+func NewCampaignCompletedError(campaignID gid.GID) error {
+	return &CampaignCompletedError{CampaignID: campaignID}
+}
+
+func (e *CampaignCompletedError) Error() string {
+	return fmt.Sprintf("access review campaign %q is completed", e.CampaignID)
+}
+
+func (e *CampaignCompletedError) Is(target error) bool {
+	return target == ErrCampaignCompleted
+}
+
+func NewCampaignCancelledError(campaignID gid.GID) error {
+	return &CampaignCancelledError{CampaignID: campaignID}
+}
+
+func (e *CampaignCancelledError) Error() string {
+	return fmt.Sprintf("access review campaign %q is cancelled", e.CampaignID)
+}
+
+func (e *CampaignCancelledError) Is(target error) bool {
+	return target == ErrCampaignCancelled
+}
