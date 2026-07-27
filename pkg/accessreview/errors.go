@@ -34,14 +34,6 @@ var (
 	ErrCampaignCancelled      = errors.New("campaign is cancelled")
 )
 
-// CampaignStatusErrors are client-facing invalid-state errors for non-draft campaigns.
-var CampaignStatusErrors = []error{
-	ErrCampaignInProgress,
-	ErrCampaignPendingActions,
-	ErrCampaignCompleted,
-	ErrCampaignCancelled,
-}
-
 func CampaignStatusError(status coredata.AccessReviewCampaignStatus) error {
 	switch status {
 	case coredata.AccessReviewCampaignStatusInProgress:

@@ -761,7 +761,13 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errorx.AnyOf(err, accessreview.CampaignStatusErrors...) {
+		if errorx.AnyOf(
+			err,
+			accessreview.ErrCampaignInProgress,
+			accessreview.ErrCampaignPendingActions,
+			accessreview.ErrCampaignCompleted,
+			accessreview.ErrCampaignCancelled,
+		) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -806,8 +812,14 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
-		if errorx.AnyOf(err, accessreview.ErrCampaignMissingSources) ||
-			errorx.AnyOf(err, accessreview.CampaignStatusErrors...) {
+		if errorx.AnyOf(
+			err,
+			accessreview.ErrCampaignMissingSources,
+			accessreview.ErrCampaignInProgress,
+			accessreview.ErrCampaignPendingActions,
+			accessreview.ErrCampaignCompleted,
+			accessreview.ErrCampaignCancelled,
+		) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -879,7 +891,13 @@ func (r *mutationResolver) AddAccessReviewCampaignSource(ctx context.Context, in
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errorx.AnyOf(err, accessreview.CampaignStatusErrors...) {
+		if errorx.AnyOf(
+			err,
+			accessreview.ErrCampaignInProgress,
+			accessreview.ErrCampaignPendingActions,
+			accessreview.ErrCampaignCompleted,
+			accessreview.ErrCampaignCancelled,
+		) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
