@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.236.0] - 2026-07-27
+
+### Added
+
+- Five new access-review connectors: Google Analytics (GA4), Dotfile, Segment, Square, and UpCloud, with account listing, role/status resolution, and connector logos
+- French translation for the console and compliance portal, backed by a new `react-i18next` setup
+- Documentation links for the Dotfile, Segment, and 19 other API-key access-review connectors' setup dialogs
+- Restored the "Risk Accepted" status on finding create/update forms, with a searchable paginated risk picker to supply the required linked risk
+
+### Fixed
+
+- Preserve the post-login destination through OIDC, magic-link, and SAML auth-error redirects instead of dropping it on `/auth/error`
+- Custom-domain CNAME verification no longer fails on multi-hop DNS alias chains
+- 1Password and Langfuse access-review connectors could not be connected: required extra settings (SCIM bridge URL, base URL) were silently dropped by the console
+
 ## [0.235.0] - 2026-07-25
 
 ### Added
