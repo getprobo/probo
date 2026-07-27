@@ -75,6 +75,11 @@ export default function AuthErrorPage() {
   const [searchParams] = useSearchParams();
   const content = useAuthErrorContent(searchParams.get("error"));
 
+  const continueParam = searchParams.get("continue");
+  const loginSearch = continueParam
+    ? `?${new URLSearchParams({ continue: continueParam }).toString()}`
+    : "";
+
   usePageTitle(content.title);
 
   return (
@@ -83,7 +88,13 @@ export default function AuthErrorPage() {
         <h1 className="text-2xl font-bold">{content.title}</h1>
         <p className="text-txt-tertiary">{content.description}</p>
       </div>
-      <Button className="w-full h-10" to="/auth/login">
+      <Button
+        className="w-full h-10"
+        to={{
+          pathname: "/auth/login",
+          search: loginSearch,
+        }}
+      >
         {t("auth.actions.signIn")}
       </Button>
     </div>

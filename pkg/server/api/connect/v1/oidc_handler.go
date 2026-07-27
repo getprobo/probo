@@ -21,6 +21,7 @@
 package connect_v1
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -58,6 +59,31 @@ func NewOIDCHandler(
 		logger:        logger,
 		safeRedirect:  saferedirect.New(allowedHost),
 	}
+}
+
+func (h *OIDCHandler) redirectAuthError(w http.ResponseWriter, r *http.Request, code string, continueURL string) {
+	safeContinue := ""
+
+	if continueURL != "" {
+		if validated, ok := h.safeRedirect.Validate(r.Context(), continueURL); ok {
+			safeContinue = validated
+		}
+	}
+
+	redirectAuthError(w, r, code, safeContinue)
+}
+
+func (h *OIDCHandler) continueURLFromCallbackState(
+	ctx context.Context,
+	provider coredata.OIDCProvider,
+	stateParam string,
+) string {
+	continueURL, err := h.iam.OIDCService.ContinueURLFromCallbackState(ctx, provider, stateParam)
+	if err != nil {
+		return ""
+	}
+
+	return continueURL
 }
 
 func (h *OIDCHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +142,8 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			log.String("error", errParam),
 			log.String("error_description", r.URL.Query().Get("error_description")),
 		)
-		redirectAuthError(w, r, authErrorAuthenticationFailed)
+		continueURL := h.continueURLFromCallbackState(ctx, provider, r.URL.Query().Get("state"))
+		h.redirectAuthError(w, r, authErrorAuthenticationFailed, continueURL)
 
 		return
 	}
@@ -125,7 +152,12 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
 	if stateParam == "" || code == "" {
-		redirectAuthError(w, r, authErrorInvalidState)
+		continueURL := ""
+		if stateParam != "" {
+			continueURL = h.continueURLFromCallbackState(ctx, provider, stateParam)
+		}
+
+		h.redirectAuthError(w, r, authErrorInvalidState, continueURL)
 
 		return
 	}
@@ -133,25 +165,25 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	identity, continueURL, organizationID, err := h.iam.OIDCService.HandleCallback(ctx, provider, stateParam, code)
 	if err != nil {
 		if _, ok := errors.AsType[*oidc.ErrPersonalAccountNotAllowed](err); ok {
-			redirectAuthError(w, r, authErrorPersonalAccountNotAllowed)
+			h.redirectAuthError(w, r, authErrorPersonalAccountNotAllowed, continueURL)
 
 			return
 		}
 
 		if _, ok := errors.AsType[*oidc.ErrEmailNotVerified](err); ok {
-			redirectAuthError(w, r, authErrorEmailNotVerified)
+			h.redirectAuthError(w, r, authErrorEmailNotVerified, continueURL)
 
 			return
 		}
 
 		if _, ok := errors.AsType[*oidc.ErrInvalidState](err); ok {
-			redirectAuthError(w, r, authErrorInvalidState)
+			h.redirectAuthError(w, r, authErrorInvalidState, continueURL)
 
 			return
 		}
 
 		h.logger.ErrorCtx(ctx, "cannot handle OIDC callback", log.Error(err))
-		redirectAuthError(w, r, authErrorAuthenticationFailed)
+		h.redirectAuthError(w, r, authErrorAuthenticationFailed, continueURL)
 
 		return
 	}
@@ -259,6 +291,21 @@ func NewMagicLinkHandler(
 	}
 }
 
+func (h *MagicLinkHandler) redirectAuthError(w http.ResponseWriter, r *http.Request, code string, token string) {
+	safeContinue := ""
+
+	if token != "" {
+		continueURL, err := h.iam.AuthService.MagicLinkContinueFromToken(token)
+		if err == nil && continueURL != nil && *continueURL != "" {
+			if validated, ok := h.safeRedirect.Validate(r.Context(), *continueURL); ok {
+				safeContinue = validated
+			}
+		}
+	}
+
+	redirectAuthError(w, r, code, safeContinue)
+}
+
 func (h *MagicLinkHandler) SendHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -313,29 +360,33 @@ func (h *MagicLinkHandler) VerifyHandler(w http.ResponseWriter, r *http.Request)
 
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		redirectAuthError(w, r, authErrorMagicLinkInvalid)
+		h.redirectAuthError(w, r, authErrorMagicLinkInvalid, "")
+
 		return
 	}
 
 	identity, session, continueURL, err := h.iam.AuthService.OpenSessionWithMagicLink(ctx, token)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
-			redirectAuthError(w, r, authErrorMagicLinkExpired)
+			h.redirectAuthError(w, r, authErrorMagicLinkExpired, token)
+
 			return
 		}
 
 		if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
-			redirectAuthError(w, r, authErrorMagicLinkAlreadyUsed)
+			h.redirectAuthError(w, r, authErrorMagicLinkAlreadyUsed, token)
+
 			return
 		}
 
 		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
-			redirectAuthError(w, r, authErrorMagicLinkInvalid)
+			h.redirectAuthError(w, r, authErrorMagicLinkInvalid, token)
+
 			return
 		}
 
 		h.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
-		redirectAuthError(w, r, authErrorAuthenticationFailed)
+		h.redirectAuthError(w, r, authErrorAuthenticationFailed, token)
 
 		return
 	}
