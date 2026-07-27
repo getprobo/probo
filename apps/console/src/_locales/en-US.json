@@ -348,12 +348,12 @@
     "breadcrumbs": { "findings": "Findings" },
     "unknown": "Unknown finding",
     "kinds": { "minor_nonconformity": "Minor nonconformity", "major_nonconformity": "Major nonconformity", "observation": "Observation", "exception": "Exception" },
-    "status": { "open": "Open", "in_progress": "In progress", "closed": "Closed", "mitigated": "Mitigated", "false_positive": "False positive" },
+    "status": { "open": "Open", "in_progress": "In progress", "closed": "Closed", "risk_accepted": "Risk accepted", "mitigated": "Mitigated", "false_positive": "False positive" },
     "priority": { "low": "Low", "medium": "Medium", "high": "High" },
     "messages": { "successTitle": "Success", "deleted": "Finding deleted successfully", "updated": "Finding updated successfully" },
     "errors": { "title": "Error", "delete": "Failed to delete finding", "update": "Failed to update finding" },
     "deleteConfirmation": "This will permanently delete the finding {{referenceId}}. This action cannot be undone.",
-    "fields": { "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
+    "fields": { "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "acceptedRisk": "Accepted risk", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
     "placeholders": { "description": "Enter description", "source": "Enter source", "rootCause": "Enter root cause", "correctiveAction": "Enter corrective action", "effectivenessCheck": "Enter effectiveness check details" },
     "actions": { "delete": "Delete", "updating": "Updating...", "update": "Update" }
   },
@@ -374,11 +374,11 @@
   "createFindingDialog": {
     "breadcrumbs": { "findings": "Findings", "create": "Create" },
     "kinds": { "minorNonconformity": "Minor nonconformity", "majorNonconformity": "Major nonconformity", "observation": "Observation", "exception": "Exception" },
-    "status": { "open": "Open", "in_progress": "In progress", "closed": "Closed", "mitigated": "Mitigated", "false_positive": "False positive" },
+    "status": { "open": "Open", "in_progress": "In progress", "closed": "Closed", "risk_accepted": "Risk accepted", "mitigated": "Mitigated", "false_positive": "False positive" },
     "priority": { "low": "Low", "medium": "Medium", "high": "High" },
     "messages": { "successTitle": "Success", "created": "Finding created successfully" },
     "errors": { "title": "Error", "create": "Failed to create finding" },
-    "fields": { "kind": "Kind", "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
+    "fields": { "kind": "Kind", "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "acceptedRisk": "Accepted risk", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
     "placeholders": { "selectKind": "Select kind", "description": "Brief description of the finding...", "source": "Enter source", "selectStatus": "Select status", "rootCause": "Detailed analysis of the root cause...", "correctiveAction": "Proposed corrective actions...", "effectivenessCheck": "Assessment of corrective action effectiveness..." },
     "actions": { "creating": "Creating...", "create": "Create finding" }
   },
@@ -608,6 +608,10 @@
   },
   "peopleSelectField": {
     "placeholder": "Select an owner",
+    "none": "None"
+  },
+  "riskSelectField": {
+    "placeholder": "Select a risk",
     "none": "None"
   },
   "processingActivityEnumOptions": {

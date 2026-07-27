@@ -728,6 +728,7 @@
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Fermé",
+      "risk_accepted": "Risque accepté",
       "mitigated": "Atténué",
       "false_positive": "Faux positif"
     },
@@ -753,6 +754,7 @@
       "owner": "Propriétaire",
       "status": "Statut",
       "priority": "Priorité",
+      "acceptedRisk": "Risque accepté",
       "dateIdentified": "Date d’identification",
       "dueDate": "Date d’échéance",
       "rootCause": "Cause racine",
@@ -852,6 +854,7 @@
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Fermé",
+      "risk_accepted": "Risque accepté",
       "mitigated": "Atténué",
       "false_positive": "Faux positif"
     },
@@ -875,6 +878,7 @@
       "owner": "Propriétaire",
       "status": "Statut",
       "priority": "Priorité",
+      "acceptedRisk": "Risque accepté",
       "dateIdentified": "Date d’identification",
       "dueDate": "Date d’échéance",
       "rootCause": "Cause racine",
@@ -1135,6 +1139,10 @@
   },
   "peopleSelectField": {
     "placeholder": "Sélectionner un propriétaire",
+    "none": "Aucun"
+  },
+  "riskSelectField": {
+    "placeholder": "Sélectionner un risque",
     "none": "Aucun"
   },
   "processingActivityEnumOptions": {

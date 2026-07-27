@@ -37,7 +37,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
@@ -45,6 +45,7 @@ import { z } from "zod";
 
 import type { CreateFindingDialogMutation } from "#/__generated__/core/CreateFindingDialogMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { RiskSelectField } from "#/components/form/RiskSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const createFindingMutation = graphql`
@@ -71,6 +72,10 @@ const createFindingMutation = graphql`
             id
             fullName
           }
+          risk {
+            id
+            name
+          }
           createdAt
           canUpdate: permission(action: "core:finding:update")
           canDelete: permission(action: "core:finding:delete")
@@ -80,19 +85,35 @@ const createFindingMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  kind: z.enum(["MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"]),
-  description: z.string().optional(),
-  source: z.string().optional(),
-  identifiedOn: z.string().optional(),
-  rootCause: z.string().optional(),
-  correctiveAction: z.string().optional(),
-  ownerId: z.string().nullable().optional(),
-  dueDate: z.string().optional(),
-  status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED", "MITIGATED", "FALSE_POSITIVE"]),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
-  effectivenessCheck: z.string().optional(),
-});
+const schema = z
+  .object({
+    kind: z.enum(["MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"]),
+    description: z.string().optional(),
+    source: z.string().optional(),
+    identifiedOn: z.string().optional(),
+    rootCause: z.string().optional(),
+    correctiveAction: z.string().optional(),
+    ownerId: z.string().nullable().optional(),
+    dueDate: z.string().optional(),
+    status: z.enum([
+      "OPEN",
+      "IN_PROGRESS",
+      "CLOSED",
+      "MITIGATED",
+      "FALSE_POSITIVE",
+      "RISK_ACCEPTED",
+    ]),
+    priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
+    riskId: z.string().nullable().optional(),
+    effectivenessCheck: z.string().optional(),
+  })
+  .refine(
+    data => data.status !== "RISK_ACCEPTED" || Boolean(data.riskId),
+    {
+      message: "A risk is required when status is Risk Accepted",
+      path: ["riskId"],
+    },
+  );
 
 type FormData = z.infer<typeof schema>;
 
@@ -111,8 +132,7 @@ export function CreateFindingDialog({
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const [createFinding] = useMutation<CreateFindingDialogMutation>(createFindingMutation);
-  const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "MITIGATED", "FALSE_POSITIVE"] as const;
-
+  const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"] as const;
   const kindOptions = [
     { value: "MINOR_NONCONFORMITY", label: t("createFindingDialog.kinds.minorNonconformity") },
     { value: "MAJOR_NONCONFORMITY", label: t("createFindingDialog.kinds.majorNonconformity") },
@@ -126,7 +146,7 @@ export function CreateFindingDialog({
     { value: "HIGH", label: t("createFindingDialog.priority.high") },
   ];
 
-  const { register, handleSubmit, formState, reset, control } = useFormWithSchema(schema, {
+  const { register, handleSubmit, formState, reset, control, watch, setValue } = useFormWithSchema(schema, {
     defaultValues: {
       kind: "MINOR_NONCONFORMITY" as const,
       description: "",
@@ -138,9 +158,18 @@ export function CreateFindingDialog({
       dueDate: "",
       status: "OPEN" as const,
       priority: "MEDIUM" as const,
+      riskId: null,
       effectivenessCheck: "",
     },
   });
+
+  const status = watch("status");
+
+  useEffect(() => {
+    if (status !== "RISK_ACCEPTED") {
+      setValue("riskId", null);
+    }
+  }, [status, setValue]);
 
   const onSubmit = (formData: FormData) => {
     createFinding({
@@ -157,6 +186,9 @@ export function CreateFindingDialog({
           dueDate: formatDatetime(formData.dueDate),
           status: formData.status,
           priority: formData.priority,
+          riskId: formData.status === "RISK_ACCEPTED"
+            ? formData.riskId || undefined
+            : undefined,
           effectivenessCheck: formData.effectivenessCheck || undefined,
         },
         connections: connectionIds ?? [],
@@ -297,6 +329,17 @@ export function CreateFindingDialog({
               )}
             />
           </div>
+
+          {status === "RISK_ACCEPTED" && (
+            <RiskSelectField
+              organizationId={organizationId}
+              control={control}
+              name="riskId"
+              label={t("createFindingDialog.fields.acceptedRisk")}
+              error={formState.errors.riskId?.message}
+              required
+            />
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

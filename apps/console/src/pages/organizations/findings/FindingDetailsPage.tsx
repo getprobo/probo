@@ -40,6 +40,7 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useEffect } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -56,6 +57,7 @@ import type { FindingDetailsPageQuery } from "#/__generated__/core/FindingDetail
 import type { FindingDetailsPageUpdateMutation } from "#/__generated__/core/FindingDetailsPageUpdateMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { RiskSelectField } from "#/components/form/RiskSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -79,6 +81,10 @@ export const findingDetailsPageQuery = graphql`
         effectivenessCheck
         owner {
           id
+        }
+        risk {
+          id
+          name
         }
         canUpdate: permission(action: "core:finding:update")
         canDelete: permission(action: "core:finding:delete")
@@ -107,6 +113,10 @@ const updateFindingMutation = graphql`
           id
           fullName
         }
+        risk {
+          id
+          name
+        }
         updatedAt
       }
     }
@@ -124,18 +134,34 @@ const deleteFindingMutation = graphql`
   }
 `;
 
-const updateFindingSchema = z.object({
-  description: z.string().optional(),
-  source: z.string().optional(),
-  identifiedOn: z.string().optional(),
-  dueDate: z.string().optional(),
-  rootCause: z.string().optional(),
-  correctiveAction: z.string().optional(),
-  effectivenessCheck: z.string().optional(),
-  status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED", "MITIGATED", "FALSE_POSITIVE", "RISK_ACCEPTED"]),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
-  ownerId: z.string().nullable().optional(),
-});
+const updateFindingSchema = z
+  .object({
+    description: z.string().optional(),
+    source: z.string().optional(),
+    identifiedOn: z.string().optional(),
+    dueDate: z.string().optional(),
+    rootCause: z.string().optional(),
+    correctiveAction: z.string().optional(),
+    effectivenessCheck: z.string().optional(),
+    status: z.enum([
+      "OPEN",
+      "IN_PROGRESS",
+      "CLOSED",
+      "MITIGATED",
+      "FALSE_POSITIVE",
+      "RISK_ACCEPTED",
+    ]),
+    priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
+    ownerId: z.string().nullable().optional(),
+    riskId: z.string().nullable().optional(),
+  })
+  .refine(
+    data => data.status !== "RISK_ACCEPTED" || Boolean(data.riskId),
+    {
+      message: "A risk is required when status is Risk Accepted",
+      path: ["riskId"],
+    },
+  );
 
 type Props = {
   queryRef: PreloadedQuery<FindingDetailsPageQuery>;
@@ -230,7 +256,7 @@ export default function FindingDetailsPage(props: Props) {
     );
   };
 
-  const { control, formState, handleSubmit, register, reset }
+  const { control, formState, handleSubmit, register, reset, watch, setValue }
     = useFormWithSchema(updateFindingSchema, {
       defaultValues: {
         description: finding.description || "",
@@ -243,8 +269,17 @@ export default function FindingDetailsPage(props: Props) {
         status: finding.status || "OPEN",
         priority: finding.priority || "MEDIUM",
         ownerId: finding.owner?.id ?? null,
+        riskId: finding.risk?.id ?? null,
       },
     });
+
+  const status = watch("status");
+
+  useEffect(() => {
+    if (status !== "RISK_ACCEPTED") {
+      setValue("riskId", null);
+    }
+  }, [status, setValue]);
 
   const onSubmit = handleSubmit((formData) => {
     if (!finding.id) return;
@@ -263,6 +298,9 @@ export default function FindingDetailsPage(props: Props) {
           status: formData.status,
           priority: formData.priority,
           ownerId: formData.ownerId || undefined,
+          riskId: formData.status === "RISK_ACCEPTED"
+            ? formData.riskId || null
+            : null,
         },
       },
       onCompleted() {
@@ -286,8 +324,7 @@ export default function FindingDetailsPage(props: Props) {
     });
   });
 
-  const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "MITIGATED", "FALSE_POSITIVE"] as const;
-
+  const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"] as const;
   const priorityOptions = [
     { value: "LOW", label: t("findingDetails.priority.low") },
     { value: "MEDIUM", label: t("findingDetails.priority.medium") },
@@ -426,6 +463,18 @@ export default function FindingDetailsPage(props: Props) {
                 )}
               />
             </div>
+
+            {status === "RISK_ACCEPTED" && (
+              <RiskSelectField
+                organizationId={organizationId}
+                control={control}
+                name="riskId"
+                label={t("findingDetails.fields.acceptedRisk")}
+                error={formState.errors.riskId?.message}
+                selectedRisk={finding.risk}
+                required
+              />
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label={t("findingDetails.fields.dateIdentified")}>
