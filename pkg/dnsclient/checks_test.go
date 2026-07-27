@@ -22,6 +22,7 @@ package dnsclient
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -48,6 +49,204 @@ func TestCheckCNAME(t *testing.T) {
 		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
 
 		require.NoError(t, err)
+	})
+
+	t.Run("accepts alias chain reaching the target", func(t *testing.T) {
+		t.Parallel()
+
+		chain := map[string]string{
+			"trust.example.com.":             "cname.eu.console.getprobo.com.",
+			"cname.eu.console.getprobo.com.": "custom.getprobo.com.",
+		}
+
+		var queried []string
+
+		client := &Client{
+			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				name := msg.Question[0].Header().Name
+				queried = append(queried, name)
+
+				target, ok := chain[name]
+				if !ok {
+					return &dns.Msg{}, nil
+				}
+
+				cname := &dns.CNAME{Hdr: dns.Header{Name: name}}
+				cname.Target = target
+
+				return &dns.Msg{Answer: []dns.RR{cname}}, nil
+			},
+		}
+
+		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
+
+		require.NoError(t, err)
+		assert.Equal(
+			t,
+			[]string{"trust.example.com.", "cname.eu.console.getprobo.com."},
+			queried,
+		)
+	})
+
+	t.Run("accepts chain returned in a single answer", func(t *testing.T) {
+		t.Parallel()
+
+		var queried []string
+
+		client := &Client{
+			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				queried = append(queried, msg.Question[0].Header().Name)
+
+				first := &dns.CNAME{Hdr: dns.Header{Name: "trust.example.com."}}
+				first.Target = "cname.eu.console.getprobo.com."
+
+				second := &dns.CNAME{Hdr: dns.Header{Name: "cname.eu.console.getprobo.com."}}
+				second.Target = "custom.getprobo.com."
+
+				third := &dns.CNAME{Hdr: dns.Header{Name: "custom.getprobo.com."}}
+				third.Target = "lb.example-cloud.com."
+
+				return &dns.Msg{Answer: []dns.RR{first, second, third}}, nil
+			},
+		}
+
+		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
+
+		require.NoError(t, err)
+		assert.Equal(t, []string{"trust.example.com."}, queried)
+	})
+
+	t.Run("rejects chain ending before the target", func(t *testing.T) {
+		t.Parallel()
+
+		client := &Client{
+			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				name := msg.Question[0].Header().Name
+				if name != "trust.example.com." {
+					return &dns.Msg{}, nil
+				}
+
+				cname := &dns.CNAME{Hdr: dns.Header{Name: name}}
+				cname.Target = "other.example.net."
+
+				return &dns.Msg{Answer: []dns.RR{cname}}, nil
+			},
+		}
+
+		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `stops at "other.example.net"`)
+	})
+
+	t.Run("rejects looping chain", func(t *testing.T) {
+		t.Parallel()
+
+		chain := map[string]string{
+			"trust.example.com.": "alias.example.net.",
+			"alias.example.net.": "trust.example.com.",
+		}
+
+		client := &Client{
+			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				name := msg.Question[0].Header().Name
+
+				cname := &dns.CNAME{Hdr: dns.Header{Name: name}}
+				cname.Target = chain[name]
+
+				return &dns.Msg{Answer: []dns.RR{cname}}, nil
+			},
+		}
+
+		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "loops back")
+	})
+
+	t.Run("rejects chain longer than the lookup budget", func(t *testing.T) {
+		t.Parallel()
+
+		var queried []string
+
+		client := &Client{
+			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				name := msg.Question[0].Header().Name
+				queried = append(queried, name)
+
+				cname := &dns.CNAME{Hdr: dns.Header{Name: name}}
+				cname.Target = "hop" + strconv.Itoa(len(queried)) + ".example.net."
+
+				return &dns.Msg{Answer: []dns.RR{cname}}, nil
+			},
+		}
+
+		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "does not reach")
+		assert.Len(t, queried, maxCNAMELookups)
+	})
+
+	t.Run("rejects multiple records owned by the same name", func(t *testing.T) {
+		t.Parallel()
+
+		client := &Client{
+			exchange: func(_ context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				name := msg.Question[0].Header().Name
+
+				first := &dns.CNAME{Hdr: dns.Header{Name: name}}
+				first.Target = "custom.getprobo.com."
+
+				second := &dns.CNAME{Hdr: dns.Header{Name: name}}
+				second.Target = "other.example.net."
+
+				return &dns.Msg{Answer: []dns.RR{first, second}}, nil
+			},
+		}
+
+		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "multiple cname records found")
+	})
+
+	t.Run("applies exchange timeout per hop", func(t *testing.T) {
+		t.Parallel()
+
+		chain := map[string]string{
+			"trust.example.com.": "alias.example.net.",
+			"alias.example.net.": "custom.getprobo.com.",
+		}
+
+		var deadlines []time.Time
+
+		client := &Client{
+			ExchangeTimeout: 2 * time.Second,
+			exchange: func(ctx context.Context, msg *dns.Msg, _ string) (*dns.Msg, error) {
+				deadline, ok := ctx.Deadline()
+				require.True(t, ok)
+
+				deadlines = append(deadlines, deadline)
+
+				name := msg.Question[0].Header().Name
+
+				cname := &dns.CNAME{Hdr: dns.Header{Name: name}}
+				cname.Target = chain[name]
+
+				return &dns.Msg{Answer: []dns.RR{cname}}, nil
+			},
+		}
+
+		err := client.CheckCNAME(context.Background(), "trust.example.com", "custom.getprobo.com")
+
+		require.NoError(t, err)
+		require.Len(t, deadlines, 2)
+		assert.True(
+			t,
+			deadlines[1].After(deadlines[0]),
+			"expected a fresh per-hop deadline, got shared chain deadline",
+		)
 	})
 
 	t.Run("rejects apex owned record for subdomain query", func(t *testing.T) {
