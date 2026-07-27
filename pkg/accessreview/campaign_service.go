@@ -159,7 +159,7 @@ func (s *Service) UpdateCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot update campaign: %w", CampaignStatusError(campaign.Status))
+				return campaignNotDraftError(campaign.Status)
 			}
 
 			if req.Name != nil && *req.Name != nil {
@@ -242,7 +242,7 @@ func (s *Service) AddCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot add scope source: %w", CampaignStatusError(campaign.Status))
+				return campaignNotDraftError(campaign.Status)
 			}
 			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -289,7 +289,7 @@ func (s *Service) RemoveCampaignSource(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot remove scope source: %w", CampaignStatusError(campaign.Status))
+				return campaignNotDraftError(campaign.Status)
 			}
 			if err := campaignSource.DeleteByCampaignIDAndAccessReviewSourceID(ctx, conn, scope, campaign.ID, req.AccessReviewSourceID); err != nil {
 				return fmt.Errorf("cannot delete campaign source: %w", err)
@@ -396,7 +396,7 @@ func (s *Service) StartCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
-				return fmt.Errorf("cannot start campaign: %w", CampaignStatusError(campaign.Status))
+				return campaignNotDraftError(campaign.Status)
 			}
 
 			var campaignSources coredata.AccessReviewCampaignSources
@@ -574,9 +574,12 @@ func (s *Service) CancelCampaign(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status == coredata.AccessReviewCampaignStatusCompleted ||
-				campaign.Status == coredata.AccessReviewCampaignStatusCancelled {
-				return fmt.Errorf("cannot update campaign: already %s", campaign.Status)
+			if campaign.Status == coredata.AccessReviewCampaignStatusCompleted {
+				return ErrCampaignCompleted
+			}
+
+			if campaign.Status == coredata.AccessReviewCampaignStatusCancelled {
+				return ErrCampaignCancelled
 			}
 
 			now := time.Now()
@@ -726,4 +729,19 @@ func (s *Service) CountCampaignsForOrganizationID(
 	}
 
 	return count, nil
+}
+
+func campaignNotDraftError(status coredata.AccessReviewCampaignStatus) error {
+	switch status {
+	case coredata.AccessReviewCampaignStatusInProgress:
+		return ErrCampaignInProgress
+	case coredata.AccessReviewCampaignStatusPendingActions:
+		return ErrCampaignPendingActions
+	case coredata.AccessReviewCampaignStatusCompleted:
+		return ErrCampaignCompleted
+	case coredata.AccessReviewCampaignStatusCancelled:
+		return ErrCampaignCancelled
+	default:
+		return ErrCampaignInProgress
+	}
 }

@@ -21,15 +21,13 @@
 package accessreview
 
 import (
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestCampaignStatusError(t *testing.T) {
+func TestCampaignNotDraftError(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -46,8 +44,7 @@ func TestCampaignStatusError(t *testing.T) {
 		t.Run(string(tt.status), func(t *testing.T) {
 			t.Parallel()
 
-			err := fmt.Errorf("cannot start campaign: %w", CampaignStatusError(tt.status))
-			assert.ErrorIs(t, err, tt.want)
+			assert.ErrorIs(t, campaignNotDraftError(tt.status), tt.want)
 		})
 	}
 }

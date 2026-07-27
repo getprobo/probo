@@ -20,11 +20,7 @@
 
 package accessreview
 
-import (
-	"errors"
-
-	"go.probo.inc/probo/pkg/coredata"
-)
+import "errors"
 
 var (
 	ErrCampaignMissingSources = errors.New("cannot start campaign: no scope sources configured")
@@ -33,18 +29,3 @@ var (
 	ErrCampaignCompleted      = errors.New("campaign is completed")
 	ErrCampaignCancelled      = errors.New("campaign is cancelled")
 )
-
-func CampaignStatusError(status coredata.AccessReviewCampaignStatus) error {
-	switch status {
-	case coredata.AccessReviewCampaignStatusInProgress:
-		return ErrCampaignInProgress
-	case coredata.AccessReviewCampaignStatusPendingActions:
-		return ErrCampaignPendingActions
-	case coredata.AccessReviewCampaignStatusCompleted:
-		return ErrCampaignCompleted
-	case coredata.AccessReviewCampaignStatusCancelled:
-		return ErrCampaignCancelled
-	default:
-		return ErrCampaignInProgress
-	}
-}
