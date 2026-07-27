@@ -1,0 +1,834 @@
+{
+  "layout": {
+    "title": "Page de conformité",
+    "description": "Configurez votre page de conformité publique pour présenter votre posture de sécurité et de conformité.",
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "actions": {
+      "open": "Ouvrir"
+    },
+    "tabs": {
+      "overview": "Vue d’ensemble",
+      "brand": "Marque",
+      "references": "Références",
+      "commitments": "Engagements",
+      "audits": "Audits",
+      "documents": "Documents",
+      "files": "Fichiers",
+      "subprocessors": "Sous-traitants",
+      "access": "Accès",
+      "mailingList": "Liste de diffusion"
+    }
+  },
+  "aliasField": {
+    "messages": {
+      "updated": "Alias mis à jour avec succès.",
+      "removed": "Alias supprimé avec succès."
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de l’alias",
+      "remove": "Échec de la suppression de l’alias"
+    },
+    "placeholder": "par ex. politique-de-confidentialite"
+  },
+  "accessPage": {
+    "title": "Accès externe",
+    "description": "Gérez qui peut accéder à votre page de conformité"
+  },
+  "accessEditDialog": {
+    "title": "Modifier l’accès pour {{email}}",
+    "types": {
+      "document": "Document",
+      "report": "Rapport",
+      "file": "Fichier"
+    },
+    "messages": {
+      "updated": "Accès mis à jour avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de l’accès"
+    },
+    "actions": {
+      "update": "Mettre à jour l’accès"
+    }
+  },
+  "accessList": {
+    "empty": "Aucun accès externe accordé pour le moment",
+    "columns": {
+      "name": "Nom",
+      "email": "E-mail",
+      "date": "Date",
+      "access": "Accès",
+      "requests": "Demandes",
+      "nda": "NDA"
+    },
+    "actions": {
+      "showMore": "Afficher plus"
+    }
+  },
+  "accessListItem": {
+    "actions": {
+      "edit": "Modifier"
+    }
+  },
+  "documentAccessList": {
+    "title": "Autorisations d’accès aux documents",
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "category": "Catégorie",
+      "access": "Accès"
+    },
+    "actions": {
+      "grantAll": "Tout accorder",
+      "rejectOrRevokeAll": "Tout rejeter/révoquer",
+      "grant": "Accorder",
+      "reject": "Rejeter",
+      "revoke": "Révoquer"
+    },
+    "empty": "Aucun document disponible"
+  },
+  "electronicSignature": {
+    "title": "Signature électronique",
+    "fields": {
+      "status": "Statut",
+      "signedAt": "Signé le",
+      "certificate": "Certificat"
+    },
+    "actions": {
+      "download": "Télécharger"
+    },
+    "activity": "Activité"
+  },
+  "eventTypeLabel": {
+    "documentViewed": "Document consulté",
+    "consentGiven": "Consentement donné",
+    "fullNameTyped": "Nom complet saisi",
+    "signatureAccepted": "Signature acceptée",
+    "signatureCompleted": "Signature terminée",
+    "sealComputed": "Sceau calculé",
+    "timestampRequested": "Horodatage demandé",
+    "certificateGenerated": "Certificat généré",
+    "processingError": "Erreur de traitement"
+  },
+  "ndaSignatureBadge": {
+    "signed": "Signé",
+    "processing": "En cours de traitement",
+    "pending": "En attente",
+    "failed": "Échoué"
+  },
+  "auditsPage": {
+    "title": "Audits",
+    "description": "Gérez les rapports d’audit et les certifications de conformité"
+  },
+  "auditList": {
+    "columns": {
+      "framework": "Référentiel",
+      "name": "Nom",
+      "validUntil": "Valide jusqu’au",
+      "state": "État",
+      "visibility": "Visibilité"
+    },
+    "empty": "Aucun audit disponible"
+  },
+  "auditListItem": {
+    "messages": {
+      "visibilityUpdated": "Visibilité de l’audit mise à jour avec succès."
+    },
+    "errors": {
+      "updateVisibility": "Échec de la mise à jour de la visibilité de l’audit"
+    },
+    "noExpiry": "Aucune expiration",
+    "untitled": "Sans titre",
+    "states": {
+      "not_started": "Non commencé",
+      "in_progress": "En cours",
+      "completed": "Terminé",
+      "rejected": "Rejeté",
+      "outdated": "Obsolète"
+    }
+  },
+  "brandPage": {
+    "messages": {
+      "updated": "Image de marque de la page de conformité mise à jour avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de l’image de marque de la page de conformité",
+      "fileTooLarge": {
+        "title": "Fichier trop volumineux",
+        "description": "Le fichier est trop volumineux. Veuillez téléverser un fichier de moins de 5 Mo."
+      }
+    },
+    "actions": {
+      "uploading": "Téléversement...",
+      "updating": "Mise à jour...",
+      "noLogo": "Aucun logo",
+      "uploadLogo": "Téléverser le logo",
+      "uploadDarkLogo": "Téléverser le logo sombre",
+      "changeLogo": "Changer le logo",
+      "removeLogo": "Supprimer le logo",
+      "changeDarkLogo": "Changer le logo sombre",
+      "removeDarkLogo": "Supprimer le logo sombre"
+    },
+    "logo": {
+      "label": "Logo",
+      "description": "Ce logo sera affiché sur votre page de conformité publique.",
+      "alt": "Logo de la page de conformité",
+      "uploadDescription": "Téléversez une image de logo (PNG, JPG, SVG, WEBP jusqu’à 5 Mo)"
+    },
+    "darkLogo": {
+      "label": "Logo du mode sombre",
+      "description": "Ce logo sera utilisé lorsque le mode sombre est activé.",
+      "alt": "Logo sombre de la page de conformité",
+      "uploadDescription": "Téléversez une image de logo sombre (PNG, JPG, SVG, WEBP jusqu’à 5 Mo)"
+    },
+    "visualIdentity": {
+      "title": "Identité visuelle",
+      "description": "Logos carrés affichés sur votre page de conformité publique."
+    },
+    "domains": {
+      "title": "Domaines",
+      "description": "Votre page de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé.",
+      "actions": {
+        "configure": "Configurer"
+      }
+    },
+    "profile": {
+      "title": "Informations générales",
+      "description": "Description et coordonnées affichées aux visiteurs.",
+      "fields": {
+        "entityName": "Nom de l’entité",
+        "entityNamePlaceholder": "Acme",
+        "description": "Description",
+        "descriptionPlaceholder": "Brève description pour les visiteurs",
+        "websiteUrl": "URL du site web",
+        "email": "E-mail",
+        "emailPlaceholder": "contact@example.com",
+        "address": "Adresse du siège",
+        "addressPlaceholder": "123 rue Principale, Ville, Pays"
+      }
+    }
+  },
+  "commitmentDialog": {
+    "title": {
+      "create": "Ajouter un engagement",
+      "edit": "Modifier l’engagement"
+    },
+    "validation": {
+      "iconRequired": "L’icône est requise",
+      "titleRequired": "Le titre est requis",
+      "descriptionRequired": "La description est requise"
+    },
+    "messages": {
+      "created": "Engagement créé avec succès",
+      "updated": "Engagement mis à jour avec succès"
+    },
+    "errors": {
+      "create": "Échec de la création de l’engagement",
+      "update": "Échec de la mise à jour de l’engagement"
+    },
+    "fields": {
+      "icon": "Icône",
+      "iconPlaceholder": "Sélectionnez une icône",
+      "eyebrow": "Sur-titre",
+      "eyebrowPlaceholder": "Petite étiquette d’accent au-dessus du titre",
+      "title": "Titre",
+      "titlePlaceholder": "Titre de l’engagement",
+      "description": "Description",
+      "descriptionPlaceholder": "Texte descriptif complémentaire"
+    },
+    "actions": {
+      "add": "Ajouter l’engagement",
+      "update": "Mettre à jour l’engagement"
+    },
+    "icons": {
+      "lock_key": "Cadenas et clé",
+      "eye_slash": "Œil barré",
+      "fingerprint": "Empreinte digitale",
+      "shield_warning": "Bouclier d’avertissement",
+      "shield_check": "Bouclier de validation",
+      "siren": "Sirène",
+      "key": "Clé",
+      "lock": "Cadenas",
+      "cloud": "Nuage",
+      "database": "Base de données",
+      "globe": "Globe",
+      "eye": "Œil",
+      "users": "Utilisateurs",
+      "certificate": "Certificat",
+      "gavel": "Marteau",
+      "heartbeat": "Pouls",
+      "bell": "Cloche",
+      "bug": "Insecte",
+      "code": "Code",
+      "server": "Serveur"
+    }
+  },
+  "commitmentGroupDialog": {
+    "title": {
+      "create": "Ajouter un groupe",
+      "edit": "Modifier le groupe"
+    },
+    "validation": {
+      "titleRequired": "Le titre est requis",
+      "descriptionRequired": "La description est requise"
+    },
+    "messages": {
+      "created": "Groupe créé avec succès",
+      "updated": "Groupe mis à jour avec succès"
+    },
+    "errors": {
+      "create": "Échec de la création du groupe",
+      "update": "Échec de la mise à jour du groupe"
+    },
+    "fields": {
+      "title": "Titre",
+      "titlePlaceholder": "par ex. Protection des données",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez ce que couvre ce groupe d’engagements"
+    },
+    "actions": {
+      "add": "Ajouter le groupe",
+      "update": "Mettre à jour le groupe"
+    }
+  },
+  "commitmentGroupList": {
+    "title": "Engagements de sécurité",
+    "description": "Regroupez les cartes d’engagement en sections affichées sur votre page de conformité",
+    "messages": {
+      "orderUpdated": "Ordre mis à jour avec succès"
+    },
+    "errors": {
+      "updateOrder": "Échec de la mise à jour de l’ordre"
+    },
+    "actions": {
+      "addGroup": "Ajouter un groupe"
+    },
+    "empty": "Aucun groupe d’engagements pour le moment"
+  },
+  "commitmentGroupListItem": {
+    "messages": {
+      "deleted": "Groupe supprimé avec succès",
+      "orderUpdated": "Ordre mis à jour avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du groupe",
+      "updateOrder": "Échec de la mise à jour de l’ordre"
+    },
+    "delete": {
+      "title": "Supprimer le groupe",
+      "description": "Voulez-vous vraiment supprimer le groupe « {{title}} » ?",
+      "warning": "Toutes les cartes d’engagement de ce groupe seront également supprimées. Cette action est irréversible."
+    },
+    "columns": {
+      "icon": "Icône",
+      "title": "Titre",
+      "description": "Description"
+    },
+    "actions": {
+      "deleting": "Suppression...",
+      "delete": "Supprimer",
+      "addCommitment": "Ajouter un engagement"
+    },
+    "empty": "Aucune carte d’engagement pour le moment"
+  },
+  "commitmentListItem": {
+    "messages": {
+      "deleted": "Engagement supprimé avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression de l’engagement"
+    }
+  },
+  "documentsPage": {
+    "title": "Documents",
+    "description": "Gérez les politiques, procédures et documents de conformité"
+  },
+  "documentList": {
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "alias": "Alias",
+      "visibility": "Visibilité"
+    },
+    "empty": "Aucun document disponible"
+  },
+  "documentListItem": {
+    "messages": {
+      "visibilityUpdated": "Visibilité du document mise à jour avec succès."
+    },
+    "errors": {
+      "updateVisibility": "Échec de la mise à jour de la visibilité du document"
+    }
+  },
+  "domainPage": {
+    "title": "Domaine personnalisé",
+    "empty": {
+      "description": "Ajoutez votre propre domaine pour rendre votre page de conformité plus professionnelle"
+    }
+  },
+  "thirdPartyListItem": {
+    "messages": {
+      "visibilityUpdated": "Visibilité du sous-traitant mise à jour avec succès."
+    },
+    "errors": {
+      "visibilityUpdate": "Échec de la mise à jour de la visibilité du sous-traitant"
+    },
+    "visibility": {
+      "visible": "Visible",
+      "none": "Aucune"
+    },
+    "actions": {
+      "hide": "Masquer",
+      "show": "Afficher"
+    }
+  },
+  "thirdPartyList": {
+    "columns": {
+      "name": "Nom",
+      "category": "Catégorie",
+      "visibility": "Visibilité"
+    },
+    "empty": "Aucun sous-traitant disponible"
+  },
+  "thirdPartiesPage": {
+    "title": "Sous-traitants",
+    "description": "Gérez les évaluations des sous-traitants et les informations de risque tiers"
+  },
+  "referenceList": {
+    "columns": {
+      "name": "Nom",
+      "description": "Description"
+    },
+    "empty": "Aucune référence disponible",
+    "dragHint": "Glissez-déposez les références pour modifier leur ordre d’affichage"
+  },
+  "referencesPage": {
+    "title": "Références",
+    "description": "Mettez en avant vos clients et partenaires sur votre page de conformité",
+    "actions": {
+      "add": "Ajouter une référence"
+    }
+  },
+  "statusSection": {
+    "title": "Statut de la page de conformité",
+    "errors": {
+      "title": "Erreur",
+      "notFound": "Page de conformité introuvable"
+    },
+    "activation": {
+      "title": "Activer la page de conformité",
+      "description": "Rendez votre page de conformité accessible publiquement pour renforcer la confiance de vos clients"
+    },
+    "indexing": {
+      "title": "Indexation par les moteurs de recherche",
+      "description": "Autorisez les moteurs de recherche à indexer votre page de conformité et à la rendre repérable",
+      "disabledHint": "Activez d’abord votre page de conformité pour permettre l’indexation par les moteurs de recherche"
+    }
+  },
+  "slackSection": {
+    "title": "Intégrations",
+    "disconnect": {
+      "title": "Déconnecter Slack",
+      "description": "Voulez-vous vraiment déconnecter ce canal Slack ? Cette action est irréversible."
+    },
+    "emptyDescription": "Gérez l’accès à votre page de conformité avec Slack",
+    "actions": {
+      "connect": "Connecter",
+      "disconnect": "Déconnecter"
+    }
+  },
+  "slackConnectionCard": {
+    "title": "Slack",
+    "connected": "Connecté le {{date}}",
+    "connectedWithChannel": "Connecté le {{date}} • Canal : {{channel}}",
+    "notConfiguredDescription": "Slack est connecté, mais aucun canal n’est encore configuré pour la page de conformité.",
+    "status": {
+      "connected": "Connecté",
+      "notConfigured": "Canal non configuré"
+    },
+    "actions": {
+      "changeChannel": "Changer de canal",
+      "connect": "Connecter",
+      "disconnect": "Déconnecter"
+    }
+  },
+  "ndaSection": {
+    "title": "Accord de confidentialité",
+    "empty": "Aucun fichier NDA téléversé",
+    "emptyDescription": "Téléversez un PDF que les visiteurs doivent accepter avant de pouvoir accéder à votre page de conformité.",
+    "uploadDescription": "Exigez que les visiteurs acceptent un accord de confidentialité avant d’accéder à votre page de conformité.",
+    "acceptanceDescription": "Les visiteurs doivent accepter cet accord avant d’accéder à votre page de conformité.",
+    "actions": {
+      "download": "Télécharger",
+      "upload": "Téléverser le NDA",
+      "replace": "Remplacer"
+    },
+    "delete": {
+      "title": "Supprimer le NDA",
+      "description": "Voulez-vous vraiment supprimer le fichier NDA ? Cette action est irréversible.",
+      "actions": {
+        "delete": "Supprimer"
+      }
+    },
+    "errors": {
+      "title": "Erreur",
+      "notFound": "Page de conformité introuvable",
+      "invalidFileType": {
+        "title": "Type de fichier non pris en charge",
+        "description": "Veuillez téléverser un fichier PDF."
+      },
+      "fileTooLarge": {
+        "title": "Fichier trop volumineux",
+        "description": "Veuillez téléverser un fichier de moins de 10 Mo."
+      }
+    }
+  },
+  "frameworkList": {
+    "title": "Référentiels de conformité",
+    "description": "Sélectionnez les référentiels à afficher sur votre page de conformité publique.",
+    "empty": "Aucun référentiel disponible",
+    "messages": {
+      "visibilityUpdated": "Visibilité du référentiel mise à jour avec succès."
+    },
+    "errors": {
+      "visibilityUpdate": "Échec de la mise à jour de la visibilité du référentiel"
+    }
+  },
+  "externalUrls": {
+    "title": "Liens personnalisés",
+    "description": "Ajoutez des URL externes à afficher sur votre page de conformité",
+    "validation": {
+      "nameRequired": "Le nom est requis",
+      "urlInvalid": "Veuillez saisir une URL valide"
+    },
+    "messages": {
+      "created": "Lien ajouté avec succès.",
+      "updated": "Lien mis à jour avec succès.",
+      "deleted": "Lien supprimé.",
+      "orderUpdated": "Ordre mis à jour."
+    },
+    "errors": {
+      "create": "Échec de l’ajout du lien.",
+      "update": "Échec de la mise à jour du lien.",
+      "delete": "Échec de la suppression du lien.",
+      "orderUpdate": "Échec de la mise à jour de l’ordre."
+    },
+    "dialog": {
+      "titleCreate": "Ajouter un lien",
+      "titleEdit": "Modifier le lien"
+    },
+    "fields": {
+      "url": "URL",
+      "urlPlaceholder": "https://example.com",
+      "name": "Nom",
+      "namePlaceholder": "par exemple, Twitter ou LinkedIn"
+    },
+    "actions": {
+      "add": "Ajouter un lien",
+      "save": "Enregistrer les modifications",
+      "open": "Ouvrir le lien",
+      "remove": "Supprimer le lien"
+    },
+    "dragHint": "Glissez-déposez pour modifier l’ordre d’affichage"
+  },
+  "sendUpdateDialog": {
+    "title": "Envoyer la mise à jour aux abonnés",
+    "description": "Cette mise à jour sera envoyée à tous les abonnés actuels de cette liste de diffusion. Cette action est irréversible.",
+    "messages": {
+      "enqueued": "Mise à jour mise en file d’attente pour l’envoi"
+    },
+    "errors": {
+      "enqueue": "Échec de la mise en file d’attente de la mise à jour"
+    },
+    "actions": {
+      "send": "Envoyer"
+    }
+  },
+  "newSubscriberDialog": {
+    "title": "Ajouter un abonné",
+    "description": "Ajoutez une personne pour recevoir les mises à jour de sécurité et de conformité",
+    "validation": {
+      "fullNameRequired": "Le nom complet est requis",
+      "emailRequired": "L’e-mail est requis",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide"
+    },
+    "messages": {
+      "created": "Abonné ajouté avec succès"
+    },
+    "errors": {
+      "create": "Échec de l’ajout de l’abonné"
+    },
+    "fields": {
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Jean Dupont",
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "jean@example.com",
+      "skipConfirmation": "Ignorer l’e-mail de confirmation"
+    },
+    "consentNotice": "En cochant cette case, vous certifiez avoir obtenu le consentement préalable vérifiable de cette personne pour recevoir ces communications, conformément aux réglementations applicables en matière de protection des données (par exemple, le RGPD et le CAN-SPAM). Vous acceptez l’entière responsabilité de fournir une preuve de ce consentement si nécessaire.",
+    "actions": {
+      "create": "Ajouter l’abonné"
+    }
+  },
+  "updateFormDialog": {
+    "title": {
+      "view": "Voir la mise à jour",
+      "edit": "Modifier la mise à jour",
+      "create": "Ajouter une mise à jour"
+    },
+    "validation": {
+      "titleRequired": "Le titre est requis",
+      "bodyRequired": "Le contenu est requis"
+    },
+    "messages": {
+      "created": "Mise à jour créée avec succès",
+      "updated": "Mise à jour enregistrée avec succès"
+    },
+    "errors": {
+      "create": "Échec de la création de la mise à jour",
+      "update": "Échec de l’enregistrement de la mise à jour"
+    },
+    "confidentialityNotice": "N’incluez pas d’informations confidentielles ou sensibles dans cette mise à jour. Tout contenu nécessitant une protection doit plutôt être placé derrière vos documents protégés par NDA.",
+    "fields": {
+      "title": "Titre",
+      "body": "Contenu"
+    },
+    "sentNotice": "Cette mise à jour a été envoyée et ne peut plus être modifiée.",
+    "actions": {
+      "save": "Enregistrer",
+      "create": "Créer"
+    }
+  },
+  "updatesList": {
+    "messages": {
+      "deleted": "Mise à jour supprimée avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression de la mise à jour"
+    },
+    "empty": "Aucune mise à jour pour le moment",
+    "columns": {
+      "title": "Titre",
+      "status": "Statut",
+      "created": "Créé le"
+    },
+    "status": {
+      "sent": "Envoyée",
+      "enqueued": "En file d’attente",
+      "processing": "Traitement en cours…",
+      "draft": "Brouillon"
+    },
+    "actions": {
+      "send": "Envoyer",
+      "edit": "Modifier la mise à jour",
+      "view": "Voir la mise à jour",
+      "delete": "Supprimer la mise à jour",
+      "showMore": "Afficher plus"
+    }
+  },
+  "mailingList": {
+    "messages": {
+      "deleted": "Abonné supprimé avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression de l’abonné"
+    },
+    "empty": "Aucun abonné à la liste de diffusion pour le moment",
+    "columns": {
+      "name": "Nom",
+      "email": "E-mail",
+      "status": "Statut",
+      "subscribedOn": "Abonné depuis"
+    },
+    "status": {
+      "confirmed": "Confirmé",
+      "pending": "En attente"
+    },
+    "actions": {
+      "delete": "Supprimer l’abonné",
+      "showMore": "Afficher plus"
+    }
+  },
+  "mailingListPage": {
+    "messages": {
+      "updated": "Liste de diffusion mise à jour avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de la liste de diffusion"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "description": "Configurez le comportement de votre liste de diffusion",
+      "replyTo": "E-mail de réponse",
+      "replyToPlaceholder": "security@example.com"
+    },
+    "tabs": {
+      "updates": "Mises à jour",
+      "subscribers": "Abonnés"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "addUpdate": "Ajouter une mise à jour",
+      "addSubscriber": "Ajouter un abonné"
+    }
+  },
+  "newFileDialog": {
+    "title": "Ajouter un fichier",
+    "uploadDescription": "Téléversez un fichier (10 Mo max)",
+    "selectedFile": "Fichier sélectionné : {{name}}",
+    "validation": {
+      "nameRequired": "Le nom est requis",
+      "categoryRequired": "La catégorie est requise",
+      "fileTypeNotAllowed": "Ce type de fichier n’est pas autorisé"
+    },
+    "messages": {
+      "created": "Fichier téléversé avec succès"
+    },
+    "errors": {
+      "create": "Échec du téléversement du fichier"
+    },
+    "fields": {
+      "name": "Nom",
+      "category": "Catégorie",
+      "visibility": "Visibilité"
+    },
+    "actions": {
+      "add": "Ajouter un fichier"
+    }
+  },
+  "editFileDialog": {
+    "title": "Modifier le fichier",
+    "validation": {
+      "nameRequired": "Le nom est requis",
+      "categoryRequired": "La catégorie est requise"
+    },
+    "messages": {
+      "updated": "Fichier mis à jour avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour du fichier"
+    },
+    "fields": {
+      "name": "Nom",
+      "category": "Catégorie"
+    },
+    "actions": {
+      "save": "Enregistrer"
+    }
+  },
+  "deleteFileDialog": {
+    "title": "Supprimer le fichier",
+    "description": "Voulez-vous vraiment supprimer ce fichier ? Cette action est irréversible.",
+    "messages": {
+      "deleted": "Fichier supprimé avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du fichier"
+    },
+    "actions": {
+      "delete": "Supprimer"
+    }
+  },
+  "fileListItem": {
+    "messages": {
+      "updated": "Fichier mis à jour avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour du fichier"
+    },
+    "actions": {
+      "download": "Télécharger",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    }
+  },
+  "fileList": {
+    "columns": {
+      "name": "Nom",
+      "category": "Catégorie",
+      "uploadDate": "Date de téléversement",
+      "alias": "Alias",
+      "visibility": "Visibilité"
+    },
+    "empty": "Aucun fichier disponible"
+  },
+  "filesPage": {
+    "title": "Fichiers",
+    "description": "Téléversez et gérez les fichiers de votre page de conformité",
+    "actions": {
+      "add": "Ajouter un fichier"
+    }
+  },
+  "newDomainDialog": {
+    "title": "Ajouter un domaine",
+    "description": "Saisissez votre domaine et nous générerons les enregistrements DNS à ajouter.",
+    "messages": {
+      "created": "Domaine ajouté avec succès. Configurez les enregistrements DNS pour vérifier et activer votre domaine."
+    },
+    "errors": {
+      "create": "Échec de l’ajout du domaine"
+    },
+    "fields": {
+      "domain": "Domaine",
+      "domainPlaceholder": "compliance.example.com"
+    },
+    "examples": "Exemples : compliance.example.com, trust.example.com",
+    "actions": {
+      "adding": "Ajout en cours...",
+      "add": "Ajouter un domaine"
+    }
+  },
+  "deleteDomainDialog": {
+    "title": "Supprimer le domaine personnalisé",
+    "description": "Cela supprimera définitivement le domaine personnalisé {{domain}} et toute sa configuration.",
+    "warning": "Cette action est irréversible.",
+    "confirmationLabel": "Pour confirmer la suppression, saisissez « {{domain}} » ci-dessous :",
+    "messages": {
+      "deleted": "Domaine supprimé avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du domaine"
+    },
+    "actions": {
+      "deleting": "Suppression en cours...",
+      "delete": "Supprimer le domaine"
+    }
+  },
+  "domainDialog": {
+    "messages": {
+      "copied": "Copié",
+      "valueCopied": "Valeur copiée dans le presse-papiers"
+    },
+    "active": {
+      "title": "Le domaine est actif",
+      "description": "Votre domaine personnalisé est vérifié et le certificat SSL est actif"
+    },
+    "provisioningError": "Erreur de provisionnement",
+    "sslExpires": "Expiration du SSL",
+    "dns": {
+      "title": "Configuration DNS",
+      "description": "Ajoutez ces enregistrements DNS à votre domaine pour terminer la vérification",
+      "name": "Nom",
+      "value": "Valeur",
+      "ttl": "TTL : {{ttl}}"
+    },
+    "actions": {
+      "copy": "Copier"
+    },
+    "pendingDescription": "Après l’ajout des enregistrements DNS, la vérification se fera automatiquement. La propagation peut prendre quelques minutes."
+  },
+  "domainCard": {
+    "managed": "Géré",
+    "status": {
+      "active": "Actif",
+      "pending": "En attente"
+    },
+    "actions": {
+      "viewDetails": "Voir les détails",
+      "delete": "Supprimer"
+    }
+  }
+}
