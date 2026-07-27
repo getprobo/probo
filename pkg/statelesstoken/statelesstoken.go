@@ -58,6 +58,13 @@ type (
 	ErrExpiredToken struct {
 		message string
 	}
+
+	validateOptions struct {
+		allowExpired bool
+	}
+
+	// ValidateOption configures token validation.
+	ValidateOption func(*validateOptions)
 )
 
 var (
@@ -71,6 +78,14 @@ func (e ErrInvalidToken) Error() string {
 
 func (e ErrExpiredToken) Error() string {
 	return e.message
+}
+
+// AllowExpired skips the expiration check while still verifying signature and type.
+// Use only when recovering non-sensitive metadata (e.g. post-auth redirect URLs).
+func AllowExpired() ValidateOption {
+	return func(o *validateOptions) {
+		o.allowExpired = true
+	}
 }
 
 func NewToken[T any](secret string, tokenType string, expirationTime time.Duration, data T) (string, error) {
@@ -125,25 +140,30 @@ func DecodePayload[T any](tokenString string) (*Payload[T], error) {
 	return &payload, nil
 }
 
-// ValidateToken validates a token and unmarshals the payload
-// It returns an error if the token is invalid or expired
-func ValidateToken[T any](secret string, tokenType string, tokenString string) (*Payload[T], error) {
+// ValidateToken validates a token and unmarshals the payload.
+// By default it returns an error if the token is invalid or expired.
+func ValidateToken[T any](
+	secret string,
+	tokenType string,
+	tokenString string,
+	opts ...ValidateOption,
+) (*Payload[T], error) {
+	var options validateOptions
+
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	payload, err := parseSignedToken[T](secret, tokenType, tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	if time.Now().After(payload.ExpiresAt) {
+	if !options.allowExpired && time.Now().After(payload.ExpiresAt) {
 		return nil, &ErrExpiredToken{message: "token has expired"}
 	}
 
 	return payload, nil
-}
-
-// ValidateTokenAllowExpired validates signature and type but ignores expiration.
-// Use only when recovering non-sensitive metadata (e.g. post-auth redirect URLs).
-func ValidateTokenAllowExpired[T any](secret string, tokenType string, tokenString string) (*Payload[T], error) {
-	return parseSignedToken[T](secret, tokenType, tokenString)
 }
 
 func parseSignedToken[T any](secret string, tokenType string, tokenString string) (*Payload[T], error) {

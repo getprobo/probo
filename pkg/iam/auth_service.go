@@ -671,7 +671,12 @@ func (s AuthService) GetMagicLinkEmail(ctx context.Context, tokenString string) 
 }
 
 func (s AuthService) MagicLinkContinueFromToken(tokenString string) (*string, error) {
-	payload, err := statelesstoken.ValidateTokenAllowExpired[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, tokenString)
+	payload, err := statelesstoken.ValidateToken[MagicLinkData](
+		s.tokenSecret,
+		TokenTypeMagicLink,
+		tokenString,
+		statelesstoken.AllowExpired(),
+	)
 	if err != nil {
 		return nil, err
 	}
