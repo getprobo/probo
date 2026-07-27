@@ -861,6 +861,10 @@ func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input
 
 	campaign, err := r.accessReview.CancelCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
+		if errorx.AnyOf(err, accessreview.ErrCampaignCompleted, accessreview.ErrCampaignCancelled) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot cancel access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
