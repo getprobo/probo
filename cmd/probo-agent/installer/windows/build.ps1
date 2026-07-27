@@ -1,0 +1,130 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+#Requires -Version 7.0
+
+<#
+.SYNOPSIS
+  Build the Probo Agent Windows MSI with WiX.
+
+.DESCRIPTION
+  Packages a pre-built probo-agent.exe into
+  probo-agent_<version>_windows_<arch>.msi. Prefer passing an
+  Authenticode-signed binary so the nested exe remains signed.
+
+  Requires the WiX CLI (`wix`) on PATH (dotnet tool install --global wix).
+
+.PARAMETER Binary
+  Path to probo-agent.exe.
+
+.PARAMETER Version
+  Product version (X.Y.Z). Defaults to cmd/probo-agent/VERSION.
+
+.PARAMETER Arch
+  Target architecture: amd64, x86_64, x64, or arm64.
+
+.PARAMETER Output
+  Output .msi path. Defaults next to the script under dist/.
+#>
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$Binary,
+
+    [string]$Version = "",
+
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("amd64", "x86_64", "x64", "arm64")]
+    [string]$Arch,
+
+    [string]$Output = ""
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$ScriptDir = $PSScriptRoot
+$RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..\..\..")).Path
+$PackageWxs = Join-Path $ScriptDir "Package.wxs"
+
+if (-not (Test-Path -LiteralPath $Binary)) {
+    throw "error: --binary / -Binary path not found: $Binary"
+}
+
+$Binary = (Resolve-Path -LiteralPath $Binary).Path
+
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $VersionFile = Join-Path $RepoRoot "cmd\probo-agent\VERSION"
+    if (-not (Test-Path -LiteralPath $VersionFile)) {
+        throw "error: VERSION file missing at $VersionFile; pass -Version"
+    }
+    $Version = (Get-Content -LiteralPath $VersionFile -Raw).Trim()
+}
+
+if ($Version -notmatch '^\d+\.\d+\.\d+') {
+    throw "error: version must look like X.Y.Z (got '$Version')"
+}
+
+switch ($Arch) {
+    { $_ -in @("amd64", "x86_64", "x64") } {
+        $WixArch = "x64"
+        $ArchLabel = "x86_64"
+    }
+    "arm64" {
+        $WixArch = "arm64"
+        $ArchLabel = "arm64"
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($Output)) {
+    $DistDir = Join-Path $RepoRoot "dist"
+    New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
+    $Output = Join-Path $DistDir "probo-agent_${Version}_windows_${ArchLabel}.msi"
+} else {
+    $outDir = Split-Path -Parent $Output
+    if ($outDir) {
+        New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+    }
+}
+
+$wix = Get-Command wix -ErrorAction SilentlyContinue
+if (-not $wix) {
+    throw "error: wix CLI not found on PATH (install with: dotnet tool install --global wix)"
+}
+
+Write-Host "Building MSI: binary=$Binary arch=$WixArch version=$Version output=$Output"
+
+& wix build `
+    -arch $WixArch `
+    -d "Version=$Version" `
+    -d "AgentExe=$Binary" `
+    -o $Output `
+    $PackageWxs
+
+if ($LASTEXITCODE -ne 0) {
+    throw "error: wix build failed with exit code $LASTEXITCODE"
+}
+
+if (-not (Test-Path -LiteralPath $Output)) {
+    throw "error: expected MSI was not produced at $Output"
+}
+
+Write-Host "Wrote $Output"
