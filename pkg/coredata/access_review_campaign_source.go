@@ -166,27 +166,6 @@ func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 		sourceIDStrings[i] = id.String()
 	}
 
-	countQ := `
-SELECT COUNT(DISTINCT id)
-FROM access_review_sources
-WHERE
-	%s
-	AND id = ANY(@access_review_source_ids::text[])
-`
-	countQ = fmt.Sprintf(countQ, scope.SQLFragment())
-
-	countArgs := pgx.StrictNamedArgs{"access_review_source_ids": sourceIDStrings}
-	maps.Copy(countArgs, scope.SQLArguments())
-
-	var found int
-	if err := conn.QueryRow(ctx, countQ, countArgs).Scan(&found); err != nil {
-		return fmt.Errorf("cannot count access review sources: %w", err)
-	}
-
-	if found != len(uniqueSourceIDs) {
-		return ErrResourceNotFound
-	}
-
 	now := time.Now()
 
 	q := `
