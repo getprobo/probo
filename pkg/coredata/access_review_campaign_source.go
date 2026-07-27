@@ -159,11 +159,11 @@ func (sources *AccessReviewCampaignSources) MergeByCampaignID(
 	campaignID gid.GID,
 	accessReviewSourceIDs []gid.GID,
 ) error {
-	uniqueSourceIDs := uniqueGIDs(accessReviewSourceIDs)
+	sourceIDs := gid.NewSet(accessReviewSourceIDs...)
 
-	sourceIDStrings := make([]string, len(uniqueSourceIDs))
-	for i, id := range uniqueSourceIDs {
-		sourceIDStrings[i] = id.String()
+	sourceIDStrings := make([]string, 0, len(sourceIDs))
+	for id := range sourceIDs {
+		sourceIDStrings = append(sourceIDStrings, id.String())
 	}
 
 	now := time.Now()
