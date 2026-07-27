@@ -11,7 +11,7 @@ changelog entry, commit, tag, push.
 | Server (`probod` group) | `probod/v*`                    | [probod.md](./probod.md)         |
 | `probod-bootstrap`      | `probod-bootstrap/v*`          | [probod-bootstrap.md](./probod-bootstrap.md) |
 | `proboctl`              | `proboctl/v*`                  | [proboctl.md](./proboctl.md)     |
-| `probo-agent`           | `probo-agent/v*`               | [probo-agent.md](./probo-agent.md) |
+| `probo-agent`           | `probo-agent/v*`               | [probo-agent.md](./probo-agent.md) ([Windows signing setup](./probo-agent-windows-signing.md)) |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
 | `@probo/skills`         | `@probo/skills/v*`             | [skills.md](./skills.md)           |
