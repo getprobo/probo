@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getAssignableRoles } from "@probo/helpers";
+import { getAssignableRoles, getMembershipRoles } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -288,21 +288,13 @@ export function PeopleListItem(props: {
             value={profile.membership.role}
             onValueChange={role => void handleUpdateRole(role)}
           >
-            {roleOptions.includes("OWNER") && (
-              <Option value="OWNER">{t("peopleListItem.roles.owner")}</Option>
-            )}
-            {roleOptions.includes("ADMIN") && (
-              <Option value="ADMIN">{t("peopleListItem.roles.admin")}</Option>
-            )}
-            {roleOptions.includes("VIEWER") && (
-              <Option value="VIEWER">{t("peopleListItem.roles.viewer")}</Option>
-            )}
-            {roleOptions.includes("AUDITOR") && (
-              <Option value="AUDITOR">{t("peopleListItem.roles.auditor")}</Option>
-            )}
-            {roleOptions.includes("EMPLOYEE") && (
-              <Option value="EMPLOYEE">{t("peopleListItem.roles.employee")}</Option>
-            )}
+            {getMembershipRoles(t)
+              .filter(({ value }) => roleOptions.includes(value))
+              .map(({ value, label }) => (
+                <Option key={value} value={value}>
+                  {label}
+                </Option>
+              ))}
           </Select>
         </Td>
       )}

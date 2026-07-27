@@ -71,6 +71,77 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Search',
+		name: 'query',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['user'],
+				operation: ['listUsers'],
+			},
+		},
+		default: '',
+		description: 'Search users by full name or email address',
+	},
+	{
+		displayName: 'State',
+		name: 'state',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['user'],
+				operation: ['listUsers'],
+			},
+		},
+		options: [
+			{ name: 'Active', value: 'ACTIVE' },
+			{ name: 'All', value: '' },
+			{ name: 'Inactive', value: 'INACTIVE' },
+		],
+		default: '',
+		description: 'Filter by profile state',
+	},
+	{
+		displayName: 'Role',
+		name: 'role',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['user'],
+				operation: ['listUsers'],
+			},
+		},
+		options: [
+			{ name: 'Admin', value: 'ADMIN' },
+			{ name: 'All', value: '' },
+			{ name: 'Auditor', value: 'AUDITOR' },
+			{ name: 'Employee', value: 'EMPLOYEE' },
+			{ name: 'Owner', value: 'OWNER' },
+			{ name: 'Viewer', value: 'VIEWER' },
+		],
+		default: '',
+		description: 'Filter by membership role',
+	},
+	{
+		displayName: 'Type',
+		name: 'kind',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['user'],
+				operation: ['listUsers'],
+			},
+		},
+		options: [
+			{ name: 'All', value: '' },
+			{ name: 'Contractor', value: 'CONTRACTOR' },
+			{ name: 'Employee', value: 'EMPLOYEE' },
+			{ name: 'Service Account', value: 'SERVICE_ACCOUNT' },
+		],
+		default: '',
+		description: 'Filter by profile kind',
+	},
 ];
 
 export async function execute(
@@ -80,12 +151,16 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const query = this.getNodeParameter('query', itemIndex, '') as string;
+	const state = this.getNodeParameter('state', itemIndex, '') as string;
+	const role = this.getNodeParameter('role', itemIndex, '') as string;
+	const kind = this.getNodeParameter('kind', itemIndex, '') as string;
 
-	const query = `
-		query ListUsers($organizationId: ID!, $first: Int, $after: CursorKey, $orderBy: ProfileOrder) {
+	const gqlQuery = `
+		query ListUsers($organizationId: ID!, $first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFilter) {
 			node(id: $organizationId) {
 				... on Organization {
-					profiles(first: $first, after: $after, orderBy: $orderBy) {
+					profiles(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
 						edges {
 							node {
 								id
@@ -114,10 +189,27 @@ export async function execute(
 		}
 	`;
 
+	const filter: IDataObject = {};
+	if (query) {
+		filter.query = query;
+	}
+	if (state) {
+		filter.state = state;
+	}
+	if (role) {
+		filter.role = role;
+	}
+	if (kind) {
+		filter.kind = kind;
+	}
+
 	const users = await proboConnectApiRequestAllItems.call(
 		this,
-		query,
-		{ organizationId },
+		gqlQuery,
+		{
+			organizationId,
+			...(Object.keys(filter).length > 0 ? { filter } : {}),
+		},
 		(response: IDataObject) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

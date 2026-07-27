@@ -12,6 +12,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ProfileOrder
+    filter: ProfileFilter
   ): ProfileConnection @goField(forceResolver: true)
 
   samlConfigurations(

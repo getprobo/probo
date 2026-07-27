@@ -21,6 +21,7 @@
 package coredata
 
 import (
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -38,6 +39,9 @@ type (
 		externalID                 *string
 		state                      *ProfileState
 		source                     *ProfileSource
+		query                      *string
+		role                       *MembershipRole
+		kind                       *string
 	}
 )
 
@@ -95,7 +99,45 @@ func (f *MembershipProfileFilter) Source() *ProfileSource {
 	return f.source
 }
 
+func (f *MembershipProfileFilter) WithQuery(query *string) *MembershipProfileFilter {
+	f.query = query
+	return f
+}
+
+func (f *MembershipProfileFilter) Query() *string {
+	return f.query
+}
+
+func (f *MembershipProfileFilter) WithRole(role MembershipRole) *MembershipProfileFilter {
+	f.role = &role
+	return f
+}
+
+func (f *MembershipProfileFilter) Role() *MembershipRole {
+	return f.role
+}
+
+func (f *MembershipProfileFilter) WithKind(kind *string) *MembershipProfileFilter {
+	f.kind = kind
+	return f
+}
+
+func (f *MembershipProfileFilter) Kind() *string {
+	return f.kind
+}
+
+func escapeLikePattern(s string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(s)
+}
+
 func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
+	var filterQuery *string
+
+	if f.query != nil && *f.query != "" {
+		escaped := escapeLikePattern(*f.query)
+		filterQuery = &escaped
+	}
+
 	return pgx.StrictNamedArgs{
 		"filter_email":             f.email,
 		"filter_user_name":         f.userName,
@@ -106,6 +148,9 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"current_date":             f.currentDate,
 		"filter_state":             f.state,
 		"filter_source":            f.source,
+		"filter_query":             filterQuery,
+		"filter_role":              f.role,
+		"filter_kind":              f.kind,
 	}
 }
 
@@ -170,6 +215,37 @@ AND (
 	CASE
 		WHEN @filter_external_id::text IS NOT NULL THEN
 			p.external_id = @filter_external_id::text
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_query::text IS NOT NULL AND @filter_query::text <> '' THEN
+			(
+				p.full_name ILIKE '%' || @filter_query || '%' ESCAPE '\'
+				OR i.email_address ILIKE '%' || @filter_query || '%' ESCAPE '\'
+				OR p.position ILIKE '%' || @filter_query || '%' ESCAPE '\'
+			)
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_role::authz_role IS NOT NULL THEN
+			p.identity_id IN (
+				SELECT identity_id
+				FROM iam_memberships
+				WHERE
+					organization_id = p.organization_id
+					AND role = @filter_role::authz_role
+			)
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_kind::text IS NOT NULL AND @filter_kind::text <> '' THEN
+			p.kind = @filter_kind::text
 		ELSE TRUE
 	END
 )

@@ -188,6 +188,13 @@ components:
         - INACTIVE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileState
 
+    ProfileKind:
+      type: string
+      enum:
+        - EMPLOYEE
+        - CONTRACTOR
+        - SERVICE_ACCOUNT
+
     ProfileSource:
       type: string
       enum:
@@ -572,6 +579,15 @@ components:
             state:
               $ref: "#/components/schemas/ProfileState"
               description: Filter by profile state (ACTIVE or INACTIVE)
+            query:
+              type: string
+              description: Search by full name, email address, or position
+            role:
+              $ref: "#/components/schemas/MembershipRole"
+              description: Filter by membership role
+            kind:
+              $ref: "#/components/schemas/ProfileKind"
+              description: Filter by profile kind
 
     ListUsersOutput:
       type: object

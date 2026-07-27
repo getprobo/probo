@@ -179,18 +179,37 @@ func (r *organizationResolver) HorizontalLogo(ctx context.Context, obj *types.Or
 }
 
 // Profiles is the resolver for the profiles field.
-func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
 	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
 	}
 
-	filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
+	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
+	if filter != nil {
+		filters = coredata.NewMembershipProfileFilter(filter.ContractEnded).WithMembership()
+
+		if filter.State != nil {
+			filters.WithState(*filter.State)
+		}
+
+		if filter.Query != nil {
+			filters.WithQuery(filter.Query)
+		}
+
+		if filter.Role != nil {
+			filters.WithRole(*filter.Role)
+		}
+
+		if filter.Kind != nil {
+			filters.WithKind(filter.Kind)
+		}
+	}
 
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
-			Filters:  filter,
+			Filters:  filters,
 		}, nil
 	}
 
@@ -207,13 +226,13 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 
 	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filter)
+	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProfileConnection(page, r, obj.ID, filter), nil
+	return types.NewProfileConnection(page, r, obj.ID, filters), nil
 }
 
 // SamlConfigurations is the resolver for the samlConfigurations field.

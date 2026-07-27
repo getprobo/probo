@@ -120,7 +120,13 @@ export {
 export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
 export { detectSocialName } from "./socialUrl";
 export { formatError, type GraphQLError } from "./error";
-export { Role, roles, getAssignableRoles } from "./roles";
+export {
+  Role,
+  roles,
+  getAssignableRoles,
+  getMembershipRole,
+  getMembershipRoles,
+} from "./roles";
 export {
   getCompliancePortalDocumentAccessStatusBadgeVariant,
   getCompliancePortalDocumentAccessStatusLabel,

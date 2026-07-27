@@ -1676,6 +1676,13 @@
       "contractor": "Prestataire",
       "serviceAccount": "Compte de service"
     },
+    "membershipRole": {
+      "owner": "Propriétaire",
+      "admin": "Administrateur",
+      "viewer": "Lecteur",
+      "auditor": "Auditeur",
+      "employee": "Employé"
+    },
     "registryStatus": {
       "open": "Ouvert",
       "inProgress": "En cours",
@@ -2419,7 +2426,15 @@
       "role": "Rôle",
       "createdOn": "Créé le"
     },
-    "empty": "Aucune personne"
+    "empty": "Aucune personne",
+    "searchPlaceholder": "Rechercher des personnes...",
+    "filters": {
+      "allStatuses": "Tous les statuts",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "allRoles": "Tous les rôles",
+      "allTypes": "Tous les types"
+    }
   },
   "peopleListItem": {
     "messages": {
@@ -2438,13 +2453,6 @@
       "sendActivationEmail": "Envoyer l’e-mail d’activation à {{name}} ?",
       "archive": "Voulez-vous vraiment archiver {{name}} ?",
       "remove": "Voulez-vous vraiment supprimer {{name}} ?"
-    },
-    "roles": {
-      "owner": "Propriétaire",
-      "admin": "Administrateur",
-      "viewer": "Lecteur",
-      "auditor": "Auditeur",
-      "employee": "Employé"
     },
     "actions": {
       "send": "Envoyer",
@@ -2472,13 +2480,6 @@
       "positionPlaceholder": "ex. PDG, DAF, etc.",
       "contractStartDate": "Date de début de contrat",
       "contractEndDate": "Date de fin de contrat"
-    },
-    "roles": {
-      "owner": "Propriétaire",
-      "admin": "Administrateur",
-      "viewer": "Lecteur",
-      "auditor": "Auditeur",
-      "employee": "Employé"
     },
     "roleDescriptions": {
       "owner": "Accès complet à tout",

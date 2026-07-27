@@ -1019,6 +1019,13 @@
       "contractor": "Contractor",
       "serviceAccount": "Service account"
     },
+    "membershipRole": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "viewer": "Viewer",
+      "auditor": "Auditor",
+      "employee": "Employee"
+    },
     "registryStatus": {
       "open": "Open",
       "inProgress": "In Progress",
@@ -1351,20 +1358,20 @@
   "addPersonDialog": { "title": "Add Person" },
   "peopleList": {
     "columns": { "name": "Name", "status": "Status", "email": "Email", "role": "Role", "createdOn": "Created on" },
-    "empty": "No people"
+    "empty": "No people",
+    "searchPlaceholder": "Search people...",
+    "filters": { "allStatuses": "All statuses", "active": "Active", "inactive": "Inactive", "allRoles": "All roles", "allTypes": "All types" }
   },
   "peopleListItem": {
     "messages": { "invitationSent": "Invitation sent successfully", "roleUpdated": "Role updated successfully", "archived": "Person archived successfully", "removed": "Person removed successfully" },
     "errors": { "sendInvitation": "Failed to send invitation", "updateRole": "Failed to update role", "archive": "Failed to archive person", "remove": "Failed to remove person" },
     "confirmations": { "sendActivationEmail": "Send the activation email to {{name}}?", "archive": "Are you sure you want to archive {{name}}?", "remove": "Are you sure you want to remove {{name}}?" },
-    "roles": { "owner": "Owner", "admin": "Admin", "viewer": "Viewer", "auditor": "Auditor", "employee": "Employee" },
     "actions": { "send": "Send", "sendActivationMail": "Send activation mail", "resendActivationMail": "Resend activation mail", "archivePerson": "Archive person", "removePerson": "Remove person" }
   },
   "personForm": {
     "messages": { "created": "Person created successfully.", "updated": "Person updated successfully." },
     "errors": { "create": "Failed to create person", "update": "Failed to update person" },
     "fields": { "fullName": "Full name *", "emailAddress": "Email Address *", "role": "Role *", "type": "Type", "position": "Position", "positionPlaceholder": "e.g. CEO, CFO, etc.", "contractStartDate": "Contract start date", "contractEndDate": "Contract end date" },
-    "roles": { "owner": "Owner", "admin": "Admin", "viewer": "Viewer", "auditor": "Auditor", "employee": "Employee" },
     "roleDescriptions": { "owner": "Full access to everything", "admin": "Full access except organization setup and API keys", "viewer": "Read-only access", "auditor": "Read-only access without settings and tasks", "employee": "Access to employee page" },
     "kinds": { "EMPLOYEE": "Employee", "CONTRACTOR": "Contractor", "SERVICE_ACCOUNT": "Service account" },
     "actions": { "update": "Update", "create": "Create" }

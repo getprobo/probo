@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime, getAssignableRoles, peopleRoles } from "@probo/helpers";
-import { roles } from "@probo/helpers/src/roles";
+import { formatDatetime, getAssignableRoles, getMembershipRoles, peopleRoles, roles } from "@probo/helpers";
 import { Button, Field, Input, Option } from "@probo/ui";
 import { use } from "react";
 import { useWatch } from "react-hook-form";
@@ -202,21 +201,13 @@ export function PersonForm(props: {
                 label={t("personForm.fields.role")}
                 disabled={disabled || !!id}
               >
-                {availableRoles.includes("OWNER") && (
-                  <Option value="OWNER">{t("personForm.roles.owner")}</Option>
-                )}
-                {availableRoles.includes("ADMIN") && (
-                  <Option value="ADMIN">{t("personForm.roles.admin")}</Option>
-                )}
-                {availableRoles.includes("VIEWER") && (
-                  <Option value="VIEWER">{t("personForm.roles.viewer")}</Option>
-                )}
-                {availableRoles.includes("AUDITOR") && (
-                  <Option value="AUDITOR">{t("personForm.roles.auditor")}</Option>
-                )}
-                {availableRoles.includes("EMPLOYEE") && (
-                  <Option value="EMPLOYEE">{t("personForm.roles.employee")}</Option>
-                )}
+                {getMembershipRoles(t)
+                  .filter(({ value }) => availableRoles.includes(value))
+                  .map(({ value, label }) => (
+                    <Option key={value} value={value}>
+                      {label}
+                    </Option>
+                  ))}
               </ControlledField>
 
               <div className="mt-4 space-y-2 text-sm text-txt-tertiary">

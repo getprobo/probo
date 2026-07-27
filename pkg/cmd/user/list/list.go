@@ -73,6 +73,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagOrderDir      string
 		flagContractEnded string
 		flagState         string
+		flagFilter        string
+		flagRole          string
+		flagKind          string
 		flagOutput        *string
 	)
 
@@ -85,6 +88,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
   # List only active users
   prb user ls --state ACTIVE
+
+  # Search users by name or email
+  prb user ls --filter alice
+
+  # List only admins
+  prb user ls --role ADMIN
+
+  # Filter by type
+  prb user ls --kind EMPLOYEE
 
   # List users whose contract has ended
   prb user ls --contract-ended true`,
@@ -151,6 +163,26 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				filter["state"] = flagState
+			}
+
+			if flagFilter != "" {
+				filter["query"] = flagFilter
+			}
+
+			if flagRole != "" {
+				if err := cmdutil.ValidateEnum("role", flagRole, []string{"OWNER", "ADMIN", "VIEWER", "AUDITOR", "EMPLOYEE"}); err != nil {
+					return err
+				}
+
+				filter["role"] = flagRole
+			}
+
+			if flagKind != "" {
+				if err := cmdutil.ValidateEnum("kind", flagKind, []string{"EMPLOYEE", "CONTRACTOR", "SERVICE_ACCOUNT"}); err != nil {
+					return err
+				}
+
+				filter["kind"] = flagKind
 			}
 
 			if len(filter) > 0 {
@@ -242,6 +274,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVar(&flagContractEnded, "contract-ended", "", "Filter by contract status (true or false)")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by profile state (ACTIVE or INACTIVE)")
+	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter users by name or email search query")
+	cmd.Flags().StringVar(&flagRole, "role", "", "Filter by membership role (OWNER, ADMIN, VIEWER, AUDITOR, EMPLOYEE)")
+	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by profile kind (EMPLOYEE, CONTRACTOR, SERVICE_ACCOUNT)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

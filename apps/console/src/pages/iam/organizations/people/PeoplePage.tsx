@@ -37,7 +37,7 @@ export const peoplePageQuery = graphql`
       ... on Organization {
         canCreateUser: permission(action: "iam:membership-profile:create", attributes: { target_role: "VIEWER" })
         ...PeopleListFragment
-          @arguments(first: 20, order: { direction: ASC, field: FULL_NAME })
+          @arguments(first: 100, order: { direction: ASC, field: FULL_NAME })
       }
     }
   }
@@ -55,7 +55,10 @@ export function PeoplePage(props: {
     ConnectionHandler.getConnectionID(
       organizationId,
       "PeopleListFragment_profiles",
-      { orderBy: { direction: "ASC", field: "FULL_NAME" } },
+      {
+        orderBy: { direction: "ASC", field: "FULL_NAME" },
+        filter: null,
+      },
     ),
   );
 

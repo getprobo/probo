@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+type Translator = (s: string) => string;
+
 export const Role = {
   OWNER: "OWNER",
   ADMIN: "ADMIN",
@@ -45,4 +47,46 @@ export function getAssignableRoles(currentRole: Role): Role[] {
   }
 
   return [];
+}
+
+export function getMembershipRoles(t: Translator) {
+  return [
+    {
+      value: Role.OWNER,
+      label: t("helpers.membershipRole.owner"),
+    },
+    {
+      value: Role.ADMIN,
+      label: t("helpers.membershipRole.admin"),
+    },
+    {
+      value: Role.VIEWER,
+      label: t("helpers.membershipRole.viewer"),
+    },
+    {
+      value: Role.AUDITOR,
+      label: t("helpers.membershipRole.auditor"),
+    },
+    {
+      value: Role.EMPLOYEE,
+      label: t("helpers.membershipRole.employee"),
+    },
+  ] as const;
+}
+
+export function getMembershipRole(t: Translator, role?: string): string {
+  switch (role) {
+    case Role.OWNER:
+      return t("helpers.membershipRole.owner");
+    case Role.ADMIN:
+      return t("helpers.membershipRole.admin");
+    case Role.VIEWER:
+      return t("helpers.membershipRole.viewer");
+    case Role.AUDITOR:
+      return t("helpers.membershipRole.auditor");
+    case Role.EMPLOYEE:
+      return t("helpers.membershipRole.employee");
+    default:
+      return t("helpers.common.unknown");
+  }
 }

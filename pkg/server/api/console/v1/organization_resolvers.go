@@ -118,8 +118,21 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
 	if filter != nil {
 		filters = coredata.NewMembershipProfileFilter(filter.ContractEnded).WithMembership()
+
 		if filter.State != nil {
 			filters.WithState(*filter.State)
+		}
+
+		if filter.Query != nil {
+			filters.WithQuery(filter.Query)
+		}
+
+		if filter.Role != nil {
+			filters.WithRole(*filter.Role)
+		}
+
+		if filter.Kind != nil {
+			filters.WithKind(filter.Kind)
 		}
 	}
 

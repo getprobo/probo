@@ -18,30 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getAssignableRoles } from "@probo/helpers";
-import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { getAssignableRoles, getMembershipRoles, peopleRoles } from "@probo/helpers";
+import {
+  IconMagnifyingGlass,
+  Input,
+  Option,
+  Select,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
 import type { ComponentProps } from "react";
-import { use } from "react";
+import { use, useCallback, useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
+import { graphql, usePaginationFragment } from "react-relay";
+import { useDebounceCallback } from "usehooks-ts";
 
 import type { PeopleListFragment$key } from "#/__generated__/iam/PeopleListFragment.graphql";
-import type { PeopleListFragment_RefetchQuery } from "#/__generated__/iam/PeopleListFragment_RefetchQuery.graphql";
+import type {
+  MembershipRole,
+  PeopleListFragment_RefetchQuery,
+  ProfileOrderField,
+  ProfileState,
+} from "#/__generated__/iam/PeopleListFragment_RefetchQuery.graphql";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
 import { PeopleListItem } from "./PeopleListItem";
+
+const PAGE_SIZE = 100;
+const SEARCH_DEBOUNCE_MS = 300;
+
+type PeopleKind = (typeof peopleRoles)[number];
 
 const fragment = graphql`
   fragment PeopleListFragment on Organization
   @refetchable(queryName: "PeopleListFragment_RefetchQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 20 }
+    first: { type: "Int", defaultValue: 100 }
     order: {
       type: "ProfileOrder"
       defaultValue: { direction: ASC, field: FULL_NAME }
     }
+    filter: { type: "ProfileFilter", defaultValue: null }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
@@ -52,7 +73,8 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "PeopleListFragment_profiles", filters: ["orderBy"]) @required(action: THROW) {
+      filter: $filter
+    ) @connection(key: "PeopleListFragment_profiles", filters: ["orderBy", "filter"]) @required(action: THROW) {
       __id
       totalCount
       edges @required(action: THROW) {
@@ -65,76 +87,215 @@ const fragment = graphql`
   }
 `;
 
+type PeopleFilter = {
+  query: string | null;
+  state: ProfileState | null;
+  role: MembershipRole | null;
+  kind: string | null;
+};
+
 export function PeopleList(props: {
   fKey: PeopleListFragment$key;
   onConnectionIdChange: (connectionId: string) => void;
 }) {
   const { fKey, onConnectionIdChange } = props;
 
-  const organizationId = useOrganizationId();
   const { t } = useTranslation();
   const { role } = use(CurrentUser);
   const canManageRoles = getAssignableRoles(role).length > 0;
+
+  const [queryFilter, setQueryFilter] = useState<string | null>(null);
+  const [stateFilter, setStateFilter] = useState<ProfileState | null>(null);
+  const [roleFilter, setRoleFilter] = useState<MembershipRole | null>(null);
+  const [kindFilter, setKindFilter] = useState<string | null>(null);
+  const [order, setOrder] = useState<Order>({
+    direction: "ASC",
+    field: "FULL_NAME",
+  });
+  const [isPending, startTransition] = useTransition();
 
   const peoplePagination = usePaginationFragment<
     PeopleListFragment_RefetchQuery,
     PeopleListFragment$key
   >(fragment, fKey);
 
-  const refetchPeople = () => {
-    peoplePagination.refetch({}, { fetchPolicy: "network-only" });
+  const connectionId = peoplePagination.data.profiles.__id;
+
+  useEffect(() => {
+    onConnectionIdChange(connectionId);
+  }, [connectionId, onConnectionIdChange]);
+
+  const currentFilter = (overrides: Partial<PeopleFilter> = {}): PeopleFilter => ({
+    query: queryFilter,
+    state: stateFilter,
+    role: roleFilter,
+    kind: kindFilter,
+    ...overrides,
+  });
+
+  const connectionFilter = (filter: PeopleFilter) => ({
+    query: filter.query,
+    state: filter.state,
+    role: filter.role,
+    kind: filter.kind,
+    contractEnded: null,
+  });
+
+  const refetchPeople = (overrides: Partial<PeopleFilter> = {}, nextOrder: Order = order) => {
+    const filter = currentFilter(overrides);
+    startTransition(() => {
+      peoplePagination.refetch(
+        {
+          order: {
+            direction: nextOrder.direction,
+            field: nextOrder.field as ProfileOrderField,
+          },
+          filter: connectionFilter(filter),
+        },
+        { fetchPolicy: "network-only" },
+      );
+    });
   };
 
-  const handleOrderChange = (order: Order) => {
-    onConnectionIdChange(
-      ConnectionHandler.getConnectionID(
-        organizationId,
-        "PeopleListFragment_profiles",
-        { orderBy: order },
-      ),
-    );
+  const debouncedRefetchQuery = useDebounceCallback(
+    useCallback(
+      (value: string) => {
+        const newQuery = value === "" ? null : value;
+        startTransition(() => {
+          peoplePagination.refetch(
+            {
+              order: {
+                direction: order.direction,
+                field: order.field as ProfileOrderField,
+              },
+              filter: {
+                query: newQuery,
+                state: stateFilter,
+                role: roleFilter,
+                kind: kindFilter,
+                contractEnded: null,
+              },
+            },
+            { fetchPolicy: "network-only" },
+          );
+        });
+      },
+      [peoplePagination, order, stateFilter, roleFilter, kindFilter],
+    ),
+    SEARCH_DEBOUNCE_MS,
+  );
+
+  const handleQueryFilterChange = (value: string) => {
+    setQueryFilter(value === "" ? null : value);
+    debouncedRefetchQuery(value);
+  };
+
+  const handleStateFilterChange = (value: string) => {
+    const newState = value === "ALL" ? null : (value as ProfileState);
+    setStateFilter(newState);
+    refetchPeople({ state: newState });
+  };
+
+  const handleRoleFilterChange = (value: string) => {
+    const newRole = value === "ALL" ? null : (value as MembershipRole);
+    setRoleFilter(newRole);
+    refetchPeople({ role: newRole });
+  };
+
+  const handleKindFilterChange = (value: string) => {
+    const newKind = value === "ALL" ? null : value;
+    setKindFilter(newKind);
+    refetchPeople({ kind: newKind });
+  };
+
+  const handleOrderChange = (nextOrder: Order) => {
+    setOrder(nextOrder);
+  };
+
+  const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order: nextOrder }) => {
+    setOrder(nextOrder);
+    refetchPeople({}, nextOrder);
   };
 
   return (
-    <SortableTable
-      {...peoplePagination}
-      refetch={
-        peoplePagination.refetch as ComponentProps<
-          typeof SortableTable
-        >["refetch"]
-      }
-      pageSize={20}
-    >
-      <Thead>
-        <Tr>
-          <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{t("peopleList.columns.name")}</SortableTh>
-          <SortableTh field="STATE">{t("peopleList.columns.status")}</SortableTh>
-          <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{t("peopleList.columns.email")}</SortableTh>
-          {canManageRoles && <Th>{t("peopleList.columns.role")}</Th>}
-          <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{t("peopleList.columns.createdOn")}</SortableTh>
-          <Th></Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {peoplePagination.data.profiles.totalCount === 0
-          ? (
-              <Tr>
-                <Td colSpan={7} className="text-center text-txt-secondary">
-                  {t("peopleList.empty")}
-                </Td>
-              </Tr>
-            )
-          : (
-              peoplePagination.data.profiles.edges.map(({ node: profile }) => (
-                <PeopleListItem
-                  connectionId={peoplePagination.data.profiles.__id}
-                  key={profile.id}
-                  fKey={profile}
-                  onRefetch={refetchPeople}
-                />
-              ))
-            )}
-      </Tbody>
-    </SortableTable>
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <Input
+          icon={IconMagnifyingGlass}
+          placeholder={t("peopleList.searchPlaceholder")}
+          value={queryFilter ?? ""}
+          onValueChange={handleQueryFilterChange}
+        />
+        <Select
+          value={stateFilter ?? "ALL"}
+          onValueChange={handleStateFilterChange}
+        >
+          <Option value="ALL">{t("peopleList.filters.allStatuses")}</Option>
+          <Option value="ACTIVE">{t("peopleList.filters.active")}</Option>
+          <Option value="INACTIVE">{t("peopleList.filters.inactive")}</Option>
+        </Select>
+        <Select
+          value={roleFilter ?? "ALL"}
+          onValueChange={handleRoleFilterChange}
+        >
+          <Option value="ALL">{t("peopleList.filters.allRoles")}</Option>
+          {getMembershipRoles(t).map(({ value, label }) => (
+            <Option key={value} value={value}>
+              {label}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          value={kindFilter ?? "ALL"}
+          onValueChange={handleKindFilterChange}
+        >
+          <Option value="ALL">{t("peopleList.filters.allTypes")}</Option>
+          {peopleRoles.map((kind: PeopleKind) => (
+            <Option key={kind} value={kind}>
+              {t(`personForm.kinds.${kind}`)}
+            </Option>
+          ))}
+        </Select>
+      </div>
+
+      <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
+        <SortableTable
+          {...peoplePagination}
+          refetch={refetchWithFilters}
+          pageSize={PAGE_SIZE}
+        >
+          <Thead>
+            <Tr>
+              <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{t("peopleList.columns.name")}</SortableTh>
+              <SortableTh field="STATE">{t("peopleList.columns.status")}</SortableTh>
+              <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{t("peopleList.columns.email")}</SortableTh>
+              {canManageRoles && <Th>{t("peopleList.columns.role")}</Th>}
+              <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{t("peopleList.columns.createdOn")}</SortableTh>
+              <Th></Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {peoplePagination.data.profiles.totalCount === 0
+              ? (
+                  <Tr>
+                    <Td colSpan={7} className="text-center text-txt-secondary">
+                      {t("peopleList.empty")}
+                    </Td>
+                  </Tr>
+                )
+              : (
+                  peoplePagination.data.profiles.edges.map(({ node: profile }) => (
+                    <PeopleListItem
+                      connectionId={connectionId}
+                      key={profile.id}
+                      fKey={profile}
+                      onRefetch={() => refetchPeople()}
+                    />
+                  ))
+                )}
+          </Tbody>
+        </SortableTable>
+      </div>
+    </div>
   );
 }

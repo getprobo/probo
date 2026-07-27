@@ -71,6 +71,9 @@ enum ProfileOrderField
 input ProfileFilter {
   contractEnded: Boolean
   state: ProfileState
+  query: String
+  role: MembershipRole
+  kind: String
 }
 
 input ProfileOrder
