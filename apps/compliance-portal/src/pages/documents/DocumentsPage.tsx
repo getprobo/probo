@@ -164,11 +164,15 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
 
   const total = documentNodes.length + fileNodes.length + auditNodes.length;
 
-  // A row is "locked" (an access request would do something) when the viewer is
-  // not authorized and no request is already pending. Computed at page level so
-  // the selection bar can count locked rows without reaching into each fragment.
+  // A row is "locked" (a bulk access request would actually do something) only
+  // when the viewer is not authorized and no access record exists yet. The
+  // backend skips any id that already has a record — REQUESTED, GRANTED,
+  // REJECTED, or REVOKED — so those rows are treated as non-requestable to keep
+  // the CTA count honest and avoid a success toast that changes nothing.
+  // Computed at page level so the selection bar can count locked rows without
+  // reaching into each fragment.
   const isLocked = (isUserAuthorized: boolean, status: string | null | undefined) =>
-    !isUserAuthorized && status !== "REQUESTED";
+    !isUserAuthorized && status == null;
 
   const selectionEntries: DocumentSelectionEntry[] = [
     ...documentNodes.map(node => ({
