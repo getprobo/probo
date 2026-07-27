@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link as RouterLink, useLocation } from "react-router";
 
-import { buildRequestAllContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
+import { getSafeContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
 import type { TopBar_query$key } from "./__generated__/TopBar_query.graphql";
@@ -121,7 +121,7 @@ export function TopBar({ queryKey }: TopBarProps) {
                     highContrast
                     iconStart={<LockSimpleIcon />}
                     onClick={() => {
-                      redirectToInitiate(buildRequestAllContinueUrl());
+                      redirectToInitiate(getSafeContinueUrl(window.location.href));
                     }}
                   >
                     {t("topBar.getAccess")}

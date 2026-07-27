@@ -35,6 +35,9 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+// PortalAccessRequest carries the explicit resource IDs to request access for.
+// Callers must supply at least one ID across the three slices; nil and empty
+// both mean "none of that type" (there is no "request all" expansion).
 type PortalAccessRequest struct {
 	CompliancePortalID      gid.GID
 	IdentityID              gid.GID
@@ -52,6 +55,10 @@ func (s *Service) RequestPortalAccess(
 	scope coredata.Scoper,
 	req *PortalAccessRequest,
 ) (*coredata.CompliancePortalAccess, error) {
+	if len(req.DocumentIDs) == 0 && len(req.ReportIDs) == 0 && len(req.CompliancePortalFileIDs) == 0 {
+		return nil, ErrNoAccessTargets
+	}
+
 	var (
 		now    = time.Now()
 		access *coredata.CompliancePortalAccess
@@ -68,96 +75,6 @@ func (s *Service) RequestPortalAccess(
 			access = &coredata.CompliancePortalAccess{}
 			if err := access.LoadByCompliancePortalIDAndIdentityID(ctx, tx, scope, req.CompliancePortalID, req.IdentityID); err != nil {
 				return fmt.Errorf("cannot load compliance page membership: %w", err)
-			}
-
-			organizationID := compliancePage.OrganizationID
-
-			documentIDs := req.DocumentIDs
-			if req.DocumentIDs == nil {
-				filter := coredata.NewDocumentCompliancePortalFilter()
-
-				allDocuments, err := page.LoadAll(
-					ctx,
-					page.OrderBy[coredata.DocumentOrderField]{
-						Field:     coredata.DocumentOrderFieldTitle,
-						Direction: page.OrderDirectionAsc,
-					},
-					func(ctx context.Context, cursor *page.Cursor[coredata.DocumentOrderField]) ([]*coredata.Document, error) {
-						var batch coredata.Documents
-						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
-							return nil, fmt.Errorf("cannot list documents: %w", err)
-						}
-
-						return batch, nil
-					},
-				)
-				if err != nil {
-					return err
-				}
-
-				for _, doc := range allDocuments {
-					documentIDs = append(documentIDs, doc.ID)
-				}
-			}
-
-			reportIDs := req.ReportIDs
-			if req.ReportIDs == nil {
-				auditFilter := coredata.NewAuditCompliancePortalFilter()
-
-				allAudits, err := page.LoadAll(
-					ctx,
-					page.OrderBy[coredata.AuditOrderField]{
-						Field:     coredata.AuditOrderFieldCreatedAt,
-						Direction: page.OrderDirectionAsc,
-					},
-					func(ctx context.Context, cursor *page.Cursor[coredata.AuditOrderField]) ([]*coredata.Audit, error) {
-						var batch coredata.Audits
-						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, auditFilter); err != nil {
-							return nil, fmt.Errorf("cannot list audits: %w", err)
-						}
-
-						return batch, nil
-					},
-				)
-				if err != nil {
-					return err
-				}
-
-				for _, audit := range allAudits {
-					if audit.ReportFileID != nil {
-						reportIDs = append(reportIDs, *audit.ReportFileID)
-					}
-				}
-			}
-
-			compliancePortalFileIDs := req.CompliancePortalFileIDs
-			if req.CompliancePortalFileIDs == nil {
-				filter := coredata.NewCompliancePortalFileFilter(
-					coredata.WithCompliancePortalFileVisibilities(coredata.CompliancePortalVisibilityPrivate, coredata.CompliancePortalVisibilityNone),
-				)
-
-				allCompliancePortalFiles, err := page.LoadAll(
-					ctx,
-					page.OrderBy[coredata.CompliancePortalFileOrderField]{
-						Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
-						Direction: page.OrderDirectionDesc,
-					},
-					func(ctx context.Context, cursor *page.Cursor[coredata.CompliancePortalFileOrderField]) ([]*coredata.CompliancePortalFile, error) {
-						var batch coredata.CompliancePortalFiles
-						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
-							return nil, fmt.Errorf("cannot list compliance page files: %w", err)
-						}
-
-						return batch, nil
-					},
-				)
-				if err != nil {
-					return err
-				}
-
-				for _, file := range allCompliancePortalFiles {
-					compliancePortalFileIDs = append(compliancePortalFileIDs, file.ID)
-				}
 			}
 
 			existingAccesses, err := page.LoadAll(
@@ -180,9 +97,9 @@ func (s *Service) RequestPortalAccess(
 			}
 
 			existingDocumentIDs, existingReportIDs, existingCompliancePortalFileIDs := extractExistingIDs(existingAccesses)
-			newDocumentIDs := filterExistingIDs(documentIDs, existingDocumentIDs)
-			newReportIDs := filterExistingIDs(reportIDs, existingReportIDs)
-			newCompliancePortalFileIDs := filterExistingIDs(compliancePortalFileIDs, existingCompliancePortalFileIDs)
+			newDocumentIDs := filterExistingIDs(req.DocumentIDs, existingDocumentIDs)
+			newReportIDs := filterExistingIDs(req.ReportIDs, existingReportIDs)
+			newCompliancePortalFileIDs := filterExistingIDs(req.CompliancePortalFileIDs, existingCompliancePortalFileIDs)
 
 			var accesses coredata.CompliancePortalDocumentAccesses
 

@@ -81,9 +81,9 @@ func TestSecurity_WriteGap_PublishRiskListApproverIDs(t *testing.T) {
 // not per-tenant.
 //
 // CompliancePortalAccess rows are normally created through the trust/v1 public
-// portal's visitor request flow (requestAllAccesses), which needs a
-// separate authenticated visitor identity and NDA acceptance. To keep this
-// test focused on the fix under test (the Update mutation's FK validation)
+// portal's visitor request flow (requestAccesses / requestDocumentAccess), which
+// needs a separate authenticated visitor identity and NDA acceptance. To keep
+// this test focused on the fix under test (the Update mutation's FK validation)
 // rather than that unrelated flow, the access row's prerequisite state is
 // seeded directly via SQL against the same Postgres database the e2e probod
 // instance runs against, then the real updateCompliancePortalAccess mutation is

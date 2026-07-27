@@ -27,9 +27,7 @@ import { graphql } from "relay-runtime";
 
 import {
   buildRequestAccessContinueUrl,
-  buildRequestAllContinueUrl,
   gateRedirectPath,
-  REQUEST_ALL_PARAM,
   REQUEST_DOCUMENT_PARAM,
   REQUEST_FILE_PARAM,
   REQUEST_REPORT_PARAM,
@@ -40,17 +38,6 @@ import { useMutation } from "#/lib/relay/useMutation";
 import type { useResumeAccessRequest_documentMutation } from "./__generated__/useResumeAccessRequest_documentMutation.graphql";
 import type { useResumeAccessRequest_fileMutation } from "./__generated__/useResumeAccessRequest_fileMutation.graphql";
 import type { useResumeAccessRequest_reportMutation } from "./__generated__/useResumeAccessRequest_reportMutation.graphql";
-import type { useResumeAccessRequestMutation } from "./__generated__/useResumeAccessRequestMutation.graphql";
-
-const requestAllAccessesMutation = graphql`
-  mutation useResumeAccessRequestMutation {
-    requestAllAccesses {
-      compliancePortalAccess {
-        id
-      }
-    }
-  }
-`;
 
 const requestDocumentMutation = graphql`
   mutation useResumeAccessRequest_documentMutation($input: RequestDocumentAccessInput!) {
@@ -99,10 +86,9 @@ const requestFileMutation = graphql`
 
 // After a user signs in through OAuth /initiate, they land back on the page that
 // carried a deferred access marker. This hook fires the matching mutation once
-// (when authenticated) — request-all from the top bar, or a single
-// document / report / file requested from a locked row — routes to the
-// full-name gate when the backend asks for it, and clears the marker so a
-// refresh never re-triggers it.
+// (when authenticated) — a single document / report / file requested from a
+// locked row — routes to the full-name gate when the backend asks for it, and
+// clears the marker so a refresh never re-triggers it.
 export function useResumeAccessRequest(isAuthenticated: boolean) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -111,10 +97,6 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
   const { t } = useTranslation();
   const firedRef = useRef(false);
 
-  const [requestAllAccesses] = useMutation<useResumeAccessRequestMutation>(
-    requestAllAccessesMutation,
-    { errorToast: false },
-  );
   const [requestDocumentAccess] = useMutation<useResumeAccessRequest_documentMutation>(
     requestDocumentMutation,
     { errorToast: false },
@@ -136,9 +118,8 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
     const documentId = searchParams.get(REQUEST_DOCUMENT_PARAM);
     const reportId = searchParams.get(REQUEST_REPORT_PARAM);
     const fileId = searchParams.get(REQUEST_FILE_PARAM);
-    const all = searchParams.get(REQUEST_ALL_PARAM) === "true";
 
-    if (!documentId && !reportId && !fileId && !all) {
+    if (!documentId && !reportId && !fileId) {
       return;
     }
 
@@ -199,20 +180,11 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
         variables: { input: { compliancePortalFileId: fileId } },
         ...makeHandlers(continueUrl),
       }).catch(() => {});
-      return;
     }
-
-    const allContinueUrl = buildRequestAllContinueUrl();
-    clear(REQUEST_ALL_PARAM);
-    void requestAllAccesses({
-      variables: {},
-      ...makeHandlers(allContinueUrl),
-    }).catch(() => {});
   }, [
     isAuthenticated,
     locale,
     navigate,
-    requestAllAccesses,
     requestDocumentAccess,
     requestReportAccess,
     requestFileAccess,

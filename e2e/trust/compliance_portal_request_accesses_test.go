@@ -132,6 +132,35 @@ func TestCompliancePortal_RequestAccesses_TenantIsolation(t *testing.T) {
 	)
 }
 
+// TestCompliancePortal_RequestAccesses_EmptyRejects verifies that requestAccesses
+// with no document, report, or file ids is rejected — there is no "request all"
+// shortcut; callers must always name the targets explicitly.
+func TestCompliancePortal_RequestAccesses_EmptyRejects(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	compliancePortalID := lookupCompliancePortalID(t, owner)
+	trustHost := lookupTrustHost(t, owner, compliancePortalID)
+
+	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
+
+	err := visitor.ExecuteTrust(trustHost, requestAccessesMutation, map[string]any{
+		"input": map[string]any{
+			"documentIds":             []string{},
+			"reportIds":               []string{},
+			"compliancePortalFileIds": []string{},
+		},
+	}, nil)
+	require.Error(t, err, "requestAccesses with empty id lists must be rejected")
+	assert.Contains(
+		t,
+		err.Error(),
+		"at least one document, report, or file id is required",
+		"empty request must surface a client validation error",
+	)
+}
+
 // setupPrivatePortalDocument creates a document and marks it privately visible on
 // the owner's compliance portal, returning the document ID.
 func setupPrivatePortalDocument(t *testing.T, owner *testutil.Client) string {

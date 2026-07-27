@@ -466,8 +466,6 @@ type DocumentAccess implements Node {
 }
 
 extend type Mutation {
-  requestAllAccesses: RequestAccessesPayload! @authentication(required: PRESENT) @nda
-
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
     @authentication(required: OPTIONAL) @nda
 
@@ -505,10 +503,6 @@ type RequestReportAccessPayload {
 
 type RequestFileAccessPayload {
   file: CompliancePortalFile
-}
-
-type RequestAccessesPayload {
-  compliancePortalAccess: CompliancePortalAccess!
 }
 
 # Returns the affected nodes so the client can update each row in place. Mirrors

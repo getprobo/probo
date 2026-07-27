@@ -43,7 +43,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useLocation } from "react-router";
 
-import { buildRequestAllContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
+import { getSafeContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
 import { useSignOut } from "#/lib/auth/useSignOut";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
@@ -164,7 +164,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
                   iconStart={<LockSimpleIcon />}
                   onClick={() => {
                     close();
-                    redirectToInitiate(buildRequestAllContinueUrl());
+                    redirectToInitiate(getSafeContinueUrl(window.location.href));
                   }}
                 >
                   {t("topBar.getAccess")}

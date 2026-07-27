@@ -756,40 +756,6 @@ func (r *frameworkResolver) DarkLogo(ctx context.Context, obj *types.Framework) 
 	return r.loadPublicFile(ctx, *framework.DarkLogoFileID)
 }
 
-// RequestAllAccesses is the resolver for the requestAllAccesses field.
-func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.RequestAccessesPayload, error) {
-	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
-	visitorService := r.visitor
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
-	}
-
-	access, err := visitorService.RequestPortalAccess(
-		ctx, scope,
-		&visitor.PortalAccessRequest{
-			CompliancePortalID: compliancePortal.ID,
-			IdentityID:         identity.ID,
-			DocumentIDs:        nil,
-			ReportIDs:          nil,
-		},
-	)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.RequestAccessesPayload{
-		CompliancePortalAccess: &types.CompliancePortalAccess{
-			ID:        access.ID,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
-	}, nil
-}
-
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
 	scope := coredata.NewScopeFromObjectID(input.DocumentID)
@@ -1008,6 +974,10 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 			CompliancePortalFileIDs: []gid.GID{},
 		},
 	); err != nil {
+		if errors.Is(err, visitor.ErrNoAccessTargets) {
+			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot request document access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1025,8 +995,19 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 
 	audit, err := visitorService.GetAuditByReportFileID(ctx, scope, input.ReportID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "report %q not found", input.ReportID)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	// GetAuditByReportFileID is only tenant-scoped, so a report belonging to
+	// another organization in the same tenant would otherwise be reachable.
+	// Reject it as not found before an access row can be written.
+	if audit.OrganizationID != compliancePortal.OrganizationID {
+		return nil, gqlutils.NotFoundf(ctx, "report %q not found", input.ReportID)
 	}
 
 	if audit.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
@@ -1051,6 +1032,10 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 			CompliancePortalFileIDs: []gid.GID{},
 		},
 	); err != nil {
+		if errors.Is(err, visitor.ErrNoAccessTargets) {
+			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot request report access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1099,6 +1084,10 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 			CompliancePortalFileIDs: []gid.GID{input.CompliancePortalFileID},
 		},
 	); err != nil {
+		if errors.Is(err, visitor.ErrNoAccessTargets) {
+			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot request compliance portal file access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1119,33 +1108,25 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	// Coerce to non-nil slices: an empty list means "none of that type", whereas
-	// a nil slice is interpreted by RequestPortalAccess as "all of that type".
-	documentIDs := input.DocumentIds
-	if documentIDs == nil {
-		documentIDs = []gid.GID{}
+	if len(input.DocumentIds) == 0 && len(input.ReportIds) == 0 && len(input.CompliancePortalFileIds) == 0 {
+		return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
 	}
 
-	reportIDs := input.ReportIds
-	if reportIDs == nil {
-		reportIDs = []gid.GID{}
-	}
-
-	compliancePortalFileIDs := input.CompliancePortalFileIds
-	if compliancePortalFileIDs == nil {
-		compliancePortalFileIDs = []gid.GID{}
-	}
-
-	// Load and tenant-check every target before requesting so a foreign or
-	// invisible GID is rejected before any access row is written (mirrors the
-	// per-resource resolvers, which guard with a load ahead of the request).
+	// Load and validate every target before requesting so a foreign, invisible,
+	// or public GID is handled before any access row is written (mirrors the
+	// per-resource resolvers, which load and guard ahead of the request). Only
+	// the resolved, non-public ids are forwarded to RequestPortalAccess.
 	payload := &types.RequestAccessesResultPayload{
-		Documents: make([]*types.Document, 0, len(documentIDs)),
-		Audits:    make([]*types.Audit, 0, len(reportIDs)),
-		Files:     make([]*types.CompliancePortalFile, 0, len(compliancePortalFileIDs)),
+		Documents: make([]*types.Document, 0, len(input.DocumentIds)),
+		Audits:    make([]*types.Audit, 0, len(input.ReportIds)),
+		Files:     make([]*types.CompliancePortalFile, 0, len(input.CompliancePortalFileIds)),
 	}
 
-	for _, documentID := range documentIDs {
+	requestDocumentIDs := make([]gid.GID, 0, len(input.DocumentIds))
+	requestReportIDs := make([]gid.GID, 0, len(input.ReportIds))
+	requestFileIDs := make([]gid.GID, 0, len(input.CompliancePortalFileIds))
+
+	for _, documentID := range input.DocumentIds {
 		document, err := visitorService.GetDocument(ctx, scope, compliancePortal.OrganizationID, documentID)
 		if err != nil {
 			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
@@ -1161,10 +1142,17 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 			return nil, gqlutils.Internal(ctx)
 		}
 
+		// Public resources are already accessible; skip them so no needless
+		// REQUESTED row is created (mirrors the per-resource resolver's guard).
+		if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
+			continue
+		}
+
+		requestDocumentIDs = append(requestDocumentIDs, documentID)
 		payload.Documents = append(payload.Documents, types.NewDocument(document))
 	}
 
-	for _, reportID := range reportIDs {
+	for _, reportID := range input.ReportIds {
 		audit, err := visitorService.GetAuditByReportFileID(ctx, scope, reportID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -1176,10 +1164,22 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 			return nil, gqlutils.Internal(ctx)
 		}
 
+		// GetAuditByReportFileID is only tenant-scoped, so a report belonging to
+		// another organization in the same tenant would otherwise be reachable.
+		// Reject it as not found before an access row can be written.
+		if audit.OrganizationID != compliancePortal.OrganizationID {
+			return nil, gqlutils.NotFoundf(ctx, "report %q not found", reportID)
+		}
+
+		if audit.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
+			continue
+		}
+
+		requestReportIDs = append(requestReportIDs, reportID)
 		payload.Audits = append(payload.Audits, types.NewAudit(audit))
 	}
 
-	for _, fileID := range compliancePortalFileIDs {
+	for _, fileID := range input.CompliancePortalFileIds {
 		portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.OrganizationID, fileID)
 		if err != nil {
 			if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
@@ -1191,7 +1191,17 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 			return nil, gqlutils.Internal(ctx)
 		}
 
+		if portalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
+			continue
+		}
+
+		requestFileIDs = append(requestFileIDs, fileID)
 		payload.Files = append(payload.Files, types.NewCompliancePortalFile(portalFile))
+	}
+
+	// All supplied ids were public (already accessible); nothing to request.
+	if len(requestDocumentIDs) == 0 && len(requestReportIDs) == 0 && len(requestFileIDs) == 0 {
+		return payload, nil
 	}
 
 	if _, err := visitorService.RequestPortalAccess(
@@ -1199,11 +1209,15 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 		&visitor.PortalAccessRequest{
 			CompliancePortalID:      compliancePortal.ID,
 			IdentityID:              identity.ID,
-			DocumentIDs:             documentIDs,
-			ReportIDs:               reportIDs,
-			CompliancePortalFileIDs: compliancePortalFileIDs,
+			DocumentIDs:             requestDocumentIDs,
+			ReportIDs:               requestReportIDs,
+			CompliancePortalFileIDs: requestFileIDs,
 		},
 	); err != nil {
+		if errors.Is(err, visitor.ErrNoAccessTargets) {
+			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot request accesses", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

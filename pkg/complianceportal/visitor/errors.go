@@ -35,4 +35,5 @@ var (
 	ErrReportNotFound         = errors.New("report not found")
 	ErrPortalFileNotFound     = errors.New("portal file not found")
 	ErrPortalFileNotVisible   = errors.New("portal file not visible")
+	ErrNoAccessTargets        = errors.New("at least one document, report, or file id is required")
 )
