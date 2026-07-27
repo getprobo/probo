@@ -4,6 +4,20 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.207.0] - 2026-07-27
+
+### Added
+
+- User `Get Many` gained `Filter` (search by name/email), `Role`, and `Kind` fields, with the default page size raised to 100
+
+### Changed
+
+- Access Review `Create` and `Update` operations gained a multi-select `Sources` field to configure scope sources in the same call, replacing the separate `Add Source` operation
+
+### Fixed
+
+- Access Review source loader now paginates through all scoped sources instead of stopping at the first 500, so organizations with more sources can select them all when creating or updating a campaign
+
 ## [0.206.2] - 2026-07-24
 
 ### Fixed
