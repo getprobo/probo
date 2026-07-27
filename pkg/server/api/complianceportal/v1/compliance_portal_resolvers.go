@@ -1001,13 +1001,6 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	// GetAuditByReportFileID is only tenant-scoped, so a report belonging to
-	// another organization in the same tenant would otherwise be reachable.
-	// Reject it as not found before an access row can be written.
-	if audit.OrganizationID != compliancePortal.OrganizationID {
-		return nil, gqlutils.NotFoundf(ctx, "report %q not found", input.ReportID)
-	}
-
 	if audit.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
 		return nil, gqlutils.Invalidf(
 			ctx,
@@ -1154,13 +1147,6 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 			r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
 			return nil, gqlutils.Internal(ctx)
-		}
-
-		// GetAuditByReportFileID is only tenant-scoped, so a report belonging to
-		// another organization in the same tenant would otherwise be reachable.
-		// Reject it as not found before an access row can be written.
-		if audit.OrganizationID != compliancePortal.OrganizationID {
-			return nil, gqlutils.NotFoundf(ctx, "report %q not found", reportID)
 		}
 
 		if audit.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {

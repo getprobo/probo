@@ -35,9 +35,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-// PortalAccessRequest carries the explicit resource IDs to request access for.
-// Callers must supply at least one ID across the three slices; nil and empty
-// both mean "none of that type" (there is no "request all" expansion).
 type PortalAccessRequest struct {
 	CompliancePortalID      gid.GID
 	IdentityID              gid.GID
