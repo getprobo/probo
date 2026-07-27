@@ -46,7 +46,7 @@ func (c *Client) CheckCNAME(ctx context.Context, hostname, expectedTarget string
 		cancel()
 
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot query cname for domain %q: %w", trimRootDot(current), err)
 		}
 
 		edges, err := cnameEdges(resp)
