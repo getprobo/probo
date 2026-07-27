@@ -240,6 +240,8 @@ func (s *Service) AddCampaignSource(
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft {
 				return NewCampaignNotDraftError(campaign.ID)
 			}
+
+			source := &coredata.AccessReviewSource{}
 			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return coredata.ErrResourceNotFound
