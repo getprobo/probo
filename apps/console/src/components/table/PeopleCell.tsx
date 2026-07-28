@@ -37,7 +37,7 @@ export function PeopleCell(props: Props) {
       query={peopleQuery}
       variables={{
         organizationId: props.organizationId,
-        filter: { contractEnded: false },
+        filter: { contractEnded: false, states: ["ACTIVE", "PENDING"] },
       }}
       items={data =>
         data.organization?.profiles?.edges.map(edge => edge.node) ?? []}
