@@ -150,7 +150,7 @@ func (s *Service) CreateUser(
 
 	profileState := coredata.ProfileStateActive
 	if !attrs.Active {
-		profileState = coredata.ProfileStateInactive
+		profileState = coredata.ProfileStateDeactivated
 	}
 
 	var externalIdPtr *string
@@ -536,8 +536,8 @@ func (s *Service) updateUser(
 			previousMembership := *membership
 			previousUser := webhooktypes.NewUser(&previousProfile, &previousMembership)
 
-			shouldReactivate := attrs.Active != nil && *attrs.Active && profile.State == coredata.ProfileStateInactive
-			shouldDeactivate := attrs.Active != nil && !*attrs.Active && profile.State == coredata.ProfileStateActive
+			shouldReactivate := attrs.Active != nil && *attrs.Active && profile.State == coredata.ProfileStateDeactivated
+			shouldDeactivate := attrs.Active != nil && !*attrs.Active && profile.State != coredata.ProfileStateDeactivated
 
 			if attrs.FullName != "" {
 				profile.FullName = attrs.FullName
@@ -748,11 +748,9 @@ func (s *Service) updateUser(
 			}
 
 			if shouldReactivate {
-				profile.State = coredata.ProfileStateActive
-				profile.UpdatedAt = now
+				profile.MarkActive(now)
 			} else if shouldDeactivate {
-				profile.State = coredata.ProfileStateInactive
-				profile.UpdatedAt = now
+				profile.MarkDeactivated(now)
 			}
 
 			if profile.Source != coredata.ProfileSourceSCIM {
@@ -826,7 +824,15 @@ func applyUserAttributes(
 	now time.Time,
 ) {
 	profile.Source = coredata.ProfileSourceSCIM
-	profile.State = state
+	switch {
+	case state == coredata.ProfileStateActive && profile.State != coredata.ProfileStateActive:
+		profile.MarkActive(now)
+	case state == coredata.ProfileStateDeactivated && profile.State != coredata.ProfileStateDeactivated:
+		profile.MarkDeactivated(now)
+	default:
+		profile.State = state
+	}
+
 	profile.FullName = attrs.FullName
 	profile.Position = &attrs.Title
 	profile.UserName = &attrs.UserName
@@ -956,15 +962,14 @@ func (s *Service) deactivateProfileInTx(
 	profile *coredata.MembershipProfile,
 	membership *coredata.Membership,
 ) error {
-	if profile.State == coredata.ProfileStateInactive {
+	if profile.State == coredata.ProfileStateDeactivated {
 		return nil
 	}
 
 	previousUser := webhooktypes.NewUser(profile, membership)
 
 	now := time.Now()
-	profile.State = coredata.ProfileStateInactive
-	profile.UpdatedAt = now
+	profile.MarkDeactivated(now)
 
 	if err := profile.Update(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot deactivate profile: %w", err)

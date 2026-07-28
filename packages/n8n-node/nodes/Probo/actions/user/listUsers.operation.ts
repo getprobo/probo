@@ -97,7 +97,8 @@ export const description: INodeProperties[] = [
 		options: [
 			{ name: 'Active', value: 'ACTIVE' },
 			{ name: 'All', value: '' },
-			{ name: 'Inactive', value: 'INACTIVE' },
+			{ name: 'Deactivated', value: 'DEACTIVATED' },
+			{ name: 'Pending', value: 'PENDING' },
 		],
 		default: '',
 		description: 'Filter by profile state',

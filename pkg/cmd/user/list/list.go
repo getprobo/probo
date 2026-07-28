@@ -158,7 +158,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagState != "" {
-				if err := cmdutil.ValidateEnum("state", flagState, []string{"ACTIVE", "INACTIVE"}); err != nil {
+				if err := cmdutil.ValidateEnum("state", flagState, []string{"PENDING", "ACTIVE", "DEACTIVATED"}); err != nil {
 					return err
 				}
 
@@ -273,7 +273,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrder, "order-by", "", "Order by field (FULL_NAME, CREATED_AT, KIND)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVar(&flagContractEnded, "contract-ended", "", "Filter by contract status (true or false)")
-	cmd.Flags().StringVar(&flagState, "state", "", "Filter by profile state (ACTIVE or INACTIVE)")
+	cmd.Flags().StringVar(&flagState, "state", "", "Filter by profile state (PENDING, ACTIVE, DEACTIVATED)")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter users by name or email search query")
 	cmd.Flags().StringVar(&flagRole, "role", "", "Filter by membership role (OWNER, ADMIN, VIEWER, AUDITOR, EMPLOYEE)")
 	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by profile kind (EMPLOYEE, CONTRACTOR, SERVICE_ACCOUNT)")

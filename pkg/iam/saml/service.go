@@ -322,6 +322,7 @@ func (s *Service) HandleAssertion(
 					OrganizationID: config.OrganizationID,
 					Source:         coredata.ProfileSourceSAML,
 					State:          coredata.ProfileStateActive,
+					ActivatedAt:    &now,
 					FullName:       fullname,
 					CreatedAt:      now,
 					UpdatedAt:      now,
@@ -332,7 +333,7 @@ func (s *Service) HandleAssertion(
 					return fmt.Errorf("cannot insert membership profile: %w", err)
 				}
 			} else {
-				if profile.State == coredata.ProfileStateInactive {
+				if profile.State == coredata.ProfileStateDeactivated {
 					return NewUserInactiveError(profile.ID)
 				}
 			}

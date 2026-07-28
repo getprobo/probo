@@ -145,10 +145,11 @@ export function PeopleListItem(props: {
     ? availableRoles
     : [...availableRoles, profile.membership.role];
 
-  const isInactive = profile.state === "INACTIVE";
+  const isActive = profile.state === "ACTIVE";
+  const isInactive = !isActive;
 
-  const canSendActivationMail = isInactive && profile.source !== "SCIM" && profile.canInvite;
-  const canArchive = profile.canDelete && profile.source !== "SCIM" && profile.state !== "INACTIVE";
+  const canSendActivationMail = !isActive && profile.source !== "SCIM" && profile.canInvite;
+  const canArchive = profile.canDelete && profile.source !== "SCIM" && profile.state !== "DEACTIVATED";
   const canRemove = profile.canRemoveMember && profile.source !== "SCIM";
 
   const [inviteUser]
@@ -262,7 +263,7 @@ export function PeopleListItem(props: {
         <span className="font-semibold">{profile.fullName}</span>
       </Td>
       <Td>
-        <Badge variant={profile.state === "INACTIVE" ? "neutral" : "success"}>{profile.state}</Badge>
+        <Badge variant={isActive ? "success" : "neutral"}>{profile.state}</Badge>
       </Td>
       <Td className={clsx(
         isMutating && "opacity-60 pointer-events-none",

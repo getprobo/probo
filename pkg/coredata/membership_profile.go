@@ -70,6 +70,8 @@ type (
 		EnterpriseOrganization   *string       `db:"enterprise_organization"`
 		Division                 *string       `db:"division"`
 		ManagerValue             *string       `db:"manager_value"`
+		ActivatedAt              *time.Time    `db:"activated_at"`
+		DeactivatedAt            *time.Time    `db:"deactivated_at"`
 		CreatedAt                time.Time     `db:"created_at"`
 		UpdatedAt                time.Time     `db:"updated_at"`
 	}
@@ -94,6 +96,26 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (p *MembershipProfile) MarkPending(now time.Time) {
+	p.State = ProfileStatePending
+	p.ActivatedAt = nil
+	p.DeactivatedAt = nil
+	p.UpdatedAt = now
+}
+
+func (p *MembershipProfile) MarkActive(now time.Time) {
+	p.State = ProfileStateActive
+	p.ActivatedAt = &now
+	p.DeactivatedAt = nil
+	p.UpdatedAt = now
+}
+
+func (p *MembershipProfile) MarkDeactivated(now time.Time) {
+	p.State = ProfileStateDeactivated
+	p.DeactivatedAt = &now
+	p.UpdatedAt = now
 }
 
 func (p *MembershipProfile) AuthorizationAttributes(
@@ -192,6 +214,8 @@ SELECT
     p.enterprise_organization,
     p.division,
     p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
     p.created_at,
     p.updated_at
 FROM
@@ -269,6 +293,8 @@ SELECT
     p.enterprise_organization,
     p.division,
     p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
     p.created_at,
     p.updated_at
 FROM
@@ -350,6 +376,8 @@ SELECT
     p.enterprise_organization,
     p.division,
     p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
     p.created_at,
     p.updated_at
 FROM
@@ -430,6 +458,8 @@ SELECT
     p.enterprise_organization,
     p.division,
     p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
     p.created_at,
     p.updated_at
 FROM
@@ -507,6 +537,8 @@ WITH profiles AS (
         p.enterprise_organization,
         p.division,
         p.manager_value,
+        p.activated_at,
+        p.deactivated_at,
         p.created_at,
         p.updated_at
     FROM
@@ -550,6 +582,8 @@ SELECT
     enterprise_organization,
     division,
     manager_value,
+    activated_at,
+    deactivated_at,
     created_at,
     updated_at
 FROM profiles
@@ -620,6 +654,8 @@ WITH profiles AS (
         p.enterprise_organization,
         p.division,
         p.manager_value,
+        p.activated_at,
+        p.deactivated_at,
         p.created_at,
         p.updated_at
     FROM
@@ -662,6 +698,8 @@ SELECT
     p.enterprise_organization,
     p.division,
     p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -743,6 +781,8 @@ profiles AS (
         mp.enterprise_organization,
         mp.division,
         mp.manager_value,
+        mp.activated_at,
+        mp.deactivated_at,
         mp.created_at,
         mp.updated_at
     FROM
@@ -785,6 +825,8 @@ SELECT
     p.enterprise_organization,
     p.division,
     p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -1000,6 +1042,8 @@ INSERT INTO
         enterprise_organization,
         division,
         manager_value,
+        activated_at,
+        deactivated_at,
         created_at,
         updated_at
     )
@@ -1035,6 +1079,8 @@ VALUES (
     @enterprise_organization,
     @division,
     @manager_value,
+    @activated_at,
+    @deactivated_at,
     @created_at,
     @updated_at
 )
@@ -1072,6 +1118,8 @@ VALUES (
 		"enterprise_organization":    p.EnterpriseOrganization,
 		"division":                   p.Division,
 		"manager_value":              p.ManagerValue,
+		"activated_at":               p.ActivatedAt,
+		"deactivated_at":             p.DeactivatedAt,
 		"created_at":                 p.CreatedAt,
 		"updated_at":                 p.UpdatedAt,
 	}
@@ -1130,6 +1178,8 @@ SET
     enterprise_organization = @enterprise_organization,
     division = @division,
     manager_value = @manager_value,
+    activated_at = @activated_at,
+    deactivated_at = @deactivated_at,
     updated_at = @updated_at
 WHERE
     id = @id
@@ -1168,6 +1218,8 @@ WHERE
 		"enterprise_organization":    p.EnterpriseOrganization,
 		"division":                   p.Division,
 		"manager_value":              p.ManagerValue,
+		"activated_at":               p.ActivatedAt,
+		"deactivated_at":             p.DeactivatedAt,
 		"updated_at":                 p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

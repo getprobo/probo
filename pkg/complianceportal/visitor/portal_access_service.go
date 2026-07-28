@@ -396,9 +396,8 @@ func (s *Service) GrantPortalAccessByIDs(
 			}
 
 			if shouldSendEmail {
-				profile.State = coredata.ProfileStateActive
+				profile.MarkActive(now)
 
-				profile.UpdatedAt = now
 				if err := profile.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update profile: %w", err)
 				}

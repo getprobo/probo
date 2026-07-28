@@ -188,6 +188,10 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 	if filter != nil {
 		filters = coredata.NewMembershipProfileFilter(filter.ContractEnded).WithMembership()
 
+		if len(filter.States) > 0 {
+			filters.WithStates(filter.States...)
+		}
+
 		if filter.State != nil {
 			filters.WithState(*filter.State)
 		}

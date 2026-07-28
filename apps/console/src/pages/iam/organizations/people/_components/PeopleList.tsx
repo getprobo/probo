@@ -231,8 +231,9 @@ export function PeopleList(props: {
           onValueChange={handleStateFilterChange}
         >
           <Option value="ALL">{t("peopleList.filters.allStatuses")}</Option>
+          <Option value="PENDING">{t("peopleList.filters.pending")}</Option>
           <Option value="ACTIVE">{t("peopleList.filters.active")}</Option>
-          <Option value="INACTIVE">{t("peopleList.filters.inactive")}</Option>
+          <Option value="DEACTIVATED">{t("peopleList.filters.deactivated")}</Option>
         </Select>
         <Select
           value={roleFilter ?? "ALL"}

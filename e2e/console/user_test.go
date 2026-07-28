@@ -704,7 +704,7 @@ func TestUser_ArchiveUser(t *testing.T) {
 	}
 
 	require.NotEmpty(t, archivedUserState, "Should still find archived user")
-	assert.Equal(t, "INACTIVE", archivedUserState)
+	assert.Equal(t, "DEACTIVATED", archivedUserState)
 }
 
 func TestUser_DeactivateUserCancelsSignatureRequests(t *testing.T) {

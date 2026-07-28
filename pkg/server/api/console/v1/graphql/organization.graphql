@@ -9,9 +9,10 @@ type OrganizationContext {
 
 enum ProfileState
   @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStatePending")
   ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
-  INACTIVE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
+  DEACTIVATED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateDeactivated")
 }
 
 enum MembershipRole
@@ -69,6 +70,7 @@ input ProfileOrder
 input ProfileFilter {
     contractEnded: Boolean
     state: ProfileState
+    states: [ProfileState!]
     query: String
     role: MembershipRole
     kind: String
