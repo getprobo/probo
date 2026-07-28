@@ -2325,6 +2325,63 @@ components:
           items:
             $ref: "#/components/schemas/Evidence"
 
+    EvidenceAssessment:
+      type: object
+      required:
+        - summary
+        - system
+        - setting
+        - scope
+        - captured_at
+        - language
+        - frameworks
+        - issues
+        - confidence
+        - readable
+        - rejection_reason
+      properties:
+        summary:
+          type: string
+          description: One-sentence summary of what the evidence shows
+        system:
+          type: string
+          description: Tool or platform visible on the file
+        setting:
+          type: string
+          description: Specific configuration or state demonstrated
+        scope:
+          type: string
+          description: Who or what the setting applies to
+        captured_at:
+          type: string
+          description: ISO-8601 date or datetime visible on the file
+        language:
+          type: string
+          description: BCP-47 language tag of the visible text
+        frameworks:
+          type: array
+          items:
+            type: string
+          description: Compliance frameworks explicitly named on the file
+        issues:
+          type: array
+          items:
+            type: string
+          description: Quality problems on the file itself
+        confidence:
+          type: string
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+          description: Confidence in the assessment
+        readable:
+          type: boolean
+          description: Whether the file is usable compliance evidence
+        rejection_reason:
+          type: string
+          description: Populated only when readable is false
+
     Evidence:
       type: object
       required:
@@ -2335,6 +2392,7 @@ components:
         - reference_id
         - type
         - url
+        - assessment_status
         - created_at
         - updated_at
       properties:
@@ -2370,6 +2428,19 @@ components:
           type: string
           description: Description
           nullable: true
+        assessment:
+          $ref: "#/components/schemas/EvidenceAssessment"
+          description: Structured assessment produced by the evidence assessor
+          nullable: true
+        assessment_status:
+          type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - COMPLETED
+            - FAILED
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EvidenceAssessmentStatus
+          description: Evidence assessment worker status
         created_at:
           type: string
           format: date-time

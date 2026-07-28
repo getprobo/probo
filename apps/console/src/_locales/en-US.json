@@ -1794,6 +1794,13 @@
     "messages": { "error": "Error" },
     "errors": { "extractUrl": "Failed to extract URL from URI file" },
     "previewUnavailable": "Preview not available for this file type: {{mimeType}}",
+    "assessment": {
+      "readable": "Readable evidence",
+      "unreadable": "Unreadable evidence",
+      "confidence": "Confidence: {{confidence}}",
+      "system": "System: {{system}}",
+      "setting": "Setting: {{setting}}"
+    },
     "actions": { "download": "Download File" }
   },
   "measureFormDialog": {
@@ -1813,7 +1820,12 @@
     "errors": { "delete": "Failed to delete evidence" },
     "deleteConfirmation": "This will permanently delete the evidence \"{{name}}\". This action cannot be undone.",
     "linkEvidence": "Link evidence",
-    "actions": { "add": "Add evidence", "download": "Download", "delete": "Delete" }
+    "actions": { "add": "Add evidence", "download": "Download", "delete": "Delete" },
+    "assessment": {
+      "readable": "Readable",
+      "unreadable": "Unreadable",
+      "confidence": { "high": "High confidence", "medium": "Medium confidence", "low": "Low confidence" }
+    }
   },
   "measureTasksTab": {
     "actions": { "newTask": "New task" }

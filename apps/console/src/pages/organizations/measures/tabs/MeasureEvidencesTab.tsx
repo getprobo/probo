@@ -22,6 +22,7 @@ import { usePageTitle } from "@probo/hooks";
 import { dateFormat, fileSize } from "@probo/i18n";
 import {
   ActionDropdown,
+  Badge,
   DropdownItem,
   IconArrowInbox,
   IconPlusLarge,
@@ -100,6 +101,10 @@ export const evidenceFragment = graphql`
       size
     }
     description
+    assessment {
+      confidence
+      readable
+    }
     createdAt
     canDelete: permission(action: "core:evidence:delete")
   }
@@ -258,9 +263,23 @@ function EvidenceRow(props: {
       )}
       <Tr to={evidenceUrl}>
         <Td>
-          <span className="text-txt-secondary text-sm line-clamp-2">
-            {evidence.description || "—"}
-          </span>
+          <div className="flex flex-col gap-1">
+            <span className="text-txt-secondary text-sm line-clamp-2">
+              {evidence.description || "—"}
+            </span>
+            {evidence.assessment && (
+              <div className="flex flex-wrap gap-1">
+                <Badge size="sm" variant={evidence.assessment.readable ? "success" : "danger"}>
+                  {evidence.assessment.readable
+                    ? t("measureEvidencesTab.assessment.readable")
+                    : t("measureEvidencesTab.assessment.unreadable")}
+                </Badge>
+                <Badge size="sm">
+                  {t(`measureEvidencesTab.assessment.confidence.${evidence.assessment.confidence.toLowerCase()}`)}
+                </Badge>
+              </div>
+            )}
+          </div>
         </Td>
         <Td>{evidence.file?.mimeType || "—"}</Td>
         <Td>{fileSize(evidence.file?.size || 0, t)}</Td>

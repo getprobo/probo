@@ -154,10 +154,6 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 		params.System = blocks
 	}
 
-	if req.Temperature != nil {
-		params.Temperature = param.NewOpt(*req.Temperature)
-	}
-
 	if req.TopP != nil {
 		params.TopP = param.NewOpt(*req.TopP)
 	}
@@ -175,7 +171,11 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 	}
 
 	if budgetTokens, ok := resolveThinkingBudget(*req.MaxTokens, req.Thinking); ok {
+		// Anthropic rejects temperature != 1 when extended thinking is
+		// enabled, so omit the caller-supplied temperature in that case.
 		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(budgetTokens))
+	} else if req.Temperature != nil {
+		params.Temperature = param.NewOpt(*req.Temperature)
 	}
 
 	if req.ResponseFormat != nil {

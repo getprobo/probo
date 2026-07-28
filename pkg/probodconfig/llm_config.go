@@ -35,15 +35,23 @@ type (
 		ModelName   string   `json:"model-name,omitempty"`
 		Temperature *float64 `json:"temperature,omitempty"`
 		MaxTokens   *int     `json:"max-tokens,omitempty"`
+		// Thinking is the extended-thinking budget in tokens for agents
+		// that opt in. Leave nil to disable extended thinking; set to 0
+		// to explicitly disable via config. Only a few providers and
+		// models support this; see pkg/agent/WithThinking.
+		Thinking *int `json:"thinking,omitempty"`
 	}
 
-	// EvidenceDescriberConfig holds worker-side tuning for the evidence
-	// description background worker. LLM parameters for the same worker
-	// live under AgentsConfig.EvidenceDescriber.
-	EvidenceDescriberConfig struct {
+	// EvidenceAssessmentConfig holds worker-side tuning for the evidence
+	// assessment background worker. LLM parameters for the same worker
+	// live under AgentsConfig.EvidenceAssessor. MaxAttempts caps how many
+	// times a single evidence row may be claimed before it is marked
+	// FAILED; stale PROCESSING recovery does not spend an attempt.
+	EvidenceAssessmentConfig struct {
 		Interval       int `json:"interval"`    // seconds between polls
 		StaleAfter     int `json:"stale-after"` // seconds before a claim is recycled
 		MaxConcurrency int `json:"max-concurrency"`
+		MaxAttempts    int `json:"max-attempts"`
 	}
 
 	// ThirdPartyVettingWorkerConfig holds worker-side tuning for the
@@ -111,7 +119,7 @@ type (
 		Providers                  map[string]LLMProviderConfig `json:"providers,omitempty"`
 		Default                    LLMAgentConfig               `json:"defaults"`
 		Probo                      LLMAgentConfig               `json:"probo,omitzero"`
-		EvidenceDescriber          LLMAgentConfig               `json:"evidence-describer,omitzero"`
+		EvidenceAssessor           LLMAgentConfig               `json:"evidence-assessor,omitzero"`
 		ThirdPartyVetter           LLMAgentConfig               `json:"third-party-vetter,omitzero"`
 		ThirdPartyDisambiguation   LLMAgentConfig               `json:"third-party-disambiguation,omitzero"`
 		TrackerMapping             LLMAgentConfig               `json:"tracker-mapping,omitzero"`
@@ -146,6 +154,10 @@ func (c *AgentsConfig) ResolveAgent(agent LLMAgentConfig) LLMAgentConfig {
 
 	if agent.MaxTokens == nil && c.Default.MaxTokens != nil {
 		agent.MaxTokens = new(*c.Default.MaxTokens)
+	}
+
+	if agent.Thinking == nil {
+		agent.Thinking = c.Default.Thinking
 	}
 
 	return agent

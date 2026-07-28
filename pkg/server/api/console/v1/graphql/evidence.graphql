@@ -17,12 +17,38 @@ enum EvidenceOrderField
     CREATED_AT
 }
 
+enum EvidenceAssessmentStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceAssessmentStatus") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceAssessmentStatusPending")
+    PROCESSING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceAssessmentStatusProcessing")
+    COMPLETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceAssessmentStatusCompleted")
+    FAILED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceAssessmentStatusFailed")
+}
+
 input EvidenceOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
     ) {
     direction: OrderDirection!
     field: EvidenceOrderField!
+}
+
+type EvidenceAssessment {
+    summary: String!
+    system: String!
+    setting: String!
+    scope: String!
+    capturedAt: String!
+    language: String!
+    frameworks: [String!]!
+    issues: [String!]!
+    confidence: String!
+    readable: Boolean!
+    rejectionReason: String!
 }
 
 type Evidence implements Node {
@@ -33,6 +59,8 @@ type Evidence implements Node {
     file: File @goField(forceResolver: true)
     url: String
     description: String
+    assessment: EvidenceAssessment
+    assessmentStatus: EvidenceAssessmentStatus!
 
     task: Task @goField(forceResolver: true)
     measure: Measure! @goField(forceResolver: true)

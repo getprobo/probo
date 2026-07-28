@@ -43,6 +43,11 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: EvidenceOrder) {
             type
             url
             description
+            assessmentStatus
+            assessment {
+              confidence
+              readable
+            }
             createdAt
           }
         }
@@ -57,12 +62,17 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: EvidenceOrder) {
 `
 
 type evidence struct {
-	ID          string  `json:"id"`
-	State       string  `json:"state"`
-	Type        string  `json:"type"`
-	URL         string  `json:"url"`
-	Description *string `json:"description"`
-	CreatedAt   string  `json:"createdAt"`
+	ID               string  `json:"id"`
+	State            string  `json:"state"`
+	Type             string  `json:"type"`
+	URL              string  `json:"url"`
+	Description      *string `json:"description"`
+	AssessmentStatus string  `json:"assessmentStatus"`
+	Assessment       *struct {
+		Confidence string `json:"confidence"`
+		Readable   bool   `json:"readable"`
+	} `json:"assessment"`
+	CreatedAt string `json:"createdAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -175,16 +185,40 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					desc = d
 				}
 
+				confidence := "-"
+				readable := "-"
+
+				if e.Assessment != nil {
+					confidence = e.Assessment.Confidence
+					if e.Assessment.Readable {
+						readable = "yes"
+					} else {
+						readable = "no"
+					}
+				}
+
 				rows = append(rows, []string{
 					e.ID,
 					e.Type,
 					e.State,
+					e.AssessmentStatus,
+					readable,
+					confidence,
 					desc,
 					cmdutil.FormatTime(e.CreatedAt),
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "TYPE", "STATE", "DESCRIPTION", "CREATED").Rows(rows...)
+			t := cmdutil.NewTable(
+				"ID",
+				"TYPE",
+				"STATE",
+				"ASSESSMENT",
+				"READABLE",
+				"CONFIDENCE",
+				"DESCRIPTION",
+				"CREATED",
+			).Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

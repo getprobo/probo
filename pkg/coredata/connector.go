@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -63,6 +64,17 @@ func (j *jsonRawMessageOrNull) Scan(src any) error {
 	default:
 		return fmt.Errorf("unsupported type for jsonRawMessageOrNull: %T", src)
 	}
+}
+
+// Value implements database/sql/driver.Valuer so pgx binds the column
+// without an explicit helper at every call site. pgx rejects empty byte
+// slices as invalid JSON, so an empty/nil value is sent as SQL NULL.
+func (j jsonRawMessageOrNull) Value() (driver.Value, error) {
+	if len(j) == 0 {
+		return nil, nil
+	}
+
+	return []byte(j), nil
 }
 
 type (
@@ -395,18 +407,13 @@ INSERT INTO connectors (
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
-	var settingsArg any
-	if len(c.RawSettings) > 0 {
-		settingsArg = []byte(c.RawSettings)
-	}
-
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
 		"tenant_id":            scope.GetTenantID(),
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
-		"settings":             settingsArg,
+		"settings":             c.RawSettings,
 		"encrypted_connection": encryptedConnection,
 		"created_at":           c.CreatedAt,
 		"updated_at":           c.UpdatedAt,
@@ -619,14 +626,9 @@ WHERE
 		return fmt.Errorf("cannot encrypt connection: %w", err)
 	}
 
-	var settingsArg any
-	if len(c.RawSettings) > 0 {
-		settingsArg = []byte(c.RawSettings)
-	}
-
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
-		"settings":             settingsArg,
+		"settings":             c.RawSettings,
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
 	}

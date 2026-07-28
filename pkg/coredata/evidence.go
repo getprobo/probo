@@ -37,20 +37,22 @@ import (
 
 type (
 	Evidence struct {
-		ID                             gid.GID                   `db:"id"`
-		OrganizationID                 gid.GID                   `db:"organization_id"`
-		MeasureID                      gid.GID                   `db:"measure_id"`
-		TaskID                         *gid.GID                  `db:"task_id"`
-		State                          EvidenceState             `db:"state"`
-		ReferenceID                    string                    `db:"reference_id"`
-		Type                           EvidenceType              `db:"type"`
-		URL                            string                    `db:"url"`
-		EvidenceFileId                 *gid.GID                  `db:"evidence_file_id"`
-		Description                    *string                   `db:"description"`
-		DescriptionStatus              EvidenceDescriptionStatus `db:"description_status"`
-		DescriptionProcessingStartedAt *time.Time                `db:"description_processing_started_at"`
-		CreatedAt                      time.Time                 `db:"created_at"`
-		UpdatedAt                      time.Time                 `db:"updated_at"`
+		ID                            gid.GID                  `db:"id"`
+		OrganizationID                gid.GID                  `db:"organization_id"`
+		MeasureID                     gid.GID                  `db:"measure_id"`
+		TaskID                        *gid.GID                 `db:"task_id"`
+		State                         EvidenceState            `db:"state"`
+		ReferenceID                   string                   `db:"reference_id"`
+		Type                          EvidenceType             `db:"type"`
+		URL                           string                   `db:"url"`
+		EvidenceFileID                *gid.GID                 `db:"evidence_file_id"`
+		Description                   *string                  `db:"description"`
+		Assessment                    jsonRawMessageOrNull     `db:"assessment"`
+		AssessmentStatus              EvidenceAssessmentStatus `db:"assessment_status"`
+		AssessmentProcessingStartedAt *time.Time               `db:"assessment_processing_started_at"`
+		AssessmentAttempts            int                      `db:"assessment_attempts"`
+		CreatedAt                     time.Time                `db:"created_at"`
+		UpdatedAt                     time.Time                `db:"updated_at"`
 	}
 
 	Evidences []*Evidence
@@ -123,8 +125,10 @@ INSERT INTO
         url,
         evidence_file_id,
         description,
-        description_status,
-        description_processing_started_at,
+        assessment,
+        assessment_status,
+        assessment_processing_started_at,
+        assessment_attempts,
         created_at,
         updated_at
     )
@@ -139,8 +143,10 @@ VALUES (
     @url,
     @evidence_file_id,
     @description,
-    @description_status,
-    @description_processing_started_at,
+    @assessment,
+    @assessment_status,
+    @assessment_processing_started_at,
+    @assessment_attempts,
     @created_at,
     @updated_at
 )
@@ -152,24 +158,28 @@ WHERE evidences.state = 'REQUESTED';
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                         scope.GetTenantID(),
-		"evidence_id":                       e.ID,
-		"measure_id":                        e.MeasureID,
-		"task_id":                           e.TaskID,
-		"reference_id":                      e.ReferenceID,
-		"evidence_file_id":                  e.EvidenceFileId,
-		"created_at":                        e.CreatedAt,
-		"updated_at":                        e.UpdatedAt,
-		"state":                             e.State,
-		"type":                              e.Type,
-		"url":                               e.URL,
-		"description":                       e.Description,
-		"description_status":                e.DescriptionStatus,
-		"description_processing_started_at": e.DescriptionProcessingStartedAt,
+		"tenant_id":                        scope.GetTenantID(),
+		"evidence_id":                      e.ID,
+		"measure_id":                       e.MeasureID,
+		"task_id":                          e.TaskID,
+		"reference_id":                     e.ReferenceID,
+		"evidence_file_id":                 e.EvidenceFileID,
+		"created_at":                       e.CreatedAt,
+		"updated_at":                       e.UpdatedAt,
+		"state":                            e.State,
+		"type":                             e.Type,
+		"url":                              e.URL,
+		"description":                      e.Description,
+		"assessment":                       e.Assessment,
+		"assessment_status":                e.AssessmentStatus,
+		"assessment_processing_started_at": e.AssessmentProcessingStartedAt,
+		"assessment_attempts":              e.AssessmentAttempts,
 	}
-	_, err := conn.Exec(ctx, q, args)
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot upsert evidence: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (e Evidence) Insert(
@@ -191,8 +201,10 @@ INSERT INTO
         url,
         evidence_file_id,
         description,
-        description_status,
-        description_processing_started_at,
+        assessment,
+        assessment_status,
+        assessment_processing_started_at,
+        assessment_attempts,
         created_at,
         updated_at
     )
@@ -208,29 +220,33 @@ VALUES (
     @url,
     @evidence_file_id,
     @description,
-    @description_status,
-    @description_processing_started_at,
+    @assessment,
+    @assessment_status,
+    @assessment_processing_started_at,
+    @assessment_attempts,
     @created_at,
     @updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                         scope.GetTenantID(),
-		"evidence_id":                       e.ID,
-		"organization_id":                   e.OrganizationID,
-		"measure_id":                        e.MeasureID,
-		"task_id":                           e.TaskID,
-		"reference_id":                      e.ReferenceID,
-		"evidence_file_id":                  e.EvidenceFileId,
-		"created_at":                        e.CreatedAt,
-		"updated_at":                        e.UpdatedAt,
-		"state":                             e.State,
-		"type":                              e.Type,
-		"url":                               e.URL,
-		"description":                       e.Description,
-		"description_status":                e.DescriptionStatus,
-		"description_processing_started_at": e.DescriptionProcessingStartedAt,
+		"tenant_id":                        scope.GetTenantID(),
+		"evidence_id":                      e.ID,
+		"organization_id":                  e.OrganizationID,
+		"measure_id":                       e.MeasureID,
+		"task_id":                          e.TaskID,
+		"reference_id":                     e.ReferenceID,
+		"evidence_file_id":                 e.EvidenceFileID,
+		"created_at":                       e.CreatedAt,
+		"updated_at":                       e.UpdatedAt,
+		"state":                            e.State,
+		"type":                             e.Type,
+		"url":                              e.URL,
+		"description":                      e.Description,
+		"assessment":                       e.Assessment,
+		"assessment_status":                e.AssessmentStatus,
+		"assessment_processing_started_at": e.AssessmentProcessingStartedAt,
+		"assessment_attempts":              e.AssessmentAttempts,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -265,8 +281,10 @@ SELECT
     url,
     evidence_file_id,
     description,
-    description_status,
-    description_processing_started_at,
+    assessment,
+    assessment_status,
+    assessment_processing_started_at,
+    assessment_attempts,
     created_at,
     updated_at
 FROM
@@ -349,8 +367,10 @@ SELECT
 	url,
 	evidence_file_id,
 	description,
-	description_status,
-	description_processing_started_at,
+	assessment,
+	assessment_status,
+	assessment_processing_started_at,
+	assessment_attempts,
 	created_at,
 	updated_at
 FROM
@@ -434,8 +454,10 @@ SELECT
     url,
     evidence_file_id,
     description,
-    description_status,
-    description_processing_started_at,
+    assessment,
+    assessment_status,
+    assessment_processing_started_at,
+    assessment_attempts,
     created_at,
     updated_at
 FROM
@@ -481,8 +503,10 @@ SET
 	evidence_file_id = @evidence_file_id,
 	url = @url,
 	description = @description,
-	description_status = @description_status,
-	description_processing_started_at = @description_processing_started_at,
+	assessment = @assessment,
+	assessment_status = @assessment_status,
+	assessment_processing_started_at = @assessment_processing_started_at,
+	assessment_attempts = @assessment_attempts,
 	updated_at = @updated_at
 WHERE
     %s
@@ -492,21 +516,168 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"evidence_id":                       e.ID,
-		"type":                              e.Type,
-		"state":                             e.State,
-		"evidence_file_id":                  e.EvidenceFileId,
-		"url":                               e.URL,
-		"description":                       e.Description,
-		"description_status":                e.DescriptionStatus,
-		"description_processing_started_at": e.DescriptionProcessingStartedAt,
-		"updated_at":                        e.UpdatedAt,
+		"evidence_id":                      e.ID,
+		"type":                             e.Type,
+		"state":                            e.State,
+		"evidence_file_id":                 e.EvidenceFileID,
+		"url":                              e.URL,
+		"description":                      e.Description,
+		"assessment":                       e.Assessment,
+		"assessment_status":                e.AssessmentStatus,
+		"assessment_processing_started_at": e.AssessmentProcessingStartedAt,
+		"assessment_attempts":              e.AssessmentAttempts,
+		"updated_at":                       e.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot update evidence: %w", err)
+	}
 
-	return err
+	return nil
+}
+
+// MarkAssessmentProcessing claims a PENDING row for assessment: bumps the
+// attempt counter and flips status to PROCESSING. Touches only the
+// assessment status columns so concurrent edits to other fields are safe.
+func (e *Evidence) MarkAssessmentProcessing(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	now := time.Now()
+	q := `
+UPDATE
+    evidences
+SET
+    assessment_status = @assessment_status,
+    assessment_processing_started_at = @started_at,
+    assessment_attempts = assessment_attempts + 1,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @evidence_id
+RETURNING
+    assessment_attempts
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"evidence_id":       e.ID,
+		"assessment_status": EvidenceAssessmentStatusProcessing,
+		"started_at":        now,
+		"updated_at":        now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	var attempts int
+	if err := conn.QueryRow(ctx, q, args).Scan(&attempts); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot mark evidence assessment processing: %w", err)
+	}
+
+	e.AssessmentStatus = EvidenceAssessmentStatusProcessing
+	e.AssessmentProcessingStartedAt = &now
+	e.AssessmentAttempts = attempts
+	e.UpdatedAt = now
+
+	return nil
+}
+
+// SetAssessmentCompleted persists a successful assessment result, touching
+// only assessment/description/status columns. Avoids clobbering concurrent
+// edits with a snapshot held across the preceding LLM call.
+func (e Evidence) SetAssessmentCompleted(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE
+    evidences
+SET
+    assessment = @assessment,
+    description = @description,
+    assessment_status = @assessment_status,
+    assessment_processing_started_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @evidence_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"evidence_id":       e.ID,
+		"assessment":        e.Assessment,
+		"description":       e.Description,
+		"assessment_status": EvidenceAssessmentStatusCompleted,
+		"updated_at":        time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot mark evidence assessment completed: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// SetAssessmentOutcome records a failed attempt. When attempts is below
+// maxAttempts the row returns to PENDING for retry; otherwise it is marked
+// FAILED. Touches only the assessment status columns.
+func (e Evidence) SetAssessmentOutcome(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	maxAttempts int,
+) error {
+	status := EvidenceAssessmentStatusFailed
+	if maxAttempts > 0 && e.AssessmentAttempts < maxAttempts {
+		status = EvidenceAssessmentStatusPending
+	}
+
+	q := `
+UPDATE
+    evidences
+SET
+    assessment_status = @assessment_status,
+    assessment_processing_started_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @evidence_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"evidence_id":       e.ID,
+		"assessment_status": status,
+		"updated_at":        time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot mark evidence assessment outcome: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (e Evidence) Delete(
@@ -535,7 +706,7 @@ WHERE
 	return nil
 }
 
-func (e *Evidence) LoadNextPendingDescriptionForUpdateSkipLocked(
+func (e *Evidence) LoadNextPendingAssessmentForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,
 ) error {
@@ -551,14 +722,16 @@ SELECT
     url,
     evidence_file_id,
     description,
-    description_status,
-    description_processing_started_at,
+    assessment,
+    assessment_status,
+    assessment_processing_started_at,
+    assessment_attempts,
     created_at,
     updated_at
 FROM
     evidences
 WHERE
-    description_status = 'PENDING'
+    assessment_status = 'PENDING'
     AND evidence_file_id IS NOT NULL
 ORDER BY
     created_at ASC
@@ -585,7 +758,7 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
-func ResetStaleDescriptionProcessing(
+func ResetStaleAssessmentProcessing(
 	ctx context.Context,
 	conn pg.Querier,
 	staleAfter time.Duration,
@@ -593,14 +766,16 @@ func ResetStaleDescriptionProcessing(
 	q := `
 UPDATE evidences
 SET
-    description_status = 'PENDING',
-    description_processing_started_at = NULL
+    assessment_status = 'PENDING',
+    assessment_processing_started_at = NULL
 WHERE
-    description_status = 'PROCESSING'
-    AND description_processing_started_at < $1;
+    assessment_status = 'PROCESSING'
+    AND assessment_processing_started_at < $1;
 `
 
-	_, err := conn.Exec(ctx, q, time.Now().Add(-staleAfter))
+	if _, err := conn.Exec(ctx, q, time.Now().Add(-staleAfter)); err != nil {
+		return fmt.Errorf("cannot reset stale assessment processing: %w", err)
+	}
 
-	return err
+	return nil
 }

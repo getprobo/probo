@@ -231,10 +231,15 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.Probo.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.Probo.MaxTokens)
-	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.Provider)
-	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.ModelName)
-	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.Temperature)
-	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceAssessor.Provider)
+	assert.Empty(t, cfg.Probod.Agents.EvidenceAssessor.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.MaxTokens)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.Thinking)
+	assert.Equal(t, 10, cfg.Probod.EvidenceAssessor.Interval)
+	assert.Equal(t, 300, cfg.Probod.EvidenceAssessor.StaleAfter)
+	assert.Equal(t, 10, cfg.Probod.EvidenceAssessor.MaxConcurrency)
+	assert.Equal(t, 3, cfg.Probod.EvidenceAssessor.MaxAttempts)
 	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.Provider)
 	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.Temperature)
@@ -367,11 +372,13 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_AGENT_DEFAULT_MODEL_NAME"] = "gpt-4-turbo"
 	env["PROBOD_AGENT_DEFAULT_TEMPERATURE"] = "0.5"
 	env["PROBOD_AGENT_DEFAULT_MAX_TOKENS"] = "8192"
-	// Agents — evidence-describer override
-	env["PROBOD_AGENT_EVIDENCE_DESCRIBER_PROVIDER"] = "anthropic"
-	env["PROBOD_AGENT_EVIDENCE_DESCRIBER_MODEL_NAME"] = "claude-sonnet-4-20250514"
-	env["PROBOD_AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"] = "0.2"
-	env["PROBOD_AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"] = "4096"
+	// Agents — evidence-assessor override
+	env["PROBOD_AGENT_EVIDENCE_ASSESSOR_PROVIDER"] = "anthropic"
+	env["PROBOD_AGENT_EVIDENCE_ASSESSOR_MODEL_NAME"] = "claude-sonnet-4-20250514"
+	env["PROBOD_AGENT_EVIDENCE_ASSESSOR_TEMPERATURE"] = "0.2"
+	env["PROBOD_AGENT_EVIDENCE_ASSESSOR_MAX_TOKENS"] = "4096"
+	env["PROBOD_AGENT_EVIDENCE_ASSESSOR_THINKING"] = "8000"
+	env["PROBOD_EVIDENCE_ASSESSOR_MAX_ATTEMPTS"] = "5"
 	// Agents — third-party-vetter override
 	env["PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER"] = "openai"
 	env["PROBOD_AGENT_THIRD_PARTY_VETTER_MODEL_NAME"] = "gpt-4o"
@@ -508,11 +515,13 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Agents — probo inherits default (no overrides set)
 	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
 	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
-	// Agents — evidence-describer overrides
-	assert.Equal(t, "anthropic", cfg.Probod.Agents.EvidenceDescriber.Provider)
-	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceDescriber.ModelName)
-	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceDescriber.Temperature)
-	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	// Agents — evidence-assessor overrides
+	assert.Equal(t, "anthropic", cfg.Probod.Agents.EvidenceAssessor.Provider)
+	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceAssessor.ModelName)
+	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceAssessor.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceAssessor.MaxTokens)
+	assert.Equal(t, new(8000), cfg.Probod.Agents.EvidenceAssessor.Thinking)
+	assert.Equal(t, 5, cfg.Probod.EvidenceAssessor.MaxAttempts)
 	// Agents — third-party-vetter overrides
 	assert.Equal(t, "openai", cfg.Probod.Agents.ThirdPartyVetter.Provider)
 	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.ThirdPartyVetter.ModelName)

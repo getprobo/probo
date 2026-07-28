@@ -46,7 +46,7 @@ type (
 	ACMEConfig                    = probodconfig.ACMEConfig
 	LLMProviderConfig             = probodconfig.LLMProviderConfig
 	LLMAgentConfig                = probodconfig.LLMAgentConfig
-	EvidenceDescriberConfig       = probodconfig.EvidenceDescriberConfig
+	EvidenceAssessmentConfig      = probodconfig.EvidenceAssessmentConfig
 	ThirdPartyVettingWorkerConfig = probodconfig.ThirdPartyVettingWorkerConfig
 	AgentsConfig                  = probodconfig.AgentsConfig
 

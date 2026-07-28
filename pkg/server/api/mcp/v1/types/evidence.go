@@ -25,20 +25,64 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+type evidenceAssessmentPayload struct {
+	Summary         string   `json:"summary"`
+	System          string   `json:"system"`
+	Setting         string   `json:"setting"`
+	Scope           string   `json:"scope"`
+	CapturedAt      string   `json:"captured_at"`
+	Language        string   `json:"language"`
+	Frameworks      []string `json:"frameworks"`
+	Issues          []string `json:"issues"`
+	Confidence      string   `json:"confidence"`
+	Readable        bool     `json:"readable"`
+	RejectionReason string   `json:"rejection_reason"`
+}
+
 func NewEvidence(e *coredata.Evidence) *Evidence {
-	return &Evidence{
-		ID:             e.ID,
-		OrganizationID: e.OrganizationID,
-		MeasureID:      e.MeasureID,
-		TaskID:         e.TaskID,
-		State:          EvidenceState(e.State.String()),
-		ReferenceID:    e.ReferenceID,
-		Type:           EvidenceType(e.Type.String()),
-		URL:            e.URL,
-		Description:    e.Description,
-		CreatedAt:      e.CreatedAt,
-		UpdatedAt:      e.UpdatedAt,
+	evidence := &Evidence{
+		ID:               e.ID,
+		OrganizationID:   e.OrganizationID,
+		MeasureID:        e.MeasureID,
+		TaskID:           e.TaskID,
+		State:            EvidenceState(e.State.String()),
+		ReferenceID:      e.ReferenceID,
+		Type:             EvidenceType(e.Type.String()),
+		URL:              e.URL,
+		Description:      e.Description,
+		AssessmentStatus: EvidenceAssessmentStatus(e.AssessmentStatus.String()),
+		CreatedAt:        e.CreatedAt,
+		UpdatedAt:        e.UpdatedAt,
 	}
+
+	var payload evidenceAssessmentPayload
+	if err := e.GetAssessment(&payload); err == nil && len(e.Assessment) > 0 {
+		frameworks := payload.Frameworks
+		if frameworks == nil {
+			frameworks = []string{}
+		}
+
+		issues := payload.Issues
+		if issues == nil {
+			issues = []string{}
+		}
+
+		evidence.Assessment = &EvidenceAssessment{
+			Summary:         payload.Summary,
+			System:          payload.System,
+			Setting:         payload.Setting,
+			Scope:           payload.Scope,
+			CapturedAt:      payload.CapturedAt,
+			Language:        payload.Language,
+			Frameworks:      frameworks,
+			Issues:          issues,
+			Confidence:      EvidenceAssessmentConfidence(payload.Confidence),
+			Readable:        payload.Readable,
+			RejectionReason: payload.RejectionReason,
+		}
+	}
+
+	return evidence
 }
 
 func NewListMeasureEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, coredata.EvidenceOrderField]) ListMeasureEvidencesOutput {

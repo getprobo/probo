@@ -3833,6 +3833,13 @@
       "extractUrl": "Échec de l’extraction de l’URL du fichier URI"
     },
     "previewUnavailable": "Aperçu non disponible pour ce type de fichier : {{mimeType}}",
+    "assessment": {
+      "readable": "Preuve lisible",
+      "unreadable": "Preuve illisible",
+      "confidence": "Confiance : {{confidence}}",
+      "system": "Système : {{system}}",
+      "setting": "Paramètre : {{setting}}"
+    },
     "actions": {
       "download": "Télécharger le fichier"
     }
@@ -3897,6 +3904,11 @@
       "add": "Ajouter une preuve",
       "download": "Télécharger",
       "delete": "Supprimer"
+    },
+    "assessment": {
+      "readable": "Lisible",
+      "unreadable": "Illisible",
+      "confidence": { "high": "Confiance élevée", "medium": "Confiance moyenne", "low": "Confiance faible" }
     }
   },
   "measureTasksTab": {

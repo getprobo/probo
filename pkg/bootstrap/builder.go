@@ -215,6 +215,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_MODEL_NAME", "gpt-4o"),
 						Temperature: new(b.resolver.getEnvFloatOrDefault("PROBOD_AGENT_DEFAULT_TEMPERATURE", 0.1)),
 						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_DEFAULT_MAX_TOKENS", 4096)),
+						Thinking:    b.resolver.getEnvIntPtr("PROBOD_AGENT_DEFAULT_THINKING"),
 					},
 					Probo: probodconfig.LLMAgentConfig{
 						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_PROBO_PROVIDER", ""),
@@ -222,11 +223,41 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_PROBO_TEMPERATURE"),
 						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_PROBO_MAX_TOKENS"),
 					},
-					EvidenceDescriber: probodconfig.LLMAgentConfig{
-						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
-						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
-						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
-						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
+					EvidenceAssessor: probodconfig.LLMAgentConfig{
+						// Prefer the renamed ASSESSOR env vars; fall back to
+						// the legacy DESCRIBER names for one release.
+						Provider: b.resolver.getEnvPrefer(
+							[]string{
+								"PROBOD_AGENT_EVIDENCE_ASSESSOR_PROVIDER",
+								"PROBOD_AGENT_EVIDENCE_DESCRIBER_PROVIDER",
+							},
+							"",
+						),
+						ModelName: b.resolver.getEnvPrefer(
+							[]string{
+								"PROBOD_AGENT_EVIDENCE_ASSESSOR_MODEL_NAME",
+								"PROBOD_AGENT_EVIDENCE_DESCRIBER_MODEL_NAME",
+							},
+							"",
+						),
+						Temperature: b.resolver.getEnvFloatPtrPrefer(
+							[]string{
+								"PROBOD_AGENT_EVIDENCE_ASSESSOR_TEMPERATURE",
+								"PROBOD_AGENT_EVIDENCE_DESCRIBER_TEMPERATURE",
+							},
+						),
+						MaxTokens: b.resolver.getEnvIntPtrPrefer(
+							[]string{
+								"PROBOD_AGENT_EVIDENCE_ASSESSOR_MAX_TOKENS",
+								"PROBOD_AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS",
+							},
+						),
+						Thinking: b.resolver.getEnvIntPtrPrefer(
+							[]string{
+								"PROBOD_AGENT_EVIDENCE_ASSESSOR_THINKING",
+								"PROBOD_AGENT_DEFAULT_THINKING",
+							},
+						),
 					},
 					ThirdPartyVetter: probodconfig.LLMAgentConfig{
 						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER", ""),
@@ -298,10 +329,29 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			ESign: probodconfig.ESignConfig{
 				TSAURL: b.resolver.getEnv("PROBOD_ESIGN_TSA_URL"),
 			},
-			EvidenceDescriber: probodconfig.EvidenceDescriberConfig{
-				Interval:       b.resolver.getEnvIntOrDefault("PROBOD_EVIDENCE_DESCRIBER_INTERVAL", 10),
-				StaleAfter:     b.resolver.getEnvIntOrDefault("PROBOD_EVIDENCE_DESCRIBER_STALE_AFTER", 300),
-				MaxConcurrency: b.resolver.getEnvIntOrDefault("PROBOD_EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
+			EvidenceAssessor: probodconfig.EvidenceAssessmentConfig{
+				Interval: b.resolver.getEnvIntPrefer(
+					[]string{
+						"PROBOD_EVIDENCE_ASSESSOR_INTERVAL",
+						"PROBOD_EVIDENCE_DESCRIBER_INTERVAL",
+					},
+					10,
+				),
+				StaleAfter: b.resolver.getEnvIntPrefer(
+					[]string{
+						"PROBOD_EVIDENCE_ASSESSOR_STALE_AFTER",
+						"PROBOD_EVIDENCE_DESCRIBER_STALE_AFTER",
+					},
+					300,
+				),
+				MaxConcurrency: b.resolver.getEnvIntPrefer(
+					[]string{
+						"PROBOD_EVIDENCE_ASSESSOR_MAX_CONCURRENCY",
+						"PROBOD_EVIDENCE_DESCRIBER_MAX_CONCURRENCY",
+					},
+					10,
+				),
+				MaxAttempts: b.resolver.getEnvIntOrDefault("PROBOD_EVIDENCE_ASSESSOR_MAX_ATTEMPTS", 3),
 			},
 			ThirdPartyVetting: probodconfig.ThirdPartyVettingWorkerConfig{
 				Interval:       b.resolver.getEnvIntOrDefault("PROBOD_THIRD_PARTY_VETTING_INTERVAL", 10),

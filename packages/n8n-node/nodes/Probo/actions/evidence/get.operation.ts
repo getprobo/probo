@@ -52,6 +52,20 @@ export async function execute(
 					state
 					type
 					description
+					assessmentStatus
+					assessment {
+						summary
+						system
+						setting
+						scope
+						capturedAt
+						language
+						frameworks
+						issues
+						confidence
+						readable
+						rejectionReason
+					}
 					createdAt
 					updatedAt
 				}

@@ -28,6 +28,17 @@ export const evidenceFileQuery = graphql`
       ... on Evidence {
         id
         description
+        assessment {
+          summary
+          system
+          setting
+          scope
+          confidence
+          readable
+          rejectionReason
+          issues
+        }
+        assessmentStatus
         file {
             mimeType
             fileName

@@ -37,6 +37,20 @@ type (
 		Resolver any
 		ParentID gid.GID
 	}
+
+	evidenceAssessmentPayload struct {
+		Summary         string   `json:"summary"`
+		System          string   `json:"system"`
+		Setting         string   `json:"setting"`
+		Scope           string   `json:"scope"`
+		CapturedAt      string   `json:"captured_at"`
+		Language        string   `json:"language"`
+		Frameworks      []string `json:"frameworks"`
+		Issues          []string `json:"issues"`
+		Confidence      string   `json:"confidence"`
+		Readable        bool     `json:"readable"`
+		RejectionReason string   `json:"rejection_reason"`
+	}
 )
 
 func NewEvidenceConnection(
@@ -75,10 +89,11 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 	}
 
 	evidence := &Evidence{
-		ID:    e.ID,
-		State: e.State,
-		Type:  e.Type,
-		URL:   urlPtr,
+		ID:               e.ID,
+		State:            e.State,
+		Type:             e.Type,
+		URL:              urlPtr,
+		AssessmentStatus: e.AssessmentStatus,
 		Measure: &Measure{
 			ID: e.MeasureID,
 		},
@@ -87,15 +102,42 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 		UpdatedAt:   e.UpdatedAt,
 	}
 
-	if e.EvidenceFileId != nil {
+	if e.EvidenceFileID != nil {
 		evidence.File = &File{
-			ID: *e.EvidenceFileId,
+			ID: *e.EvidenceFileID,
 		}
 	}
 
 	if e.TaskID != nil {
 		evidence.Task = &Task{
 			ID: *e.TaskID,
+		}
+	}
+
+	var payload evidenceAssessmentPayload
+	if err := e.GetAssessment(&payload); err == nil && len(e.Assessment) > 0 {
+		frameworks := payload.Frameworks
+		if frameworks == nil {
+			frameworks = []string{}
+		}
+
+		issues := payload.Issues
+		if issues == nil {
+			issues = []string{}
+		}
+
+		evidence.Assessment = &EvidenceAssessment{
+			Summary:         payload.Summary,
+			System:          payload.System,
+			Setting:         payload.Setting,
+			Scope:           payload.Scope,
+			CapturedAt:      payload.CapturedAt,
+			Language:        payload.Language,
+			Frameworks:      frameworks,
+			Issues:          issues,
+			Confidence:      payload.Confidence,
+			Readable:        payload.Readable,
+			RejectionReason: payload.RejectionReason,
 		}
 	}
 

@@ -41,6 +41,20 @@ query($id: ID!) {
       type
       url
       description
+      assessmentStatus
+      assessment {
+        summary
+        system
+        setting
+        scope
+        capturedAt
+        language
+        frameworks
+        issues
+        confidence
+        readable
+        rejectionReason
+      }
       file {
         id
         filename
@@ -59,16 +73,32 @@ query($id: ID!) {
 }
 `
 
+type evidenceAssessment struct {
+	Summary         string   `json:"summary"`
+	System          string   `json:"system"`
+	Setting         string   `json:"setting"`
+	Scope           string   `json:"scope"`
+	CapturedAt      string   `json:"capturedAt"`
+	Language        string   `json:"language"`
+	Frameworks      []string `json:"frameworks"`
+	Issues          []string `json:"issues"`
+	Confidence      string   `json:"confidence"`
+	Readable        bool     `json:"readable"`
+	RejectionReason string   `json:"rejectionReason"`
+}
+
 type viewResponse struct {
 	Node *struct {
-		Typename    string  `json:"__typename"`
-		ID          string  `json:"id"`
-		Size        int     `json:"size"`
-		State       string  `json:"state"`
-		Type        string  `json:"type"`
-		URL         string  `json:"url"`
-		Description *string `json:"description"`
-		File        *struct {
+		Typename         string              `json:"__typename"`
+		ID               string              `json:"id"`
+		Size             int                 `json:"size"`
+		State            string              `json:"state"`
+		Type             string              `json:"type"`
+		URL              string              `json:"url"`
+		Description      *string             `json:"description"`
+		AssessmentStatus string              `json:"assessmentStatus"`
+		Assessment       *evidenceAssessment `json:"assessment"`
+		File             *struct {
 			ID          string `json:"id"`
 			Filename    string `json:"filename"`
 			ContentType string `json:"contentType"`
@@ -165,6 +195,29 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if n.Description != nil && *n.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *n.Description)
+			}
+
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Assessment status:"), n.AssessmentStatus)
+
+			if n.Assessment != nil {
+				_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Readable:"), n.Assessment.Readable)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Confidence:"), n.Assessment.Confidence)
+
+				if n.Assessment.System != "" {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("System:"), n.Assessment.System)
+				}
+
+				if n.Assessment.Setting != "" {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Setting:"), n.Assessment.Setting)
+				}
+
+				if n.Assessment.Scope != "" {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Scope:"), n.Assessment.Scope)
+				}
+
+				if n.Assessment.RejectionReason != "" {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Rejection:"), n.Assessment.RejectionReason)
+				}
 			}
 
 			_, _ = fmt.Fprintln(out)

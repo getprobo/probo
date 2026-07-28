@@ -18,40 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probod
+package coredata
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"go.gearno.de/kit/log"
-	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/pkg/thirdparty"
-	"go.probo.inc/probo/pkg/vetting"
+	"encoding/json"
+	"fmt"
 )
 
-// buildThirdPartyVetter wires the third-party vetting agent. Unset
-// third-party-vetter fields inherit from the default agent config
-// (AGENT_DEFAULT_*), same as evidence-assessor and probo.
-func (impl *Implm) buildThirdPartyVetter(
-	l *log.Logger,
-	tp trace.TracerProvider,
-	r prometheus.Registerer,
-) (thirdparty.Vetter, error) {
-	agentCfg, llmClient, err := impl.resolveAgentClient("third-party-vetter", impl.cfg.Agents.ThirdPartyVetter, l, tp, r)
+// SetAssessment marshals a typed assessment into Evidence.Assessment.
+// Passing nil — or any value that marshals to JSON null, including a
+// typed-nil pointer — clears the field rather than persisting JSON
+// null. The shape of the assessment is defined by its producer (see
+// pkg/evidenceassessor.EvidenceAssessment); this package is
+// intentionally agnostic about the schema and only owns the raw JSONB
+// round-trip.
+func (e *Evidence) SetAssessment(v any) error {
+	if v == nil {
+		e.Assessment = nil
+		return nil
+	}
+
+	data, err := json.Marshal(v)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("cannot marshal evidence assessment: %w", err)
 	}
 
-	maxTokens := vetting.DefaultMaxTokens
-	if agentCfg.MaxTokens != nil {
-		maxTokens = *agentCfg.MaxTokens
+	if string(data) == "null" {
+		e.Assessment = nil
+		return nil
 	}
 
-	return vetting.NewAssessor(vetting.Config{
-		Client:          llmClient,
-		Model:           agentCfg.ModelName,
-		MaxTokens:       maxTokens,
-		ChromeAddr:      impl.cfg.ChromeDPAddr,
-		FirecrawlAPIKey: impl.cfg.Agents.Tools.FirecrawlAPIKey,
-		Logger:          l.Named("third-party-vetter"),
-	}), nil
+	e.Assessment = data
+
+	return nil
+}
+
+// GetAssessment unmarshals Evidence.Assessment into dst. It is a no-op
+// when the column is NULL/empty, leaving dst untouched.
+func (e *Evidence) GetAssessment(dst any) error {
+	if len(e.Assessment) == 0 {
+		return nil
+	}
+
+	if err := json.Unmarshal(e.Assessment, dst); err != nil {
+		return fmt.Errorf("cannot unmarshal evidence assessment: %w", err)
+	}
+
+	return nil
 }

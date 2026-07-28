@@ -187,6 +187,48 @@ function EvidencePreviewContent({
       {evidence.description && (
         <p className="text-txt-secondary text-sm">{evidence.description}</p>
       )}
+      {evidence.assessment && (
+        <div className="flex flex-col gap-2 text-sm text-txt-secondary">
+          <div className="flex flex-wrap gap-2">
+            <span>
+              {evidence.assessment.readable
+                ? t("evidencePreviewDialog.assessment.readable")
+                : t("evidencePreviewDialog.assessment.unreadable")}
+            </span>
+            <span>
+              {t("evidencePreviewDialog.assessment.confidence", {
+                confidence: evidence.assessment.confidence,
+              })}
+            </span>
+          </div>
+          {evidence.assessment.system && (
+            <p>
+              {t("evidencePreviewDialog.assessment.system", {
+                system: evidence.assessment.system,
+              })}
+            </p>
+          )}
+          {evidence.assessment.setting && (
+            <p>
+              {t("evidencePreviewDialog.assessment.setting", {
+                setting: evidence.assessment.setting,
+              })}
+            </p>
+          )}
+          {evidence.assessment.rejectionReason && (
+            <p className="text-txt-danger">
+              {evidence.assessment.rejectionReason}
+            </p>
+          )}
+          {evidence.assessment.issues.length > 0 && (
+            <ul className="list-disc pl-5">
+              {evidence.assessment.issues.map(issue => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -82,6 +82,56 @@ func (r *Resolver) getEnvOrDefault(key, defaultValue string) string {
 	return defaultValue
 }
 
+// getEnvPrefer returns the first non-empty env value among keys, or
+// defaultValue when none are set. Used to rename env vars while keeping
+// the previous name working for one release.
+func (r *Resolver) getEnvPrefer(keys []string, defaultValue string) string {
+	for _, key := range keys {
+		if value := r.getEnv(key); value != "" {
+			return value
+		}
+	}
+
+	return defaultValue
+}
+
+func (r *Resolver) getEnvIntPrefer(keys []string, defaultValue int) int {
+	for _, key := range keys {
+		if value := r.getEnv(key); value != "" {
+			if intValue, err := strconv.ParseInt(value, 10, 32); err == nil {
+				return int(intValue)
+			}
+		}
+	}
+
+	return defaultValue
+}
+
+func (r *Resolver) getEnvFloatPtrPrefer(keys []string) *float64 {
+	for _, key := range keys {
+		if value := r.getEnv(key); value != "" {
+			if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
+				return &floatValue
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *Resolver) getEnvIntPtrPrefer(keys []string) *int {
+	for _, key := range keys {
+		if value := r.getEnv(key); value != "" {
+			if intValue, err := strconv.ParseInt(value, 10, 32); err == nil {
+				v := int(intValue)
+				return &v
+			}
+		}
+	}
+
+	return nil
+}
+
 func (r *Resolver) getEnvIntOrDefault(key string, defaultValue int) int {
 	if value := r.getEnv(key); value != "" {
 		if intValue, err := strconv.ParseInt(value, 10, 32); err == nil {
