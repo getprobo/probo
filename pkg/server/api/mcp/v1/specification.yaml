@@ -4674,6 +4674,18 @@ components:
             - "null"
           format: date-time
           description: Valid until date
+        audit_start_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Audit start date
+        audit_end_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Audit end date
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
@@ -4791,6 +4803,14 @@ components:
           type: string
           format: date-time
           description: Valid until date
+        audit_start_date:
+          type: string
+          format: date-time
+          description: Audit start date
+        audit_end_date:
+          type: string
+          format: date-time
+          description: Audit end date
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
@@ -4827,6 +4847,18 @@ components:
             - "null"
           format: date-time
           description: Valid until date
+        audit_start_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Audit start date
+        audit_end_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Audit end date
         state:
           anyOf:
             - $ref: "#/components/schemas/AuditState"

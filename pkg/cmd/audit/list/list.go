@@ -43,6 +43,8 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
             state
             validFrom
             validUntil
+            auditStartDate
+            auditEndDate
           }
         }
         pageInfo {
@@ -56,11 +58,13 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
 `
 
 type audit struct {
-	ID         string  `json:"id"`
-	Name       string  `json:"name"`
-	State      string  `json:"state"`
-	ValidFrom  *string `json:"validFrom"`
-	ValidUntil *string `json:"validUntil"`
+	ID             string  `json:"id"`
+	Name           string  `json:"name"`
+	State          string  `json:"state"`
+	ValidFrom      *string `json:"validFrom"`
+	ValidUntil     *string `json:"validUntil"`
+	AuditStartDate *string `json:"auditStartDate"`
+	AuditEndDate   *string `json:"auditEndDate"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -180,16 +184,28 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					validUntil = *a.ValidUntil
 				}
 
+				auditStartDate := ""
+				if a.AuditStartDate != nil {
+					auditStartDate = *a.AuditStartDate
+				}
+
+				auditEndDate := ""
+				if a.AuditEndDate != nil {
+					auditEndDate = *a.AuditEndDate
+				}
+
 				rows = append(rows, []string{
 					a.ID,
 					a.Name,
 					a.State,
 					validFrom,
 					validUntil,
+					auditStartDate,
+					auditEndDate,
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "STATE", "VALID FROM", "VALID UNTIL").Rows(rows...)
+			t := cmdutil.NewTable("ID", "NAME", "STATE", "VALID FROM", "VALID UNTIL", "AUDIT START", "AUDIT END").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

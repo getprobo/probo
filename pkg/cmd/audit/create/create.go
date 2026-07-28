@@ -40,6 +40,8 @@ mutation($input: CreateAuditInput!) {
         state
         validFrom
         validUntil
+        auditStartDate
+        auditEndDate
       }
     }
   }
@@ -50,11 +52,13 @@ type createResponse struct {
 	CreateAudit struct {
 		AuditEdge struct {
 			Node struct {
-				ID         string  `json:"id"`
-				Name       string  `json:"name"`
-				State      string  `json:"state"`
-				ValidFrom  *string `json:"validFrom"`
-				ValidUntil *string `json:"validUntil"`
+				ID             string  `json:"id"`
+				Name           string  `json:"name"`
+				State          string  `json:"state"`
+				ValidFrom      *string `json:"validFrom"`
+				ValidUntil     *string `json:"validUntil"`
+				AuditStartDate *string `json:"auditStartDate"`
+				AuditEndDate   *string `json:"auditEndDate"`
 			} `json:"node"`
 		} `json:"auditEdge"`
 	} `json:"createAudit"`
@@ -68,6 +72,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagState                      string
 		flagValidFrom                  string
 		flagValidUntil                 string
+		flagAuditStartDate             string
+		flagAuditEndDate               string
 		flagCompliancePortalVisibility string
 	)
 
@@ -160,6 +166,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["validUntil"] = flagValidUntil
 			}
 
+			if flagAuditStartDate != "" {
+				input["auditStartDate"] = flagAuditStartDate
+			}
+
+			if flagAuditEndDate != "" {
+				input["auditEndDate"] = flagAuditEndDate
+			}
+
 			if flagCompliancePortalVisibility != "" {
 				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
 			}
@@ -195,6 +209,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
+	cmd.Flags().StringVar(&flagAuditStartDate, "audit-start-date", "", "Audit start date (e.g. 2026-03-01)")
+	cmd.Flags().StringVar(&flagAuditEndDate, "audit-end-date", "", "Audit end date (e.g. 2026-03-15)")
 	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd

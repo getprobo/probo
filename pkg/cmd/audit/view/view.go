@@ -40,6 +40,8 @@ query($id: ID!) {
       state
       validFrom
       validUntil
+      auditStartDate
+      auditEndDate
       createdAt
       updatedAt
     }
@@ -49,14 +51,16 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename   string  `json:"__typename"`
-		ID         string  `json:"id"`
-		Name       string  `json:"name"`
-		State      string  `json:"state"`
-		ValidFrom  *string `json:"validFrom"`
-		ValidUntil *string `json:"validUntil"`
-		CreatedAt  string  `json:"createdAt"`
-		UpdatedAt  string  `json:"updatedAt"`
+		Typename       string  `json:"__typename"`
+		ID             string  `json:"id"`
+		Name           string  `json:"name"`
+		State          string  `json:"state"`
+		ValidFrom      *string `json:"validFrom"`
+		ValidUntil     *string `json:"validUntil"`
+		AuditStartDate *string `json:"auditStartDate"`
+		AuditEndDate   *string `json:"auditEndDate"`
+		CreatedAt      string  `json:"createdAt"`
+		UpdatedAt      string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -132,6 +136,14 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if a.ValidUntil != nil && *a.ValidUntil != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Valid Until:"), *a.ValidUntil)
+			}
+
+			if a.AuditStartDate != nil && *a.AuditStartDate != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Audit Start:"), *a.AuditStartDate)
+			}
+
+			if a.AuditEndDate != nil && *a.AuditEndDate != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Audit End:"), *a.AuditEndDate)
 			}
 
 			_, _ = fmt.Fprintln(out)

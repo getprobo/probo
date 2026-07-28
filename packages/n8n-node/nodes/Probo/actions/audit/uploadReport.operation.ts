@@ -74,6 +74,8 @@ export async function execute(
 					state
 					validFrom
 					validUntil
+					auditStartDate
+					auditEndDate
 					reportUrl
 					compliancePortalVisibility
 					createdAt

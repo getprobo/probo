@@ -3441,7 +3441,9 @@
       "namePlaceholder": "Nom de l’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
-      "validUntil": "Valide jusqu’au"
+      "validUntil": "Valide jusqu’au",
+      "auditStartDate": "Date de début de l’audit",
+      "auditEndDate": "Date de fin de l’audit"
     },
     "actions": {
       "delete": "Supprimer",
@@ -3519,7 +3521,9 @@
       "namePlaceholder": "Nom de l’audit",
       "state": "État",
       "validFrom": "Valide à partir de",
-      "validUntil": "Valide jusqu’au"
+      "validUntil": "Valide jusqu’au",
+      "auditStartDate": "Date de début de l’audit",
+      "auditEndDate": "Date de fin de l’audit"
     },
     "states": {
       "not_started": "Non commencé",
