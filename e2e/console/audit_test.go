@@ -1982,3 +1982,169 @@ func TestAudit_DeleteReport_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete report")
 	})
 }
+
+func TestAudit_ParentAudit(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	frameworkID := factory.NewFramework(owner).WithName("ISO 27001 for Parent Audit").Create()
+
+	parentID := factory.NewAudit(owner, frameworkID).
+		WithName("ISO 27001 2024-2027 cycle").
+		Create()
+
+	childID := factory.NewAudit(owner, frameworkID).
+		WithName("Year 1 internal audit").
+		WithParentAuditID(parentID).
+		Create()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Audit {
+					id
+					name
+					parentAudit {
+						id
+						name
+					}
+					childAudits(first: 10) {
+						totalCount
+						edges {
+							node {
+								id
+								name
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	t.Run("child references parent", func(t *testing.T) {
+		var result struct {
+			Node struct {
+				ID          string `json:"id"`
+				Name        string `json:"name"`
+				ParentAudit *struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"parentAudit"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": childID}, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.Node.ParentAudit)
+		assert.Equal(t, parentID, result.Node.ParentAudit.ID)
+		assert.Equal(t, "ISO 27001 2024-2027 cycle", result.Node.ParentAudit.Name)
+	})
+
+	t.Run("parent lists children", func(t *testing.T) {
+		var result struct {
+			Node struct {
+				ID          string `json:"id"`
+				ChildAudits struct {
+					TotalCount int `json:"totalCount"`
+					Edges      []struct {
+						Node struct {
+							ID   string `json:"id"`
+							Name string `json:"name"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"childAudits"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": parentID}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, 1, result.Node.ChildAudits.TotalCount)
+		require.Len(t, result.Node.ChildAudits.Edges, 1)
+		assert.Equal(t, childID, result.Node.ChildAudits.Edges[0].Node.ID)
+		assert.Equal(t, "Year 1 internal audit", result.Node.ChildAudits.Edges[0].Node.Name)
+	})
+
+	t.Run("update parent and clear", func(t *testing.T) {
+		siblingID := factory.NewAudit(owner, frameworkID).
+			WithName("Surveillance audit 1").
+			Create()
+
+		const updateQuery = `
+			mutation($input: UpdateAuditInput!) {
+				updateAudit(input: $input) {
+					audit {
+						id
+						parentAudit { id }
+					}
+				}
+			}
+		`
+
+		var updateResult struct {
+			UpdateAudit struct {
+				Audit struct {
+					ID          string `json:"id"`
+					ParentAudit *struct {
+						ID string `json:"id"`
+					} `json:"parentAudit"`
+				} `json:"audit"`
+			} `json:"updateAudit"`
+		}
+
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"id":            siblingID,
+				"parentAuditId": parentID,
+			},
+		}, &updateResult)
+		require.NoError(t, err)
+		require.NotNil(t, updateResult.UpdateAudit.Audit.ParentAudit)
+		assert.Equal(t, parentID, updateResult.UpdateAudit.Audit.ParentAudit.ID)
+
+		err = owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"id":            siblingID,
+				"parentAuditId": nil,
+			},
+		}, &updateResult)
+		require.NoError(t, err)
+		assert.Nil(t, updateResult.UpdateAudit.Audit.ParentAudit)
+	})
+
+	t.Run("rejects self as parent", func(t *testing.T) {
+		const updateQuery = `
+			mutation($input: UpdateAuditInput!) {
+				updateAudit(input: $input) {
+					audit { id }
+				}
+			}
+		`
+
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"id":            parentID,
+				"parentAuditId": parentID,
+			},
+		}, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("rejects cycle", func(t *testing.T) {
+		const updateQuery = `
+			mutation($input: UpdateAuditInput!) {
+				updateAudit(input: $input) {
+					audit { id }
+				}
+			}
+		`
+
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"id":            parentID,
+				"parentAuditId": childID,
+			},
+		}, nil)
+		require.Error(t, err)
+	})
+}

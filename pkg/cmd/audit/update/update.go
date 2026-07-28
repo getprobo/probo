@@ -40,6 +40,10 @@ mutation($input: UpdateAuditInput!) {
       validUntil
       auditStartDate
       auditEndDate
+      parentAudit {
+        id
+        name
+      }
     }
   }
 }
@@ -62,6 +66,8 @@ type updateResponse struct {
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagName                       string
+		flagParent                     string
+		flagClearParent                bool
 		flagState                      string
 		flagValidFrom                  string
 		flagValidUntil                 string
@@ -99,6 +105,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
+			}
+
+			if flagClearParent {
+				input["parentAuditId"] = nil
+			} else if cmd.Flags().Changed("parent") {
+				input["parentAuditId"] = flagParent
 			}
 
 			if cmd.Flags().Changed("state") {
@@ -155,6 +167,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Audit name")
+	cmd.Flags().StringVar(&flagParent, "parent", "", "Parent audit ID (for multi-year cycles)")
+	cmd.Flags().BoolVar(&flagClearParent, "clear-parent", false, "Clear the parent audit")
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")

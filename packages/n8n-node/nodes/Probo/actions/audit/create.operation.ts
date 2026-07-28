@@ -85,6 +85,13 @@ export const description: INodeProperties[] = [
 				description: 'The name of the audit',
 			},
 			{
+				displayName: 'Parent Audit ID',
+				name: 'parentAuditId',
+				type: 'string',
+				default: '',
+				description: 'Parent audit ID for multi-year cycles (e.g. ISO 27001)',
+			},
+			{
 				displayName: 'State',
 				name: 'state',
 				type: 'options',
@@ -139,6 +146,7 @@ export async function execute(
 	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
+		parentAuditId?: string;
 		state?: string;
 		validFrom?: string;
 		validUntil?: string;
@@ -158,7 +166,10 @@ export async function execute(
 						validUntil
 						auditStartDate
 						auditEndDate
-						reportUrl
+						parentAudit {
+							id
+							name
+						}
 						compliancePortalVisibility
 						createdAt
 						updatedAt
@@ -173,6 +184,7 @@ export async function execute(
 		frameworkId,
 	};
 	if (additionalFields.name) input.name = additionalFields.name;
+	if (additionalFields.parentAuditId) input.parentAuditId = additionalFields.parentAuditId;
 	if (additionalFields.state) input.state = additionalFields.state;
 	if (additionalFields.validFrom) input.validFrom = additionalFields.validFrom;
 	if (additionalFields.validUntil) input.validUntil = additionalFields.validUntil;

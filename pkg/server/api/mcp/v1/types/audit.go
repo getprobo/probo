@@ -31,6 +31,7 @@ func NewAudit(a *coredata.Audit, file *coredata.File) *Audit {
 		Name:                       a.Name,
 		OrganizationID:             a.OrganizationID,
 		FrameworkID:                a.FrameworkID,
+		ParentAuditID:              a.ParentAuditID,
 		State:                      a.State,
 		CompliancePortalVisibility: a.CompliancePortalVisibility,
 		HasReport:                  a.ReportFileID != nil,
@@ -102,6 +103,25 @@ func NewListFindingAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.A
 	}
 
 	return ListFindingAuditsOutput{
+		NextCursor: nextCursor,
+		Audits:     audits,
+	}
+}
+
+func NewListChildAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrderField]) ListChildAuditsOutput {
+	audits := make([]*Audit, 0, len(auditPage.Data))
+	for _, v := range auditPage.Data {
+		audits = append(audits, NewAudit(v, nil))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if len(auditPage.Data) > 0 {
+		cursorKey := auditPage.Data[len(auditPage.Data)-1].CursorKey(auditPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListChildAuditsOutput{
 		NextCursor: nextCursor,
 		Audits:     audits,
 	}

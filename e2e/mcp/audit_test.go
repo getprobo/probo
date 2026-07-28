@@ -94,6 +94,50 @@ func TestMCP_Audit_CRUD(t *testing.T) {
 	assert.Equal(t, addResult.Audit.ID, deleteResult.DeletedAuditID)
 }
 
+func TestMCP_Audit_ParentAudit(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	frameworkID := factory.CreateFramework(owner)
+
+	var parentResult struct {
+		Audit struct {
+			ID string `json:"id"`
+		} `json:"audit"`
+	}
+	mc.CallToolInto("addAudit", map[string]any{
+		"frameworkId": frameworkID,
+		"name":        factory.SafeName("ParentAudit"),
+	}, &parentResult)
+	require.NotEmpty(t, parentResult.Audit.ID)
+
+	var childResult struct {
+		Audit struct {
+			ID            string  `json:"id"`
+			ParentAuditID *string `json:"parentAuditId"`
+		} `json:"audit"`
+	}
+	mc.CallToolInto("addAudit", map[string]any{
+		"frameworkId":   frameworkID,
+		"name":          factory.SafeName("ChildAudit"),
+		"parentAuditId": parentResult.Audit.ID,
+	}, &childResult)
+	require.NotEmpty(t, childResult.Audit.ID)
+	require.NotNil(t, childResult.Audit.ParentAuditID)
+	assert.Equal(t, parentResult.Audit.ID, *childResult.Audit.ParentAuditID)
+
+	var listResult struct {
+		Audits []struct {
+			ID string `json:"id"`
+		} `json:"audits"`
+	}
+	mc.CallToolInto("listChildAudits", map[string]any{
+		"parentAuditId": parentResult.Audit.ID,
+	}, &listResult)
+	require.Len(t, listResult.Audits, 1)
+	assert.Equal(t, childResult.Audit.ID, listResult.Audits[0].ID)
+}
+
 func TestMCP_AuditLog(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

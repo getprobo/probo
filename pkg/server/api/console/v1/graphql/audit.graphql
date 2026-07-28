@@ -157,6 +157,14 @@ type Audit implements Node {
     name: String
     organization: Organization @goField(forceResolver: true)
     framework: Framework @goField(forceResolver: true)
+    parentAudit: Audit @goField(forceResolver: true)
+    childAudits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection @goField(forceResolver: true)
     validFrom: Datetime
     validUntil: Datetime
     auditStartDate: Datetime
@@ -282,6 +290,7 @@ type PublishFindingListPayload {
 input CreateAuditInput {
     organizationId: ID!
     frameworkId: ID!
+    parentAuditId: ID
     name: String
     validFrom: Datetime
     validUntil: Datetime
@@ -295,6 +304,7 @@ input CreateAuditInput {
 input UpdateAuditInput {
     id: ID!
     name: String @goField(omittable: true)
+    parentAuditId: ID @goField(omittable: true)
     validFrom: Datetime
     validUntil: Datetime
     auditStartDate: Datetime

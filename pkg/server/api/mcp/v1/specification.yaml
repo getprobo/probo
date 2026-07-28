@@ -4659,6 +4659,9 @@ components:
         framework_id:
           $ref: "#/components/schemas/GID"
           description: Framework ID
+        parent_audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent audit ID, when this audit belongs to a multi-year cycle
         name:
           type:
             - string
@@ -4765,6 +4768,37 @@ components:
           items:
             $ref: "#/components/schemas/Audit"
 
+    ListChildAuditsInput:
+      type: object
+      required:
+        - parent_audit_id
+      properties:
+        parent_audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent audit ID
+        order_by:
+          $ref: "#/components/schemas/AuditOrderBy"
+          description: Audit order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListChildAuditsOutput:
+      type: object
+      required:
+        - audits
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        audits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Audit"
+
     GetAuditInput:
       type: object
       required:
@@ -4794,6 +4828,9 @@ components:
         framework_id:
           $ref: "#/components/schemas/GID"
           description: Framework ID
+        parent_audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent audit ID for multi-year cycles (e.g. ISO 27001)
         name:
           type: string
           description: Audit name
@@ -4836,6 +4873,13 @@ components:
         name:
           type: ["string", "null"]
           description: Audit name
+          go.probo.inc/mcpgen/omittable: true
+        parent_audit_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Parent audit ID. Pass null to clear.
           go.probo.inc/mcpgen/omittable: true
         valid_from:
           type:
@@ -13253,6 +13297,15 @@ tools:
       $ref: "#/components/schemas/ListAuditsInput"
     outputSchema:
       $ref: "#/components/schemas/ListAuditsOutput"
+  - name: listChildAudits
+    description: List child audits belonging to a parent audit (e.g. annual and surveillance audits under an ISO 27001 cycle)
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListChildAuditsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListChildAuditsOutput"
   - name: getAudit
     description: Get an audit by ID
     hints:

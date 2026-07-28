@@ -1503,6 +1503,7 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 			AuditEndDate:   input.AuditEndDate,
 			State:          input.State,
 			FrameworkID:    input.FrameworkID,
+			ParentAuditID:  input.ParentAuditID,
 		},
 	)
 	if err != nil {
@@ -1527,6 +1528,7 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		&probo.UpdateAuditRequest{
 			ID:                         input.ID,
 			Name:                       UnwrapOmittable(input.Name),
+			ParentAuditID:              UnwrapOmittable(input.ParentAuditID),
 			ValidFrom:                  input.ValidFrom,
 			ValidUntil:                 input.ValidUntil,
 			AuditStartDate:             input.AuditStartDate,
@@ -7350,4 +7352,32 @@ func (r *Resolver) DeleteCommitmentTool(ctx context.Context, req *mcp.CallToolRe
 	}
 
 	return nil, types.DeleteCommitmentOutput{DeletedCommitmentID: input.ID}, nil
+}
+
+func (r *Resolver) ListChildAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListChildAuditsInput) (*mcp.CallToolResult, types.ListChildAuditsOutput, error) {
+	scope, err := r.Authorize(ctx, input.ParentAuditID, probo.ActionAuditList)
+	if err != nil {
+		return nil, types.ListChildAuditsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := r.proboSvc.Audits.ListForParentAuditID(ctx, scope, input.ParentAuditID, cursor)
+	if err != nil {
+		return nil, types.ListChildAuditsOutput{}, fmt.Errorf("cannot list child audits: %w", err)
+	}
+
+	return nil, types.NewListChildAuditsOutput(page), nil
 }

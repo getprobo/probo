@@ -22,6 +22,7 @@ import {
   auditStates,
   formatDatetime,
   formatError,
+  getAuditStateLabel,
   getAuditStateVariant,
   type GraphQLError,
 } from "@probo/helpers";
@@ -49,10 +50,11 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { z } from "zod";
 
 import type { AuditGraphNodeQuery } from "#/__generated__/core/AuditGraphNodeQuery.graphql";
+import { AuditSelectField } from "#/components/form/AuditSelectField";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -67,6 +69,7 @@ import {
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
+  parentAuditId: z.string().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
   auditStartDate: z.string().optional(),
@@ -104,6 +107,7 @@ export default function AuditDetailsPage(props: Props) {
     = useFormWithSchema(updateAuditSchema, {
       defaultValues: {
         name: auditEntry.name || null,
+        parentAuditId: auditEntry.parentAudit?.id || "",
         validFrom: auditEntry.validFrom?.split("T")[0] || "",
         validUntil: auditEntry.validUntil?.split("T")[0] || "",
         auditStartDate: auditEntry.auditStartDate?.split("T")[0] || "",
@@ -118,6 +122,11 @@ export default function AuditDetailsPage(props: Props) {
   const confirm = useConfirm();
   const { toast } = useToast();
 
+  const childAudits
+    = auditEntry.childAudits?.edges
+      ?.map(edge => edge.node)
+      .filter(node => node !== null) ?? [];
+
   const onSubmit = handleSubmit(async (formData) => {
     if (!auditEntry.id) return;
 
@@ -125,6 +134,7 @@ export default function AuditDetailsPage(props: Props) {
       await updateAudit({
         id: auditEntry.id,
         name: formData.name || null,
+        parentAuditId: formData.parentAuditId || null,
         validFrom: formatDatetime(formData.validFrom) ?? null,
         validUntil: formatDatetime(formData.validUntil) ?? null,
         auditStartDate: formatDatetime(formData.auditStartDate) ?? null,
@@ -228,6 +238,15 @@ export default function AuditDetailsPage(props: Props) {
             />
           </Field>
 
+          <AuditSelectField
+            organizationId={organizationId}
+            control={control}
+            name="parentAuditId"
+            label={t("auditDetailsPage.fields.parentAudit")}
+            excludeAuditId={auditEntry.id ?? undefined}
+            disabled={!auditEntry.canUpdate}
+          />
+
           <ControlledField
             control={control}
             name="state"
@@ -268,75 +287,106 @@ export default function AuditDetailsPage(props: Props) {
           </div>
         </form>
 
-        <Card padded className="mt-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">
-              {t("auditDetailsPage.report.title")}
-            </h3>
+        <div className="space-y-6">
+          {childAudits.length > 0 && (
+            <Card padded>
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">
+                  {t("auditDetailsPage.childAudits.title")}
+                </h3>
+                <ul className="space-y-2">
+                  {childAudits.map(child => (
+                    <li key={child.id}>
+                      <Link
+                        to={`/organizations/${organizationId}/audits/${child.id}`}
+                        className="flex items-center justify-between rounded-lg border border-border-low px-3 py-2 hover:bg-level-1"
+                      >
+                        <span className="text-sm">
+                          {child.name
+                            ? `${child.framework?.name} — ${child.name}`
+                            : child.framework?.name}
+                        </span>
+                        <Badge variant={getAuditStateVariant(child.state)}>
+                          {getAuditStateLabel(t, child.state)}
+                        </Badge>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
+          )}
 
-            {auditEntry.reportFile
-              ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <IconArrowInbox className="text-success-600" size={20} />
-                        <div className="flex-1">
-                          <p className="font-medium text-success-900">
-                            {auditEntry.reportFile.fileName}
-                          </p>
-                          <div className="flex items-center gap-4 text-sm text-success-700">
-                            <span>
-                              {fileSize(auditEntry.reportFile.size, t)}
-                            </span>
-                            <span>
-                              {t("auditDetailsPage.report.uploaded", {
-                                date: dateFormat(
-                                  i18n.language,
-                                  auditEntry.reportFile.createdAt,
-                                ),
-                              })}
-                            </span>
+          <Card padded className="mt-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">
+                {t("auditDetailsPage.report.title")}
+              </h3>
+
+              {auditEntry.reportFile
+                ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <IconArrowInbox className="text-success-600" size={20} />
+                          <div className="flex-1">
+                            <p className="font-medium text-success-900">
+                              {auditEntry.reportFile.fileName}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm text-success-700">
+                              <span>
+                                {fileSize(auditEntry.reportFile.size, t)}
+                              </span>
+                              <span>
+                                {t("auditDetailsPage.report.uploaded", {
+                                  date: dateFormat(
+                                    i18n.language,
+                                    auditEntry.reportFile.createdAt,
+                                  ),
+                                })}
+                              </span>
+                            </div>
                           </div>
                         </div>
+                        <ActionDropdown>
+                          <DropdownItem
+                            onClick={() => {
+                              if (auditEntry.reportFile?.downloadUrl) {
+                                window.open(auditEntry.reportFile.downloadUrl, "_blank", "noopener,noreferrer");
+                              }
+                            }}
+                            icon={IconArrowInbox}
+                          >
+                            {t("auditDetailsPage.actions.download")}
+                          </DropdownItem>
+                          <DropdownItem
+                            variant="danger"
+                            icon={IconTrashCan}
+                            onClick={handleDeleteReport}
+                          >
+                            {t("auditDetailsPage.actions.delete")}
+                          </DropdownItem>
+                        </ActionDropdown>
                       </div>
-                      <ActionDropdown>
-                        <DropdownItem
-                          onClick={() => {
-                            if (auditEntry.reportFile?.downloadUrl) {
-                              window.open(auditEntry.reportFile.downloadUrl, "_blank", "noopener,noreferrer");
-                            }
-                          }}
-                          icon={IconArrowInbox}
-                        >
-                          {t("auditDetailsPage.actions.download")}
-                        </DropdownItem>
-                        <DropdownItem
-                          variant="danger"
-                          icon={IconTrashCan}
-                          onClick={handleDeleteReport}
-                        >
-                          {t("auditDetailsPage.actions.delete")}
-                        </DropdownItem>
-                      </ActionDropdown>
                     </div>
-                  </div>
-                )
-              : (
-                  <div className="space-y-4">
-                    <p className="text-neutral-600">
-                      {t("auditDetailsPage.report.uploadDescription")}
-                    </p>
-                    <Dropzone
-                      description={t("auditDetailsPage.report.dropzoneDescription")}
-                      isUploading={isUploading}
-                      onDrop={files => void handleUploadFile(files)}
-                      accept={{ "application/pdf": [".pdf"] }}
-                      maxSize={25}
-                    />
-                  </div>
-                )}
-          </div>
-        </Card>
+                  )
+                : (
+                    <div className="space-y-4">
+                      <p className="text-neutral-600">
+                        {t("auditDetailsPage.report.uploadDescription")}
+                      </p>
+                      <Dropzone
+                        description={t("auditDetailsPage.report.dropzoneDescription")}
+                        isUploading={isUploading}
+                        onDrop={files => void handleUploadFile(files)}
+                        accept={{ "application/pdf": [".pdf"] }}
+                        maxSize={25}
+                      />
+                    </div>
+                  )}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );

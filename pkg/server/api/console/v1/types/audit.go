@@ -85,6 +85,12 @@ func NewAudit(a *coredata.Audit) *Audit {
 		UpdatedAt:                  a.UpdatedAt,
 	}
 
+	if a.ParentAuditID != nil {
+		node.ParentAudit = &Audit{
+			ID: *a.ParentAuditID,
+		}
+	}
+
 	if a.ReportFileID != nil {
 		node.ReportFile = &File{
 			ID: *a.ReportFileID,

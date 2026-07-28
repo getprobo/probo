@@ -67,6 +67,61 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 	return types.NewFramework(framework), nil
 }
 
+// ParentAudit is the resolver for the parentAudit field.
+func (r *auditResolver) ParentAudit(ctx context.Context, obj *types.Audit) (*types.Audit, error) {
+	if obj.ParentAudit == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ParentAudit.ID, probo.ActionAuditGet)
+	if err != nil {
+		return nil, err
+	}
+
+	parent, err := r.probo.Audits.Get(ctx, scope, obj.ParentAudit.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load parent audit", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAudit(parent), nil
+}
+
+// ChildAudits is the resolver for the childAudits field.
+func (r *auditResolver) ChildAudits(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.probo.Audits.ListForParentAuditID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list child audits", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditConnection(page, r, obj.ID), nil
+}
+
 // ReportFile is the resolver for the reportFile field.
 func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*types.File, error) {
 	if obj.ReportFile == nil {
@@ -206,6 +261,14 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		count, err := r.probo.Audits.CountForControlID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *auditResolver:
+		count, err := r.probo.Audits.CountForParentAuditID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count child audits", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 
@@ -381,6 +444,7 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 	req := probo.CreateAuditRequest{
 		OrganizationID:             input.OrganizationID,
 		FrameworkID:                input.FrameworkID,
+		ParentAuditID:              input.ParentAuditID,
 		Name:                       input.Name,
 		ValidFrom:                  input.ValidFrom,
 		ValidUntil:                 input.ValidUntil,
@@ -439,6 +503,7 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	req := probo.UpdateAuditRequest{
 		ID:                         input.ID,
 		Name:                       gqlutils.UnwrapOmittable(input.Name),
+		ParentAuditID:              gqlutils.UnwrapOmittable(input.ParentAuditID),
 		ValidFrom:                  input.ValidFrom,
 		ValidUntil:                 input.ValidUntil,
 		AuditStartDate:             input.AuditStartDate,

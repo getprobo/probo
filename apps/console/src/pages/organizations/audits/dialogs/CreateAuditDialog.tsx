@@ -47,6 +47,7 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
+import { AuditSelectField } from "#/components/form/AuditSelectField";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useCreateAudit } from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -89,6 +90,7 @@ export function CreateAuditDialog({
   const { toast } = useToast();
   const schema = z.object({
     frameworkId: z.string().min(1, t("createAuditDialog.validation.frameworkRequired")),
+    parentAuditId: z.string().optional(),
     name: z.string().optional(),
     validFrom: z.string().optional(),
     validUntil: z.string().optional(),
@@ -106,6 +108,7 @@ export function CreateAuditDialog({
     = useFormWithSchema(schema, {
       defaultValues: {
         frameworkId: "",
+        parentAuditId: "",
         name: "",
         validFrom: "",
         validUntil: "",
@@ -123,6 +126,7 @@ export function CreateAuditDialog({
       await createAudit({
         organizationId,
         frameworkId: data.frameworkId,
+        parentAuditId: data.parentAuditId || null,
         name: data.name || null,
         validFrom: formatDatetime(data.validFrom),
         validUntil: formatDatetime(data.validUntil),
@@ -215,6 +219,13 @@ export function CreateAuditDialog({
               placeholder={t("createAuditDialog.fields.namePlaceholder")}
             />
           </Field>
+
+          <AuditSelectField
+            organizationId={organizationId}
+            control={control}
+            name="parentAuditId"
+            label={t("createAuditDialog.fields.parentAudit")}
+          />
 
           <ControlledField
             control={control}

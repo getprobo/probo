@@ -40,6 +40,7 @@ type (
 		Name                       *string                    `db:"name"`
 		OrganizationID             gid.GID                    `db:"organization_id"`
 		FrameworkID                gid.GID                    `db:"framework_id"`
+		ParentAuditID              *gid.GID                   `db:"parent_audit_id"`
 		ReportFileID               *gid.GID                   `db:"report_file_id"`
 		ValidFrom                  *time.Time                 `db:"valid_from"`
 		ValidUntil                 *time.Time                 `db:"valid_until"`
@@ -265,6 +266,7 @@ INSERT INTO audits (
 	tenant_id,
 	organization_id,
 	framework_id,
+	parent_audit_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -280,6 +282,7 @@ INSERT INTO audits (
 	@tenant_id,
 	@organization_id,
 	@framework_id,
+	@parent_audit_id,
 	@report_file_id,
 	@valid_from,
 	@valid_until,
@@ -298,6 +301,7 @@ INSERT INTO audits (
 		"tenant_id":               scope.GetTenantID(),
 		"organization_id":         a.OrganizationID,
 		"framework_id":            a.FrameworkID,
+		"parent_audit_id":         a.ParentAuditID,
 		"report_file_id":          a.ReportFileID,
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
@@ -326,6 +330,7 @@ func (a *Audit) Update(
 UPDATE audits
 SET
 	name = @name,
+	parent_audit_id = @parent_audit_id,
 	report_file_id = @report_file_id,
 	valid_from = @valid_from,
 	valid_until = @valid_until,
@@ -344,6 +349,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                      a.ID,
 		"name":                    a.Name,
+		"parent_audit_id":         a.ParentAuditID,
 		"report_file_id":          a.ReportFileID,
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
@@ -663,6 +669,91 @@ LIMIT 1;
 	}
 
 	*a = audit
+
+	return nil
+}
+
+func (a *Audits) CountByParentAuditID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentAuditID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	audits
+WHERE
+	%s
+	AND parent_audit_id = @parent_audit_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"parent_audit_id": parentAuditID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count child audits: %w", err)
+	}
+
+	return count, nil
+}
+
+func (a *Audits) LoadByParentAuditID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentAuditID gid.GID,
+	cursor *page.Cursor[AuditOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	parent_audit_id,
+	report_file_id,
+	valid_from,
+	valid_until,
+	audit_start_date,
+	audit_end_date,
+	state,
+	trust_center_visibility,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE
+	%s
+	AND parent_audit_id = @parent_audit_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"parent_audit_id": parentAuditID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query child audits: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect child audits: %w", err)
+	}
+
+	*a = audits
 
 	return nil
 }

@@ -696,6 +696,9 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 	if state := a.getStringPtr("state"); state != nil {
 		input["state"] = *state
 	}
+	if parentAuditID := a.getString("parentAuditId", ""); parentAuditID != "" {
+		input["parentAuditId"] = parentAuditID
+	}
 
 	var result struct {
 		CreateAudit struct {
@@ -730,6 +733,11 @@ func (b *AuditBuilder) WithName(name string) *AuditBuilder {
 
 func (b *AuditBuilder) WithState(state string) *AuditBuilder {
 	b.attrs["state"] = state
+	return b
+}
+
+func (b *AuditBuilder) WithParentAuditID(parentAuditID string) *AuditBuilder {
+	b.attrs["parentAuditId"] = parentAuditID
 	return b
 }
 

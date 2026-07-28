@@ -41,6 +41,7 @@ type (
 	CreateAuditRequest struct {
 		OrganizationID             gid.GID
 		FrameworkID                gid.GID
+		ParentAuditID              *gid.GID
 		Name                       *string
 		ValidFrom                  *time.Time
 		ValidUntil                 *time.Time
@@ -53,6 +54,7 @@ type (
 	UpdateAuditRequest struct {
 		ID                         gid.GID
 		Name                       **string
+		ParentAuditID              **gid.GID
 		ValidFrom                  *time.Time
 		ValidUntil                 *time.Time
 		AuditStartDate             *time.Time
@@ -72,6 +74,7 @@ func (car *CreateAuditRequest) Validate() error {
 
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	v.Check(car.ParentAuditID, "parent_audit_id", validator.GID(coredata.AuditEntityType))
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
 	v.Check(car.AuditEndDate, "audit_end_date", validator.After(car.AuditStartDate))
@@ -86,6 +89,7 @@ func (uar *UpdateAuditRequest) Validate() error {
 
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AuditEntityType))
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(uar.ParentAuditID, "parent_audit_id", validator.GID(coredata.AuditEntityType))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
 	v.Check(uar.AuditEndDate, "audit_end_date", validator.After(uar.AuditStartDate))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
@@ -205,6 +209,22 @@ func (s *AuditService) Create(
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
+			if req.ParentAuditID != nil {
+				parent, err := s.loadParentAudit(
+					ctx,
+					conn,
+					scope,
+					*req.ParentAuditID,
+					req.OrganizationID,
+					"parent_audit_id",
+				)
+				if err != nil {
+					return err
+				}
+
+				audit.ParentAuditID = &parent.ID
+			}
+
 			if err := audit.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert audit: %w", err)
 			}
@@ -238,6 +258,38 @@ func (s *AuditService) Update(
 
 			if req.Name != nil {
 				audit.Name = *req.Name
+			}
+
+			if req.ParentAuditID != nil {
+				if *req.ParentAuditID == nil {
+					audit.ParentAuditID = nil
+				} else {
+					if **req.ParentAuditID == audit.ID {
+						return validator.ValidationErrors{{
+							Field:   "parent_audit_id",
+							Code:    validator.ErrorCodeCustom,
+							Message: "audit cannot be its own parent",
+						}}
+					}
+
+					parent, err := s.loadParentAudit(
+						ctx,
+						conn,
+						scope,
+						**req.ParentAuditID,
+						audit.OrganizationID,
+						"parent_audit_id",
+					)
+					if err != nil {
+						return err
+					}
+
+					if err := s.assertNoAuditCycle(ctx, conn, scope, audit.ID, parent.ID, "parent_audit_id"); err != nil {
+						return err
+					}
+
+					audit.ParentAuditID = &parent.ID
+				}
 			}
 
 			if req.ValidFrom != nil {
@@ -584,4 +636,130 @@ func (s AuditService) ListForFindingID(
 	}
 
 	return page.NewPage(audits, cursor), nil
+}
+
+func (s AuditService) CountForParentAuditID(
+	ctx context.Context, scope coredata.Scoper,
+	parentAuditID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			audits := coredata.Audits{}
+
+			count, err = audits.CountByParentAuditID(ctx, conn, scope, parentAuditID)
+			if err != nil {
+				return fmt.Errorf("cannot count child audits: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s AuditService) ListForParentAuditID(
+	ctx context.Context, scope coredata.Scoper,
+	parentAuditID gid.GID,
+	cursor *page.Cursor[coredata.AuditOrderField],
+) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
+	var audits coredata.Audits
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			parent := &coredata.Audit{}
+			if err := parent.LoadByID(ctx, conn, scope, parentAuditID); err != nil {
+				return fmt.Errorf("cannot load parent audit: %w", err)
+			}
+
+			err := audits.LoadByParentAuditID(ctx, conn, scope, parent.ID, cursor)
+			if err != nil {
+				return fmt.Errorf("cannot load child audits: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(audits, cursor), nil
+}
+
+func (s AuditService) loadParentAudit(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	parentAuditID gid.GID,
+	organizationID gid.GID,
+	field string,
+) (*coredata.Audit, error) {
+	parent := &coredata.Audit{}
+	if err := parent.LoadByID(ctx, conn, scope, parentAuditID); err != nil {
+		return nil, validator.ValidationErrors{{
+			Field:   field,
+			Code:    validator.ErrorCodeCustom,
+			Message: "parent audit not found",
+		}}
+	}
+
+	if parent.OrganizationID != organizationID {
+		return nil, validator.ValidationErrors{{
+			Field:   field,
+			Code:    validator.ErrorCodeCustom,
+			Message: "parent audit belongs to a different organization",
+		}}
+	}
+
+	return parent, nil
+}
+
+// assertNoAuditCycle walks the ancestor chain starting from the proposed
+// parent. If it reaches the audit being updated, the new parent would make
+// the audit an ancestor of itself (a cycle), which is rejected.
+func (s AuditService) assertNoAuditCycle(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	auditID gid.GID,
+	proposedParentID gid.GID,
+	field string,
+) error {
+	visited := make(map[gid.GID]bool)
+	currentID := proposedParentID
+
+	for {
+		if currentID == auditID {
+			return validator.ValidationErrors{{
+				Field:   field,
+				Code:    validator.ErrorCodeCustom,
+				Message: "audit cannot be nested under itself or one of its descendants",
+			}}
+		}
+
+		if visited[currentID] {
+			return nil
+		}
+
+		visited[currentID] = true
+
+		current := &coredata.Audit{}
+		if err := current.LoadByID(ctx, conn, scope, currentID); err != nil {
+			return fmt.Errorf("cannot load parent audit: %w", err)
+		}
+
+		if current.ParentAuditID == nil {
+			return nil
+		}
+
+		currentID = *current.ParentAuditID
+	}
 }

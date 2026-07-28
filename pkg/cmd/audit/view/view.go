@@ -42,6 +42,10 @@ query($id: ID!) {
       validUntil
       auditStartDate
       auditEndDate
+      parentAudit {
+        id
+        name
+      }
       createdAt
       updatedAt
     }

@@ -3440,6 +3440,7 @@
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
       "state": "État",
+      "parentAudit": "Audit parent",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
       "auditStartDate": "Date de début de l’audit",
@@ -3450,6 +3451,9 @@
       "update": "Mettre à jour",
       "updating": "Mise à jour...",
       "download": "Télécharger"
+    },
+    "childAudits": {
+      "title": "Audits enfants"
     },
     "report": {
       "title": "Rapport d’audit",
@@ -3519,6 +3523,7 @@
       "frameworkPlaceholder": "Sélectionner un référentiel",
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
+      "parentAudit": "Audit parent",
       "state": "État",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",

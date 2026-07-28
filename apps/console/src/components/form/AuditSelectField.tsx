@@ -60,11 +60,13 @@ type Props<T extends FieldValues = FieldValues> = {
   name: Path<T>;
   label?: string;
   error?: string;
+  excludeAuditId?: string;
 } & ComponentProps<typeof Field>;
 
 export function AuditSelectField<T extends FieldValues = FieldValues>({
   organizationId,
   control,
+  excludeAuditId,
   ...props
 }: Props<T>) {
   return (
@@ -77,6 +79,7 @@ export function AuditSelectField<T extends FieldValues = FieldValues>({
           control={control}
           name={props.name}
           disabled={props.disabled}
+          excludeAuditId={excludeAuditId}
         />
       </Suspense>
     </Field>
@@ -84,10 +87,13 @@ export function AuditSelectField<T extends FieldValues = FieldValues>({
 }
 
 function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled">,
+  props: Pick<
+    Props<T>,
+    "organizationId" | "control" | "name" | "disabled" | "excludeAuditId"
+  >,
 ) {
   const { t } = useTranslation();
-  const { name, organizationId, control } = props;
+  const { name, organizationId, control, excludeAuditId } = props;
   const data = useLazyLoadQuery<AuditSelectFieldQuery>(
     auditsQuery,
     { organizationId },
@@ -96,7 +102,8 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
   const audits
     = data?.organization?.audits?.edges
       ?.map(edge => edge.node)
-      .filter(node => node !== null) ?? [];
+      .filter(node => node !== null)
+      .filter(node => node.id !== excludeAuditId) ?? [];
 
   const NONE_VALUE = "__NONE__";
 

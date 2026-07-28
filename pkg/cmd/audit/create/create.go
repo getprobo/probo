@@ -42,6 +42,10 @@ mutation($input: CreateAuditInput!) {
         validUntil
         auditStartDate
         auditEndDate
+        parentAudit {
+          id
+          name
+        }
       }
     }
   }
@@ -68,6 +72,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg                        string
 		flagFramework                  string
+		flagParent                     string
 		flagName                       string
 		flagState                      string
 		flagValidFrom                  string
@@ -154,6 +159,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["frameworkId"] = flagFramework
 			}
 
+			if flagParent != "" {
+				input["parentAuditId"] = flagParent
+			}
+
 			if flagState != "" {
 				input["state"] = flagState
 			}
@@ -205,6 +214,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagFramework, "framework", "", "Framework ID")
+	cmd.Flags().StringVar(&flagParent, "parent", "", "Parent audit ID (for multi-year cycles)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Audit name (required)")
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
