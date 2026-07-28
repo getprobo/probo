@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.12.0] - 2026-07-28
+
+### Added
+
+- `probo.auth.emailConfirmationTokenValidity` Helm value to configure the email-confirmation token lifetime (default: 3600 seconds / 1 hour)
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.238.0`
+
 ## [0.11.0] - 2026-07-25
 
 ### Added
