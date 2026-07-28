@@ -46,10 +46,3 @@ WHERE state = 'DEACTIVATED'
         )
   );
 
-UPDATE iam_membership_profiles
-SET activated_at = updated_at
-WHERE state = 'ACTIVE';
-
-UPDATE iam_membership_profiles
-SET deactivated_at = NOW()
-WHERE state = 'DEACTIVATED';

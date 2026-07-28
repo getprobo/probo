@@ -41,7 +41,7 @@ export const membershipsPageQuery = graphql`
       profiles(
         first: 1000
         orderBy: { direction: ASC, field: ORGANIZATION_NAME }
-        filter: { state: ACTIVE }
+        filter: { states: [ACTIVE] }
       )
         @connection(key: "MembershipsPage_profiles")
         @required(action: THROW) {

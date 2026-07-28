@@ -1371,7 +1371,7 @@
     "columns": { "name": "Name", "status": "Status", "email": "Email", "role": "Role", "createdOn": "Created on" },
     "empty": "No people",
     "searchPlaceholder": "Search people...",
-    "filters": { "allStatuses": "All statuses", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All types" }
+    "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All types" }
   },
   "peopleListItem": {
     "messages": { "invitationSent": "Invitation sent successfully", "roleUpdated": "Role updated successfully", "deactivated": "Person deactivated successfully", "removed": "Person removed successfully" },

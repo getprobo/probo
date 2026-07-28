@@ -43,7 +43,7 @@ export const enrollDevicePageQuery = graphql`
       profiles(
         first: 1000
         orderBy: { direction: ASC, field: ORGANIZATION_NAME }
-        filter: { state: ACTIVE }
+        filter: { states: [ACTIVE] }
       ) @required(action: THROW) {
         edges @required(action: THROW) {
           node @required(action: THROW) {

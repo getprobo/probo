@@ -36,10 +36,6 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 			filters.WithStates(filter.States...)
 		}
 
-		if filter.State != nil {
-			filters.WithState(*filter.State)
-		}
-
 		if filter.Query != nil {
 			filters.WithQuery(filter.Query)
 		}

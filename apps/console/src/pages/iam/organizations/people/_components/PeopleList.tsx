@@ -20,6 +20,7 @@
 
 import { getAssignableRoles, getMembershipRoles, peopleRoles } from "@probo/helpers";
 import {
+  Checkbox,
   IconMagnifyingGlass,
   Input,
   Option,
@@ -89,10 +90,12 @@ const fragment = graphql`
 
 type PeopleFilter = {
   query: string | null;
-  state: ProfileState | null;
+  states: ProfileState[];
   role: MembershipRole | null;
   kind: string | null;
 };
+
+const PROFILE_STATES: ProfileState[] = ["PENDING", "ACTIVE", "DEACTIVATED"];
 
 export function PeopleList(props: {
   fKey: PeopleListFragment$key;
@@ -105,7 +108,7 @@ export function PeopleList(props: {
   const canManageRoles = getAssignableRoles(role).length > 0;
 
   const [queryFilter, setQueryFilter] = useState<string | null>(null);
-  const [stateFilter, setStateFilter] = useState<ProfileState | null>(null);
+  const [statesFilter, setStatesFilter] = useState<ProfileState[]>([]);
   const [roleFilter, setRoleFilter] = useState<MembershipRole | null>(null);
   const [kindFilter, setKindFilter] = useState<string | null>(null);
   const [order, setOrder] = useState<Order>({
@@ -127,7 +130,7 @@ export function PeopleList(props: {
 
   const currentFilter = (overrides: Partial<PeopleFilter> = {}): PeopleFilter => ({
     query: queryFilter,
-    state: stateFilter,
+    states: statesFilter,
     role: roleFilter,
     kind: kindFilter,
     ...overrides,
@@ -135,7 +138,7 @@ export function PeopleList(props: {
 
   const connectionFilter = (filter: PeopleFilter) => ({
     query: filter.query,
-    state: filter.state,
+    states: filter.states.length > 0 ? filter.states : null,
     role: filter.role,
     kind: filter.kind,
     contractEnded: null,
@@ -170,7 +173,7 @@ export function PeopleList(props: {
               },
               filter: {
                 query: newQuery,
-                state: stateFilter,
+                states: statesFilter.length > 0 ? statesFilter : null,
                 role: roleFilter,
                 kind: kindFilter,
                 contractEnded: null,
@@ -180,7 +183,7 @@ export function PeopleList(props: {
           );
         });
       },
-      [peoplePagination, order, stateFilter, roleFilter, kindFilter],
+      [peoplePagination, order, statesFilter, roleFilter, kindFilter],
     ),
     SEARCH_DEBOUNCE_MS,
   );
@@ -190,10 +193,12 @@ export function PeopleList(props: {
     debouncedRefetchQuery(value);
   };
 
-  const handleStateFilterChange = (value: string) => {
-    const newState = value === "ALL" ? null : (value as ProfileState);
-    setStateFilter(newState);
-    refetchPeople({ state: newState });
+  const handleStateFilterToggle = (state: ProfileState) => {
+    const newStates = statesFilter.includes(state)
+      ? statesFilter.filter(s => s !== state)
+      : [...statesFilter, state];
+    setStatesFilter(newStates);
+    refetchPeople({ states: newStates });
   };
 
   const handleRoleFilterChange = (value: string) => {
@@ -226,15 +231,18 @@ export function PeopleList(props: {
           value={queryFilter ?? ""}
           onValueChange={handleQueryFilterChange}
         />
-        <Select
-          value={stateFilter ?? "ALL"}
-          onValueChange={handleStateFilterChange}
-        >
-          <Option value="ALL">{t("peopleList.filters.allStatuses")}</Option>
-          <Option value="PENDING">{t("peopleList.filters.pending")}</Option>
-          <Option value="ACTIVE">{t("peopleList.filters.active")}</Option>
-          <Option value="DEACTIVATED">{t("peopleList.filters.deactivated")}</Option>
-        </Select>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-txt-secondary">{t("peopleList.filters.status")}</span>
+          {PROFILE_STATES.map(state => (
+            <label key={state} className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox
+                checked={statesFilter.includes(state)}
+                onChange={() => handleStateFilterToggle(state)}
+              />
+              {t(`peopleList.filters.${state.toLowerCase()}`)}
+            </label>
+          ))}
+        </div>
         <Select
           value={roleFilter ?? "ALL"}
           onValueChange={handleRoleFilterChange}

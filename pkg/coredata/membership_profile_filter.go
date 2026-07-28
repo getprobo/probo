@@ -81,11 +81,6 @@ func (f *MembershipProfileFilter) WithExternalID(externalID string) *MembershipP
 	return f
 }
 
-func (f *MembershipProfileFilter) WithState(state ProfileState) *MembershipProfileFilter {
-	f.states = ProfileStateValues{state}
-	return f
-}
-
 func (f *MembershipProfileFilter) WithStates(states ...ProfileState) *MembershipProfileFilter {
 	f.states = ProfileStateValues(states)
 	return f

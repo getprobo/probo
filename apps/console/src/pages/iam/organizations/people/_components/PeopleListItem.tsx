@@ -146,7 +146,7 @@ export function PeopleListItem(props: {
     : [...availableRoles, profile.membership.role];
 
   const isActive = profile.state === "ACTIVE";
-  const isInactive = !isActive;
+  const isInactive = profile.state === "DEACTIVATED";
 
   const canSendActivationMail = !isActive && profile.source !== "SCIM" && profile.canInvite;
   const canDeactivate = profile.canDeactivate && profile.source !== "SCIM" && profile.state !== "DEACTIVATED";

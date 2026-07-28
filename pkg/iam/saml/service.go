@@ -336,6 +336,10 @@ func (s *Service) HandleAssertion(
 				if profile.State == coredata.ProfileStateDeactivated {
 					return NewUserInactiveError(profile.ID)
 				}
+
+				if profile.State == coredata.ProfileStatePending {
+					profile.MarkActive(now)
+				}
 			}
 
 			if err := membership.LoadByIdentityIDAndOrganizationID(

@@ -577,9 +577,6 @@ components:
             contract_ended:
               type: boolean
               description: Filter by contract status. True returns only users with ended contracts, false returns only users with active or no contract.
-            state:
-              $ref: "#/components/schemas/ProfileState"
-              description: Filter by profile state (PENDING, ACTIVE, or DEACTIVATED)
             states:
               type: array
               items:
@@ -6421,9 +6418,11 @@ components:
             active_contract:
               type: boolean
               description: Signatory contract status
-            profile_state:
-              $ref: "#/components/schemas/ProfileState"
-              description: Signatory profile state
+            profile_states:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProfileState"
+              description: Signatory profile states
 
     ListDocumentVersionSignaturesOutput:
       type: object

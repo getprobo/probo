@@ -247,7 +247,7 @@ input DocumentVersionSignatureOrder {
 input DocumentVersionSignatureFilter {
     states: [DocumentVersionSignatureState!]
     activeContract: Boolean
-    profileState: ProfileState
+    profileStates: [ProfileState!]
 }
 
 input DocumentVersionApprovalQuorumOrder {

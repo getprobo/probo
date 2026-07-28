@@ -2401,7 +2401,7 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 	var (
 		signatureStates []coredata.DocumentVersionSignatureState
 		activeContract  *bool
-		profileState    *coredata.ProfileState
+		profileStates   []coredata.ProfileState
 	)
 
 	if input.Filter != nil {
@@ -2413,12 +2413,12 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 			activeContract = input.Filter.ActiveContract
 		}
 
-		if input.Filter.ProfileState != nil {
-			profileState = input.Filter.ProfileState
+		if input.Filter.ProfileStates != nil {
+			profileStates = input.Filter.ProfileStates
 		}
 	}
 
-	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract, profileState)
+	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract, profileStates)
 
 	page, err := prb.Documents.ListSignatures(ctx, scope, input.DocumentVersionID, cursor, signatureFilter)
 	if err != nil {
@@ -2778,10 +2778,6 @@ func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 		if len(input.Filter.States) > 0 {
 			filter.WithStates(input.Filter.States...)
-		}
-
-		if input.Filter.State != nil {
-			filter.WithState(*input.Filter.State)
 		}
 
 		if input.Filter.Query != nil {

@@ -69,7 +69,6 @@ input ProfileOrder
 
 input ProfileFilter {
     contractEnded: Boolean
-    state: ProfileState
     states: [ProfileState!]
     query: String
     role: MembershipRole

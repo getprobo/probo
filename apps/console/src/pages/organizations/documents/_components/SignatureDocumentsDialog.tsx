@@ -210,7 +210,7 @@ function PeopleList({
     signatureDocumentsDialogPeopleQuery,
     {
       organizationId,
-      filter: { contractEnded: false, state: "ACTIVE" },
+      filter: { contractEnded: false, states: ["ACTIVE"] },
     },
   );
   const {

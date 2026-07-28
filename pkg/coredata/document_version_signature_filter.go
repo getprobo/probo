@@ -28,15 +28,15 @@ type (
 	DocumentVersionSignatureFilter struct {
 		states         DocumentVersionSignatureStates
 		activeContract *bool
-		profileState   *ProfileState
+		profileStates  ProfileStateValues
 	}
 )
 
-func NewDocumentVersionSignatureFilter(states []DocumentVersionSignatureState, activeContract *bool, profileState *ProfileState) *DocumentVersionSignatureFilter {
+func NewDocumentVersionSignatureFilter(states []DocumentVersionSignatureState, activeContract *bool, profileStates []ProfileState) *DocumentVersionSignatureFilter {
 	return &DocumentVersionSignatureFilter{
 		states:         DocumentVersionSignatureStates(states),
 		activeContract: activeContract,
-		profileState:   profileState,
+		profileStates:  ProfileStateValues(profileStates),
 	}
 }
 
@@ -44,7 +44,7 @@ func (f *DocumentVersionSignatureFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"states":          f.states,
 		"active_contract": f.activeContract,
-		"profile_state":   f.profileState,
+		"profile_states":  f.profileStates,
 	}
 }
 
@@ -81,13 +81,13 @@ func (f *DocumentVersionSignatureFilter) SQLFragment() string {
     END
     AND
     CASE
-    WHEN @profile_state::text IS NULL
+    WHEN @profile_states::membership_state[] IS NULL
         THEN TRUE
     ELSE EXISTS (
         SELECT 1
         FROM iam_membership_profiles p
         WHERE p.id = signed_by_profile_id
-        AND p.state = @profile_state::membership_state
+        AND p.state = ANY(@profile_states::membership_state[])
     )
     END
 )`

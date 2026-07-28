@@ -33,7 +33,7 @@ export const documentSignaturesPageQuery = graphql`
   query DocumentSignaturesPageQuery($documentId: ID! $organizationId: ID! $versionId: ID! $versionSpecified: Boolean!) {
     organization: node(id: $organizationId) {
       __typename
-      ...DocumentSignatureList_peopleFragment @arguments(filter: { contractEnded: false, state: ACTIVE })
+      ...DocumentSignatureList_peopleFragment @arguments(filter: { contractEnded: false, states: [ACTIVE] })
     }
     # We use this on /documents/:documentId
     document: node(id: $documentId) @skip(if: $versionSpecified) {

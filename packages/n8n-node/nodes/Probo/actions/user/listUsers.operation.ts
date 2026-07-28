@@ -85,9 +85,9 @@ export const description: INodeProperties[] = [
 		description: 'Search users by full name or email address',
 	},
 	{
-		displayName: 'State',
+		displayName: 'States',
 		name: 'state',
-		type: 'options',
+		type: 'multiOptions',
 		displayOptions: {
 			show: {
 				resource: ['user'],
@@ -96,12 +96,11 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{ name: 'Active', value: 'ACTIVE' },
-			{ name: 'All', value: '' },
 			{ name: 'Deactivated', value: 'DEACTIVATED' },
 			{ name: 'Pending', value: 'PENDING' },
 		],
-		default: '',
-		description: 'Filter by profile state',
+		default: [],
+		description: 'Filter by profile states',
 	},
 	{
 		displayName: 'Role',
@@ -153,7 +152,7 @@ export async function execute(
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const query = this.getNodeParameter('query', itemIndex, '') as string;
-	const state = this.getNodeParameter('state', itemIndex, '') as string;
+	const state = this.getNodeParameter('state', itemIndex, []) as string[];
 	const role = this.getNodeParameter('role', itemIndex, '') as string;
 	const kind = this.getNodeParameter('kind', itemIndex, '') as string;
 
@@ -194,8 +193,8 @@ export async function execute(
 	if (query) {
 		filter.query = query;
 	}
-	if (state) {
-		filter.state = state;
+	if (state.length > 0) {
+		filter.states = state;
 	}
 	if (role) {
 		filter.role = role;

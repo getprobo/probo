@@ -123,10 +123,6 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 			filters.WithStates(filter.States...)
 		}
 
-		if filter.State != nil {
-			filters.WithState(*filter.State)
-		}
-
 		if filter.Query != nil {
 			filters.WithQuery(filter.Query)
 		}

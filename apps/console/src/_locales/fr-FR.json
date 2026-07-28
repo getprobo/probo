@@ -2458,6 +2458,7 @@
     "searchPlaceholder": "Rechercher des personnes...",
     "filters": {
       "allStatuses": "Tous les statuts",
+      "status": "Statut",
       "pending": "En attente",
       "active": "Actif",
       "deactivated": "Désactivé",

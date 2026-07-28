@@ -405,7 +405,7 @@ func (s *OrganizationService) DeactivateUser(
 			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
 				profiles := coredata.MembershipProfiles{}
 
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, profile.OrganizationID)
 				if err != nil {
 					return fmt.Errorf("cannot count active owners: %w", err)
 				}
