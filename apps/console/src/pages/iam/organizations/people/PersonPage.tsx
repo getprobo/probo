@@ -40,7 +40,7 @@ export const personPageQuery = graphql`
         emailAddress
         source
         state
-        canDelete: permission(action: "iam:membership-profile:delete")
+        canDeactivate: permission(action: "iam:membership-profile:deactivate")
         canRemoveMember: permission(action: "iam:membership:delete")
         ...PersonFormFragment
       }
@@ -58,12 +58,12 @@ const removeUserMutation = graphql`
   }
 `;
 
-const archiveUserMutation = graphql`
-  mutation PersonPage_archiveMutation(
-    $input: ArchiveUserInput!
+const deactivateUserMutation = graphql`
+  mutation PersonPage_deactivateMutation(
+    $input: DeactivateUserInput!
   ) {
-    archiveUser(input: $input) {
-      archivedProfileId
+    deactivateUser(input: $input) {
+      success
     }
   }
 `;
@@ -81,11 +81,11 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
     throw new Error("invalid type for node");
   }
 
-  const [archiveUser, isArchiving] = useMutationWithToasts(
-    archiveUserMutation,
+  const [deactivateUser, isDeactivating] = useMutationWithToasts(
+    deactivateUserMutation,
     {
-      successMessage: t("personPage.messages.archived"),
-      errorMessage: t("personPage.errors.archive"),
+      successMessage: t("personPage.messages.deactivated"),
+      errorMessage: t("personPage.errors.deactivate"),
     },
   );
   const [removeUser, isRemoving] = useMutationWithToasts(
@@ -95,12 +95,12 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
       errorMessage: t("personPage.errors.remove"),
     },
   );
-  const isMutating = isArchiving || isRemoving;
+  const isMutating = isDeactivating || isRemoving;
 
-  const handleArchive = () => {
+  const handleDeactivate = () => {
     confirm(
       () => {
-        return archiveUser({
+        return deactivateUser({
           variables: {
             input: {
               profileId: person.id,
@@ -113,7 +113,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
         });
       },
       {
-        message: t("personPage.confirmations.archive", { name: person.fullName }),
+        message: t("personPage.confirmations.deactivate", { name: person.fullName }),
       },
     );
   };
@@ -139,7 +139,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
     );
   };
 
-  const canArchive = person.canDelete && person.source !== "SCIM" && person.state !== "DEACTIVATED";
+  const canDeactivate = person.canDeactivate && person.source !== "SCIM" && person.state !== "DEACTIVATED";
   const canRemove = person.canRemoveMember && person.source !== "SCIM";
 
   return (
@@ -166,15 +166,15 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
             <div className="text-lg text-txt-secondary">{person.emailAddress}</div>
           </div>
         </div>
-        {(canArchive || canRemove) && (
+        {(canDeactivate || canRemove) && (
           <ActionDropdown variant="secondary">
-            {canArchive && (
+            {canDeactivate && (
               <DropdownItem
                 icon={IconArchive}
-                onClick={handleArchive}
+                onClick={handleDeactivate}
                 disabled={isMutating}
               >
-                {t("personPage.actions.archive")}
+                {t("personPage.actions.deactivate")}
               </DropdownItem>
             )}
             {canRemove && (

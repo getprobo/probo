@@ -2427,19 +2427,19 @@
       "people": "Personnes"
     },
     "messages": {
-      "archived": "Personne archivée avec succès",
+      "deactivated": "Personne désactivée avec succès",
       "removed": "Personne supprimée avec succès"
     },
     "errors": {
-      "archive": "Échec de l’archivage de la personne",
+      "deactivate": "Échec de la désactivation de la personne",
       "remove": "Échec de la suppression de la personne"
     },
     "confirmations": {
-      "archive": "Voulez-vous vraiment archiver {{name}} ?",
+      "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
       "remove": "Voulez-vous vraiment supprimer {{name}} ?"
     },
     "actions": {
-      "archive": "Archiver",
+      "deactivate": "Désactiver",
       "remove": "Supprimer"
     }
   },
@@ -2469,25 +2469,25 @@
     "messages": {
       "invitationSent": "Invitation envoyée avec succès",
       "roleUpdated": "Rôle mis à jour avec succès",
-      "archived": "Personne archivée avec succès",
+      "deactivated": "Personne désactivée avec succès",
       "removed": "Personne supprimée avec succès"
     },
     "errors": {
       "sendInvitation": "Échec de l’envoi de l’invitation",
       "updateRole": "Échec de la mise à jour du rôle",
-      "archive": "Échec de l’archivage de la personne",
+      "deactivate": "Échec de la désactivation de la personne",
       "remove": "Échec de la suppression de la personne"
     },
     "confirmations": {
       "sendActivationEmail": "Envoyer l’e-mail d’activation à {{name}} ?",
-      "archive": "Voulez-vous vraiment archiver {{name}} ?",
+      "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
       "remove": "Voulez-vous vraiment supprimer {{name}} ?"
     },
     "actions": {
       "send": "Envoyer",
       "sendActivationMail": "Envoyer l’e-mail d’activation",
       "resendActivationMail": "Renvoyer l’e-mail d’activation",
-      "archivePerson": "Archiver la personne",
+      "deactivatePerson": "Désactiver la personne",
       "removePerson": "Supprimer la personne"
     }
   },

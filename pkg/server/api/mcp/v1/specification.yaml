@@ -1698,7 +1698,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted user (profile) ID
 
-    ArchiveUserInput:
+    DeactivateUserInput:
       type: object
       required:
         - organization_id
@@ -1709,16 +1709,16 @@ components:
           description: Organization ID
         profile_id:
           $ref: "#/components/schemas/GID"
-          description: User (profile) ID to archive
+          description: User (profile) ID to deactivate
 
-    ArchiveUserOutput:
+    DeactivateUserOutput:
       type: object
       required:
-        - archived_user_id
+        - deactivated_user_id
       properties:
-        archived_user_id:
+        deactivated_user_id:
           $ref: "#/components/schemas/GID"
-          description: Archived user (profile) ID
+          description: Deactivated user (profile) ID
 
     GetProfileInput:
       type: object
@@ -12679,14 +12679,14 @@ tools:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
-  - name: archiveUser
-    description: Archive a user in the organization
+  - name: deactivateUser
+    description: Deactivate a user in the organization
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/ArchiveUserInput"
+      $ref: "#/components/schemas/DeactivateUserInput"
     outputSchema:
-      $ref: "#/components/schemas/ArchiveUserOutput"
+      $ref: "#/components/schemas/DeactivateUserOutput"
   - name: addThirdParty
     description: Add a new thirdParty to the organization
     hints:

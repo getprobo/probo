@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package archive
+package deactivate
 
 import (
 	"fmt"
@@ -29,34 +29,34 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const archiveMutation = `
-mutation($input: ArchiveUserInput!) {
-  archiveUser(input: $input) {
-    archivedProfileId
+const deactivateMutation = `
+mutation($input: DeactivateUserInput!) {
+  deactivateUser(input: $input) {
+    success
   }
 }
 `
 
-func NewCmdArchive(f *cmdutil.Factory) *cobra.Command {
+func NewCmdDeactivate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg string
 		flagYes bool
 	)
 
 	cmd := &cobra.Command{
-		Use:   "archive <id>",
-		Short: "Archive a user",
+		Use:   "deactivate <id>",
+		Short: "Deactivate a user",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {
 				if !f.IOStreams.IsInteractive() {
-					return fmt.Errorf("cannot archive user: confirmation required, use --yes to confirm")
+					return fmt.Errorf("cannot deactivate user: confirmation required, use --yes to confirm")
 				}
 
 				var confirmed bool
 
 				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Archive user %s?", args[0])).
+					Title(fmt.Sprintf("Deactivate user %s?", args[0])).
 					Value(&confirmed).
 					Run()
 				if err != nil {
@@ -95,7 +95,7 @@ func NewCmdArchive(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			_, err = client.Do(
-				archiveMutation,
+				deactivateMutation,
 				map[string]any{
 					"input": map[string]any{
 						"organizationId": flagOrg,
@@ -107,7 +107,7 @@ func NewCmdArchive(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Archived user %s\n", args[0])
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Deactivated user %s\n", args[0])
 
 			return nil
 		},

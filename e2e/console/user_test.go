@@ -605,13 +605,13 @@ func TestUser_RemoveUser_ProfileInUse(t *testing.T) {
 	assert.Contains(t, gqlErrors[0].Message, "referenced by other resources")
 }
 
-func TestUser_ArchiveUser(t *testing.T) {
+func TestUser_DeactivateUser(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create a user to archive.
-	userToArchive := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-	_ = userToArchive
+	// Create a user to deactivate.
+	userToDeactivate := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	_ = userToDeactivate
 
 	query := `
 		query($id: ID!) {
@@ -666,17 +666,17 @@ func TestUser_ArchiveUser(t *testing.T) {
 	require.NotEmpty(t, userID, "Should find viewer member")
 
 	mutation := `
-		mutation($input: ArchiveUserInput!) {
-			archiveUser(input: $input) {
-				archivedProfileId
+		mutation($input: DeactivateUserInput!) {
+			deactivateUser(input: $input) {
+				success
 			}
 		}
 	`
 
 	var mutationResult struct {
-		ArchiveUser struct {
-			ArchivedProfileID string `json:"archivedProfileId"`
-		} `json:"archiveUser"`
+		DeactivateUser struct {
+			Success bool `json:"success"`
+		} `json:"deactivateUser"`
 	}
 
 	err = owner.ExecuteConnect(mutation, map[string]any{
@@ -687,24 +687,24 @@ func TestUser_ArchiveUser(t *testing.T) {
 	}, &mutationResult)
 	require.NoError(t, err)
 
-	assert.Equal(t, userID, mutationResult.ArchiveUser.ArchivedProfileID)
+	assert.True(t, mutationResult.DeactivateUser.Success)
 
 	err = owner.ExecuteConnect(query, map[string]any{
 		"id": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
 
-	var archivedUserState string
+	var deactivatedUserState string
 
 	for _, edge := range result.Node.Profiles.Edges {
 		if edge.Node.ID == userID {
-			archivedUserState = edge.Node.State
+			deactivatedUserState = edge.Node.State
 			break
 		}
 	}
 
-	require.NotEmpty(t, archivedUserState, "Should still find archived user")
-	assert.Equal(t, "DEACTIVATED", archivedUserState)
+	require.NotEmpty(t, deactivatedUserState, "Should still find deactivated user")
+	assert.Equal(t, "DEACTIVATED", deactivatedUserState)
 }
 
 func TestUser_DeactivateUserCancelsSignatureRequests(t *testing.T) {

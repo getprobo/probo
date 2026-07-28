@@ -2994,26 +2994,26 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 	return nil, types.RemoveUserOutput{DeletedUserID: input.ProfileID}, nil
 }
 
-func (r *Resolver) ArchiveUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ArchiveUserInput) (*mcp.CallToolResult, types.ArchiveUserOutput, error) {
-	scope, err := r.Authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
+func (r *Resolver) DeactivateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateUserInput) (*mcp.CallToolResult, types.DeactivateUserOutput, error) {
+	scope, err := r.Authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate)
 	if err != nil {
-		return nil, types.ArchiveUserOutput{}, err
+		return nil, types.DeactivateUserOutput{}, err
 	}
 
-	err = r.iamSvc.OrganizationService.ArchiveUser(ctx, scope, input.OrganizationID, input.ProfileID)
+	err = r.iamSvc.OrganizationService.DeactivateUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
-			return nil, types.ArchiveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be archived: %w", err)
+			return nil, types.DeactivateUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be deactivated: %w", err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, types.ArchiveUserOutput{}, fmt.Errorf("cannot archive last active owner: %w", err)
+			return nil, types.DeactivateUserOutput{}, fmt.Errorf("cannot deactivate last active owner: %w", err)
 		}
 
-		return nil, types.ArchiveUserOutput{}, fmt.Errorf("archive user: %w", err)
+		return nil, types.DeactivateUserOutput{}, fmt.Errorf("deactivate user: %w", err)
 	}
 
-	return nil, types.ArchiveUserOutput{ArchivedUserID: input.ProfileID}, nil
+	return nil, types.DeactivateUserOutput{DeactivatedUserID: input.ProfileID}, nil
 }
 
 func (r *Resolver) DeleteDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteDataProtectionImpactAssessmentOutput, error) {

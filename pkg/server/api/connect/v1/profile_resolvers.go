@@ -64,17 +64,23 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 
 // DeactivateUser is the resolver for the deactivateUser field.
 func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.DeactivateUserInput) (*types.DeactivateUserPayload, error) {
-	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
+	scope, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate)
+	if err != nil {
 		return nil, err
 	}
 
-	_, err := r.iam.OrganizationService.UpdateUserState(
-		ctx,
-		input.ProfileID,
-		coredata.ProfileStateDeactivated,
-	)
+	err = r.iam.OrganizationService.DeactivateUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be deactivated")
+		}
+
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot deactivate last active owner")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot deactivate user", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -109,31 +115,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 	return &types.UpdateUserPayload{
 		Profile: types.NewProfile(profile),
 	}, nil
-}
-
-// ArchiveUser is the resolver for the archiveUser field.
-func (r *mutationResolver) ArchiveUser(ctx context.Context, input types.ArchiveUserInput) (*types.ArchiveUserPayload, error) {
-	scope, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.iam.OrganizationService.ArchiveUser(ctx, scope, input.OrganizationID, input.ProfileID)
-	if err != nil {
-		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be archived")
-		}
-
-		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "cannot archive last active owner")
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot archive user from organization", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.ArchiveUserPayload{ArchivedProfileID: input.ProfileID}, nil
 }
 
 // RemoveUser is the resolver for the removeUser field.

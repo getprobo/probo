@@ -71,7 +71,7 @@ const fragment = graphql`
     createdAt
     canUpdate: permission(action: "iam:membership-profile:update")
     canInvite: permission(action: "iam:invitation:create")
-    canDelete: permission(action: "iam:membership-profile:delete")
+    canDeactivate: permission(action: "iam:membership-profile:deactivate")
     canRemoveMember: permission(action: "iam:membership:delete")
   }
 `;
@@ -116,10 +116,10 @@ const removeUserMutation = graphql`
   }
 `;
 
-const archiveUserMutation = graphql`
-  mutation PeopleListItem_archiveMutation($input: ArchiveUserInput!) {
-    archiveUser(input: $input) {
-      archivedProfileId
+const deactivateUserMutation = graphql`
+  mutation PeopleListItem_deactivateMutation($input: DeactivateUserInput!) {
+    deactivateUser(input: $input) {
+      success
     }
   }
 `;
@@ -149,7 +149,7 @@ export function PeopleListItem(props: {
   const isInactive = !isActive;
 
   const canSendActivationMail = !isActive && profile.source !== "SCIM" && profile.canInvite;
-  const canArchive = profile.canDelete && profile.source !== "SCIM" && profile.state !== "DEACTIVATED";
+  const canDeactivate = profile.canDeactivate && profile.source !== "SCIM" && profile.state !== "DEACTIVATED";
   const canRemove = profile.canRemoveMember && profile.source !== "SCIM";
 
   const [inviteUser]
@@ -164,11 +164,11 @@ export function PeopleListItem(props: {
       errorMessage: t("peopleListItem.errors.updateRole"),
     },
   );
-  const [archiveUser, isArchiving] = useMutationWithToasts(
-    archiveUserMutation,
+  const [deactivateUser, isDeactivating] = useMutationWithToasts(
+    deactivateUserMutation,
     {
-      successMessage: t("peopleListItem.messages.archived"),
-      errorMessage: t("peopleListItem.errors.archive"),
+      successMessage: t("peopleListItem.messages.deactivated"),
+      errorMessage: t("peopleListItem.errors.deactivate"),
     },
   );
   const [removeUser, isRemoving] = useMutationWithToasts(
@@ -178,7 +178,7 @@ export function PeopleListItem(props: {
       errorMessage: t("peopleListItem.errors.remove"),
     },
   );
-  const isMutating = isArchiving || isRemoving;
+  const isMutating = isDeactivating || isRemoving;
 
   const handleInvite = () => {
     confirm(
@@ -211,10 +211,10 @@ export function PeopleListItem(props: {
       },
     });
   };
-  const handleArchive = () => {
+  const handleDeactivate = () => {
     confirm(
       () => {
-        return archiveUser({
+        return deactivateUser({
           variables: {
             input: {
               profileId: profile.id,
@@ -227,7 +227,7 @@ export function PeopleListItem(props: {
         });
       },
       {
-        message: t("peopleListItem.confirmations.archive", { name: profile.fullName }),
+        message: t("peopleListItem.confirmations.deactivate", { name: profile.fullName }),
       },
     );
   };
@@ -307,7 +307,7 @@ export function PeopleListItem(props: {
         {dateFormat(i18n.language, profile.createdAt)}
       </Td>
       <Td noLink width={160} className="text-end">
-        {(canSendActivationMail || canArchive || canRemove) && (
+        {(canSendActivationMail || canDeactivate || canRemove) && (
           <ActionDropdown>
             {canSendActivationMail && (
               <DropdownItem
@@ -317,12 +317,12 @@ export function PeopleListItem(props: {
                 {lastInvitation ? t("peopleListItem.actions.resendActivationMail") : t("peopleListItem.actions.sendActivationMail")}
               </DropdownItem>
             )}
-            {canArchive && (
+            {canDeactivate && (
               <DropdownItem
-                onClick={handleArchive}
+                onClick={handleDeactivate}
                 icon={IconArchive}
               >
-                {t("peopleListItem.actions.archivePerson")}
+                {t("peopleListItem.actions.deactivatePerson")}
               </DropdownItem>
             )}
             {canRemove && (

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
-import * as archiveUserOp from './archiveUser.operation';
+import * as deactivateUserOp from './deactivateUser.operation';
 import * as listUsersOp from './listUsers.operation';
 import * as getUserOp from './getUser.operation';
 import * as createUserOp from './createUser.operation';
@@ -41,16 +41,16 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Archive',
-				value: 'archiveUser',
-				description: 'Archive a user in the organization',
-				action: 'Archive a user',
-			},
-			{
 				name: 'Create',
 				value: 'createUser',
 				description: 'Create a new user in the organization',
 				action: 'Create a user',
+			},
+			{
+				name: 'Deactivate',
+				value: 'deactivateUser',
+				description: 'Deactivate a user in the organization',
+				action: 'Deactivate a user',
 			},
 			{
 				name: 'Get',
@@ -91,7 +91,7 @@ export const description: INodeProperties[] = [
 		],
 		default: 'listUsers',
 	},
-	...archiveUserOp.description,
+	...deactivateUserOp.description,
 	...listUsersOp.description,
 	...getUserOp.description,
 	...createUserOp.description,
@@ -102,7 +102,7 @@ export const description: INodeProperties[] = [
 ];
 
 export {
-	archiveUserOp as archiveUser,
+	deactivateUserOp as deactivateUser,
 	listUsersOp as listUsers,
 	getUserOp as getUser,
 	createUserOp as createUser,

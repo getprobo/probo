@@ -374,7 +374,7 @@ func (s *OrganizationService) RemoveUser(
 	)
 }
 
-func (s *OrganizationService) ArchiveUser(
+func (s *OrganizationService) DeactivateUser(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
@@ -1171,55 +1171,6 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				previousUser,
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return profile, nil
-}
-
-func (s *OrganizationService) UpdateUserState(
-	ctx context.Context,
-	userID gid.GID,
-	state coredata.ProfileState,
-) (*coredata.MembershipProfile, error) {
-	var (
-		scope   = coredata.NewScopeFromObjectID(userID)
-		profile = &coredata.MembershipProfile{}
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := profile.LoadByID(ctx, tx, scope, userID); err != nil {
-				return fmt.Errorf("cannot load profile: %w", err)
-			}
-
-			now := time.Now()
-
-			switch state {
-			case coredata.ProfileStatePending:
-				profile.MarkPending(now)
-			case coredata.ProfileStateActive:
-				profile.MarkActive(now)
-			case coredata.ProfileStateDeactivated:
-				profile.MarkDeactivated(now)
-			}
-
-			if err := profile.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update profile: %w", err)
-			}
-
-			if state == coredata.ProfileStateDeactivated {
-				signatures := &coredata.DocumentVersionSignatures{}
-				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
-					return fmt.Errorf("cannot delete requested signatures: %w", err)
-				}
 			}
 
 			return nil

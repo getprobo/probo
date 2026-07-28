@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['user'],
-				operation: ['archiveUser'],
+				operation: ['deactivateUser'],
 			},
 		},
 		default: '',
@@ -43,11 +43,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['user'],
-				operation: ['archiveUser'],
+				operation: ['deactivateUser'],
 			},
 		},
 		default: '',
-		description: 'The ID of the user (profile) to archive in the organization',
+		description: 'The ID of the user (profile) to deactivate in the organization',
 		required: true,
 	},
 ];
@@ -60,9 +60,9 @@ export async function execute(
 	const userId = this.getNodeParameter('userId', itemIndex) as string;
 
 	const query = `
-		mutation ArchiveUser($input: ArchiveUserInput!) {
-			archiveUser(input: $input) {
-				archivedProfileId
+		mutation DeactivateUser($input: DeactivateUserInput!) {
+			deactivateUser(input: $input) {
+				success
 			}
 		}
 	`;
