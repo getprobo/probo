@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.208.0] - 2026-07-28
+
+### Added
+
+- Audit `Create` and `Update` operations gained `Audit Start Date` and `Audit End Date` fields
+
 ## [0.207.0] - 2026-07-27
 
 ### Added
