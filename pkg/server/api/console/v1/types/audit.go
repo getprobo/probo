@@ -76,6 +76,8 @@ func NewAudit(a *coredata.Audit) *Audit {
 		},
 		ValidFrom:                  a.ValidFrom,
 		ValidUntil:                 a.ValidUntil,
+		AuditStartDate:             a.AuditStartDate,
+		AuditEndDate:               a.AuditEndDate,
 		State:                      a.State,
 		Name:                       a.Name,
 		CompliancePortalVisibility: a.CompliancePortalVisibility,

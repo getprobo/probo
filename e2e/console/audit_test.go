@@ -151,6 +151,93 @@ func TestAudit_Create(t *testing.T) {
 	}
 }
 
+func TestAudit_AuditDates(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	frameworkID := factory.NewFramework(owner).WithName("Framework for Audit Dates").Create()
+
+	const createQuery = `
+		mutation CreateAudit($input: CreateAuditInput!) {
+			createAudit(input: $input) {
+				auditEdge {
+					node {
+						id
+						auditStartDate
+						auditEndDate
+					}
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": owner.GetOrganizationID().String(),
+		"frameworkId":    frameworkID,
+		"name":           "Audit with engagement dates",
+		"state":          "NOT_STARTED",
+		"auditStartDate": "2026-03-01T00:00:00Z",
+		"auditEndDate":   "2026-03-15T00:00:00Z",
+	}
+
+	var createResult struct {
+		CreateAudit struct {
+			AuditEdge struct {
+				Node struct {
+					ID             string  `json:"id"`
+					AuditStartDate *string `json:"auditStartDate"`
+					AuditEndDate   *string `json:"auditEndDate"`
+				} `json:"node"`
+			} `json:"auditEdge"`
+		} `json:"createAudit"`
+	}
+
+	err := owner.Execute(createQuery, map[string]any{"input": input}, &createResult)
+	require.NoError(t, err)
+
+	node := createResult.CreateAudit.AuditEdge.Node
+	require.NotNil(t, node.AuditStartDate)
+	require.NotNil(t, node.AuditEndDate)
+	assert.True(t, strings.HasPrefix(*node.AuditStartDate, "2026-03-01"))
+	assert.True(t, strings.HasPrefix(*node.AuditEndDate, "2026-03-15"))
+
+	const updateQuery = `
+		mutation UpdateAudit($input: UpdateAuditInput!) {
+			updateAudit(input: $input) {
+				audit {
+					id
+					auditStartDate
+					auditEndDate
+				}
+			}
+		}
+	`
+
+	updateInput := map[string]any{
+		"id":             node.ID,
+		"auditStartDate": "2026-04-01T00:00:00Z",
+		"auditEndDate":   "2026-04-30T00:00:00Z",
+	}
+
+	var updateResult struct {
+		UpdateAudit struct {
+			Audit struct {
+				AuditStartDate *string `json:"auditStartDate"`
+				AuditEndDate   *string `json:"auditEndDate"`
+			} `json:"audit"`
+		} `json:"updateAudit"`
+	}
+
+	err = owner.Execute(updateQuery, map[string]any{"input": updateInput}, &updateResult)
+	require.NoError(t, err)
+
+	updated := updateResult.UpdateAudit.Audit
+	require.NotNil(t, updated.AuditStartDate)
+	require.NotNil(t, updated.AuditEndDate)
+	assert.True(t, strings.HasPrefix(*updated.AuditStartDate, "2026-04-01"))
+	assert.True(t, strings.HasPrefix(*updated.AuditEndDate, "2026-04-30"))
+}
+
 func TestAudit_Create_Validation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

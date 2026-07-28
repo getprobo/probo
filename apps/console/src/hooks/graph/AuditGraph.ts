@@ -47,6 +47,8 @@ export const auditNodeQuery = graphql`
         name
         validFrom
         validUntil
+        auditStartDate
+        auditEndDate
         reportFile {
           id
           fileName
@@ -91,6 +93,8 @@ export const createAuditMutation = graphql`
           name
           validFrom
           validUntil
+          auditStartDate
+          auditEndDate
           reportFile {
             id
             fileName
@@ -117,6 +121,8 @@ export const updateAuditMutation = graphql`
         name
         validFrom
         validUntil
+        auditStartDate
+        auditEndDate
         reportFile {
           id
           fileName
@@ -186,6 +192,8 @@ export const useCreateAudit = (connectionId: string) => {
     name?: string | null;
     validFrom?: string;
     validUntil?: string;
+    auditStartDate?: string;
+    auditEndDate?: string;
     reportKey?: string;
     state?: string;
     file?: File | null;
@@ -205,6 +213,8 @@ export const useCreateAudit = (connectionId: string) => {
           name: input.name,
           validFrom: input.validFrom,
           validUntil: input.validUntil,
+          auditStartDate: input.auditStartDate,
+          auditEndDate: input.auditEndDate,
           reportKey: input.reportKey,
           state: input.state || "NOT_STARTED",
           file: input.file ? null : undefined,
@@ -226,6 +236,8 @@ export const useUpdateAudit = () => {
     name?: string | null;
     validFrom?: string | null;
     validUntil?: string | null;
+    auditStartDate?: string | null;
+    auditEndDate?: string | null;
     state?: string;
   }) => {
     if (!input.id) {

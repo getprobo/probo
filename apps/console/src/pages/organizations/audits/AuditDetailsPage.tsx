@@ -69,6 +69,8 @@ const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
+  auditStartDate: z.string().optional(),
+  auditEndDate: z.string().optional(),
   state: z.enum([
     "NOT_STARTED",
     "IN_PROGRESS",
@@ -104,6 +106,8 @@ export default function AuditDetailsPage(props: Props) {
         name: auditEntry.name || null,
         validFrom: auditEntry.validFrom?.split("T")[0] || "",
         validUntil: auditEntry.validUntil?.split("T")[0] || "",
+        auditStartDate: auditEntry.auditStartDate?.split("T")[0] || "",
+        auditEndDate: auditEntry.auditEndDate?.split("T")[0] || "",
         state: auditEntry.state || "NOT_STARTED",
       },
     });
@@ -123,6 +127,8 @@ export default function AuditDetailsPage(props: Props) {
         name: formData.name || null,
         validFrom: formatDatetime(formData.validFrom) ?? null,
         validUntil: formatDatetime(formData.validUntil) ?? null,
+        auditStartDate: formatDatetime(formData.auditStartDate) ?? null,
+        auditEndDate: formatDatetime(formData.auditEndDate) ?? null,
         state: formData.state,
       });
       reset(formData);
@@ -241,6 +247,14 @@ export default function AuditDetailsPage(props: Props) {
 
           <Field label={t("auditDetailsPage.fields.validUntil")}>
             <Input {...register("validUntil")} type="date" />
+          </Field>
+
+          <Field label={t("auditDetailsPage.fields.auditStartDate")}>
+            <Input {...register("auditStartDate")} type="date" />
+          </Field>
+
+          <Field label={t("auditDetailsPage.fields.auditEndDate")}>
+            <Input {...register("auditEndDate")} type="date" />
           </Field>
 
           <div className="flex justify-end">

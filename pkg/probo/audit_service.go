@@ -44,6 +44,8 @@ type (
 		Name                       *string
 		ValidFrom                  *time.Time
 		ValidUntil                 *time.Time
+		AuditStartDate             *time.Time
+		AuditEndDate               *time.Time
 		State                      *coredata.AuditState
 		CompliancePortalVisibility *coredata.CompliancePortalVisibility
 	}
@@ -53,6 +55,8 @@ type (
 		Name                       **string
 		ValidFrom                  *time.Time
 		ValidUntil                 *time.Time
+		AuditStartDate             *time.Time
+		AuditEndDate               *time.Time
 		State                      *coredata.AuditState
 		CompliancePortalVisibility *coredata.CompliancePortalVisibility
 	}
@@ -70,6 +74,7 @@ func (car *CreateAuditRequest) Validate() error {
 	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
+	v.Check(car.AuditEndDate, "audit_end_date", validator.After(car.AuditStartDate))
 	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
 	v.Check(car.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
@@ -82,6 +87,7 @@ func (uar *UpdateAuditRequest) Validate() error {
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AuditEntityType))
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
+	v.Check(uar.AuditEndDate, "audit_end_date", validator.After(uar.AuditStartDate))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
 	v.Check(uar.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
@@ -170,6 +176,8 @@ func (s *AuditService) Create(
 		FrameworkID:                req.FrameworkID,
 		ValidFrom:                  req.ValidFrom,
 		ValidUntil:                 req.ValidUntil,
+		AuditStartDate:             req.AuditStartDate,
+		AuditEndDate:               req.AuditEndDate,
 		State:                      coredata.AuditStateNotStarted,
 		CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
 		CreatedAt:                  now,
@@ -238,6 +246,14 @@ func (s *AuditService) Update(
 
 			if req.ValidUntil != nil {
 				audit.ValidUntil = req.ValidUntil
+			}
+
+			if req.AuditStartDate != nil {
+				audit.AuditStartDate = req.AuditStartDate
+			}
+
+			if req.AuditEndDate != nil {
+				audit.AuditEndDate = req.AuditEndDate
 			}
 
 			if req.State != nil {

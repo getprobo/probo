@@ -384,6 +384,8 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 		Name:                       input.Name,
 		ValidFrom:                  input.ValidFrom,
 		ValidUntil:                 input.ValidUntil,
+		AuditStartDate:             input.AuditStartDate,
+		AuditEndDate:               input.AuditEndDate,
 		State:                      input.State,
 		CompliancePortalVisibility: input.CompliancePortalVisibility,
 	}
@@ -439,6 +441,8 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 		Name:                       gqlutils.UnwrapOmittable(input.Name),
 		ValidFrom:                  input.ValidFrom,
 		ValidUntil:                 input.ValidUntil,
+		AuditStartDate:             input.AuditStartDate,
+		AuditEndDate:               input.AuditEndDate,
 		State:                      input.State,
 		CompliancePortalVisibility: input.CompliancePortalVisibility,
 	}

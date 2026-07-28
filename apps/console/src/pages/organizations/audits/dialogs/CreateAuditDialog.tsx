@@ -92,6 +92,8 @@ export function CreateAuditDialog({
     name: z.string().optional(),
     validFrom: z.string().optional(),
     validUntil: z.string().optional(),
+    auditStartDate: z.string().optional(),
+    auditEndDate: z.string().optional(),
     state: z.enum([
       "NOT_STARTED",
       "IN_PROGRESS",
@@ -107,6 +109,8 @@ export function CreateAuditDialog({
         name: "",
         validFrom: "",
         validUntil: "",
+        auditStartDate: "",
+        auditEndDate: "",
         state: "NOT_STARTED",
       },
     });
@@ -122,6 +126,8 @@ export function CreateAuditDialog({
         name: data.name || null,
         validFrom: formatDatetime(data.validFrom),
         validUntil: formatDatetime(data.validUntil),
+        auditStartDate: formatDatetime(data.auditStartDate),
+        auditEndDate: formatDatetime(data.auditEndDate),
         state: data.state,
         file: file ?? null,
       });
@@ -229,6 +235,12 @@ export function CreateAuditDialog({
           <Field label={t("createAuditDialog.fields.validUntil")}>
             <Input {...register("validUntil")} type="date" />
           </Field>
+          <Field label={t("createAuditDialog.fields.auditStartDate")}>
+            <Input {...register("auditStartDate")} type="date" />
+          </Field>
+          <Field label={t("createAuditDialog.fields.auditEndDate")}>
+            <Input {...register("auditEndDate")} type="date" />
+          </Field>
         </DialogContent>
         <DialogFooter>
           <Button disabled={formState.isSubmitting} type="submit">
@@ -245,6 +257,8 @@ type FormSchema = {
   name?: string;
   validFrom?: string;
   validUntil?: string;
+  auditStartDate?: string;
+  auditEndDate?: string;
   state: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "REJECTED" | "OUTDATED";
 };
 

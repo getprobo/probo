@@ -99,6 +99,20 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The end date of the audit validity period',
 			},
+			{
+				displayName: 'Audit Start Date',
+				name: 'auditStartDate',
+				type: 'dateTime',
+				default: '',
+				description: 'The start date of the audit engagement',
+			},
+			{
+				displayName: 'Audit End Date',
+				name: 'auditEndDate',
+				type: 'dateTime',
+				default: '',
+				description: 'The end date of the audit engagement',
+			},
 		],
 	},
 ];
@@ -113,6 +127,8 @@ export async function execute(
 		state?: string;
 		validFrom?: string;
 		validUntil?: string;
+		auditStartDate?: string;
+		auditEndDate?: string;
 	};
 
 	const query = `
@@ -124,6 +140,8 @@ export async function execute(
 					state
 					validFrom
 					validUntil
+					auditStartDate
+					auditEndDate
 					reportUrl
 					compliancePortalVisibility
 					createdAt
@@ -138,6 +156,8 @@ export async function execute(
 	if (updateFields.state) input.state = updateFields.state;
 	if (updateFields.validFrom) input.validFrom = updateFields.validFrom;
 	if (updateFields.validUntil) input.validUntil = updateFields.validUntil;
+	if (updateFields.auditStartDate) input.auditStartDate = updateFields.auditStartDate;
+	if (updateFields.auditEndDate) input.auditEndDate = updateFields.auditEndDate;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

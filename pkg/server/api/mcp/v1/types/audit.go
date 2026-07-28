@@ -36,6 +36,8 @@ func NewAudit(a *coredata.Audit, file *coredata.File) *Audit {
 		HasReport:                  a.ReportFileID != nil,
 		ValidFrom:                  a.ValidFrom,
 		ValidUntil:                 a.ValidUntil,
+		AuditStartDate:             a.AuditStartDate,
+		AuditEndDate:               a.AuditEndDate,
 		CreatedAt:                  a.CreatedAt,
 		UpdatedAt:                  a.UpdatedAt,
 	}
