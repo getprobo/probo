@@ -30,10 +30,12 @@ import (
 type AuditOrderField string
 
 const (
-	AuditOrderFieldCreatedAt  AuditOrderField = "CREATED_AT"
-	AuditOrderFieldValidFrom  AuditOrderField = "VALID_FROM"
-	AuditOrderFieldValidUntil AuditOrderField = "VALID_UNTIL"
-	AuditOrderFieldState      AuditOrderField = "STATE"
+	AuditOrderFieldCreatedAt      AuditOrderField = "CREATED_AT"
+	AuditOrderFieldValidFrom      AuditOrderField = "VALID_FROM"
+	AuditOrderFieldValidUntil     AuditOrderField = "VALID_UNTIL"
+	AuditOrderFieldAuditStartDate AuditOrderField = "AUDIT_START_DATE"
+	AuditOrderFieldAuditEndDate   AuditOrderField = "AUDIT_END_DATE"
+	AuditOrderFieldState          AuditOrderField = "STATE"
 )
 
 var (
@@ -48,6 +50,8 @@ func AuditOrderFields() []AuditOrderField {
 		AuditOrderFieldCreatedAt,
 		AuditOrderFieldValidFrom,
 		AuditOrderFieldValidUntil,
+		AuditOrderFieldAuditStartDate,
+		AuditOrderFieldAuditEndDate,
 		AuditOrderFieldState,
 	}
 }
@@ -58,6 +62,8 @@ func (v AuditOrderField) IsValid() bool {
 		AuditOrderFieldCreatedAt,
 		AuditOrderFieldValidFrom,
 		AuditOrderFieldValidUntil,
+		AuditOrderFieldAuditStartDate,
+		AuditOrderFieldAuditEndDate,
 		AuditOrderFieldState:
 		return true
 	}

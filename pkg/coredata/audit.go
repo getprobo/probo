@@ -62,6 +62,10 @@ func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 		return page.NewCursorKey(a.ID, a.ValidFrom)
 	case AuditOrderFieldValidUntil:
 		return page.NewCursorKey(a.ID, a.ValidUntil)
+	case AuditOrderFieldAuditStartDate:
+		return page.NewCursorKey(a.ID, a.AuditStartDate)
+	case AuditOrderFieldAuditEndDate:
+		return page.NewCursorKey(a.ID, a.AuditEndDate)
 	case AuditOrderFieldState:
 		return page.NewCursorKey(a.ID, a.State)
 	}
