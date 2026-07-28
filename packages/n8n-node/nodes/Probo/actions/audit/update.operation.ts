@@ -50,6 +50,20 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Audit End Date',
+				name: 'auditEndDate',
+				type: 'dateTime',
+				default: '',
+				description: 'The end date of the audit engagement',
+			},
+			{
+				displayName: 'Audit Start Date',
+				name: 'auditStartDate',
+				type: 'dateTime',
+				default: '',
+				description: 'The start date of the audit engagement',
+			},
+			{
 				displayName: 'Name',
 				name: 'name',
 				type: 'string',
@@ -98,20 +112,6 @@ export const description: INodeProperties[] = [
 				type: 'dateTime',
 				default: '',
 				description: 'The end date of the audit validity period',
-			},
-			{
-				displayName: 'Audit Start Date',
-				name: 'auditStartDate',
-				type: 'dateTime',
-				default: '',
-				description: 'The start date of the audit engagement',
-			},
-			{
-				displayName: 'Audit End Date',
-				name: 'auditEndDate',
-				type: 'dateTime',
-				default: '',
-				description: 'The end date of the audit engagement',
 			},
 		],
 	},
