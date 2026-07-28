@@ -2072,6 +2072,34 @@
       "sendInstructions": "Envoyer les instructions de réinitialisation"
     }
   },
+  "resendVerificationEmailPage": {
+    "pageTitle": "Vérifiez votre e-mail",
+    "title": "Vérifiez votre e-mail",
+    "description": "Votre adresse e-mail n’a pas encore été vérifiée. Saisissez votre e-mail et nous vous enverrons un nouveau lien de vérification",
+    "alreadyVerified": "Déjà vérifié ?",
+    "messages": {
+      "verificationSent": "E-mail de vérification envoyé"
+    },
+    "errors": {
+      "requestFailed": "La requête a échoué",
+      "sendVerification": "Échec de l’envoi de l’e-mail de vérification"
+    },
+    "fields": {
+      "email": "E-mail",
+      "emailPlaceholder": "name@example.com"
+    },
+    "sent": {
+      "title": "Consultez votre e-mail",
+      "description": "Nous avons envoyé un lien de vérification à votre adresse e-mail",
+      "didNotReceive": "Vous n’avez pas reçu l’e-mail ?"
+    },
+    "actions": {
+      "tryAgain": "Réessayer",
+      "backToLogin": "Retour à la connexion",
+      "sendingVerification": "Envoi de l’e-mail de vérification...",
+      "sendVerification": "Envoyer l’e-mail de vérification"
+    }
+  },
   "resetPasswordPage": {
     "pageTitle": "Réinitialiser le mot de passe",
     "title": "Réinitialiser le mot de passe",

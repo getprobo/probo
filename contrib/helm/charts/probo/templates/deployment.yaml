@@ -122,6 +122,8 @@ spec:
               value: {{ .Values.probo.auth.disableSignup | quote }}
             - name: PROBOD_AUTH_INVITATION_TOKEN_VALIDITY
               value: {{ .Values.probo.auth.invitationTokenValidity | quote }}
+            - name: PROBOD_AUTH_EMAIL_CONFIRMATION_TOKEN_VALIDITY
+              value: {{ .Values.probo.auth.emailConfirmationTokenValidity | quote }}
             - name: PROBOD_AUTH_COOKIE_NAME
               value: {{ .Values.probo.auth.cookieName | quote }}
             - name: PROBOD_AUTH_COOKIE_DOMAIN

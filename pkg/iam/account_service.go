@@ -120,7 +120,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 	confirmationToken, err := statelesstoken.NewToken(
 		s.tokenSecret,
 		TokenTypeEmailConfirmation,
-		24*time.Hour,
+		s.emailConfirmationTokenValidity,
 		EmailConfirmationData{IdentityID: identityID, Email: req.NewEmail},
 	)
 	if err != nil {
@@ -219,6 +219,58 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
 			err = identity.Update(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s AccountService) ResendVerificationEmail(ctx context.Context, email mail.Addr) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			identity := &coredata.Identity{}
+			if err := identity.LoadByEmail(ctx, tx, email); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return nil // Don't leak information about non-existent identities
+				}
+
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			if identity.EmailAddressVerified {
+				return nil // Don't leak information about already-verified identities
+			}
+
+			confirmationToken, err := statelesstoken.NewToken(
+				s.tokenSecret,
+				TokenTypeEmailConfirmation,
+				s.emailConfirmationTokenValidity,
+				EmailConfirmationData{IdentityID: identity.ID, Email: identity.EmailAddress},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot generate confirmation token: %w", err)
+			}
+
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+
+			subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
+			if err != nil {
+				return fmt.Errorf("cannot render confirmation email: %w", err)
+			}
+
+			confirmationEmail := coredata.NewEmail(
+				identity.FullName,
+				identity.EmailAddress,
+				subject,
+				textBody,
+				htmlBody,
+				nil,
+			)
+
+			if err := confirmationEmail.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert confirmation email: %w", err)
 			}
 
 			return nil

@@ -127,6 +127,9 @@ func (c *Client) setupTestUser() {
 	// Sign up
 	c.userID = c.signUp(email, password, fullName)
 
+	// Confirm email so password sign-in works for later re-authentication.
+	c.verifyEmail(c.GetEmailConfirmationToken(email))
+
 	// Create organization (this makes the user an OWNER)
 	orgName := fmt.Sprintf("Test Org %s", uniqueID)
 	c.organizationID = c.createOrganization(orgName)
@@ -197,28 +200,7 @@ func (c *Client) signUp(email, password, fullName string) gid.GID {
 }
 
 func (c *Client) signIn(email string, password string) {
-	const query = `
-		mutation($input: SignInInput!) {
-			signIn(input: $input) {
-				identity { id }
-			}
-		}
-	`
-
-	var result struct {
-		SignIn struct {
-			Identity struct {
-				ID string `json:"id"`
-			} `json:"identity"`
-		} `json:"signIn"`
-	}
-
-	err := c.ExecuteConnect(query, map[string]any{
-		"input": map[string]any{
-			"email":    email,
-			"password": password,
-		},
-	}, &result)
+	err := c.SignIn(email, password)
 	require.NoError(c.T, err, "signIn mutation failed")
 }
 
@@ -415,6 +397,129 @@ func (c *Client) inviteUser(profileID gid.GID) {
 
 func (c *Client) getActivationToken(email string) string {
 	return c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Invitation to join\"", email))
+}
+
+func (c *Client) GetEmailConfirmationToken(email string) string {
+	c.T.Helper()
+
+	return c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Confirm your email address\"", email))
+}
+
+func (c *Client) verifyEmail(token string) {
+	const query = `
+		mutation($input: VerifyEmailInput!) {
+			verifyEmail(input: $input) {
+				success
+			}
+		}
+	`
+
+	var result struct {
+		VerifyEmail struct {
+			Success bool `json:"success"`
+		} `json:"verifyEmail"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"token": token,
+		},
+	}, &result)
+	require.NoError(c.T, err, "verifyEmail mutation failed")
+	require.True(c.T, result.VerifyEmail.Success, "verifyEmail should succeed")
+}
+
+func (c *Client) ResendVerificationEmail(email string) {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: ResendVerificationEmailInput!) {
+			resendVerificationEmail(input: $input) {
+				success
+			}
+		}
+	`
+
+	var result struct {
+		ResendVerificationEmail struct {
+			Success bool `json:"success"`
+		} `json:"resendVerificationEmail"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"email": email,
+		},
+	}, &result)
+	require.NoError(c.T, err, "resendVerificationEmail mutation failed")
+	require.True(c.T, result.ResendVerificationEmail.Success, "resendVerificationEmail should succeed")
+}
+
+func (c *Client) SignOut() {
+	c.T.Helper()
+
+	const query = `
+		mutation {
+			signOut {
+				success
+			}
+		}
+	`
+
+	var result struct {
+		SignOut struct {
+			Success bool `json:"success"`
+		} `json:"signOut"`
+	}
+
+	err := c.ExecuteConnect(query, nil, &result)
+	require.NoError(c.T, err, "signOut mutation failed")
+}
+
+// SignIn attempts password sign-in and returns any GraphQL/transport error.
+func (c *Client) SignIn(email string, password string) error {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: SignInInput!) {
+			signIn(input: $input) {
+				identity { id }
+			}
+		}
+	`
+
+	var result struct {
+		SignIn struct {
+			Identity struct {
+				ID string `json:"id"`
+			} `json:"identity"`
+		} `json:"signIn"`
+	}
+
+	return c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"email":    email,
+			"password": password,
+		},
+	}, &result)
+}
+
+// NewUnauthenticatedClient returns a Connect client with no session cookie.
+func NewUnauthenticatedClient(t testing.TB) *Client {
+	t.Helper()
+
+	jar, err := cookiejar.New(nil)
+	require.NoError(t, err, "cannot create cookie jar")
+
+	return &Client{
+		T:              t,
+		baseURL:        GetBaseURL(),
+		mailpitBaseURL: GetMailpitBaseURL(),
+		httpClient: &http.Client{
+			Jar:     jar,
+			Timeout: 30 * time.Second,
+		},
+	}
 }
 
 // pollForLinkToken polls mailpit for a message matching searchQuery and

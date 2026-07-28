@@ -111,6 +111,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				InvitationConfirmationTokenValidity: b.resolver.getEnvIntOrDefault("PROBOD_AUTH_INVITATION_TOKEN_VALIDITY", 3600),
 				PasswordResetTokenValidity:          b.resolver.getEnvIntOrDefault("PROBOD_AUTH_PASSWORD_RESET_TOKEN_VALIDITY", 3600),
 				MagicLinkTokenValidity:              b.resolver.getEnvIntOrDefault("PROBOD_AUTH_MAGIC_LINK_TOKEN_VALIDITY", 900),
+				EmailConfirmationTokenValidity:      b.resolver.getEnvIntOrDefault("PROBOD_AUTH_EMAIL_CONFIRMATION_TOKEN_VALIDITY", 3600),
 				Cookie: probodconfig.CookieConfig{
 					Name:     b.resolver.getEnv("PROBOD_AUTH_COOKIE_NAME"),
 					Domain:   b.resolver.getEnv("PROBOD_AUTH_COOKIE_DOMAIN"),

@@ -388,7 +388,7 @@ func (s AuthService) CreateIdentityWithPassword(
 	confirmationToken, err := statelesstoken.NewToken(
 		s.tokenSecret,
 		TokenTypeEmailConfirmation,
-		24*time.Hour,
+		s.emailConfirmationTokenValidity,
 		EmailConfirmationData{IdentityID: identity.ID, Email: identity.EmailAddress},
 	)
 	if err != nil {

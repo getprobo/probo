@@ -108,6 +108,16 @@ func (e ErrEmailAlreadyVerified) Error() string {
 	return e.message
 }
 
+type ErrEmailNotVerified struct{ message string }
+
+func NewEmailNotVerifiedError() error {
+	return &ErrEmailNotVerified{"email address not verified"}
+}
+
+func (e ErrEmailNotVerified) Error() string {
+	return e.message
+}
+
 type ErrIdentityNotFound struct{ IdentityID gid.GID }
 
 func NewIdentityNotFoundError(identityID gid.GID) error {

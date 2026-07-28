@@ -225,6 +225,8 @@ probo:
   auth:
     disableSignup: false
     invitationTokenValidity: 3600
+    # Email confirmation token validity in seconds (default: 3600 = 1 hour)
+    emailConfirmationTokenValidity: 3600
     cookieName: "SSID"
     cookieDomain: "probo.example.com"
     # REQUIRED: Generate with openssl rand -base64 32

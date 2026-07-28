@@ -50,23 +50,24 @@ import (
 
 type (
 	Service struct {
-		pg                         *pg.Client
-		fm                         *filemanager.Service
-		hp                         *passwdhash.Profile
-		dummyHash                  []byte
-		baseURL                    string
-		tokenSecret                string
-		disableSignup              bool
-		invitationTokenValidity    time.Duration
-		passwordResetTokenValidity time.Duration
-		magicLinkTokenValidity     time.Duration
-		sessionDuration            time.Duration
-		bucket                     string
-		compliancePortalBaseDomain string
-		certManager                *certmanager.Service
-		certificate                *x509.Certificate
-		privateKey                 *rsa.PrivateKey
-		logger                     *log.Logger
+		pg                             *pg.Client
+		fm                             *filemanager.Service
+		hp                             *passwdhash.Profile
+		dummyHash                      []byte
+		baseURL                        string
+		tokenSecret                    string
+		disableSignup                  bool
+		invitationTokenValidity        time.Duration
+		passwordResetTokenValidity     time.Duration
+		magicLinkTokenValidity         time.Duration
+		emailConfirmationTokenValidity time.Duration
+		sessionDuration                time.Duration
+		bucket                         string
+		compliancePortalBaseDomain     string
+		certManager                    *certmanager.Service
+		certificate                    *x509.Certificate
+		privateKey                     *rsa.PrivateKey
+		logger                         *log.Logger
 
 		AccountService      *AccountService
 		OrganizationService *OrganizationService
@@ -88,6 +89,7 @@ type (
 		InvitationTokenValidity        time.Duration
 		PasswordResetTokenValidity     time.Duration
 		MagicLinkTokenValidity         time.Duration
+		EmailConfirmationTokenValidity time.Duration
 		SessionDuration                time.Duration
 		Bucket                         string
 		TokenSecret                    string
@@ -154,23 +156,24 @@ func NewService(
 	}
 
 	svc := &Service{
-		pg:                         pgClient,
-		fm:                         fm,
-		hp:                         hp,
-		dummyHash:                  mustHashDummy(hp),
-		baseURL:                    cfg.BaseURL.String(),
-		tokenSecret:                cfg.TokenSecret,
-		disableSignup:              cfg.DisableSignup,
-		invitationTokenValidity:    cfg.InvitationTokenValidity,
-		passwordResetTokenValidity: cfg.PasswordResetTokenValidity,
-		magicLinkTokenValidity:     cfg.MagicLinkTokenValidity,
-		sessionDuration:            cfg.SessionDuration,
-		bucket:                     cfg.Bucket,
-		compliancePortalBaseDomain: cfg.CompliancePortalBaseDomain,
-		certManager:                cfg.CertManager,
-		certificate:                cfg.Certificate,
-		privateKey:                 cfg.PrivateKey,
-		logger:                     cfg.Logger,
+		pg:                             pgClient,
+		fm:                             fm,
+		hp:                             hp,
+		dummyHash:                      mustHashDummy(hp),
+		baseURL:                        cfg.BaseURL.String(),
+		tokenSecret:                    cfg.TokenSecret,
+		disableSignup:                  cfg.DisableSignup,
+		invitationTokenValidity:        cfg.InvitationTokenValidity,
+		passwordResetTokenValidity:     cfg.PasswordResetTokenValidity,
+		magicLinkTokenValidity:         cfg.MagicLinkTokenValidity,
+		emailConfirmationTokenValidity: cfg.EmailConfirmationTokenValidity,
+		sessionDuration:                cfg.SessionDuration,
+		bucket:                         cfg.Bucket,
+		compliancePortalBaseDomain:     cfg.CompliancePortalBaseDomain,
+		certManager:                    cfg.CertManager,
+		certificate:                    cfg.Certificate,
+		privateKey:                     cfg.PrivateKey,
+		logger:                         cfg.Logger,
 	}
 
 	svc.AccountService = NewAccountService(svc)

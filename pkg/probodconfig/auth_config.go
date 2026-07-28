@@ -32,6 +32,7 @@ type AuthConfig struct {
 	InvitationConfirmationTokenValidity int                `json:"invitation-confirmation-token-validity"`
 	PasswordResetTokenValidity          int                `json:"password-reset-token-validity"`
 	MagicLinkTokenValidity              int                `json:"magic-link-token-validity"`
+	EmailConfirmationTokenValidity      int                `json:"email-confirmation-token-validity"`
 	SAML                                SAMLConfig         `json:"saml"`
 	Google                              OIDCProviderConfig `json:"google,omitzero"`
 	Microsoft                           OIDCProviderConfig `json:"microsoft,omitzero"`

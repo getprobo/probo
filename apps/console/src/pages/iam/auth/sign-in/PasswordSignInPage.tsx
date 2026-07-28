@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, matchPath, useLocation } from "react-router";
+import { Link, matchPath, useLocation, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -41,6 +41,7 @@ const signInMutation = graphql`
 
 export default function PasswordSignInPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
   const { t } = useTranslation();
@@ -73,6 +74,16 @@ export default function PasswordSignInPage() {
       },
       onCompleted: (_, error) => {
         if (error) {
+          const errors = Array.isArray(error) ? error : [error];
+          const emailNotVerified = errors.some(
+            e => (e as GraphQLError).extensions?.code === "EMAIL_NOT_VERIFIED",
+          );
+          if (emailNotVerified) {
+            const search = new URLSearchParams({ email: emailValue }).toString();
+            void navigate(`/auth/resend-verification-email?${search}`);
+            return;
+          }
+
           toast({
             title: t("common.error"),
             description: formatError(

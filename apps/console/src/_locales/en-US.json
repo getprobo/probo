@@ -1287,6 +1287,17 @@
     "sent": { "title": "Check your email", "description": "We've sent password reset instructions to your email address", "didNotReceive": "Didn't receive the email?" },
     "actions": { "tryAgain": "Try again", "backToLogin": "Back to login", "sendingInstructions": "Sending instructions...", "sendInstructions": "Send reset instructions" }
   },
+  "resendVerificationEmailPage": {
+    "pageTitle": "Verify your email",
+    "title": "Verify your email",
+    "description": "Your email address has not been verified yet. Enter your email and we'll send you a new verification link",
+    "alreadyVerified": "Already verified?",
+    "messages": { "verificationSent": "Verification email sent" },
+    "errors": { "requestFailed": "Request failed", "sendVerification": "Failed to send verification email" },
+    "fields": { "email": "Email", "emailPlaceholder": "name@example.com" },
+    "sent": { "title": "Check your email", "description": "We've sent a verification link to your email address", "didNotReceive": "Didn't receive the email?" },
+    "actions": { "tryAgain": "Try again", "backToLogin": "Back to login", "sendingVerification": "Sending verification email...", "sendVerification": "Send verification email" }
+  },
   "resetPasswordPage": {
     "pageTitle": "Reset password",
     "title": "Reset password",
