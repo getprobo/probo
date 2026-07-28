@@ -726,6 +726,13 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 				} else {
 					return fmt.Errorf("cannot load identity by email: %w", err)
 				}
+			} else if !identity.EmailAddressVerified {
+				identity.EmailAddressVerified = true
+				identity.UpdatedAt = now
+
+				if err := identity.Update(ctx, tx); err != nil {
+					return fmt.Errorf("cannot update identity: %w", err)
+				}
 			}
 
 			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodMagicLink, s.sessionDuration)
