@@ -100,7 +100,7 @@ func NewPresenter(baseURL string, fullName string) *Presenter {
 }
 
 const (
-	SubjectConfirmEmail                           = "Confirm your email address"
+	subjectConfirmEmail                           = "Confirm your email address"
 	subjectPasswordReset                          = "Reset your password"
 	subjectInvitation                             = "Invitation to join %s on Probo"
 	subjectDocumentApproval                       = "Action Required – Please review and approve %s compliance documents"
@@ -185,7 +185,7 @@ func (p *Presenter) RenderConfirmEmail(ctx context.Context, confirmationURLPath 
 
 	textBody, htmlBody, err = renderEmail(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
 
-	return SubjectConfirmEmail, textBody, htmlBody, err
+	return subjectConfirmEmail, textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderPasswordReset(ctx context.Context, resetPasswordURLPath string, resetPasswordToken string) (subject string, textBody string, htmlBody *string, err error) {

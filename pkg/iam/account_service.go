@@ -76,11 +76,6 @@ var SupportedIdentityLocales = []string{
 
 const (
 	TokenTypeEmailConfirmation = "email_confirmation"
-
-	// emailConfirmationResendCooldown is the minimum time between confirmation
-	// emails for the same address. Resend requests inside this window succeed
-	// without enqueueing another message (anti-enumeration + anti-abuse).
-	emailConfirmationResendCooldown = time.Minute
 )
 
 func NewAccountService(svc *Service) *AccountService {
@@ -246,20 +241,6 @@ func (s AccountService) ResendVerificationEmail(ctx context.Context, email mail.
 
 			if identity.EmailAddressVerified {
 				return nil // Don't leak information about already-verified identities
-			}
-
-			recent, err := coredata.ExistsByRecipientSubjectCreatedAfter(
-				ctx,
-				tx,
-				identity.EmailAddress,
-				emails.SubjectConfirmEmail,
-				time.Now().Add(-emailConfirmationResendCooldown),
-			)
-			if err != nil {
-				return fmt.Errorf("cannot check recent confirmation email: %w", err)
-			}
-			if recent {
-				return nil // Cooldown: avoid flooding the recipient / mail queue
 			}
 
 			confirmationToken, err := statelesstoken.NewToken(
