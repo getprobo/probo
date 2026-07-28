@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.205.0] - 2026-07-28
+
+### Added
+
+- `prb audit create`/`update` gained `--audit-start-date` and `--audit-end-date` flags, and `prb audit list`/`view` show the new AUDIT START/AUDIT END columns
+- `prb audit list --sort` now accepts `AUDIT_START_DATE` and `AUDIT_END_DATE`
+
 ## [0.204.0] - 2026-07-27
 
 ### Added
