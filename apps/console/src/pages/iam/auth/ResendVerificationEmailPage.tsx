@@ -57,11 +57,12 @@ export default function ResendVerificationEmailPage() {
     },
   });
 
-  const [resendVerificationEmail] = useMutation<ResendVerificationEmailPageMutation>(
-    resendVerificationEmailMutation,
-  );
+  const [resendVerificationEmail, isResending]
+    = useMutation<ResendVerificationEmailPageMutation>(resendVerificationEmailMutation);
 
   const onSubmit = handleSubmit(({ email }) => {
+    if (isResending) return;
+
     resendVerificationEmail({
       variables: {
         input: { email },
@@ -155,9 +156,9 @@ export default function ResendVerificationEmailPage() {
             <Button
               type="submit"
               className="w-xs h-10 mx-auto mt-6"
-              disabled={formState.isSubmitting}
+              disabled={isResending}
             >
-              {formState.isSubmitting
+              {isResending
                 ? t("resendVerificationEmailPage.actions.sendingVerification")
                 : t("resendVerificationEmailPage.actions.sendVerification")}
             </Button>

@@ -319,6 +319,39 @@ WHERE id = @id
 	return err
 }
 
+// ExistsByRecipientSubjectCreatedAfter reports whether an email with the given
+// recipient and subject was created at or after createdAfter.
+func ExistsByRecipientSubjectCreatedAfter(
+	ctx context.Context,
+	conn pg.Querier,
+	recipientEmail mail.Addr,
+	subject string,
+	createdAfter time.Time,
+) (bool, error) {
+	q := `
+SELECT EXISTS (
+	SELECT 1
+	FROM emails
+	WHERE recipient_email = @recipient_email
+		AND subject = @subject
+		AND created_at >= @created_after
+)
+`
+
+	args := pgx.StrictNamedArgs{
+		"recipient_email": recipientEmail.String(),
+		"subject":         subject,
+		"created_after":   createdAfter,
+	}
+
+	var exists bool
+	if err := conn.QueryRow(ctx, q, args).Scan(&exists); err != nil {
+		return false, fmt.Errorf("cannot check recent email: %w", err)
+	}
+
+	return exists, nil
+}
+
 func ResetStaleProcessingEmails(
 	ctx context.Context,
 	conn pg.Querier,

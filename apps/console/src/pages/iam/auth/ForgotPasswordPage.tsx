@@ -56,11 +56,12 @@ export default function ForgotPasswordPage() {
     },
   });
 
-  const [sendInstructions] = useMutation<ForgotPasswordPageMutation>(
-    sendInstructionsMutation,
-  );
+  const [sendInstructions, isSendingInstructions]
+    = useMutation<ForgotPasswordPageMutation>(sendInstructionsMutation);
 
   const onSubmit = handleSubmit(({ email }) => {
+    if (isSendingInstructions) return;
+
     sendInstructions({
       variables: {
         input: { email },
@@ -154,9 +155,9 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               className="w-xs h-10 mx-auto mt-6"
-              disabled={formState.isSubmitting}
+              disabled={isSendingInstructions}
             >
-              {formState.isSubmitting
+              {isSendingInstructions
                 ? t("forgotPasswordPage.actions.sendingInstructions")
                 : t("forgotPasswordPage.actions.sendInstructions")}
             </Button>
