@@ -2515,8 +2515,8 @@ func TestOAuth2_IDTokenClaims(t *testing.T) {
 				"ID token must contain email when email scope is requested")
 			require.NotNil(t, claims.EmailVerified,
 				"ID token must contain email_verified when email scope is requested")
-			assert.False(t, *claims.EmailVerified,
-				"email_verified must be false for unverified e2e test identity")
+			assert.True(t, *claims.EmailVerified,
+				"email_verified must reflect the verified e2e test identity")
 			assert.NotEmpty(t, claims.Name,
 				"ID token must contain name when profile scope is requested")
 		},
@@ -2607,8 +2607,8 @@ func TestOAuth2_IDTokenClaims(t *testing.T) {
 				"refresh ID token must contain email when email scope is present")
 			require.NotNil(t, claims.EmailVerified,
 				"refresh ID token must contain email_verified when email scope is present")
-			assert.False(t, *claims.EmailVerified,
-				"email_verified must be false for unverified e2e test identity")
+			assert.True(t, *claims.EmailVerified,
+				"email_verified must reflect the verified e2e test identity")
 			assert.NotEmpty(t, claims.Name,
 				"refresh ID token must contain name when profile scope is present")
 		},
