@@ -89,6 +89,14 @@ enum AuditOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidUntil"
         )
+    AUDIT_START_DATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldAuditStartDate"
+        )
+    AUDIT_END_DATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldAuditEndDate"
+        )
     STATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldState")
 }
 
