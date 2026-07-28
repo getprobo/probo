@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.238.0] - 2026-07-28
+
+### Added
+
+- Optional `auditStartDate`/`auditEndDate` on audits, exposed through GraphQL, MCP, CLI, n8n, and console, with new sortable order fields `AUDIT_START_DATE`/`AUDIT_END_DATE`
+
+### Fixed
+
+- Unverified password identities could open a session after signing out; password sign-in is now rejected with `EMAIL_NOT_VERIFIED` until the address is confirmed, with a resend-confirmation email flow
+- Completing a magic link for an existing identity now marks the address verified, matching OIDC behavior
+- Mermaid diagrams that fail to render now show a toast with a safe inline fallback instead of leaking raw Mermaid error markup into documents
+
 ## [0.237.0] - 2026-07-27
 
 ### Added
