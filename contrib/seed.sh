@@ -808,18 +808,241 @@ agent_heartbeat() {
   fi
 }
 
-# agent_postures <api_key> <CHECK_KEY:STATUS>...
+# posture_evidence <platform> <check_key> <status> <os_version>
+# Emits platform-shaped evidence JSON that ParseDevicePostureValue can turn
+# into a non-UNKNOWN value for PASS/FAIL, or UNKNOWN/None for the rest.
+posture_evidence() {
+  local platform="$1"
+  local check_key="$2"
+  local status="$3"
+  local os_version="$4"
+
+  case "$platform:$check_key" in
+    DARWIN:DISK_ENCRYPTION)
+      case "$status" in
+        PASS) jq -nc '{raw:"FileVault is On."}' ;;
+        FAIL) jq -nc '{raw:"FileVault is Off."}' ;;
+        *) jq -nc '{note:"fdesetup unavailable"}' ;;
+      esac
+      ;;
+    LINUX:DISK_ENCRYPTION)
+      case "$status" in
+        PASS) jq -nc '{crypttab_present:true,crypttab_lines:["nvme0n1p3_crypt UUID=6c2f none luks,discard"]}' ;;
+        FAIL) jq -nc '{crypttab_present:false,lsblk:"nvme0n1 disk\nnvme0n1p2 part ext4 /"}' ;;
+        *) jq -nc '{crypttab_present:false,lsblk_error:"lsblk not found"}' ;;
+      esac
+      ;;
+    WINDOWS:DISK_ENCRYPTION)
+      case "$status" in
+        PASS) jq -nc '{raw:"Conversion Status: Fully Encrypted\n    Percentage Encrypted: 100%"}' ;;
+        FAIL) jq -nc '{raw:"Conversion Status: Fully Decrypted\n    Percentage Encrypted: 0%"}' ;;
+        *) jq -nc '{note:"manage-bde not found"}' ;;
+      esac
+      ;;
+    DARWIN:SCREEN_LOCK)
+      case "$status" in
+        PASS) jq -nc '{backend:"sysadminctl",mode:"seconds",seconds:900,raw:"screenLock delay is 900 seconds"}' ;;
+        FAIL) jq -nc '{backend:"sysadminctl",mode:"off",raw:"screenLock is off"}' ;;
+        *) jq -nc '{backend:"sysadminctl",error:"sysadminctl failed"}' ;;
+      esac
+      ;;
+    LINUX:SCREEN_LOCK)
+      case "$status" in
+        PASS) jq -nc '{backend:"gnome",schema:"org.gnome.desktop.screensaver",lock_enabled:"true"}' ;;
+        FAIL) jq -nc '{backend:"gnome",schema:"org.gnome.desktop.screensaver",lock_enabled:"false"}' ;;
+        *) jq -nc '{backend:"gnome",error:"gsettings failed"}' ;;
+      esac
+      ;;
+    WINDOWS:SCREEN_LOCK)
+      case "$status" in
+        PASS) jq -nc '{backend:"hkey_users",users:{"S-1-5-21-1004336348-1177238915-682003330-1001":"1"}}' ;;
+        FAIL) jq -nc '{backend:"hkey_users",users:{"S-1-5-21-1004336348-1177238915-682003330-1001":"0"}}' ;;
+        *) jq -nc '{backend:"hkey_users",users:{},note:"no interactive user hives loaded"}' ;;
+      esac
+      ;;
+    DARWIN:FIREWALL_ENABLED)
+      case "$status" in
+        PASS) jq -nc '{backend:"defaults",global_state:"1"}' ;;
+        FAIL) jq -nc '{backend:"defaults",global_state:"0"}' ;;
+        *) jq -nc '{note:"no known firewall tool found"}' ;;
+      esac
+      ;;
+    LINUX:FIREWALL_ENABLED)
+      case "$status" in
+        PASS) jq -nc '{backend:"ufw",raw:"Status: active"}' ;;
+        FAIL) jq -nc '{backend:"ufw",raw:"Status: inactive"}' ;;
+        *) jq -nc '{note:"no known firewall tool found"}' ;;
+      esac
+      ;;
+    WINDOWS:FIREWALL_ENABLED)
+      case "$status" in
+        PASS) jq -nc '{backend:"Get-NetFirewallProfile",raw:"Domain=True;Private=True;Public=True",profiles:{Domain:"True",Private:"True",Public:"True"}}' ;;
+        FAIL) jq -nc '{backend:"Get-NetFirewallProfile",raw:"Domain=True;Private=True;Public=False",profiles:{Domain:"True",Private:"True",Public:"False"}}' ;;
+        *) jq -nc '{backend:"netsh",state_lines:[]}' ;;
+      esac
+      ;;
+    DARWIN:TIME_SYNC)
+      case "$status" in
+        PASS) jq -nc '{raw:"Network Time: On"}' ;;
+        FAIL) jq -nc '{raw:"Network Time: Off"}' ;;
+        *) jq -nc '{note:"systemsetup unavailable"}' ;;
+      esac
+      ;;
+    LINUX:TIME_SYNC)
+      case "$status" in
+        PASS) jq -nc '{raw:"Timezone=Europe/Paris\nLocalRTC=no\nCanNTP=yes\nNTP=yes\nNTPSynchronized=yes"}' ;;
+        FAIL) jq -nc '{raw:"Timezone=Europe/Paris\nLocalRTC=no\nCanNTP=yes\nNTP=yes\nNTPSynchronized=no"}' ;;
+        *) jq -nc '{note:"timedatectl not installed"}' ;;
+      esac
+      ;;
+    WINDOWS:TIME_SYNC)
+      case "$status" in
+        PASS) jq -nc '{raw:"Leap Indicator: 0(no warning)\nStratum: 4 (secondary reference)\nSource: time.windows.com,0x8\nPoll Interval: 10"}' ;;
+        FAIL) jq -nc '{raw:"Leap Indicator: 3(not synchronized)\nStratum: 0 (unspecified)\nSource: Local CMOS Clock\nPoll Interval: 10"}' ;;
+        *) jq -nc '{note:"w32tm unavailable"}' ;;
+      esac
+      ;;
+    DARWIN:OS_VERSION)
+      case "$status" in
+        UNKNOWN | NOT_APPLICABLE) jq -nc '{error:"sw_vers failed"}' ;;
+        *) jq -nc --arg v "$os_version" '{product_version:$v,build_version:"24E248"}' ;;
+      esac
+      ;;
+    LINUX:OS_VERSION)
+      case "$status" in
+        UNKNOWN | NOT_APPLICABLE) jq -nc '{error:"os-release unreadable"}' ;;
+        *) jq -nc --arg v "$os_version" '{pretty_name:$v,version_id:$v,id:"linux"}' ;;
+      esac
+      ;;
+    WINDOWS:OS_VERSION)
+      case "$status" in
+        UNKNOWN | NOT_APPLICABLE) jq -nc '{error:"wmic failed"}' ;;
+        *) jq -nc --arg v "$os_version" '{caption:$v}' ;;
+      esac
+      ;;
+    DARWIN:AUTO_UPDATE)
+      case "$status" in
+        PASS) jq -nc '{backend:"defaults",AutomaticCheckEnabled:{source:"system",value:"1",enabled:true},AutomaticDownload:{source:"default",enabled:true}}' ;;
+        FAIL) jq -nc '{backend:"defaults",disabled_keys:["AutomaticDownload"]}' ;;
+        *) jq -nc '{backend:"defaults",indeterminate_keys:["ConfigDataInstall"]}' ;;
+      esac
+      ;;
+    LINUX:AUTO_UPDATE)
+      case "$status" in
+        PASS) jq -nc '{backend:"unattended-upgrades",raw:"APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\n"}' ;;
+        FAIL) jq -nc '{backend:"unattended-upgrades",raw:"APT::Periodic::Update-Package-Lists \"0\";\nAPT::Periodic::Unattended-Upgrade \"0\";\n"}' ;;
+        *) jq -nc '{note:"unattended-upgrades not installed"}' ;;
+      esac
+      ;;
+    WINDOWS:AUTO_UPDATE)
+      case "$status" in
+        PASS) jq -nc '{no_auto_update:"0",au_options:"4"}' ;;
+        FAIL) jq -nc '{no_auto_update:"",au_options:"2"}' ;;
+        *) jq -nc '{no_auto_update:"",au_options:"",wuauserv:""}' ;;
+      esac
+      ;;
+    DARWIN:PASSWORD_POLICY)
+      case "$status" in
+        PASS) jq -nc '{raw_truncated:"<dict><key>policyCategoryPasswordContent</key><array/></dict>"}' ;;
+        FAIL) jq -nc '{raw_truncated:"There are no account policies for all users."}' ;;
+        *) jq -nc '{error:"pwpolicy failed"}' ;;
+      esac
+      ;;
+    LINUX:PASSWORD_POLICY)
+      case "$status" in
+        PASS) jq -nc '{pass_min_len:"12",pass_max_days:"90",pass_min_len_value:12}' ;;
+        FAIL) jq -nc '{pass_min_len:"",pass_max_days:"99999",parse_error:"PASS_MIN_LEN not set"}' ;;
+        *) jq -nc '{error:"login.defs unreadable"}' ;;
+      esac
+      ;;
+    WINDOWS:PASSWORD_POLICY)
+      case "$status" in
+        PASS) jq -nc '{raw:"Minimum password length:                        8\n"}' ;;
+        FAIL) jq -nc '{raw:"Minimum password length:                        0\n"}' ;;
+        *) jq -nc '{error:"net accounts failed"}' ;;
+      esac
+      ;;
+    # REMOTE_LOGIN is inverted: PASS means remote access is Off / denied.
+    DARWIN:REMOTE_LOGIN)
+      case "$status" in
+        PASS) jq -nc '{raw:"Remote Login: Off"}' ;;
+        FAIL) jq -nc '{raw:"Remote Login: On"}' ;;
+        *) jq -nc '{error:"systemsetup failed"}' ;;
+      esac
+      ;;
+    LINUX:REMOTE_LOGIN)
+      case "$status" in
+        PASS) jq -nc '{is_active:"inactive"}' ;;
+        FAIL) jq -nc '{is_active:"active"}' ;;
+        *) jq -nc '{is_active:""}' ;;
+      esac
+      ;;
+    WINDOWS:REMOTE_LOGIN)
+      case "$status" in
+        PASS) jq -nc '{fdeny_ts_connections:"1"}' ;;
+        FAIL) jq -nc '{fdeny_ts_connections:"0"}' ;;
+        *) jq -nc '{error:"registry read failed"}' ;;
+      esac
+      ;;
+    DARWIN:MALWARE_PROTECTION)
+      case "$status" in
+        PASS) jq -nc '{engine:"XProtect",version:"5260"}' ;;
+        FAIL) jq -nc '{engine:"XProtect",note:"XProtect.meta.plist not found in expected locations"}' ;;
+        *) jq -nc '{note:"XProtect check skipped"}' ;;
+      esac
+      ;;
+    LINUX:MALWARE_PROTECTION)
+      case "$status" in
+        PASS) jq -nc '{active:["ClamAV"],installed:[]}' ;;
+        FAIL) jq -nc '{active:[],installed:["ClamAV"]}' ;;
+        *) jq -nc '{active:[],installed:[]}' ;;
+      esac
+      ;;
+    WINDOWS:MALWARE_PROTECTION)
+      case "$status" in
+        PASS) jq -nc '{antivirus_enabled:true,real_time_protection:true,am_service_enabled:true}' ;;
+        FAIL) jq -nc '{antivirus_enabled:false,real_time_protection:false,am_service_enabled:false}' ;;
+        *) jq -nc '{note:"defender status unavailable"}' ;;
+      esac
+      ;;
+    *)
+      jq -nc '{}'
+      ;;
+  esac
+}
+
+# agent_postures <api_key> <platform> <os_version> <CHECK_KEY:STATUS>...
 agent_postures() {
   local api_key="$1"
-  shift
+  local platform="$2"
+  local os_version="$3"
+  shift 3
 
   local now
   now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+  local results='[]'
+  local pair check_key status evidence
+  for pair in "$@"; do
+    check_key="${pair%%:*}"
+    status="${pair#*:}"
+    evidence=$(posture_evidence "$platform" "$check_key" "$status" "$os_version")
+    results=$(jq -nc \
+      --argjson results "$results" \
+      --arg check_key "$check_key" \
+      --arg status "$status" \
+      --arg observed_at "$now" \
+      --argjson evidence "$evidence" \
+      '$results + [{
+        check_key: $check_key,
+        status: $status,
+        observed_at: $observed_at,
+        evidence: $evidence
+      }]')
+  done
+
   local body
-  body=$(printf '%s\n' "$@" \
-    | jq -R --arg o "$now" 'split(":") | {check_key: .[0], status: .[1], observed_at: $o}' \
-    | jq -s '{results: .}')
+  body=$(jq -nc --argjson results "$results" '{results: $results}')
 
   local code
   code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
@@ -829,6 +1052,7 @@ agent_postures() {
     "$AGENT_API/postures")
   if [ "$code" != "204" ] && [ "$code" != "200" ]; then
     echo "ERROR (agent_postures): HTTP $code" >&2
+    echo "  request: $body" >&2
     exit 1
   fi
 }
@@ -868,7 +1092,7 @@ seed_device() {
   hardware_uuid="hw-$(echo "$hostname" | tr '[:upper:]' '[:lower:]')"
 
   agent_heartbeat "$api_key" "$hardware_uuid" "$hostname" "$platform" "$os_version" "1.0.0" "$serial"
-  agent_postures "$api_key" "$@"
+  agent_postures "$api_key" "$platform" "$os_version" "$@"
 
   echo "$device_id"
 }

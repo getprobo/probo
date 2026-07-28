@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { dateFormat } from "@probo/i18n";
+import { dateFormat, dateTimeFormat } from "@probo/i18n";
 import { Badge, Card } from "@probo/ui";
-import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -55,64 +54,83 @@ export function DeviceDetailsCard(props: {
   return (
     <Card className="space-y-4" padded>
       <div className="grid grid-cols-3 gap-4">
-        <DetailField
-          label={t("devices.fields.state")}
-          value={
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.state")}
+          </div>
+          <div className="text-sm text-txt-primary">
             <Badge variant={stateVariant(device.state)}>{device.state}</Badge>
-          }
-        />
-        <DetailField
-          label={t("devices.fields.owner")}
-          value={device.owner?.fullName ?? t("devices.values.unassigned")}
-        />
-        <DetailField
-          label={t("devices.fields.hardwareUuid")}
-          value={displayValue(device.hardwareUuid, pendingLabel)}
-        />
-        <DetailField
-          label={t("devices.fields.serialNumber")}
-          value={displayValue(device.serialNumber, pendingLabel)}
-        />
-        <DetailField
-          label={t("devices.fields.platform")}
-          value={displayValue(device.platform, pendingLabel)}
-        />
-        <DetailField
-          label={t("devices.fields.osVersion")}
-          value={displayValue(device.osVersion, pendingLabel)}
-        />
-        <DetailField
-          label={t("devices.fields.agentVersion")}
-          value={displayValue(device.agentVersion, pendingLabel)}
-        />
-        <DetailField
-          label={t("devices.fields.enrolledAt")}
-          value={
-            device.enrolledAt
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.owner")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {device.owner?.fullName ?? t("devices.values.unassigned")}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.hardwareUuid")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {displayValue(device.hardwareUuid, pendingLabel)}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.serialNumber")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {displayValue(device.serialNumber, pendingLabel)}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.platform")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {displayValue(device.platform, pendingLabel)}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.osVersion")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {displayValue(device.osVersion, pendingLabel)}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.agentVersion")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {displayValue(device.agentVersion, pendingLabel)}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.enrolledAt")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {device.enrolledAt
               ? dateFormat(i18n.language, device.enrolledAt)
-              : pendingLabel
-          }
-        />
-        <DetailField
-          label={t("devices.fields.lastSeen")}
-          value={
-            device.lastSeenAt
-              ? dateFormat(i18n.language, device.lastSeenAt)
-              : t("devices.values.never")
-          }
-        />
+              : pendingLabel}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-txt-tertiary font-semibold mb-1">
+            {t("devices.fields.lastSeen")}
+          </div>
+          <div className="text-sm text-txt-primary">
+            {device.lastSeenAt
+              ? dateTimeFormat(i18n.language, device.lastSeenAt)
+              : t("devices.values.never")}
+          </div>
+        </div>
       </div>
     </Card>
-  );
-}
-
-function DetailField(props: { label: string; value: ReactNode }) {
-  return (
-    <div>
-      <div className="text-xs text-txt-tertiary font-semibold mb-1">
-        {props.label}
-      </div>
-      <div className="text-sm text-txt-primary">{props.value}</div>
-    </div>
   );
 }

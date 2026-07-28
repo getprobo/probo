@@ -39,6 +39,7 @@ type (
 		TenantID       gid.TenantID        `db:"tenant_id"`
 		OrganizationID gid.GID             `db:"organization_id"`
 		DeviceID       gid.GID             `db:"device_id"`
+		CorrelationID  gid.GID             `db:"correlation_id"`
 		CheckKey       string              `db:"check_key"`
 		Status         DevicePostureStatus `db:"status"`
 		Evidence       json.RawMessage     `db:"evidence"`
@@ -86,6 +87,7 @@ INSERT INTO device_postures (
     tenant_id,
     organization_id,
     device_id,
+    correlation_id,
     check_key,
     status,
     evidence,
@@ -96,6 +98,7 @@ INSERT INTO device_postures (
     @tenant_id,
     @organization_id,
     @device_id,
+    @correlation_id,
     @check_key,
     @status,
     @evidence,
@@ -108,11 +111,12 @@ INSERT INTO device_postures (
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": p.OrganizationID,
 		"device_id":       p.DeviceID,
+		"correlation_id":  p.CorrelationID,
 		"check_key":       p.CheckKey,
 		"status":          p.Status,
 		"evidence":        evidence,
 		"observed_at":     observedAt,
-		"created_at":      p.CreatedAt,
+		"created_at":      now,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -138,8 +142,9 @@ func normalizeObservedAt(observed, now time.Time) time.Time {
 	return observed
 }
 
-// LoadLatestByDeviceID loads a page of the latest posture row for each
-// check_key on the given device.
+// LoadLatestByDeviceID loads the latest posture per check_key by observed_at.
+// A check that errored in the last run keeps its last known result, so the set
+// can span multiple reports.
 func (p *DevicePostures) LoadLatestByDeviceID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -154,6 +159,7 @@ WITH latest AS (
         tenant_id,
         organization_id,
         device_id,
+        correlation_id,
         check_key,
         status,
         evidence,
@@ -189,6 +195,64 @@ SELECT * FROM latest WHERE %s
 	return nil
 }
 
+func (p *DevicePostures) LoadByDeviceIDAndCorrelationIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	deviceID gid.GID,
+	correlationIDs []gid.GID,
+) error {
+	if len(correlationIDs) == 0 {
+		*p = nil
+
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    tenant_id,
+    organization_id,
+    device_id,
+    correlation_id,
+    check_key,
+    status,
+    evidence,
+    observed_at,
+    created_at
+FROM
+    device_postures
+WHERE
+    %s
+    AND device_id = @device_id
+    AND correlation_id = ANY(@correlation_ids)
+ORDER BY
+    created_at DESC,
+    check_key ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"device_id":       deviceID,
+		"correlation_ids": correlationIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query device postures by correlation_id: %w", err)
+	}
+
+	postures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DevicePosture])
+	if err != nil {
+		return fmt.Errorf("cannot collect device postures by correlation_id: %w", err)
+	}
+
+	*p = postures
+
+	return nil
+}
+
 // LoadHistoryByDeviceIDAndCheckKey returns the most recent N entries for one
 // (device, check_key) pair, newest first.
 func (p *DevicePostures) LoadHistoryByDeviceIDAndCheckKey(
@@ -209,6 +273,7 @@ SELECT
     tenant_id,
     organization_id,
     device_id,
+    correlation_id,
     check_key,
     status,
     evidence,

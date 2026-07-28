@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { dateFormat } from "@probo/i18n";
+import { dateTimeFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -52,10 +52,6 @@ const deviceRowFragment = graphql`
       id
       fullName
     }
-    latestPostures {
-      id
-      status
-    }
     ...ReassignDeviceDialog_device
   }
 `;
@@ -76,7 +72,6 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
 
   const [confirmRevoke, isRevoking] = useRevokeDevice();
 
-  const summary = postureSummary(device.latestPostures);
   const isRevoked = device.state === "REVOKED";
   const hasActions = !isRevoked && (canRevoke || canAssignDevice);
 
@@ -97,17 +92,8 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
         <Td>{displayValue(device.osVersion, pendingLabel)}</Td>
         <Td>
           {device.lastSeenAt
-            ? dateFormat(i18n.language, device.lastSeenAt)
+            ? dateTimeFormat(i18n.language, device.lastSeenAt)
             : t("devices.values.never")}
-        </Td>
-        <Td>
-          <span className="text-txt-success">{summary.pass}</span>
-          {" / "}
-          <span className={summary.fail > 0 ? "text-txt-danger" : undefined}>
-            {summary.fail}
-          </span>
-          {" / "}
-          {summary.total}
         </Td>
         <Td noLink width={50} className="text-end">
           {hasActions && (
@@ -137,25 +123,4 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
       </Tr>
     </>
   );
-}
-
-function postureSummary(
-  postures: readonly { status: string }[],
-): { pass: number; fail: number; total: number } {
-  let pass = 0;
-  let fail = 0;
-  for (const p of postures) {
-    switch (p.status) {
-      case "PASS":
-        pass += 1;
-        break;
-      case "FAIL":
-        fail += 1;
-        break;
-      default:
-        // UNKNOWN and NOT_APPLICABLE count toward total only.
-        break;
-    }
-  }
-  return { pass, fail, total: postures.length };
 }

@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -64,6 +65,36 @@ func (r *deviceResolver) LatestPostures(ctx context.Context, obj *types.Device) 
 	return types.NewDevicePostures(postures), nil
 }
 
+// PostureReports is the resolver for the postureReports field.
+func (r *deviceResolver) PostureReports(ctx context.Context, obj *types.Device, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DevicePostureReportOrderBy) (*types.DevicePostureReportConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, itam.ActionDevicePostureList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DevicePostureReportOrderField]{
+		Field:     coredata.DevicePostureReportOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DevicePostureReportOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.itam.ListPostureReports(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list device posture reports", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDevicePostureReportConnection(p, r, obj.ID), nil
+}
+
 // TotalCount is the resolver for the DeviceConnection.totalCount field.
 func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.DeviceConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, itam.ActionDeviceList)
@@ -83,6 +114,23 @@ func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.De
 	}
 
 	return 0, gqlutils.Internal(ctx)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *devicePostureReportConnectionResolver) TotalCount(ctx context.Context, obj *types.DevicePostureReportConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, itam.ActionDevicePostureList)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.itam.CountPostureReports(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count device posture reports", log.Error(err))
+
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // EnrollDevice is the resolver for the enrollDevice field.
@@ -220,7 +268,13 @@ func (r *Resolver) DeviceConnection() schema.DeviceConnectionResolver {
 	return &deviceConnectionResolver{r}
 }
 
+// DevicePostureReportConnection returns schema.DevicePostureReportConnectionResolver implementation.
+func (r *Resolver) DevicePostureReportConnection() schema.DevicePostureReportConnectionResolver {
+	return &devicePostureReportConnectionResolver{r}
+}
+
 type (
-	deviceResolver           struct{ *Resolver }
-	deviceConnectionResolver struct{ *Resolver }
+	deviceResolver                        struct{ *Resolver }
+	deviceConnectionResolver              struct{ *Resolver }
+	devicePostureReportConnectionResolver struct{ *Resolver }
 )

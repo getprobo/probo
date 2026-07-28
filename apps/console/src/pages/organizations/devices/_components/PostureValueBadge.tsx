@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,36 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { Badge } from "@probo/ui";
+import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DevicePosturesPageQuery } from "#/__generated__/core/DevicePosturesPageQuery.graphql";
+import type { PostureValueBadge_postureFragment$key } from "#/__generated__/core/PostureValueBadge_postureFragment.graphql";
 
-import { DevicePostureList } from "./_components/DevicePostureList";
+import { postureValueLabel, postureValueVariant } from "../_lib/deviceDisplay";
 
-export const devicePosturesPageQuery = graphql`
-  query DevicePosturesPageQuery($deviceId: ID!) {
-    device: node(id: $deviceId) @required(action: THROW) {
-      __typename
-      ... on Device {
-        ...DevicePostureList_deviceFragment
-      }
+const postureFragment = graphql`
+  fragment PostureValueBadge_postureFragment on DevicePosture {
+    checkKey
+    value {
+      kind
+      text
+      number
     }
   }
 `;
 
-interface DevicePosturesPageProps {
-  queryRef: PreloadedQuery<DevicePosturesPageQuery>;
+interface PostureValueBadgeProps {
+  postureFragmentRef: PostureValueBadge_postureFragment$key;
 }
 
-export function DevicePosturesPage({ queryRef }: DevicePosturesPageProps) {
-  const { device } = usePreloadedQuery<DevicePosturesPageQuery>(
-    devicePosturesPageQuery,
-    queryRef,
-  );
-  if (device.__typename !== "Device") {
-    throw new Error("invalid type for device node");
+export function PostureValueBadge({
+  postureFragmentRef,
+}: PostureValueBadgeProps) {
+  const { t } = useTranslation();
+  const posture = useFragment(postureFragment, postureFragmentRef);
+
+  const label = postureValueLabel(t, posture.value);
+  const variant = postureValueVariant(posture.value.kind, posture.checkKey);
+
+  if (!variant) {
+    return label;
   }
 
-  return <DevicePostureList deviceFragmentRef={device} />;
+  return <Badge variant={variant}>{label}</Badge>;
 }

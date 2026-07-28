@@ -36,6 +36,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/server/api/agent/v1/types"
 	"go.probo.inc/probo/pkg/server/jsonx"
@@ -177,15 +178,33 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fallbackCorrelationID := gid.New(
+		dev.ID.TenantID(),
+		coredata.DevicePostureReportEntityType,
+	)
+
 	results := make([]itam.RecordPostureResult, 0, len(req.Results))
 	for _, pr := range req.Results {
+		correlationID := fallbackCorrelationID
+
+		if pr.CorrelationID != "" {
+			parsed, err := gid.ParseGID(pr.CorrelationID)
+			if err != nil {
+				jsonx.RenderBadRequest(w, errors.New("correlation_id is invalid"))
+				return
+			}
+
+			correlationID = parsed
+		}
+
 		results = append(
 			results,
 			itam.RecordPostureResult{
-				CheckKey:   pr.CheckKey,
-				Status:     pr.Status,
-				Evidence:   pr.Evidence,
-				ObservedAt: pr.ObservedAt,
+				CheckKey:      pr.CheckKey,
+				Status:        pr.Status,
+				Evidence:      pr.Evidence,
+				ObservedAt:    pr.ObservedAt,
+				CorrelationID: correlationID,
 			},
 		)
 	}
@@ -195,6 +214,13 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 	if err := h.itamSvc.RecordPostures(r.Context(), scope, dev.ID, results); err != nil {
 		if errors.Is(err, itam.ErrDeviceRevoked) {
 			jsonx.RenderUnauthorized(w, errors.New("device revoked"))
+			return
+		}
+
+		if errors.Is(err, itam.ErrCorrelationIDRequired) ||
+			errors.Is(err, itam.ErrInvalidCorrelationIDEntityType) ||
+			errors.Is(err, itam.ErrInvalidCorrelationIDTenant) {
+			jsonx.RenderBadRequest(w, err)
 			return
 		}
 

@@ -139,6 +139,7 @@ const (
 	DeviceEntityType                                 uint16 = 107
 	DevicePostureEntityType                          uint16 = 108
 	DeviceEnrollmentTokenEntityType                  uint16 = 109
+	DevicePostureReportEntityType                    uint16 = 110
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -345,6 +346,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DevicePosture{ID: id}, true
 	case DeviceEnrollmentTokenEntityType:
 		return &DeviceEnrollmentToken{ID: id}, true
+	case DevicePostureReportEntityType:
+		return &DevicePostureReport{ID: id}, true
 	default:
 		return nil, false
 	}

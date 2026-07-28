@@ -117,6 +117,7 @@ func insertDevicePosture(
 		ID:             gid.New(fx.scope.GetTenantID(), coredata.DevicePostureEntityType),
 		OrganizationID: fx.organizationID,
 		DeviceID:       fx.deviceID,
+		CorrelationID:  gid.New(fx.scope.GetTenantID(), coredata.DevicePostureReportEntityType),
 		CheckKey:       checkKey,
 		Status:         status,
 		ObservedAt:     observedAt,

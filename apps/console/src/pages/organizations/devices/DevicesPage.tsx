@@ -36,7 +36,6 @@ import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { DeviceRow } from "./_components/DeviceRow";
-import { PostureColumnHeader } from "./_components/PostureColumnHeader";
 import { CreateDeviceDialog } from "./dialogs/CreateDeviceDialog";
 
 export const devicesPageQuery = graphql`
@@ -141,9 +140,6 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
             <Th>{t("devices.fields.platform")}</Th>
             <Th>{t("devices.fields.osVersion")}</Th>
             <SortableTh field="LAST_SEEN_AT">{t("devices.fields.lastSeen")}</SortableTh>
-            <Th>
-              <PostureColumnHeader />
-            </Th>
             <Th></Th>
           </Tr>
         </Thead>

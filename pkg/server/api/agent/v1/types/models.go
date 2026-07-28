@@ -52,10 +52,11 @@ type (
 	}
 
 	PostureResultPayload struct {
-		CheckKey   string                       `json:"check_key"`
-		Status     coredata.DevicePostureStatus `json:"status"`
-		Evidence   json.RawMessage              `json:"evidence,omitempty"`
-		ObservedAt time.Time                    `json:"observed_at"`
+		CheckKey      string                       `json:"check_key"`
+		Status        coredata.DevicePostureStatus `json:"status"`
+		Evidence      json.RawMessage              `json:"evidence,omitempty"`
+		ObservedAt    time.Time                    `json:"observed_at"`
+		CorrelationID string                       `json:"correlation_id"`
 	}
 
 	PostureRequest struct {

@@ -27,7 +27,8 @@ import (
 )
 
 type (
-	DeviceOrderBy OrderBy[coredata.DeviceOrderField]
+	DeviceOrderBy              OrderBy[coredata.DeviceOrderField]
+	DevicePostureReportOrderBy OrderBy[coredata.DevicePostureReportOrderField]
 
 	DeviceConnection struct {
 		TotalCount int
@@ -46,6 +47,15 @@ type (
 	EmployeeDeviceEdge struct {
 		Cursor page.CursorKey
 		Node   *Device
+	}
+
+	DevicePostureReportConnection struct {
+		TotalCount int
+		Edges      []*DevicePostureReportEdge
+		PageInfo   PageInfo
+
+		Resolver any
+		ParentID gid.GID
 	}
 )
 
@@ -122,11 +132,14 @@ func NewDevice(d *coredata.Device) *Device {
 }
 
 func NewDevicePosture(p *coredata.DevicePosture) *DevicePosture {
+	value := coredata.ParseDevicePostureValue(p.CheckKey, p.Evidence)
+
 	return &DevicePosture{
 		ID:         p.ID,
 		DeviceID:   p.DeviceID,
 		CheckKey:   p.CheckKey,
 		Status:     p.Status,
+		Value:      &value,
 		ObservedAt: p.ObservedAt,
 	}
 }
@@ -138,4 +151,42 @@ func NewDevicePostures(ps coredata.DevicePostures) []*DevicePosture {
 	}
 
 	return out
+}
+
+func NewDevicePostureReport(
+	s *coredata.DevicePostureReport,
+) *DevicePostureReport {
+	return &DevicePostureReport{
+		ID:        s.ID,
+		CreatedAt: s.CreatedAt,
+		Postures:  NewDevicePostures(s.Postures),
+	}
+}
+
+func NewDevicePostureReportEdge(
+	s *coredata.DevicePostureReport,
+	orderBy coredata.DevicePostureReportOrderField,
+) *DevicePostureReportEdge {
+	return &DevicePostureReportEdge{
+		Cursor: s.CursorKey(orderBy),
+		Node:   NewDevicePostureReport(s),
+	}
+}
+
+func NewDevicePostureReportConnection(
+	p *page.Page[*coredata.DevicePostureReport, coredata.DevicePostureReportOrderField],
+	parentType any,
+	parentID gid.GID,
+) *DevicePostureReportConnection {
+	edges := make([]*DevicePostureReportEdge, len(p.Data))
+	for i := range edges {
+		edges[i] = NewDevicePostureReportEdge(p.Data[i], p.Cursor.OrderBy.Field)
+	}
+
+	return &DevicePostureReportConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+		Resolver: parentType,
+		ParentID: parentID,
+	}
 }

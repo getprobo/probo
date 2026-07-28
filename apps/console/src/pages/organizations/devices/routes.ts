@@ -34,17 +34,17 @@ const deviceTabs = () => [
     }: LoaderFunctionArgs) => {
       // eslint-disable-next-line
       throw redirect(
-        `/organizations/${organizationId}/devices/${deviceId}/postures`,
+        `/organizations/${organizationId}/devices/${deviceId}/history`,
       );
     },
     Component: Fragment,
   },
   {
-    path: "postures",
+    path: "history",
     Fallback: LinkCardSkeleton,
     Component: lazy(
       () =>
-        import("#/pages/organizations/devices/postures/DevicePosturesPageLoader"),
+        import("#/pages/organizations/devices/history/DeviceHistoryPageLoader"),
     ),
   },
 ];

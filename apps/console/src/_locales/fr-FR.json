@@ -5960,21 +5960,17 @@
       "revoke": "Révoquer l’appareil « {{hostname}} » ? L’agent sur l’appareil arrêtera de transmettre des données et devra être réenrôlé."
     },
     "postures": {
-      "title": "Posture",
-      "navigation": "Postures",
-      "summaryHelp": "Comment le résumé de posture est calculé",
-      "summaryDescription": "Affiché sous la forme réussite / échec / total.",
+      "currentTitle": "Postures actuelles",
       "empty": "Aucun contrôle de posture enregistré",
-      "columns": {
-        "check": "Contrôle",
-        "status": "Statut",
-        "observedAt": "Observé le"
-      },
-      "status": {
-        "pass": "Réussite",
-        "fail": "Échec",
-        "unknown": "Inconnu",
-        "notApplicable": "Non applicable"
+      "values": {
+        "on": "Activé",
+        "off": "Désactivé",
+        "immediate": "Immédiat",
+        "seconds": "{{seconds}} s",
+        "minPasswordLength": "Longueur min. {{length}}",
+        "configured": "Configurée",
+        "none": "Aucune",
+        "unknown": "Inconnu"
       },
       "checks": {
         "diskEncryption": "Chiffrement du disque",
@@ -5986,6 +5982,21 @@
         "passwordPolicy": "Politique de mot de passe",
         "remoteLogin": "Connexion à distance",
         "malwareProtection": "Protection contre les logiciels malveillants"
+      }
+    },
+    "history": {
+      "title": "Historique des rapports",
+      "empty": "Aucun rapport de posture pour le moment",
+      "checkCount_one": "{{count}} contrôle rapporté",
+      "checkCount_other": "{{count}} contrôles rapportés",
+      "columns": {
+        "time": "Heure",
+        "checks": "Contrôles",
+        "correlationId": "ID de corrélation"
+      },
+      "actions": {
+        "copyCorrelationId": "Copier l’ID de corrélation",
+        "correlationIdCopied": "ID de corrélation copié"
       }
     }
   },

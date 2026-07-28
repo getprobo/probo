@@ -38,17 +38,71 @@ export function stateVariant(
   }
 }
 
-export function statusVariant(
-  status: string,
-): "success" | "danger" | "warning" | "info" {
-  switch (status) {
-    case "PASS":
-      return "success";
-    case "FAIL":
-      return "danger";
-    case "NOT_APPLICABLE":
-      return "info";
+type Translator = (key: string, options?: Record<string, unknown>) => string;
+
+/** What a posture check observed, as returned by the DevicePostureValue type. */
+export interface PostureValue {
+  readonly kind: string;
+  readonly text?: string | null;
+  readonly number?: number | null;
+}
+
+export function postureValueLabel(t: Translator, value: PostureValue): string {
+  switch (value.kind) {
+    case "ON":
+      return t("devices.postures.values.on");
+    case "OFF":
+      return t("devices.postures.values.off");
+    case "IMMEDIATE":
+      return t("devices.postures.values.immediate");
+    case "SECONDS":
+      return t("devices.postures.values.seconds", {
+        seconds: value.number ?? 0,
+      });
+    case "MIN_PASSWORD_LENGTH":
+      return t("devices.postures.values.minPasswordLength", {
+        length: value.number ?? 0,
+      });
+    case "CONFIGURED":
+      return t("devices.postures.values.configured");
+    case "NONE":
+      return t("devices.postures.values.none");
+    case "TEXT":
+      return value.text || t("devices.postures.values.unknown");
     default:
-      return "warning";
+      return t("devices.postures.values.unknown");
+  }
+}
+
+/**
+ * Badge variant for a posture value. Kinds carrying a measurement render as
+ * plain text instead: whether a 15 second delay or an 8 character minimum is
+ * acceptable is a ruleset decision, not something the observation can say.
+ */
+export function postureValueVariant(
+  kind: string,
+  checkKey?: string,
+): "success" | "danger" | "info" | undefined {
+  if (checkKey === "REMOTE_LOGIN") {
+    // Remote login reports reachability, so On is the exposed state.
+    switch (kind) {
+      case "ON":
+        return "danger";
+      case "OFF":
+        return "info";
+      default:
+        return undefined;
+    }
+  }
+
+  switch (kind) {
+    case "ON":
+    case "IMMEDIATE":
+      return "success";
+    case "OFF":
+    case "NONE":
+      return "danger";
+    default:
+      return undefined;
   }
 }

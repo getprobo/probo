@@ -95,6 +95,55 @@ type Device implements Node {
 
     owner: Profile @goField(forceResolver: true)
     latestPostures: [DevicePosture!]! @goField(forceResolver: true)
+    postureReports(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DevicePostureReportOrder
+    ): DevicePostureReportConnection! @goField(forceResolver: true)
+}
+
+enum DevicePostureValueKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKind"
+    ) {
+    ON @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindOn")
+    OFF
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindOff")
+    IMMEDIATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindImmediate"
+        )
+    SECONDS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindSeconds"
+        )
+    MIN_PASSWORD_LENGTH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindMinPasswordLength"
+        )
+    CONFIGURED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindConfigured"
+        )
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindNone"
+        )
+    TEXT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindText")
+    UNKNOWN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureValueKindUnknown"
+        )
+}
+
+type DevicePostureValue
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DevicePostureValue") {
+    kind: DevicePostureValueKind!
+    text: String!
+    number: Int
 }
 
 type DevicePosture implements Node {
@@ -102,7 +151,46 @@ type DevicePosture implements Node {
     deviceId: ID!
     checkKey: String!
     status: DevicePostureStatus!
+    value: DevicePostureValue!
     observedAt: Datetime!
+}
+
+enum DevicePostureReportOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DevicePostureReportOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DevicePostureReportOrderFieldCreatedAt"
+        )
+}
+
+input DevicePostureReportOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DevicePostureReportOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DevicePostureReportOrderField!
+}
+
+type DevicePostureReport {
+    id: ID!
+    createdAt: Datetime!
+    postures: [DevicePosture!]!
+}
+
+type DevicePostureReportConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DevicePostureReportConnection"
+    ) {
+    edges: [DevicePostureReportEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type DevicePostureReportEdge {
+    cursor: CursorKey!
+    node: DevicePostureReport!
 }
 
 type DeviceConnection

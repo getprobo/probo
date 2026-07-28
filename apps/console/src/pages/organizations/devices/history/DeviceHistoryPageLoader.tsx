@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,20 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { DevicePosturesPageQuery } from "#/__generated__/core/DevicePosturesPageQuery.graphql";
+import type { DeviceHistoryPageQuery } from "#/__generated__/core/DeviceHistoryPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
-import { DevicePosturesPage, devicePosturesPageQuery } from "./DevicePosturesPage";
+import { DeviceHistoryPage, deviceHistoryPageQuery } from "./DeviceHistoryPage";
 
-function DevicePosturesPageQueryLoader() {
+function DeviceHistoryPageQueryLoader() {
   const { deviceId } = useParams();
   if (!deviceId) {
     throw new Error(":deviceId missing in route params");
   }
 
-  const [queryRef, loadQuery] = useQueryLoader<DevicePosturesPageQuery>(
-    devicePosturesPageQuery,
+  const [queryRef, loadQuery] = useQueryLoader<DeviceHistoryPageQuery>(
+    deviceHistoryPageQuery,
   );
 
   useEffect(() => {
@@ -50,15 +50,15 @@ function DevicePosturesPageQueryLoader() {
 
   return (
     <Suspense fallback={<LinkCardSkeleton />}>
-      <DevicePosturesPage queryRef={queryRef} />
+      <DeviceHistoryPage queryRef={queryRef} />
     </Suspense>
   );
 }
 
-export default function DevicePosturesPageLoader() {
+export default function DeviceHistoryPageLoader() {
   return (
     <CoreRelayProvider>
-      <DevicePosturesPageQueryLoader />
+      <DeviceHistoryPageQueryLoader />
     </CoreRelayProvider>
   );
 }

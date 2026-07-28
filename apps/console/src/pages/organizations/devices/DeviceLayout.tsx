@@ -19,13 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import {
-  Breadcrumb,
-  Button,
-  PageHeader,
-  TabLink,
-  Tabs,
-} from "@probo/ui";
+import { Breadcrumb, Button, PageHeader } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
@@ -37,6 +31,7 @@ import { graphql } from "relay-runtime";
 import type { DeviceLayoutQuery } from "#/__generated__/core/DeviceLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { DeviceCurrentPostures } from "./_components/DeviceCurrentPostures";
 import { DeviceDetailsCard } from "./_components/DeviceDetailsCard";
 import { displayValue } from "./_lib/deviceDisplay";
 import { useRevokeDevice } from "./_lib/useRevokeDevice";
@@ -49,8 +44,8 @@ export const deviceLayoutQuery = graphql`
         id
         state
         hostname
-        platform
         ...DeviceDetailsCard_deviceFragment
+        ...DeviceCurrentPostures_deviceFragment
       }
     }
     organization: node(id: $organizationId) @required(action: THROW) {
@@ -102,10 +97,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
           { label: hostnameLabel },
         ]}
       />
-      <PageHeader
-        title={hostnameLabel}
-        description={displayValue(device.platform, pendingLabel)}
-      >
+      <PageHeader title={hostnameLabel}>
         {!isRevoked && canRevokeDevice && (
           <Button
             variant="danger"
@@ -120,15 +112,14 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
 
       <DeviceDetailsCard deviceFragmentRef={device} />
 
-      <Tabs>
-        <TabLink
-          to={`/organizations/${organizationId}/devices/${device.id}/postures`}
-        >
-          {t("devices.postures.navigation")}
-        </TabLink>
-      </Tabs>
+      <DeviceCurrentPostures deviceFragmentRef={device} />
 
-      <Outlet />
+      <div className="space-y-4">
+        <h2 className="text-base font-medium">
+          {t("devices.history.title")}
+        </h2>
+        <Outlet />
+      </div>
     </div>
   );
 }

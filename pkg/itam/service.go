@@ -57,6 +57,18 @@ var (
 	// ErrEnrollmentTokenInvalid is returned when an enrollment token
 	// cannot be exchanged for the device.
 	ErrEnrollmentTokenInvalid = errors.New("enrollment token invalid")
+
+	// ErrCorrelationIDRequired is returned when a posture result is
+	// missing a correlation ID.
+	ErrCorrelationIDRequired = errors.New("correlation_id is required")
+
+	// ErrInvalidCorrelationIDEntityType is returned when a posture
+	// correlation ID is not a DevicePostureReport entity.
+	ErrInvalidCorrelationIDEntityType = errors.New("correlation_id entity type is invalid")
+
+	// ErrInvalidCorrelationIDTenant is returned when a posture
+	// correlation ID belongs to a different tenant than the device.
+	ErrInvalidCorrelationIDTenant = errors.New("correlation_id tenant is invalid")
 )
 
 const (
@@ -109,10 +121,11 @@ type (
 	}
 
 	RecordPostureResult struct {
-		CheckKey   string
-		Status     coredata.DevicePostureStatus
-		Evidence   json.RawMessage
-		ObservedAt time.Time
+		CheckKey      string
+		Status        coredata.DevicePostureStatus
+		Evidence      json.RawMessage
+		ObservedAt    time.Time
+		CorrelationID gid.GID
 	}
 
 	ServiceConfig struct {
@@ -670,6 +683,113 @@ func (s *Service) GetPostureHistory(
 	return postures, nil
 }
 
+func (s *Service) ListPostureReports(
+	ctx context.Context,
+	scope coredata.Scoper,
+	deviceID gid.GID,
+	cursor *page.Cursor[coredata.DevicePostureReportOrderField],
+) (*page.Page[*coredata.DevicePostureReport, coredata.DevicePostureReportOrderField], error) {
+	var result *page.Page[*coredata.DevicePostureReport, coredata.DevicePostureReportOrderField]
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var reports coredata.DevicePostureReports
+			if err := reports.LoadByDeviceID(ctx, conn, scope, deviceID, cursor); err != nil {
+				return fmt.Errorf("cannot load device posture reports: %w", err)
+			}
+
+			p := page.NewPage(reports, cursor)
+			if err := attachPosturesToReports(ctx, conn, scope, deviceID, p.Data); err != nil {
+				return err
+			}
+
+			result = p
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Service) CountPostureReports(
+	ctx context.Context,
+	scope coredata.Scoper,
+	deviceID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var reports coredata.DevicePostureReports
+
+			n, err := reports.CountByDeviceID(ctx, conn, scope, deviceID)
+			if err != nil {
+				return fmt.Errorf("cannot count device posture reports: %w", err)
+			}
+
+			count = n
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func attachPosturesToReports(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	deviceID gid.GID,
+	reports []*coredata.DevicePostureReport,
+) error {
+	if len(reports) == 0 {
+		return nil
+	}
+
+	correlationIDs := make([]gid.GID, len(reports))
+	for i, report := range reports {
+		correlationIDs[i] = report.ID
+		report.Postures = nil
+	}
+
+	var postures coredata.DevicePostures
+	if err := postures.LoadByDeviceIDAndCorrelationIDs(
+		ctx,
+		conn,
+		scope,
+		deviceID,
+		correlationIDs,
+	); err != nil {
+		return fmt.Errorf("cannot load postures for reports: %w", err)
+	}
+
+	reportsByID := make(map[gid.GID]*coredata.DevicePostureReport, len(reports))
+	for _, report := range reports {
+		reportsByID[report.ID] = report
+	}
+
+	for _, posture := range postures {
+		report, ok := reportsByID[posture.CorrelationID]
+		if !ok {
+			continue
+		}
+
+		report.Postures = append(report.Postures, posture)
+	}
+
+	return nil
+}
+
 // AuthenticateDevice resolves a device API key to its device row.
 // Returns coredata.ErrResourceNotFound when no non-revoked device
 // matches the key. Revoked devices are treated as not found.
@@ -811,10 +931,23 @@ func (s *Service) RecordPostures(
 			}
 
 			for _, r := range results {
+				if r.CorrelationID == gid.Nil {
+					return ErrCorrelationIDRequired
+				}
+
+				if r.CorrelationID.EntityType() != coredata.DevicePostureReportEntityType {
+					return ErrInvalidCorrelationIDEntityType
+				}
+
+				if r.CorrelationID.TenantID() != device.ID.TenantID() {
+					return ErrInvalidCorrelationIDTenant
+				}
+
 				posture := coredata.DevicePosture{
 					ID:             gid.New(device.OrganizationID.TenantID(), coredata.DevicePostureEntityType),
 					OrganizationID: device.OrganizationID,
 					DeviceID:       device.ID,
+					CorrelationID:  r.CorrelationID,
 					CheckKey:       r.CheckKey,
 					Status:         r.Status,
 					Evidence:       r.Evidence,

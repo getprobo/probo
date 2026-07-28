@@ -28,8 +28,10 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/deviceagent/checks"
 	"go.probo.inc/probo/pkg/deviceagent/update"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 const (
@@ -450,15 +452,27 @@ func (a *Agent) doPostures(ctx context.Context) {
 		log.Duration("per_check_timeout", perCheckTimeout),
 	)
 
+	deviceID, err := gid.ParseGID(a.cfg.DeviceID)
+	if err != nil {
+		a.Logger.ErrorCtx(ctx, "cannot parse device id for posture correlation", log.Error(err))
+		return
+	}
+
+	correlationID := gid.New(
+		deviceID.TenantID(),
+		coredata.DevicePostureReportEntityType,
+	).String()
+
 	payload := make([]PostureResultPayload, 0, len(results))
 	for _, r := range results {
 		payload = append(
 			payload,
 			PostureResultPayload{
-				CheckKey:   r.CheckKey,
-				Status:     string(r.Status),
-				Evidence:   checks.EvidenceJSON(r.Evidence),
-				ObservedAt: r.ObservedAt,
+				CheckKey:      r.CheckKey,
+				Status:        string(r.Status),
+				Evidence:      checks.EvidenceJSON(r.Evidence),
+				ObservedAt:    r.ObservedAt,
+				CorrelationID: correlationID,
 			},
 		)
 	}

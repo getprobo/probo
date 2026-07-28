@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -121,7 +122,68 @@ const (
 				}
 			}
 		}`
+
+	devicePostureReportsQuery = `
+		query DevicePostureReports($id: ID!) {
+			node(id: $id) {
+				... on Device {
+					latestPostures {
+						id
+						checkKey
+						status
+						value { kind text number }
+					}
+					postureReports(first: 10) {
+						totalCount
+						edges {
+							cursor
+							node {
+								id
+								createdAt
+								postures {
+									id
+									checkKey
+									value { kind text number }
+								}
+							}
+						}
+					}
+				}
+			}
+		}`
 )
+
+type devicePostureValue struct {
+	Kind   string `json:"kind"`
+	Text   string `json:"text"`
+	Number *int   `json:"number"`
+}
+
+type devicePostureReportsResult struct {
+	Node struct {
+		LatestPostures []struct {
+			ID       string             `json:"id"`
+			CheckKey string             `json:"checkKey"`
+			Status   string             `json:"status"`
+			Value    devicePostureValue `json:"value"`
+		} `json:"latestPostures"`
+		PostureReports struct {
+			TotalCount int `json:"totalCount"`
+			Edges      []struct {
+				Cursor string `json:"cursor"`
+				Node   struct {
+					ID        string `json:"id"`
+					CreatedAt string `json:"createdAt"`
+					Postures  []struct {
+						ID       string             `json:"id"`
+						CheckKey string             `json:"checkKey"`
+						Value    devicePostureValue `json:"value"`
+					} `json:"postures"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"postureReports"`
+	} `json:"node"`
+}
 
 type enrollDeviceResult struct {
 	EnrollDevice struct {
@@ -290,6 +352,106 @@ func enrollAndActivateDevice(
 	)
 
 	return enrolled
+}
+
+func enrollActivateAndAuthenticateDevice(
+	t *testing.T,
+	client *testutil.Client,
+	organizationID string,
+) (enrollDeviceResult, string) {
+	t.Helper()
+
+	enrolled := enrollDevice(t, client, organizationID)
+
+	status, payload := exchangeEnrollmentToken(
+		t,
+		enrolled.EnrollDevice.EnrollmentToken,
+	)
+	require.Equal(t, http.StatusOK, status)
+	require.NotEmpty(t, payload.APIKey)
+
+	require.Equal(
+		t,
+		http.StatusOK,
+		sendHeartbeat(t, payload.APIKey, enrolled.EnrollDevice.Device.ID+"-hw"),
+	)
+
+	return enrolled, payload.APIKey
+}
+
+func reportPostures(t *testing.T, apiKey string, results []map[string]any) int {
+	t.Helper()
+
+	body, err := json.Marshal(map[string]any{"results": results})
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		testutil.GetBaseURL()+"/api/agent/v1/postures",
+		bytes.NewReader(body),
+	)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	return resp.StatusCode
+}
+
+func newPostureCorrelationID(t *testing.T, deviceID string) string {
+	t.Helper()
+
+	id, err := gid.ParseGID(deviceID)
+	require.NoError(t, err)
+
+	return gid.New(id.TenantID(), coredata.DevicePostureReportEntityType).String()
+}
+
+// ufwInactivePosture is the evidence a Linux host with a disabled firewall
+// reports. The server must read it as OFF: "inactive" contains "active", so a
+// substring test inverts the signal.
+func ufwInactivePosture(
+	observedAt time.Time,
+	correlationID string,
+) map[string]any {
+	result := map[string]any{
+		"check_key":   "FIREWALL_ENABLED",
+		"status":      "FAIL",
+		"observed_at": observedAt.Format(time.RFC3339Nano),
+		"evidence": map[string]any{
+			"backend": "ufw",
+			"raw":     "Status: inactive",
+		},
+	}
+	if correlationID != "" {
+		result["correlation_id"] = correlationID
+	}
+
+	return result
+}
+
+func osVersionPosture(
+	observedAt time.Time,
+	version string,
+	correlationID string,
+) map[string]any {
+	result := map[string]any{
+		"check_key":   "OS_VERSION",
+		"status":      "PASS",
+		"observed_at": observedAt.Format(time.RFC3339Nano),
+		"evidence": map[string]any{
+			"pretty_name": version,
+		},
+	}
+	if correlationID != "" {
+		result["correlation_id"] = correlationID
+	}
+
+	return result
 }
 
 func createDevice(
@@ -879,4 +1041,242 @@ func TestDeviceEnrollmentPermissionQueryShape(t *testing.T) {
 			require.True(t, result.Node.CanEnrollDevice)
 		})
 	}
+}
+
+func TestDevicePostureReports(t *testing.T) {
+	t.Parallel()
+
+	t.Run("one agent run becomes one report", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
+		deviceID := enrolled.EnrollDevice.Device.ID
+
+		observedAt := time.Now().UTC()
+		correlationID := newPostureCorrelationID(t, deviceID)
+		require.Equal(
+			t,
+			http.StatusNoContent,
+			reportPostures(t, apiKey, []map[string]any{
+				ufwInactivePosture(observedAt, correlationID),
+				osVersionPosture(observedAt, "Ubuntu 24.04.2 LTS", correlationID),
+			}),
+		)
+
+		var result devicePostureReportsResult
+		owner.MustExecute(
+			devicePostureReportsQuery,
+			map[string]any{"id": deviceID},
+			&result,
+		)
+
+		reports := result.Node.PostureReports
+		require.Equal(t, 1, reports.TotalCount)
+		require.Len(t, reports.Edges, 1)
+
+		report := reports.Edges[0].Node
+		require.Equal(t, correlationID, report.ID)
+		require.NotEmpty(t, report.CreatedAt)
+		require.NotEmpty(t, reports.Edges[0].Cursor)
+		require.Len(t, report.Postures, 2)
+
+		values := map[string]devicePostureValue{}
+		for _, posture := range report.Postures {
+			values[posture.CheckKey] = posture.Value
+		}
+
+		require.Equal(t, "OFF", values["FIREWALL_ENABLED"].Kind)
+		require.Equal(t, "TEXT", values["OS_VERSION"].Kind)
+		require.Equal(t, "Ubuntu 24.04.2 LTS", values["OS_VERSION"].Text)
+
+		require.Len(t, result.Node.LatestPostures, 2)
+
+		for _, posture := range result.Node.LatestPostures {
+			require.Equal(
+				t,
+				values[posture.CheckKey].Kind,
+				posture.Value.Kind,
+				"latest posture and report disagree on %s",
+				posture.CheckKey,
+			)
+		}
+	})
+
+	t.Run("legacy agent without correlation_id still groups one report", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
+		deviceID := enrolled.EnrollDevice.Device.ID
+
+		observedAt := time.Now().UTC()
+		require.Equal(
+			t,
+			http.StatusNoContent,
+			reportPostures(t, apiKey, []map[string]any{
+				ufwInactivePosture(observedAt, ""),
+				osVersionPosture(observedAt, "Ubuntu 24.04.2 LTS", ""),
+			}),
+		)
+
+		var result devicePostureReportsResult
+		owner.MustExecute(
+			devicePostureReportsQuery,
+			map[string]any{"id": deviceID},
+			&result,
+		)
+
+		reports := result.Node.PostureReports
+		require.Equal(t, 1, reports.TotalCount)
+		require.Len(t, reports.Edges, 1)
+
+		report := reports.Edges[0].Node
+		reportID, err := gid.ParseGID(report.ID)
+		require.NoError(t, err)
+		require.Equal(t, coredata.DevicePostureReportEntityType, reportID.EntityType())
+
+		deviceGID, err := gid.ParseGID(deviceID)
+		require.NoError(t, err)
+		require.Equal(t, deviceGID.TenantID(), reportID.TenantID())
+
+		require.Len(t, report.Postures, 2)
+
+		values := map[string]devicePostureValue{}
+		for _, posture := range report.Postures {
+			values[posture.CheckKey] = posture.Value
+		}
+
+		require.Equal(t, "OFF", values["FIREWALL_ENABLED"].Kind)
+		require.Equal(t, "TEXT", values["OS_VERSION"].Kind)
+		require.Equal(t, "Ubuntu 24.04.2 LTS", values["OS_VERSION"].Text)
+	})
+
+	t.Run("each agent run adds a report", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
+		deviceID := enrolled.EnrollDevice.Device.ID
+
+		firstCorrelationID := newPostureCorrelationID(t, deviceID)
+		require.Equal(
+			t,
+			http.StatusNoContent,
+			reportPostures(t, apiKey, []map[string]any{
+				osVersionPosture(time.Now().UTC(), "Ubuntu 24.04.1 LTS", firstCorrelationID),
+			}),
+		)
+
+		var first devicePostureReportsResult
+		owner.MustExecute(
+			devicePostureReportsQuery,
+			map[string]any{"id": deviceID},
+			&first,
+		)
+		require.Equal(t, 1, first.Node.PostureReports.TotalCount)
+
+		secondCorrelationID := newPostureCorrelationID(t, deviceID)
+		require.Equal(
+			t,
+			http.StatusNoContent,
+			reportPostures(t, apiKey, []map[string]any{
+				osVersionPosture(time.Now().UTC(), "Ubuntu 24.04.2 LTS", secondCorrelationID),
+			}),
+		)
+
+		var second devicePostureReportsResult
+		owner.MustExecute(
+			devicePostureReportsQuery,
+			map[string]any{"id": deviceID},
+			&second,
+		)
+		require.Equal(t, 2, second.Node.PostureReports.TotalCount)
+		require.Len(t, second.Node.PostureReports.Edges, 2)
+
+		newest := second.Node.PostureReports.Edges[0].Node
+		oldest := second.Node.PostureReports.Edges[1].Node
+
+		require.Equal(t, secondCorrelationID, newest.ID)
+		require.Equal(t, firstCorrelationID, oldest.ID)
+		require.NotEqual(t, newest.CreatedAt, oldest.CreatedAt)
+		require.Equal(
+			t,
+			first.Node.PostureReports.Edges[0].Node.CreatedAt,
+			oldest.CreatedAt,
+			"the first run's report must survive the second",
+		)
+		require.Equal(
+			t,
+			"Ubuntu 24.04.2 LTS",
+			newest.Postures[0].Value.Text,
+		)
+	})
+
+	t.Run("viewer can read posture reports", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, employee, viewer, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
+		deviceID := enrolled.EnrollDevice.Device.ID
+
+		require.Equal(
+			t,
+			http.StatusNoContent,
+			reportPostures(t, apiKey, []map[string]any{
+				osVersionPosture(
+					time.Now().UTC(),
+					"Ubuntu 24.04.2 LTS",
+					newPostureCorrelationID(t, deviceID),
+				),
+			}),
+		)
+
+		var result devicePostureReportsResult
+		viewer.MustExecute(
+			devicePostureReportsQuery,
+			map[string]any{"id": deviceID},
+			&result,
+		)
+		require.Equal(t, 1, result.Node.PostureReports.TotalCount)
+
+		err := employee.ExecuteShouldFail(
+			devicePostureReportsQuery,
+			map[string]any{"id": deviceID},
+		)
+		require.Error(t, err, "employee must not read device postures")
+	})
+
+	t.Run("another organization cannot read posture reports", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+
+		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
+		deviceID := enrolled.EnrollDevice.Device.ID
+
+		require.Equal(
+			t,
+			http.StatusNoContent,
+			reportPostures(t, apiKey, []map[string]any{
+				osVersionPosture(
+					time.Now().UTC(),
+					"Ubuntu 24.04.2 LTS",
+					newPostureCorrelationID(t, deviceID),
+				),
+			}),
+		)
+
+		outsider := testutil.NewClient(t, testutil.RoleOwner)
+
+		err := outsider.ExecuteShouldFail(
+			devicePostureReportsQuery,
+			map[string]any{"id": deviceID},
+		)
+		require.Error(t, err, "another organization must not read device postures")
+	})
 }
