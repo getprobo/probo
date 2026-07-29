@@ -33,14 +33,11 @@ import (
 const MaxLoadAllPages = 20
 
 // Loader runs one paginated query for the given cursor and returns the
-// rows it loaded. Callers bind the connection, scope, parent key and
-// filter in a closure, exposing only ctx and cursor (typically a coredata
-// LoadBy* on a fresh receiver).
-type Loader[T Paginable[U], U OrderField] func(ctx context.Context, cursor *Cursor[U]) ([]T, error)
-
-// WalkLoader is like Loader but allows coredata collection types (e.g.
-// AuditLogEntries) whose underlying type is []T.
-type WalkLoader[T Paginable[U], U OrderField, S ~[]T] func(ctx context.Context, cursor *Cursor[U]) (S, error)
+// rows it loaded. S may be []T or a coredata collection type with underlying
+// type []T (e.g. AuditLogEntries). Callers bind the connection, scope, parent
+// key and filter in a closure, exposing only ctx and cursor (typically a
+// coredata LoadBy* on a fresh receiver).
+type Loader[T Paginable[U], U OrderField, S ~[]T] func(ctx context.Context, cursor *Cursor[U]) (S, error)
 
 // WalkAll walks every matching row via keyset pagination, advancing a
 // MaxCursorSize forward cursor until no rows remain, and invokes walk with
@@ -48,7 +45,7 @@ type WalkLoader[T Paginable[U], U OrderField, S ~[]T] func(ctx context.Context, 
 func WalkAll[T Paginable[U], U OrderField, S ~[]T](
 	ctx context.Context,
 	orderBy OrderBy[U],
-	fetch WalkLoader[T, U, S],
+	fetch Loader[T, U, S],
 	walk func(rows S) error,
 ) error {
 	var key *CursorKey
@@ -82,7 +79,7 @@ func WalkAll[T Paginable[U], U OrderField, S ~[]T](
 func LoadAll[T Paginable[U], U OrderField](
 	ctx context.Context,
 	orderBy OrderBy[U],
-	fetch Loader[T, U],
+	fetch Loader[T, U, []T],
 ) ([]T, error) {
 	var (
 		all   []T
