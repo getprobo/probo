@@ -1534,7 +1534,7 @@
     "errors": { "delete": "Failed to delete access source", "configure": "Failed to configure source" },
     "messages": { "error": "Error", "success": "Success", "organizationUpdated": "Organization updated." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
-    "status": { "connected": "Connected", "disconnected": "Disconnected", "invalidCredentials": "Invalid credentials" },
+    "status": { "connected": "Connected", "disconnected": "Disconnected", "invalidCredentials": "Invalid credentials", "reconnectRequired": "Reconnect required" },
     "actions": { "reconnect": "Reconnect", "delete": "Delete" },
     "loading": "Loading...",
     "selectOrganization": "Select organization",

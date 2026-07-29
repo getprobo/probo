@@ -582,6 +582,49 @@ func (s *Service) SourceNeedsConfiguration(
 	return cfg.SelectedSlug(dbConnector) == "", nil
 }
 
+// SourceNeedsReconnect reports whether the connector is missing OAuth scopes
+// required by the current provider registration. Only OAuth2 connectors are
+// checked: API-key (and other non-OAuth) credentials have no grant scopes and
+// cannot be repaired by an OAuth reconnect, even when the provider also
+// advertises OAuth2Scopes for its dual-auth path. ErrResourceNotFound is
+// propagated for a missing connector.
+func (s *Service) SourceNeedsReconnect(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (bool, error) {
+	var dbConnector coredata.Connector
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
+		return false, nil
+	}
+
+	required := s.providerRegistry.ProviderOAuth2Scopes(dbConnector.Provider)
+	if len(required) == 0 {
+		return false, nil
+	}
+
+	if dbConnector.Connection == nil {
+		return true, nil
+	}
+
+	return len(connector.MissingScopes(required, dbConnector.Connection.Scopes())) > 0, nil
+}
+
 // AutoSelectDefaultOrganization picks the first workspace/org a freshly linked
 // picker-provider source can see when none is selected yet, so the source is
 // usable immediately instead of failing its first campaign fetch. The picker

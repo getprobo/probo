@@ -69,6 +69,58 @@ func FormatScopeString(scopes []string) string {
 	return strings.Join(sorted, " ")
 }
 
+// microsoftGraphScopePrefix is stripped when comparing scopes so that
+// Microsoft's short permission names (User.Read.All) match the full
+// resource URIs we request (https://graph.microsoft.com/User.Read.All).
+const microsoftGraphScopePrefix = "https://graph.microsoft.com/"
+
+// canonicalizeScope normalizes a scope string for equality checks.
+func canonicalizeScope(scope string) string {
+	return strings.TrimPrefix(scope, microsoftGraphScopePrefix)
+}
+
+// MissingScopes returns the sorted list of scopes present in required but
+// absent from granted. Empty strings in either input are ignored. Scope
+// comparison is canonicalized so Microsoft Graph short names and full
+// resource URIs are treated as equivalent. The result uses the required
+// scope strings as provided and never aliases any input.
+func MissingScopes(required, granted []string) []string {
+	grantedSet := make(map[string]struct{}, len(granted))
+	for _, s := range granted {
+		if s == "" {
+			continue
+		}
+
+		grantedSet[canonicalizeScope(s)] = struct{}{}
+	}
+
+	missing := make([]string, 0)
+	seenMissing := make(map[string]struct{})
+
+	for _, s := range required {
+		if s == "" {
+			continue
+		}
+
+		key := canonicalizeScope(s)
+		if _, ok := grantedSet[key]; ok {
+			continue
+		}
+
+		if _, ok := seenMissing[key]; ok {
+			continue
+		}
+
+		seenMissing[key] = struct{}{}
+
+		missing = append(missing, s)
+	}
+
+	sort.Strings(missing)
+
+	return missing
+}
+
 // UnionScopes returns the sorted, deduplicated union of the given scope
 // slices. Empty strings and empty slices are handled gracefully. The
 // result is a fresh slice and never aliases any input.

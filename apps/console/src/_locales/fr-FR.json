@@ -2957,7 +2957,8 @@
     "status": {
       "connected": "Connecté",
       "disconnected": "Déconnecté",
-      "invalidCredentials": "Identifiants invalides"
+      "invalidCredentials": "Identifiants invalides",
+      "reconnectRequired": "Reconnexion requise"
     },
     "actions": {
       "reconnect": "Reconnecter",

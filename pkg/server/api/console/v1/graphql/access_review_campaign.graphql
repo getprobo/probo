@@ -247,6 +247,7 @@ input AccessReviewCampaignSourceFetchAttemptOrder {
 enum AccessReviewSourceConnectionStatus {
     CONNECTED
     DISCONNECTED
+    RECONNECT_REQUIRED
     NOT_APPLICABLE
 }
 

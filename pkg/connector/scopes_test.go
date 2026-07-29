@@ -53,6 +53,36 @@ func TestParseScopeString(t *testing.T) {
 	}
 }
 
+func TestMissingScopes(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		required []string
+		granted  []string
+		want     []string
+	}{
+		{"both empty", nil, nil, []string{}},
+		{"none missing", []string{"a", "b"}, []string{"b", "a"}, []string{}},
+		{"some missing", []string{"a", "b", "c"}, []string{"a"}, []string{"b", "c"}},
+		{"all missing", []string{"a", "b"}, nil, []string{"a", "b"}},
+		{"drops empty strings", []string{"a", ""}, []string{""}, []string{"a"}},
+		{"sorted output", []string{"z", "a"}, nil, []string{"a", "z"}},
+		{
+			"microsoft graph short vs full uri",
+			[]string{"https://graph.microsoft.com/User.Read.All", "https://graph.microsoft.com/AuditLog.Read.All"},
+			[]string{"User.Read.All"},
+			[]string{"https://graph.microsoft.com/AuditLog.Read.All"},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, c.want, MissingScopes(c.required, c.granted))
+		})
+	}
+}
+
 func TestUnionScopes(t *testing.T) {
 	t.Parallel()
 

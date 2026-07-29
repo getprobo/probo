@@ -243,6 +243,10 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
 
   const showOrgSelector = accessSource.needsConfiguration || accessSource.selectedOrganization;
   const canReconnect = (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
+  const showReconnect
+    = canReconnect
+      && (accessSource.connectionStatus === "DISCONNECTED"
+        || accessSource.connectionStatus === "RECONNECT_REQUIRED");
 
   return (
     <Tr>
@@ -258,6 +262,18 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
             {t("accessReviewSourceRow.status.connected")}
           </Badge>
         )}
+        {accessSource.connectionStatus === "RECONNECT_REQUIRED" && (
+          <div className="flex items-center gap-2">
+            <Badge variant="warning" size="sm">
+              {t("accessReviewSourceRow.status.reconnectRequired")}
+            </Badge>
+            {showReconnect && (
+              <Button variant="secondary" onClick={handleReconnect}>
+                {t("accessReviewSourceRow.actions.reconnect")}
+              </Button>
+            )}
+          </div>
+        )}
         {accessSource.connectionStatus === "DISCONNECTED" && (
           <div className="flex items-center gap-2">
             <Badge variant="danger" size="sm">
@@ -265,7 +281,7 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
                 ? t("accessReviewSourceRow.status.disconnected")
                 : t("accessReviewSourceRow.status.invalidCredentials")}
             </Badge>
-            {canReconnect && (
+            {showReconnect && (
               <Button variant="secondary" onClick={handleReconnect}>
                 {t("accessReviewSourceRow.actions.reconnect")}
               </Button>

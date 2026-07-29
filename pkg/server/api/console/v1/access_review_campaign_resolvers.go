@@ -493,6 +493,11 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 }
 
 // ConnectionStatus is the resolver for the connectionStatus field.
+//
+// Returns RECONNECT_REQUIRED when the connector's stored OAuth grant is
+// missing scopes required by the current provider registration (e.g. a newly
+// added Graph permission), DISCONNECTED when the credential probe fails, and
+// CONNECTED when the grant is usable as-is.
 func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *types.AccessReviewSource) (types.AccessReviewSourceConnectionStatus, error) {
 	if obj.ConnectorID == nil {
 		return types.AccessReviewSourceConnectionStatusNotApplicable, nil
@@ -518,6 +523,21 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 	// verify the credential is actually accepted.
 	if err := r.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector); err != nil {
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
+	}
+
+	needsReconnect, err := r.accessReview.SourceNeedsReconnect(ctx, scope, *obj.ConnectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot determine access source reconnect requirement", log.Error(err))
+
+		return types.AccessReviewSourceConnectionStatusNotApplicable, gqlutils.Internal(ctx)
+	}
+
+	if needsReconnect {
+		return types.AccessReviewSourceConnectionStatusReconnectRequired, nil
 	}
 
 	return types.AccessReviewSourceConnectionStatusConnected, nil
