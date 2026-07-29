@@ -132,9 +132,9 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
     deleteCampaignMutation,
   );
 
-  // Only DRAFT and CANCELLED campaigns can be deleted (enforced by the backend).
+  // Only DRAFT, CANCELLED, and COMPLETED campaigns can be deleted (enforced by the backend).
   const isDeletableStatus = (status: string) =>
-    status === "DRAFT" || status === "CANCELLED";
+    status === "DRAFT" || status === "CANCELLED" || status === "COMPLETED";
 
   const handleDelete = (campaignId: string, campaignName: string) => {
     confirm(

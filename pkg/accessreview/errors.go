@@ -95,7 +95,7 @@ func NewCampaignNotDeletableError(campaignID gid.GID) error {
 
 func (e *CampaignNotDeletableError) Error() string {
 	return fmt.Sprintf(
-		"access review campaign %q cannot be deleted unless it is draft or cancelled",
+		"access review campaign %q cannot be deleted unless it is draft, cancelled, or completed",
 		e.CampaignID,
 	)
 }

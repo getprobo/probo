@@ -217,7 +217,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const isDraft = campaign.status === "DRAFT";
   const isPendingActions = campaign.status === "PENDING_ACTIONS";
   const isCancelled = campaign.status === "CANCELLED";
-  const canDelete = campaign.canDelete && (isDraft || isCancelled);
+  const isCompleted = campaign.status === "COMPLETED";
+  const canDelete = campaign.canDelete && (isDraft || isCancelled || isCompleted);
 
   const campaignIdRef = useRef(campaign.id);
 

@@ -206,7 +206,8 @@ func (s *Service) DeleteCampaign(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusDraft &&
-				campaign.Status != coredata.AccessReviewCampaignStatusCancelled {
+				campaign.Status != coredata.AccessReviewCampaignStatusCancelled &&
+				campaign.Status != coredata.AccessReviewCampaignStatusCompleted {
 				return NewCampaignNotDeletableError(campaign.ID)
 			}
 

@@ -61,7 +61,7 @@ func TestCampaignClientErrors(t *testing.T) {
 			name: "not deletable",
 			err:  accessreview.NewCampaignNotDeletableError(campaignID),
 			wantText: fmt.Sprintf(
-				"access review campaign %q cannot be deleted unless it is draft or cancelled",
+				"access review campaign %q cannot be deleted unless it is draft, cancelled, or completed",
 				campaignID,
 			),
 			sentinel: accessreview.ErrCampaignNotDeletable,
