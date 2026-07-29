@@ -270,30 +270,26 @@ func loadAuditLogActorExportInfo(
 
 	result := make(map[gid.GID]auditLogActorExportInfo)
 
-	if len(identityIDs) > 0 {
-		var identities coredata.Identities
-		if err := identities.LoadByIDs(ctx, conn, identityIDs); err != nil {
-			return nil, fmt.Errorf("cannot load audit log actor identities: %w", err)
-		}
+	var identities coredata.IdentityAuditLogActorRows
+	if err := identities.LoadByIDs(ctx, conn, identityIDs); err != nil {
+		return nil, fmt.Errorf("cannot load audit log actor identities: %w", err)
+	}
 
-		for _, identity := range identities {
-			result[identity.ID] = auditLogActorExportInfo{
-				email: identity.EmailAddress.String(),
-				name:  identity.FullName,
-			}
+	for _, identity := range identities {
+		result[identity.ID] = auditLogActorExportInfo{
+			email: identity.EmailAddress.String(),
+			name:  identity.FullName,
 		}
 	}
 
-	if len(apiKeyIDs) > 0 {
-		var apiKeys coredata.PersonalAPIKeys
-		if err := apiKeys.LoadByIDs(ctx, conn, apiKeyIDs); err != nil {
-			return nil, fmt.Errorf("cannot load audit log actor API keys: %w", err)
-		}
+	var apiKeys coredata.PersonalAPIKeyAuditLogActorRows
+	if err := apiKeys.LoadByIDs(ctx, conn, apiKeyIDs); err != nil {
+		return nil, fmt.Errorf("cannot load audit log actor API keys: %w", err)
+	}
 
-		for _, apiKey := range apiKeys {
-			result[apiKey.ID] = auditLogActorExportInfo{
-				name: apiKey.Name,
-			}
+	for _, apiKey := range apiKeys {
+		result[apiKey.ID] = auditLogActorExportInfo{
+			name: apiKey.Name,
 		}
 	}
 
