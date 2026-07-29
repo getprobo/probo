@@ -43,6 +43,7 @@ export { Spinner } from "./Atoms/Spinner/Spinner";
 export {
   ActionDropdown,
   Dropdown,
+  DropdownCheckboxItem,
   DropdownItem,
   DropdownSeparator,
 } from "./Atoms/Dropdown/Dropdown";

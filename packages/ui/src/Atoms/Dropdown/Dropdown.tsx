@@ -24,7 +24,7 @@ import type { ComponentProps, FC, PropsWithChildren, ReactNode } from "react";
 import { tv } from "tailwind-variants";
 
 import { Button } from "../Button/Button";
-import { IconDotGrid1x3Horizontal } from "../Icons";
+import { IconCheckmark1, IconDotGrid1x3Horizontal } from "../Icons";
 import type { IconProps } from "../Icons/type";
 
 type Props = PropsWithChildren<{
@@ -136,5 +136,42 @@ export function DropdownItem({
             </>
           )}
     </DropdownMenu.Item>
+  );
+}
+
+type DropdownCheckboxItemProps = PropsWithChildren<{
+  className?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+}>;
+
+export function DropdownCheckboxItem({
+  className,
+  checked,
+  onCheckedChange,
+  disabled,
+  children,
+}: DropdownCheckboxItemProps) {
+  return (
+    <DropdownMenu.CheckboxItem
+      checked={checked}
+      onCheckedChange={value => onCheckedChange(value === true)}
+      disabled={disabled}
+      className={clsx(dropdownItem(), "rounded-lg outline-none", className)}
+    >
+      <span
+        className={clsx(
+          "size-4 border border-border-mid relative rounded-sm flex items-center justify-center flex-none",
+          checked && "bg-accent text-invert",
+          disabled && "opacity-50",
+        )}
+      >
+        <DropdownMenu.ItemIndicator>
+          <IconCheckmark1 size={12} />
+        </DropdownMenu.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenu.CheckboxItem>
   );
 }

@@ -191,6 +191,11 @@ export function PeopleListItem(props: {
             },
             connections: [profile.lastInvitation.__id],
           },
+          updater: (store) => {
+            // Inviting a deactivated user marks the profile pending server-side;
+            // the payload only returns the invitation edge, so update state here.
+            store.get(profile.id)?.setValue("PENDING", "state");
+          },
         });
       },
       {

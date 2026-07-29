@@ -20,7 +20,10 @@
 
 import { getAssignableRoles, getMembershipRoles, peopleRoles } from "@probo/helpers";
 import {
-  Checkbox,
+  Button,
+  Dropdown,
+  DropdownCheckboxItem,
+  IconChevronDown,
   IconMagnifyingGlass,
   Input,
   Option,
@@ -192,14 +195,20 @@ export function PeopleList(props: {
     debouncedRefetchQuery(value);
   };
 
-  const handleStateFilterToggle = (state: ProfileState) => {
+  const handleStateFilterChange = (state: ProfileState, checked: boolean) => {
     debouncedRefetchQuery.cancel();
-    const newStates = statesFilter.includes(state)
-      ? statesFilter.filter(s => s !== state)
-      : [...statesFilter, state];
+    const newStates = checked
+      ? [...statesFilter, state]
+      : statesFilter.filter(s => s !== state);
     setStatesFilter(newStates);
     refetchPeople({ states: newStates });
   };
+
+  const statusFilterLabel = statesFilter.length === 0
+    ? t("peopleList.filters.allStatuses")
+    : statesFilter
+        .map(state => t(`peopleList.filters.${state.toLowerCase()}`))
+        .join(", ");
 
   const handleRoleFilterChange = (value: string) => {
     debouncedRefetchQuery.cancel();
@@ -234,18 +243,24 @@ export function PeopleList(props: {
           value={queryFilter ?? ""}
           onValueChange={handleQueryFilterChange}
         />
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-txt-secondary">{t("peopleList.filters.status")}</span>
+        <Dropdown
+          toggle={(
+            <Button variant="secondary" className="min-w-40 justify-between gap-2">
+              <span className="truncate">{statusFilterLabel}</span>
+              <IconChevronDown size={12} className="shrink-0" />
+            </Button>
+          )}
+        >
           {PROFILE_STATES.map(state => (
-            <label key={state} className="flex items-center gap-2 text-sm cursor-pointer">
-              <Checkbox
-                checked={statesFilter.includes(state)}
-                onChange={() => handleStateFilterToggle(state)}
-              />
+            <DropdownCheckboxItem
+              key={state}
+              checked={statesFilter.includes(state)}
+              onCheckedChange={(checked: boolean) => handleStateFilterChange(state, checked)}
+            >
               {t(`peopleList.filters.${state.toLowerCase()}`)}
-            </label>
+            </DropdownCheckboxItem>
           ))}
-        </div>
+        </Dropdown>
         <Select
           value={roleFilter ?? "ALL"}
           onValueChange={handleRoleFilterChange}
