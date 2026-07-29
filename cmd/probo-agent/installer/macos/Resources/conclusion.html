@@ -12,22 +12,17 @@
             line-height: 1.45;
         }
         h1 { font-size: 18px; margin-bottom: 6px; }
-        h2 { font-size: 14px; margin-top: 18px; margin-bottom: 4px; }
-        code, pre {
+        code {
             font-family: Menlo, Consolas, monospace;
             background: #f5f5f7;
             border-radius: 4px;
+            padding: 2px 4px;
         }
-        code { padding: 2px 4px; }
-        pre {
-            padding: 8px 10px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
+        ul { margin: 4px 0 8px 18px; padding: 0; }
+        li { margin: 2px 0; }
         @media (prefers-color-scheme: dark) {
             body { color: #f5f5f7; }
-            code, pre {
+            code {
                 background: #3a3a3c;
                 color: #f5f5f7;
             }
@@ -38,36 +33,26 @@
     <h1>Installation complete</h1>
 
     <p>
-        The <code>probo-agent</code> binary is installed. The Probo icon should
-        appear in the menu bar (or at your next login). To enroll, open the menu
-        and choose <strong>Enroll via…</strong>, then pick
-        <strong>United States</strong>, <strong>European Union</strong>, or
-        <strong>Self hosted…</strong>. Finish enrollment in your browser; when
-        it succeeds, the menu shows <strong>Connected</strong> and the agent
-        service starts automatically.
+        Enroll this device in your browser, or click the Probo icon in your
+        menu bar:
+    </p>
+    <ul>
+        <li>United States:
+            <code>https://us.probo.com/enroll</code></li>
+        <li>European Union:
+            <code>https://eu.probo.com/enroll</code></li>
+        <li>Self-hosted:
+            <code>https://&lt;your-host&gt;/enroll</code></li>
+    </ul>
+
+    <p>
+        When enrollment succeeds, the menu bar shows
+        <strong>Connected</strong> and the agent starts automatically.
     </p>
 
     <p>
-        If MDM already enrolled the device during installation, the menu bar
-        helper should already show <strong>Connected</strong>.
-    </p>
-
-    <p>Administrators can also finish setup from a Terminal:</p>
-    <pre>sudo probo-agent install \
-    --server https://your-probo-host.example.com \
-    --enrollment-token &lt;ENROLLMENT_TOKEN&gt;</pre>
-
-    <h2>Inspect the agent</h2>
-    <pre>sudo probo-agent status
-sudo probo-agent collect</pre>
-
-    <h2>Uninstall</h2>
-    <pre>sudo probo-agent uninstall</pre>
-
-    <p>
-        Logs are written to <code>/var/log/probo-agent.log</code>. The
-        installer's own log lives at
-        <code>/var/log/probo-agent-install.log</code>.
+        To uninstall: <code>sudo probo-agent uninstall</code><br>
+        Logs: <code>/var/log/probo-agent.log</code>
     </p>
 </body>
 </html>
