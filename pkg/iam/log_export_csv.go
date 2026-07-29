@@ -100,8 +100,8 @@ func (s *LogExportService) streamAuditLogCSV(
 			Direction: page.OrderDirectionAsc,
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.AuditLogEntryOrderField]) ([]*coredata.AuditLogEntry, error) {
-			var batch coredata.AuditLogEntries
-			if err := batch.LoadByOrganizationID(
+			var logs coredata.AuditLogEntries
+			if err := logs.LoadByOrganizationID(
 				ctx,
 				conn,
 				scope,
@@ -109,10 +109,10 @@ func (s *LogExportService) streamAuditLogCSV(
 				cursor,
 				filter,
 			); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("cannot load audit log entries: %w", err)
 			}
 
-			return batch, nil
+			return logs, nil
 		},
 		func(entries []*coredata.AuditLogEntry) error {
 			actorsByID, err := loadAuditLogActorExportInfo(ctx, conn, entries)
@@ -171,7 +171,7 @@ func (s *LogExportService) streamSCIMEventCSV(
 				cursor,
 				filter,
 			); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("cannot load SCIM events: %w", err)
 			}
 
 			return events, nil
