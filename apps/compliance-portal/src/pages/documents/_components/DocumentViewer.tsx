@@ -23,9 +23,9 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   DownloadSimpleIcon,
+  LinkSimpleIcon,
   MagnifyingGlassMinusIcon,
   MagnifyingGlassPlusIcon,
-  ShareNetworkIcon,
   SpinnerGapIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -64,8 +64,8 @@ interface DocumentViewerProps {
 }
 
 // Full-page document viewer: a header band with the title and a toolbar
-// (page navigation + zoom for PDFs, share, download) above the scrollable body.
-// PDFs render with react-pdf, images inline, and anything else offers a
+// (page navigation + zoom for PDFs, copy link, download) above the scrollable
+// body. PDFs render with react-pdf, images inline, and anything else offers a
 // download.
 export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerProps) {
   const { t } = useTranslation("documents");
@@ -87,7 +87,7 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
     setCurrentPage(next);
   };
 
-  const handleShare = () => {
+  const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href).then(
       () => toast.add({ title: t("viewer.linkCopied"), type: "success" }),
       () => {},
@@ -168,11 +168,11 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
               <Button
                 variant="ghost"
                 color="neutral"
-                iconStart={<ShareNetworkIcon />}
-                onClick={handleShare}
-                aria-label={t("viewer.share")}
+                iconStart={<LinkSimpleIcon />}
+                onClick={handleCopyLink}
+                aria-label={t("viewer.copyLink")}
               >
-                <span className={slots.actionLabel()}>{t("viewer.share")}</span>
+                <span className={slots.actionLabel()}>{t("viewer.copyLink")}</span>
               </Button>
               <Separator orientation="vertical" className={slots.separator()} />
               <Button

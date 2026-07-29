@@ -30,6 +30,16 @@ export const documentSection = tv({
   },
 });
 
+// Document list row trailing chrome: copy-link + access action. z-2 sits above
+// the mobile full-row overlay so these controls stay tappable on small screens.
+export const documentEntry = tv({
+  slots: {
+    trailing: "relative z-2 flex shrink-0 items-center gap-1",
+    accessDesktop: "max-sm:hidden",
+    accessMobile: "hidden shrink-0 max-sm:block",
+  },
+});
+
 // PDF preview: a scrollable grey stage holding the stacked, centered pages.
 export const pdfPreview = tv({
   slots: {
@@ -48,7 +58,7 @@ export const documentViewer = tv({
     root: "flex h-full min-h-0 flex-1 flex-col",
     header: "flex w-full flex-col gap-3",
     back: "-ml-2 self-start",
-    // Stay on one row so page/zoom controls and share/download share a baseline;
+    // Stay on one row so page/zoom controls and copy/download share a baseline;
     // icon-only action labels on max-sm keep this viable on phones.
     toolbar: "flex min-h-16 flex-wrap items-center justify-between gap-x-4 gap-y-2",
     toolbarStart: "flex min-w-0 flex-wrap items-center gap-2",

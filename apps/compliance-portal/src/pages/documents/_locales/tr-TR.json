@@ -40,7 +40,7 @@
   },
   "viewer": {
     "back": "Belgeler",
-    "share": "Belgeyi paylaş",
+    "copyLink": "Bağlantıyı kopyala",
     "linkCopied": "Bağlantı panoya kopyalandı",
     "download": "İndir",
     "previewUnavailable": "Önizleme kullanılamıyor",

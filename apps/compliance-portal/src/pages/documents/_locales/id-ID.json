@@ -40,7 +40,7 @@
   },
   "viewer": {
     "back": "Dokumen",
-    "share": "Bagikan dokumen",
+    "copyLink": "Salin tautan",
     "linkCopied": "Tautan disalin ke clipboard",
     "download": "Unduh",
     "previewUnavailable": "Pratinjau tidak tersedia",

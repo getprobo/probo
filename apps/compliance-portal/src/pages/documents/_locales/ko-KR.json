@@ -40,7 +40,7 @@
   },
   "viewer": {
     "back": "문서",
-    "share": "문서 공유",
+    "copyLink": "링크 복사",
     "linkCopied": "링크가 클립보드에 복사되었습니다",
     "download": "다운로드",
     "previewUnavailable": "미리보기를 사용할 수 없습니다",

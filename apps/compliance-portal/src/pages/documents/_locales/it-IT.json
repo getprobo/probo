@@ -40,7 +40,7 @@
   },
   "viewer": {
     "back": "Documenti",
-    "share": "Condividi documento",
+    "copyLink": "Copia collegamento",
     "linkCopied": "Link copiato negli appunti",
     "download": "Scarica",
     "previewUnavailable": "Anteprima non disponibile",

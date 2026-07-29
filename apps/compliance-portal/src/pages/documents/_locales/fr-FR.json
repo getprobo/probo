@@ -40,7 +40,7 @@
   },
   "viewer": {
     "back": "Documents",
-    "share": "Partager le document",
+    "copyLink": "Copier le lien",
     "linkCopied": "Lien copié dans le presse-papiers",
     "download": "Télécharger",
     "previewUnavailable": "Aperçu indisponible",

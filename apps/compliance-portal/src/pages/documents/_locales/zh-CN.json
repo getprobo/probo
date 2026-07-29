@@ -40,7 +40,7 @@
   },
   "viewer": {
     "back": "文档",
-    "share": "分享文档",
+    "copyLink": "复制链接",
     "linkCopied": "链接已复制到剪贴板",
     "download": "下载",
     "previewUnavailable": "无法预览",

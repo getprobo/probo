@@ -18,7 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
+import { LinkSimpleIcon } from "@phosphor-icons/react";
 import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -27,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router";
 
 import { DocumentAccessAction } from "./DocumentAccessAction";
+import { documentEntry } from "./variants";
 
 interface DocumentEntryProps {
   // Primary line (document title, file name, or framework name).
@@ -51,8 +55,9 @@ interface DocumentEntryProps {
 }
 
 // Presentational row shared by the document / file / report list items: a title
-// with accent metadata and the trailing access action. On small screens the
-// whole row is the hit target (the trailing icon is a status affordance only).
+// with accent metadata, a copy-link control, and the trailing access action. On
+// small screens the whole row is the hit target (the trailing icon is a status
+// affordance only).
 export function DocumentEntry({
   title,
   meta,
@@ -65,6 +70,8 @@ export function DocumentEntry({
   onSelectedChange,
 }: DocumentEntryProps) {
   const { t } = useTranslation("documents");
+  const toast = Toast.useToastManager();
+  const slots = documentEntry();
 
   // Only locked rows (not yet authorized, no pending request) can be requested,
   // so only they are selectable — the checkbox is disabled otherwise to avoid a
@@ -76,6 +83,14 @@ export function DocumentEntry({
     : isAuthorized
       ? t("actions.view")
       : t("actions.getAccess");
+
+  const handleCopyLink = () => {
+    const url = new URL(viewHref, window.location.origin);
+    navigator.clipboard.writeText(url.href).then(
+      () => toast.add({ title: t("viewer.linkCopied"), type: "success" }),
+      () => {},
+    );
+  };
 
   return (
     <ListItem
@@ -105,31 +120,42 @@ export function DocumentEntry({
         </Text>
       </ListItemContent>
 
-      {/* Desktop: labeled interactive control. */}
-      <div className="max-sm:hidden">
-        <DocumentAccessAction
-          isAuthorized={isAuthorized}
-          requested={requested}
-          viewHref={viewHref}
-          onGetAccess={onGetAccess}
-          isRequesting={isRequesting}
-        />
-      </div>
+      <div className={slots.trailing()}>
+        <IconButton
+          variant="ghost"
+          color="neutral"
+          aria-label={t("viewer.copyLink")}
+          onClick={handleCopyLink}
+        >
+          <LinkSimpleIcon />
+        </IconButton>
 
-      {/* Mobile: status icon only; the row overlay handles activation.
-          Pending (`requested`) rows keep the icon in the a11y tree as status. */}
-      <div
-        className="hidden shrink-0 max-sm:block"
-        aria-hidden={mobileHitLabel != null ? true : undefined}
-      >
-        <DocumentAccessAction
-          isAuthorized={isAuthorized}
-          requested={requested}
-          viewHref={viewHref}
-          onGetAccess={onGetAccess}
-          isRequesting={isRequesting}
-          interactive={false}
-        />
+        {/* Desktop: labeled interactive control. */}
+        <div className={slots.accessDesktop()}>
+          <DocumentAccessAction
+            isAuthorized={isAuthorized}
+            requested={requested}
+            viewHref={viewHref}
+            onGetAccess={onGetAccess}
+            isRequesting={isRequesting}
+          />
+        </div>
+
+        {/* Mobile: status icon only; the row overlay handles activation.
+            Pending (`requested`) rows keep the icon in the a11y tree as status. */}
+        <div
+          className={slots.accessMobile()}
+          aria-hidden={mobileHitLabel != null ? true : undefined}
+        >
+          <DocumentAccessAction
+            isAuthorized={isAuthorized}
+            requested={requested}
+            viewHref={viewHref}
+            onGetAccess={onGetAccess}
+            isRequesting={isRequesting}
+            interactive={false}
+          />
+        </div>
       </div>
 
       {/* Sit above the row content so title / icon areas are part of the hit target. */}

@@ -40,7 +40,7 @@
   },
   "viewer": {
     "back": "ドキュメント",
-    "share": "ドキュメントを共有",
+    "copyLink": "リンクをコピー",
     "linkCopied": "リンクをクリップボードにコピーしました",
     "download": "ダウンロード",
     "previewUnavailable": "プレビューは利用できません",
