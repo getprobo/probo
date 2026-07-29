@@ -72,6 +72,26 @@ func TestWithLogger(t *testing.T) {
 	assert.NotNil(t, converter.l)
 }
 
+func TestGenerateTaggedPDFEnabled(t *testing.T) {
+	assert.True(t, generateTaggedPDFEnabled(RenderConfig{}))
+
+	disabled := false
+	assert.False(t, generateTaggedPDFEnabled(RenderConfig{GenerateTaggedPDF: &disabled}))
+
+	enabled := true
+	assert.True(t, generateTaggedPDFEnabled(RenderConfig{GenerateTaggedPDF: &enabled}))
+}
+
+func TestGenerateDocumentOutlineEnabled(t *testing.T) {
+	assert.True(t, generateDocumentOutlineEnabled(RenderConfig{}))
+
+	disabled := false
+	assert.False(t, generateDocumentOutlineEnabled(RenderConfig{GenerateDocumentOutline: &disabled}))
+
+	enabled := true
+	assert.True(t, generateDocumentOutlineEnabled(RenderConfig{GenerateDocumentOutline: &enabled}))
+}
+
 func TestGetPageDimensions(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -212,6 +232,7 @@ func TestGeneratePDF_WithValidChrome(t *testing.T) {
 
 	// Verify it looks like a PDF file (starts with PDF magic bytes)
 	assert.True(t, bytes.HasPrefix(pdfContent, []byte("%PDF-")))
+	assert.Contains(t, string(pdfContent), "/StructTreeRoot")
 }
 
 func TestGeneratePDF_ScaleHandling(t *testing.T) {
