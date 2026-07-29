@@ -24,10 +24,11 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
-import { documentViewer } from "./_components/variants";
+import { documentViewer, documentViewerToolbar } from "./_components/variants";
 
 export function DocumentViewerPageSkeleton() {
   const slots = documentViewer();
+  const toolbar = documentViewerToolbar();
 
   return (
     <div className={slots.root()}>
@@ -35,9 +36,9 @@ export function DocumentViewerPageSkeleton() {
         <div className={slots.header()}>
           <TextSkeleton size={1} className="w-20" />
           <HeadingSkeleton size={7} className="w-80" />
-          <div className={slots.toolbar()}>
+          <div className={toolbar.root()}>
             <ButtonSkeleton size={2} />
-            <div className={slots.actions()}>
+            <div className={toolbar.actions()}>
               <ButtonSkeleton size={2} />
               <ButtonSkeleton size={2} />
             </div>

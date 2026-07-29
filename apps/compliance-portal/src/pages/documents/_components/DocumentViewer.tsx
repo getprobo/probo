@@ -18,22 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import {
-  CaretLeftIcon,
-  CaretRightIcon,
-  DownloadSimpleIcon,
-  LinkSimpleIcon,
-  MagnifyingGlassMinusIcon,
-  MagnifyingGlassPlusIcon,
-  SpinnerGapIcon,
-} from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
+import { CaretLeftIcon, SpinnerGapIcon } from "@phosphor-icons/react";
 import { Link } from "@probo/ui/src/v2/Button/Link";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Separator } from "@probo/ui/src/v2/Separator/Separator";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -44,12 +31,10 @@ import { dataUriMimeType, downloadDataUri } from "../_lib/dataUri";
 
 import { DocumentDownloadFallback } from "./DocumentDownloadFallback";
 import { DocumentLocked } from "./DocumentLocked";
+import { DocumentViewerToolbar } from "./DocumentViewerToolbar";
 import type { PdfPreviewHandle } from "./PdfPreview";
 import { PdfPreview } from "./PdfPreview";
 import { documentViewer } from "./variants";
-
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 3;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -83,7 +68,6 @@ interface DocumentViewerProps {
 // place of the preview.
 export function DocumentViewer({ title, dataUri = null, downloadName = title, locked }: DocumentViewerProps) {
   const { t } = useTranslation("documents");
-  const toast = Toast.useToastManager();
   const localizedPath = useLocalizedPath();
 
   const pdfRef = useRef<PdfPreviewHandle>(null);
@@ -100,13 +84,6 @@ export function DocumentViewer({ title, dataUri = null, downloadName = title, lo
     const next = clamp(currentPage + direction, 1, numPages);
     pdfRef.current?.scrollToPage(next);
     setCurrentPage(next);
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(
-      () => toast.add({ title: t("viewer.linkCopied"), type: "success" }),
-      () => {},
-    );
   };
 
   const handleDownload = () => {
@@ -128,81 +105,16 @@ export function DocumentViewer({ title, dataUri = null, downloadName = title, lo
             {title}
           </Heading>
           {!isLocked && (
-            <div className={slots.toolbar()}>
-              <div className={slots.toolbarStart()}>
-                {isPdf && (
-                  <>
-                    <div className={slots.controls()}>
-                      <IconButton
-                        variant="ghost"
-                        color="neutral"
-                        aria-label={t("common.previousPage")}
-                        disabled={currentPage <= 1}
-                        onClick={() => movePage(-1)}
-                      >
-                        <CaretLeftIcon />
-                      </IconButton>
-                      <Text size={2} color="neutral">
-                        {t("common.pageOf", { current: currentPage, total: numPages })}
-                      </Text>
-                      <IconButton
-                        variant="ghost"
-                        color="neutral"
-                        aria-label={t("common.nextPage")}
-                        disabled={currentPage >= numPages}
-                        onClick={() => movePage(1)}
-                      >
-                        <CaretRightIcon />
-                      </IconButton>
-                    </div>
-                    <Separator orientation="vertical" className={slots.separator()} />
-                    <div className={slots.controls()}>
-                      <IconButton
-                        variant="ghost"
-                        color="neutral"
-                        aria-label={t("common.zoomOut")}
-                        onClick={() => setScale(value => clamp(value * 0.8, MIN_SCALE, MAX_SCALE))}
-                      >
-                        <MagnifyingGlassMinusIcon />
-                      </IconButton>
-                      <Text size={2} color="neutral">
-                        {`${Math.round(scale * 100)}%`}
-                      </Text>
-                      <IconButton
-                        variant="ghost"
-                        color="neutral"
-                        aria-label={t("common.zoomIn")}
-                        onClick={() => setScale(value => clamp(value * 1.25, MIN_SCALE, MAX_SCALE))}
-                      >
-                        <MagnifyingGlassPlusIcon />
-                      </IconButton>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className={slots.actions()}>
-                <Button
-                  variant="ghost"
-                  color="neutral"
-                  iconStart={<LinkSimpleIcon />}
-                  onClick={handleCopyLink}
-                  aria-label={t("viewer.copyLink")}
-                >
-                  <span className={slots.actionLabel()}>{t("viewer.copyLink")}</span>
-                </Button>
-                <Separator orientation="vertical" className={slots.separator()} />
-                <Button
-                  variant="ghost"
-                  color="neutral"
-                  iconStart={<DownloadSimpleIcon />}
-                  disabled={dataUri == null}
-                  onClick={handleDownload}
-                  aria-label={t("viewer.download")}
-                >
-                  <span className={slots.actionLabel()}>{t("viewer.download")}</span>
-                </Button>
-              </div>
-            </div>
+            <DocumentViewerToolbar
+              isPdf={isPdf}
+              currentPage={currentPage}
+              numPages={numPages}
+              scale={scale}
+              onScaleChange={setScale}
+              onMovePage={movePage}
+              dataUri={dataUri}
+              downloadName={downloadName}
+            />
           )}
         </div>
       </HeaderBand>
