@@ -3,6 +3,14 @@
 All notable changes to the `probo-agent` device posture agent will be
 documented in this file.
 
+## Unreleased
+
+## [0.4.0] - 2026-07-29
+
+### Added
+
+- Posture check submissions now carry a correlation ID grouping each agent push into a single report, powering paginated report history in the console
+
 ## [0.3.1] - 2026-07-27
 
 ### Fixed
