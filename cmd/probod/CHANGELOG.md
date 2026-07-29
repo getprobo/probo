@@ -4,6 +4,33 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.240.0] - 2026-07-29
+
+### Added
+
+- Log export for audit logs and SCIM events: request a JSONL export job from the console, Connect, MCP, or CLI, streamed and uploaded to S3 by a concurrent export worker
+- Auth cookie `SameSite` attribute is now configurable (`PROBOD_AUTH_COOKIE_SAMESITE`, defaults to `Lax`), rejecting `None` unless `Secure` is enabled
+- In-tab light/dark display mode toggle for signed-in compliance portal guests, independent of the OS color scheme
+- Subprocessor cards truncate long country/region lists behind a "+N" popover
+
+### Changed
+
+- Access review campaigns can now be deleted in any status, except while a campaign is still fetching sources
+- Document share action relabeled "Copy link" and exposed on each row of the documents list, not just the viewer
+- Locked document viewer keeps showing the document title and an access-request CTA instead of withholding the whole page
+- Guest language selector shows the locale code instead of the full language name to save space next to "Get access"
+- Compliance portal TopBar stacks the brand name over the tagline and shortens nav labels on narrower viewports
+- html2pdf-rendered PDFs (e.g. signature certificates) now request a tagged structure tree and document outline from Chrome for accessibility
+- `safeRedirect` now accepts configured CORS origins as valid continue-URL hosts, alongside verified custom domains
+
+### Fixed
+
+- Document soft-delete now clears associated control/risk/measure mappings, fixing risk deletion when the linked document was already removed
+- Console document `lang` attribute now follows the active i18next locale instead of always reporting English
+- "Trusted by" logo tiles now stretch to match row height when a caption wraps to two lines
+- Compliance portal drawer's dropdown/select menus are clickable again when the swipe drawer's transform was blocking pointer events underneath it
+- Ukrainian "+N more regions" label now uses the correct one/few/many plural forms
+
 ## [0.239.0] - 2026-07-29
 
 ### Added
