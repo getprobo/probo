@@ -75,9 +75,13 @@ export function TopBar({ queryKey }: TopBarProps) {
   return (
     <header className={slots.bar()}>
       <div className={slots.inner()}>
-        <RouterLink to={homePath} className={slots.brand()}>
+        <RouterLink
+          to={homePath}
+          className={slots.brand()}
+          aria-label={`${entityName} ${t("topBar.tagline")}`}
+        >
           <Avatar
-            size={1}
+            size={2}
             variant="soft"
             color="neutral"
             radius="small"
@@ -85,15 +89,15 @@ export function TopBar({ queryKey }: TopBarProps) {
             fallback={entityName.charAt(0) || "?"}
             className={slots.logo()}
           />
-          <Text size={2} weight="medium" color="neutral" highContrast className={slots.brandName()}>
-            {entityName}
-          </Text>
-          <Text size={2} color="neutral" className={slots.tagline()}>
-            {t("topBar.tagline")}
-          </Text>
+          <span className={slots.brandText()}>
+            <Text size={2} weight="medium" color="neutral" highContrast className={slots.brandName()}>
+              {entityName}
+            </Text>
+            <Text size={1} color="neutral" className={slots.tagline()}>
+              {t("topBar.tagline")}
+            </Text>
+          </span>
         </RouterLink>
-
-        <div className={slots.spacer()} />
 
         <nav className={slots.nav()}>
           {TOP_BAR_NAV_ITEMS.map((item) => {

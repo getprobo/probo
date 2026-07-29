@@ -7,8 +7,8 @@
     "menuTitle": "Menü",
     "nav": {
       "documents": "Dokumente",
-      "subprocessors": "Unterauftragsverarbeiter",
-      "updates": "Aktualisierungen",
+      "subprocessors": "Subprozessoren",
+      "updates": "Updates",
       "requests": "Anfragen"
     }
   },

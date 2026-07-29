@@ -7,8 +7,8 @@
     "menuTitle": "Menü",
     "nav": {
       "documents": "Belgeler",
-      "subprocessors": "Alt İşleyiciler",
-      "updates": "Güncellemeler",
+      "subprocessors": "Alt işlemciler",
+      "updates": "Güncelleme",
       "requests": "Talepler"
     }
   },

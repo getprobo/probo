@@ -22,17 +22,20 @@ import { tv } from "tailwind-variants/lite";
 
 // Compliance Portal top navigation bar. Slots are shared by the live TopBar and its
 // skeleton so the loading placeholder is structurally identical. Desktop-first:
-// unprefixed classes are the desktop layout; max-md: collapses into the burger.
+// unprefixed classes are the desktop layout; max-md (<768px) collapses into the
+// burger. Below lg (<1024px) the brand shows logo only — name + tagline return
+// at lg+, where they fit beside the nav without ellipsis. justify-between keeps
+// nav right-aligned without a flex-grow spacer competing with the brand.
 export const topBar = tv({
   slots: {
     bar: "flex h-14 items-center bg-sand-1 px-8 max-md:px-4",
-    inner: "mx-auto flex w-full max-w-5xl items-center gap-10 max-md:gap-3",
+    inner: "mx-auto flex w-full max-w-5xl items-center justify-between gap-6 max-md:gap-3",
     brand: "flex min-w-0 items-center gap-2",
+    brandText: "flex min-w-0 flex-col max-lg:hidden",
     brandName: "truncate",
-    tagline: "max-md:hidden",
+    tagline: "truncate",
     logo: "shrink-0",
-    spacer: "h-px flex-1",
-    nav: "flex items-center gap-1 max-md:hidden",
+    nav: "flex shrink-0 items-center gap-1 max-md:hidden",
     // Wrapper (not the IconButton) so kit `inline-flex` cannot override `hidden`.
     menuTrigger: "hidden max-md:block",
   },

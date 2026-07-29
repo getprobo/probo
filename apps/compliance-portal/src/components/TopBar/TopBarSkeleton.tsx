@@ -42,12 +42,12 @@ export function TopBarSkeleton() {
     <div className={slots.bar()}>
       <div className={slots.inner()}>
         <div className={slots.brand()}>
-          <AvatarSkeleton size={1} radius="small" />
-          <TextSkeleton size={2} className={`w-24 ${slots.brandName()}`} />
-          <TextSkeleton size={2} className={`w-28 ${slots.tagline()}`} />
+          <AvatarSkeleton size={2} radius="small" />
+          <span className={slots.brandText()}>
+            <TextSkeleton size={2} className={`w-24 ${slots.brandName()}`} />
+            <TextSkeleton size={1} className={`w-28 ${slots.tagline()}`} />
+          </span>
         </div>
-
-        <div className={slots.spacer()} />
 
         <nav className={slots.nav()}>
           {NAV_ITEMS.map(item => (
