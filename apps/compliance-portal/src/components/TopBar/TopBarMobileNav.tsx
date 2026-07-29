@@ -80,9 +80,10 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
   const [signOut, isSigningOut] = useSignOut();
   const { displayMode, toggleDisplayMode } = useDisplayMode();
   const [open, setOpen] = useState(false);
-  // Select menus portal to body at z-3 by default; mount them on the drawer
-  // popup so they stack inside the modal layer (z-5) instead of under it.
-  const drawerPopupRef = useRef<HTMLDivElement>(null);
+  // Select menus portal to body at z-3 by default (under the drawer at z-5).
+  // Mount them on the drawer Viewport — not the swipe Popup, which keeps a CSS
+  // transform and would break Base UI's modal inert cutout over the trigger.
+  const drawerViewportRef = useRef<HTMLDivElement>(null);
   const identity = useFragment(topBarMobileNavFragment, identityKey);
   const localizedPath = useLocalizedPath();
 
@@ -110,7 +111,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
           )}
         />
       </div>
-      <DrawerPopup side="right" ref={drawerPopupRef}>
+      <DrawerPopup side="right" ref={drawerViewportRef}>
         <DrawerHeader>
           <DrawerTitle>{t("topBar.menuTitle")}</DrawerTitle>
           <DrawerClose
@@ -154,7 +155,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
             <LocaleSelect
               persist={identity != null}
               onLocaleChange={close}
-              portalContainer={drawerPopupRef}
+              portalContainer={drawerViewportRef}
             />
           </div>
           {identity == null

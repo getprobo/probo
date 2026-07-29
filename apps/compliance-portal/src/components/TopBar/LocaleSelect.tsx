@@ -40,7 +40,8 @@ interface LocaleSelectProps {
   // Called after a locale change is requested (e.g. close the mobile drawer).
   onLocaleChange?: () => void;
   // Portal target for the menu. Required inside a Drawer/Dialog so the popup
-  // is not painted under the modal layer (Select defaults to body + z-3).
+  // stacks in the modal layer (Select defaults to body + z-3). Prefer a
+  // non-transformed container (e.g. Drawer Viewport, not the swipe Popup).
   portalContainer?: RefObject<HTMLElement | null>;
 }
 

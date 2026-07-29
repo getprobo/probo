@@ -27,8 +27,10 @@ export type SelectPopupProps
   = & Omit<ComponentProps<typeof BaseSelect.Popup>, "className">
     & {
       className?: string;
-      // Mount inside a modal/drawer so the menu stacks above that layer
-      // (body portal uses z-3, below drawers at z-5).
+      // Mount inside a modal/drawer stacking context (body portal uses z-3,
+      // below drawers at z-5). Use a non-transformed ancestor — a CSS
+      // transform on the container re-roots `position: fixed` and breaks
+      // Base UI's modal inert cutout over the trigger.
       container?: ComponentProps<typeof BaseSelect.Portal>["container"];
       // Positioner placement passthrough.
       side?: ComponentProps<typeof BaseSelect.Positioner>["side"];
