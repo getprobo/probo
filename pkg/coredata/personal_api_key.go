@@ -302,16 +302,7 @@ WHERE
 	return nil
 }
 
-type (
-	PersonalAPIKeyAuditLogActorRow struct {
-		ID   gid.GID `db:"id"`
-		Name string  `db:"name"`
-	}
-
-	PersonalAPIKeyAuditLogActorRows []*PersonalAPIKeyAuditLogActorRow
-)
-
-func (rows *PersonalAPIKeyAuditLogActorRows) LoadByIDs(
+func (a *PersonalAPIKeys) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	apiKeyIDs []gid.GID,
@@ -319,7 +310,13 @@ func (rows *PersonalAPIKeyAuditLogActorRows) LoadByIDs(
 	q := `
 SELECT
     id,
-    name
+    identity_id,
+    name,
+    expires_at,
+    expire_reason,
+    last_used_at,
+    created_at,
+    updated_at
 FROM
     iam_personal_api_keys
 WHERE
@@ -328,17 +325,17 @@ WHERE
 
 	args := pgx.StrictNamedArgs{"api_key_ids": apiKeyIDs}
 
-	rowsResult, err := conn.Query(ctx, q, args)
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query personal api key audit log actors: %w", err)
+		return fmt.Errorf("cannot query personal api keys: %w", err)
 	}
 
-	actors, err := pgx.CollectRows(rowsResult, pgx.RowToAddrOfStructByName[PersonalAPIKeyAuditLogActorRow])
+	apiKeys, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[PersonalAPIKey])
 	if err != nil {
-		return fmt.Errorf("cannot collect personal api key audit log actors: %w", err)
+		return fmt.Errorf("cannot collect personal api keys: %w", err)
 	}
 
-	*rows = actors
+	*a = apiKeys
 
 	return nil
 }

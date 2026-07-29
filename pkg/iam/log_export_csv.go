@@ -270,7 +270,7 @@ func loadAuditLogActorExportInfo(
 
 	result := make(map[gid.GID]auditLogActorExportInfo)
 
-	var identities coredata.IdentityAuditLogActorRows
+	var identities coredata.Identities
 	if err := identities.LoadByIDs(ctx, conn, identityIDs); err != nil {
 		return nil, fmt.Errorf("cannot load audit log actor identities: %w", err)
 	}
@@ -282,7 +282,7 @@ func loadAuditLogActorExportInfo(
 		}
 	}
 
-	var apiKeys coredata.PersonalAPIKeyAuditLogActorRows
+	var apiKeys coredata.PersonalAPIKeys
 	if err := apiKeys.LoadByIDs(ctx, conn, apiKeyIDs); err != nil {
 		return nil, fmt.Errorf("cannot load audit log actor API keys: %w", err)
 	}
@@ -308,7 +308,7 @@ func loadSCIMProfileExportInfo(
 		return map[string]scimProfileExportInfo{}, nil
 	}
 
-	var profiles coredata.MembershipProfileByUserNameRows
+	var profiles coredata.MembershipProfiles
 	if err := profiles.LoadByOrganizationIDAndUserNames(
 		ctx,
 		conn,
@@ -328,7 +328,7 @@ func loadSCIMProfileExportInfo(
 		key := strings.ToLower(*profile.UserName)
 		result[key] = scimProfileExportInfo{
 			email:    scimEmailFromUserName(*profile.UserName),
-			fullName: profile.DisplayName(),
+			fullName: profileFullName(profile),
 		}
 	}
 
@@ -377,6 +377,14 @@ func scimEmailFromUserName(userName string) string {
 	}
 
 	return ""
+}
+
+func profileFullName(profile *coredata.MembershipProfile) string {
+	if profile.FormattedName != nil && *profile.FormattedName != "" {
+		return *profile.FormattedName
+	}
+
+	return profile.FullName
 }
 
 func stringPtrValue(value *string) string {

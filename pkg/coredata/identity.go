@@ -388,17 +388,7 @@ WHERE
 	return count, nil
 }
 
-type (
-	IdentityAuditLogActorRow struct {
-		ID           gid.GID   `db:"id"`
-		EmailAddress mail.Addr `db:"email_address"`
-		FullName     string    `db:"full_name"`
-	}
-
-	IdentityAuditLogActorRows []*IdentityAuditLogActorRow
-)
-
-func (rows *IdentityAuditLogActorRows) LoadByIDs(
+func (i *Identities) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	identityIDs []gid.GID,
@@ -407,7 +397,13 @@ func (rows *IdentityAuditLogActorRows) LoadByIDs(
 SELECT
     id,
     email_address,
-    full_name
+    full_name,
+    hashed_password,
+    email_address_verified,
+    saml_subject,
+    locale,
+    created_at,
+    updated_at
 FROM
     identities
 WHERE
@@ -416,17 +412,17 @@ WHERE
 
 	args := pgx.StrictNamedArgs{"identity_ids": identityIDs}
 
-	rowsResult, err := conn.Query(ctx, q, args)
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query identity audit log actors: %w", err)
+		return fmt.Errorf("cannot query identities: %w", err)
 	}
 
-	actors, err := pgx.CollectRows(rowsResult, pgx.RowToAddrOfStructByName[IdentityAuditLogActorRow])
+	identities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Identity])
 	if err != nil {
-		return fmt.Errorf("cannot collect identity audit log actors: %w", err)
+		return fmt.Errorf("cannot collect identities: %w", err)
 	}
 
-	*rows = actors
+	*i = identities
 
 	return nil
 }
