@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.239.0] - 2026-07-29
+
+### Added
+
+- Device page shows a formatted value per posture check alongside current postures; the Postures tab is replaced with paginated report history grouped by agent push time
+
 ## [0.238.0] - 2026-07-28
 
 ### Added
