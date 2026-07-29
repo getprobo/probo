@@ -37,6 +37,7 @@ import CompliancePortalDocumentAccessRejected from "../src/CompliancePortalDocum
 import ElectronicSignatureCertificate from "../src/ElectronicSignatureCertificate";
 import MailingListSubscription from "../src/MailingListSubscription";
 import MailingListUnsubscription from "../src/MailingListUnsubscription";
+import LogExport from "../src/LogExport";
 import MagicLink from "../src/MagicLink";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -103,6 +104,10 @@ const templates: TemplateConfig[] = [
   {
     name: "mailing-list-updates",
     render: () => MailingListUpdates(),
+  },
+  {
+    name: "log-export",
+    render: () => LogExport(),
   },
 ];
 

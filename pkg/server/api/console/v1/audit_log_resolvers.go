@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -65,6 +66,42 @@ func (r *auditLogEntryConnectionResolver) TotalCount(ctx context.Context, obj *t
 	}
 
 	return count, nil
+}
+
+// RequestAuditLogExport is the resolver for the requestAuditLogExport field.
+func (r *mutationResolver) RequestAuditLogExport(ctx context.Context, input types.RequestAuditLogExportInput) (*types.RequestAuditLogExportPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, iam.ActionAuditLogExport)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iam.OrganizationService.RequestLogExport(
+		ctx,
+		scope,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.ExportJobTypeAuditLog,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrInvalidLogExportTimeRange](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot request audit log export", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RequestAuditLogExportPayload{
+		ExportJobID: logExport.ID,
+	}, nil
 }
 
 // AuditLogEntry returns schema.AuditLogEntryResolver implementation.

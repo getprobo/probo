@@ -255,7 +255,7 @@ LIMIT 1;
 	return nil
 }
 
-func (es *AuditLogEntries) LoadAllByOrganizationID(
+func (es *AuditLogEntries) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,

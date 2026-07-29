@@ -123,7 +123,7 @@ The method name signals whether the result set is bounded:
 
 ### Loading every row without an unbounded query
 
-When a caller genuinely needs all rows, expose a cursor-paginated `LoadBy*` and walk it with the generic `page.LoadAll` helper ([`pkg/page/load_all.go`](../../pkg/page/load_all.go)). It repeatedly fetches forward pages of `MaxCursorSize` until the result is exhausted, and returns an error past `MaxLoadAllPages` (20) pages so a genuinely unbounded set fails loudly instead of exhausting memory.
+When a caller genuinely needs all rows, expose a cursor-paginated `LoadBy*` and walk it with the generic `page.LoadAll` / `page.WalkAll` helpers ([`pkg/page/load_all.go`](../../pkg/page/load_all.go)). They repeatedly fetch forward pages of `MaxCursorSize` until the result is exhausted. `LoadAll` materialises the concatenated slice and errors past `MaxLoadAllPages` pages so a genuinely unbounded set fails loudly instead of exhausting memory. `WalkAll` streams each page to a callback with no page cap — use it when you can process rows as they arrive (e.g. streaming an export).
 
 ```go
 things, err := page.LoadAll(
@@ -143,7 +143,29 @@ things, err := page.LoadAll(
 )
 ```
 
-The order field passed to `page.LoadAll` must have a `CursorKey` case on the entity. `CursorKey` panics at runtime (not compile time) on an unhandled field, so add the case when introducing the order field.
+```go
+err := page.WalkAll(
+	ctx,
+	page.OrderBy[coredata.ThingOrderField]{
+		Field:     coredata.ThingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	},
+	func(ctx context.Context, cursor *page.Cursor[coredata.ThingOrderField]) ([]*coredata.Thing, error) {
+		var batch coredata.Things
+		if err := batch.LoadByParentID(ctx, conn, scope, parentID, cursor); err != nil {
+			return nil, err
+		}
+
+		return batch, nil
+	},
+	func(things []*coredata.Thing) error {
+		// process one page
+		return nil
+	},
+)
+```
+
+The order field passed to `page.LoadAll` / `page.WalkAll` must have a `CursorKey` case on the entity. `CursorKey` panics at runtime (not compile time) on an unhandled field, so add the case when introducing the order field.
 
 ## No cross-entity JOINs
 

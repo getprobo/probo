@@ -22,6 +22,7 @@ package iam
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -1565,7 +1566,14 @@ func (s OrganizationService) ListSCIMEvents(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := scimEvents.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			err := scimEvents.LoadByOrganizationID(
+				ctx,
+				conn,
+				scope,
+				organizationID,
+				cursor,
+				coredata.NewSCIMEventFilter(),
+			)
 			if err != nil {
 				return fmt.Errorf("cannot load scim events: %w", err)
 			}
@@ -2353,7 +2361,7 @@ func (s *OrganizationService) ListAuditLogEntries(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := entries.LoadAllByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+			if err := entries.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load audit log entries: %w", err)
 			}
 
@@ -2392,4 +2400,72 @@ func (s *OrganizationService) CountAuditLogEntries(
 	)
 
 	return count, err
+}
+
+type RequestLogExportRequest struct {
+	OrganizationID gid.GID
+	Type           coredata.ExportJobType
+	FromTime       time.Time
+	ToTime         time.Time
+	RecipientEmail mail.Addr
+	RecipientName  string
+}
+
+func (s *OrganizationService) RequestLogExport(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req RequestLogExportRequest,
+) (*coredata.ExportJob, error) {
+	if !req.FromTime.Before(req.ToTime) {
+		return nil, NewInvalidLogExportTimeRangeError()
+	}
+
+	if req.ToTime.After(req.FromTime.AddDate(maxLogExportTimeRangeYears, 0, 0)) {
+		return nil, NewLogExportTimeRangeTooLargeError()
+	}
+
+	switch req.Type {
+	case coredata.ExportJobTypeAuditLog, coredata.ExportJobTypeSCIMEvent:
+	default:
+		return nil, fmt.Errorf("unsupported log export type: %q", req.Type)
+	}
+
+	arguments, err := json.Marshal(coredata.LogExportArguments{
+		FromTime: req.FromTime,
+		ToTime:   req.ToTime,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal log export arguments: %w", err)
+	}
+
+	exportJob := &coredata.ExportJob{}
+
+	err = s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			now := time.Now()
+
+			exportJob = &coredata.ExportJob{
+				ID:             gid.New(scope.GetTenantID(), coredata.ExportJobEntityType),
+				OrganizationID: req.OrganizationID,
+				Type:           req.Type,
+				Arguments:      arguments,
+				Status:         coredata.ExportJobStatusPending,
+				RecipientEmail: req.RecipientEmail,
+				RecipientName:  req.RecipientName,
+				CreatedAt:      now,
+			}
+
+			if err := exportJob.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert export job: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot request log export: %w", err)
+	}
+
+	return exportJob, nil
 }

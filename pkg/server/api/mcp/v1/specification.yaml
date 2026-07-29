@@ -8487,6 +8487,66 @@ components:
           items:
             $ref: "#/components/schemas/AuditLogEntry"
 
+    RequestAuditLogExportInput:
+      type: object
+      required:
+        - organization_id
+        - from_time
+        - to_time
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        from_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Start of the time range (inclusive). The range must not exceed 1 year.
+        to_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: End of the time range (exclusive). The range must not exceed 1 year.
+
+    RequestAuditLogExportOutput:
+      type: object
+      required:
+        - export_job_id
+      properties:
+        export_job_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the created log export
+
+    RequestSCIMEventExportInput:
+      type: object
+      required:
+        - organization_id
+        - from_time
+        - to_time
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        from_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Start of the time range (inclusive). The range must not exceed 1 year.
+        to_time:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: End of the time range (exclusive). The range must not exceed 1 year.
+
+    RequestSCIMEventExportOutput:
+      type: object
+      required:
+        - export_job_id
+      properties:
+        export_job_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the created log export
+
     AuditLogEntry:
       type: object
       required:
@@ -13955,6 +14015,24 @@ tools:
       $ref: "#/components/schemas/ListAuditLogEntriesInput"
     outputSchema:
       $ref: "#/components/schemas/ListAuditLogEntriesOutput"
+  - name: requestAuditLogExport
+    description: Request an export of audit log entries for the organization within a time range. The export will be emailed as a JSONL download link.
+    hints:
+      readonly: false
+      idempotent: false
+    inputSchema:
+      $ref: "#/components/schemas/RequestAuditLogExportInput"
+    outputSchema:
+      $ref: "#/components/schemas/RequestAuditLogExportOutput"
+  - name: requestSCIMEventExport
+    description: Request an export of SCIM events for the organization within a time range. The export will be emailed as a JSONL download link.
+    hints:
+      readonly: false
+      idempotent: false
+    inputSchema:
+      $ref: "#/components/schemas/RequestSCIMEventExportInput"
+    outputSchema:
+      $ref: "#/components/schemas/RequestSCIMEventExportOutput"
   - name: listWebhookSubscriptions
     description: List all webhook subscriptions for the organization
     hints:

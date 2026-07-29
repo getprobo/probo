@@ -242,6 +242,7 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	policy.Allow(
 		ActionAuditLogEntryGet,
 		ActionAuditLogEntryList,
+		ActionAuditLogExport,
 	).
 		WithSID("audit-log-entry-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
@@ -360,15 +361,21 @@ var IAMAdminPolicy = policy.NewPolicy(
 	).
 		WithSID("deny-scim-management"),
 
-	// Can view audit log entries (scoped to own organization)
+	// Can view and export audit log entries (scoped to own organization)
 	policy.Allow(
 		ActionAuditLogEntryGet,
 		ActionAuditLogEntryList,
+		ActionAuditLogExport,
 	).
 		WithSID("audit-log-entry-admin-access").
 		When(
 			policy.Equals("principal.organization_id", "resource.organization_id"),
 		),
+
+	// Can export SCIM events (scoped to own organization)
+	policy.Allow(ActionSCIMEventExport).
+		WithSID("scim-event-export-admin-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("IAM admin access - can manage members but cannot delete organization or manage SAML/SCIM")
 

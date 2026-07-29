@@ -1218,19 +1218,12 @@ func (impl *Implm) runExportJob(
 	proboService *probo.Service,
 	l *log.Logger,
 ) error {
-LOOP:
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(30 * time.Second):
-		if err := proboService.ExportJob(ctx); err != nil {
-			if !errors.Is(err, coredata.ErrNoExportJobAvailable) {
-				l.ErrorCtx(ctx, "cannot process export job", log.Error(err))
-			}
-		}
-
-		goto LOOP
-	}
+	return probo.NewExportJobWorker(
+		proboService,
+		l,
+		probo.ExportJobWorkerConfig{},
+		worker.WithMaxConcurrency(3),
+	).Run(ctx)
 }
 
 func (impl *Implm) runApiServer(

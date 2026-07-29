@@ -32,6 +32,8 @@ type (
 const (
 	ExportJobTypeFramework ExportJobType = "FRAMEWORK"
 	ExportJobTypeDocument  ExportJobType = "DOCUMENT"
+	ExportJobTypeAuditLog  ExportJobType = "AUDIT_LOG"
+	ExportJobTypeSCIMEvent ExportJobType = "SCIM_EVENT"
 )
 
 var (
@@ -44,6 +46,8 @@ func ExportJobTypes() []ExportJobType {
 	return []ExportJobType{
 		ExportJobTypeFramework,
 		ExportJobTypeDocument,
+		ExportJobTypeAuditLog,
+		ExportJobTypeSCIMEvent,
 	}
 }
 
@@ -51,7 +55,9 @@ func (v ExportJobType) IsValid() bool {
 	switch v {
 	case
 		ExportJobTypeFramework,
-		ExportJobTypeDocument:
+		ExportJobTypeDocument,
+		ExportJobTypeAuditLog,
+		ExportJobTypeSCIMEvent:
 		return true
 	}
 

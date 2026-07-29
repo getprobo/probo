@@ -140,6 +140,9 @@ extend type Mutation {
   updateSCIMBridge(
     input: UpdateSCIMBridgeInput!
   ): UpdateSCIMBridgePayload @authentication(required: PRESENT)
+  requestSCIMEventExport(
+    input: RequestSCIMEventExportInput!
+  ): RequestSCIMEventExportPayload @authentication(required: PRESENT) @sessionOnly
 }
 
 input CreateSCIMConfigurationInput {
@@ -180,4 +183,14 @@ type RegenerateSCIMTokenPayload {
 
 type UpdateSCIMBridgePayload {
   scimBridge: SCIMBridge!
+}
+
+input RequestSCIMEventExportInput {
+  organizationId: ID!
+  fromTime: Datetime!
+  toTime: Datetime!
+}
+
+type RequestSCIMEventExportPayload {
+  exportJobId: ID!
 }

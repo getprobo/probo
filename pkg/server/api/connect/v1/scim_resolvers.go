@@ -13,6 +13,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -104,6 +105,42 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 
 	return &types.UpdateSCIMBridgePayload{
 		ScimBridge: types.NewSCIMBridge(bridge),
+	}, nil
+}
+
+// RequestSCIMEventExport is the resolver for the requestSCIMEventExport field.
+func (r *mutationResolver) RequestSCIMEventExport(ctx context.Context, input types.RequestSCIMEventExportInput) (*types.RequestSCIMEventExportPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, iam.ActionSCIMEventExport)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iam.OrganizationService.RequestLogExport(
+		ctx,
+		scope,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.ExportJobTypeSCIMEvent,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrInvalidLogExportTimeRange](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot request SCIM event export", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RequestSCIMEventExportPayload{
+		ExportJobID: logExport.ID,
 	}, nil
 }
 

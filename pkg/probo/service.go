@@ -118,6 +118,7 @@ type (
 		GeneratedDocuments                    *GeneratedDocumentService
 		Files                                 *FileService
 		SlackMessages                         *slack.Service
+		LogExports                            ExportService
 	}
 )
 
@@ -231,16 +232,12 @@ func NewService(
 	svc.GeneratedDocuments = &GeneratedDocumentService{svc: svc}
 	svc.Files = &FileService{svc: svc}
 	svc.SlackMessages = slackService
+	svc.LogExports = iamService.LogExports
 
 	return svc, nil
 }
 
-func (s *Service) ExportJob(ctx context.Context) error {
-	exportJob, err := s.lockExportJob(ctx)
-	if err != nil {
-		return fmt.Errorf("cannot lock export job: %w", err)
-	}
-
+func (s *Service) processExportJob(ctx context.Context, exportJob *coredata.ExportJob) error {
 	scope := coredata.NewScope(exportJob.ID.TenantID())
 
 	var exportService ExportService
@@ -250,6 +247,8 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		exportService = s.Frameworks
 	case coredata.ExportJobTypeDocument:
 		exportService = s.Documents
+	case coredata.ExportJobTypeAuditLog, coredata.ExportJobTypeSCIMEvent:
+		exportService = s.LogExports
 	default:
 		unknownTypeErr := fmt.Errorf("unknown export job type: %q", exportJob.Type)
 		if err := s.commitFailedExport(ctx, exportJob, unknownTypeErr); err != nil {
@@ -314,10 +313,7 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 
 			scope = coredata.NewScope(exportJob.ID.TenantID())
 
-			exportJob.Status = coredata.ExportJobStatusProcessing
-
-			exportJob.StartedAt = new(time.Now())
-			if err := exportJob.Update(ctx, tx, scope); err != nil {
+			if err := exportJob.MarkProcessing(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -341,7 +337,7 @@ func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.Ex
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, tx, scope); err != nil {
+			if err := exportJob.UpdateIfStatus(ctx, tx, scope, coredata.ExportJobStatusProcessing); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -358,7 +354,7 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, tx, scope); err != nil {
+			if err := exportJob.UpdateIfStatus(ctx, tx, scope, coredata.ExportJobStatusProcessing); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 

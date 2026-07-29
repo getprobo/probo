@@ -1,0 +1,10 @@
+Probo
+
+Hi {{.RecipientFullName}},
+
+Your {{.ExportLabel}} export has been completed successfully. Click the link below to download it:
+
+{{.DownloadUrl}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

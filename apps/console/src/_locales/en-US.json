@@ -1393,7 +1393,21 @@
     "empty": "No audit log entries yet.",
     "showing": "Showing {{shown}} of {{total}} entries",
     "columns": { "date": "Date", "actor": "Actor", "action": "Action", "resource": "Resource" },
-    "actions": { "showMore": "Show more" }
+    "actions": { "showMore": "Show more" },
+    "export": {
+      "title": "Export Audit Log",
+      "description": "Select a date range to export audit log entries as JSONL. You will receive an email with a download link.",
+      "fields": { "from": "From", "to": "To" },
+      "actions": { "export": "Export", "exporting": "Exporting..." },
+      "messages": {
+        "successTitle": "Success",
+        "success": "Export started. You will receive an email with a download link when it is ready."
+      },
+      "errors": {
+        "title": "Error",
+        "request": "Failed to request audit log export"
+      }
+    }
   },
   "generalSettingsPage": {
     "messages": { "deleted": "Organization deleted successfully." },
@@ -1407,7 +1421,21 @@
   },
   "scimSettingsPage": {
     "manualScim": { "title": "Manual SCIM", "description": "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider." },
-    "provisioningEventHistory": "Provisioning Event History"
+    "provisioningEventHistory": "Provisioning Event History",
+    "export": {
+      "title": "Export SCIM Events",
+      "description": "Select a date range to export SCIM events as JSONL. You will receive an email with a download link.",
+      "fields": { "from": "From", "to": "To" },
+      "actions": { "export": "Export", "exporting": "Exporting..." },
+      "messages": {
+        "successTitle": "Success",
+        "success": "Export started. You will receive an email with a download link when it is ready."
+      },
+      "errors": {
+        "title": "Error",
+        "request": "Failed to request SCIM event export"
+      }
+    }
   },
   "settingsLayout": { "title": "Settings", "tabs": { "general": "General", "samlSso": "SAML SSO", "scim": "SCIM", "webhooks": "Webhooks", "auditLog": "Audit Log" } },
   "connectorList": { "title": "Identity Provider", "description": "Connect your identity provider to automatically sync users to your organization. Once connected, you don't need to configure SCIM manually." },

@@ -2539,6 +2539,20 @@
     },
     "actions": {
       "showMore": "Afficher plus"
+    },
+    "export": {
+      "title": "Exporter le journal d'audit",
+      "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d'audit au format JSONL. Vous recevrez un e-mail avec un lien de téléchargement.",
+      "fields": { "from": "Du", "to": "Au" },
+      "actions": { "export": "Exporter", "exporting": "Exportation..." },
+      "messages": {
+        "successTitle": "Succès",
+        "success": "L'export a démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu'il sera prêt."
+      },
+      "errors": {
+        "title": "Erreur",
+        "request": "Échec de la demande d'export du journal d'audit"
+      }
     }
   },
   "generalSettingsPage": {
@@ -2574,7 +2588,21 @@
       "title": "SCIM manuel",
       "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé ci-dessus. Cela nécessite de configurer l’URL du point de terminaison SCIM et le jeton porteur dans votre fournisseur d’identité."
     },
-    "provisioningEventHistory": "Historique des événements de provisionnement"
+    "provisioningEventHistory": "Historique des événements de provisionnement",
+    "export": {
+      "title": "Exporter les événements SCIM",
+      "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format JSONL. Vous recevrez un e-mail avec un lien de téléchargement.",
+      "fields": { "from": "Du", "to": "Au" },
+      "actions": { "export": "Exporter", "exporting": "Exportation..." },
+      "messages": {
+        "successTitle": "Succès",
+        "success": "Export démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
+      },
+      "errors": {
+        "title": "Erreur",
+        "request": "Échec de la demande d’export des événements SCIM"
+      }
+    }
   },
   "settingsLayout": {
     "title": "Paramètres",

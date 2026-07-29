@@ -82,6 +82,7 @@ type (
 		OAuth2ScopeRegistry *oauth2scope.Registry
 
 		samlDomainVerifier *SAMLDomainVerifier
+		LogExports         *LogExportService
 	}
 
 	Config struct {
@@ -239,6 +240,13 @@ func NewService(
 		cfg.TracerProvider,
 		cfg.DomainVerificationInterval,
 		cfg.DomainVerificationResolverAddr,
+	)
+
+	svc.LogExports = NewLogExportService(
+		pgClient,
+		fm,
+		cfg.Bucket,
+		cfg.BaseURL.String(),
 	)
 
 	return svc, nil

@@ -113,6 +113,8 @@ const (
 	subjectMailingListSubscription                = "%s – Confirm Your Compliance Updates Subscription"
 	subjectMailingListUnsubscription              = "%s – You've been unsubscribed"
 	subjectMailingListUpdates                     = "%s – %s"
+	subjectAuditLogExport                         = "Your audit log export is ready"
+	subjectSCIMEventExport                        = "Your SCIM event export is ready"
 )
 
 var (
@@ -144,6 +146,8 @@ var (
 	mailingListUnsubscriptionTextTemplate              = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.txt.tmpl"))
 	mailingListUpdatesHTMLTemplate                     = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-updates.html.tmpl"))
 	mailingListUpdatesTextTemplate                     = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-updates.txt.tmpl"))
+	logExportHTMLTemplate                              = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/log-export.html.tmpl"))
+	logExportTextTemplate                              = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/log-export.txt.tmpl"))
 )
 
 func (p *Presenter) getCommonVariables() (*CommonVariables, error) {
@@ -332,6 +336,37 @@ func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl strin
 	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
 
 	return subjectFrameworkExport, textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderLogExport(ctx context.Context, downloadUrl string, isSCIMEvent bool) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	subject = subjectAuditLogExport
+	exportLabel := "audit log"
+
+	if isSCIMEvent {
+		subject = subjectSCIMEventExport
+		exportLabel = "SCIM event"
+	}
+
+	data := struct {
+		*CommonVariables
+		Subject     string
+		ExportLabel string
+		DownloadUrl string
+	}{
+		CommonVariables: vars,
+		Subject:         subject,
+		ExportLabel:     exportLabel,
+		DownloadUrl:     downloadUrl,
+	}
+
+	textBody, htmlBody, err = renderEmail(logExportTextTemplate, logExportHTMLTemplate, data)
+
+	return subject, textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderCompliancePortalAccess(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {

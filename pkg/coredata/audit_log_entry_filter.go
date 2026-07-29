@@ -21,6 +21,8 @@
 package coredata
 
 import (
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -30,6 +32,8 @@ type AuditLogEntryFilter struct {
 	actorID      *gid.GID
 	resourceType *string
 	resourceID   *gid.GID
+	createdAtGte *time.Time
+	createdAtLt  *time.Time
 }
 
 func NewAuditLogEntryFilter() *AuditLogEntryFilter {
@@ -53,6 +57,16 @@ func (f *AuditLogEntryFilter) WithResourceType(resourceType string) *AuditLogEnt
 
 func (f *AuditLogEntryFilter) WithResourceID(resourceID gid.GID) *AuditLogEntryFilter {
 	f.resourceID = &resourceID
+	return f
+}
+
+func (f *AuditLogEntryFilter) WithCreatedAtGte(t time.Time) *AuditLogEntryFilter {
+	f.createdAtGte = &t
+	return f
+}
+
+func (f *AuditLogEntryFilter) WithCreatedAtLt(t time.Time) *AuditLogEntryFilter {
+	f.createdAtLt = &t
 	return f
 }
 
@@ -82,15 +96,29 @@ func (f *AuditLogEntryFilter) SQLFragment() string {
             resource_id = @filter_resource_id::text
         ELSE TRUE
     END
+    AND
+    CASE
+        WHEN @filter_created_at_gte::timestamptz IS NOT NULL THEN
+            created_at >= @filter_created_at_gte::timestamptz
+        ELSE TRUE
+    END
+    AND
+    CASE
+        WHEN @filter_created_at_lt::timestamptz IS NOT NULL THEN
+            created_at < @filter_created_at_lt::timestamptz
+        ELSE TRUE
+    END
 )`
 }
 
 func (f *AuditLogEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"filter_action":        nil,
-		"filter_actor_id":      nil,
-		"filter_resource_type": nil,
-		"filter_resource_id":   nil,
+		"filter_action":         nil,
+		"filter_actor_id":       nil,
+		"filter_resource_type":  nil,
+		"filter_resource_id":    nil,
+		"filter_created_at_gte": nil,
+		"filter_created_at_lt":  nil,
 	}
 
 	if f.action != nil {
@@ -107,6 +135,14 @@ func (f *AuditLogEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.resourceID != nil {
 		args["filter_resource_id"] = *f.resourceID
+	}
+
+	if f.createdAtGte != nil {
+		args["filter_created_at_gte"] = *f.createdAtGte
+	}
+
+	if f.createdAtLt != nil {
+		args["filter_created_at_lt"] = *f.createdAtLt
 	}
 
 	return args

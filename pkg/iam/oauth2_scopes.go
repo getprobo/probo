@@ -109,5 +109,7 @@ var IAMOAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionSCIMBridgeUpdate,
 		ActionSCIMBridgeDelete,
 		ActionOAuth2ConsentApprove,
+		ActionAuditLogExport,
+		ActionSCIMEventExport,
 	},
 }

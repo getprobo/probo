@@ -18,23 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package event
+import { Button, Section, Text } from 'react-email';
+import * as React from 'react';
+import EmailLayout, { bodyText, button, buttonContainer } from './components/EmailLayout';
 
-import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/scim/event/export"
-	"go.probo.inc/probo/pkg/cmd/scim/event/list"
-)
+export const LogExport = () => {
+  return (
+    <EmailLayout subject={'{{.Subject}}'}>
+      <Text style={bodyText}>
+        Your {'{{.ExportLabel}}'} export has been completed successfully. Click the button below to download it:
+      </Text>
 
-func NewCmdEvent(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "event <command>",
-		Short: "Manage SCIM events",
-	}
+      <Section style={buttonContainer}>
+        <Button style={button} href={'{{.DownloadUrl}}'}>
+          Download Export
+        </Button>
+      </Section>
+    </EmailLayout>
+  );
+};
 
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(export.NewCmdExport(f))
-
-	return cmd
-}
+export default LogExport;

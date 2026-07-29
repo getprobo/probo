@@ -18,11 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { formatError } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
 import {
   Badge,
   Button,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
+  IconArrowDown,
   IconChevronDown,
+  Input,
   Spinner,
   Table,
   Tbody,
@@ -30,16 +37,21 @@ import {
   Th,
   Thead,
   Tr,
+  useDialogRef,
+  useToast,
 } from "@probo/ui";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
   useFragment,
+  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 
+import type { AuditLogSettingsPageExportMutation } from "#/__generated__/iam/AuditLogSettingsPageExportMutation.graphql";
 import type { AuditLogSettingsPageFragment$key } from "#/__generated__/iam/AuditLogSettingsPageFragment.graphql";
 import type { AuditLogSettingsPageQuery } from "#/__generated__/iam/AuditLogSettingsPageQuery.graphql";
 import type { AuditLogSettingsPageRefetchQuery } from "#/__generated__/iam/AuditLogSettingsPageRefetchQuery.graphql";
@@ -50,6 +62,8 @@ export const auditLogSettingsPageQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
+        id
+        canExportAuditLog: permission(action: "iam:audit-log:export")
         ...AuditLogSettingsPageFragment
       }
     }
@@ -92,6 +106,16 @@ const auditLogEntryRowFragment = graphql`
     resourceType
     resourceId
     createdAt
+  }
+`;
+
+const exportMutation = graphql`
+  mutation AuditLogSettingsPageExportMutation(
+    $input: RequestAuditLogExportInput!
+  ) {
+    requestAuditLogExport(input: $input) {
+      exportJobId
+    }
   }
 `;
 
@@ -178,6 +202,112 @@ function AuditLogEntryRow({
   );
 }
 
+function ExportAuditLogDialog({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const dialogRef = useDialogRef();
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [commitExport, isExporting] = useMutation<AuditLogSettingsPageExportMutation>(exportMutation);
+
+  const handleExport = () => {
+    if (!fromDate || !toDate) return;
+
+    commitExport({
+      variables: {
+        input: {
+          organizationId,
+          fromTime: new Date(`${fromDate}T00:00:00Z`).toISOString(),
+          toTime: new Date(Date.parse(`${toDate}T00:00:00Z`) + 24 * 60 * 60 * 1000).toISOString(),
+        },
+      },
+      onCompleted: (_response, errors) => {
+        if (errors) {
+          toast({
+            title: t("auditLogSettingsPage.export.errors.title"),
+            description: formatError(t("auditLogSettingsPage.export.errors.request"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: t("auditLogSettingsPage.export.messages.successTitle"),
+          description: t("auditLogSettingsPage.export.messages.success"),
+          variant: "success",
+        });
+        dialogRef.current?.close();
+        setFromDate("");
+        setToDate("");
+      },
+      onError: (error) => {
+        toast({
+          title: t("auditLogSettingsPage.export.errors.title"),
+          description: formatError(t("auditLogSettingsPage.export.errors.request"), error),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  return (
+    <>
+      <Button
+        variant="secondary"
+        icon={IconArrowDown}
+        onClick={() => dialogRef.current?.open()}
+      >
+        {t("auditLogSettingsPage.export.actions.export")}
+      </Button>
+      <Dialog
+        className="max-w-md"
+        ref={dialogRef}
+        title={t("auditLogSettingsPage.export.title")}
+      >
+        <DialogContent className="space-y-4" padded>
+          <p className="text-sm text-txt-secondary">
+            {t("auditLogSettingsPage.export.description")}
+          </p>
+          <Field label={t("auditLogSettingsPage.export.fields.from")}>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={e => setFromDate(e.target.value)}
+              required
+            />
+          </Field>
+          <Field label={t("auditLogSettingsPage.export.fields.to")}>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={e => setToDate(e.target.value)}
+              required
+            />
+          </Field>
+        </DialogContent>
+        <DialogFooter>
+          <Button
+            onClick={handleExport}
+            disabled={isExporting || !fromDate || !toDate || fromDate > toDate}
+          >
+            {isExporting
+              ? (
+                  <>
+                    <Spinner size={16} />
+                    {t("auditLogSettingsPage.export.actions.exporting")}
+                  </>
+                )
+              : t("auditLogSettingsPage.export.actions.export")}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+    </>
+  );
+}
+
 export function AuditLogSettingsPage(props: {
   queryRef: PreloadedQuery<AuditLogSettingsPageQuery>;
 }) {
@@ -202,11 +332,16 @@ export function AuditLogSettingsPage(props: {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-base font-medium">{t("auditLogSettingsPage.title")}</h2>
-        <p className="text-sm text-txt-tertiary">
-          {t("auditLogSettingsPage.description")}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-base font-medium">{t("auditLogSettingsPage.title")}</h2>
+          <p className="text-sm text-txt-tertiary">
+            {t("auditLogSettingsPage.description")}
+          </p>
+        </div>
+        {organization.canExportAuditLog && (
+          <ExportAuditLogDialog organizationId={organization.id} />
+        )}
       </div>
 
       {entries.length === 0

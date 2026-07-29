@@ -499,3 +499,24 @@ func NewConnectorNotFoundError(connectorID gid.GID) error {
 func (e ErrConnectorNotFound) Error() string {
 	return fmt.Sprintf("connector %q not found", e.ConnectorID)
 }
+
+type ErrInvalidLogExportTimeRange struct{ message string }
+
+const maxLogExportTimeRangeYears = 1
+
+func NewInvalidLogExportTimeRangeError() error {
+	return &ErrInvalidLogExportTimeRange{message: "from_time must be before to_time"}
+}
+
+func NewLogExportTimeRangeTooLargeError() error {
+	return &ErrInvalidLogExportTimeRange{
+		message: fmt.Sprintf(
+			"export time range must not exceed %d year",
+			maxLogExportTimeRangeYears,
+		),
+	}
+}
+
+func (e ErrInvalidLogExportTimeRange) Error() string {
+	return e.message
+}

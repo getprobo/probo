@@ -27,7 +27,9 @@ import (
 
 // MaxLoadAllPages caps how many pages LoadAll walks, bounding a single
 // call to MaxLoadAllPages*MaxCursorSize rows. Past that, LoadAll errors
-// rather than materialising an unbounded set.
+// rather than materialising an unbounded set. WalkAll is uncapped: it
+// streams page-by-page and is meant for callers that can process rows
+// without holding the full set in memory.
 const MaxLoadAllPages = 20
 
 // Loader runs one paginated query for the given cursor and returns the
@@ -35,6 +37,39 @@ const MaxLoadAllPages = 20
 // filter in a closure, exposing only ctx and cursor (typically a coredata
 // LoadBy* on a fresh receiver).
 type Loader[T Paginable[U], U OrderField] func(ctx context.Context, cursor *Cursor[U]) ([]T, error)
+
+// WalkAll walks every matching row via keyset pagination, advancing a
+// MaxCursorSize forward cursor until no rows remain, and invokes walk with
+// every page of rows. Unlike LoadAll, it does not apply MaxLoadAllPages.
+func WalkAll[T Paginable[U], U OrderField](
+	ctx context.Context,
+	orderBy OrderBy[U],
+	fetch Loader[T, U],
+	walk func(rows []T) error,
+) error {
+	var key *CursorKey
+
+	for {
+		cursor := NewCursor(MaxCursorSize, key, Head, orderBy)
+
+		rows, err := fetch(ctx, cursor)
+		if err != nil {
+			return fmt.Errorf("cannot load all rows: %w", err)
+		}
+
+		p := NewPage(rows, cursor)
+		if err := walk(p.Data); err != nil {
+			return err
+		}
+
+		if !p.Info.HasNext {
+			return nil
+		}
+
+		k := p.Last().CursorKey(orderBy.Field)
+		key = &k
+	}
+}
 
 // LoadAll walks every matching row via keyset pagination, advancing a
 // MaxCursorSize forward cursor until no rows remain, and returns them
@@ -46,36 +81,34 @@ func LoadAll[T Paginable[U], U OrderField](
 	fetch Loader[T, U],
 ) ([]T, error) {
 	var (
-		all []T
-		key *CursorKey
+		all   []T
+		pages int
 	)
 
-	for page := 0; ; page++ {
-		if page >= MaxLoadAllPages {
-			return nil, fmt.Errorf(
-				"cannot load all rows: result set exceeds %d rows (%d pages of %d)",
-				MaxLoadAllPages*MaxCursorSize,
-				MaxLoadAllPages,
-				MaxCursorSize,
-			)
-		}
+	err := WalkAll(
+		ctx,
+		orderBy,
+		func(ctx context.Context, cursor *Cursor[U]) ([]T, error) {
+			if pages >= MaxLoadAllPages {
+				return nil, fmt.Errorf(
+					"cannot load all rows: result set exceeds %d rows (%d pages of %d)",
+					MaxLoadAllPages*MaxCursorSize,
+					MaxLoadAllPages,
+					MaxCursorSize,
+				)
+			}
 
-		cursor := NewCursor(MaxCursorSize, key, Head, orderBy)
+			pages++
 
-		rows, err := fetch(ctx, cursor)
-		if err != nil {
-			return nil, fmt.Errorf("cannot load all rows: %w", err)
-		}
-
-		p := NewPage(rows, cursor)
-		all = append(all, p.Data...)
-
-		if !p.Info.HasNext {
-			break
-		}
-
-		k := p.Last().CursorKey(orderBy.Field)
-		key = &k
+			return fetch(ctx, cursor)
+		},
+		func(rows []T) error {
+			all = append(all, rows...)
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return all, nil

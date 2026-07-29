@@ -183,3 +183,32 @@ func TestLoadAllRefusesUnboundedResultSet(t *testing.T) {
 	assert.Contains(t, err.Error(), "result set exceeds")
 	assert.Equal(t, MaxLoadAllPages, fetchs, "stops after walking the max number of pages")
 }
+
+func TestWalkAllHasNoPageCap(t *testing.T) {
+	t.Parallel()
+
+	// More pages than MaxLoadAllPages: WalkAll must keep going.
+	store := newLoadAllStore(MaxLoadAllPages*MaxCursorSize + 1)
+
+	fetchs := 0
+
+	var got []*loadAllItem
+
+	err := WalkAll(
+		context.Background(),
+		ascOrderBy(),
+		func(_ context.Context, cursor *Cursor[testOrderField]) ([]*loadAllItem, error) {
+			fetchs++
+			return keysetPage(store, cursor), nil
+		},
+		func(rows []*loadAllItem) error {
+			got = append(got, rows...)
+			return nil
+		},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, got, len(store))
+	assert.Equal(t, loadAllValues(store), loadAllValues(got))
+	assert.Greater(t, fetchs, MaxLoadAllPages)
+}

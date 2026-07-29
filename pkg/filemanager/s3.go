@@ -31,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"go.probo.inc/probo/pkg/coredata"
@@ -203,23 +204,51 @@ func (s *Service) OpenFile(
 	return obj, nil
 }
 
+type putFileConfig struct {
+	attachmentDisposition bool
+}
+
+// PutFileOption configures optional PutFile behavior.
+type PutFileOption func(*putFileConfig)
+
+// WithAttachmentContentDisposition stores Content-Disposition: attachment on the
+// uploaded object so browsers download it when served from object storage.
+func WithAttachmentContentDisposition() PutFileOption {
+	return func(cfg *putFileConfig) {
+		cfg.attachmentDisposition = true
+	}
+}
+
 func (s *Service) PutFile(
 	ctx context.Context,
 	file *coredata.File,
 	content io.Reader,
 	metadata map[string]string,
+	opts ...PutFileOption,
 ) (int64, error) {
-	_, err := s.s3Client.PutObject(
-		ctx,
-		&s3.PutObjectInput{
-			Bucket:       new(file.BucketName),
-			Key:          new(file.FileKey),
-			Body:         content,
-			ContentType:  new(file.MimeType),
-			CacheControl: new("private, max-age=3600"),
-			Metadata:     metadata,
-		},
-	)
+	cfg := putFileConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
+	// Transfer manager accepts unseekable readers (e.g. io.Pipe) by buffering
+	// parts in memory, which works against plain-HTTP S3-compatible endpoints
+	// where PutObject checksums require a seekable body.
+	uploader := transfermanager.New(s.s3Client)
+
+	input := &transfermanager.UploadObjectInput{
+		Bucket:       new(file.BucketName),
+		Key:          new(file.FileKey),
+		Body:         content,
+		ContentType:  new(file.MimeType),
+		CacheControl: new("private, max-age=3600"),
+		Metadata:     metadata,
+	}
+	if cfg.attachmentDisposition && file.FileName != "" {
+		input.ContentDisposition = new(attachmentContentDisposition(file.FileName))
+	}
+
+	_, err := uploader.UploadObject(ctx, input)
 	if err != nil {
 		return 0, fmt.Errorf("cannot upload file to S3: %w", err)
 	}
@@ -245,11 +274,7 @@ func (s *Service) GeneratePresignedURL(
 ) (string, error) {
 	presignClient := s3.NewPresignClient(s.s3Client)
 
-	contentDisposition := fmt.Sprintf(
-		"attachment; filename=%q; filename*=UTF-8''%s",
-		asciiFilename(file.FileName),
-		url.PathEscape(file.FileName),
-	)
+	contentDisposition := attachmentContentDisposition(file.FileName)
 
 	presignedReq, err := presignClient.PresignGetObject(
 		ctx,
@@ -298,6 +323,14 @@ func ifRangeMatches(ifRange, etag string, lastModified time.Time) bool {
 	}
 
 	return !lastModified.IsZero() && lastModified.Truncate(time.Second).Equal(t)
+}
+
+func attachmentContentDisposition(filename string) string {
+	return fmt.Sprintf(
+		"attachment; filename=%q; filename*=UTF-8''%s",
+		asciiFilename(filename),
+		url.PathEscape(filename),
+	)
 }
 
 func asciiFilename(filename string) string {

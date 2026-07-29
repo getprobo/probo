@@ -70,3 +70,19 @@ type AuditLogEntryEdge {
   cursor: CursorKey!
   node: AuditLogEntry!
 }
+
+extend type Mutation {
+  requestAuditLogExport(
+    input: RequestAuditLogExportInput!
+  ): RequestAuditLogExportPayload @authentication(required: PRESENT) @sessionOnly
+}
+
+input RequestAuditLogExportInput {
+  organizationId: ID!
+  fromTime: Datetime!
+  toTime: Datetime!
+}
+
+type RequestAuditLogExportPayload {
+  exportJobId: ID!
+}

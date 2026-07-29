@@ -106,4 +106,8 @@ const (
 	// Audit log entry actions
 	ActionAuditLogEntryGet  = "iam:audit-log-entry:get"
 	ActionAuditLogEntryList = "iam:audit-log-entry:list"
+
+	// Log export actions
+	ActionAuditLogExport  = "iam:audit-log:export"
+	ActionSCIMEventExport = "iam:scim-event:export"
 )

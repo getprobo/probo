@@ -22,6 +22,7 @@ package auditlog
 
 import (
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/auditlog/export"
 	"go.probo.inc/probo/pkg/cmd/auditlog/list"
 	"go.probo.inc/probo/pkg/cmd/auditlog/view"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -33,6 +34,7 @@ func NewCmdAuditLog(f *cmdutil.Factory) *cobra.Command {
 		Short: "Manage audit log entries",
 	}
 
+	cmd.AddCommand(export.NewCmdExport(f))
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(view.NewCmdView(f))
 

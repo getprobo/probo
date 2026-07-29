@@ -7351,3 +7351,69 @@ func (r *Resolver) DeleteCommitmentTool(ctx context.Context, req *mcp.CallToolRe
 
 	return nil, types.DeleteCommitmentOutput{DeletedCommitmentID: input.ID}, nil
 }
+
+func (r *Resolver) RequestAuditLogExportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestAuditLogExportInput) (*mcp.CallToolResult, types.RequestAuditLogExportOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, iam.ActionAuditLogExport)
+	if err != nil {
+		return nil, types.RequestAuditLogExportOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iamSvc.OrganizationService.RequestLogExport(
+		ctx,
+		scope,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.ExportJobTypeAuditLog,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrInvalidLogExportTimeRange](err); ok {
+			return nil, types.RequestAuditLogExportOutput{}, err
+		}
+
+		return nil, types.RequestAuditLogExportOutput{}, fmt.Errorf("cannot request audit log export: %w", err)
+	}
+
+	return nil, types.RequestAuditLogExportOutput{
+		ExportJobID: logExport.ID,
+	}, nil
+}
+
+func (r *Resolver) RequestSCIMEventExportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestSCIMEventExportInput) (*mcp.CallToolResult, types.RequestSCIMEventExportOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, iam.ActionSCIMEventExport)
+	if err != nil {
+		return nil, types.RequestSCIMEventExportOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	logExport, err := r.iamSvc.OrganizationService.RequestLogExport(
+		ctx,
+		scope,
+		iam.RequestLogExportRequest{
+			OrganizationID: input.OrganizationID,
+			Type:           coredata.ExportJobTypeSCIMEvent,
+			FromTime:       input.FromTime,
+			ToTime:         input.ToTime,
+			RecipientEmail: identity.EmailAddress,
+			RecipientName:  identity.FullName,
+		},
+	)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrInvalidLogExportTimeRange](err); ok {
+			return nil, types.RequestSCIMEventExportOutput{}, err
+		}
+
+		return nil, types.RequestSCIMEventExportOutput{}, fmt.Errorf("cannot request SCIM event export: %w", err)
+	}
+
+	return nil, types.RequestSCIMEventExportOutput{
+		ExportJobID: logExport.ID,
+	}, nil
+}
