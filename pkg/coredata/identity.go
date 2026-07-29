@@ -393,12 +393,6 @@ func (i *Identities) LoadByIDs(
 	conn pg.Querier,
 	identityIDs []gid.GID,
 ) error {
-	if len(identityIDs) == 0 {
-		*i = nil
-
-		return nil
-	}
-
 	q := `
 SELECT
     id,

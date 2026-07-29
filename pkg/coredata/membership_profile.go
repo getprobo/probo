@@ -502,12 +502,6 @@ func (p *MembershipProfiles) LoadByOrganizationIDAndUserNames(
 	organizationID gid.GID,
 	userNames []string,
 ) error {
-	if len(userNames) == 0 {
-		*p = nil
-
-		return nil
-	}
-
 	q := `
 SELECT
     p.id,

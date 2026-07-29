@@ -307,12 +307,6 @@ func (a *PersonalAPIKeys) LoadByIDs(
 	conn pg.Querier,
 	apiKeyIDs []gid.GID,
 ) error {
-	if len(apiKeyIDs) == 0 {
-		*a = nil
-
-		return nil
-	}
-
 	q := `
 SELECT
     id,
