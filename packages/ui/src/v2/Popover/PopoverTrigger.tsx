@@ -18,24 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { tv } from "tailwind-variants/lite";
+import { Popover as BasePopover } from "@base-ui/react/popover";
+import type { ComponentProps } from "react";
 
-// Subprocessor card: the logo box placed over the BackdropCard header (backed by
-// a blurred, magnified copy of the logo) and the hosting-regions row shown in
-// the body. The card frame and backdrop live in BackdropCard.
-export const subprocessorListItem = tv({
-  slots: {
-    logo: "relative z-1 flex size-10 items-center justify-center overflow-hidden rounded-2 bg-sand-1",
-    logoImage: "size-full object-cover",
-    logoFallbackIcon: "text-sand-9",
-    region: "flex items-start gap-1",
-    regionIcon: "size-4 shrink-0 text-gold-11",
-    // Button reset so the +N control keeps the Text line box (and pin alignment).
-    moreTrigger: [
-      "inline border-0 bg-transparent p-0 font-medium align-baseline",
-      "cursor-pointer underline-offset-2 hover:underline",
-      "outline-none focus-visible:underline",
-    ],
-    moreList: "flex flex-wrap gap-x-2 gap-y-1",
-  },
-});
+// The element that opens the popover. Compose a Button via `render` to style it,
+// or pass className/children for a native button trigger.
+export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;
+
+export function PopoverTrigger(props: PopoverTriggerProps) {
+  return <BasePopover.Trigger {...props} />;
+}

@@ -14,7 +14,8 @@
   },
   "regions": {
     "global": "グローバル",
-    "eu": "欧州連合"
+    "eu": "欧州連合",
+    "moreRegions": "他{{count}}件の地域を表示"
   },
   "categories": {
     "ANALYTICS": {

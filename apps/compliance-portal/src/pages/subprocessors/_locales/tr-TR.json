@@ -14,7 +14,8 @@
   },
   "regions": {
     "global": "Küresel",
-    "eu": "Avrupa Birliği"
+    "eu": "Avrupa Birliği",
+    "moreRegions": "{{count}} bölge daha göster"
   },
   "categories": {
     "ANALYTICS": {

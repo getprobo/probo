@@ -14,7 +14,8 @@
   },
   "regions": {
     "global": "全球",
-    "eu": "欧盟"
+    "eu": "欧盟",
+    "moreRegions": "显示另外 {{count}} 个地区"
   },
   "categories": {
     "ANALYTICS": {

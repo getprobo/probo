@@ -20,7 +20,11 @@
 
 import { BuildingsIcon, MapPinSimpleIcon } from "@phosphor-icons/react";
 import { faviconUrl } from "@probo/helpers";
+import { Popover } from "@probo/ui/src/v2/Popover/Popover";
+import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
+import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { BackdropCard } from "#/components/BackdropCard/BackdropCard";
@@ -29,6 +33,8 @@ import { useCountryLabel } from "../_lib/useCountryLabel";
 
 import type { SubprocessorListItem_subprocessor$key } from "./__generated__/SubprocessorListItem_subprocessor.graphql";
 import { subprocessorListItem } from "./variants";
+
+const VISIBLE_COUNTRY_COUNT = 5;
 
 const subprocessorListItemFragment = graphql`
   fragment SubprocessorListItem_subprocessor on Subprocessor @throwOnFieldError {
@@ -47,9 +53,11 @@ interface SubprocessorListItemProps {
 // description, and the hosting regions.
 export function SubprocessorListItem({ subprocessorKey }: SubprocessorListItemProps) {
   const subprocessor = useFragment(subprocessorListItemFragment, subprocessorKey);
+  const { t } = useTranslation("subprocessors");
   const countryLabel = useCountryLabel();
   const logoUrl = faviconUrl(subprocessor.websiteUrl);
-  const countries = subprocessor.countries.map(countryLabel).join(", ");
+  const visibleCodes = subprocessor.countries.slice(0, VISIBLE_COUNTRY_COUNT);
+  const hiddenCodes = subprocessor.countries.slice(VISIBLE_COUNTRY_COUNT);
   const slots = subprocessorListItem();
 
   return (
@@ -71,11 +79,34 @@ export function SubprocessorListItem({ subprocessorKey }: SubprocessorListItemPr
           {subprocessor.description}
         </Text>
       )}
-      {countries !== "" && (
+      {subprocessor.countries.length > 0 && (
         <div className={slots.region()}>
           <MapPinSimpleIcon className={slots.regionIcon()} />
           <Text size={1} color="gold">
-            {countries}
+            {visibleCodes.map(countryLabel).join(", ")}
+            {hiddenCodes.length > 0 && (
+              <>
+                {" "}
+                <Popover>
+                  <PopoverTrigger
+                    className={slots.moreTrigger()}
+                    aria-label={t("regions.moreRegions", { count: hiddenCodes.length })}
+                  >
+                    +
+                    {hiddenCodes.length}
+                  </PopoverTrigger>
+                  <PopoverPopup>
+                    <div className={slots.moreList()}>
+                      {hiddenCodes.map(code => (
+                        <Text key={code} size={1} color="neutral" highContrast>
+                          {countryLabel(code)}
+                        </Text>
+                      ))}
+                    </div>
+                  </PopoverPopup>
+                </Popover>
+              </>
+            )}
           </Text>
         </div>
       )}

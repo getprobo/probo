@@ -20,22 +20,13 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Subprocessor card: the logo box placed over the BackdropCard header (backed by
-// a blurred, magnified copy of the logo) and the hosting-regions row shown in
-// the body. The card frame and backdrop live in BackdropCard.
-export const subprocessorListItem = tv({
-  slots: {
-    logo: "relative z-1 flex size-10 items-center justify-center overflow-hidden rounded-2 bg-sand-1",
-    logoImage: "size-full object-cover",
-    logoFallbackIcon: "text-sand-9",
-    region: "flex items-start gap-1",
-    regionIcon: "size-4 shrink-0 text-gold-11",
-    // Button reset so the +N control keeps the Text line box (and pin alignment).
-    moreTrigger: [
-      "inline border-0 bg-transparent p-0 font-medium align-baseline",
-      "cursor-pointer underline-offset-2 hover:underline",
-      "outline-none focus-visible:underline",
-    ],
-    moreList: "flex flex-wrap gap-x-2 gap-y-1",
-  },
+// Floating popover surface (Radix "Popover" over Base UI). Same panel look as
+// DropdownPopup; content-agnostic so callers compose arbitrary children.
+
+export const popoverPopup = tv({
+  base: [
+    "max-w-sm origin-(--transform-origin) rounded-3 bg-sand-1 p-3 shadow-5 outline-none",
+    "transition-[scale,opacity] duration-150 ease-out data-starting-style:scale-95 data-starting-style:opacity-0",
+    "data-ending-style:scale-95 data-ending-style:opacity-0",
+  ],
 });

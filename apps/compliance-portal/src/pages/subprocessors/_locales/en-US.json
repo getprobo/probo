@@ -14,7 +14,8 @@
   },
   "regions": {
     "global": "Global",
-    "eu": "European Union"
+    "eu": "European Union",
+    "moreRegions": "Show {{count}} more regions"
   },
   "categories": {
     "ANALYTICS": {

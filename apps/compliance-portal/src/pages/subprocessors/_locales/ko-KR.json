@@ -14,7 +14,8 @@
   },
   "regions": {
     "global": "글로벌",
-    "eu": "유럽연합"
+    "eu": "유럽연합",
+    "moreRegions": "지역 {{count}}개 더 보기"
   },
   "categories": {
     "ANALYTICS": {

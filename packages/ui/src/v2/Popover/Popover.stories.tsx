@@ -18,24 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { tv } from "tailwind-variants/lite";
+import { Button } from "../Button/Button";
+import { Text } from "../typography/Text";
 
-// Subprocessor card: the logo box placed over the BackdropCard header (backed by
-// a blurred, magnified copy of the logo) and the hosting-regions row shown in
-// the body. The card frame and backdrop live in BackdropCard.
-export const subprocessorListItem = tv({
-  slots: {
-    logo: "relative z-1 flex size-10 items-center justify-center overflow-hidden rounded-2 bg-sand-1",
-    logoImage: "size-full object-cover",
-    logoFallbackIcon: "text-sand-9",
-    region: "flex items-start gap-1",
-    regionIcon: "size-4 shrink-0 text-gold-11",
-    // Button reset so the +N control keeps the Text line box (and pin alignment).
-    moreTrigger: [
-      "inline border-0 bg-transparent p-0 font-medium align-baseline",
-      "cursor-pointer underline-offset-2 hover:underline",
-      "outline-none focus-visible:underline",
-    ],
-    moreList: "flex flex-wrap gap-x-2 gap-y-1",
-  },
-});
+import { Popover } from "./Popover";
+import { PopoverPopup } from "./PopoverPopup";
+import { PopoverTrigger } from "./PopoverTrigger";
+
+export default {
+  title: "v2/Popover",
+  component: Popover,
+};
+
+export function Default() {
+  return (
+    <Popover>
+      <PopoverTrigger render={<Button variant="soft" color="neutral">Open popover</Button>} />
+      <PopoverPopup>
+        <Text size={2} color="neutral" highContrast>
+          Popover content goes here.
+        </Text>
+      </PopoverPopup>
+    </Popover>
+  );
+}
