@@ -76,7 +76,7 @@ export function LocaleSelect({
         {(value: UrlLocale | null) => (
           <span className="flex items-center gap-1.5">
             <GlobeIcon className="size-3.5 shrink-0" aria-hidden />
-            {value ? URL_LOCALE_LABELS[value] : null}
+            {value ? value.toUpperCase() : null}
           </span>
         )}
       </SelectTrigger>
