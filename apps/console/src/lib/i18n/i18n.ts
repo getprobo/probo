@@ -29,6 +29,12 @@ import { resolveLanguage, SUPPORTED_LANGUAGES } from "./resolveLanguage";
 // react-i18next's hooks read from, so no I18nextProvider is required.
 const i18n = createInstance();
 
+function syncDocumentLanguage(language: string) {
+  document.documentElement.lang = language;
+}
+
+i18n.on("languageChanged", syncDocumentLanguage);
+
 void i18n
   .use(globBackend)
   .use(initReactI18next)
@@ -42,6 +48,9 @@ void i18n
     ns: [DEFAULT_NAMESPACE],
     interpolation: { escapeValue: false },
     react: { useSuspense: true },
+  })
+  .then(() => {
+    syncDocumentLanguage(i18n.language);
   });
 
 export { i18n };
