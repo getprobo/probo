@@ -26,14 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestScimEmailFromUserName(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "user@example.com", scimEmailFromUserName("user@example.com"))
-	assert.Equal(t, "", scimEmailFromUserName("not-an-email"))
-	assert.Equal(t, "", scimEmailFromUserName(""))
-}
-
 func TestUniqueNonEmptyStrings(t *testing.T) {
 	t.Parallel()
 
