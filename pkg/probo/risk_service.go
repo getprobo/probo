@@ -249,7 +249,7 @@ func (s RiskService) DeleteDocumentMapping(
 ) (*coredata.Risk, *coredata.Document, error) {
 	riskDocument := &coredata.RiskDocument{}
 	risk := &coredata.Risk{}
-	document := &coredata.Document{}
+	document := &coredata.Document{ID: documentID}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -259,10 +259,12 @@ func (s RiskService) DeleteDocumentMapping(
 			}
 
 			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load document: %w", err)
+				}
 			}
 
-			return riskDocument.Delete(ctx, tx, scope, risk.ID, document.ID)
+			return riskDocument.Delete(ctx, tx, scope, risk.ID, documentID)
 		},
 	)
 	if err != nil {
@@ -610,10 +612,15 @@ func (s RiskService) Delete(
 	riskID gid.GID,
 ) error {
 	risk := &coredata.Risk{}
+	riskDocument := &coredata.RiskDocument{}
 
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := riskDocument.DeleteByRiskID(ctx, tx, scope, riskID); err != nil {
+				return fmt.Errorf("cannot delete risk document mappings: %w", err)
+			}
+
 			return risk.Delete(ctx, tx, scope, riskID)
 		},
 	)

@@ -1598,6 +1598,10 @@ func (s *DocumentService) SoftDelete(
 				return fmt.Errorf("cannot emit document deleted webhook: %w", err)
 			}
 
+			if err := s.deleteDocumentEntityMappings(ctx, scope, tx, []gid.GID{documentID}); err != nil {
+				return err
+			}
+
 			if err := s.clearDocumentReferences(ctx, scope, tx, []gid.GID{documentID}); err != nil {
 				return err
 			}
@@ -1622,6 +1626,10 @@ func (s *DocumentService) BulkSoftDelete(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentDeleted); err != nil {
 				return fmt.Errorf("cannot emit document deleted webhooks: %w", err)
+			}
+
+			if err := s.deleteDocumentEntityMappings(ctx, scope, tx, documentIDs); err != nil {
+				return err
 			}
 
 			if err := s.clearDocumentReferences(ctx, scope, tx, documentIDs); err != nil {
@@ -1652,19 +1660,8 @@ func (s *DocumentService) BulkArchive(
 				}
 			}
 
-			controlDocument := coredata.ControlDocument{}
-			if err := controlDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
-				return fmt.Errorf("cannot delete control mappings: %w", err)
-			}
-
-			riskDocument := coredata.RiskDocument{}
-			if err := riskDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
-				return fmt.Errorf("cannot delete risk mappings: %w", err)
-			}
-
-			measureDocument := coredata.MeasureDocument{}
-			if err := measureDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
-				return fmt.Errorf("cannot delete measure mappings: %w", err)
+			if err := s.deleteDocumentEntityMappings(ctx, scope, tx, documentIDs); err != nil {
+				return err
 			}
 
 			if err := s.clearDocumentReferences(ctx, scope, tx, documentIDs); err != nil {
@@ -1714,6 +1711,33 @@ func (s *DocumentService) BulkUnarchive(
 			return nil
 		},
 	)
+}
+
+func (s *DocumentService) deleteDocumentEntityMappings(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	if len(documentIDs) == 0 {
+		return nil
+	}
+
+	controlDocument := coredata.ControlDocument{}
+	if err := controlDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot delete control mappings: %w", err)
+	}
+
+	riskDocument := coredata.RiskDocument{}
+	if err := riskDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot delete risk mappings: %w", err)
+	}
+
+	measureDocument := coredata.MeasureDocument{}
+	if err := measureDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot delete measure mappings: %w", err)
+	}
+
+	return nil
 }
 
 // clearDocumentReferences nullifies references to the given document IDs in
@@ -2476,19 +2500,8 @@ func (s *DocumentService) Archive(
 				return err
 			}
 
-			controlDocument := coredata.ControlDocument{}
-			if err := controlDocument.DeleteByDocumentIDs(ctx, tx, scope, []gid.GID{documentID}); err != nil {
-				return fmt.Errorf("cannot delete control mappings: %w", err)
-			}
-
-			riskDocument := coredata.RiskDocument{}
-			if err := riskDocument.DeleteByDocumentIDs(ctx, tx, scope, []gid.GID{documentID}); err != nil {
-				return fmt.Errorf("cannot delete risk mappings: %w", err)
-			}
-
-			measureDocument := coredata.MeasureDocument{}
-			if err := measureDocument.DeleteByDocumentIDs(ctx, tx, scope, []gid.GID{documentID}); err != nil {
-				return fmt.Errorf("cannot delete measure mappings: %w", err)
+			if err := s.deleteDocumentEntityMappings(ctx, scope, tx, []gid.GID{documentID}); err != nil {
+				return err
 			}
 
 			if err := s.clearDocumentReferences(ctx, scope, tx, []gid.GID{documentID}); err != nil {

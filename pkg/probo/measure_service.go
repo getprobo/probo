@@ -789,7 +789,7 @@ func (s MeasureService) DeleteDocumentMapping(
 	documentID gid.GID,
 ) (*coredata.Measure, *coredata.Document, error) {
 	measure := &coredata.Measure{}
-	document := &coredata.Document{}
+	document := &coredata.Document{ID: documentID}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -799,11 +799,13 @@ func (s MeasureService) DeleteDocumentMapping(
 			}
 
 			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load document: %w", err)
+				}
 			}
 
 			measureDocument := &coredata.MeasureDocument{}
-			if err := measureDocument.Delete(ctx, tx, scope, measure.ID, document.ID); err != nil {
+			if err := measureDocument.Delete(ctx, tx, scope, measure.ID, documentID); err != nil {
 				return fmt.Errorf("cannot delete measure document mapping: %w", err)
 			}
 

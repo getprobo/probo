@@ -501,7 +501,7 @@ func (s ControlService) DeleteDocumentMapping(
 	documentID gid.GID,
 ) (*coredata.Control, *coredata.Document, error) {
 	control := &coredata.Control{}
-	document := &coredata.Document{}
+	document := &coredata.Document{ID: documentID}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -511,11 +511,13 @@ func (s ControlService) DeleteDocumentMapping(
 			}
 
 			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load document: %w", err)
+				}
 			}
 
 			controlDocument := &coredata.ControlDocument{}
-			if err := controlDocument.Delete(ctx, tx, scope, control.ID, document.ID); err != nil {
+			if err := controlDocument.Delete(ctx, tx, scope, control.ID, documentID); err != nil {
 				return fmt.Errorf("cannot delete control document mapping: %w", err)
 			}
 

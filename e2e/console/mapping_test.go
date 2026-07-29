@@ -728,6 +728,106 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 	})
 }
 
+func TestRiskDocumentMapping_DeleteDocumentClearsMappingAndAllowsRiskDelete(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	riskID := factory.NewRisk(owner).
+		WithName("Risk linked to deleted document").
+		Create()
+	documentID := factory.NewDocument(owner).
+		WithTitle("Document linked to risk").
+		Create()
+
+	_, err := owner.Do(`
+		mutation($input: CreateRiskDocumentMappingInput!) {
+			createRiskDocumentMapping(input: $input) {
+				riskEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"riskId":     riskID,
+			"documentId": documentID,
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = owner.Do(`
+		mutation DeleteDocument($input: DeleteDocumentInput!) {
+			deleteDocument(input: $input) {
+				deletedDocumentId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"documentId": documentID},
+	})
+	require.NoError(t, err)
+
+	_, err = owner.Do(`
+		mutation($input: DeleteRiskDocumentMappingInput!) {
+			deleteRiskDocumentMapping(input: $input) {
+				deletedRiskId
+				deletedDocumentId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"riskId":     riskID,
+			"documentId": documentID,
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = owner.Do(`
+		mutation DeleteRisk($input: DeleteRiskInput!) {
+			deleteRisk(input: $input) {
+				deletedRiskId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"riskId": riskID},
+	})
+	require.NoError(t, err)
+}
+
+func TestRiskDocumentMapping_DeleteRiskWithActiveDocumentMapping(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	riskID := factory.NewRisk(owner).
+		WithName("Risk with active document link").
+		Create()
+	documentID := factory.NewDocument(owner).
+		WithTitle("Document still linked to risk").
+		Create()
+
+	_, err := owner.Do(`
+		mutation($input: CreateRiskDocumentMappingInput!) {
+			createRiskDocumentMapping(input: $input) {
+				riskEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"riskId":     riskID,
+			"documentId": documentID,
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = owner.Do(`
+		mutation DeleteRisk($input: DeleteRiskInput!) {
+			deleteRisk(input: $input) {
+				deletedRiskId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"riskId": riskID},
+	})
+	require.NoError(t, err)
+}
+
 func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
