@@ -22,7 +22,6 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
 import type { DocumentViewerPageQuery } from "./__generated__/DocumentViewerPageQuery.graphql";
-import { DocumentLocked } from "./_components/DocumentLocked";
 import { DocumentViewer } from "./_components/DocumentViewer";
 import { useAccessRequest } from "./_lib/useAccessRequest";
 import type { DocumentKind } from "./_lib/useDocumentExport";
@@ -76,8 +75,8 @@ function resolveNode(node: DocumentViewerPageQuery["response"]["aliasedNode"]): 
 }
 
 // Full-page viewer for a single document/file/report resolved by its alias. It
-// exports the (watermarked) bytes and renders them; unauthorized visitors get a
-// locked state instead.
+// exports the (watermarked) bytes and renders them; unauthorized visitors keep
+// the title header and see a locked empty state in place of the preview.
 export function DocumentViewerPage({ queryRef }: DocumentViewerPageProps) {
   const data = usePreloadedQuery<DocumentViewerPageQuery>(documentViewerPageQuery, queryRef);
   const node = resolveNode(data.aliasedNode);
@@ -85,7 +84,12 @@ export function DocumentViewerPage({ queryRef }: DocumentViewerPageProps) {
   const { requestAccess, isRequesting } = useAccessRequest(node.kind, node.id);
 
   if (!node.isAuthorized) {
-    return <DocumentLocked onGetAccess={requestAccess} isRequesting={isRequesting} />;
+    return (
+      <DocumentViewer
+        title={node.title}
+        locked={{ onGetAccess: requestAccess, isRequesting }}
+      />
+    );
   }
 
   return <DocumentViewer title={node.title} dataUri={dataUri} downloadName={node.title} />;

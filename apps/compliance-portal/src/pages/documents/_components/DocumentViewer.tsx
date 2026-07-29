@@ -43,6 +43,7 @@ import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { dataUriMimeType, downloadDataUri } from "../_lib/dataUri";
 
 import { DocumentDownloadFallback } from "./DocumentDownloadFallback";
+import { DocumentLocked } from "./DocumentLocked";
 import type { PdfPreviewHandle } from "./PdfPreview";
 import { PdfPreview } from "./PdfPreview";
 import { documentViewer } from "./variants";
@@ -54,20 +55,33 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+interface DocumentViewerLocked {
+  // Requests access for the locked resource (prompting sign-in first when
+  // needed).
+  onGetAccess: () => void;
+  // Whether the access request is in flight.
+  isRequesting: boolean;
+}
+
 interface DocumentViewerProps {
   // The document/file/report display name.
   title: string;
-  // The exported base64 data URI, or null while it is still loading.
-  dataUri: string | null;
-  // File name used when downloading.
-  downloadName: string;
+  // The exported base64 data URI, or null while it is still loading. Omitted
+  // when the viewer is locked.
+  dataUri?: string | null;
+  // File name used when downloading. Omitted when the viewer is locked.
+  downloadName?: string;
+  // When set, the header keeps the title (no toolbar) and the body shows the
+  // locked empty state with a Get Access CTA instead of the file preview.
+  locked?: DocumentViewerLocked;
 }
 
 // Full-page document viewer: a header band with the title and a toolbar
 // (page navigation + zoom for PDFs, copy link, download) above the scrollable
 // body. PDFs render with react-pdf, images inline, and anything else offers a
-// download.
-export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerProps) {
+// download. Locked visitors keep the title header and see a Get Access CTA in
+// place of the preview.
+export function DocumentViewer({ title, dataUri = null, downloadName = title, locked }: DocumentViewerProps) {
   const { t } = useTranslation("documents");
   const toast = Toast.useToastManager();
   const localizedPath = useLocalizedPath();
@@ -77,7 +91,8 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1);
 
-  const mimeType = dataUri ? dataUriMimeType(dataUri) : null;
+  const isLocked = locked != null;
+  const mimeType = !isLocked && dataUri ? dataUriMimeType(dataUri) : null;
   const isPdf = mimeType === "application/pdf";
   const isImage = mimeType?.startsWith("image/") ?? false;
 
@@ -104,7 +119,7 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
 
   return (
     <div className={slots.root()}>
-      <HeaderBand flushBottomSpace>
+      <HeaderBand flushBottomSpace={!isLocked}>
         <div className={slots.header()}>
           <Link to={localizedPath("/documents")} variant="ghost" color="neutral" size={1} iconStart={<CaretLeftIcon />} className={slots.back()}>
             {t("viewer.back")}
@@ -112,108 +127,117 @@ export function DocumentViewer({ title, dataUri, downloadName }: DocumentViewerP
           <Heading level={1} size={7} weight="medium" highContrast className="truncate">
             {title}
           </Heading>
-          <div className={slots.toolbar()}>
-            <div className={slots.toolbarStart()}>
-              {isPdf && (
-                <>
-                  <div className={slots.controls()}>
-                    <IconButton
-                      variant="ghost"
-                      color="neutral"
-                      aria-label={t("common.previousPage")}
-                      disabled={currentPage <= 1}
-                      onClick={() => movePage(-1)}
-                    >
-                      <CaretLeftIcon />
-                    </IconButton>
-                    <Text size={2} color="neutral">
-                      {t("common.pageOf", { current: currentPage, total: numPages })}
-                    </Text>
-                    <IconButton
-                      variant="ghost"
-                      color="neutral"
-                      aria-label={t("common.nextPage")}
-                      disabled={currentPage >= numPages}
-                      onClick={() => movePage(1)}
-                    >
-                      <CaretRightIcon />
-                    </IconButton>
-                  </div>
-                  <Separator orientation="vertical" className={slots.separator()} />
-                  <div className={slots.controls()}>
-                    <IconButton
-                      variant="ghost"
-                      color="neutral"
-                      aria-label={t("common.zoomOut")}
-                      onClick={() => setScale(value => clamp(value * 0.8, MIN_SCALE, MAX_SCALE))}
-                    >
-                      <MagnifyingGlassMinusIcon />
-                    </IconButton>
-                    <Text size={2} color="neutral">
-                      {`${Math.round(scale * 100)}%`}
-                    </Text>
-                    <IconButton
-                      variant="ghost"
-                      color="neutral"
-                      aria-label={t("common.zoomIn")}
-                      onClick={() => setScale(value => clamp(value * 1.25, MIN_SCALE, MAX_SCALE))}
-                    >
-                      <MagnifyingGlassPlusIcon />
-                    </IconButton>
-                  </div>
-                </>
-              )}
+          {!isLocked && (
+            <div className={slots.toolbar()}>
+              <div className={slots.toolbarStart()}>
+                {isPdf && (
+                  <>
+                    <div className={slots.controls()}>
+                      <IconButton
+                        variant="ghost"
+                        color="neutral"
+                        aria-label={t("common.previousPage")}
+                        disabled={currentPage <= 1}
+                        onClick={() => movePage(-1)}
+                      >
+                        <CaretLeftIcon />
+                      </IconButton>
+                      <Text size={2} color="neutral">
+                        {t("common.pageOf", { current: currentPage, total: numPages })}
+                      </Text>
+                      <IconButton
+                        variant="ghost"
+                        color="neutral"
+                        aria-label={t("common.nextPage")}
+                        disabled={currentPage >= numPages}
+                        onClick={() => movePage(1)}
+                      >
+                        <CaretRightIcon />
+                      </IconButton>
+                    </div>
+                    <Separator orientation="vertical" className={slots.separator()} />
+                    <div className={slots.controls()}>
+                      <IconButton
+                        variant="ghost"
+                        color="neutral"
+                        aria-label={t("common.zoomOut")}
+                        onClick={() => setScale(value => clamp(value * 0.8, MIN_SCALE, MAX_SCALE))}
+                      >
+                        <MagnifyingGlassMinusIcon />
+                      </IconButton>
+                      <Text size={2} color="neutral">
+                        {`${Math.round(scale * 100)}%`}
+                      </Text>
+                      <IconButton
+                        variant="ghost"
+                        color="neutral"
+                        aria-label={t("common.zoomIn")}
+                        onClick={() => setScale(value => clamp(value * 1.25, MIN_SCALE, MAX_SCALE))}
+                      >
+                        <MagnifyingGlassPlusIcon />
+                      </IconButton>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className={slots.actions()}>
+                <Button
+                  variant="ghost"
+                  color="neutral"
+                  iconStart={<LinkSimpleIcon />}
+                  onClick={handleCopyLink}
+                  aria-label={t("viewer.copyLink")}
+                >
+                  <span className={slots.actionLabel()}>{t("viewer.copyLink")}</span>
+                </Button>
+                <Separator orientation="vertical" className={slots.separator()} />
+                <Button
+                  variant="ghost"
+                  color="neutral"
+                  iconStart={<DownloadSimpleIcon />}
+                  disabled={dataUri == null}
+                  onClick={handleDownload}
+                  aria-label={t("viewer.download")}
+                >
+                  <span className={slots.actionLabel()}>{t("viewer.download")}</span>
+                </Button>
+              </div>
             </div>
-            <div className={slots.actions()}>
-              <Button
-                variant="ghost"
-                color="neutral"
-                iconStart={<LinkSimpleIcon />}
-                onClick={handleCopyLink}
-                aria-label={t("viewer.copyLink")}
-              >
-                <span className={slots.actionLabel()}>{t("viewer.copyLink")}</span>
-              </Button>
-              <Separator orientation="vertical" className={slots.separator()} />
-              <Button
-                variant="ghost"
-                color="neutral"
-                iconStart={<DownloadSimpleIcon />}
-                disabled={dataUri == null}
-                onClick={handleDownload}
-                aria-label={t("viewer.download")}
-              >
-                <span className={slots.actionLabel()}>{t("viewer.download")}</span>
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       </HeaderBand>
 
       <div className={slots.body()}>
-        {dataUri == null
+        {isLocked
           ? (
-              <div className={slots.stage()}>
-                <SpinnerGapIcon className={slots.spinner()} />
-              </div>
+              <DocumentLocked
+                onGetAccess={locked.onGetAccess}
+                isRequesting={locked.isRequesting}
+              />
             )
-          : isPdf
+          : dataUri == null
             ? (
-                <PdfPreview
-                  ref={pdfRef}
-                  file={dataUri}
-                  scale={scale}
-                  onNumPages={setNumPages}
-                  onVisiblePageChange={setCurrentPage}
-                />
+                <div className={slots.stage()}>
+                  <SpinnerGapIcon className={slots.spinner()} />
+                </div>
               )
-            : isImage
+            : isPdf
               ? (
-                  <div className={slots.imageStage()}>
-                    <img src={dataUri} alt={title} className={slots.image()} />
-                  </div>
+                  <PdfPreview
+                    ref={pdfRef}
+                    file={dataUri}
+                    scale={scale}
+                    onNumPages={setNumPages}
+                    onVisiblePageChange={setCurrentPage}
+                  />
                 )
-              : <DocumentDownloadFallback onDownload={handleDownload} />}
+              : isImage
+                ? (
+                    <div className={slots.imageStage()}>
+                      <img src={dataUri} alt={title} className={slots.image()} />
+                    </div>
+                  )
+                : <DocumentDownloadFallback onDownload={handleDownload} />}
       </div>
     </div>
   );
