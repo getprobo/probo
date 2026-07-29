@@ -163,7 +163,6 @@ export function PeopleList(props: {
   const debouncedRefetchQuery = useDebounceCallback(
     useCallback(
       (value: string) => {
-        const newQuery = value === "" ? null : value;
         startTransition(() => {
           peoplePagination.refetch(
             {
@@ -172,7 +171,7 @@ export function PeopleList(props: {
                 field: order.field as ProfileOrderField,
               },
               filter: {
-                query: newQuery,
+                query: value === "" ? null : value,
                 states: statesFilter.length > 0 ? statesFilter : null,
                 role: roleFilter,
                 kind: kindFilter,
@@ -194,6 +193,7 @@ export function PeopleList(props: {
   };
 
   const handleStateFilterToggle = (state: ProfileState) => {
+    debouncedRefetchQuery.cancel();
     const newStates = statesFilter.includes(state)
       ? statesFilter.filter(s => s !== state)
       : [...statesFilter, state];
@@ -202,12 +202,14 @@ export function PeopleList(props: {
   };
 
   const handleRoleFilterChange = (value: string) => {
+    debouncedRefetchQuery.cancel();
     const newRole = value === "ALL" ? null : (value as MembershipRole);
     setRoleFilter(newRole);
     refetchPeople({ role: newRole });
   };
 
   const handleKindFilterChange = (value: string) => {
+    debouncedRefetchQuery.cancel();
     const newKind = value === "ALL" ? null : value;
     setKindFilter(newKind);
     refetchPeople({ kind: newKind });
@@ -218,6 +220,7 @@ export function PeopleList(props: {
   };
 
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order: nextOrder }) => {
+    debouncedRefetchQuery.cancel();
     setOrder(nextOrder);
     refetchPeople({}, nextOrder);
   };
