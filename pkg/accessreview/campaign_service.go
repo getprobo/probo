@@ -205,12 +205,6 @@ func (s *Service) DeleteCampaign(
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
-			if campaign.Status != coredata.AccessReviewCampaignStatusDraft &&
-				campaign.Status != coredata.AccessReviewCampaignStatusCancelled &&
-				campaign.Status != coredata.AccessReviewCampaignStatusCompleted {
-				return NewCampaignNotDeletableError(campaign.ID)
-			}
-
 			if err := campaign.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete campaign: %w", err)
 			}

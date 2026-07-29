@@ -132,10 +132,6 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
     deleteCampaignMutation,
   );
 
-  // Only DRAFT, CANCELLED, and COMPLETED campaigns can be deleted (enforced by the backend).
-  const isDeletableStatus = (status: string) =>
-    status === "DRAFT" || status === "CANCELLED" || status === "COMPLETED";
-
   const handleDelete = (campaignId: string, campaignName: string) => {
     confirm(
       () => {
@@ -182,9 +178,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
     );
   };
 
-  const hasActions = accessReviewCampaigns.edges.some(
-    edge => edge.node.canDelete && isDeletableStatus(edge.node.status),
-  );
+  const hasActions = accessReviewCampaigns.edges.some(edge => edge.node.canDelete);
 
   return (
     <div className="space-y-4">
@@ -215,8 +209,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                 </Thead>
                 <Tbody>
                   {accessReviewCampaigns.edges.map((edge) => {
-                    const canDeleteRow
-                      = edge.node.canDelete && isDeletableStatus(edge.node.status);
+                    const canDeleteRow = edge.node.canDelete;
                     return (
                       <Tr
                         key={edge.node.id}
