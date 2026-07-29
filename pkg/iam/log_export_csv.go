@@ -82,16 +82,12 @@ func (s *LogExportService) streamAuditLogCSV(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	organizationName string,
-	args *coredata.LogExportArguments,
+	filter *coredata.AuditLogEntryFilter,
 	w *csv.Writer,
 ) error {
 	if err := w.Write(auditLogExportCSVHeader); err != nil {
 		return fmt.Errorf("cannot write audit log CSV header: %w", err)
 	}
-
-	filter := coredata.NewAuditLogEntryFilter().
-		WithCreatedAtGte(args.FromTime).
-		WithCreatedAtLt(args.ToTime)
 
 	return page.WalkAll(
 		ctx,
@@ -114,7 +110,8 @@ func (s *LogExportService) streamAuditLogCSV(
 
 			return logs, nil
 		},
-		func(entries []*coredata.AuditLogEntry) error {
+		func(pageEntries []*coredata.AuditLogEntry) error {
+			entries := coredata.AuditLogEntries(pageEntries)
 			actorsByID, err := loadAuditLogActorExportInfo(ctx, conn, entries)
 			if err != nil {
 				return err
@@ -144,16 +141,12 @@ func (s *LogExportService) streamSCIMEventCSV(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	organizationName string,
-	args *coredata.LogExportArguments,
+	filter *coredata.SCIMEventFilter,
 	w *csv.Writer,
 ) error {
 	if err := w.Write(scimEventExportCSVHeader); err != nil {
 		return fmt.Errorf("cannot write SCIM event CSV header: %w", err)
 	}
-
-	filter := coredata.NewSCIMEventFilter().
-		WithCreatedAtGte(args.FromTime).
-		WithCreatedAtLt(args.ToTime)
 
 	return page.WalkAll(
 		ctx,
@@ -176,7 +169,8 @@ func (s *LogExportService) streamSCIMEventCSV(
 
 			return events, nil
 		},
-		func(events []*coredata.SCIMEvent) error {
+		func(pageEvents []*coredata.SCIMEvent) error {
+			events := coredata.SCIMEvents(pageEvents)
 			profilesByUserName, err := loadSCIMProfileExportInfo(
 				ctx,
 				conn,
@@ -256,7 +250,7 @@ func scimEventCSVRow(
 func loadAuditLogActorExportInfo(
 	ctx context.Context,
 	conn pg.Querier,
-	entries []*coredata.AuditLogEntry,
+	entries coredata.AuditLogEntries,
 ) (map[gid.GID]auditLogActorExportInfo, error) {
 	identityIDs := make([]gid.GID, 0)
 	apiKeyIDs := make([]gid.GID, 0)
@@ -309,7 +303,7 @@ func loadSCIMProfileExportInfo(
 	conn pg.Querier,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	events []*coredata.SCIMEvent,
+	events coredata.SCIMEvents,
 ) (map[string]scimProfileExportInfo, error) {
 	userNames := uniqueNonEmptyStrings(scimEventUserNames(events))
 	if len(userNames) == 0 {
@@ -343,7 +337,7 @@ func loadSCIMProfileExportInfo(
 	return result, nil
 }
 
-func scimEventUserNames(events []*coredata.SCIMEvent) []string {
+func scimEventUserNames(events coredata.SCIMEvents) []string {
 	userNames := make([]string, 0, len(events))
 	for _, event := range events {
 		userNames = append(userNames, event.UserName)

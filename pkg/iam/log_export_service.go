@@ -232,23 +232,31 @@ func (s *LogExportService) streamCSV(
 
 			switch exportJob.Type {
 			case coredata.ExportJobTypeAuditLog:
+				filter := coredata.NewAuditLogEntryFilter().
+					WithCreatedAtGte(args.FromTime).
+					WithCreatedAtLt(args.ToTime)
+
 				return s.streamAuditLogCSV(
 					ctx,
 					conn,
 					scope,
 					exportJob.OrganizationID,
 					organization.Name,
-					args,
+					filter,
 					w,
 				)
 			case coredata.ExportJobTypeSCIMEvent:
+				filter := coredata.NewSCIMEventFilter().
+					WithCreatedAtGte(args.FromTime).
+					WithCreatedAtLt(args.ToTime)
+
 				return s.streamSCIMEventCSV(
 					ctx,
 					conn,
 					scope,
 					exportJob.OrganizationID,
 					organization.Name,
-					args,
+					filter,
 					w,
 				)
 			default:
