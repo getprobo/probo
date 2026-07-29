@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.13.0] - 2026-07-29
+
+### Added
+
+- `probo.auth.cookieSameSite` Helm value to configure the auth cookie's `SameSite` attribute (`lax`, `strict`, or `none`; default: `lax`)
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.240.0`
+
 ## [0.12.0] - 2026-07-28
 
 ### Added
