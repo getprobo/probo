@@ -212,3 +212,29 @@ func TestWalkAllHasNoPageCap(t *testing.T) {
 	assert.Equal(t, loadAllValues(store), loadAllValues(got))
 	assert.Greater(t, fetchs, MaxLoadAllPages)
 }
+
+type loadAllItems []*loadAllItem
+
+func TestWalkAllNamedSliceType(t *testing.T) {
+	t.Parallel()
+
+	store := newLoadAllStore(MaxCursorSize + 1)
+
+	var got loadAllItems
+
+	err := WalkAll(
+		context.Background(),
+		ascOrderBy(),
+		func(_ context.Context, cursor *Cursor[testOrderField]) (loadAllItems, error) {
+			return loadAllItems(keysetPage(store, cursor)), nil
+		},
+		func(rows loadAllItems) error {
+			got = append(got, rows...)
+			return nil
+		},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, got, len(store))
+	assert.Equal(t, loadAllValues(store), loadAllValues(got))
+}

@@ -95,7 +95,7 @@ func (s *LogExportService) streamAuditLogCSV(
 			Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
 			Direction: page.OrderDirectionAsc,
 		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.AuditLogEntryOrderField]) ([]*coredata.AuditLogEntry, error) {
+		func(ctx context.Context, cursor *page.Cursor[coredata.AuditLogEntryOrderField]) (coredata.AuditLogEntries, error) {
 			var logs coredata.AuditLogEntries
 			if err := logs.LoadByOrganizationID(
 				ctx,
@@ -110,8 +110,7 @@ func (s *LogExportService) streamAuditLogCSV(
 
 			return logs, nil
 		},
-		func(pageEntries []*coredata.AuditLogEntry) error {
-			entries := coredata.AuditLogEntries(pageEntries)
+		func(entries coredata.AuditLogEntries) error {
 			actorsByID, err := loadAuditLogActorExportInfo(ctx, conn, entries)
 			if err != nil {
 				return err
@@ -154,7 +153,7 @@ func (s *LogExportService) streamSCIMEventCSV(
 			Field:     coredata.SCIMEventOrderFieldCreatedAt,
 			Direction: page.OrderDirectionAsc,
 		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.SCIMEventOrderField]) ([]*coredata.SCIMEvent, error) {
+		func(ctx context.Context, cursor *page.Cursor[coredata.SCIMEventOrderField]) (coredata.SCIMEvents, error) {
 			var events coredata.SCIMEvents
 			if err := events.LoadByOrganizationID(
 				ctx,
@@ -169,8 +168,7 @@ func (s *LogExportService) streamSCIMEventCSV(
 
 			return events, nil
 		},
-		func(pageEvents []*coredata.SCIMEvent) error {
-			events := coredata.SCIMEvents(pageEvents)
+		func(events coredata.SCIMEvents) error {
 			profilesByUserName, err := loadSCIMProfileExportInfo(
 				ctx,
 				conn,

@@ -38,14 +38,18 @@ const MaxLoadAllPages = 20
 // LoadBy* on a fresh receiver).
 type Loader[T Paginable[U], U OrderField] func(ctx context.Context, cursor *Cursor[U]) ([]T, error)
 
+// WalkLoader is like Loader but allows coredata collection types (e.g.
+// AuditLogEntries) whose underlying type is []T.
+type WalkLoader[T Paginable[U], U OrderField, S ~[]T] func(ctx context.Context, cursor *Cursor[U]) (S, error)
+
 // WalkAll walks every matching row via keyset pagination, advancing a
 // MaxCursorSize forward cursor until no rows remain, and invokes walk with
 // every page of rows. Unlike LoadAll, it does not apply MaxLoadAllPages.
-func WalkAll[T Paginable[U], U OrderField](
+func WalkAll[T Paginable[U], U OrderField, S ~[]T](
 	ctx context.Context,
 	orderBy OrderBy[U],
-	fetch Loader[T, U],
-	walk func(rows []T) error,
+	fetch WalkLoader[T, U, S],
+	walk func(rows S) error,
 ) error {
 	var key *CursorKey
 
@@ -57,8 +61,8 @@ func WalkAll[T Paginable[U], U OrderField](
 			return fmt.Errorf("cannot load all rows: %w", err)
 		}
 
-		p := NewPage(rows, cursor)
-		if err := walk(p.Data); err != nil {
+		p := NewPage([]T(rows), cursor)
+		if err := walk(S(p.Data)); err != nil {
 			return err
 		}
 
