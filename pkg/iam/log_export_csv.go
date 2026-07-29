@@ -331,7 +331,7 @@ func loadSCIMProfileExportInfo(
 
 		key := strings.ToLower(*profile.UserName)
 		result[key] = scimProfileExportInfo{
-			email:    profile.EmailAddress.String(),
+			email:    scimEmailFromUserName(*profile.UserName),
 			fullName: profileFullName(profile),
 		}
 	}
