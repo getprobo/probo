@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestScimEmailFromUserName(t *testing.T) {
@@ -33,21 +32,6 @@ func TestScimEmailFromUserName(t *testing.T) {
 	assert.Equal(t, "user@example.com", scimEmailFromUserName("user@example.com"))
 	assert.Equal(t, "", scimEmailFromUserName("not-an-email"))
 	assert.Equal(t, "", scimEmailFromUserName(""))
-}
-
-func TestScimDisplayNameFromJSON(t *testing.T) {
-	t.Parallel()
-
-	displayName := scimDisplayNameFromJSON(`{"displayName":"Jane Doe"}`)
-	require.Equal(t, "Jane Doe", displayName)
-
-	formatted := scimDisplayNameFromJSON(`{"name":{"formatted":"John Smith"}}`)
-	require.Equal(t, "John Smith", formatted)
-
-	givenFamily := scimDisplayNameFromJSON(`{"name":{"givenName":"John","familyName":"Smith"}}`)
-	require.Equal(t, "John Smith", givenFamily)
-
-	assert.Equal(t, "", scimDisplayNameFromJSON("not json"))
 }
 
 func TestUniqueNonEmptyStrings(t *testing.T) {

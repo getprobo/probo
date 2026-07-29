@@ -23,7 +23,6 @@ package iam
 import (
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -60,7 +59,6 @@ var (
 		"action",
 		"resource_type",
 		"resource_id",
-		"metadata",
 	}
 
 	scimEventExportCSVHeader = []string{
@@ -213,11 +211,6 @@ func auditLogEntryCSVRow(
 	entry *coredata.AuditLogEntry,
 	actor auditLogActorExportInfo,
 ) []string {
-	metadata := ""
-	if len(entry.Metadata) > 0 {
-		metadata = string(entry.Metadata)
-	}
-
 	return []string{
 		organizationName,
 		entry.ID.String(),
@@ -229,7 +222,6 @@ func auditLogEntryCSVRow(
 		entry.Action,
 		entry.ResourceType,
 		entry.ResourceID.String(),
-		metadata,
 	}
 }
 
@@ -244,10 +236,6 @@ func scimEventCSVRow(
 
 	if email == "" {
 		email = scimEmailFromUserName(event.UserName)
-	}
-
-	if fullName == "" {
-		fullName = scimFullNameFromBodies(event.RequestBody, event.ResponseBody)
 	}
 
 	return []string{
@@ -394,49 +382,6 @@ func scimEmailFromUserName(userName string) string {
 
 	if _, err := mail.ParseAddr(userName); err == nil {
 		return userName
-	}
-
-	return ""
-}
-
-func scimFullNameFromBodies(requestBody *string, responseBody *string) string {
-	for _, body := range []*string{requestBody, responseBody} {
-		if body == nil || strings.TrimSpace(*body) == "" {
-			continue
-		}
-
-		if name := scimDisplayNameFromJSON(*body); name != "" {
-			return name
-		}
-	}
-
-	return ""
-}
-
-func scimDisplayNameFromJSON(body string) string {
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(body), &payload); err != nil {
-		return ""
-	}
-
-	if displayName, ok := payload["displayName"].(string); ok && displayName != "" {
-		return displayName
-	}
-
-	nameValue, ok := payload["name"].(map[string]any)
-	if !ok {
-		return ""
-	}
-
-	if formatted, ok := nameValue["formatted"].(string); ok && formatted != "" {
-		return formatted
-	}
-
-	given, _ := nameValue["givenName"].(string)
-	family, _ := nameValue["familyName"].(string)
-	fullName := strings.TrimSpace(given + " " + family)
-	if fullName != "" {
-		return fullName
 	}
 
 	return ""
