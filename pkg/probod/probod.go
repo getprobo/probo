@@ -287,6 +287,7 @@ func (impl *Implm) Run(
 	}
 
 	authCookieMaxAge := int(time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour)
+
 	authCookie, err := authSecureCookieConfig(impl.cfg.Auth.Cookie, authCookieMaxAge)
 	if err != nil {
 		rootSpan.RecordError(err)
