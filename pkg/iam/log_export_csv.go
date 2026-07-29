@@ -162,8 +162,8 @@ func (s *LogExportService) streamSCIMEventCSV(
 			Direction: page.OrderDirectionAsc,
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.SCIMEventOrderField]) ([]*coredata.SCIMEvent, error) {
-			var batch coredata.SCIMEvents
-			if err := batch.LoadByOrganizationID(
+			var events coredata.SCIMEvents
+			if err := events.LoadByOrganizationID(
 				ctx,
 				conn,
 				scope,
@@ -174,7 +174,7 @@ func (s *LogExportService) streamSCIMEventCSV(
 				return nil, err
 			}
 
-			return batch, nil
+			return events, nil
 		},
 		func(events []*coredata.SCIMEvent) error {
 			profilesByUserName, err := loadSCIMProfileExportInfo(
