@@ -5,6 +5,14 @@ documented in this file.
 
 ## Unreleased
 
+## [0.4.1] - 2026-07-29
+
+### Changed
+
+- Simplified the macOS PKG installer's welcome and conclusion screens to
+  point straight at browser-based `/enroll` enrollment, dropping the CLI
+  install steps, path inventories, and MDM notes.
+
 ## [0.4.0] - 2026-07-29
 
 ### Added
