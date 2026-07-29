@@ -58,6 +58,12 @@ type (
 		Scale                    float64       // Print scale (0.1 to 2.0)
 		WaitForExpression        string        // Optional JS expression polled until true before printing
 		WaitForExpressionTimeout time.Duration // Max time to wait (default 15s)
+		// GenerateTaggedPDF enables accessible PDF tagging (structure tree, reading
+		// order). Nil defaults to true.
+		GenerateTaggedPDF *bool
+		// GenerateDocumentOutline embeds a document outline (bookmarks). Nil defaults
+		// to true.
+		GenerateDocumentOutline *bool
 	}
 
 	Option func(*Converter)
@@ -122,6 +128,22 @@ func getPageDimensions(format PageFormat, orientation Orientation) (width, heigh
 	return w, h
 }
 
+func generateTaggedPDFEnabled(cfg RenderConfig) bool {
+	if cfg.GenerateTaggedPDF != nil {
+		return *cfg.GenerateTaggedPDF
+	}
+
+	return true
+}
+
+func generateDocumentOutlineEnabled(cfg RenderConfig) bool {
+	if cfg.GenerateDocumentOutline != nil {
+		return *cfg.GenerateDocumentOutline
+	}
+
+	return true
+}
+
 func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg RenderConfig) (io.Reader, error) {
 	var (
 		rootSpan = trace.SpanFromContext(ctx)
@@ -155,6 +177,9 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		scale = 1.0
 	}
 
+	generateTaggedPDF := generateTaggedPDFEnabled(cfg)
+	generateDocumentOutline := generateDocumentOutlineEnabled(cfg)
+
 	var pdfBytes []byte
 
 	c.l.InfoCtx(
@@ -168,6 +193,8 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		log.Float64("marginRight", marginRight),
 		log.Float64("scale", scale),
 		log.Bool("printBackground", cfg.PrintBackground),
+		log.Bool("generateTaggedPDF", generateTaggedPDF),
+		log.Bool("generateDocumentOutline", generateDocumentOutline),
 	)
 
 	htmlContent := string(htmlDocument)
@@ -231,6 +258,8 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 					WithMarginRight(marginRight).
 					WithScale(scale).
 					WithPreferCSSPageSize(false).
+					WithGenerateTaggedPDF(generateTaggedPDF).
+					WithGenerateDocumentOutline(generateDocumentOutline).
 					Do(ctx)
 
 				return err
