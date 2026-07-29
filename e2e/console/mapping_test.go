@@ -814,9 +814,20 @@ func TestRiskDocumentMapping_DeleteDocumentClearsRiskDocumentLink(t *testing.T) 
 	linkedDocumentIDs = loadRiskLinkedDocumentIDs(t, owner, riskID)
 	assert.NotContains(t, linkedDocumentIDs, documentID)
 	assert.Empty(t, linkedDocumentIDs)
+
+	_, err = owner.Do(`
+		mutation DeleteRisk($input: DeleteRiskInput!) {
+			deleteRisk(input: $input) {
+				deletedRiskId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"riskId": riskID},
+	})
+	require.NoError(t, err)
 }
 
-func TestRiskDocumentMapping_DeleteRiskWithActiveDocumentMapping(t *testing.T) {
+func TestRiskDocumentMapping_DeleteRiskRequiresUnlinkedDocuments(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -831,6 +842,32 @@ func TestRiskDocumentMapping_DeleteRiskWithActiveDocumentMapping(t *testing.T) {
 		mutation($input: CreateRiskDocumentMappingInput!) {
 			createRiskDocumentMapping(input: $input) {
 				riskEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"riskId":     riskID,
+			"documentId": documentID,
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = owner.Do(`
+		mutation DeleteRisk($input: DeleteRiskInput!) {
+			deleteRisk(input: $input) {
+				deletedRiskId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"riskId": riskID},
+	})
+	require.Error(t, err)
+
+	_, err = owner.Do(`
+		mutation($input: DeleteRiskDocumentMappingInput!) {
+			deleteRiskDocumentMapping(input: $input) {
+				deletedRiskId
+				deletedDocumentId
 			}
 		}
 	`, map[string]any{

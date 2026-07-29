@@ -108,33 +108,6 @@ WHERE
 	return err
 }
 
-func (rp RiskDocument) DeleteByRiskID(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	riskID gid.GID,
-) error {
-	q := `
-DELETE
-FROM
-    risks_documents
-WHERE
-    %s
-    AND risk_id = @risk_id;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"risk_id": riskID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, q, args)
-
-	return err
-}
-
 func (rp RiskDocument) DeleteByDocumentIDs(
 	ctx context.Context,
 	conn pg.Tx,
