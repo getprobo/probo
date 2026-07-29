@@ -158,13 +158,18 @@ export function DropdownCheckboxItem({
       checked={checked}
       onCheckedChange={value => onCheckedChange(value === true)}
       disabled={disabled}
-      className={clsx(dropdownItem(), "rounded-lg outline-none", className)}
+      className={clsx(
+        dropdownItem(),
+        "rounded-lg outline-none",
+        "data-disabled:opacity-50 data-disabled:cursor-not-allowed data-disabled:pointer-events-none",
+        "data-disabled:hover:bg-transparent data-disabled:active:bg-transparent data-disabled:data-active-item:bg-transparent",
+        className,
+      )}
     >
       <span
         className={clsx(
           "size-4 border border-border-mid relative rounded-sm flex items-center justify-center flex-none",
           checked && "bg-accent text-invert",
-          disabled && "opacity-50",
         )}
       >
         <DropdownMenu.ItemIndicator>
