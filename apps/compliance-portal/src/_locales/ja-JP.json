@@ -16,7 +16,9 @@
     "subscribe": "アップデートを購読",
     "subscribed": "アップデート購読中",
     "signOut": "サインアウト",
-    "signOutFailed": "サインアウトできません"
+    "signOutFailed": "サインアウトできません",
+    "switchToDarkMode": "ダークモードに切り替え",
+    "switchToLightMode": "ライトモードに切り替え"
   },
   "common": {
     "cancel": "キャンセル",

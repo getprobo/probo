@@ -21,23 +21,23 @@
 import { graphql } from "react-relay";
 import { type LiveState, readFragment } from "relay-runtime";
 
-import type { CompliancePortalLogoResolverFragment$key } from "./__generated__/CompliancePortalLogoResolverFragment.graphql";
+import {
+  getDisplayMode,
+  subscribeDisplayMode,
+} from "#/lib/displayMode/displayMode";
 
-function prefersDark(): boolean {
-  return typeof window !== "undefined"
-    && !!window.matchMedia
-    && window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
+import type { CompliancePortalLogoResolverFragment$key } from "./__generated__/CompliancePortalLogoResolverFragment.graphql";
 
 /**
  * @relayField CompliancePortal.themedLogoUrl: String
  * @rootFragment CompliancePortalLogoResolverFragment
  * @live
  *
- * Resolves the compliance portal logo download URL for the current system color
- * scheme: the dark logo (falling back to the light one) when the OS prefers
- * dark, otherwise the light logo. Lives in the graph so consumers select a
- * single field instead of threading `useSystemTheme` through URL selection.
+ * Resolves the compliance portal logo download URL for the effective display
+ * mode (OS preference, or an in-tab override): the dark logo (falling back to
+ * the light one) in dark mode, otherwise the light logo. Lives in the graph so
+ * consumers select a single field instead of threading display-mode state
+ * through URL selection.
  */
 export function themedLogoUrl(
   key: CompliancePortalLogoResolverFragment$key,
@@ -59,11 +59,7 @@ export function themedLogoUrl(
   const darkUrl = data.darkLogo?.downloadUrl ?? lightUrl;
 
   return {
-    read: () => (prefersDark() ? darkUrl : lightUrl),
-    subscribe: (callback) => {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      mediaQuery.addEventListener("change", callback);
-      return () => mediaQuery.removeEventListener("change", callback);
-    },
+    read: () => (getDisplayMode() === "dark" ? darkUrl : lightUrl),
+    subscribe: subscribeDisplayMode,
   };
 }

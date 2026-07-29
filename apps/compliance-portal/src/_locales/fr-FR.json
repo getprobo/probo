@@ -16,7 +16,9 @@
     "subscribe": "S'abonner aux mises à jour",
     "subscribed": "Abonné aux mises à jour",
     "signOut": "Se déconnecter",
-    "signOutFailed": "Impossible de se déconnecter"
+    "signOutFailed": "Impossible de se déconnecter",
+    "switchToDarkMode": "Passer en mode sombre",
+    "switchToLightMode": "Passer en mode clair"
   },
   "common": {
     "cancel": "Annuler",

@@ -23,7 +23,9 @@ import {
   BellRingingIcon,
   CaretDownIcon,
   GlobeIcon,
+  MoonIcon,
   SignOutIcon,
+  SunIcon,
   UserIcon,
 } from "@phosphor-icons/react";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
@@ -42,6 +44,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { useSignOut } from "#/lib/auth/useSignOut";
+import { useDisplayMode } from "#/lib/displayMode/useDisplayMode";
 import {
   URL_LOCALE_LABELS,
   URL_LOCALES,
@@ -70,6 +73,7 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
   const identity = useFragment(topBarUserMenuFragment, identityKey);
   const { openSubscribe, isSubscribed, unsubscribe, isUnsubscribing } = useSubscribeDialog();
   const [signOut, isSigningOut] = useSignOut();
+  const { displayMode, toggleDisplayMode } = useDisplayMode();
   const locale = useLocale();
   const [changeLocale, isChangingLocale] = useChangeLocale();
 
@@ -122,6 +126,14 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
           onClick={onSubscribeItemClick}
         >
           {isSubscribed ? t("userMenu.subscribed") : t("userMenu.subscribe")}
+        </DropdownItem>
+        <DropdownItem
+          iconStart={displayMode === "dark" ? <SunIcon /> : <MoonIcon />}
+          onClick={toggleDisplayMode}
+        >
+          {displayMode === "dark"
+            ? t("userMenu.switchToLightMode")
+            : t("userMenu.switchToDarkMode")}
         </DropdownItem>
         <DropdownSubmenu>
           <DropdownSubmenuTrigger iconStart={<GlobeIcon />}>

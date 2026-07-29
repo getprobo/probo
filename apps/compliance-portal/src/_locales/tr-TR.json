@@ -16,7 +16,9 @@
     "subscribe": "Güncellemelere abone ol",
     "subscribed": "Güncellemelere abone olundu",
     "signOut": "Çıkış yap",
-    "signOutFailed": "Çıkış yapılamıyor"
+    "signOutFailed": "Çıkış yapılamıyor",
+    "switchToDarkMode": "Karanlık moda geç",
+    "switchToLightMode": "Aydınlık moda geç"
   },
   "common": {
     "cancel": "İptal",

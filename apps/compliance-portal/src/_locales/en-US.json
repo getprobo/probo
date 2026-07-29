@@ -16,7 +16,9 @@
     "subscribe": "Subscribe to updates",
     "subscribed": "Subscribed to updates",
     "signOut": "Sign out",
-    "signOutFailed": "Cannot sign out"
+    "signOutFailed": "Cannot sign out",
+    "switchToDarkMode": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode"
   },
   "locale": {
     "label": "Language",

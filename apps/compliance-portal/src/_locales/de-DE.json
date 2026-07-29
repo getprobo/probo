@@ -16,7 +16,9 @@
     "subscribe": "Aktualisierungen abonnieren",
     "subscribed": "Aktualisierungen abonniert",
     "signOut": "Abmelden",
-    "signOutFailed": "Abmelden nicht möglich"
+    "signOutFailed": "Abmelden nicht möglich",
+    "switchToDarkMode": "Zum dunklen Modus wechseln",
+    "switchToLightMode": "Zum hellen Modus wechseln"
   },
   "common": {
     "cancel": "Abbrechen",

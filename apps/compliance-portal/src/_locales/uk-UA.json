@@ -16,7 +16,9 @@
     "subscribe": "Підписатися на оновлення",
     "subscribed": "Підписано на оновлення",
     "signOut": "Вийти",
-    "signOutFailed": "Не вдалося вийти"
+    "signOutFailed": "Не вдалося вийти",
+    "switchToDarkMode": "Перейти в темний режим",
+    "switchToLightMode": "Перейти у світлий режим"
   },
   "common": {
     "cancel": "Скасувати",

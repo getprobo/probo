@@ -16,7 +16,9 @@
     "subscribe": "Suscribirse a las actualizaciones",
     "subscribed": "Suscrito a las actualizaciones",
     "signOut": "Cerrar sesión",
-    "signOutFailed": "No se puede cerrar sesión"
+    "signOutFailed": "No se puede cerrar sesión",
+    "switchToDarkMode": "Cambiar a modo oscuro",
+    "switchToLightMode": "Cambiar a modo claro"
   },
   "common": {
     "cancel": "Cancelar",

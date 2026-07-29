@@ -16,7 +16,9 @@
     "subscribe": "Berlangganan pembaruan",
     "subscribed": "Sudah berlangganan pembaruan",
     "signOut": "Keluar",
-    "signOutFailed": "Tidak dapat keluar"
+    "signOutFailed": "Tidak dapat keluar",
+    "switchToDarkMode": "Beralih ke mode gelap",
+    "switchToLightMode": "Beralih ke mode terang"
   },
   "common": {
     "cancel": "Batal",

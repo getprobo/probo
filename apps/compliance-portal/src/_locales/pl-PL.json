@@ -16,7 +16,9 @@
     "subscribe": "Subskrybuj aktualizacje",
     "subscribed": "Subskrybowano aktualizacje",
     "signOut": "Wyloguj się",
-    "signOutFailed": "Nie można się wylogować"
+    "signOutFailed": "Nie można się wylogować",
+    "switchToDarkMode": "Przełącz na tryb ciemny",
+    "switchToLightMode": "Przełącz na tryb jasny"
   },
   "common": {
     "cancel": "Anuluj",

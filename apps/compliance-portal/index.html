@@ -13,12 +13,15 @@
   </script>
 
   <script>
+    // FOUC guard: apply the OS preference before JS bundles load. Runtime
+    // overrides (and further system-preference changes) are owned by
+    // src/lib/displayMode/displayMode.ts once the app boots.
     (function () {
       if (!window.matchMedia) return;
-      var mq = window.matchMedia("(prefers-color-scheme: dark)");
-      var apply = function () { document.documentElement.classList.toggle("dark", mq.matches); };
-      apply();
-      mq.addEventListener("change", apply);
+      document.documentElement.classList.toggle(
+        "dark",
+        window.matchMedia("(prefers-color-scheme: dark)").matches,
+      );
     })();
   </script>
 

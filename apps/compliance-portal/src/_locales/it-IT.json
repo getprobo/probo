@@ -16,7 +16,9 @@
     "subscribe": "Iscriviti agli aggiornamenti",
     "subscribed": "Iscritto agli aggiornamenti",
     "signOut": "Esci",
-    "signOutFailed": "Impossibile uscire"
+    "signOutFailed": "Impossibile uscire",
+    "switchToDarkMode": "Passa alla modalità scura",
+    "switchToLightMode": "Passa alla modalità chiara"
   },
   "common": {
     "cancel": "Annulla",

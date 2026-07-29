@@ -23,7 +23,9 @@ import {
   BellRingingIcon,
   ListIcon,
   LockSimpleIcon,
+  MoonIcon,
   SignOutIcon,
+  SunIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -45,6 +47,7 @@ import { useLocation } from "react-router";
 
 import { getSafeContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
 import { useSignOut } from "#/lib/auth/useSignOut";
+import { useDisplayMode } from "#/lib/displayMode/useDisplayMode";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 
@@ -75,6 +78,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
   const { pathname } = useLocation();
   const { openSubscribe, isSubscribed, unsubscribe, isUnsubscribing } = useSubscribeDialog();
   const [signOut, isSigningOut] = useSignOut();
+  const { displayMode, toggleDisplayMode } = useDisplayMode();
   const [open, setOpen] = useState(false);
   // Select menus portal to body at z-3 by default; mount them on the drawer
   // popup so they stack inside the modal layer (z-5) instead of under it.
@@ -201,6 +205,20 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
                     }}
                   >
                     {isSubscribed ? t("userMenu.subscribed") : t("userMenu.subscribe")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    color="gold"
+                    size={3}
+                    className="w-full justify-start"
+                    iconStart={displayMode === "dark" ? <SunIcon /> : <MoonIcon />}
+                    onClick={() => {
+                      toggleDisplayMode();
+                    }}
+                  >
+                    {displayMode === "dark"
+                      ? t("userMenu.switchToLightMode")
+                      : t("userMenu.switchToDarkMode")}
                   </Button>
                   <Button
                     variant="ghost"
