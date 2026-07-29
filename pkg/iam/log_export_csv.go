@@ -312,7 +312,7 @@ func loadSCIMProfileExportInfo(
 		return map[string]scimProfileExportInfo{}, nil
 	}
 
-	var profiles coredata.MembershipProfiles
+	var profiles coredata.MembershipProfileByUserNameRows
 	if err := profiles.LoadByOrganizationIDAndUserNames(
 		ctx,
 		conn,
@@ -332,7 +332,7 @@ func loadSCIMProfileExportInfo(
 		key := strings.ToLower(*profile.UserName)
 		result[key] = scimProfileExportInfo{
 			email:    scimEmailFromUserName(*profile.UserName),
-			fullName: profileFullName(profile),
+			fullName: profile.DisplayName(),
 		}
 	}
 
@@ -381,14 +381,6 @@ func scimEmailFromUserName(userName string) string {
 	}
 
 	return ""
-}
-
-func profileFullName(profile *coredata.MembershipProfile) string {
-	if profile.FormattedName != nil && *profile.FormattedName != "" {
-		return *profile.FormattedName
-	}
-
-	return profile.FullName
 }
 
 func stringPtrValue(value *string) string {

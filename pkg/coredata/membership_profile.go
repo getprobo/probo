@@ -495,7 +495,25 @@ WHERE
 	return nil
 }
 
-func (p *MembershipProfiles) LoadByOrganizationIDAndUserNames(
+type (
+	MembershipProfileByUserNameRow struct {
+		UserName      *string `db:"user_name"`
+		FullName      string  `db:"full_name"`
+		FormattedName *string `db:"formatted_name"`
+	}
+
+	MembershipProfileByUserNameRows []*MembershipProfileByUserNameRow
+)
+
+func (p *MembershipProfileByUserNameRow) DisplayName() string {
+	if p.FormattedName != nil && *p.FormattedName != "" {
+		return *p.FormattedName
+	}
+
+	return p.FullName
+}
+
+func (rows *MembershipProfileByUserNameRows) LoadByOrganizationIDAndUserNames(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -504,40 +522,9 @@ func (p *MembershipProfiles) LoadByOrganizationIDAndUserNames(
 ) error {
 	q := `
 SELECT
-    p.id,
-    p.identity_id,
-    p.organization_id,
-    '' AS email_address,
-    p.source,
-    p.state,
-    p.full_name,
-    p.kind,
-    p.additional_email_addresses,
-    p.position,
-    p.contract_start_date,
-    p.contract_end_date,
-    '' AS organization_name,
     p.user_name,
-    p.external_id,
-    p.nickname,
-    p.locale,
-    p.timezone,
-    p.profile_url,
-    p.preferred_language,
-    p.given_name,
-    p.family_name,
-    p.formatted_name,
-    p.middle_name,
-    p.honorific_prefix,
-    p.honorific_suffix,
-    p.employee_number,
-    p.department,
-    p.cost_center,
-    p.enterprise_organization,
-    p.division,
-    p.manager_value,
-    p.created_at,
-    p.updated_at
+    p.full_name,
+    p.formatted_name
 FROM
     iam_membership_profiles p
 WHERE
@@ -554,17 +541,17 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
+	rowsResult, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query profiles by user names: %w", err)
 	}
 
-	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	profiles, err := pgx.CollectRows(rowsResult, pgx.RowToAddrOfStructByName[MembershipProfileByUserNameRow])
 	if err != nil {
 		return fmt.Errorf("cannot collect profiles by user names: %w", err)
 	}
 
-	*p = profiles
+	*rows = profiles
 
 	return nil
 }
