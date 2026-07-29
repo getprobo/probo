@@ -28,11 +28,14 @@ import { tv } from "tailwind-variants/lite";
 // of the logo as the backdrop. Slots are shared by the shell and its skeleton.
 export const mediaTile = tv({
   slots: {
+    // Inner column fills the Card height so grid peers stretch evenly when a
+    // caption wraps; flex-1 on caption absorbs the leftover space.
+    body: "flex h-full flex-col",
     media: "relative flex w-full items-center justify-center overflow-hidden border-b border-sand-a2",
     backdrop: "pointer-events-none absolute inset-0",
     backdropFade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
     mediaContent: "relative z-1 flex size-16 items-center justify-center [&_img]:size-full [&_img]:object-contain",
-    caption: "flex w-full items-center justify-center px-4 py-3",
+    caption: "flex w-full flex-1 items-center justify-center px-4 py-3",
   },
   variants: {
     variant: {

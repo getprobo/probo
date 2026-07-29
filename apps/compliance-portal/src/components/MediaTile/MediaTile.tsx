@@ -55,25 +55,28 @@ export function MediaTile({ media, label, variant = "icon", backdropSrc }: Media
       variant="soft"
       size={3}
       padding="none"
+      className="h-full"
       onPointerMove={parallax ? onBackdropPointerMove : undefined}
       onPointerLeave={parallax ? onBackdropPointerLeave : undefined}
     >
-      <div className={slots.media()} {...(parallax ? backdropFrameProps("logoTile") : undefined)}>
-        {backdropSrc != null
-          ? (
-              <img
-                src={backdropSrc}
-                alt=""
-                aria-hidden
-                className={blurBackdropClassName("logoTile")}
-                style={blurBackdropStyle("logoTile")}
-              />
-            )
-          : <div className={slots.backdrop()} style={dotPatternStyle} />}
-        <div className={slots.backdropFade()} />
-        <div className={slots.mediaContent()}>{media}</div>
+      <div className={slots.body()}>
+        <div className={slots.media()} {...(parallax ? backdropFrameProps("logoTile") : undefined)}>
+          {backdropSrc != null
+            ? (
+                <img
+                  src={backdropSrc}
+                  alt=""
+                  aria-hidden
+                  className={blurBackdropClassName("logoTile")}
+                  style={blurBackdropStyle("logoTile")}
+                />
+              )
+            : <div className={slots.backdrop()} style={dotPatternStyle} />}
+          <div className={slots.backdropFade()} />
+          <div className={slots.mediaContent()}>{media}</div>
+        </div>
+        <div className={slots.caption()}>{label}</div>
       </div>
-      <div className={slots.caption()}>{label}</div>
     </Card>
   );
 }

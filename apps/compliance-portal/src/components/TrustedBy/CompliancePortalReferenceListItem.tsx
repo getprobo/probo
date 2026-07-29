@@ -46,7 +46,7 @@ export function CompliancePortalReferenceListItem({ referenceKey }: CompliancePo
 
   return (
     <a
-      className="block"
+      className="block h-full"
       href={externalHref(reference.websiteUrl)}
       target="_blank"
       rel="noopener noreferrer"
