@@ -74,6 +74,16 @@ var (
 		"error_message",
 		"ip_address",
 	}
+
+	auditLogExportOrderBy = page.OrderBy[coredata.AuditLogEntryOrderField]{
+		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	scimEventExportOrderBy = page.OrderBy[coredata.SCIMEventOrderField]{
+		Field:     coredata.SCIMEventOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
 )
 
 func (s *LogExportService) streamAuditLogCSV(
@@ -91,10 +101,7 @@ func (s *LogExportService) streamAuditLogCSV(
 
 	return page.WalkAll(
 		ctx,
-		page.OrderBy[coredata.AuditLogEntryOrderField]{
-			Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
+		auditLogExportOrderBy,
 		func(ctx context.Context, cursor *page.Cursor[coredata.AuditLogEntryOrderField]) (coredata.AuditLogEntries, error) {
 			var logs coredata.AuditLogEntries
 			if err := logs.LoadByOrganizationID(
@@ -149,10 +156,7 @@ func (s *LogExportService) streamSCIMEventCSV(
 
 	return page.WalkAll(
 		ctx,
-		page.OrderBy[coredata.SCIMEventOrderField]{
-			Field:     coredata.SCIMEventOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
+		scimEventExportOrderBy,
 		func(ctx context.Context, cursor *page.Cursor[coredata.SCIMEventOrderField]) (coredata.SCIMEvents, error) {
 			var events coredata.SCIMEvents
 			if err := events.LoadByOrganizationID(
