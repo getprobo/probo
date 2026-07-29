@@ -113,12 +113,14 @@ export default defineConfig(({ mode, command }) => {
       port: 5174,
       proxy: proxyTarget
         ? {
-            "^/graphql": {
-              // Host-routed compliance-portal API (trust-center HTTPS listener).
-              target: proxyTarget,
-              changeOrigin: true,
-              secure: false, // local step-ca
-            },
+            // Host-routed compliance-portal API (trust-center HTTPS listener).
+            // Match pathname only; req.url may include ?continue=… etc.
+            "^/(?:graphql|initiate|callback|brand/(?:logo|dark-logo)|\\.well-known/oauth-client-metadata)(?:\\?|$)":
+              {
+                target: proxyTarget,
+                changeOrigin: true,
+                secure: false, // local step-ca
+              },
           }
         : undefined,
     },
