@@ -301,3 +301,47 @@ WHERE
 
 	return nil
 }
+
+func (a *PersonalAPIKeys) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	apiKeyIDs []gid.GID,
+) error {
+	if len(apiKeyIDs) == 0 {
+		*a = nil
+
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    identity_id,
+    name,
+    expires_at,
+    expire_reason,
+    last_used_at,
+    created_at,
+    updated_at
+FROM
+    iam_personal_api_keys
+WHERE
+    id = ANY(@api_key_ids::text[])
+`
+
+	args := pgx.StrictNamedArgs{"api_key_ids": apiKeyIDs}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query personal api keys: %w", err)
+	}
+
+	apiKeys, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[PersonalAPIKey])
+	if err != nil {
+		return fmt.Errorf("cannot collect personal api keys: %w", err)
+	}
+
+	*a = apiKeys
+
+	return nil
+}

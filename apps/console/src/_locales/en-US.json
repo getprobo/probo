@@ -1396,7 +1396,7 @@
     "actions": { "showMore": "Show more" },
     "export": {
       "title": "Export Audit Log",
-      "description": "Select a date range to export audit log entries as JSONL. You will receive an email with a download link.",
+      "description": "Select a date range to export audit log entries as CSV. You will receive an email with a download link.",
       "fields": { "from": "From", "to": "To" },
       "actions": { "export": "Export", "exporting": "Exporting..." },
       "messages": {
@@ -1424,7 +1424,7 @@
     "provisioningEventHistory": "Provisioning Event History",
     "export": {
       "title": "Export SCIM Events",
-      "description": "Select a date range to export SCIM events as JSONL. You will receive an email with a download link.",
+      "description": "Select a date range to export SCIM events as CSV. You will receive an email with a download link.",
       "fields": { "from": "From", "to": "To" },
       "actions": { "export": "Export", "exporting": "Exporting..." },
       "messages": {

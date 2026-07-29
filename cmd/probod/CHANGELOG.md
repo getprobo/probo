@@ -8,7 +8,7 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Added
 
-- Log export for audit logs and SCIM events: request a JSONL export job from the console, Connect, MCP, or CLI, streamed and uploaded to S3 by a concurrent export worker
+- Log export for audit logs and SCIM events: request a CSV export job from the console, Connect, MCP, or CLI, streamed and uploaded to S3 by a concurrent export worker
 - Auth cookie `SameSite` attribute is now configurable (`PROBOD_AUTH_COOKIE_SAMESITE`, defaults to `Lax`), rejecting `None` unless `Secure` is enabled
 - In-tab light/dark display mode toggle for signed-in compliance portal guests, independent of the OS color scheme
 - Subprocessor cards truncate long country/region lists behind a "+N" popover

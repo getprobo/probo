@@ -387,3 +387,48 @@ WHERE
 
 	return count, nil
 }
+
+func (i *Identities) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	identityIDs []gid.GID,
+) error {
+	if len(identityIDs) == 0 {
+		*i = nil
+
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    email_address,
+    full_name,
+    hashed_password,
+    email_address_verified,
+    saml_subject,
+    locale,
+    created_at,
+    updated_at
+FROM
+    identities
+WHERE
+    id = ANY(@identity_ids::text[])
+`
+
+	args := pgx.StrictNamedArgs{"identity_ids": identityIDs}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query identities: %w", err)
+	}
+
+	identities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Identity])
+	if err != nil {
+		return fmt.Errorf("cannot collect identities: %w", err)
+	}
+
+	*i = identities
+
+	return nil
+}

@@ -2544,7 +2544,7 @@
     },
     "export": {
       "title": "Exporter le journal d'audit",
-      "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d'audit au format JSONL. Vous recevrez un e-mail avec un lien de téléchargement.",
+      "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d'audit au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
       "fields": { "from": "Du", "to": "Au" },
       "actions": { "export": "Exporter", "exporting": "Exportation..." },
       "messages": {
@@ -2593,7 +2593,7 @@
     "provisioningEventHistory": "Historique des événements de provisionnement",
     "export": {
       "title": "Exporter les événements SCIM",
-      "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format JSONL. Vous recevrez un e-mail avec un lien de téléchargement.",
+      "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
       "fields": { "from": "Du", "to": "Au" },
       "actions": { "export": "Exporter", "exporting": "Exportation..." },
       "messages": {

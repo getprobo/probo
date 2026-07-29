@@ -22,7 +22,7 @@ package iam
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"strings"
@@ -35,7 +35,6 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/page"
 )
 
 type LogExportService struct {
@@ -88,7 +87,7 @@ func (s *LogExportService) BuildAndUploadExport(
 	now := time.Now()
 	fileKey := uuid.MustNewV4().String()
 	fileName := fmt.Sprintf(
-		"%s-export-%s-to-%s.jsonl",
+		"%s-export-%s-to-%s.csv",
 		typeName,
 		args.FromTime.Format("2006-01-02"),
 		args.ToTime.Format("2006-01-02"),
@@ -98,7 +97,7 @@ func (s *LogExportService) BuildAndUploadExport(
 		ID:             gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
 		OrganizationID: exportJob.OrganizationID,
 		BucketName:     s.bucket,
-		MimeType:       "application/octet-stream",
+		MimeType:       "text/csv",
 		FileName:       fileName,
 		FileKey:        fileKey,
 		Visibility:     coredata.FileVisibilityPrivate,
@@ -131,7 +130,7 @@ func (s *LogExportService) BuildAndUploadExport(
 		_ = pr.CloseWithError(uploadErr)
 	}()
 
-	writeErr := s.streamJSONL(ctx, exportJob, args, scope, pw)
+	writeErr := s.streamCSV(ctx, exportJob, args, scope, pw)
 	if writeErr != nil {
 		_ = pw.CloseWithError(writeErr)
 	} else {
@@ -141,7 +140,7 @@ func (s *LogExportService) BuildAndUploadExport(
 	<-uploadDone
 
 	if writeErr != nil {
-		return nil, fmt.Errorf("cannot write JSONL: %w", writeErr)
+		return nil, fmt.Errorf("cannot write CSV: %w", writeErr)
 	}
 
 	if uploadErr != nil {
@@ -214,7 +213,7 @@ func (s *LogExportService) SendExportEmail(
 	)
 }
 
-func (s *LogExportService) streamJSONL(
+func (s *LogExportService) streamCSV(
 	ctx context.Context,
 	exportJob *coredata.ExportJob,
 	args *coredata.LogExportArguments,
@@ -224,106 +223,37 @@ func (s *LogExportService) streamJSONL(
 	return s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			enc := json.NewEncoder(pw)
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, scope, exportJob.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization for log export: %w", err)
+			}
+
+			w := csv.NewWriter(pw)
 
 			switch exportJob.Type {
 			case coredata.ExportJobTypeAuditLog:
-				return s.streamAuditLogEntries(ctx, conn, scope, exportJob.OrganizationID, args, enc)
+				return s.streamAuditLogCSV(
+					ctx,
+					conn,
+					scope,
+					exportJob.OrganizationID,
+					organization.Name,
+					args,
+					w,
+				)
 			case coredata.ExportJobTypeSCIMEvent:
-				return s.streamSCIMEvents(ctx, conn, scope, exportJob.OrganizationID, args, enc)
+				return s.streamSCIMEventCSV(
+					ctx,
+					conn,
+					scope,
+					exportJob.OrganizationID,
+					organization.Name,
+					args,
+					w,
+				)
 			default:
 				return fmt.Errorf("unsupported log export type: %q", exportJob.Type)
 			}
-		},
-	)
-}
-
-func (s *LogExportService) streamAuditLogEntries(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-	args *coredata.LogExportArguments,
-	enc *json.Encoder,
-) error {
-	filter := coredata.NewAuditLogEntryFilter().
-		WithCreatedAtGte(args.FromTime).
-		WithCreatedAtLt(args.ToTime)
-
-	return page.WalkAll(
-		ctx,
-		page.OrderBy[coredata.AuditLogEntryOrderField]{
-			Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.AuditLogEntryOrderField]) ([]*coredata.AuditLogEntry, error) {
-			var batch coredata.AuditLogEntries
-			if err := batch.LoadByOrganizationID(
-				ctx,
-				conn,
-				scope,
-				organizationID,
-				cursor,
-				filter,
-			); err != nil {
-				return nil, err
-			}
-
-			return batch, nil
-		},
-		func(entries []*coredata.AuditLogEntry) error {
-			for _, entry := range entries {
-				if err := enc.Encode(entry); err != nil {
-					return fmt.Errorf("cannot encode audit log entry: %w", err)
-				}
-			}
-
-			return nil
-		},
-	)
-}
-
-func (s *LogExportService) streamSCIMEvents(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-	args *coredata.LogExportArguments,
-	enc *json.Encoder,
-) error {
-	filter := coredata.NewSCIMEventFilter().
-		WithCreatedAtGte(args.FromTime).
-		WithCreatedAtLt(args.ToTime)
-
-	return page.WalkAll(
-		ctx,
-		page.OrderBy[coredata.SCIMEventOrderField]{
-			Field:     coredata.SCIMEventOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.SCIMEventOrderField]) ([]*coredata.SCIMEvent, error) {
-			var batch coredata.SCIMEvents
-			if err := batch.LoadByOrganizationID(
-				ctx,
-				conn,
-				scope,
-				organizationID,
-				cursor,
-				filter,
-			); err != nil {
-				return nil, err
-			}
-
-			return batch, nil
-		},
-		func(events []*coredata.SCIMEvent) error {
-			for _, event := range events {
-				if err := enc.Encode(event); err != nil {
-					return fmt.Errorf("cannot encode SCIM event: %w", err)
-				}
-			}
-
-			return nil
 		},
 	)
 }

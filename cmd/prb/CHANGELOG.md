@@ -8,7 +8,7 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ### Added
 
-- `prb audit-log export` and `prb scim event export` commands to request JSONL exports of audit log entries and SCIM events
+- `prb audit-log export` and `prb scim event export` commands to request CSV exports of audit log entries and SCIM events
 
 ## [0.205.0] - 2026-07-28
 

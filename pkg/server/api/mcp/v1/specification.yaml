@@ -14610,7 +14610,7 @@ tools:
       $ref: "#/components/schemas/ListAuditLogEntriesOutput"
   - name: requestAuditLogExport
     title: Request Audit Log Export
-    description: Request an export of audit log entries for the organization within a time range. The export will be emailed as a JSONL download link.
+    description: Request an export of audit log entries for the organization within a time range. The export will be emailed as a CSV download link.
     hints:
       readonly: false
       destructive: false
@@ -14622,7 +14622,7 @@ tools:
       $ref: "#/components/schemas/RequestAuditLogExportOutput"
   - name: requestSCIMEventExport
     title: Request SCIM Event Export
-    description: Request an export of SCIM events for the organization within a time range. The export will be emailed as a JSONL download link.
+    description: Request an export of SCIM events for the organization within a time range. The export will be emailed as a CSV download link.
     hints:
       readonly: false
       destructive: false
