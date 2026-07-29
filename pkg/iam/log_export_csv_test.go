@@ -32,3 +32,21 @@ func TestUniqueNonEmptyStrings(t *testing.T) {
 	got := uniqueNonEmptyStrings([]string{"a", "A", "", "b", "a"})
 	assert.Equal(t, []string{"a", "b"}, got)
 }
+
+func TestCsvSafeCell(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "plain", csvSafeCell("plain"))
+	assert.Equal(t, "'=1+1", csvSafeCell("=1+1"))
+	assert.Equal(t, "'+cmd", csvSafeCell("+cmd"))
+	assert.Equal(t, "'-2", csvSafeCell("-2"))
+	assert.Equal(t, "'@sum", csvSafeCell("@sum"))
+}
+
+func TestScimEmailFromUserName(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "user@example.com", scimEmailFromUserName("user@example.com"))
+	assert.Equal(t, "", scimEmailFromUserName("not-an-email"))
+	assert.Equal(t, "", scimEmailFromUserName(""))
+}

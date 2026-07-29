@@ -31,6 +31,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -206,7 +207,7 @@ func auditLogEntryCSVRow(
 	entry *coredata.AuditLogEntry,
 	actor auditLogActorExportInfo,
 ) []string {
-	return []string{
+	return csvExportRow(
 		organizationName,
 		entry.ID.String(),
 		entry.CreatedAt.Format(time.RFC3339),
@@ -217,7 +218,7 @@ func auditLogEntryCSVRow(
 		entry.Action,
 		entry.ResourceType,
 		entry.ResourceID.String(),
-	}
+	)
 }
 
 func scimEventCSVRow(
@@ -227,19 +228,24 @@ func scimEventCSVRow(
 ) []string {
 	profile := profilesByUserName[strings.ToLower(event.UserName)]
 
-	return []string{
+	email := profile.email
+	if email == "" {
+		email = scimEmailFromUserName(event.UserName)
+	}
+
+	return csvExportRow(
 		organizationName,
 		event.ID.String(),
 		event.CreatedAt.Format(time.RFC3339),
 		event.Method,
 		event.Path,
 		event.UserName,
-		profile.email,
+		email,
 		profile.fullName,
 		strconv.Itoa(event.StatusCode),
 		stringPtrValue(event.ErrorMessage),
 		event.IPAddress.String(),
-	}
+	)
 }
 
 func loadAuditLogActorExportInfo(
@@ -312,6 +318,21 @@ func loadSCIMProfileExportInfo(
 		return nil, fmt.Errorf("cannot load SCIM profile export info: %w", err)
 	}
 
+	identityIDs := make([]gid.GID, 0, len(profiles))
+	for _, profile := range profiles {
+		identityIDs = append(identityIDs, profile.IdentityID)
+	}
+
+	var identities coredata.Identities
+	if err := identities.LoadByIDs(ctx, conn, identityIDs); err != nil {
+		return nil, fmt.Errorf("cannot load SCIM profile identity emails: %w", err)
+	}
+
+	emailByIdentityID := make(map[gid.GID]string, len(identities))
+	for _, identity := range identities {
+		emailByIdentityID[identity.ID] = identity.EmailAddress.String()
+	}
+
 	result := make(map[string]scimProfileExportInfo, len(profiles))
 	for _, profile := range profiles {
 		if profile.UserName == nil {
@@ -320,7 +341,7 @@ func loadSCIMProfileExportInfo(
 
 		key := strings.ToLower(*profile.UserName)
 		result[key] = scimProfileExportInfo{
-			email:    profile.EmailAddress.String(),
+			email:    emailByIdentityID[profile.IdentityID],
 			fullName: profileFullName(profile),
 		}
 	}
@@ -358,6 +379,41 @@ func uniqueNonEmptyStrings(values []string) []string {
 	}
 
 	return out
+}
+
+func csvExportRow(fields ...string) []string {
+	row := make([]string, len(fields))
+	for i, field := range fields {
+		row[i] = csvSafeCell(field)
+	}
+
+	return row
+}
+
+func csvSafeCell(value string) string {
+	if value == "" {
+		return value
+	}
+
+	switch value[0] {
+	case '=', '+', '-', '@', '\t', '\r':
+		return "'" + value
+	default:
+		return value
+	}
+}
+
+func scimEmailFromUserName(userName string) string {
+	userName = strings.TrimSpace(userName)
+	if userName == "" {
+		return ""
+	}
+
+	if _, err := mail.ParseAddr(userName); err == nil {
+		return userName
+	}
+
+	return ""
 }
 
 func profileFullName(profile *coredata.MembershipProfile) string {

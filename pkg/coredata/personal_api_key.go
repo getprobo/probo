@@ -320,7 +320,7 @@ SELECT
 FROM
     iam_personal_api_keys
 WHERE
-    id = ANY(@api_key_ids::text[])
+    id = ANY(@api_key_ids)
 `
 
 	args := pgx.StrictNamedArgs{"api_key_ids": apiKeyIDs}

@@ -407,7 +407,7 @@ SELECT
 FROM
     identities
 WHERE
-    id = ANY(@identity_ids::text[])
+    id = ANY(@identity_ids)
 `
 
 	args := pgx.StrictNamedArgs{"identity_ids": identityIDs}
