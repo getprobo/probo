@@ -30,6 +30,7 @@ import (
 var (
 	ErrCampaignMissingSources    = errors.New("access review campaign missing scope sources")
 	ErrCampaignNotDraft          = errors.New("access review campaign not draft")
+	ErrCampaignNotDeletable      = errors.New("access review campaign not deletable")
 	ErrCampaignNotPendingActions = errors.New("access review campaign not pending actions")
 	ErrCampaignCompleted         = errors.New("access review campaign completed")
 	ErrCampaignCancelled         = errors.New("access review campaign cancelled")
@@ -41,6 +42,10 @@ type (
 	}
 
 	CampaignNotDraftError struct {
+		CampaignID gid.GID
+	}
+
+	CampaignNotDeletableError struct {
 		CampaignID gid.GID
 	}
 
@@ -82,6 +87,21 @@ func (e *CampaignNotDraftError) Error() string {
 
 func (e *CampaignNotDraftError) Is(target error) bool {
 	return target == ErrCampaignNotDraft
+}
+
+func NewCampaignNotDeletableError(campaignID gid.GID) error {
+	return &CampaignNotDeletableError{CampaignID: campaignID}
+}
+
+func (e *CampaignNotDeletableError) Error() string {
+	return fmt.Sprintf(
+		"access review campaign %q cannot be deleted while it is in progress",
+		e.CampaignID,
+	)
+}
+
+func (e *CampaignNotDeletableError) Is(target error) bool {
+	return target == ErrCampaignNotDeletable
 }
 
 func NewCampaignNotPendingActionsError(campaignID gid.GID) error {

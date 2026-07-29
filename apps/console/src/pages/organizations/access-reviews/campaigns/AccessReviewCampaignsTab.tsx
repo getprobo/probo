@@ -132,6 +132,8 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
     deleteCampaignMutation,
   );
 
+  const isDeletableStatus = (status: string) => status !== "IN_PROGRESS";
+
   const handleDelete = (campaignId: string, campaignName: string) => {
     confirm(
       () => {
@@ -178,7 +180,9 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
     );
   };
 
-  const hasActions = accessReviewCampaigns.edges.some(edge => edge.node.canDelete);
+  const hasActions = accessReviewCampaigns.edges.some(
+    edge => edge.node.canDelete && isDeletableStatus(edge.node.status),
+  );
 
   return (
     <div className="space-y-4">
@@ -209,7 +213,8 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                 </Thead>
                 <Tbody>
                   {accessReviewCampaigns.edges.map((edge) => {
-                    const canDeleteRow = edge.node.canDelete;
+                    const canDeleteRow
+                      = edge.node.canDelete && isDeletableStatus(edge.node.status);
                     return (
                       <Tr
                         key={edge.node.id}

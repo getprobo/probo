@@ -787,6 +787,10 @@ func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
+		if errors.Is(err, accessreview.ErrCampaignNotDeletable) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
