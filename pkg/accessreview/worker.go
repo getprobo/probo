@@ -24,8 +24,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
@@ -140,32 +142,52 @@ func (h *sourceFetchHandler) handle(
 
 	campaignSource := &coredata.AccessReviewCampaignSource{}
 	if err := h.loadCampaignSource(ctx, scope, attempt.AccessReviewCampaignSourceID, campaignSource); err != nil {
-		commitErr := h.commitFailedSourceFetch(ctx, attempt, fmt.Errorf("cannot load campaign source: %w", err))
-		if commitErr != nil {
-			return fmt.Errorf("cannot load campaign source: %w, and cannot commit failed fetch attempt: %w", err, commitErr)
+		failureErr := fmt.Errorf("cannot load campaign source: %w", err)
+		campaignID, idErr := h.loadCampaignIDForCampaignSource(
+			ctx,
+			scope,
+			attempt.AccessReviewCampaignSourceID,
+		)
+		if idErr != nil {
+			campaignID = gid.Nil
 		}
 
-		return fmt.Errorf("cannot load campaign source: %w", err)
+		if finalizeErr := h.failAttemptAndFinalizeCampaign(
+			ctx,
+			attempt,
+			campaignID,
+			failureErr,
+		); finalizeErr != nil {
+			return fmt.Errorf("cannot load campaign source: %w, and cannot commit failed fetch attempt: %w", err, finalizeErr)
+		}
+
+		return nil
 	}
 
 	campaign, err := h.svc.GetCampaign(ctx, scope, campaignSource.AccessReviewCampaignID)
 	if err != nil {
-		commitErr := h.commitFailedSourceFetch(ctx, attempt, fmt.Errorf("cannot load campaign: %w", err))
-		if commitErr != nil {
-			return fmt.Errorf("cannot load campaign: %w, and cannot commit failed fetch attempt: %w", err, commitErr)
+		failureErr := fmt.Errorf("cannot load campaign: %w", err)
+		if finalizeErr := h.failAttemptAndFinalizeCampaign(
+			ctx,
+			attempt,
+			campaignSource.AccessReviewCampaignID,
+			failureErr,
+		); finalizeErr != nil {
+			return fmt.Errorf("cannot load campaign: %w, and cannot commit failed fetch attempt: %w", err, finalizeErr)
 		}
 
-		return fmt.Errorf("cannot load campaign: %w", err)
+		return nil
 	}
 
 	count, err := h.svc.FetchSource(ctx, scope, campaign, campaignSource)
 	if err != nil {
-		if commitErr := h.commitFailedSourceFetch(ctx, attempt, err); commitErr != nil {
-			return fmt.Errorf("cannot fetch source: %w, and cannot commit failed fetch attempt: %w", err, commitErr)
-		}
-
-		if finalizeErr := h.finalizeCampaignFetchLifecycle(ctx, attempt.TenantID, campaignSource.AccessReviewCampaignID); finalizeErr != nil {
-			return fmt.Errorf("cannot finalize campaign after failed fetch attempt: %w", finalizeErr)
+		if finalizeErr := h.failAttemptAndFinalizeCampaign(
+			ctx,
+			attempt,
+			campaignSource.AccessReviewCampaignID,
+			err,
+		); finalizeErr != nil {
+			return fmt.Errorf("cannot fetch source: %w, and cannot commit failed fetch attempt: %w", err, finalizeErr)
 		}
 
 		return nil
@@ -196,9 +218,66 @@ func (h *sourceFetchHandler) loadCampaignSource(
 	)
 }
 
+func (h *sourceFetchHandler) loadCampaignIDForCampaignSource(
+	ctx context.Context,
+	scope coredata.Scoper,
+	campaignSourceID gid.GID,
+) (gid.GID, error) {
+	var campaignID gid.GID
+
+	err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			q := `
+SELECT access_review_campaign_id
+FROM access_review_campaign_sources
+WHERE
+	%s
+	AND id = @campaign_source_id
+`
+			q = fmt.Sprintf(q, scope.SQLFragment())
+
+			args := pgx.StrictNamedArgs{"campaign_source_id": campaignSourceID}
+			maps.Copy(args, scope.SQLArguments())
+
+			if err := conn.QueryRow(ctx, q, args).Scan(&campaignID); err != nil {
+				return fmt.Errorf("cannot load campaign id for source: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return gid.Nil, err
+	}
+
+	return campaignID, nil
+}
+
 // commitFailedSourceFetch marks the in-flight attempt as failed with a generic,
 // user-facing message and logs the raw error so the internal detail stays in the
 // logs only.
+func (h *sourceFetchHandler) failAttemptAndFinalizeCampaign(
+	ctx context.Context,
+	attempt *coredata.AccessReviewCampaignSourceFetchAttempt,
+	campaignID gid.GID,
+	failureErr error,
+) error {
+	if err := h.commitFailedSourceFetch(ctx, attempt, failureErr); err != nil {
+		return err
+	}
+
+	if campaignID == gid.Nil {
+		return nil
+	}
+
+	if err := h.finalizeCampaignFetchLifecycle(ctx, attempt.TenantID, campaignID); err != nil {
+		return fmt.Errorf("cannot finalize campaign after failed fetch attempt: %w", err)
+	}
+
+	return nil
+}
+
 func (h *sourceFetchHandler) commitFailedSourceFetch(
 	ctx context.Context,
 	attempt *coredata.AccessReviewCampaignSourceFetchAttempt,
@@ -278,12 +357,21 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 				return nil
 			}
 
+			var campaignSources coredata.AccessReviewCampaignSources
+			if err := campaignSources.LoadByCampaignID(ctx, tx, scope, campaignID); err != nil {
+				return fmt.Errorf("cannot load campaign sources: %w", err)
+			}
+
+			if len(campaignSources) == 0 {
+				return nil
+			}
+
 			latest := coredata.AccessReviewCampaignSourceFetchAttempts{}
 			if err := latest.LoadLatestByCampaignID(ctx, tx, scope, campaignID); err != nil {
 				return fmt.Errorf("cannot load latest fetch attempts: %w", err)
 			}
 
-			if len(latest) == 0 {
+			if len(latest) != len(campaignSources) {
 				return nil
 			}
 

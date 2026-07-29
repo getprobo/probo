@@ -52,6 +52,49 @@ export function fetchStatusBadgeVariant(status: string): BadgeVariant {
   }
 }
 
+type CampaignSourcePendingCloseCount = {
+  id: string;
+  fetchAttempts: {
+    edges: ReadonlyArray<{
+      node: { status: string };
+    }>;
+  };
+  entries?: {
+    edges: ReadonlyArray<{
+      node: { decision: string };
+    }>;
+  } | null;
+};
+
+/** Pending decisions that still block closing the campaign (mirrors backend). */
+export function countPendingEntriesBlockingClose(
+  totalPendingCount: number,
+  sources: ReadonlyArray<CampaignSourcePendingCloseCount>,
+): number {
+  const failedSourceIds = new Set(
+    sources
+      .filter(source => source.fetchAttempts.edges[0]?.node.status === "FAILED")
+      .map(source => source.id),
+  );
+
+  if (failedSourceIds.size === 0) {
+    return totalPendingCount;
+  }
+
+  let pendingOnFailedSources = 0;
+  for (const source of sources) {
+    if (!failedSourceIds.has(source.id)) {
+      continue;
+    }
+
+    pendingOnFailedSources += (source.entries?.edges ?? []).filter(
+      edge => edge.node.decision === "PENDING",
+    ).length;
+  }
+
+  return Math.max(0, totalPendingCount - pendingOnFailedSources);
+}
+
 export function statusLabel(
   t: (key: string) => string,
   status: string,
