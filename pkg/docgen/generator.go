@@ -214,6 +214,7 @@ type (
 	}
 
 	SignaturePageData struct {
+		Title      string
 		Signatures []SignatureData
 		Landscape  bool
 	}

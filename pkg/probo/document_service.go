@@ -2908,6 +2908,11 @@ func generateSignaturePagePDF(
 		return nil, nil
 	}
 
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, conn, scope, version.DocumentID); err != nil {
+		return nil, fmt.Errorf("cannot load document: %w", err)
+	}
+
 	signatureData := make([]docgen.SignatureData, len(*signaturesWithPeople))
 	for i, sig := range *signaturesWithPeople {
 		signatureData[i] = docgen.SignatureData{
@@ -2921,6 +2926,7 @@ func generateSignaturePagePDF(
 	isLandscape := version.Orientation == coredata.DocumentVersionOrientationLandscape
 
 	htmlContent, err := docgen.RenderSignaturePageHTML(docgen.SignaturePageData{
+		Title:      document.Title,
 		Signatures: signatureData,
 		Landscape:  isLandscape,
 	})

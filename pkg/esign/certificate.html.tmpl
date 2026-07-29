@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <title>Certificate Of Completion{{if .DocumentTypeName}} — {{.DocumentTypeName}}{{end}}</title>
     <style>
       @page {
         @bottom-right {
@@ -10,6 +11,10 @@
           font-size: 8px;
           color: #777;
         }
+      }
+
+      thead {
+        display: table-header-group;
       }
 
       * {

@@ -4,10 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .Title}}{{.Title}} — {{end}}Document Signatures</title>
     <style>
         @page {
             size: {{- if .Landscape}} A4 landscape {{- else}} A4 {{- end}};
             margin: 1in;
+        }
+
+        thead {
+            display: table-header-group;
         }
 
         body {
