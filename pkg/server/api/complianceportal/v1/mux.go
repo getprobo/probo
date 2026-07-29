@@ -15,7 +15,6 @@
 package complianceportal_v1
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -27,6 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -37,6 +37,7 @@ import (
 type MuxConfig struct {
 	BaseURL           *baseurl.BaseURL
 	ExtraHeaderFields map[string]string
+	AllowedOrigins    []string
 	Logger            *log.Logger
 	IAM               *iam.Service
 	Visitor           *visitor.Service
@@ -66,9 +67,10 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 	r.Get("/robots.txt", markdownHandler.HandleRobotsTxt)
 	r.Get("/sitemap.xml", markdownHandler.HandleSitemap)
 
-	allowedHost := func(ctx context.Context, host string) bool {
-		return cfg.Visitor.IsVerifiedRedirectHost(ctx, host)
-	}
+	allowedHost := saferedirect.Any(
+		saferedirect.Origins(cfg.AllowedOrigins...),
+		cfg.Visitor.IsVerifiedRedirectHost,
+	)
 
 	oauthInitiateHandler := NewOAuthInitiateHandler(
 		cfg.BaseURL,

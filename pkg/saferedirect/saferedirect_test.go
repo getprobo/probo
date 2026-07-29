@@ -439,3 +439,86 @@ func TestStaticHosts(t *testing.T) {
 		}
 	})
 }
+
+func TestOrigins(t *testing.T) {
+	t.Parallel()
+
+	t.Run("extracts hosts including ports", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.Origins(
+			"http://localhost:5174",
+			"https://app.example.com",
+		)
+		if !fn(context.Background(), "localhost:5174") {
+			t.Error("expected localhost:5174 to be allowed")
+		}
+
+		if !fn(context.Background(), "app.example.com") {
+			t.Error("expected app.example.com to be allowed")
+		}
+
+		if fn(context.Background(), "evil.com") {
+			t.Error("expected evil.com to be rejected")
+		}
+	})
+
+	t.Run("ignores invalid and empty origins", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.Origins("", "not a url", "http://localhost:5173")
+		if !fn(context.Background(), "localhost:5173") {
+			t.Error("expected localhost:5173 to be allowed")
+		}
+
+		if fn(context.Background(), "") {
+			t.Error("expected empty host to be rejected")
+		}
+	})
+}
+
+func TestAny(t *testing.T) {
+	t.Parallel()
+
+	t.Run("allows when any function matches", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.Any(
+			saferedirect.StaticHosts("a.com"),
+			saferedirect.StaticHosts("b.com"),
+		)
+		if !fn(context.Background(), "a.com") {
+			t.Error("expected a.com to be allowed")
+		}
+
+		if !fn(context.Background(), "b.com") {
+			t.Error("expected b.com to be allowed")
+		}
+
+		if fn(context.Background(), "c.com") {
+			t.Error("expected c.com to be rejected")
+		}
+	})
+
+	t.Run("skips nil functions", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.Any(nil, saferedirect.StaticHosts("example.com"), nil)
+		if !fn(context.Background(), "example.com") {
+			t.Error("expected example.com to be allowed")
+		}
+
+		if fn(context.Background(), "other.com") {
+			t.Error("expected other.com to be rejected")
+		}
+	})
+
+	t.Run("rejects when no functions provided", func(t *testing.T) {
+		t.Parallel()
+
+		fn := saferedirect.Any()
+		if fn(context.Background(), "example.com") {
+			t.Error("expected example.com to be rejected")
+		}
+	})
+}

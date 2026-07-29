@@ -55,6 +55,37 @@ func StaticHosts(hosts ...string) AllowedHostFunc {
 	}
 }
 
+// Origins returns an AllowedHost function that matches hosts extracted from
+// absolute origin URLs (for example CORS allowed-origins). Invalid or empty
+// origins are ignored. The host includes the port when present.
+func Origins(origins ...string) AllowedHostFunc {
+	hosts := make([]string, 0, len(origins))
+	for _, origin := range origins {
+		parsed, err := url.Parse(origin)
+		if err != nil || parsed.Host == "" {
+			continue
+		}
+
+		hosts = append(hosts, parsed.Host)
+	}
+
+	return StaticHosts(hosts...)
+}
+
+// Any returns an AllowedHost function that allows a host when any of the
+// provided functions allow it. Nil functions are skipped.
+func Any(fns ...AllowedHostFunc) AllowedHostFunc {
+	return func(ctx context.Context, host string) bool {
+		for _, fn := range fns {
+			if fn != nil && fn(ctx, host) {
+				return true
+			}
+		}
+
+		return false
+	}
+}
+
 func (sr *SafeRedirect) Validate(ctx context.Context, redirectURL string) (string, bool) {
 	if redirectURL == "" {
 		return "", false

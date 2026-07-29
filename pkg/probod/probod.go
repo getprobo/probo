@@ -788,6 +788,7 @@ func (impl *Implm) Run(
 		complianceportal_v1.MuxConfig{
 			BaseURL:           baseURL,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
+			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			Logger:            l.Named("compliance-portal"),
 			IAM:               iamService,
 			Visitor:           visitorService,

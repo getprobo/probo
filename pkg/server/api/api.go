@@ -21,7 +21,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -49,6 +48,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
+	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	agent_v1 "go.probo.inc/probo/pkg/server/api/agent/v1"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
@@ -262,13 +262,11 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.TokenSecret,
 			cfg.File,
 			cfg.BaseURL,
-			func(ctx context.Context, host string) bool {
-				if host == cfg.BaseURL.Host() {
-					return true
-				}
-
-				return cfg.Visitor.IsVerifiedRedirectHost(ctx, host)
-			},
+			saferedirect.Any(
+				saferedirect.StaticHosts(cfg.BaseURL.Host()),
+				saferedirect.Origins(cfg.AllowedOrigins...),
+				cfg.Visitor.IsVerifiedRedirectHost,
+			),
 			cfg.GraphQLLimits,
 		),
 		agentHandler: agent_v1.NewMux(
