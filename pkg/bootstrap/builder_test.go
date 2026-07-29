@@ -335,6 +335,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_AUTH_EMAIL_CONFIRMATION_TOKEN_VALIDITY"] = "43200"
 	env["PROBOD_AUTH_COOKIE_DOMAIN"] = ".example.com"
 	env["PROBOD_AUTH_COOKIE_DURATION"] = "48"
+	env["PROBOD_AUTH_COOKIE_SAMESITE"] = "strict"
 	// SAML
 	env["PROBOD_SAML_DOMAIN_VERIFICATION_INTERVAL_SECONDS"] = "120"
 	env["PROBOD_SAML_DOMAIN_VERIFICATION_RESOLVER_ADDR"] = "1.1.1.1:53"
@@ -471,6 +472,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 43200, cfg.Probod.Auth.EmailConfirmationTokenValidity)
 	assert.Equal(t, ".example.com", cfg.Probod.Auth.Cookie.Domain)
 	assert.Equal(t, 48, cfg.Probod.Auth.Cookie.Duration)
+	assert.Equal(t, probodconfig.CookieSameSiteStrict, cfg.Probod.Auth.Cookie.SameSite)
 	// SAML
 	assert.Equal(t, 120, cfg.Probod.Auth.SAML.DomainVerificationIntervalSeconds)
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.Auth.SAML.DomainVerificationResolverAddr)
@@ -894,6 +896,33 @@ func TestBuilder_Build_PgCABundleFromFile(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "ca-bundle-from-file", cfg.Probod.Pg.CACertBundle)
+}
+
+func TestBuilder_Build_AuthCookieSameSiteInvalid(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_AUTH_COOKIE_SAMESITE"] = "invalid"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	_, err := b.Build()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "PROBOD_AUTH_COOKIE_SAMESITE")
+}
+
+func TestBuilder_Build_AuthCookieSameSiteNoneRequiresSecure(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_AUTH_COOKIE_SAMESITE"] = "none"
+	env["PROBOD_AUTH_COOKIE_SECURE"] = "false"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	_, err := b.Build()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "secure")
 }
 
 func TestBuilder_parseOriginsList(t *testing.T) {

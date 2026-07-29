@@ -38,6 +38,7 @@ type (
 	OAuth2ServerConfig            = probodconfig.OAuth2ServerConfig
 	OAuth2SigningKeyConfig        = probodconfig.OAuth2SigningKeyConfig
 	CookieConfig                  = probodconfig.CookieConfig
+	CookieSameSite                = probodconfig.CookieSameSite
 	PasswordConfig                = probodconfig.PasswordConfig
 	AWSConfig                     = probodconfig.AWSConfig
 	ConnectorConfig               = probodconfig.ConnectorConfig
@@ -66,4 +67,10 @@ type (
 	SCIMBridgeConfig           = probodconfig.SCIMBridgeConfig
 	ITAMConfig                 = probodconfig.ITAMConfig
 	SlackConfig                = probodconfig.SlackConfig
+)
+
+const (
+	CookieSameSiteLax    = probodconfig.CookieSameSiteLax
+	CookieSameSiteStrict = probodconfig.CookieSameSiteStrict
+	CookieSameSiteNone   = probodconfig.CookieSameSiteNone
 )

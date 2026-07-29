@@ -23,7 +23,33 @@ package probodconfig
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"strings"
 )
+
+type CookieSameSite string
+
+const (
+	CookieSameSiteLax    CookieSameSite = "lax"
+	CookieSameSiteStrict CookieSameSite = "strict"
+	CookieSameSiteNone   CookieSameSite = "none"
+)
+
+func ParseCookieSameSite(raw string) (CookieSameSite, error) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "", string(CookieSameSiteLax):
+		return CookieSameSiteLax, nil
+	case string(CookieSameSiteStrict):
+		return CookieSameSiteStrict, nil
+	case string(CookieSameSiteNone):
+		return CookieSameSiteNone, nil
+	default:
+		return "", fmt.Errorf(
+			"invalid same-site value %q: must be lax, strict, or none",
+			raw,
+		)
+	}
+}
 
 type AuthConfig struct {
 	Cookie                              CookieConfig       `json:"cookie"`
@@ -55,11 +81,38 @@ type OAuth2SigningKeyConfig struct {
 }
 
 type CookieConfig struct {
-	Domain   string `json:"domain,omitempty"`
-	Secret   string `json:"secret"`
-	Duration int    `json:"duration"`
-	Name     string `json:"name,omitempty"`
-	Secure   bool   `json:"secure"`
+	Domain   string         `json:"domain,omitempty"`
+	Secret   string         `json:"secret"`
+	Duration int            `json:"duration"`
+	Name     string         `json:"name,omitempty"`
+	Secure   bool           `json:"secure"`
+	SameSite CookieSameSite `json:"same-site,omitempty"`
+}
+
+func (c CookieConfig) HTTPSameSite() (http.SameSite, error) {
+	switch c.SameSite {
+	case "", CookieSameSiteLax:
+		return http.SameSiteLaxMode, nil
+	case CookieSameSiteStrict:
+		return http.SameSiteStrictMode, nil
+	case CookieSameSiteNone:
+		return http.SameSiteNoneMode, nil
+	default:
+		return 0, fmt.Errorf("invalid cookie same-site value %q", c.SameSite)
+	}
+}
+
+func (c CookieConfig) Validate() error {
+	sameSite, err := c.HTTPSameSite()
+	if err != nil {
+		return err
+	}
+
+	if sameSite == http.SameSiteNoneMode && !c.Secure {
+		return fmt.Errorf("cookie same-site none requires secure cookies")
+	}
+
+	return nil
 }
 
 type PasswordConfig struct {

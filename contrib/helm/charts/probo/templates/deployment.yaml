@@ -135,6 +135,8 @@ spec:
                   key: cookie-secret
             - name: PROBOD_AUTH_COOKIE_DURATION
               value: {{ .Values.probo.auth.cookieDuration | quote }}
+            - name: PROBOD_AUTH_COOKIE_SAMESITE
+              value: {{ .Values.probo.auth.cookieSameSite | quote }}
             - name: PROBOD_AUTH_PASSWORD_PEPPER
               valueFrom:
                 secretKeyRef:

@@ -229,6 +229,8 @@ probo:
     emailConfirmationTokenValidity: 3600
     cookieName: "SSID"
     cookieDomain: "probo.example.com"
+    # lax, strict, or none (none requires HTTPS / secure cookies)
+    cookieSameSite: "lax"
     # REQUIRED: Generate with openssl rand -base64 32
     cookieSecret: ""
     cookieDuration: 24

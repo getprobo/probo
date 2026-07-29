@@ -59,6 +59,13 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 
 	pgCACertBundle := b.getPgCACertBundle()
 
+	authCookieSameSite, err := probodconfig.ParseCookieSameSite(
+		b.resolver.getEnvOrDefault("PROBOD_AUTH_COOKIE_SAMESITE", "lax"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse PROBOD_AUTH_COOKIE_SAMESITE: %w", err)
+	}
+
 	cfg := &probodconfig.FullConfig{
 		Unit: probodconfig.UnitConfig{
 			Metrics: probodconfig.MetricsConfig{
@@ -118,6 +125,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Secret:   b.resolver.getEnv("PROBOD_AUTH_COOKIE_SECRET"),
 					Duration: b.resolver.getEnvIntOrDefault("PROBOD_AUTH_COOKIE_DURATION", 24),
 					Secure:   b.resolver.getEnvBoolOrDefault("PROBOD_AUTH_COOKIE_SECURE", true),
+					SameSite: authCookieSameSite,
 				},
 				Password: probodconfig.PasswordConfig{
 					Pepper:     b.resolver.getEnv("PROBOD_AUTH_PASSWORD_PEPPER"),
@@ -557,6 +565,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 
 	if b.resolver.Err() != nil {
 		return nil, b.resolver.Err()
+	}
+
+	if err := cfg.Probod.Auth.Cookie.Validate(); err != nil {
+		return nil, fmt.Errorf("cannot validate auth cookie config: %w", err)
 	}
 
 	return cfg, nil

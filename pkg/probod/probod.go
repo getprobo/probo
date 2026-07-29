@@ -134,6 +134,7 @@ func New() *Implm {
 					Duration: 24,
 					Domain:   "localhost",
 					Secure:   true,
+					SameSite: CookieSameSiteLax,
 				},
 				DisableSignup:                       false,
 				InvitationConfirmationTokenValidity: 3600,
@@ -278,6 +279,18 @@ func (impl *Implm) Run(
 	if err != nil {
 		rootSpan.RecordError(err)
 		return fmt.Errorf("cannot get cookie secret bytes: %w", err)
+	}
+
+	if err := impl.cfg.Auth.Cookie.Validate(); err != nil {
+		rootSpan.RecordError(err)
+		return fmt.Errorf("cannot validate auth cookie config: %w", err)
+	}
+
+	authCookieMaxAge := int(time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour)
+	authCookie, err := authSecureCookieConfig(impl.cfg.Auth.Cookie, authCookieMaxAge)
+	if err != nil {
+		rootSpan.RecordError(err)
+		return fmt.Errorf("cannot configure auth cookie: %w", err)
 	}
 
 	awsConfig, err := awsconfig.NewConfig(
@@ -768,16 +781,7 @@ func (impl *Implm) Run(
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
 			Logger:            l.Named("http.server"),
-			Cookie: securecookie.Config{
-				Name:     impl.cfg.Auth.Cookie.Name,
-				Domain:   impl.cfg.Auth.Cookie.Domain,
-				Path:     "/",
-				MaxAge:   int(time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour),
-				Secret:   impl.cfg.Auth.Cookie.Secret,
-				Secure:   impl.cfg.Auth.Cookie.Secure,
-				HTTPOnly: true,
-				SameSite: http.SameSiteLaxMode,
-			},
+			Cookie:            authCookie,
 		},
 	)
 	if err != nil {
@@ -796,17 +800,8 @@ func (impl *Implm) Run(
 			File:              fileManagerService,
 			ESign:             esignService,
 			Mailman:           mailmanService,
-			Cookie: securecookie.Config{
-				Name:     impl.cfg.Auth.Cookie.Name,
-				Domain:   impl.cfg.Auth.Cookie.Domain,
-				Path:     "/",
-				MaxAge:   int(time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour),
-				Secret:   impl.cfg.Auth.Cookie.Secret,
-				Secure:   impl.cfg.Auth.Cookie.Secure,
-				HTTPOnly: true,
-				SameSite: http.SameSiteLaxMode,
-			},
-			TokenSecret: impl.cfg.Auth.Cookie.Secret,
+			Cookie:            authCookie,
+			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
 			GraphQLLimits: gqlutils.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
@@ -1603,4 +1598,22 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 	}
 
 	return opts
+}
+
+func authSecureCookieConfig(c CookieConfig, maxAgeSeconds int) (securecookie.Config, error) {
+	sameSite, err := c.HTTPSameSite()
+	if err != nil {
+		return securecookie.Config{}, err
+	}
+
+	return securecookie.Config{
+		Name:     c.Name,
+		Domain:   c.Domain,
+		Path:     "/",
+		MaxAge:   maxAgeSeconds,
+		Secret:   c.Secret,
+		Secure:   c.Secure,
+		HTTPOnly: true,
+		SameSite: sameSite,
+	}, nil
 }
