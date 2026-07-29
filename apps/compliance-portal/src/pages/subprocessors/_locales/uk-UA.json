@@ -15,7 +15,10 @@
   "regions": {
     "global": "Глобально",
     "eu": "Європейський Союз",
-    "moreRegions": "Показати ще {{count}} регіонів"
+    "moreRegions_one": "Показати ще {{count}} регіон",
+    "moreRegions_few": "Показати ще {{count}} регіони",
+    "moreRegions_many": "Показати ще {{count}} регіонів",
+    "moreRegions_other": "Показати ще {{count}} регіонів"
   },
   "categories": {
     "ANALYTICS": {

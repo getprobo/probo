@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { LinkSimpleIcon } from "@phosphor-icons/react";
 import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
@@ -28,6 +27,8 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router";
+
+import { useCopyDocumentLink } from "../_lib/useCopyDocumentLink";
 
 import { DocumentAccessAction } from "./DocumentAccessAction";
 import { documentEntry } from "./variants";
@@ -70,7 +71,7 @@ export function DocumentEntry({
   onSelectedChange,
 }: DocumentEntryProps) {
   const { t } = useTranslation("documents");
-  const toast = Toast.useToastManager();
+  const copyDocumentLink = useCopyDocumentLink();
   const slots = documentEntry();
 
   // Only locked rows (not yet authorized, no pending request) can be requested,
@@ -85,11 +86,7 @@ export function DocumentEntry({
       : t("actions.getAccess");
 
   const handleCopyLink = () => {
-    const url = new URL(viewHref, window.location.origin);
-    navigator.clipboard.writeText(url.href).then(
-      () => toast.add({ title: t("viewer.linkCopied"), type: "success" }),
-      () => {},
-    );
+    copyDocumentLink(new URL(viewHref, window.location.origin).href);
   };
 
   return (

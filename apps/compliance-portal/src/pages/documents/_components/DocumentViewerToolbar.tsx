@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import {
   CaretLeftIcon,
   CaretRightIcon,
@@ -34,6 +33,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
 import { downloadDataUri } from "../_lib/dataUri";
+import { useCopyDocumentLink } from "../_lib/useCopyDocumentLink";
 
 import { documentViewerToolbar } from "./variants";
 
@@ -72,14 +72,11 @@ export function DocumentViewerToolbar({
   downloadName,
 }: DocumentViewerToolbarProps) {
   const { t } = useTranslation("documents");
-  const toast = Toast.useToastManager();
+  const copyDocumentLink = useCopyDocumentLink();
   const slots = documentViewerToolbar();
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(
-      () => toast.add({ title: t("viewer.linkCopied"), type: "success" }),
-      () => {},
-    );
+    copyDocumentLink(window.location.href);
   };
 
   const handleDownload = () => {
