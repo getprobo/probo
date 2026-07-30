@@ -18,54 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package safecsv wraps encoding/csv for exports that may contain user-controlled
+// text. Writer sanitizes every cell before encoding to reduce spreadsheet formula
+// injection when a file is opened in Excel, LibreOffice Calc, Google Sheets, or
+// similar tools.
+//
+// Use safecsv for all user-facing CSV downloads. Do not write export CSV with
+// encoding/csv alone when record fields can contain untrusted or attacker-influenced
+// content.
 package safecsv
-
-import (
-	"strings"
-	"unicode"
-	"unicode/utf8"
-)
-
-// SanitizeRecord returns a copy of record with spreadsheet-safe cell values.
-func SanitizeRecord(record []string) []string {
-	if len(record) == 0 {
-		return record
-	}
-
-	out := make([]string, len(record))
-	for i, field := range record {
-		out[i] = SanitizeCell(field)
-	}
-
-	return out
-}
-
-// SanitizeCell prefixes values that spreadsheet tools may interpret as formulas.
-// Leading Unicode whitespace (including newlines) is ignored for detection only;
-// the written cell keeps the original text with a leading single-quote escape.
-func SanitizeCell(value string) string {
-	if value == "" {
-		return value
-	}
-
-	trimmed := strings.TrimLeftFunc(value, unicode.IsSpace)
-	if trimmed == "" {
-		return value
-	}
-
-	r, _ := utf8.DecodeRuneInString(trimmed)
-	if formulaLeadingRune(r) {
-		return "'" + value
-	}
-
-	return value
-}
-
-func formulaLeadingRune(r rune) bool {
-	switch r {
-	case '=', '+', '-', '@', '\\', '|', '%':
-		return true
-	default:
-		return false
-	}
-}

@@ -36,6 +36,10 @@ func TestSanitizeCell(t *testing.T) {
 	assert.Equal(t, "'+cmd", SanitizeCell("+cmd"))
 	assert.Equal(t, "'-2", SanitizeCell("-2"))
 	assert.Equal(t, "'@sum", SanitizeCell("@sum"))
+	assert.Equal(t, "' =1+1", SanitizeCell(" =1+1"))
+	assert.Equal(t, "'\n=1+1", SanitizeCell("\n=1+1"))
+	assert.Equal(t, "'\\evil", SanitizeCell("\\evil"))
+	assert.Equal(t, "'-5", SanitizeCell("-5"))
 }
 
 func TestWriterWrite(t *testing.T) {
