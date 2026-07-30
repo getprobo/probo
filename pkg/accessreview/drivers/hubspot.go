@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -33,6 +34,12 @@ import (
 
 // HubSpotDriver fetches account users from HubSpot via OAuth2-authenticated
 // REST requests.
+//
+// The Settings Users API (`/settings/v3/users`) exposes roles and super-admin
+// flags but has no active/archived signal. Deactivated HubSpot users are
+// owners with `archived=true` on `/crm/v3/owners`; this driver merges both
+// APIs so inactive accounts are returned with Active=false instead of being
+// misclassified as active.
 type HubSpotDriver struct {
 	httpClient *http.Client
 	baseURL    string
@@ -57,15 +64,30 @@ type (
 		RoleIDs       []string `json:"roleIds"`
 		PrimaryTeamID string   `json:"primaryTeamId"`
 		SuperAdmin    bool     `json:"superAdmin"`
-		Archived      *bool    `json:"archived"`
-		Deactivated   *bool    `json:"deactivated"`
-		IsActive      *bool    `json:"isActive"`
-		Active        *bool    `json:"active"`
-		HSDeactivated *bool    `json:"hs_deactivated"`
 	}
 
 	hubspotUsersResponse struct {
 		Results []hubspotUser `json:"results"`
+		Paging  *struct {
+			Next *struct {
+				After string `json:"after"`
+			} `json:"next"`
+		} `json:"paging"`
+	}
+
+	hubspotOwner struct {
+		ID                      string `json:"id"`
+		Email                   string `json:"email"`
+		FirstName               string `json:"firstName"`
+		LastName                string `json:"lastName"`
+		Type                    string `json:"type"`
+		Archived                bool   `json:"archived"`
+		UserID                  *int64 `json:"userId"`
+		UserIDIncludingInactive *int64 `json:"userIdIncludingInactive"`
+	}
+
+	hubspotOwnersResponse struct {
+		Results []hubspotOwner `json:"results"`
 		Paging  *struct {
 			Next *struct {
 				After string `json:"after"`
@@ -78,6 +100,7 @@ const (
 	hubspotUsersPath       = "/settings/v3/users"
 	hubspotRolesPath       = "/settings/v3/users/roles"
 	hubspotAccountInfoPath = "/account-info/v3/details"
+	hubspotOwnersPath      = "/crm/v3/owners"
 )
 
 func NewHubSpotDriver(httpClient *http.Client, baseURL string) *HubSpotDriver {
@@ -90,9 +113,113 @@ func NewHubSpotDriver(httpClient *http.Client, baseURL string) *HubSpotDriver {
 func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	roleMap, _ := d.fetchRoles(ctx)
 
+	users, err := d.fetchAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	archivedOwners, err := d.fetchAllOwners(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	archivedByUserID := make(map[string]hubspotOwner, len(archivedOwners))
+	archivedByEmail := make(map[string]hubspotOwner, len(archivedOwners))
+	for _, owner := range archivedOwners {
+		if owner.Type != "" && !strings.EqualFold(owner.Type, "PERSON") {
+			continue
+		}
+
+		if id := hubspotOwnerUserID(owner); id != "" {
+			archivedByUserID[id] = owner
+		}
+
+		if email := strings.ToLower(strings.TrimSpace(owner.Email)); email != "" {
+			archivedByEmail[email] = owner
+		}
+	}
+
+	records := make([]AccountRecord, 0, len(users)+len(archivedOwners))
+	seenUserIDs := make(map[string]struct{}, len(users)+len(archivedOwners))
+
+	for _, u := range users {
+		fullName := strings.TrimSpace(u.FirstName + " " + u.LastName)
+
+		active := true
+		if _, ok := archivedByUserID[u.ID]; ok {
+			active = false
+		} else if email := strings.ToLower(strings.TrimSpace(u.Email)); email != "" {
+			if _, ok := archivedByEmail[email]; ok {
+				active = false
+			}
+		}
+
+		record := AccountRecord{
+			Email:       u.Email,
+			FullName:    fullName,
+			Roles:       hubspotRoles(u, roleMap),
+			Active:      new(active),
+			IsAdmin:     u.SuperAdmin,
+			ExternalID:  u.ID,
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
+		}
+
+		if record.Email != "" || record.ExternalID != "" {
+			records = append(records, record)
+			if u.ID != "" {
+				seenUserIDs[u.ID] = struct{}{}
+			}
+		}
+	}
+
+	// Settings Users does not always list deactivated accounts. Surface
+	// archived owners that never appeared above so reviews still see them.
+	for _, owner := range archivedOwners {
+		if owner.Type != "" && !strings.EqualFold(owner.Type, "PERSON") {
+			continue
+		}
+
+		userID := hubspotOwnerUserID(owner)
+		if userID != "" {
+			if _, seen := seenUserIDs[userID]; seen {
+				continue
+			}
+
+			seenUserIDs[userID] = struct{}{}
+		}
+
+		fullName := strings.TrimSpace(owner.FirstName + " " + owner.LastName)
+		externalID := userID
+		if externalID == "" {
+			externalID = owner.ID
+		}
+
+		record := AccountRecord{
+			Email:       owner.Email,
+			FullName:    fullName,
+			Roles:       []string{"User"},
+			Active:      new(false),
+			IsAdmin:     false,
+			ExternalID:  externalID,
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
+		}
+
+		if record.Email != "" || record.ExternalID != "" {
+			records = append(records, record)
+		}
+	}
+
+	return records, nil
+}
+
+func (d *HubSpotDriver) fetchAllUsers(ctx context.Context) ([]hubspotUser, error) {
 	var (
-		records []AccountRecord
-		after   string
+		users []hubspotUser
+		after string
 	)
 
 	for range maxPaginationPages {
@@ -101,34 +228,40 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			return nil, err
 		}
 
-		for _, u := range resp.Results {
-			fullName := strings.TrimSpace(u.FirstName + " " + u.LastName)
-
-			record := AccountRecord{
-				Email:       u.Email,
-				FullName:    fullName,
-				Roles:       hubspotRoles(u, roleMap),
-				Active:      hubspotUserActive(u),
-				IsAdmin:     u.SuperAdmin,
-				ExternalID:  u.ID,
-				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
-				AccountType: coredata.AccessReviewEntryAccountTypeUser,
-			}
-
-			if record.Email != "" || record.ExternalID != "" {
-				records = append(records, record)
-			}
-		}
+		users = append(users, resp.Results...)
 
 		if resp.Paging == nil || resp.Paging.Next == nil || resp.Paging.Next.After == "" {
-			return records, nil
+			return users, nil
 		}
 
 		after = resp.Paging.Next.After
 	}
 
-	return nil, fmt.Errorf("cannot list all hubspot accounts: %w", ErrPaginationLimitReached)
+	return nil, fmt.Errorf("cannot list all hubspot users: %w", ErrPaginationLimitReached)
+}
+
+func (d *HubSpotDriver) fetchAllOwners(ctx context.Context, archived bool) ([]hubspotOwner, error) {
+	var (
+		owners []hubspotOwner
+		after  string
+	)
+
+	for range maxPaginationPages {
+		resp, err := d.fetchOwners(ctx, archived, after)
+		if err != nil {
+			return nil, err
+		}
+
+		owners = append(owners, resp.Results...)
+
+		if resp.Paging == nil || resp.Paging.Next == nil || resp.Paging.Next.After == "" {
+			return owners, nil
+		}
+
+		after = resp.Paging.Next.After
+	}
+
+	return nil, fmt.Errorf("cannot list all hubspot owners: %w", ErrPaginationLimitReached)
 }
 
 func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotUsersResponse, error) {
@@ -169,6 +302,54 @@ func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotU
 	var resp hubspotUsersResponse
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return nil, fmt.Errorf("cannot decode hubspot users response: %w", err)
+	}
+
+	return &resp, nil
+}
+
+func (d *HubSpotDriver) fetchOwners(
+	ctx context.Context,
+	archived bool,
+	after string,
+) (*hubspotOwnersResponse, error) {
+	endpoint, err := url.JoinPath(d.baseURL, hubspotOwnersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build hubspot owners URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create hubspot owners request: %w", err)
+	}
+
+	q := req.URL.Query()
+	q.Set("limit", "100")
+	q.Set("archived", strconv.FormatBool(archived))
+
+	if after != "" {
+		q.Set("after", after)
+	}
+
+	req.URL.RawQuery = q.Encode()
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute hubspot owners request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot fetch hubspot owners: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp hubspotOwnersResponse
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("cannot decode hubspot owners response: %w", err)
 	}
 
 	return &resp, nil
@@ -274,28 +455,18 @@ func hubspotRoleIDs(user hubspotUser) []string {
 	return ids
 }
 
-func hubspotUserActive(user hubspotUser) *bool {
-	if user.IsActive != nil {
-		return new(*user.IsActive)
+// hubspotOwnerUserID returns the Settings Users ID for an owner. Archived
+// owners leave userId null and expose the ID only on userIdIncludingInactive.
+func hubspotOwnerUserID(owner hubspotOwner) string {
+	if owner.UserIDIncludingInactive != nil {
+		return strconv.FormatInt(*owner.UserIDIncludingInactive, 10)
 	}
 
-	if user.Active != nil {
-		return new(*user.Active)
+	if owner.UserID != nil {
+		return strconv.FormatInt(*owner.UserID, 10)
 	}
 
-	if user.Deactivated != nil {
-		return new(!*user.Deactivated)
-	}
-
-	if user.HSDeactivated != nil {
-		return new(!*user.HSDeactivated)
-	}
-
-	if user.Archived != nil {
-		return new(!*user.Archived)
-	}
-
-	return nil
+	return ""
 }
 
 // hubspotNameResolver resolves the HubSpot account name.

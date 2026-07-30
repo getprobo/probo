@@ -47,6 +47,8 @@ func TestHubSpotDriver(t *testing.T) {
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
+	require.NotNil(t, r.Active)
+	assert.True(t, *r.Active)
 }
 
 func TestHubSpotDriverArchivedUsers(t *testing.T) {
@@ -55,16 +57,21 @@ func TestHubSpotDriverArchivedUsers(t *testing.T) {
 	client := &http.Client{
 		Transport: roundTripFunc(
 			func(req *http.Request) (*http.Response, error) {
-				switch req.URL.Path {
-				case "/settings/v3/users/roles":
+				switch {
+				case req.URL.Path == "/settings/v3/users/roles":
 					return hubspotResponse(
 						http.StatusOK,
 						`{"results":[{"id":"role-1","name":"Sales Admin"}]}`,
 					), nil
-				case "/settings/v3/users":
+				case req.URL.Path == "/settings/v3/users":
 					return hubspotResponse(
 						http.StatusOK,
-						`{"results":[{"id":"user-1","email":"active@example.com","firstName":"Active","lastName":"User","roleIds":["role-1"],"superAdmin":false,"isActive":true},{"id":"user-2","email":"","firstName":"Archived","lastName":"User","superAdmin":false,"archived":true}]}`,
+						`{"results":[{"id":"10000001","email":"active@example.com","firstName":"Active","lastName":"User","roleIds":["role-1"],"superAdmin":false},{"id":"10000002","email":"still-listed@example.com","firstName":"Listed","lastName":"Inactive","roleIds":[],"superAdmin":false}]}`,
+					), nil
+				case req.URL.Path == "/crm/v3/owners" && req.URL.Query().Get("archived") == "true":
+					return hubspotResponse(
+						http.StatusOK,
+						`{"results":[{"id":"owner-2","email":"still-listed@example.com","firstName":"Listed","lastName":"Inactive","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000002},{"id":"owner-3","email":"gone@example.com","firstName":"Fully","lastName":"Archived","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000003}]}`,
 					), nil
 				default:
 					return hubspotResponse(http.StatusNotFound, `{"message":"not found"}`), nil
@@ -77,16 +84,52 @@ func TestHubSpotDriverArchivedUsers(t *testing.T) {
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.Len(t, records, 2)
+	require.Len(t, records, 3)
 
+	assert.Equal(t, "active@example.com", records[0].Email)
 	assert.Equal(t, []string{"Sales Admin"}, records[0].Roles)
 	require.NotNil(t, records[0].Active)
 	assert.True(t, *records[0].Active)
 
-	assert.Equal(t, "user-2", records[1].ExternalID)
-	assert.Empty(t, records[1].Email)
+	assert.Equal(t, "10000002", records[1].ExternalID)
+	assert.Equal(t, "still-listed@example.com", records[1].Email)
 	require.NotNil(t, records[1].Active)
 	assert.False(t, *records[1].Active)
+
+	assert.Equal(t, "10000003", records[2].ExternalID)
+	assert.Equal(t, "gone@example.com", records[2].Email)
+	require.NotNil(t, records[2].Active)
+	assert.False(t, *records[2].Active)
+}
+
+func TestHubSpotDriverOwnersRequired(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{
+		Transport: roundTripFunc(
+			func(req *http.Request) (*http.Response, error) {
+				switch req.URL.Path {
+				case "/settings/v3/users/roles":
+					return hubspotResponse(http.StatusOK, `{"results":[]}`), nil
+				case "/settings/v3/users":
+					return hubspotResponse(
+						http.StatusOK,
+						`{"results":[{"id":"1","email":"a@example.com","firstName":"A","lastName":"B","roleIds":[],"superAdmin":false}]}`,
+					), nil
+				case "/crm/v3/owners":
+					return hubspotResponse(http.StatusForbidden, `{"message":"missing scope"}`), nil
+				default:
+					return hubspotResponse(http.StatusNotFound, `{"message":"not found"}`), nil
+				}
+			},
+		),
+	}
+
+	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
+
+	_, err := driver.ListAccounts(context.Background())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot fetch hubspot owners")
 }
 
 func TestHubSpotRoles(t *testing.T) {
