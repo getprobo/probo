@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.241.0] - 2026-07-30
+
+### Added
+
+- MCP tools now carry titles and complete annotation hints (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients like Claude present reads, writes, and deletes accurately
+
+### Changed
+
+- Member profiles now have a `PENDING` state distinct from `ACTIVE`/`DEACTIVATED`, so invited-but-not-yet-activated members remain assignable to assets, data, and risks; owner pickers and state filters across the console, CLI, MCP, and n8n now accept multiple states
+- "Archive" user action renamed to "Deactivate" across the API, CLI, MCP, n8n, and console
+- People list status filter is now a multi-select dropdown instead of cramped checkboxes, and reflects `PENDING` immediately after an activation email is sent
+- Audit log and SCIM export CSV files now escape leading `=`, `+`, `-`, `@`, tab, and carriage-return characters to prevent spreadsheet formula injection
+
+### Fixed
+
+- Asset table's inline owner picker no longer offers deactivated profiles as owners
+- People list search no longer briefly reverts to stale results when a debounced search resolves after a filter change
+- Disabled dropdown checkbox items are now fully non-interactive (opacity, cursor, hover) instead of only dimming the checkbox glyph
+
 ## [0.240.0] - 2026-07-29
 
 ### Added
