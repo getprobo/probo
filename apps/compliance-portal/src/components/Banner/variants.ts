@@ -20,21 +20,33 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Full-bleed unsigned-NDA banner under the TopBar: message row + CTA/dismiss,
-// stacking on small screens. Amber (warning) so it reads apart from the sky
-// locale-mismatch callout when both are visible. Content column matches TopBar /
-// page layout (px-8 + centered max-w-5xl).
-export const unsignedNDACallout = tv({
+// Full-bleed portal banner under the TopBar: message row + actions, stacking on
+// small screens. Content column matches TopBar / page layout (px-8 + centered
+// max-w-5xl). Color tints the band and leading icon (sky = info, amber = warning).
+export const banner = tv({
   slots: {
-    root: "w-full bg-amber-3 px-8 py-2.5 max-md:px-4 max-md:py-3",
+    root: "w-full px-8 py-2.5 max-md:px-4 max-md:py-3",
     inner:
       "mx-auto flex w-full max-w-5xl items-center gap-3 max-md:flex-col max-md:items-stretch max-md:gap-3",
     content: "flex min-w-0 flex-1 items-start gap-2",
-    icon: "mt-0.5 size-4 shrink-0 text-amber-11",
+    icon: "mt-0.5 shrink-0 [&_svg]:size-4",
     message: "min-w-0 flex-1",
     dismissMobile: "md:hidden",
-    actions: "flex shrink-0 items-center gap-2 max-md:flex-col max-md:items-stretch",
-    cta: "max-md:w-full",
+    // Full-width CTAs on small screens; leave the trailing dismiss control alone.
+    actions:
+      "flex shrink-0 items-center gap-2 max-md:flex-col max-md:items-stretch [&>*:not(:last-child)]:max-md:w-full",
     dismissDesktop: "max-md:hidden",
+  },
+  variants: {
+    color: {
+      sky: {
+        root: "bg-sky-3",
+        icon: "text-sky-11",
+      },
+      amber: {
+        root: "bg-amber-3",
+        icon: "text-amber-11",
+      },
+    },
   },
 });

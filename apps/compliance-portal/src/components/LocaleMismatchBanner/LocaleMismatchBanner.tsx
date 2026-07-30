@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { GlobeIcon, XIcon } from "@phosphor-icons/react";
+import { GlobeIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import { Banner } from "#/components/Banner/Banner";
 import { DEFAULT_NAMESPACE } from "#/lib/i18n/backend";
 import {
   isUrlLocale,
@@ -36,24 +36,23 @@ import { useChangeLocale } from "#/lib/i18n/useChangeLocale";
 import { useLocale } from "#/lib/i18n/useLocale";
 import { useUpdateLocale } from "#/lib/i18n/useUpdateLocale";
 
-import type { LocaleMismatchCallout_identity$key } from "./__generated__/LocaleMismatchCallout_identity.graphql";
-import { localeMismatchCallout } from "./variants";
+import type { LocaleMismatchBanner_identity$key } from "./__generated__/LocaleMismatchBanner_identity.graphql";
 
-const localeMismatchCalloutFragment = graphql`
-  fragment LocaleMismatchCallout_identity on Identity {
+const localeMismatchBannerFragment = graphql`
+  fragment LocaleMismatchBanner_identity on Identity {
     locale
   }
 `;
 
-interface LocaleMismatchCalloutProps {
-  identityKey: LocaleMismatchCallout_identity$key;
+interface LocaleMismatchBannerProps {
+  identityKey: LocaleMismatchBanner_identity$key;
 }
 
 // Full-bleed notice when the URL locale differs from the signed-in identity
 // preference. Dismissed state is React-only (no localStorage/cookies).
-export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProps) {
+export function LocaleMismatchBanner({ identityKey }: LocaleMismatchBannerProps) {
   const { t, i18n } = useTranslation();
-  const identity = useFragment(localeMismatchCalloutFragment, identityKey);
+  const identity = useFragment(localeMismatchBannerFragment, identityKey);
   const urlLocale = useLocale();
   const [changeLocale, isChanging] = useChangeLocale();
   const [updateLocale, isUpdating] = useUpdateLocale();
@@ -95,7 +94,6 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
   const urlLabel = URL_LOCALE_LABELS[urlLocale];
   const savedLabel = URL_LOCALE_LABELS[savedLocale];
   const busy = isChanging || isUpdating;
-  const slots = localeMismatchCallout();
 
   const switchToSaved = () => {
     void changeLocale(savedLocale, { persist: false });
@@ -108,32 +106,21 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
   };
 
   return (
-    <aside className={slots.root()} role="status">
-      <div className={slots.inner()}>
-        <div className={slots.content()}>
-          <GlobeIcon weight="fill" className={slots.icon()} aria-hidden />
-          <Text size={2} color="neutral" highContrast className={slots.message()}>
-            {t("locale.mismatch.message", { language: urlLabel })}
-          </Text>
-          <IconButton
-            size={1}
-            variant="ghost"
-            color="neutral"
-            aria-label={t("locale.mismatch.dismiss")}
-            disabled={busy}
-            className={slots.dismissMobile()}
-            onClick={() => setDismissed(true)}
-          >
-            <XIcon />
-          </IconButton>
-        </div>
-        <div className={slots.actions()}>
+    <Banner
+      color="sky"
+      icon={<GlobeIcon weight="fill" />}
+      message={(
+        <Text size={2} color="neutral" highContrast>
+          {t("locale.mismatch.message", { language: urlLabel })}
+        </Text>
+      )}
+      actions={(
+        <>
           <Button
             size={1}
             variant="outline"
             color="sky"
             disabled={busy}
-            className={slots.action()}
             onClick={switchToSaved}
           >
             {t("locale.mismatch.switchToMine", {
@@ -149,24 +136,15 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
             color="neutral"
             highContrast
             disabled={busy}
-            className={slots.action()}
             onClick={adoptUrlLocale}
           >
             {t("locale.mismatch.useThis", { language: urlLabel })}
           </Button>
-          <IconButton
-            size={1}
-            variant="ghost"
-            color="neutral"
-            aria-label={t("locale.mismatch.dismiss")}
-            disabled={busy}
-            className={slots.dismissDesktop()}
-            onClick={() => setDismissed(true)}
-          >
-            <XIcon />
-          </IconButton>
-        </div>
-      </div>
-    </aside>
+        </>
+      )}
+      dismissLabel={t("locale.mismatch.dismiss")}
+      onDismiss={() => setDismissed(true)}
+      dismissDisabled={busy}
+    />
   );
 }

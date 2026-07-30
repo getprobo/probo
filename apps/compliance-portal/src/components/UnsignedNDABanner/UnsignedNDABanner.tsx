@@ -18,21 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { FileTextIcon, XIcon } from "@phosphor-icons/react";
+import { FileTextIcon } from "@phosphor-icons/react";
 import { Link } from "@probo/ui/src/v2/Button/Link";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import { Banner } from "#/components/Banner/Banner";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
-import type { UnsignedNDACallout_compliancePortal$key } from "./__generated__/UnsignedNDACallout_compliancePortal.graphql";
-import { unsignedNDACallout } from "./variants";
+import type { UnsignedNDABanner_compliancePortal$key } from "./__generated__/UnsignedNDABanner_compliancePortal.graphql";
 
-const unsignedNDACalloutFragment = graphql`
-  fragment UnsignedNDACallout_compliancePortal on CompliancePortal {
+const unsignedNDABannerFragment = graphql`
+  fragment UnsignedNDABanner_compliancePortal on CompliancePortal {
     nonDisclosureAgreement {
       viewerSignature {
         status
@@ -41,16 +40,16 @@ const unsignedNDACalloutFragment = graphql`
   }
 `;
 
-interface UnsignedNDACalloutProps {
-  compliancePortalKey: UnsignedNDACallout_compliancePortal$key;
+interface UnsignedNDABannerProps {
+  compliancePortalKey: UnsignedNDABanner_compliancePortal$key;
 }
 
 // Full-bleed notice when a signed-in user still needs to complete the portal
 // NDA. Dismissed state is React-only (no localStorage/cookies).
-export function UnsignedNDACallout({ compliancePortalKey }: UnsignedNDACalloutProps) {
+export function UnsignedNDABanner({ compliancePortalKey }: UnsignedNDABannerProps) {
   const { t } = useTranslation();
   const localizedPath = useLocalizedPath();
-  const portal = useFragment(unsignedNDACalloutFragment, compliancePortalKey);
+  const portal = useFragment(unsignedNDABannerFragment, compliancePortalKey);
   const [dismissed, setDismissed] = useState(false);
 
   const signature = portal.nonDisclosureAgreement?.viewerSignature;
@@ -62,49 +61,28 @@ export function UnsignedNDACallout({ compliancePortalKey }: UnsignedNDACalloutPr
   }
 
   const ndaHref = `${localizedPath("/nda")}?continue=${encodeURIComponent(window.location.href)}`;
-  const slots = unsignedNDACallout();
 
   return (
-    <aside className={slots.root()} role="status">
-      <div className={slots.inner()}>
-        <div className={slots.content()}>
-          <FileTextIcon weight="fill" className={slots.icon()} aria-hidden />
-          <Text size={2} color="neutral" highContrast className={slots.message()}>
-            {t("nda.unsignedBanner.message")}
-          </Text>
-          <IconButton
-            size={1}
-            variant="ghost"
-            color="neutral"
-            aria-label={t("nda.unsignedBanner.dismiss")}
-            className={slots.dismissMobile()}
-            onClick={() => setDismissed(true)}
-          >
-            <XIcon />
-          </IconButton>
-        </div>
-        <div className={slots.actions()}>
-          <Link
-            to={ndaHref}
-            size={1}
-            variant="solid"
-            color="amber"
-            className={slots.cta()}
-          >
-            {t("nda.unsignedBanner.sign")}
-          </Link>
-          <IconButton
-            size={1}
-            variant="ghost"
-            color="neutral"
-            aria-label={t("nda.unsignedBanner.dismiss")}
-            className={slots.dismissDesktop()}
-            onClick={() => setDismissed(true)}
-          >
-            <XIcon />
-          </IconButton>
-        </div>
-      </div>
-    </aside>
+    <Banner
+      color="amber"
+      icon={<FileTextIcon weight="fill" />}
+      message={(
+        <Text size={2} color="neutral" highContrast>
+          {t("nda.unsignedBanner.message")}
+        </Text>
+      )}
+      actions={(
+        <Link
+          to={ndaHref}
+          size={1}
+          variant="solid"
+          color="amber"
+        >
+          {t("nda.unsignedBanner.sign")}
+        </Link>
+      )}
+      dismissLabel={t("nda.unsignedBanner.dismiss")}
+      onDismiss={() => setDismissed(true)}
+    />
   );
 }
