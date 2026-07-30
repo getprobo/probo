@@ -59,8 +59,8 @@ export function Banner({
           <div className={slots.message()}>{message}</div>
           <IconButton
             size={1}
-            variant="ghost"
-            color="neutral"
+            variant="soft"
+            color={color}
             aria-label={dismissLabel}
             disabled={dismissDisabled}
             className={slots.dismissMobile()}
@@ -73,8 +73,8 @@ export function Banner({
           {actions}
           <IconButton
             size={1}
-            variant="ghost"
-            color="neutral"
+            variant="soft"
+            color={color}
             aria-label={dismissLabel}
             disabled={dismissDisabled}
             className={slots.dismissDesktop()}

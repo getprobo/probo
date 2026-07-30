@@ -28,8 +28,8 @@ export const banner = tv({
     root: "w-full px-8 py-2.5 max-md:px-4 max-md:py-3",
     inner:
       "mx-auto flex w-full max-w-5xl items-center gap-3 max-md:flex-col max-md:items-stretch max-md:gap-3",
-    content: "flex min-w-0 flex-1 items-start gap-2",
-    icon: "mt-0.5 shrink-0 [&_svg]:size-4",
+    content: "flex min-w-0 flex-1 items-center gap-2",
+    icon: "inline-flex shrink-0 [&_svg]:size-4",
     message: "min-w-0 flex-1",
     dismissMobile: "md:hidden",
     // Full-width CTAs on small screens; leave the trailing dismiss control alone.

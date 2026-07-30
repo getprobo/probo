@@ -75,7 +75,7 @@ export function UnsignedNDABanner({ compliancePortalKey }: UnsignedNDABannerProp
         <Link
           to={ndaHref}
           size={1}
-          variant="solid"
+          variant="ghost"
           color="amber"
         >
           {t("nda.unsignedBanner.sign")}

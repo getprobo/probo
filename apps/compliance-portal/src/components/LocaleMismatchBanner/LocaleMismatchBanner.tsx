@@ -118,8 +118,18 @@ export function LocaleMismatchBanner({ identityKey }: LocaleMismatchBannerProps)
         <>
           <Button
             size={1}
-            variant="outline"
+            variant="ghost"
             color="sky"
+            disabled={busy}
+            onClick={adoptUrlLocale}
+          >
+            {t("locale.mismatch.useThis", { language: urlLabel })}
+          </Button>
+          <Button
+            size={1}
+            variant="solid"
+            color="neutral"
+            highContrast
             disabled={busy}
             onClick={switchToSaved}
           >
@@ -129,16 +139,6 @@ export function LocaleMismatchBanner({ identityKey }: LocaleMismatchBannerProps)
               // "switch back to my language", not the page they're visiting.
               lng: savedLanguage,
             })}
-          </Button>
-          <Button
-            size={1}
-            variant="solid"
-            color="neutral"
-            highContrast
-            disabled={busy}
-            onClick={adoptUrlLocale}
-          >
-            {t("locale.mismatch.useThis", { language: urlLabel })}
           </Button>
         </>
       )}
