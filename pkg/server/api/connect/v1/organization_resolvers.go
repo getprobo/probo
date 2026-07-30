@@ -8,7 +8,6 @@ package connect_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -145,7 +144,19 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 
 // DeleteOrganizationHorizontalLogo is the resolver for the deleteOrganizationHorizontalLogo field.
 func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error) {
-	panic(fmt.Errorf("not implemented: DeleteOrganizationHorizontalLogo - deleteOrganizationHorizontalLogo"))
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionOrganizationUpdate); err != nil {
+		return nil, err
+	}
+
+	organization, err := r.iam.OrganizationService.DeleteHorizontalLogo(ctx, input.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete organization horizontal logo", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteOrganizationHorizontalLogoPayload{
+		Organization: types.NewOrganization(organization),
+	}, nil
 }
 
 // Logo is the resolver for the logo field.

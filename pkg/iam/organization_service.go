@@ -1438,6 +1438,45 @@ func (s OrganizationService) HorizontalLogoFile(
 	return file, nil
 }
 
+func (s OrganizationService) DeleteHorizontalLogo(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*coredata.Organization, error) {
+	scope := coredata.NewScopeFromObjectID(organizationID)
+	organization := &coredata.Organization{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if organization.HorizontalLogoFileID != nil {
+				file := coredata.File{ID: *organization.HorizontalLogoFileID}
+
+				if err := file.SoftDelete(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot soft-delete horizontal logo file: %w", err)
+				}
+			}
+
+			organization.HorizontalLogoFileID = nil
+			organization.UpdatedAt = time.Now()
+
+			if err := organization.Update(ctx, scope, tx); err != nil {
+				return fmt.Errorf("cannot update organization: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return organization, nil
+}
+
 func (s OrganizationService) DeleteSAMLConfiguration(
 	ctx context.Context,
 	organizationID gid.GID,
