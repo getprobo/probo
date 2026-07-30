@@ -22,16 +22,11 @@ package complianceportal_v1
 
 import (
 	"net/http"
-	"net/url"
-	"slices"
-	"strings"
 
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 )
-
-const defaultCompliancePortalLocale = "en"
 
 // SEOFromRequest derives html lang, a self-referencing canonical URL, and
 // hreflang alternates (including x-default → English) for the SPA shell.
@@ -72,81 +67,4 @@ func SEOFromRequest(r *http.Request) (htmlLang, canonical string, hreflang []Hre
 	})
 
 	return htmlLang, canonical, hreflang
-}
-
-func splitLocaleFromAppPath(appPath string) (locale, rest string) {
-	segments := strings.Split(strings.Trim(appPath, "/"), "/")
-	if len(segments) == 0 || segments[0] == "" {
-		return defaultCompliancePortalLocale, "/"
-	}
-
-	if isCompliancePortalLocale(segments[0]) {
-		locale = segments[0]
-		if len(segments) == 1 {
-			return locale, "/"
-		}
-
-		return locale, "/" + strings.Join(segments[1:], "/")
-	}
-
-	// Unprefixed path — treat content path as-is; default lang for tags.
-	return defaultCompliancePortalLocale, appPath
-}
-
-func isCompliancePortalLocale(value string) bool {
-	return slices.Contains(iam.SupportedIdentityLocales, value)
-}
-
-// rewriteContinueURLLocale swaps the leading locale segment of continueURL's
-// path for locale (a supported short tag). Relative and absolute URLs are
-// accepted; query and fragment are preserved. Unprefixed paths get the locale
-// prepended. Returns continueURL unchanged when locale is unsupported or the
-// URL cannot be parsed.
-func rewriteContinueURLLocale(continueURL, locale string) string {
-	if !isCompliancePortalLocale(locale) {
-		return continueURL
-	}
-
-	u, err := url.Parse(continueURL)
-	if err != nil {
-		return continueURL
-	}
-
-	path := u.Path
-	if path == "" {
-		path = "/"
-	}
-
-	_, rest := splitLocaleFromAppPath(path)
-	if rest == "/" || rest == "" {
-		u.Path = "/" + locale
-	} else {
-		u.Path = "/" + locale + rest
-	}
-
-	return u.String()
-}
-
-func localizedPageURL(pageBaseURL, locale, rest string) string {
-	base := strings.TrimRight(pageBaseURL, "/")
-	segments := []string{locale}
-
-	if rest != "/" && rest != "" {
-		trimmed := strings.Trim(rest, "/")
-		if trimmed != "" {
-			segments = append(segments, strings.Split(trimmed, "/")...)
-		}
-	}
-
-	escaped := make([]string, len(segments))
-	for i, segment := range segments {
-		escaped[i] = url.PathEscape(segment)
-	}
-
-	joined, err := url.JoinPath(base, escaped...)
-	if err != nil {
-		return base + "/" + strings.Join(escaped, "/")
-	}
-
-	return joined
 }
