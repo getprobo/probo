@@ -71,7 +71,7 @@ func TestHubSpotDriverArchivedUsers(t *testing.T) {
 				case req.URL.Path == "/crm/v3/owners" && req.URL.Query().Get("archived") == "true":
 					return hubspotResponse(
 						http.StatusOK,
-						`{"results":[{"id":"owner-2","email":"still-listed@example.com","firstName":"Listed","lastName":"Inactive","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000002},{"id":"owner-3","email":"gone@example.com","firstName":"Fully","lastName":"Archived","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000003}]}`,
+						`{"results":[{"id":"owner-2","email":"still-listed@example.com","firstName":"Listed","lastName":"Inactive","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000002},{"id":"owner-3","email":"gone@example.com","firstName":"","lastName":"","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000003}]}`,
 					), nil
 				default:
 					return hubspotResponse(http.StatusNotFound, `{"message":"not found"}`), nil
@@ -96,10 +96,54 @@ func TestHubSpotDriverArchivedUsers(t *testing.T) {
 	require.NotNil(t, records[1].Active)
 	assert.False(t, *records[1].Active)
 
+	// Archived-only owner: empty HubSpot name falls back to email, Active=false.
 	assert.Equal(t, "10000003", records[2].ExternalID)
 	assert.Equal(t, "gone@example.com", records[2].Email)
+	assert.Equal(t, "gone@example.com", records[2].FullName)
 	require.NotNil(t, records[2].Active)
 	assert.False(t, *records[2].Active)
+}
+
+func TestHubSpotDriverEmailMatchDoesNotDuplicate(t *testing.T) {
+	t.Parallel()
+
+	// Settings user ID differs from owner userIdIncludingInactive, but the
+	// email matches. The driver must mark the settings row inactive and must
+	// not emit a second archived-only row for the same person.
+	client := &http.Client{
+		Transport: roundTripFunc(
+			func(req *http.Request) (*http.Response, error) {
+				switch {
+				case req.URL.Path == "/settings/v3/users/roles":
+					return hubspotResponse(http.StatusOK, `{"results":[]}`), nil
+				case req.URL.Path == "/settings/v3/users":
+					return hubspotResponse(
+						http.StatusOK,
+						`{"results":[{"id":"settings-1","email":"Jane.Doe@Example.com","firstName":"Jane","lastName":"Doe","roleIds":[],"superAdmin":true}]}`,
+					), nil
+				case req.URL.Path == "/crm/v3/owners" && req.URL.Query().Get("archived") == "true":
+					return hubspotResponse(
+						http.StatusOK,
+						`{"results":[{"id":"owner-9","email":"jane.doe@example.com","firstName":"","lastName":"","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":999}]}`,
+					), nil
+				default:
+					return hubspotResponse(http.StatusNotFound, `{"message":"not found"}`), nil
+				}
+			},
+		),
+	}
+
+	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
+
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+
+	assert.Equal(t, "settings-1", records[0].ExternalID)
+	assert.Equal(t, "Jane.Doe@Example.com", records[0].Email)
+	assert.Equal(t, []string{"Super Admin"}, records[0].Roles)
+	require.NotNil(t, records[0].Active)
+	assert.False(t, *records[0].Active)
 }
 
 func TestHubSpotDriverOwnersRequired(t *testing.T) {
@@ -130,6 +174,58 @@ func TestHubSpotDriverOwnersRequired(t *testing.T) {
 	_, err := driver.ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot fetch hubspot owners")
+}
+
+func TestHubSpotDriverSkipsNonPersonOwners(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{
+		Transport: roundTripFunc(
+			func(req *http.Request) (*http.Response, error) {
+				switch {
+				case req.URL.Path == "/settings/v3/users/roles":
+					return hubspotResponse(http.StatusOK, `{"results":[]}`), nil
+				case req.URL.Path == "/settings/v3/users":
+					return hubspotResponse(http.StatusOK, `{"results":[]}`), nil
+				case req.URL.Path == "/crm/v3/owners" && req.URL.Query().Get("archived") == "true":
+					return hubspotResponse(
+						http.StatusOK,
+						`{"results":[{"id":"queue-1","email":"queue@example.com","type":"QUEUE","archived":true,"userId":null,"userIdIncludingInactive":null},{"id":"owner-1","email":"person@example.com","firstName":"P","lastName":"erson","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":42}]}`,
+					), nil
+				default:
+					return hubspotResponse(http.StatusNotFound, `{"message":"not found"}`), nil
+				}
+			},
+		),
+	}
+
+	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
+
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, "42", records[0].ExternalID)
+	require.NotNil(t, records[0].Active)
+	assert.False(t, *records[0].Active)
+}
+
+func TestHubSpotOwnerUserID(t *testing.T) {
+	t.Parallel()
+
+	inactiveID := int64(9685555)
+	activeID := int64(123)
+
+	assert.Equal(t, "9685555", hubspotOwnerUserID(hubspotOwner{
+		UserIDIncludingInactive: &inactiveID,
+	}))
+	assert.Equal(t, "123", hubspotOwnerUserID(hubspotOwner{
+		UserID: &activeID,
+	}))
+	assert.Equal(t, "", hubspotOwnerUserID(hubspotOwner{}))
+	zero := int64(0)
+	assert.Equal(t, "", hubspotOwnerUserID(hubspotOwner{
+		UserIDIncludingInactive: &zero,
+	}))
 }
 
 func TestHubSpotRoles(t *testing.T) {

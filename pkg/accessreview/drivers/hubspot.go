@@ -94,6 +94,11 @@ type (
 			} `json:"next"`
 		} `json:"paging"`
 	}
+
+	hubspotSeenKeys struct {
+		userIDs map[string]struct{}
+		emails  map[string]struct{}
+	}
 )
 
 const (
@@ -118,47 +123,29 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		return nil, err
 	}
 
+	// Owners archived=true is HubSpot's authoritative deactivated-user list.
+	// Settings Users has no status field; without this call every account
+	// would be stored as active via COALESCE(@active, TRUE) on upsert.
 	archivedOwners, err := d.fetchAllOwners(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	archivedByUserID := make(map[string]hubspotOwner, len(archivedOwners))
-	archivedByEmail := make(map[string]hubspotOwner, len(archivedOwners))
-	for _, owner := range archivedOwners {
-		if owner.Type != "" && !strings.EqualFold(owner.Type, "PERSON") {
-			continue
-		}
-
-		if id := hubspotOwnerUserID(owner); id != "" {
-			archivedByUserID[id] = owner
-		}
-
-		if email := strings.ToLower(strings.TrimSpace(owner.Email)); email != "" {
-			archivedByEmail[email] = owner
-		}
-	}
+	archivedByUserID, archivedByEmail := hubspotIndexArchivedOwners(archivedOwners)
 
 	records := make([]AccountRecord, 0, len(users)+len(archivedOwners))
-	seenUserIDs := make(map[string]struct{}, len(users)+len(archivedOwners))
+	seen := newHubspotSeenKeys(len(users) + len(archivedOwners))
 
 	for _, u := range users {
-		fullName := strings.TrimSpace(u.FirstName + " " + u.LastName)
+		owner, inactive := hubspotLookupArchived(u.ID, u.Email, archivedByUserID, archivedByEmail)
 
-		active := true
-		if _, ok := archivedByUserID[u.ID]; ok {
-			active = false
-		} else if email := strings.ToLower(strings.TrimSpace(u.Email)); email != "" {
-			if _, ok := archivedByEmail[email]; ok {
-				active = false
-			}
-		}
+		fullName := hubspotDisplayName(u.FirstName, u.LastName, u.Email)
 
 		record := AccountRecord{
 			Email:       u.Email,
 			FullName:    fullName,
 			Roles:       hubspotRoles(u, roleMap),
-			Active:      new(active),
+			Active:      new(!inactive),
 			IsAdmin:     u.SuperAdmin,
 			ExternalID:  u.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,
@@ -166,31 +153,32 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
-		if record.Email != "" || record.ExternalID != "" {
-			records = append(records, record)
-			if u.ID != "" {
-				seenUserIDs[u.ID] = struct{}{}
-			}
+		if record.Email == "" && record.ExternalID == "" {
+			continue
+		}
+
+		records = append(records, record)
+		seen.mark(u.ID, u.Email)
+		// If we matched an archived owner by email only, also mark its
+		// settings user ID so the archived-only pass cannot emit a duplicate.
+		if inactive {
+			seen.mark(hubspotOwnerUserID(owner), owner.Email)
 		}
 	}
 
 	// Settings Users does not always list deactivated accounts. Surface
 	// archived owners that never appeared above so reviews still see them.
 	for _, owner := range archivedOwners {
-		if owner.Type != "" && !strings.EqualFold(owner.Type, "PERSON") {
+		if !hubspotOwnerIsPerson(owner) {
 			continue
 		}
 
 		userID := hubspotOwnerUserID(owner)
-		if userID != "" {
-			if _, seen := seenUserIDs[userID]; seen {
-				continue
-			}
-
-			seenUserIDs[userID] = struct{}{}
+		if seen.has(userID, owner.Email) {
+			continue
 		}
 
-		fullName := strings.TrimSpace(owner.FirstName + " " + owner.LastName)
+		fullName := hubspotDisplayName(owner.FirstName, owner.LastName, owner.Email)
 		externalID := userID
 		if externalID == "" {
 			externalID = owner.ID
@@ -208,9 +196,12 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
-		if record.Email != "" || record.ExternalID != "" {
-			records = append(records, record)
+		if record.Email == "" && record.ExternalID == "" {
+			continue
 		}
+
+		records = append(records, record)
+		seen.mark(userID, owner.Email)
 	}
 
 	return records, nil
@@ -455,18 +446,112 @@ func hubspotRoleIDs(user hubspotUser) []string {
 	return ids
 }
 
+func hubspotIndexArchivedOwners(
+	owners []hubspotOwner,
+) (byUserID map[string]hubspotOwner, byEmail map[string]hubspotOwner) {
+	byUserID = make(map[string]hubspotOwner, len(owners))
+	byEmail = make(map[string]hubspotOwner, len(owners))
+
+	for _, owner := range owners {
+		if !hubspotOwnerIsPerson(owner) {
+			continue
+		}
+
+		if id := hubspotOwnerUserID(owner); id != "" {
+			byUserID[id] = owner
+		}
+
+		if email := hubspotNormalizeEmail(owner.Email); email != "" {
+			byEmail[email] = owner
+		}
+	}
+
+	return byUserID, byEmail
+}
+
+func hubspotLookupArchived(
+	userID string,
+	email string,
+	byUserID map[string]hubspotOwner,
+	byEmail map[string]hubspotOwner,
+) (hubspotOwner, bool) {
+	if userID != "" {
+		if owner, ok := byUserID[userID]; ok {
+			return owner, true
+		}
+	}
+
+	if normalized := hubspotNormalizeEmail(email); normalized != "" {
+		if owner, ok := byEmail[normalized]; ok {
+			return owner, true
+		}
+	}
+
+	return hubspotOwner{}, false
+}
+
+func hubspotOwnerIsPerson(owner hubspotOwner) bool {
+	return owner.Type == "" || strings.EqualFold(owner.Type, "PERSON")
+}
+
 // hubspotOwnerUserID returns the Settings Users ID for an owner. Archived
 // owners leave userId null and expose the ID only on userIdIncludingInactive.
 func hubspotOwnerUserID(owner hubspotOwner) string {
-	if owner.UserIDIncludingInactive != nil {
+	if owner.UserIDIncludingInactive != nil && *owner.UserIDIncludingInactive != 0 {
 		return strconv.FormatInt(*owner.UserIDIncludingInactive, 10)
 	}
 
-	if owner.UserID != nil {
+	if owner.UserID != nil && *owner.UserID != 0 {
 		return strconv.FormatInt(*owner.UserID, 10)
 	}
 
 	return ""
+}
+
+func hubspotDisplayName(firstName, lastName, email string) string {
+	fullName := strings.TrimSpace(firstName + " " + lastName)
+	if fullName != "" {
+		return fullName
+	}
+
+	return strings.TrimSpace(email)
+}
+
+func hubspotNormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
+func newHubspotSeenKeys(capacity int) *hubspotSeenKeys {
+	return &hubspotSeenKeys{
+		userIDs: make(map[string]struct{}, capacity),
+		emails:  make(map[string]struct{}, capacity),
+	}
+}
+
+func (s *hubspotSeenKeys) mark(userID, email string) {
+	if userID != "" {
+		s.userIDs[userID] = struct{}{}
+	}
+
+	if normalized := hubspotNormalizeEmail(email); normalized != "" {
+		s.emails[normalized] = struct{}{}
+	}
+}
+
+func (s *hubspotSeenKeys) has(userID, email string) bool {
+	if userID != "" {
+		if _, ok := s.userIDs[userID]; ok {
+			return true
+		}
+	}
+
+	if normalized := hubspotNormalizeEmail(email); normalized != "" {
+		if _, ok := s.emails[normalized]; ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // hubspotNameResolver resolves the HubSpot account name.
