@@ -87,10 +87,10 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
       (config: UseMutationConfig<T>, overrides?: MutationFeedback): Promise<T["response"]> => {
         const successMessage = overrides?.successMessage ?? baseSuccess;
         const errorToast = overrides?.errorToast ?? baseErrorToast;
-        const continueUrl =
-          overrides?.continueUrl
-          ?? baseContinueUrl
-          ?? (typeof window !== "undefined" ? window.location.href : "");
+        const continueUrl
+          = overrides?.continueUrl
+            ?? baseContinueUrl
+            ?? (typeof window !== "undefined" ? window.location.href : "");
 
         function notifyError(error: Error | PayloadError) {
           if (errorToast === false) {
@@ -128,8 +128,8 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
               }
               if (errors && errors.length > 0) {
                 const [payloadError] = errors;
-                const error =
-                  payloadError instanceof Error
+                const error
+                  = payloadError instanceof Error
                     ? payloadError
                     : new Error(payloadError.message);
                 if (!consumeFailure(error)) {
