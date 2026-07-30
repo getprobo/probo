@@ -179,7 +179,7 @@ func New() *Implm {
 				Document: DocumentNotificationConfig{
 					Interval:         300,   // 5 minutes
 					DebounceDelay:    900,   // 15 minutes
-					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x)
+					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x; weekend reminders → Monday)
 				},
 			},
 			CustomDomains: CustomDomainsConfig{

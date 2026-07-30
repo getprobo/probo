@@ -412,7 +412,9 @@ WHERE
 // request gets: the first notice plus three reminders. A request is due for its
 // next email once it is past its scheduled offset — the first email after the
 // debounce delay, then reminders at 1x, 2x and 3x the reminder interval after
-// the previous email — and stops once it reaches this cap.
+// the previous email — and stops once it reaches this cap. Reminder sends that
+// fall on Saturday or Sunday are deferred to Monday at the same clock time;
+// the first debounced notice is unchanged.
 const documentNotificationMaxCount = 4
 
 func remainingNotificationIDs(all []gid.GID, claimed []gid.GID) []gid.GID {
@@ -445,6 +447,7 @@ func (pvss *DocumentVersionSignatures) LoadNextDueGroupForNotification(
 	debounceBefore time.Time,
 	reminderInterval time.Duration,
 ) error {
+	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
 	q := `
 WITH next_group AS (
 	SELECT
@@ -457,7 +460,25 @@ WITH next_group AS (
 		AND notification_count < @max_notifications
 		AND (
 			(notification_count = 0 AND requested_at < @debounce_before)
-			OR (notification_count > 0 AND last_notified_at < @now::timestamptz - make_interval(secs => @reminder_interval_seconds * notification_count))
+			OR (
+				notification_count > 0
+				AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
+				AND @now::timestamptz > (
+					SELECT
+						(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
+							WHEN 6 THEN interval '2 days'
+							WHEN 7 THEN interval '1 day'
+							ELSE interval '0'
+						END) AT TIME ZONE 'UTC'
+					FROM (
+						SELECT
+							(
+								last_notified_at
+									+ make_interval(secs => @reminder_interval_seconds * notification_count)
+							) AT TIME ZONE 'UTC' AS due_at_utc
+					) AS reminder
+				)
+			)
 		)
 		AND EXISTS (
 			SELECT 1
@@ -554,6 +575,7 @@ func (pvss DocumentVersionSignatures) ClaimForNotification(
 		ids[i] = signature.ID
 	}
 
+	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
 	q := `
 UPDATE document_version_signatures
 SET
@@ -565,7 +587,25 @@ WHERE
 	AND notification_count < @max_notifications
 	AND (
 		(notification_count = 0 AND requested_at < @debounce_before)
-		OR (notification_count > 0 AND last_notified_at < @now::timestamptz - make_interval(secs => @reminder_interval_seconds * notification_count))
+		OR (
+			notification_count > 0
+			AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
+			AND @now::timestamptz > (
+				SELECT
+					(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
+						WHEN 6 THEN interval '2 days'
+						WHEN 7 THEN interval '1 day'
+						ELSE interval '0'
+					END) AT TIME ZONE 'UTC'
+				FROM (
+					SELECT
+						(
+							last_notified_at
+								+ make_interval(secs => @reminder_interval_seconds * notification_count)
+						) AT TIME ZONE 'UTC' AS due_at_utc
+				) AS reminder
+			)
+		)
 	)
 RETURNING id
 `

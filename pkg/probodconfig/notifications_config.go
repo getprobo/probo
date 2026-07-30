@@ -40,7 +40,9 @@ type DocumentNotificationConfig struct {
 	// DebounceDelay is how long a request must have been pending before its
 	// first notification is sent.
 	DebounceDelay int `json:"debounce-delay"`
-	// ReminderInterval is the base reminder cadence. Reminders are sent at
-	// 1x, 2x and 3x this interval after the previous email, then stop.
+	// ReminderInterval is the base reminder cadence in seconds. Reminders are
+	// sent at 1x, 2x and 3x this interval after the previous email, then stop.
+	// Reminder sends that fall on Saturday or Sunday are deferred to Monday at
+	// the same clock time; the first (debounced) notice is unchanged.
 	ReminderInterval int `json:"reminder-interval"`
 }

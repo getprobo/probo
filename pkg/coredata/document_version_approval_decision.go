@@ -420,6 +420,7 @@ func (d *DocumentVersionApprovalDecisions) LoadNextDueGroupForNotification(
 	debounceBefore time.Time,
 	reminderInterval time.Duration,
 ) error {
+	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
 	q := `
 WITH next_group AS (
 	SELECT
@@ -432,7 +433,25 @@ WITH next_group AS (
 		AND notification_count < @max_notifications
 		AND (
 			(notification_count = 0 AND created_at < @debounce_before)
-			OR (notification_count > 0 AND last_notified_at < @now::timestamptz - make_interval(secs => @reminder_interval_seconds * notification_count))
+			OR (
+				notification_count > 0
+				AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
+				AND @now::timestamptz > (
+					SELECT
+						(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
+							WHEN 6 THEN interval '2 days'
+							WHEN 7 THEN interval '1 day'
+							ELSE interval '0'
+						END) AT TIME ZONE 'UTC'
+					FROM (
+						SELECT
+							(
+								last_notified_at
+									+ make_interval(secs => @reminder_interval_seconds * notification_count)
+							) AT TIME ZONE 'UTC' AS due_at_utc
+					) AS reminder
+				)
+			)
 		)
 		AND EXISTS (
 			SELECT 1
@@ -531,6 +550,7 @@ func (d DocumentVersionApprovalDecisions) ClaimForNotification(
 		ids[i] = decision.ID
 	}
 
+	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
 	q := `
 UPDATE document_version_approval_decisions
 SET
@@ -542,7 +562,25 @@ WHERE
 	AND notification_count < @max_notifications
 	AND (
 		(notification_count = 0 AND created_at < @debounce_before)
-		OR (notification_count > 0 AND last_notified_at < @now::timestamptz - make_interval(secs => @reminder_interval_seconds * notification_count))
+		OR (
+			notification_count > 0
+			AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
+			AND @now::timestamptz > (
+				SELECT
+					(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
+						WHEN 6 THEN interval '2 days'
+						WHEN 7 THEN interval '1 day'
+						ELSE interval '0'
+					END) AT TIME ZONE 'UTC'
+				FROM (
+					SELECT
+						(
+							last_notified_at
+								+ make_interval(secs => @reminder_interval_seconds * notification_count)
+						) AT TIME ZONE 'UTC' AS due_at_utc
+				) AS reminder
+			)
+		)
 	)
 RETURNING id
 `
