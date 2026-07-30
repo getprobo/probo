@@ -49,7 +49,6 @@ export const trackerPatternDetectedTrackersSectionFragment = graphql`
       before: $before
       orderBy: $order
     ) @connection(key: "TrackerPatternDetectedTrackersSection_detectedTrackers", filters: ["orderBy"]) {
-      __id
       edges {
         node {
           id

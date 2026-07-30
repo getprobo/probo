@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -163,6 +164,32 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete device_enrollment_token: %w", err)
+	}
+
+	return nil
+}
+
+func (t *DeviceEnrollmentToken) DeleteByDeviceID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	deviceID gid.GID,
+) error {
+	q := `
+DELETE FROM device_enrollment_tokens
+WHERE
+    %s
+    AND device_id = @device_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"device_id": deviceID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete device_enrollment_tokens by device: %w", err)
 	}
 
 	return nil

@@ -58,6 +58,10 @@ var (
 	// cannot be exchanged for the device.
 	ErrEnrollmentTokenInvalid = errors.New("enrollment token invalid")
 
+	// ErrDeviceNotDeletable is returned when a device cannot be soft-deleted
+	// because it is not REVOKED.
+	ErrDeviceNotDeletable = errors.New("device cannot be deleted")
+
 	// ErrCorrelationIDRequired is returned when a posture result is
 	// missing a correlation ID.
 	ErrCorrelationIDRequired = errors.New("correlation_id is required")
@@ -541,6 +545,43 @@ func (s *Service) RevokeDevice(
 
 			if err := device.Revoke(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot revoke device: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return device, nil
+}
+
+func (s *Service) DeleteDevice(
+	ctx context.Context,
+	scope coredata.Scoper,
+	deviceID gid.GID,
+) (*coredata.Device, error) {
+	device := &coredata.Device{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := device.LoadByIDForUpdate(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load device: %w", err)
+			}
+
+			if device.State != coredata.DeviceStateRevoked {
+				return ErrDeviceNotDeletable
+			}
+
+			if err := device.SoftDelete(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot soft delete device: %w", err)
+			}
+
+			var token coredata.DeviceEnrollmentToken
+			if err := token.DeleteByDeviceID(ctx, conn, scope, device.ID); err != nil {
+				return fmt.Errorf("cannot delete device enrollment tokens: %w", err)
 			}
 
 			return nil

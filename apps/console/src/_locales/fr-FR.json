@@ -5958,7 +5958,8 @@
       "add": "Ajouter un appareil",
       "new": "Nouvel appareil",
       "reassign": "Réattribuer",
-      "revoke": "Révoquer"
+      "revoke": "Révoquer",
+      "delete": "Supprimer"
     },
     "fields": {
       "organization": "Organisation",
@@ -5980,15 +5981,18 @@
     },
     "messages": {
       "ownerUpdated": "Propriétaire de l’appareil mis à jour",
-      "revoked": "Appareil révoqué"
+      "revoked": "Appareil révoqué",
+      "deleted": "Appareil supprimé"
     },
     "errors": {
       "create": "Échec de la création de l’appareil",
       "reassign": "Échec de la réattribution de l’appareil",
-      "revoke": "Échec de la révocation de l’appareil"
+      "revoke": "Échec de la révocation de l’appareil",
+      "delete": "Échec de la suppression de l’appareil"
     },
     "confirmations": {
-      "revoke": "Révoquer l’appareil « {{hostname}} » ? L’agent sur l’appareil arrêtera de transmettre des données et devra être réenrôlé."
+      "revoke": "Révoquer l’appareil « {{hostname}} » ? L’agent sur l’appareil arrêtera de transmettre des données et devra être réenrôlé.",
+      "delete": "Supprimer l’appareil « {{hostname}} » ? Il sera retiré de l’inventaire."
     },
     "postures": {
       "currentTitle": "Postures actuelles",

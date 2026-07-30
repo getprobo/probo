@@ -112,6 +112,7 @@ export { IconBrandX } from "./IconBrandX";
 export { IconGlobe } from "./IconGlobe";
 export {
   ArrowsClockwise as IconArrowsClockwise,
+  Eject as IconEject,
   Envelope as IconEnvelope,
   LockOpen as IconLockOpen,
   User as IconUser,

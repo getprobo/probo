@@ -48,8 +48,9 @@ export function PostureValueBadge({
   const { t } = useTranslation();
   const posture = useFragment(postureFragment, postureFragmentRef);
 
-  const label = postureValueLabel(t, posture.value);
-  const variant = postureValueVariant(posture.value.kind, posture.checkKey);
+  const { kind, text, number } = posture.value;
+  const label = postureValueLabel(t, { kind, text, number });
+  const variant = postureValueVariant(kind, posture.checkKey);
 
   if (!variant) {
     return label;

@@ -38,6 +38,11 @@ export function stateVariant(
   }
 }
 
+/** Soft-delete is only offered after the device has been revoked. */
+export function isDeviceDeletable(state: string): boolean {
+  return state === "REVOKED";
+}
+
 type Translator = (key: string, options?: Record<string, unknown>) => string;
 
 /** What a posture check observed, as returned by the DevicePostureValue type. */

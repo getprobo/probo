@@ -64,6 +64,13 @@ const (
 			}
 		}`
 
+	deleteDeviceMutation = `
+		mutation DeleteDevice($input: DeleteDeviceInput!) {
+			deleteDevice(input: $input) {
+				deletedDeviceId
+			}
+		}`
+
 	devicePermissionQuery = `
 		query DevicePermission($orgId: ID!) {
 			node(id: $orgId) {
@@ -1009,6 +1016,92 @@ func TestDeviceEnrollment(t *testing.T) {
 			},
 		}, &revokeResult)
 		require.Equal(t, "REVOKED", revokeResult.RevokeDevice.Device.State)
+	})
+}
+
+func TestDeviceDelete(t *testing.T) {
+	t.Parallel()
+
+	t.Run("cannot delete pending device", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		created := createDevice(t, owner, orgID, nil)
+
+		_, err := owner.Do(deleteDeviceMutation, map[string]any{
+			"input": map[string]any{
+				"deviceId": created.CreateDevice.Device.ID,
+			},
+		})
+		testutil.RequireErrorCode(t, err, "CONFLICT", "pending device must be revoked before delete")
+	})
+
+	t.Run("owner can delete revoked device", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, _, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		created := createDevice(t, owner, orgID, nil)
+		deviceID := created.CreateDevice.Device.ID
+
+		owner.MustExecute(revokeDeviceMutation, map[string]any{
+			"input": map[string]any{"deviceId": deviceID},
+		}, &struct {
+			RevokeDevice struct {
+				Device struct {
+					State string `json:"state"`
+				} `json:"device"`
+			} `json:"revokeDevice"`
+		}{})
+
+		var deleteResult struct {
+			DeleteDevice struct {
+				DeletedDeviceID string `json:"deletedDeviceId"`
+			} `json:"deleteDevice"`
+		}
+		owner.MustExecute(deleteDeviceMutation, map[string]any{
+			"input": map[string]any{"deviceId": deviceID},
+		}, &deleteResult)
+		require.Equal(t, deviceID, deleteResult.DeleteDevice.DeletedDeviceID)
+
+		_, err := owner.Do(getDeviceQuery, map[string]any{"id": deviceID})
+		testutil.RequireErrorCode(t, err, "NOT_FOUND", "soft-deleted device must not be readable")
+	})
+
+	t.Run("cannot delete active device", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		enrolled, _ := enrollActivateAndAuthenticateDevice(t, employee, orgID)
+
+		_, err := owner.Do(deleteDeviceMutation, map[string]any{
+			"input": map[string]any{
+				"deviceId": enrolled.EnrollDevice.Device.ID,
+			},
+		})
+		testutil.RequireErrorCode(t, err, "CONFLICT", "active device must not be deletable")
+	})
+
+	t.Run("employee cannot delete device", func(t *testing.T) {
+		t.Parallel()
+
+		owner, _, employee, _, orgID, _ := setupDeviceEnrollmentClients(t)
+		created := createDevice(t, owner, orgID, nil)
+		deviceID := created.CreateDevice.Device.ID
+
+		owner.MustExecute(revokeDeviceMutation, map[string]any{
+			"input": map[string]any{"deviceId": deviceID},
+		}, &struct {
+			RevokeDevice struct {
+				Device struct {
+					State string `json:"state"`
+				} `json:"device"`
+			} `json:"revokeDevice"`
+		}{})
+
+		_, err := employee.Do(deleteDeviceMutation, map[string]any{
+			"input": map[string]any{"deviceId": deviceID},
+		})
+		testutil.RequireForbiddenError(t, err, "employee should not delete devices")
 	})
 }
 

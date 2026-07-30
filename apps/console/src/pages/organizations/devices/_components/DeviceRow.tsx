@@ -23,6 +23,7 @@ import {
   ActionDropdown,
   Badge,
   DropdownItem,
+  IconEject,
   IconTrashCan,
   IconUser,
   Td,
@@ -36,7 +37,8 @@ import { graphql } from "relay-runtime";
 import type { DeviceRowFragment$key } from "#/__generated__/core/DeviceRowFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { displayValue, stateVariant } from "../_lib/deviceDisplay";
+import { displayValue, isDeviceDeletable, stateVariant } from "../_lib/deviceDisplay";
+import { useDeleteDevice } from "../_lib/useDeleteDevice";
 import { useRevokeDevice } from "../_lib/useRevokeDevice";
 import { ReassignDeviceDialog } from "../dialogs/ReassignDeviceDialog";
 
@@ -58,11 +60,19 @@ const deviceRowFragment = graphql`
 
 interface DeviceRowProps {
   canAssignDevice: boolean;
+  canDelete: boolean;
   canRevoke: boolean;
+  connectionId: string;
   fKey: DeviceRowFragment$key;
 }
 
-export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) {
+export function DeviceRow({
+  canAssignDevice,
+  canDelete,
+  canRevoke,
+  connectionId,
+  fKey,
+}: DeviceRowProps) {
   const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const reassignDialogRef = useDialogRef();
@@ -71,9 +81,16 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
   const device = useFragment(deviceRowFragment, fKey);
 
   const [confirmRevoke, isRevoking] = useRevokeDevice();
+  const [confirmDelete, isDeleting] = useDeleteDevice({
+    organizationId,
+    connectionId,
+  });
 
-  const isRevoked = device.state === "REVOKED";
-  const hasActions = !isRevoked && (canRevoke || canAssignDevice);
+  const deletable = isDeviceDeletable(device.state);
+  const showAssign = canAssignDevice && !deletable;
+  const showRevoke = canRevoke && !deletable;
+  const showDelete = canDelete && deletable;
+  const hasActions = showAssign || showRevoke || showDelete;
 
   return (
     <>
@@ -98,7 +115,7 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
         <Td noLink width={50} className="text-end">
           {hasActions && (
             <ActionDropdown>
-              {canAssignDevice && (
+              {showAssign && (
                 <DropdownItem
                   icon={IconUser}
                   onClick={() => reassignDialogRef.current?.open()}
@@ -106,15 +123,26 @@ export function DeviceRow({ canAssignDevice, canRevoke, fKey }: DeviceRowProps) 
                   {t("devices.actions.reassign")}
                 </DropdownItem>
               )}
-              {canRevoke && (
+              {showRevoke && (
                 <DropdownItem
                   onClick={() =>
                     confirmRevoke({ id: device.id, hostname: device.hostname })}
                   disabled={isRevoking}
                   variant="danger"
-                  icon={IconTrashCan}
+                  icon={IconEject}
                 >
                   {t("devices.actions.revoke")}
+                </DropdownItem>
+              )}
+              {showDelete && (
+                <DropdownItem
+                  onClick={() =>
+                    confirmDelete({ id: device.id, hostname: device.hostname })}
+                  disabled={isDeleting}
+                  variant="danger"
+                  icon={IconTrashCan}
+                >
+                  {t("devices.actions.delete")}
                 </DropdownItem>
               )}
             </ActionDropdown>

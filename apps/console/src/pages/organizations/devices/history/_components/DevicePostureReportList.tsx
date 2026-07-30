@@ -45,7 +45,6 @@ const deviceFragment = graphql`
     ) @connection(key: "DevicePostureReportListFragment_postureReports") {
       edges {
         node {
-          createdAt
           id
           ...DevicePostureReportListItemFragment
         }

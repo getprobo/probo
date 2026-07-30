@@ -56,6 +56,7 @@ type (
 		EnrolledAt     *time.Time      `db:"enrolled_at"`
 		LastSeenAt     *time.Time      `db:"last_seen_at"`
 		RevokedAt      *time.Time      `db:"revoked_at"`
+		DeletedAt      *time.Time      `db:"deleted_at"`
 		CreatedAt      time.Time       `db:"created_at"`
 		UpdatedAt      time.Time       `db:"updated_at"`
 	}
@@ -102,6 +103,7 @@ FROM
     devices
 WHERE
     id = ANY(@resource_ids::text[])
+    AND deleted_at IS NULL
 `
 
 	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs})
@@ -195,6 +197,7 @@ SELECT
 	enrolled_at,
 	last_seen_at,
 	revoked_at,
+	deleted_at,
 	created_at,
 	updated_at
 FROM
@@ -202,6 +205,7 @@ FROM
 WHERE
 	%s
 	AND id = @device_id
+	AND deleted_at IS NULL
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -252,6 +256,7 @@ SELECT
 	enrolled_at,
 	last_seen_at,
 	revoked_at,
+	deleted_at,
 	created_at,
 	updated_at
 FROM
@@ -259,6 +264,7 @@ FROM
 WHERE
 	%s
 	AND id = @device_id
+	AND deleted_at IS NULL
 LIMIT 1
 FOR UPDATE;
 `
@@ -311,6 +317,7 @@ SELECT
 	enrolled_at,
 	last_seen_at,
 	revoked_at,
+	deleted_at,
 	created_at,
 	updated_at
 FROM
@@ -318,6 +325,7 @@ FROM
 WHERE
 	api_key_hash = @api_key_hash
 	AND state != @revoked_state
+	AND deleted_at IS NULL
 LIMIT 1;
 `
 
@@ -370,6 +378,7 @@ SELECT
 	enrolled_at,
 	last_seen_at,
 	revoked_at,
+	deleted_at,
 	created_at,
 	updated_at
 FROM
@@ -378,6 +387,7 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND hardware_uuid = @hardware_uuid
+	AND deleted_at IS NULL
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -504,6 +514,7 @@ WHERE %s
     AND id = @device_id
     AND state = @pending_state
     AND api_key_hash IS NULL
+    AND deleted_at IS NULL
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
@@ -556,6 +567,7 @@ SET
 WHERE %s
     AND id = @device_id
     AND state = @pending_state
+    AND deleted_at IS NULL
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
@@ -611,6 +623,7 @@ SET
 WHERE %s
     AND id = @device_id
     AND state = @active_state
+    AND deleted_at IS NULL
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
@@ -654,6 +667,7 @@ SET
     updated_at = @now
 WHERE %s
     AND id = @device_id
+    AND deleted_at IS NULL
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
@@ -697,6 +711,7 @@ SET
     updated_at = @now
 WHERE %s
     AND id = @device_id
+    AND deleted_at IS NULL
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
@@ -746,6 +761,7 @@ SELECT
 	enrolled_at,
 	last_seen_at,
 	revoked_at,
+	deleted_at,
 	created_at,
 	updated_at
 FROM
@@ -753,6 +769,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND deleted_at IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -802,6 +819,7 @@ SELECT
 	enrolled_at,
 	last_seen_at,
 	revoked_at,
+	deleted_at,
 	created_at,
 	updated_at
 FROM
@@ -811,6 +829,7 @@ WHERE
 	AND organization_id = @organization_id
 	AND owner_profile_id = @owner_profile_id
 	AND state = @active_state
+	AND deleted_at IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -846,7 +865,7 @@ func (ds *Devices) CountByOrganizationID(
 ) (int, error) {
 	q := fmt.Sprintf(`
 SELECT COUNT(id) FROM devices
-WHERE %s AND organization_id = @organization_id
+WHERE %s AND organization_id = @organization_id AND deleted_at IS NULL
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
@@ -877,6 +896,7 @@ WHERE
 	AND organization_id = @organization_id
 	AND owner_profile_id = @owner_profile_id
 	AND state = @active_state
+	AND deleted_at IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -893,4 +913,86 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (d *Device) SoftDelete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	now := time.Now()
+
+	q := fmt.Sprintf(`
+UPDATE devices
+SET
+    deleted_at = @deleted_at,
+    updated_at = @updated_at
+WHERE %s
+    AND id = @device_id
+    AND deleted_at IS NULL
+    AND state = @revoked_state
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"device_id":     d.ID,
+		"deleted_at":    now,
+		"updated_at":    now,
+		"revoked_state": DeviceStateRevoked,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot soft delete device: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	d.DeletedAt = &now
+	d.UpdatedAt = now
+
+	return nil
+}
+
+// DeleteOrphans hard-deletes PENDING and REVOKED devices that never received
+// an API key, have no posture history, and have no non-expired enrollment
+// token. Soft-deleted rows are included so user tombstones without history
+// can be reclaimed; soft-deleted rows that retain posture history are kept.
+func (d *Device) DeleteOrphans(
+	ctx context.Context,
+	conn pg.Tx,
+	now time.Time,
+) (int64, error) {
+	q := `
+DELETE FROM devices d
+WHERE
+    d.state IN (@pending_state, @revoked_state)
+    AND d.api_key_hash IS NULL
+    AND NOT EXISTS (
+        SELECT 1
+        FROM device_postures p
+        WHERE p.device_id = d.id
+    )
+    AND NOT EXISTS (
+        SELECT 1
+        FROM device_enrollment_tokens t
+        WHERE t.device_id = d.id
+          AND t.expires_at >= @now
+    )
+`
+
+	args := pgx.StrictNamedArgs{
+		"pending_state": DeviceStatePending,
+		"revoked_state": DeviceStateRevoked,
+		"now":           now,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete orphan devices: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }

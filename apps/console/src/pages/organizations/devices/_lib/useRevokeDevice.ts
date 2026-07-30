@@ -18,14 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import { useConfirm, useToast } from "@probo/ui";
+import { useConfirm } from "@probo/ui";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { useRevokeDeviceMutation } from "#/__generated__/core/useRevokeDeviceMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { displayValue } from "./deviceDisplay";
 
@@ -49,58 +48,34 @@ interface RevokeDeviceInput {
 
 export function useRevokeDevice() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const confirm = useConfirm();
   const pendingLabel = t("devices.values.pending");
 
   const [revokeDevice, isRevoking] = useMutation<useRevokeDeviceMutation>(
     revokeDeviceMutation,
+    {
+      successMessage: t("devices.messages.revoked"),
+      errorToast: t("devices.errors.revoke"),
+    },
   );
 
   const confirmRevoke = useCallback(
     (device: RevokeDeviceInput) => {
       confirm(
         () =>
-          new Promise<void>((resolve) => {
-            revokeDevice({
-              variables: { input: { deviceId: device.id } },
-              onCompleted(_, errors) {
-                if (errors?.length) {
-                  toast({
-                    title: t("common.error"),
-                    description: errors[0].message,
-                    variant: "error",
-                  });
-                } else {
-                  toast({
-                    title: t("common.success"),
-                    description: t("devices.messages.revoked"),
-                    variant: "success",
-                  });
-                }
-                resolve();
-              },
-              onError(error) {
-                toast({
-                  title: t("common.error"),
-                  description: formatError(
-                    t("devices.errors.revoke"),
-                    error,
-                  ),
-                  variant: "error",
-                });
-                resolve();
-              },
-            });
+          revokeDevice({
+            variables: { input: { deviceId: device.id } },
           }),
         {
-          message: t("devices.confirmations.revoke", { hostname: displayValue(device.hostname, pendingLabel) }),
+          message: t("devices.confirmations.revoke", {
+            hostname: displayValue(device.hostname, pendingLabel),
+          }),
           variant: "danger",
           label: t("devices.actions.revoke"),
         },
       );
     },
-    [t, confirm, pendingLabel, revokeDevice, toast],
+    [t, confirm, pendingLabel, revokeDevice],
   );
 
   return [confirmRevoke, isRevoking] as const;

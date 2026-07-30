@@ -31,6 +31,7 @@ const (
 	ActionDeviceCreate       = "itam:device:create"
 	ActionDeviceEnroll       = "itam:device:enroll"
 	ActionDeviceRevoke       = "itam:device:revoke"
+	ActionDeviceDelete       = "itam:device:delete"
 	ActionDeviceAssignOwner  = "itam:device:assign"
 
 	// DevicePosture actions

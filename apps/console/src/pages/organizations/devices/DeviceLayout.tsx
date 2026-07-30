@@ -19,13 +19,13 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Breadcrumb, Button, PageHeader } from "@probo/ui";
+import { Breadcrumb, Button, IconEject, IconTrashCan, PageHeader } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { DeviceLayoutQuery } from "#/__generated__/core/DeviceLayoutQuery.graphql";
@@ -33,7 +33,8 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { DeviceCurrentPostures } from "./_components/DeviceCurrentPostures";
 import { DeviceDetailsCard } from "./_components/DeviceDetailsCard";
-import { displayValue } from "./_lib/deviceDisplay";
+import { displayValue, isDeviceDeletable } from "./_lib/deviceDisplay";
+import { useDeleteDevice } from "./_lib/useDeleteDevice";
 import { useRevokeDevice } from "./_lib/useRevokeDevice";
 
 export const deviceLayoutQuery = graphql`
@@ -52,6 +53,7 @@ export const deviceLayoutQuery = graphql`
       __typename
       ... on Organization {
         canRevokeDevice: permission(action: "itam:device:revoke")
+        canDeleteDevice: permission(action: "itam:device:delete")
       }
     }
   }
@@ -63,6 +65,7 @@ interface DeviceLayoutProps {
 
 export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const pendingLabel = t("devices.values.pending");
 
@@ -82,9 +85,16 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
   const hostnameLabel = displayValue(device.hostname, pendingLabel);
 
   const [confirmRevoke, isRevoking] = useRevokeDevice();
+  const [confirmDelete, isDeleting] = useDeleteDevice({
+    organizationId,
+    onDeleted: () => {
+      void navigate(`/organizations/${organizationId}/devices`, { replace: true });
+    },
+  });
 
-  const isRevoked = device.state === "REVOKED";
+  const deletable = isDeviceDeletable(device.state);
   const canRevokeDevice = organization.canRevokeDevice ?? false;
+  const canDeleteDevice = organization.canDeleteDevice ?? false;
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -98,14 +108,26 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
         ]}
       />
       <PageHeader title={hostnameLabel}>
-        {!isRevoked && canRevokeDevice && (
+        {!deletable && canRevokeDevice && (
           <Button
             variant="danger"
+            icon={IconEject}
             onClick={() =>
               confirmRevoke({ id: device.id, hostname: device.hostname })}
             disabled={isRevoking}
           >
             {t("devices.actions.revoke")}
+          </Button>
+        )}
+        {deletable && canDeleteDevice && (
+          <Button
+            variant="danger"
+            icon={IconTrashCan}
+            onClick={() =>
+              confirmDelete({ id: device.id, hostname: device.hostname })}
+            disabled={isDeleting}
+          >
+            {t("devices.actions.delete")}
           </Button>
         )}
       </PageHeader>

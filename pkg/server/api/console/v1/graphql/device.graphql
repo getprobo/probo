@@ -237,6 +237,10 @@ type RevokeDevicePayload {
     device: Device!
 }
 
+type DeleteDevicePayload {
+    deletedDeviceId: ID!
+}
+
 type SetDeviceOwnerPayload {
     device: Device!
 }
@@ -254,6 +258,10 @@ input RevokeDeviceInput {
     deviceId: ID!
 }
 
+input DeleteDeviceInput {
+    deviceId: ID!
+}
+
 input SetDeviceOwnerInput {
     deviceId: ID!
     ownerId: ID
@@ -263,6 +271,7 @@ extend type Mutation {
     enrollDevice(input: EnrollDeviceInput!): CreateDevicePayload!
     createDevice(input: CreateDeviceInput!): CreateDevicePayload!
     revokeDevice(input: RevokeDeviceInput!): RevokeDevicePayload!
+    deleteDevice(input: DeleteDeviceInput!): DeleteDevicePayload!
     setDeviceOwner(
         input: SetDeviceOwnerInput!
     ): SetDeviceOwnerPayload!

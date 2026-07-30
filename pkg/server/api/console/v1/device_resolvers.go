@@ -239,6 +239,31 @@ func (r *mutationResolver) RevokeDevice(ctx context.Context, input types.RevokeD
 	return &types.RevokeDevicePayload{Device: types.NewDevice(d)}, nil
 }
 
+// DeleteDevice is the resolver for the deleteDevice field.
+func (r *mutationResolver) DeleteDevice(ctx context.Context, input types.DeleteDeviceInput) (*types.DeleteDevicePayload, error) {
+	scope, err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := r.itam.DeleteDevice(ctx, scope, input.DeviceID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, itam.ErrDeviceNotDeletable) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete device", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteDevicePayload{DeletedDeviceID: d.ID}, nil
+}
+
 // SetDeviceOwner is the resolver for the setDeviceOwner field.
 func (r *mutationResolver) SetDeviceOwner(ctx context.Context, input types.SetDeviceOwnerInput) (*types.SetDeviceOwnerPayload, error) {
 	scope, err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceAssignOwner)

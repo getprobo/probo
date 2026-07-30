@@ -100,10 +100,18 @@ func (h *gcHandler) cleanup(ctx context.Context) error {
 				return fmt.Errorf("cannot delete expired device enrollment tokens: %w", err)
 			}
 
+			var device coredata.Device
+
+			devicesDeleted, err := device.DeleteOrphans(ctx, tx, now)
+			if err != nil {
+				return fmt.Errorf("cannot delete orphan devices: %w", err)
+			}
+
 			h.logger.InfoCtx(
 				ctx,
 				"itam garbage collector cleaned up",
 				log.Int64("device_enrollment_tokens_deleted", tokensDeleted),
+				log.Int64("orphan_devices_deleted", devicesDeleted),
 			)
 
 			return nil

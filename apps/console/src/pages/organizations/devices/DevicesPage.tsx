@@ -46,6 +46,7 @@ export const devicesPageQuery = graphql`
         id
         canAssignDevice: permission(action: "itam:device:assign")
         canRevokeDevice: permission(action: "itam:device:revoke")
+        canDeleteDevice: permission(action: "itam:device:delete")
         canCreateDevice: permission(action: "itam:device:create")
         ...DevicesPageFragment
       }
@@ -72,7 +73,8 @@ const devicesPageFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "DevicesPage_devices", filters: ["orderBy"]) {
+    ) @connection(key: "DevicesPage_devices", filters: []) {
+      __id
       edges {
         node {
           id
@@ -107,6 +109,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
   >(devicesPageFragment, organization);
 
   const devices = pagination.data.devices.edges.map(edge => edge.node);
+  const connectionId = pagination.data.devices.__id;
 
   return (
     <div className="space-y-6">
@@ -148,8 +151,10 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
             <DeviceRow
               key={device.id}
               fKey={device}
+              connectionId={connectionId}
               canAssignDevice={organization.canAssignDevice ?? false}
               canRevoke={organization.canRevokeDevice ?? false}
+              canDelete={organization.canDeleteDevice ?? false}
             />
           ))}
         </Tbody>
