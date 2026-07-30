@@ -30,27 +30,49 @@ tools:
     hints:
       readonly: true
       idempotent: true
+      openWorld: false
     inputSchema:
       $ref: "#/components/schemas/ListThirdPartiesInput"
     outputSchema:
       $ref: "#/components/schemas/ListThirdPartiesOutput"
+  - name: addThirdParty
+    title: Add Third Party
+    description: Add a new thirdParty to the organization
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddThirdPartyInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddThirdPartyOutput"
   - name: deleteThirdParty
     title: Delete Third Party
     description: Delete a thirdParty
     hints:
       readonly: false
       destructive: true
+      idempotent: true
+      openWorld: false
     inputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyOutput"
 ```
 
-`title` is the human-readable display name (emitted as MCP `title` /
-`annotations.title`). `hints.readonly` and `hints.destructive` map to
-`readOnlyHint` and `destructiveHint` so clients can distinguish reads, writes,
-and deletes. Every delete/remove/unlink/cancel/void tool must set
-`destructive: true`.
+`title` is the human-readable display name (MCP `title` / `annotations.title`).
+
+`hints` map to MCP tool annotations. Set all of them explicitly — several
+defaults are surprising (`destructiveHint` defaults to **true**,
+`openWorldHint` defaults to **true**):
+
+| Hint | Reads | Additive writes | Deletes / regenerates |
+|---|---|---|---|
+| `readonly` | `true` | `false` | `false` |
+| `destructive` | omit | `false` | `true` |
+| `idempotent` | `true` | `false` for creates, `true` for updates | `true` |
+| `openWorld` | `false` | `false` (unless the tool calls out, e.g. `vetThirdParty`) | `false` |
 
 Input/output schemas reference `components/schemas`. Map custom Go types with the `go.probo.inc/mcpgen/type` extension:
 
