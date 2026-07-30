@@ -121,7 +121,7 @@ input CompliancePortalVisibilityFilter {
   visibility: CompliancePortalVisibility
 }
 
-type Document implements Node @nda {
+type Document implements Node {
   id: ID!
   title: String!
   documentType: DocumentType!
@@ -130,24 +130,24 @@ type Document implements Node @nda {
   access: DocumentAccess @goField(forceResolver: true)
 }
 
-type DocumentConnection @nda {
+type DocumentConnection {
   edges: [DocumentEdge!]!
   pageInfo: PageInfo!
 }
 
-type DocumentEdge @nda {
+type DocumentEdge {
   cursor: CursorKey!
   node: Document!
 }
 
-type Framework implements Node @nda {
+type Framework implements Node {
   id: ID!
   name: String!
   lightLogo: File @goField(forceResolver: true)
   darkLogo: File @goField(forceResolver: true)
 }
 
-type AuditReport implements Node @nda {
+type AuditReport implements Node {
   id: ID!
   fileName: String!
   alias: String @goField(forceResolver: true)
@@ -155,19 +155,19 @@ type AuditReport implements Node @nda {
   access: DocumentAccess @goField(forceResolver: true)
 }
 
-type Audit implements Node @nda {
+type Audit implements Node {
   id: ID!
   name: String
   framework: Framework! @goField(forceResolver: true)
   reportFile: AuditReport @goField(forceResolver: true)
 }
 
-type AuditConnection @nda {
+type AuditConnection {
   edges: [AuditEdge!]!
   pageInfo: PageInfo!
 }
 
-type AuditEdge @nda {
+type AuditEdge {
   cursor: CursorKey!
   node: Audit!
 }
@@ -261,7 +261,7 @@ enum SubprocessorCategory
     )
 }
 
-type Subprocessor implements Node @nda {
+type Subprocessor implements Node {
   id: ID!
   name: String!
   description: String
@@ -280,18 +280,18 @@ input SubprocessorFilter {
 type SubprocessorConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/complianceportal/v1/types.SubprocessorConnection"
-  ) @nda {
+  ) {
   edges: [SubprocessorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int! @goField(forceResolver: true)
 }
 
-type SubprocessorEdge @nda {
+type SubprocessorEdge {
   cursor: CursorKey!
   node: Subprocessor!
 }
 
-type CompliancePortalReference implements Node @nda {
+type CompliancePortalReference implements Node {
   id: ID!
   name: String!
   description: String
@@ -299,12 +299,12 @@ type CompliancePortalReference implements Node @nda {
   logo: File! @goField(forceResolver: true)
 }
 
-type CompliancePortalReferenceConnection @nda {
+type CompliancePortalReferenceConnection {
   edges: [CompliancePortalReferenceEdge!]!
   pageInfo: PageInfo!
 }
 
-type CompliancePortalReferenceEdge @nda {
+type CompliancePortalReferenceEdge {
   cursor: CursorKey!
   node: CompliancePortalReference!
 }
@@ -394,7 +394,7 @@ type CompliancePortalCommitmentEdge {
   node: CompliancePortalCommitment!
 }
 
-type CompliancePortalFile implements Node @nda {
+type CompliancePortalFile implements Node {
   id: ID!
   name: String!
   category: String!
@@ -403,12 +403,12 @@ type CompliancePortalFile implements Node @nda {
   access: DocumentAccess @goField(forceResolver: true)
 }
 
-type CompliancePortalFileConnection @nda {
+type CompliancePortalFileConnection {
   edges: [CompliancePortalFileEdge!]!
   pageInfo: PageInfo!
 }
 
-type CompliancePortalFileEdge @nda {
+type CompliancePortalFileEdge {
   cursor: CursorKey!
   node: CompliancePortalFile!
 }
