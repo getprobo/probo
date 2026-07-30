@@ -99,7 +99,7 @@ func (s *LogExportService) streamAuditLogCSV(
 	filter *coredata.AuditLogEntryFilter,
 	w *safecsv.Writer,
 ) error {
-	if err := w.WriteRow(auditLogExportCSVHeader...); err != nil {
+	if err := w.Write(auditLogExportCSVHeader); err != nil {
 		return fmt.Errorf("cannot write audit log CSV header: %w", err)
 	}
 
@@ -153,7 +153,7 @@ func (s *LogExportService) streamSCIMEventCSV(
 	filter *coredata.SCIMEventFilter,
 	w *safecsv.Writer,
 ) error {
-	if err := w.WriteRow(scimEventExportCSVHeader...); err != nil {
+	if err := w.Write(scimEventExportCSVHeader); err != nil {
 		return fmt.Errorf("cannot write SCIM event CSV header: %w", err)
 	}
 
@@ -204,7 +204,7 @@ func writeAuditLogEntryCSVRow(
 	entry *coredata.AuditLogEntry,
 	actor auditLogActorExportInfo,
 ) error {
-	return w.WriteRow(
+	return w.Write([]string{
 		organizationName,
 		entry.ID.String(),
 		entry.CreatedAt.Format(time.RFC3339),
@@ -215,7 +215,7 @@ func writeAuditLogEntryCSVRow(
 		entry.Action,
 		entry.ResourceType,
 		entry.ResourceID.String(),
-	)
+	})
 }
 
 func writeSCIMEventCSVRow(
@@ -226,7 +226,7 @@ func writeSCIMEventCSVRow(
 ) error {
 	profile := lookup.forEvent(event)
 
-	return w.WriteRow(
+	return w.Write([]string{
 		organizationName,
 		event.ID.String(),
 		event.CreatedAt.Format(time.RFC3339),
@@ -238,7 +238,7 @@ func writeSCIMEventCSVRow(
 		strconv.Itoa(event.StatusCode),
 		stringPtrValue(event.ErrorMessage),
 		event.IPAddress.String(),
-	)
+	})
 }
 
 func loadAuditLogActorExportInfo(

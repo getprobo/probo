@@ -50,7 +50,7 @@ func TestWriterWrite(t *testing.T) {
 	var buf bytes.Buffer
 
 	w := NewWriter(&buf)
-	require.NoError(t, w.WriteRow("ok", "=evil"))
+	require.NoError(t, w.Write([]string{"ok", "=evil"}))
 	w.Flush()
 	require.NoError(t, w.Error())
 

@@ -41,16 +41,9 @@ func NewWriter(w io.Writer) *Writer {
 	return &Writer{inner: csv.NewWriter(w)}
 }
 
-// Write encodes a CSV record after sanitizing every field. Prefer WriteRow for
-// literal column values at call sites.
+// Write encodes a CSV record after sanitizing every field.
 func (w *Writer) Write(record []string) error {
 	return w.inner.Write(SanitizeRecord(record))
-}
-
-// WriteRow encodes one CSV record from fields, sanitizing each value before
-// encoding (spreadsheet formula injection mitigation).
-func (w *Writer) WriteRow(fields ...string) error {
-	return w.inner.Write(SanitizeRecord(fields))
 }
 
 func (w *Writer) Flush() {
