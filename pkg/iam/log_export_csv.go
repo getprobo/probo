@@ -307,28 +307,13 @@ func loadSCIMProfileExportInfo(
 		return scimProfileExportLookup{}, fmt.Errorf("cannot load SCIM export profiles: %w", err)
 	}
 
-	identityIDs := make([]gid.GID, 0, len(profiles))
-	for _, profile := range profiles {
-		identityIDs = append(identityIDs, profile.IdentityID)
-	}
-
-	var identities coredata.Identities
-	if err := identities.LoadByIDs(ctx, conn, identityIDs); err != nil {
-		return scimProfileExportLookup{}, fmt.Errorf("cannot load SCIM profile identity emails: %w", err)
-	}
-
-	emailByIdentityID := make(map[gid.GID]string, len(identities))
-	for _, identity := range identities {
-		emailByIdentityID[identity.ID] = identity.EmailAddress.String()
-	}
-
 	lookup := scimProfileExportLookup{
 		byProfileID: make(map[gid.GID]scimProfileExportInfo, len(profiles)),
 		byUserName:  make(map[string]scimProfileExportInfo, len(profiles)),
 	}
 	for _, profile := range profiles {
 		info := scimProfileExportInfo{
-			email:    emailByIdentityID[profile.IdentityID],
+			email:    profile.EmailAddress.String(),
 			fullName: profileFullName(profile),
 		}
 

@@ -506,7 +506,7 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    ''::citext AS email_address,
+    i.email_address,
     p.source,
     p.state,
     p.full_name,
@@ -541,6 +541,8 @@ SELECT
     p.updated_at
 FROM
     iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
 WHERE
     p.%s
     AND p.id = ANY(@profile_ids)
