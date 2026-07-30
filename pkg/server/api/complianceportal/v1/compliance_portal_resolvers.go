@@ -976,10 +976,6 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	if err := r.requireCompletedNDA(ctx); err != nil {
-		return nil, err
-	}
-
 	if _, err := visitorService.RequestPortalAccess(
 		ctx, scope,
 		&visitor.PortalAccessRequest{
@@ -1027,10 +1023,6 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
-	}
-
-	if err := r.requireCompletedNDA(ctx); err != nil {
-		return nil, err
 	}
 
 	if _, err := visitorService.RequestPortalAccess(
@@ -1082,10 +1074,6 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	if err := r.requireCompletedNDA(ctx); err != nil {
-		return nil, err
-	}
-
 	if _, err := visitorService.RequestPortalAccess(
 		ctx, scope,
 		&visitor.PortalAccessRequest{
@@ -1115,10 +1103,6 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
-	}
-
-	if err := r.requireCompletedNDA(ctx); err != nil {
-		return nil, err
 	}
 
 	if len(input.DocumentIds) == 0 && len(input.ReportIds) == 0 && len(input.CompliancePortalFileIds) == 0 {

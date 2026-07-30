@@ -32,7 +32,8 @@ import (
 
 // requireCompletedNDA enforces portal NDA completion for the signed-in identity.
 // No-ops when there is no viewer or the portal membership has no NDA signature.
-// Callers own authentication and PUBLIC-resource skips.
+// Call from protected (non-PUBLIC) export resolvers after authentication.
+// Access-request mutations must not call this — requesting is allowed before signing.
 func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
