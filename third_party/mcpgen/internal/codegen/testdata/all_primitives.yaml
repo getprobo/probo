@@ -1,0 +1,222 @@
+info:
+  title: all-primitives-test
+  version: 1.0.0
+  description: Test all MCP primitives and JSON Schema features
+
+components:
+  schemas:
+    # All JSON Schema types
+    StringSchema:
+      type: string
+      description: A string
+
+    NumberSchema:
+      type: number
+      description: A number
+
+    IntegerSchema:
+      type: integer
+      description: An integer
+
+    BooleanSchema:
+      type: boolean
+      description: A boolean
+
+    ArraySchema:
+      type: array
+      items:
+        type: string
+      description: An array of strings
+
+    ObjectSchema:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+      required: [name]
+
+    # Enum types
+    Color:
+      type: string
+      enum: [red, green, blue, yellow]
+      description: A color
+
+    # Nested objects
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+      required: [city, country]
+
+    Person:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+        email:
+          type: string
+          format: email
+        address:
+          $ref: "#/components/schemas/Address"
+        favoriteColor:
+          $ref: "#/components/schemas/Color"
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [name]
+
+    # Nullable fields with anyOf
+    NullableFields:
+      type: object
+      properties:
+        nullableString:
+          anyOf:
+            - type: string
+            - type: "null"
+        nullableNumber:
+          anyOf:
+            - type: number
+            - type: "null"
+        nullableObject:
+          anyOf:
+            - $ref: "#/components/schemas/Address"
+            - type: "null"
+
+    # Complex nested structure
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/Person"
+        headquarters:
+          $ref: "#/components/schemas/Address"
+        founded:
+          type: string
+          format: date
+      required: [id, name]
+
+tools:
+  # Tool with inline schema
+  - name: simple_tool
+    description: A simple tool with inline schema
+    inputSchema:
+      type: object
+      properties:
+        message:
+          type: string
+        count:
+          type: integer
+      required: [message]
+
+  # Tool with ref schema
+  - name: create_person
+    description: Create a person
+    inputSchema:
+      $ref: "#/components/schemas/Person"
+
+  # Tool with complex schema
+  - name: create_organization
+    description: Create an organization
+    inputSchema:
+      $ref: "#/components/schemas/Organization"
+
+  # Tool with enum
+  - name: set_color
+    description: Set a color
+    inputSchema:
+      type: object
+      properties:
+        color:
+          $ref: "#/components/schemas/Color"
+      required: [color]
+
+  # Tool with nullable fields
+  - name: update_fields
+    description: Update optional fields
+    inputSchema:
+      $ref: "#/components/schemas/NullableFields"
+
+resources:
+  # Static resource
+  - uri: "docs://readme"
+    name: README
+    description: The README document
+    mimeType: text/markdown
+    readonly: true
+
+  # Resource with simple template
+  - uriTemplate: "person://{id}"
+    name: Person Resource
+    description: Get a person by ID
+    mimeType: application/json
+    readonly: true
+    schema:
+      $ref: "#/components/schemas/Person"
+
+  # Resource with multiple parameters
+  - uriTemplate: "org://{orgId}/member/{memberId}"
+    name: Organization Member
+    description: Get a member of an organization
+    mimeType: application/json
+    readonly: true
+    schema:
+      $ref: "#/components/schemas/Person"
+
+  # Resource with nested schema
+  - uriTemplate: "org://{id}"
+    name: Organization Resource
+    description: Get an organization by ID
+    mimeType: application/json
+    schema:
+      $ref: "#/components/schemas/Organization"
+
+prompts:
+  # Prompt without arguments
+  - name: help
+    description: Get general help
+
+  # Prompt with optional arguments
+  - name: person_info
+    description: Get information about a person
+    arguments:
+      - name: personId
+        description: The person ID
+        required: true
+      - name: includeAddress
+        description: Include address in the response
+        required: false
+      - name: format
+        description: Output format
+        required: false
+
+  # Prompt with all required arguments
+  - name: compare_people
+    description: Compare two people
+    arguments:
+      - name: person1Id
+        description: First person ID
+        required: true
+      - name: person2Id
+        description: Second person ID
+        required: true

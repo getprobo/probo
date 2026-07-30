@@ -272,3 +272,5 @@ tool (
 )
 
 replace github.com/elimity-com/scim => github.com/getprobo/scim v0.0.0-20260309220528-a952b258e8d3
+
+replace go.probo.inc/mcpgen => ./third_party/mcpgen

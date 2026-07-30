@@ -12593,6 +12593,7 @@ components:
 
 tools:
   - name: listOrganizations
+    title: List Organizations
     description: List all organizations the user has access to
     hints:
       readonly: true
@@ -12602,6 +12603,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListOrganizationsOutput"
   - name: listThirdParties
+    title: List Third Parties
     description: List all thirdParties for the organization
     hints:
       readonly: true
@@ -12611,6 +12613,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListThirdPartiesOutput"
   - name: listChildThirdParties
+    title: List Child Third Parties
     description: List child third parties linked to a parent third party
     hints:
       readonly: true
@@ -12620,6 +12623,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListChildThirdPartiesOutput"
   - name: listUsers
+    title: List Users
     description: List all users for the organization
     hints:
       readonly: true
@@ -12629,6 +12633,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListUsersOutput"
   - name: getUser
+    title: Get User
     description: Get a user by ID (profile ID)
     hints:
       readonly: true
@@ -12638,6 +12643,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetUserOutput"
   - name: createUser
+    title: Create User
     description: Create a new user in the organization
     hints:
       readonly: false
@@ -12646,6 +12652,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CreateUserOutput"
   - name: inviteUser
+    title: Invite User
     description: Invite a user (profile) to the organization
     hints:
       readonly: false
@@ -12654,6 +12661,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/InviteUserOutput"
   - name: updateUser
+    title: Update User
     description: Update an existing user (profile)
     hints:
       readonly: false
@@ -12662,6 +12670,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateUserOutput"
   - name: updateMembership
+    title: Update Membership
     description: Update a membership role
     hints:
       readonly: false
@@ -12670,6 +12679,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateMembershipOutput"
   - name: removeUser
+    title: Remove User
     description: Remove a user from the organization
     hints:
       readonly: false
@@ -12678,8 +12688,14 @@ tools:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
+<<<<<<< HEAD
   - name: deactivateUser
     description: Deactivate a user in the organization
+=======
+  - name: archiveUser
+    title: Archive User
+    description: Archive a user in the organization
+>>>>>>> b29c4a15c (Annotate MCP tools with titles and hints)
     hints:
       readonly: false
     inputSchema:
@@ -12687,6 +12703,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeactivateUserOutput"
   - name: addThirdParty
+    title: Add Third Party
     description: Add a new thirdParty to the organization
     hints:
       readonly: false
@@ -12695,6 +12712,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddThirdPartyOutput"
   - name: updateThirdParty
+    title: Update Third Party
     description: Update an existing thirdParty
     hints:
       readonly: false
@@ -12703,6 +12721,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateThirdPartyOutput"
   - name: listThirdPartyRiskAssessments
+    title: List Third Party Risk Assessments
     description: List all risk assessments for a thirdParty
     hints:
       readonly: true
@@ -12712,6 +12731,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListThirdPartyRiskAssessmentsOutput"
   - name: addThirdPartyRiskAssessment
+    title: Add Third Party Risk Assessment
     description: Add a new risk assessment for a thirdParty
     hints:
       readonly: false
@@ -12720,6 +12740,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddThirdPartyRiskAssessmentOutput"
   - name: deleteThirdParty
+    title: Delete Third Party
     description: Delete a thirdParty
     hints:
       readonly: false
@@ -12729,6 +12750,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyOutput"
   - name: listThirdPartyContacts
+    title: List Third Party Contacts
     description: List all contacts for a thirdParty
     hints:
       readonly: true
@@ -12738,6 +12760,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListThirdPartyContactsOutput"
   - name: addThirdPartyContact
+    title: Add Third Party Contact
     description: Add a new contact to a thirdParty
     hints:
       readonly: false
@@ -12746,6 +12769,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddThirdPartyContactOutput"
   - name: updateThirdPartyContact
+    title: Update Third Party Contact
     description: Update an existing thirdParty contact
     hints:
       readonly: false
@@ -12754,6 +12778,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateThirdPartyContactOutput"
   - name: deleteThirdPartyContact
+    title: Delete Third Party Contact
     description: Delete a thirdParty contact
     hints:
       readonly: false
@@ -12763,6 +12788,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyContactOutput"
   - name: listThirdPartyServices
+    title: List Third Party Services
     description: List all services for a thirdParty
     hints:
       readonly: true
@@ -12772,6 +12798,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListThirdPartyServicesOutput"
   - name: addThirdPartyService
+    title: Add Third Party Service
     description: Add a new service to a thirdParty
     hints:
       readonly: false
@@ -12780,6 +12807,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddThirdPartyServiceOutput"
   - name: updateThirdPartyService
+    title: Update Third Party Service
     description: Update an existing thirdParty service
     hints:
       readonly: false
@@ -12788,6 +12816,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateThirdPartyServiceOutput"
   - name: deleteThirdPartyService
+    title: Delete Third Party Service
     description: Delete a thirdParty service
     hints:
       readonly: false
@@ -12797,6 +12826,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyServiceOutput"
   - name: vetThirdParty
+    title: Vet Third Party
     description: Start AI-powered vetting of a third party by crawling its website. Returns immediately; vetting runs in the background.
     hints:
       readonly: false
@@ -12805,6 +12835,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/VetThirdPartyOutput"
   - name: listRisks
+    title: List Risks
     description: List all risks for the organization
     hints:
       readonly: true
@@ -12814,6 +12845,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRisksOutput"
   - name: getRisk
+    title: Get Risk
     description: Get a risk by ID
     hints:
       readonly: true
@@ -12823,6 +12855,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskOutput"
   - name: addRisk
+    title: Add Risk
     description: Add a new risk to the organization
     hints:
       readonly: false
@@ -12831,6 +12864,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskOutput"
   - name: updateRisk
+    title: Update Risk
     description: Update an existing risk
     hints:
       readonly: false
@@ -12839,6 +12873,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskOutput"
   - name: deleteRisk
+    title: Delete Risk
     description: Delete a risk
     hints:
       readonly: false
@@ -12848,6 +12883,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskOutput"
   - name: listMeasures
+    title: List Measures
     description: List all measures for the organization
     hints:
       readonly: true
@@ -12857,6 +12893,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasuresOutput"
   - name: getMeasure
+    title: Get Measure
     description: Get a measure by ID
     hints:
       readonly: true
@@ -12866,6 +12903,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetMeasureOutput"
   - name: addMeasure
+    title: Add Measure
     description: Add a new measure to the organization
     hints:
       readonly: false
@@ -12874,6 +12912,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddMeasureOutput"
   - name: updateMeasure
+    title: Update Measure
     description: Update an existing measure
     hints:
       readonly: false
@@ -12882,6 +12921,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateMeasureOutput"
   - name: deleteMeasure
+    title: Delete Measure
     description: Delete a measure
     hints:
       readonly: false
@@ -12891,6 +12931,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteMeasureOutput"
   - name: listMeasureRisks
+    title: List Measure Risks
     description: List risks linked to a measure
     hints:
       readonly: true
@@ -12900,6 +12941,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureRisksOutput"
   - name: listMeasureControls
+    title: List Measure Controls
     description: List controls linked to a measure
     hints:
       readonly: true
@@ -12909,6 +12951,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureControlsOutput"
   - name: listMeasureTasks
+    title: List Measure Tasks
     description: List tasks linked to a measure
     hints:
       readonly: true
@@ -12918,6 +12961,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureTasksOutput"
   - name: listMeasureEvidences
+    title: List Measure Evidences
     description: List evidences linked to a measure
     hints:
       readonly: true
@@ -12927,6 +12971,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureEvidencesOutput"
   - name: linkMeasure
+    title: Link Measure
     description: Link a measure to a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
@@ -12935,14 +12980,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkMeasureOutput"
   - name: unlinkMeasure
+    title: Unlink Measure
     description: Unlink a measure from a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/UnlinkMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkMeasureOutput"
   - name: listMeasureDocuments
+    title: List Measure Documents
     description: List documents linked to a measure
     hints:
       readonly: true
@@ -12952,6 +13000,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureDocumentsOutput"
   - name: listFrameworks
+    title: List Frameworks
     description: List all frameworks for the organization
     hints:
       readonly: true
@@ -12961,6 +13010,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListFrameworksOutput"
   - name: getFramework
+    title: Get Framework
     description: Get a framework by ID
     hints:
       readonly: true
@@ -12970,6 +13020,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetFrameworkOutput"
   - name: addFramework
+    title: Add Framework
     description: Add a new framework to the organization
     hints:
       readonly: false
@@ -12978,6 +13029,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddFrameworkOutput"
   - name: updateFramework
+    title: Update Framework
     description: Update an existing framework
     hints:
       readonly: false
@@ -12986,6 +13038,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateFrameworkOutput"
   - name: listAssets
+    title: List Assets
     description: List all assets for the organization
     hints:
       readonly: true
@@ -12995,6 +13048,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAssetsOutput"
   - name: getAsset
+    title: Get Asset
     description: Get an asset by ID
     hints:
       readonly: true
@@ -13004,6 +13058,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetAssetOutput"
   - name: addAsset
+    title: Add Asset
     description: Add a new asset to the organization
     hints:
       readonly: false
@@ -13012,6 +13067,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddAssetOutput"
   - name: updateAsset
+    title: Update Asset
     description: Update an existing asset
     hints:
       readonly: false
@@ -13020,6 +13076,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateAssetOutput"
   - name: deleteAsset
+    title: Delete Asset
     description: Delete an asset
     hints:
       readonly: false
@@ -13029,6 +13086,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listData
+    title: List Data
     description: List all data for the organization
     hints:
       readonly: true
@@ -13038,6 +13096,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListDataOutput"
   - name: getDatum
+    title: Get Datum
     description: Get a datum by ID
     hints:
       readonly: true
@@ -13047,6 +13106,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetDatumOutput"
   - name: addDatum
+    title: Add Datum
     description: Add a new datum to the organization
     hints:
       readonly: false
@@ -13055,6 +13115,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddDatumOutput"
   - name: updateDatum
+    title: Update Datum
     description: Update an existing datum
     hints:
       readonly: false
@@ -13063,6 +13124,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateDatumOutput"
   - name: deleteDatum
+    title: Delete Datum
     description: Delete a datum
     hints:
       readonly: false
@@ -13072,6 +13134,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteDatumOutput"
   - name: listFindings
+    title: List Findings
     description: List all findings (nonconformities, observations, exceptions) for the organization
     hints:
       readonly: true
@@ -13081,6 +13144,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListFindingsOutput"
   - name: getFinding
+    title: Get Finding
     description: Get a finding by ID
     hints:
       readonly: true
@@ -13090,6 +13154,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetFindingOutput"
   - name: addFinding
+    title: Add Finding
     description: Add a new finding (nonconformity, observation, or exception) to the organization
     hints:
       readonly: false
@@ -13098,6 +13163,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddFindingOutput"
   - name: updateFinding
+    title: Update Finding
     description: Update an existing finding
     hints:
       readonly: false
@@ -13106,6 +13172,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateFindingOutput"
   - name: deleteFinding
+    title: Delete Finding
     description: Delete a finding
     hints:
       readonly: false
@@ -13115,6 +13182,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteFindingOutput"
   - name: linkFindingAudit
+    title: Link Finding Audit
     description: Link a finding to an audit with a reference ID
     hints:
       readonly: false
@@ -13123,6 +13191,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkFindingAuditOutput"
   - name: unlinkFindingAudit
+    title: Unlink Finding Audit
     description: Unlink a finding from an audit
     hints:
       readonly: false
@@ -13132,6 +13201,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UnlinkFindingAuditOutput"
   - name: listFindingAudits
+    title: List Finding Audits
     description: List audits linked to a finding
     hints:
       readonly: true
@@ -13141,6 +13211,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListFindingAuditsOutput"
   - name: listObligations
+    title: List Obligations
     description: List all obligations for the organization
     hints:
       readonly: true
@@ -13150,6 +13221,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListObligationsOutput"
   - name: getObligation
+    title: Get Obligation
     description: Get an obligation by ID
     hints:
       readonly: true
@@ -13159,6 +13231,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetObligationOutput"
   - name: addObligation
+    title: Add Obligation
     description: Add a new obligation to the organization
     hints:
       readonly: false
@@ -13167,6 +13240,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddObligationOutput"
   - name: updateObligation
+    title: Update Obligation
     description: Update an existing obligation
     hints:
       readonly: false
@@ -13175,6 +13249,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateObligationOutput"
   - name: deleteObligation
+    title: Delete Obligation
     description: Delete an obligation
     hints:
       readonly: false
@@ -13184,6 +13259,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteObligationOutput"
   - name: listProcessingActivities
+    title: List Processing Activities
     description: List all processing activities for the organization
     hints:
       readonly: true
@@ -13193,6 +13269,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListProcessingActivitiesOutput"
   - name: getProcessingActivity
+    title: Get Processing Activity
     description: Get a processing activity by ID
     hints:
       readonly: true
@@ -13202,6 +13279,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetProcessingActivityOutput"
   - name: addProcessingActivity
+    title: Add Processing Activity
     description: Add a new processing activity to the organization
     hints:
       readonly: false
@@ -13210,6 +13288,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddProcessingActivityOutput"
   - name: updateProcessingActivity
+    title: Update Processing Activity
     description: Update an existing processing activity
     hints:
       readonly: false
@@ -13218,14 +13297,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateProcessingActivityOutput"
   - name: deleteProcessingActivity
+    title: Delete Processing Activity
     description: Delete a processing activity
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/DeleteProcessingActivityInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteProcessingActivityOutput"
   - name: listDataProtectionImpactAssessments
+    title: List Data Protection Impact Assessments
     description: List all data protection impact assessments (DPIAs) for the organization
     hints:
       readonly: true
@@ -13235,6 +13317,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListDataProtectionImpactAssessmentsOutput"
   - name: getDataProtectionImpactAssessment
+    title: Get Data Protection Impact Assessment
     description: Get a data protection impact assessment (DPIA) by ID
     hints:
       readonly: true
@@ -13244,6 +13327,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetDataProtectionImpactAssessmentOutput"
   - name: addDataProtectionImpactAssessment
+    title: Add Data Protection Impact Assessment
     description: Add a new data protection impact assessment (DPIA) for a processing activity
     hints:
       readonly: false
@@ -13252,6 +13336,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddDataProtectionImpactAssessmentOutput"
   - name: updateDataProtectionImpactAssessment
+    title: Update Data Protection Impact Assessment
     description: Update an existing data protection impact assessment (DPIA)
     hints:
       readonly: false
@@ -13260,14 +13345,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateDataProtectionImpactAssessmentOutput"
   - name: deleteDataProtectionImpactAssessment
+    title: Delete Data Protection Impact Assessment
     description: Delete a data protection impact assessment (DPIA) by ID
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/DeleteDataProtectionImpactAssessmentInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteDataProtectionImpactAssessmentOutput"
   - name: listTransferImpactAssessments
+    title: List Transfer Impact Assessments
     description: List all transfer impact assessments (TIAs) for the organization
     hints:
       readonly: true
@@ -13277,6 +13365,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListTransferImpactAssessmentsOutput"
   - name: getTransferImpactAssessment
+    title: Get Transfer Impact Assessment
     description: Get a transfer impact assessment (TIA) by ID
     hints:
       readonly: true
@@ -13286,6 +13375,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetTransferImpactAssessmentOutput"
   - name: addTransferImpactAssessment
+    title: Add Transfer Impact Assessment
     description: Add a new transfer impact assessment (TIA) for a processing activity
     hints:
       readonly: false
@@ -13294,6 +13384,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddTransferImpactAssessmentOutput"
   - name: updateTransferImpactAssessment
+    title: Update Transfer Impact Assessment
     description: Update an existing transfer impact assessment (TIA)
     hints:
       readonly: false
@@ -13302,14 +13393,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateTransferImpactAssessmentOutput"
   - name: deleteTransferImpactAssessment
+    title: Delete Transfer Impact Assessment
     description: Delete a transfer impact assessment (TIA)
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/DeleteTransferImpactAssessmentInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTransferImpactAssessmentOutput"
   - name: listAudits
+    title: List Audits
     description: List all audits for the organization
     hints:
       readonly: true
@@ -13319,6 +13413,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAuditsOutput"
   - name: getAudit
+    title: Get Audit
     description: Get an audit by ID
     hints:
       readonly: true
@@ -13328,6 +13423,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetAuditOutput"
   - name: addAudit
+    title: Add Audit
     description: Add a new audit to the organization
     hints:
       readonly: false
@@ -13336,6 +13432,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddAuditOutput"
   - name: updateAudit
+    title: Update Audit
     description: Update an existing audit
     hints:
       readonly: false
@@ -13344,6 +13441,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateAuditOutput"
   - name: deleteAudit
+    title: Delete Audit
     description: Delete an audit
     hints:
       readonly: false
@@ -13353,6 +13451,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteAuditOutput"
   - name: getAuditReportUrl
+    title: Get Audit Report URL
     description: Get a presigned download URL for an audit's attached report. Returns a time-limited URL valid for 15 minutes. The audit must have an attached report.
     hints:
       readonly: true
@@ -13362,6 +13461,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetAuditReportUrlOutput"
   - name: listControls
+    title: List Controls
     description: List all controls for the organization or framework
     hints:
       readonly: true
@@ -13371,6 +13471,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListControlsOutput"
   - name: getControl
+    title: Get Control
     description: Get a control by ID
     hints:
       readonly: true
@@ -13380,6 +13481,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetControlOutput"
   - name: addControl
+    title: Add Control
     description: Add a new control to a framework
     hints:
       readonly: false
@@ -13388,6 +13490,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddControlOutput"
   - name: updateControl
+    title: Update Control
     description: Update an existing control
     hints:
       readonly: false
@@ -13396,6 +13499,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateControlOutput"
   - name: linkControl
+    title: Link Control
     description: Link a resource to a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
@@ -13404,14 +13508,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkControlOutput"
   - name: unlinkControl
+    title: Unlink Control
     description: Unlink a resource from a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/UnlinkControlInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlOutput"
   - name: listControlObligations
+    title: List Control Obligations
     description: List obligations linked to a control
     hints:
       readonly: true
@@ -13421,6 +13528,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListControlObligationsOutput"
   - name: listControlMeasures
+    title: List Control Measures
     description: List measures linked to a control
     hints:
       readonly: true
@@ -13430,6 +13538,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListControlMeasuresOutput"
   - name: listControlDocuments
+    title: List Control Documents
     description: List documents linked to a control
     hints:
       readonly: true
@@ -13439,6 +13548,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListControlDocumentsOutput"
   - name: listControlAudits
+    title: List Control Audits
     description: List audits linked to a control
     hints:
       readonly: true
@@ -13448,6 +13558,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListControlAuditsOutput"
   - name: listRiskObligations
+    title: List Risk Obligations
     description: List obligations linked to a risk
     hints:
       readonly: true
@@ -13457,6 +13568,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskObligationsOutput"
   - name: linkRisk
+    title: Link Risk
     description: Link a risk to a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
@@ -13465,14 +13577,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkRiskOutput"
   - name: unlinkRisk
+    title: Unlink Risk
     description: Unlink a risk from a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/UnlinkRiskInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkRiskOutput"
   - name: listTasks
+    title: List Tasks
     description: List all tasks for the organization or measure
     hints:
       readonly: true
@@ -13482,6 +13597,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListTasksOutput"
   - name: getTask
+    title: Get Task
     description: Get a task by ID
     hints:
       readonly: true
@@ -13491,6 +13607,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetTaskOutput"
   - name: addTask
+    title: Add Task
     description: Add a new task to the organization
     hints:
       readonly: false
@@ -13499,6 +13616,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddTaskOutput"
   - name: updateTask
+    title: Update Task
     description: Update an existing task
     hints:
       readonly: false
@@ -13507,6 +13625,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateTaskOutput"
   - name: assignTask
+    title: Assign Task
     description: Assign a task to a person
     hints:
       readonly: false
@@ -13515,6 +13634,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AssignTaskOutput"
   - name: unassignTask
+    title: Unassign Task
     description: Unassign a task from a person
     hints:
       readonly: false
@@ -13523,6 +13643,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UnassignTaskOutput"
   - name: deleteTask
+    title: Delete Task
     description: Delete a task
     hints:
       readonly: false
@@ -13532,6 +13653,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteTaskOutput"
   - name: listDocuments
+    title: List Documents
     description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.
     hints:
       readonly: true
@@ -13541,6 +13663,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListDocumentsOutput"
   - name: getDocument
+    title: Get Document
     description: Get a document by ID
     hints:
       readonly: true
@@ -13550,6 +13673,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetDocumentOutput"
   - name: addDocument
+    title: Add Document
     description: Add a new document to the organization
     hints:
       readonly: false
@@ -13558,6 +13682,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddDocumentOutput"
   - name: updateDocument
+    title: Update Document
     description: Update an existing document
     hints:
       readonly: false
@@ -13566,6 +13691,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateDocumentOutput"
   - name: deleteDocumentDraft
+    title: Delete Document Draft
     description: Delete the latest draft version of a document, reverting to the last published version. Cannot delete the initial v0.1 draft.
     hints:
       readonly: false
@@ -13575,6 +13701,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteDocumentDraftOutput"
   - name: archiveDocument
+    title: Archive Document
     description: Archive a document to prevent further modifications
     hints:
       readonly: false
@@ -13583,6 +13710,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ArchiveDocumentOutput"
   - name: unarchiveDocument
+    title: Unarchive Document
     description: Unarchive a document to allow modifications again
     hints:
       readonly: false
@@ -13591,6 +13719,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UnarchiveDocumentOutput"
   - name: listDocumentVersions
+    title: List Document Versions
     description: List all versions for a document
     hints:
       readonly: true
@@ -13600,6 +13729,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListDocumentVersionsOutput"
   - name: getDocumentVersion
+    title: Get Document Version
     description: Get a document version by ID
     hints:
       readonly: true
@@ -13609,6 +13739,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionOutput"
   - name: publishDocument
+    title: Publish Document
     description: Publish the latest draft of a document. Set minor=true to publish a minor version (no approval flow). When minor=false, providing approver_ids triggers an approval request as a new major version; otherwise the draft is published immediately as a new major version.
     hints:
       readonly: false
@@ -13617,6 +13748,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishDocumentOutput"
   - name: deleteDocument
+    title: Delete Document
     description: Delete a document
     hints:
       readonly: false
@@ -13626,6 +13758,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteDocumentOutput"
   - name: listDocumentVersionSignatures
+    title: List Document Version Signatures
     description: List all signatures for a document version
     hints:
       readonly: true
@@ -13635,6 +13768,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListDocumentVersionSignaturesOutput"
   - name: getDocumentVersionSignature
+    title: Get Document Version Signature
     description: Get a document version signature by ID
     hints:
       readonly: true
@@ -13644,6 +13778,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionSignatureOutput"
   - name: requestDocumentVersionSignature
+    title: Request Document Version Signature
     description: Request a signature for a document version
     hints:
       readonly: false
@@ -13652,6 +13787,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RequestDocumentVersionSignatureOutput"
   - name: cancelSignatureRequest
+    title: Cancel Signature Request
     description: Cancel a document version signature request
     hints:
       readonly: false
@@ -13661,6 +13797,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CancelSignatureRequestOutput"
   - name: voidDocumentVersionApproval
+    title: Void Document Version Approval
     description: Void a pending document version approval request
     hints:
       readonly: false
@@ -13670,6 +13807,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/VoidDocumentVersionApprovalOutput"
   - name: listStatementsOfApplicability
+    title: List Statements of Applicability
     description: List all statements of applicability for the organization
     hints:
       readonly: true
@@ -13679,6 +13817,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListStatementsOfApplicabilityOutput"
   - name: getStatementOfApplicability
+    title: Get Statement of Applicability
     description: Get a statement of applicability by ID
     hints:
       readonly: true
@@ -13688,6 +13827,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetStatementOfApplicabilityOutput"
   - name: addStatementOfApplicability
+    title: Add Statement of Applicability
     description: Add a new statement of applicability to the organization
     hints:
       readonly: false
@@ -13696,6 +13836,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddStatementOfApplicabilityOutput"
   - name: updateStatementOfApplicability
+    title: Update Statement of Applicability
     description: Update an existing statement of applicability
     hints:
       readonly: false
@@ -13704,6 +13845,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateStatementOfApplicabilityOutput"
   - name: deleteStatementOfApplicability
+    title: Delete Statement of Applicability
     description: Delete a statement of applicability
     hints:
       readonly: false
@@ -13713,6 +13855,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteStatementOfApplicabilityOutput"
   - name: publishDataList
+    title: Publish Data List
     description: Publish the data list for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13721,6 +13864,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishDataListOutput"
   - name: publishAssetList
+    title: Publish Asset List
     description: Publish the asset list for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13729,6 +13873,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishAssetListOutput"
   - name: publishFindingList
+    title: Publish Finding List
     description: Publish the finding register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13737,6 +13882,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishFindingListOutput"
   - name: publishObligationList
+    title: Publish Obligation List
     description: Publish the obligation register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13745,6 +13891,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishObligationListOutput"
   - name: publishProcessingActivityList
+    title: Publish Processing Activity List
     description: Publish the processing activity register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13753,6 +13900,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishProcessingActivityListOutput"
   - name: publishDataProtectionImpactAssessmentList
+    title: Publish Data Protection Impact Assessment List
     description: Publish the Data Protection Impact Assessment register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13761,6 +13909,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishDataProtectionImpactAssessmentListOutput"
   - name: publishTransferImpactAssessmentList
+    title: Publish Transfer Impact Assessment List
     description: Publish the Transfer Impact Assessment register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13769,6 +13918,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishTransferImpactAssessmentListOutput"
   - name: publishThirdPartyList
+    title: Publish Third Party List
     description: Publish the thirdParty register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13777,6 +13927,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishThirdPartyListOutput"
   - name: publishRiskList
+    title: Publish Risk List
     description: Publish the risk register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13785,6 +13936,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishRiskListOutput"
   - name: publishStatementOfApplicability
+    title: Publish Statement of Applicability
     description: Publish a statement of applicability as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -13793,6 +13945,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishStatementOfApplicabilityOutput"
   - name: listApplicabilityStatements
+    title: List Applicability Statements
     description: List all applicability statements for a statement of applicability
     hints:
       readonly: true
@@ -13802,6 +13955,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListApplicabilityStatementsOutput"
   - name: getApplicabilityStatement
+    title: Get Applicability Statement
     description: Get an applicability statement by ID
     hints:
       readonly: true
@@ -13811,6 +13965,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetApplicabilityStatementOutput"
   - name: addApplicabilityStatement
+    title: Add Applicability Statement
     description: Add a control to a statement of applicability with an applicability decision
     hints:
       readonly: false
@@ -13819,6 +13974,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddApplicabilityStatementOutput"
   - name: updateApplicabilityStatement
+    title: Update Applicability Statement
     description: Update the applicability and justification of an applicability statement
     hints:
       readonly: false
@@ -13827,6 +13983,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateApplicabilityStatementOutput"
   - name: deleteApplicabilityStatement
+    title: Delete Applicability Statement
     description: Delete an applicability statement from a statement of applicability
     hints:
       readonly: false
@@ -13836,6 +13993,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteApplicabilityStatementOutput"
   - name: listAccessReviewCampaigns
+    title: List Access Review Campaigns
     description: List access review campaigns for an organization
     hints:
       readonly: true
@@ -13845,6 +14003,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAccessReviewCampaignsOutput"
   - name: listAccessEntries
+    title: List Access Entries
     description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, active, auth_method, account_type)
     hints:
       readonly: true
@@ -13854,6 +14013,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAccessEntriesOutput"
   - name: getAccessReviewStatistics
+    title: Get Access Review Statistics
     description: Get statistics for an access review campaign including counts by decision, flag, and incremental tag
     hints:
       readonly: true
@@ -13863,6 +14023,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetAccessReviewStatisticsOutput"
   - name: recordAccessReviewEntryDecision
+    title: Record Access Review Entry Decision
     description: Record a decision on an access entry (APPROVED, REVOKE, DEFER, or ESCALATE). Non-APPROVED decisions require a decision_note.
     hints:
       readonly: false
@@ -13871,6 +14032,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RecordAccessReviewEntryDecisionMCPOutput"
   - name: recordAccessReviewEntryDecisions
+    title: Record Access Review Entry Decisions
     description: Record decisions on multiple access entries in a single batch. Non-APPROVED decisions require a decision_note.
     hints:
       readonly: false
@@ -13879,6 +14041,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RecordAccessReviewEntryDecisionsMCPOutput"
   - name: flagAccessReviewEntry
+    title: Flag Access Review Entry
     description: Flag an access entry with one or more flags during review (ORPHANED, INACTIVE, EXCESSIVE, ROLE_MISMATCH, NEW, etc.). Optionally provide reasons.
     hints:
       readonly: false
@@ -13887,6 +14050,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/FlagAccessReviewEntryMCPOutput"
   - name: closeAccessReviewCampaign
+    title: Close Access Review Campaign
     description: Close an access review campaign. All entries must have been decided (no PENDING entries).
     hints:
       readonly: false
@@ -13895,6 +14059,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CloseAccessReviewCampaignMCPOutput"
   - name: listAccessReviewSources
+    title: List Access Review Sources
     description: List access sources for an organization
     hints:
       readonly: true
@@ -13904,6 +14069,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAccessReviewSourcesOutput"
   - name: createAccessReviewSource
+    title: Create Access Review Source
     description: Create a new access source for an organization
     hints:
       readonly: false
@@ -13912,6 +14078,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CreateAccessReviewSourceMCPOutput"
   - name: updateAccessReviewSource
+    title: Update Access Review Source
     description: Update an existing access source
     hints:
       readonly: false
@@ -13920,6 +14087,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateAccessReviewSourceMCPOutput"
   - name: deleteAccessReviewSource
+    title: Delete Access Review Source
     description: Delete an access source
     hints:
       readonly: false
@@ -13929,6 +14097,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPOutput"
   - name: createAccessReviewCampaign
+    title: Create Access Review Campaign
     description: Create a new access review campaign for an organization
     hints:
       readonly: false
@@ -13937,6 +14106,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CreateAccessReviewCampaignMCPOutput"
   - name: updateAccessReviewCampaign
+    title: Update Access Review Campaign
     description: Update an existing access review campaign
     hints:
       readonly: false
@@ -13945,6 +14115,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateAccessReviewCampaignMCPOutput"
   - name: deleteAccessReviewCampaign
+    title: Delete Access Review Campaign
     description: Delete an access review campaign
     hints:
       readonly: false
@@ -13954,6 +14125,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteAccessReviewCampaignMCPOutput"
   - name: startAccessReviewCampaign
+    title: Start Access Review Campaign
     description: Start an access review campaign. Triggers data fetching from all configured scope sources.
     hints:
       readonly: false
@@ -13962,14 +14134,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/StartAccessReviewCampaignMCPOutput"
   - name: cancelAccessReviewCampaign
+    title: Cancel Access Review Campaign
     description: Cancel an in-progress access review campaign
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/CancelAccessReviewCampaignMCPInput"
     outputSchema:
       $ref: "#/components/schemas/CancelAccessReviewCampaignMCPOutput"
   - name: addAccessReviewCampaignSource
+    title: Add Access Review Campaign Source
     description: Add an access source to an access review campaign's scope
     hints:
       readonly: false
@@ -13978,14 +14153,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddAccessReviewCampaignSourceMCPOutput"
   - name: removeAccessReviewCampaignSource
+    title: Remove Access Review Campaign Source
     description: Remove an access source from an access review campaign's scope
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignSourceMCPOutput"
   - name: getOrganizationContext
+    title: Get Organization Context
     description: Get the organization context containing structured sections about the company
     hints:
       readonly: true
@@ -13995,6 +14173,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetOrganizationContextOutput"
   - name: updateOrganizationContext
+    title: Update Organization Context
     description: Update the organization context sections (product, architecture, team, processes, customers)
     hints:
       readonly: false
@@ -14003,6 +14182,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateOrganizationContextOutput"
   - name: getAuditLogEntry
+    title: Get Audit Log Entry
     description: Get an audit log entry by ID
     hints:
       readonly: true
@@ -14012,6 +14192,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetAuditLogEntryOutput"
   - name: listAuditLogEntries
+    title: List Audit Log Entries
     description: List audit log entries for the organization. Audit log entries record write actions (create, update, delete) performed by users and API keys.
     hints:
       readonly: true
@@ -14021,6 +14202,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAuditLogEntriesOutput"
   - name: requestAuditLogExport
+    title: Request Audit Log Export
     description: Request an export of audit log entries for the organization within a time range. The export will be emailed as a JSONL download link.
     hints:
       readonly: false
@@ -14030,6 +14212,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RequestAuditLogExportOutput"
   - name: requestSCIMEventExport
+    title: Request SCIM Event Export
     description: Request an export of SCIM events for the organization within a time range. The export will be emailed as a JSONL download link.
     hints:
       readonly: false
@@ -14039,6 +14222,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RequestSCIMEventExportOutput"
   - name: listWebhookSubscriptions
+    title: List Webhook Subscriptions
     description: List all webhook subscriptions for the organization
     hints:
       readonly: true
@@ -14048,6 +14232,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListWebhookSubscriptionsOutput"
   - name: getWebhookSubscription
+    title: Get Webhook Subscription
     description: Get a webhook subscription by ID
     hints:
       readonly: true
@@ -14057,6 +14242,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetWebhookSubscriptionOutput"
   - name: createWebhookSubscription
+    title: Create Webhook Subscription
     description: Create a new webhook subscription for the organization. The endpoint URL must use HTTPS. Selected events determine which events trigger webhook deliveries.
     hints:
       readonly: false
@@ -14065,6 +14251,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CreateWebhookSubscriptionOutput"
   - name: updateWebhookSubscription
+    title: Update Webhook Subscription
     description: Update a webhook subscription's endpoint URL or selected events
     hints:
       readonly: false
@@ -14073,6 +14260,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateWebhookSubscriptionOutput"
   - name: deleteWebhookSubscription
+    title: Delete Webhook Subscription
     description: Delete a webhook subscription
     hints:
       readonly: false
@@ -14082,6 +14270,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteWebhookSubscriptionOutput"
   - name: listWebhookEvents
+    title: List Webhook Events
     description: List webhook delivery events for a subscription. Shows delivery status (PENDING, SUCCEEDED, FAILED) and response details.
     hints:
       readonly: true
@@ -14091,6 +14280,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListWebhookEventsOutput"
   - name: listDocumentVersionApprovalQuorums
+    title: List Document Version Approval Quorums
     description: List approval quorums for a document version
     hints:
       readonly: true
@@ -14100,6 +14290,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListDocumentVersionApprovalQuorumsOutput"
   - name: getDocumentVersionApprovalQuorum
+    title: Get Document Version Approval Quorum
     description: Get a document version approval quorum by ID
     hints:
       readonly: true
@@ -14109,6 +14300,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionApprovalQuorumOutput"
   - name: listDocumentVersionApprovalDecisions
+    title: List Document Version Approval Decisions
     description: List approval decisions for an approval quorum
     hints:
       readonly: true
@@ -14118,6 +14310,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListDocumentVersionApprovalDecisionsOutput"
   - name: getDocumentVersionApprovalDecision
+    title: Get Document Version Approval Decision
     description: Get a document version approval decision by ID
     hints:
       readonly: true
@@ -14127,6 +14320,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionApprovalDecisionOutput"
   - name: listRightsRequests
+    title: List Rights Requests
     description: List all rights requests for the organization
     hints:
       readonly: true
@@ -14136,6 +14330,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRightsRequestsOutput"
   - name: getRightsRequest
+    title: Get Rights Request
     description: Get a rights request by ID
     hints:
       readonly: true
@@ -14145,6 +14340,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRightsRequestOutput"
   - name: addRightsRequest
+    title: Add Rights Request
     description: Add a new rights request to the organization
     hints:
       readonly: false
@@ -14153,6 +14349,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRightsRequestOutput"
   - name: updateRightsRequest
+    title: Update Rights Request
     description: Update an existing rights request
     hints:
       readonly: false
@@ -14161,6 +14358,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRightsRequestOutput"
   - name: deleteRightsRequest
+    title: Delete Rights Request
     description: Delete a rights request
     hints:
       readonly: false
@@ -14170,6 +14368,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRightsRequestOutput"
   - name: getCompliancePortal
+    title: Get Compliance Portal
     description: Get the compliance portal for an organization
     hints:
       readonly: true
@@ -14179,6 +14378,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetCompliancePortalOutput"
   - name: updateCompliancePortal
+    title: Update Compliance Portal
     description: Update a compliance portal's settings
     hints:
       readonly: false
@@ -14187,6 +14387,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateCompliancePortalOutput"
   - name: listCompliancePortalReferences
+    title: List Compliance Portal References
     description: List all references for a compliance portal
     hints:
       readonly: true
@@ -14196,6 +14397,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCompliancePortalReferencesOutput"
   - name: addCompliancePortalReference
+    title: Add Compliance Portal Reference
     description: Add a new reference to a compliance portal
     hints:
       readonly: false
@@ -14204,6 +14406,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddCompliancePortalReferenceOutput"
   - name: updateCompliancePortalReference
+    title: Update Compliance Portal Reference
     description: Update an existing compliance portal reference
     hints:
       readonly: false
@@ -14212,6 +14415,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateCompliancePortalReferenceOutput"
   - name: deleteCompliancePortalReference
+    title: Delete Compliance Portal Reference
     description: Delete a compliance portal reference
     hints:
       readonly: false
@@ -14221,6 +14425,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteCompliancePortalReferenceOutput"
   - name: listCommitmentGroups
+    title: List Commitment Groups
     description: List all commitment groups for a trust center
     hints:
       readonly: true
@@ -14230,6 +14435,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCommitmentGroupsOutput"
   - name: addCommitmentGroup
+    title: Add Commitment Group
     description: Add a new commitment group to a trust center
     hints:
       readonly: false
@@ -14238,6 +14444,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddCommitmentGroupOutput"
   - name: updateCommitmentGroup
+    title: Update Commitment Group
     description: Update an existing commitment group
     hints:
       readonly: false
@@ -14246,6 +14453,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateCommitmentGroupOutput"
   - name: deleteCommitmentGroup
+    title: Delete Commitment Group
     description: Delete a commitment group
     hints:
       readonly: false
@@ -14255,6 +14463,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteCommitmentGroupOutput"
   - name: listCommitments
+    title: List Commitments
     description: List all commitments in a commitment group
     hints:
       readonly: true
@@ -14264,6 +14473,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCommitmentsOutput"
   - name: addCommitment
+    title: Add Commitment
     description: Add a new commitment to a commitment group
     hints:
       readonly: false
@@ -14272,6 +14482,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddCommitmentOutput"
   - name: updateCommitment
+    title: Update Commitment
     description: Update an existing commitment
     hints:
       readonly: false
@@ -14280,6 +14491,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateCommitmentOutput"
   - name: deleteCommitment
+    title: Delete Commitment
     description: Delete a commitment
     hints:
       readonly: false
@@ -14289,6 +14501,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteCommitmentOutput"
   - name: setResourceAlias
+    title: Set Resource Alias
     description: Set a resource alias for a resource
     hints:
       readonly: false
@@ -14297,6 +14510,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/SetResourceAliasOutput"
   - name: removeResourceAlias
+    title: Remove Resource Alias
     description: Remove a resource alias from a resource
     hints:
       readonly: false
@@ -14306,6 +14520,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RemoveResourceAliasOutput"
   - name: listCompliancePortalFiles
+    title: List Compliance Portal Files
     description: List all files for the compliance portal
     hints:
       readonly: true
@@ -14315,6 +14530,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCompliancePortalFilesOutput"
   - name: deleteCompliancePortalFile
+    title: Delete Compliance Portal File
     description: Delete a compliance portal file
     hints:
       readonly: false
@@ -14324,6 +14540,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteCompliancePortalFileOutput"
   - name: listComplianceCustomLinks
+    title: List Compliance Custom Links
     description: List all compliance custom links for a compliance portal
     hints:
       readonly: true
@@ -14333,6 +14550,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListComplianceCustomLinksOutput"
   - name: addComplianceCustomLink
+    title: Add Compliance Custom Link
     description: Add a new compliance custom link to a compliance portal
     hints:
       readonly: false
@@ -14341,6 +14559,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddComplianceCustomLinkOutput"
   - name: updateComplianceCustomLink
+    title: Update Compliance Custom Link
     description: Update an existing compliance custom link
     hints:
       readonly: false
@@ -14349,6 +14568,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateComplianceCustomLinkOutput"
   - name: deleteComplianceCustomLink
+    title: Delete Compliance Custom Link
     description: Delete a compliance custom link
     hints:
       readonly: false
@@ -14358,6 +14578,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteComplianceCustomLinkOutput"
   - name: createCustomDomain
+    title: Create Custom Domain
     description: Create a custom domain for a compliance page
     hints:
       readonly: false
@@ -14366,6 +14587,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CreateCustomDomainOutput"
   - name: deleteCustomDomain
+    title: Delete Custom Domain
     description: Delete the custom domain of a compliance page
     hints:
       readonly: false
@@ -14375,6 +14597,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteCustomDomainOutput"
   - name: listCookieBanners
+    title: List Cookie Banners
     description: List all cookie banners for the organization
     hints:
       readonly: true
@@ -14384,6 +14607,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCookieBannersOutput"
   - name: getCookieBanner
+    title: Get Cookie Banner
     description: Get a cookie banner by ID
     hints:
       readonly: true
@@ -14393,6 +14617,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetCookieBannerOutput"
   - name: addCookieBanner
+    title: Add Cookie Banner
     description: Create a new cookie banner for an organization
     hints:
       readonly: false
@@ -14401,6 +14626,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddCookieBannerOutput"
   - name: updateCookieBanner
+    title: Update Cookie Banner
     description: Update an existing cookie banner
     hints:
       readonly: false
@@ -14409,6 +14635,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateCookieBannerOutput"
   - name: deleteCookieBanner
+    title: Delete Cookie Banner
     description: Delete a cookie banner
     hints:
       readonly: false
@@ -14418,6 +14645,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteCookieBannerOutput"
   - name: activateCookieBanner
+    title: Activate Cookie Banner
     description: Activate a cookie banner
     hints:
       readonly: false
@@ -14426,6 +14654,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ActivateCookieBannerOutput"
   - name: deactivateCookieBanner
+    title: Deactivate Cookie Banner
     description: Deactivate a cookie banner
     hints:
       readonly: false
@@ -14434,6 +14663,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeactivateCookieBannerOutput"
   - name: listCookieCategories
+    title: List Cookie Categories
     description: List all cookie categories for a banner
     hints:
       readonly: true
@@ -14443,6 +14673,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCookieCategoriesOutput"
   - name: getCookieCategory
+    title: Get Cookie Category
     description: Get a cookie category by ID
     hints:
       readonly: true
@@ -14452,6 +14683,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetCookieCategoryOutput"
   - name: addCookieCategory
+    title: Add Cookie Category
     description: Create a new cookie category for a banner
     hints:
       readonly: false
@@ -14460,6 +14692,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddCookieCategoryOutput"
   - name: updateCookieCategory
+    title: Update Cookie Category
     description: Update an existing cookie category
     hints:
       readonly: false
@@ -14468,6 +14701,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateCookieCategoryOutput"
   - name: deleteCookieCategory
+    title: Delete Cookie Category
     description: Delete a cookie category
     hints:
       readonly: false
@@ -14477,6 +14711,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteCookieCategoryOutput"
   - name: reorderCookieCategory
+    title: Reorder Cookie Category
     description: Change the display order rank of a cookie category
     hints:
       readonly: false
@@ -14485,6 +14720,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ReorderCookieCategoryOutput"
   - name: listTrackerPatterns
+    title: List Tracker Patterns
     description: List all tracker patterns for a category
     hints:
       readonly: true
@@ -14494,6 +14730,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListTrackerPatternsOutput"
   - name: getTrackerPattern
+    title: Get Tracker Pattern
     description: Get a tracker pattern by ID
     hints:
       readonly: true
@@ -14503,6 +14740,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetTrackerPatternOutput"
   - name: addTrackerPattern
+    title: Add Tracker Pattern
     description: Create a new tracker pattern for a category
     hints:
       readonly: false
@@ -14511,6 +14749,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddTrackerPatternOutput"
   - name: updateTrackerPattern
+    title: Update Tracker Pattern
     description: Update an existing tracker pattern
     hints:
       readonly: false
@@ -14519,6 +14758,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateTrackerPatternOutput"
   - name: deleteTrackerPattern
+    title: Delete Tracker Pattern
     description: Delete a tracker pattern
     hints:
       readonly: false
@@ -14528,6 +14768,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteTrackerPatternOutput"
   - name: moveTrackerPatternToCategory
+    title: Move Tracker Pattern to Category
     description: Move a tracker pattern to a different category
     hints:
       readonly: false
@@ -14536,6 +14777,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/MoveTrackerPatternToCategoryOutput"
   - name: listTrackerResources
+    title: List Tracker Resources
     description: List all tracker resources for a category
     hints:
       readonly: true
@@ -14545,6 +14787,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListTrackerResourcesOutput"
   - name: getTrackerResource
+    title: Get Tracker Resource
     description: Get a tracker resource by ID
     hints:
       readonly: true
@@ -14554,6 +14797,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetTrackerResourceOutput"
   - name: addTrackerResource
+    title: Add Tracker Resource
     description: Create a new tracker resource for a category
     hints:
       readonly: false
@@ -14562,6 +14806,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddTrackerResourceOutput"
   - name: updateTrackerResource
+    title: Update Tracker Resource
     description: Update an existing tracker resource
     hints:
       readonly: false
@@ -14570,6 +14815,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateTrackerResourceOutput"
   - name: deleteTrackerResource
+    title: Delete Tracker Resource
     description: Delete a tracker resource
     hints:
       readonly: false
@@ -14579,6 +14825,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteTrackerResourceOutput"
   - name: moveTrackerResourceToCategory
+    title: Move Tracker Resource to Category
     description: Move a tracker resource to a different category
     hints:
       readonly: false
@@ -14587,6 +14834,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/MoveTrackerResourceToCategoryOutput"
   - name: publishCookieBannerVersion
+    title: Publish Cookie Banner Version
     description: Publish the current draft version of a cookie banner
     hints:
       readonly: false
@@ -14595,6 +14843,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/PublishCookieBannerVersionOutput"
   - name: regenerateCookieBannerTrackerPolicy
+    title: Regenerate Cookie Banner Tracker Policy
     description: Re-arm tracker policy generation for a cookie banner that already has a published version. Returns immediately; the policy document is regenerated in the background.
     hints:
       readonly: false
@@ -14603,6 +14852,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RegenerateCookieBannerTrackerPolicyOutput"
   - name: listCookieBannerVersions
+    title: List Cookie Banner Versions
     description: List all versions for a cookie banner
     hints:
       readonly: true
@@ -14612,6 +14862,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCookieBannerVersionsOutput"
   - name: upsertCookieBannerTranslation
+    title: Upsert Cookie Banner Translation
     description: Insert or update a cookie banner translation for a language
     hints:
       readonly: false
@@ -14620,6 +14871,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpsertCookieBannerTranslationOutput"
   - name: listCookieConsentRecords
+    title: List Cookie Consent Records
     description: List consent records for a cookie banner
     hints:
       readonly: true
@@ -14629,6 +14881,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListCookieConsentRecordsOutput"
   - name: getCookieConsentRecord
+    title: Get Cookie Consent Record
     description: Get a consent record by ID
     hints:
       readonly: true
@@ -14638,6 +14891,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetCookieConsentRecordOutput"
   - name: getSCIMConfiguration
+    title: Get SCIM Configuration
     description: Get the SCIM configuration for an organization
     hints:
       readonly: true
@@ -14647,6 +14901,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetSCIMConfigurationOutput"
   - name: createSCIMConfiguration
+    title: Create SCIM Configuration
     description: Create a SCIM configuration for an organization. Optionally provide a connector ID to also create a SCIM bridge.
     hints:
       readonly: false
@@ -14655,6 +14910,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/CreateSCIMConfigurationOutput"
   - name: deleteSCIMConfiguration
+    title: Delete SCIM Configuration
     description: Delete a SCIM configuration and its associated bridge
     hints:
       readonly: false
@@ -14664,6 +14920,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteSCIMConfigurationOutput"
   - name: regenerateSCIMToken
+    title: Regenerate SCIM Token
     description: Regenerate the bearer token for a SCIM configuration
     hints:
       readonly: false
@@ -14672,6 +14929,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/RegenerateSCIMTokenOutput"
   - name: getSCIMBridge
+    title: Get SCIM Bridge
     description: Get a SCIM bridge by ID
     hints:
       readonly: true
@@ -14681,6 +14939,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetSCIMBridgeOutput"
   - name: updateSCIMBridge
+    title: Update SCIM Bridge
     description: Update a SCIM bridge's excluded user names
     hints:
       readonly: false
@@ -14689,6 +14948,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateSCIMBridgeOutput"
   - name: listSCIMEvents
+    title: List SCIM Events
     description: List SCIM events for a configuration
     hints:
       readonly: true
@@ -14698,6 +14958,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListSCIMEventsOutput"
   - name: listRiskAssessments
+    title: List Risk Assessments
     description: List all risk assessments for an organization
     hints:
       readonly: true
@@ -14707,6 +14968,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskAssessmentsOutput"
   - name: getRiskAssessment
+    title: Get Risk Assessment
     description: Get a risk assessment by ID
     hints:
       readonly: true
@@ -14716,6 +14978,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentOutput"
   - name: addRiskAssessment
+    title: Add Risk Assessment
     description: Create a new risk assessment
     hints:
       readonly: false
@@ -14724,6 +14987,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskAssessmentOutput"
   - name: updateRiskAssessment
+    title: Update Risk Assessment
     description: Update an existing risk assessment
     hints:
       readonly: false
@@ -14732,6 +14996,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskAssessmentOutput"
   - name: deleteRiskAssessment
+    title: Delete Risk Assessment
     description: Delete a risk assessment
     hints:
       readonly: false
@@ -14741,6 +15006,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentOutput"
   - name: listRiskAssessmentScopes
+    title: List Risk Assessment Scopes
     description: List all scopes for a risk assessment
     hints:
       readonly: true
@@ -14750,6 +15016,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskAssessmentScopesOutput"
   - name: getRiskAssessmentScope
+    title: Get Risk Assessment Scope
     description: Get a risk assessment scope by ID
     hints:
       readonly: true
@@ -14759,6 +15026,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentScopeOutput"
   - name: getRiskAssessmentScopeMermaidChart
+    title: Get Risk Assessment Scope Mermaid Chart
     description: Get the Mermaid chart for a risk assessment scope
     hints:
       readonly: true
@@ -14768,6 +15036,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentScopeMermaidChartOutput"
   - name: addRiskAssessmentScope
+    title: Add Risk Assessment Scope
     description: Create a new risk assessment scope
     hints:
       readonly: false
@@ -14776,6 +15045,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskAssessmentScopeOutput"
   - name: updateRiskAssessmentScope
+    title: Update Risk Assessment Scope
     description: Update an existing risk assessment scope
     hints:
       readonly: false
@@ -14784,6 +15054,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskAssessmentScopeOutput"
   - name: deleteRiskAssessmentScope
+    title: Delete Risk Assessment Scope
     description: Delete a risk assessment scope
     hints:
       readonly: false
@@ -14793,6 +15064,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentScopeOutput"
   - name: listRiskAssessmentNodes
+    title: List Risk Assessment Nodes
     description: List all nodes for a risk assessment scope
     hints:
       readonly: true
@@ -14802,6 +15074,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskAssessmentNodesOutput"
   - name: getRiskAssessmentNode
+    title: Get Risk Assessment Node
     description: Get a risk assessment node by ID
     hints:
       readonly: true
@@ -14811,6 +15084,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentNodeOutput"
   - name: addRiskAssessmentNode
+    title: Add Risk Assessment Node
     description: Create a new risk assessment node
     hints:
       readonly: false
@@ -14819,6 +15093,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskAssessmentNodeOutput"
   - name: updateRiskAssessmentNode
+    title: Update Risk Assessment Node
     description: Update an existing risk assessment node
     hints:
       readonly: false
@@ -14827,6 +15102,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskAssessmentNodeOutput"
   - name: deleteRiskAssessmentNode
+    title: Delete Risk Assessment Node
     description: Delete a risk assessment node
     hints:
       readonly: false
@@ -14836,6 +15112,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentNodeOutput"
   - name: listRiskAssessmentBoundaries
+    title: List Risk Assessment Boundaries
     description: List all boundaries for a risk assessment scope
     hints:
       readonly: true
@@ -14845,6 +15122,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskAssessmentBoundariesOutput"
   - name: getRiskAssessmentBoundary
+    title: Get Risk Assessment Boundary
     description: Get a risk assessment boundary by ID
     hints:
       readonly: true
@@ -14854,6 +15132,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentBoundaryOutput"
   - name: addRiskAssessmentBoundary
+    title: Add Risk Assessment Boundary
     description: Create a new risk assessment boundary
     hints:
       readonly: false
@@ -14862,6 +15141,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskAssessmentBoundaryOutput"
   - name: updateRiskAssessmentBoundary
+    title: Update Risk Assessment Boundary
     description: Update an existing risk assessment boundary
     hints:
       readonly: false
@@ -14870,6 +15150,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskAssessmentBoundaryOutput"
   - name: deleteRiskAssessmentBoundary
+    title: Delete Risk Assessment Boundary
     description: Delete a risk assessment boundary
     hints:
       readonly: false
@@ -14879,6 +15160,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentBoundaryOutput"
   - name: listRiskAssessmentProcesses
+    title: List Risk Assessment Processes
     description: List all processes for a risk assessment scope
     hints:
       readonly: true
@@ -14888,6 +15170,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskAssessmentProcessesOutput"
   - name: getRiskAssessmentProcess
+    title: Get Risk Assessment Process
     description: Get a risk assessment process by ID
     hints:
       readonly: true
@@ -14897,6 +15180,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentProcessOutput"
   - name: addRiskAssessmentProcess
+    title: Add Risk Assessment Process
     description: Create a new risk assessment process
     hints:
       readonly: false
@@ -14905,6 +15189,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskAssessmentProcessOutput"
   - name: updateRiskAssessmentProcess
+    title: Update Risk Assessment Process
     description: Update an existing risk assessment process
     hints:
       readonly: false
@@ -14913,6 +15198,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskAssessmentProcessOutput"
   - name: deleteRiskAssessmentProcess
+    title: Delete Risk Assessment Process
     description: Delete a risk assessment process
     hints:
       readonly: false
@@ -14922,6 +15208,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentProcessOutput"
   - name: listRiskAssessmentThreats
+    title: List Risk Assessment Threats
     description: List all threats for a risk assessment scope
     hints:
       readonly: true
@@ -14931,6 +15218,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskAssessmentThreatsOutput"
   - name: getRiskAssessmentThreat
+    title: Get Risk Assessment Threat
     description: Get a risk assessment threat by ID
     hints:
       readonly: true
@@ -14940,6 +15228,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentThreatOutput"
   - name: addRiskAssessmentThreat
+    title: Add Risk Assessment Threat
     description: Create a new risk assessment threat
     hints:
       readonly: false
@@ -14948,6 +15237,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskAssessmentThreatOutput"
   - name: updateRiskAssessmentThreat
+    title: Update Risk Assessment Threat
     description: Update an existing risk assessment threat
     hints:
       readonly: false
@@ -14956,6 +15246,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskAssessmentThreatOutput"
   - name: deleteRiskAssessmentThreat
+    title: Delete Risk Assessment Threat
     description: Delete a risk assessment threat
     hints:
       readonly: false
@@ -14965,6 +15256,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentThreatOutput"
   - name: listRiskAssessmentScenarios
+    title: List Risk Assessment Scenarios
     description: List all scenarios for a risk assessment scope
     hints:
       readonly: true
@@ -14974,6 +15266,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListRiskAssessmentScenariosOutput"
   - name: getRiskAssessmentScenario
+    title: Get Risk Assessment Scenario
     description: Get a risk assessment scenario by ID
     hints:
       readonly: true
@@ -14983,6 +15276,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetRiskAssessmentScenarioOutput"
   - name: addRiskAssessmentScenario
+    title: Add Risk Assessment Scenario
     description: Create a new risk assessment scenario
     hints:
       readonly: false
@@ -14991,6 +15285,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/AddRiskAssessmentScenarioOutput"
   - name: updateRiskAssessmentScenario
+    title: Update Risk Assessment Scenario
     description: Update an existing risk assessment scenario
     hints:
       readonly: false
@@ -14999,6 +15294,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskAssessmentScenarioOutput"
   - name: deleteRiskAssessmentScenario
+    title: Delete Risk Assessment Scenario
     description: Delete a risk assessment scenario
     hints:
       readonly: false
@@ -15008,6 +15304,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentScenarioOutput"
   - name: linkRiskAssessmentScenarioThreat
+    title: Link Risk Assessment Scenario Threat
     description: Link a threat to a risk assessment scenario
     hints:
       readonly: false
@@ -15016,14 +15313,17 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkRiskAssessmentScenarioThreatOutput"
   - name: unlinkRiskAssessmentScenarioThreat
+    title: Unlink Risk Assessment Scenario Threat
     description: Unlink a threat from a risk assessment scenario
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioThreatInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioThreatOutput"
   - name: linkRiskAssessmentScenarioRisk
+    title: Link Risk Assessment Scenario Risk
     description: Link a risk to a risk assessment scenario
     hints:
       readonly: false
@@ -15032,9 +15332,11 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkRiskAssessmentScenarioRiskOutput"
   - name: unlinkRiskAssessmentScenarioRisk
+    title: Unlink Risk Assessment Scenario Risk
     description: Unlink a risk from a risk assessment scenario
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioRiskInput"
     outputSchema:

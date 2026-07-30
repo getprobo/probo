@@ -25,16 +25,32 @@ go generate ./pkg/server/api/mcp/v1
 ```yaml
 tools:
   - name: listThirdParties
+    title: List Third Parties
     description: List all thirdParties for the organization
     hints:
       readonly: true
       idempotent: true
-      destructive: false
     inputSchema:
       $ref: "#/components/schemas/ListThirdPartiesInput"
     outputSchema:
       $ref: "#/components/schemas/ListThirdPartiesOutput"
+  - name: deleteThirdParty
+    title: Delete Third Party
+    description: Delete a thirdParty
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyOutput"
 ```
+
+`title` is the human-readable display name (emitted as MCP `title` /
+`annotations.title`). `hints.readonly` and `hints.destructive` map to
+`readOnlyHint` and `destructiveHint` so clients can distinguish reads, writes,
+and deletes. Every delete/remove/unlink/cancel/void tool must set
+`destructive: true`.
 
 Input/output schemas reference `components/schemas`. Map custom Go types with the `go.probo.inc/mcpgen/type` extension:
 
