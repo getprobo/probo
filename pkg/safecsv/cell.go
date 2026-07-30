@@ -41,11 +41,16 @@ func SanitizeRecord(record []string) []string {
 }
 
 // SanitizeCell prefixes values that spreadsheet tools may interpret as formulas.
-// Leading Unicode whitespace (including newlines) is ignored for detection only;
-// the written cell keeps the original text with a leading single-quote escape.
+// Leading spaces are ignored for formula detection only; tab and carriage return
+// at the start are always escaped. The written cell keeps the original text with
+// a leading single-quote when sanitization applies.
 func SanitizeCell(value string) string {
 	if value == "" {
 		return value
+	}
+
+	if spreadsheetLeadingControl(value[0]) {
+		return "'" + value
 	}
 
 	trimmed := strings.TrimLeftFunc(value, unicode.IsSpace)
@@ -59,6 +64,15 @@ func SanitizeCell(value string) string {
 	}
 
 	return value
+}
+
+func spreadsheetLeadingControl(b byte) bool {
+	switch b {
+	case '\t', '\r':
+		return true
+	default:
+		return false
+	}
 }
 
 func formulaLeadingRune(r rune) bool {

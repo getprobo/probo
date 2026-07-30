@@ -38,6 +38,8 @@ func TestSanitizeCell(t *testing.T) {
 	assert.Equal(t, "'@sum", SanitizeCell("@sum"))
 	assert.Equal(t, "' =1+1", SanitizeCell(" =1+1"))
 	assert.Equal(t, "'\n=1+1", SanitizeCell("\n=1+1"))
+	assert.Equal(t, "'\tplain", SanitizeCell("\tplain"))
+	assert.Equal(t, "'\rhello", SanitizeCell("\rhello"))
 	assert.Equal(t, "'\\evil", SanitizeCell("\\evil"))
 	assert.Equal(t, "'-5", SanitizeCell("-5"))
 }
