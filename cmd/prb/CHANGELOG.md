@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.207.1] - 2026-07-30
+
+### Added
+
+- `prb login` now requests the `v1:itam`/`v1:itam:read` OAuth2 scopes, in anticipation of upcoming ITAM commands in the CLI
+
 ## [0.207.0] - 2026-07-30
 
 ### Changed
