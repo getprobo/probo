@@ -65,7 +65,6 @@ func NewGraphQLHandler(
 			sessionCookie: authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
-			Nda:            newNDADirective(logger, visitorSvc, esignSvc),
 			Authentication: authentication.Directive,
 			SessionOnly:    session.Directive,
 		},

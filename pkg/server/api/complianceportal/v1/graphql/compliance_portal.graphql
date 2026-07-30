@@ -467,30 +467,30 @@ type DocumentAccess implements Node {
 
 extend type Mutation {
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @authentication(required: OPTIONAL) @nda
+    @authentication(required: OPTIONAL)
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @authentication(required: OPTIONAL) @nda
+    @authentication(required: OPTIONAL)
 
   exportCompliancePortalFile(
     input: ExportCompliancePortalFileInput!
-  ): ExportCompliancePortalFilePayload! @authentication(required: OPTIONAL) @nda
+  ): ExportCompliancePortalFilePayload! @authentication(required: OPTIONAL)
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestDocumentAccessPayload! @authentication(required: PRESENT) @nda
+  ): RequestDocumentAccessPayload! @authentication(required: PRESENT)
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestReportAccessPayload! @authentication(required: PRESENT) @nda
+  ): RequestReportAccessPayload! @authentication(required: PRESENT)
 
   requestCompliancePortalFileAccess(
     input: RequestCompliancePortalFileAccessInput!
-  ): RequestFileAccessPayload! @authentication(required: PRESENT) @nda
+  ): RequestFileAccessPayload! @authentication(required: PRESENT)
 
   requestAccesses(
     input: RequestAccessesInput!
-  ): RequestAccessesResultPayload! @authentication(required: PRESENT) @nda
+  ): RequestAccessesResultPayload! @authentication(required: PRESENT)
 }
 
 type RequestDocumentAccessPayload {
