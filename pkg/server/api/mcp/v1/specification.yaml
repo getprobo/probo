@@ -663,7 +663,7 @@ components:
           description: Organization ID
         level:
           type: integer
-          description: Filter by level
+          description: Filter by hierarchy depth (1 = direct third party, 2+ = third party of a third party / indirect). Defaults to 1 when omitted.
         order_by:
           $ref: "#/components/schemas/ThirdPartyOrderBy"
           description: ThirdParty order by
@@ -12606,7 +12606,7 @@ tools:
       $ref: "#/components/schemas/ListOrganizationsOutput"
   - name: listThirdParties
     title: List Third Parties
-    description: List all thirdParties for the organization
+    description: List thirdParties for the organization. By default only direct third parties (level 1) are returned; pass level to filter by hierarchy depth.
     hints:
       readonly: true
       destructive: false

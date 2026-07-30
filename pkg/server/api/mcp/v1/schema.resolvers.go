@@ -76,7 +76,12 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, input.Level, nil, nil, nil)
+	level := input.Level
+	if level == nil {
+		level = new(1)
+	}
+
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, level, nil, nil, nil)
 
 	page, err := prb.ThirdParties.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, thirdPartyFilter)
 	if err != nil {
