@@ -331,7 +331,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
                   ? t("sealing")
                   : isFailed
                     ? t("tryAgain")
-                    : t("reviewAndSign")}
+                    : t("sign")}
               </Button>
             </div>
           </div>

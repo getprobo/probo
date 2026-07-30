@@ -2,7 +2,7 @@
   "back": "Documents",
   "title": "Accord de confidentialité",
   "subtitle": "{{name}} exige la signature d'un accord de confidentialité avant d'accéder aux documents de conformité.",
-  "reviewAndSign": "Lire et signer",
+  "sign": "Signer",
   "tryAgain": "Réessayer",
   "sealing": "Scellement de votre signature…",
   "failedDescription": "Un problème est survenu lors du traitement de votre signature. Veuillez réessayer."

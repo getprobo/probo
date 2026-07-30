@@ -2,7 +2,7 @@
   "back": "Dokumen",
   "title": "Perjanjian Kerahasiaan",
   "subtitle": "{{name}} mengharuskan Anda menandatangani perjanjian kerahasiaan sebelum mengakses dokumen kepatuhan.",
-  "reviewAndSign": "Tinjau dan tanda tangani",
+  "sign": "Tanda tangani",
   "tryAgain": "Coba lagi",
   "sealing": "Menyegel tanda tangan Anda…",
   "failedDescription": "Kami mengalami masalah saat memproses tanda tangan Anda. Silakan coba lagi."
