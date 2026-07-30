@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/probo"
 )
 
@@ -37,7 +38,8 @@ func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
-		Register(agentrun.OAuth2ScopeMappings)
+		Register(agentrun.OAuth2ScopeMappings).
+		Register(itam.OAuth2ScopeMappings)
 }
 
 func TestRegisteredOAuth2ScopeRegistries_OrganizationRead(t *testing.T) {
@@ -61,4 +63,14 @@ func TestRegisteredOAuth2ScopeRegistries_UnmappedActionDenies(t *testing.T) {
 	}
 
 	assert.False(t, reg.Allows(tokenScopes, "core:unmapped:action"))
+}
+
+func TestRegisteredOAuth2ScopeRegistries_ITAMDeviceDelete(t *testing.T) {
+	t.Parallel()
+
+	reg := allRegisteredOAuth2ScopeRegistries()
+
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{itam.ScopeV1ITAM}, itam.ActionDeviceDelete))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{itam.ScopeV1ITAMRead}, itam.ActionDeviceDelete))
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{itam.ScopeV1ITAMRead}, itam.ActionDeviceGet))
 }

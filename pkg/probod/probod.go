@@ -516,7 +516,8 @@ func (impl *Implm) Run(
 		Register(management.OAuth2ScopeMappings).
 		Register(agentrun.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
-		Register(resourcealias.OAuth2ScopeMappings)
+		Register(resourcealias.OAuth2ScopeMappings).
+		Register(itam.OAuth2ScopeMappings)
 
 	var accountKey crypto.Signer
 	if impl.cfg.CustomDomains.ACME.AccountKey != "" {

@@ -54,6 +54,7 @@ const (
 		"v1:datum " +
 		"v1:document " +
 		"v1:iam " +
+		"v1:itam " +
 		"v1:org " +
 		"v1:privacy " +
 		"v1:risk " +
