@@ -4,9 +4,31 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.242.0] - 2026-07-30
+
+### Added
+
+- Organization owners and admins can now delete the organization's horizontal logo; the underlying file is soft-deleted so existing download URLs stop serving the image, and the operation is exposed in the n8n organization node
+- Compliance portal shows an unsigned-NDA banner directly in the portal shell, with a "Sign" CTA and a Documents back link on the NDA page, instead of only surfacing the requirement when a document export fails
+- Access-review connector rows show a "reconnect" prompt when the connector needs additional OAuth scopes
+- Devices can now be soft-deleted after being revoked; ITAM garbage collection also hard-deletes orphaned pending/revoked devices with no API key, postures, or valid enrollment token
+
+### Changed
+
+- NDA signature is now required only for exporting a private (protected) document, report, or file — requesting access and exporting public files no longer require signing first
+- Locale-mismatch and unsigned-NDA banners in the compliance portal are now visually distinguished (info vs warning) so they don't read as a single band when both are shown
+- MCP third-party list now defaults to level 1 (direct third parties only) when no level filter is given
+- Document signing/approval reminders due on a weekend now defer to Monday instead of sending over the weekend or spending an escalation step unused
+
 ### Fixed
 
 - Microsoft 365 access review lists home-tenant organization members only, using the same Graph `/users?$filter=userType eq 'Member'` call as the SCIM bridge
+- Microsoft 365 access review now resolves actual MFA status for users instead of always reporting it as unknown
+- Portal mutations now consistently enforce sign-in, full-name, and NDA gates instead of relying on each call site to reimplement the redirect logic
+- Guests who sign in from a shared-locale portal link no longer land back on it showing a stale locale-mismatch banner; the redirect now adopts the identity's saved locale
+- ITAM GraphQL actions are now registered under the `v1:itam`/`v1:itam:read` OAuth2 scopes, fixing bearer-token callers that were failing closed despite having role-level permission
+- Device enrollment token deletes are now scoped to the owning tenant
+- SCIM audit-log CSV exports collected by ID no longer fail to load activation/deactivation timestamps
 
 ## [0.241.0] - 2026-07-30
 
