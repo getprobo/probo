@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.209.0] - 2026-07-30
+
+### Changed
+
+- User `Get Many` and Document `Get All Signatures` `State`/`Profile State` fields are now multi-select (`States`/`Profile States`), adding `Pending` alongside `Active` and `Deactivated`
+- User `Archive` operation renamed to `Deactivate`
+
 ## [0.208.0] - 2026-07-28
 
 ### Added
