@@ -18,6 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package safecsv wraps encoding/csv for exports that may contain user-controlled
+// text. Writer sanitizes every cell before encoding to reduce spreadsheet formula
+// injection when a file is opened in Excel, LibreOffice Calc, Google Sheets, or
+// similar tools.
+//
+// Use safecsv for all user-facing CSV downloads. Do not write export CSV with
+// encoding/csv alone when record fields can contain untrusted or attacker-influenced
+// content.
 package safecsv
 
 import (
