@@ -109,61 +109,63 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
 
   return (
     <aside className={slots.root()} role="status">
-      <div className={slots.content()}>
-        <GlobeIcon weight="fill" className={slots.icon()} aria-hidden />
-        <Text size={2} color="neutral" highContrast className={slots.message()}>
-          {t("locale.mismatch.message", { language: urlLabel })}
-        </Text>
-        <IconButton
-          size={1}
-          variant="ghost"
-          color="neutral"
-          aria-label={t("locale.mismatch.dismiss")}
-          disabled={busy}
-          className={slots.dismissMobile()}
-          onClick={() => setDismissed(true)}
-        >
-          <XIcon />
-        </IconButton>
-      </div>
-      <div className={slots.actions()}>
-        <Button
-          size={1}
-          variant="solid"
-          color="gold"
-          disabled={busy}
-          className={slots.action()}
-          onClick={switchToSaved}
-        >
-          {t("locale.mismatch.switchToMine", {
-            language: savedLabel,
-            // Label this action in the user's saved locale so it reads as
-            // "switch back to my language", not the page they're visiting.
-            lng: savedLanguage,
-          })}
-        </Button>
-        <Button
-          size={1}
-          variant="solid"
-          color="neutral"
-          highContrast
-          disabled={busy}
-          className={slots.action()}
-          onClick={adoptUrlLocale}
-        >
-          {t("locale.mismatch.useThis", { language: urlLabel })}
-        </Button>
-        <IconButton
-          size={1}
-          variant="ghost"
-          color="neutral"
-          aria-label={t("locale.mismatch.dismiss")}
-          disabled={busy}
-          className={slots.dismissDesktop()}
-          onClick={() => setDismissed(true)}
-        >
-          <XIcon />
-        </IconButton>
+      <div className={slots.inner()}>
+        <div className={slots.content()}>
+          <GlobeIcon weight="fill" className={slots.icon()} aria-hidden />
+          <Text size={2} color="neutral" highContrast className={slots.message()}>
+            {t("locale.mismatch.message", { language: urlLabel })}
+          </Text>
+          <IconButton
+            size={1}
+            variant="ghost"
+            color="neutral"
+            aria-label={t("locale.mismatch.dismiss")}
+            disabled={busy}
+            className={slots.dismissMobile()}
+            onClick={() => setDismissed(true)}
+          >
+            <XIcon />
+          </IconButton>
+        </div>
+        <div className={slots.actions()}>
+          <Button
+            size={1}
+            variant="outline"
+            color="sky"
+            disabled={busy}
+            className={slots.action()}
+            onClick={switchToSaved}
+          >
+            {t("locale.mismatch.switchToMine", {
+              language: savedLabel,
+              // Label this action in the user's saved locale so it reads as
+              // "switch back to my language", not the page they're visiting.
+              lng: savedLanguage,
+            })}
+          </Button>
+          <Button
+            size={1}
+            variant="solid"
+            color="neutral"
+            highContrast
+            disabled={busy}
+            className={slots.action()}
+            onClick={adoptUrlLocale}
+          >
+            {t("locale.mismatch.useThis", { language: urlLabel })}
+          </Button>
+          <IconButton
+            size={1}
+            variant="ghost"
+            color="neutral"
+            aria-label={t("locale.mismatch.dismiss")}
+            disabled={busy}
+            className={slots.dismissDesktop()}
+            onClick={() => setDismissed(true)}
+          >
+            <XIcon />
+          </IconButton>
+        </div>
       </div>
     </aside>
   );

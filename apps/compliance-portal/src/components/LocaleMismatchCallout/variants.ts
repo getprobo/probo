@@ -21,12 +21,16 @@
 import { tv } from "tailwind-variants/lite";
 
 // Full-bleed locale-mismatch banner under the TopBar: message row + actions,
-// stacking on small screens.
+// stacking on small screens. Sky (info) so it reads apart from the amber
+// unsigned-NDA callout when both are visible. Content column matches TopBar /
+// page layout (px-8 + centered max-w-5xl).
 export const localeMismatchCallout = tv({
   slots: {
-    root: "flex w-full items-center gap-3 bg-gold-3 px-8 py-2.5 max-md:flex-col max-md:items-stretch max-md:gap-3 max-md:px-4 max-md:py-3",
+    root: "w-full bg-sky-3 px-8 py-2.5 max-md:px-4 max-md:py-3",
+    inner:
+      "mx-auto flex w-full max-w-5xl items-center gap-3 max-md:flex-col max-md:items-stretch max-md:gap-3",
     content: "flex min-w-0 flex-1 items-start gap-2",
-    icon: "mt-0.5 size-4 shrink-0 text-gold-11",
+    icon: "mt-0.5 size-4 shrink-0 text-sky-11",
     message: "min-w-0 flex-1",
     dismissMobile: "md:hidden",
     actions: "flex shrink-0 items-center gap-2 max-md:flex-col max-md:items-stretch",

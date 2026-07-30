@@ -66,42 +66,44 @@ export function UnsignedNDACallout({ compliancePortalKey }: UnsignedNDACalloutPr
 
   return (
     <aside className={slots.root()} role="status">
-      <div className={slots.content()}>
-        <FileTextIcon weight="fill" className={slots.icon()} aria-hidden />
-        <Text size={2} color="neutral" highContrast className={slots.message()}>
-          {t("nda.unsignedBanner.message")}
-        </Text>
-        <IconButton
-          size={1}
-          variant="ghost"
-          color="neutral"
-          aria-label={t("nda.unsignedBanner.dismiss")}
-          className={slots.dismissMobile()}
-          onClick={() => setDismissed(true)}
-        >
-          <XIcon />
-        </IconButton>
-      </div>
-      <div className={slots.actions()}>
-        <Link
-          to={ndaHref}
-          size={1}
-          variant="solid"
-          color="gold"
-          className={slots.cta()}
-        >
-          {t("nda.unsignedBanner.sign")}
-        </Link>
-        <IconButton
-          size={1}
-          variant="ghost"
-          color="neutral"
-          aria-label={t("nda.unsignedBanner.dismiss")}
-          className={slots.dismissDesktop()}
-          onClick={() => setDismissed(true)}
-        >
-          <XIcon />
-        </IconButton>
+      <div className={slots.inner()}>
+        <div className={slots.content()}>
+          <FileTextIcon weight="fill" className={slots.icon()} aria-hidden />
+          <Text size={2} color="neutral" highContrast className={slots.message()}>
+            {t("nda.unsignedBanner.message")}
+          </Text>
+          <IconButton
+            size={1}
+            variant="ghost"
+            color="neutral"
+            aria-label={t("nda.unsignedBanner.dismiss")}
+            className={slots.dismissMobile()}
+            onClick={() => setDismissed(true)}
+          >
+            <XIcon />
+          </IconButton>
+        </div>
+        <div className={slots.actions()}>
+          <Link
+            to={ndaHref}
+            size={1}
+            variant="solid"
+            color="amber"
+            className={slots.cta()}
+          >
+            {t("nda.unsignedBanner.sign")}
+          </Link>
+          <IconButton
+            size={1}
+            variant="ghost"
+            color="neutral"
+            aria-label={t("nda.unsignedBanner.dismiss")}
+            className={slots.dismissDesktop()}
+            onClick={() => setDismissed(true)}
+          >
+            <XIcon />
+          </IconButton>
+        </div>
       </div>
     </aside>
   );
