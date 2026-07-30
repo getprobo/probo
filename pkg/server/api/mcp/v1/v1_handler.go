@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -56,6 +57,7 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	riskManagementSvc *riskmanagement.Service,
 	itamSvc *itam.Service,
+	mailmanSvc *mailman.Service,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
@@ -75,6 +77,7 @@ func NewMux(
 		cookieBanner:   cookieBannerSvc,
 		riskManagement: riskManagementSvc,
 		itamSvc:        itamSvc,
+		mailman:        mailmanSvc,
 		logger:         logger,
 		fileManager:    fileManagerSvc,
 		baseURL:        baseURL,

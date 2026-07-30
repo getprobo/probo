@@ -673,6 +673,12 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
 
     ListThirdPartiesOutput:
       type: object
@@ -1166,6 +1172,23 @@ components:
           description: Trust page URL
 
     UpdateThirdPartyOutput:
+      type: object
+      required:
+        - thirdParty
+      properties:
+        thirdParty:
+          $ref: "#/components/schemas/ThirdParty"
+
+    GetThirdPartyInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Third party ID
+
+    GetThirdPartyOutput:
       type: object
       required:
         - thirdParty
@@ -2382,6 +2405,24 @@ components:
           format: date-time
           description: Update timestamp
 
+    DeleteEvidenceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Evidence ID
+
+    DeleteEvidenceOutput:
+      type: object
+      required:
+        - deleted_evidence_id
+      properties:
+        deleted_evidence_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted evidence ID
+
     LinkMeasureInput:
       type: object
       required:
@@ -2653,6 +2694,24 @@ components:
       properties:
         framework:
           $ref: "#/components/schemas/Framework"
+
+    DeleteFrameworkInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+
+    DeleteFrameworkOutput:
+      type: object
+      required:
+        - deleted_framework_id
+      properties:
+        deleted_framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted framework ID
 
     AssetType:
       type: string
@@ -5082,6 +5141,23 @@ components:
           type: string
           description: Presigned download URL for the report (valid for 15 minutes)
 
+    DeleteAuditReportInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+
+    DeleteAuditReportOutput:
+      type: object
+      required:
+        - audit
+      properties:
+        audit:
+          $ref: "#/components/schemas/Audit"
+
     ListAuditsInput:
       type: object
       required:
@@ -5467,6 +5543,24 @@ components:
       properties:
         control:
           $ref: "#/components/schemas/Control"
+
+    DeleteControlInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+
+    DeleteControlOutput:
+      type: object
+      required:
+        - deleted_control_id
+      properties:
+        deleted_control_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted control ID
 
     LinkControlInput:
       type: object
@@ -6854,6 +6948,63 @@ components:
       properties:
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
+
+    ApproveDocumentVersionInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        comment:
+          type: string
+          description: Optional approval comment
+
+    ApproveDocumentVersionOutput:
+      type: object
+      required:
+        - document_version_approval_decision
+      properties:
+        document_version_approval_decision:
+          $ref: "#/components/schemas/DocumentVersionApprovalDecision"
+
+    RejectDocumentVersionInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        comment:
+          type: string
+          description: Optional rejection comment
+
+    RejectDocumentVersionOutput:
+      type: object
+      required:
+        - document_version_approval_decision
+      properties:
+        document_version_approval_decision:
+          $ref: "#/components/schemas/DocumentVersionApprovalDecision"
+
+    SignDocumentInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+
+    SignDocumentOutput:
+      type: object
+      required:
+        - document_version_signature
+      properties:
+        document_version_signature:
+          $ref: "#/components/schemas/DocumentVersionSignature"
 
     ListDocumentVersionApprovalQuorumsInput:
       type: object
@@ -8794,6 +8945,23 @@ components:
         audit_log_entry:
           $ref: "#/components/schemas/AuditLogEntry"
 
+    AuditLogEntryOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogEntryOrderField
+
+    AuditLogEntryOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AuditLogEntryOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
     ListAuditLogEntriesInput:
       type: object
       required:
@@ -8802,6 +8970,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AuditLogEntryOrderBy"
+          description: Audit log entry order by
         size:
           type: integer
           description: Page size
@@ -10829,6 +11000,14 @@ components:
         cookie_banner:
           $ref: "#/components/schemas/CookieBanner"
 
+    CookieCategoryKind:
+      type: string
+      enum:
+        - NORMAL
+        - NECESSARY
+        - UNCATEGORISED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieCategoryKind
+
     ListCookieCategoriesInput:
       type: object
       required:
@@ -10841,6 +11020,12 @@ components:
           type: integer
         cursor:
           $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            exclude_kind:
+              $ref: "#/components/schemas/CookieCategoryKind"
+              description: Exclude categories of this kind. Defaults to UNCATEGORISED when omitted.
 
     ListCookieCategoriesOutput:
       type: object
@@ -11375,6 +11560,7 @@ components:
       type: string
       enum:
         - GOOGLE_WORKSPACE
+        - MICROSOFT_365
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SCIMBridgeType
 
     SCIMBridgeState:
@@ -12936,6 +13122,467 @@ components:
     UnlinkRiskAssessmentScenarioRiskOutput:
       type: object
 
+    # --- Mailing lists ---
+    MailingList:
+      type: object
+      required: [id, organization_id, created_at, updated_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        reply_to:
+          $ref: "#/components/schemas/EmailAddress"
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MailingListSubscriberStatus:
+      type: string
+      enum: [PENDING, CONFIRMED]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatus
+
+    MailingListSubscriberOrderField:
+      type: string
+      enum: [CREATED_AT]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MailingListSubscriberOrderField
+
+    MailingListSubscriberOrderBy:
+      type: object
+      required: [field, direction]
+      properties:
+        field:
+          $ref: "#/components/schemas/MailingListSubscriberOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    MailingListSubscriber:
+      type: object
+      required: [id, organization_id, mailing_list_id, full_name, email, status, created_at, updated_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        mailing_list_id:
+          $ref: "#/components/schemas/GID"
+        full_name:
+          type: string
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+        status:
+          $ref: "#/components/schemas/MailingListSubscriberStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MailingListUpdateStatus:
+      type: string
+      enum: [DRAFT, ENQUEUED, PROCESSING, SENT]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MailingListUpdateStatus
+
+    MailingListUpdateOrderField:
+      type: string
+      enum: [CREATED_AT, UPDATED_AT]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MailingListUpdateOrderField
+
+    MailingListUpdateOrderBy:
+      type: object
+      required: [field, direction]
+      properties:
+        field:
+          $ref: "#/components/schemas/MailingListUpdateOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    MailingListUpdate:
+      type: object
+      required: [id, organization_id, mailing_list_id, title, body, status, created_at, updated_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        mailing_list_id:
+          $ref: "#/components/schemas/GID"
+        title:
+          type: string
+        body:
+          type: string
+        status:
+          $ref: "#/components/schemas/MailingListUpdateStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GetMailingListInput:
+      type: object
+      required: [compliance_portal_id]
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+
+    GetMailingListOutput:
+      type: object
+      properties:
+        mailing_list:
+          $ref: "#/components/schemas/MailingList"
+          nullable: true
+          description: Null when the portal has no mailing list
+
+    UpdateMailingListInput:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        reply_to:
+          $ref: "#/components/schemas/EmailAddress"
+          nullable: true
+          description: Reply-to email address; null clears it
+
+    UpdateMailingListOutput:
+      type: object
+      required: [mailing_list]
+      properties:
+        mailing_list:
+          $ref: "#/components/schemas/MailingList"
+
+    ListMailingListSubscribersInput:
+      type: object
+      required: [mailing_list_id]
+      properties:
+        mailing_list_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/MailingListSubscriberOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListMailingListSubscribersOutput:
+      type: object
+      required: [mailing_list_subscribers]
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        mailing_list_subscribers:
+          type: array
+          items:
+            $ref: "#/components/schemas/MailingListSubscriber"
+
+    AddMailingListSubscriberInput:
+      type: object
+      required: [mailing_list_id, full_name, email]
+      properties:
+        mailing_list_id:
+          $ref: "#/components/schemas/GID"
+        full_name:
+          type: string
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+        confirmed:
+          type: boolean
+          description: When false or omitted, a confirmation email is sent
+
+    AddMailingListSubscriberOutput:
+      type: object
+      required: [mailing_list_subscriber]
+      properties:
+        mailing_list_subscriber:
+          $ref: "#/components/schemas/MailingListSubscriber"
+
+    DeleteMailingListSubscriberInput:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteMailingListSubscriberOutput:
+      type: object
+      required: [deleted_mailing_list_subscriber_id]
+      properties:
+        deleted_mailing_list_subscriber_id:
+          $ref: "#/components/schemas/GID"
+
+    ListMailingListUpdatesInput:
+      type: object
+      required: [mailing_list_id]
+      properties:
+        mailing_list_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/MailingListUpdateOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListMailingListUpdatesOutput:
+      type: object
+      required: [mailing_list_updates]
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        mailing_list_updates:
+          type: array
+          items:
+            $ref: "#/components/schemas/MailingListUpdate"
+
+    AddMailingListUpdateInput:
+      type: object
+      required: [mailing_list_id, title, body]
+      properties:
+        mailing_list_id:
+          $ref: "#/components/schemas/GID"
+        title:
+          type: string
+        body:
+          type: string
+
+    AddMailingListUpdateOutput:
+      type: object
+      required: [mailing_list_update]
+      properties:
+        mailing_list_update:
+          $ref: "#/components/schemas/MailingListUpdate"
+
+    UpdateMailingListUpdateInput:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        title:
+          type: string
+        body:
+          type: string
+
+    UpdateMailingListUpdateOutput:
+      type: object
+      required: [mailing_list_update]
+      properties:
+        mailing_list_update:
+          $ref: "#/components/schemas/MailingListUpdate"
+
+    SendMailingListUpdateInput:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    SendMailingListUpdateOutput:
+      type: object
+      required: [mailing_list_update]
+      properties:
+        mailing_list_update:
+          $ref: "#/components/schemas/MailingListUpdate"
+
+    DeleteMailingListUpdateInput:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteMailingListUpdateOutput:
+      type: object
+      required: [deleted_mailing_list_update_id]
+      properties:
+        deleted_mailing_list_update_id:
+          $ref: "#/components/schemas/GID"
+
+    # --- Detected trackers ---
+    DetectedTrackerOrderField:
+      type: string
+      enum: [INITIATOR_URL, LAST_DETECTED_AT]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderField
+
+    DetectedTrackerOrderBy:
+      type: object
+      required: [field, direction]
+      properties:
+        field:
+          $ref: "#/components/schemas/DetectedTrackerOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    DetectedTracker:
+      type: object
+      required: [id, identifier, last_detected_at, created_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        identifier:
+          type: string
+        initiator_url:
+          type: string
+          nullable: true
+        max_age_seconds:
+          type: integer
+          nullable: true
+        source:
+          type: string
+          enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
+          nullable: true
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieSource
+        last_detected_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    ListDetectedTrackersInput:
+      type: object
+      required: [tracker_pattern_id]
+      properties:
+        tracker_pattern_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/DetectedTrackerOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListDetectedTrackersOutput:
+      type: object
+      required: [detected_trackers]
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        detected_trackers:
+          type: array
+          items:
+            $ref: "#/components/schemas/DetectedTracker"
+
+    # --- Compliance portal frameworks ---
+    CompliancePortalFrameworkVisibility:
+      type: string
+      enum: [NONE, PUBLIC]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibility
+
+    CompliancePortalFrameworkOrderField:
+      type: string
+      enum: [CREATED_AT, RANK]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderField
+
+    CompliancePortalFrameworkOrderBy:
+      type: object
+      required: [field, direction]
+      properties:
+        field:
+          $ref: "#/components/schemas/CompliancePortalFrameworkOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    CompliancePortalFramework:
+      type: object
+      required: [id, organization_id, compliance_portal_id, framework_id, rank, visibility, created_at, updated_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+        framework_id:
+          $ref: "#/components/schemas/GID"
+        rank:
+          type: integer
+        visibility:
+          $ref: "#/components/schemas/CompliancePortalFrameworkVisibility"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListCompliancePortalFrameworksInput:
+      type: object
+      required: [compliance_portal_id]
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/CompliancePortalFrameworkOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCompliancePortalFrameworksOutput:
+      type: object
+      required: [compliance_portal_frameworks]
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        compliance_portal_frameworks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompliancePortalFramework"
+
+    AddCompliancePortalFrameworkInput:
+      type: object
+      required: [compliance_portal_id, framework_id]
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+        framework_id:
+          $ref: "#/components/schemas/GID"
+
+    AddCompliancePortalFrameworkOutput:
+      type: object
+      required: [compliance_portal_framework]
+      properties:
+        compliance_portal_framework:
+          $ref: "#/components/schemas/CompliancePortalFramework"
+
+    UpdateCompliancePortalFrameworkInput:
+      type: object
+      required: [id, rank]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        rank:
+          type: integer
+
+    UpdateCompliancePortalFrameworkOutput:
+      type: object
+      required: [compliance_portal_framework]
+      properties:
+        compliance_portal_framework:
+          $ref: "#/components/schemas/CompliancePortalFramework"
+
+    DeleteCompliancePortalFrameworkInput:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteCompliancePortalFrameworkOutput:
+      type: object
+      required: [deleted_compliance_portal_framework_id]
+      properties:
+        deleted_compliance_portal_framework_id:
+          $ref: "#/components/schemas/GID"
+
 tools:
   - name: listOrganizations
     title: List Organizations
@@ -13093,6 +13740,18 @@ tools:
       $ref: "#/components/schemas/UpdateThirdPartyInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateThirdPartyOutput"
+  - name: getThirdParty
+    title: Get Third Party
+    description: Get a third party by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetThirdPartyInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetThirdPartyOutput"
   - name: listThirdPartyRiskAssessments
     title: List Third Party Risk Assessments
     description: List all risk assessments for a thirdParty
@@ -13405,6 +14064,18 @@ tools:
       $ref: "#/components/schemas/ListMeasureEvidencesInput"
     outputSchema:
       $ref: "#/components/schemas/ListMeasureEvidencesOutput"
+  - name: deleteEvidence
+    title: Delete Evidence
+    description: Delete an evidence
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteEvidenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteEvidenceOutput"
   - name: linkMeasure
     title: Link Measure
     description: Link a measure to a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
@@ -13489,6 +14160,18 @@ tools:
       $ref: "#/components/schemas/UpdateFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateFrameworkOutput"
+  - name: deleteFramework
+    title: Delete Framework
+    description: Delete a framework
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteFrameworkOutput"
   - name: listAssets
     title: List Assets
     description: List all assets for the organization
@@ -14089,6 +14772,18 @@ tools:
       $ref: "#/components/schemas/GetAuditReportUrlInput"
     outputSchema:
       $ref: "#/components/schemas/GetAuditReportUrlOutput"
+  - name: deleteAuditReport
+    title: Delete Audit Report
+    description: Delete the report file attached to an audit
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAuditReportInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAuditReportOutput"
   - name: listControls
     title: List Controls
     description: List all controls for the organization or framework
@@ -14137,6 +14832,18 @@ tools:
       $ref: "#/components/schemas/UpdateControlInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateControlOutput"
+  - name: deleteControl
+    title: Delete Control
+    description: Delete a control
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteControlInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteControlOutput"
   - name: linkControl
     title: Link Control
     description: Link a resource to a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
@@ -14521,6 +15228,42 @@ tools:
       $ref: "#/components/schemas/VoidDocumentVersionApprovalInput"
     outputSchema:
       $ref: "#/components/schemas/VoidDocumentVersionApprovalOutput"
+  - name: approveDocumentVersion
+    title: Approve Document Version
+    description: Approve a document version pending approval as the authenticated user
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ApproveDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/ApproveDocumentVersionOutput"
+  - name: rejectDocumentVersion
+    title: Reject Document Version
+    description: Reject a document version pending approval as the authenticated user
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RejectDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/RejectDocumentVersionOutput"
+  - name: signDocument
+    title: Sign Document
+    description: Sign a document version as the authenticated user
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/SignDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/SignDocumentOutput"
   - name: listStatementsOfApplicability
     title: List Statements of Applicability
     description: List all statements of applicability for the organization
@@ -16453,3 +17196,183 @@ tools:
       $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioRiskInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioRiskOutput"
+  - name: getMailingList
+    title: Get Mailing List
+    description: Get the mailing list for a compliance portal
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetMailingListInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetMailingListOutput"
+  - name: updateMailingList
+    title: Update Mailing List
+    description: Update mailing list settings
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMailingListInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMailingListOutput"
+  - name: listMailingListSubscribers
+    title: List Mailing List Subscribers
+    description: List subscribers for a mailing list
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListMailingListSubscribersInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMailingListSubscribersOutput"
+  - name: addMailingListSubscriber
+    title: Add Mailing List Subscriber
+    description: Add a subscriber to a mailing list
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddMailingListSubscriberInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddMailingListSubscriberOutput"
+  - name: deleteMailingListSubscriber
+    title: Delete Mailing List Subscriber
+    description: Delete a mailing list subscriber
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteMailingListSubscriberInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteMailingListSubscriberOutput"
+  - name: listMailingListUpdates
+    title: List Mailing List Updates
+    description: List updates for a mailing list
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListMailingListUpdatesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMailingListUpdatesOutput"
+  - name: addMailingListUpdate
+    title: Add Mailing List Update
+    description: Create a draft mailing list update
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddMailingListUpdateInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddMailingListUpdateOutput"
+  - name: updateMailingListUpdate
+    title: Update Mailing List Update
+    description: Update a draft mailing list update
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMailingListUpdateInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMailingListUpdateOutput"
+  - name: sendMailingListUpdate
+    title: Send Mailing List Update
+    description: Queue a draft mailing list update for sending
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/SendMailingListUpdateInput"
+    outputSchema:
+      $ref: "#/components/schemas/SendMailingListUpdateOutput"
+  - name: deleteMailingListUpdate
+    title: Delete Mailing List Update
+    description: Delete a mailing list update
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteMailingListUpdateInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteMailingListUpdateOutput"
+  - name: listDetectedTrackers
+    title: List Detected Trackers
+    description: List detected trackers for a tracker pattern
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDetectedTrackersInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDetectedTrackersOutput"
+  - name: listCompliancePortalFrameworks
+    title: List Compliance Portal Frameworks
+    description: List frameworks shown on a compliance portal
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalFrameworksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalFrameworksOutput"
+  - name: addCompliancePortalFramework
+    title: Add Compliance Portal Framework
+    description: Add an organization framework to a compliance portal
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCompliancePortalFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCompliancePortalFrameworkOutput"
+  - name: updateCompliancePortalFramework
+    title: Update Compliance Portal Framework
+    description: Update the rank of a compliance portal framework
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalFrameworkOutput"
+  - name: deleteCompliancePortalFramework
+    title: Delete Compliance Portal Framework
+    description: Remove a framework from a compliance portal
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalFrameworkOutput"

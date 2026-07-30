@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -7643,5 +7644,481 @@ func (r *Resolver) CreateDeviceTool(ctx context.Context, req *mcp.CallToolReques
 		EnrollmentToken: result.EnrollmentToken,
 		ServerURL:       urls.ServerURL,
 		EnrollmentURL:   urls.EnrollmentURL,
+	}, nil
+}
+
+func (r *Resolver) GetThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetThirdPartyInput) (*mcp.CallToolResult, types.GetThirdPartyOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyGet)
+	if err != nil {
+		return nil, types.GetThirdPartyOutput{}, err
+	}
+
+	thirdParty, err := r.proboSvc.ThirdParties.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetThirdPartyOutput{}, fmt.Errorf("cannot get third party: %w", err)
+	}
+
+	return nil, types.GetThirdPartyOutput{
+		ThirdParty: types.NewThirdParty(thirdParty),
+	}, nil
+}
+
+func (r *Resolver) DeleteEvidenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteEvidenceInput) (*mcp.CallToolResult, types.DeleteEvidenceOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionEvidenceDelete)
+	if err != nil {
+		return nil, types.DeleteEvidenceOutput{}, err
+	}
+
+	err = r.proboSvc.Evidences.Delete(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteEvidenceOutput{}, fmt.Errorf("cannot delete evidence: %w", err)
+	}
+
+	return nil, types.DeleteEvidenceOutput{
+		DeletedEvidenceID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) DeleteFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteFrameworkInput) (*mcp.CallToolResult, types.DeleteFrameworkOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionFrameworkDelete)
+	if err != nil {
+		return nil, types.DeleteFrameworkOutput{}, err
+	}
+
+	err = r.proboSvc.Frameworks.Delete(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteFrameworkOutput{}, fmt.Errorf("cannot delete framework: %w", err)
+	}
+
+	return nil, types.DeleteFrameworkOutput{
+		DeletedFrameworkID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) DeleteAuditReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAuditReportInput) (*mcp.CallToolResult, types.DeleteAuditReportOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAuditReportDelete)
+	if err != nil {
+		return nil, types.DeleteAuditReportOutput{}, err
+	}
+
+	audit, err := r.proboSvc.Audits.DeleteReport(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteAuditReportOutput{}, fmt.Errorf("cannot delete audit report: %w", err)
+	}
+
+	return nil, types.DeleteAuditReportOutput{
+		Audit: types.NewAudit(audit, nil),
+	}, nil
+}
+
+func (r *Resolver) DeleteControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteControlInput) (*mcp.CallToolResult, types.DeleteControlOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionControlDelete)
+	if err != nil {
+		return nil, types.DeleteControlOutput{}, err
+	}
+
+	err = r.proboSvc.Controls.Delete(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteControlOutput{}, fmt.Errorf("cannot delete control: %w", err)
+	}
+
+	return nil, types.DeleteControlOutput{
+		DeletedControlID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ApproveDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ApproveDocumentVersionInput) (*mcp.CallToolResult, types.ApproveDocumentVersionOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionApprove)
+	if err != nil {
+		return nil, types.ApproveDocumentVersionOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	signer := signerMetadataFromToolRequest(req)
+
+	decision, err := r.proboSvc.DocumentApprovals.Approve(
+		ctx,
+		scope,
+		probo.ApproveDocumentVersionRequest{
+			DocumentVersionID: input.DocumentVersionID,
+			IdentityID:        identity.ID,
+			Comment:           input.Comment,
+			SignerFullName:    identity.FullName,
+			SignerEmail:       identity.EmailAddress,
+			SignerIPAddr:      signer.IPAddr,
+			SignerUA:          signer.UA,
+		},
+	)
+	if err != nil {
+		return nil, types.ApproveDocumentVersionOutput{}, fmt.Errorf("cannot approve document version: %w", err)
+	}
+
+	return nil, types.ApproveDocumentVersionOutput{
+		DocumentVersionApprovalDecision: types.NewDocumentVersionApprovalDecision(decision),
+	}, nil
+}
+
+func (r *Resolver) RejectDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RejectDocumentVersionInput) (*mcp.CallToolResult, types.RejectDocumentVersionOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionReject)
+	if err != nil {
+		return nil, types.RejectDocumentVersionOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	decision, err := r.proboSvc.DocumentApprovals.Reject(
+		ctx,
+		scope,
+		probo.RejectDocumentVersionRequest{
+			DocumentVersionID: input.DocumentVersionID,
+			IdentityID:        identity.ID,
+			Comment:           input.Comment,
+		},
+	)
+	if err != nil {
+		return nil, types.RejectDocumentVersionOutput{}, fmt.Errorf("cannot reject document version: %w", err)
+	}
+
+	return nil, types.RejectDocumentVersionOutput{
+		DocumentVersionApprovalDecision: types.NewDocumentVersionApprovalDecision(decision),
+	}, nil
+}
+
+func (r *Resolver) SignDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SignDocumentInput) (*mcp.CallToolResult, types.SignDocumentOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSign)
+	if err != nil {
+		return nil, types.SignDocumentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	signer := signerMetadataFromToolRequest(req)
+
+	signature, err := r.proboSvc.Documents.SignDocumentVersionByIdentity(
+		ctx,
+		scope,
+		probo.SignDocumentVersionRequest{
+			DocumentVersionID: input.DocumentVersionID,
+			IdentityID:        identity.ID,
+			SignerFullName:    identity.FullName,
+			SignerEmail:       identity.EmailAddress,
+			SignerIPAddr:      signer.IPAddr,
+			SignerUA:          signer.UA,
+		},
+	)
+	if err != nil {
+		return nil, types.SignDocumentOutput{}, fmt.Errorf("cannot sign document: %w", err)
+	}
+
+	return nil, types.SignDocumentOutput{
+		DocumentVersionSignature: types.NewDocumentVersionSignature(signature),
+	}, nil
+}
+
+func (r *Resolver) GetMailingListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMailingListInput) (*mcp.CallToolResult, types.GetMailingListOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionMailingListSubscriberList)
+	if err != nil {
+		return nil, types.GetMailingListOutput{}, err
+	}
+
+	mailingList, err := r.management.GetMailingList(ctx, scope, input.CompliancePortalID)
+	if err != nil {
+		return nil, types.GetMailingListOutput{}, fmt.Errorf("cannot get mailing list: %w", err)
+	}
+
+	return nil, types.GetMailingListOutput{MailingList: types.NewMailingList(mailingList)}, nil
+}
+
+func (r *Resolver) UpdateMailingListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMailingListInput) (*mcp.CallToolResult, types.UpdateMailingListOutput, error) {
+	if _, err := r.Authorize(ctx, input.ID, management.ActionMailingListUpdate); err != nil {
+		return nil, types.UpdateMailingListOutput{}, err
+	}
+
+	mailingList, err := r.mailman.UpdateMailingList(ctx, input.ID, input.ReplyTo)
+	if err != nil {
+		return nil, types.UpdateMailingListOutput{}, fmt.Errorf("cannot update mailing list: %w", err)
+	}
+
+	return nil, types.UpdateMailingListOutput{MailingList: types.NewMailingList(mailingList)}, nil
+}
+
+func (r *Resolver) ListMailingListSubscribersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMailingListSubscribersInput) (*mcp.CallToolResult, types.ListMailingListSubscribersOutput, error) {
+	if _, err := r.Authorize(ctx, input.MailingListID, management.ActionMailingListSubscriberList); err != nil {
+		return nil, types.ListMailingListSubscribersOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MailingListSubscriberOrderField]{
+		Field:     coredata.MailingListSubscriberOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MailingListSubscriberOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.mailman.ListSubscribers(ctx, input.MailingListID, cursor)
+	if err != nil {
+		return nil, types.ListMailingListSubscribersOutput{}, fmt.Errorf("cannot list mailing list subscribers: %w", err)
+	}
+
+	return nil, types.NewListMailingListSubscribersOutput(p), nil
+}
+
+func (r *Resolver) AddMailingListSubscriberTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMailingListSubscriberInput) (*mcp.CallToolResult, types.AddMailingListSubscriberOutput, error) {
+	if _, err := r.Authorize(ctx, input.MailingListID, management.ActionMailingListSubscriberCreate); err != nil {
+		return nil, types.AddMailingListSubscriberOutput{}, err
+	}
+
+	subscriber, err := r.mailman.CreateSubscriber(
+		ctx,
+		&mailman.CreateSubscriberRequest{
+			MailingListID: input.MailingListID,
+			Email:         input.Email,
+			FullName:      input.FullName,
+			Confirmed:     input.Confirmed != nil && *input.Confirmed,
+		},
+	)
+	if err != nil {
+		return nil, types.AddMailingListSubscriberOutput{}, fmt.Errorf("cannot add mailing list subscriber: %w", err)
+	}
+
+	return nil, types.AddMailingListSubscriberOutput{
+		MailingListSubscriber: types.NewMailingListSubscriber(subscriber),
+	}, nil
+}
+
+func (r *Resolver) DeleteMailingListSubscriberTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMailingListSubscriberInput) (*mcp.CallToolResult, types.DeleteMailingListSubscriberOutput, error) {
+	if _, err := r.Authorize(ctx, input.ID, management.ActionMailingListSubscriberDelete); err != nil {
+		return nil, types.DeleteMailingListSubscriberOutput{}, err
+	}
+
+	if err := r.mailman.DeleteSubscriber(ctx, input.ID); err != nil {
+		return nil, types.DeleteMailingListSubscriberOutput{}, fmt.Errorf("cannot delete mailing list subscriber: %w", err)
+	}
+
+	return nil, types.DeleteMailingListSubscriberOutput{
+		DeletedMailingListSubscriberID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListMailingListUpdatesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMailingListUpdatesInput) (*mcp.CallToolResult, types.ListMailingListUpdatesOutput, error) {
+	if _, err := r.Authorize(ctx, input.MailingListID, management.ActionMailingListUpdateList); err != nil {
+		return nil, types.ListMailingListUpdatesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
+		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MailingListUpdateOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.mailman.ListMailingListUpdates(ctx, input.MailingListID, cursor)
+	if err != nil {
+		return nil, types.ListMailingListUpdatesOutput{}, fmt.Errorf("cannot list mailing list updates: %w", err)
+	}
+
+	return nil, types.NewListMailingListUpdatesOutput(p), nil
+}
+
+func (r *Resolver) AddMailingListUpdateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMailingListUpdateInput) (*mcp.CallToolResult, types.AddMailingListUpdateOutput, error) {
+	if _, err := r.Authorize(ctx, input.MailingListID, management.ActionMailingListUpdateCreate); err != nil {
+		return nil, types.AddMailingListUpdateOutput{}, err
+	}
+
+	update, err := r.mailman.CreateMailingListUpdate(
+		ctx,
+		&mailman.CreateMailingListUpdateRequest{
+			MailingListID: input.MailingListID,
+			Title:         input.Title,
+			Body:          input.Body,
+		},
+	)
+	if err != nil {
+		return nil, types.AddMailingListUpdateOutput{}, fmt.Errorf("cannot add mailing list update: %w", err)
+	}
+
+	return nil, types.AddMailingListUpdateOutput{
+		MailingListUpdate: types.NewMailingListUpdate(update),
+	}, nil
+}
+
+func (r *Resolver) UpdateMailingListUpdateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMailingListUpdateInput) (*mcp.CallToolResult, types.UpdateMailingListUpdateOutput, error) {
+	if _, err := r.Authorize(ctx, input.ID, management.ActionMailingListUpdateUpdate); err != nil {
+		return nil, types.UpdateMailingListUpdateOutput{}, err
+	}
+
+	update, err := r.mailman.UpdateMailingListUpdate(
+		ctx,
+		&mailman.UpdateMailingListUpdateRequest{
+			ID:    input.ID,
+			Title: input.Title,
+			Body:  input.Body,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateMailingListUpdateOutput{}, fmt.Errorf("cannot update mailing list update: %w", err)
+	}
+
+	return nil, types.UpdateMailingListUpdateOutput{
+		MailingListUpdate: types.NewMailingListUpdate(update),
+	}, nil
+}
+
+func (r *Resolver) SendMailingListUpdateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SendMailingListUpdateInput) (*mcp.CallToolResult, types.SendMailingListUpdateOutput, error) {
+	if _, err := r.Authorize(ctx, input.ID, management.ActionMailingListUpdateUpdate); err != nil {
+		return nil, types.SendMailingListUpdateOutput{}, err
+	}
+
+	update, err := r.mailman.SendMailingListUpdate(ctx, input.ID)
+	if err != nil {
+		return nil, types.SendMailingListUpdateOutput{}, fmt.Errorf("cannot send mailing list update: %w", err)
+	}
+
+	return nil, types.SendMailingListUpdateOutput{
+		MailingListUpdate: types.NewMailingListUpdate(update),
+	}, nil
+}
+
+func (r *Resolver) DeleteMailingListUpdateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMailingListUpdateInput) (*mcp.CallToolResult, types.DeleteMailingListUpdateOutput, error) {
+	if _, err := r.Authorize(ctx, input.ID, management.ActionMailingListUpdateDelete); err != nil {
+		return nil, types.DeleteMailingListUpdateOutput{}, err
+	}
+
+	if err := r.mailman.DeleteMailingListUpdate(ctx, input.ID); err != nil {
+		return nil, types.DeleteMailingListUpdateOutput{}, fmt.Errorf("cannot delete mailing list update: %w", err)
+	}
+
+	return nil, types.DeleteMailingListUpdateOutput{
+		DeletedMailingListUpdateID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListDetectedTrackersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDetectedTrackersInput) (*mcp.CallToolResult, types.ListDetectedTrackersOutput, error) {
+	scope, err := r.Authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternGet)
+	if err != nil {
+		return nil, types.ListDetectedTrackersOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DetectedTrackerOrderField]{
+		Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	trackers, err := r.cookieBanner.ListDetectedTrackersForPattern(ctx, scope, input.TrackerPatternID, cursor)
+	if err != nil {
+		return nil, types.ListDetectedTrackersOutput{}, fmt.Errorf("cannot list detected trackers: %w", err)
+	}
+
+	return nil, types.NewListDetectedTrackersOutput(page.NewPage(trackers, cursor)), nil
+}
+
+func (r *Resolver) ListCompliancePortalFrameworksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalFrameworksInput) (*mcp.CallToolResult, types.ListCompliancePortalFrameworksOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionComplianceFrameworkList)
+	if err != nil {
+		return nil, types.ListCompliancePortalFrameworksOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceFrameworkOrderField]{
+		Field:     coredata.ComplianceFrameworkOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ComplianceFrameworkOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.management.ListFrameworksWithHidden(ctx, scope, input.CompliancePortalID, cursor)
+	if err != nil {
+		return nil, types.ListCompliancePortalFrameworksOutput{}, fmt.Errorf("cannot list compliance portal frameworks: %w", err)
+	}
+
+	return nil, types.NewListCompliancePortalFrameworksOutput(p), nil
+}
+
+func (r *Resolver) AddCompliancePortalFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCompliancePortalFrameworkInput) (*mcp.CallToolResult, types.AddCompliancePortalFrameworkOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionComplianceFrameworkCreate)
+	if err != nil {
+		return nil, types.AddCompliancePortalFrameworkOutput{}, err
+	}
+
+	framework, err := r.management.CreateFramework(
+		ctx,
+		scope,
+		&management.CreateFrameworkRequest{
+			CompliancePortalID: input.CompliancePortalID,
+			FrameworkID:        input.FrameworkID,
+		},
+	)
+	if err != nil {
+		return nil, types.AddCompliancePortalFrameworkOutput{}, fmt.Errorf("cannot add compliance portal framework: %w", err)
+	}
+
+	return nil, types.AddCompliancePortalFrameworkOutput{
+		CompliancePortalFramework: types.NewCompliancePortalFramework(framework),
+	}, nil
+}
+
+func (r *Resolver) UpdateCompliancePortalFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalFrameworkInput) (*mcp.CallToolResult, types.UpdateCompliancePortalFrameworkOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionComplianceFrameworkUpdateRank)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalFrameworkOutput{}, err
+	}
+
+	framework, err := r.management.UpdateFramework(
+		ctx,
+		scope,
+		&management.UpdateFrameworkRequest{
+			ID:   input.ID,
+			Rank: input.Rank,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalFrameworkOutput{}, fmt.Errorf("cannot update compliance portal framework: %w", err)
+	}
+
+	return nil, types.UpdateCompliancePortalFrameworkOutput{
+		CompliancePortalFramework: types.NewCompliancePortalFramework(framework),
+	}, nil
+}
+
+func (r *Resolver) DeleteCompliancePortalFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalFrameworkInput) (*mcp.CallToolResult, types.DeleteCompliancePortalFrameworkOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionComplianceFrameworkDelete)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalFrameworkOutput{}, err
+	}
+
+	err = r.management.DeleteFramework(
+		ctx,
+		scope,
+		&management.DeleteFrameworkRequest{ID: input.ID},
+	)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalFrameworkOutput{}, fmt.Errorf("cannot delete compliance portal framework: %w", err)
+	}
+
+	return nil, types.DeleteCompliancePortalFrameworkOutput{
+		DeletedCompliancePortalFrameworkID: input.ID,
 	}, nil
 }

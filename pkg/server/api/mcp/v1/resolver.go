@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -63,6 +64,7 @@ type Resolver struct {
 	cookieBanner   *cookiebanner.Service
 	riskManagement *riskmanagement.Service
 	itamSvc        *itam.Service
+	mailman        *mailman.Service
 	logger         *log.Logger
 	fileManager    *filemanager.Service
 	baseURL        *baseurl.BaseURL
