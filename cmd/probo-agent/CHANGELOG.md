@@ -5,6 +5,16 @@ documented in this file.
 
 ## Unreleased
 
+## [0.4.2] - 2026-07-30
+
+### Fixed
+
+- macOS auto-update no longer spawns new Background Task Management
+  entries (and the generic executable icon) on every release; updated
+  darwin archives are now signed with a stable identifier, signature
+  downgrades are refused, and daemon/tray jobs are attributed to
+  `Probo Agent.app`.
+
 ## [0.4.1] - 2026-07-29
 
 ### Changed
