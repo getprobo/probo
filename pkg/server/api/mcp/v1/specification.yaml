@@ -12597,6 +12597,7 @@ tools:
     description: List all organizations the user has access to
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12608,6 +12609,7 @@ tools:
     description: List all thirdParties for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12619,6 +12621,7 @@ tools:
     description: List child third parties linked to a parent third party
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12630,6 +12633,7 @@ tools:
     description: List all users for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12641,6 +12645,7 @@ tools:
     description: Get a user by ID (profile ID)
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12753,6 +12758,7 @@ tools:
     description: List all risk assessments for a thirdParty
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12788,6 +12794,7 @@ tools:
     description: List all contacts for a thirdParty
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12835,6 +12842,7 @@ tools:
     description: List all services for a thirdParty
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12894,6 +12902,7 @@ tools:
     description: List all risks for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12905,6 +12914,7 @@ tools:
     description: Get a risk by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12952,6 +12962,7 @@ tools:
     description: List all measures for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -12963,6 +12974,7 @@ tools:
     description: Get a measure by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13010,6 +13022,7 @@ tools:
     description: List risks linked to a measure
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13021,6 +13034,7 @@ tools:
     description: List controls linked to a measure
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13032,6 +13046,7 @@ tools:
     description: List tasks linked to a measure
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13043,6 +13058,7 @@ tools:
     description: List evidences linked to a measure
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13078,6 +13094,7 @@ tools:
     description: List documents linked to a measure
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13089,6 +13106,7 @@ tools:
     description: List all frameworks for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13100,6 +13118,7 @@ tools:
     description: Get a framework by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13135,6 +13154,7 @@ tools:
     description: List all assets for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13146,6 +13166,7 @@ tools:
     description: Get an asset by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13193,6 +13214,7 @@ tools:
     description: List all data for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13204,6 +13226,7 @@ tools:
     description: Get a datum by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13251,6 +13274,7 @@ tools:
     description: List all findings (nonconformities, observations, exceptions) for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13262,6 +13286,7 @@ tools:
     description: Get a finding by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13333,6 +13358,7 @@ tools:
     description: List audits linked to a finding
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13344,6 +13370,7 @@ tools:
     description: List all obligations for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13355,6 +13382,7 @@ tools:
     description: Get an obligation by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13402,6 +13430,7 @@ tools:
     description: List all processing activities for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13413,6 +13442,7 @@ tools:
     description: Get a processing activity by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13460,6 +13490,7 @@ tools:
     description: List all data protection impact assessments (DPIAs) for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13471,6 +13502,7 @@ tools:
     description: Get a data protection impact assessment (DPIA) by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13518,6 +13550,7 @@ tools:
     description: List all transfer impact assessments (TIAs) for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13529,6 +13562,7 @@ tools:
     description: Get a transfer impact assessment (TIA) by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13576,6 +13610,7 @@ tools:
     description: List all audits for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13587,6 +13622,7 @@ tools:
     description: Get an audit by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13634,6 +13670,7 @@ tools:
     description: Get a presigned download URL for an audit's attached report. Returns a time-limited URL valid for 15 minutes. The audit must have an attached report.
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13645,6 +13682,7 @@ tools:
     description: List all controls for the organization or framework
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13656,6 +13694,7 @@ tools:
     description: Get a control by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13715,6 +13754,7 @@ tools:
     description: List obligations linked to a control
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13726,6 +13766,7 @@ tools:
     description: List measures linked to a control
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13737,6 +13778,7 @@ tools:
     description: List documents linked to a control
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13748,6 +13790,7 @@ tools:
     description: List audits linked to a control
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13759,6 +13802,7 @@ tools:
     description: List obligations linked to a risk
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13794,6 +13838,7 @@ tools:
     description: List all tasks for the organization or measure
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13805,6 +13850,7 @@ tools:
     description: Get a task by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13876,6 +13922,7 @@ tools:
     description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13887,6 +13934,7 @@ tools:
     description: Get a document by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13958,6 +14006,7 @@ tools:
     description: List all versions for a document
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -13969,6 +14018,7 @@ tools:
     description: Get a document version by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14004,6 +14054,7 @@ tools:
     description: List all signatures for a document version
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14015,6 +14066,7 @@ tools:
     description: Get a document version signature by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14062,6 +14114,7 @@ tools:
     description: List all statements of applicability for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14073,6 +14126,7 @@ tools:
     description: Get a statement of applicability by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14240,6 +14294,7 @@ tools:
     description: List all applicability statements for a statement of applicability
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14251,6 +14306,7 @@ tools:
     description: Get an applicability statement by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14298,6 +14354,7 @@ tools:
     description: List access review campaigns for an organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14309,6 +14366,7 @@ tools:
     description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, active, auth_method, account_type)
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14320,6 +14378,7 @@ tools:
     description: Get statistics for an access review campaign including counts by decision, flag, and incremental tag
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14379,6 +14438,7 @@ tools:
     description: List access sources for an organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14510,6 +14570,7 @@ tools:
     description: Get the organization context containing structured sections about the company
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14533,6 +14594,7 @@ tools:
     description: Get an audit log entry by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14544,6 +14606,7 @@ tools:
     description: List audit log entries for the organization. Audit log entries record write actions (create, update, delete) performed by users and API keys.
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14579,6 +14642,7 @@ tools:
     description: List all webhook subscriptions for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14590,6 +14654,7 @@ tools:
     description: Get a webhook subscription by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14637,6 +14702,7 @@ tools:
     description: List webhook delivery events for a subscription. Shows delivery status (PENDING, SUCCEEDED, FAILED) and response details.
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14648,6 +14714,7 @@ tools:
     description: List approval quorums for a document version
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14659,6 +14726,7 @@ tools:
     description: Get a document version approval quorum by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14670,6 +14738,7 @@ tools:
     description: List approval decisions for an approval quorum
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14681,6 +14750,7 @@ tools:
     description: Get a document version approval decision by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14692,6 +14762,7 @@ tools:
     description: List all rights requests for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14703,6 +14774,7 @@ tools:
     description: Get a rights request by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14750,6 +14822,7 @@ tools:
     description: Get the compliance portal for an organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14773,6 +14846,7 @@ tools:
     description: List all references for a compliance portal
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14820,6 +14894,7 @@ tools:
     description: List all commitment groups for a trust center
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14867,6 +14942,7 @@ tools:
     description: List all commitments in a commitment group
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14938,6 +15014,7 @@ tools:
     description: List all files for the compliance portal
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -14961,6 +15038,7 @@ tools:
     description: List all compliance custom links for a compliance portal
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15032,6 +15110,7 @@ tools:
     description: List all cookie banners for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15043,6 +15122,7 @@ tools:
     description: Get a cookie banner by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15114,6 +15194,7 @@ tools:
     description: List all cookie categories for a banner
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15125,6 +15206,7 @@ tools:
     description: Get a cookie category by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15184,6 +15266,7 @@ tools:
     description: List all tracker patterns for a category
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15195,6 +15278,7 @@ tools:
     description: Get a tracker pattern by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15254,6 +15338,7 @@ tools:
     description: List all tracker resources for a category
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15265,6 +15350,7 @@ tools:
     description: Get a tracker resource by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15348,6 +15434,7 @@ tools:
     description: List all versions for a cookie banner
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15371,6 +15458,7 @@ tools:
     description: List consent records for a cookie banner
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15382,6 +15470,7 @@ tools:
     description: Get a consent record by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15393,6 +15482,7 @@ tools:
     description: Get the SCIM configuration for an organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15440,6 +15530,7 @@ tools:
     description: Get a SCIM bridge by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15463,6 +15554,7 @@ tools:
     description: List SCIM events for a configuration
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15474,6 +15566,7 @@ tools:
     description: List all risk assessments for an organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15485,6 +15578,7 @@ tools:
     description: Get a risk assessment by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15532,6 +15626,7 @@ tools:
     description: List all scopes for a risk assessment
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15543,6 +15638,7 @@ tools:
     description: Get a risk assessment scope by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15554,6 +15650,7 @@ tools:
     description: Get the Mermaid chart for a risk assessment scope
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15601,6 +15698,7 @@ tools:
     description: List all nodes for a risk assessment scope
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15612,6 +15710,7 @@ tools:
     description: Get a risk assessment node by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15659,6 +15758,7 @@ tools:
     description: List all boundaries for a risk assessment scope
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15670,6 +15770,7 @@ tools:
     description: Get a risk assessment boundary by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15717,6 +15818,7 @@ tools:
     description: List all processes for a risk assessment scope
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15728,6 +15830,7 @@ tools:
     description: Get a risk assessment process by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15775,6 +15878,7 @@ tools:
     description: List all threats for a risk assessment scope
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15786,6 +15890,7 @@ tools:
     description: Get a risk assessment threat by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15833,6 +15938,7 @@ tools:
     description: List all scenarios for a risk assessment scope
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -15844,6 +15950,7 @@ tools:
     description: Get a risk assessment scenario by ID
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:

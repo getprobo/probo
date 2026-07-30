@@ -29,6 +29,7 @@ tools:
     description: List all thirdParties for the organization
     hints:
       readonly: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
@@ -70,9 +71,12 @@ defaults are surprising (`destructiveHint` defaults to **true**,
 | Hint | Reads | Additive writes | Deletes / regenerates |
 |---|---|---|---|
 | `readonly` | `true` | `false` | `false` |
-| `destructive` | omit | `false` | `true` |
-| `idempotent` | `true` | `false` for creates, `true` for updates | `true` |
+| `destructive` | `false` | `false` | `true` |
+| `idempotent` | `true` | `false` for creates, `true` for updates | `true` (regenerates: `false`) |
 | `openWorld` | `false` | `false` (unless the tool calls out, e.g. `vetThirdParty`) | `false` |
+
+Always set all four hints. Do not omit `destructive` or `openWorld` —
+both default to **true** in the MCP spec when absent.
 
 Input/output schemas reference `components/schemas`. Map custom Go types with the `go.probo.inc/mcpgen/type` extension:
 
