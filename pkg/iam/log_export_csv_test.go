@@ -24,11 +24,23 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestUniqueNonEmptyStrings(t *testing.T) {
+func TestScimProfileIDFromEventPath(t *testing.T) {
 	t.Parallel()
 
-	got := uniqueNonEmptyStrings([]string{"a", "A", "", "b", "a"})
-	assert.Equal(t, []string{"a", "b"}, got)
+	profileID := gid.New(gid.NewTenantID(), coredata.MembershipProfileEntityType)
+
+	got, ok := scimProfileIDFromEventPath("/Users/" + profileID.String())
+	require.True(t, ok)
+	assert.Equal(t, profileID, got)
+
+	_, ok = scimProfileIDFromEventPath("/Users")
+	assert.False(t, ok)
+
+	_, ok = scimProfileIDFromEventPath("/Users?filter=userName eq \"a\"")
+	assert.False(t, ok)
 }

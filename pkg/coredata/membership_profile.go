@@ -495,12 +495,11 @@ WHERE
 	return nil
 }
 
-func (p *MembershipProfiles) LoadByOrganizationIDAndUserNames(
+func (p *MembershipProfiles) LoadExistingByIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
-	userNames []string,
+	profileIDs []gid.GID,
 ) error {
 	q := `
 SELECT
@@ -542,26 +541,22 @@ FROM
     iam_membership_profiles p
 WHERE
     p.%s
-    AND p.organization_id = @organization_id
-    AND p.user_name = ANY(@user_names::citext[])
+    AND p.id = ANY(@profile_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{
-		"organization_id": organizationID,
-		"user_names":      userNames,
-	}
+	args := pgx.NamedArgs{"profile_ids": profileIDs}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query profiles by user names: %w", err)
+		return fmt.Errorf("cannot query profiles by ids: %w", err)
 	}
 
 	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
 	if err != nil {
-		return fmt.Errorf("cannot collect profiles by user names: %w", err)
+		return fmt.Errorf("cannot collect profiles by ids: %w", err)
 	}
 
 	*p = profiles

@@ -40,6 +40,11 @@ type (
 		fullName string
 	}
 
+	scimProfileExportLookup struct {
+		byProfileID map[gid.GID]scimProfileExportInfo
+		byUserName  map[string]scimProfileExportInfo
+	}
+
 	auditLogActorExportInfo struct {
 		email string
 		name  string
@@ -172,19 +177,13 @@ func (s *LogExportService) streamSCIMEventCSV(
 			return events, nil
 		},
 		func(events coredata.SCIMEvents) error {
-			profilesByUserName, err := loadSCIMProfileExportInfo(
-				ctx,
-				conn,
-				scope,
-				organizationID,
-				events,
-			)
+			profileLookup, err := loadSCIMProfileExportInfo(ctx, conn, scope, events)
 			if err != nil {
 				return err
 			}
 
 			for _, event := range events {
-				row := scimEventCSVRow(organizationName, event, profilesByUserName)
+				row := scimEventCSVRow(organizationName, event, profileLookup)
 				if err := w.Write(row); err != nil {
 					return fmt.Errorf("cannot write SCIM event CSV row: %w", err)
 				}
@@ -223,9 +222,9 @@ func auditLogEntryCSVRow(
 func scimEventCSVRow(
 	organizationName string,
 	event *coredata.SCIMEvent,
-	profilesByUserName map[string]scimProfileExportInfo,
+	lookup scimProfileExportLookup,
 ) []string {
-	profile := profilesByUserName[strings.ToLower(event.UserName)]
+	profile := lookup.forEvent(event)
 
 	return []string{
 		organizationName,
@@ -293,23 +292,19 @@ func loadSCIMProfileExportInfo(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	organizationID gid.GID,
 	events coredata.SCIMEvents,
-) (map[string]scimProfileExportInfo, error) {
-	userNames := uniqueNonEmptyStrings(scimEventUserNames(events))
-	if len(userNames) == 0 {
-		return map[string]scimProfileExportInfo{}, nil
+) (scimProfileExportLookup, error) {
+	profileIDs := scimEventProfileIDs(events)
+	if len(profileIDs) == 0 {
+		return scimProfileExportLookup{
+			byProfileID: map[gid.GID]scimProfileExportInfo{},
+			byUserName:  map[string]scimProfileExportInfo{},
+		}, nil
 	}
 
 	var profiles coredata.MembershipProfiles
-	if err := profiles.LoadByOrganizationIDAndUserNames(
-		ctx,
-		conn,
-		scope,
-		organizationID,
-		userNames,
-	); err != nil {
-		return nil, fmt.Errorf("cannot load SCIM profile export info: %w", err)
+	if err := profiles.LoadExistingByIDs(ctx, conn, scope, profileIDs); err != nil {
+		return scimProfileExportLookup{}, fmt.Errorf("cannot load SCIM export profiles: %w", err)
 	}
 
 	identityIDs := make([]gid.GID, 0, len(profiles))
@@ -319,7 +314,7 @@ func loadSCIMProfileExportInfo(
 
 	var identities coredata.Identities
 	if err := identities.LoadByIDs(ctx, conn, identityIDs); err != nil {
-		return nil, fmt.Errorf("cannot load SCIM profile identity emails: %w", err)
+		return scimProfileExportLookup{}, fmt.Errorf("cannot load SCIM profile identity emails: %w", err)
 	}
 
 	emailByIdentityID := make(map[gid.GID]string, len(identities))
@@ -327,52 +322,85 @@ func loadSCIMProfileExportInfo(
 		emailByIdentityID[identity.ID] = identity.EmailAddress.String()
 	}
 
-	result := make(map[string]scimProfileExportInfo, len(profiles))
+	lookup := scimProfileExportLookup{
+		byProfileID: make(map[gid.GID]scimProfileExportInfo, len(profiles)),
+		byUserName:  make(map[string]scimProfileExportInfo, len(profiles)),
+	}
 	for _, profile := range profiles {
-		if profile.UserName == nil {
-			continue
-		}
-
-		key := strings.ToLower(*profile.UserName)
-		result[key] = scimProfileExportInfo{
+		info := scimProfileExportInfo{
 			email:    emailByIdentityID[profile.IdentityID],
 			fullName: profileFullName(profile),
 		}
+
+		lookup.byProfileID[profile.ID] = info
+
+		if profile.UserName != nil {
+			lookup.byUserName[strings.ToLower(*profile.UserName)] = info
+		}
 	}
 
-	return result, nil
+	return lookup, nil
 }
 
-func scimEventUserNames(events coredata.SCIMEvents) []string {
-	userNames := make([]string, 0, len(events))
+func (l scimProfileExportLookup) forEvent(event *coredata.SCIMEvent) scimProfileExportInfo {
+	if profileID, ok := scimProfileIDFromEventPath(event.Path); ok {
+		if info, ok := l.byProfileID[profileID]; ok {
+			return info
+		}
+	}
+
+	if event.UserName != "" {
+		return l.byUserName[strings.ToLower(event.UserName)]
+	}
+
+	return scimProfileExportInfo{}
+}
+
+const scimUsersResourcePathPrefix = "/Users/"
+
+func scimProfileIDFromEventPath(path string) (gid.GID, bool) {
+	if !strings.HasPrefix(path, scimUsersResourcePathPrefix) {
+		return gid.GID{}, false
+	}
+
+	rest := strings.TrimPrefix(path, scimUsersResourcePathPrefix)
+	if rest == "" {
+		return gid.GID{}, false
+	}
+
+	idPart, _, _ := strings.Cut(rest, "?")
+
+	idPart, _, _ = strings.Cut(idPart, "/")
+	if idPart == "" {
+		return gid.GID{}, false
+	}
+
+	profileID, err := gid.ParseGID(idPart)
+	if err != nil {
+		return gid.GID{}, false
+	}
+
+	return profileID, true
+}
+
+func scimEventProfileIDs(events coredata.SCIMEvents) []gid.GID {
+	seen := gid.NewSet()
+
 	for _, event := range events {
-		userNames = append(userNames, event.UserName)
-	}
-
-	return userNames
-}
-
-func uniqueNonEmptyStrings(values []string) []string {
-	seen := make(map[string]struct{})
-	out := make([]string, 0, len(values))
-
-	for _, value := range values {
-		value = strings.TrimSpace(value)
-		if value == "" {
+		profileID, ok := scimProfileIDFromEventPath(event.Path)
+		if !ok {
 			continue
 		}
 
-		key := strings.ToLower(value)
-		if _, ok := seen[key]; ok {
-			continue
-		}
-
-		seen[key] = struct{}{}
-
-		out = append(out, value)
+		seen[profileID] = struct{}{}
 	}
 
-	return out
+	profileIDs := make([]gid.GID, 0, len(seen))
+	for profileID := range seen {
+		profileIDs = append(profileIDs, profileID)
+	}
+
+	return profileIDs
 }
 
 func profileFullName(profile *coredata.MembershipProfile) string {
