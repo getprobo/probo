@@ -535,6 +535,8 @@ SELECT
     p.enterprise_organization,
     p.division,
     p.manager_value,
+    p.activated_at,
+    p.deactivated_at,
     p.created_at,
     p.updated_at
 FROM
