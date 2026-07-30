@@ -87,15 +87,21 @@ export function buildSubscribeContinueUrl(): string {
 // resumes) once the gate is cleared. Returns null for non-gate errors. Shared
 // by the route boundaries and the request-access flows so all gate handling
 // stays in one place.
+function isGateError(error: unknown, ctor: new (...args: never[]) => Error, name: string): boolean {
+  return error instanceof ctor || (error instanceof Error && error.name === name);
+}
+
 export function gateRedirectPath(
   error: unknown,
   continueUrl: string,
   locale: UrlLocale = resolveUrlLocale(),
 ): string | null {
-  if (error instanceof FullNameRequiredError) {
+  // Prefer instanceof; fall back to `name` so a duplicated @probo/relay copy
+  // (or a wrapped error that preserved the name) still redirects.
+  if (isGateError(error, FullNameRequiredError, "FullNameRequiredError")) {
     return `${localizedPath(locale, "/full-name")}?continue=${encodeURIComponent(continueUrl)}`;
   }
-  if (error instanceof NDASignatureRequiredError) {
+  if (isGateError(error, NDASignatureRequiredError, "NDASignatureRequiredError")) {
     return `${localizedPath(locale, "/nda")}?continue=${encodeURIComponent(continueUrl)}`;
   }
   return null;

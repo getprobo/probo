@@ -18,9 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
+import { UnAuthenticatedError } from "@probo/relay";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
+import { useNavigate } from "react-router";
 
+import { gateRedirectPath, redirectToInitiate } from "#/lib/auth/continueUrl";
+import { useLocale } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useDocumentExportDocumentMutation } from "./__generated__/useDocumentExportDocumentMutation.graphql";
@@ -59,13 +65,50 @@ interface DocumentExportState {
   isExporting: boolean;
 }
 
-// Exports the aliased node's (watermarked) bytes for the viewer. Fires the
-// export mutation matching the node kind once `enabled`, and resets when the
-// target id changes. Failures surface through the mutation notifier's toast.
+// Exports the aliased node's (watermarked) bytes for the viewer. Fires once per
+// (kind, id) while enabled. Mutation failures cannot reach a route error
+// boundary, so full-name / NDA gates redirect here (same as request-access);
+// other failures toast once. Mutate functions are read from a ref so their
+// identity churn (in-flight flag, toast notifier) cannot re-trigger the effect.
 export function useDocumentExport(kind: DocumentKind, id: string, enabled: boolean): DocumentExportState {
-  const [exportDocument, isExportingDocument] = useMutation<useDocumentExportDocumentMutation>(exportDocumentMutation);
-  const [exportFile, isExportingFile] = useMutation<useDocumentExportFileMutation>(exportFileMutation);
-  const [exportReport, isExportingReport] = useMutation<useDocumentExportReportMutation>(exportReportMutation);
+  const navigate = useNavigate();
+  const locale = useLocale();
+  const toast = Toast.useToastManager();
+  const { t } = useTranslation();
+
+  const [exportDocument, isExportingDocument] = useMutation<useDocumentExportDocumentMutation>(
+    exportDocumentMutation,
+    { errorToast: false },
+  );
+  const [exportFile, isExportingFile] = useMutation<useDocumentExportFileMutation>(
+    exportFileMutation,
+    { errorToast: false },
+  );
+  const [exportReport, isExportingReport] = useMutation<useDocumentExportReportMutation>(
+    exportReportMutation,
+    { errorToast: false },
+  );
+
+  const latest = useRef({
+    exportDocument,
+    exportFile,
+    exportReport,
+    navigate,
+    locale,
+    toast,
+    t,
+  });
+  useEffect(() => {
+    latest.current = {
+      exportDocument,
+      exportFile,
+      exportReport,
+      navigate,
+      locale,
+      toast,
+      t,
+    };
+  });
 
   const [dataUri, setDataUri] = useState<string | null>(null);
 
@@ -77,45 +120,80 @@ export function useDocumentExport(kind: DocumentKind, id: string, enabled: boole
     setDataUri(null);
   }
 
-  // Track the current target so a slow export that resolves after the id
-  // changed cannot overwrite the preview with the previous document's bytes.
-  const currentId = useRef(id);
   useEffect(() => {
-    currentId.current = id;
-  }, [id]);
-
-  useEffect(() => {
-    if (!enabled || dataUri) {
+    if (!enabled) {
       return;
     }
 
-    const apply = (targetId: string, data: string) => {
-      if (currentId.current === targetId) {
-        setDataUri(data);
+    let cancelled = false;
+    const {
+      exportDocument: exportDoc,
+      exportFile: exportFil,
+      exportReport: exportRep,
+    } = latest.current;
+
+    const handleError = (error: unknown) => {
+      if (cancelled) {
+        return;
+      }
+
+      const continueUrl = window.location.href;
+      const err = error instanceof Error ? error : new Error(String(error));
+
+      if (err instanceof UnAuthenticatedError || err.name === "UnAuthenticatedError") {
+        redirectToInitiate(continueUrl);
+        return;
+      }
+
+      const gatePath = gateRedirectPath(err, continueUrl, latest.current.locale);
+      if (gatePath) {
+        void latest.current.navigate(gatePath);
+        return;
+      }
+
+      latest.current.toast.add({ title: latest.current.t("common.error"), type: "error" });
+    };
+
+    const run = async () => {
+      try {
+        let data: string;
+        switch (kind) {
+          case "Document": {
+            const response = await exportDoc({
+              variables: { input: { documentId: id } },
+            });
+            data = response.exportDocumentPDF.data;
+            break;
+          }
+          case "CompliancePortalFile": {
+            const response = await exportFil({
+              variables: { input: { compliancePortalFileId: id } },
+            });
+            data = response.exportCompliancePortalFile.data;
+            break;
+          }
+          case "AuditReport": {
+            const response = await exportRep({
+              variables: { input: { reportId: id } },
+            });
+            data = response.exportReportPDF.data;
+            break;
+          }
+        }
+        if (!cancelled) {
+          setDataUri(data);
+        }
+      } catch (error) {
+        handleError(error);
       }
     };
 
-    switch (kind) {
-      case "Document":
-        exportDocument({
-          variables: { input: { documentId: id } },
-          onCompleted: response => apply(id, response.exportDocumentPDF.data),
-        }).catch(() => {});
-        break;
-      case "CompliancePortalFile":
-        exportFile({
-          variables: { input: { compliancePortalFileId: id } },
-          onCompleted: response => apply(id, response.exportCompliancePortalFile.data),
-        }).catch(() => {});
-        break;
-      case "AuditReport":
-        exportReport({
-          variables: { input: { reportId: id } },
-          onCompleted: response => apply(id, response.exportReportPDF.data),
-        }).catch(() => {});
-        break;
-    }
-  }, [enabled, dataUri, kind, id, exportDocument, exportFile, exportReport]);
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, kind, id]);
 
   return { dataUri, isExporting: isExportingDocument || isExportingFile || isExportingReport };
 }
