@@ -7602,3 +7602,46 @@ func (r *Resolver) SetDeviceOwnerTool(ctx context.Context, req *mcp.CallToolRequ
 		Device: types.NewDevice(device, nil),
 	}, nil
 }
+
+func (r *Resolver) CreateDeviceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDeviceInput) (*mcp.CallToolResult, types.CreateDeviceOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, itam.ActionDeviceCreate)
+	if err != nil {
+		return nil, types.CreateDeviceOutput{}, err
+	}
+
+	result, err := r.itamSvc.CreateDevice(
+		ctx,
+		scope,
+		itam.CreateDeviceRequest{
+			OrganizationID: input.OrganizationID,
+			OwnerID:        input.OwnerID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.CreateDeviceOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if errors.Is(err, itam.ErrInvalidOwnerProfile) {
+			return nil, types.CreateDeviceOutput{}, fmt.Errorf("owner_id must reference a membership profile of the device organization")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create device", log.Error(err))
+
+		return nil, types.CreateDeviceOutput{}, fmt.Errorf("internal server error")
+	}
+
+	urls, err := itam.BuildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build enrollment URLs", log.Error(err))
+
+		return nil, types.CreateDeviceOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.CreateDeviceOutput{
+		Device:          types.NewDevice(result.Device, nil),
+		EnrollmentToken: result.EnrollmentToken,
+		ServerURL:       urls.ServerURL,
+		EnrollmentURL:   urls.EnrollmentURL,
+	}, nil
+}

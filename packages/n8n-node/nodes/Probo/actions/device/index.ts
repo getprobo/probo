@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as createOp from './create.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
@@ -37,6 +38,12 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create a PENDING ITAM device and enrollment token',
+				action: 'Create a device',
+			},
 			{
 				name: 'Delete',
 				value: 'delete',
@@ -70,6 +77,7 @@ export const description: INodeProperties[] = [
 		],
 		default: 'getAll',
 	},
+	...createOp.description,
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
@@ -78,6 +86,7 @@ export const description: INodeProperties[] = [
 ];
 
 export {
+	createOp as create,
 	deleteOp as delete,
 	getOp as get,
 	getAllOp as getAll,

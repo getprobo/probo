@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package console_v1
+package itam_test
 
 import (
 	"net/url"
@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/itam"
 )
 
 func TestBuildEnrollmentURLs(t *testing.T) {
@@ -76,7 +77,7 @@ func TestBuildEnrollmentURLs(t *testing.T) {
 				base = parsed
 			}
 
-			got, err := buildEnrollmentURLs(base, tt.token)
+			got, err := itam.BuildEnrollmentURLs(base, tt.token)
 			if tt.wantErrContains != "" {
 				require.Error(t, err)
 				assert.ErrorContains(t, err, tt.wantErrContains)

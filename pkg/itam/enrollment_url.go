@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package console_v1
+package itam
 
 import (
 	"fmt"
@@ -27,22 +27,22 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 )
 
-// enrollmentURLs holds the public API origin and probo:// deep link issued
+// EnrollmentURLs holds the public API origin and probo:// deep link issued
 // when a device enrollment token is created.
-type enrollmentURLs struct {
+type EnrollmentURLs struct {
 	ServerURL     string
 	EnrollmentURL string
 }
 
-// buildEnrollmentURLs derives the agent server origin and deep link from the
+// BuildEnrollmentURLs derives the agent server origin and deep link from the
 // deployment base URL and a one-shot enrollment token.
-func buildEnrollmentURLs(baseURL *baseurl.BaseURL, enrollmentToken string) (enrollmentURLs, error) {
+func BuildEnrollmentURLs(baseURL *baseurl.BaseURL, enrollmentToken string) (EnrollmentURLs, error) {
 	if baseURL == nil {
-		return enrollmentURLs{}, fmt.Errorf("base URL is required")
+		return EnrollmentURLs{}, fmt.Errorf("base URL is required")
 	}
 
 	if enrollmentToken == "" {
-		return enrollmentURLs{}, fmt.Errorf("enrollment token is required")
+		return EnrollmentURLs{}, fmt.Errorf("enrollment token is required")
 	}
 
 	serverURL := (&url.URL{
@@ -59,7 +59,7 @@ func buildEnrollmentURLs(baseURL *baseurl.BaseURL, enrollmentToken string) (enro
 	query.Set("token", enrollmentToken)
 	enrollURL.RawQuery = query.Encode()
 
-	return enrollmentURLs{
+	return EnrollmentURLs{
 		ServerURL:     serverURL,
 		EnrollmentURL: enrollURL.String(),
 	}, nil

@@ -3126,6 +3126,38 @@ components:
         device:
           $ref: "#/components/schemas/Device"
 
+    CreateDeviceInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Optional MembershipProfile GID belonging to the same organization; omit to leave the device unassigned.
+
+    CreateDeviceOutput:
+      type: object
+      required:
+        - device
+        - enrollment_token
+        - server_url
+        - enrollment_url
+      properties:
+        device:
+          $ref: "#/components/schemas/Device"
+        enrollment_token:
+          type: string
+          description: One-shot enrollment token shown only in this response; the agent installer exchanges it via REST /enroll. It expires after the deployment-configured enrollment token lifetime (7 days by default), so do not cache it for a later enrollment attempt.
+        server_url:
+          type: string
+          description: Public API origin for agent --server / deep-link server=.
+        enrollment_url:
+          type: string
+          description: probo://enroll?server=...&token=... deep link for the desktop agent.
+
     RevokeDeviceInput:
       type: object
       required:
@@ -13519,7 +13551,7 @@ tools:
       $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listDevices
     title: List Devices
-    description: "List ITAM devices for an organization. Devices cannot be created through the MCP API: enrollment issues a one-shot token that the agent installer exchanges (there is no createDevice tool). Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. latest_postures is empty unless include_postures is true; when loaded it holds the newest result per check_key and is empty for PENDING devices. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
+    description: "List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. latest_postures is empty unless include_postures is true; when loaded it holds the newest result per check_key and is empty for PENDING devices. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
     hints:
       readonly: true
       destructive: false
@@ -13541,6 +13573,18 @@ tools:
       $ref: "#/components/schemas/GetDeviceInput"
     outputSchema:
       $ref: "#/components/schemas/GetDeviceOutput"
+  - name: createDevice
+    title: Create Device
+    description: "Create a PENDING ITAM device and return a one-shot enrollment token (plus server_url and enrollment_url) for the agent installer. The plaintext token is shown only in this response; only its hash is stored. The token also expires after a deployment-configured lifetime (7 days by default), so hand it to the installer now instead of storing it for a later retry: exchanging an expired token fails with enrollment token expired and leaves the device PENDING, and you must call createDevice again to issue a fresh device and token. Optionally assign an owner with owner_id (MembershipProfile GID in the same organization)."
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateDeviceInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateDeviceOutput"
   - name: revokeDevice
     title: Revoke Device
     description: "Irreversibly revoke a device enrollment. Immediately invalidates the device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. Call this before deleteDevice."

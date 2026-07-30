@@ -23,6 +23,7 @@ package device
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/device/create"
 	"go.probo.inc/probo/pkg/cmd/device/delete"
 	"go.probo.inc/probo/pkg/cmd/device/list"
 	"go.probo.inc/probo/pkg/cmd/device/revoke"
@@ -36,6 +37,7 @@ func NewCmdDevice(f *cmdutil.Factory) *cobra.Command {
 		Short: "Manage ITAM devices",
 	}
 
+	cmd.AddCommand(create.NewCmdCreate(f))
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(revoke.NewCmdRevoke(f))

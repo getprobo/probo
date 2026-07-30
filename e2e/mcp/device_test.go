@@ -29,14 +29,6 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-const createDeviceMutation = `
-mutation CreateDevice($input: CreateDeviceInput!) {
-	createDevice(input: $input) {
-		device { id state }
-	}
-}
-`
-
 type mcpDevice struct {
 	ID             string  `json:"id"`
 	OrganizationID string  `json:"organization_id"`
@@ -49,25 +41,27 @@ type mcpDevice struct {
 	} `json:"latest_postures"`
 }
 
-func createDeviceViaGraphQL(t *testing.T, owner *testutil.Client, orgID string) string {
+func createDeviceViaMCP(t *testing.T, mc *testutil.MCPClient, orgID string) string {
 	t.Helper()
 
 	var result struct {
-		CreateDevice struct {
-			Device struct {
-				ID    string `json:"id"`
-				State string `json:"state"`
-			} `json:"device"`
-		} `json:"createDevice"`
+		Device          mcpDevice `json:"device"`
+		EnrollmentToken string    `json:"enrollment_token"`
+		ServerURL       string    `json:"server_url"`
+		EnrollmentURL   string    `json:"enrollment_url"`
 	}
-	owner.MustExecute(createDeviceMutation, map[string]any{
-		"input": map[string]any{
-			"organizationId": orgID,
-		},
+	mc.CallToolInto("createDevice", map[string]any{
+		"organization_id": orgID,
 	}, &result)
-	require.NotEmpty(t, result.CreateDevice.Device.ID)
+	require.NotEmpty(t, result.Device.ID)
+	assert.Equal(t, "PENDING", result.Device.State)
+	assert.NotEmpty(t, result.EnrollmentToken)
+	assert.NotEmpty(t, result.ServerURL)
+	assert.NotEmpty(t, result.EnrollmentURL)
+	assert.NotNil(t, result.Device.LatestPostures)
+	assert.Empty(t, result.Device.LatestPostures)
 
-	return result.CreateDevice.Device.ID
+	return result.Device.ID
 }
 
 func TestMCP_Device_Lifecycle(t *testing.T) {
@@ -77,7 +71,7 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 	profileID := factory.CreateUser(owner)
 
-	deviceID := createDeviceViaGraphQL(t, owner, orgID)
+	deviceID := createDeviceViaMCP(t, mc, orgID)
 
 	// Get
 	var getResult struct {
@@ -156,13 +150,59 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 	assert.Equal(t, "resource not found", msg)
 }
 
+func TestMCP_Device_CreateWithOwner(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	profileID := factory.CreateUser(owner)
+
+	var result struct {
+		Device          mcpDevice `json:"device"`
+		EnrollmentToken string    `json:"enrollment_token"`
+	}
+	mc.CallToolInto("createDevice", map[string]any{
+		"organization_id": orgID,
+		"owner_id":        profileID,
+	}, &result)
+	require.NotEmpty(t, result.Device.ID)
+	assert.Equal(t, "PENDING", result.Device.State)
+	assert.NotEmpty(t, result.EnrollmentToken)
+	require.NotNil(t, result.Device.OwnerID)
+	assert.Equal(t, profileID, *result.Device.OwnerID)
+}
+
+func TestMCP_Device_CreateWithInvalidOwner(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	msg := mc.CallToolExpectToolError("createDevice", map[string]any{
+		"organization_id": orgID,
+		"owner_id":        orgID,
+	})
+	assert.Equal(t, "owner_id must reference a membership profile of the device organization", msg)
+
+	// Each organization lives in its own tenant, so the tenant-scoped profile
+	// load fails before the owner organization is ever compared.
+	otherOwner := testutil.NewClient(t, testutil.RoleOwner)
+	otherProfileID := factory.CreateUser(otherOwner)
+
+	msg = mc.CallToolExpectToolError("createDevice", map[string]any{
+		"organization_id": orgID,
+		"owner_id":        otherProfileID,
+	})
+	assert.Equal(t, "resource not found", msg)
+}
+
 func TestMCP_Device_CannotDeletePending(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
 	orgID := owner.GetOrganizationID().String()
 
-	deviceID := createDeviceViaGraphQL(t, owner, orgID)
+	deviceID := createDeviceViaMCP(t, mc, orgID)
 
 	msg := mc.CallToolExpectToolError("deleteDevice", map[string]any{
 		"id": deviceID,
@@ -173,14 +213,28 @@ func TestMCP_Device_CannotDeletePending(t *testing.T) {
 func TestMCP_Device_PermissionDenied(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
 	orgID := owner.GetOrganizationID().String()
-	deviceID := createDeviceViaGraphQL(t, owner, orgID)
+	deviceID := createDeviceViaMCP(t, mc, orgID)
 
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 	viewerMC := testutil.NewMCPClient(t, viewer)
 
 	msg := viewerMC.CallToolExpectToolError("revokeDevice", map[string]any{
 		"id": deviceID,
+	})
+	assert.Contains(t, msg, "permission denied")
+
+	msg = viewerMC.CallToolExpectToolError("createDevice", map[string]any{
+		"organization_id": orgID,
+	})
+	assert.Contains(t, msg, "permission denied")
+
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	employeeMC := testutil.NewMCPClient(t, employee)
+
+	msg = employeeMC.CallToolExpectToolError("createDevice", map[string]any{
+		"organization_id": orgID,
 	})
 	assert.Contains(t, msg, "permission denied")
 }
@@ -195,7 +249,7 @@ func TestMCP_Device_EmployeeCannotIncludePostures(t *testing.T) {
 	employeeMC := testutil.NewMCPClient(t, employee)
 	employeeProfileID := employee.GetProfileID().String()
 
-	deviceID := createDeviceViaGraphQL(t, owner, orgID)
+	deviceID := createDeviceViaMCP(t, ownerMC, orgID)
 
 	var setOwnerResult struct {
 		Device mcpDevice `json:"device"`

@@ -166,7 +166,7 @@ func (r *mutationResolver) EnrollDevice(ctx context.Context, input types.EnrollD
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	urls, err := buildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
+	urls, err := itam.BuildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build enrollment URLs", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -208,7 +208,7 @@ func (r *mutationResolver) CreateDevice(ctx context.Context, input types.CreateD
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	urls, err := buildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
+	urls, err := itam.BuildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build enrollment URLs", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
