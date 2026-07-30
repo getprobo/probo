@@ -325,6 +325,10 @@ func (u *Updater) Apply(ctx context.Context, rel *Release) error {
 		return fmt.Errorf("cannot extract archive: %w", err)
 	}
 
+	if err := ensureSignatureCompatible(ctx, u.Logger, u.ExePath, extractedBinary); err != nil {
+		return fmt.Errorf("cannot verify code signature compatibility: %w", err)
+	}
+
 	if err := replaceBinary(u.ExePath, extractedBinary); err != nil {
 		return fmt.Errorf("cannot replace agent binary: %w", err)
 	}

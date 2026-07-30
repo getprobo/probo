@@ -126,6 +126,7 @@ jobs:
           LDFLAGS="-s -w -X 'main.version=${VERSION}'"
 
           mkdir -p dist archives staging
+          export COPYFILE_DISABLE=1
 
           GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" \
             -gcflags="-e" -o dist/probo-agent_arm64 ./cmd/probo-agent
@@ -147,6 +148,13 @@ jobs:
             if [ -f cmd/probo-agent/CHANGELOG.md ]; then
               cp cmd/probo-agent/CHANGELOG.md "staging/${AGENT_DIR}/"
             fi
+            # Match the PKG payload signing identity so auto-update does
+            # not replace a Developer ID binary with an ad-hoc one (which
+            # multiplies macOS Background Activity entries).
+            codesign --force --options runtime --timestamp \
+              --identifier com.probo.agent \
+              --sign "${CODESIGN_IDENTITY}" "staging/${AGENT_DIR}/probo-agent"
+            codesign --verify --verbose=2 "staging/${AGENT_DIR}/probo-agent"
             tar -czf "archives/${AGENT_DIR}.tar.gz" -C staging "${AGENT_DIR}"
           done
 

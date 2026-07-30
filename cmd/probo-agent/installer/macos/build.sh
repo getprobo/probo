@@ -151,12 +151,17 @@ fi
 
 codesign_runtime() {
   local path="$1"
-  codesign \
-    --force \
-    --options runtime \
-    --timestamp \
-    --sign "${CODESIGN_IDENTITY}" \
-    "${path}"
+  local identifier="${2:-}"
+  local -a args=(
+    --force
+    --options runtime
+    --timestamp
+    --sign "${CODESIGN_IDENTITY}"
+  )
+  if [ -n "${identifier}" ]; then
+    args+=(--identifier "${identifier}")
+  fi
+  codesign "${args[@]}" "${path}"
   codesign --verify --verbose=2 "${path}"
 }
 
@@ -391,7 +396,7 @@ RESOURCES="${STAGE}/Resources"
 mkdir -p "${PAYLOAD}/usr/local/bin" "${SCRIPTS}" "${RESOURCES}"
 
 install -m 0755 "${BINARY}" "${PAYLOAD}/usr/local/bin/probo-agent"
-codesign_runtime "${PAYLOAD}/usr/local/bin/probo-agent"
+codesign_runtime "${PAYLOAD}/usr/local/bin/probo-agent" "com.probo.agent"
 
 mkdir -p "${PAYLOAD}/Applications"
 build_probo_agent_app "${PAYLOAD}/Applications"
