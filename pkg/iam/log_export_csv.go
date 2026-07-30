@@ -30,7 +30,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/safecsv"
 )
@@ -228,11 +227,6 @@ func scimEventCSVRow(
 ) []string {
 	profile := profilesByUserName[strings.ToLower(event.UserName)]
 
-	email := profile.email
-	if email == "" {
-		email = scimEmailFromUserName(event.UserName)
-	}
-
 	return []string{
 		organizationName,
 		event.ID.String(),
@@ -240,7 +234,7 @@ func scimEventCSVRow(
 		event.Method,
 		event.Path,
 		event.UserName,
-		email,
+		profile.email,
 		profile.fullName,
 		strconv.Itoa(event.StatusCode),
 		stringPtrValue(event.ErrorMessage),
@@ -379,19 +373,6 @@ func uniqueNonEmptyStrings(values []string) []string {
 	}
 
 	return out
-}
-
-func scimEmailFromUserName(userName string) string {
-	userName = strings.TrimSpace(userName)
-	if userName == "" {
-		return ""
-	}
-
-	if _, err := mail.ParseAddr(userName); err == nil {
-		return userName
-	}
-
-	return ""
 }
 
 func profileFullName(profile *coredata.MembershipProfile) string {

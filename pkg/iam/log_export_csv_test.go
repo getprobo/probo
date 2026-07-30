@@ -32,11 +32,3 @@ func TestUniqueNonEmptyStrings(t *testing.T) {
 	got := uniqueNonEmptyStrings([]string{"a", "A", "", "b", "a"})
 	assert.Equal(t, []string{"a", "b"}, got)
 }
-
-func TestScimEmailFromUserName(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "user@example.com", scimEmailFromUserName("user@example.com"))
-	assert.Equal(t, "", scimEmailFromUserName("not-an-email"))
-	assert.Equal(t, "", scimEmailFromUserName(""))
-}
