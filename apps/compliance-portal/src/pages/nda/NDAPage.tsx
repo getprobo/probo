@@ -25,6 +25,7 @@ import {
   MagnifyingGlassPlusIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Link } from "@probo/ui/src/v2/Button/Link";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Separator } from "@probo/ui/src/v2/Separator/Separator";
@@ -112,7 +113,9 @@ interface NDAPageProps {
 // Non-Disclosure Agreement gate: the user reviews the NDA (rendered in the body)
 // and signs it via the header action. Signing records the consent events, accepts
 // the electronic signature, polls until it is sealed, then returns to the
-// continue URL. Reached from the route boundary on NDA_SIGNATURE_REQUIRED.
+// continue URL. A Documents back link dismisses without signing (avoids bouncing
+// into the continue URL that re-triggers the gate). Reached from the route
+// boundary / mutation layer on NDA_SIGNATURE_REQUIRED.
 export function NDAPage({ queryRef }: NDAPageProps) {
   const { t } = useTranslation("nda");
   const localizedPath = useLocalizedPath();
@@ -233,6 +236,16 @@ export function NDAPage({ queryRef }: NDAPageProps) {
     <div className={slots.root()}>
       <HeaderBand flushBottomSpace>
         <div className={slots.header()}>
+          <Link
+            to={localizedPath("/documents")}
+            variant="ghost"
+            color="neutral"
+            size={1}
+            iconStart={<CaretLeftIcon />}
+            className={slots.back()}
+          >
+            {t("back")}
+          </Link>
           <div className={slots.text()}>
             <Heading level={1} size={7} weight="medium" highContrast>
               {t("title")}

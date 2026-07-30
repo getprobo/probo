@@ -26,6 +26,7 @@ export const ndaPage = tv({
   slots: {
     root: "flex h-dvh flex-col",
     header: "flex w-full flex-col gap-3",
+    back: "-ml-2 self-start",
     text: "flex flex-col gap-1",
     toolbar: "flex min-h-16 flex-wrap items-center justify-between gap-x-4 gap-y-2",
     toolbarStart: "flex min-w-0 flex-wrap items-center gap-2",

@@ -33,6 +33,7 @@ export function NDAPageSkeleton() {
     <div className={slots.root()}>
       <HeaderBand flushBottomSpace>
         <div className={slots.header()}>
+          <TextSkeleton size={1} className={`${slots.back()} w-20`} />
           <div className={slots.text()}>
             <HeadingSkeleton size={7} className="w-80" />
             <TextSkeleton size={2} className="w-96" />
