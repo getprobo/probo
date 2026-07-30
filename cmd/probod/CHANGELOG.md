@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Microsoft 365 access review lists home-tenant organization members only, using the same Graph `/users?$filter=userType eq 'Member'` call as the SCIM bridge
+
 ## [0.241.0] - 2026-07-30
 
 ### Added

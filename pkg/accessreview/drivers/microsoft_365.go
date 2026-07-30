@@ -44,10 +44,8 @@ type Microsoft365Driver struct {
 var _ Driver = (*Microsoft365Driver)(nil)
 
 const (
-	microsoft365GraphBaseURL = "https://graph.microsoft.com/v1.0"
-	microsoft365UsersSelect  = "id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,createdDateTime"
-	// microsoft365UserTypeMemberFilter restricts /users to internal members
-	// so guest (B2B) accounts are not pulled into access review.
+	microsoft365GraphBaseURL         = "https://graph.microsoft.com/v1.0"
+	microsoft365UsersSelect          = "id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,createdDateTime"
 	microsoft365UserTypeMemberFilter = "userType eq 'Member'"
 	microsoft365UsersPageSize        = 999
 	microsoft365MaxPaginationOK      = maxPaginationPages
@@ -270,20 +268,15 @@ func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User,
 }
 
 func buildMicrosoft365UsersURL() (string, error) {
-	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "users")
-	if err != nil {
-		return "", fmt.Errorf("cannot build graph users URL: %w", err)
-	}
-
-	u, err := url.Parse(endpoint)
+	u, err := url.Parse(microsoft365GraphBaseURL + "/users")
 	if err != nil {
 		return "", fmt.Errorf("cannot parse graph users URL: %w", err)
 	}
 
 	q := u.Query()
 	q.Set("$select", microsoft365UsersSelect)
-	q.Set("$filter", microsoft365UserTypeMemberFilter)
 	q.Set("$top", strconv.Itoa(microsoft365UsersPageSize))
+	q.Set("$filter", microsoft365UserTypeMemberFilter)
 	u.RawQuery = q.Encode()
 
 	return u.String(), nil
