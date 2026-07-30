@@ -106,5 +106,12 @@
       "useThis": "将{{language}}设为我的语言",
       "dismiss": "关闭"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "签署保密协议以访问私有文档。",
+      "sign": "查看并签署",
+      "dismiss": "关闭"
+    }
   }
 }

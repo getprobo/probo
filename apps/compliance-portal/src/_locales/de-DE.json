@@ -106,5 +106,12 @@
       "useThis": "{{language}} als meine Sprache verwenden",
       "dismiss": "Schließen"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "Unterschreiben Sie die Geheimhaltungsvereinbarung, um auf private Dokumente zuzugreifen.",
+      "sign": "Prüfen und unterschreiben",
+      "dismiss": "Schließen"
+    }
   }
 }

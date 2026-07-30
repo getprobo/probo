@@ -106,5 +106,12 @@
       "useThis": "{{language}}を自分の言語として使用",
       "dismiss": "閉じる"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "非公開ドキュメントにアクセスするには秘密保持契約に署名してください。",
+      "sign": "確認して署名",
+      "dismiss": "閉じる"
+    }
   }
 }

@@ -66,6 +66,7 @@ func newNDADirective(
 			logger.ErrorCtx(ctx, "cannot check target visibility for NDA gate", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		if skip {
 			return next(ctx)
 		}
@@ -123,6 +124,7 @@ func shouldSkipNDAForPublic(
 		if !ok {
 			return false, nil
 		}
+
 		return isPublicDocument(ctx, visitorSvc, scope, organizationID, input.DocumentID)
 
 	case "requestDocumentAccess":
@@ -130,6 +132,7 @@ func shouldSkipNDAForPublic(
 		if !ok {
 			return false, nil
 		}
+
 		return isPublicDocument(ctx, visitorSvc, scope, organizationID, input.DocumentID)
 
 	case "exportReportPDF":
@@ -137,6 +140,7 @@ func shouldSkipNDAForPublic(
 		if !ok {
 			return false, nil
 		}
+
 		return isPublicReport(ctx, visitorSvc, scope, input.ReportID)
 
 	case "requestReportAccess":
@@ -144,6 +148,7 @@ func shouldSkipNDAForPublic(
 		if !ok {
 			return false, nil
 		}
+
 		return isPublicReport(ctx, visitorSvc, scope, input.ReportID)
 
 	case "exportCompliancePortalFile":
@@ -151,6 +156,7 @@ func shouldSkipNDAForPublic(
 		if !ok {
 			return false, nil
 		}
+
 		return isPublicPortalFile(ctx, visitorSvc, scope, organizationID, input.CompliancePortalFileID)
 
 	case "requestCompliancePortalFileAccess":
@@ -158,6 +164,7 @@ func shouldSkipNDAForPublic(
 		if !ok {
 			return false, nil
 		}
+
 		return isPublicPortalFile(ctx, visitorSvc, scope, organizationID, input.CompliancePortalFileID)
 
 	default:
@@ -177,6 +184,7 @@ func isPublicDocument(
 		if isMissingDocument(err) {
 			return true, nil
 		}
+
 		return false, fmt.Errorf("cannot load document: %w", err)
 	}
 
@@ -194,6 +202,7 @@ func isPublicReport(
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return true, nil
 		}
+
 		return false, fmt.Errorf("cannot load audit: %w", err)
 	}
 
@@ -214,6 +223,7 @@ func isPublicPortalFile(
 			errors.Is(err, coredata.ErrResourceNotFound) {
 			return true, nil
 		}
+
 		return false, fmt.Errorf("cannot load portal file: %w", err)
 	}
 
@@ -226,6 +236,8 @@ func isMissingDocument(err error) bool {
 		errors.Is(err, coredata.ErrResourceNotFound) {
 		return true
 	}
+
 	_, ok := errors.AsType[*visitor.ErrDocumentArchived](err)
+
 	return ok
 }

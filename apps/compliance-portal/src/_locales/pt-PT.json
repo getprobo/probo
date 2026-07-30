@@ -106,5 +106,12 @@
       "useThis": "Usar {{language}} como o meu idioma",
       "dismiss": "Ignorar"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "Assine o acordo de confidencialidade para aceder aos documentos privados.",
+      "sign": "Rever e assinar",
+      "dismiss": "Fechar"
+    }
   }
 }

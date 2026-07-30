@@ -106,5 +106,12 @@
       "useThis": "표시 언어({{language}})를 내 언어로 사용",
       "dismiss": "닫기"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "비공개 문서에 접근하려면 비밀 유지 계약에 서명하세요.",
+      "sign": "검토 후 서명",
+      "dismiss": "닫기"
+    }
   }
 }

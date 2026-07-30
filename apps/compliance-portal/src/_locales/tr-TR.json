@@ -106,5 +106,12 @@
       "useThis": "{{language}} dilini benim dilim olarak kullan",
       "dismiss": "Kapat"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "Özel belgelere erişmek için gizlilik sözleşmesini imzalayın.",
+      "sign": "İncele ve imzala",
+      "dismiss": "Kapat"
+    }
   }
 }

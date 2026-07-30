@@ -106,5 +106,12 @@
       "useThis": "Gunakan {{language}} sebagai bahasa saya",
       "dismiss": "Tutup"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "Tandatangani perjanjian kerahasiaan untuk mengakses dokumen pribadi.",
+      "sign": "Tinjau dan tanda tangani",
+      "dismiss": "Tutup"
+    }
   }
 }

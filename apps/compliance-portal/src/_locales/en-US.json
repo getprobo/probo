@@ -106,5 +106,12 @@
   "pagination": {
     "previous": "Previous page",
     "next": "Next page"
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "Sign the NDA to access private documents.",
+      "sign": "Review and sign",
+      "dismiss": "Dismiss"
+    }
   }
 }

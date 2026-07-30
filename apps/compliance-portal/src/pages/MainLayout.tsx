@@ -26,6 +26,7 @@ import { Outlet, useMatch } from "react-router";
 import { LocaleMismatchCallout } from "#/components/LocaleMismatchCallout";
 import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
+import { UnsignedNDACallout } from "#/components/UnsignedNDACallout/UnsignedNDACallout";
 import { useResumeAccessRequest } from "#/lib/auth/useResumeAccessRequest";
 import { useEnsureViewerLocale } from "#/lib/i18n/useEnsureViewerLocale";
 import { SubscribeDialogProvider } from "#/lib/mailingList/SubscribeDialogProvider";
@@ -38,6 +39,9 @@ export const mainLayoutQuery = graphql`
       __typename
       ...LocaleMismatchCallout_identity
       ...useEnsureViewerLocale_identity
+    }
+    currentCompliancePortal {
+      ...UnsignedNDACallout_compliancePortal
     }
     ...TopBar_query
     ...SubscribeDialogProvider_query
@@ -73,6 +77,9 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
         <TopBar queryKey={data} />
         {data.viewer != null
           ? <LocaleMismatchCallout identityKey={data.viewer} />
+          : null}
+        {data.viewer != null && data.currentCompliancePortal != null
+          ? <UnsignedNDACallout compliancePortalKey={data.currentCompliancePortal} />
           : null}
         <div
           className={

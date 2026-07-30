@@ -106,5 +106,12 @@
       "useThis": "Użyj {{language}} jako mojego języka",
       "dismiss": "Zamknij"
     }
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "Podpisz umowę o zachowaniu poufności, aby uzyskać dostęp do prywatnych dokumentów.",
+      "sign": "Przejrzyj i podpisz",
+      "dismiss": "Zamknij"
+    }
   }
 }
