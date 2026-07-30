@@ -29,6 +29,7 @@ import * as cookieCategory from './cookieCategory';
 import * as cookieConsentRecord from './cookieConsentRecord';
 import * as trackerPattern from './trackerPattern';
 import * as datum from './datum';
+import * as device from './device';
 import * as document from './document';
 import * as dpia from './dpia';
 import * as evidence from './evidence';
@@ -73,6 +74,7 @@ export const resources: Record<string, ResourceModule> = {
 	cookieConsentRecord: cookieConsentRecord as ResourceModule,
 	trackerPattern: trackerPattern as ResourceModule,
 	datum: datum as ResourceModule,
+	device: device as ResourceModule,
 	document: document as ResourceModule,
 	dpia: dpia as ResourceModule,
 	evidence: evidence as ResourceModule,

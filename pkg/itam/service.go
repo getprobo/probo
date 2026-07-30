@@ -62,6 +62,10 @@ var (
 	// because it is not REVOKED.
 	ErrDeviceNotDeletable = errors.New("device cannot be deleted")
 
+	// ErrInvalidOwnerProfile is returned when an owner ID is not a
+	// membership profile of the device organization.
+	ErrInvalidOwnerProfile = errors.New("invalid owner profile")
+
 	// ErrCorrelationIDRequired is returned when a posture result is
 	// missing a correlation ID.
 	ErrCorrelationIDRequired = errors.New("correlation_id is required")
@@ -642,7 +646,7 @@ func (s *Service) validateOwnerProfileID(
 	}
 
 	if ownerID.EntityType() != coredata.MembershipProfileEntityType {
-		return nil, fmt.Errorf("owner_id must be a membership profile")
+		return nil, fmt.Errorf("%w: owner_id must be a membership profile", ErrInvalidOwnerProfile)
 	}
 
 	profile := &coredata.MembershipProfile{}
@@ -651,7 +655,7 @@ func (s *Service) validateOwnerProfileID(
 	}
 
 	if profile.OrganizationID != organizationID {
-		return nil, fmt.Errorf("owner profile does not belong to organization")
+		return nil, fmt.Errorf("%w: owner profile does not belong to organization", ErrInvalidOwnerProfile)
 	}
 
 	return ownerID, nil

@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
@@ -46,6 +47,10 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
+
+// maxDeviceListSize caps the listDevices page size: with include_postures the
+// resolver runs one posture query per returned device.
+const maxDeviceListSize = 100
 
 type Resolver struct {
 	proboSvc       *probo.Service
@@ -57,6 +62,7 @@ type Resolver struct {
 	accessReview   *accessreview.Service
 	cookieBanner   *cookiebanner.Service
 	riskManagement *riskmanagement.Service
+	itamSvc        *itam.Service
 	logger         *log.Logger
 	fileManager    *filemanager.Service
 	baseURL        *baseurl.BaseURL

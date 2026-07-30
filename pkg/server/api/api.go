@@ -245,6 +245,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.AccessReview,
 			cfg.CookieBanner,
 			cfg.RiskManagement,
+			cfg.ITAM,
 			cfg.TokenSecret,
 			cfg.File,
 			cfg.BaseURL,

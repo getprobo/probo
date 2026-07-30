@@ -2872,6 +2872,319 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted asset ID
 
+    DeviceState:
+      type: string
+      description: Device lifecycle state. PENDING means an enrollment token was issued but the agent has never checked in; ACTIVE means the agent is heartbeating; REVOKED means enrollment was revoked.
+      enum:
+        - PENDING
+        - ACTIVE
+        - REVOKED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DeviceState
+
+    DevicePlatform:
+      type: string
+      enum:
+        - DARWIN
+        - LINUX
+        - FREEBSD
+        - WINDOWS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePlatform
+
+    DevicePostureStatus:
+      type: string
+      description: Posture check verdict. PASS and FAIL are compliance outcomes; UNKNOWN means the agent could not determine a result; NOT_APPLICABLE means the check does not apply on this host or platform (for example no screen-lock tool on a headless Linux host).
+      enum:
+        - PASS
+        - FAIL
+        - UNKNOWN
+        - NOT_APPLICABLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePostureStatus
+
+    DevicePostureValueKind:
+      type: string
+      description: Machine-readable observation class for a posture value. Use kind to interpret text and number; kind is not the compliance verdict (see status). SECONDS and MIN_PASSWORD_LENGTH carry a value in number; TEXT carries a literal in text; other kinds are self-describing (ON, OFF, IMMEDIATE, CONFIGURED, NONE, UNKNOWN).
+      enum:
+        - ON
+        - OFF
+        - IMMEDIATE
+        - SECONDS
+        - MIN_PASSWORD_LENGTH
+        - CONFIGURED
+        - NONE
+        - TEXT
+        - UNKNOWN
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePostureValueKind
+
+    DeviceOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - UPDATED_AT
+        - HOSTNAME
+        - LAST_SEEN_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DeviceOrderField
+
+    DeviceOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DeviceOrderField"
+          description: Device order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Device order direction
+
+    DevicePostureValue:
+      type: object
+      required:
+        - kind
+        - text
+      properties:
+        kind:
+          $ref: "#/components/schemas/DevicePostureValueKind"
+          description: Machine-readable observation class (ON, OFF, TEXT, SECONDS, and so on). Interpret text and number based on kind; this is not the compliance verdict.
+        text:
+          type: string
+          description: Literal posture value when kind is TEXT (for example an OS version or engine name). Often empty for non-TEXT kinds.
+        number:
+          type:
+            - integer
+            - "null"
+          description: Numeric posture value when kind is SECONDS (delay) or MIN_PASSWORD_LENGTH (character count); null otherwise.
+
+    DevicePosture:
+      type: object
+      required:
+        - id
+        - device_id
+        - check_key
+        - status
+        - value
+        - observed_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Device posture ID
+        device_id:
+          $ref: "#/components/schemas/GID"
+          description: Device ID
+        check_key:
+          type: string
+          description: Posture check identifier (for example DISK_ENCRYPTION, SCREEN_LOCK, FIREWALL_ENABLED, TIME_SYNC, OS_VERSION, AUTO_UPDATE, PASSWORD_POLICY, REMOTE_LOGIN, MALWARE_PROTECTION).
+        status:
+          $ref: "#/components/schemas/DevicePostureStatus"
+          description: Posture check verdict (PASS, FAIL, UNKNOWN, or NOT_APPLICABLE). NOT_APPLICABLE means the check does not apply on this host or platform.
+        value:
+          $ref: "#/components/schemas/DevicePostureValue"
+          description: Observed posture value for this check_key; use value.kind to interpret value.text and value.number.
+        observed_at:
+          type: string
+          format: date-time
+          description: Observation timestamp
+
+    Device:
+      type: object
+      required:
+        - id
+        - organization_id
+        - state
+        - latest_postures
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Device ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        state:
+          $ref: "#/components/schemas/DeviceState"
+          description: Device lifecycle state (PENDING, ACTIVE, or REVOKED).
+        hostname:
+          type:
+            - string
+            - "null"
+          description: Device hostname
+        serial_number:
+          type:
+            - string
+            - "null"
+          description: Device serial number
+        hardware_uuid:
+          type:
+            - string
+            - "null"
+          description: Device hardware UUID
+        platform:
+          anyOf:
+            - $ref: "#/components/schemas/DevicePlatform"
+            - type: "null"
+          description: Device platform
+        os_version:
+          type:
+            - string
+            - "null"
+          description: Operating system version
+        agent_version:
+          type:
+            - string
+            - "null"
+          description: Agent version
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: MembershipProfile GID of the device owner, or null when unassigned.
+        enrolled_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Enrollment timestamp
+        last_seen_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Last agent heartbeat timestamp; use as the staleness signal. Null while the device is still PENDING.
+        revoked_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Time of the first revoke. Set once and kept on subsequent revokeDevice calls.
+        latest_postures:
+          type: array
+          items:
+            $ref: "#/components/schemas/DevicePosture"
+          description: Newest posture result per check_key when include_postures was true on listDevices or getDevice; otherwise empty. Also empty for PENDING devices that have never reported.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListDevicesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/DeviceOrderBy"
+          description: Device order by
+        size:
+          type: integer
+          description: Number of devices to return in this page.
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Opaque cursor from a previous next_cursor; omit on the first page.
+        include_postures:
+          type: boolean
+          description: When true, include each device's latest posture check results. Requires the itam:device-posture:list permission and runs one extra query per device.
+
+    ListDevicesOutput:
+      type: object
+      required:
+        - devices
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Cursor for the next page; pass as cursor on the next listDevices call. Absent when there are no more results.
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Device"
+
+    GetDeviceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Device ID
+        include_postures:
+          type: boolean
+          description: When true, include the device's latest posture check results. Requires the itam:device-posture:list permission.
+
+    GetDeviceOutput:
+      type: object
+      required:
+        - device
+      properties:
+        device:
+          $ref: "#/components/schemas/Device"
+
+    RevokeDeviceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Device ID
+
+    RevokeDeviceOutput:
+      type: object
+      required:
+        - device
+      properties:
+        device:
+          $ref: "#/components/schemas/Device"
+
+    DeleteDeviceInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Device ID
+
+    DeleteDeviceOutput:
+      type: object
+      required:
+        - deleted_device_id
+      properties:
+        deleted_device_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted device ID
+
+    SetDeviceOwnerInput:
+      type: object
+      required:
+        - id
+        - owner_id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Device ID
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: MembershipProfile GID belonging to the same organization as the device, or null to clear the owner. Required; omitting the field is invalid.
+
+    SetDeviceOwnerOutput:
+      type: object
+      required:
+        - device
+      properties:
+        device:
+          $ref: "#/components/schemas/Device"
+
     DataClassification:
       type: string
       enum:
@@ -13204,6 +13517,66 @@ tools:
       $ref: "#/components/schemas/DeleteAssetInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAssetOutput"
+  - name: listDevices
+    title: List Devices
+    description: "List ITAM devices for an organization. Devices cannot be created through the MCP API: enrollment issues a one-shot token that the agent installer exchanges (there is no createDevice tool). Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. latest_postures is empty unless include_postures is true; when loaded it holds the newest result per check_key and is empty for PENDING devices. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDevicesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDevicesOutput"
+  - name: getDevice
+    title: Get Device
+    description: "Get one ITAM device by ID (soft-deleted devices are not returned). Same state machine as listDevices: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. latest_postures is empty unless include_postures is true; when loaded it holds the newest result per check_key and is empty for PENDING devices."
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDeviceInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDeviceOutput"
+  - name: revokeDevice
+    title: Revoke Device
+    description: "Irreversibly revoke a device enrollment. Immediately invalidates the device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. Call this before deleteDevice."
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RevokeDeviceInput"
+    outputSchema:
+      $ref: "#/components/schemas/RevokeDeviceOutput"
+  - name: deleteDevice
+    title: Delete Device
+    description: "Soft-delete a device. The device must already be REVOKED — call revokeDevice first, otherwise the call fails with the error device cannot be deleted. After success the device stops appearing in listDevices/getDevice; enrollment tokens for the device are removed. Eligible orphan rows are later hard-deleted by the ITAM garbage collector."
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDeviceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDeviceOutput"
+  - name: setDeviceOwner
+    title: Set Device Owner
+    description: "Set or clear the owner of an ITAM device. owner_id is required: pass a MembershipProfile GID belonging to the same organization as the device to assign, or null to clear. Omitting the field is invalid."
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/SetDeviceOwnerInput"
+    outputSchema:
+      $ref: "#/components/schemas/SetDeviceOwnerOutput"
   - name: listData
     title: List Data
     description: List all data for the organization

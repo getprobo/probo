@@ -130,7 +130,7 @@ This pattern works well for daily compliance standups or overdue-task digests.
 
 The **Probo** node exposes operations across the platform, including:
 
-Access Review, Asset, Audit, Audit Log, Control, Cookie Banner, Cookie Category, Cookie Consent Record, Data, Document, DPIA, Evidence, Finding, Framework, Measure, Obligation, Organization, Processing Activity, Risk, Task, Third Party, Trust Center, User, Vendor, and more.
+Access Review, Asset, Audit, Audit Log, Control, Cookie Banner, Cookie Category, Cookie Consent Record, Data, Device, Document, DPIA, Evidence, Finding, Framework, Measure, Obligation, Organization, Processing Activity, Risk, Task, Third Party, Trust Center, User, Vendor, and more.
 
 Use the **Execute** resource to run custom GraphQL queries or mutations when a dedicated operation is not available.
 

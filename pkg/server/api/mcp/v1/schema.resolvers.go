@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -7420,5 +7421,184 @@ func (r *Resolver) RequestSCIMEventExportTool(ctx context.Context, req *mcp.Call
 
 	return nil, types.RequestSCIMEventExportOutput{
 		ExportJobID: logExport.ID,
+	}, nil
+}
+
+func (r *Resolver) ListDevicesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDevicesInput) (*mcp.CallToolResult, types.ListDevicesOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, itam.ActionDeviceList)
+	if err != nil {
+		return nil, types.ListDevicesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DeviceOrderField]{
+		Field:     coredata.DeviceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DeviceOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	size := input.Size
+	if size != nil && *size > maxDeviceListSize {
+		size = new(maxDeviceListSize)
+	}
+
+	cursor := types.NewCursor(size, input.Cursor, pageOrderBy)
+
+	devicePage, err := r.itamSvc.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list devices", log.Error(err))
+
+		return nil, types.ListDevicesOutput{}, fmt.Errorf("internal server error")
+	}
+
+	includePostures := input.IncludePostures != nil && *input.IncludePostures
+
+	var postureScope *coredata.Scope
+
+	if includePostures && len(devicePage.Data) > 0 {
+		deviceIDs := make([]gid.GID, 0, len(devicePage.Data))
+		for _, d := range devicePage.Data {
+			deviceIDs = append(deviceIDs, d.ID)
+		}
+
+		postureScope, err = r.AuthorizeBatch(ctx, deviceIDs, itam.ActionDevicePostureList)
+		if err != nil {
+			return nil, types.ListDevicesOutput{}, err
+		}
+	}
+
+	posturesByDeviceID := make(map[gid.GID]coredata.DevicePostures, len(devicePage.Data))
+	for _, d := range devicePage.Data {
+		if postureScope == nil {
+			continue
+		}
+
+		postures, err := r.itamSvc.GetLatestPostures(ctx, postureScope, d.ID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load latest device postures", log.Error(err))
+
+			return nil, types.ListDevicesOutput{}, fmt.Errorf("internal server error")
+		}
+
+		posturesByDeviceID[d.ID] = postures
+	}
+
+	return nil, types.NewListDevicesOutput(devicePage, posturesByDeviceID), nil
+}
+
+func (r *Resolver) GetDeviceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDeviceInput) (*mcp.CallToolResult, types.GetDeviceOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, itam.ActionDeviceGet)
+	if err != nil {
+		return nil, types.GetDeviceOutput{}, err
+	}
+
+	device, err := r.itamSvc.GetDevice(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetDeviceOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get device", log.Error(err))
+
+		return nil, types.GetDeviceOutput{}, fmt.Errorf("internal server error")
+	}
+
+	var postures coredata.DevicePostures
+
+	if input.IncludePostures != nil && *input.IncludePostures {
+		postureScope, err := r.Authorize(ctx, input.ID, itam.ActionDevicePostureList)
+		if err != nil {
+			return nil, types.GetDeviceOutput{}, err
+		}
+
+		postures, err = r.itamSvc.GetLatestPostures(ctx, postureScope, device.ID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load latest device postures", log.Error(err))
+
+			return nil, types.GetDeviceOutput{}, fmt.Errorf("internal server error")
+		}
+	}
+
+	return nil, types.GetDeviceOutput{
+		Device: types.NewDevice(device, postures),
+	}, nil
+}
+
+func (r *Resolver) RevokeDeviceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RevokeDeviceInput) (*mcp.CallToolResult, types.RevokeDeviceOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, itam.ActionDeviceRevoke)
+	if err != nil {
+		return nil, types.RevokeDeviceOutput{}, err
+	}
+
+	device, err := r.itamSvc.RevokeDevice(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.RevokeDeviceOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot revoke device", log.Error(err))
+
+		return nil, types.RevokeDeviceOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.RevokeDeviceOutput{
+		Device: types.NewDevice(device, nil),
+	}, nil
+}
+
+func (r *Resolver) DeleteDeviceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDeviceInput) (*mcp.CallToolResult, types.DeleteDeviceOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, itam.ActionDeviceDelete)
+	if err != nil {
+		return nil, types.DeleteDeviceOutput{}, err
+	}
+
+	device, err := r.itamSvc.DeleteDevice(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.DeleteDeviceOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if errors.Is(err, itam.ErrDeviceNotDeletable) {
+			return nil, types.DeleteDeviceOutput{}, fmt.Errorf("device cannot be deleted")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete device", log.Error(err))
+
+		return nil, types.DeleteDeviceOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.DeleteDeviceOutput{
+		DeletedDeviceID: device.ID,
+	}, nil
+}
+
+func (r *Resolver) SetDeviceOwnerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SetDeviceOwnerInput) (*mcp.CallToolResult, types.SetDeviceOwnerOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, itam.ActionDeviceAssignOwner)
+	if err != nil {
+		return nil, types.SetDeviceOwnerOutput{}, err
+	}
+
+	device, err := r.itamSvc.SetDeviceOwner(ctx, scope, input.ID, input.OwnerID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.SetDeviceOwnerOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if errors.Is(err, itam.ErrInvalidOwnerProfile) {
+			return nil, types.SetDeviceOwnerOutput{}, fmt.Errorf("owner_id must reference a membership profile of the device organization")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot set device owner", log.Error(err))
+
+		return nil, types.SetDeviceOwnerOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.SetDeviceOwnerOutput{
+		Device: types.NewDevice(device, nil),
 	}, nil
 }

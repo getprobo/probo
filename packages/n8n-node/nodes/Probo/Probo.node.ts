@@ -129,6 +129,11 @@ export class Probo implements INodeType {
 						description: 'Manage data',
 					},
 					{
+						name: 'Device',
+						value: 'device',
+						description: 'Manage ITAM devices',
+					},
+					{
 						name: 'Document',
 						value: 'document',
 						description: 'Manage documents, versions, and signatures',

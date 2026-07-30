@@ -199,6 +199,10 @@ func (r *mutationResolver) CreateDevice(ctx context.Context, input types.CreateD
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
+		if errors.Is(err, itam.ErrInvalidOwnerProfile) {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create device", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -275,6 +279,10 @@ func (r *mutationResolver) SetDeviceOwner(ctx context.Context, input types.SetDe
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, itam.ErrInvalidOwnerProfile) {
+			return nil, gqlutils.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot set device owner", log.Error(err))
