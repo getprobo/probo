@@ -18,25 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package iam
+package safecsv
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"encoding/csv"
+	"io"
 )
 
-func TestUniqueNonEmptyStrings(t *testing.T) {
-	t.Parallel()
-
-	got := uniqueNonEmptyStrings([]string{"a", "A", "", "b", "a"})
-	assert.Equal(t, []string{"a", "b"}, got)
+type Writer struct {
+	inner *csv.Writer
 }
 
-func TestScimEmailFromUserName(t *testing.T) {
-	t.Parallel()
+func NewWriter(w io.Writer) *Writer {
+	return &Writer{inner: csv.NewWriter(w)}
+}
 
-	assert.Equal(t, "user@example.com", scimEmailFromUserName("user@example.com"))
-	assert.Equal(t, "", scimEmailFromUserName("not-an-email"))
-	assert.Equal(t, "", scimEmailFromUserName(""))
+func (w *Writer) Write(record []string) error {
+	return w.inner.Write(SanitizeRecord(record))
+}
+
+func (w *Writer) WriteRow(fields ...string) error {
+	return w.Write(fields)
+}
+
+func (w *Writer) Flush() {
+	w.inner.Flush()
+}
+
+func (w *Writer) Error() error {
+	return w.inner.Error()
 }

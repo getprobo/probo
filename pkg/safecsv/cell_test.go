@@ -18,25 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package iam
+package safecsv
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestUniqueNonEmptyStrings(t *testing.T) {
+func TestSanitizeCell(t *testing.T) {
 	t.Parallel()
 
-	got := uniqueNonEmptyStrings([]string{"a", "A", "", "b", "a"})
-	assert.Equal(t, []string{"a", "b"}, got)
+	assert.Equal(t, "plain", SanitizeCell("plain"))
+	assert.Equal(t, "'=1+1", SanitizeCell("=1+1"))
+	assert.Equal(t, "'+cmd", SanitizeCell("+cmd"))
+	assert.Equal(t, "'-2", SanitizeCell("-2"))
+	assert.Equal(t, "'@sum", SanitizeCell("@sum"))
 }
 
-func TestScimEmailFromUserName(t *testing.T) {
+func TestWriterWrite(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "user@example.com", scimEmailFromUserName("user@example.com"))
-	assert.Equal(t, "", scimEmailFromUserName("not-an-email"))
-	assert.Equal(t, "", scimEmailFromUserName(""))
+	var buf bytes.Buffer
+
+	w := NewWriter(&buf)
+	require.NoError(t, w.WriteRow("ok", "=evil"))
+	w.Flush()
+	require.NoError(t, w.Error())
+
+	assert.Equal(t, "ok,'=evil\n", buf.String())
 }

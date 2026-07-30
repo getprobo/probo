@@ -18,25 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package iam
+package safecsv
 
-import (
-	"testing"
+// SanitizeRecord returns a copy of record with spreadsheet-safe cell values.
+func SanitizeRecord(record []string) []string {
+	if len(record) == 0 {
+		return record
+	}
 
-	"github.com/stretchr/testify/assert"
-)
+	out := make([]string, len(record))
+	for i, field := range record {
+		out[i] = SanitizeCell(field)
+	}
 
-func TestUniqueNonEmptyStrings(t *testing.T) {
-	t.Parallel()
-
-	got := uniqueNonEmptyStrings([]string{"a", "A", "", "b", "a"})
-	assert.Equal(t, []string{"a", "b"}, got)
+	return out
 }
 
-func TestScimEmailFromUserName(t *testing.T) {
-	t.Parallel()
+// SanitizeCell prefixes values that spreadsheet tools may interpret as formulas.
+func SanitizeCell(value string) string {
+	if value == "" {
+		return value
+	}
 
-	assert.Equal(t, "user@example.com", scimEmailFromUserName("user@example.com"))
-	assert.Equal(t, "", scimEmailFromUserName("not-an-email"))
-	assert.Equal(t, "", scimEmailFromUserName(""))
+	switch value[0] {
+	case '=', '+', '-', '@', '\t', '\r':
+		return "'" + value
+	default:
+		return value
+	}
 }

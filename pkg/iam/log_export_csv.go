@@ -22,7 +22,6 @@ package iam
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
 	"strconv"
 	"strings"
@@ -33,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/safecsv"
 )
 
 type (
@@ -93,7 +93,7 @@ func (s *LogExportService) streamAuditLogCSV(
 	organizationID gid.GID,
 	organizationName string,
 	filter *coredata.AuditLogEntryFilter,
-	w *csv.Writer,
+	w *safecsv.Writer,
 ) error {
 	if err := w.Write(auditLogExportCSVHeader); err != nil {
 		return fmt.Errorf("cannot write audit log CSV header: %w", err)
@@ -148,7 +148,7 @@ func (s *LogExportService) streamSCIMEventCSV(
 	organizationID gid.GID,
 	organizationName string,
 	filter *coredata.SCIMEventFilter,
-	w *csv.Writer,
+	w *safecsv.Writer,
 ) error {
 	if err := w.Write(scimEventExportCSVHeader); err != nil {
 		return fmt.Errorf("cannot write SCIM event CSV header: %w", err)
@@ -207,7 +207,7 @@ func auditLogEntryCSVRow(
 	entry *coredata.AuditLogEntry,
 	actor auditLogActorExportInfo,
 ) []string {
-	return csvExportRow(
+	return []string{
 		organizationName,
 		entry.ID.String(),
 		entry.CreatedAt.Format(time.RFC3339),
@@ -218,7 +218,7 @@ func auditLogEntryCSVRow(
 		entry.Action,
 		entry.ResourceType,
 		entry.ResourceID.String(),
-	)
+	}
 }
 
 func scimEventCSVRow(
@@ -233,7 +233,7 @@ func scimEventCSVRow(
 		email = scimEmailFromUserName(event.UserName)
 	}
 
-	return csvExportRow(
+	return []string{
 		organizationName,
 		event.ID.String(),
 		event.CreatedAt.Format(time.RFC3339),
@@ -245,7 +245,7 @@ func scimEventCSVRow(
 		strconv.Itoa(event.StatusCode),
 		stringPtrValue(event.ErrorMessage),
 		event.IPAddress.String(),
-	)
+	}
 }
 
 func loadAuditLogActorExportInfo(
@@ -379,28 +379,6 @@ func uniqueNonEmptyStrings(values []string) []string {
 	}
 
 	return out
-}
-
-func csvExportRow(fields ...string) []string {
-	row := make([]string, len(fields))
-	for i, field := range fields {
-		row[i] = csvSafeCell(field)
-	}
-
-	return row
-}
-
-func csvSafeCell(value string) string {
-	if value == "" {
-		return value
-	}
-
-	switch value[0] {
-	case '=', '+', '-', '@', '\t', '\r':
-		return "'" + value
-	default:
-		return value
-	}
 }
 
 func scimEmailFromUserName(userName string) string {

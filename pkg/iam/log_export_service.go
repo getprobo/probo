@@ -22,7 +22,6 @@ package iam
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"strings"
@@ -35,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/safecsv"
 )
 
 type LogExportService struct {
@@ -228,7 +228,7 @@ func (s *LogExportService) streamCSV(
 				return fmt.Errorf("cannot load organization for log export: %w", err)
 			}
 
-			w := csv.NewWriter(pw)
+			w := safecsv.NewWriter(pw)
 
 			switch exportJob.Type {
 			case coredata.ExportJobTypeAuditLog:
