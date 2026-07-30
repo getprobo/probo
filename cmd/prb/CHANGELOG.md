@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.207.0] - 2026-07-30
+
+### Changed
+
+- `prb user list --state` now accepts multiple values (repeat the flag or comma-separate) and filters by `PENDING`, `ACTIVE`, or `DEACTIVATED` instead of `ACTIVE`/`INACTIVE`
+- `prb user archive` renamed to `prb user deactivate`
+- `prb audit-log export` and `prb scim event export` now emit CSV instead of JSONL
+
 ## [0.206.0] - 2026-07-29
 
 ### Added
