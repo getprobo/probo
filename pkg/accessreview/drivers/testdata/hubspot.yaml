@@ -135,3 +135,43 @@ interactions:
         status: 200 OK
         code: 200
         duration: 212.332792ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.hubapi.com
+        form:
+            archived:
+                - "true"
+            limit:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.hubapi.com/crm/v3/owners?archived=true&limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[]}'
+        headers:
+            Access-Control-Allow-Credentials:
+                - "false"
+            Cf-Cache-Status:
+                - DYNAMIC
+            Content-Type:
+                - application/json;charset=utf-8
+            Date:
+                - Thu, 26 Mar 2026 12:54:02 GMT
+            Server:
+                - cloudflare
+            X-Content-Type-Options:
+                - nosniff
+        status: 200 OK
+        code: 200
+        duration: 100ms
