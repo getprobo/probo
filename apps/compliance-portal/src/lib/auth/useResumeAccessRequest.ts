@@ -18,21 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useSearchParams } from "react-router";
-import type { PayloadError } from "relay-runtime";
+import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import {
   buildRequestAccessContinueUrl,
-  gateRedirectPath,
   REQUEST_DOCUMENT_PARAM,
   REQUEST_FILE_PARAM,
   REQUEST_REPORT_PARAM,
 } from "#/lib/auth/continueUrl";
-import { useLocale } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useResumeAccessRequest_documentMutation } from "./__generated__/useResumeAccessRequest_documentMutation.graphql";
@@ -87,27 +83,30 @@ const requestFileMutation = graphql`
 // After a user signs in through OAuth /initiate, they land back on the page that
 // carried a deferred access marker. This hook fires the matching mutation once
 // (when authenticated) — a single document / report / file requested from a
-// locked row — routes to the full-name gate when the backend asks for it, and
-// clears the marker so a refresh never re-triggers it.
+// locked row — and clears the marker so a refresh never re-triggers it. Auth
+// gates (full-name / NDA) are consumed by useMutation with a continueUrl that
+// still carries the marker so the request can resume after the next gate.
 export function useResumeAccessRequest(isAuthenticated: boolean) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const locale = useLocale();
-  const toast = Toast.useToastManager();
   const { t } = useTranslation();
   const firedRef = useRef(false);
 
+  const feedback = {
+    successMessage: t("auth.requestAccess.success"),
+    errorToast: t("auth.errors.requestFailed"),
+  };
+
   const [requestDocumentAccess] = useMutation<useResumeAccessRequest_documentMutation>(
     requestDocumentMutation,
-    { errorToast: false },
+    feedback,
   );
   const [requestReportAccess] = useMutation<useResumeAccessRequest_reportMutation>(
     requestReportMutation,
-    { errorToast: false },
+    feedback,
   );
   const [requestFileAccess] = useMutation<useResumeAccessRequest_fileMutation>(
     requestFileMutation,
-    { errorToast: false },
+    feedback,
   );
 
   useEffect(() => {
@@ -125,29 +124,9 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
 
     firedRef.current = true;
 
-    // Shared outcome handling. The full-name and NDA gates are thrown by the
-    // fetch layer, so they arrive in `onError` and deep-link to their gate page,
-    // preserving the marker so the request resumes once cleared. Other failures
-    // toast; success confirms.
-    const makeHandlers = (continueUrl: string) => ({
-      onCompleted: (_response: unknown, errors: PayloadError[] | null) => {
-        if (errors && errors.length > 0) {
-          toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
-          return;
-        }
-        toast.add({ title: t("auth.requestAccess.success"), type: "success" });
-      },
-      onError: (error: Error) => {
-        const gatePath = gateRedirectPath(error, continueUrl, locale);
-        if (gatePath) {
-          void navigate(gatePath);
-          return;
-        }
-        toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
-      },
-    });
-
-    // Drop the marker up front so a reload can't queue a second request.
+    // Drop the marker up front so a reload can't queue a second request. The
+    // continueUrl passed to the mutation still includes the marker so a further
+    // full-name / NDA gate can re-queue the same resume.
     const clear = (param: string) => {
       searchParams.delete(param);
       setSearchParams(searchParams, { replace: true });
@@ -156,41 +135,37 @@ export function useResumeAccessRequest(isAuthenticated: boolean) {
     if (documentId) {
       const continueUrl = buildRequestAccessContinueUrl(REQUEST_DOCUMENT_PARAM, documentId);
       clear(REQUEST_DOCUMENT_PARAM);
-      void requestDocumentAccess({
-        variables: { input: { documentId } },
-        ...makeHandlers(continueUrl),
-      }).catch(() => {});
+      void requestDocumentAccess(
+        { variables: { input: { documentId } } },
+        { continueUrl },
+      ).catch(() => {});
       return;
     }
 
     if (reportId) {
       const continueUrl = buildRequestAccessContinueUrl(REQUEST_REPORT_PARAM, reportId);
       clear(REQUEST_REPORT_PARAM);
-      void requestReportAccess({
-        variables: { input: { reportId } },
-        ...makeHandlers(continueUrl),
-      }).catch(() => {});
+      void requestReportAccess(
+        { variables: { input: { reportId } } },
+        { continueUrl },
+      ).catch(() => {});
       return;
     }
 
     if (fileId) {
       const continueUrl = buildRequestAccessContinueUrl(REQUEST_FILE_PARAM, fileId);
       clear(REQUEST_FILE_PARAM);
-      void requestFileAccess({
-        variables: { input: { compliancePortalFileId: fileId } },
-        ...makeHandlers(continueUrl),
-      }).catch(() => {});
+      void requestFileAccess(
+        { variables: { input: { compliancePortalFileId: fileId } } },
+        { continueUrl },
+      ).catch(() => {});
     }
   }, [
     isAuthenticated,
-    locale,
-    navigate,
     requestDocumentAccess,
     requestReportAccess,
     requestFileAccess,
     searchParams,
     setSearchParams,
-    t,
-    toast,
   ]);
 }

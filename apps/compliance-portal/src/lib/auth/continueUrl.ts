@@ -18,7 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { FullNameRequiredError, NDASignatureRequiredError } from "@probo/relay";
+import {
+  FullNameRequiredError,
+  NDASignatureRequiredError,
+  UnAuthenticatedError,
+} from "@probo/relay";
 
 import { localizedPath, resolveUrlLocale, type UrlLocale } from "#/lib/i18n/locale";
 
@@ -85,8 +89,8 @@ export function buildSubscribeContinueUrl(): string {
 // Maps a caught auth-gate error to the route that resolves it, carrying the
 // given `continueUrl` so the user returns here (and any deferred request
 // resumes) once the gate is cleared. Returns null for non-gate errors. Shared
-// by the route boundaries and the request-access flows so all gate handling
-// stays in one place.
+// by the route boundaries and consumeAuthGate (useMutation) so all gate
+// handling stays in one place.
 function isGateError(error: unknown, ctor: new (...args: never[]) => Error, name: string): boolean {
   return error instanceof ctor || (error instanceof Error && error.name === name);
 }
@@ -114,4 +118,29 @@ export function redirectToInitiate(continueTo: string): void {
   const initiateURL = new URL("/initiate", window.location.origin);
   initiateURL.searchParams.set("continue", getSafeContinueUrl(continueTo));
   window.location.href = initiateURL.toString();
+}
+
+// Consumes an auth-gate error from a mutation (or similar async path): redirects
+// to OAuth /initiate, the full-name page, or the NDA page as appropriate.
+// Returns true when the error was a gate and navigation was kicked off, so the
+// caller can skip toasts / local error UI. Used by the portal's useMutation
+// binding so every mutation gets this for free.
+export function consumeAuthGate(
+  error: unknown,
+  continueUrl: string,
+  navigate: (to: string) => void,
+  locale: UrlLocale = resolveUrlLocale(),
+): boolean {
+  if (isGateError(error, UnAuthenticatedError, "UnAuthenticatedError")) {
+    redirectToInitiate(continueUrl);
+    return true;
+  }
+
+  const gatePath = gateRedirectPath(error, continueUrl, locale);
+  if (gatePath) {
+    navigate(gatePath);
+    return true;
+  }
+
+  return false;
 }

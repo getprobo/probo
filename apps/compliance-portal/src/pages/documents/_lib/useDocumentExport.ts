@@ -18,15 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { UnAuthenticatedError } from "@probo/relay";
 import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { useNavigate } from "react-router";
 
-import { gateRedirectPath, redirectToInitiate } from "#/lib/auth/continueUrl";
-import { useLocale } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useDocumentExportDocumentMutation } from "./__generated__/useDocumentExportDocumentMutation.graphql";
@@ -66,48 +60,24 @@ interface DocumentExportState {
 }
 
 // Exports the aliased node's (watermarked) bytes for the viewer. Fires once per
-// (kind, id) while enabled. Mutation failures cannot reach a route error
-// boundary, so full-name / NDA gates redirect here (same as request-access);
-// other failures toast once. Mutate functions are read from a ref so their
-// identity churn (in-flight flag, toast notifier) cannot re-trigger the effect.
+// (kind, id) while enabled. Auth / full-name / NDA gates and error toasts are
+// handled by useMutation; this hook only applies the bytes on success. Mutate
+// functions are read from a ref so their identity churn cannot re-trigger the
+// effect.
 export function useDocumentExport(kind: DocumentKind, id: string, enabled: boolean): DocumentExportState {
-  const navigate = useNavigate();
-  const locale = useLocale();
-  const toast = Toast.useToastManager();
-  const { t } = useTranslation();
-
   const [exportDocument, isExportingDocument] = useMutation<useDocumentExportDocumentMutation>(
     exportDocumentMutation,
-    { errorToast: false },
   );
   const [exportFile, isExportingFile] = useMutation<useDocumentExportFileMutation>(
     exportFileMutation,
-    { errorToast: false },
   );
   const [exportReport, isExportingReport] = useMutation<useDocumentExportReportMutation>(
     exportReportMutation,
-    { errorToast: false },
   );
 
-  const latest = useRef({
-    exportDocument,
-    exportFile,
-    exportReport,
-    navigate,
-    locale,
-    toast,
-    t,
-  });
+  const latest = useRef({ exportDocument, exportFile, exportReport });
   useEffect(() => {
-    latest.current = {
-      exportDocument,
-      exportFile,
-      exportReport,
-      navigate,
-      locale,
-      toast,
-      t,
-    };
+    latest.current = { exportDocument, exportFile, exportReport };
   });
 
   const [dataUri, setDataUri] = useState<string | null>(null);
@@ -131,28 +101,6 @@ export function useDocumentExport(kind: DocumentKind, id: string, enabled: boole
       exportFile: exportFil,
       exportReport: exportRep,
     } = latest.current;
-
-    const handleError = (error: unknown) => {
-      if (cancelled) {
-        return;
-      }
-
-      const continueUrl = window.location.href;
-      const err = error instanceof Error ? error : new Error(String(error));
-
-      if (err instanceof UnAuthenticatedError || err.name === "UnAuthenticatedError") {
-        redirectToInitiate(continueUrl);
-        return;
-      }
-
-      const gatePath = gateRedirectPath(err, continueUrl, latest.current.locale);
-      if (gatePath) {
-        void latest.current.navigate(gatePath);
-        return;
-      }
-
-      latest.current.toast.add({ title: latest.current.t("common.error"), type: "error" });
-    };
 
     const run = async () => {
       try {
@@ -183,8 +131,8 @@ export function useDocumentExport(kind: DocumentKind, id: string, enabled: boole
         if (!cancelled) {
           setDataUri(data);
         }
-      } catch (error) {
-        handleError(error);
+      } catch {
+        // Gate redirects and error toasts are handled by useMutation.
       }
     };
 

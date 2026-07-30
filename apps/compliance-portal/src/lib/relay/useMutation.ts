@@ -23,11 +23,16 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import { createUseMutation, type MutationNotifier } from "@probo/relay";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
+
+import { consumeAuthGate } from "#/lib/auth/continueUrl";
+import { useLocale } from "#/lib/i18n/useLocale";
 
 /**
  * Binds the shared awaitable useMutation (`@probo/relay`) to this app's
- * feedback stack: Base UI toasts, i18next titles, and `formatError`
- * descriptions. This is the only place those opinions are wired.
+ * feedback stack: Base UI toasts, i18next titles, `formatError` descriptions,
+ * and auth-gate redirects (sign-in / full-name / NDA). This is the only place
+ * those opinions are wired — every mutation gets gate handling for free.
  *
  * Always import useMutation from `#/lib/relay/useMutation` — never useMutation
  * from react-relay.
@@ -35,6 +40,8 @@ import { useTranslation } from "react-i18next";
 function useMutationNotifier(): MutationNotifier {
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const locale = useLocale();
 
   return useMemo<MutationNotifier>(
     () => ({
@@ -49,8 +56,12 @@ function useMutationNotifier(): MutationNotifier {
           type: "error",
         });
       },
+      handleFailure: (error, continueUrl) =>
+        consumeAuthGate(error, continueUrl, (to) => {
+          void navigate(to);
+        }, locale),
     }),
-    [toast, t],
+    [toast, t, navigate, locale],
   );
 }
 

@@ -33,10 +33,14 @@ import type {
  *
  * `notifyError` receives an optional title override; when omitted, the
  * implementation supplies its own (localized) default.
+ *
+ * `handleFailure` is optional. When it returns true, the failure was consumed
+ * (e.g. redirected to an auth / NDA gate) and `notifyError` is skipped.
  */
 export type MutationNotifier = {
   notifySuccess: (message: string) => void;
   notifyError: (error: Error | PayloadError, title?: string) => void;
+  handleFailure?: (error: Error, continueUrl: string) => boolean;
 };
 
 export type MutationFeedback = {
@@ -46,6 +50,9 @@ export type MutationFeedback = {
   // default title, a string overrides that title, and `false` disables the
   // automatic notification so the caller handles the rejected promise itself.
   errorToast?: boolean | string;
+  // Absolute URL returned to after an auth-gate redirect. Defaults to the
+  // current page. Pass a marker-bearing URL when a deferred action must resume.
+  continueUrl?: string;
 };
 
 /**
@@ -56,8 +63,8 @@ export type MutationFeedback = {
  *
  * - resolves with the mutation response on success;
  * - preserves every UseMutationConfig option by spreading the caller's config;
- * - on failure, notifies via the injected notifier (unless disabled) AND
- *   rejects.
+ * - on failure, optionally lets `handleFailure` consume auth gates, otherwise
+ *   notifies via the injected notifier (unless disabled) AND rejects.
  *
  * Each app calls this once with its own notifier hook and re-exports the
  * result as the canonical `useMutation`.
@@ -70,12 +77,20 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
     const [commit, isInFlight] = useRelayMutation<T>(mutation);
     const notifier = useNotifier();
 
-    const { successMessage: baseSuccess, errorToast: baseErrorToast = true } = feedback ?? {};
+    const {
+      successMessage: baseSuccess,
+      errorToast: baseErrorToast = true,
+      continueUrl: baseContinueUrl,
+    } = feedback ?? {};
 
     const mutate = useCallback(
       (config: UseMutationConfig<T>, overrides?: MutationFeedback): Promise<T["response"]> => {
         const successMessage = overrides?.successMessage ?? baseSuccess;
         const errorToast = overrides?.errorToast ?? baseErrorToast;
+        const continueUrl =
+          overrides?.continueUrl
+          ?? baseContinueUrl
+          ?? (typeof window !== "undefined" ? window.location.href : "");
 
         function notifyError(error: Error | PayloadError) {
           if (errorToast === false) {
@@ -91,6 +106,10 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
           return value instanceof Error ? value : new Error(String(value));
         }
 
+        function consumeFailure(error: Error): boolean {
+          return notifier.handleFailure?.(error, continueUrl) === true;
+        }
+
         return new Promise<T["response"]>((resolve, reject) => {
           commit({
             ...config,
@@ -101,18 +120,22 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
                 config.onCompleted?.(response, errors);
               } catch (callbackError) {
                 const error = toError(callbackError);
-                notifyError(error);
+                if (!consumeFailure(error)) {
+                  notifyError(error);
+                }
                 reject(error);
                 return;
               }
               if (errors && errors.length > 0) {
                 const [payloadError] = errors;
-                notifyError(payloadError);
-                reject(
+                const error =
                   payloadError instanceof Error
                     ? payloadError
-                    : new Error(payloadError.message),
-                );
+                    : new Error(payloadError.message);
+                if (!consumeFailure(error)) {
+                  notifyError(payloadError);
+                }
+                reject(error);
                 return;
               }
               if (successMessage) {
@@ -121,6 +144,12 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
               resolve(response);
             },
             onError: (error) => {
+              // Auth / NDA gates are consumed before the caller's onError so
+              // every mutation redirects consistently without per-call boilerplate.
+              if (consumeFailure(error)) {
+                reject(error);
+                return;
+              }
               // Swallow a throwing caller callback so the original mutation error
               // still flows through to the notifier and the rejection.
               try {
@@ -134,7 +163,7 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
           });
         });
       },
-      [commit, notifier, baseSuccess, baseErrorToast],
+      [commit, notifier, baseSuccess, baseErrorToast, baseContinueUrl],
     );
 
     return [mutate, isInFlight] as const;

@@ -18,16 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { UnAuthenticatedError } from "@probo/relay";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import type { PayloadError } from "relay-runtime";
 import { graphql } from "relay-runtime";
 
-import { gateRedirectPath, getSafeContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
-import { useLocale } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useBulkRequestAccessMutation } from "./__generated__/useBulkRequestAccessMutation.graphql";
@@ -78,20 +72,15 @@ export interface BulkAccessRequest {
 }
 
 // Requests access for a mixed selection of documents / reports / files in a
-// single mutation. Auth, full-name, and NDA gates are thrown by the fetch layer
-// and surface in `onError`: unauthenticated redirects to OAuth /initiate, while
-// full-name and NDA deep-link to their gate page. Unlike the single-row flow
-// this is a "simple redirect": the current URL carries no batch marker, so the
-// selection is not resumed after the gate is cleared (the user re-selects).
+// single mutation. Auth / full-name / NDA gates are consumed by useMutation
+// (current URL as continue — no batch marker, so the selection is not resumed
+// after the gate). Success and non-gate failures use the shared toast feedback.
 export function useBulkRequestAccess(onSuccess?: () => void): BulkAccessRequest {
-  const navigate = useNavigate();
-  const locale = useLocale();
-  const toast = Toast.useToastManager();
   const { t } = useTranslation();
-  const [mutate, isRequesting] = useMutation<useBulkRequestAccessMutation>(
-    bulkMutation,
-    { errorToast: false },
-  );
+  const [mutate, isRequesting] = useMutation<useBulkRequestAccessMutation>(bulkMutation, {
+    successMessage: t("auth.requestAccess.success"),
+    errorToast: t("auth.errors.requestFailed"),
+  });
 
   const requestAccess = useCallback(
     (entries: BulkAccessRequestEntry[]) => {
@@ -115,33 +104,14 @@ export function useBulkRequestAccess(onSuccess?: () => void): BulkAccessRequest 
 
       void mutate({
         variables: { input: { documentIds, reportIds, compliancePortalFileIds } },
-        onCompleted: (_response: unknown, errors: PayloadError[] | null) => {
-          if (errors && errors.length > 0) {
-            toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
-            return;
+        onCompleted: (_response, errors) => {
+          if (!errors || errors.length === 0) {
+            onSuccess?.();
           }
-          toast.add({ title: t("auth.requestAccess.success"), type: "success" });
-          onSuccess?.();
-        },
-        onError: (error: Error) => {
-          const continueUrl = getSafeContinueUrl(window.location.href);
-
-          if (error instanceof UnAuthenticatedError) {
-            redirectToInitiate(continueUrl);
-            return;
-          }
-
-          const gatePath = gateRedirectPath(error, continueUrl, locale);
-          if (gatePath) {
-            void navigate(gatePath);
-            return;
-          }
-
-          toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
         },
       }).catch(() => {});
     },
-    [mutate, toast, t, navigate, locale, onSuccess],
+    [mutate, onSuccess],
   );
 
   return { requestAccess, isRequesting };

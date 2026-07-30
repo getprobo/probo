@@ -18,23 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { UnAuthenticatedError } from "@probo/relay";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import type { PayloadError } from "relay-runtime";
 import { graphql } from "relay-runtime";
 
 import {
   buildRequestAccessContinueUrl,
-  gateRedirectPath,
-  redirectToInitiate,
   REQUEST_DOCUMENT_PARAM,
   REQUEST_FILE_PARAM,
   REQUEST_REPORT_PARAM,
 } from "#/lib/auth/continueUrl";
-import { useLocale } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import type { useAccessRequestDocumentMutation } from "./__generated__/useAccessRequestDocumentMutation.graphql";
@@ -94,87 +87,64 @@ const fileMutation = graphql`
   }
 `;
 
-// Shared success / error handling for a single access request. The auth,
-// full-name, and NDA gates are thrown by the fetch layer, so they surface in
-// `onError`: unauthenticated redirects to OAuth /initiate, while full-name and
-// NDA deep-link to their gate page — all deferring the request via the continue
-// URL so it resumes once the gate is cleared. Everything else is a generic toast.
-function useAccessRequestHandlers(param: string, id: string) {
-  const navigate = useNavigate();
-  const locale = useLocale();
-  const toast = Toast.useToastManager();
+// Auth, full-name, and NDA gates are consumed by useMutation (with a
+// marker-bearing continueUrl so the request resumes after the gate). Success
+// and non-gate failures use the shared toast feedback.
+function useAccessRequestFeedback() {
   const { t } = useTranslation();
-
-  return useMemo(
-    () => ({
-      onCompleted: (_response: unknown, errors: PayloadError[] | null) => {
-        if (errors && errors.length > 0) {
-          toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
-          return;
-        }
-        toast.add({ title: t("auth.requestAccess.success"), type: "success" });
-      },
-      onError: (error: Error) => {
-        const continueUrl = buildRequestAccessContinueUrl(param, id);
-
-        // Not signed in: start OAuth, deferring this request until the user lands
-        // back authenticated (see useResumeAccessRequest).
-        if (error instanceof UnAuthenticatedError) {
-          redirectToInitiate(continueUrl);
-          return;
-        }
-        // Full-name / NDA gate: deep-link to the gate page, preserving the
-        // marker so the request resumes afterwards.
-        const gatePath = gateRedirectPath(error, continueUrl, locale);
-        if (gatePath) {
-          void navigate(gatePath);
-          return;
-        }
-        toast.add({ title: t("auth.errors.requestFailed"), type: "error" });
-      },
-    }),
-    [navigate, locale, toast, t, param, id],
-  );
+  return {
+    successMessage: t("auth.requestAccess.success"),
+    errorToast: t("auth.errors.requestFailed"),
+  };
 }
 
 export function useRequestDocumentAccess(id: string): AccessRequest {
-  const handlers = useAccessRequestHandlers(REQUEST_DOCUMENT_PARAM, id);
+  const feedback = useAccessRequestFeedback();
   const [mutate, isRequesting] = useMutation<useAccessRequestDocumentMutation>(
     documentMutation,
-    { errorToast: false },
+    feedback,
   );
 
   const requestAccess = useCallback(() => {
-    void mutate({ variables: { input: { documentId: id } }, ...handlers }).catch(() => {});
-  }, [mutate, id, handlers]);
+    void mutate(
+      { variables: { input: { documentId: id } } },
+      { continueUrl: buildRequestAccessContinueUrl(REQUEST_DOCUMENT_PARAM, id) },
+    ).catch(() => {});
+  }, [mutate, id]);
 
   return { requestAccess, isRequesting };
 }
 
 export function useRequestReportAccess(id: string): AccessRequest {
-  const handlers = useAccessRequestHandlers(REQUEST_REPORT_PARAM, id);
+  const feedback = useAccessRequestFeedback();
   const [mutate, isRequesting] = useMutation<useAccessRequestReportMutation>(
     reportMutation,
-    { errorToast: false },
+    feedback,
   );
 
   const requestAccess = useCallback(() => {
-    void mutate({ variables: { input: { reportId: id } }, ...handlers }).catch(() => {});
-  }, [mutate, id, handlers]);
+    void mutate(
+      { variables: { input: { reportId: id } } },
+      { continueUrl: buildRequestAccessContinueUrl(REQUEST_REPORT_PARAM, id) },
+    ).catch(() => {});
+  }, [mutate, id]);
 
   return { requestAccess, isRequesting };
 }
 
 export function useRequestFileAccess(id: string): AccessRequest {
-  const handlers = useAccessRequestHandlers(REQUEST_FILE_PARAM, id);
+  const feedback = useAccessRequestFeedback();
   const [mutate, isRequesting] = useMutation<useAccessRequestFileMutation>(
     fileMutation,
-    { errorToast: false },
+    feedback,
   );
 
   const requestAccess = useCallback(() => {
-    void mutate({ variables: { input: { compliancePortalFileId: id } }, ...handlers }).catch(() => {});
-  }, [mutate, id, handlers]);
+    void mutate(
+      { variables: { input: { compliancePortalFileId: id } } },
+      { continueUrl: buildRequestAccessContinueUrl(REQUEST_FILE_PARAM, id) },
+    ).catch(() => {});
+  }, [mutate, id]);
 
   return { requestAccess, isRequesting };
 }
