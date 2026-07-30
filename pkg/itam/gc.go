@@ -95,7 +95,7 @@ func (h *gcHandler) cleanup(ctx context.Context) error {
 		func(ctx context.Context, tx pg.Tx) error {
 			var token coredata.DeviceEnrollmentToken
 
-			tokensDeleted, err := token.DeleteExpired(ctx, tx, now)
+			tokensDeleted, err := token.DeleteExpired(ctx, tx, coredata.NewNoScope(), now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired device enrollment tokens: %w", err)
 			}

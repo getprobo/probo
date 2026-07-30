@@ -133,15 +133,22 @@ FOR UPDATE;
 func (t *DeviceEnrollmentToken) DeleteExpired(
 	ctx context.Context,
 	conn pg.Tx,
+	scope Scoper,
 	now time.Time,
 ) (int64, error) {
 	q := `
 DELETE FROM device_enrollment_tokens
 WHERE
-    expires_at < @now
+    %s
+    AND expires_at < @now
 `
 
-	result, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"now": now})
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"now": now}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return 0, fmt.Errorf("cannot delete expired device_enrollment_tokens: %w", err)
 	}
@@ -152,14 +159,19 @@ WHERE
 func (t *DeviceEnrollmentToken) Delete(
 	ctx context.Context,
 	conn pg.Tx,
+	scope Scoper,
 ) error {
 	q := `
 DELETE FROM device_enrollment_tokens
 WHERE
-    id = @id
+    %s
+    AND id = @id
 `
 
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
 	args := pgx.StrictNamedArgs{"id": t.ID}
+	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

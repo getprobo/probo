@@ -324,15 +324,15 @@ func (s *Service) ExchangeEnrollmentToken(
 				return fmt.Errorf("cannot load device enrollment token: %w", err)
 			}
 
+			scope := coredata.NewScope(token.TenantID)
+
 			if now.After(token.ExpiresAt) {
-				if err := token.Delete(ctx, conn); err != nil {
+				if err := token.Delete(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot delete expired device enrollment token: %w", err)
 				}
 
 				return ErrEnrollmentTokenExpired
 			}
-
-			scope := coredata.NewScope(token.TenantID)
 
 			device := &coredata.Device{}
 			if err := device.LoadByIDForUpdate(ctx, conn, scope, token.DeviceID); err != nil {
@@ -361,7 +361,7 @@ func (s *Service) ExchangeEnrollmentToken(
 				return fmt.Errorf("cannot set device api key hash: %w", err)
 			}
 
-			if err := token.Delete(ctx, conn); err != nil {
+			if err := token.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete device enrollment token: %w", err)
 			}
 
