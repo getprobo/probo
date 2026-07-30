@@ -178,12 +178,23 @@ func (h *OAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.sessionCookie.Set(w, session)
+	identity, err := h.iam.AccountService.GetIdentity(ctx, identityID)
+	if err != nil {
+		h.logger.ErrorCtx(ctx, "cannot load identity", log.Error(err))
+		httpserver.RenderError(w, http.StatusInternalServerError, errInternal)
+
+		return
+	}
 
 	continueURL := state.ContinueURL
 	if continueURL == "" {
 		continueURL = "/"
 	}
 
+	if identity.Locale != nil {
+		continueURL = rewriteContinueURLLocale(continueURL, *identity.Locale)
+	}
+
+	h.sessionCookie.Set(w, session)
 	h.safeRedirect.Redirect(w, r, continueURL, "/", http.StatusFound)
 }

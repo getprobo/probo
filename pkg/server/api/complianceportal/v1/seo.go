@@ -97,6 +97,36 @@ func isCompliancePortalLocale(value string) bool {
 	return slices.Contains(iam.SupportedIdentityLocales, value)
 }
 
+// rewriteContinueURLLocale swaps the leading locale segment of continueURL's
+// path for locale (a supported short tag). Relative and absolute URLs are
+// accepted; query and fragment are preserved. Unprefixed paths get the locale
+// prepended. Returns continueURL unchanged when locale is unsupported or the
+// URL cannot be parsed.
+func rewriteContinueURLLocale(continueURL, locale string) string {
+	if !isCompliancePortalLocale(locale) {
+		return continueURL
+	}
+
+	u, err := url.Parse(continueURL)
+	if err != nil {
+		return continueURL
+	}
+
+	path := u.Path
+	if path == "" {
+		path = "/"
+	}
+
+	_, rest := splitLocaleFromAppPath(path)
+	if rest == "/" || rest == "" {
+		u.Path = "/" + locale
+	} else {
+		u.Path = "/" + locale + rest
+	}
+
+	return u.String()
+}
+
 func localizedPageURL(pageBaseURL, locale, rest string) string {
 	base := strings.TrimRight(pageBaseURL, "/")
 	segments := []string{locale}
