@@ -12712,14 +12712,9 @@ tools:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
-<<<<<<< HEAD
   - name: deactivateUser
+    title: Deactivate User
     description: Deactivate a user in the organization
-=======
-  - name: archiveUser
-    title: Archive User
-    description: Archive a user in the organization
->>>>>>> b29c4a15c (Annotate MCP tools with titles and hints)
     hints:
       readonly: false
       destructive: false
