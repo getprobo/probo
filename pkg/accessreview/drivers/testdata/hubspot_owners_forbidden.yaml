@@ -1,11 +1,6 @@
-# Hand-authored cassette for HubSpot access-review fetch (Bearer token
-# stripped by the recorder). Three interactions mirror ListAccounts:
-#   1. GET /settings/v3/users/roles — role name map
-#   2. GET /settings/v3/users — provisioned users (no status field)
-#   3. GET /crm/v3/owners?archived=true — deactivated owners
-# Coverage: active super-admin with a role, still-listed deactivated user
-# matched by userIdIncludingInactive, archived-only owner with empty name
-# (display falls back to email), and a non-PERSON queue owner that is skipped.
+# Hand-authored cassette: Owners API rejects the token for missing
+# crm.objects.owners.read. Settings Users succeeds first; the driver must
+# fail the fetch rather than classify every user as active.
 version: 2
 interactions:
     - id: 0
@@ -26,7 +21,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"role-sales","name":"Sales Admin"}]}'
+        body: '{"results":[]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
@@ -54,7 +49,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"10000001","email":"john.smith@example.com","firstName":"John","lastName":"Smith","roleIds":["role-sales"],"superAdmin":true},{"id":"10000002","email":"jane.doe@example.com","firstName":"Jane","lastName":"Doe","roleIds":[],"superAdmin":false}]}'
+        body: '{"results":[{"id":"10000001","email":"john.smith@example.com","firstName":"John","lastName":"Smith","roleIds":[],"superAdmin":false}]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
@@ -84,10 +79,10 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"owner-2","email":"jane.doe@example.com","firstName":"Jane","lastName":"Doe","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000002},{"id":"owner-3","email":"gone@example.com","firstName":"","lastName":"","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000003},{"id":"queue-1","email":"queue@example.com","type":"QUEUE","archived":true,"userId":null,"userIdIncludingInactive":null}]}'
+        body: '{"status":"error","message":"This app hasn''t been granted all required scopes to make this call.","category":"MISSING_SCOPES"}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
-        status: 200 OK
-        code: 200
+        status: 403 Forbidden
+        code: 403
         duration: 100ms

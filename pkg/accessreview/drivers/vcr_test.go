@@ -189,3 +189,11 @@ func newVCRClientWithHeader(rec *recorder.Recorder, header, value string) *http.
 
 	return &http.Client{Transport: transport}
 }
+
+// roundTripFunc is a test helper that adapts a function to http.RoundTripper
+// for stubbing HTTP responses outside VCR cassettes.
+type roundTripFunc func(req *http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}

@@ -1,11 +1,7 @@
-# Hand-authored cassette for HubSpot access-review fetch (Bearer token
-# stripped by the recorder). Three interactions mirror ListAccounts:
-#   1. GET /settings/v3/users/roles — role name map
-#   2. GET /settings/v3/users — provisioned users (no status field)
-#   3. GET /crm/v3/owners?archived=true — deactivated owners
-# Coverage: active super-admin with a role, still-listed deactivated user
-# matched by userIdIncludingInactive, archived-only owner with empty name
-# (display falls back to email), and a non-PERSON queue owner that is skipped.
+# Hand-authored cassette: Settings user ID differs from the archived owner's
+# userIdIncludingInactive, but emails match (case-insensitive). The driver
+# must mark the settings row inactive and must not emit a second archived-only
+# row for the same person.
 version: 2
 interactions:
     - id: 0
@@ -26,7 +22,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"role-sales","name":"Sales Admin"}]}'
+        body: '{"results":[]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
@@ -54,7 +50,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"10000001","email":"john.smith@example.com","firstName":"John","lastName":"Smith","roleIds":["role-sales"],"superAdmin":true},{"id":"10000002","email":"jane.doe@example.com","firstName":"Jane","lastName":"Doe","roleIds":[],"superAdmin":false}]}'
+        body: '{"results":[{"id":"settings-1","email":"Jane.Doe@example.com","firstName":"Jane","lastName":"Doe","roleIds":[],"superAdmin":true}]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
@@ -84,7 +80,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"owner-2","email":"jane.doe@example.com","firstName":"Jane","lastName":"Doe","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000002},{"id":"owner-3","email":"gone@example.com","firstName":"","lastName":"","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000003},{"id":"queue-1","email":"queue@example.com","type":"QUEUE","archived":true,"userId":null,"userIdIncludingInactive":null}]}'
+        body: '{"results":[{"id":"owner-9","email":"jane.doe@example.com","firstName":"","lastName":"","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":999}]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
