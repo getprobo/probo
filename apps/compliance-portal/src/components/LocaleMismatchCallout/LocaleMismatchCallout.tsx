@@ -37,6 +37,7 @@ import { useLocale } from "#/lib/i18n/useLocale";
 import { useUpdateLocale } from "#/lib/i18n/useUpdateLocale";
 
 import type { LocaleMismatchCallout_identity$key } from "./__generated__/LocaleMismatchCallout_identity.graphql";
+import { localeMismatchCallout } from "./variants";
 
 const localeMismatchCalloutFragment = graphql`
   fragment LocaleMismatchCallout_identity on Identity {
@@ -94,6 +95,7 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
   const urlLabel = URL_LOCALE_LABELS[urlLocale];
   const savedLabel = URL_LOCALE_LABELS[savedLocale];
   const busy = isChanging || isUpdating;
+  const slots = localeMismatchCallout();
 
   const switchToSaved = () => {
     void changeLocale(savedLocale, { persist: false });
@@ -106,13 +108,10 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
   };
 
   return (
-    <aside
-      className="flex w-full items-center gap-3 bg-gold-3 px-8 py-2.5 max-md:flex-col max-md:items-stretch max-md:gap-3 max-md:px-4 max-md:py-3"
-      role="status"
-    >
-      <div className="flex min-w-0 flex-1 items-start gap-2">
-        <GlobeIcon weight="fill" className="mt-0.5 size-4 shrink-0 text-gold-11" aria-hidden />
-        <Text size={2} color="neutral" highContrast className="min-w-0 flex-1">
+    <aside className={slots.root()} role="status">
+      <div className={slots.content()}>
+        <GlobeIcon weight="fill" className={slots.icon()} aria-hidden />
+        <Text size={2} color="neutral" highContrast className={slots.message()}>
           {t("locale.mismatch.message", { language: urlLabel })}
         </Text>
         <IconButton
@@ -121,19 +120,19 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
           color="neutral"
           aria-label={t("locale.mismatch.dismiss")}
           disabled={busy}
-          className="md:hidden"
+          className={slots.dismissMobile()}
           onClick={() => setDismissed(true)}
         >
           <XIcon />
         </IconButton>
       </div>
-      <div className="flex shrink-0 items-center gap-2 max-md:flex-col max-md:items-stretch">
+      <div className={slots.actions()}>
         <Button
           size={1}
           variant="solid"
           color="gold"
           disabled={busy}
-          className="max-md:w-full"
+          className={slots.action()}
           onClick={switchToSaved}
         >
           {t("locale.mismatch.switchToMine", {
@@ -149,7 +148,7 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
           color="neutral"
           highContrast
           disabled={busy}
-          className="max-md:w-full"
+          className={slots.action()}
           onClick={adoptUrlLocale}
         >
           {t("locale.mismatch.useThis", { language: urlLabel })}
@@ -160,7 +159,7 @@ export function LocaleMismatchCallout({ identityKey }: LocaleMismatchCalloutProp
           color="neutral"
           aria-label={t("locale.mismatch.dismiss")}
           disabled={busy}
-          className="max-md:hidden"
+          className={slots.dismissDesktop()}
           onClick={() => setDismissed(true)}
         >
           <XIcon />

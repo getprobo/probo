@@ -20,9 +20,9 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Full-bleed unsigned-NDA banner under the TopBar: message row + CTA/dismiss,
-// stacking on small screens like the locale-mismatch callout.
-export const unsignedNDACallout = tv({
+// Full-bleed locale-mismatch banner under the TopBar: message row + actions,
+// stacking on small screens.
+export const localeMismatchCallout = tv({
   slots: {
     root: "flex w-full items-center gap-3 bg-gold-3 px-8 py-2.5 max-md:flex-col max-md:items-stretch max-md:gap-3 max-md:px-4 max-md:py-3",
     content: "flex min-w-0 flex-1 items-start gap-2",
@@ -30,7 +30,7 @@ export const unsignedNDACallout = tv({
     message: "min-w-0 flex-1",
     dismissMobile: "md:hidden",
     actions: "flex shrink-0 items-center gap-2 max-md:flex-col max-md:items-stretch",
-    cta: "max-md:w-full",
+    action: "max-md:w-full",
     dismissDesktop: "max-md:hidden",
   },
 });

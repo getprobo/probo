@@ -23,7 +23,7 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 import { Outlet, useMatch } from "react-router";
 
-import { LocaleMismatchCallout } from "#/components/LocaleMismatchCallout";
+import { LocaleMismatchCallout } from "#/components/LocaleMismatchCallout/LocaleMismatchCallout";
 import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
 import { UnsignedNDACallout } from "#/components/UnsignedNDACallout/UnsignedNDACallout";
