@@ -50,6 +50,7 @@ import (
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -67,6 +68,7 @@ type (
 		batchAuthorize    authz.BatchAuthorizeFunc
 		probo             *probo.Service
 		resourceAlias     *resourcealias.Service
+		resourceTag       *resourcetag.Service
 		iam               *iam.Service
 		esign             *esign.Service
 		management        *management.Service
@@ -92,6 +94,7 @@ func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	resourceAliasSvc *resourcealias.Service,
+	resourceTagSvc *resourcetag.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	managementSvc *management.Service,
@@ -120,6 +123,7 @@ func NewMux(
 		iamSvc,
 		proboSvc,
 		resourceAliasSvc,
+		resourceTagSvc,
 		esignSvc,
 		managementSvc,
 		certManagerSvc,

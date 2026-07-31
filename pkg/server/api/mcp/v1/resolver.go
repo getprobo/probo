@@ -43,6 +43,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -58,6 +59,7 @@ type Resolver struct {
 	management     *management.Service
 	certManager    *certmanager.Service
 	resourceAlias  *resourcealias.Service
+	resourceTag    *resourcetag.Service
 	thirdPartySvc  *thirdparty.Service
 	iamSvc         *iam.Service
 	accessReview   *accessreview.Service

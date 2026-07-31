@@ -25,6 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -8148,5 +8149,160 @@ func (r *Resolver) DeleteCompliancePortalFrameworkTool(ctx context.Context, req 
 
 	return nil, types.DeleteCompliancePortalFrameworkOutput{
 		DeletedCompliancePortalFrameworkID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) CreateResourceTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateResourceTagInput) (*mcp.CallToolResult, types.CreateResourceTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, resourcetag.ActionTagCreate)
+	if err != nil {
+		return nil, types.CreateResourceTagOutput{}, err
+	}
+
+	tag, err := r.resourceTag.Create(
+		ctx,
+		scope,
+		resourcetag.CreateTagRequest{
+			OrganizationID: input.OrganizationID,
+			Key:            input.Key,
+			Value:          input.Value,
+			Color:          input.Color,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateResourceTagOutput{}, fmt.Errorf("cannot create resource tag: %w", err)
+	}
+
+	return nil, types.CreateResourceTagOutput{
+		ResourceTag: types.NewResourceTag(tag),
+	}, nil
+}
+
+func (r *Resolver) UpdateResourceTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateResourceTagInput) (*mcp.CallToolResult, types.UpdateResourceTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, resourcetag.ActionTagUpdate)
+	if err != nil {
+		return nil, types.UpdateResourceTagOutput{}, err
+	}
+
+	tag, err := r.resourceTag.Update(
+		ctx,
+		scope,
+		resourcetag.UpdateTagRequest{
+			ID:    input.ID,
+			Key:   input.Key,
+			Value: input.Value,
+			Color: input.Color,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateResourceTagOutput{}, fmt.Errorf("cannot update resource tag: %w", err)
+	}
+
+	return nil, types.UpdateResourceTagOutput{
+		ResourceTag: types.NewResourceTag(tag),
+	}, nil
+}
+
+func (r *Resolver) DeleteResourceTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteResourceTagInput) (*mcp.CallToolResult, types.DeleteResourceTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceTagID, resourcetag.ActionTagDelete)
+	if err != nil {
+		return nil, types.DeleteResourceTagOutput{}, err
+	}
+
+	if err := r.resourceTag.Delete(ctx, scope, input.ResourceTagID); err != nil {
+		return nil, types.DeleteResourceTagOutput{}, fmt.Errorf("cannot delete resource tag: %w", err)
+	}
+
+	return nil, types.DeleteResourceTagOutput{
+		DeletedResourceTagID: input.ResourceTagID,
+	}, nil
+}
+
+func (r *Resolver) AttachResourceTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AttachResourceTagInput) (*mcp.CallToolResult, types.AttachResourceTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, resourcetag.ActionAssignmentAttach)
+	if err != nil {
+		return nil, types.AttachResourceTagOutput{}, err
+	}
+
+	err = r.resourceTag.Attach(
+		ctx,
+		scope,
+		resourcetag.AttachRequest{
+			ResourceID: input.ResourceID,
+			TagID:      input.TagID,
+		},
+	)
+	if err != nil {
+		return nil, types.AttachResourceTagOutput{}, fmt.Errorf("cannot attach resource tag: %w", err)
+	}
+
+	return nil, types.AttachResourceTagOutput{
+		ResourceID: input.ResourceID,
+		TagID:      input.TagID,
+	}, nil
+}
+
+func (r *Resolver) DetachResourceTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DetachResourceTagInput) (*mcp.CallToolResult, types.DetachResourceTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, resourcetag.ActionAssignmentDetach)
+	if err != nil {
+		return nil, types.DetachResourceTagOutput{}, err
+	}
+
+	err = r.resourceTag.Detach(
+		ctx,
+		scope,
+		resourcetag.DetachRequest{
+			ResourceID: input.ResourceID,
+			TagID:      input.TagID,
+		},
+	)
+	if err != nil {
+		return nil, types.DetachResourceTagOutput{}, fmt.Errorf("cannot detach resource tag: %w", err)
+	}
+
+	return nil, types.DetachResourceTagOutput{
+		ResourceID: input.ResourceID,
+		TagID:      input.TagID,
+	}, nil
+}
+
+func (r *Resolver) ListResourceTagsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListResourceTagsInput) (*mcp.CallToolResult, types.ListResourceTagsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, resourcetag.ActionTagList)
+	if err != nil {
+		return nil, types.ListResourceTagsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ResourceTagOrderField]{
+		Field:     coredata.ResourceTagOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pageResult, err := r.resourceTag.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		return nil, types.ListResourceTagsOutput{}, fmt.Errorf("cannot list resource tags: %w", err)
+	}
+
+	return nil, types.NewListResourceTagsOutput(pageResult), nil
+}
+
+func (r *Resolver) ListResourceTagsForResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListResourceTagsForResourceInput) (*mcp.CallToolResult, types.ListResourceTagsForResourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, resourcetag.ActionAssignmentGet)
+	if err != nil {
+		return nil, types.ListResourceTagsForResourceOutput{}, err
+	}
+
+	tags, err := r.resourceTag.ListForResourceID(ctx, scope, input.ResourceID)
+	if err != nil {
+		return nil, types.ListResourceTagsForResourceOutput{}, fmt.Errorf("cannot list resource tags for resource: %w", err)
+	}
+
+	result := make([]*types.ResourceTag, len(tags))
+	for i, tag := range tags {
+		result[i] = types.NewResourceTag(tag)
+	}
+
+	return nil, types.ListResourceTagsForResourceOutput{
+		ResourceTags: result,
 	}, nil
 }

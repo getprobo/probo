@@ -10247,6 +10247,207 @@ components:
           $ref: "#/components/schemas/GID"
           description: Resource ID whose alias was removed
 
+    ResourceTag:
+      type: object
+      required:
+        - id
+        - organization_id
+        - key
+        - value
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Resource tag ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        key:
+          type: string
+          description: Unique slug key for the tag within the organization
+        value:
+          type: string
+          description: Display value for the tag
+        color:
+          type: string
+          description: Optional hex color (#RGB or #RRGGBB)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateResourceTagInput:
+      type: object
+      required:
+        - organization_id
+        - key
+        - value
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        key:
+          type: string
+          description: Unique slug key for the tag within the organization
+        value:
+          type: string
+          description: Display value for the tag
+        color:
+          type: string
+          description: Optional hex color (#RGB or #RRGGBB)
+
+    CreateResourceTagOutput:
+      type: object
+      required:
+        - resource_tag
+      properties:
+        resource_tag:
+          $ref: "#/components/schemas/ResourceTag"
+
+    UpdateResourceTagInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Resource tag ID
+        key:
+          type: string
+          description: Unique slug key for the tag within the organization
+        value:
+          type: string
+          description: Display value for the tag
+        color:
+          type: string
+          description: Optional hex color (#RGB or #RRGGBB); empty string clears
+
+    UpdateResourceTagOutput:
+      type: object
+      required:
+        - resource_tag
+      properties:
+        resource_tag:
+          $ref: "#/components/schemas/ResourceTag"
+
+    DeleteResourceTagInput:
+      type: object
+      required:
+        - resource_tag_id
+      properties:
+        resource_tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Resource tag ID to delete
+
+    DeleteResourceTagOutput:
+      type: object
+      required:
+        - deleted_resource_tag_id
+      properties:
+        deleted_resource_tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted resource tag ID
+
+    AttachResourceTagInput:
+      type: object
+      required:
+        - resource_id
+        - tag_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to tag
+        tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Resource tag ID
+
+    AttachResourceTagOutput:
+      type: object
+      required:
+        - resource_id
+        - tag_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+        tag_id:
+          $ref: "#/components/schemas/GID"
+
+    DetachResourceTagInput:
+      type: object
+      required:
+        - resource_id
+        - tag_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to untag
+        tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Resource tag ID
+
+    DetachResourceTagOutput:
+      type: object
+      required:
+        - resource_id
+        - tag_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+        tag_id:
+          $ref: "#/components/schemas/GID"
+
+    ListResourceTagsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListResourceTagsOutput:
+      type: object
+      required:
+        - resource_tags
+      properties:
+        resource_tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceTag"
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    ListResourceTagsForResourceInput:
+      type: object
+      required:
+        - resource_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: Resource ID
+
+    ListResourceTagsForResourceOutput:
+      type: object
+      required:
+        - resource_tags
+      properties:
+        resource_tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceTag"
+
     ListCompliancePortalFilesInput:
       type: object
       required:
@@ -16157,6 +16358,90 @@ tools:
       $ref: "#/components/schemas/RemoveResourceAliasInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveResourceAliasOutput"
+  - name: createResourceTag
+    title: Create Resource Tag
+    description: Create an organization resource tag
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateResourceTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateResourceTagOutput"
+  - name: updateResourceTag
+    title: Update Resource Tag
+    description: Update an organization resource tag
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateResourceTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateResourceTagOutput"
+  - name: deleteResourceTag
+    title: Delete Resource Tag
+    description: Delete an organization resource tag and its assignments
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteResourceTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteResourceTagOutput"
+  - name: attachResourceTag
+    title: Attach Resource Tag
+    description: Attach a resource tag to a resource
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AttachResourceTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/AttachResourceTagOutput"
+  - name: detachResourceTag
+    title: Detach Resource Tag
+    description: Detach a resource tag from a resource
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DetachResourceTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/DetachResourceTagOutput"
+  - name: listResourceTags
+    title: List Resource Tags
+    description: List organization resource tags
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListResourceTagsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListResourceTagsOutput"
+  - name: listResourceTagsForResource
+    title: List Resource Tags For Resource
+    description: List tags attached to a resource
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListResourceTagsForResourceInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListResourceTagsForResourceOutput"
   - name: listCompliancePortalFiles
     title: List Compliance Portal Files
     description: List all files for the compliance portal

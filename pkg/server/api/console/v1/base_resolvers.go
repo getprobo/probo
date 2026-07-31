@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -500,6 +501,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				CreatedAt: version.CreatedAt,
 				UpdatedAt: version.UpdatedAt,
 			}, nil
+		}
+	case coredata.ResourceTagEntityType:
+		action = resourcetag.ActionTagGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			tag, err := r.resourceTag.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewResourceTag(tag), nil
 		}
 	default:
 	}
