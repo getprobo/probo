@@ -48,8 +48,8 @@ func microsoft365Registration() *Registration {
 			"https://graph.microsoft.com/Directory.Read.All",
 			"https://graph.microsoft.com/RoleManagement.Read.Directory",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
-			return drivers.NewMicrosoft365Driver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger) (drivers.Driver, error) {
+			return drivers.NewMicrosoft365Driver(c, logger.Named("microsoft365")), nil
 		},
 		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
 			return drivers.NewMicrosoft365NameResolver(c)

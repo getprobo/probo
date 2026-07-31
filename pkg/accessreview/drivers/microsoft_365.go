@@ -23,6 +23,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -39,6 +41,7 @@ import (
 // HTTP client (Bearer token).
 type Microsoft365Driver struct {
 	httpClient *http.Client
+	logger     *log.Logger
 }
 
 var _ Driver = (*Microsoft365Driver)(nil)
@@ -68,7 +71,7 @@ var adminRoleDisplayNames = map[string]bool{
 	"Authentication Administrator":            true,
 }
 
-func NewMicrosoft365Driver(httpClient *http.Client) *Microsoft365Driver {
+func NewMicrosoft365Driver(httpClient *http.Client, logger *log.Logger) *Microsoft365Driver {
 	return &Microsoft365Driver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -76,6 +79,7 @@ func NewMicrosoft365Driver(httpClient *http.Client) *Microsoft365Driver {
 				maxRetries: 3,
 			},
 		},
+		logger: logger,
 	}
 }
 
@@ -157,9 +161,19 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 		return nil, fmt.Errorf("cannot list users: %w", err)
 	}
 
+	// MFA registration details require AuditLog.Read.All. A failure here
+	// must not abort the account fetch — leave MFA unknown so the campaign
+	// can still proceed. Context cancel/deadline still fail the fetch so a
+	// timed-out source does not commit an incomplete result as success.
 	mfaStatuses, err := d.listMFAStatuses(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list MFA statuses: %w", err)
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return nil, fmt.Errorf("cannot list MFA statuses: %w", err)
+		}
+
+		d.logger.ErrorCtx(ctx, "cannot list microsoft 365 MFA statuses, reporting MFA unknown", log.Error(err))
+
+		mfaStatuses = map[string]coredata.MFAStatus{}
 	}
 
 	records := make([]AccountRecord, 0, len(users))

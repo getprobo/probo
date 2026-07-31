@@ -22,11 +22,15 @@ package drivers
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -36,7 +40,7 @@ func TestMicrosoft365Driver(t *testing.T) {
 	rec := newRecorder(t, "testdata/microsoft_365", "MICROSOFT_365_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("MICROSOFT_365_TOKEN")))
 
-	driver := NewMicrosoft365Driver(client)
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")))
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 4)
@@ -82,4 +86,106 @@ func TestMicrosoft365Driver(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusUnknown, dana.MFAStatus)
 	require.NotNil(t, dana.Active)
 	assert.False(t, *dana.Active)
+}
+
+func TestMicrosoft365Driver_MFAFetchFailureLeavesUnknown(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{
+		Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+			header := http.Header{"Content-Type": []string{"application/json"}}
+
+			switch {
+			case strings.HasSuffix(r.URL.Path, "/directoryRoles"):
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     header,
+					Body:       io.NopCloser(strings.NewReader(`{"value":[]}`)),
+				}, nil
+			case strings.HasSuffix(r.URL.Path, "/users"):
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     header,
+					Body: io.NopCloser(strings.NewReader(`{
+						"value":[{
+							"id":"user-1",
+							"userPrincipalName":"alice@example.com",
+							"mail":"alice@example.com",
+							"displayName":"Alice",
+							"accountEnabled":true
+						}]
+					}`)),
+				}, nil
+			case strings.Contains(r.URL.Path, "userRegistrationDetails"):
+				return &http.Response{
+					StatusCode: http.StatusForbidden,
+					Header:     header,
+					Body: io.NopCloser(strings.NewReader(`{
+						"error":{
+							"code":"Authentication_RequestFromNonPremiumTenantOrB2CTenant",
+							"message":"Tenant is not a B2C tenant and doesn't have premium license"
+						}
+					}`)),
+				}, nil
+			default:
+				return &http.Response{
+					StatusCode: http.StatusNotFound,
+					Header:     header,
+					Body:       io.NopCloser(strings.NewReader(`{}`)),
+				}, nil
+			}
+		}),
+	}
+
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")))
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, "alice@example.com", records[0].Email)
+	assert.Equal(t, coredata.MFAStatusUnknown, records[0].MFAStatus)
+}
+
+func TestMicrosoft365Driver_MFAFetchCanceledPropagates(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{
+		Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+			header := http.Header{"Content-Type": []string{"application/json"}}
+
+			switch {
+			case strings.HasSuffix(r.URL.Path, "/directoryRoles"):
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     header,
+					Body:       io.NopCloser(strings.NewReader(`{"value":[]}`)),
+				}, nil
+			case strings.HasSuffix(r.URL.Path, "/users"):
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     header,
+					Body: io.NopCloser(strings.NewReader(`{
+						"value":[{
+							"id":"user-1",
+							"userPrincipalName":"alice@example.com",
+							"mail":"alice@example.com",
+							"displayName":"Alice",
+							"accountEnabled":true
+						}]
+					}`)),
+				}, nil
+			case strings.Contains(r.URL.Path, "userRegistrationDetails"):
+				return nil, context.Canceled
+			default:
+				return &http.Response{
+					StatusCode: http.StatusNotFound,
+					Header:     header,
+					Body:       io.NopCloser(strings.NewReader(`{}`)),
+				}, nil
+			}
+		}),
+	}
+
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")))
+	_, err := driver.ListAccounts(context.Background())
+	require.ErrorIs(t, err, context.Canceled)
 }
