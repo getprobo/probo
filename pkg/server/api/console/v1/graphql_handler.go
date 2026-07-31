@@ -47,6 +47,7 @@ import (
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -60,6 +61,7 @@ func NewGraphQLHandler(
 	iamSvc *iam.Service,
 	proboSvc *probo.Service,
 	resourceAliasSvc *resourcealias.Service,
+	resourceTagSvc *resourcetag.Service,
 	esignSvc *esign.Service,
 	managementSvc *management.Service,
 	certManagerSvc *certmanager.Service,
@@ -95,6 +97,7 @@ func NewGraphQLHandler(
 			batchAuthorize:          authz.NewBatchAuthorizeFunc(iamSvc, logger),
 			probo:                   proboSvc,
 			resourceAlias:           resourceAliasSvc,
+			resourceTag:             resourceTagSvc,
 			iam:                     iamSvc,
 			esign:                   esignSvc,
 			management:              managementSvc,

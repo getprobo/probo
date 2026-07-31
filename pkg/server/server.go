@@ -57,6 +57,7 @@ import (
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
@@ -85,6 +86,7 @@ type Config struct {
 	CollaborationEvents     *realtime.Events
 	ShutdownContext         context.Context
 	ResourceAlias           *resourcealias.Service
+	ResourceTag             *resourcetag.Service
 	File                    *filemanager.Service
 	IAM                     *iam.Service
 	Visitor                 *visitor.Service
@@ -156,6 +158,7 @@ func NewServer(cfg Config) (*Server, error) {
 		CollaborationEvents:      cfg.CollaborationEvents,
 		ShutdownContext:          cfg.ShutdownContext,
 		ResourceAlias:            cfg.ResourceAlias,
+		ResourceTag:              cfg.ResourceTag,
 		File:                     cfg.File,
 		IAM:                      cfg.IAM,
 		Visitor:                  cfg.Visitor,
