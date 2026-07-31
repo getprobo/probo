@@ -30,7 +30,7 @@ export const compliancePortalCommitmentsPageQuery = graphql`
       __typename
       ... on CompliancePortal {
         id
-        canCreateGroup: permission(action: "core:compliance-portal-commitment-group:create")
+        canCreateGroup: permission(action: "compliance-portal:commitment-group:create")
         ...CompliancePortalCommitmentGroupListFragment
       }
     }

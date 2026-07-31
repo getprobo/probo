@@ -219,6 +219,31 @@ var EmployeePolicy = policy.NewPolicy(
 	).WithSID("document-version-approval").When(organizationCondition),
 ).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 
+// ComplianceManagerPolicy defines permissions needed to manage the compliance
+// portal and toggle portal visibility on related core entities.
+var ComplianceManagerPolicy = policy.NewPolicy(
+	"probo:compliance-manager",
+	"Probo Compliance Manager",
+	policy.Allow(
+		ActionOrganizationGet,
+		ActionOrganizationGetLogoUrl,
+		ActionOrganizationGetHorizontalLogoUrl,
+	).WithSID("org-read-access").When(organizationCondition),
+
+	policy.Allow(
+		ActionDocumentGet, ActionDocumentList, ActionDocumentUpdate,
+		ActionDocumentVersionGet, ActionDocumentVersionList,
+		ActionAuditGet, ActionAuditList, ActionAuditUpdate,
+		ActionReportGet, ActionReportGetReportUrl, ActionReportDownloadUrlGet,
+		ActionFrameworkGet, ActionFrameworkList,
+		ActionThirdPartyGet, ActionThirdPartyList, ActionThirdPartyUpdate,
+		ActionFileGet,
+		ActionElectronicSignatureGet,
+		ActionSlackConnectionList, ActionConnectorList,
+		ActionConnectorInitiate, ActionConnectorDelete,
+	).WithSID("compliance-portal-related-access").When(organizationCondition),
+).WithDescription("Access required to manage the compliance portal and related entity visibility")
+
 // ProboPolicySet returns the PolicySet for the probo service.
 func ProboPolicySet() *iam.PolicySet {
 	return iam.NewPolicySet().
@@ -227,5 +252,6 @@ func ProboPolicySet() *iam.PolicySet {
 		AddRolePolicy("VIEWER", ViewerPolicy).
 		AddRolePolicy("AUDITOR", AuditorPolicy).
 		AddRolePolicy("EMPLOYEE", EmployeePolicy).
+		AddRolePolicy("COMPLIANCE_MANAGER", ComplianceManagerPolicy).
 		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy)
 }

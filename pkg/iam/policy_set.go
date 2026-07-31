@@ -70,6 +70,7 @@ func IAMPolicySet() *PolicySet {
 		AddRolePolicy("VIEWER", IAMViewerPolicy).
 		AddRolePolicy("EMPLOYEE", IAMViewerPolicy).
 		AddRolePolicy("AUDITOR", IAMViewerPolicy).
+		AddRolePolicy("COMPLIANCE_MANAGER", IAMViewerPolicy).
 		AddIdentityScopedPolicy(
 			IAMSelfManageIdentityPolicy,
 			IAMSelfManageSessionPolicy,

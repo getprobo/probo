@@ -7,6 +7,10 @@ enum MembershipRole
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
   AUDITOR
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
+  COMPLIANCE_MANAGER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipRoleComplianceManager"
+    )
 }
 
 type Membership implements Node {

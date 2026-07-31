@@ -47,11 +47,12 @@ func generateUniqueID() string {
 type TestRole string
 
 const (
-	RoleOwner    TestRole = "OWNER"
-	RoleAdmin    TestRole = "ADMIN"
-	RoleViewer   TestRole = "VIEWER"
-	RoleEmployee TestRole = "EMPLOYEE"
-	RoleAuditor  TestRole = "AUDITOR"
+	RoleOwner             TestRole = "OWNER"
+	RoleAdmin             TestRole = "ADMIN"
+	RoleViewer            TestRole = "VIEWER"
+	RoleEmployee          TestRole = "EMPLOYEE"
+	RoleAuditor           TestRole = "AUDITOR"
+	RoleComplianceManager TestRole = "COMPLIANCE_MANAGER"
 )
 
 type Client struct {

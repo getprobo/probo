@@ -1683,7 +1683,8 @@
       "admin": "Administrateur",
       "viewer": "Lecteur",
       "auditor": "Auditeur",
-      "employee": "Employé"
+      "employee": "Employé",
+      "complianceManager": "Gestionnaire de conformité"
     },
     "registryStatus": {
       "open": "Ouvert",
@@ -2519,7 +2520,8 @@
       "admin": "Accès complet sauf la configuration de l’organisation et les clés API",
       "viewer": "Accès en lecture seule",
       "auditor": "Accès en lecture seule sans les paramètres et les tâches",
-      "employee": "Accès à la page employé"
+      "employee": "Accès à la page employé",
+      "complianceManager": "Peut gérer le portail de conformité"
     },
     "kinds": {
       "EMPLOYEE": "Employé",
