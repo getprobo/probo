@@ -20,9 +20,9 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Button (Radix "Button"). A <button>; an Anchor / Link are separate
-// components (see contrib/claude/ui.md). The variant × color surface treatment
-// resolves in the compound variants below.
+// Button (Radix "Button"). A <button>; ButtonLink / ButtonAnchor share these
+// styles for button-looking navigation (see contrib/claude/ui.md). The
+// variant × color surface treatment resolves in the compound variants below.
 export const button = tv({
   base: [
     "inline-flex shrink-0 items-center justify-center border border-transparent font-medium whitespace-nowrap",
@@ -59,7 +59,7 @@ export const button = tv({
       true: "",
       false: "",
     },
-    // Persistent "selected" treatment for nav items built on Anchor / Link
+    // Persistent "selected" treatment for nav items built on ButtonLink / ButtonAnchor
     // (ghost / soft surfaces). Look-only — does not change structure.
     active: {
       true: "",

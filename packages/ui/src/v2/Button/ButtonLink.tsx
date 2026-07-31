@@ -19,35 +19,36 @@
 // SOFTWARE.
 
 import type { ComponentProps, ReactNode } from "react";
+import { Link as RouterLink } from "react-router";
 import type { VariantProps } from "tailwind-variants/lite";
 
 import { button } from "./variants";
 
-export type AnchorProps
-  = Omit<ComponentProps<"a">, "color">
+export type ButtonLinkProps
+  = Omit<ComponentProps<typeof RouterLink>, "color">
     & VariantProps<typeof button>
     & {
       iconStart?: ReactNode;
       iconEnd?: ReactNode;
     };
 
-// Styled <a> sharing the Button look (Radix "Button"). Use for external links
-// or mailto:/tel:; for in-app navigation use Link (router). See
-// contrib/claude/ui.md.
-export function Anchor(props: AnchorProps) {
+// In-app navigation that looks like a Button. Renders a react-router Link; for
+// a button-styled <a> use ButtonAnchor, for underlined text use Link/Anchor.
+// Set `active` for the selected nav state. See contrib/claude/ui.md.
+export function ButtonLink(props: ButtonLinkProps) {
   const {
     size, variant, color, highContrast, active, className,
     iconStart, iconEnd, children, ...rest
   } = props;
 
   return (
-    <a
+    <RouterLink
       className={button({ size, variant, color, highContrast, active, className })}
       {...rest}
     >
       {iconStart}
       {children}
       {iconEnd}
-    </a>
+    </RouterLink>
   );
 }

@@ -14,7 +14,7 @@
 
 import { ForbiddenError, InternalServerError, UnAuthenticatedError } from "@probo/relay";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { ErrorState } from "@probo/ui/src/v2/ErrorState/ErrorState";
 import { useTranslation } from "react-i18next";
 
@@ -76,9 +76,9 @@ export function GlobalError({ error, onRetry, fullPage = false }: GlobalErrorPro
       description={t(descriptionKey)}
       actions={(
         <>
-          <Link to={localizedPath("/")} variant="solid" color="neutral" highContrast size={2}>
+          <ButtonLink to={localizedPath("/")} variant="solid" color="neutral" highContrast size={2}>
             {t("errors.actions.backToCompliancePortal")}
-          </Link>
+          </ButtonLink>
           {onRetry && (
             <Button variant="soft" color="neutral" size={2} onClick={onRetry}>
               {t("errors.actions.tryAgain")}

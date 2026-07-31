@@ -20,7 +20,7 @@
 
 import { ArrowRightIcon, ClockIcon, LockSimpleIcon, SpinnerGapIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { useTranslation } from "react-i18next";
 
 interface DocumentAccessActionProps {
@@ -100,7 +100,7 @@ export function DocumentAccessAction({
 
   if (isAuthorized) {
     return (
-      <Link
+      <ButtonLink
         to={viewHref}
         variant="ghost"
         color="neutral"
@@ -108,7 +108,7 @@ export function DocumentAccessAction({
         iconStart={<ArrowRightIcon />}
       >
         {t("actions.view")}
-      </Link>
+      </ButtonLink>
     );
   }
 

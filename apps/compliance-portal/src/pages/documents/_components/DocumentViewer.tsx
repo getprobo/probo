@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CaretLeftIcon, SpinnerGapIcon } from "@phosphor-icons/react";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -98,9 +98,9 @@ export function DocumentViewer({ title, dataUri = null, downloadName = title, lo
     <div className={slots.root()}>
       <HeaderBand flushBottomSpace={!isLocked}>
         <div className={slots.header()}>
-          <Link to={localizedPath("/documents")} variant="ghost" color="neutral" size={1} iconStart={<CaretLeftIcon />} className={slots.back()}>
+          <ButtonLink to={localizedPath("/documents")} variant="ghost" color="neutral" size={1} iconStart={<CaretLeftIcon />} className={slots.back()}>
             {t("viewer.back")}
-          </Link>
+          </ButtonLink>
           <Heading level={1} size={7} weight="medium" highContrast className="truncate">
             {title}
           </Heading>

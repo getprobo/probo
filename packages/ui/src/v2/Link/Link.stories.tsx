@@ -18,51 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArrowSquareOutIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon } from "@phosphor-icons/react";
 import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router";
 
-import { Anchor } from "./Anchor";
+import { Link } from "./Link";
 
 const sizes = [1, 2, 3, 4] as const;
-const variants = ["classic", "solid", "soft", "surface", "outline", "ghost"] as const;
 
 export default {
-  title: "v2/Anchor",
-  component: Anchor,
+  title: "v2/Link",
+  component: Link,
   args: {
-    children: "Documentation",
-    href: "#",
+    children: "View all updates",
+    to: "#",
     size: 2,
-    variant: "solid",
-    color: "gold",
+    color: "neutral",
     highContrast: false,
-    active: false,
   },
-} satisfies Meta<typeof Anchor>;
+  decorators: [
+    Story => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
+} satisfies Meta<typeof Link>;
 
-type Story = StoryObj<typeof Anchor>;
+type Story = StoryObj<typeof Link>;
 
 export const Playground: Story = {};
 
 export const Sizes: Story = {
   render: () => (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col items-start gap-3">
       {sizes.map(size => (
-        <Anchor key={size} href="#" size={size}>
-          Documentation
-        </Anchor>
-      ))}
-    </div>
-  ),
-};
-
-export const Variants: Story = {
-  render: () => (
-    <div className="flex flex-wrap items-center gap-3">
-      {variants.map(variant => (
-        <Anchor key={variant} href="#" variant={variant}>
-          {variant}
-        </Anchor>
+        <Link key={size} to="#" size={size}>
+          View all updates
+        </Link>
       ))}
     </div>
   ),
@@ -70,8 +63,14 @@ export const Variants: Story = {
 
 export const WithIcon: Story = {
   render: () => (
-    <Anchor href="#" variant="soft" color="neutral" iconEnd={<ArrowSquareOutIcon />}>
-      External link
-    </Anchor>
+    <Link to="#" size={2} iconEnd={<ArrowRightIcon />}>
+      View all updates
+    </Link>
   ),
+};
+
+export const Plain: Story = {
+  args: {
+    underline: false,
+  },
 };

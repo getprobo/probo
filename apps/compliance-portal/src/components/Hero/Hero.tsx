@@ -34,8 +34,8 @@ export interface HeroProps {
 
 // Landing hero (home): a size-8 title (+ optional description) in the shared
 // white band, plus an optional bottom slot for page-specific content (the org
-// contact row). The slot content owns its own divider/spacing so it disappears
-// cleanly when empty.
+// meta row: contact + custom links). The slot content owns its own
+// divider/spacing so it disappears cleanly when empty.
 export function Hero({ title, description, children }: HeroProps) {
   const { content, section } = hero();
 

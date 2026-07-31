@@ -151,7 +151,15 @@ export function Row({ bordered, children }: { bordered?: boolean; children: Reac
 
 Variants tune **look** (size, tone, density) — they must not change a component's **structure, semantics, or prop contract**. When a "variant" would render a different element, accept different props, or fork the behavior, build a **separate component** instead. This keeps each component's typing simple and its rendered element predictable.
 
-The clearest case is the button family: a clickable action, a styled `<a>`, and a router link are three components, not one `Button` with an `as`/`href`/`to` union.
+The clearest case is navigation vs action: a clickable action, button-looking navigation, and underlined text links are separate components — not one `Button` with an `as`/`href`/`to` union, and not `Link`/`Anchor` that secretly look like buttons.
+
+| Component | Element | Look |
+|---|---|---|
+| `Button` | `<button>` | button |
+| `ButtonLink` | react-router | button |
+| `ButtonAnchor` | `<a>` | button |
+| `Link` | react-router | underlined text |
+| `Anchor` | `<a>` | underlined text |
 
 ### Do / don't: separate components over polymorphic props
 
@@ -170,23 +178,32 @@ export function Button(props: ButtonProps) {
 ```
 
 ```tsx
-// Good — three flat components sharing the same tv styles
-// variants.ts
+// Good — flat components; button look and text-link look stay separate
+// Button/variants.ts
 export const button = tv({ base: "inline-flex items-center …", variants: { /* size, tone */ } });
 
-// Button.tsx — renders <button>
+// Button.tsx — action
 export function Button(props: ComponentProps<"button">) {
   return <button className={button()} {...props} />;
 }
 
-// Anchor.tsx — renders <a>
-export function Anchor(props: ComponentProps<"a">) {
+// ButtonAnchor.tsx / ButtonLink.tsx — navigation that looks like a button
+export function ButtonAnchor(props: ComponentProps<"a">) {
   return <a className={button()} {...props} />;
 }
-
-// Link.tsx — renders a router link
-export function Link(props: ComponentProps<typeof RouterLink>) {
+export function ButtonLink(props: ComponentProps<typeof RouterLink>) {
   return <RouterLink className={button()} {...props} />;
+}
+
+// Link/variants.ts — underlined text
+export const link = tv({ base: "underline …", variants: { /* size, color */ } });
+
+// Link.tsx / Anchor.tsx — navigation that looks like a link
+export function Link(props: ComponentProps<typeof RouterLink>) {
+  return <RouterLink className={link()} {...props} />;
+}
+export function Anchor(props: ComponentProps<"a">) {
+  return <a className={link()} {...props} />;
 }
 ```
 
@@ -542,4 +559,4 @@ Base UI primitives ship correct roles, focus management, and keyboard interactio
 - Keep accessible labels: every control has a visible label or an `aria-label`; icon-only buttons (`Button icon={…}`) require an `aria-label`.
 - Don't strip `aria-*` / `role` that primitives set, and don't trap or override focus the primitive manages.
 - Convey state with more than color (e.g. an icon + text alongside a `red-*` tone), so meaning survives for color-blind users — the [token contrast guarantees](v2-tokens.md#contrast-guarantees) cover text legibility, not state encoding.
-- Use semantic elements (`<button>`, `<a>`, `<nav>`, headings) — see the [Button vs Anchor vs Link](#no-structure-changing-variants) split.
+- Use semantic elements (`<button>`, `<a>`, `<nav>`, headings) — see the [Button / ButtonLink / ButtonAnchor / Link / Anchor](#no-structure-changing-variants) split.

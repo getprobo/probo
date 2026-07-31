@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { EnvelopeIcon, GlobeSimpleIcon, MapPinSimpleIcon } from "@phosphor-icons/react";
+import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useFragment } from "react-relay";
 
@@ -39,8 +40,8 @@ interface CompliancePortalContactInfoProps {
   compliancePortalKey: CompliancePortalContactInfo_compliancePortal$key;
 }
 
-// Compliance portal contact details (website, email, HQ) rendered as an icon +
-// label row. Owns its fragment so it can be reused wherever the portal is in scope.
+// Compliance portal contact details (website, email, HQ) rendered as icon +
+// label items for the shared hero meta row. The parent band owns the divider.
 export function CompliancePortalContactInfo({ compliancePortalKey }: CompliancePortalContactInfoProps) {
   const compliancePortal = useFragment(compliancePortalContactInfoFragment, compliancePortalKey);
 
@@ -48,35 +49,39 @@ export function CompliancePortalContactInfo({ compliancePortalKey }: ComplianceP
   const hasEmail = compliancePortal.email != null && compliancePortal.email !== "";
   const hasAddress = compliancePortal.headquarterAddress != null && compliancePortal.headquarterAddress !== "";
 
-  // Nothing to show — render no row (and therefore no divider) at all.
   if (!hasWebsite && !hasEmail && !hasAddress) {
     return null;
   }
 
-  const { root, item, link } = organizationContactInfo();
+  const { item, link } = organizationContactInfo();
 
   return (
-    <div className={root()}>
+    <>
       {hasWebsite && (
-        <a
+        <Anchor
           className={link()}
           href={externalHref(compliancePortal.websiteUrl)}
           target="_blank"
           rel="noopener noreferrer"
+          size={2}
+          color="neutral"
+          underline={false}
+          iconStart={<GlobeSimpleIcon />}
         >
-          <GlobeSimpleIcon />
-          <Text size={2} color="neutral">
-            {hostnameOf(compliancePortal.websiteUrl)}
-          </Text>
-        </a>
+          {hostnameOf(compliancePortal.websiteUrl)}
+        </Anchor>
       )}
       {hasEmail && (
-        <a className={link()} href={`mailto:${compliancePortal.email}`}>
-          <EnvelopeIcon />
-          <Text size={2} color="neutral">
-            {compliancePortal.email}
-          </Text>
-        </a>
+        <Anchor
+          className={link()}
+          href={`mailto:${compliancePortal.email}`}
+          size={2}
+          color="neutral"
+          underline={false}
+          iconStart={<EnvelopeIcon />}
+        >
+          {compliancePortal.email}
+        </Anchor>
       )}
       {hasAddress && (
         <div className={item()}>
@@ -86,6 +91,6 @@ export function CompliancePortalContactInfo({ compliancePortalKey }: ComplianceP
           </Text>
         </div>
       )}
-    </div>
+    </>
   );
 }

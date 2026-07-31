@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CaretLeftIcon, NewspaperIcon } from "@phosphor-icons/react";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -68,9 +68,9 @@ export function UpdateDetailPage({ queryRef }: UpdateDetailPageProps) {
     <>
       <HeaderBand>
         <div className={toolbar()}>
-          <Link to={localizedPath("/updates")} variant="soft" color="neutral" highContrast iconStart={<CaretLeftIcon />}>
+          <ButtonLink to={localizedPath("/updates")} variant="soft" color="neutral" highContrast iconStart={<CaretLeftIcon />}>
             {t("backToUpdates")}
-          </Link>
+          </ButtonLink>
           <UpdatesSubscribeButton />
         </div>
       </HeaderBand>

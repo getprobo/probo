@@ -21,7 +21,7 @@
 import { LockSimpleIcon } from "@phosphor-icons/react";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -103,7 +103,7 @@ export function TopBar({ queryKey }: TopBarProps) {
           {TOP_BAR_NAV_ITEMS.map((item) => {
             const to = localizedPath(item.to);
             return (
-              <Link
+              <ButtonLink
                 key={item.to}
                 to={to}
                 variant="ghost"
@@ -112,7 +112,7 @@ export function TopBar({ queryKey }: TopBarProps) {
                 active={isActive(pathname, to)}
               >
                 {t(item.labelKey)}
-              </Link>
+              </ButtonLink>
             );
           })}
           {data.viewer == null

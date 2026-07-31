@@ -18,42 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { SpinnerGapIcon } from "@phosphor-icons/react";
 import type { ComponentProps, ReactNode } from "react";
 import type { VariantProps } from "tailwind-variants/lite";
 
 import { button } from "./variants";
 
-export type ButtonProps
-  = Omit<ComponentProps<"button">, "color">
+export type ButtonAnchorProps
+  = Omit<ComponentProps<"a">, "color">
     & VariantProps<typeof button>
     & {
       iconStart?: ReactNode;
       iconEnd?: ReactNode;
-      // Shows a spinner in place of the leading icon and disables the button.
-      loading?: boolean;
     };
 
-// Clickable action (Radix "Button"). Renders a <button>; button-styled
-// navigation uses ButtonLink / ButtonAnchor, underlined text uses Link /
-// Anchor. See contrib/claude/ui.md.
-export function Button(props: ButtonProps) {
+// External (or mailto:/tel:) navigation that looks like a Button. Renders an
+// <a>; for in-app button navigation use ButtonLink, for underlined text use
+// Link/Anchor. See contrib/claude/ui.md.
+export function ButtonAnchor(props: ButtonAnchorProps) {
   const {
     size, variant, color, highContrast, active, className,
-    iconStart, iconEnd, loading = false, disabled, type = "button", children, ...rest
+    iconStart, iconEnd, children, ...rest
   } = props;
 
   return (
-    <button
-      type={type}
-      disabled={disabled || loading}
-      aria-busy={loading || undefined}
+    <a
       className={button({ size, variant, color, highContrast, active, className })}
       {...rest}
     >
-      {loading ? <SpinnerGapIcon className="animate-spin" aria-hidden /> : iconStart}
+      {iconStart}
       {children}
       {iconEnd}
-    </button>
+    </a>
   );
 }

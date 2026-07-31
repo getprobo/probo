@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -84,9 +84,9 @@ function RecentUpdatesSectionContent({ compliancePortalKey }: RecentUpdatesSecti
     <HomeSection
       title={t("home.sections.recentUpdates")}
       action={(
-        <Link to={localizedPath("/updates")} variant="ghost" color="neutral" size={2}>
+        <ButtonLink to={localizedPath("/updates")} variant="ghost" color="neutral" size={2}>
           {t("home.recentUpdates.viewAll")}
-        </Link>
+        </ButtonLink>
       )}
     >
       <div className="relative overflow-hidden rounded-5 border border-sand-3 bg-sand-1">

@@ -18,42 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { SpinnerGapIcon } from "@phosphor-icons/react";
 import type { ComponentProps, ReactNode } from "react";
+import { Link as RouterLink } from "react-router";
 import type { VariantProps } from "tailwind-variants/lite";
 
-import { button } from "./variants";
+import { link } from "./variants";
 
-export type ButtonProps
-  = Omit<ComponentProps<"button">, "color">
-    & VariantProps<typeof button>
+export type LinkProps
+  = Omit<ComponentProps<typeof RouterLink>, "color">
+    & VariantProps<typeof link>
     & {
       iconStart?: ReactNode;
       iconEnd?: ReactNode;
-      // Shows a spinner in place of the leading icon and disables the button.
-      loading?: boolean;
     };
 
-// Clickable action (Radix "Button"). Renders a <button>; button-styled
-// navigation uses ButtonLink / ButtonAnchor, underlined text uses Link /
-// Anchor. See contrib/claude/ui.md.
-export function Button(props: ButtonProps) {
+// Underlined in-app text link (react-router). For external/mailto use Anchor;
+// for button-looking navigation use ButtonLink. See contrib/claude/ui.md.
+export function Link(props: LinkProps) {
   const {
-    size, variant, color, highContrast, active, className,
-    iconStart, iconEnd, loading = false, disabled, type = "button", children, ...rest
+    size, color, highContrast, underline, className,
+    iconStart, iconEnd, children, ...rest
   } = props;
 
   return (
-    <button
-      type={type}
-      disabled={disabled || loading}
-      aria-busy={loading || undefined}
-      className={button({ size, variant, color, highContrast, active, className })}
+    <RouterLink
+      className={link({ size, color, highContrast, underline, className })}
       {...rest}
     >
-      {loading ? <SpinnerGapIcon className="animate-spin" aria-hidden /> : iconStart}
+      {iconStart}
       {children}
       {iconEnd}
-    </button>
+    </RouterLink>
   );
 }

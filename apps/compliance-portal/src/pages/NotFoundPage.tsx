@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -41,9 +41,9 @@ export default function NotFoundPage() {
         <Text size={2} color="neutral">
           {t("notFound.description")}
         </Text>
-        <Link to={localizedPath("/")} variant="soft" color="neutral" highContrast size={2}>
+        <ButtonLink to={localizedPath("/")} variant="soft" color="neutral" highContrast size={2}>
           {t("notFound.backHome")}
-        </Link>
+        </ButtonLink>
       </div>
     </HeaderBand>
   );

@@ -21,8 +21,8 @@
 import { tv } from "tailwind-variants/lite";
 
 // Landing hero content rendered inside the shared HeaderBand: a centered
-// title/description section above an optional bottom slot (the contact row).
-// Slots are shared by the live Hero and its skeleton.
+// title/description section above an optional bottom slot (contact + custom
+// links). Slots are shared by the live Hero and its skeleton.
 export const hero = tv({
   slots: {
     content: "flex w-full flex-col gap-10",
@@ -30,14 +30,15 @@ export const hero = tv({
   },
 });
 
-// Organization contact block: a horizontal row of icon + label items, with a
-// top divider so it reads as the hero's bottom section. Self-contained so the
-// divider only appears when there is contact info to show.
+// Hero meta band: contact details and custom links as one icon + label row,
+// with a single top divider. Link chrome comes from v2 Anchor; these slots
+// only own the band layout and non-link items (HQ address).
 export const organizationContactInfo = tv({
   slots: {
     // Only a top divider gap; the band's py-8 provides the bottom spacing.
     root: "flex w-full flex-wrap items-center gap-x-6 gap-y-2 border-t border-sand-a2 pt-4 max-md:flex-col max-md:items-start",
-    item: "flex min-w-0 items-center gap-2 text-sand-11 [&_svg]:size-5 [&_svg]:shrink-0 [&>*]:min-w-0 [&>*:not(svg)]:break-words",
-    link: "flex min-w-0 items-center gap-2 text-sand-11 hover:underline [&_svg]:size-5 [&_svg]:shrink-0 [&>*]:min-w-0 [&>*:not(svg)]:break-all",
+    item: "flex min-w-0 items-center gap-2 text-sand-11 [&_svg]:size-4 [&_svg]:shrink-0 *:min-w-0 [&>*:not(svg)]:wrap-break-word",
+    // Layout extras on top of Anchor (underline/color/size live on Anchor).
+    link: "min-w-0 max-w-full [&>:not(svg)]:break-all",
   },
 });

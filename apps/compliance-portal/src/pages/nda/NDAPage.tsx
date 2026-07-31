@@ -25,7 +25,7 @@ import {
   MagnifyingGlassPlusIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Separator } from "@probo/ui/src/v2/Separator/Separator";
@@ -236,7 +236,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
     <div className={slots.root()}>
       <HeaderBand flushBottomSpace>
         <div className={slots.header()}>
-          <Link
+          <ButtonLink
             to={localizedPath("/documents")}
             variant="ghost"
             color="neutral"
@@ -245,7 +245,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
             className={slots.back()}
           >
             {t("back")}
-          </Link>
+          </ButtonLink>
           <div className={slots.text()}>
             <Heading level={1} size={7} weight="medium" highContrast>
               {t("title")}

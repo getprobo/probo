@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { FileTextIcon } from "@phosphor-icons/react";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -72,14 +72,14 @@ export function UnsignedNDABanner({ compliancePortalKey }: UnsignedNDABannerProp
         </Text>
       )}
       actions={(
-        <Link
+        <ButtonLink
           to={ndaHref}
           size={1}
           variant="ghost"
           color="amber"
         >
           {t("nda.unsignedBanner.sign")}
-        </Link>
+        </ButtonLink>
       )}
       dismissLabel={t("nda.unsignedBanner.dismiss")}
       onDismiss={() => setDismissed(true)}

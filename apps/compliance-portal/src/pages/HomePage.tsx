@@ -23,7 +23,7 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
 import { ComplianceFrameworksSection } from "#/components/ComplianceFrameworks/ComplianceFrameworksSection";
-import { CompliancePortalContactInfo } from "#/components/Hero/CompliancePortalContactInfo";
+import { CompliancePortalHeroMeta } from "#/components/Hero/CompliancePortalHeroMeta";
 import { Hero } from "#/components/Hero/Hero";
 import { RecentUpdatesSection } from "#/components/RecentUpdates/RecentUpdatesSection";
 import { SecurityCommitmentsSection } from "#/components/SecurityCommitments/SecurityCommitmentsSection";
@@ -35,7 +35,7 @@ export const homePageQuery = graphql`
   query HomePageQuery @throwOnFieldError {
     currentCompliancePortal @required(action: THROW) {
       entityName
-      ...CompliancePortalContactInfo_compliancePortal
+      ...CompliancePortalHeroMeta_compliancePortal
       ...ComplianceFrameworksSection_compliancePortal
       ...SecurityCommitmentsSection_compliancePortal
       ...TrustedBySection_compliancePortal
@@ -60,7 +60,7 @@ export function HomePage({ queryRef }: HomePageProps) {
         title={t("home.heroTitle", { name: entityName })}
         description={t("home.heroDescription")}
       >
-        <CompliancePortalContactInfo compliancePortalKey={currentCompliancePortal} />
+        <CompliancePortalHeroMeta compliancePortalKey={currentCompliancePortal} />
       </Hero>
       <div className="flex w-full flex-col items-center px-8 max-md:px-4">
         <div className="flex w-full max-w-5xl flex-col">

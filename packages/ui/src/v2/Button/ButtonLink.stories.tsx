@@ -21,13 +21,13 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { MemoryRouter } from "react-router";
 
-import { Link } from "./Link";
+import { ButtonLink } from "./ButtonLink";
 
 const navItems = ["Documents", "Subprocessors", "Updates", "Requests"] as const;
 
 export default {
-  title: "v2/Link",
-  component: Link,
+  title: "v2/ButtonLink",
+  component: ButtonLink,
   args: {
     children: "Documents",
     to: "#",
@@ -44,9 +44,9 @@ export default {
       </MemoryRouter>
     ),
   ],
-} satisfies Meta<typeof Link>;
+} satisfies Meta<typeof ButtonLink>;
 
-type Story = StoryObj<typeof Link>;
+type Story = StoryObj<typeof ButtonLink>;
 
 export const Playground: Story = {};
 
@@ -56,7 +56,7 @@ export const Nav: Story = {
   render: () => (
     <div className="flex items-center gap-1">
       {navItems.map((item, index) => (
-        <Link
+        <ButtonLink
           key={item}
           to="#"
           variant="ghost"
@@ -65,7 +65,7 @@ export const Nav: Story = {
           active={index === 0}
         >
           {item}
-        </Link>
+        </ButtonLink>
       ))}
     </div>
   ),

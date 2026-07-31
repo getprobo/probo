@@ -29,7 +29,7 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Link } from "@probo/ui/src/v2/Button/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Drawer } from "@probo/ui/src/v2/Drawer/Drawer";
 import { DrawerBody } from "@probo/ui/src/v2/Drawer/DrawerBody";
 import { DrawerClose } from "@probo/ui/src/v2/Drawer/DrawerClose";
@@ -133,7 +133,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
             {TOP_BAR_NAV_ITEMS.map((item) => {
               const to = localizedPath(item.to);
               return (
-                <Link
+                <ButtonLink
                   key={item.to}
                   to={to}
                   variant="ghost"
@@ -144,7 +144,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
                   onClick={close}
                 >
                   {t(item.labelKey)}
-                </Link>
+                </ButtonLink>
               );
             })}
           </nav>
