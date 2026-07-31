@@ -48,7 +48,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   }
 
   get reopenWidget(): string {
-    return this.getAttribute("reopen-widget") ?? "floating";
+    return this.getAttribute("reopen-widget") ?? "custom";
   }
 
   get state(): ProboState {
@@ -83,7 +83,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
         new CustomEvent("probo-reopen-widget", {
           bubbles: true,
           composed: true,
-          detail: { value: newValue ?? "floating" },
+          detail: { value: newValue ?? "custom" },
         }),
       );
     }
@@ -180,10 +180,21 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       }),
     );
 
-    if (this._client.hasConsent) {
+    this.scheduleValidation(() => this.validateSettingsLink());
+
+    if (this._client.hasConsent || this._client.regulation === "CCPA") {
       this.setState("hidden");
     } else {
       this.setState("banner");
+    }
+  }
+
+  private validateSettingsLink(): void {
+    if (!document.querySelector("probo-settings-link")) {
+      this.warn(
+        "<probo-settings-link> is required in the header or footer to reopen cookie preferences",
+      );
+      this.emitValidation(["probo-settings-link"]);
     }
   }
 }

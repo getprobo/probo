@@ -71,6 +71,9 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
           </div>
         </probo-preference-panel>
       </probo-cookie-banner-root>
+      <p style="margin-top:12px;">
+        <probo-settings-link>Cookie settings</probo-settings-link>
+      </p>
     `;
 
     const root = container.querySelector("probo-cookie-banner-root");

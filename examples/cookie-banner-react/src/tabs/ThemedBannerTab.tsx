@@ -101,6 +101,10 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
         position="bottom-right"
       />
 
+      <p style={{ marginTop: 16 }}>
+        <probo-settings-link>Cookie settings</probo-settings-link>
+      </p>
+
       <h3>Events ({events.length})</h3>
       {events.length === 0 ? (
         <p style={{ color: "#999" }}>No events yet.</p>

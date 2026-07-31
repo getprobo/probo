@@ -21,7 +21,7 @@
 import { registerHeadlessComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import type { BannerConfig } from "../types";
-import { getGpcLabel, interpolate } from "../i18n";
+import { interpolate } from "../i18n";
 import { BRANDING, CHEVRON_DOWN, CLOSE_ICON } from "../html";
 import { THEMED_STYLES } from "./styles";
 
@@ -136,8 +136,6 @@ export class ProboThemedBanner extends HTMLElement {
             </div>
           </div>
         </probo-preference-panel>
-
-        <probo-settings-button position="${this.esc(position)}"></probo-settings-button>
       </probo-cookie-banner-root>
     `;
 
@@ -152,18 +150,6 @@ export class ProboThemedBanner extends HTMLElement {
           (el as HTMLElement).setAttribute("hidden", "");
         });
       }
-      if (detail.gpcApplied) {
-        const settingsBtn = this.shadow.querySelector("probo-settings-button");
-        settingsBtn?.setAttribute("gpc-label", getGpcLabel(config.language));
-      }
-    });
-
-    root.addEventListener("probo-consent", (e: Event) => {
-      const { action } = (e as CustomEvent).detail;
-      if (action !== "GPC") {
-        const settingsBtn = this.shadow.querySelector("probo-settings-button");
-        settingsBtn?.removeAttribute("gpc-label");
-      }
     });
 
     root.addEventListener("probo-state", (e: Event) => {
@@ -172,7 +158,9 @@ export class ProboThemedBanner extends HTMLElement {
     });
 
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
-      root.setState(root.client.hasConsent ? "hidden" : "banner");
+      root.setState(
+        root.client.hasConsent || root.regulation === "CCPA" ? "hidden" : "banner",
+      );
     });
 
     this.shadow.addEventListener("click", (e: Event) => {
@@ -313,14 +301,6 @@ export class ProboThemedBanner extends HTMLElement {
       const raw = texts[key] ?? el.getAttribute("aria-label") ?? "";
       if (raw) el.setAttribute("aria-label", raw);
     });
-
-    const settingsBtn = this.shadow.querySelector("probo-settings-button");
-    if (settingsBtn) {
-      const ariaText = texts.aria_cookie_settings;
-      if (ariaText) {
-        settingsBtn.setAttribute("aria-settings-label", ariaText);
-      }
-    }
   }
 
   private esc(str: string): string {

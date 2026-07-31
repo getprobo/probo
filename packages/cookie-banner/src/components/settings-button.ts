@@ -22,6 +22,10 @@ import { COOKIE_ICON } from "../html";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
 
+/**
+ * @deprecated Prefer `<probo-settings-link>` in the header or footer. The themed
+ * banner no longer mounts this floating button; reopen defaults to `custom`.
+ */
 export class ProboSettingsButton extends HTMLElement {
   private shadow: ShadowRoot;
   private root: ProboRootElement | null = null;

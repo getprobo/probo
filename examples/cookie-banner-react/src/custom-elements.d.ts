@@ -23,6 +23,7 @@ declare module "react" {
       "probo-customize-button": CE;
       "probo-save-button": CE;
       "probo-settings-button": CE<{ position?: string }>;
+      "probo-settings-link": CE;
       "probo-cookie-banner": CE<{
         "banner-id"?: string;
         "base-url"?: string;

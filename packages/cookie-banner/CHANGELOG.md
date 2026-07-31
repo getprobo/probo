@@ -4,6 +4,20 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+### Added
+
+- `<probo-settings-link>` always shows the statutory “Your Privacy Choices” label plus the official CPPA opt-out icon under CCPA (overriding integrator children); otherwise keeps children or falls back to `aria_cookie_settings`; optional GPC badge when the opt-out preference signal was applied
+- Soft-validate that `<probo-settings-link>` is present (warn + `probo-validation`), since it is the sole reopen control
+
+### Changed
+
+- Under CCPA, the banner starts closed by default (cookies already follow the opt-out model until the visitor opts out)
+- Default `reopen-widget` is now `custom` instead of `floating`
+
+### Removed
+
+- Themed banner no longer mounts the floating `<probo-settings-button>` — place `<probo-settings-link>` in the header or footer instead (**breaking**). The settings-button custom element remains registered but is deprecated.
+
 ## [0.11.0] - 2026-08-04
 
 ### Added
