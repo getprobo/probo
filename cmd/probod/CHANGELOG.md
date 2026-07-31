@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.243.0] - 2026-07-31
+
+### Added
+
+- ITAM devices are now exposed via MCP and n8n (in addition to GraphQL): list, get, create, revoke, delete, and set-owner, with latest postures nested on list/get responses
+
+### Changed
+
+- Compliance portal locale-mismatch banner now falls back to a supported browser-language match for visitors without a saved locale, and stays silent for unsupported languages instead of assuming English is preferred
+
+### Fixed
+
+- Manual agent install instructions now point to `probo-agent/v*` releases instead of the repo-wide `/releases/latest`, which pointed at the wrong assets when other tracks published more recently
+- SCIM event CSV exports no longer fail with a "cannot parse address" error caused by a missing email address in the underlying membership profile query
+
 ## [0.242.0] - 2026-07-30
 
 ### Added
