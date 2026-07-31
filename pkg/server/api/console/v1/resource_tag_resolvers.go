@@ -266,26 +266,63 @@ func (r *resourceTagResolver) Organization(ctx context.Context, obj *types.Resou
 	return types.NewOrganization(organization), nil
 }
 
-// ResourceIds is the resolver for the resourceIds field.
-func (r *resourceTagResolver) ResourceIds(ctx context.Context, obj *types.ResourceTag) ([]gid.GID, error) {
+// Assignments is the resolver for the assignments field.
+func (r *resourceTagResolver) Assignments(ctx context.Context, obj *types.ResourceTag, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ResourceTagAssignmentOrderBy) (*types.ResourceTagAssignmentConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, resourcetag.ActionAssignmentGet)
 	if err != nil {
 		return nil, err
 	}
 
-	ids, err := r.resourceTag.ListResourceIDsByTagID(ctx, scope, obj.ID)
+	pageOrderBy := page.OrderBy[coredata.ResourceTagAssignmentOrderField]{
+		Field:     coredata.ResourceTagAssignmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ResourceTagAssignmentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	pageResult, err := r.resourceTag.ListAssignmentsForTagID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list resource ids for tag", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list resource tag assignments", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return ids, nil
+	return types.NewResourceTagAssignmentConnection(pageResult, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
 func (r *resourceTagResolver) Permission(ctx context.Context, obj *types.ResourceTag, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *resourceTagAssignmentConnectionResolver) TotalCount(ctx context.Context, obj *types.ResourceTagAssignmentConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, resourcetag.ActionAssignmentGet)
+	if err != nil {
+		return 0, err
+	}
+
+	switch obj.Resolver.(type) {
+	case *resourceTagResolver:
+		count, err := r.resourceTag.CountAssignmentsForTagID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count resource tag assignments", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver for resource tag assignment connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+
+	return 0, gqlutils.Internal(ctx)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -314,12 +351,18 @@ func (r *resourceTagConnectionResolver) TotalCount(ctx context.Context, obj *typ
 // ResourceTag returns schema.ResourceTagResolver implementation.
 func (r *Resolver) ResourceTag() schema.ResourceTagResolver { return &resourceTagResolver{r} }
 
+// ResourceTagAssignmentConnection returns schema.ResourceTagAssignmentConnectionResolver implementation.
+func (r *Resolver) ResourceTagAssignmentConnection() schema.ResourceTagAssignmentConnectionResolver {
+	return &resourceTagAssignmentConnectionResolver{r}
+}
+
 // ResourceTagConnection returns schema.ResourceTagConnectionResolver implementation.
 func (r *Resolver) ResourceTagConnection() schema.ResourceTagConnectionResolver {
 	return &resourceTagConnectionResolver{r}
 }
 
 type (
-	resourceTagResolver           struct{ *Resolver }
-	resourceTagConnectionResolver struct{ *Resolver }
+	resourceTagResolver                     struct{ *Resolver }
+	resourceTagAssignmentConnectionResolver struct{ *Resolver }
+	resourceTagConnectionResolver           struct{ *Resolver }
 )

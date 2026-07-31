@@ -141,6 +141,7 @@ const (
 	DeviceEnrollmentTokenEntityType                  uint16 = 109
 	DevicePostureReportEntityType                    uint16 = 110
 	ResourceTagEntityType                            uint16 = 111
+	ResourceTagAssignmentEntityType                  uint16 = 112
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -351,6 +352,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DevicePostureReport{ID: id}, true
 	case ResourceTagEntityType:
 		return &ResourceTag{ID: id}, true
+	case ResourceTagAssignmentEntityType:
+		return &ResourceTagAssignment{ID: id}, true
 	default:
 		return nil, false
 	}

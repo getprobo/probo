@@ -47,9 +47,53 @@ type ResourceTag implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
 
-    resourceIds: [ID!]! @goField(forceResolver: true)
+    assignments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ResourceTagAssignmentOrder
+    ): ResourceTagAssignmentConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum ResourceTagAssignmentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ResourceTagAssignmentOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ResourceTagAssignmentOrderFieldCreatedAt"
+        )
+}
+
+input ResourceTagAssignmentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ResourceTagAssignmentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ResourceTagAssignmentOrderField!
+}
+
+type ResourceTagAssignment {
+    id: ID!
+    resourceId: ID!
+    createdAt: Datetime!
+}
+
+type ResourceTagAssignmentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ResourceTagAssignmentConnection"
+    ) {
+    edges: [ResourceTagAssignmentEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type ResourceTagAssignmentEdge {
+    cursor: CursorKey!
+    node: ResourceTagAssignment!
 }
 
 type ResourceTagConnection

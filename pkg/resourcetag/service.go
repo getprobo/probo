@@ -33,9 +33,8 @@ import (
 )
 
 const (
-	keyMaxLength    = 100
-	valueMaxLength  = 200
-	resourceIDLimit = 1000
+	keyMaxLength   = 100
+	valueMaxLength = 200
 )
 
 type (
@@ -334,6 +333,7 @@ func (s *Service) Attach(
 			}
 
 			assignment := &coredata.ResourceTagAssignment{
+				ID:         gid.New(scope.GetTenantID(), coredata.ResourceTagAssignmentEntityType),
 				ResourceID: req.ResourceID,
 				TagID:      req.TagID,
 				CreatedAt:  time.Now(),
@@ -488,15 +488,14 @@ func (s *Service) FilterResourceIDs(
 	return filtered, nil
 }
 
-// ListResourceIDsByTagID returns up to resourceIDLimit resource IDs that have
-// the given tag. Prefer FilterResourceIDs inside entity list queries once tags
-// are wired onto specific resources.
-func (s *Service) ListResourceIDsByTagID(
+// ListAssignmentsForTagID returns a page of assignments for the given tag.
+func (s *Service) ListAssignmentsForTagID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	tagID gid.GID,
-) ([]gid.GID, error) {
-	var ids []gid.GID
+	cursor *page.Cursor[coredata.ResourceTagAssignmentOrderField],
+) (*page.Page[*coredata.ResourceTagAssignment, coredata.ResourceTagAssignmentOrderField], error) {
+	var assignments coredata.ResourceTagAssignments
 
 	err := s.pg.WithConn(
 		ctx,
@@ -506,12 +505,8 @@ func (s *Service) ListResourceIDsByTagID(
 				return fmt.Errorf("cannot load resource tag: %w", err)
 			}
 
-			assignments := &coredata.ResourceTagAssignments{}
-
-			var err error
-			ids, err = assignments.LoadResourceIDsByTagID(ctx, conn, scope, tagID, resourceIDLimit)
-			if err != nil {
-				return fmt.Errorf("cannot list resource ids by tag: %w", err)
+			if err := assignments.LoadByTagID(ctx, conn, scope, tagID, cursor); err != nil {
+				return fmt.Errorf("cannot list resource tag assignments: %w", err)
 			}
 
 			return nil
@@ -521,5 +516,34 @@ func (s *Service) ListResourceIDsByTagID(
 		return nil, err
 	}
 
-	return ids, nil
+	return page.NewPage(assignments, cursor), nil
+}
+
+// CountAssignmentsForTagID returns how many resources are assigned the tag.
+func (s *Service) CountAssignmentsForTagID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tagID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			assignments := &coredata.ResourceTagAssignments{}
+
+			var err error
+			count, err = assignments.CountByTagID(ctx, conn, scope, tagID)
+			if err != nil {
+				return fmt.Errorf("cannot count resource tag assignments: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
