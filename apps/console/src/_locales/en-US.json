@@ -1010,7 +1010,8 @@
       "admin": "Admin",
       "viewer": "Viewer",
       "auditor": "Auditor",
-      "employee": "Employee"
+      "employee": "Employee",
+      "complianceManager": "Compliance Manager"
     },
     "registryStatus": {
       "open": "Open",
@@ -1366,7 +1367,7 @@
     "messages": { "created": "Person created successfully.", "updated": "Person updated successfully." },
     "errors": { "create": "Failed to create person", "update": "Failed to update person" },
     "fields": { "fullName": "Full name *", "emailAddress": "Email Address *", "role": "Role *", "type": "Type", "position": "Position", "positionPlaceholder": "e.g. CEO, CFO, etc.", "contractStartDate": "Contract start date", "contractEndDate": "Contract end date" },
-    "roleDescriptions": { "owner": "Full access to everything", "admin": "Full access except organization setup and API keys", "viewer": "Read-only access", "auditor": "Read-only access without settings and tasks", "employee": "Access to employee page" },
+    "roleDescriptions": { "owner": "Full access to everything", "admin": "Full access except organization setup and API keys", "viewer": "Read-only access", "auditor": "Read-only access without settings and tasks", "employee": "Access to employee page", "complianceManager": "Can manage the compliance portal" },
     "kinds": { "EMPLOYEE": "Employee", "CONTRACTOR": "Contractor", "SERVICE_ACCOUNT": "Service account" },
     "actions": { "update": "Update", "create": "Create" }
   },

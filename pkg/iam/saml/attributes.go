@@ -122,19 +122,14 @@ func extractAttributeValue(assertion *saml.Assertion, attributeName string) (str
 }
 
 func mapSAMLRoleToSystemRole(samlRole string) *coredata.MembershipRole {
-	if samlRole != "" && isValidRole(samlRole) {
-		role := coredata.MembershipRole(samlRole)
-		return &role
+	if samlRole == "" {
+		return nil
 	}
 
-	return nil
-}
-
-func isValidRole(role string) bool {
-	switch role {
-	case "OWNER", "ADMIN", "EMPLOYEE", "VIEWER":
-		return true
-	default:
-		return false
+	role := coredata.MembershipRole(samlRole)
+	if !role.IsValid() {
+		return nil
 	}
+
+	return &role
 }

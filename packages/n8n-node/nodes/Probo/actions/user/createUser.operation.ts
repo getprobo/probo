@@ -32,6 +32,7 @@ const roleOptions = [
 	{ name: 'Employee', value: 'EMPLOYEE' },
 	{ name: 'Viewer', value: 'VIEWER' },
 	{ name: 'Auditor', value: 'AUDITOR' },
+	{ name: 'Compliance Manager', value: 'COMPLIANCE_MANAGER' },
 ];
 
 const kindOptions = [

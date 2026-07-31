@@ -67,7 +67,7 @@ func TestIAMPolicySet(t *testing.T) {
 	require.NotNil(t, policySet, "IAMPolicySet should not return nil")
 
 	// Should have policies for all standard roles
-	roles := []string{"OWNER", "ADMIN", "VIEWER", "EMPLOYEE", "AUDITOR"}
+	roles := []string{"OWNER", "ADMIN", "VIEWER", "EMPLOYEE", "AUDITOR", "COMPLIANCE_MANAGER"}
 	for _, role := range roles {
 		policies := policySet.RolePolicies[role]
 		assert.NotEmptyf(t, policies, "expected policies for role %s", role)
