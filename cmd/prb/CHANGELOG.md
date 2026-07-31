@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.208.0] - 2026-07-31
+
+### Added
+
+- `prb device list`, `view`, `create`, `revoke`, `delete`, and `set-owner` commands to manage ITAM devices
+
 ## [0.207.1] - 2026-07-30
 
 ### Added
