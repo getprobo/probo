@@ -3,7 +3,7 @@
   "tabs": {
     "all": "すべて",
     "public": "公開",
-    "private": "非公開"
+    "restricted": "制限付き"
   },
   "sections": {
     "reports": "コンプライアンスレポート"

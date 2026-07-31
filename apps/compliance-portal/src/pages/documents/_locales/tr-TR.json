@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Tümü",
     "public": "Genel",
-    "private": "Özel"
+    "restricted": "Kısıtlı"
   },
   "sections": {
     "reports": "Uyumluluk raporları"

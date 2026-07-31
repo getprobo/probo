@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Semua",
     "public": "Publik",
-    "private": "Privat"
+    "restricted": "Terbatas"
   },
   "sections": {
     "reports": "Laporan kepatuhan"

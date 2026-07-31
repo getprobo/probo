@@ -18,18 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router";
 
 // Single source of truth for the tab set. The type, the rendered tab list, and
 // URL validation all derive from this so a new tab can't be shown/written but
 // read back as the default.
-export const DOCUMENT_TABS = ["all", "public", "private"] as const;
+export const DOCUMENT_TABS = ["all", "public", "restricted"] as const;
 
 export type DocumentTab = (typeof DOCUMENT_TABS)[number];
 
 // The default (no-filter) tab; kept out of the URL by `setTab`.
 const DEFAULT_DOCUMENT_TAB: DocumentTab = "all";
+
+function normalizeDocumentTabParam(value: string | null): DocumentTab {
+  if (value === "private") {
+    return "restricted";
+  }
+
+  return isDocumentTab(value) ? value : DEFAULT_DOCUMENT_TAB;
+}
 
 function isDocumentTab(value: string | null): value is DocumentTab {
   return value != null && (DOCUMENT_TABS as readonly string[]).includes(value);
@@ -40,14 +48,24 @@ interface DocumentTabState {
   setTab: (value: DocumentTab) => void;
 }
 
-// Active documents tab (All / Public / Private), persisted in the URL so it is
+// Active documents tab (All / Public / Restricted), persisted in the URL so it is
 // shareable and survives reloads. Pure URL state — no local state or effects —
 // so the loader, page, and toolbar can all read it without racing.
 export function useDocumentTab(): DocumentTabState {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const raw = searchParams.get("tab");
-  const tab: DocumentTab = isDocumentTab(raw) ? raw : DEFAULT_DOCUMENT_TAB;
+  const tab: DocumentTab = normalizeDocumentTabParam(raw);
+
+  useEffect(() => {
+    if (raw === "private") {
+      setSearchParams((previous) => {
+        const next = new URLSearchParams(previous);
+        next.set("tab", "restricted");
+        return next;
+      }, { replace: true });
+    }
+  }, [raw, setSearchParams]);
 
   const setTab = useCallback((value: DocumentTab) => {
     setSearchParams((previous) => {

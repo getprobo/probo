@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Усі",
     "public": "Публічні",
-    "private": "Приватні"
+    "restricted": "Обмежені"
   },
   "sections": {
     "reports": "Звіти про відповідність"

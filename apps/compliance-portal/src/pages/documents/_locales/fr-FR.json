@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Tous",
     "public": "Public",
-    "private": "Privé"
+    "restricted": "Restreints"
   },
   "sections": {
     "reports": "Rapports de conformité"

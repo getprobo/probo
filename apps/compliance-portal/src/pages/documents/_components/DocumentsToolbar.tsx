@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import type { DocumentTab } from "../_lib/useDocumentTab";
 import { DOCUMENT_TABS, useDocumentTab } from "../_lib/useDocumentTab";
 
-// Access filter for the documents page: All / Public / Private tabs. Writes the
+// Access filter for the documents page: All / Public / Restricted tabs. Writes the
 // active tab to the URL; the page reacts and refetches the matching slice.
 export function DocumentsToolbar() {
   const { t } = useTranslation("documents");

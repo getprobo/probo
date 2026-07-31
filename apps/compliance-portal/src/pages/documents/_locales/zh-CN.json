@@ -3,7 +3,7 @@
   "tabs": {
     "all": "全部",
     "public": "公开",
-    "private": "私密"
+    "restricted": "受限"
   },
   "sections": {
     "reports": "合规报告"

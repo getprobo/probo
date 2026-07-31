@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Alle",
     "public": "Öffentlich",
-    "private": "Privat"
+    "restricted": "Eingeschränkt"
   },
   "sections": {
     "reports": "Compliance-Berichte"
