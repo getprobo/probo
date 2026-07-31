@@ -40,16 +40,21 @@ type (
 	// scoped CRUD operations for the compliance page and its related resources as
 	// methods on a single type.
 	Service struct {
-		pg            *pg.Client
-		s3            *s3.Client
-		bucket        string
-		baseURL       string
-		baseDomain    string
-		fileManager   *filemanager.Service
-		certManager   *certmanager.Service
-		logger        *log.Logger
-		SlackMessages *slack.Service
-		fileValidator *filevalidation.FileValidator
+		pg         *pg.Client
+		s3         *s3.Client
+		bucket     string
+		baseURL    string
+		baseDomain string
+		// tlsTerminatedByProxy reports whether public TLS for the compliance
+		// portal is terminated by an upstream proxy. A custom domain then serves
+		// without a Probo-issued certificate, so certificate status must not
+		// gate it. See probodconfig.CompliancePortalConfig.TLSTerminatedByProxy.
+		tlsTerminatedByProxy bool
+		fileManager          *filemanager.Service
+		certManager          *certmanager.Service
+		logger               *log.Logger
+		SlackMessages        *slack.Service
+		fileValidator        *filevalidation.FileValidator
 	}
 
 	// FileUpload is an in-memory file supplied by a caller for upload.
@@ -75,21 +80,23 @@ func NewService(
 	bucket string,
 	baseURL string,
 	baseDomain string,
+	tlsTerminatedByProxy bool,
 	fileManagerService *filemanager.Service,
 	certManagerService *certmanager.Service,
 	slackService *slack.Service,
 	logger *log.Logger,
 ) *Service {
 	return &Service{
-		pg:            pgClient,
-		s3:            s3Client,
-		bucket:        bucket,
-		baseURL:       baseURL,
-		baseDomain:    baseDomain,
-		fileManager:   fileManagerService,
-		certManager:   certManagerService,
-		logger:        logger,
-		SlackMessages: slackService,
+		pg:                   pgClient,
+		s3:                   s3Client,
+		bucket:               bucket,
+		baseURL:              baseURL,
+		baseDomain:           baseDomain,
+		tlsTerminatedByProxy: tlsTerminatedByProxy,
+		fileManager:          fileManagerService,
+		certManager:          certManagerService,
+		logger:               logger,
+		SlackMessages:        slackService,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(
 				filevalidation.CategoryData,

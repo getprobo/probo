@@ -171,9 +171,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				),
 			},
 			CompliancePortal: probodconfig.CompliancePortalConfig{
-				HTTPAddr:   b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
-				HTTPSAddr:  b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
-				BaseDomain: b.resolver.getEnv("PROBOD_TRUST_CENTER_BASE_DOMAIN"),
+				HTTPAddr:             b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
+				HTTPSAddr:            b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
+				TLSTerminatedByProxy: b.resolver.getEnvBoolOrDefault("PROBOD_TRUST_CENTER_TLS_TERMINATED_BY_PROXY", false),
+				BaseDomain:           b.resolver.getEnv("PROBOD_TRUST_CENTER_BASE_DOMAIN"),
 				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.resolver.getEnv("PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},
@@ -291,6 +292,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				CnameTarget:       b.resolver.getEnvOrDefault("PROBOD_CUSTOM_DOMAINS_CNAME_TARGET", "custom.getprobo.com"),
 				ResolverAddr:      b.resolver.getEnv("PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR"),
 				CAAIssuerDomain:   b.resolver.getEnvOrDefault("PROBOD_CUSTOM_DOMAINS_CAA_ISSUER_DOMAIN", "letsencrypt.org"),
+				SkipCNAMECheck:    b.resolver.getEnvBoolOrDefault("PROBOD_CUSTOM_DOMAINS_SKIP_CNAME_CHECK", false),
 				ACME: probodconfig.ACMEConfig{
 					Directory:  b.resolver.getEnv("PROBOD_ACME_DIRECTORY"),
 					Email:      b.resolver.getEnv("PROBOD_ACME_EMAIL"),

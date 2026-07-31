@@ -21,12 +21,20 @@
 package probodconfig
 
 type CustomDomainsConfig struct {
-	RenewalInterval   int        `json:"renewal-interval"`
-	ProvisionInterval int        `json:"provision-interval"`
-	ResolverAddr      string     `json:"resolver-addr,omitempty"`
-	CnameTarget       string     `json:"cname-target"`
-	CAAIssuerDomain   string     `json:"caa-issuer-domain"`
-	ACME              ACMEConfig `json:"acme,omitzero"`
+	RenewalInterval   int    `json:"renewal-interval"`
+	ProvisionInterval int    `json:"provision-interval"`
+	ResolverAddr      string `json:"resolver-addr,omitempty"`
+	CnameTarget       string `json:"cname-target"`
+	CAAIssuerDomain   string `json:"caa-issuer-domain"`
+	// SkipCNAMECheck turns the CNAME pre-check into a warning instead of a
+	// hard block. A hostname served through a proxying CDN never exposes its
+	// origin CNAME in public DNS, so the check can never pass even when HTTP
+	// routing works. The ACME HTTP-01 challenge still proves control of the
+	// hostname; what is lost is the cheap upfront filter that keeps obviously
+	// misconfigured domains from consuming ACME rate limits, so only enable
+	// this on a self-hosted, single-tenant deployment.
+	SkipCNAMECheck bool       `json:"skip-cname-check,omitempty"`
+	ACME           ACMEConfig `json:"acme,omitzero"`
 }
 
 type ACMEConfig struct {

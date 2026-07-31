@@ -49,6 +49,11 @@ type (
 		CAAIssuerDomain   string
 		ResolverAddr      string
 		ManagedBaseDomain string
+		// SkipCNAMECheck downgrades a failed CNAME pre-check to a warning and
+		// lets the ACME HTTP-01 challenge decide. It exists for hostnames
+		// behind a proxying CDN, whose origin CNAME is never visible in public
+		// DNS. See probodconfig.CustomDomainsConfig.SkipCNAMECheck.
+		SkipCNAMECheck    bool
 		RenewalInterval   time.Duration
 		ProvisionInterval time.Duration
 	}
@@ -79,10 +84,7 @@ func NewService(
 		beginChallengeWorker: NewBeginChallengeWorker(
 			pgClient,
 			acmeService,
-			cfg.CnameTarget,
-			cfg.CAAIssuerDomain,
-			cfg.ResolverAddr,
-			cfg.ManagedBaseDomain,
+			cfg,
 			logger.Named("begin-challenge-worker"),
 			worker.WithInterval(provisionInterval),
 		),

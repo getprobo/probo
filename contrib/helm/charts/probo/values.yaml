@@ -381,12 +381,36 @@ probo:
     confidenceThreshold: 0.7
     maxAttempts: 3
 
+  # Compliance portal (trust center) configuration
+  compliancePortal:
+    # Set to true when an upstream proxy, tunnel or CDN (Cloudflare Tunnel,
+    # CloudFront, an ingress controller, ...) already terminates public TLS for
+    # the compliance portal. The portal is then served in clear text on the HTTP
+    # listener, the HTTPS listener is not started and no certificate is
+    # provisioned or renewed for its domains.
+    #
+    # SECURITY: without a certificate there is no ACME challenge, so nothing
+    # proves that an organization owns the hostname it registers as its
+    # compliance portal domain -- the operator vouches for the hosts their proxy
+    # routes here. Only enable this on a self-hosted, single-tenant deployment;
+    # on a shared install any tenant could claim a hostname it does not control.
+    tlsTerminatedByProxy: false
+
   # Custom domains configuration (optional)
   customDomains:
     enabled: false
     renewalInterval: 3600
     provisionInterval: 30
     cnameTarget: "probo.example.com"
+    # Turn the CNAME pre-check into a warning instead of a hard block. A
+    # hostname served through a proxying CDN resolves to the CDN edge, so its
+    # origin CNAME is never visible in public DNS and the pre-check can never
+    # pass -- even when HTTP routing to this deployment works and the ACME
+    # HTTP-01 challenge would succeed. Ownership is still proven by that
+    # challenge; what is lost is the cheap filter that keeps misconfigured
+    # domains from consuming ACME rate limits, so only enable this on a
+    # self-hosted, single-tenant deployment.
+    skipCnameCheck: false
     acme:
       directory: "https://acme-v02.api.letsencrypt.org/directory"
       email: "admin@example.com"

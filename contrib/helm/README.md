@@ -168,6 +168,48 @@ HAProxy Ingress LoadBalancer
 - **Port 443** - TCP passthrough to Probo:443 (HTTPS service with TLS)
 - **Port 8080** - HTTP routing to Probo:8080 (Backoffice, via host-based routing)
 
+### Deployment Mode: TLS Terminated by an Upstream Proxy
+
+Deployments that expose Probo through a tunnel or CDN — Cloudflare Tunnel,
+CloudFront, an ingress controller with its own certificates — already terminate
+public TLS at the edge. There, TCP passthrough to Probo's own port 443 is not
+available: the hostname's public DNS record points at the edge, so the CNAME
+Probo expects for a compliance portal custom domain is never visible and no
+certificate can be issued for it.
+
+Set `probo.compliancePortal.tlsTerminatedByProxy: true` for that topology:
+
+```yaml
+probo:
+  compliancePortal:
+    tlsTerminatedByProxy: true
+```
+
+**What changes:**
+
+- The compliance portal is served in clear text on port 80; the proxy forwards
+  public HTTPS traffic there and the portal keeps advertising `https://` URLs
+- The HTTPS listener on port 443 is not started, and the port-80 listener no
+  longer redirects to it
+- No certificate is provisioned or renewed: the certificate manager workers stay
+  idle and no ACME order is ever placed
+- A compliance page serves its custom domain as soon as the domain is added,
+  without waiting for a certificate
+
+**Security:** with no certificate, there is no ACME challenge, and nothing
+proves that an organization owns the hostname it registers as its compliance
+portal domain — the operator vouches for the hosts their proxy routes to Probo.
+On a shared, multi-tenant install any tenant could claim a hostname it does not
+control, so only enable this on a self-hosted, single-tenant deployment. It is a
+server-level setting on purpose: no tenant can turn it on from the console or
+the API.
+
+Operators who want to keep Probo-issued certificates while their hostnames are
+proxied through a CDN can instead set `probo.customDomains.skipCnameCheck: true`,
+which downgrades the CNAME pre-check to a warning and lets the ACME HTTP-01
+challenge — which does prove control of the hostname — decide. This requires the
+CDN to forward `/.well-known/acme-challenge/` requests to Probo's port 80.
+
 ## Configuration
 
 ### Required Configuration
@@ -506,10 +548,12 @@ regenerate the config from all `PROBOD_*` env vars.
 | probo.openai.temperature                                | float   | `0.1`                                              | OpenAI temperature setting                                                                          |
 | probo.openai.modelName                                  | string  | `"gpt-4o"`                                         | OpenAI model name                                                                                   |
 | probo.openai.maxTokens                                  | int     | `4096`                                             | Maximum output tokens for LLM requests                                                              |
+| probo.compliancePortal.tlsTerminatedByProxy              | bool    | `false`                                            | Serve the compliance portal in clear text when an upstream proxy terminates TLS (single-tenant only)|
 | probo.customDomains.enabled                             | bool    | `false`                                            | Enable custom domains feature                                                                       |
 | probo.customDomains.renewalInterval                     | int     | `3600`                                             | Certificate renewal interval in seconds                                                             |
 | probo.customDomains.provisionInterval                   | int     | `30`                                               | Domain provision interval in seconds                                                                |
 | probo.customDomains.cnameTarget                         | string  | `"probo.example.com"`                              | CNAME target for custom domains                                                                     |
+| probo.customDomains.skipCnameCheck                      | bool    | `false`                                            | Downgrade the CNAME pre-check to a warning (single-tenant deployments behind a proxying CDN)        |
 | probo.customDomains.acme.directory                      | string  | `"https://acme-v02.api.letsencrypt.org/directory"` | ACME directory URL                                                                                  |
 | probo.customDomains.acme.email                          | string  | `"admin@example.com"`                              | ACME registration email                                                                             |
 | probo.customDomains.acme.keyType                        | string  | `"EC256"`                                          | ACME key type                                                                                       |

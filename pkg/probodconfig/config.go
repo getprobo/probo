@@ -82,9 +82,17 @@ type (
 
 	// CompliancePortalConfig contains compliance portal server configuration.
 	CompliancePortalConfig struct {
-		HTTPAddr      string              `json:"http-addr,omitempty"`
-		HTTPSAddr     string              `json:"https-addr,omitempty"`
-		BaseDomain    string              `json:"base-domain,omitempty"`
-		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol,omitzero"`
+		HTTPAddr  string `json:"http-addr,omitempty"`
+		HTTPSAddr string `json:"https-addr,omitempty"`
+		// TLSTerminatedByProxy tells probod that an upstream proxy, tunnel or
+		// CDN already terminates public TLS for the compliance portal. The
+		// portal is then served in clear text on HTTPAddr, the HTTPS listener
+		// is not started and no certificate is provisioned. It also makes the
+		// portal serve a custom domain without a Probo-issued certificate, so
+		// hostname ownership is no longer proven by an ACME challenge: only
+		// enable it on a self-hosted, single-tenant deployment.
+		TLSTerminatedByProxy bool                `json:"tls-terminated-by-proxy,omitempty"`
+		BaseDomain           string              `json:"base-domain,omitempty"`
+		ProxyProtocol        ProxyProtocolConfig `json:"proxy-protocol,omitzero"`
 	}
 )

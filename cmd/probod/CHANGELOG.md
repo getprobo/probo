@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- `PROBOD_TRUST_CENTER_TLS_TERMINATED_BY_PROXY` serves the compliance portal in clear text on the HTTP listener for deployments sitting behind a proxy, tunnel or CDN that already terminates public TLS (Cloudflare Tunnel, CloudFront, an ingress controller, ...). The HTTPS listener is not started, no certificate is provisioned or renewed, and a compliance page serves its custom domain without one. Nothing then proves hostname ownership, so this is for self-hosted, single-tenant deployments only
+- `PROBOD_CUSTOM_DOMAINS_SKIP_CNAME_CHECK` turns the custom-domain CNAME pre-check into a warning instead of a hard block, so a domain proxied through a CDN can be provisioned: such a hostname resolves to the CDN edge and never exposes its origin CNAME in public DNS. The ACME HTTP-01 challenge still proves control of the hostname
+
 ## [0.242.0] - 2026-07-30
 
 ### Added

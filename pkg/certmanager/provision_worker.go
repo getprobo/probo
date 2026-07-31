@@ -63,13 +63,20 @@ type (
 		tracer      trace.Tracer
 	}
 
+	// dnsChecker runs the DNS pre-checks that gate an ACME order.
+	dnsChecker interface {
+		CheckCNAME(ctx context.Context, hostname, expectedTarget string) error
+		CheckCAA(ctx context.Context, hostname, permittedIssuer string) error
+	}
+
 	beginChallengeHandler struct {
 		provisionCore
 
 		cnameTarget       string
 		caaIssuerDomain   string
-		dnsClient         *dnsclient.Client
+		dnsClient         dnsChecker
 		managedBaseDomain string
+		skipCNAMECheck    bool
 	}
 
 	pollOrderHandler struct {
@@ -90,15 +97,13 @@ var (
 	_ worker.Handler[coredata.Certificate] = (*beginChallengeHandler)(nil)
 	_ worker.Handler[coredata.Certificate] = (*pollOrderHandler)(nil)
 	_ worker.StaleRecoverer                = (*pollOrderHandler)(nil)
+	_ dnsChecker                           = (*dnsclient.Client)(nil)
 )
 
 func NewBeginChallengeWorker(
 	pgClient *pg.Client,
 	acmeService *ACMEService,
-	cnameTarget string,
-	caaIssuerDomain string,
-	resolverAddr string,
-	managedBaseDomain string,
+	cfg Config,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.Certificate] {
@@ -109,10 +114,11 @@ func NewBeginChallengeWorker(
 			logger:      logger,
 			tracer:      otel.Tracer(tracerName),
 		},
-		cnameTarget:       cnameTarget,
-		caaIssuerDomain:   caaIssuerDomain,
-		dnsClient:         dnsclient.NewClient(resolverAddr),
-		managedBaseDomain: managedBaseDomain,
+		cnameTarget:       cfg.CnameTarget,
+		caaIssuerDomain:   cfg.CAAIssuerDomain,
+		dnsClient:         dnsclient.NewClient(cfg.ResolverAddr),
+		managedBaseDomain: cfg.ManagedBaseDomain,
+		skipCNAMECheck:    cfg.SkipCNAMECheck,
 	}
 
 	opts = append(opts, worker.WithMaxConcurrency(1))
@@ -205,26 +211,13 @@ func (h *beginChallengeHandler) Process(ctx context.Context, certificate coredat
 		dnsCtx, dnsSpan := h.tracer.Start(ctx, "certmanager.dns_check")
 		dnsStarted := time.Now()
 
-		// Exchange timeouts are applied per chain hop inside
-		// dnsclient.CheckCNAME so the alias walk does not share one budget
-		// across every lookup.
-		err := h.dnsClient.CheckCNAME(dnsCtx, certificate.Hostname, h.cnameTarget)
-		if err != nil {
+		if err := h.checkDNSConfiguration(dnsCtx, certificate.Hostname); err != nil {
 			h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultDNSError, dnsStarted)
 			h.recordSpanError(dnsSpan, err, classifyProvisioningError(err))
 			dnsSpan.End()
 			h.recordSpanError(span, err, classifyProvisioningError(err))
 			// DNS/CAA misconfig is intentionally non-terminal: retry forever so a
 			// customer DNS fix auto-recovers without marking the domain FAILED.
-			return h.persistFailure(ctx, certificate.ID, err)
-		}
-
-		if err := h.checkCAARecords(dnsCtx, certificate.Hostname); err != nil {
-			h.acmeService.metrics.observeStep(provisionPhaseDNSCheck, provisionResultDNSError, dnsStarted)
-			h.recordSpanError(dnsSpan, err, classifyProvisioningError(err))
-			dnsSpan.End()
-			h.recordSpanError(span, err, classifyProvisioningError(err))
-			// DNS/CAA misconfig is intentionally non-terminal (see above).
 			return h.persistFailure(ctx, certificate.ID, err)
 		}
 
@@ -347,9 +340,35 @@ func (h *beginChallengeHandler) loadSkipDNSChecks(ctx context.Context, hostname 
 	return skip, nil
 }
 
+// checkDNSConfiguration runs the DNS pre-checks that gate the ACME order and
+// returns the error that must block it, or nil when the order can proceed.
+//
+// Exchange timeouts are applied per chain hop inside dnsclient.CheckCNAME and
+// per CAA label inside dnsclient.CheckCAA so neither walk shares one budget
+// across every lookup.
+func (h *beginChallengeHandler) checkDNSConfiguration(ctx context.Context, hostname string) error {
+	if err := h.dnsClient.CheckCNAME(ctx, hostname, h.cnameTarget); err != nil {
+		if !h.skipCNAMECheck {
+			return err
+		}
+
+		// A hostname served through a proxying CDN resolves to the CDN edge, so
+		// its origin CNAME is invisible in public DNS even when HTTP routing to
+		// this deployment works. The operator opted out of the pre-check, so
+		// keep the finding as a hint and let the HTTP-01 challenge — which is
+		// what actually proves control of the hostname — decide.
+		h.logger.WarnCtx(
+			ctx,
+			"cname configuration check failed, continuing because the cname check is disabled",
+			log.String("hostname", hostname),
+			log.Error(err),
+		)
+	}
+
+	return h.checkCAARecords(ctx, hostname)
+}
+
 func (h *beginChallengeHandler) checkCAARecords(ctx context.Context, hostname string) error {
-	// Exchange timeouts are applied per CAA label inside dnsclient.CheckCAA so
-	// the parent-climb budget is not shared across every lookup.
 	err := h.dnsClient.CheckCAA(ctx, hostname, h.caaIssuerDomain)
 	if err == nil {
 		return nil
