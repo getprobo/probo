@@ -275,16 +275,12 @@ const routes = [
                 case Role.AUDITOR:
                   return <Navigate to="measures" />;
                 case Role.COMPLIANCE_MANAGER:
-<<<<<<< HEAD
                   return <Navigate to="compliance-portals" />;
-=======
-                  return <Navigate to="compliance-page" />;
                 case Role.COMPLIANCE_ACCESS_MANAGER:
-                  return <Navigate to="compliance-page/access" />;
->>>>>>> c9c08a0ad (Add compliance access manager membership role)
+                  return <Navigate to="compliance-portals" />;
                 default:
                   return <Navigate to="tasks" />;
-                }
+              }
             },
           },
           {
