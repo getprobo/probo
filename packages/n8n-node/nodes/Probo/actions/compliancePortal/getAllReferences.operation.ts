@@ -23,8 +23,8 @@ import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
+		displayName: 'Compliance Portal ID',
+		name: 'compliancePortalId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the organization',
+		description: 'The ID of the compliance portal',
 		required: true,
 	},
 	{
@@ -72,31 +72,29 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetCompliancePortalReferences($organizationId: ID!, $first: Int, $after: CursorKey) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal {
-						references(first: $first, after: $after) {
-							edges {
-								node {
-									id
-									name
-									description
-									websiteUrl
-									rank
-									createdAt
-									updatedAt
-								}
+		query GetCompliancePortalReferences($compliancePortalId: ID!, $first: Int, $after: CursorKey) {
+			node(id: $compliancePortalId) {
+				... on CompliancePortal {
+					references(first: $first, after: $after) {
+						edges {
+							node {
+								id
+								name
+								description
+								websiteUrl
+								rank
+								createdAt
+								updatedAt
 							}
-							pageInfo {
-								hasNextPage
-								endCursor
-							}
+						}
+						pageInfo {
+							hasNextPage
+							endCursor
 						}
 					}
 				}
@@ -107,12 +105,11 @@ export async function execute(
 	const references = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		{ compliancePortalId },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			const compliancePortal = node?.compliancePortal as IDataObject | undefined;
-			return compliancePortal?.references as IDataObject | undefined;
+			return node?.references as IDataObject | undefined;
 		},
 		returnAll,
 		limit,

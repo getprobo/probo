@@ -83,7 +83,7 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 		level = new(1)
 	}
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, level, nil, nil, nil)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(level, nil, nil, nil)
 
 	page, err := prb.ThirdParties.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, thirdPartyFilter)
 	if err != nil {
@@ -1540,14 +1540,13 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 	audit, err := svc.Audits.Update(
 		ctx, scope,
 		&probo.UpdateAuditRequest{
-			ID:                         input.ID,
-			Name:                       UnwrapOmittable(input.Name),
-			ValidFrom:                  input.ValidFrom,
-			ValidUntil:                 input.ValidUntil,
-			AuditStartDate:             input.AuditStartDate,
-			AuditEndDate:               input.AuditEndDate,
-			State:                      input.State,
-			CompliancePortalVisibility: input.CompliancePortalVisibility,
+			ID:             input.ID,
+			Name:           UnwrapOmittable(input.Name),
+			ValidFrom:      input.ValidFrom,
+			ValidUntil:     input.ValidUntil,
+			AuditStartDate: input.AuditStartDate,
+			AuditEndDate:   input.AuditEndDate,
+			State:          input.State,
 		},
 	)
 	if err != nil {
@@ -2259,11 +2258,6 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
-	var compliancePortalVisibility *coredata.CompliancePortalVisibility
-	if input.CompliancePortalVisibility != nil {
-		compliancePortalVisibility = input.CompliancePortalVisibility
-	}
-
 	contentJSON, err := markdownToProseMirrorJSON(input.Content)
 	if err != nil {
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
@@ -2272,13 +2266,12 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 	document, documentVersion, err := svc.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
-			OrganizationID:             input.OrganizationID,
-			Title:                      input.Title,
-			Content:                    contentJSON,
-			Classification:             input.Classification,
-			DocumentType:               input.DocumentType,
-			CompliancePortalVisibility: compliancePortalVisibility,
-			DefaultApproverIDs:         input.DefaultApproverIds,
+			OrganizationID:     input.OrganizationID,
+			Title:              input.Title,
+			Content:            contentJSON,
+			Classification:     input.Classification,
+			DocumentType:       input.DocumentType,
+			DefaultApproverIDs: input.DefaultApproverIds,
 		},
 	)
 	if err != nil {
@@ -2315,13 +2308,12 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	document, documentVersion, _, err := svc.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
-			DocumentID:                 input.ID,
-			Title:                      input.Title,
-			Content:                    content,
-			Classification:             input.Classification,
-			DocumentType:               input.DocumentType,
-			CompliancePortalVisibility: input.CompliancePortalVisibility,
-			DefaultApproverIDs:         defaultApproverIDs,
+			DocumentID:         input.ID,
+			Title:              input.Title,
+			Content:            content,
+			Classification:     input.Classification,
+			DocumentType:       input.DocumentType,
+			DefaultApproverIDs: defaultApproverIDs,
 		},
 	)
 	if err != nil {
@@ -4927,16 +4919,16 @@ func (r *Resolver) DeleteRightsRequestTool(ctx context.Context, req *mcp.CallToo
 }
 
 // GetCompliancePortalTool handles the getCompliancePortal tool
-// Get the compliance portal for an organization
+// Get a compliance portal
 func (r *Resolver) GetCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCompliancePortalInput) (*mcp.CallToolResult, types.GetCompliancePortalOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalGet)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalGet)
 	if err != nil {
 		return nil, types.GetCompliancePortalOutput{}, err
 	}
 
 	prb := r.management
 
-	compliancePortal, err := prb.GetByOrganizationID(ctx, scope, input.OrganizationID)
+	compliancePortal, err := prb.Get(ctx, scope, input.CompliancePortalID)
 	if err != nil {
 		return nil, types.GetCompliancePortalOutput{}, fmt.Errorf("cannot get compliance portal: %w", err)
 	}
@@ -5145,7 +5137,7 @@ func (r *Resolver) DeleteCompliancePortalReferenceTool(ctx context.Context, req 
 // ListCompliancePortalFilesTool handles the listCompliancePortalFiles tool
 // List all files for the compliance portal
 func (r *Resolver) ListCompliancePortalFilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalFilesInput) (*mcp.CallToolResult, types.ListCompliancePortalFilesOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalFileList)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalFileList)
 	if err != nil {
 		return nil, types.ListCompliancePortalFilesOutput{}, err
 	}
@@ -5167,7 +5159,7 @@ func (r *Resolver) ListCompliancePortalFilesTool(ctx context.Context, req *mcp.C
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 	filter := coredata.NewCompliancePortalFileFilter()
 
-	p, err := prb.ListFilesForOrganizationID(ctx, scope, input.OrganizationID, cursor, filter)
+	p, err := prb.ListFilesForCompliancePortalID(ctx, scope, input.CompliancePortalID, cursor, filter)
 	if err != nil {
 		return nil, types.ListCompliancePortalFilesOutput{}, fmt.Errorf("cannot list compliance portal files: %w", err)
 	}
@@ -8149,4 +8141,41 @@ func (r *Resolver) DeleteCompliancePortalFrameworkTool(ctx context.Context, req 
 	return nil, types.DeleteCompliancePortalFrameworkOutput{
 		DeletedCompliancePortalFrameworkID: input.ID,
 	}, nil
+}
+
+func (r *Resolver) ListCompliancePortalsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalsInput) (*mcp.CallToolResult, types.ListCompliancePortalsOutput, error) {
+	return nil, types.ListCompliancePortalsOutput{}, fmt.Errorf("listCompliancePortals not implemented")
+}
+func (r *Resolver) CreateCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCompliancePortalInput) (*mcp.CallToolResult, types.CreateCompliancePortalOutput, error) {
+	return nil, types.CreateCompliancePortalOutput{}, fmt.Errorf("createCompliancePortal not implemented")
+}
+func (r *Resolver) DeleteCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalInput) (*mcp.CallToolResult, types.DeleteCompliancePortalOutput, error) {
+	return nil, types.DeleteCompliancePortalOutput{}, fmt.Errorf("deleteCompliancePortal not implemented")
+}
+func (r *Resolver) UpdateCompliancePortalDocumentVisibilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalDocumentVisibilityInput) (*mcp.CallToolResult, types.UpdateCompliancePortalDocumentVisibilityOutput, error) {
+	return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("updateCompliancePortalDocumentVisibility not implemented")
+}
+func (r *Resolver) DeleteCompliancePortalDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalDocumentInput) (*mcp.CallToolResult, types.DeleteCompliancePortalDocumentOutput, error) {
+	return nil, types.DeleteCompliancePortalDocumentOutput{}, fmt.Errorf("deleteCompliancePortalDocument not implemented")
+}
+func (r *Resolver) UpdateCompliancePortalAuditVisibilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalAuditVisibilityInput) (*mcp.CallToolResult, types.UpdateCompliancePortalAuditVisibilityOutput, error) {
+	return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, fmt.Errorf("updateCompliancePortalAuditVisibility not implemented")
+}
+func (r *Resolver) DeleteCompliancePortalAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalAuditInput) (*mcp.CallToolResult, types.DeleteCompliancePortalAuditOutput, error) {
+	return nil, types.DeleteCompliancePortalAuditOutput{}, fmt.Errorf("deleteCompliancePortalAudit not implemented")
+}
+func (r *Resolver) UpdateCompliancePortalThirdPartyPublishedTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalThirdPartyPublishedInput) (*mcp.CallToolResult, types.UpdateCompliancePortalThirdPartyPublishedOutput, error) {
+	return nil, types.UpdateCompliancePortalThirdPartyPublishedOutput{}, fmt.Errorf("updateCompliancePortalThirdPartyPublished not implemented")
+}
+func (r *Resolver) DeleteCompliancePortalThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalThirdPartyInput) (*mcp.CallToolResult, types.DeleteCompliancePortalThirdPartyOutput, error) {
+	return nil, types.DeleteCompliancePortalThirdPartyOutput{}, fmt.Errorf("deleteCompliancePortalThirdParty not implemented")
+}
+func (r *Resolver) ListCompliancePortalDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalDocumentsInput) (*mcp.CallToolResult, types.ListCompliancePortalDocumentsOutput, error) {
+	return nil, types.ListCompliancePortalDocumentsOutput{}, fmt.Errorf("listCompliancePortalDocuments not implemented")
+}
+func (r *Resolver) ListCompliancePortalAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalAuditsInput) (*mcp.CallToolResult, types.ListCompliancePortalAuditsOutput, error) {
+	return nil, types.ListCompliancePortalAuditsOutput{}, fmt.Errorf("listCompliancePortalAudits not implemented")
+}
+func (r *Resolver) ListCompliancePortalThirdPartiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalThirdPartiesInput) (*mcp.CallToolResult, types.ListCompliancePortalThirdPartiesOutput, error) {
+	return nil, types.ListCompliancePortalThirdPartiesOutput{}, fmt.Errorf("listCompliancePortalThirdParties not implemented")
 }

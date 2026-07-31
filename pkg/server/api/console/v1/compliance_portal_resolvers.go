@@ -270,6 +270,123 @@ func (r *compliancePortalResolver) CustomLinks(ctx context.Context, obj *types.C
 	return types.NewComplianceCustomLinkConnection(result), nil
 }
 
+// CompliancePortalFiles is the resolver for the compliancePortalFiles field.
+func (r *compliancePortalResolver) CompliancePortalFiles(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalFileOrderField]) (*types.CompliancePortalFileConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalFileOrderField]{
+		Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalFileOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	pageResult, err := r.management.ListFilesForCompliancePortalID(ctx, scope, obj.ID, cursor, &coredata.CompliancePortalFileFilter{})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal files", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalFileConnection(pageResult, obj.ID), nil
+}
+
+// Documents is the resolver for the documents field.
+func (r *compliancePortalResolver) Documents(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.CompliancePortalDocumentConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldTitle,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	pageResult, err := r.management.ListDocumentCatalog(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal document catalog", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalDocumentConnection(pageResult, obj.ID), nil
+}
+
+// Audits is the resolver for the audits field.
+func (r *compliancePortalResolver) Audits(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.CompliancePortalAuditConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	pageResult, err := r.management.ListAuditCatalog(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal audit catalog", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalAuditConnection(pageResult, obj.ID), nil
+}
+
+// ThirdParties is the resolver for the thirdParties field.
+func (r *compliancePortalResolver) ThirdParties(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.CompliancePortalThirdPartyConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	pageResult, err := r.management.ListThirdPartyCatalog(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal third party catalog", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalThirdPartyConnection(pageResult, obj.ID), nil
+}
+
 // MailingList is the resolver for the mailingList field.
 func (r *compliancePortalResolver) MailingList(ctx context.Context, obj *types.CompliancePortal) (*types.MailingList, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionMailingListSubscriberList)
@@ -476,6 +593,22 @@ func (r *compliancePortalAccessResolver) Permission(ctx context.Context, obj *ty
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *compliancePortalAuditConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalAuditConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.management.CountAuditCatalog(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count compliance portal audit catalog", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *compliancePortalCommitmentResolver) Permission(ctx context.Context, obj *types.CompliancePortalCommitment, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -542,6 +675,23 @@ func (r *compliancePortalCommitmentGroupConnectionResolver) TotalCount(ctx conte
 	count, err := r.management.CountCommitmentGroups(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal commitment groups", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *compliancePortalConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalList)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.management.CountForOrganizationID(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count compliance portals", log.Error(err))
+
 		return 0, gqlutils.Internal(ctx)
 	}
 
@@ -660,6 +810,22 @@ func (r *compliancePortalDocumentAccessConnectionResolver) TotalCount(ctx contex
 	return count, nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *compliancePortalDocumentConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalDocumentConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.management.CountDocumentCatalog(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count compliance portal document catalog", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // File is the resolver for the file field.
 func (r *compliancePortalFileResolver) File(ctx context.Context, obj *types.CompliancePortalFile) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileGetFileUrl); err != nil {
@@ -718,7 +884,7 @@ func (r *compliancePortalFileConnectionResolver) TotalCount(ctx context.Context,
 		return 0, err
 	}
 
-	count, err := r.management.CountFilesForOrganizationID(ctx, scope, obj.ParentID)
+	count, err := r.management.CountFilesForCompliancePortalID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal files", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -757,6 +923,22 @@ func (r *compliancePortalReferenceConnectionResolver) TotalCount(ctx context.Con
 	return count, nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *compliancePortalThirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalThirdPartyConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.management.CountThirdPartyCatalog(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count compliance portal third party catalog", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Certificate is the resolver for the certificate field.
 func (r *customDomainResolver) Certificate(ctx context.Context, obj *types.CustomDomain) (*types.Certificate, error) {
 	if obj.Certificate == nil {
@@ -785,6 +967,289 @@ func (r *customDomainResolver) Certificate(ctx context.Context, obj *types.Custo
 // Permission is the resolver for the permission field.
 func (r *customDomainResolver) Permission(ctx context.Context, obj *types.CustomDomain, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// CreateCompliancePortal is the resolver for the createCompliancePortal field.
+func (r *mutationResolver) CreateCompliancePortal(ctx context.Context, input types.CreateCompliancePortalInput) (*types.CreateCompliancePortalPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, management.ActionCompliancePortalCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	portal, err := r.management.Create(
+		ctx,
+		scope,
+		&management.CreateCompliancePortalRequest{
+			OrganizationID: input.OrganizationID,
+			EntityName:     input.EntityName,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, management.ErrSlugAlreadyInUse) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create compliance portal", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateCompliancePortalPayload{
+		CompliancePortalEdge: types.NewCompliancePortalEdge(portal, coredata.CompliancePortalOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteCompliancePortal is the resolver for the deleteCompliancePortal field.
+func (r *mutationResolver) DeleteCompliancePortal(ctx context.Context, input types.DeleteCompliancePortalInput) (*types.DeleteCompliancePortalPayload, error) {
+	scope, err := r.authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.management.Delete(ctx, scope, input.CompliancePortalID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete compliance portal", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCompliancePortalPayload{
+		DeletedCompliancePortalID: input.CompliancePortalID,
+	}, nil
+}
+
+// UpdateCompliancePortalDocumentVisibility is the resolver for the updateCompliancePortalDocumentVisibility field.
+func (r *mutationResolver) UpdateCompliancePortalDocumentVisibility(ctx context.Context, input types.UpdateCompliancePortalDocumentVisibilityInput) (*types.UpdateCompliancePortalDocumentVisibilityPayload, error) {
+	scope, err := r.authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.management.UpdateDocumentVisibility(
+		ctx,
+		scope,
+		&management.UpdateCompliancePortalDocumentVisibilityRequest{
+			CompliancePortalID:         input.CompliancePortalID,
+			DocumentID:                 input.DocumentID,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update compliance portal document visibility", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	document, err := r.management.GetCatalogDocument(ctx, scope, input.CompliancePortalID, input.DocumentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load document catalog entry", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	catalogDocument := types.NewCompliancePortalDocument(document)
+
+	return &types.UpdateCompliancePortalDocumentVisibilityPayload{
+		CatalogDocument: catalogDocument,
+		CatalogDocumentEdge: types.NewCompliancePortalDocumentEdge(
+			document,
+			coredata.DocumentOrderFieldTitle,
+		),
+	}, nil
+}
+
+// DeleteCompliancePortalDocument is the resolver for the deleteCompliancePortalDocument field.
+func (r *mutationResolver) DeleteCompliancePortalDocument(ctx context.Context, input types.DeleteCompliancePortalDocumentInput) (*types.DeleteCompliancePortalDocumentPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.management.DeleteDocument(
+		ctx,
+		scope,
+		&management.DeleteCompliancePortalDocumentRequest{
+			ID: input.ID,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete compliance portal document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCompliancePortalDocumentPayload{
+		DeletedCompliancePortalDocumentID: input.ID,
+	}, nil
+}
+
+// UpdateCompliancePortalAuditVisibility is the resolver for the updateCompliancePortalAuditVisibility field.
+func (r *mutationResolver) UpdateCompliancePortalAuditVisibility(ctx context.Context, input types.UpdateCompliancePortalAuditVisibilityInput) (*types.UpdateCompliancePortalAuditVisibilityPayload, error) {
+	scope, err := r.authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.management.UpdateAuditVisibility(
+		ctx,
+		scope,
+		&management.UpdateCompliancePortalAuditVisibilityRequest{
+			CompliancePortalID:         input.CompliancePortalID,
+			AuditID:                    input.AuditID,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "audit %q not found", input.AuditID)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update compliance portal audit visibility", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	audit, err := r.management.GetCatalogAudit(ctx, scope, input.CompliancePortalID, input.AuditID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load audit catalog entry", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	catalogAudit := types.NewCompliancePortalAudit(audit)
+
+	return &types.UpdateCompliancePortalAuditVisibilityPayload{
+		CatalogAudit: catalogAudit,
+		CatalogAuditEdge: types.NewCompliancePortalAuditEdge(
+			audit,
+			coredata.AuditOrderFieldCreatedAt,
+		),
+	}, nil
+}
+
+// DeleteCompliancePortalAudit is the resolver for the deleteCompliancePortalAudit field.
+func (r *mutationResolver) DeleteCompliancePortalAudit(ctx context.Context, input types.DeleteCompliancePortalAuditInput) (*types.DeleteCompliancePortalAuditPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.management.DeleteAudit(
+		ctx,
+		scope,
+		&management.DeleteCompliancePortalAuditRequest{
+			ID: input.ID,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete compliance portal audit", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCompliancePortalAuditPayload{
+		DeletedCompliancePortalAuditID: input.ID,
+	}, nil
+}
+
+// UpdateCompliancePortalThirdPartyPublished is the resolver for the updateCompliancePortalThirdPartyPublished field.
+func (r *mutationResolver) UpdateCompliancePortalThirdPartyPublished(ctx context.Context, input types.UpdateCompliancePortalThirdPartyPublishedInput) (*types.UpdateCompliancePortalThirdPartyPublishedPayload, error) {
+	scope, err := r.authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.management.UpdateThirdPartyPublished(
+		ctx,
+		scope,
+		&management.UpdateCompliancePortalThirdPartyPublishedRequest{
+			CompliancePortalID: input.CompliancePortalID,
+			ThirdPartyID:       input.ThirdPartyID,
+			Published:          input.Published,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "third party %q not found", input.ThirdPartyID)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update compliance portal third party published", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	catalogThirdParty, err := r.management.GetCatalogThirdParty(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load third party catalog entry", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	catalogEntry := types.NewCompliancePortalThirdParty(catalogThirdParty)
+
+	return &types.UpdateCompliancePortalThirdPartyPublishedPayload{
+		CatalogThirdParty: catalogEntry,
+		CatalogThirdPartyEdge: types.NewCompliancePortalThirdPartyEdge(
+			catalogThirdParty,
+			coredata.ThirdPartyOrderFieldName,
+		),
+	}, nil
+}
+
+// DeleteCompliancePortalThirdParty is the resolver for the deleteCompliancePortalThirdParty field.
+func (r *mutationResolver) DeleteCompliancePortalThirdParty(ctx context.Context, input types.DeleteCompliancePortalThirdPartyInput) (*types.DeleteCompliancePortalThirdPartyPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.management.DeleteThirdParty(
+		ctx,
+		scope,
+		&management.DeleteCompliancePortalThirdPartyRequest{
+			ID: input.ID,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete compliance portal third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteCompliancePortalThirdPartyPayload{
+		DeletedCompliancePortalThirdPartyID: input.ID,
+	}, nil
 }
 
 // UpdateCompliancePortal is the resolver for the updateCompliancePortal field.
@@ -1424,7 +1889,7 @@ func (r *mutationResolver) DeleteComplianceCustomLink(ctx context.Context, input
 
 // CreateCompliancePortalFile is the resolver for the createCompliancePortalFile field.
 func (r *mutationResolver) CreateCompliancePortalFile(ctx context.Context, input types.CreateCompliancePortalFileInput) (*types.CreateCompliancePortalFilePayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, management.ActionCompliancePortalFileCreate)
+	scope, err := r.authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalFileCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -1432,9 +1897,9 @@ func (r *mutationResolver) CreateCompliancePortalFile(ctx context.Context, input
 	file, err := r.management.CreateFile(
 		ctx, scope,
 		&management.CreateFileRequest{
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Category:       input.Category,
+			CompliancePortalID: input.CompliancePortalID,
+			Name:               input.Name,
+			Category:           input.Category,
 			File: management.File{
 				Content:     input.File.File,
 				Filename:    input.File.Filename,
@@ -1598,6 +2063,11 @@ func (r *Resolver) CompliancePortalAccess() schema.CompliancePortalAccessResolve
 	return &compliancePortalAccessResolver{r}
 }
 
+// CompliancePortalAuditConnection returns schema.CompliancePortalAuditConnectionResolver implementation.
+func (r *Resolver) CompliancePortalAuditConnection() schema.CompliancePortalAuditConnectionResolver {
+	return &compliancePortalAuditConnectionResolver{r}
+}
+
 // CompliancePortalCommitment returns schema.CompliancePortalCommitmentResolver implementation.
 func (r *Resolver) CompliancePortalCommitment() schema.CompliancePortalCommitmentResolver {
 	return &compliancePortalCommitmentResolver{r}
@@ -1618,6 +2088,11 @@ func (r *Resolver) CompliancePortalCommitmentGroupConnection() schema.Compliance
 	return &compliancePortalCommitmentGroupConnectionResolver{r}
 }
 
+// CompliancePortalConnection returns schema.CompliancePortalConnectionResolver implementation.
+func (r *Resolver) CompliancePortalConnection() schema.CompliancePortalConnectionResolver {
+	return &compliancePortalConnectionResolver{r}
+}
+
 // CompliancePortalDocumentAccess returns schema.CompliancePortalDocumentAccessResolver implementation.
 func (r *Resolver) CompliancePortalDocumentAccess() schema.CompliancePortalDocumentAccessResolver {
 	return &compliancePortalDocumentAccessResolver{r}
@@ -1626,6 +2101,11 @@ func (r *Resolver) CompliancePortalDocumentAccess() schema.CompliancePortalDocum
 // CompliancePortalDocumentAccessConnection returns schema.CompliancePortalDocumentAccessConnectionResolver implementation.
 func (r *Resolver) CompliancePortalDocumentAccessConnection() schema.CompliancePortalDocumentAccessConnectionResolver {
 	return &compliancePortalDocumentAccessConnectionResolver{r}
+}
+
+// CompliancePortalDocumentConnection returns schema.CompliancePortalDocumentConnectionResolver implementation.
+func (r *Resolver) CompliancePortalDocumentConnection() schema.CompliancePortalDocumentConnectionResolver {
+	return &compliancePortalDocumentConnectionResolver{r}
 }
 
 // CompliancePortalFile returns schema.CompliancePortalFileResolver implementation.
@@ -1648,6 +2128,11 @@ func (r *Resolver) CompliancePortalReferenceConnection() schema.CompliancePortal
 	return &compliancePortalReferenceConnectionResolver{r}
 }
 
+// CompliancePortalThirdPartyConnection returns schema.CompliancePortalThirdPartyConnectionResolver implementation.
+func (r *Resolver) CompliancePortalThirdPartyConnection() schema.CompliancePortalThirdPartyConnectionResolver {
+	return &compliancePortalThirdPartyConnectionResolver{r}
+}
+
 // CustomDomain returns schema.CustomDomainResolver implementation.
 func (r *Resolver) CustomDomain() schema.CustomDomainResolver { return &customDomainResolver{r} }
 
@@ -1656,15 +2141,19 @@ type (
 	complianceFrameworkResolver                       struct{ *Resolver }
 	compliancePortalResolver                          struct{ *Resolver }
 	compliancePortalAccessResolver                    struct{ *Resolver }
+	compliancePortalAuditConnectionResolver           struct{ *Resolver }
 	compliancePortalCommitmentResolver                struct{ *Resolver }
 	compliancePortalCommitmentConnectionResolver      struct{ *Resolver }
 	compliancePortalCommitmentGroupResolver           struct{ *Resolver }
 	compliancePortalCommitmentGroupConnectionResolver struct{ *Resolver }
+	compliancePortalConnectionResolver                struct{ *Resolver }
 	compliancePortalDocumentAccessResolver            struct{ *Resolver }
 	compliancePortalDocumentAccessConnectionResolver  struct{ *Resolver }
+	compliancePortalDocumentConnectionResolver        struct{ *Resolver }
 	compliancePortalFileResolver                      struct{ *Resolver }
 	compliancePortalFileConnectionResolver            struct{ *Resolver }
 	compliancePortalReferenceResolver                 struct{ *Resolver }
 	compliancePortalReferenceConnectionResolver       struct{ *Resolver }
+	compliancePortalThirdPartyConnectionResolver      struct{ *Resolver }
 	customDomainResolver                              struct{ *Resolver }
 )

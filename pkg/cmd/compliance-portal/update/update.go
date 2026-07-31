@@ -29,19 +29,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const compliancePortalQuery = `
-query($id: ID!) {
-  node(id: $id) {
-    __typename
-    ... on Organization {
-      compliancePortal {
-        id
-      }
-    }
-  }
-}
-`
-
 const updateMutation = `
 mutation($input: UpdateCompliancePortalInput!) {
   updateCompliancePortal(input: $input) {
@@ -58,15 +45,6 @@ mutation($input: UpdateCompliancePortalInput!) {
   }
 }
 `
-
-type compliancePortalQueryResponse struct {
-	Node *struct {
-		Typename         string `json:"__typename"`
-		CompliancePortal *struct {
-			ID string `json:"id"`
-		} `json:"compliancePortal"`
-	} `json:"node"`
-}
 
 type updateResponse struct {
 	UpdateCompliancePortal struct {
@@ -85,7 +63,7 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg                  string
+		flagPortal               string
 		flagActive               bool
 		flagSearchEngineIndexing string
 		flagDescription          string
@@ -123,42 +101,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
-			// Fetch compliance portal ID from organization.
-			data, err := client.Do(
-				compliancePortalQuery,
-				map[string]any{"id": flagOrg},
-			)
-			if err != nil {
-				return err
-			}
-
-			var tcResp compliancePortalQueryResponse
-			if err := json.Unmarshal(data, &tcResp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if tcResp.Node == nil {
-				return fmt.Errorf("organization %s not found", flagOrg)
-			}
-
-			if tcResp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", tcResp.Node.Typename)
-			}
-
-			if tcResp.Node.CompliancePortal == nil {
-				return fmt.Errorf("compliance portal not found for organization %s", flagOrg)
-			}
-
 			input := map[string]any{
-				"compliancePortalId": tcResp.Node.CompliancePortal.ID,
+				"compliancePortalId": flagPortal,
 			}
 
 			if cmd.Flags().Changed("active") {
@@ -201,7 +145,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
 
-			data, err = client.Do(
+			data, err := client.Do(
 				updateMutation,
 				map[string]any{"input": input},
 			)
@@ -225,7 +169,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID")
+	_ = cmd.MarkFlagRequired("portal")
+	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().BoolVar(&flagActive, "active", false, "Enable or disable the compliance portal")
 	cmd.Flags().StringVar(&flagSearchEngineIndexing, "search-engine-indexing", "", "Search engine indexing: INDEXABLE, NOT_INDEXABLE")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Compliance page description")

@@ -91,7 +91,6 @@ export async function execute(
 								auditStartDate
 								auditEndDate
 								reportUrl
-								compliancePortalVisibility
 								createdAt
 								updatedAt
 							}

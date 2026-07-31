@@ -146,7 +146,6 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 			Category:                      input.Category,
 			Certifications:                input.Certifications,
 			AdministratorIDs:              administratorIDs,
-			ShowOnCompliancePortal:        input.ShowOnCompliancePortal,
 			Countries:                     input.Countries,
 		},
 	)

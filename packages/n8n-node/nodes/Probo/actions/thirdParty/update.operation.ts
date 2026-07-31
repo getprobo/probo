@@ -131,19 +131,6 @@ export const description: INodeProperties[] = [
 		description: 'Comma-separated administrator profile IDs (omit to leave unchanged)',
 	},
 	{
-		displayName: 'Show on Compliance Portal',
-		name: 'showOnCompliancePortal',
-		type: 'boolean',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['update'],
-			},
-		},
-		default: false,
-		description: 'Whether to show the thirdParty on the compliance portal',
-	},
-	{
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
@@ -241,7 +228,6 @@ export async function execute(
 	const legalName = this.getNodeParameter('legalName', itemIndex, '') as string;
 	const headquarterAddress = this.getNodeParameter('headquarterAddress', itemIndex, '') as string;
 	const administratorIds = this.getNodeParameter('administratorIds', itemIndex, '') as string;
-	const showOnCompliancePortal = this.getNodeParameter('showOnCompliancePortal', itemIndex) as boolean | undefined;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		statusPageUrl?: string;
 		termsOfServiceUrl?: string;
@@ -278,7 +264,6 @@ export async function execute(
 					trustPageUrl
 					certifications
 					countries
-					showOnCompliancePortal
 					createdAt
 					updatedAt
 				}
@@ -296,7 +281,6 @@ export async function execute(
 	if (administratorIds) {
 		input.administratorIds = administratorIds.split(',').map(id => id.trim()).filter(Boolean);
 	}
-	if (showOnCompliancePortal !== undefined) input.showOnCompliancePortal = showOnCompliancePortal;
 	if (additionalFields.statusPageUrl !== undefined) input.statusPageUrl = additionalFields.statusPageUrl === '' ? null : additionalFields.statusPageUrl;
 	if (additionalFields.termsOfServiceUrl !== undefined) input.termsOfServiceUrl = additionalFields.termsOfServiceUrl === '' ? null : additionalFields.termsOfServiceUrl;
 	if (additionalFields.privacyPolicyUrl !== undefined) input.privacyPolicyUrl = additionalFields.privacyPolicyUrl === '' ? null : additionalFields.privacyPolicyUrl;

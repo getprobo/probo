@@ -5010,9 +5010,60 @@ components:
       type: string
       enum:
         - NONE
-        - PRIVATE
+        - RESTRICTED
         - PUBLIC
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalVisibility
+
+    CompliancePortalLinkedVisibility:
+      type: string
+      enum:
+        - RESTRICTED
+        - PUBLIC
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalVisibility
+
+    CompliancePortalCatalogDocument:
+      type: object
+      required:
+        - id
+        - document
+        - visibility
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Portal catalog link ID
+        document:
+          $ref: "#/components/schemas/Document"
+        visibility:
+          $ref: "#/components/schemas/CompliancePortalLinkedVisibility"
+          description: Document visibility on this compliance portal
+
+    CompliancePortalCatalogAudit:
+      type: object
+      required:
+        - id
+        - audit
+        - visibility
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Portal catalog link ID
+        audit:
+          $ref: "#/components/schemas/Audit"
+        visibility:
+          $ref: "#/components/schemas/CompliancePortalLinkedVisibility"
+          description: Audit visibility on this compliance portal
+
+    CompliancePortalCatalogThirdParty:
+      type: object
+      required:
+        - id
+        - third_party
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Portal catalog link ID
+        third_party:
+          $ref: "#/components/schemas/ThirdParty"
 
     AuditOrderField:
       type: string
@@ -5045,7 +5096,6 @@ components:
         - organization_id
         - framework_id
         - state
-        - compliance_portal_visibility
         - has_report
         - created_at
         - updated_at
@@ -5091,9 +5141,6 @@ components:
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
-        compliance_portal_visibility:
-          $ref: "#/components/schemas/CompliancePortalVisibility"
-          description: Compliance portal visibility
         has_report:
           type: boolean
           description: Whether the audit has an attached report
@@ -5285,14 +5332,6 @@ components:
             - type: "null"
               description: No state
           description: Audit state
-        compliance_portal_visibility:
-          anyOf:
-            - $ref: "#/components/schemas/CompliancePortalVisibility"
-              description: Compliance portal visibility
-            - type: "null"
-              description: No compliance portal visibility
-          description: Compliance portal visibility
-
     UpdateAuditOutput:
       type: object
       required:
@@ -6266,7 +6305,6 @@ components:
       required:
         - id
         - organization_id
-        - compliance_portal_visibility
         - write_mode
         - status
         - created_at
@@ -6288,9 +6326,6 @@ components:
             - integer
             - "null"
           description: Current published minor version number
-        compliance_portal_visibility:
-          $ref: "#/components/schemas/CompliancePortalVisibility"
-          description: Compliance portal visibility
         write_mode:
           $ref: "#/components/schemas/DocumentWriteMode"
           description: Write mode (authored or generated)
@@ -6528,11 +6563,6 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentWriteMode"
               description: Filter by write mode (AUTHORED or GENERATED)
-            compliance_portal_visibilities:
-              type: array
-              items:
-                $ref: "#/components/schemas/CompliancePortalVisibility"
-              description: Compliance portal visibilities
             document_types:
               type: array
               items:
@@ -6603,9 +6633,6 @@ components:
         document_type:
           $ref: "#/components/schemas/DocumentType"
           description: Document type
-        compliance_portal_visibility:
-          $ref: "#/components/schemas/CompliancePortalVisibility"
-          description: Compliance portal visibility
         default_approver_ids:
           type: array
           items:
@@ -6644,9 +6671,6 @@ components:
         document_type:
           $ref: "#/components/schemas/DocumentType"
           description: Document type
-        compliance_portal_visibility:
-          $ref: "#/components/schemas/CompliancePortalVisibility"
-          description: Compliance portal visibility
         default_approver_ids:
           type: array
           items:
@@ -9642,7 +9666,24 @@ components:
           type: string
           format: date-time
 
-    GetCompliancePortalInput:
+    CompliancePortalOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CompliancePortalOrderField
+
+    CompliancePortalOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/CompliancePortalOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    ListCompliancePortalsInput:
       type: object
       required:
         - organization_id
@@ -9650,6 +9691,58 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/CompliancePortalOrderBy"
+          description: Compliance portal order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListCompliancePortalsOutput:
+      type: object
+      required:
+        - compliance_portals
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        compliance_portals:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompliancePortal"
+
+    CreateCompliancePortalInput:
+      type: object
+      required:
+        - organization_id
+        - entity_name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        entity_name:
+          type: string
+          description: Entity name shown on the public compliance page
+
+    CreateCompliancePortalOutput:
+      type: object
+      required:
+        - compliance_portal
+      properties:
+        compliance_portal:
+          $ref: "#/components/schemas/CompliancePortal"
+
+    GetCompliancePortalInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
 
     GetCompliancePortalOutput:
       type: object
@@ -9717,6 +9810,249 @@ components:
       properties:
         compliance_portal:
           $ref: "#/components/schemas/CompliancePortal"
+
+    DeleteCompliancePortalInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+
+    DeleteCompliancePortalOutput:
+      type: object
+      required:
+        - deleted_compliance_portal_id
+      properties:
+        deleted_compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted compliance portal ID
+
+    UpdateCompliancePortalDocumentVisibilityInput:
+      type: object
+      required:
+        - compliance_portal_id
+        - document_id
+        - compliance_portal_visibility
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        compliance_portal_visibility:
+          $ref: "#/components/schemas/CompliancePortalLinkedVisibility"
+          description: Document visibility on this compliance portal
+
+    UpdateCompliancePortalDocumentVisibilityOutput:
+      type: object
+      required:
+        - catalog_document
+      properties:
+        catalog_document:
+          $ref: "#/components/schemas/CompliancePortalCatalogDocument"
+          description: Updated document catalog entry
+
+    DeleteCompliancePortalDocumentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal document ID
+
+    DeleteCompliancePortalDocumentOutput:
+      type: object
+      required:
+        - deleted_compliance_portal_document_id
+      properties:
+        deleted_compliance_portal_document_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted compliance portal document ID
+
+    UpdateCompliancePortalAuditVisibilityInput:
+      type: object
+      required:
+        - compliance_portal_id
+        - audit_id
+        - compliance_portal_visibility
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        compliance_portal_visibility:
+          $ref: "#/components/schemas/CompliancePortalLinkedVisibility"
+          description: Audit visibility on this compliance portal
+
+    UpdateCompliancePortalAuditVisibilityOutput:
+      type: object
+      required:
+        - catalog_audit
+      properties:
+        catalog_audit:
+          $ref: "#/components/schemas/CompliancePortalCatalogAudit"
+          description: Updated audit catalog entry
+
+    DeleteCompliancePortalAuditInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal audit ID
+
+    DeleteCompliancePortalAuditOutput:
+      type: object
+      required:
+        - deleted_compliance_portal_audit_id
+      properties:
+        deleted_compliance_portal_audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted compliance portal audit ID
+
+    UpdateCompliancePortalThirdPartyPublishedInput:
+      type: object
+      required:
+        - compliance_portal_id
+        - third_party_id
+        - published
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Third party ID
+        published:
+          type: boolean
+          description: Whether the third party is published on this compliance portal
+
+    UpdateCompliancePortalThirdPartyPublishedOutput:
+      type: object
+      required:
+        - catalog_third_party
+      properties:
+        catalog_third_party:
+          $ref: "#/components/schemas/CompliancePortalCatalogThirdParty"
+          description: Published third party catalog entry
+
+    DeleteCompliancePortalThirdPartyInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal third party ID
+
+    DeleteCompliancePortalThirdPartyOutput:
+      type: object
+      required:
+        - deleted_compliance_portal_third_party_id
+      properties:
+        deleted_compliance_portal_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted compliance portal third party ID
+
+    ListCompliancePortalDocumentsInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        order_by:
+          $ref: "#/components/schemas/DocumentOrderBy"
+          description: Document order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListCompliancePortalDocumentsOutput:
+      type: object
+      required:
+        - compliance_portal_documents
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        compliance_portal_documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompliancePortalCatalogDocument"
+
+    ListCompliancePortalAuditsInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        order_by:
+          $ref: "#/components/schemas/AuditOrderBy"
+          description: Audit order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListCompliancePortalAuditsOutput:
+      type: object
+      required:
+        - compliance_portal_audits
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        compliance_portal_audits:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompliancePortalCatalogAudit"
+
+    ListCompliancePortalThirdPartiesInput:
+      type: object
+      required:
+        - compliance_portal_id
+      properties:
+        compliance_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal ID
+        order_by:
+          $ref: "#/components/schemas/ThirdPartyOrderBy"
+          description: Third party order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListCompliancePortalThirdPartiesOutput:
+      type: object
+      required:
+        - compliance_portal_third_parties
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        compliance_portal_third_parties:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompliancePortalCatalogThirdParty"
 
     ListCompliancePortalReferencesInput:
       type: object
@@ -10250,11 +10586,11 @@ components:
     ListCompliancePortalFilesInput:
       type: object
       required:
-        - organization_id
+        - compliance_portal_id
       properties:
-        organization_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Organization ID
+          description: Compliance portal ID
         order_by:
           $ref: "#/components/schemas/CompliancePortalFileOrderBy"
           description: Compliance portal file order by
@@ -15965,9 +16301,33 @@ tools:
       $ref: "#/components/schemas/DeleteRightsRequestInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRightsRequestOutput"
+  - name: listCompliancePortals
+    title: List Compliance Portals
+    description: List all compliance portals for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalsOutput"
+  - name: createCompliancePortal
+    title: Create Compliance Portal
+    description: Create a compliance portal for an organization
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateCompliancePortalOutput"
   - name: getCompliancePortal
     title: Get Compliance Portal
-    description: Get the compliance portal for an organization
+    description: Get a compliance portal by ID
     hints:
       readonly: true
       destructive: false
@@ -15989,6 +16349,126 @@ tools:
       $ref: "#/components/schemas/UpdateCompliancePortalInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateCompliancePortalOutput"
+  - name: deleteCompliancePortal
+    title: Delete Compliance Portal
+    description: Delete a compliance portal
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalOutput"
+  - name: updateCompliancePortalDocumentVisibility
+    title: Update Compliance Portal Document Visibility
+    description: Update a document's visibility on a compliance portal
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalDocumentVisibilityInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalDocumentVisibilityOutput"
+  - name: deleteCompliancePortalDocument
+    title: Delete Compliance Portal Document
+    description: Remove a document from a compliance portal
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalDocumentOutput"
+  - name: updateCompliancePortalAuditVisibility
+    title: Update Compliance Portal Audit Visibility
+    description: Update an audit's visibility on a compliance portal
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalAuditVisibilityInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalAuditVisibilityOutput"
+  - name: deleteCompliancePortalAudit
+    title: Delete Compliance Portal Audit
+    description: Remove an audit from a compliance portal
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalAuditOutput"
+  - name: updateCompliancePortalThirdPartyPublished
+    title: Update Compliance Portal Third Party Published
+    description: Update whether a third party is published on a compliance portal
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalThirdPartyPublishedInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCompliancePortalThirdPartyPublishedOutput"
+  - name: deleteCompliancePortalThirdParty
+    title: Delete Compliance Portal Third Party
+    description: Remove a third party from a compliance portal
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalThirdPartyInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalThirdPartyOutput"
+  - name: listCompliancePortalDocuments
+    title: List Compliance Portal Documents
+    description: List documents linked to a compliance portal
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalDocumentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalDocumentsOutput"
+  - name: listCompliancePortalAudits
+    title: List Compliance Portal Audits
+    description: List audits linked to a compliance portal
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalAuditsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalAuditsOutput"
+  - name: listCompliancePortalThirdParties
+    title: List Compliance Portal Third Parties
+    description: List third parties published on a compliance portal
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalThirdPartiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCompliancePortalThirdPartiesOutput"
   - name: listCompliancePortalReferences
     title: List Compliance Portal References
     description: List all references for a compliance portal

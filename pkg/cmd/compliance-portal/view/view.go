@@ -34,18 +34,16 @@ const viewQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
-    ... on Organization {
-      compliancePortal {
-        id
-        active
-        searchEngineIndexing
-        logoFileUrl
-        darkLogoFileUrl
-        ndaFileName
-        ndaFileUrl
-        createdAt
-        updatedAt
-      }
+    ... on CompliancePortal {
+      id
+      active
+      searchEngineIndexing
+      logoFileUrl
+      darkLogoFileUrl
+      ndaFileName
+      ndaFileUrl
+      createdAt
+      updatedAt
     }
   }
 }
@@ -53,31 +51,31 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename         string `json:"__typename"`
-		CompliancePortal *struct {
-			ID                   string  `json:"id"`
-			Active               bool    `json:"active"`
-			SearchEngineIndexing string  `json:"searchEngineIndexing"`
-			LogoFileUrl          *string `json:"logoFileUrl"`
-			DarkLogoFileUrl      *string `json:"darkLogoFileUrl"`
-			NdaFileName          *string `json:"ndaFileName"`
-			NdaFileUrl           *string `json:"ndaFileUrl"`
-			CreatedAt            string  `json:"createdAt"`
-			UpdatedAt            string  `json:"updatedAt"`
-		} `json:"compliancePortal"`
+		Typename             string  `json:"__typename"`
+		ID                   string  `json:"id"`
+		Active               bool    `json:"active"`
+		SearchEngineIndexing string  `json:"searchEngineIndexing"`
+		LogoFileUrl          *string `json:"logoFileUrl"`
+		DarkLogoFileUrl      *string `json:"darkLogoFileUrl"`
+		NdaFileName          *string `json:"ndaFileName"`
+		NdaFileUrl           *string `json:"ndaFileUrl"`
+		CreatedAt            string  `json:"createdAt"`
+		UpdatedAt            string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg    string
+		flagPortal string
 		flagOutput *string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "view",
 		Short: "View compliance portal settings",
-		Args:  cobra.NoArgs,
+		Example: `  # View a compliance portal
+  prb compliance-portal view --portal <compliance-portal-id>`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
@@ -101,17 +99,9 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
 			data, err := client.Do(
 				viewQuery,
-				map[string]any{"id": flagOrg},
+				map[string]any{"id": flagPortal},
 			)
 			if err != nil {
 				return err
@@ -123,18 +113,14 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if resp.Node == nil {
-				return fmt.Errorf("organization %s not found", flagOrg)
+				return fmt.Errorf("compliance portal %s not found", flagPortal)
 			}
 
-			if resp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
+			if resp.Node.Typename != "CompliancePortal" {
+				return fmt.Errorf("expected CompliancePortal node, got %s", resp.Node.Typename)
 			}
 
-			if resp.Node.CompliancePortal == nil {
-				return fmt.Errorf("compliance portal not found for organization %s", flagOrg)
-			}
-
-			tc := resp.Node.CompliancePortal
+			tc := resp.Node
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, tc)
@@ -171,7 +157,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID")
+	_ = cmd.MarkFlagRequired("portal")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

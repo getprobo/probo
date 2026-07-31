@@ -49,16 +49,15 @@ func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
 
 func NewDocument(d *coredata.Document) *Document {
 	return &Document{
-		ID:                         d.ID,
-		OrganizationID:             d.OrganizationID,
-		CurrentPublishedMajor:      d.CurrentPublishedMajor,
-		CurrentPublishedMinor:      d.CurrentPublishedMinor,
-		WriteMode:                  d.WriteMode,
-		CompliancePortalVisibility: d.CompliancePortalVisibility,
-		Status:                     d.Status,
-		ArchivedAt:                 d.ArchivedAt,
-		CreatedAt:                  d.CreatedAt,
-		UpdatedAt:                  d.UpdatedAt,
+		ID:                    d.ID,
+		OrganizationID:        d.OrganizationID,
+		CurrentPublishedMajor: d.CurrentPublishedMajor,
+		CurrentPublishedMinor: d.CurrentPublishedMinor,
+		WriteMode:             d.WriteMode,
+		Status:                d.Status,
+		ArchivedAt:            d.ArchivedAt,
+		CreatedAt:             d.CreatedAt,
+		UpdatedAt:             d.UpdatedAt,
 	}
 }
 

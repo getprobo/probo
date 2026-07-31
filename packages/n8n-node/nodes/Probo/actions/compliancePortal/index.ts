@@ -19,7 +19,10 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as createOp from './create.operation';
+import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
+import * as getAllOp from './getAll.operation';
 import * as updateOp from './update.operation';
 import * as getAllReferencesOp from './getAllReferences.operation';
 import * as createReferenceOp from './createReference.operation';
@@ -36,6 +39,12 @@ import * as getAllCommitmentsOp from './getAllCommitments.operation';
 import * as createCommitmentOp from './createCommitment.operation';
 import * as updateCommitmentOp from './updateCommitment.operation';
 import * as deleteCommitmentOp from './deleteCommitment.operation';
+import * as updateDocumentVisibilityOp from './updateDocumentVisibility.operation';
+import * as updateAuditVisibilityOp from './updateAuditVisibility.operation';
+import * as updateThirdPartyPublishedOp from './updateThirdPartyPublished.operation';
+import * as deleteDocumentOp from './deleteDocument.operation';
+import * as deleteAuditOp from './deleteAudit.operation';
+import * as deleteThirdPartyOp from './deleteThirdParty.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -49,6 +58,12 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create a new compliance portal',
+				action: 'Create a compliance portal',
+			},
 			{
 				name: 'Create Commitment',
 				value: 'createCommitment',
@@ -74,6 +89,18 @@ export const description: INodeProperties[] = [
 				action: 'Create a compliance portal reference',
 			},
 			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete a compliance portal',
+				action: 'Delete a compliance portal',
+			},
+			{
+				name: 'Delete Audit',
+				value: 'deleteAudit',
+				description: 'Remove an audit from a compliance portal',
+				action: 'Remove an audit from a compliance portal',
+			},
+			{
 				name: 'Delete Commitment',
 				value: 'deleteCommitment',
 				description: 'Delete a compliance portal commitment',
@@ -92,6 +119,12 @@ export const description: INodeProperties[] = [
 				action: 'Delete a compliance custom link',
 			},
 			{
+				name: 'Delete Document',
+				value: 'deleteDocument',
+				description: 'Remove a document from a compliance portal',
+				action: 'Remove a document from a compliance portal',
+			},
+			{
 				name: 'Delete File',
 				value: 'deleteFile',
 				description: 'Delete a compliance portal file',
@@ -104,10 +137,22 @@ export const description: INodeProperties[] = [
 				action: 'Delete a compliance portal reference',
 			},
 			{
+				name: 'Delete Third Party',
+				value: 'deleteThirdParty',
+				description: 'Remove a third party from a compliance portal',
+				action: 'Remove a third party from a compliance portal',
+			},
+			{
 				name: 'Get',
 				value: 'get',
 				description: 'Get compliance portal settings',
 				action: 'Get compliance portal settings',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Get many compliance portals',
+				action: 'Get many compliance portals',
 			},
 			{
 				name: 'Get Many Commitment Groups',
@@ -140,6 +185,12 @@ export const description: INodeProperties[] = [
 				action: 'Update compliance portal settings',
 			},
 			{
+				name: 'Update Audit Visibility',
+				value: 'updateAuditVisibility',
+				description: 'Update the visibility of an audit on a compliance portal',
+				action: 'Update an audit visibility on a compliance portal',
+			},
+			{
 				name: 'Update Commitment',
 				value: 'updateCommitment',
 				description: 'Update a compliance portal commitment',
@@ -151,10 +202,25 @@ export const description: INodeProperties[] = [
 				description: 'Update a compliance portal commitment group',
 				action: 'Update a compliance portal commitment group',
 			},
+			{
+				name: 'Update Document Visibility',
+				value: 'updateDocumentVisibility',
+				description: 'Update the visibility of a document on a compliance portal',
+				action: 'Update a document visibility on a compliance portal',
+			},
+			{
+				name: 'Update Third Party Published',
+				value: 'updateThirdPartyPublished',
+				description: 'Publish or unpublish a third party on a compliance portal',
+				action: 'Update a third party published state on a compliance portal',
+			},
 		],
 		default: 'get',
 	},
+	...createOp.description,
+	...deleteOp.description,
 	...getOp.description,
+	...getAllOp.description,
 	...updateOp.description,
 	...getAllReferencesOp.description,
 	...createReferenceOp.description,
@@ -171,10 +237,19 @@ export const description: INodeProperties[] = [
 	...createCommitmentOp.description,
 	...updateCommitmentOp.description,
 	...deleteCommitmentOp.description,
+	...updateDocumentVisibilityOp.description,
+	...updateAuditVisibilityOp.description,
+	...updateThirdPartyPublishedOp.description,
+	...deleteDocumentOp.description,
+	...deleteAuditOp.description,
+	...deleteThirdPartyOp.description,
 ];
 
 export {
+	createOp as create,
+	deleteOp as delete,
 	getOp as get,
+	getAllOp as getAll,
 	updateOp as update,
 	getAllReferencesOp as getAllReferences,
 	createReferenceOp as createReference,
@@ -191,4 +266,10 @@ export {
 	createCommitmentOp as createCommitment,
 	updateCommitmentOp as updateCommitment,
 	deleteCommitmentOp as deleteCommitment,
+	updateDocumentVisibilityOp as updateDocumentVisibility,
+	updateAuditVisibilityOp as updateAuditVisibility,
+	updateThirdPartyPublishedOp as updateThirdPartyPublished,
+	deleteDocumentOp as deleteDocument,
+	deleteAuditOp as deleteAudit,
+	deleteThirdPartyOp as deleteThirdParty,
 };

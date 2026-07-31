@@ -43,14 +43,17 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
-	scope := coredata.NewScopeFromObjectID(id)
+	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
+
+	// Scope from the visited portal, not from the requested ID: a scope derived
+	// from a caller-supplied GID always matches that GID's own tenant and so
+	// constrains nothing.
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 	visitorService := r.visitor
 
 	switch id.EntityType() {
 	case coredata.DocumentEntityType:
-		compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-
-		document, err := visitorService.GetDocument(ctx, scope, compliancePortal.OrganizationID, id)
+		document, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
@@ -68,18 +71,21 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return types.NewDocument(document), nil
 
 	case coredata.FrameworkEntityType:
-		framework, err := visitorService.GetFramework(ctx, scope, id)
+		framework, err := visitorService.GetFrameworkForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
+			if errors.Is(err, visitor.ErrFrameworkNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
 			r.logger.ErrorCtx(ctx, "cannot get framework", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 
 		return types.NewFramework(framework), nil
 
 	case coredata.FileEntityType:
-		compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-
-		file, err := visitorService.GetReport(ctx, scope, compliancePortal.OrganizationID, id)
+		file, err := visitorService.GetReport(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrReportNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
@@ -93,45 +99,69 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return types.NewAuditReport(file), nil
 
 	case coredata.AuditEntityType:
-		audit, err := visitorService.GetAudit(ctx, scope, id)
+		audit, err := visitorService.GetAuditForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
+			if errors.Is(err, visitor.ErrAuditNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
 			r.logger.ErrorCtx(ctx, "cannot get audit", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 
 		return types.NewAudit(audit), nil
 
 	case coredata.ThirdPartyEntityType:
-		thirdParty, err := visitorService.GetThirdParty(ctx, scope, id)
+		thirdParty, err := visitorService.GetThirdPartyForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
+			if errors.Is(err, visitor.ErrThirdPartyNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
 			r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 
 		return types.NewSubprocessor(thirdParty), nil
 
 	case coredata.CompliancePortalEntityType:
-		compliancePortal, err := visitorService.GetPortal(ctx, scope, id)
+		// An organization can run several portals; a visitor only ever sees the
+		// one they are visiting.
+		if id != compliancePortal.ID {
+			return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+		}
+
+		portal, err := visitorService.GetPortal(ctx, scope, id)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
 			r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		return types.NewCompliancePortal(compliancePortal), nil
+		return types.NewCompliancePortal(portal), nil
 
 	case coredata.CompliancePortalReferenceEntityType:
-		reference, err := visitorService.GetPortalReference(ctx, scope, id)
+		reference, err := visitorService.GetPortalReferenceForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
+			if errors.Is(err, visitor.ErrPortalReferenceNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
 			r.logger.ErrorCtx(ctx, "cannot get compliance portal reference", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 
 		return types.NewCompliancePortalReference(reference), nil
 
 	case coredata.CompliancePortalFileEntityType:
-		compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-
-		portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.OrganizationID, id)
+		portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
@@ -227,10 +257,10 @@ func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after 
 	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 
-	result, err := r.visitor.ListRightsRequestsForOrganizationIDAndContact(
+	result, err := r.visitor.ListRightsRequestsForCompliancePortalIDAndContact(
 		ctx,
 		scope,
-		compliancePage.OrganizationID,
+		compliancePage.ID,
 		identity.EmailAddress.String(),
 		cursor,
 	)

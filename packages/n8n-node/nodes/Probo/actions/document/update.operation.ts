@@ -63,18 +63,6 @@ export const description: INodeProperties[] = [
 				description: 'The classification of the document. Updating it edits the current draft version, creating one from the latest published version if none exists.',
 			},
 			{
-				displayName: 'Compliance Portal Visibility',
-				name: 'compliancePortalVisibility',
-				type: 'options',
-				options: [
-					{ name: 'None', value: 'NONE' },
-					{ name: 'Private', value: 'PRIVATE' },
-					{ name: 'Public', value: 'PUBLIC' },
-				],
-				default: 'NONE',
-				description: 'The compliance portal visibility of the document',
-			},
-			{
 				displayName: 'Content',
 				name: 'content',
 				type: 'string',
@@ -130,7 +118,6 @@ export async function execute(
 		content?: string;
 		classification?: string;
 		documentType?: string;
-		compliancePortalVisibility?: string;
 		defaultApproverIds?: string;
 	};
 
@@ -140,7 +127,6 @@ export async function execute(
 				document {
 					id
 					status
-					compliancePortalVisibility
 					currentPublishedMajor
 					currentPublishedMinor
 					archivedAt
@@ -170,7 +156,6 @@ export async function execute(
 	if (updateFields.content !== undefined && updateFields.content !== '') input.content = updateFields.content;
 	if (updateFields.classification !== undefined) input.classification = updateFields.classification;
 	if (updateFields.documentType !== undefined) input.documentType = updateFields.documentType;
-	if (updateFields.compliancePortalVisibility !== undefined) input.compliancePortalVisibility = updateFields.compliancePortalVisibility;
 	if (updateFields.defaultApproverIds !== undefined && updateFields.defaultApproverIds !== '') {
 		input.defaultApproverIds = updateFields.defaultApproverIds.split(',').map(id => id.trim()).filter(Boolean);
 	}

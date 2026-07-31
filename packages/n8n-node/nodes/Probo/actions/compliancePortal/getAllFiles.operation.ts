@@ -23,8 +23,8 @@ import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
+		displayName: 'Compliance Portal ID',
+		name: 'compliancePortalId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the organization',
+		description: 'The ID of the compliance portal',
 		required: true,
 	},
 	{
@@ -72,14 +72,14 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetCompliancePortalFiles($organizationId: ID!, $first: Int, $after: CursorKey) {
-			node(id: $organizationId) {
-				... on Organization {
+		query GetCompliancePortalFiles($compliancePortalId: ID!, $first: Int, $after: CursorKey) {
+			node(id: $compliancePortalId) {
+				... on CompliancePortal {
 					compliancePortalFiles(first: $first, after: $after) {
 						edges {
 							node {
@@ -104,7 +104,7 @@ export async function execute(
 	const compliancePortalFiles = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		{ compliancePortalId },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

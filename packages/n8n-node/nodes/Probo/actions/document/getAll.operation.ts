@@ -169,7 +169,6 @@ export async function execute(
 							node {
 								id
 								status
-								compliancePortalVisibility
 								currentPublishedMajor
 								currentPublishedMinor
 								archivedAt

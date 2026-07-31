@@ -114,7 +114,6 @@ export async function execute(
 					trustPageUrl
 					certifications
 					countries
-					showOnCompliancePortal
 					${organizationFragment}
 					${administratorsFragment}
 					createdAt

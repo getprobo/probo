@@ -66,15 +66,14 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg                        string
-		flagFramework                  string
-		flagName                       string
-		flagState                      string
-		flagValidFrom                  string
-		flagValidUntil                 string
-		flagAuditStartDate             string
-		flagAuditEndDate               string
-		flagCompliancePortalVisibility string
+		flagOrg            string
+		flagFramework      string
+		flagName           string
+		flagState          string
+		flagValidFrom      string
+		flagValidUntil     string
+		flagAuditStartDate string
+		flagAuditEndDate   string
 	)
 
 	cmd := &cobra.Command{
@@ -174,10 +173,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["auditEndDate"] = flagAuditEndDate
 			}
 
-			if flagCompliancePortalVisibility != "" {
-				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
-			}
-
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -211,7 +206,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
 	cmd.Flags().StringVar(&flagAuditStartDate, "audit-start-date", "", "Audit start date (e.g. 2026-03-01)")
 	cmd.Flags().StringVar(&flagAuditEndDate, "audit-end-date", "", "Audit end date (e.g. 2026-03-15)")
-	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd
 }

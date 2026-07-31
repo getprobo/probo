@@ -41,6 +41,23 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	}
 }
 
+func NewListCompliancePortalsOutput(
+	portals []*CompliancePortal,
+	p *page.Page[*coredata.CompliancePortal, coredata.CompliancePortalOrderField],
+) ListCompliancePortalsOutput {
+	var nextCursor *page.CursorKey
+
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListCompliancePortalsOutput{
+		NextCursor:        nextCursor,
+		CompliancePortals: portals,
+	}
+}
+
 func NewCompliancePortalReference(r *coredata.CompliancePortalReference) *CompliancePortalReference {
 	return &CompliancePortalReference{
 		ID:          r.ID,

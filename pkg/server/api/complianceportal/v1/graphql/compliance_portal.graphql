@@ -111,8 +111,8 @@ enum DocumentType
 
 enum CompliancePortalVisibility
   @goModel(model: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibility") {
-  PRIVATE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityPrivate")
+  RESTRICTED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityRestricted")
   PUBLIC
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityPublic")
 }

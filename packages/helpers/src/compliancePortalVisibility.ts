@@ -20,11 +20,11 @@
 
 type Translator = (s: string) => string;
 
-export type CompliancePortalVisibility = "NONE" | "PRIVATE" | "PUBLIC";
+export type CompliancePortalVisibility = "NONE" | "RESTRICTED" | "PUBLIC";
 
 export const compliancePortalVisibilities = [
   "NONE",
-  "PRIVATE",
+  "RESTRICTED",
   "PUBLIC",
 ] as const;
 
@@ -32,7 +32,7 @@ export const getCompliancePortalVisibilityVariant = (visibility: CompliancePorta
   switch (visibility) {
     case "NONE":
       return "danger" as const;
-    case "PRIVATE":
+    case "RESTRICTED":
       return "warning" as const;
     case "PUBLIC":
       return "success" as const;
@@ -45,8 +45,8 @@ export const getCompliancePortalVisibilityLabel = (visibility: CompliancePortalV
   switch (visibility) {
     case "NONE":
       return "None";
-    case "PRIVATE":
-      return "Private";
+    case "RESTRICTED":
+      return "Restricted";
     case "PUBLIC":
       return "Public";
     default:
@@ -54,12 +54,30 @@ export const getCompliancePortalVisibilityLabel = (visibility: CompliancePortalV
   }
 };
 
+export type CompliancePortalLinkedVisibility = "RESTRICTED" | "PUBLIC";
+
+export const compliancePortalLinkedVisibilities = [
+  "RESTRICTED",
+  "PUBLIC",
+] as const;
+
+export function getCompliancePortalLinkedVisibilityOptions(t: Translator) {
+  return compliancePortalLinkedVisibilities.map((visibility) => ({
+    value: visibility,
+    label: t({
+      "RESTRICTED": "helpers.compliancePortalVisibility.restricted",
+      "PUBLIC": "helpers.compliancePortalVisibility.public",
+    }[visibility]),
+    variant: getCompliancePortalVisibilityVariant(visibility),
+  }));
+}
+
 export function getCompliancePortalVisibilityOptions(t: Translator) {
   return compliancePortalVisibilities.map((visibility) => ({
     value: visibility,
     label: t({
       "NONE": "helpers.compliancePortalVisibility.none",
-      "PRIVATE": "helpers.compliancePortalVisibility.private",
+      "RESTRICTED": "helpers.compliancePortalVisibility.restricted",
       "PUBLIC": "helpers.compliancePortalVisibility.public",
     }[visibility]),
     variant: getCompliancePortalVisibilityVariant(visibility),

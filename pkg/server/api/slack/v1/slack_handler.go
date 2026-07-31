@@ -23,6 +23,7 @@ package slack_v1
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -245,12 +246,34 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			}
 		}
 
+		compliancePortalID, err := slackSvc.ResolveCompliancePortalID(
+			ctx,
+			scope,
+			initialSlackMessage.OrganizationID,
+			initialSlackMessage.Metadata,
+		)
+		if err != nil {
+			if errors.Is(err, slack.ErrCompliancePortalMetadataAmbiguous) {
+				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{
+					Success: false,
+					Message: "cannot determine compliance portal for this Slack message; please submit a new access request",
+				})
+
+				return
+			}
+
+			logger.ErrorCtx(ctx, "cannot resolve compliance portal for slack message", log.Error(err))
+			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
+			return
+		}
+
 		switch statusAction {
 		case StatusAccept:
 			if err := visitorSvc.GrantPortalAccessByIDs(
 				ctx,
 				scope,
-				initialSlackMessage.OrganizationID,
+				compliancePortalID,
 				requesterEmail,
 				documentIDs,
 				reportIDs,
@@ -265,7 +288,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			if err := visitorSvc.RejectOrRevokePortalAccessByIDs(
 				ctx,
 				scope,
-				initialSlackMessage.OrganizationID,
+				compliancePortalID,
 				requesterEmail,
 				documentIDs,
 				reportIDs,

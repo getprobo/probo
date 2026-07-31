@@ -33,11 +33,11 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		ctx,
 		scope,
 		&visitor.CreateRightsRequest{
-			OrganizationID: compliancePage.OrganizationID,
-			RequestType:    input.RequestType,
-			DataSubject:    input.DataSubject,
-			Contact:        identity.EmailAddress.String(),
-			Details:        input.Details,
+			CompliancePortalID: compliancePage.ID,
+			RequestType:        input.RequestType,
+			DataSubject:        input.DataSubject,
+			Contact:            identity.EmailAddress.String(),
+			Details:            input.Details,
 		},
 	)
 	if err != nil {

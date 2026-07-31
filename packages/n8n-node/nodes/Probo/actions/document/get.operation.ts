@@ -50,7 +50,6 @@ export async function execute(
 				... on Document {
 					id
 					status
-					compliancePortalVisibility
 					currentPublishedMajor
 					currentPublishedMinor
 					archivedAt
