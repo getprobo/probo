@@ -147,6 +147,57 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The deadline for the task',
 	},
+	{
+		displayName: 'Recurrence Interval Unit',
+		name: 'recurrenceIntervalUnit',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		options: [
+			{
+				name: 'None',
+				value: '',
+			},
+			{
+				name: 'Day',
+				value: 'DAY',
+			},
+			{
+				name: 'Week',
+				value: 'WEEK',
+			},
+			{
+				name: 'Month',
+				value: 'MONTH',
+			},
+			{
+				name: 'Year',
+				value: 'YEAR',
+			},
+		],
+		default: '',
+		description: 'The recurrence unit for the task, e.g. "Week" with a count of 3 means "every 3 weeks". Requires a deadline to be set.',
+	},
+	{
+		displayName: 'Recurrence Interval Count',
+		name: 'recurrenceIntervalCount',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+		},
+		default: 1,
+		description: 'The recurrence count, used together with the recurrence interval unit',
+	},
 ];
 
 export async function execute(
@@ -161,6 +212,8 @@ export async function execute(
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
+	const recurrenceIntervalUnit = this.getNodeParameter('recurrenceIntervalUnit', itemIndex, '') as string;
+	const recurrenceIntervalCount = this.getNodeParameter('recurrenceIntervalCount', itemIndex, 1) as number;
 
 	const query = `
 		mutation CreateTask($input: CreateTaskInput!) {
@@ -174,6 +227,8 @@ export async function execute(
 						priority
 						timeEstimate
 						deadline
+						recurrenceIntervalUnit
+						recurrenceIntervalCount
 						createdAt
 						updatedAt
 					}
@@ -192,6 +247,8 @@ export async function execute(
 			...(timeEstimate && { timeEstimate }),
 			...(assignedToId && { assignedToId }),
 			...(deadline && { deadline }),
+			...(recurrenceIntervalUnit && { recurrenceIntervalUnit }),
+			...(recurrenceIntervalUnit && { recurrenceIntervalCount }),
 		},
 	};
 

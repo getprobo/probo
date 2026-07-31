@@ -60,14 +60,16 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg          string
-		flagName         string
-		flagDescription  string
-		flagPriority     string
-		flagMeasure      string
-		flagTimeEstimate string
-		flagAssignedTo   string
-		flagDeadline     string
+		flagOrg             string
+		flagName            string
+		flagDescription     string
+		flagPriority        string
+		flagMeasure         string
+		flagTimeEstimate    string
+		flagAssignedTo      string
+		flagDeadline        string
+		flagRecurrenceUnit  string
+		flagRecurrenceCount int
 	)
 
 	cmd := &cobra.Command{
@@ -166,6 +168,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["deadline"] = flagDeadline
 			}
 
+			if flagRecurrenceUnit != "" {
+				input["recurrenceIntervalUnit"] = flagRecurrenceUnit
+			}
+
+			if flagRecurrenceCount != 0 {
+				input["recurrenceIntervalCount"] = flagRecurrenceCount
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -199,6 +209,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
+	cmd.Flags().StringVar(&flagRecurrenceUnit, "recurrence-unit", "", "Recurrence interval unit: DAY, WEEK, MONTH, YEAR (requires --deadline)")
+	cmd.Flags().IntVar(&flagRecurrenceCount, "recurrence-count", 0, "Recurrence interval count, e.g. 3 with --recurrence-unit WEEK means \"every 3 weeks\"")
 
 	return cmd
 }

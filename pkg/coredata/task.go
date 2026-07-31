@@ -37,20 +37,22 @@ import (
 
 type (
 	Task struct {
-		ID             gid.GID        `db:"id"`
-		OrganizationID gid.GID        `db:"organization_id"`
-		MeasureID      *gid.GID       `db:"measure_id"`
-		Name           string         `db:"name"`
-		Description    *string        `db:"description"`
-		State          TaskState      `db:"state"`
-		Priority       TaskPriority   `db:"priority"`
-		ReferenceID    string         `db:"reference_id"`
-		TimeEstimate   *time.Duration `db:"time_estimate"`
-		AssignedToID   *gid.GID       `db:"assigned_to_profile_id"`
-		Deadline       *time.Time     `db:"deadline"`
-		Rank           int            `db:"rank"`
-		CreatedAt      time.Time      `db:"created_at"`
-		UpdatedAt      time.Time      `db:"updated_at"`
+		ID                      gid.GID                     `db:"id"`
+		OrganizationID          gid.GID                     `db:"organization_id"`
+		MeasureID               *gid.GID                    `db:"measure_id"`
+		Name                    string                      `db:"name"`
+		Description             *string                     `db:"description"`
+		State                   TaskState                   `db:"state"`
+		Priority                TaskPriority                `db:"priority"`
+		ReferenceID             string                      `db:"reference_id"`
+		TimeEstimate            *time.Duration              `db:"time_estimate"`
+		AssignedToID            *gid.GID                    `db:"assigned_to_profile_id"`
+		Deadline                *time.Time                  `db:"deadline"`
+		RecurrenceIntervalUnit  *TaskRecurrenceIntervalUnit `db:"recurrence_interval_unit"`
+		RecurrenceIntervalCount *int                        `db:"recurrence_interval_count"`
+		Rank                    int                         `db:"rank"`
+		CreatedAt               time.Time                   `db:"created_at"`
+		UpdatedAt               time.Time                   `db:"updated_at"`
 
 		// ordering only
 		PriorityRank int `db:"priority_rank"`
@@ -128,6 +130,8 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence_interval_unit,
+    recurrence_interval_count,
     rank,
     priority_rank,
     created_at,
@@ -183,6 +187,8 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence_interval_unit,
+    recurrence_interval_count,
     rank,
     priority_rank,
     created_at,
@@ -243,6 +249,8 @@ INSERT INTO
         time_estimate,
         assigned_to_profile_id,
         deadline,
+        recurrence_interval_unit,
+        recurrence_interval_count,
         rank,
         created_at,
         updated_at
@@ -260,6 +268,8 @@ VALUES (
     @time_estimate,
     @assigned_to_profile_id,
     @deadline,
+    @recurrence_interval_unit,
+    @recurrence_interval_count,
     (SELECT value FROM next_rank),
     @created_at,
     @updated_at
@@ -268,20 +278,22 @@ RETURNING rank, priority_rank;
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
-		"task_id":                t.ID,
-		"organization_id":        t.OrganizationID,
-		"measure_id":             t.MeasureID,
-		"name":                   t.Name,
-		"description":            t.Description,
-		"reference_id":           t.ReferenceID,
-		"state":                  t.State,
-		"priority":               t.Priority,
-		"time_estimate":          t.TimeEstimate,
-		"assigned_to_profile_id": t.AssignedToID,
-		"deadline":               t.Deadline,
-		"created_at":             t.CreatedAt,
-		"updated_at":             t.UpdatedAt,
+		"tenant_id":                 scope.GetTenantID(),
+		"task_id":                   t.ID,
+		"organization_id":           t.OrganizationID,
+		"measure_id":                t.MeasureID,
+		"name":                      t.Name,
+		"description":               t.Description,
+		"reference_id":              t.ReferenceID,
+		"state":                     t.State,
+		"priority":                  t.Priority,
+		"time_estimate":             t.TimeEstimate,
+		"assigned_to_profile_id":    t.AssignedToID,
+		"deadline":                  t.Deadline,
+		"recurrence_interval_unit":  t.RecurrenceIntervalUnit,
+		"recurrence_interval_count": t.RecurrenceIntervalCount,
+		"created_at":                t.CreatedAt,
+		"updated_at":                t.UpdatedAt,
 	}
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank, &t.PriorityRank)
@@ -452,6 +464,8 @@ func (t *Tasks) LoadByOrganizationID(
 		time_estimate,
 		assigned_to_profile_id,
 		deadline,
+		recurrence_interval_unit,
+		recurrence_interval_count,
 		rank,
 		priority_rank,
 		created_at,
@@ -537,6 +551,8 @@ SELECT
     time_estimate,
     assigned_to_profile_id,
     deadline,
+    recurrence_interval_unit,
+    recurrence_interval_count,
     rank,
     priority_rank,
     created_at,
@@ -585,23 +601,27 @@ SET
   time_estimate = @time_estimate,
   updated_at = @updated_at,
   assigned_to_profile_id = @assigned_to_profile_id,
-  deadline = @deadline
+  deadline = @deadline,
+  recurrence_interval_unit = @recurrence_interval_unit,
+  recurrence_interval_count = @recurrence_interval_count
 WHERE %s
     AND id = @task_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"task_id":                t.ID,
-		"name":                   t.Name,
-		"description":            t.Description,
-		"state":                  t.State,
-		"priority":               t.Priority,
-		"rank":                   t.Rank,
-		"time_estimate":          t.TimeEstimate,
-		"updated_at":             t.UpdatedAt,
-		"assigned_to_profile_id": t.AssignedToID,
-		"deadline":               t.Deadline,
+		"task_id":                   t.ID,
+		"name":                      t.Name,
+		"description":               t.Description,
+		"state":                     t.State,
+		"priority":                  t.Priority,
+		"rank":                      t.Rank,
+		"time_estimate":             t.TimeEstimate,
+		"updated_at":                t.UpdatedAt,
+		"assigned_to_profile_id":    t.AssignedToID,
+		"deadline":                  t.Deadline,
+		"recurrence_interval_unit":  t.RecurrenceIntervalUnit,
+		"recurrence_interval_count": t.RecurrenceIntervalCount,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -728,6 +748,63 @@ WHERE %s
 	if err != nil {
 		return fmt.Errorf("cannot delete task: %w", err)
 	}
+
+	return nil
+}
+
+// LoadNextOverdueRecurringForUpdateSkipLocked loads the next recurring task
+// whose deadline has passed, across all tenants, locking the row so
+// concurrent workers claim distinct tasks.
+func (t *Task) LoadNextOverdueRecurringForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+	now time.Time,
+) error {
+	q := `
+SELECT
+    id,
+	organization_id,
+    measure_id,
+    name,
+    description,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    recurrence_interval_unit,
+    recurrence_interval_count,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    recurrence_interval_unit IS NOT NULL
+    AND deadline < @now
+ORDER BY
+    deadline ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED
+`
+
+	rows, err := tx.Query(ctx, q, pgx.StrictNamedArgs{"now": now})
+	if err != nil {
+		return fmt.Errorf("cannot query overdue recurring tasks: %w", err)
+	}
+
+	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect task: %w", err)
+	}
+
+	*t = task
 
 	return nil
 }

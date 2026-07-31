@@ -32,14 +32,16 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 	task, err := r.probo.Tasks.Create(
 		ctx, scope,
 		probo.CreateTaskRequest{
-			MeasureID:      input.MeasureID,
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Description:    input.Description,
-			Priority:       input.Priority,
-			TimeEstimate:   input.TimeEstimate,
-			AssignedToID:   input.AssignedToID,
-			Deadline:       input.Deadline,
+			MeasureID:               input.MeasureID,
+			OrganizationID:          input.OrganizationID,
+			Name:                    input.Name,
+			Description:             input.Description,
+			Priority:                input.Priority,
+			TimeEstimate:            input.TimeEstimate,
+			AssignedToID:            input.AssignedToID,
+			Deadline:                input.Deadline,
+			RecurrenceIntervalUnit:  input.RecurrenceIntervalUnit,
+			RecurrenceIntervalCount: input.RecurrenceIntervalCount,
 		},
 	)
 	if err != nil {
@@ -71,16 +73,18 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 	task, err := r.probo.Tasks.Update(
 		ctx, scope,
 		probo.UpdateTaskRequest{
-			TaskID:       input.TaskID,
-			Name:         input.Name,
-			Description:  gqlutils.UnwrapOmittable(input.Description),
-			State:        input.State,
-			Priority:     input.Priority,
-			Rank:         input.Rank,
-			TimeEstimate: gqlutils.UnwrapOmittable(input.TimeEstimate),
-			Deadline:     gqlutils.UnwrapOmittable(input.Deadline),
-			AssignedToID: gqlutils.UnwrapOmittable(input.AssignedToID),
-			MeasureID:    gqlutils.UnwrapOmittable(input.MeasureID),
+			TaskID:                  input.TaskID,
+			Name:                    input.Name,
+			Description:             gqlutils.UnwrapOmittable(input.Description),
+			State:                   input.State,
+			Priority:                input.Priority,
+			Rank:                    input.Rank,
+			TimeEstimate:            gqlutils.UnwrapOmittable(input.TimeEstimate),
+			Deadline:                gqlutils.UnwrapOmittable(input.Deadline),
+			AssignedToID:            gqlutils.UnwrapOmittable(input.AssignedToID),
+			MeasureID:               gqlutils.UnwrapOmittable(input.MeasureID),
+			RecurrenceIntervalUnit:  gqlutils.UnwrapOmittable(input.RecurrenceIntervalUnit),
+			RecurrenceIntervalCount: gqlutils.UnwrapOmittable(input.RecurrenceIntervalCount),
 		},
 	)
 	if err != nil {

@@ -1355,6 +1355,9 @@
       },
       "deadline": {
         "label": "Échéance"
+      },
+      "recurrence": {
+        "label": "Répétition"
       }
     },
     "states": {
@@ -1368,13 +1371,21 @@
       "medium": "Moyenne",
       "low": "Basse"
     },
+    "recurrenceIntervalUnits": {
+      "none": "Ne se répète pas",
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "year": "Année"
+    },
     "messages": {
       "created": "Tâche créée avec succès.",
       "updated": "Tâche mise à jour avec succès."
     },
     "errors": {
       "create": "Échec de la création de la tâche",
-      "update": "Échec de la mise à jour de la tâche"
+      "update": "Échec de la mise à jour de la tâche",
+      "recurrenceRequiresDeadline": "Une échéance est requise pour une tâche récurrente"
     },
     "actions": {
       "create": "Créer la tâche",
@@ -1413,6 +1424,10 @@
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",
       "delete": "Supprimer"
+    },
+    "recurringBadge": {
+      "tooltip_one": "Se répète tous les {{count}} {{unit}}",
+      "tooltip_other": "Se répète tous les {{count}} {{unit}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {

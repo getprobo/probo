@@ -61,6 +61,8 @@ const taskFragment = graphql`
     priority
     timeEstimate
     deadline
+    recurrenceIntervalUnit
+    recurrenceIntervalCount
     assignedTo {
       id
     }
@@ -101,8 +103,39 @@ export const taskUpdateMutation = graphql`
 
 export const taskStates = ["TODO", "IN_PROGRESS", "DONE"] as const;
 export const taskPriorities = ["URGENT", "HIGH", "MEDIUM", "LOW"] as const;
+export const taskRecurrenceIntervalUnits = ["DAY", "WEEK", "MONTH", "YEAR"] as const;
 
-const createTaskSchema = z.object({
+const recurrenceIntervalUnitField = z.preprocess(
+  val => (val === "" || val == null ? null : val),
+  z.enum(taskRecurrenceIntervalUnits).nullable().optional(),
+);
+
+const recurrenceIntervalCountField = z.preprocess(
+  val => (typeof val === "number" && Number.isNaN(val) ? null : val),
+  z.number().int().min(1).nullable().optional(),
+);
+
+function refineRecurrence<T extends z.ZodType<{
+  deadline?: string | null;
+  recurrenceIntervalUnit?: string | null;
+  recurrenceIntervalCount?: number | null;
+}>>(schema: T) {
+  return schema
+    .refine(
+      data => !(data.recurrenceIntervalUnit && !data.recurrenceIntervalCount),
+      { message: "Recurrence count is required", path: ["recurrenceIntervalCount"] },
+    )
+    .refine(
+      data => !(data.recurrenceIntervalCount && !data.recurrenceIntervalUnit),
+      { message: "Recurrence unit is required", path: ["recurrenceIntervalUnit"] },
+    )
+    .refine(
+      data => !(data.recurrenceIntervalUnit && !data.deadline),
+      { message: "Deadline is required for a recurring task", path: ["deadline"] },
+    );
+}
+
+const createTaskSchema = refineRecurrence(z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
   priority: z.enum(taskPriorities),
@@ -113,9 +146,11 @@ const createTaskSchema = z.object({
     z.string().nullable().optional(),
   ),
   deadline: z.string().optional().nullable(),
-});
+  recurrenceIntervalUnit: recurrenceIntervalUnitField,
+  recurrenceIntervalCount: recurrenceIntervalCountField,
+}));
 
-const updateTaskSchema = z.object({
+const updateTaskSchema = refineRecurrence(z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
   state: z.enum(taskStates),
@@ -130,7 +165,9 @@ const updateTaskSchema = z.object({
     z.string().nullable().optional(),
   ),
   deadline: z.string().optional().nullable(),
-});
+  recurrenceIntervalUnit: recurrenceIntervalUnitField,
+  recurrenceIntervalCount: recurrenceIntervalCountField,
+}));
 
 type Props = {
   children?: ReactNode;
@@ -170,6 +207,8 @@ export default function TaskFormDialog(props: Props) {
         assignedToId: task?.assignedTo?.id ?? "",
         measureId: task?.measure?.id ?? measureId ?? "",
         deadline: task?.deadline?.split("T")[0] ?? "",
+        recurrenceIntervalUnit: task?.recurrenceIntervalUnit ?? "",
+        recurrenceIntervalCount: task?.recurrenceIntervalCount ?? 1,
       },
     });
 
@@ -184,6 +223,8 @@ export default function TaskFormDialog(props: Props) {
         assignedToId: task.assignedTo?.id ?? "",
         measureId: task.measure?.id ?? measureId ?? "",
         deadline: task.deadline?.split("T")[0] ?? "",
+        recurrenceIntervalUnit: task.recurrenceIntervalUnit ?? "",
+        recurrenceIntervalCount: task.recurrenceIntervalCount ?? 1,
       });
     }
   }, [
@@ -204,6 +245,8 @@ export default function TaskFormDialog(props: Props) {
             deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId ?? null,
             measureId: data.measureId || null,
+            recurrenceIntervalUnit: data.recurrenceIntervalUnit || null,
+            recurrenceIntervalCount: data.recurrenceIntervalUnit ? data.recurrenceIntervalCount : null,
           },
         },
         onCompleted: (_response, errors) => {
@@ -222,6 +265,8 @@ export default function TaskFormDialog(props: Props) {
             deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId || null,
             measureId: data.measureId || null,
+            recurrenceIntervalUnit: data.recurrenceIntervalUnit || null,
+            recurrenceIntervalCount: data.recurrenceIntervalUnit ? data.recurrenceIntervalCount : null,
           },
           connections: [connection!],
         },
@@ -392,6 +437,39 @@ export default function TaskFormDialog(props: Props) {
               error={formState.errors.deadline?.message}
             >
               <Input id="deadline" type="date" {...register("deadline")} />
+            </PropertyRow>
+            <PropertyRow
+              label={t("taskFormDialog.fields.recurrence.label")}
+              error={
+                formState.errors.recurrenceIntervalUnit?.message
+                ?? formState.errors.recurrenceIntervalCount?.message
+              }
+            >
+              <div className="flex items-center gap-2">
+                <Input
+                  id="recurrenceIntervalCount"
+                  type="number"
+                  min={1}
+                  className="w-16"
+                  {...register("recurrenceIntervalCount", { valueAsNumber: true })}
+                />
+                <Controller
+                  name="recurrenceIntervalUnit"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={field.onChange}
+                    >
+                      <Option value="">{t("taskFormDialog.recurrenceIntervalUnits.none")}</Option>
+                      <Option value="DAY">{t("taskFormDialog.recurrenceIntervalUnits.day")}</Option>
+                      <Option value="WEEK">{t("taskFormDialog.recurrenceIntervalUnits.week")}</Option>
+                      <Option value="MONTH">{t("taskFormDialog.recurrenceIntervalUnits.month")}</Option>
+                      <Option value="YEAR">{t("taskFormDialog.recurrenceIntervalUnits.year")}</Option>
+                    </Select>
+                  )}
+                />
+              </div>
             </PropertyRow>
           </div>
         </DialogContent>
