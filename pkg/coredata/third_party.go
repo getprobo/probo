@@ -170,7 +170,7 @@ type (
 		TermsOfServiceURL             *string                  `db:"terms_of_service_url"`
 		SecurityPageURL               *string                  `db:"security_page_url"`
 		TrustPageURL                  *string                  `db:"trust_page_url"`
-		ShowOnCompliancePortal        bool                     `db:"show_on_trust_center"`
+		ShowOnCompliancePortal        bool                     `db:"-"`
 		Level                         int                      `db:"level"`
 		VettingStatus                 *ThirdPartyVettingStatus `db:"vetting_status"`
 		VettingWebsiteURL             *string                  `db:"vetting_website_url"`
@@ -265,7 +265,6 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
-    show_on_trust_center,
     level,
     vetting_status,
     vetting_website_url,
@@ -336,7 +335,6 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
-    show_on_trust_center,
     level,
     vetting_status,
     vetting_website_url,
@@ -409,7 +407,6 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
-    show_on_trust_center,
     level,
     vetting_status,
     vetting_website_url,
@@ -485,7 +482,6 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
-    show_on_trust_center,
     level,
     vetting_status,
     vetting_website_url,
@@ -560,7 +556,6 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
-    show_on_trust_center,
     level,
     vetting_status,
     vetting_website_url,
@@ -630,7 +625,6 @@ INSERT INTO
         terms_of_service_url,
         security_page_url,
         trust_page_url,
-        show_on_trust_center,
         level,
         vetting_status,
         vetting_website_url,
@@ -663,7 +657,6 @@ VALUES (
     @terms_of_service_url,
     @security_page_url,
     @trust_page_url,
-    @show_on_trust_center,
     @level,
     @vetting_status,
     @vetting_website_url,
@@ -698,7 +691,6 @@ VALUES (
 		"terms_of_service_url":             v.TermsOfServiceURL,
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
-		"show_on_trust_center":             v.ShowOnCompliancePortal,
 		"level":                            v.Level,
 		"vetting_status":                   v.VettingStatus,
 		"vetting_website_url":              v.VettingWebsiteURL,
@@ -732,6 +724,26 @@ DELETE FROM third_parties WHERE %s AND id = @third_party_id
 	return err
 }
 
+// CountByCompliancePortalID counts the third parties published on the given
+// portal. Like LoadByCompliancePortalID it owns the portal restriction so the
+// count can never disagree with the list it accompanies.
+func (v *ThirdParties) CountByCompliancePortalID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	organizationID gid.GID,
+	filter *ThirdPartyFilter,
+) (int, error) {
+	if filter == nil {
+		filter = NewThirdPartyFilter(nil, nil, nil, nil)
+	}
+
+	filter = filter.withCompliancePortalID(compliancePortalID)
+
+	return v.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
+}
+
 func (v *ThirdParties) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -739,6 +751,10 @@ func (v *ThirdParties) CountByOrganizationID(
 	organizationID gid.GID,
 	filter *ThirdPartyFilter,
 ) (int, error) {
+	if filter == nil {
+		filter = NewThirdPartyFilter(nil, nil, nil, nil)
+	}
+
 	q := `
 SELECT
     COUNT(id)
@@ -768,11 +784,11 @@ WHERE
 	return count, nil
 }
 
-func (v *ThirdParties) LoadDistinctCompliancePortalCategoriesByOrganizationID(
+func (v *ThirdParties) LoadDistinctCompliancePortalCategoriesByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 ) ([]ThirdPartyCategory, error) {
 	q := `
 SELECT DISTINCT
@@ -781,14 +797,17 @@ FROM
     third_parties
 WHERE
     %s
-    AND organization_id = @organization_id
-    AND show_on_trust_center = true
+    AND id IN (
+        SELECT third_party_id
+        FROM trust_center_third_parties
+        WHERE trust_center_id = @compliance_portal_id
+    )
 ORDER BY
     category ASC
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -804,11 +823,11 @@ ORDER BY
 	return categories, nil
 }
 
-func (v *ThirdParties) LoadDistinctCompliancePortalCountriesByOrganizationID(
+func (v *ThirdParties) LoadDistinctCompliancePortalCountriesByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 ) ([]CountryCode, error) {
 	q := `
 SELECT DISTINCT
@@ -817,14 +836,17 @@ FROM
     third_parties
 WHERE
     %s
-    AND organization_id = @organization_id
-    AND show_on_trust_center = true
+    AND id IN (
+        SELECT third_party_id
+        FROM trust_center_third_parties
+        WHERE trust_center_id = @compliance_portal_id
+    )
 ORDER BY
     country ASC
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -840,6 +862,27 @@ ORDER BY
 	return countries, nil
 }
 
+// LoadByCompliancePortalID loads the third parties published on the given
+// portal. The portal restriction is applied here rather than left to the
+// caller, so a filter built from a request can only narrow the published set.
+func (v *ThirdParties) LoadByCompliancePortalID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	organizationID gid.GID,
+	cursor *page.Cursor[ThirdPartyOrderField],
+	filter *ThirdPartyFilter,
+) error {
+	if filter == nil {
+		filter = NewThirdPartyFilter(nil, nil, nil, nil)
+	}
+
+	filter = filter.withCompliancePortalID(compliancePortalID)
+
+	return v.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+}
+
 func (v *ThirdParties) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -848,6 +891,10 @@ func (v *ThirdParties) LoadByOrganizationID(
 	cursor *page.Cursor[ThirdPartyOrderField],
 	filter *ThirdPartyFilter,
 ) error {
+	if filter == nil {
+		filter = NewThirdPartyFilter(nil, nil, nil, nil)
+	}
+
 	q := `
 SELECT
 	id,
@@ -871,7 +918,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,
@@ -937,7 +983,6 @@ SET
 	terms_of_service_url = @terms_of_service_url,
 	security_page_url = @security_page_url,
 	trust_page_url = @trust_page_url,
-	show_on_trust_center = @show_on_trust_center,
 	level = @level,
 	vetting_status = @vetting_status,
 	vetting_website_url = @vetting_website_url,
@@ -972,7 +1017,6 @@ WHERE %s
 		"terms_of_service_url":             v.TermsOfServiceURL,
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
-		"show_on_trust_center":             v.ShowOnCompliancePortal,
 		"level":                            v.Level,
 		"vetting_status":                   v.VettingStatus,
 		"vetting_website_url":              v.VettingWebsiteURL,
@@ -1101,7 +1145,6 @@ WITH vend AS (
 		v.terms_of_service_url,
 		v.security_page_url,
 		v.trust_page_url,
-		v.show_on_trust_center,
 		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
@@ -1139,7 +1182,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,
@@ -1246,7 +1288,6 @@ WITH vend AS (
 		v.terms_of_service_url,
 		v.security_page_url,
 		v.trust_page_url,
-		v.show_on_trust_center,
 		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
@@ -1284,7 +1325,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,
@@ -1351,7 +1391,6 @@ WITH vend AS (
 		v.terms_of_service_url,
 		v.security_page_url,
 		v.trust_page_url,
-		v.show_on_trust_center,
 		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
@@ -1389,7 +1428,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,
@@ -1523,7 +1561,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,
@@ -1642,7 +1679,6 @@ WITH tps AS (
 		v.terms_of_service_url,
 		v.security_page_url,
 		v.trust_page_url,
-		v.show_on_trust_center,
 		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
@@ -1680,7 +1716,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,
@@ -1776,7 +1811,6 @@ WITH RECURSIVE ancestor_chain AS (
 		tp.terms_of_service_url,
 		tp.security_page_url,
 		tp.trust_page_url,
-		tp.show_on_trust_center,
 		tp.level,
 		tp.vetting_status,
 		tp.vetting_website_url,
@@ -1819,7 +1853,6 @@ WITH RECURSIVE ancestor_chain AS (
 		tp.terms_of_service_url,
 		tp.security_page_url,
 		tp.trust_page_url,
-		tp.show_on_trust_center,
 		tp.level,
 		tp.vetting_status,
 		tp.vetting_website_url,
@@ -1856,7 +1889,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,
@@ -1921,7 +1953,6 @@ SELECT
 	terms_of_service_url,
 	security_page_url,
 	trust_page_url,
-	show_on_trust_center,
 	level,
 	vetting_status,
 	vetting_website_url,

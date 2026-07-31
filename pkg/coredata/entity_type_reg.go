@@ -140,6 +140,9 @@ const (
 	DevicePostureEntityType                          uint16 = 108
 	DeviceEnrollmentTokenEntityType                  uint16 = 109
 	DevicePostureReportEntityType                    uint16 = 110
+	CompliancePortalAuditEntityType                  uint16 = 111
+	CompliancePortalThirdPartyEntityType             uint16 = 112
+	CompliancePortalDocumentEntityType               uint16 = 113
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -338,6 +341,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CompliancePortalCommitmentGroup{ID: id}, true
 	case CompliancePortalCommitmentEntityType:
 		return &CompliancePortalCommitment{ID: id}, true
+	case CompliancePortalDocumentEntityType:
+		return &CompliancePortalDocument{ID: id}, true
+	case CompliancePortalAuditEntityType:
+		return &CompliancePortalAudit{ID: id}, true
+	case CompliancePortalThirdPartyEntityType:
+		return &CompliancePortalThirdParty{ID: id}, true
 	case CertificateEntityType:
 		return &Certificate{ID: id}, true
 	case DeviceEntityType:

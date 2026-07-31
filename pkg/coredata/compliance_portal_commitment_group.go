@@ -145,6 +145,58 @@ LIMIT 1;
 	return nil
 }
 
+func (t *CompliancePortalCommitmentGroup) LoadByCompliancePortalIDAndID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	groupID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    trust_center_id,
+    title,
+    description,
+    rank,
+    created_at,
+    updated_at
+FROM
+    compliance_portal_commitment_groups
+WHERE
+    %s
+    AND trust_center_id = @trust_center_id
+    AND id = @group_id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_id": compliancePortalID,
+		"group_id":        groupID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance_portal_commitment_groups: %w", err)
+	}
+
+	group, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalCommitmentGroup])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal commitment group: %w", err)
+	}
+
+	*t = group
+
+	return nil
+}
+
 func (t *CompliancePortalCommitmentGroup) Insert(
 	ctx context.Context,
 	conn pg.Tx,

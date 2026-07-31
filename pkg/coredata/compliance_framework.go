@@ -149,6 +149,58 @@ LIMIT 1;
 	return nil
 }
 
+func (c *ComplianceFramework) LoadByCompliancePortalIDAndID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	complianceFrameworkID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    trust_center_id,
+    framework_id,
+    rank,
+    'PUBLIC' AS visibility,
+    created_at,
+    updated_at
+FROM
+    compliance_frameworks
+WHERE
+    %s
+    AND trust_center_id = @trust_center_id
+    AND id = @compliance_framework_id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_id":         compliancePortalID,
+		"compliance_framework_id": complianceFrameworkID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance_frameworks: %w", err)
+	}
+
+	cf, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ComplianceFramework])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance framework: %w", err)
+	}
+
+	*c = cf
+
+	return nil
+}
+
 func (c *ComplianceFramework) LoadByCompliancePortalIDAndFrameworkID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -487,7 +487,7 @@ func (tcdas *CompliancePortalDocumentAccesses) LoadAvailableByCompliancePortalAc
 ) error {
 	q := `
 WITH organization AS (
-    SELECT tc.organization_id
+    SELECT tc.organization_id, tc.id AS trust_center_id
     FROM trust_center_accesses tca
     INNER JOIN trust_centers tc ON tca.trust_center_id = tc.id
     WHERE tca.tenant_id = @tenant_id
@@ -509,8 +509,13 @@ all_items AS (
     FROM documents d, tenant_organization o
     WHERE d.organization_id = o.organization_id
         AND d.deleted_at IS NULL
-        AND d.trust_center_visibility = 'PRIVATE'::trust_center_visibility
         AND d.current_published_major IS NOT NULL
+        AND d.id IN (
+            SELECT tcd.document_id
+            FROM trust_center_documents tcd
+            WHERE tcd.trust_center_id = (SELECT trust_center_id FROM organization)
+                AND tcd.visibility = 'RESTRICTED'::trust_center_visibility
+        )
 
     UNION ALL
 
@@ -523,8 +528,13 @@ all_items AS (
         r.updated_at AS item_updated_at
     FROM audits r, tenant_organization o
     WHERE r.organization_id = o.organization_id
-        AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
         AND r.report_file_id IS NOT NULL
+        AND r.id IN (
+            SELECT tca.audit_id
+            FROM trust_center_audits tca
+            WHERE tca.trust_center_id = (SELECT trust_center_id FROM organization)
+                AND tca.visibility = 'RESTRICTED'::trust_center_visibility
+        )
 
     UNION ALL
 
@@ -537,8 +547,9 @@ all_items AS (
         tcf.updated_at AS item_updated_at
     FROM trust_center_files tcf, tenant_organization o
     WHERE tcf.organization_id = o.organization_id
+        AND tcf.trust_center_id = (SELECT trust_center_id FROM organization)
         AND (
-            tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+            tcf.trust_center_visibility = 'RESTRICTED'::trust_center_visibility
             OR tcf.trust_center_visibility = 'NONE'::trust_center_visibility
         )
 ),

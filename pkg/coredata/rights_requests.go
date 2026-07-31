@@ -36,17 +36,18 @@ import (
 
 type (
 	RightsRequest struct {
-		ID             gid.GID            `db:"id"`
-		OrganizationID gid.GID            `db:"organization_id"`
-		RequestType    RightsRequestType  `db:"request_type"`
-		RequestState   RightsRequestState `db:"request_state"`
-		DataSubject    *string            `db:"data_subject"`
-		Contact        *string            `db:"contact"`
-		Details        *string            `db:"details"`
-		Deadline       *time.Time         `db:"deadline"`
-		ActionTaken    *string            `db:"action_taken"`
-		CreatedAt      time.Time          `db:"created_at"`
-		UpdatedAt      time.Time          `db:"updated_at"`
+		ID                 gid.GID            `db:"id"`
+		OrganizationID     gid.GID            `db:"organization_id"`
+		CompliancePortalID *gid.GID           `db:"trust_center_id"`
+		RequestType        RightsRequestType  `db:"request_type"`
+		RequestState       RightsRequestState `db:"request_state"`
+		DataSubject        *string            `db:"data_subject"`
+		Contact            *string            `db:"contact"`
+		Details            *string            `db:"details"`
+		Deadline           *time.Time         `db:"deadline"`
+		ActionTaken        *string            `db:"action_taken"`
+		CreatedAt          time.Time          `db:"created_at"`
+		UpdatedAt          time.Time          `db:"updated_at"`
 	}
 
 	RightsRequests []*RightsRequest
@@ -117,6 +118,7 @@ func (rr *RightsRequest) LoadByID(
 SELECT
 	id,
 	organization_id,
+	trust_center_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -202,6 +204,7 @@ func (rrs *RightsRequests) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
+	trust_center_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -240,11 +243,11 @@ WHERE
 	return nil
 }
 
-func (rrs *RightsRequests) LoadByOrganizationIDAndContact(
+func (rrs *RightsRequests) LoadByCompliancePortalIDAndContact(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	contact string,
 	cursor *page.Cursor[RightsRequestOrderField],
 ) error {
@@ -252,6 +255,7 @@ func (rrs *RightsRequests) LoadByOrganizationIDAndContact(
 SELECT
 	id,
 	organization_id,
+	trust_center_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -265,7 +269,7 @@ FROM
 	rights_requests
 WHERE
 	%s
-	AND organization_id = @organization_id
+	AND trust_center_id = @trust_center_id
 	AND contact = @contact
 	AND %s
 `
@@ -273,7 +277,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
+		"trust_center_id": compliancePortalID,
 		"contact":         contact,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -304,6 +308,7 @@ INSERT INTO rights_requests (
 	id,
 	tenant_id,
 	organization_id,
+	trust_center_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -317,6 +322,7 @@ INSERT INTO rights_requests (
 	@id,
 	@tenant_id,
 	@organization_id,
+	@trust_center_id,
 	@request_type,
 	@request_state,
 	@data_subject,
@@ -333,6 +339,7 @@ INSERT INTO rights_requests (
 		"id":              rr.ID,
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": rr.OrganizationID,
+		"trust_center_id": rr.CompliancePortalID,
 		"request_type":    rr.RequestType,
 		"request_state":   rr.RequestState,
 		"data_subject":    rr.DataSubject,

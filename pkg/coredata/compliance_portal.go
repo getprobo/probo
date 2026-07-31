@@ -227,11 +227,12 @@ LIMIT 1;
 	return nil
 }
 
-func (tc *CompliancePortal) LoadByOrganizationID(
+func (tcs *CompliancePortals) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	cursor *page.Cursor[CompliancePortalOrderField],
 ) error {
 	q := `
 SELECT
@@ -259,7 +260,44 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-LIMIT 1;
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portals: %w", err)
+	}
+
+	portals, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortal])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portals: %w", err)
+	}
+
+	*tcs = portals
+
+	return nil
+}
+
+func (tcs *CompliancePortals) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	trust_centers
+WHERE
+	%s
+	AND organization_id = @organization_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -267,23 +305,14 @@ LIMIT 1;
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
+	var count int
+
+	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
-		return fmt.Errorf("cannot query compliance portal: %w", err)
+		return 0, fmt.Errorf("cannot count compliance portals: %w", err)
 	}
 
-	compliancePortal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortal])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect compliance portal: %w", err)
-	}
-
-	*tc = compliancePortal
-
-	return nil
+	return count, nil
 }
 
 // Tenant id scope is not applied because we want to access compliance portals by slug across all tenants for public access.
@@ -537,6 +566,31 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update compliance portal: %w", err)
+	}
+
+	return nil
+}
+
+func (tc *CompliancePortal) Delete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM trust_centers
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": tc.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete compliance portal: %w", err)
 	}
 
 	return nil

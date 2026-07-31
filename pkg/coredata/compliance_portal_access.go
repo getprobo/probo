@@ -199,6 +199,54 @@ LIMIT 1;
 	return nil
 }
 
+func (tca *CompliancePortalAccess) LoadByElectronicSignatureID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	electronicSignatureID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	identity_id,
+	trust_center_id,
+	electronic_signature_id,
+	created_at,
+	updated_at
+FROM
+	trust_center_accesses
+WHERE
+	%s
+	AND electronic_signature_id = @electronic_signature_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"electronic_signature_id": electronicSignatureID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal access by electronic signature: %w", err)
+	}
+
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal access by electronic signature: %w", err)
+	}
+
+	*tca = access
+
+	return nil
+}
+
 func (tca *CompliancePortalAccess) Insert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -240,7 +288,7 @@ INSERT INTO trust_center_accesses (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_accesses_trust_center_id_email_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_accesses_identity_id_trust_center_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}

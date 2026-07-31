@@ -29,6 +29,7 @@ type (
 	DocumentFilter struct {
 		query                        *string
 		compliancePortalVisibilities []CompliancePortalVisibility
+		compliancePortalID           *gid.GID
 		published                    *bool
 		employeeIdentityID           *gid.GID
 		employeeFilterModes          []EmployeeFilterMode
@@ -50,7 +51,7 @@ func NewDocumentCompliancePortalFilter() *DocumentFilter {
 
 	return &DocumentFilter{
 		compliancePortalVisibilities: []CompliancePortalVisibility{
-			CompliancePortalVisibilityPrivate,
+			CompliancePortalVisibilityRestricted,
 			CompliancePortalVisibilityPublic,
 		},
 		published: &published,
@@ -61,6 +62,13 @@ func NewDocumentCompliancePortalFilter() *DocumentFilter {
 func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
 	f.published = published
 	return f
+}
+
+func (f *DocumentFilter) WithCompliancePortalID(compliancePortalID gid.GID) *DocumentFilter {
+	clone := *f
+	clone.compliancePortalID = &compliancePortalID
+
+	return &clone
 }
 
 func (f *DocumentFilter) WithCompliancePortalVisibilities(visibilities ...CompliancePortalVisibility) *DocumentFilter {
@@ -141,8 +149,14 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		employeeFilterModes = append(employeeFilterModes, string(m))
 	}
 
+	var compliancePortalID any
+	if f.compliancePortalID != nil {
+		compliancePortalID = f.compliancePortalID.String()
+	}
+
 	return pgx.NamedArgs{
 		"query":                     f.query,
+		"compliance_portal_id":      compliancePortalID,
 		"trust_center_visibilities": visibilities,
 		"published":                 f.published,
 		"employee_identity_id":      f.employeeIdentityID,
@@ -173,8 +187,19 @@ func (f *DocumentFilter) SQLFragment() string {
 	END
 	AND
 	CASE
+		WHEN @compliance_portal_id::text IS NOT NULL
+			AND @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
+			EXISTS (
+				SELECT 1
+				FROM trust_center_documents
+				WHERE trust_center_documents.document_id = documents.id
+					AND trust_center_documents.trust_center_id = @compliance_portal_id
+					AND trust_center_documents.visibility = ANY(
+						@trust_center_visibilities::trust_center_visibility[]
+					)
+			)
 		WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
-			trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])
+			FALSE
 		ELSE TRUE
 	END
 	AND

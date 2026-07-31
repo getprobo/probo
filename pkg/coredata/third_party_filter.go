@@ -22,45 +22,57 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	ThirdPartyFilter struct {
-		showOnCompliancePortal *bool
-		level                  *int
-		query                  *string
-		category               *ThirdPartyCategory
-		country                *CountryCode
+		// The portal fields are never caller-supplied: LoadByCompliancePortalID
+		// sets them so that a filter coming from an API layer can only narrow a
+		// portal's published set, never widen it.
+		compliancePortalID *gid.GID
+
+		level    *int
+		query    *string
+		category *ThirdPartyCategory
+		country  *CountryCode
 	}
 )
 
 func NewThirdPartyFilter(
-	showOnCompliancePortal *bool,
 	level *int,
 	query *string,
 	category *ThirdPartyCategory,
 	country *CountryCode,
 ) *ThirdPartyFilter {
 	return &ThirdPartyFilter{
-		showOnCompliancePortal: showOnCompliancePortal,
-		level:                  level,
-		query:                  query,
-		category:               category,
-		country:                country,
+		level:    level,
+		query:    query,
+		category: category,
+		country:  country,
 	}
+}
+
+// withCompliancePortalID restricts the filter to the third parties published on
+// the given portal.
+func (f *ThirdPartyFilter) withCompliancePortalID(compliancePortalID gid.GID) *ThirdPartyFilter {
+	clone := *f
+	clone.compliancePortalID = &compliancePortalID
+
+	return &clone
 }
 
 func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"show_on_trust_center": nil,
+		"compliance_portal_id": nil,
 		"filter_query":         nil,
 		"level":                nil,
 		"filter_category":      nil,
 		"filter_country":       nil,
 	}
 
-	if f.showOnCompliancePortal != nil {
-		args["show_on_trust_center"] = *f.showOnCompliancePortal
+	if f.compliancePortalID != nil {
+		args["compliance_portal_id"] = *f.compliancePortalID
 	}
 
 	if f.query != nil && *f.query != "" {
@@ -86,8 +98,13 @@ func (f *ThirdPartyFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @show_on_trust_center::boolean IS NOT NULL THEN
-			show_on_trust_center = @show_on_trust_center::boolean
+		WHEN @compliance_portal_id::text IS NOT NULL THEN
+			EXISTS (
+				SELECT 1
+				FROM trust_center_third_parties
+				WHERE trust_center_third_parties.third_party_id = third_parties.id
+					AND trust_center_third_parties.trust_center_id = @compliance_portal_id
+			)
 		ELSE TRUE
 	END
 	AND CASE

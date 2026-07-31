@@ -38,7 +38,6 @@ import (
 
 type ElectronicSignature struct {
 	ID                             gid.GID                         `db:"id"`
-	TenantID                       gid.TenantID                    `db:"tenant_id"`
 	OrganizationID                 gid.GID                         `db:"organization_id"`
 	Status                         ElectronicSignatureStatus       `db:"status"`
 	DocumentType                   ElectronicSignatureDocumentType `db:"document_type"`
@@ -232,7 +231,7 @@ func (es *ElectronicSignature) LoadByID(
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, document_name, file_id,
+	id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
@@ -272,7 +271,7 @@ func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, document_name, file_id,
+	id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
@@ -310,7 +309,7 @@ func (es *ElectronicSignature) LoadNextCompletedWithoutCertificateForUpdate(
 ) error {
 	q := `
 SELECT
-	id, tenant_id, organization_id, status, document_type, document_name, file_id,
+	id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,

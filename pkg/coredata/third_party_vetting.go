@@ -57,7 +57,6 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
-    show_on_trust_center,
     level,
     vetting_status,
     vetting_website_url,

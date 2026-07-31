@@ -151,6 +151,60 @@ LIMIT 1;
 	return nil
 }
 
+func (t *CompliancePortalReference) LoadByCompliancePortalIDAndID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	compliancePortalReferenceID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    trust_center_id,
+    name,
+    description,
+    website_url,
+    logo_file_id,
+    rank,
+    created_at,
+    updated_at
+FROM
+    trust_center_references
+WHERE
+    %s
+    AND trust_center_id = @trust_center_id
+    AND id = @trust_center_reference_id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_id":           compliancePortalID,
+		"trust_center_reference_id": compliancePortalReferenceID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query trust_center_references: %w", err)
+	}
+
+	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalReference])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal reference: %w", err)
+	}
+
+	*t = reference
+
+	return nil
+}
+
 func (t *CompliancePortalReference) Insert(
 	ctx context.Context,
 	conn pg.Tx,
