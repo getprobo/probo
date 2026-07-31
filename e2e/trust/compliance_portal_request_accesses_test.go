@@ -67,15 +67,14 @@ type requestAccessesResult struct {
 }
 
 // TestCompliancePortal_RequestAccesses_Batch verifies that an authenticated
-// visitor can request access to a specific selection of private documents in a
+// visitor can request access to a specific selection of restricted documents in a
 // single mutation, and that each affected row comes back flagged as REQUESTED.
 func TestCompliancePortal_RequestAccesses_Batch(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	documentID := setupPrivatePortalDocument(t, owner)
-	compliancePortalID := lookupCompliancePortalID(t, owner)
+	documentID, compliancePortalID := setupRestrictedPortalDocument(t, owner)
 	trustHost := lookupTrustHost(t, owner, compliancePortalID)
 
 	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
@@ -109,7 +108,7 @@ func TestCompliancePortal_RequestAccesses_TenantIsolation(t *testing.T) {
 	victimOwner := testutil.NewClient(t, testutil.RoleOwner)
 	attackerOwner := testutil.NewClient(t, testutil.RoleOwner)
 
-	victimDocumentID := setupPrivatePortalDocument(t, victimOwner)
+	victimDocumentID, _ := setupRestrictedPortalDocument(t, victimOwner)
 
 	attackerCompliancePortalID := lookupCompliancePortalID(t, attackerOwner)
 	attackerTrustHost := lookupTrustHost(t, attackerOwner, attackerCompliancePortalID)
@@ -161,28 +160,48 @@ func TestCompliancePortal_RequestAccesses_EmptyRejects(t *testing.T) {
 	)
 }
 
-// setupPrivatePortalDocument creates a document and marks it privately visible on
-// the owner's compliance portal, returning the document ID.
-func setupPrivatePortalDocument(t *testing.T, owner *testutil.Client) string {
+// setupRestrictedPortalDocument creates a published document with restricted
+// visibility on the owner's compliance portal.
+func setupRestrictedPortalDocument(t *testing.T, owner *testutil.Client) (documentID, compliancePortalID string) {
 	t.Helper()
 
-	documentID := factory.NewDocument(owner).WithTitle(factory.SafeName("Document")).Create()
+	compliancePortalID = lookupCompliancePortalID(t, owner)
+	documentID = factory.NewDocument(owner).WithTitle(factory.SafeName("Document")).Create()
 
-	const updateMutation = `
-		mutation UpdateDocument($input: UpdateDocumentInput!) {
-			updateDocument(input: $input) {
-				document { id }
+	err := owner.Execute(`
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				documentVersion { id status }
 			}
 		}
-	`
-
-	err := owner.Execute(updateMutation, map[string]any{
+	`, map[string]any{
 		"input": map[string]any{
-			"id":                         documentID,
-			"compliancePortalVisibility": "PRIVATE",
+			"minor":      true,
+			"documentId": documentID,
+			"changelog":  "Publish for portal catalog",
 		},
 	}, nil)
 	require.NoError(t, err)
 
-	return documentID
+	const updateMutation = `
+		mutation UpdateCompliancePortalDocumentVisibility($input: UpdateCompliancePortalDocumentVisibilityInput!) {
+			updateCompliancePortalDocumentVisibility(input: $input) {
+				catalogDocument {
+					visibility
+					document { id }
+				}
+			}
+		}
+	`
+
+	err = owner.Execute(updateMutation, map[string]any{
+		"input": map[string]any{
+			"compliancePortalId":         compliancePortalID,
+			"documentId":                 documentID,
+			"compliancePortalVisibility": "RESTRICTED",
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	return documentID, compliancePortalID
 }

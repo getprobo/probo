@@ -28,33 +28,11 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// compliancePortalID looks up the caller's own organization's compliance portal id.
+// compliancePortalID creates a compliance portal for the caller's organization.
 func compliancePortalID(t *testing.T, c *testutil.Client) string {
 	t.Helper()
 
-	var result struct {
-		Node struct {
-			CompliancePortal struct {
-				ID string `json:"id"`
-			} `json:"compliancePortal"`
-		} `json:"node"`
-	}
-
-	err := c.Execute(`
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal { id }
-				}
-			}
-		}
-	`, map[string]any{
-		"organizationId": c.GetOrganizationID().String(),
-	}, &result)
-	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.CompliancePortal.ID)
-
-	return result.Node.CompliancePortal.ID
+	return factory.CreateCompliancePortal(c)
 }
 
 func TestComplianceFramework_Create(t *testing.T) {

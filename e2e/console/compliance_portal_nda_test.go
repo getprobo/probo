@@ -33,35 +33,8 @@ func TestCompliancePortal_UploadNDA(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	organizationID := owner.GetOrganizationID().String()
 
-	const compliancePortalQuery = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal {
-						id
-					}
-				}
-			}
-		}
-	`
-
-	var compliancePortalLookup struct {
-		Node struct {
-			CompliancePortal struct {
-				ID string `json:"id"`
-			} `json:"compliancePortal"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(compliancePortalQuery, map[string]any{
-		"organizationId": organizationID,
-	}, &compliancePortalLookup)
-	require.NoError(t, err)
-	require.NotEmpty(t, compliancePortalLookup.Node.CompliancePortal.ID)
-
-	compliancePortalID := compliancePortalLookup.Node.CompliancePortal.ID
+	compliancePortalID := compliancePortalID(t, owner)
 
 	const uploadMutation = `
 		mutation UploadCompliancePortalNDA($input: UploadCompliancePortalNDAInput!) {
@@ -93,7 +66,7 @@ func TestCompliancePortal_UploadNDA(t *testing.T) {
 		} `json:"uploadCompliancePortalNDA"`
 	}
 
-	err = owner.ExecuteWithFile(uploadMutation, map[string]any{
+	err := owner.ExecuteWithFile(uploadMutation, map[string]any{
 		"input": map[string]any{
 			"compliancePortalId": compliancePortalID,
 			"fileName":           "nda.pdf",

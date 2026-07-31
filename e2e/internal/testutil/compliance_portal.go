@@ -18,51 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package trust_test
+package testutil
 
 import (
-	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/e2e/internal/factory"
-	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestCompliancePortal_CreateAssignsSlugAutomatically(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	const entityName = "Acme Trust"
-
-	portalID := factory.CreateCompliancePortal(owner, factory.Attrs{
-		"entityName": entityName,
-	})
+// ActivateCompliancePortal sets the portal active for visitor-facing tests.
+func ActivateCompliancePortal(t *testing.T, c *Client, compliancePortalID string) {
+	t.Helper()
 
 	const query = `
-		query($compliancePortalId: ID!) {
-			node(id: $compliancePortalId) {
-				... on CompliancePortal {
-					slug
-					entityName
-				}
+		mutation($input: UpdateCompliancePortalInput!) {
+			updateCompliancePortal(input: $input) {
+				compliancePortal { id active }
 			}
 		}
 	`
 
-	var result struct {
-		Node struct {
-			Slug       string `json:"slug"`
-			EntityName string `json:"entityName"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(query, map[string]any{
-		"compliancePortalId": portalID,
-	}, &result)
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"compliancePortalId": compliancePortalID,
+			"active":             true,
+		},
+	}, nil)
 	require.NoError(t, err)
-	assert.Equal(t, entityName, result.Node.EntityName)
-	assert.Regexp(t, regexp.MustCompile(`^acme-trust-[0-9a-f]{8}$`), result.Node.Slug)
 }

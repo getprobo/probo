@@ -48,45 +48,43 @@ type compliancePortalReference struct {
 	Description *string `json:"description"`
 }
 
+func mcpPublishDocumentMinor(t *testing.T, owner *testutil.Client, documentID string) {
+	t.Helper()
+
+	err := owner.Execute(`
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				documentVersion { status }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"minor":      true,
+			"documentId": documentID,
+			"changelog":  "MCP catalog test publish",
+		},
+	}, nil)
+	require.NoError(t, err)
+}
+
 type complianceCustomLink struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	URL  string `json:"url"`
 }
 
+func mcpCompliancePortalID(t *testing.T, owner *testutil.Client) string {
+	t.Helper()
+
+	return factory.CreateCompliancePortal(owner)
+}
+
 func TestMCP_GetCompliancePortal(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
-	const compliancePortalQuery = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal {
-						id
-					}
-				}
-			}
-		}
-	`
-
-	var compliancePortalLookup struct {
-		Node struct {
-			CompliancePortal struct {
-				ID string `json:"id"`
-			} `json:"compliancePortal"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(compliancePortalQuery, map[string]any{
-		"organizationId": orgID,
-	}, &compliancePortalLookup)
-	require.NoError(t, err)
-	require.NotEmpty(t, compliancePortalLookup.Node.CompliancePortal.ID)
-
-	compliancePortalID := compliancePortalLookup.Node.CompliancePortal.ID
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	const uploadMutation = `
 		mutation UpdateCompliancePortalBrand($input: UpdateCompliancePortalBrandInput!) {
@@ -126,7 +124,7 @@ func TestMCP_GetCompliancePortal(t *testing.T) {
 		} `json:"updateCompliancePortalBrand"`
 	}
 
-	err = owner.ExecuteWithFile(uploadMutation, map[string]any{
+	err := owner.ExecuteWithFile(uploadMutation, map[string]any{
 		"input": map[string]any{
 			"compliancePortalId": compliancePortalID,
 			"logoFile":           nil,
@@ -143,7 +141,7 @@ func TestMCP_GetCompliancePortal(t *testing.T) {
 		CompliancePortal compliancePortal `json:"compliance_portal"`
 	}
 	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
+		"compliance_portal_id": compliancePortalID,
 	}, &result)
 
 	assert.NotEmpty(t, result.CompliancePortal.ID)
@@ -160,16 +158,12 @@ func TestMCP_UpdateCompliancePortal(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	require.NotEmpty(t, getResult.CompliancePortal.ID)
+	portalID := mcpCompliancePortalID(t, owner)
+	getResult := struct {
+		CompliancePortal compliancePortal
+	}{CompliancePortal: compliancePortal{ID: portalID}}
 
 	// Update
 	var updateResult struct {
@@ -203,20 +197,149 @@ func TestMCP_UpdateCompliancePortal(t *testing.T) {
 	assert.Equal(t, "123 Main St, San Francisco, CA 94102", *updateResult.CompliancePortal.HeadquarterAddress)
 }
 
+func TestMCP_CreateAndDeleteCompliancePortal(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+
+	var createResult struct {
+		CompliancePortal compliancePortal `json:"compliance_portal"`
+	}
+	mc.CallToolInto("createCompliancePortal", map[string]any{
+		"organization_id": owner.GetOrganizationID().String(),
+		"entity_name":     "MCP Portal",
+	}, &createResult)
+
+	require.NotEmpty(t, createResult.CompliancePortal.ID)
+	assert.Equal(t, "MCP Portal", createResult.CompliancePortal.EntityName)
+	assert.False(t, createResult.CompliancePortal.Active)
+
+	var deleteResult struct {
+		DeletedCompliancePortalID string `json:"deleted_compliance_portal_id"`
+	}
+	mc.CallToolInto("deleteCompliancePortal", map[string]any{
+		"compliance_portal_id": createResult.CompliancePortal.ID,
+	}, &deleteResult)
+
+	assert.Equal(t, createResult.CompliancePortal.ID, deleteResult.DeletedCompliancePortalID)
+}
+
+func TestMCP_UpdateCompliancePortalCatalogVisibility(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	portalID := mcpCompliancePortalID(t, owner)
+	documentID := factory.NewDocument(owner).Create()
+	mcpPublishDocumentMinor(t, owner, documentID)
+	frameworkID := factory.CreateFramework(owner)
+	auditID := factory.CreateAudit(owner, frameworkID)
+	thirdPartyID := factory.CreateThirdParty(owner)
+
+	var documentResult struct {
+		CatalogDocument struct {
+			ID         string `json:"id"`
+			Visibility string `json:"visibility"`
+			Document   struct {
+				ID string `json:"id"`
+			} `json:"document"`
+		} `json:"catalog_document"`
+	}
+	mc.CallToolInto("updateCompliancePortalDocumentVisibility", map[string]any{
+		"compliance_portal_id":         portalID,
+		"document_id":                  documentID,
+		"compliance_portal_visibility": "PUBLIC",
+	}, &documentResult)
+
+	assert.NotEmpty(t, documentResult.CatalogDocument.ID)
+	assert.Equal(t, documentID, documentResult.CatalogDocument.Document.ID)
+	assert.Equal(t, "PUBLIC", documentResult.CatalogDocument.Visibility)
+
+	var auditResult struct {
+		CatalogAudit struct {
+			ID         string `json:"id"`
+			Visibility string `json:"visibility"`
+			Audit      struct {
+				ID string `json:"id"`
+			} `json:"audit"`
+		} `json:"catalog_audit"`
+	}
+	mc.CallToolInto("updateCompliancePortalAuditVisibility", map[string]any{
+		"compliance_portal_id":         portalID,
+		"audit_id":                     auditID,
+		"compliance_portal_visibility": "RESTRICTED",
+	}, &auditResult)
+
+	assert.NotEmpty(t, auditResult.CatalogAudit.ID)
+	assert.Equal(t, auditID, auditResult.CatalogAudit.Audit.ID)
+	assert.Equal(t, "RESTRICTED", auditResult.CatalogAudit.Visibility)
+
+	var thirdPartyResult struct {
+		CatalogThirdParty struct {
+			ID         string `json:"id"`
+			ThirdParty struct {
+				ID string `json:"id"`
+			} `json:"third_party"`
+		} `json:"catalog_third_party"`
+	}
+	mc.CallToolInto("updateCompliancePortalThirdPartyPublished", map[string]any{
+		"compliance_portal_id": portalID,
+		"third_party_id":       thirdPartyID,
+		"published":            true,
+	}, &thirdPartyResult)
+
+	assert.NotEmpty(t, thirdPartyResult.CatalogThirdParty.ID)
+	assert.Equal(t, thirdPartyID, thirdPartyResult.CatalogThirdParty.ThirdParty.ID)
+
+	var deletedDocumentResult struct {
+		DeletedCompliancePortalDocumentID string `json:"deleted_compliance_portal_document_id"`
+	}
+	mc.CallToolInto("deleteCompliancePortalDocument", map[string]any{
+		"id": documentResult.CatalogDocument.ID,
+	}, &deletedDocumentResult)
+	assert.Equal(t, documentResult.CatalogDocument.ID, deletedDocumentResult.DeletedCompliancePortalDocumentID)
+
+	var deletedAuditResult struct {
+		DeletedCompliancePortalAuditID string `json:"deleted_compliance_portal_audit_id"`
+	}
+	mc.CallToolInto("deleteCompliancePortalAudit", map[string]any{
+		"id": auditResult.CatalogAudit.ID,
+	}, &deletedAuditResult)
+	assert.Equal(t, auditResult.CatalogAudit.ID, deletedAuditResult.DeletedCompliancePortalAuditID)
+
+	var deletedThirdPartyResult struct {
+		DeletedCompliancePortalThirdPartyID string `json:"deleted_compliance_portal_third_party_id"`
+	}
+	mc.CallToolInto("deleteCompliancePortalThirdParty", map[string]any{
+		"id": thirdPartyResult.CatalogThirdParty.ID,
+	}, &deletedThirdPartyResult)
+	assert.Equal(t, thirdPartyResult.CatalogThirdParty.ID, deletedThirdPartyResult.DeletedCompliancePortalThirdPartyID)
+}
+
+func TestMCP_UpdateCompliancePortalCatalogVisibilityReturnsOpaqueError(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	otherOwner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+
+	errorText := mc.CallToolExpectToolError("updateCompliancePortalDocumentVisibility", map[string]any{
+		"compliance_portal_id":         mcpCompliancePortalID(t, owner),
+		"document_id":                  factory.NewDocument(otherOwner).Create(),
+		"compliance_portal_visibility": "PUBLIC",
+	})
+
+	assert.Equal(t, "internal server error", errorText)
+}
+
 func TestMCP_AddCompliancePortalReference(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	var result struct {
 		CompliancePortalReference compliancePortalReference `json:"compliance_portal_reference"`
@@ -235,16 +358,9 @@ func TestMCP_UpdateCompliancePortalReference(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	// Create reference
 	var addResult struct {
@@ -275,16 +391,9 @@ func TestMCP_DeleteCompliancePortalReference(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	// Create reference
 	var addResult struct {
@@ -312,16 +421,9 @@ func TestMCP_ListCompliancePortalReferences(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	// Create references
 	for i := range 2 {
@@ -353,7 +455,6 @@ func TestMCP_ListCompliancePortalFiles(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// List files (may be empty, just verify the tool works)
 	var listResult struct {
@@ -363,7 +464,7 @@ func TestMCP_ListCompliancePortalFiles(t *testing.T) {
 		} `json:"compliance_portal_files"`
 	}
 	mc.CallToolInto("listCompliancePortalFiles", map[string]any{
-		"organization_id": orgID,
+		"compliance_portal_id": mcpCompliancePortalID(t, owner),
 	}, &listResult)
 
 	// Just assert the call succeeded — files require multipart upload
@@ -374,16 +475,9 @@ func TestMCP_AddComplianceCustomLink(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	var result struct {
 		ComplianceCustomLink complianceCustomLink `json:"compliance_custom_link"`
@@ -402,16 +496,9 @@ func TestMCP_UpdateComplianceCustomLink(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	// Create
 	var addResult struct {
@@ -442,16 +529,9 @@ func TestMCP_DeleteComplianceCustomLink(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	// Create
 	var addResult struct {
@@ -479,16 +559,9 @@ func TestMCP_ListComplianceCustomLinks(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
 
 	// Get compliance portal ID
-	var getResult struct {
-		CompliancePortal compliancePortal `json:"compliance_portal"`
-	}
-	mc.CallToolInto("getCompliancePortal", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	portalID := getResult.CompliancePortal.ID
+	portalID := mcpCompliancePortalID(t, owner)
 
 	// Create URLs
 	for i := range 2 {

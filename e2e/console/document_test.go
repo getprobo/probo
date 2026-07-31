@@ -645,8 +645,8 @@ func TestDocument_Timestamps(t *testing.T) {
 
 		err = owner.Execute(updateQuery, map[string]any{
 			"input": map[string]any{
-				"id":                         documentID,
-				"compliancePortalVisibility": "PRIVATE",
+				"id":             documentID,
+				"classification": "CONFIDENTIAL",
 			},
 		}, &updateResult)
 		require.NoError(t, err)
@@ -778,8 +778,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":                         documentID,
-					"compliancePortalVisibility": "PRIVATE",
+					"id":             documentID,
+					"classification": "CONFIDENTIAL",
 				},
 			})
 			require.NoError(t, err, "owner should be able to update document")
@@ -799,8 +799,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":                         documentID,
-					"compliancePortalVisibility": "PRIVATE",
+					"id":             documentID,
+					"classification": "CONFIDENTIAL",
 				},
 			})
 			require.NoError(t, err, "admin should be able to update document")
@@ -820,8 +820,8 @@ func TestDocument_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"id":                         documentID,
-					"compliancePortalVisibility": "PRIVATE",
+					"id":             documentID,
+					"classification": "CONFIDENTIAL",
 				},
 			})
 			testutil.RequireForbiddenError(t, err, "viewer should not be able to update document")
@@ -1240,8 +1240,8 @@ func TestDocument_TenantIsolation(t *testing.T) {
 
 		_, err := org2Owner.Do(query, map[string]any{
 			"input": map[string]any{
-				"id":                         documentID,
-				"compliancePortalVisibility": "PRIVATE",
+				"id":             documentID,
+				"classification": "CONFIDENTIAL",
 			},
 		})
 		require.Error(t, err, "Should not be able to update document from another org")

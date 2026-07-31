@@ -98,6 +98,23 @@ func TestSecurity_WriteGap_CompliancePortalAccessDocuments(t *testing.T) {
 	org1DocumentID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for compliance portal access").Create()
 	org2DocumentID := factory.NewDocument(org2Owner).WithTitle("Org2 Secret Document").Create()
 
+	publishDocumentMinor(t, org1Owner, org1DocumentID)
+
+	_, err := org1Owner.Do(`
+		mutation($input: UpdateCompliancePortalDocumentVisibilityInput!) {
+			updateCompliancePortalDocumentVisibility(input: $input) {
+				catalogDocument { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"compliancePortalId":         org1CompliancePortalID,
+			"documentId":                 org1DocumentID,
+			"compliancePortalVisibility": "RESTRICTED",
+		},
+	})
+	require.NoError(t, err)
+
 	accessID := seedCompliancePortalAccess(t, org1Owner, org1CompliancePortalID)
 
 	t.Run("cannot grant access to a document from another organization", func(t *testing.T) {
