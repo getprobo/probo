@@ -381,6 +381,21 @@ probo:
     confidenceThreshold: 0.7
     maxAttempts: 3
 
+  # Compliance portal (trust center) configuration
+  compliancePortal:
+    # Set to true when an upstream proxy, tunnel or CDN (Cloudflare Tunnel,
+    # CloudFront, an ingress controller, ...) already terminates public TLS for
+    # the compliance portal. The portal is then served in clear text on the HTTP
+    # listener, the HTTPS listener is not started and no certificate is
+    # provisioned or renewed for its domains.
+    #
+    # SECURITY: without a certificate there is no ACME challenge, so nothing
+    # proves that an organization owns the hostname it registers as its
+    # compliance portal domain -- the operator vouches for the hosts their proxy
+    # routes here. Only enable this on a self-hosted, single-tenant deployment;
+    # on a shared install any tenant could claim a hostname it does not control.
+    tlsTerminatedByProxy: false
+
   # Custom domains configuration (optional)
   customDomains:
     enabled: false

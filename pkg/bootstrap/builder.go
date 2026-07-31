@@ -171,9 +171,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				),
 			},
 			CompliancePortal: probodconfig.CompliancePortalConfig{
-				HTTPAddr:   b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
-				HTTPSAddr:  b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
-				BaseDomain: b.resolver.getEnv("PROBOD_TRUST_CENTER_BASE_DOMAIN"),
+				HTTPAddr:             b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
+				HTTPSAddr:            b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
+				TLSTerminatedByProxy: b.resolver.getEnvBoolOrDefault("PROBOD_TRUST_CENTER_TLS_TERMINATED_BY_PROXY", false),
+				BaseDomain:           b.resolver.getEnv("PROBOD_TRUST_CENTER_BASE_DOMAIN"),
 				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.resolver.getEnv("PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},

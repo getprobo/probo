@@ -569,6 +569,7 @@ func (impl *Implm) Run(
 			CAAIssuerDomain:   impl.cfg.CustomDomains.CAAIssuerDomain,
 			ResolverAddr:      impl.cfg.CustomDomains.ResolverAddr,
 			ManagedBaseDomain: impl.cfg.CompliancePortal.BaseDomain,
+			SkipCNAMECheck:    impl.cfg.CustomDomains.SkipCNAMECheck,
 			RenewalInterval:   customDomainRenewalInterval,
 			ProvisionInterval: customDomainProvisionInterval,
 		},
@@ -647,6 +648,7 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
 		impl.cfg.CompliancePortal.BaseDomain,
+		impl.cfg.CompliancePortal.TLSTerminatedByProxy,
 		fileManagerService,
 		certManagerService,
 		slackService,
@@ -804,6 +806,9 @@ func (impl *Implm) Run(
 			Mailman:           mailmanService,
 			Cookie:            authCookie,
 			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
+
+			TLSTerminatedByProxy: impl.cfg.CompliancePortal.TLSTerminatedByProxy,
+
 			GraphQLLimits: gqlutils.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
@@ -992,13 +997,20 @@ func (impl *Implm) Run(
 
 	certManagerServiceCtx, stopCertManagerService := context.WithCancel(context.Background())
 
-	wg.Go(
-		func() {
-			if err := certManagerService.Run(certManagerServiceCtx); err != nil {
-				cancel(fmt.Errorf("certificate manager service crashed: %w", err))
-			}
-		},
-	)
+	if impl.cfg.CompliancePortal.TLSTerminatedByProxy {
+		// The compliance portal is served in clear text behind a proxy that
+		// terminates public TLS, so no Probo-issued certificate is ever
+		// presented and provisioning one would only burn ACME attempts.
+		l.Info("compliance portal TLS is terminated by an upstream proxy, certificate provisioning is disabled")
+	} else {
+		wg.Go(
+			func() {
+				if err := certManagerService.Run(certManagerServiceCtx); err != nil {
+					cancel(fmt.Errorf("certificate manager service crashed: %w", err))
+				}
+			},
+		)
+	}
 
 	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l)
 	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
@@ -1385,12 +1397,14 @@ func (impl *Implm) runCompliancePortalServer(
 	ctx, span := tracer.Start(ctx, "probod.runCompliancePortalServer")
 	defer span.End()
 
-	certSelector := certmanager.NewSelector(pgClient, encryptionKey)
+	tlsTerminatedByProxy := impl.cfg.CompliancePortal.TLSTerminatedByProxy
 
-	warmer := certmanager.NewCacheStore(pgClient, encryptionKey, l)
-	if err := warmer.WarmCache(ctx); err != nil {
-		span.RecordError(err)
-		l.ErrorCtx(ctx, "cannot warm certificate cache", log.Error(err))
+	if !tlsTerminatedByProxy {
+		warmer := certmanager.NewCacheStore(pgClient, encryptionKey, l)
+		if err := warmer.WarmCache(ctx); err != nil {
+			span.RecordError(err)
+			l.ErrorCtx(ctx, "cannot warm certificate cache", log.Error(err))
+		}
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -1407,7 +1421,11 @@ func (impl *Implm) runCompliancePortalServer(
 
 	httpServer := httpserver.NewServer(
 		impl.cfg.CompliancePortal.HTTPAddr,
-		httpACMEHandler.Handle(httpRedirectHandler),
+		compliancePortalHTTPHandler(
+			tlsTerminatedByProxy,
+			trustRouter,
+			httpACMEHandler.Handle(httpRedirectHandler),
+		),
 		httpserver.WithLogger(l),
 		httpserver.WithRegisterer(r),
 		httpserver.WithTracerProvider(tp),
@@ -1415,34 +1433,24 @@ func (impl *Implm) runCompliancePortalServer(
 
 	g.Go(
 		func() error {
-			l.InfoCtx(ctx, "starting HTTP server for ACME challenges", log.String("addr", httpServer.Addr))
+			if tlsTerminatedByProxy {
+				l.InfoCtx(
+					ctx,
+					"starting compliance portal HTTP server, TLS is terminated by an upstream proxy",
+					log.String("addr", httpServer.Addr),
+				)
+			} else {
+				l.InfoCtx(ctx, "starting HTTP server for ACME challenges", log.String("addr", httpServer.Addr))
+			}
+
 			span.AddEvent("HTTP server starting")
 
-			listener, err := net.Listen("tcp", httpServer.Addr)
+			listener, err := impl.newCompliancePortalListener(httpServer.Addr, "HTTP", l)
 			if err != nil {
-				return fmt.Errorf("cannot listen on %q: %w", httpServer.Addr, err)
+				return err
 			}
 
 			defer func() { _ = listener.Close() }()
-
-			if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
-				policy, err := proxyproto.PolicyFromRanges(
-					impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies,
-					proxyproto.USE,
-					proxyproto.REJECT,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
-				}
-
-				listener = &proxyproto.Listener{
-					Listener:          listener,
-					ReadHeaderTimeout: 10 * time.Second,
-					ConnPolicy:        policy,
-				}
-
-				l.Info("using proxy protocol for compliance portal HTTP server", log.Any("trusted-proxies", impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies))
-			}
 
 			if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
 				return fmt.Errorf("cannot serve http requests: %w", err)
@@ -1452,12 +1460,18 @@ func (impl *Implm) runCompliancePortalServer(
 		},
 	)
 
+	if tlsTerminatedByProxy {
+		return impl.waitCompliancePortalServers(ctx, g, span, l, httpServer, nil)
+	}
+
 	acmeHandler := certmanager.NewACMEChallengeHandler(
 		pgClient,
 		l.Named("acme_handler"),
 	)
 
 	handler := acmeHandler.Handle(trustRouter)
+
+	certSelector := certmanager.NewSelector(pgClient, encryptionKey)
 
 	ignoreTLSHandshakeErrors := func(level log.Level, msg string, attrs []log.Attr) bool {
 		return strings.Contains(msg, "tls: no certificates configured") ||
@@ -1513,31 +1527,12 @@ func (impl *Implm) runCompliancePortalServer(
 			l.InfoCtx(ctx, "starting compliance portal https server", log.String("addr", httpsServer.Addr))
 			span.AddEvent("HTTPS server starting")
 
-			listener, err := net.Listen("tcp", httpsServer.Addr)
+			listener, err := impl.newCompliancePortalListener(httpsServer.Addr, "HTTPS", l)
 			if err != nil {
-				return fmt.Errorf("cannot listen on %q: %w", httpsServer.Addr, err)
+				return err
 			}
 
 			defer func() { _ = listener.Close() }()
-
-			if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
-				policy, err := proxyproto.PolicyFromRanges(
-					impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies,
-					proxyproto.USE,
-					proxyproto.REJECT,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot build proxy protocol policy: %w", err)
-				}
-
-				listener = &proxyproto.Listener{
-					Listener:          listener,
-					ReadHeaderTimeout: 10 * time.Second,
-					ConnPolicy:        policy,
-				}
-
-				l.Info("using proxy protocol for compliance portal HTTPS server", log.Any("trusted-proxies", impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies))
-			}
 
 			if err := httpsServer.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
 				return fmt.Errorf("cannot serve https requests: %w", err)
@@ -1547,6 +1542,74 @@ func (impl *Implm) runCompliancePortalServer(
 		},
 	)
 
+	return impl.waitCompliancePortalServers(ctx, g, span, l, httpServer, httpsServer)
+}
+
+// compliancePortalHTTPHandler picks the handler for the compliance portal's
+// plain-HTTP listener. It normally answers ACME HTTP-01 challenges and redirects
+// everything else to the HTTPS listener; when an upstream proxy terminates
+// public TLS, the portal is served in clear text and no certificate is
+// provisioned, so the portal router is exposed directly.
+func compliancePortalHTTPHandler(
+	tlsTerminatedByProxy bool,
+	trustRouter http.Handler,
+	acmeAndRedirectHandler http.Handler,
+) http.Handler {
+	if tlsTerminatedByProxy {
+		return trustRouter
+	}
+
+	return acmeAndRedirectHandler
+}
+
+// newCompliancePortalListener listens on addr, wrapping the listener with the
+// PROXY protocol when trusted proxies are configured.
+func (impl *Implm) newCompliancePortalListener(
+	addr string,
+	name string,
+	l *log.Logger,
+) (net.Listener, error) {
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot listen on %q: %w", addr, err)
+	}
+
+	trustedProxies := impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies
+	if len(trustedProxies) == 0 {
+		return listener, nil
+	}
+
+	policy, err := proxyproto.PolicyFromRanges(trustedProxies, proxyproto.USE, proxyproto.REJECT)
+	if err != nil {
+		_ = listener.Close()
+
+		return nil, fmt.Errorf("cannot build proxy protocol policy: %w", err)
+	}
+
+	l.Info(
+		"using proxy protocol for compliance portal server",
+		log.String("server", name),
+		log.Any("trusted-proxies", trustedProxies),
+	)
+
+	return &proxyproto.Listener{
+		Listener:          listener,
+		ReadHeaderTimeout: 10 * time.Second,
+		ConnPolicy:        policy,
+	}, nil
+}
+
+// waitCompliancePortalServers blocks until the compliance portal servers stop,
+// shutting them down gracefully once ctx is done. httpsServer is nil when TLS is
+// terminated by an upstream proxy.
+func (impl *Implm) waitCompliancePortalServers(
+	ctx context.Context,
+	g *errgroup.Group,
+	span trace.Span,
+	l *log.Logger,
+	httpServer *http.Server,
+	httpsServer *http.Server,
+) error {
 	l.Info("compliance portal servers started")
 	span.AddEvent("Trust center servers started")
 
@@ -1559,9 +1622,11 @@ func (impl *Implm) runCompliancePortalServer(
 		l.InfoCtx(ctx, "shutting down compliance portal servers...")
 		span.AddEvent("Trust center servers shutting down")
 
-		if err := httpsServer.Shutdown(shutdownCtx); err != nil {
-			span.RecordError(err)
-			l.ErrorCtx(ctx, "cannot shutdown HTTPS server", log.Error(err))
+		if httpsServer != nil {
+			if err := httpsServer.Shutdown(shutdownCtx); err != nil {
+				span.RecordError(err)
+				l.ErrorCtx(ctx, "cannot shutdown HTTPS server", log.Error(err))
+			}
 		}
 
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {

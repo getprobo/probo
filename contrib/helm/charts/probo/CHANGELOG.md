@@ -6,6 +6,7 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ### Added
 
+- `probo.compliancePortal.tlsTerminatedByProxy` Helm value (default: `false`) to serve the compliance portal in clear text when an upstream proxy, tunnel or CDN already terminates public TLS. No certificate is provisioned and hostname ownership is no longer verified, so it is for self-hosted, single-tenant deployments only
 - `probo.customDomains.skipCnameCheck` Helm value (default: `false`) to downgrade the custom-domain CNAME pre-check to a warning, for hostnames proxied through a CDN whose edge hides the origin CNAME from public DNS
 
 ## [0.13.0] - 2026-07-29

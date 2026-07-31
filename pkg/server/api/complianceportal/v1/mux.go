@@ -48,6 +48,10 @@ type MuxConfig struct {
 	Cookie            securecookie.Config
 	TokenSecret       string
 	GraphQLLimits     gqlutils.Limits
+	// TLSTerminatedByProxy tells the portal that public TLS is terminated by an
+	// upstream proxy, so the request hostname comes from the Host header
+	// instead of the TLS SNI.
+	TLSTerminatedByProxy bool
 }
 
 func NewMux(cfg MuxConfig) (http.Handler, error) {
@@ -58,7 +62,7 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 
 	r := chi.NewRouter()
 
-	r.Use(complianceportal.NewSNIMiddleware(cfg.Visitor))
+	r.Use(complianceportal.NewSNIMiddleware(cfg.Visitor, cfg.TLSTerminatedByProxy))
 	r.Use(server.NewSecurityHeadersMiddleware(cfg.ExtraHeaderFields))
 
 	markdownHandler := complianceportal.NewHandler(cfg.Visitor)

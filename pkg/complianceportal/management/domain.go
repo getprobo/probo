@@ -29,7 +29,7 @@ func (s *Service) EffectiveDomainForCompliancePortal(
 	scope coredata.Scoper,
 	compliancePage *coredata.CompliancePortal,
 ) (*coredata.CustomDomain, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
+	byID, active, err := s.loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *Service) PublicURLForCompliancePortal(
 	scope coredata.Scoper,
 	compliancePage *coredata.CompliancePortal,
 ) (string, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
+	byID, active, err := s.loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +76,11 @@ func (s *Service) PublicURLForCompliancePortal(
 	return "https://" + host, nil
 }
 
-func loadDomains(
+// loadDomains returns the compliance page domains by ID, along with whether
+// each one can serve the page. A domain serves once its certificate is active,
+// or, when TLS is terminated by an upstream proxy, as soon as it exists: no
+// Probo-issued certificate is provisioned in that mode.
+func (s *Service) loadDomains(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
@@ -109,13 +113,15 @@ func loadDomains(
 
 	for _, d := range domains {
 		byID[d.ID] = d
+		active[d.ID] = s.tlsTerminatedByProxy
+
 		if d.CertificateID != nil {
 			certificateIDs = append(certificateIDs, *d.CertificateID)
 			domainByCertificate[*d.CertificateID] = d.ID
 		}
 	}
 
-	if len(certificateIDs) == 0 {
+	if s.tlsTerminatedByProxy || len(certificateIDs) == 0 {
 		return byID, active, nil
 	}
 

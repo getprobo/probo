@@ -195,6 +195,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPAddr)
 	assert.Empty(t, cfg.Probod.CompliancePortal.HTTPSAddr)
 	assert.Empty(t, cfg.Probod.CompliancePortal.BaseDomain)
+	assert.False(t, cfg.Probod.CompliancePortal.TLSTerminatedByProxy)
 	assert.Nil(t, cfg.Probod.CompliancePortal.ProxyProtocol.TrustedProxies)
 
 	// AWS config
@@ -344,6 +345,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_TRUST_CENTER_HTTP_ADDR"] = ":8080"
 	env["PROBOD_TRUST_CENTER_HTTPS_ADDR"] = ":8443"
 	env["PROBOD_TRUST_CENTER_BASE_DOMAIN"] = "probopage.example.com"
+	env["PROBOD_TRUST_CENTER_TLS_TERMINATED_BY_PROXY"] = "true"
 	env["PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES"] = "10.0.1.1,10.0.1.2"
 	// AWS
 	env["PROBOD_AWS_REGION"] = "eu-west-1"
@@ -482,6 +484,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, ":8080", cfg.Probod.CompliancePortal.HTTPAddr)
 	assert.Equal(t, ":8443", cfg.Probod.CompliancePortal.HTTPSAddr)
 	assert.Equal(t, "probopage.example.com", cfg.Probod.CompliancePortal.BaseDomain)
+	assert.True(t, cfg.Probod.CompliancePortal.TLSTerminatedByProxy)
 	assert.Equal(t, []string{"10.0.1.1", "10.0.1.2"}, cfg.Probod.CompliancePortal.ProxyProtocol.TrustedProxies)
 	// AWS
 	assert.Equal(t, "eu-west-1", cfg.Probod.AWS.Region)

@@ -442,6 +442,11 @@ spec:
             - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.maxAttempts | quote }}
             {{- end }}
+            # Compliance Portal
+            {{- if .Values.probo.compliancePortal.tlsTerminatedByProxy }}
+            - name: PROBOD_TRUST_CENTER_TLS_TERMINATED_BY_PROXY
+              value: "true"
+            {{- end }}
             # Custom Domains
             {{- if .Values.probo.customDomains.enabled }}
             - name: PROBOD_CUSTOM_DOMAINS_RENEWAL_INTERVAL

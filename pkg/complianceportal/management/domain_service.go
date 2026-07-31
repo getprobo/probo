@@ -141,6 +141,13 @@ func (s *Service) RemoveCustomDomain(
 }
 
 func (s *Service) IsCustomDomainVerified(ctx context.Context, host string) (bool, error) {
+	if s.tlsTerminatedByProxy {
+		// No Probo-issued certificate exists to attest the hostname in this
+		// mode, so a registered domain is as verified as it gets: the operator
+		// vouches for the hosts their proxy routes to this deployment.
+		return s.customDomainExists(ctx, host)
+	}
+
 	certificate, err := s.certManager.GetByHostname(ctx, host)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -156,6 +163,29 @@ func (s *Service) IsCustomDomainVerified(ctx context.Context, host string) (bool
 	default:
 		return false, nil
 	}
+}
+
+// customDomainExists reports whether host is registered as a compliance page
+// domain. It is unscoped because it powers public host resolution across all
+// tenants.
+func (s *Service) customDomainExists(ctx context.Context, host string) (bool, error) {
+	domain := &coredata.CustomDomain{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), host)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("cannot load custom domain: %w", err)
+	}
+
+	return true, nil
 }
 
 // GetDomain returns a custom domain by ID.
