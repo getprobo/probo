@@ -6101,8 +6101,11 @@
       "title": "Jeton d’enrôlement généré",
       "description": "Ne partagez ce jeton d’enrôlement qu’avec le propriétaire de l’appareil, via un canal sécurisé. Il ne peut être utilisé qu’une seule fois et expire après sept jours.",
       "manualInstall": "Installation manuelle (CLI / MDM)",
+      "releaseListHint": "Consultez les <link>versions probo-agent sur GitHub</link> (tags probo-agent/v*), puis choisissez l’archive correspondant à votre OS et architecture (par exemple probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz ou probo-agent_Windows_x86_64.zip). Remplacez vX.Y.Z, OS et ARCH dans la commande de téléchargement par les valeurs de l’asset choisi.",
       "installUnix": "Installer sur macOS ou Linux (exécuter depuis un shell avec accès sudo)",
       "installWindows": "Installer sur Windows (exécuter depuis une session PowerShell élevée)",
+      "downloadStep": "Télécharger et placer le binaire",
+      "enrollStep": "Configurer l’appareil et démarrer l’agent",
       "securityNotice": "Le jeton est transmis sous forme d’indicateur CLI (et non via un curl redirigé vers un shell ou des variables d’environnement sudo). Une fois installé, l’agent se met à jour automatiquement depuis les GitHub Releases avec vérification de signature cosign."
     },
     "messages": {

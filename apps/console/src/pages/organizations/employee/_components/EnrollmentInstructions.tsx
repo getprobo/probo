@@ -19,10 +19,23 @@
 // SOFTWARE.
 
 import { Button, Card, useToast } from "@probo/ui";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
-const RELEASE_BASE_URL
-  = "https://github.com/getprobo/probo/releases/latest/download";
+const AGENT_RELEASES_URL
+  = "https://github.com/getprobo/probo/releases?q=probo-agent";
+
+const UNIX_DOWNLOAD_COMMAND = `curl -fsSL "https://github.com/getprobo/probo/releases/download/probo-agent/vX.Y.Z/probo-agent_OS_ARCH.tar.gz" -o /tmp/probo-agent.tar.gz
+tar -xzf /tmp/probo-agent.tar.gz -C /tmp
+sudo install -m 0755 /tmp/probo-agent_OS_ARCH/probo-agent /usr/local/bin/probo-agent
+rm -rf /tmp/probo-agent.tar.gz /tmp/probo-agent_OS_ARCH`;
+
+const WINDOWS_DOWNLOAD_COMMAND = `$zip = "$env:TEMP\\probo-agent.zip"
+$dst = "$env:ProgramFiles\\Probo"
+Invoke-WebRequest -Uri "https://github.com/getprobo/probo/releases/download/probo-agent/vX.Y.Z/probo-agent_Windows_ARCH.zip" -OutFile $zip
+Expand-Archive -Path $zip -DestinationPath $env:TEMP -Force
+New-Item -ItemType Directory -Force -Path $dst | Out-Null
+Move-Item -Force "$env:TEMP\\probo-agent_Windows_ARCH\\probo-agent.exe" "$dst\\probo-agent.exe"
+Remove-Item -Recurse -Force $zip, "$env:TEMP\\probo-agent_Windows_ARCH"`;
 
 interface EnrollmentInstructionsProps {
   enrollmentToken: string;
@@ -34,32 +47,22 @@ export function EnrollmentInstructions(
 ) {
   const { t } = useTranslation();
 
-  const unixCommand = `# 1. Download and install the probo-agent binary
-OS=$(uname -s); ARCH=$(uname -m | sed 's/aarch64/arm64/; s/amd64/x86_64/')
-NAME="probo-agent_\${OS}_\${ARCH}"
-curl -fsSL "${RELEASE_BASE_URL}/\${NAME}.tar.gz" -o /tmp/probo-agent.tar.gz
-tar -xzf /tmp/probo-agent.tar.gz -C /tmp
-sudo install -m 0755 "/tmp/\${NAME}/probo-agent" /usr/local/bin/probo-agent
-rm -rf /tmp/probo-agent.tar.gz "/tmp/\${NAME}"
+  const downloadComment = `# ${t("deviceEnrollment.token.downloadStep")}`;
+  const enrollComment = `# ${t("deviceEnrollment.token.enrollStep")}`;
 
-# 2. Configure the device and start the agent service
+  const unixDownloadCommand = `${downloadComment}
+${UNIX_DOWNLOAD_COMMAND}`;
+
+  const unixInstallCommand = `${enrollComment}
 sudo /usr/local/bin/probo-agent install \\
   --server ${serverUrl} \\
   --enrollment-token '${enrollmentToken}'`;
 
-  const windowsCommand = `# 1. Download and install the probo-agent binary
-$arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x86_64' }
-$name = "probo-agent_Windows_$arch"
-$zip  = "$env:TEMP\\probo-agent.zip"
-$dst  = "$env:ProgramFiles\\Probo"
-Invoke-WebRequest -Uri "${RELEASE_BASE_URL}/$name.zip" -OutFile $zip
-Expand-Archive -Path $zip -DestinationPath $env:TEMP -Force
-New-Item -ItemType Directory -Force -Path $dst | Out-Null
-Move-Item -Force "$env:TEMP\\$name\\probo-agent.exe" "$dst\\probo-agent.exe"
-Remove-Item -Recurse -Force $zip, "$env:TEMP\\$name"
+  const windowsDownloadCommand = `${downloadComment}
+${WINDOWS_DOWNLOAD_COMMAND}`;
 
-# 2. Configure the device and start the agent service
-& "$dst\\probo-agent.exe" install \`
+  const windowsInstallCommand = `${enrollComment}
+& "$env:ProgramFiles\\Probo\\probo-agent.exe" install \`
   --server ${serverUrl} \`
   --enrollment-token '${enrollmentToken}'`;
 
@@ -77,18 +80,36 @@ Remove-Item -Recurse -Force $zip, "$env:TEMP\\$name"
         </summary>
 
         <div className="mt-4 space-y-4">
-          <div className="space-y-2">
+          <p className="text-sm text-txt-secondary">
+            <Trans
+              i18nKey="deviceEnrollment.token.releaseListHint"
+              components={{
+                link: (
+                  <a
+                    href={AGENT_RELEASES_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-txt-primary underline hover:no-underline"
+                  />
+                ),
+              }}
+            />
+          </p>
+
+          <div className="space-y-3">
             <h3 className="text-sm font-medium">
               {t("deviceEnrollment.token.installUnix")}
             </h3>
-            <CopyableCodeBlock code={unixCommand} />
+            <CopyableCodeBlock code={unixDownloadCommand} />
+            <CopyableCodeBlock code={unixInstallCommand} />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <h3 className="text-sm font-medium">
               {t("deviceEnrollment.token.installWindows")}
             </h3>
-            <CopyableCodeBlock code={windowsCommand} />
+            <CopyableCodeBlock code={windowsDownloadCommand} />
+            <CopyableCodeBlock code={windowsInstallCommand} />
           </div>
 
           <p className="text-xs text-txt-secondary">
