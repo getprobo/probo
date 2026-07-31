@@ -21,14 +21,53 @@
 package certmanager
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
+	"go.opentelemetry.io/otel/trace/noop"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/dnsclient"
 )
+
+// stubDNSChecker records the checks it was asked to run and returns canned
+// errors for them.
+type stubDNSChecker struct {
+	cnameErr error
+	caaErr   error
+
+	cnameChecked bool
+	caaChecked   bool
+}
+
+func (c *stubDNSChecker) CheckCNAME(ctx context.Context, hostname, expectedTarget string) error {
+	c.cnameChecked = true
+
+	return c.cnameErr
+}
+
+func (c *stubDNSChecker) CheckCAA(ctx context.Context, hostname, permittedIssuer string) error {
+	c.caaChecked = true
+
+	return c.caaErr
+}
+
+func newBeginChallengeHandler(dnsClient dnsChecker, skipCNAMECheck bool) *beginChallengeHandler {
+	return &beginChallengeHandler{
+		provisionCore: provisionCore{
+			logger: log.NewLogger(log.WithName("test")),
+			tracer: noop.NewTracerProvider().Tracer("test"),
+		},
+		cnameTarget:     "custom.getprobo.com",
+		caaIssuerDomain: "letsencrypt.org",
+		dnsClient:       dnsClient,
+		skipCNAMECheck:  skipCNAMECheck,
+	}
+}
 
 func TestClassifyProvisioningError(t *testing.T) {
 	t.Parallel()
@@ -166,4 +205,58 @@ func TestDecideProvisioningOutcome_RateLimitWithoutOrderStaysPending(t *testing.
 	require.Equal(t, coredata.CertificateStatusPending, outcome.status)
 	assert.Equal(t, 1, outcome.retryCount)
 	assert.False(t, outcome.clearACMEState)
+}
+
+func TestCheckDNSConfiguration_CNAMEMismatchBlocksByDefault(t *testing.T) {
+	t.Parallel()
+
+	cnameErr := errors.New("no cname records found for domain \"trust.example.com\"")
+	dnsClient := &stubDNSChecker{cnameErr: cnameErr}
+
+	err := newBeginChallengeHandler(dnsClient, false).
+		checkDNSConfiguration(context.Background(), "trust.example.com")
+
+	require.ErrorIs(t, err, cnameErr)
+	assert.False(t, dnsClient.caaChecked)
+}
+
+func TestCheckDNSConfiguration_CNAMEMismatchIsAHintWhenSkipped(t *testing.T) {
+	t.Parallel()
+
+	// A hostname behind a proxying CDN never exposes its origin CNAME in public
+	// DNS, so the pre-check cannot pass even though HTTP-01 would.
+	dnsClient := &stubDNSChecker{cnameErr: errors.New("no cname records found for domain \"trust.example.com\"")}
+
+	err := newBeginChallengeHandler(dnsClient, true).
+		checkDNSConfiguration(context.Background(), "trust.example.com")
+
+	require.NoError(t, err)
+	assert.True(t, dnsClient.caaChecked)
+}
+
+func TestCheckDNSConfiguration_CAAStillBlocksWhenCNAMECheckIsSkipped(t *testing.T) {
+	t.Parallel()
+
+	dnsClient := &stubDNSChecker{
+		cnameErr: errors.New("no cname records found for domain \"trust.example.com\""),
+		caaErr:   dnsclient.ErrCAADenied,
+	}
+
+	err := newBeginChallengeHandler(dnsClient, true).
+		checkDNSConfiguration(context.Background(), "trust.example.com")
+
+	require.ErrorIs(t, err, ErrCAANotPermitted)
+}
+
+func TestCheckDNSConfiguration_RunsBothChecks(t *testing.T) {
+	t.Parallel()
+
+	dnsClient := &stubDNSChecker{}
+
+	err := newBeginChallengeHandler(dnsClient, false).
+		checkDNSConfiguration(context.Background(), "trust.example.com")
+
+	require.NoError(t, err)
+	assert.True(t, dnsClient.cnameChecked)
+	assert.True(t, dnsClient.caaChecked)
 }

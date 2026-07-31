@@ -279,6 +279,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
 	assert.Equal(t, 30, cfg.Probod.CustomDomains.ProvisionInterval)
 	assert.Equal(t, "custom.getprobo.com", cfg.Probod.CustomDomains.CnameTarget)
+	assert.False(t, cfg.Probod.CustomDomains.SkipCNAMECheck)
 	assert.Empty(t, cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Empty(t, cfg.Probod.CustomDomains.ACME.Directory)
 	assert.Empty(t, cfg.Probod.CustomDomains.ACME.Email)
@@ -421,6 +422,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
 	// Custom domains
 	env["PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
+	env["PROBOD_CUSTOM_DOMAINS_SKIP_CNAME_CHECK"] = "true"
 	env["PROBOD_ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
 	// SCIM bridge
 	env["PROBOD_SCIM_BRIDGE_SYNC_INTERVAL"] = "1800"
@@ -563,6 +565,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 2, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
+	assert.True(t, cfg.Probod.CustomDomains.SkipCNAMECheck)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
 	// SCIM bridge
 	assert.Equal(t, 1800, cfg.Probod.SCIMBridge.SyncInterval)

@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- `PROBOD_CUSTOM_DOMAINS_SKIP_CNAME_CHECK` turns the custom-domain CNAME pre-check into a warning instead of a hard block, so a domain proxied through a CDN can be provisioned: such a hostname resolves to the CDN edge and never exposes its origin CNAME in public DNS. The ACME HTTP-01 challenge still proves control of the hostname
+
 ## [0.242.0] - 2026-07-30
 
 ### Added

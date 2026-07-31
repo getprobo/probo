@@ -291,6 +291,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				CnameTarget:       b.resolver.getEnvOrDefault("PROBOD_CUSTOM_DOMAINS_CNAME_TARGET", "custom.getprobo.com"),
 				ResolverAddr:      b.resolver.getEnv("PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR"),
 				CAAIssuerDomain:   b.resolver.getEnvOrDefault("PROBOD_CUSTOM_DOMAINS_CAA_ISSUER_DOMAIN", "letsencrypt.org"),
+				SkipCNAMECheck:    b.resolver.getEnvBoolOrDefault("PROBOD_CUSTOM_DOMAINS_SKIP_CNAME_CHECK", false),
 				ACME: probodconfig.ACMEConfig{
 					Directory:  b.resolver.getEnv("PROBOD_ACME_DIRECTORY"),
 					Email:      b.resolver.getEnv("PROBOD_ACME_EMAIL"),

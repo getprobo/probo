@@ -4,6 +4,10 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `probo.customDomains.skipCnameCheck` Helm value (default: `false`) to downgrade the custom-domain CNAME pre-check to a warning, for hostnames proxied through a CDN whose edge hides the origin CNAME from public DNS
+
 ## [0.13.0] - 2026-07-29
 
 ### Added
