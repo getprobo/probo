@@ -932,6 +932,10 @@
       "title": "Page introuvable",
       "description": "La page que vous recherchez n’existe pas."
     },
+    "forbidden": {
+      "title": "Vous n’avez pas accès à cette page",
+      "description": "Votre rôle ne vous permet pas de consulter cette page. Contactez un administrateur de l’organisation si vous avez besoin d’un accès."
+    },
     "unexpected": {
       "title": "Un problème est survenu",
       "description": "Nous avons rencontré une erreur inattendue. Retournez à l’accueil pour continuer."
