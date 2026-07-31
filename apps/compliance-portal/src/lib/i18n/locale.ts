@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import {
+  matchNavigatorLanguage,
   resolveLanguage,
   type SupportedLanguage,
 } from "./resolveLanguage";
@@ -96,6 +97,13 @@ export function urlLocaleToLanguage(locale: UrlLocale): SupportedLanguage {
 
 export function resolveUrlLocale(): UrlLocale {
   return languageToUrlLocale(resolveLanguage());
+}
+
+// Navigator match with no en fallback — null when the browser languages do
+// not include any supported prefix.
+export function matchNavigatorUrlLocale(): UrlLocale | null {
+  const language = matchNavigatorLanguage();
+  return language != null ? languageToUrlLocale(language) : null;
 }
 
 export function parseUrlLocale(value: string | undefined | null): UrlLocale | null {

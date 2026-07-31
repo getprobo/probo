@@ -29,6 +29,7 @@ import { Banner } from "#/components/Banner/Banner";
 import { DEFAULT_NAMESPACE } from "#/lib/i18n/backend";
 import {
   isUrlLocale,
+  matchNavigatorUrlLocale,
   URL_LOCALE_LABELS,
   urlLocaleToLanguage,
 } from "#/lib/i18n/locale";
@@ -45,11 +46,12 @@ const localeMismatchBannerFragment = graphql`
 `;
 
 interface LocaleMismatchBannerProps {
-  identityKey: LocaleMismatchBanner_identity$key;
+  identityKey: LocaleMismatchBanner_identity$key | null;
 }
 
-// Full-bleed notice when the URL locale differs from the signed-in identity
-// preference. Dismissed state is React-only (no localStorage/cookies).
+// Full-bleed notice when the URL locale differs from the preferred locale
+// (signed-in Identity.locale, or a matched navigator language for visitors).
+// Dismissed state is React-only (no localStorage/cookies).
 export function LocaleMismatchBanner({ identityKey }: LocaleMismatchBannerProps) {
   const { t, i18n } = useTranslation();
   const identity = useFragment(localeMismatchBannerFragment, identityKey);
@@ -57,46 +59,51 @@ export function LocaleMismatchBanner({ identityKey }: LocaleMismatchBannerProps)
   const [changeLocale, isChanging] = useChangeLocale();
   const [updateLocale, isUpdating] = useUpdateLocale();
   const [dismissed, setDismissed] = useState(false);
-  // Bumps after the identity-locale catalog loads so the switch button can
+  // Bumps after the preferred-locale catalog loads so the switch button can
   // re-render in that language (it may not be the active i18n language).
-  const [, setSavedCatalogTick] = useState(0);
+  const [, setPreferredCatalogTick] = useState(0);
 
-  const savedLocale = isUrlLocale(identity.locale) ? identity.locale : null;
-  const savedLanguage = savedLocale != null ? urlLocaleToLanguage(savedLocale) : null;
-  const mismatched = savedLocale != null && savedLocale !== urlLocale;
+  const preferredLocale = identity != null
+    ? (isUrlLocale(identity.locale) ? identity.locale : null)
+    : matchNavigatorUrlLocale();
+  const preferredLanguage = preferredLocale != null
+    ? urlLocaleToLanguage(preferredLocale)
+    : null;
+  const mismatched = preferredLocale != null && preferredLocale !== urlLocale;
   // Lag the mismatch flag so a transient desync during startTransition locale
   // switches never paints the banner; a real mismatch still shows once settled.
   const deferredMismatched = useDeferredValue(mismatched);
   const visible = !dismissed && mismatched && deferredMismatched;
+  const canPersist = identity != null;
 
   useEffect(() => {
-    if (!visible || savedLanguage == null) {
+    if (!visible || preferredLanguage == null) {
       return;
     }
-    if (i18n.hasResourceBundle(savedLanguage, DEFAULT_NAMESPACE)) {
+    if (i18n.hasResourceBundle(preferredLanguage, DEFAULT_NAMESPACE)) {
       return;
     }
     let cancelled = false;
-    void i18n.loadLanguages(savedLanguage).then(() => {
+    void i18n.loadLanguages(preferredLanguage).then(() => {
       if (!cancelled) {
-        setSavedCatalogTick(tick => tick + 1);
+        setPreferredCatalogTick(tick => tick + 1);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [visible, savedLanguage, i18n]);
+  }, [visible, preferredLanguage, i18n]);
 
-  if (!visible || savedLocale == null || savedLanguage == null) {
+  if (!visible || preferredLocale == null || preferredLanguage == null) {
     return null;
   }
 
   const urlLabel = URL_LOCALE_LABELS[urlLocale];
-  const savedLabel = URL_LOCALE_LABELS[savedLocale];
+  const preferredLabel = URL_LOCALE_LABELS[preferredLocale];
   const busy = isChanging || isUpdating;
 
-  const switchToSaved = () => {
-    void changeLocale(savedLocale, { persist: false });
+  const switchToPreferred = () => {
+    void changeLocale(preferredLocale, { persist: false });
   };
 
   const adoptUrlLocale = () => {
@@ -116,28 +123,32 @@ export function LocaleMismatchBanner({ identityKey }: LocaleMismatchBannerProps)
       )}
       actions={(
         <>
-          <Button
-            size={1}
-            variant="ghost"
-            color="sky"
-            disabled={busy}
-            onClick={adoptUrlLocale}
-          >
-            {t("locale.mismatch.useThis", { language: urlLabel })}
-          </Button>
+          {canPersist
+            ? (
+                <Button
+                  size={1}
+                  variant="ghost"
+                  color="sky"
+                  disabled={busy}
+                  onClick={adoptUrlLocale}
+                >
+                  {t("locale.mismatch.useThis", { language: urlLabel })}
+                </Button>
+              )
+            : null}
           <Button
             size={1}
             variant="solid"
             color="neutral"
             highContrast
             disabled={busy}
-            onClick={switchToSaved}
+            onClick={switchToPreferred}
           >
             {t("locale.mismatch.switchToMine", {
-              language: savedLabel,
-              // Label this action in the user's saved locale so it reads as
+              language: preferredLabel,
+              // Label this action in the user's preferred locale so it reads as
               // "switch back to my language", not the page they're visiting.
-              lng: savedLanguage,
+              lng: preferredLanguage,
             })}
           </Button>
         </>

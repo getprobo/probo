@@ -56,10 +56,9 @@ const PREFIX_TO_LANGUAGE: Record<string, SupportedLanguage> = {
 
 // Collapse the browser's preferred languages to one of our supported locales
 // by matching the two-letter language prefix (e.g. any "fr*" tag maps to
-// fr-FR). en-US is the ultimate fallback when nothing matches. Resolving to a
-// canonical supported tag here means i18next is never asked to load an
-// unsupported locale; fallbackLng only has to cover individual missing keys.
-export function resolveLanguage(): SupportedLanguage {
+// fr-FR). Returns null when nothing matches — callers that need a guaranteed
+// locale should use resolveLanguage() instead.
+export function matchNavigatorLanguage(): SupportedLanguage | null {
   const candidates = navigator.languages?.length
     ? navigator.languages
     : [navigator.language];
@@ -72,5 +71,12 @@ export function resolveLanguage(): SupportedLanguage {
     }
   }
 
-  return "en-US";
+  return null;
+}
+
+// Like matchNavigatorLanguage, but falls back to en-US when nothing matches.
+// Resolving to a canonical supported tag here means i18next is never asked to
+// load an unsupported locale; fallbackLng only has to cover missing keys.
+export function resolveLanguage(): SupportedLanguage {
+  return matchNavigatorLanguage() ?? "en-US";
 }

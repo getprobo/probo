@@ -75,9 +75,7 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
         }
       >
         <TopBar queryKey={data} />
-        {data.viewer != null
-          ? <LocaleMismatchBanner identityKey={data.viewer} />
-          : null}
+        <LocaleMismatchBanner identityKey={data.viewer ?? null} />
         {data.viewer != null && data.currentCompliancePortal != null
           ? <UnsignedNDABanner compliancePortalKey={data.currentCompliancePortal} />
           : null}
