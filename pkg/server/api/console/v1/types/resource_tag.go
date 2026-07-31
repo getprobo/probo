@@ -29,9 +29,20 @@ import (
 type (
 	ResourceTagOrderBy OrderBy[coredata.ResourceTagOrderField]
 
+	ResourceTagAssignmentOrderBy OrderBy[coredata.ResourceTagAssignmentOrderField]
+
 	ResourceTagConnection struct {
 		TotalCount int
 		Edges      []*ResourceTagEdge
+		PageInfo   PageInfo
+
+		Resolver any
+		ParentID gid.GID
+	}
+
+	ResourceTagAssignmentConnection struct {
+		TotalCount int
+		Edges      []*ResourceTagAssignmentEdge
 		PageInfo   PageInfo
 
 		Resolver any
@@ -77,5 +88,43 @@ func NewResourceTag(tag *coredata.ResourceTag) *ResourceTag {
 		Color:     tag.Color,
 		CreatedAt: tag.CreatedAt,
 		UpdatedAt: tag.UpdatedAt,
+	}
+}
+
+func NewResourceTagAssignmentConnection(
+	p *page.Page[*coredata.ResourceTagAssignment, coredata.ResourceTagAssignmentOrderField],
+	parentType any,
+	parentID gid.GID,
+) *ResourceTagAssignmentConnection {
+	var edges = make([]*ResourceTagAssignmentEdge, len(p.Data))
+
+	for i := range edges {
+		edges[i] = NewResourceTagAssignmentEdge(p.Data[i], p.Cursor.OrderBy.Field)
+	}
+
+	return &ResourceTagAssignmentConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+
+		Resolver: parentType,
+		ParentID: parentID,
+	}
+}
+
+func NewResourceTagAssignmentEdge(
+	assignment *coredata.ResourceTagAssignment,
+	orderBy coredata.ResourceTagAssignmentOrderField,
+) *ResourceTagAssignmentEdge {
+	return &ResourceTagAssignmentEdge{
+		Cursor: assignment.CursorKey(orderBy),
+		Node:   NewResourceTagAssignment(assignment),
+	}
+}
+
+func NewResourceTagAssignment(assignment *coredata.ResourceTagAssignment) *ResourceTagAssignment {
+	return &ResourceTagAssignment{
+		ID:         assignment.ID,
+		ResourceID: assignment.ResourceID,
+		CreatedAt:  assignment.CreatedAt,
 	}
 }

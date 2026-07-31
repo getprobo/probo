@@ -31,10 +31,12 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	ResourceTagAssignment struct {
+		ID         gid.GID   `db:"id"`
 		ResourceID gid.GID   `db:"resource_id"`
 		TagID      gid.GID   `db:"tag_id"`
 		CreatedAt  time.Time `db:"created_at"`
@@ -42,6 +44,15 @@ type (
 
 	ResourceTagAssignments []*ResourceTagAssignment
 )
+
+func (a ResourceTagAssignment) CursorKey(orderBy ResourceTagAssignmentOrderField) page.CursorKey {
+	switch orderBy {
+	case ResourceTagAssignmentOrderFieldCreatedAt:
+		return page.NewCursorKey(a.ID, a.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
 
 func (a *ResourceTagAssignment) Insert(
 	ctx context.Context,
@@ -51,12 +62,14 @@ func (a *ResourceTagAssignment) Insert(
 	q := `
 INSERT INTO resource_tag_assignments (
 	tenant_id,
+	id,
 	resource_id,
 	tag_id,
 	created_at
 )
 VALUES (
 	@tenant_id,
+	@id,
 	@resource_id,
 	@tag_id,
 	@created_at
@@ -65,6 +78,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":   scope.GetTenantID(),
+		"id":          a.ID,
 		"resource_id": a.ResourceID,
 		"tag_id":      a.TagID,
 		"created_at":  a.CreatedAt,
@@ -73,7 +87,7 @@ VALUES (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "resource_tag_assignments_pkey" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "resource_tag_assignments_resource_id_tag_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -113,6 +127,79 @@ WHERE
 	return nil
 }
 
+func (as *ResourceTagAssignments) LoadByTagID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	tagID gid.GID,
+	cursor *page.Cursor[ResourceTagAssignmentOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	resource_id,
+	tag_id,
+	created_at
+FROM
+	resource_tag_assignments
+WHERE
+	%s
+	AND tag_id = @tag_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"tag_id": tagID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query resource tag assignments: %w", err)
+	}
+
+	assignments, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ResourceTagAssignment])
+	if err != nil {
+		return fmt.Errorf("cannot collect resource tag assignments: %w", err)
+	}
+
+	*as = assignments
+
+	return nil
+}
+
+func (as *ResourceTagAssignments) CountByTagID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	tagID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(*)
+FROM
+	resource_tag_assignments
+WHERE
+	%s
+	AND tag_id = @tag_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"tag_id": tagID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count resource tag assignments: %w", err)
+	}
+
+	return count, nil
+}
+
 func (as *ResourceTagAssignments) LoadByResourceIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -127,6 +214,7 @@ func (as *ResourceTagAssignments) LoadByResourceIDs(
 
 	q := `
 SELECT
+	id,
 	resource_id,
 	tag_id,
 	created_at
@@ -206,55 +294,6 @@ HAVING
 	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
 	if err != nil {
 		return nil, fmt.Errorf("cannot collect filtered resource ids: %w", err)
-	}
-
-	return ids, nil
-}
-
-// LoadResourceIDsByTagID returns resource IDs assigned the given tag, capped by
-// limit. Prefer entity-list filters that use FilterResourceIDs once callers
-// adopt tags on specific resources.
-func (as *ResourceTagAssignments) LoadResourceIDsByTagID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	tagID gid.GID,
-	limit int,
-) ([]gid.GID, error) {
-	if limit <= 0 {
-		return nil, nil
-	}
-
-	q := `
-SELECT
-	resource_id
-FROM
-	resource_tag_assignments
-WHERE
-	%s
-	AND tag_id = @tag_id
-ORDER BY
-	created_at ASC,
-	resource_id ASC
-LIMIT @limit
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"tag_id": tagID,
-		"limit":  limit,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query resource ids by tag: %w", err)
-	}
-
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect resource ids by tag: %w", err)
 	}
 
 	return ids, nil

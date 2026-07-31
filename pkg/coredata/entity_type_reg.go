@@ -173,6 +173,7 @@ const (
 	CookieBannerScanEntityType                       uint16 = 141
 	EmployeePortalDocumentEntityType                 uint16 = 142
 	ResourceTagEntityType                            uint16 = 143
+	ResourceTagAssignmentEntityType                  uint16 = 144
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -439,6 +440,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &EmployeePortalDocument{ID: id}, true
 	case ResourceTagEntityType:
 		return &ResourceTag{ID: id}, true
+	case ResourceTagAssignmentEntityType:
+		return &ResourceTagAssignment{ID: id}, true
 	default:
 		return nil, false
 	}
