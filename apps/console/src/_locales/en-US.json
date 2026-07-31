@@ -730,44 +730,6 @@
   },
   "graphQLCell": { "searchPlaceholder": "Search" },
   "sortableDataTable": { "actions": { "showMore": "Show more" } },
-  "linkedStatementsOfApplicabilityCard": {
-    "title": "Statements of Applicability",
-    "columns": {
-      "name": "Name",
-      "applicability": "Applicability",
-      "justification": "Justification"
-    },
-    "empty": "No statements of applicability linked",
-    "applicable": "Applicable",
-    "notApplicable": "Not Applicable",
-    "actions": {
-      "link": "Link statement of applicability",
-      "unlink": "Unlink",
-      "showMore": "Show {{count}} more"
-    }
-  },
-  "linkedStatementsOfApplicabilityDialog": {
-    "title": "Link Statement of Applicability",
-    "empty": {
-      "title": "No statements of applicability available",
-      "description": "Create a statement of applicability first to link it to this control"
-    },
-    "select": "Select a statement of applicability:",
-    "linked": "Linked",
-    "selected": "Selected:",
-    "applicable": "Applicable",
-    "justification": {
-      "label": "Justification (optional)",
-      "placeholder": "Add a justification..."
-    },
-    "actions": {
-      "back": "Back",
-      "change": "Change",
-      "close": "Close",
-      "link": "Link",
-      "unlink": "Unlink"
-    }
-  },
   "taskFormDialog": {
     "breadcrumb": { "tasks": "Tasks", "edit": "Edit Task", "new": "New Task" },
     "properties": "Properties",
@@ -2248,15 +2210,6 @@
     "messages": { "updated": "Statement updated successfully." },
     "errors": { "update": "Failed to update statement" },
     "actions": { "save": "Save" }
-  },
-  "linkControlDialog": {
-    "breadcrumb": { "statementsOfApplicability": "Statements of Applicability", "addControls": "Add Controls" },
-    "applicability": { "notLinked": "Not Linked", "applicable": "Applicable", "notApplicable": "Not Applicable" },
-    "placeholders": { "justification": "Reason for non-applicability", "search": "Search controls..." },
-    "messages": { "updated": "Control updated successfully.", "removed": "Control removed successfully." },
-    "errors": { "update": "Failed to update control", "remove": "Failed to remove control" },
-    "empty": "No controls found",
-    "actions": { "save": "Save", "expand": "Expand", "collapse": "Collapse", "close": "Close" }
   },
   "publishStatementOfApplicabilityDialog": {
     "title": "Publish Statement of Applicability",

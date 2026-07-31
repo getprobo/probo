@@ -1286,44 +1286,6 @@
       "showMore": "Afficher plus"
     }
   },
-  "linkedStatementsOfApplicabilityCard": {
-    "title": "Déclarations d’applicabilité",
-    "columns": {
-      "name": "Nom",
-      "applicability": "Applicabilité",
-      "justification": "Justification"
-    },
-    "empty": "Aucune déclaration d’applicabilité associée",
-    "applicable": "Applicable",
-    "notApplicable": "Non applicable",
-    "actions": {
-      "link": "Associer une déclaration d’applicabilité",
-      "unlink": "Dissocier",
-      "showMore": "Afficher {{count}} de plus"
-    }
-  },
-  "linkedStatementsOfApplicabilityDialog": {
-    "title": "Associer une déclaration d’applicabilité",
-    "empty": {
-      "title": "Aucune déclaration d’applicabilité disponible",
-      "description": "Créez d’abord une déclaration d’applicabilité pour l’associer à ce contrôle"
-    },
-    "select": "Sélectionnez une déclaration d’applicabilité :",
-    "linked": "Associée",
-    "selected": "Sélectionnée :",
-    "applicable": "Applicable",
-    "justification": {
-      "label": "Justification (facultatif)",
-      "placeholder": "Ajouter une justification..."
-    },
-    "actions": {
-      "back": "Retour",
-      "change": "Modifier",
-      "close": "Fermer",
-      "link": "Associer",
-      "unlink": "Dissocier"
-    }
-  },
   "taskFormDialog": {
     "breadcrumb": {
       "tasks": "Tâches",
@@ -5198,36 +5160,6 @@
     },
     "actions": {
       "save": "Enregistrer"
-    }
-  },
-  "linkControlDialog": {
-    "breadcrumb": {
-      "statementsOfApplicability": "Déclarations d’applicabilité",
-      "addControls": "Ajouter des contrôles"
-    },
-    "applicability": {
-      "notLinked": "Non associé",
-      "applicable": "Applicable",
-      "notApplicable": "Non applicable"
-    },
-    "placeholders": {
-      "justification": "Motif de non-applicabilité",
-      "search": "Rechercher des contrôles..."
-    },
-    "messages": {
-      "updated": "Contrôle mis à jour avec succès.",
-      "removed": "Contrôle retiré avec succès."
-    },
-    "errors": {
-      "update": "Échec de la mise à jour du contrôle",
-      "remove": "Échec du retrait du contrôle"
-    },
-    "empty": "Aucun contrôle trouvé",
-    "actions": {
-      "save": "Enregistrer",
-      "expand": "Développer",
-      "collapse": "Réduire",
-      "close": "Fermer"
     }
   },
   "publishStatementOfApplicabilityDialog": {
