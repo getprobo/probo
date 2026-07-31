@@ -101,12 +101,22 @@ export class ProboSettingsLink extends HTMLElement {
 
       const label = document.createElement("span");
       label.textContent = CCPA_PRIVACY_CHOICES_LABEL;
+      this.styleInheritedText(label);
       this.append(label);
 
       const icon = document.createElement("span");
       icon.style.display = "inline-flex";
       icon.style.flexShrink = "0";
+      icon.style.height = "1em";
+      icon.style.width = "auto";
       icon.innerHTML = CCPA_OPT_OUT_ICON;
+      const svg = icon.querySelector("svg");
+      if (svg) {
+        svg.style.height = "100%";
+        svg.style.width = "auto";
+        svg.removeAttribute("width");
+        svg.removeAttribute("height");
+      }
       this.append(icon);
       return;
     }
@@ -120,8 +130,16 @@ export class ProboSettingsLink extends HTMLElement {
       root.bannerConfig.texts?.aria_cookie_settings ?? "Cookie settings";
     const label = document.createElement("span");
     label.textContent = text;
+    this.styleInheritedText(label);
     this.append(label);
     this.setAttribute("aria-label", text);
+  }
+
+  /** Auto-filled text inherits typography/color from the host. */
+  private styleInheritedText(el: HTMLElement): void {
+    el.style.color = "inherit";
+    el.style.font = "inherit";
+    el.style.lineHeight = "inherit";
   }
 
   private hasConsumerChildren(): boolean {

@@ -96,9 +96,18 @@ registerComponents();
 
 If `<probo-settings-link>` is missing, the SDK emits a `probo-validation` warning (same soft checks used for other headless composition requirements).
 
-Put your default label as children — it is shown for non-CCPA visitors. Under CCPA the SDK always replaces the content with the statutory “Your Privacy Choices” label and official opt-out icon:
+Put your default label as children — it is shown for non-CCPA visitors. Under CCPA the SDK always replaces the content with the statutory “Your Privacy Choices” label and official opt-out icon.
+
+Style the **host** for font size and color (not inner children). Host styles still apply after CCPA replace; the icon keeps its statutory blue/white fills and scales with `1em`:
 
 ```html
+<style>
+  probo-settings-link {
+    font-size: 14px;
+    color: #334155;
+    text-decoration: underline;
+  }
+</style>
 <probo-settings-link>Cookie settings</probo-settings-link>
 ```
 

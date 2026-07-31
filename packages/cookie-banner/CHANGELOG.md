@@ -13,6 +13,7 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 - Under CCPA, the banner starts closed by default (cookies already follow the opt-out model until the visitor opts out)
 - Default `reopen-widget` is now `custom` instead of `floating`
+- Auto-filled settings-link text inherits font and color from the host; the CCPA icon scales with `1em`
 
 ### Removed
 
