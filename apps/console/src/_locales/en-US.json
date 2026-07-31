@@ -399,6 +399,10 @@
       "title": "Page not found",
       "description": "The page you are looking for does not exist."
     },
+    "forbidden": {
+      "title": "You do not have access to this page",
+      "description": "Your role does not allow you to view this page. Ask an organization admin if you need access."
+    },
     "unexpected": {
       "title": "Something went wrong",
       "description": "We hit an unexpected error. Head back home to continue."
