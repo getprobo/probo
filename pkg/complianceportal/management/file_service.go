@@ -41,7 +41,7 @@ import (
 
 type (
 	CreateFileRequest struct {
-		OrganizationID             gid.GID
+		CompliancePortalID         gid.GID
 		Name                       string
 		Category                   string
 		File                       File
@@ -59,7 +59,7 @@ type (
 func (ctcfr *CreateFileRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(ctcfr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ctcfr.CompliancePortalID, "compliance_portal_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(ctcfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctcfr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 	v.Check(ctcfr.File, "file", validator.Required())
@@ -79,10 +79,10 @@ func (utcfr *UpdateFileRequest) Validate() error {
 	return v.Error()
 }
 
-func (s *Service) ListFilesForOrganizationID(
+func (s *Service) ListFilesForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.CompliancePortalFileOrderField],
 	filter *coredata.CompliancePortalFileFilter,
 ) (*page.Page[*coredata.CompliancePortalFile, coredata.CompliancePortalFileOrderField], error) {
@@ -91,12 +91,13 @@ func (s *Service) ListFilesForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := files.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+			if err := files.LoadByCompliancePortalID(ctx, conn, scope, compliancePortalID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load compliance page files: %w", err)
 			}
 
 			return nil
-		})
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +105,10 @@ func (s *Service) ListFilesForOrganizationID(
 	return page.NewPage(files, cursor), nil
 }
 
-func (s *Service) CountFilesForOrganizationID(
+func (s *Service) CountFilesForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -116,13 +117,14 @@ func (s *Service) CountFilesForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 
-			count, err = (&coredata.CompliancePortalFiles{}).CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = (&coredata.CompliancePortalFiles{}).CountByCompliancePortalID(ctx, conn, scope, compliancePortalID)
 			if err != nil {
 				return fmt.Errorf("cannot count compliance page files: %w", err)
 			}
 
 			return nil
-		})
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -189,7 +191,12 @@ func (s *Service) CreateFile(
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			fileID, objectKey, err := s.uploadFile(ctx, scope, tx, req.File, compliancePortalFileID, req.OrganizationID, now)
+			portal := &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, tx, scope, req.CompliancePortalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
+			}
+
+			fileID, objectKey, err := s.uploadFile(ctx, scope, tx, req.File, compliancePortalFileID, portal.OrganizationID, now)
 			if err != nil {
 				return fmt.Errorf("cannot upload file: %w", err)
 			}
@@ -198,7 +205,8 @@ func (s *Service) CreateFile(
 
 			file = &coredata.CompliancePortalFile{
 				ID:                         compliancePortalFileID,
-				OrganizationID:             req.OrganizationID,
+				OrganizationID:             portal.OrganizationID,
+				CompliancePortalID:         req.CompliancePortalID,
 				Name:                       req.Name,
 				Category:                   req.Category,
 				FileID:                     fileID,

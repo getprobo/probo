@@ -75,9 +75,9 @@ func BuildTrackerPolicyDocument(data docgen.TrackerPolicyData) (string, error) {
 
 // PublishTrackerPolicy generates (or regenerates) the cookie and tracking
 // technologies policy document for a banner from its latest published version
-// snapshot. The document is stored as a GENERATED document that is PRIVATE in
-// the compliance portal by default, and is linked to the banner through
-// cookie_banners.policy_document_id.
+// snapshot. The document is stored as a GENERATED document and is linked to the
+// banner through cookie_banners.policy_document_id. Portal publication is
+// configured separately via compliance portal catalog mutations.
 func (s *GeneratedDocumentService) PublishTrackerPolicy(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -164,13 +164,12 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
-					ID:                         documentID,
-					OrganizationID:             organizationID,
-					WriteMode:                  coredata.DocumentWriteModeGenerated,
-					CompliancePortalVisibility: coredata.CompliancePortalVisibilityPrivate,
-					Status:                     coredata.DocumentStatusActive,
-					CreatedAt:                  now,
-					UpdatedAt:                  now,
+					ID:             documentID,
+					OrganizationID: organizationID,
+					WriteMode:      coredata.DocumentWriteModeGenerated,
+					Status:         coredata.DocumentStatusActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				if err := document.Insert(ctx, tx, scope); err != nil {

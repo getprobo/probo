@@ -339,7 +339,7 @@ func (s *Service) GetPortalFileAccess(
 func (s *Service) GrantPortalAccessByIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	email mail.Addr,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
@@ -349,8 +349,8 @@ func (s *Service) GrantPortalAccessByIDs(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := loadPortalByID(ctx, tx, scope, compliancePortalID, compliancePage); err != nil {
+				return err
 			}
 
 			identity := &coredata.Identity{}
@@ -368,13 +368,14 @@ func (s *Service) GrantPortalAccessByIDs(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrUserNotFound
 				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
 			if profile.State != coredata.ProfileStateActive {
 				return ErrUserInactive
 			}
 
-			shouldSendEmail := profile.State != coredata.ProfileStateActive
 			now := time.Now()
 
 			if len(documentIDs) > 0 {
@@ -395,16 +396,8 @@ func (s *Service) GrantPortalAccessByIDs(
 				}
 			}
 
-			if shouldSendEmail {
-				profile.MarkActive(now)
-
-				if err := profile.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot update profile: %w", err)
-				}
-
-				if err := s.sendPortalAccessEmail(ctx, tx, scope, access, profile); err != nil {
-					return fmt.Errorf("cannot send access email: %w", err)
-				}
+			if err := s.sendPortalAccessEmail(ctx, tx, scope, access, profile); err != nil {
+				return fmt.Errorf("cannot send access email: %w", err)
 			}
 
 			return nil
@@ -464,7 +457,7 @@ func (s *Service) sendPortalAccessEmail(
 func (s *Service) RejectOrRevokePortalAccessByIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	email mail.Addr,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
@@ -474,8 +467,8 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := loadPortalByID(ctx, tx, scope, compliancePortalID, compliancePage); err != nil {
+				return err
 			}
 
 			identity := &coredata.Identity{}

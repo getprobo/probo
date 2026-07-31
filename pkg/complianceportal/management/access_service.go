@@ -267,6 +267,18 @@ func (s *Service) UpdateAccess(
 					return fmt.Errorf("cannot load documents: %w", err)
 				}
 
+				if err := validatePortalCatalogAccessTargets(
+					ctx,
+					tx,
+					scope,
+					access.CompliancePortalID,
+					documentIDs,
+					nil,
+					nil,
+				); err != nil {
+					return err
+				}
+
 				if err := tcdas.MergeDocumentAccesses(ctx, tx, scope, access.OrganizationID, access.ID, documentData); err != nil {
 					return fmt.Errorf("cannot merge document accesses: %w", err)
 				}
@@ -290,6 +302,18 @@ func (s *Service) UpdateAccess(
 					return fmt.Errorf("cannot load report files: %w", err)
 				}
 
+				if err := validatePortalCatalogAccessTargets(
+					ctx,
+					tx,
+					scope,
+					access.CompliancePortalID,
+					nil,
+					reportIDs,
+					nil,
+				); err != nil {
+					return err
+				}
+
 				if err := tcdas.MergeReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
 					return fmt.Errorf("cannot merge report accesses: %w", err)
 				}
@@ -311,6 +335,18 @@ func (s *Service) UpdateAccess(
 				compliancePortalFiles := &coredata.CompliancePortalFiles{}
 				if err := compliancePortalFiles.LoadByIDs(ctx, tx, scope, compliancePortalFileIDs); err != nil {
 					return fmt.Errorf("cannot load compliance page files: %w", err)
+				}
+
+				if err := validatePortalCatalogAccessTargets(
+					ctx,
+					tx,
+					scope,
+					access.CompliancePortalID,
+					nil,
+					nil,
+					compliancePortalFileIDs,
+				); err != nil {
+					return err
 				}
 
 				if err := tcdas.MergeCompliancePortalFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, fileData); err != nil {
@@ -370,6 +406,84 @@ func (s *Service) DeleteAccess(
 	)
 
 	return err
+}
+
+func validatePortalCatalogAccessTargets(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	documentIDs []gid.GID,
+	reportFileIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
+) error {
+	for _, documentID := range documentIDs {
+		link := &coredata.CompliancePortalDocument{}
+
+		err := link.LoadByCompliancePortalIDAndDocumentID(
+			ctx,
+			tx,
+			scope,
+			compliancePortalID,
+			documentID,
+		)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return coredata.ErrResourceNotFound
+			}
+
+			return fmt.Errorf("cannot load portal document link: %w", err)
+		}
+	}
+
+	for _, reportFileID := range reportFileIDs {
+		audit := &coredata.Audit{}
+
+		if err := audit.LoadByReportFileID(ctx, tx, scope, reportFileID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return coredata.ErrResourceNotFound
+			}
+
+			return fmt.Errorf("cannot load audit for report file: %w", err)
+		}
+
+		link := &coredata.CompliancePortalAudit{}
+
+		err := link.LoadByCompliancePortalIDAndAuditID(
+			ctx,
+			tx,
+			scope,
+			compliancePortalID,
+			audit.ID,
+		)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return coredata.ErrResourceNotFound
+			}
+
+			return fmt.Errorf("cannot load portal audit link: %w", err)
+		}
+	}
+
+	for _, compliancePortalFileID := range compliancePortalFileIDs {
+		file := &coredata.CompliancePortalFile{}
+
+		if err := file.LoadByCompliancePortalIDAndID(
+			ctx,
+			tx,
+			scope,
+			compliancePortalID,
+			compliancePortalFileID,
+		); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return coredata.ErrResourceNotFound
+			}
+
+			return fmt.Errorf("cannot load compliance portal file: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) sendAccessEmail(

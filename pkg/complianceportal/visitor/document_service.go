@@ -43,10 +43,10 @@ func (e ErrDocumentArchived) Error() string {
 	return "cannot access an archived document"
 }
 
-func (s *Service) ListDocumentsForOrganizationID(
+func (s *Service) ListDocumentsForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.DocumentOrderField],
 	filter *coredata.DocumentFilter,
 ) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
@@ -59,7 +59,12 @@ func (s *Service) ListDocumentsForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := documents.LoadPublishedByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+			compliancePortal := &coredata.CompliancePortal{}
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			if err := documents.LoadPublishedByCompliancePortalID(ctx, conn, scope, compliancePortalID, compliancePortal.OrganizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load published documents: %w", err)
 			}
 
@@ -76,10 +81,11 @@ func (s *Service) ListDocumentsForOrganizationID(
 func (s *Service) ExportDocumentPDF(
 	ctx context.Context,
 	scope coredata.Scoper,
+	compliancePortalID gid.GID,
 	documentID gid.GID,
 	email mail.Addr,
 ) ([]byte, error) {
-	pdfData, err := s.exportDocumentPDFData(ctx, scope, documentID)
+	pdfData, err := s.exportDocumentPDFData(ctx, scope, compliancePortalID, documentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
@@ -95,24 +101,43 @@ func (s *Service) ExportDocumentPDF(
 func (s *Service) ExportDocumentPDFWithoutWatermark(
 	ctx context.Context,
 	scope coredata.Scoper,
+	compliancePortalID gid.GID,
 	documentID gid.GID,
 ) ([]byte, error) {
-	return s.exportDocumentPDFData(ctx, scope, documentID)
+	return s.exportDocumentPDFData(ctx, scope, compliancePortalID, documentID)
 }
 
+// GetDocument loads a document as published on the given compliance portal.
+// The returned document carries the portal-scoped visibility read from the
+// portal/document association: documents not attached to the portal, or
+// attached with a NONE visibility, are reported as not visible.
 func (s *Service) GetDocument(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
+	portalDocument := &coredata.CompliancePortalDocument{}
+	compliancePortal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := document.LoadByID(ctx, conn, scope, documentID)
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := portalDocument.LoadByCompliancePortalIDAndDocumentID(ctx, conn, scope, compliancePortalID, documentID)
 			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrDocumentNotVisible
+				}
+
+				return fmt.Errorf("cannot load compliance page document: %w", err)
+			}
+
+			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -127,13 +152,7 @@ func (s *Service) GetDocument(
 		return nil, err
 	}
 
-	if document.OrganizationID != organizationID {
-		return nil, ErrDocumentNotFound
-	}
-
-	if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
-		return nil, ErrDocumentNotVisible
-	}
+	document.CompliancePortalVisibility = portalDocument.Visibility
 
 	return document, nil
 }
@@ -141,25 +160,37 @@ func (s *Service) GetDocument(
 func (s *Service) exportDocumentPDFData(
 	ctx context.Context,
 	scope coredata.Scoper,
+	compliancePortalID gid.GID,
 	documentID gid.GID,
 ) ([]byte, error) {
 	document := &coredata.Document{}
+	portalDocument := &coredata.CompliancePortalDocument{}
+	compliancePortal := &coredata.CompliancePortal{}
 	version := &coredata.DocumentVersion{}
 	fileRecord := &coredata.File{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := portalDocument.LoadByCompliancePortalIDAndDocumentID(ctx, conn, scope, compliancePortalID, documentID)
+			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrDocumentNotVisible
+				}
+
+				return fmt.Errorf("cannot load compliance page document to export: %w", err)
+			}
+
 			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
 			if document.ArchivedAt != nil {
 				return &ErrDocumentArchived{}
-			}
-
-			if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
-				return fmt.Errorf("document not visible on compliance page")
 			}
 
 			if err := version.LoadLatestPublishedVersion(ctx, conn, scope, documentID); err != nil {

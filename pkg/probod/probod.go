@@ -1022,7 +1022,7 @@ func (impl *Implm) Run(
 
 	wg.Go(
 		func() {
-			if err := esignService.Run(esignServiceCtx, visitorService.GetPortalEmailPresenterConfigByOrganizationID); err != nil {
+			if err := esignService.Run(esignServiceCtx, visitorService.GetEmailPresenterConfigForSignature); err != nil {
 				cancel(fmt.Errorf("esign service crashed: %w", err))
 			}
 		},

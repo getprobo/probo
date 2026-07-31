@@ -30,9 +30,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func (s *Service) ListCommitmentsForGroupID(
+func (s *Service) ListCommitmentsForCompliancePortalGroupID(
 	ctx context.Context,
 	scope coredata.Scoper,
+	compliancePortalID gid.GID,
 	groupID gid.GID,
 	cursor *page.Cursor[coredata.CompliancePortalCommitmentOrderField],
 ) (*page.Page[*coredata.CompliancePortalCommitment, coredata.CompliancePortalCommitmentOrderField], error) {
@@ -41,6 +42,22 @@ func (s *Service) ListCommitmentsForGroupID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			compliancePortal := &coredata.CompliancePortal{}
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			group := &coredata.CompliancePortalCommitmentGroup{}
+			if err := group.LoadByCompliancePortalIDAndID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				groupID,
+			); err != nil {
+				return fmt.Errorf("cannot load compliance portal commitment group: %w", err)
+			}
+
 			err := commitments.LoadByGroupID(ctx, conn, scope, groupID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance portal commitments: %w", err)

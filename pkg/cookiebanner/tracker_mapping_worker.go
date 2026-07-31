@@ -1439,7 +1439,7 @@ func (h *trackerMappingHandler) prepareOrgThirdParty(
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.ThirdPartyOrderField]) ([]*coredata.ThirdParty, error) {
 			var batch coredata.ThirdParties
-			if err := batch.LoadByOrganizationID(ctx, conn, scope, tp.OrganizationID, cursor, coredata.NewThirdPartyFilter(nil, &firstLevel, nil, nil, nil)); err != nil {
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, tp.OrganizationID, cursor, coredata.NewThirdPartyFilter(&firstLevel, nil, nil, nil)); err != nil {
 				return nil, fmt.Errorf("cannot load org third parties: %w", err)
 			}
 

@@ -39,26 +39,24 @@ type AuditService struct {
 
 type (
 	CreateAuditRequest struct {
-		OrganizationID             gid.GID
-		FrameworkID                gid.GID
-		Name                       *string
-		ValidFrom                  *time.Time
-		ValidUntil                 *time.Time
-		AuditStartDate             *time.Time
-		AuditEndDate               *time.Time
-		State                      *coredata.AuditState
-		CompliancePortalVisibility *coredata.CompliancePortalVisibility
+		OrganizationID gid.GID
+		FrameworkID    gid.GID
+		Name           *string
+		ValidFrom      *time.Time
+		ValidUntil     *time.Time
+		AuditStartDate *time.Time
+		AuditEndDate   *time.Time
+		State          *coredata.AuditState
 	}
 
 	UpdateAuditRequest struct {
-		ID                         gid.GID
-		Name                       **string
-		ValidFrom                  *time.Time
-		ValidUntil                 *time.Time
-		AuditStartDate             *time.Time
-		AuditEndDate               *time.Time
-		State                      *coredata.AuditState
-		CompliancePortalVisibility *coredata.CompliancePortalVisibility
+		ID             gid.GID
+		Name           **string
+		ValidFrom      *time.Time
+		ValidUntil     *time.Time
+		AuditStartDate *time.Time
+		AuditEndDate   *time.Time
+		State          *coredata.AuditState
 	}
 
 	UploadAuditReportRequest struct {
@@ -76,7 +74,6 @@ func (car *CreateAuditRequest) Validate() error {
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
 	v.Check(car.AuditEndDate, "audit_end_date", validator.After(car.AuditStartDate))
 	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
-	v.Check(car.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }
@@ -89,7 +86,6 @@ func (uar *UpdateAuditRequest) Validate() error {
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
 	v.Check(uar.AuditEndDate, "audit_end_date", validator.After(uar.AuditStartDate))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
-	v.Check(uar.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }
@@ -170,26 +166,21 @@ func (s *AuditService) Create(
 
 	now := time.Now()
 	audit := &coredata.Audit{
-		ID:                         gid.New(scope.GetTenantID(), coredata.AuditEntityType),
-		Name:                       req.Name,
-		OrganizationID:             req.OrganizationID,
-		FrameworkID:                req.FrameworkID,
-		ValidFrom:                  req.ValidFrom,
-		ValidUntil:                 req.ValidUntil,
-		AuditStartDate:             req.AuditStartDate,
-		AuditEndDate:               req.AuditEndDate,
-		State:                      coredata.AuditStateNotStarted,
-		CompliancePortalVisibility: coredata.CompliancePortalVisibilityNone,
-		CreatedAt:                  now,
-		UpdatedAt:                  now,
+		ID:             gid.New(scope.GetTenantID(), coredata.AuditEntityType),
+		Name:           req.Name,
+		OrganizationID: req.OrganizationID,
+		FrameworkID:    req.FrameworkID,
+		ValidFrom:      req.ValidFrom,
+		ValidUntil:     req.ValidUntil,
+		AuditStartDate: req.AuditStartDate,
+		AuditEndDate:   req.AuditEndDate,
+		State:          coredata.AuditStateNotStarted,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if req.State != nil {
 		audit.State = *req.State
-	}
-
-	if req.CompliancePortalVisibility != nil {
-		audit.CompliancePortalVisibility = *req.CompliancePortalVisibility
 	}
 
 	err := s.svc.pg.WithTx(
@@ -258,10 +249,6 @@ func (s *AuditService) Update(
 
 			if req.State != nil {
 				audit.State = *req.State
-			}
-
-			if req.CompliancePortalVisibility != nil {
-				audit.CompliancePortalVisibility = *req.CompliancePortalVisibility
 			}
 
 			audit.UpdatedAt = time.Now()

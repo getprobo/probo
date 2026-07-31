@@ -101,16 +101,7 @@ func (s *Service) GetPortalByID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := compliancePage.LoadByID(ctx, conn, coredata.NewNoScope(), id)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrPageNotFound
-				}
-
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			return nil
+			return loadPortalByID(ctx, conn, coredata.NewNoScope(), id, compliancePage)
 		},
 	)
 	if err != nil {
@@ -120,10 +111,24 @@ func (s *Service) GetPortalByID(
 	return compliancePage, nil
 }
 
-// GetEffectiveCanonicalHost returns the host a compliance page should be
-// served under. It prefers the primary domain when its certificate is active,
-// and otherwise falls back to the managed probopage subdomain. An empty string
-// is returned when no serving host can be determined.
+func loadPortalByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	id gid.GID,
+	compliancePage *coredata.CompliancePortal,
+) error {
+	if err := compliancePage.LoadByID(ctx, conn, scope, id); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return ErrPageNotFound
+		}
+
+		return fmt.Errorf("cannot load compliance page: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) GetPortalEffectiveCanonicalHost(ctx context.Context, compliancePageID gid.GID) (string, error) {
 	var host string
 
@@ -154,14 +159,6 @@ func (s *Service) GetPortalEffectiveCanonicalHost(ctx context.Context, complianc
 	return host, nil
 }
 
-// GetPortalCanonicalBaseURL rewrites currentBaseURL to the compliance page's
-// canonical host, if one is set. OAuth client_id and redirect_uri values must
-// always be derived from the canonical base URL: the SNI middleware only
-// redirects secondary domains to the canonical host for non-well-known
-// paths, so a client_id fetched from /.well-known/oauth-client-metadata on a
-// secondary domain must already advertise the canonical redirect_uri to stay
-// consistent with what /callback uses at token exchange time. When no
-// canonical host can be determined, currentBaseURL is returned unchanged.
 func (s *Service) GetPortalCanonicalBaseURL(
 	ctx context.Context,
 	compliancePageID gid.GID,
@@ -234,25 +231,29 @@ func (s *Service) IsVerifiedRedirectHost(ctx context.Context, host string) bool 
 	return verified
 }
 
-// GetPortalEmailPresenterConfigByOrganizationID resolves the emails.PresenterConfig for
-// the compliance page that belongs to the given organization. This is used by the
-// esign certificate worker which needs per-org branding at render time.
-func (s *Service) GetPortalEmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
-	var compliancePage coredata.CompliancePortal
-
-	scope := coredata.NewScopeFromObjectID(orgID)
+func (s *Service) GetEmailPresenterConfigForSignature(
+	ctx context.Context,
+	signatureID gid.GID,
+	organizationID gid.GID,
+) (emails.PresenterConfig, error) {
+	access := &coredata.CompliancePortalAccess{}
+	scope := coredata.NewScopeFromObjectID(organizationID)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return compliancePage.LoadByOrganizationID(ctx, conn, scope, orgID)
+			return access.LoadByElectronicSignatureID(ctx, conn, scope, signatureID)
 		},
 	)
 	if err != nil {
-		return emails.PresenterConfig{}, fmt.Errorf("cannot load compliance page for org %s: %w", orgID, err)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return emails.DefaultPresenterConfig(s.baseURL), nil
+		}
+
+		return emails.PresenterConfig{}, fmt.Errorf("cannot load compliance portal access for signature: %w", err)
 	}
 
-	return s.GetPortalEmailPresenterConfig(ctx, scope, compliancePage.ID)
+	return s.GetPortalEmailPresenterConfig(ctx, scope, access.CompliancePortalID)
 }
 
 func (s *Service) GetPortalOrganization(
