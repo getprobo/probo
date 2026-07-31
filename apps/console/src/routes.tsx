@@ -35,7 +35,7 @@ import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
-import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
+import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
@@ -347,7 +347,7 @@ const routes = [
           ...processingActivityRoutes,
           ...statementsOfApplicabilityRoutes,
           ...accessReviewRoutes,
-          ...compliancePageRoutes,
+          ...compliancePortalRoutes,
           ...cookieBannerRoutes,
           {
             path: "*",

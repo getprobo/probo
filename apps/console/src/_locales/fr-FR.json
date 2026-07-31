@@ -1605,7 +1605,7 @@
     },
     "compliancePortalVisibility": {
       "none": "Aucune",
-      "private": "Privé",
+      "restricted": "Restreint",
       "public": "Public"
     },
     "controlMaturityLevel": {
@@ -2398,7 +2398,7 @@
     "statementsOfApplicability": "Déclarations d’applicabilité",
     "rightsRequests": "Demandes d’exercice de droits",
     "accessReviews": "Revues d’accès",
-    "compliancePage": "Page de conformité",
+    "compliancePortals": "Portails de conformité",
     "cookieBanners": "Bannières de cookies",
     "settings": "Paramètres"
   },

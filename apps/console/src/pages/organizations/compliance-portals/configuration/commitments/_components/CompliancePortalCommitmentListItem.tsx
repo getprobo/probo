@@ -1,0 +1,128 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { Badge, Button, IconChevronDown, IconChevronUp, IconPencil, IconTrashCan, Spinner, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+
+import type { CompliancePortalCommitmentListItemDeleteMutation } from "#/__generated__/core/CompliancePortalCommitmentListItemDeleteMutation.graphql";
+import type { CompliancePortalCommitmentListItemFragment$data, CompliancePortalCommitmentListItemFragment$key } from "#/__generated__/core/CompliancePortalCommitmentListItemFragment.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+
+const deleteCommitmentMutation = graphql`
+  mutation CompliancePortalCommitmentListItemDeleteMutation(
+    $input: DeleteCompliancePortalCommitmentInput!
+  ) {
+    deleteCompliancePortalCommitment(input: $input) {
+      deletedCompliancePortalCommitmentId
+    }
+  }
+`;
+
+const fragment = graphql`
+  fragment CompliancePortalCommitmentListItemFragment on CompliancePortalCommitment {
+    id
+    icon
+    eyebrow
+    title
+    description
+    canUpdate: permission(action: "core:compliance-portal-commitment:update")
+    canDelete: permission(action: "core:compliance-portal-commitment:delete")
+  }
+`;
+
+export function CompliancePortalCommitmentListItem(props: {
+  fragmentRef: CompliancePortalCommitmentListItemFragment$key;
+  onEdit: (commitment: CompliancePortalCommitmentListItemFragment$data) => void;
+  onChanged: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+  isReordering: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const { fragmentRef, onEdit, onChanged, isFirst, isLast, isReordering, onMoveUp, onMoveDown } = props;
+
+  const { t } = useTranslation("organizations/compliance-portals");
+  const commitment = useFragment<CompliancePortalCommitmentListItemFragment$key>(fragment, fragmentRef);
+
+  const [deleteCommitment, isDeleting] = useMutationWithToasts<CompliancePortalCommitmentListItemDeleteMutation>(
+    deleteCommitmentMutation,
+    { successMessage: t("commitmentListItem.messages.deleted"), errorMessage: t("commitmentListItem.errors.delete") },
+  );
+
+  const handleDelete = async () => {
+    await deleteCommitment({
+      variables: { input: { id: commitment.id } },
+      onSuccess: onChanged,
+    });
+  };
+
+  const iconLabel = t(`commitmentDialog.icons.${commitment.icon.toLowerCase()}`);
+
+  return (
+    <Tr>
+      <Td>
+        <Badge variant="neutral">{iconLabel}</Badge>
+      </Td>
+      <Td>
+        <div className="flex flex-col">
+          {commitment.eyebrow && (
+            <span className="text-xs text-txt-tertiary">{commitment.eyebrow}</span>
+          )}
+          <span className="font-medium">{commitment.title}</span>
+        </div>
+      </Td>
+      <Td>
+        <span className="text-txt-secondary line-clamp-2">{commitment.description}</span>
+      </Td>
+      <Td noLink width={180} className="text-end">
+        <div className="flex gap-2 justify-end">
+          {commitment.canUpdate && (
+            <>
+              <Button
+                variant="secondary"
+                icon={IconChevronUp}
+                disabled={isFirst || isReordering}
+                onClick={onMoveUp}
+              />
+              <Button
+                variant="secondary"
+                icon={IconChevronDown}
+                disabled={isLast || isReordering}
+                onClick={onMoveDown}
+              />
+              <Button variant="secondary" icon={IconPencil} onClick={() => onEdit(commitment)} />
+            </>
+          )}
+          {commitment.canDelete && (
+            <Button
+              variant="danger"
+              icon={isDeleting ? Spinner : IconTrashCan}
+              disabled={isDeleting}
+              onClick={() => void handleDelete()}
+            />
+          )}
+        </div>
+      </Td>
+    </Tr>
+  );
+}
