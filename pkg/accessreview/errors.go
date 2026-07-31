@@ -23,6 +23,7 @@ package accessreview
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -34,6 +35,7 @@ var (
 	ErrCampaignNotPendingActions = errors.New("access review campaign not pending actions")
 	ErrCampaignCompleted         = errors.New("access review campaign completed")
 	ErrCampaignCancelled         = errors.New("access review campaign cancelled")
+	ErrMissingOAuthScopes        = errors.New("missing required OAuth scopes")
 )
 
 type (
@@ -59,6 +61,10 @@ type (
 
 	CampaignCancelledError struct {
 		CampaignID gid.GID
+	}
+
+	MissingOAuthScopesError struct {
+		Scopes []string
 	}
 )
 
@@ -141,4 +147,21 @@ func (e *CampaignCancelledError) Error() string {
 
 func (e *CampaignCancelledError) Is(target error) bool {
 	return target == ErrCampaignCancelled
+}
+
+func NewMissingOAuthScopesError(scopes []string) error {
+	return &MissingOAuthScopesError{Scopes: append([]string(nil), scopes...)}
+}
+
+func (e *MissingOAuthScopesError) Error() string {
+	display := make([]string, len(e.Scopes))
+	for i, scope := range e.Scopes {
+		display[i] = strings.TrimPrefix(scope, "https://graph.microsoft.com/")
+	}
+
+	return "Missing required OAuth scopes: " + strings.Join(display, ", ")
+}
+
+func (e *MissingOAuthScopesError) Is(target error) bool {
+	return target == ErrMissingOAuthScopes
 }

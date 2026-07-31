@@ -47,6 +47,13 @@ import { AccessReviewSourceRow } from "../_components/AccessReviewSourceRow";
 import { createAccessReviewSourceMutation } from "../dialogs/accessReviewSourceMutations";
 import { AddAccessReviewSourceDialog, addAccessReviewSourceDialogConnectorProviderInfoFragment } from "../dialogs/AddAccessReviewSourceDialog";
 
+function clearOAuthCallbackParams(params: URLSearchParams) {
+  params.delete("connector_id");
+  params.delete("provider");
+  params.delete("error");
+  return params;
+}
+
 export const accessReviewSourcesTabQuery = graphql`
   query AccessReviewSourcesTabQuery($organizationId: ID!) {
     accessReviewDrivers {
@@ -145,9 +152,11 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     );
 
   // Handle OAuth callback: after the provider redirects back with connector_id,
-  // automatically create the access source for that connector.
+  // automatically create the access source for that connector. Missing scopes
+  // arrive as a backend error query param and are toasted like other errors.
   const callbackConnectorId = searchParams.get("connector_id");
   const callbackProvider = searchParams.get("provider");
+  const callbackError = searchParams.get("error");
   const hasSourceForCallback = !!callbackConnectorId
     && accessReviewSources?.edges.some(edge => edge.node.connectorId === callbackConnectorId);
 
@@ -155,11 +164,22 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     if (!callbackConnectorId) return;
 
     if (hasSourceForCallback) {
-      setSearchParams((params) => {
-        params.delete("connector_id");
-        params.delete("provider");
-        return params;
-      }, { replace: true });
+      // Create sets processedConnectorIdRef before the mutation; when Relay
+      // inserts the edge mid-callback, skip toasting here so onCompleted is
+      // the only toast. Reconnect never sets that ref, so it still toasts.
+      const createInFlight
+        = processedConnectorIdRef.current === callbackConnectorId;
+      if (callbackError && !createInFlight) {
+        toast({
+          title: t("accessReviewSourcesTab.messages.error"),
+          description: callbackError,
+          variant: "error",
+        });
+      }
+      if (!createInFlight) {
+        processedConnectorIdRef.current = null;
+        setSearchParams(clearOAuthCallbackParams, { replace: true });
+      }
       return;
     }
 
@@ -186,11 +206,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
       onCompleted(_, errors) {
         if (errors?.length) {
           processedConnectorIdRef.current = null;
-          setSearchParams((params) => {
-            params.delete("connector_id");
-            params.delete("provider");
-            return params;
-          }, { replace: true });
+          setSearchParams(clearOAuthCallbackParams, { replace: true });
           toast({
             title: t("accessReviewSourcesTab.messages.error"),
             description: formatError(
@@ -201,24 +217,25 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
           });
           return;
         }
-        toast({
-          title: t("accessReviewSourcesTab.messages.success"),
-          description: t("accessReviewSourcesTab.messages.created"),
-          variant: "success",
-        });
-        setSearchParams((params) => {
-          params.delete("connector_id");
-          params.delete("provider");
-          return params;
-        }, { replace: true });
+        if (callbackError) {
+          toast({
+            title: t("accessReviewSourcesTab.messages.error"),
+            description: callbackError,
+            variant: "error",
+          });
+        } else {
+          toast({
+            title: t("accessReviewSourcesTab.messages.success"),
+            description: t("accessReviewSourcesTab.messages.created"),
+            variant: "success",
+          });
+        }
+        processedConnectorIdRef.current = null;
+        setSearchParams(clearOAuthCallbackParams, { replace: true });
       },
       onError(error) {
         processedConnectorIdRef.current = null;
-        setSearchParams((params) => {
-          params.delete("connector_id");
-          params.delete("provider");
-          return params;
-        }, { replace: true });
+        setSearchParams(clearOAuthCallbackParams, { replace: true });
         toast({
           title: t("accessReviewSourcesTab.messages.error"),
           description: formatError(
@@ -232,6 +249,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   }, [
     callbackConnectorId,
     callbackProvider,
+    callbackError,
     connectorProviderInfos,
     createAccessReviewSource,
     hasSourceForCallback,

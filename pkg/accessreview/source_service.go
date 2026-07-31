@@ -582,17 +582,17 @@ func (s *Service) SourceNeedsConfiguration(
 	return cfg.SelectedSlug(dbConnector) == "", nil
 }
 
-// SourceNeedsReconnect reports whether the connector is missing OAuth scopes
-// required by the current provider registration. Only OAuth2 connectors are
-// checked: API-key (and other non-OAuth) credentials have no grant scopes and
-// cannot be repaired by an OAuth reconnect, even when the provider also
-// advertises OAuth2Scopes for its dual-auth path. ErrResourceNotFound is
-// propagated for a missing connector.
-func (s *Service) SourceNeedsReconnect(
+// SourceMissingOAuthScopes returns the OAuth scopes required by the current
+// provider registration that are absent from the connector's stored grant.
+// Only OAuth2 connectors are checked: API-key (and other non-OAuth)
+// credentials have no grant scopes and return an empty slice, even when the
+// provider also advertises OAuth2Scopes for its dual-auth path.
+// ErrResourceNotFound is propagated for a missing connector.
+func (s *Service) SourceMissingOAuthScopes(
 	ctx context.Context,
 	scope coredata.Scoper,
 	connectorID gid.GID,
-) (bool, error) {
+) ([]string, error) {
 	var dbConnector coredata.Connector
 
 	err := s.pg.WithConn(
@@ -606,23 +606,52 @@ func (s *Service) SourceNeedsReconnect(
 		},
 	)
 	if err != nil {
-		return false, err
-	}
-
-	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
-		return false, nil
+		return nil, err
 	}
 
 	required := s.providerRegistry.ProviderOAuth2Scopes(dbConnector.Provider)
+
+	return missingOAuthScopesForConnector(dbConnector, required), nil
+}
+
+// SourceNeedsReconnect reports whether the connector is missing OAuth scopes
+// required by the current provider registration. ErrResourceNotFound is
+// propagated for a missing connector.
+func (s *Service) SourceNeedsReconnect(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (bool, error) {
+	missing, err := s.SourceMissingOAuthScopes(ctx, scope, connectorID)
+	if err != nil {
+		return false, err
+	}
+
+	return len(missing) > 0, nil
+}
+
+// missingOAuthScopesForConnector returns scopes in required that are absent
+// from the connector's stored OAuth grant. Non-OAuth connectors and empty
+// required lists yield an empty result. A nil Connection is treated as
+// granting nothing.
+func missingOAuthScopesForConnector(
+	dbConnector coredata.Connector,
+	required []string,
+) []string {
+	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
+		return []string{}
+	}
+
 	if len(required) == 0 {
-		return false, nil
+		return []string{}
 	}
 
-	if dbConnector.Connection == nil {
-		return true, nil
+	var granted []string
+	if dbConnector.Connection != nil {
+		granted = dbConnector.Connection.Scopes()
 	}
 
-	return len(connector.MissingScopes(required, dbConnector.Connection.Scopes())) > 0, nil
+	return connector.MissingScopes(required, granted)
 }
 
 // AutoSelectDefaultOrganization picks the first workspace/org a freshly linked

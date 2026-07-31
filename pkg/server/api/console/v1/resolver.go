@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -431,6 +432,19 @@ func handleConnectorComplete(
 		q := parsedURL.Query()
 		q.Set("connector_id", cnnctr.ID.String())
 		q.Set("provider", string(connectorProvider))
+
+		// Access-review sources toast missing scopes after redirect. Other
+		// continue URLs (Slack compliance page, SCIM settings, …) must not
+		// get a false missing-scope error from this access-review check.
+		if strings.Contains(state.ContinueURL, "/access-reviews/sources") {
+			missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
+			if err != nil {
+				logger.WarnCtx(r.Context(), "cannot determine missing OAuth scopes after connector callback", log.Error(err))
+			} else if len(missing) > 0 {
+				q.Set("error", accessreview.NewMissingOAuthScopesError(missing).Error())
+			}
+		}
+
 		parsedURL.RawQuery = q.Encode()
 
 		safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)

@@ -98,3 +98,19 @@ func TestCampaignClientErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestMissingOAuthScopesError(t *testing.T) {
+	t.Parallel()
+
+	err := accessreview.NewMissingOAuthScopesError([]string{
+		"https://graph.microsoft.com/AuditLog.Read.All",
+		"openid",
+	})
+
+	assert.Equal(
+		t,
+		"Missing required OAuth scopes: AuditLog.Read.All, openid",
+		err.Error(),
+	)
+	assert.ErrorIs(t, err, accessreview.ErrMissingOAuthScopes)
+}
