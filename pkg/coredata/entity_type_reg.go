@@ -171,6 +171,7 @@ const (
 	CookieBannerSampleEntityType                     uint16 = 139
 	DocumentCollaborationSessionEntityType           uint16 = 140
 	CookieBannerScanEntityType                       uint16 = 141
+	ResourceTagEntityType                            uint16 = 142
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -433,6 +434,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CookieBannerSample{ID: id}, true
 	case CookieBannerScanEntityType:
 		return &CookieBannerScan{ID: id}, true
+	case ResourceTagEntityType:
+		return &ResourceTag{ID: id}, true
 	default:
 		return nil, false
 	}

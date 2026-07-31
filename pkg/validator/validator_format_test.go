@@ -224,6 +224,39 @@ func TestSlug(t *testing.T) {
 	}
 }
 
+func TestHexColor(t *testing.T) {
+	tests := []struct {
+		name      string
+		value     any
+		wantError bool
+	}{
+		{"valid #RGB", "#0f0", false},
+		{"valid #RRGGBB", "#00ff00", false},
+		{"valid uppercase", "#ABC", false},
+		{"valid mixed case", "#aBcDeF", false},
+		{"empty string", "", false},
+		{"nil pointer", (*string)(nil), false},
+		{"missing hash", "00ff00", true},
+		{"too short", "#0f", true},
+		{"too long", "#00ff00a", true},
+		{"invalid chars", "#gg0000", true},
+		{"non-string", 123, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := HexColor()(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("HexColor() error = %v, wantError %v", err, tt.wantError)
+			}
+
+			if err != nil && err.Code != ErrorCodeInvalidFormat {
+				t.Errorf("Expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+			}
+		})
+	}
+}
+
 func TestDomain(t *testing.T) {
 	t.Run("valid domain", func(t *testing.T) {
 		str := "example.com"

@@ -58,6 +58,7 @@ import (
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -87,6 +88,7 @@ type (
 		CollaborationEvents     *realtime.Events
 		ShutdownContext         context.Context
 		ResourceAlias           *resourcealias.Service
+		ResourceTag             *resourcetag.Service
 		File                    *filemanager.Service
 		IAM                     *iam.Service
 		Visitor                 *visitor.Service
@@ -304,6 +306,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			collabHandler,
 			cfg.ResourceAlias,
+			cfg.ResourceTag,
 			cfg.IAM,
 			cfg.ESign,
 			cfg.Management,
@@ -355,6 +358,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Management,
 			cfg.CertManager,
 			cfg.ResourceAlias,
+			cfg.ResourceTag,
 			cfg.ThirdParty,
 			cfg.IAM,
 			cfg.AccessReview,
