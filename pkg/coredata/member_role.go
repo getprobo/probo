@@ -28,12 +28,13 @@ import (
 type MembershipRole string
 
 const (
-	MembershipRoleOwner             MembershipRole = "OWNER"
-	MembershipRoleAdmin             MembershipRole = "ADMIN"
-	MembershipRoleEmployee          MembershipRole = "EMPLOYEE"
-	MembershipRoleViewer            MembershipRole = "VIEWER"
-	MembershipRoleAuditor           MembershipRole = "AUDITOR"
-	MembershipRoleComplianceManager MembershipRole = "COMPLIANCE_MANAGER"
+	MembershipRoleOwner                   MembershipRole = "OWNER"
+	MembershipRoleAdmin                   MembershipRole = "ADMIN"
+	MembershipRoleEmployee                MembershipRole = "EMPLOYEE"
+	MembershipRoleViewer                  MembershipRole = "VIEWER"
+	MembershipRoleAuditor                 MembershipRole = "AUDITOR"
+	MembershipRoleComplianceManager       MembershipRole = "COMPLIANCE_MANAGER"
+	MembershipRoleComplianceAccessManager MembershipRole = "COMPLIANCE_ACCESS_MANAGER"
 )
 
 var (
@@ -50,6 +51,7 @@ func MembershipRoles() []MembershipRole {
 		MembershipRoleViewer,
 		MembershipRoleAuditor,
 		MembershipRoleComplianceManager,
+		MembershipRoleComplianceAccessManager,
 	}
 }
 
@@ -61,7 +63,8 @@ func (v MembershipRole) IsValid() bool {
 		MembershipRoleEmployee,
 		MembershipRoleViewer,
 		MembershipRoleAuditor,
-		MembershipRoleComplianceManager:
+		MembershipRoleComplianceManager,
+		MembershipRoleComplianceAccessManager:
 		return true
 	}
 

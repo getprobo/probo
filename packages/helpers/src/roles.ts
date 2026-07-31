@@ -27,6 +27,7 @@ export const Role = {
   AUDITOR: "AUDITOR",
   EMPLOYEE: "EMPLOYEE",
   COMPLIANCE_MANAGER: "COMPLIANCE_MANAGER",
+  COMPLIANCE_ACCESS_MANAGER: "COMPLIANCE_ACCESS_MANAGER",
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role];
@@ -37,6 +38,7 @@ export const roles = [
   "AUDITOR",
   "EMPLOYEE",
   "COMPLIANCE_MANAGER",
+  "COMPLIANCE_ACCESS_MANAGER",
 ] as const
 
 export function getAssignableRoles(currentRole: Role): Role[] {
@@ -48,6 +50,7 @@ export function getAssignableRoles(currentRole: Role): Role[] {
       Role.AUDITOR,
       Role.EMPLOYEE,
       Role.COMPLIANCE_MANAGER,
+      Role.COMPLIANCE_ACCESS_MANAGER,
     ];
   }
 
@@ -58,6 +61,7 @@ export function getAssignableRoles(currentRole: Role): Role[] {
       Role.AUDITOR,
       Role.EMPLOYEE,
       Role.COMPLIANCE_MANAGER,
+      Role.COMPLIANCE_ACCESS_MANAGER,
     ];
   }
 
@@ -90,6 +94,10 @@ export function getMembershipRoles(t: Translator) {
       value: Role.COMPLIANCE_MANAGER,
       label: t("helpers.membershipRole.complianceManager"),
     },
+    {
+      value: Role.COMPLIANCE_ACCESS_MANAGER,
+      label: t("helpers.membershipRole.complianceAccessManager"),
+    },
   ] as const;
 }
 
@@ -107,6 +115,8 @@ export function getMembershipRole(t: Translator, role?: string): string {
       return t("helpers.membershipRole.employee");
     case Role.COMPLIANCE_MANAGER:
       return t("helpers.membershipRole.complianceManager");
+    case Role.COMPLIANCE_ACCESS_MANAGER:
+      return t("helpers.membershipRole.complianceAccessManager");
     default:
       return t("helpers.common.unknown");
   }

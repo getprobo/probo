@@ -277,9 +277,11 @@ const routes = [
                   return <Navigate to="measures" />;
                 case Role.COMPLIANCE_MANAGER:
                   return <Navigate to="compliance-portals" />;
+                case Role.COMPLIANCE_ACCESS_MANAGER:
+                  return <Navigate to="compliance-portals" />;
                 default:
                   return <Navigate to="tasks" />;
-                }
+              }
             },
           },
           {

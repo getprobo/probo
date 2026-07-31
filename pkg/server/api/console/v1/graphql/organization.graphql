@@ -28,6 +28,10 @@ enum MembershipRole
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipRoleComplianceManager"
     )
+  COMPLIANCE_ACCESS_MANAGER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipRoleComplianceAccessManager"
+    )
 }
 
 type Profile implements Node {

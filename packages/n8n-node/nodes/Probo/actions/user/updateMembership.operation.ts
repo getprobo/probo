@@ -28,6 +28,7 @@ const roleOptions = [
 	{ name: 'Viewer', value: 'VIEWER' },
 	{ name: 'Auditor', value: 'AUDITOR' },
 	{ name: 'Compliance Manager', value: 'COMPLIANCE_MANAGER' },
+	{ name: 'Compliance Access Manager', value: 'COMPLIANCE_ACCESS_MANAGER' },
 ];
 
 export const description: INodeProperties[] = [

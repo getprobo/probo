@@ -49,10 +49,26 @@ var ViewerPolicy = policy.NewPolicy(
 	).WithSID("compliance-portal-read-access").When(organizationCondition),
 ).WithDescription("Read-only compliance portal access for organization viewers")
 
+// AccessManagerPolicy allows managing visitor access requests without broader
+// compliance portal configuration permissions.
+var AccessManagerPolicy = policy.NewPolicy(
+	"compliance-portal:access-manager",
+	"Compliance Portal Access Manager",
+	policy.Allow(
+		ActionCompliancePortalGet,
+		ActionCompliancePortalAccessGet, ActionCompliancePortalAccessList,
+		ActionCompliancePortalAccessCreate, ActionCompliancePortalAccessUpdate,
+		ActionCompliancePortalAccessDelete,
+		ActionCompliancePortalDocumentAccessList,
+		ActionCompliancePortalFileGet, ActionCompliancePortalFileGetFileUrl,
+	).WithSID("compliance-portal-access-management").When(organizationCondition),
+).WithDescription("Manage compliance portal visitor access and document access requests")
+
 func PolicySet() *iam.PolicySet {
 	return iam.NewPolicySet().
 		AddRolePolicy("OWNER", FullAccessPolicy).
 		AddRolePolicy("ADMIN", FullAccessPolicy).
 		AddRolePolicy("VIEWER", ViewerPolicy).
-		AddRolePolicy("COMPLIANCE_MANAGER", FullAccessPolicy)
+		AddRolePolicy("COMPLIANCE_MANAGER", FullAccessPolicy).
+		AddRolePolicy("COMPLIANCE_ACCESS_MANAGER", AccessManagerPolicy)
 }
