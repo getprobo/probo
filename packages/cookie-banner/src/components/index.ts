@@ -32,6 +32,5 @@ export { ProboCategoryToggle } from "./category-toggle";
 export { ProboCookieBannerRoot } from "./cookie-banner-root";
 export { ProboCookie, ProboCookieList } from "./cookie-list";
 export { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
-export { ProboSettingsButton } from "./settings-button";
 export { ProboSettingsLink } from "./settings-link";
 export { registerHeadlessComponents } from "./register";

@@ -71,7 +71,6 @@ export interface ProboRootElement extends ProboElement {
   readonly client: CookieBannerClient;
   readonly bannerConfig: BannerConfig;
   readonly state: ProboState;
-  readonly reopenWidget: string;
   readonly consentDraft: ConsentDraft;
   readonly gpcApplied: boolean;
   readonly regulation: Regulation | null;

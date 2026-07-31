@@ -30,7 +30,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   private _draft: ConsentDraft = {};
 
   static get observedAttributes(): string[] {
-    return ["banner-id", "base-url", "reopen-widget", "lang"];
+    return ["banner-id", "base-url", "lang"];
   }
 
   get client(): CookieBannerClient {
@@ -45,10 +45,6 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       throw new Error("<probo-cookie-banner-root> not loaded yet");
     }
     return this._config;
-  }
-
-  get reopenWidget(): string {
-    return this.getAttribute("reopen-widget") ?? "custom";
   }
 
   get state(): ProboState {
@@ -75,18 +71,6 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
 
   get reopenState(): ProboState {
     return this.consentMode === "OPT_OUT" ? "banner" : "panel";
-  }
-
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
-    if (name === "reopen-widget" && oldValue !== newValue) {
-      this.dispatchEvent(
-        new CustomEvent("probo-reopen-widget", {
-          bubbles: true,
-          composed: true,
-          detail: { value: newValue ?? "custom" },
-        }),
-      );
-    }
   }
 
   connectedCallback(): void {

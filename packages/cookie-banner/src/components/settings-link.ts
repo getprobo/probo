@@ -55,7 +55,6 @@ export class ProboSettingsLink extends HTMLElement {
 
   private attach(root: ProboCookieBannerRoot): void {
     this.root = root;
-    root.setAttribute("reopen-widget", "custom");
 
     if (!this.attached) {
       this.attached = true;

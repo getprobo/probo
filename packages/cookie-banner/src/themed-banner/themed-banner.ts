@@ -44,7 +44,7 @@ export class ProboThemedBanner extends HTMLElement {
   }
 
   static get observedAttributes(): string[] {
-    return ["banner-id", "base-url", "reopen-widget", "lang"];
+    return ["banner-id", "base-url", "lang"];
   }
 
   connectedCallback(): void {
@@ -59,14 +59,12 @@ export class ProboThemedBanner extends HTMLElement {
     }
 
     const position = this.getAttribute("position") ?? "bottom-left";
-    const reopenWidget = this.getAttribute("reopen-widget");
-    const reopenAttr = reopenWidget ? ` reopen-widget="${this.esc(reopenWidget)}"` : "";
     const lang = this.getAttribute("lang");
     const langAttr = lang ? ` lang="${this.esc(lang)}"` : "";
 
     this.shadow.innerHTML = `
       <style>${THEMED_STYLES}</style>
-      <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}"${reopenAttr}${langAttr}>
+      <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}"${langAttr}>
         <probo-banner>
           <div class="floating" data-position="${this.esc(position)}">
             <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-banner-title" aria-describedby="probo-banner-desc">
