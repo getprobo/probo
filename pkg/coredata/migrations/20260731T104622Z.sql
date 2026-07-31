@@ -36,11 +36,12 @@ CREATE TABLE resource_tags (
 );
 
 CREATE TABLE resource_tag_assignments (
+    id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     resource_id TEXT NOT NULL,
     tag_id TEXT NOT NULL REFERENCES resource_tags (id) ON UPDATE CASCADE ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL,
-    PRIMARY KEY (resource_id, tag_id)
+    CONSTRAINT resource_tag_assignments_resource_id_tag_id_key UNIQUE (resource_id, tag_id)
 );
 
 UPDATE iam_oauth2_clients

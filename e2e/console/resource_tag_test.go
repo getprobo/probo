@@ -273,7 +273,14 @@ func TestResourceTag_AttachDetachAndConflict(t *testing.T) {
 			node(id: $id) {
 				... on ResourceTag {
 					id
-					resourceIds
+					assignments(first: 50) {
+						edges {
+							node {
+								resourceId
+							}
+						}
+						totalCount
+					}
 				}
 			}
 		}
@@ -281,14 +288,23 @@ func TestResourceTag_AttachDetachAndConflict(t *testing.T) {
 
 	var nodeResult struct {
 		Node struct {
-			ID          string   `json:"id"`
-			ResourceIDs []string `json:"resourceIds"`
+			ID          string `json:"id"`
+			Assignments struct {
+				Edges []struct {
+					Node struct {
+						ResourceID string `json:"resourceId"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"assignments"`
 		} `json:"node"`
 	}
 
 	err = owner.Execute(nodeQuery, map[string]any{"id": tagID}, &nodeResult)
 	require.NoError(t, err)
-	assert.Contains(t, nodeResult.Node.ResourceIDs, documentID)
+	assert.Equal(t, 1, nodeResult.Node.Assignments.TotalCount)
+	require.Len(t, nodeResult.Node.Assignments.Edges, 1)
+	assert.Equal(t, documentID, nodeResult.Node.Assignments.Edges[0].Node.ResourceID)
 
 	const detachMutation = `
 		mutation($input: DetachResourceTagInput!) {
