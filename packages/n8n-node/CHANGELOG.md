@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.210.0] - 2026-07-31
+
+### Added
+
+- Device `Create`, `Get Many`, `Get`, `Revoke`, `Delete`, and `Set Owner` operations to manage ITAM devices
+- Organization `Delete Horizontal Logo` operation
+
 ## [0.209.0] - 2026-07-30
 
 ### Changed
