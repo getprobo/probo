@@ -116,6 +116,7 @@ export const description: INodeProperties[] = [
 			{ name: 'Admin', value: 'ADMIN' },
 			{ name: 'All', value: '' },
 			{ name: 'Auditor', value: 'AUDITOR' },
+			{ name: 'Compliance Access Manager', value: 'COMPLIANCE_ACCESS_MANAGER' },
 			{ name: 'Compliance Manager', value: 'COMPLIANCE_MANAGER' },
 			{ name: 'Employee', value: 'EMPLOYEE' },
 			{ name: 'Owner', value: 'OWNER' },

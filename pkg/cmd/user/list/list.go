@@ -172,7 +172,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagRole != "" {
-				if err := cmdutil.ValidateEnum("role", flagRole, []string{"OWNER", "ADMIN", "VIEWER", "AUDITOR", "EMPLOYEE", "COMPLIANCE_MANAGER"}); err != nil {
+				if err := cmdutil.ValidateEnum("role", flagRole, []string{"OWNER", "ADMIN", "VIEWER", "AUDITOR", "EMPLOYEE", "COMPLIANCE_MANAGER", "COMPLIANCE_ACCESS_MANAGER"}); err != nil {
 					return err
 				}
 
@@ -277,7 +277,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContractEnded, "contract-ended", "", "Filter by contract status (true or false)")
 	cmd.Flags().StringSliceVar(&flagState, "state", nil, "Filter by profile state; repeat or comma-separate for multiple (PENDING, ACTIVE, DEACTIVATED)")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter users by name or email search query")
-	cmd.Flags().StringVar(&flagRole, "role", "", "Filter by membership role (OWNER, ADMIN, VIEWER, AUDITOR, EMPLOYEE, COMPLIANCE_MANAGER)")
+	cmd.Flags().StringVar(&flagRole, "role", "", "Filter by membership role (OWNER, ADMIN, VIEWER, AUDITOR, EMPLOYEE, COMPLIANCE_MANAGER, COMPLIANCE_ACCESS_MANAGER)")
 	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by profile kind (EMPLOYEE, CONTRACTOR, SERVICE_ACCOUNT)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

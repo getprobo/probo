@@ -322,6 +322,7 @@ Manual bearer tokens created from the console are stored in `iam_oauth2_access_t
 | `AUDITOR` | Read-only, excludes internal/employee content |
 | `EMPLOYEE` | Can sign documents and view internal content |
 | `COMPLIANCE_MANAGER` | Full compliance portal management, plus related document/audit/third-party visibility |
+| `COMPLIANCE_ACCESS_MANAGER` | Manage compliance portal visitor access and document access requests only |
 
 ## New entity IAM wiring
 
