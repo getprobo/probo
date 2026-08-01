@@ -213,12 +213,12 @@ export const description: INodeProperties[] = [
 				value: 'DAY',
 			},
 			{
-				name: 'Week',
-				value: 'WEEK',
-			},
-			{
 				name: 'Month',
 				value: 'MONTH',
+			},
+			{
+				name: 'Week',
+				value: 'WEEK',
 			},
 			{
 				name: 'Year',

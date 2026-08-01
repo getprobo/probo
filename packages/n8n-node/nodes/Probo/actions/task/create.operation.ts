@@ -159,20 +159,20 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'None',
-				value: '',
-			},
-			{
 				name: 'Day',
 				value: 'DAY',
 			},
 			{
-				name: 'Week',
-				value: 'WEEK',
-			},
-			{
 				name: 'Month',
 				value: 'MONTH',
+			},
+			{
+				name: 'None',
+				value: '',
+			},
+			{
+				name: 'Week',
+				value: 'WEEK',
 			},
 			{
 				name: 'Year',
