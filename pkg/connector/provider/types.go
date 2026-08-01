@@ -102,6 +102,12 @@ type Registration struct {
 
 	// Endpoints groups every host-bearing URL this provider owns.
 	Endpoints Endpoints
+	// EndpointOverrideUnsupported explains why a deployment cannot repoint this
+	// provider, for providers that reach hosts declared outside Endpoints. An
+	// override could move what Endpoints describes while those other calls kept
+	// going to the real vendor, so the whole provider is refused rather than
+	// partly moved. Empty for a provider whose every host comes from Endpoints.
+	EndpointOverrideUnsupported string
 
 	// OAuth2 metadata.
 	ExtraAuthParams         map[string]string

@@ -37,6 +37,20 @@ func mockEnv(env map[string]string) EnvGetter {
 	}
 }
 
+// mockEnumerator wraps env in os.Environ's "KEY=VALUE" form, so a test can
+// give a mockEnv-backed Resolver the enumeration capability NewResolver(nil)
+// gives the real process environment for free (see Resolver.SetEnumerator).
+func mockEnumerator(env map[string]string) EnvEnumerator {
+	return func() []string {
+		pairs := make([]string, 0, len(env))
+		for k, v := range env {
+			pairs = append(pairs, k+"="+v)
+		}
+
+		return pairs
+	}
+}
+
 func requiredEnv() map[string]string {
 	return map[string]string{
 		"PROBOD_ENCRYPTION_KEY":            "test-encryption-key-32-bytes-long",
@@ -972,6 +986,8 @@ func TestBuilder_parseOriginsList(t *testing.T) {
 // deployment's environment, with no code change and no effect on any other
 // provider.
 func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
+	t.Parallel()
+
 	env := requiredEnv()
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_AUTH"] = "https://account-d.docusign.com/oauth/auth"
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_TOKEN"] = "https://account-d.docusign.com/oauth/token"
@@ -1001,6 +1017,8 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 // deployment that configures nothing emits no override map at all, so every
 // connector keeps the endpoints compiled into it.
 func TestBuilder_Build_NoConnectorEndpointOverrides(t *testing.T) {
+	t.Parallel()
+
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "test-cert"
 	b.samlPrivateKey = "test-key"
@@ -1009,4 +1027,50 @@ func TestBuilder_Build_NoConnectorEndpointOverrides(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, cfg.Probod.ConnectorEndpoints)
+}
+
+// TestBuilder_Build_ConnectorEndpointTypoUnknownProvider pins the fix for a
+// typo the operator would otherwise never see: getEnv resolves an unset key
+// to "" exactly like a typo'd one, so
+// PROBOD_CONNECTOR_GITHBU_ENDPOINT_API_BASE silently did nothing before this
+// scan existed, while the operator believed GitHub was repointed.
+func TestBuilder_Build_ConnectorEndpointTypoUnknownProvider(t *testing.T) {
+	t.Parallel()
+
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_GITHBU_ENDPOINT_API_BASE"] = "https://api.github.com"
+
+	resolver := NewResolver(mockEnv(env))
+	resolver.SetEnumerator(mockEnumerator(env))
+
+	b := NewBuilder(resolver)
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	_, err := b.Build()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "PROBOD_CONNECTOR_GITHBU_ENDPOINT_API_BASE")
+	assert.Contains(t, err.Error(), "GITHBU")
+}
+
+// TestBuilder_Build_ConnectorEndpointTypoUnknownField mirrors the provider-typo
+// case for a misspelled field segment: GITHUB is a real provider, but BASEURL
+// is not one of the five endpoint fields probod resolves.
+func TestBuilder_Build_ConnectorEndpointTypoUnknownField(t *testing.T) {
+	t.Parallel()
+
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_GITHUB_ENDPOINT_BASEURL"] = "https://api.github.com"
+
+	resolver := NewResolver(mockEnv(env))
+	resolver.SetEnumerator(mockEnumerator(env))
+
+	b := NewBuilder(resolver)
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	_, err := b.Build()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "PROBOD_CONNECTOR_GITHUB_ENDPOINT_BASEURL")
+	assert.Contains(t, err.Error(), "BASEURL")
 }

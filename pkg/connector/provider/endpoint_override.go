@@ -54,22 +54,56 @@ func WithEndpointOverrides(overrides EndpointOverrides) Option {
 }
 
 // applyEndpointOverride returns reg's endpoints with o's non-empty fields
-// substituted, rejecting any override that would not take effect or that would
-// weaken the connection.
+// substituted, rejecting any override that would not take effect, that would
+// weaken the connection, or that would move only part of the provider's
+// traffic.
 //
-// A field that is empty in code is NOT overridable. An empty Auth or Token
-// means the provider builds it per flow (BuildAuthURL, BuildAuthURLForSite,
-// BuildTokenURLForDomain, BuildTokenURLForSite); an empty APIBase or Identity
-// means the host is customer-supplied through connector settings or
-// discovered at runtime. In both cases the override would be silently
-// ignored — and for a customer-supplied host, overriding it deployment-wide
-// is exactly what the per-provider domain validators exist to prevent.
-// Rejecting at startup turns a silent no-op into a boot failure the operator
-// can see.
-func applyEndpointOverride(p coredata.ConnectorProvider, base Endpoints, o Endpoints) (Endpoints, error) {
+// Two gates run before any field is substituted:
+//
+//   - Reach (unsupportedReason): some providers call at least one host that
+//     is not expressed anywhere in Endpoints — Vercel's authorize URL and
+//     OAuth callback, Crisp's connect-time subscription check, PostHog's
+//     Cloud region discovery, Google Workspace's SDK-owned basePath. An
+//     override could move what Endpoints DOES describe while those other
+//     calls kept going to the real vendor, so such a provider refuses ANY
+//     override rather than accept one that can only ever be partial.
+//   - Atomicity: once any field is overridden, every field that is non-empty
+//     in the provider's COMPILED Registration must be overridden too. This is
+//     the fix for the bug an adversarial review found: an override that moved
+//     DocuSign's Auth/Token/Probe but left Identity on its compiled value
+//     produced a connector whose OAuth handshake and health check ran against
+//     the sandbox while every account lookup — which resolves its host from
+//     Identity — kept hitting production. The connection badge read healthy
+//     for an environment the driver never reached. A field omitted from an
+//     override is not "unset", it silently keeps its production value, so a
+//     partial override is not a smaller version of a full one — it is a
+//     deployment split across two environments that reports as one. For
+//     DocuSign an override must set auth+token+probe+identity; for Brex
+//     auth+token+probe+api-base; for an API-key provider with only a probe
+//     and an api-base (Tally, for instance), those two.
+//
+// A field that is empty in the compiled Registration is NOT overridable
+// regardless of atomicity. An empty Auth or Token means the provider builds
+// it per flow (BuildAuthURL, BuildAuthURLForSite, BuildTokenURLForDomain,
+// BuildTokenURLForSite); an empty APIBase or Identity means the host is
+// customer-supplied through connector settings or discovered at runtime. In
+// both cases the override would be silently ignored — and for a
+// customer-supplied host, overriding it deployment-wide is exactly what the
+// per-provider domain validators exist to prevent. Rejecting at startup turns
+// a silent no-op into a boot failure the operator can see.
+func applyEndpointOverride(p coredata.ConnectorProvider, unsupportedReason string, base Endpoints, o Endpoints) (Endpoints, error) {
+	if o == (Endpoints{}) {
+		return base, nil
+	}
+
+	if unsupportedReason != "" {
+		return Endpoints{}, fmt.Errorf("cannot override endpoints for connector provider %q: %s", p, unsupportedReason)
+	}
+
 	fields := []struct {
 		name     string
 		current  *string
+		original string
 		override string
 		// isBase marks APIBase and Identity: both are the root a driver
 		// resolves further data or identity from — APIBase via
@@ -79,27 +113,37 @@ func applyEndpointOverride(p coredata.ConnectorProvider, base Endpoints, o Endpo
 		// validateEndpointOverride applies only to a base.
 		isBase bool
 	}{
-		{"auth", &base.Auth, o.Auth, false},
-		{"token", &base.Token, o.Token, false},
-		{"probe", &base.Probe, o.Probe, false},
-		{"identity", &base.Identity, o.Identity, true},
-		{"api-base", &base.APIBase, o.APIBase, true},
+		{"auth", &base.Auth, base.Auth, o.Auth, false},
+		{"token", &base.Token, base.Token, o.Token, false},
+		{"probe", &base.Probe, base.Probe, o.Probe, false},
+		{"identity", &base.Identity, base.Identity, o.Identity, true},
+		{"api-base", &base.APIBase, base.APIBase, o.APIBase, true},
 	}
 
+	var missing []string
+
 	for _, f := range fields {
-		if f.override == "" {
-			continue
-		}
-
-		if *f.current == "" {
+		switch {
+		case f.override == "" && f.original == "":
+			// Neither compiled nor overridden: nothing to move.
+		case f.override == "":
+			// Compiled but left out of the override: collected so the
+			// atomicity check below can name every field the operator still
+			// needs to set, not just the first one found.
+			missing = append(missing, f.name)
+		case f.original == "":
 			return Endpoints{}, fmt.Errorf("cannot override %s endpoint for connector provider %q: the provider has no static value for it, so the override would be ignored", f.name, p)
-		}
+		default:
+			if err := validateEndpointOverride(f.override, f.isBase); err != nil {
+				return Endpoints{}, fmt.Errorf("cannot override %s endpoint for connector provider %q: %w", f.name, p, err)
+			}
 
-		if err := validateEndpointOverride(f.override, f.isBase); err != nil {
-			return Endpoints{}, fmt.Errorf("cannot override %s endpoint for connector provider %q: %w", f.name, p, err)
+			*f.current = f.override
 		}
+	}
 
-		*f.current = f.override
+	if len(missing) > 0 {
+		return Endpoints{}, fmt.Errorf("cannot override endpoints for connector provider %q: also override %s: an override must move every endpoint the provider has a static value for, or the field left behind keeps pointing at production", p, strings.Join(missing, ", "))
 	}
 
 	// A Probe override is only safe when the data path can move with it. If
@@ -107,7 +151,10 @@ func applyEndpointOverride(p coredata.ConnectorProvider, base Endpoints, o Endpo
 	// override to carry it to: the health check would move to the override
 	// host while every data call stayed on the real provider, turning the
 	// connection badge green for an environment the driver never reaches —
-	// the DocuSign bug this guards against.
+	// the DocuSign bug this guards against. Atomicity above cannot catch this
+	// case by itself when Probe is the provider's only static field (e.g.
+	// 1Password): moving that one field is trivially "every field", yet still
+	// unsafe, because nothing else in Endpoints exists for it to carry.
 	if o.Probe != "" && base.APIBase == "" && base.Identity == "" {
 		return Endpoints{}, fmt.Errorf("cannot override probe endpoint for connector provider %q: the provider has neither api-base nor identity to move with it, so the connection check would move while the driver's data calls stayed on the real provider", p)
 	}

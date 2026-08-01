@@ -86,7 +86,7 @@ func (d *TallyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 }
 
 func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
-	endpoint, err := url.JoinPath(d.baseURL, tallyOrganizationsPath, d.organizationID, tallyUsersSegment)
+	endpoint, err := url.JoinPath(d.baseURL, tallyOrganizationsPath, url.PathEscape(d.organizationID), tallyUsersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build tally users URL: %w", err)
 	}
@@ -147,7 +147,7 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 }
 
 func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) {
-	endpoint, err := url.JoinPath(d.baseURL, tallyOrganizationsPath, d.organizationID, tallyInvitesSegment)
+	endpoint, err := url.JoinPath(d.baseURL, tallyOrganizationsPath, url.PathEscape(d.organizationID), tallyInvitesSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build tally invites URL: %w", err)
 	}

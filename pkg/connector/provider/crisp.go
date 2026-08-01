@@ -61,6 +61,10 @@ func crispRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "websiteId", Label: "Website ID", Required: true},
 		},
+		// See Registration.EndpointOverrideUnsupported: GetCrispSubscriptionSettings,
+		// called at connect time from connector_settings.go to verify plugin
+		// ownership, hits crispDefaultBaseURL directly instead of APIBase.
+		EndpointOverrideUnsupported: "its connect-time plugin-subscription check calls a host pinned in GetCrispSubscriptionSettings instead of APIBase",
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls shares the /v1 prefix, so the
 			// version segment stays in APIBase.

@@ -41,6 +41,10 @@ func vercelRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderVercel,
 		DisplayName: "Vercel",
+		// See Registration.EndpointOverrideUnsupported: BuildAuthURL builds the
+		// authorize URL from an operator slug and FetchVercelUserID resolves the
+		// OAuth callback's user from a pinned host — neither reads Endpoints.
+		EndpointOverrideUnsupported: "its authorize URL is built from an operator slug and its OAuth callback resolves the user from a pinned host",
 		Endpoints: Endpoints{
 			Token: "https://api.vercel.com/v2/oauth/access_token",
 			Probe: "https://api.vercel.com/v2/user",

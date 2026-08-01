@@ -120,7 +120,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		if o, ok := options.endpoints[reg.Provider]; ok {
 			seen[reg.Provider] = true
 
-			endpoints, err := applyEndpointOverride(reg.Provider, reg.Endpoints, o)
+			endpoints, err := applyEndpointOverride(reg.Provider, reg.EndpointOverrideUnsupported, reg.Endpoints, o)
 			if err != nil {
 				return nil, err
 			}

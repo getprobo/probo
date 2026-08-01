@@ -42,6 +42,7 @@ func googleWorkspaceRegistration() *Registration {
 		// this struct documents. Declaring an APIBase nothing reads would be
 		// worse than declaring none: the Probe below would silently keep
 		// pointing at production while the SDK went on using its own basePath.
+		EndpointOverrideUnsupported: "its data host is the Google SDK's basePath (admin.NewService), not a value in Endpoints",
 		Endpoints: Endpoints{
 			Auth:  "https://accounts.google.com/o/oauth2/v2/auth",
 			Token: "https://oauth2.googleapis.com/token",

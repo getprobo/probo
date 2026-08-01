@@ -39,21 +39,63 @@ const (
 	awsParameterStoreRefPrefix       = "awsps://"
 )
 
+// EnvEnumerator lists every environment variable visible to a Resolver, in
+// os.Environ's "KEY=VALUE" form. EnvGetter looks up one key at a time and so
+// can never notice a key nobody asked for; an enumerator lets a caller scan
+// the whole environment instead — used to catch a typo'd
+// PROBOD_CONNECTOR_<PROVIDER>_ENDPOINT_<FIELD> variable that getEnv's
+// one-key-at-a-time interface would otherwise silently resolve to "" and
+// ignore. Optional: nil for a Resolver built from a custom lookup (every
+// existing test), which simply skips any scan built on top of it.
+type EnvEnumerator func() []string
+
 type Resolver struct {
-	lookup   EnvGetter
-	smClient *secretsmanager.Client
-	psClient *ssm.Client
-	smCache  map[string]string
-	psCache  map[string]string
-	err      error
+	lookup    EnvGetter
+	enumerate EnvEnumerator
+	smClient  *secretsmanager.Client
+	psClient  *ssm.Client
+	smCache   map[string]string
+	psCache   map[string]string
+	err       error
 }
 
 func NewResolver(lookup EnvGetter) *Resolver {
 	if lookup == nil {
-		lookup = os.Getenv
+		// nil means "use the real process environment": give the resolver
+		// both the single-key getter and, for free, the enumerator that lets
+		// buildConnectorEndpoints scan for a typo'd override key.
+		return &Resolver{lookup: os.Getenv, enumerate: os.Environ}
 	}
 
 	return &Resolver{lookup: lookup}
+}
+
+// SetEnumerator injects e as the resolver's environment enumerator. Tests
+// that construct a Resolver from a custom EnvGetter (mockEnv, in this
+// package's tests) get no enumerator from NewResolver and must call this
+// directly — typically wrapping the same map mockEnv already reads from — to
+// exercise a scan without a real process environment.
+func (r *Resolver) SetEnumerator(e EnvEnumerator) {
+	r.enumerate = e
+}
+
+// keys returns every environment variable name visible to r, or nil if no
+// enumerator is configured.
+func (r *Resolver) keys() []string {
+	if r.enumerate == nil {
+		return nil
+	}
+
+	pairs := r.enumerate()
+	keys := make([]string, 0, len(pairs))
+
+	for _, kv := range pairs {
+		if k, _, ok := strings.Cut(kv, "="); ok {
+			keys = append(keys, k)
+		}
+	}
+
+	return keys
 }
 
 func (r *Resolver) Err() error {

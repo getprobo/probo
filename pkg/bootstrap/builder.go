@@ -23,11 +23,17 @@ package bootstrap
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
+
+// connectorEndpointFields are the field segments buildConnectorEndpoints reads
+// off PROBOD_CONNECTOR_<PROVIDER>_ENDPOINT_<FIELD>. checkConnectorEndpointEnvTypos
+// keys off the same list so the two never drift apart.
+var connectorEndpointFields = []string{"AUTH", "TOKEN", "PROBE", "IDENTITY", "API_BASE"}
 
 type EnvGetter func(key string) string
 
@@ -751,13 +757,16 @@ func (b *Builder) parseOriginsList(s string) []string {
 }
 
 // buildConnectorEndpoints collects per-provider endpoint overrides from
-// PROBOD_CONNECTOR_<PROVIDER>_ENDPOINT_{AUTH,TOKEN,PROBE,API_BASE}, letting a
-// deployment point a connector at a vendor sandbox without a code change.
+// PROBOD_CONNECTOR_<PROVIDER>_ENDPOINT_{AUTH,TOKEN,PROBE,IDENTITY,API_BASE},
+// letting a deployment point a connector at a vendor sandbox without a code
+// change.
 //
 // The provider list comes from the connector registry rather than a literal
 // here, so a new provider is overridable the moment it is registered. The
 // resolver looks up keys one at a time and cannot enumerate the environment,
-// which is why the providers are iterated instead of the variables.
+// which is why the providers are iterated instead of the variables — that
+// same blindness is why checkConnectorEndpointEnvTypos below exists as a
+// separate, explicit environment scan.
 //
 // probod rejects an override that names an unknown provider or a field the
 // provider does not resolve statically, so a typo fails at startup rather than
@@ -769,6 +778,15 @@ func (b *Builder) buildConnectorEndpoints() (map[string]probodconfig.ConnectorEn
 	reg, err := provider.NewBuiltinRegistryWith()
 	if err != nil {
 		return nil, fmt.Errorf("cannot build connector provider registry: %w", err)
+	}
+
+	known := make(map[string]bool, len(reg.All()))
+	for _, r := range reg.All() {
+		known[string(r.Provider)] = true
+	}
+
+	if err := b.checkConnectorEndpointEnvTypos(known); err != nil {
+		return nil, err
 	}
 
 	var endpoints map[string]probodconfig.ConnectorEndpointsConfig
@@ -796,4 +814,55 @@ func (b *Builder) buildConnectorEndpoints() (map[string]probodconfig.ConnectorEn
 	}
 
 	return endpoints, nil
+}
+
+// checkConnectorEndpointEnvTypos scans the environment (when the resolver has
+// an enumerator — production always does, via NewResolver(nil)) for
+// PROBOD_CONNECTOR_*_ENDPOINT_* keys and rejects any whose provider segment is
+// not in known or whose field segment is not one of connectorEndpointFields.
+//
+// This exists because buildConnectorEndpoints's getEnv calls above are blind
+// to a typo: PROBOD_CONNECTOR_GITHBU_ENDPOINT_API_BASE resolves to "" exactly
+// like an unset key, so the misspelled provider's endpoint silently keeps
+// pointing at production while the operator believes they repointed it.
+// getEnv cannot see a key it never asked for; only a full-environment scan
+// can. When the resolver has no enumerator (every test that does not opt in
+// via Resolver.SetEnumerator) this is a no-op, matching the pre-existing
+// getEnv-only behaviour.
+func (b *Builder) checkConnectorEndpointEnvTypos(known map[string]bool) error {
+	const (
+		prefix = "PROBOD_CONNECTOR_"
+		infix  = "_ENDPOINT_"
+	)
+
+	var bad []string
+
+	for _, key := range b.resolver.keys() {
+		if !strings.HasPrefix(key, prefix) {
+			continue
+		}
+
+		rest := strings.TrimPrefix(key, prefix)
+
+		idx := strings.Index(rest, infix)
+		if idx < 0 {
+			continue
+		}
+
+		providerSeg := rest[:idx]
+		fieldSeg := rest[idx+len(infix):]
+
+		switch {
+		case !known[providerSeg]:
+			bad = append(bad, fmt.Sprintf("%s: %q is not a registered connector provider", key, providerSeg))
+		case !slices.Contains(connectorEndpointFields, fieldSeg):
+			bad = append(bad, fmt.Sprintf("%s: %q is not a connector endpoint field", key, fieldSeg))
+		}
+	}
+
+	if len(bad) > 0 {
+		return fmt.Errorf("invalid connector endpoint override environment variable(s):\n  - %s", strings.Join(bad, "\n  - "))
+	}
+
+	return nil
 }

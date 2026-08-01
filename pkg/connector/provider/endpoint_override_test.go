@@ -87,14 +87,22 @@ func TestEndpointOverrideRepointsProvider(t *testing.T) {
 }
 
 // TestEndpointOverrideLeavesOthersAlone guards the blast radius: overriding one
-// provider must not perturb any other.
+// provider must not perturb any other. The override moves every DocuSign
+// field (a partial one is now rejected by the atomicity check — see
+// TestEndpointOverridePartialRejected) so this test exercises the accepted
+// path rather than an error return.
 func TestEndpointOverrideLeavesOthersAlone(t *testing.T) {
 	t.Parallel()
 
 	base := provider.NewBuiltinRegistry()
 
 	overridden, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(provider.EndpointOverrides{
-		coredata.ConnectorProviderDocuSign: {Auth: "https://account-d.docusign.com/oauth/auth"},
+		coredata.ConnectorProviderDocuSign: {
+			Auth:     "https://account-d.docusign.com/oauth/auth",
+			Token:    "https://account-d.docusign.com/oauth/token",
+			Probe:    "https://account-d.docusign.com/oauth/userinfo",
+			Identity: "https://account-d.docusign.com/oauth/userinfo",
+		},
 	}))
 	require.NoError(t, err)
 
@@ -110,27 +118,27 @@ func TestEndpointOverrideLeavesOthersAlone(t *testing.T) {
 	}
 }
 
-// TestEndpointOverridePartialKeepsDefaults verifies an omitted field keeps the
-// compiled value rather than blanking it.
-func TestEndpointOverridePartialKeepsDefaults(t *testing.T) {
+// TestEndpointOverridePartialRejected pins the fix for the bug three
+// adversarial reviews converged on: an override that set only Auth used to be
+// ACCEPTED, silently leaving Token, Probe and Identity on their compiled
+// (production) values — a connector whose OAuth handshake ran against the
+// sandbox while its health check and every account lookup kept hitting
+// production, reporting healthy the whole time. This test previously asserted
+// that accept-and-keep-defaults behaviour as correct (as
+// TestEndpointOverridePartialKeepsDefaults); it was the bug, not the
+// contract, so it is inverted here: a partial override must be rejected, and
+// the error must name every field left out.
+func TestEndpointOverridePartialRejected(t *testing.T) {
 	t.Parallel()
-
-	base := provider.NewBuiltinRegistry()
-
-	original, ok := base.Get(coredata.ConnectorProviderDocuSign)
-	require.True(t, ok)
 
 	r, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(provider.EndpointOverrides{
 		coredata.ConnectorProviderDocuSign: {Auth: "https://account-d.docusign.com/oauth/auth"},
 	}))
-	require.NoError(t, err)
-
-	reg, ok := r.Get(coredata.ConnectorProviderDocuSign)
-	require.True(t, ok)
-
-	assert.Equal(t, "https://account-d.docusign.com/oauth/auth", reg.Endpoints.Auth)
-	assert.Equal(t, original.Endpoints.Token, reg.Endpoints.Token)
-	assert.Equal(t, original.Endpoints.Probe, reg.Endpoints.Probe)
+	require.Error(t, err)
+	assert.Nil(t, r)
+	assert.Contains(t, err.Error(), "token")
+	assert.Contains(t, err.Error(), "probe")
+	assert.Contains(t, err.Error(), "identity")
 }
 
 func TestEndpointOverrideRejected(t *testing.T) {
@@ -177,19 +185,23 @@ func TestEndpointOverrideRejected(t *testing.T) {
 		},
 		{
 			// Register's invariant must see the overridden values, not the
-			// compiled ones: a probe left on the real vendor while the driver
-			// moves is exactly the half-migration it exists to prevent.
-			name:      "probe and api base on different hosts",
-			overrides: provider.EndpointOverrides{coredata.ConnectorProviderAsana: {Probe: "https://elsewhere.example.com/api/1.0/users/me"}},
-			wantErr:   "does not match APIBase host",
+			// compiled ones. Tally's only static fields are Probe and APIBase,
+			// so overriding both satisfies the atomicity check above and
+			// reaches Register with a genuine host mismatch.
+			name: "probe and api base on different hosts",
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderTally: {
+				Probe:   "https://elsewhere.example.com/me",
+				APIBase: "https://api.tally.so",
+			}},
+			wantErr: "does not match APIBase host",
 		},
 		{
-			// Google Workspace's data host lives in the Google SDK's basePath
-			// (APIBase and Identity are both empty): moving Probe alone would
-			// turn the badge green for a sandbox the SDK never talks to.
-			name:      "probe override rejected when provider has no api base or identity",
+			// Google Workspace's data host lives in the Google SDK's basePath,
+			// which nothing in Endpoints describes: EndpointOverrideUnsupported
+			// refuses ANY override before the atomicity/host checks even run.
+			name:      "provider whose data host is outside Endpoints",
 			overrides: provider.EndpointOverrides{coredata.ConnectorProviderGoogleWorkspace: {Probe: "https://admin.googleapis.com/admin/directory/v1/users?customer=other"}},
-			wantErr:   "neither api-base nor identity",
+			wantErr:   "Google SDK's basePath",
 		},
 		{
 			// 1Password's data host is per-connection (regional Users API or
@@ -221,12 +233,20 @@ func TestEndpointOverrideRejected(t *testing.T) {
 			wantErr:   "must not carry a query string or fragment",
 		},
 		{
-			// Overriding Probe alone (no matching Identity move) must fail —
-			// this is the exact half-migration the bug shipped as: Auth/Token
-			// hit the sandbox while every account lookup stayed on production.
-			name:      "probe moved without identity",
-			overrides: provider.EndpointOverrides{coredata.ConnectorProviderDocuSign: {Probe: "https://account-d.docusign.com/oauth/userinfo"}},
-			wantErr:   "does not match Identity host",
+			// Every field is present (so the atomicity check above is
+			// satisfied), but Identity was pointed at a different host than
+			// Probe: Register must see the OVERRIDDEN values disagree, not
+			// the compiled ones — the exact shape the DocuSign bug shipped
+			// as, Auth/Token/Probe on the sandbox while account lookups
+			// (which resolve from Identity) stayed on a stale host.
+			name: "probe and identity moved to different hosts",
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderDocuSign: {
+				Auth:     "https://account-d.docusign.com/oauth/auth",
+				Token:    "https://account-d.docusign.com/oauth/token",
+				Probe:    "https://account-d.docusign.com/oauth/userinfo",
+				Identity: "https://elsewhere.example.com/oauth/userinfo",
+			}},
+			wantErr: "does not match Identity host",
 		},
 	}
 
@@ -246,12 +266,19 @@ func TestEndpointOverrideRejected(t *testing.T) {
 // restriction applies only to APIBase and Identity (a base further paths are
 // joined onto), not to Auth/Token/Probe, which are complete URLs used
 // verbatim and may legitimately carry one (Google Workspace's and Apollo's
-// Probe both do).
+// Probe both do). The override moves every DocuSign field — a partial one
+// would now be rejected by the atomicity check — so this only exercises the
+// query-string allowance on Auth.
 func TestEndpointOverrideAuthMayCarryQuery(t *testing.T) {
 	t.Parallel()
 
 	r, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(provider.EndpointOverrides{
-		coredata.ConnectorProviderDocuSign: {Auth: "https://account-d.docusign.com/oauth/auth?prompt=login"},
+		coredata.ConnectorProviderDocuSign: {
+			Auth:     "https://account-d.docusign.com/oauth/auth?prompt=login",
+			Token:    "https://account-d.docusign.com/oauth/token",
+			Probe:    "https://account-d.docusign.com/oauth/userinfo",
+			Identity: "https://account-d.docusign.com/oauth/userinfo",
+		},
 	}))
 	require.NoError(t, err)
 
@@ -378,4 +405,73 @@ func TestDocumentedDocuSignOverrideBoots(t *testing.T) {
 	} {
 		assert.True(t, strings.HasPrefix(got, sandbox), "%s endpoint still points at %q", name, got)
 	}
+}
+
+// TestEndpointOverrideRejectedForUnsupportedProviders covers the four
+// providers an adversarial review found reach a host that lives outside
+// Endpoints entirely, so no override — partial or full — could ever move all
+// of their traffic: Vercel's authorize URL and OAuth callback, Crisp's
+// connect-time subscription check, PostHog's Cloud region discovery, and
+// Google Workspace's SDK-owned basePath. Registration.EndpointOverrideUnsupported
+// refuses ANY override for these before the atomicity/reach checks even run,
+// and the error must name the reason so the operator understands why.
+func TestEndpointOverrideRejectedForUnsupportedProviders(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		provider coredata.ConnectorProvider
+		override provider.Endpoints
+		wantErr  string
+	}{
+		{
+			provider: coredata.ConnectorProviderVercel,
+			override: provider.Endpoints{Token: "https://sandbox.example.com/v2/oauth/access_token"},
+			wantErr:  "pinned host",
+		},
+		{
+			provider: coredata.ConnectorProviderCrisp,
+			override: provider.Endpoints{APIBase: "https://sandbox.example.com"},
+			wantErr:  "GetCrispSubscriptionSettings",
+		},
+		{
+			provider: coredata.ConnectorProviderPostHog,
+			override: provider.Endpoints{Auth: "https://sandbox.example.com/oauth/authorize/"},
+			wantErr:  "us.posthog.com",
+		},
+		{
+			provider: coredata.ConnectorProviderGoogleWorkspace,
+			override: provider.Endpoints{Auth: "https://sandbox.example.com/o/oauth2/v2/auth"},
+			wantErr:  "Google SDK's basePath",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.provider), func(t *testing.T) {
+			t.Parallel()
+
+			r, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(provider.EndpointOverrides{
+				tt.provider: tt.override,
+			}))
+			require.Error(t, err)
+			assert.Nil(t, r)
+			assert.Contains(t, err.Error(), tt.wantErr)
+		})
+	}
+}
+
+// TestEndpointOverridePartialBrexRejected is the section-E-mandated case for a
+// second, non-DocuSign provider: overriding only api-base and leaving
+// auth/token/probe on their compiled (production) values must be rejected,
+// and the error must list every field the operator still needs to set.
+func TestEndpointOverridePartialBrexRejected(t *testing.T) {
+	t.Parallel()
+
+	r, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(provider.EndpointOverrides{
+		coredata.ConnectorProviderBrex: {APIBase: "https://sandbox.example.com"},
+	}))
+	require.Error(t, err)
+	assert.Nil(t, r)
+	assert.Contains(t, err.Error(), "auth")
+	assert.Contains(t, err.Error(), "token")
+	assert.Contains(t, err.Error(), "probe")
 }

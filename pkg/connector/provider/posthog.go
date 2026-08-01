@@ -49,6 +49,10 @@ func posthogRegistration() *Registration {
 		// the deployment's hosted CIMD client_id; no operator OAuth app or
 		// credentials are required.
 		PublicClient: true,
+		// See Registration.EndpointOverrideUnsupported: cloud region discovery
+		// (resolveBaseURL) probes us.posthog.com / eu.posthog.com directly, never
+		// Endpoints, so no override can move the data host it resolves.
+		EndpointOverrideUnsupported: "its Cloud region discovery is hardcoded to us.posthog.com and eu.posthog.com, never Endpoints",
 		Endpoints: Endpoints{
 			Auth:  "https://oauth.posthog.com/oauth/authorize/",
 			Token: "https://oauth.posthog.com/oauth/token/",
