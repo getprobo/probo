@@ -201,3 +201,52 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 
 	return resp.Data.Name, nil
 }
+
+// ListAsanaOrganizations fetches the workspaces the authenticated Asana
+// user belongs to.
+func ListAsanaOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://app.asana.com/api/1.0/workspaces?limit=100",
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create asana organizations request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch asana organizations: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch asana organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var body struct {
+		Data []struct {
+			GID  string `json:"gid"`
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil, fmt.Errorf("cannot decode asana organizations response: %w", err)
+	}
+
+	result := make([]Organization, len(body.Data))
+	for i, w := range body.Data {
+		displayName := w.Name
+		if displayName == "" {
+			displayName = w.GID
+		}
+
+		result[i] = Organization{Slug: w.GID, DisplayName: displayName}
+	}
+
+	return result, nil
+}

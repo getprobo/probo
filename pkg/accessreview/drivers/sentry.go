@@ -299,3 +299,50 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	return resp.Name, nil
 }
+
+// ListSentryOrganizations fetches the organizations the authenticated
+// Sentry user belongs to.
+func ListSentryOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://sentry.io/api/0/organizations/?member=true",
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create sentry organizations request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch sentry organizations: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch sentry organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var orgs []struct {
+		Slug string `json:"slug"`
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&orgs); err != nil {
+		return nil, fmt.Errorf("cannot decode sentry organizations response: %w", err)
+	}
+
+	result := make([]Organization, len(orgs))
+	for i, org := range orgs {
+		displayName := org.Name
+		if displayName == "" {
+			displayName = org.Slug
+		}
+
+		result[i] = Organization{Slug: org.Slug, DisplayName: displayName}
+	}
+
+	return result, nil
+}

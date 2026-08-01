@@ -401,3 +401,54 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	return resp.Name, nil
 }
+
+// ListHerokuOrganizations fetches the teams the authenticated Heroku
+// user belongs to, and always appends a synthetic "Personal account"
+// entry. Heroku Teams are an opt-in paid construct, so a solo account has
+// no team to discover; the personal entry lets the picker offer personal
+// mode (app owner + collaborators) instead of dead-ending at a free-text
+// slug the user cannot fill.
+func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.heroku.com/teams", nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create heroku organizations request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch heroku organizations: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch heroku organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var teams []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&teams); err != nil {
+		return nil, fmt.Errorf("cannot decode heroku organizations response: %w", err)
+	}
+
+	result := make([]Organization, 0, len(teams)+1)
+	for _, t := range teams {
+		displayName := t.Name
+		if displayName == "" {
+			displayName = t.ID
+		}
+
+		result = append(result, Organization{Slug: t.ID, DisplayName: displayName})
+	}
+
+	result = append(result, Organization{
+		Slug:        herokuPersonalAccountSlug,
+		DisplayName: herokuPersonalAccountDisplayName,
+	})
+
+	return result, nil
+}

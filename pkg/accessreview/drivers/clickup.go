@@ -223,3 +223,52 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 
 	return resp.Team.Name, nil
 }
+
+// ListClickUpOrganizations fetches the ClickUp teams (workspaces) the
+// authenticated user belongs to.
+func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.clickup.com/api/v2/team",
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create clickup organizations request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch clickup organizations: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch clickup organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var body struct {
+		Teams []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"teams"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil, fmt.Errorf("cannot decode clickup organizations response: %w", err)
+	}
+
+	result := make([]Organization, len(body.Teams))
+	for i, t := range body.Teams {
+		displayName := t.Name
+		if displayName == "" {
+			displayName = t.ID
+		}
+
+		result[i] = Organization{Slug: t.ID, DisplayName: displayName}
+	}
+
+	return result, nil
+}

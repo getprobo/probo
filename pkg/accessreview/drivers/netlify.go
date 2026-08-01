@@ -187,3 +187,51 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 
 	return resp.Name, nil
 }
+
+// ListNetlifyOrganizations fetches the Netlify accounts the authenticated
+// user belongs to.
+func ListNetlifyOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.netlify.com/api/v1/accounts",
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create netlify organizations request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch netlify organizations: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch netlify organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var accounts []struct {
+		Slug string `json:"slug"`
+		Name string `json:"name"`
+		Type string `json:"type"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&accounts); err != nil {
+		return nil, fmt.Errorf("cannot decode netlify organizations response: %w", err)
+	}
+
+	result := make([]Organization, len(accounts))
+	for i, a := range accounts {
+		displayName := a.Name
+		if displayName == "" {
+			displayName = a.Slug
+		}
+
+		result[i] = Organization{Slug: a.Slug, DisplayName: displayName}
+	}
+
+	return result, nil
+}

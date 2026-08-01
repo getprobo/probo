@@ -295,3 +295,27 @@ func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string,
 
 	return "", nil
 }
+
+// ListDocuSignOrganizations fetches the DocuSign accounts the authenticated
+// user can access, from the OAuth2 userinfo endpoint. A user may belong to
+// several accounts; the picker scopes the access source to one. The account
+// UUID is surfaced as the Organization slug (it is what the driver and name
+// resolver key off).
+func ListDocuSignOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	accounts, err := fetchDocuSignAccounts(ctx, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]Organization, len(accounts))
+	for i, a := range accounts {
+		displayName := a.AccountName
+		if displayName == "" {
+			displayName = a.AccountID
+		}
+
+		result[i] = Organization{Slug: a.AccountID, DisplayName: displayName}
+	}
+
+	return result, nil
+}

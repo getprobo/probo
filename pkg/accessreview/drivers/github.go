@@ -386,3 +386,45 @@ func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	return resp.Name, nil
 }
+
+// ListGitHubOrganizations fetches the organizations the authenticated
+// GitHub user belongs to.
+func ListGitHubOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/user/orgs?per_page=100", nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create github organizations request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch github organizations: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch github organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var orgs []struct {
+		Login string `json:"login"`
+		Name  string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&orgs); err != nil {
+		return nil, fmt.Errorf("cannot decode github organizations response: %w", err)
+	}
+
+	result := make([]Organization, len(orgs))
+	for i, org := range orgs {
+		displayName := org.Name
+		if displayName == "" {
+			displayName = org.Login
+		}
+
+		result[i] = Organization{Slug: org.Login, DisplayName: displayName}
+	}
+
+	return result, nil
+}

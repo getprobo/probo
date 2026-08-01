@@ -230,3 +230,55 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	return resp.FullPath, nil
 }
+
+// ListGitLabOrganizations fetches the GitLab groups the authenticated
+// user owns. Group IDs are int64; we surface them as strings so they fit
+// the Organization.Slug shape.
+func ListGitLabOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://gitlab.com/api/v4/groups?min_access_level=50&per_page=100",
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create gitlab organizations request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch gitlab organizations: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch gitlab organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var groups []struct {
+		ID       int64  `json:"id"`
+		Name     string `json:"name"`
+		FullPath string `json:"full_path"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&groups); err != nil {
+		return nil, fmt.Errorf("cannot decode gitlab organizations response: %w", err)
+	}
+
+	result := make([]Organization, len(groups))
+	for i, g := range groups {
+		displayName := g.Name
+		if displayName == "" {
+			displayName = g.FullPath
+		}
+
+		result[i] = Organization{
+			Slug:        strconv.FormatInt(g.ID, 10),
+			DisplayName: displayName,
+		}
+	}
+
+	return result, nil
+}
