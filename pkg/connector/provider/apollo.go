@@ -43,10 +43,12 @@ func apolloRegistration() *Registration {
 		// bound to one Apollo account, so there is nothing to pick
 		// (Pattern 3): no settings struct, no picker.
 		APIKeyHeader: "x-api-key",
-		// ProbeURL lets the connection-status check confirm the key with a
-		// lightweight GET; the transport attaches x-api-key, and a missing,
-		// dead, or non-master key returns 401/403.
-		ProbeURL: "https://api.apollo.io/api/v1/users/search?page=1&per_page=1",
+		Endpoints: Endpoints{
+			// ProbeURL lets the connection-status check confirm the key with a
+			// lightweight GET; the transport attaches x-api-key, and a missing,
+			// dead, or non-master key returns 401/403.
+			Probe: "https://api.apollo.io/api/v1/users/search?page=1&per_page=1",
+		},
 		//
 		// No NewNameResolver: Apollo exposes no stable account-name
 		// endpoint reachable with the master key, so the source keeps its

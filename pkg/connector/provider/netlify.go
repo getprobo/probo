@@ -35,9 +35,11 @@ func netlifyRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderNetlify,
 		DisplayName: "Netlify",
-		AuthURL:     "https://app.netlify.com/authorize",
-		TokenURL:    "https://api.netlify.com/oauth/token",
-		ProbeURL:    "https://api.netlify.com/api/v1/user",
+		Endpoints: Endpoints{
+			Auth:  "https://app.netlify.com/authorize",
+			Token: "https://api.netlify.com/oauth/token",
+			Probe: "https://api.netlify.com/api/v1/user",
+		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
 			if err != nil {

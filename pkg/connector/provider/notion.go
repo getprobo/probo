@@ -31,13 +31,15 @@ import (
 
 func notionRegistration() *Registration {
 	return &Registration{
-		Provider:          coredata.ConnectorProviderNotion,
-		DisplayName:       "Notion",
-		AuthURL:           "https://api.notion.com/v1/oauth/authorize",
-		TokenURL:          "https://api.notion.com/v1/oauth/token",
+		Provider:    coredata.ConnectorProviderNotion,
+		DisplayName: "Notion",
+		Endpoints: Endpoints{
+			Auth:  "https://api.notion.com/v1/oauth/authorize",
+			Token: "https://api.notion.com/v1/oauth/token",
+			Probe: "https://api.notion.com/v1/users/me",
+		},
 		ExtraAuthParams:   map[string]string{"owner": "user"},
 		TokenEndpointAuth: "basic-json",
-		ProbeURL:          "https://api.notion.com/v1/users/me",
 		SupportsAPIKey:    true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewNotionDriver(c), nil

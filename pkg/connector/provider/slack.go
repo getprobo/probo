@@ -31,11 +31,13 @@ import (
 
 func slackRegistration() *Registration {
 	return &Registration{
-		Provider:     coredata.ConnectorProviderSlack,
-		DisplayName:  "Slack",
-		AuthURL:      "https://slack.com/oauth/v2/authorize",
-		TokenURL:     "https://slack.com/api/oauth.v2.access",
-		ProbeURL:     "https://slack.com/api/users.list?limit=1",
+		Provider:    coredata.ConnectorProviderSlack,
+		DisplayName: "Slack",
+		Endpoints: Endpoints{
+			Auth:  "https://slack.com/oauth/v2/authorize",
+			Token: "https://slack.com/api/oauth.v2.access",
+			Probe: "https://slack.com/api/users.list?limit=1",
+		},
 		OAuth2Scopes: []string{"users:read", "users:read.email"},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewSlackDriver(c), nil

@@ -31,11 +31,13 @@ import (
 
 func hubspotRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderHubSpot,
-		DisplayName:    "HubSpot",
-		AuthURL:        "https://app.hubspot.com/oauth/authorize",
-		TokenURL:       "https://api.hubapi.com/oauth/v1/token",
-		ProbeURL:       "https://api.hubapi.com/account-info/v3/details",
+		Provider:    coredata.ConnectorProviderHubSpot,
+		DisplayName: "HubSpot",
+		Endpoints: Endpoints{
+			Auth:  "https://app.hubspot.com/oauth/authorize",
+			Token: "https://api.hubapi.com/oauth/v1/token",
+			Probe: "https://api.hubapi.com/account-info/v3/details",
+		},
 		OAuth2Scopes:   []string{"settings.users.read"},
 		SupportsAPIKey: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

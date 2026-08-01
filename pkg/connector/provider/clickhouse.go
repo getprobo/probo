@@ -44,10 +44,12 @@ func clickhouseRegistration() *Registration {
 		// GET /v1/organizations, so there is nothing to pick or configure
 		// (Pattern 3): no settings struct, no picker.
 		APIKeyBasicAuthUserPass: true,
-		// ProbeURL lets the connection-status check confirm the key/secret
-		// with a lightweight GET; the transport attaches the Basic
-		// credential and a dead key/secret returns 401/403.
-		ProbeURL: "https://api.clickhouse.cloud/v1/organizations",
+		Endpoints: Endpoints{
+			// ProbeURL lets the connection-status check confirm the key/secret
+			// with a lightweight GET; the transport attaches the Basic
+			// credential and a dead key/secret returns 401/403.
+			Probe: "https://api.clickhouse.cloud/v1/organizations",
+		},
 		//
 		// No NewNameResolver: the organization name is available but would
 		// duplicate the driver's discovery call; the source keeps its

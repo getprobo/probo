@@ -48,8 +48,8 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 		return nil
 	}
 
-	c.AuthURL = reg.AuthURL
-	c.TokenURL = reg.TokenURL
+	c.AuthURL = reg.Endpoints.Auth
+	c.TokenURL = reg.Endpoints.Token
 	c.TokenEndpointAuth = reg.TokenEndpointAuth
 	c.SupportsIncrementalAuth = reg.SupportsIncrementalAuth
 	c.RequiresPKCE = reg.RequiresPKCE
@@ -116,5 +116,5 @@ func (r *Registry) ProbeURL(p string) string {
 		return ""
 	}
 
-	return reg.ProbeURL
+	return reg.Endpoints.Probe
 }

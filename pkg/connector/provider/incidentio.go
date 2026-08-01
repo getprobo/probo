@@ -35,17 +35,19 @@ func incidentioRegistration() *Registration {
 		DisplayName:      "incident.io",
 		DocumentationURL: accessReviewDocsURL("incident-io"),
 		SupportsAPIKey:   true,
-		// incident.io publishes an OAuth2 flow, but it is outbound-only (for
-		// incident.io to call other apps), so access review authenticates
-		// with an API key presented as Authorization: Bearer, the default
-		// APIKeyConnection scheme. The key is bound to one organization, so
-		// there is nothing to pick (Pattern 3): no settings struct, no
-		// picker.
-		//
-		// ProbeURL lets the connection-status check confirm the key with a
-		// lightweight GET; the transport attaches the Bearer token and a dead
-		// key returns 401/403.
-		ProbeURL: "https://api.incident.io/v2/users?page_size=1",
+		Endpoints: Endpoints{
+			// incident.io publishes an OAuth2 flow, but it is outbound-only (for
+			// incident.io to call other apps), so access review authenticates
+			// with an API key presented as Authorization: Bearer, the default
+			// APIKeyConnection scheme. The key is bound to one organization, so
+			// there is nothing to pick (Pattern 3): no settings struct, no
+			// picker.
+			//
+			// ProbeURL lets the connection-status check confirm the key with a
+			// lightweight GET; the transport attaches the Bearer token and a dead
+			// key returns 401/403.
+			Probe: "https://api.incident.io/v2/users?page_size=1",
+		},
 		//
 		// No NewNameResolver: GET /v2/users carries no organization name, so
 		// the source keeps its generic name.

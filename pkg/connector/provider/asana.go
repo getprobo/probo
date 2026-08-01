@@ -32,11 +32,13 @@ import (
 
 func asanaRegistration() *Registration {
 	return &Registration{
-		Provider:     coredata.ConnectorProviderAsana,
-		DisplayName:  "Asana",
-		AuthURL:      "https://app.asana.com/-/oauth_authorize",
-		TokenURL:     "https://app.asana.com/-/oauth_token",
-		ProbeURL:     "https://app.asana.com/api/1.0/users/me",
+		Provider:    coredata.ConnectorProviderAsana,
+		DisplayName: "Asana",
+		Endpoints: Endpoints{
+			Auth:  "https://app.asana.com/-/oauth_authorize",
+			Token: "https://app.asana.com/-/oauth_token",
+			Probe: "https://app.asana.com/api/1.0/users/me",
+		},
 		OAuth2Scopes: []string{"workspaces:read", "users:read"},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)

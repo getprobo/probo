@@ -35,9 +35,11 @@ func clickupRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderClickUp,
 		DisplayName: "ClickUp",
-		AuthURL:     "https://app.clickup.com/api",
-		TokenURL:    "https://api.clickup.com/api/v2/oauth/token",
-		ProbeURL:    "https://api.clickup.com/api/v2/user",
+		Endpoints: Endpoints{
+			Auth:  "https://app.clickup.com/api",
+			Token: "https://api.clickup.com/api/v2/oauth/token",
+			Probe: "https://api.clickup.com/api/v2/user",
+		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {

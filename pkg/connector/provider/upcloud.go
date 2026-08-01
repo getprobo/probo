@@ -35,19 +35,21 @@ func upcloudRegistration() *Registration {
 		DisplayName:      "UpCloud",
 		DocumentationURL: accessReviewDocsURL("upcloud"),
 		SupportsAPIKey:   true,
-		// UpCloud API tokens ("ucat_...", created under Account > API
-		// tokens) authenticate as a standard Bearer token, so the default
-		// APIKeyConnection mode applies; no Header/Scheme/BasicAuth
-		// override is needed. There is no OAuth2 flow, and account/list
-		// already returns the main account plus every sub-account the token
-		// reaches, so there is nothing to pick: no settings struct, no
-		// picker.
-		//
-		// ProbeURL lets the connection-status check confirm the token with
-		// the same lightweight GET the driver uses; a bad token returns 401.
-		// account/list is main-account-only, so it also rejects a
-		// sub-account token, which authenticates but sees nothing.
-		ProbeURL: "https://api.upcloud.com/1.3/account/list",
+		Endpoints: Endpoints{
+			// UpCloud API tokens ("ucat_...", created under Account > API
+			// tokens) authenticate as a standard Bearer token, so the default
+			// APIKeyConnection mode applies; no Header/Scheme/BasicAuth
+			// override is needed. There is no OAuth2 flow, and account/list
+			// already returns the main account plus every sub-account the token
+			// reaches, so there is nothing to pick: no settings struct, no
+			// picker.
+			//
+			// ProbeURL lets the connection-status check confirm the token with
+			// the same lightweight GET the driver uses; a bad token returns 401.
+			// account/list is main-account-only, so it also rejects a
+			// sub-account token, which authenticates but sees nothing.
+			Probe: "https://api.upcloud.com/1.3/account/list",
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger) (drivers.Driver, error) {
 			return drivers.NewUpCloudDriver(c, logger.Named("upcloud")), nil
 		},

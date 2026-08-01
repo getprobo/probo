@@ -32,11 +32,13 @@ import (
 
 func gitlabRegistration() *Registration {
 	return &Registration{
-		Provider:     coredata.ConnectorProviderGitLab,
-		DisplayName:  "GitLab",
-		AuthURL:      "https://gitlab.com/oauth/authorize",
-		TokenURL:     "https://gitlab.com/oauth/token",
-		ProbeURL:     "https://gitlab.com/api/v4/user",
+		Provider:    coredata.ConnectorProviderGitLab,
+		DisplayName: "GitLab",
+		Endpoints: Endpoints{
+			Auth:  "https://gitlab.com/oauth/authorize",
+			Token: "https://gitlab.com/oauth/token",
+			Probe: "https://gitlab.com/api/v4/user",
+		},
 		OAuth2Scopes: []string{"read_api"},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)

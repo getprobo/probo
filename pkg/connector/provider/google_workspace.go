@@ -33,14 +33,16 @@ func googleWorkspaceRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderGoogleWorkspace,
 		DisplayName: "Google Workspace",
-		AuthURL:     "https://accounts.google.com/o/oauth2/v2/auth",
-		TokenURL:    "https://oauth2.googleapis.com/token",
+		Endpoints: Endpoints{
+			Auth:  "https://accounts.google.com/o/oauth2/v2/auth",
+			Token: "https://oauth2.googleapis.com/token",
+			Probe: "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
+		},
 		ExtraAuthParams: map[string]string{
 			"access_type": "offline",
 			"prompt":      "consent",
 		},
 		SupportsIncrementalAuth: true,
-		ProbeURL:                "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
 		OAuth2Scopes: []string{
 			"https://www.googleapis.com/auth/admin.directory.user.readonly",
 			"https://www.googleapis.com/auth/admin.directory.group.member.readonly",

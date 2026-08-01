@@ -42,10 +42,12 @@ func deepgramRegistration() *Registration {
 		// account, so there is nothing to pick (Pattern 3): no settings
 		// struct, no picker.
 		APIKeyAuthScheme: "Token",
-		// ProbeURL lets the connection-status check confirm the key with a
-		// lightweight GET; the transport attaches the `Token` credential and
-		// a dead key returns 401/403.
-		ProbeURL: "https://api.deepgram.com/v1/projects",
+		Endpoints: Endpoints{
+			// ProbeURL lets the connection-status check confirm the key with a
+			// lightweight GET; the transport attaches the `Token` credential and
+			// a dead key returns 401/403.
+			Probe: "https://api.deepgram.com/v1/projects",
+		},
 		//
 		// No NewNameResolver: an account may span several projects, so there
 		// is no single instance name; the source keeps its generic name.

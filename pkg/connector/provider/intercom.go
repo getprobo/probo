@@ -31,11 +31,13 @@ import (
 
 func intercomRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderIntercom,
-		DisplayName:    "Intercom",
-		AuthURL:        "https://app.intercom.com/oauth",
-		TokenURL:       "https://api.intercom.io/auth/eagle/token",
-		ProbeURL:       "https://api.intercom.io/me",
+		Provider:    coredata.ConnectorProviderIntercom,
+		DisplayName: "Intercom",
+		Endpoints: Endpoints{
+			Auth:  "https://app.intercom.com/oauth",
+			Token: "https://api.intercom.io/auth/eagle/token",
+			Probe: "https://api.intercom.io/me",
+		},
 		SupportsAPIKey: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewIntercomDriver(c), nil

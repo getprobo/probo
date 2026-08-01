@@ -42,10 +42,12 @@ func dotfileRegistration() *Registration {
 		// bound to one workspace, so there is nothing to pick (Pattern 3): no
 		// settings struct, no picker.
 		APIKeyHeader: "X-DOTFILE-API-KEY",
-		// ProbeURL lets the connection-status check confirm the key with a
-		// lightweight GET; the transport attaches X-DOTFILE-API-KEY and a dead
-		// key returns 401.
-		ProbeURL: "https://api.dotfile.com/v1/users?limit=1",
+		Endpoints: Endpoints{
+			// ProbeURL lets the connection-status check confirm the key with a
+			// lightweight GET; the transport attaches X-DOTFILE-API-KEY and a dead
+			// key returns 401.
+			Probe: "https://api.dotfile.com/v1/users?limit=1",
+		},
 		// No NewNameResolver: the users endpoint carries no workspace name, so
 		// the source keeps its generic name.
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

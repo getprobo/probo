@@ -48,9 +48,11 @@ func posthogRegistration() *Registration {
 		// authenticated by PKCE. probod auto-registers this connector with
 		// the deployment's hosted CIMD client_id; no operator OAuth app or
 		// credentials are required.
-		PublicClient:      true,
-		AuthURL:           "https://oauth.posthog.com/oauth/authorize/",
-		TokenURL:          "https://oauth.posthog.com/oauth/token/",
+		PublicClient: true,
+		Endpoints: Endpoints{
+			Auth:  "https://oauth.posthog.com/oauth/authorize/",
+			Token: "https://oauth.posthog.com/oauth/token/",
+		},
 		TokenEndpointAuth: "none",
 		RequiresPKCE:      true,
 		OAuth2Scopes:      []string{"organization:read", "organization_member:read"},

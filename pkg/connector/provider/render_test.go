@@ -47,7 +47,7 @@ func TestRenderRegistrationMetadata(t *testing.T) {
 	assert.Empty(t, reg.APIKeyHeader)
 	assert.False(t, reg.APIKeyBasicAuth)
 	// No OAuth and no picker.
-	assert.Empty(t, reg.AuthURL)
+	assert.Empty(t, reg.Endpoints.Auth)
 	assert.Nil(t, reg.SetOrganizationSettings)
 
 	require.Len(t, reg.APIKeyExtraSettings, 1)

@@ -35,8 +35,10 @@ func googleAnalyticsRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderGoogleAnalytics,
 		DisplayName: "Google Analytics",
-		AuthURL:     "https://accounts.google.com/o/oauth2/v2/auth",
-		TokenURL:    "https://oauth2.googleapis.com/token",
+		Endpoints: Endpoints{
+			Auth:  "https://accounts.google.com/o/oauth2/v2/auth",
+			Token: "https://oauth2.googleapis.com/token",
+		},
 		ExtraAuthParams: map[string]string{
 			"access_type": "offline",
 			"prompt":      "consent",

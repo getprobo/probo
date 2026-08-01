@@ -33,12 +33,14 @@ func microsoft365Registration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderMicrosoft365,
 		DisplayName: "Microsoft 365",
-		AuthURL:     "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-		TokenURL:    "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+		Endpoints: Endpoints{
+			Auth:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+			Token: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+			Probe: "https://graph.microsoft.com/v1.0/organization?$top=1",
+		},
 		ExtraAuthParams: map[string]string{
 			"prompt": "consent",
 		},
-		ProbeURL: "https://graph.microsoft.com/v1.0/organization?$top=1",
 		OAuth2Scopes: []string{
 			"openid",
 			"profile",

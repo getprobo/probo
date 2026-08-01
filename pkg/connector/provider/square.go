@@ -34,8 +34,10 @@ func squareRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderSquare,
 		DisplayName: "Square",
-		AuthURL:     "https://connect.squareup.com/oauth2/authorize",
-		TokenURL:    "https://connect.squareup.com/oauth2/token",
+		Endpoints: Endpoints{
+			Auth:  "https://connect.squareup.com/oauth2/authorize",
+			Token: "https://connect.squareup.com/oauth2/token",
+		},
 		// EMPLOYEES_READ lists team members; MERCHANT_PROFILE_READ is needed
 		// for the merchant-name resolver and the /v2/merchants/me probe.
 		// Square's confidential token endpoint accepts client credentials in

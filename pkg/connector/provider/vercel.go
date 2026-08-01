@@ -41,8 +41,10 @@ func vercelRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderVercel,
 		DisplayName: "Vercel",
-		TokenURL:    "https://api.vercel.com/v2/oauth/access_token",
-		ProbeURL:    "https://api.vercel.com/v2/user",
+		Endpoints: Endpoints{
+			Token: "https://api.vercel.com/v2/oauth/access_token",
+			Probe: "https://api.vercel.com/v2/user",
+		},
 		BuildAuthURL: func(slug string) (string, error) {
 			u, err := url.JoinPath("https://vercel.com/integrations", url.PathEscape(slug), "new")
 			if err != nil {

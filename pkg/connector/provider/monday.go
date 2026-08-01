@@ -31,10 +31,12 @@ import (
 
 func mondayRegistration() *Registration {
 	return &Registration{
-		Provider:     coredata.ConnectorProviderMonday,
-		DisplayName:  "Monday.com",
-		AuthURL:      "https://auth.monday.com/oauth2/authorize",
-		TokenURL:     "https://auth.monday.com/oauth2/token",
+		Provider:    coredata.ConnectorProviderMonday,
+		DisplayName: "Monday.com",
+		Endpoints: Endpoints{
+			Auth:  "https://auth.monday.com/oauth2/authorize",
+			Token: "https://auth.monday.com/oauth2/token",
+		},
 		Probe:        probeMonday,
 		OAuth2Scopes: []string{"users:read", "account:read"},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

@@ -45,7 +45,9 @@ func cursorRegistration() *Registration {
 		// there is nothing to pick (Pattern 3): no settings struct, no
 		// picker, and no SetOrganizationSettings.
 		APIKeyBasicAuth: true,
-		ProbeURL:        cursorMembersEndpoint,
+		Endpoints: Endpoints{
+			Probe: cursorMembersEndpoint,
+		},
 		// No NewNameResolver: the Admin API exposes no team/organization
 		// name endpoint, so the source keeps its generic name (the
 		// source-name worker degrades gracefully when no resolver is set).

@@ -32,11 +32,13 @@ import (
 
 func sentryRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderSentry,
-		DisplayName:    "Sentry",
-		AuthURL:        "https://sentry.io/oauth/authorize/",
-		TokenURL:       "https://sentry.io/oauth/token/",
-		ProbeURL:       "https://sentry.io/api/0/organizations/",
+		Provider:    coredata.ConnectorProviderSentry,
+		DisplayName: "Sentry",
+		Endpoints: Endpoints{
+			Auth:  "https://sentry.io/oauth/authorize/",
+			Token: "https://sentry.io/oauth/token/",
+			Probe: "https://sentry.io/api/0/organizations/",
+		},
 		OAuth2Scopes:   []string{"org:read", "member:read"},
 		SupportsAPIKey: true,
 		APIKeyExtraSettings: []ExtraSetting{

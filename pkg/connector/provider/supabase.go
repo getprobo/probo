@@ -35,8 +35,10 @@ func supabaseRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderSupabase,
 		DisplayName:      "Supabase",
 		DocumentationURL: accessReviewDocsURL("supabase"),
-		ProbeURL:         "https://api.supabase.com/v1/organizations",
-		SupportsAPIKey:   true,
+		Endpoints: Endpoints{
+			Probe: "https://api.supabase.com/v1/organizations",
+		},
+		SupportsAPIKey: true,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
 		},

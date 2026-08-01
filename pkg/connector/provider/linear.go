@@ -31,10 +31,12 @@ import (
 
 func linearRegistration() *Registration {
 	return &Registration{
-		Provider:     coredata.ConnectorProviderLinear,
-		DisplayName:  "Linear",
-		AuthURL:      "https://linear.app/oauth/authorize",
-		TokenURL:     "https://api.linear.app/oauth/token",
+		Provider:    coredata.ConnectorProviderLinear,
+		DisplayName: "Linear",
+		Endpoints: Endpoints{
+			Auth:  "https://linear.app/oauth/authorize",
+			Token: "https://api.linear.app/oauth/token",
+		},
 		Probe:        probeLinear,
 		OAuth2Scopes: []string{"read"},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

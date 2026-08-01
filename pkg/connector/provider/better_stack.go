@@ -42,7 +42,9 @@ func betterStackRegistration() *Registration {
 		DisplayName:      "Better Stack",
 		DocumentationURL: accessReviewDocsURL("better-stack"),
 		SupportsAPIKey:   true,
-		ProbeURL:         "https://betterstack.com/api/v2/team-members",
+		Endpoints: Endpoints{
+			Probe: "https://betterstack.com/api/v2/team-members",
+		},
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "teamName", Label: "Team Name", Required: true},
 		},

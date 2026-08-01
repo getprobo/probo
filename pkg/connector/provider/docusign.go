@@ -32,12 +32,14 @@ import (
 
 func docusignRegistration() *Registration {
 	return &Registration{
-		Provider:          coredata.ConnectorProviderDocuSign,
-		DisplayName:       "DocuSign",
-		AuthURL:           "https://account.docusign.com/oauth/auth",
-		TokenURL:          "https://account.docusign.com/oauth/token",
+		Provider:    coredata.ConnectorProviderDocuSign,
+		DisplayName: "DocuSign",
+		Endpoints: Endpoints{
+			Auth:  "https://account.docusign.com/oauth/auth",
+			Token: "https://account.docusign.com/oauth/token",
+			Probe: "https://account.docusign.com/oauth/userinfo",
+		},
 		TokenEndpointAuth: "basic-form",
-		ProbeURL:          "https://account.docusign.com/oauth/userinfo",
 		// signature grants the eSignature REST API (the userinfo probe and
 		// the account users list). extended rolls the 30-day refresh-token
 		// window on every refresh so the connection survives long-term — the

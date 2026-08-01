@@ -33,7 +33,9 @@ package provider
 
 import (
 	"fmt"
+	"net/url"
 	"slices"
+	"strings"
 	"sync"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -132,6 +134,26 @@ func (r *Registry) Register(reg *Registration) error {
 	// startup rather than let the requirement quietly do nothing.
 	if reg.RequiresManagedResourceID && !reg.ManagedAPIKey {
 		return fmt.Errorf("cannot register connector provider %q: RequiresManagedResourceID requires ManagedAPIKey", reg.Provider)
+	}
+
+	// A Probe on a different host from APIBase would let a deployment move the
+	// driver to another host while the connection check keeps hitting the real
+	// provider — a half-migrated connector that reports healthy. The two are
+	// the same provider's API, so their hosts must agree.
+	if reg.Endpoints.APIBase != "" && reg.Endpoints.Probe != "" {
+		base, err := url.Parse(reg.Endpoints.APIBase)
+		if err != nil {
+			return fmt.Errorf("cannot register connector provider %q: cannot parse APIBase: %w", reg.Provider, err)
+		}
+
+		probe, err := url.Parse(reg.Endpoints.Probe)
+		if err != nil {
+			return fmt.Errorf("cannot register connector provider %q: cannot parse Probe: %w", reg.Provider, err)
+		}
+
+		if !strings.EqualFold(base.Host, probe.Host) {
+			return fmt.Errorf("cannot register connector provider %q: Probe host %q does not match APIBase host %q", reg.Provider, probe.Host, base.Host)
+		}
 	}
 
 	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token

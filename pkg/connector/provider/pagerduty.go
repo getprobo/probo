@@ -35,11 +35,13 @@ func pagerdutyRegistration() *Registration {
 	// occasionally in the token response body) and is persisted on
 	// PagerDutyConnectorSettings by the OAuth callback handler.
 	return &Registration{
-		Provider:     coredata.ConnectorProviderPagerDuty,
-		DisplayName:  "PagerDuty",
-		AuthURL:      "https://identity.pagerduty.com/oauth/authorize",
-		TokenURL:     "https://identity.pagerduty.com/oauth/token",
-		ProbeURL:     "https://api.pagerduty.com/users/me",
+		Provider:    coredata.ConnectorProviderPagerDuty,
+		DisplayName: "PagerDuty",
+		Endpoints: Endpoints{
+			Auth:  "https://identity.pagerduty.com/oauth/authorize",
+			Token: "https://identity.pagerduty.com/oauth/token",
+			Probe: "https://api.pagerduty.com/users/me",
+		},
 		OAuth2Scopes: []string{"users.read"},
 		RequiresPKCE: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

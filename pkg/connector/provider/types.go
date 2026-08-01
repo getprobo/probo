@@ -30,6 +30,51 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// Endpoints groups every host-bearing URL a provider owns, so a deployment
+// can reason about — and later override — one struct instead of chasing
+// literals across pkg/connector/provider and pkg/accessreview/drivers.
+//
+// Auth, Token and Probe are complete URLs, query string included when the
+// provider needs one. APIBase is a scheme-ful origin, optionally carrying a
+// version segment, with NO trailing slash; drivers join paths onto it with
+// url.JoinPath.
+//
+// An empty field means "not expressible here", never "unknown": an
+// API-key-only provider has no Auth or Token, a provider with BuildProbeURL
+// or a Probe closure has no static Probe, and APIBase is empty whenever the
+// data host is per-connection or discovered at runtime.
+type Endpoints struct {
+	// Auth is the OAuth2 authorization endpoint. It is frequently a
+	// DIFFERENT host from APIBase (github.com vs api.github.com,
+	// identity.pagerduty.com vs api.pagerduty.com) and must never be derived
+	// from it. Empty for API-key-only providers and for providers using
+	// BuildAuthURL or BuildAuthURLForSite.
+	Auth string
+
+	// Token is the OAuth2 token endpoint, independent of Auth: Monday serves
+	// both from auth.monday.com, while HubSpot authorizes on app.hubspot.com
+	// and exchanges on api.hubapi.com. Empty for API-key-only providers, for
+	// BuildTokenURLForDomain / BuildTokenURLForSite providers, and for
+	// 1Password, whose token endpoint is supplied per connection.
+	Token string
+
+	// Probe is the connection-check URL for a plain authenticated GET. Empty
+	// when BuildProbeURL or the Probe closure is set. When both Probe and
+	// APIBase are non-empty their hosts MUST match — Register enforces it, so
+	// an APIBase override can never leave the connection check pointed at the
+	// real provider while the driver talks to the override.
+	Probe string
+
+	// APIBase is the data API root the driver joins paths onto. Set it ONLY
+	// for a compile-time-constant host. Leave it EMPTY when the host comes
+	// from connector settings (Grafana, Metabase, Okta, SigNoz, Zendesk,
+	// Datadog, Langfuse, Segment, PostHog) or is discovered at runtime
+	// (DocuSign's per-account base_uri, PostHog's lazy region probe) — the
+	// NewDriver closure resolves those, with pkg/accessreview/drivers/posthog.go
+	// as the reference implementation.
+	APIBase string
+}
+
 // Registration is the per-provider metadata + factory bundle. Each
 // provider returns one of these from a private constructor (e.g.
 // slackRegistration) that NewBuiltinRegistry assembles into the
@@ -44,14 +89,14 @@ type Registration struct {
 	// surfaced (nullable) on ConnectorProviderInfo so the console renders a link.
 	DocumentationURL string
 
+	// Endpoints groups every host-bearing URL this provider owns.
+	Endpoints Endpoints
+
 	// OAuth2 metadata.
-	AuthURL                 string
-	TokenURL                string
 	ExtraAuthParams         map[string]string
 	TokenEndpointAuth       string // "post-form" (default), "basic-form", or "basic-json"
 	SupportsIncrementalAuth bool
 	OAuth2Scopes            []string
-	ProbeURL                string
 	// RequiresPKCE enables RFC 7636 PKCE (S256) on the authorization
 	// request and replays the verifier on the token exchange. Default
 	// false; non-PKCE providers are unaffected.

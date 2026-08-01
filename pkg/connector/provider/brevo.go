@@ -42,10 +42,12 @@ func brevoRegistration() *Registration {
 		// there is nothing to pick (Pattern 3): no settings struct, no
 		// picker.
 		APIKeyHeader: "api-key",
-		// ProbeURL lets the connection-status check confirm the key with a
-		// lightweight GET; the transport attaches the api-key header and a
-		// dead key returns 401/403.
-		ProbeURL: "https://api.brevo.com/v3/organization/invited/users",
+		Endpoints: Endpoints{
+			// ProbeURL lets the connection-status check confirm the key with a
+			// lightweight GET; the transport attaches the api-key header and a
+			// dead key returns 401/403.
+			Probe: "https://api.brevo.com/v3/organization/invited/users",
+		},
 		//
 		// No NewNameResolver: the invited-users endpoint carries no account
 		// name, so the source keeps its generic name.

@@ -34,8 +34,10 @@ func openaiRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderOpenAI,
 		DisplayName:      "OpenAI",
 		DocumentationURL: accessReviewDocsURL("openai"),
-		ProbeURL:         "https://api.openai.com/v1/models",
-		SupportsAPIKey:   true,
+		Endpoints: Endpoints{
+			Probe: "https://api.openai.com/v1/models",
+		},
+		SupportsAPIKey: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewOpenAIDriver(c), nil
 		},

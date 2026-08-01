@@ -37,9 +37,11 @@ func bitbucketRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderBitbucket,
 		DisplayName: "Bitbucket",
-		AuthURL:     "https://bitbucket.org/site/oauth2/authorize",
-		TokenURL:    "https://bitbucket.org/site/oauth2/access_token",
-		ProbeURL:    "https://api.bitbucket.org/2.0/user",
+		Endpoints: Endpoints{
+			Auth:  "https://bitbucket.org/site/oauth2/authorize",
+			Token: "https://bitbucket.org/site/oauth2/access_token",
+			Probe: "https://api.bitbucket.org/2.0/user",
+		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {

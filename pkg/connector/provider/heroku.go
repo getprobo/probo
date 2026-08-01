@@ -34,8 +34,10 @@ func herokuRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderHeroku,
 		DisplayName: "Heroku",
-		AuthURL:     "https://id.heroku.com/oauth/authorize",
-		TokenURL:    "https://id.heroku.com/oauth/token",
+		Endpoints: Endpoints{
+			Auth:  "https://id.heroku.com/oauth/authorize",
+			Token: "https://id.heroku.com/oauth/token",
+		},
 		// Heroku requires the versioned Accept header; a plain ProbeURL GET
 		// (Accept: application/json) returns 400 and would read as connected,
 		// so probe via a closure that sends application/vnd.heroku+json.

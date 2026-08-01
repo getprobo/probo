@@ -35,19 +35,21 @@ func yousignRegistration() *Registration {
 		DisplayName:      "Yousign",
 		DocumentationURL: accessReviewDocsURL("yousign"),
 		SupportsAPIKey:   true,
-		// Yousign authenticates with an API key as Authorization: Bearer. The
-		// key is bound to one organization, so GET /v3/users returns everyone
-		// with nothing to pick (Pattern 3). The connector targets Yousign
-		// production; the sandbox runs on a separate host and is not a reviewed
-		// environment.
-		//
-		// ProbeURL lets the connection-status check confirm the key with a
-		// lightweight GET; the transport attaches the Bearer credential and a
-		// dead key returns 401/403.
-		//
-		// No NewNameResolver: Yousign v3 exposes no organization-name endpoint,
-		// so the source keeps its generic name.
-		ProbeURL: "https://api.yousign.app/v3/users?limit=1",
+		Endpoints: Endpoints{
+			// Yousign authenticates with an API key as Authorization: Bearer. The
+			// key is bound to one organization, so GET /v3/users returns everyone
+			// with nothing to pick (Pattern 3). The connector targets Yousign
+			// production; the sandbox runs on a separate host and is not a reviewed
+			// environment.
+			//
+			// ProbeURL lets the connection-status check confirm the key with a
+			// lightweight GET; the transport attaches the Bearer credential and a
+			// dead key returns 401/403.
+			//
+			// No NewNameResolver: Yousign v3 exposes no organization-name endpoint,
+			// so the source keeps its generic name.
+			Probe: "https://api.yousign.app/v3/users?limit=1",
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewYousignDriver(c), nil
 		},

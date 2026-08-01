@@ -70,7 +70,7 @@ func (r *Registry) ProbeConnection(
 		return reg.Probe(ctx, httpClient, conn)
 	}
 
-	probeURL := reg.ProbeURL
+	probeURL := reg.Endpoints.Probe
 	if reg.BuildProbeURL != nil {
 		built, err := reg.BuildProbeURL(conn)
 		if err != nil {

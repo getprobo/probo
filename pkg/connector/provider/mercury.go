@@ -35,17 +35,19 @@ func mercuryRegistration() *Registration {
 		DisplayName:      "Mercury",
 		DocumentationURL: accessReviewDocsURL("mercury"),
 		SupportsAPIKey:   true,
-		// Mercury authenticates with a self-serve API token presented as
-		// Authorization: Bearer, the default APIKeyConnection scheme. There
-		// is no third-party OAuth2 flow for the Users API. The token is
-		// bound to one Mercury organization, so there is nothing to pick
-		// (Pattern 3): no settings struct, no picker, no
-		// SetOrganizationSettings.
-		//
-		// ProbeURL lets the connection-status check confirm the token is
-		// live with a lightweight GET; the transport attaches the Bearer
-		// token and a dead token returns 401/403.
-		ProbeURL: "https://api.mercury.com/api/v1/users?limit=1",
+		Endpoints: Endpoints{
+			// Mercury authenticates with a self-serve API token presented as
+			// Authorization: Bearer, the default APIKeyConnection scheme. There
+			// is no third-party OAuth2 flow for the Users API. The token is
+			// bound to one Mercury organization, so there is nothing to pick
+			// (Pattern 3): no settings struct, no picker, no
+			// SetOrganizationSettings.
+			//
+			// ProbeURL lets the connection-status check confirm the token is
+			// live with a lightweight GET; the transport attaches the Bearer
+			// token and a dead token returns 401/403.
+			Probe: "https://api.mercury.com/api/v1/users?limit=1",
+		},
 		//
 		// No NewNameResolver: GET /api/v1/users carries no organization
 		// name and a read-only token may lack other scopes, so the source

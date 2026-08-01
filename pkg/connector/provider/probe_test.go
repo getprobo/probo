@@ -46,7 +46,7 @@ func TestBuiltinRegistry_ProbeCoverage(t *testing.T) {
 	r := NewBuiltinRegistry()
 
 	for _, reg := range r.All() {
-		hasProbe := reg.Probe != nil || reg.ProbeURL != "" || reg.BuildProbeURL != nil
+		hasProbe := reg.Probe != nil || reg.Endpoints.Probe != "" || reg.BuildProbeURL != nil
 		assert.True(t, hasProbe, "provider %s has no connection probe configured", reg.Provider)
 	}
 }

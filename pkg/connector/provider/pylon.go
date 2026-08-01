@@ -35,16 +35,18 @@ func pylonRegistration() *Registration {
 		DisplayName:      "Pylon",
 		DocumentationURL: accessReviewDocsURL("pylon"),
 		SupportsAPIKey:   true,
-		// Pylon authenticates with an account API token presented as
-		// Authorization: Bearer, the default APIKeyConnection scheme. There
-		// is no third-party OAuth2 flow for the Users API. The token is bound
-		// to one Pylon organization, so there is nothing to pick (Pattern 3):
-		// no settings struct, no picker, no SetOrganizationSettings.
-		//
-		// ProbeURL lets the connection-status check confirm the token is live
-		// with a lightweight GET; the transport attaches the Bearer token and
-		// a dead token returns 401/403.
-		ProbeURL: "https://api.usepylon.com/users?limit=1",
+		Endpoints: Endpoints{
+			// Pylon authenticates with an account API token presented as
+			// Authorization: Bearer, the default APIKeyConnection scheme. There
+			// is no third-party OAuth2 flow for the Users API. The token is bound
+			// to one Pylon organization, so there is nothing to pick (Pattern 3):
+			// no settings struct, no picker, no SetOrganizationSettings.
+			//
+			// ProbeURL lets the connection-status check confirm the token is live
+			// with a lightweight GET; the transport attaches the Bearer token and
+			// a dead token returns 401/403.
+			Probe: "https://api.usepylon.com/users?limit=1",
+		},
 		//
 		// No NewNameResolver: GET /users carries no organization name, so the
 		// source keeps its generic name (the source-name worker degrades
