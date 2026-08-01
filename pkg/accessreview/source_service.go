@@ -532,7 +532,7 @@ func (s *Service) ProviderOrganizations(
 		return nil, nil
 	}
 
-	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerAPIBase(dbConnector.Provider))
+	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerListBaseURL(dbConnector.Provider))
 	if err != nil {
 		return nil, err
 	}
@@ -540,17 +540,26 @@ func (s *Service) ProviderOrganizations(
 	return orgs, nil
 }
 
-// providerAPIBase returns the API root declared by the provider's
-// registration, or "" when the provider is not registered or declares
-// none. Listers treat "" as "no override" and fall back to their
-// production base.
-func (s *Service) providerAPIBase(connectorProvider coredata.ConnectorProvider) string {
+// providerListBaseURL returns the base URL a picker's ListOrgs call should
+// target: the provider registration's static API root (Endpoints.APIBase),
+// falling back to Endpoints.Identity when the provider has no static data
+// root of its own. DocuSign is that case — it declares no APIBase, but its
+// Identity host is exactly the host ListDocuSignOrganizations needs, so the
+// fallback lets an Identity override reach the picker the same way it
+// reaches the driver and name resolver. Returns "" when the provider is not
+// registered or declares neither; listers treat "" as "no override" and
+// fall back to their production base.
+func (s *Service) providerListBaseURL(connectorProvider coredata.ConnectorProvider) string {
 	reg, ok := s.providerRegistry.Get(connectorProvider)
 	if !ok {
 		return ""
 	}
 
-	return reg.Endpoints.APIBase
+	if reg.Endpoints.APIBase != "" {
+		return reg.Endpoints.APIBase
+	}
+
+	return reg.Endpoints.Identity
 }
 
 // SelectedOrganizationSlug returns the org identifier currently configured on
@@ -722,7 +731,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 	listCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	orgs, err := cfg.ListOrgs(listCtx, httpClient, s.providerAPIBase(dbMeta.Provider))
+	orgs, err := cfg.ListOrgs(listCtx, httpClient, s.providerListBaseURL(dbMeta.Provider))
 	if err != nil {
 		s.logger.WarnCtx(
 			ctx,

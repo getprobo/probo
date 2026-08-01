@@ -65,6 +65,15 @@ type Endpoints struct {
 	// real provider while the driver talks to the override.
 	Probe string
 
+	// Identity is the host a provider's driver resolves its real data host
+	// from, for providers that split identity from data. DocuSign is the
+	// case: this endpoint's response carries the per-account `base_uri` that
+	// every eSignature call then targets, so moving Identity moves the whole
+	// connector while moving APIBase alone could not — DocuSign has no static
+	// data root to move. Empty for every provider whose data host is either
+	// static (APIBase) or supplied per connection.
+	Identity string
+
 	// APIBase is the data API root the driver joins paths onto, or — for a
 	// GraphQL provider (Linear, Monday, Railway), which exposes a single
 	// endpoint and nothing to join — that endpoint, used verbatim. Set it

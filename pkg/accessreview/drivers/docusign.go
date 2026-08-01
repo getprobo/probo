@@ -40,8 +40,9 @@ import (
 // eSignature Users API. The account is the one the user picked after OAuth
 // (a DocuSign user may have access to several).
 type DocuSignDriver struct {
-	httpClient *http.Client
-	accountID  string
+	httpClient  *http.Client
+	accountID   string
+	userInfoURL string
 }
 
 var _ Driver = (*DocuSignDriver)(nil)
@@ -61,11 +62,15 @@ type docusignAccount struct {
 }
 
 // fetchDocuSignAccounts returns the DocuSign accounts the access token can
-// reach, from the OAuth2 userinfo endpoint. A non-2xx response yields
-// errDocuSignUserInfoStatus; request and decode failures surface as ordinary
-// errors so transient conditions stay distinguishable from a dead token.
-func fetchDocuSignAccounts(ctx context.Context, httpClient *http.Client) ([]docusignAccount, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, docusignUserInfoEndpoint, nil)
+// reach, from the OAuth2 userinfo endpoint at userInfoURL. userInfoURL is the
+// registration's Endpoints.Identity, threaded in by every caller (the driver,
+// the name resolver, and the org picker) rather than hardcoded, so a
+// deployment-supplied override reaches every one of them instead of only the
+// health probe. A non-2xx response yields errDocuSignUserInfoStatus; request
+// and decode failures surface as ordinary errors so transient conditions stay
+// distinguishable from a dead token.
+func fetchDocuSignAccounts(ctx context.Context, httpClient *http.Client, userInfoURL string) ([]docusignAccount, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, userInfoURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create docusign userinfo request: %w", err)
 	}
@@ -113,23 +118,13 @@ type docusignUsersResponse struct {
 	EndPosition   string `json:"endPosition"`
 }
 
-const (
-	// docusignUserInfoEndpoint is DocuSign's identity host, deliberately a
-	// literal rather than a value joined onto an injected base URL. DocuSign
-	// splits identity from data: this host is static, but the eSignature host
-	// is discovered per account from the `base_uri` this very response
-	// carries (see discoverBaseURI). Pinning it as the registration's APIBase
-	// would let an override move the userinfo call while the data calls kept
-	// going to production, splitting one connector across two environments.
-	// It must stay byte-identical to the registration's Endpoints.Probe.
-	docusignUserInfoEndpoint = "https://account.docusign.com/oauth/userinfo"
-	docusignUsersPageSize    = 100
-)
+const docusignUsersPageSize = 100
 
-func NewDocuSignDriver(httpClient *http.Client, accountID string) *DocuSignDriver {
+func NewDocuSignDriver(httpClient *http.Client, accountID string, userInfoURL string) *DocuSignDriver {
 	return &DocuSignDriver{
-		httpClient: httpClient,
-		accountID:  accountID,
+		httpClient:  httpClient,
+		accountID:   accountID,
+		userInfoURL: userInfoURL,
 	}
 }
 
@@ -212,7 +207,7 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 // userinfo endpoint. DocuSign issues account-specific base URIs, so the
 // eSignature REST host cannot be hardcoded.
 func (d *DocuSignDriver) discoverBaseURI(ctx context.Context) (string, error) {
-	accounts, err := fetchDocuSignAccounts(ctx, d.httpClient)
+	accounts, err := fetchDocuSignAccounts(ctx, d.httpClient, d.userInfoURL)
 	if err != nil {
 		return "", err
 	}
@@ -274,16 +269,17 @@ func (d *DocuSignDriver) queryUsers(ctx context.Context, baseURI string, account
 // docusignNameResolver resolves the configured DocuSign account's name from
 // the OAuth2 userinfo endpoint, for the AccessReviewSource title.
 type docusignNameResolver struct {
-	httpClient *http.Client
-	accountID  string
+	httpClient  *http.Client
+	accountID   string
+	userInfoURL string
 }
 
-func NewDocuSignNameResolver(httpClient *http.Client, accountID string) NameResolver {
-	return &docusignNameResolver{httpClient: httpClient, accountID: accountID}
+func NewDocuSignNameResolver(httpClient *http.Client, accountID string, userInfoURL string) NameResolver {
+	return &docusignNameResolver{httpClient: httpClient, accountID: accountID, userInfoURL: userInfoURL}
 }
 
 func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	accounts, err := fetchDocuSignAccounts(ctx, r.httpClient)
+	accounts, err := fetchDocuSignAccounts(ctx, r.httpClient, r.userInfoURL)
 	if err != nil {
 		// A dead token (non-2xx) is terminal: the source-name worker marks
 		// the source synced on ("", nil), so it stops retrying. Transient and
@@ -308,9 +304,12 @@ func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string,
 // user can access, from the OAuth2 userinfo endpoint. A user may belong to
 // several accounts; the picker scopes the access source to one. The account
 // UUID is surfaced as the Organization slug (it is what the driver and name
-// resolver key off).
-func ListDocuSignOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	accounts, err := fetchDocuSignAccounts(ctx, httpClient)
+// resolver key off). userInfoURL is the registration's Endpoints.Identity
+// (falling back to Endpoints.APIBase upstream — see
+// accessreview.providerListBaseURL), so the picker follows a deployment
+// override the same way the driver and name resolver do.
+func ListDocuSignOrganizations(ctx context.Context, httpClient *http.Client, userInfoURL string) ([]Organization, error) {
+	accounts, err := fetchDocuSignAccounts(ctx, httpClient, userInfoURL)
 	if err != nil {
 		return nil, err
 	}

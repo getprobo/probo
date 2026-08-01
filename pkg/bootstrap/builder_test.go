@@ -976,6 +976,7 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_AUTH"] = "https://account-d.docusign.com/oauth/auth"
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_TOKEN"] = "https://account-d.docusign.com/oauth/token"
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_PROBE"] = "https://account-d.docusign.com/oauth/userinfo"
+	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_IDENTITY"] = "https://account-d.docusign.com/oauth/userinfo"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
@@ -992,6 +993,7 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 	assert.Equal(t, "https://account-d.docusign.com/oauth/auth", got.Auth)
 	assert.Equal(t, "https://account-d.docusign.com/oauth/token", got.Token)
 	assert.Equal(t, "https://account-d.docusign.com/oauth/userinfo", got.Probe)
+	assert.Equal(t, "https://account-d.docusign.com/oauth/userinfo", got.Identity)
 	assert.Empty(t, got.APIBase, "an unset field must stay empty so the compiled default survives")
 }
 

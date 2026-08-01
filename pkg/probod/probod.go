@@ -346,10 +346,11 @@ func (impl *Implm) Run(
 	endpointOverrides := make(provider.EndpointOverrides, len(impl.cfg.ConnectorEndpoints))
 	for p, e := range impl.cfg.ConnectorEndpoints {
 		endpointOverrides[coredata.ConnectorProvider(strings.ToUpper(p))] = provider.Endpoints{
-			Auth:    e.Auth,
-			Token:   e.Token,
-			Probe:   e.Probe,
-			APIBase: e.APIBase,
+			Auth:     e.Auth,
+			Token:    e.Token,
+			Probe:    e.Probe,
+			Identity: e.Identity,
+			APIBase:  e.APIBase,
 		}
 	}
 

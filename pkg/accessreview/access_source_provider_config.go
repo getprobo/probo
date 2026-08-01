@@ -35,9 +35,10 @@ import (
 // PagerDuty and Vercel where the value is captured during OAuth).
 //
 // Its baseURL is the API root of the provider's registration
-// (Endpoints.APIBase), so the picker targets the same host the driver
-// does when a deployment overrides it. "" means no override is in scope
-// and the lister falls back to its production base.
+// (Endpoints.APIBase, falling back to Endpoints.Identity — see
+// Service.providerListBaseURL), so the picker targets the same host the
+// driver does when a deployment overrides it. "" means no override is in
+// scope and the lister falls back to its production base.
 //
 // SelectedSlug returns the currently-configured org identifier for the
 // connector (empty string if none).
@@ -48,17 +49,6 @@ type providerOrgConfig struct {
 	ListOrgs     func(ctx context.Context, httpClient *http.Client, baseURL string) ([]drivers.Organization, error)
 	SelectedSlug func(c *coredata.Connector) string
 	NeedsPicker  bool
-}
-
-// baseUnawareLister adapts a lister that composes its own host to the
-// ListOrgs shape. It is for providers whose registration declares no
-// APIBase — there is no override for the picker to follow.
-func baseUnawareLister(
-	list func(ctx context.Context, httpClient *http.Client) ([]drivers.Organization, error),
-) func(ctx context.Context, httpClient *http.Client, baseURL string) ([]drivers.Organization, error) {
-	return func(ctx context.Context, httpClient *http.Client, _ string) ([]drivers.Organization, error) {
-		return list(ctx, httpClient)
-	}
 }
 
 // providerOrgConfigs is the single source of truth that the access-source
@@ -139,8 +129,12 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
+	// DocuSign declares no APIBase, but its Identity host is exactly what
+	// ListDocuSignOrganizations calls, so ListOrgs takes the baseURL
+	// providerListBaseURL resolves directly — an Identity override must
+	// reach the picker the same way it reaches the driver and name resolver.
 	coredata.ConnectorProviderDocuSign: {
-		ListOrgs: baseUnawareLister(drivers.ListDocuSignOrganizations),
+		ListOrgs: drivers.ListDocuSignOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](c)
 			return s.AccountID

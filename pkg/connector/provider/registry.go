@@ -136,23 +136,41 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: RequiresManagedResourceID requires ManagedAPIKey", reg.Provider)
 	}
 
-	// A Probe on a different host from APIBase would let a deployment move the
-	// driver to another host while the connection check keeps hitting the real
-	// provider — a half-migrated connector that reports healthy. The two are
-	// the same provider's API, so their hosts must agree.
-	if reg.Endpoints.APIBase != "" && reg.Endpoints.Probe != "" {
-		base, err := url.Parse(reg.Endpoints.APIBase)
-		if err != nil {
-			return fmt.Errorf("cannot register connector provider %q: cannot parse APIBase: %w", reg.Provider, err)
-		}
-
+	// A Probe on a different host from APIBase (or Identity) would let a
+	// deployment move the driver to another host while the connection check
+	// keeps hitting the real provider — a half-migrated connector that
+	// reports healthy. All three describe the same provider's API or identity
+	// surface, so their hosts must agree. This is what turns an override that
+	// moves Probe without moving the matching field (an operator forgetting
+	// DocuSign's Identity, say) into a boot failure instead of the silent
+	// split applyEndpointOverride's own check cannot see, because it only
+	// runs before Register on the still-being-assembled Endpoints.
+	if reg.Endpoints.Probe != "" && (reg.Endpoints.APIBase != "" || reg.Endpoints.Identity != "") {
 		probe, err := url.Parse(reg.Endpoints.Probe)
 		if err != nil {
 			return fmt.Errorf("cannot register connector provider %q: cannot parse Probe: %w", reg.Provider, err)
 		}
 
-		if !strings.EqualFold(base.Host, probe.Host) {
-			return fmt.Errorf("cannot register connector provider %q: Probe host %q does not match APIBase host %q", reg.Provider, probe.Host, base.Host)
+		if reg.Endpoints.APIBase != "" {
+			base, err := url.Parse(reg.Endpoints.APIBase)
+			if err != nil {
+				return fmt.Errorf("cannot register connector provider %q: cannot parse APIBase: %w", reg.Provider, err)
+			}
+
+			if !strings.EqualFold(base.Host, probe.Host) {
+				return fmt.Errorf("cannot register connector provider %q: Probe host %q does not match APIBase host %q", reg.Provider, probe.Host, base.Host)
+			}
+		}
+
+		if reg.Endpoints.Identity != "" {
+			identity, err := url.Parse(reg.Endpoints.Identity)
+			if err != nil {
+				return fmt.Errorf("cannot register connector provider %q: cannot parse Identity: %w", reg.Provider, err)
+			}
+
+			if !strings.EqualFold(identity.Host, probe.Host) {
+				return fmt.Errorf("cannot register connector provider %q: Probe host %q does not match Identity host %q", reg.Provider, probe.Host, identity.Host)
+			}
 		}
 	}
 

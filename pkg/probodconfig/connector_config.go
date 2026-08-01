@@ -64,10 +64,16 @@ type ConnectorConfig struct {
 // field the provider builds per flow or per connection cannot be overridden —
 // probod refuses to start rather than accept a value it would ignore.
 type ConnectorEndpointsConfig struct {
-	Auth    string `json:"auth,omitempty"`
-	Token   string `json:"token,omitempty"`
-	Probe   string `json:"probe,omitempty"`
-	APIBase string `json:"api-base,omitempty"`
+	Auth  string `json:"auth,omitempty"`
+	Token string `json:"token,omitempty"`
+	Probe string `json:"probe,omitempty"`
+	// Identity is the host a provider's driver resolves its real data host
+	// from, for providers that split the two. It must move together with
+	// Probe — probod refuses to start on a mismatch, because a moved probe
+	// with a stale identity host reports healthy while every data call still
+	// reaches the real provider.
+	Identity string `json:"identity,omitempty"`
+	APIBase  string `json:"api-base,omitempty"`
 }
 
 type ConnectorConfigOAuth2 struct {

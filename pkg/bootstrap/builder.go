@@ -564,7 +564,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		)
 	}
 
-	cfg.Probod.ConnectorEndpoints = b.buildConnectorEndpoints()
+	connectorEndpoints, err := b.buildConnectorEndpoints()
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.Probod.ConnectorEndpoints = connectorEndpoints
 
 	if b.resolver.Err() != nil {
 		return nil, b.resolver.Err()
@@ -756,18 +761,27 @@ func (b *Builder) parseOriginsList(s string) []string {
 //
 // probod rejects an override that names an unknown provider or a field the
 // provider does not resolve statically, so a typo fails at startup rather than
-// sitting in the config doing nothing.
-func (b *Builder) buildConnectorEndpoints() map[string]probodconfig.ConnectorEndpointsConfig {
+// sitting in the config doing nothing. Building the registry can itself fail
+// on a bad Registration, which is why this returns an error instead of
+// panicking: that failure is an operator-visible startup condition here, not
+// the programmer error NewBuiltinRegistry treats it as elsewhere.
+func (b *Builder) buildConnectorEndpoints() (map[string]probodconfig.ConnectorEndpointsConfig, error) {
+	reg, err := provider.NewBuiltinRegistryWith()
+	if err != nil {
+		return nil, fmt.Errorf("cannot build connector provider registry: %w", err)
+	}
+
 	var endpoints map[string]probodconfig.ConnectorEndpointsConfig
 
-	for _, reg := range provider.NewBuiltinRegistry().All() {
-		prefix := "PROBOD_CONNECTOR_" + string(reg.Provider) + "_ENDPOINT_"
+	for _, r := range reg.All() {
+		prefix := "PROBOD_CONNECTOR_" + string(r.Provider) + "_ENDPOINT_"
 
 		e := probodconfig.ConnectorEndpointsConfig{
-			Auth:    b.resolver.getEnv(prefix + "AUTH"),
-			Token:   b.resolver.getEnv(prefix + "TOKEN"),
-			Probe:   b.resolver.getEnv(prefix + "PROBE"),
-			APIBase: b.resolver.getEnv(prefix + "API_BASE"),
+			Auth:     b.resolver.getEnv(prefix + "AUTH"),
+			Token:    b.resolver.getEnv(prefix + "TOKEN"),
+			Probe:    b.resolver.getEnv(prefix + "PROBE"),
+			Identity: b.resolver.getEnv(prefix + "IDENTITY"),
+			APIBase:  b.resolver.getEnv(prefix + "API_BASE"),
 		}
 
 		if e == (probodconfig.ConnectorEndpointsConfig{}) {
@@ -778,8 +792,8 @@ func (b *Builder) buildConnectorEndpoints() map[string]probodconfig.ConnectorEnd
 			endpoints = make(map[string]probodconfig.ConnectorEndpointsConfig)
 		}
 
-		endpoints[string(reg.Provider)] = e
+		endpoints[string(r.Provider)] = e
 	}
 
-	return endpoints
+	return endpoints, nil
 }

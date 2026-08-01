@@ -41,12 +41,16 @@ func docusignRegistration() *Registration {
 		// identity host as APIBase would look right and be wrong: an override
 		// would move the userinfo call while every data call still went to the
 		// account's real data center, splitting one connector across two
-		// environments. Probe below and drivers.docusignUserInfoEndpoint are
-		// the same URL and must stay byte-identical.
+		// environments. Identity records that host instead: NewDriver,
+		// NewNameResolver and the org picker all resolve accounts from it, so
+		// an override reaches every one of them, not just the health check.
+		// Probe and Identity are the same URL here and Register enforces that
+		// their hosts stay in agreement.
 		Endpoints: Endpoints{
-			Auth:  "https://account.docusign.com/oauth/auth",
-			Token: "https://account.docusign.com/oauth/token",
-			Probe: "https://account.docusign.com/oauth/userinfo",
+			Auth:     "https://account.docusign.com/oauth/auth",
+			Token:    "https://account.docusign.com/oauth/token",
+			Probe:    "https://account.docusign.com/oauth/userinfo",
+			Identity: "https://account.docusign.com/oauth/userinfo",
 		},
 		TokenEndpointAuth: "basic-form",
 		// signature grants the eSignature REST API (the userinfo probe and
@@ -60,7 +64,7 @@ func docusignRegistration() *Registration {
 		// Basic auth (basic-form); PKCE rides along as the documented hardening
 		// layer, replaying the verifier in the token request body.
 		RequiresPKCE: true,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read docusign connector settings: %w", err)
@@ -70,16 +74,16 @@ func docusignRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create docusign driver: account_id is required")
 			}
 
-			return drivers.NewDocuSignDriver(c, s.AccountID), nil
+			return drivers.NewDocuSignDriver(c, s.AccountID, ep.Identity), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read docusign connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewDocuSignNameResolver(c, s.AccountID)
+			return drivers.NewDocuSignNameResolver(c, s.AccountID, ep.Identity)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, accountID string) error {
 			return c.SetSettings(&coredata.DocuSignConnectorSettings{AccountID: accountID})
