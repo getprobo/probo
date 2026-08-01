@@ -12,8 +12,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "~6.0.3",
-    "vitest": "^4.1.8"
+    "typescript": "~7.0.2",
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "react": "^19.2.7",
@@ -22,6 +22,6 @@
     "relay-runtime": "^21.0.1"
   },
   "dependencies": {
-    "graphql": "^17.0.1"
+    "graphql": "^17.0.2"
   }
 }
