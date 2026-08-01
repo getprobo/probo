@@ -242,7 +242,9 @@ func TestSameHostNextPageURLRejectsDisguisedHosts(t *testing.T) {
 		{name: "scheme downgrade", next: "http://api.example.com/v1/members", wantErr: true},
 		{name: "absolute off-host", next: "https://evil.example.com/members", wantErr: true},
 		{name: "embedded credentials stripped", next: "https://u" + ":p@api.example.com/v1/members", want: "https://api.example.com/v1/members"},
-		{name: "relative stays on host", next: "members?page=2", want: "https://api.example.com/members?page=2"},
+		// Resolving this against the base replaces the last segment, so it
+		// leaves /v1 behind — see TestSameHostNextPageURLStaysOnCollection.
+		{name: "relative reference re-roots off the base path", next: "members?page=2", wantErr: true},
 		{name: "absolute same host", next: "https://api.example.com/v1/members?page=2", want: "https://api.example.com/v1/members?page=2"},
 	}
 
@@ -254,6 +256,84 @@ func TestSameHostNextPageURLRejectsDisguisedHosts(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.NotContains(t, err.Error(), "evil.example.com", "error must not echo the attacker-supplied host")
+				assert.Empty(t, got)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestSameHostNextPageURLStaysOnCollection covers the same-host escapes that a
+// host check alone lets through: traversal to another endpoint, and a relative
+// reference re-rooting off a versioned base. The connection's bearer token
+// rides on every one of these requests.
+func TestSameHostNextPageURLStaysOnCollection(t *testing.T) {
+	t.Parallel()
+
+	const versioned = "https://graph.microsoft.com/v1.0"
+
+	tests := []struct {
+		name    string
+		base    string
+		next    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "traversal to another endpoint",
+			base:    versioned,
+			next:    "../../../oauth2/token",
+			wantErr: true,
+		},
+		{
+			// Resolving this against the base yields /users, silently dropping
+			// the version segment and paging a different API.
+			name:    "relative reference re-roots off the version",
+			base:    versioned,
+			next:    "users?$skiptoken=X",
+			wantErr: true,
+		},
+		{
+			name: "absolute next on the collection",
+			base: versioned,
+			next: versioned + "/users?$skiptoken=X",
+			want: versioned + "/users?$skiptoken=X",
+		},
+		{
+			// A base with no path constrains nothing beyond the host, which is
+			// the shape most providers use.
+			name: "pathless base still allows any path",
+			base: "https://api.github.com",
+			next: "https://api.github.com/organizations/1/members?page=2",
+			want: "https://api.github.com/organizations/1/members?page=2",
+		},
+		{
+			name: "query-only next on a collection base",
+			base: "https://us.posthog.com/api/organizations/@current/members",
+			next: "?offset=100",
+			want: "https://us.posthog.com/api/organizations/@current/members?offset=100",
+		},
+		{
+			// A sibling path sharing a textual prefix must not pass as though
+			// it were under the base.
+			name:    "sibling path sharing a prefix",
+			base:    "https://api.example.com/v1",
+			next:    "https://api.example.com/v10/secrets",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := sameHostNextPageURL("example", tt.base, tt.next)
+			if tt.wantErr {
+				require.Error(t, err)
 				assert.Empty(t, got)
 
 				return

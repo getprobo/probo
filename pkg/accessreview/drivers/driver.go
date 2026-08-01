@@ -103,6 +103,20 @@ func sameHostNextPageURL(provider, baseURL, next string) (string, error) {
 		return "", fmt.Errorf("cannot follow %s next page URL: cross-host pagination is not allowed", provider)
 	}
 
+	// Pinning the host is not enough: "../../oauth2/token" resolves to the same
+	// host and would send the connection's bearer token to an endpoint that is
+	// not the collection being paged. Requiring the resolved path to stay under
+	// the base also stops a relative reference from silently re-rooting — a
+	// bare "users?..." against a versioned base resolves to /users, dropping
+	// the version segment and quietly paging the wrong API.
+	basePath := strings.TrimSuffix(base.EscapedPath(), "/")
+	if basePath != "" {
+		got := resolved.EscapedPath()
+		if got != basePath && !strings.HasPrefix(got, basePath+"/") {
+			return "", fmt.Errorf("cannot follow %s next page URL: it leaves the collection path", provider)
+		}
+	}
+
 	// Credentials embedded in the reference would reach http.NewRequest and, on
 	// some transports, take precedence over the Authorization header the
 	// connection sets. Drop them; the host is already pinned to the base.
