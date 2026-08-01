@@ -173,3 +173,53 @@ func parseClickUpTime(raw string) (time.Time, error) {
 
 	return time.UnixMilli(ms).UTC(), nil
 }
+
+// clickupNameResolver resolves the ClickUp team name.
+type clickupNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewClickUpNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &clickupNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", url.PathEscape(r.teamID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build clickup team URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create clickup team request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute clickup team request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("clickup team", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Team struct {
+			Name string `json:"name"`
+		} `json:"team"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode clickup team response: %w", err)
+	}
+
+	return resp.Team.Name, nil
+}

@@ -177,3 +177,56 @@ func gitlabRoles(level int) []string {
 		return []string{}
 	}
 }
+
+// gitlabNameResolver resolves the GitLab group name.
+type gitlabNameResolver struct {
+	httpClient *http.Client
+	groupID    string
+}
+
+func NewGitLabNameResolver(httpClient *http.Client, groupID string) NameResolver {
+	return &gitlabNameResolver{httpClient: httpClient, groupID: groupID}
+}
+
+func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.groupID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", url.PathEscape(r.groupID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build gitlab group URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create gitlab group request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute gitlab group request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("gitlab group", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name     string `json:"name"`
+		FullPath string `json:"full_path"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode gitlab group response: %w", err)
+	}
+
+	if resp.Name != "" {
+		return resp.Name, nil
+	}
+
+	return resp.FullPath, nil
+}

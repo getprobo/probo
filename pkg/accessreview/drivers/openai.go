@@ -154,3 +154,47 @@ func openaiRoles(role string) []string {
 		return []string{"Member"}
 	}
 }
+
+// openaiNameResolver resolves the OpenAI organization name.
+type openaiNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewOpenAINameResolver(httpClient *http.Client) NameResolver {
+	return &openaiNameResolver{httpClient: httpClient}
+}
+
+func (r *openaiNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.openai.com/v1/organization",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create openai organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute openai organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		// OpenAI may not support this endpoint for all token types.
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode openai organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}

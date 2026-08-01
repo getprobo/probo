@@ -203,3 +203,20 @@ func (d *ZendeskDriver) queryUsers(ctx context.Context, afterCursor string) (*ze
 
 	return &out, nil
 }
+
+// zendeskNameResolver returns the Zendesk subdomain stored in connector
+// settings (e.g. "acme" for acme.zendesk.com), captured at connect time. No
+// HTTP call is required; the AccessReviewSource title becomes "Zendesk <subdomain>".
+// Account-name resolution is intentionally omitted to keep the scope to
+// users:read (Zendesk exposes no human account name on that scope).
+type zendeskNameResolver struct {
+	subdomain string
+}
+
+func NewZendeskNameResolver(subdomain string) NameResolver {
+	return &zendeskNameResolver{subdomain: subdomain}
+}
+
+func (r *zendeskNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.subdomain, nil
+}

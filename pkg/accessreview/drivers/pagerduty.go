@@ -167,3 +167,18 @@ func (d *PagerDutyDriver) queryUsers(ctx context.Context, offset, limit int) (*p
 
 	return &page, nil
 }
+
+// pagerdutyNameResolver returns the PagerDuty subdomain stored in connector
+// settings. The subdomain is captured during the OAuth callback (see
+// handleConnectorComplete) so no HTTP call is required.
+type pagerdutyNameResolver struct {
+	subdomain string
+}
+
+func NewPagerDutyNameResolver(subdomain string) NameResolver {
+	return &pagerdutyNameResolver{subdomain: subdomain}
+}
+
+func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.subdomain, nil
+}

@@ -141,3 +141,46 @@ func (d *BrexDriver) queryUsers(ctx context.Context, cursor *string) (*brexUsers
 
 	return &resp, nil
 }
+
+// brexNameResolver resolves the Brex company name.
+type brexNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewBrexNameResolver(httpClient *http.Client) NameResolver {
+	return &brexNameResolver{httpClient: httpClient}
+}
+
+func (r *brexNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://platform.brexapis.com/v2/company",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create brex company request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute brex company request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("brex company", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		LegalName string `json:"legal_name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode brex company response: %w", err)
+	}
+
+	return resp.LegalName, nil
+}

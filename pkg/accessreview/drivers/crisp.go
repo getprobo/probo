@@ -226,3 +226,45 @@ func crispFullName(details crispOperatorDetails, fallback string) string {
 
 	return fallback
 }
+
+// crispNameResolver resolves the Crisp website name via GET /v1/website/{id},
+// for the AccessReviewSource title. Like the driver it sends the X-Crisp-Tier
+// header; the Basic credential is supplied by the connection transport.
+type crispNameResolver struct {
+	httpClient *http.Client
+	websiteID  string
+}
+
+func NewCrispNameResolver(httpClient *http.Client, websiteID string) NameResolver {
+	return &crispNameResolver{httpClient: httpClient, websiteID: websiteID}
+}
+
+func (r *crispNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.websiteID == "" {
+		return "", nil
+	}
+
+	httpResp, err := crispGet(ctx, r.httpClient, "website", "website", url.PathEscape(r.websiteID))
+	if err != nil {
+		return "", err
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked token, stale website id) must not make the
+	// source-name worker retry forever — keep the generic name.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Data struct {
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode crisp website response: %w", err)
+	}
+
+	return resp.Data.Name, nil
+}

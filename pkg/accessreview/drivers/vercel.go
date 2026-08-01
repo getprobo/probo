@@ -29,6 +29,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -171,4 +172,75 @@ func (d *VercelDriver) queryMembers(ctx context.Context, cursor string) (*vercel
 	}
 
 	return &page, nil
+}
+
+// vercelNameResolver resolves the Vercel team name. When the captured
+// TeamID is a personal-account UID, the v2 teams endpoint returns 404;
+// the resolver falls back to /v2/user and uses `username` (or `name`)
+// as the display name.
+type vercelNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewVercelNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &vercelNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	teamURL, err := url.JoinPath("https://api.vercel.com", "v2", "teams", url.PathEscape(r.teamID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build vercel team URL: %w", err)
+	}
+
+	teamReq, err := http.NewRequestWithContext(ctx, http.MethodGet, teamURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create vercel team request: %w", err)
+	}
+
+	teamReq.Header.Set("Accept", "application/json")
+
+	teamResp, err := r.httpClient.Do(teamReq)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute vercel team request: %w", err)
+	}
+
+	defer func() { _ = teamResp.Body.Close() }()
+
+	if teamResp.StatusCode == http.StatusOK {
+		var body struct {
+			Name string `json:"name"`
+			Slug string `json:"slug"`
+		}
+		if err := json.NewDecoder(teamResp.Body).Decode(&body); err != nil {
+			return "", fmt.Errorf("cannot decode vercel team response: %w", err)
+		}
+
+		if body.Name != "" {
+			return body.Name, nil
+		}
+
+		return body.Slug, nil
+	}
+
+	if teamResp.StatusCode != http.StatusNotFound {
+		return "", nameStatusError("vercel team", teamResp.StatusCode)
+	}
+
+	// Personal-account fallback: /v2/teams/<uid> returns 404, but
+	// /v2/user works with the same Bearer token.
+	user, err := connector.FetchVercelUser(ctx, r.httpClient)
+	if err != nil {
+		return "", err
+	}
+
+	if user.Username != "" {
+		return user.Username, nil
+	}
+
+	return user.Name, nil
 }

@@ -283,3 +283,47 @@ func hubspotUserActive(user hubspotUser) *bool {
 
 	return nil
 }
+
+// hubspotNameResolver resolves the HubSpot account name.
+type hubspotNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewHubSpotNameResolver(httpClient *http.Client) NameResolver {
+	return &hubspotNameResolver{httpClient: httpClient}
+}
+
+func (r *hubspotNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.hubapi.com/account-info/v3/details",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create hubspot account-info request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute hubspot account-info request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("hubspot account info", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		PortalID    int    `json:"portalId"`
+		AccountName string `json:"accountName"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode hubspot account-info response: %w", err)
+	}
+
+	return resp.AccountName, nil
+}

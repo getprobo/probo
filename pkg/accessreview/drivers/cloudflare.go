@@ -262,3 +262,60 @@ func (d *CloudflareDriver) queryMembers(ctx context.Context, accountID string, p
 
 	return &resp, nil
 }
+
+// cloudflareNameResolver resolves the Cloudflare account name.
+type cloudflareNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewCloudflareNameResolver(httpClient *http.Client) NameResolver {
+	return &cloudflareNameResolver{httpClient: httpClient}
+}
+
+func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	cfURL, err := url.Parse("https://api.cloudflare.com/client/v4/accounts")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
+	}
+
+	q := cfURL.Query()
+	q.Set("page", "1")
+	// Cloudflare requires per_page in the range 5..50; per_page=1 is rejected
+	// with a 400 (which, before terminal classification, caused a 400 storm).
+	// Do not "optimize" this back down to 1.
+	q.Set("per_page", "50")
+	cfURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfURL.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create cloudflare accounts request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute cloudflare accounts request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("cloudflare accounts", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Result []struct {
+			Name string `json:"name"`
+		} `json:"result"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode cloudflare accounts response: %w", err)
+	}
+
+	if len(resp.Result) == 0 {
+		return "", fmt.Errorf("no cloudflare accounts found")
+	}
+
+	return resp.Result[0].Name, nil
+}

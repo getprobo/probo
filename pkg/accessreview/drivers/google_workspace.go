@@ -22,12 +22,14 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
 
@@ -122,4 +124,32 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	}
 
 	return nil, fmt.Errorf("cannot list all google workspace accounts: %w", ErrPaginationLimitReached)
+}
+
+// googleWorkspaceNameResolver resolves the Google Workspace primary domain.
+type googleWorkspaceNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewGoogleWorkspaceNameResolver(httpClient *http.Client) NameResolver {
+	return &googleWorkspaceNameResolver{httpClient: httpClient}
+}
+
+func (r *googleWorkspaceNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	adminService, err := admin.NewService(ctx, option.WithHTTPClient(r.httpClient))
+	if err != nil {
+		return "", fmt.Errorf("cannot create google admin service: %w", err)
+	}
+
+	customer, err := adminService.Customers.Get("my_customer").Context(ctx).Do()
+	if err != nil {
+		var gerr *googleapi.Error
+		if errors.As(err, &gerr) && gerr.Code == http.StatusForbidden {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("cannot fetch google workspace customer: %w", err)
+	}
+
+	return customer.CustomerDomain, nil
 }

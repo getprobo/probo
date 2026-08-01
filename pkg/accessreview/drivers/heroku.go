@@ -347,3 +347,57 @@ func herokuListAll[T any](ctx context.Context, client *http.Client, endpoint, la
 
 	return nil, fmt.Errorf("cannot list all heroku %s: %w", label, ErrPaginationLimitReached)
 }
+
+// herokuNameResolver resolves the Heroku team name.
+type herokuNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewHerokuNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &herokuNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	// A personal account has no Team to name; short-circuit before hitting
+	// GET /teams/@personal, which 404s and would loop the source-name worker.
+	if r.teamID == herokuPersonalAccountSlug {
+		return herokuPersonalAccountDisplayName, nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(r.teamID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build heroku team URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create heroku team request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute heroku team request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("heroku team", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode heroku team response: %w", err)
+	}
+
+	return resp.Name, nil
+}

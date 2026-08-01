@@ -119,3 +119,14 @@ func (d *ResendDriver) fetchAPIKeys(ctx context.Context) (*resendAPIKeysResponse
 
 	return &resp, nil
 }
+
+// resendNameResolver returns a static name for Resend.
+type resendNameResolver struct{}
+
+func NewResendNameResolver() NameResolver {
+	return &resendNameResolver{}
+}
+
+func (r *resendNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return "Resend", nil
+}

@@ -347,3 +347,52 @@ func segmentRolesAndAdmin(perms []segmentPermission) ([]string, bool) {
 
 	return roles, isAdmin
 }
+
+// segmentNameResolver resolves the Segment workspace name. The Public API
+// binds a token to exactly one workspace and exposes it at the API root, so
+// the base URL (which already encodes the US/EU region) is the whole request.
+type segmentNameResolver struct {
+	httpClient *http.Client
+	baseURL    string
+}
+
+func NewSegmentNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &segmentNameResolver{httpClient: httpClient, baseURL: baseURL}
+}
+
+func (r *segmentNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.baseURL == "" {
+		return "", nil
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, r.baseURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create segment workspace request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute segment workspace request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("segment workspace", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Workspace struct {
+				Name string `json:"name"`
+			} `json:"workspace"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode segment workspace response: %w", err)
+	}
+
+	return resp.Data.Workspace.Name, nil
+}

@@ -178,3 +178,50 @@ func squareFullName(m squareTeamMember, email string) string {
 
 	return name
 }
+
+// squareNameResolver resolves the Square merchant's business name via
+// GET /v2/merchants/me. A Square token — OAuth or PAT — is scoped to a single
+// merchant, so "me" resolves it for both connection kinds.
+type squareNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewSquareNameResolver(httpClient *http.Client) NameResolver {
+	return &squareNameResolver{httpClient: httpClient}
+}
+
+func (r *squareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://connect.squareup.com/v2/merchants/me", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create square merchant request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Square-Version", squareAPIVersion)
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute square merchant request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	// A non-2xx (revoked token, missing scope) is terminal: keep the generic
+	// source name rather than make the source-name worker retry forever.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Merchant struct {
+			BusinessName string `json:"business_name"`
+		} `json:"merchant"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode square merchant response: %w", err)
+	}
+
+	return resp.Merchant.BusinessName, nil
+}

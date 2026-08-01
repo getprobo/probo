@@ -426,3 +426,76 @@ func (d *Microsoft365Driver) fetchJSON(ctx context.Context, url string, dst any)
 
 	return nil
 }
+
+// microsoft365NameResolver resolves the Microsoft 365 tenant display name
+// via the Microsoft Graph organization endpoint.
+type microsoft365NameResolver struct {
+	httpClient *http.Client
+}
+
+func NewMicrosoft365NameResolver(httpClient *http.Client) NameResolver {
+	return &microsoft365NameResolver{httpClient: httpClient}
+}
+
+func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	msURL, err := url.Parse("https://graph.microsoft.com/v1.0/organization")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse microsoft 365 organization URL: %w", err)
+	}
+
+	q := msURL.Query()
+	q.Set("$select", "displayName,verifiedDomains")
+	msURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, msURL.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create microsoft 365 organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute microsoft 365 organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("microsoft 365 organization", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Value []struct {
+			DisplayName     string `json:"displayName"`
+			VerifiedDomains []struct {
+				Name      string `json:"name"`
+				IsDefault bool   `json:"isDefault"`
+			} `json:"verifiedDomains"`
+		} `json:"value"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode microsoft 365 organization response: %w", err)
+	}
+
+	if len(resp.Value) == 0 {
+		return "", nil
+	}
+
+	org := resp.Value[0]
+	if org.DisplayName != "" {
+		return org.DisplayName, nil
+	}
+
+	for _, d := range org.VerifiedDomains {
+		if d.IsDefault {
+			return d.Name, nil
+		}
+	}
+
+	if len(org.VerifiedDomains) > 0 {
+		return org.VerifiedDomains[0].Name, nil
+	}
+
+	return "", nil
+}

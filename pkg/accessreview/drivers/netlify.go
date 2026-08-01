@@ -139,3 +139,51 @@ func (d *NetlifyDriver) queryMembers(ctx context.Context, endpoint string) ([]ne
 
 	return members, httpResp.Header.Get("Link"), nil
 }
+
+// netlifyNameResolver resolves the Netlify account name.
+type netlifyNameResolver struct {
+	httpClient  *http.Client
+	accountSlug string
+}
+
+func NewNetlifyNameResolver(httpClient *http.Client, accountSlug string) NameResolver {
+	return &netlifyNameResolver{httpClient: httpClient, accountSlug: accountSlug}
+}
+
+func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.accountSlug == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.netlify.com", "api", "v1", "accounts", url.PathEscape(r.accountSlug))
+	if err != nil {
+		return "", fmt.Errorf("cannot build netlify account URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create netlify account request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute netlify account request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("netlify account", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode netlify account response: %w", err)
+	}
+
+	return resp.Name, nil
+}

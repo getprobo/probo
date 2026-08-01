@@ -243,3 +243,59 @@ func sentryAuthMethod(flags map[string]bool, user *sentryUser) coredata.AccessRe
 
 	return coredata.AccessReviewEntryAuthMethodUnknown
 }
+
+// sentryNameResolver resolves the Sentry organization name.
+type sentryNameResolver struct {
+	httpClient *http.Client
+	orgSlug    string
+}
+
+func NewSentryNameResolver(httpClient *http.Client, orgSlug string) NameResolver {
+	return &sentryNameResolver{httpClient: httpClient, orgSlug: orgSlug}
+}
+
+func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.orgSlug == "" {
+		return "", nil
+	}
+
+	// Trailing slash required; see SentryDriver.ListAccounts.
+	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug)+"/")
+	if err != nil {
+		return "", fmt.Errorf("cannot build sentry organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create sentry organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute sentry organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// 404 means the stored slug is no longer visible to this token.
+	// Treat as terminal so the worker stops looping; other non-2xx
+	// stay retryable for token refresh / transient outages.
+	if httpResp.StatusCode == http.StatusNotFound {
+		return "", nil
+	}
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("sentry organization", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode sentry organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}

@@ -262,3 +262,36 @@ func (d *DocuSignDriver) queryUsers(ctx context.Context, baseURI string, account
 
 	return &resp, nil
 }
+
+// docusignNameResolver resolves the configured DocuSign account's name from
+// the OAuth2 userinfo endpoint, for the AccessReviewSource title.
+type docusignNameResolver struct {
+	httpClient *http.Client
+	accountID  string
+}
+
+func NewDocuSignNameResolver(httpClient *http.Client, accountID string) NameResolver {
+	return &docusignNameResolver{httpClient: httpClient, accountID: accountID}
+}
+
+func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	accounts, err := fetchDocuSignAccounts(ctx, r.httpClient)
+	if err != nil {
+		// A dead token (non-2xx) is terminal: the source-name worker marks
+		// the source synced on ("", nil), so it stops retrying. Transient and
+		// decode failures stay errors so the worker retries.
+		if errors.Is(err, errDocuSignUserInfoStatus) {
+			return "", nil
+		}
+
+		return "", err
+	}
+
+	for _, account := range accounts {
+		if account.AccountID == r.accountID {
+			return account.AccountName, nil
+		}
+	}
+
+	return "", nil
+}

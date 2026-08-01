@@ -178,3 +178,67 @@ func (d *MondayDriver) queryUsers(ctx context.Context, page int) ([]mondayUser, 
 
 	return resp.Data.Users, nil
 }
+
+// mondayNameResolver resolves the Monday.com account name via GraphQL.
+type mondayNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewMondayNameResolver(httpClient *http.Client) NameResolver {
+	return &mondayNameResolver{httpClient: httpClient}
+}
+
+func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	body := struct {
+		Query string `json:"query"`
+	}{
+		Query: `query { account { id name slug tier } }`,
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal monday account query: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, mondayGraphQLEndpoint, bytes.NewReader(payload))
+	if err != nil {
+		return "", fmt.Errorf("cannot create monday account request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute monday account request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("monday account", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Account struct {
+				Name string `json:"name"`
+			} `json:"account"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode monday account response: %w", err)
+	}
+
+	if len(resp.Errors) > 0 {
+		// Provider-supplied messages may carry tenant identifiers or
+		// query fragments — never embed them. Driver scrubs the same
+		// field; keep both call sites aligned.
+		return "", fmt.Errorf("cannot fetch monday account: graphql error")
+	}
+
+	return resp.Data.Account.Name, nil
+}

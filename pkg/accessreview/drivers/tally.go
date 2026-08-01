@@ -198,3 +198,50 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 func tallyRoles() []string {
 	return []string{"Invited"}
 }
+
+// tallyNameResolver resolves the Tally organization name.
+type tallyNameResolver struct {
+	httpClient     *http.Client
+	organizationID string
+}
+
+func NewTallyNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+	return &tallyNameResolver{
+		httpClient:     httpClient,
+		organizationID: organizationID,
+	}
+}
+
+func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	endpoint, err := url.JoinPath("https://api.tally.so", "organizations", url.PathEscape(r.organizationID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build tally organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create tally organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute tally organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("tally organization", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode tally organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}

@@ -130,3 +130,44 @@ func intercomRoles(hasInboxSeat bool) []string {
 
 	return []string{"Viewer"}
 }
+
+// intercomNameResolver resolves the Intercom app name.
+type intercomNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewIntercomNameResolver(httpClient *http.Client) NameResolver {
+	return &intercomNameResolver{httpClient: httpClient}
+}
+
+func (r *intercomNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.intercom.io/me", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create intercom me request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Intercom-Version", "2.11")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute intercom me request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		App struct {
+			Name string `json:"name"`
+		} `json:"app"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode intercom me response: %w", err)
+	}
+
+	return resp.App.Name, nil
+}

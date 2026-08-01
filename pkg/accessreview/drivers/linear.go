@@ -216,3 +216,64 @@ func linearRoles(admin, guest bool) []string {
 		return []string{"Member"}
 	}
 }
+
+// linearNameResolver resolves the Linear organization name via GraphQL.
+type linearNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewLinearNameResolver(httpClient *http.Client) NameResolver {
+	return &linearNameResolver{httpClient: httpClient}
+}
+
+func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	body := struct {
+		Query string `json:"query"`
+	}{
+		Query: `{ organization { name } }`,
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal linear organization query: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, linearGraphQLEndpoint, bytes.NewReader(payload))
+	if err != nil {
+		return "", fmt.Errorf("cannot create linear organization request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute linear organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("linear organization", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Organization struct {
+				Name string `json:"name"`
+			} `json:"organization"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode linear organization response: %w", err)
+	}
+
+	if len(resp.Errors) > 0 {
+		return "", fmt.Errorf("linear graphql error: %s", resp.Errors[0].Message)
+	}
+
+	return resp.Data.Organization.Name, nil
+}

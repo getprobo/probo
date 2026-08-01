@@ -334,3 +334,55 @@ func (d *GitHubDriver) fetchUserProfile(ctx context.Context, login string) (*git
 
 	return &profile, nil
 }
+
+// githubNameResolver resolves the GitHub organization name.
+type githubNameResolver struct {
+	httpClient *http.Client
+	org        string
+}
+
+func NewGitHubNameResolver(httpClient *http.Client, org string) NameResolver {
+	return &githubNameResolver{httpClient: httpClient, org: org}
+}
+
+func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.org == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(r.org))
+	if err != nil {
+		return "", fmt.Errorf("cannot build github organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create github organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute github organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("github organization", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode github organization response: %w", err)
+	}
+
+	if resp.Name == "" {
+		return r.org, nil
+	}
+
+	return resp.Name, nil
+}

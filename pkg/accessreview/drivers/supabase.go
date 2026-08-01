@@ -130,3 +130,16 @@ func (d *SupabaseDriver) queryMembers(ctx context.Context) ([]supabaseMember, er
 
 	return members, nil
 }
+
+// supabaseNameResolver returns the Supabase organization slug as the name.
+type supabaseNameResolver struct {
+	orgSlug string
+}
+
+func NewSupabaseNameResolver(orgSlug string) NameResolver {
+	return &supabaseNameResolver{orgSlug: orgSlug}
+}
+
+func (r *supabaseNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.orgSlug, nil
+}

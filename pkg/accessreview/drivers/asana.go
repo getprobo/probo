@@ -151,3 +151,53 @@ func (d *AsanaDriver) queryUsers(ctx context.Context, endpoint string) (*asanaUs
 
 	return &page, nil
 }
+
+// asanaNameResolver resolves the Asana workspace name.
+type asanaNameResolver struct {
+	httpClient   *http.Client
+	workspaceGID string
+}
+
+func NewAsanaNameResolver(httpClient *http.Client, workspaceGID string) NameResolver {
+	return &asanaNameResolver{httpClient: httpClient, workspaceGID: workspaceGID}
+}
+
+func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.workspaceGID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", url.PathEscape(r.workspaceGID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build asana workspace URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create asana workspace request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute asana workspace request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("asana workspace", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode asana workspace response: %w", err)
+	}
+
+	return resp.Data.Name, nil
+}

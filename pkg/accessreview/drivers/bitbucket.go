@@ -148,3 +148,56 @@ func (d *BitbucketDriver) queryMembers(ctx context.Context, endpoint string) (*b
 
 	return &page, nil
 }
+
+// bitbucketNameResolver resolves the Bitbucket workspace name.
+type bitbucketNameResolver struct {
+	httpClient *http.Client
+	workspace  string
+}
+
+func NewBitbucketNameResolver(httpClient *http.Client, workspace string) NameResolver {
+	return &bitbucketNameResolver{httpClient: httpClient, workspace: workspace}
+}
+
+func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.workspace == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", url.PathEscape(r.workspace))
+	if err != nil {
+		return "", fmt.Errorf("cannot build bitbucket workspace URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create bitbucket workspace request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute bitbucket workspace request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nameStatusError("bitbucket workspace", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+		Slug string `json:"slug"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode bitbucket workspace response: %w", err)
+	}
+
+	if resp.Name != "" {
+		return resp.Name, nil
+	}
+
+	return resp.Slug, nil
+}

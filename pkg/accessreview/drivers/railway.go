@@ -296,3 +296,62 @@ func railwayMFAStatus(hasSignal, enabled bool) coredata.MFAStatus {
 
 	return coredata.MFAStatusDisabled
 }
+
+// railwayNameResolver resolves the Railway workspace name via GraphQL, for the
+// AccessReviewSource title. With a single workspace it uses that workspace's
+// name; with several it falls back to the account holder's name, since the
+// source spans all of the account's workspaces.
+type railwayNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewRailwayNameResolver(httpClient *http.Client) NameResolver {
+	return &railwayNameResolver{httpClient: httpClient}
+}
+
+func (r *railwayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	httpResp, err := railwayPost(ctx, r.httpClient, "account", `query { me { name workspaces { id name } } }`)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx must not make the source-name worker retry forever
+	// — keep the generic name. (Railway also signals auth failure with a 200 +
+	// errors body, handled below.)
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Data struct {
+			Me *struct {
+				Name       string `json:"name"`
+				Workspaces []struct {
+					Name string `json:"name"`
+				} `json:"workspaces"`
+			} `json:"me"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode railway account response: %w", err)
+	}
+
+	if len(resp.Errors) > 0 || resp.Data.Me == nil {
+		return "", nil
+	}
+
+	// A single workspace names the source directly; with several (or none) fall
+	// back to the account holder's display name. Never the email — a terminal
+	// empty result keeps the generic source name, which the worker tolerates.
+	me := resp.Data.Me
+	if len(me.Workspaces) == 1 {
+		return me.Workspaces[0].Name, nil
+	}
+
+	return me.Name, nil
+}

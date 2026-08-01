@@ -193,3 +193,40 @@ func slackMFAStatus(has2FA bool) coredata.MFAStatus {
 
 	return coredata.MFAStatusDisabled
 }
+
+// slackNameResolver resolves the Slack workspace name via auth.test.
+type slackNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewSlackNameResolver(httpClient *http.Client) NameResolver {
+	return &slackNameResolver{httpClient: httpClient}
+}
+
+func (r *slackNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://slack.com/api/auth.test", nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create slack auth.test request: %w", err)
+	}
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute slack auth.test request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	var resp struct {
+		OK   bool   `json:"ok"`
+		Team string `json:"team"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode slack auth.test response: %w", err)
+	}
+
+	if !resp.OK {
+		return "", fmt.Errorf("slack auth.test returned ok=false")
+	}
+
+	return resp.Team, nil
+}
