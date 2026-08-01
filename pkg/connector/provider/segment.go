@@ -47,7 +47,7 @@ func segmentRegistration() *Registration {
 			{Key: "region", Label: "Region", Required: true},
 		},
 		BuildProbeURL: buildSegmentProbeURL,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read segment connector settings: %w", err)
@@ -59,7 +59,7 @@ func segmentRegistration() *Registration {
 
 			return drivers.NewSegmentDriver(c, s.BaseURL), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read segment connector settings", log.Error(err))

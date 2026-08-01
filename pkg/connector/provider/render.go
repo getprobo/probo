@@ -47,7 +47,7 @@ func renderRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "workspaceId", Label: "Workspace ID", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read render connector settings: %w", err)
@@ -59,7 +59,7 @@ func renderRegistration() *Registration {
 
 			return drivers.NewRenderDriver(c, s.OwnerID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read render connector settings", log.Error(err))

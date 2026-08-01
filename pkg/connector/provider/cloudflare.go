@@ -38,10 +38,10 @@ func cloudflareRegistration() *Registration {
 			Probe: "https://api.cloudflare.com/client/v4/user/tokens/verify",
 		},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewCloudflareDriver(c), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
 			return drivers.NewCloudflareNameResolver(c)
 		},
 	}

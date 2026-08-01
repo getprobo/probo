@@ -40,7 +40,7 @@ func asanaRegistration() *Registration {
 			Probe: "https://app.asana.com/api/1.0/users/me",
 		},
 		OAuth2Scopes: []string{"workspaces:read", "users:read"},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read asana connector settings: %w", err)
@@ -52,7 +52,7 @@ func asanaRegistration() *Registration {
 
 			return drivers.NewAsanaDriver(c, s.WorkspaceGID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read asana connector settings", log.Error(err))

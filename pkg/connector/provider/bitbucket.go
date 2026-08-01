@@ -42,7 +42,7 @@ func bitbucketRegistration() *Registration {
 			Token: "https://bitbucket.org/site/oauth2/access_token",
 			Probe: "https://api.bitbucket.org/2.0/user",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
@@ -54,7 +54,7 @@ func bitbucketRegistration() *Registration {
 
 			return drivers.NewBitbucketDriver(c, s.Workspace), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read bitbucket connector settings", log.Error(err))

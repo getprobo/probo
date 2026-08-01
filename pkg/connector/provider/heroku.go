@@ -43,7 +43,7 @@ func herokuRegistration() *Registration {
 		// so probe via a closure that sends application/vnd.heroku+json.
 		Probe:        probeHeroku,
 		OAuth2Scopes: []string{"read"},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
@@ -54,7 +54,7 @@ func herokuRegistration() *Registration {
 			// (app owner + collaborators) in that case.
 			return drivers.NewHerokuDriver(c, s.TeamID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read heroku connector settings", log.Error(err))

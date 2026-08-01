@@ -70,7 +70,7 @@ func TestNeonNewDriver(t *testing.T) {
 			RawSettings: raw,
 		}
 
-		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil)
+		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.NeonDriver{}, drv)
 	})
@@ -83,7 +83,7 @@ func TestNeonNewDriver(t *testing.T) {
 			RawSettings: []byte(`{}`),
 		}
 
-		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil)
+		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "organization_id is required")
 	})
@@ -107,6 +107,6 @@ func TestNeonNewNameResolver(t *testing.T) {
 		RawSettings: raw,
 	}
 
-	resolver := reg.NewNameResolver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil)
+	resolver := reg.NewNameResolver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
 	require.NotNil(t, resolver, "neon name resolver must be constructed for a valid connector")
 }

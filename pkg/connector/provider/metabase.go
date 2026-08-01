@@ -43,7 +43,7 @@ func metabaseRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "instanceUrl", Label: "Instance URL", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read metabase connector settings: %w", err)
@@ -60,7 +60,7 @@ func metabaseRegistration() *Registration {
 
 			return drivers.NewMetabaseDriver(c, instanceURL), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read metabase connector settings", log.Error(err))

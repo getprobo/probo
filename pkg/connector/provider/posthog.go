@@ -71,7 +71,7 @@ func posthogRegistration() *Registration {
 			{Key: "instanceUrl", Label: "Instance URL"},
 		},
 
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read posthog connector settings: %w", err)
@@ -82,7 +82,7 @@ func posthogRegistration() *Registration {
 			// oauth.posthog.com gateway does not serve the data API.
 			return drivers.NewPostHogDriver(c, s.BaseURL), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read posthog connector settings", log.Error(err))

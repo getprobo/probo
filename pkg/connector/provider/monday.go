@@ -39,10 +39,10 @@ func mondayRegistration() *Registration {
 		},
 		Probe:        probeMonday,
 		OAuth2Scopes: []string{"users:read", "account:read"},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewMondayDriver(c), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
 			return drivers.NewMondayNameResolver(c)
 		},
 	}

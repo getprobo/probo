@@ -139,7 +139,7 @@ func TestApplyOAuth2Defaults_CopiesSiteClosures(t *testing.T) {
 		RequiresPKCE:           true,
 		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
 		BuildTokenURLForDomain: connector.DatadogTokenURL,
-		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger, provider.Endpoints) (drivers.Driver, error) {
 			return nil, nil
 		},
 	}))
@@ -173,7 +173,7 @@ func TestApplyOAuth2Defaults_CopiesTokenURLForSiteClosure(t *testing.T) {
 		OAuth2Scopes:         []string{"users:read"},
 		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
 		BuildTokenURLForSite: connector.ZendeskTokenURL,
-		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger, provider.Endpoints) (drivers.Driver, error) {
 			return nil, nil
 		},
 	}))

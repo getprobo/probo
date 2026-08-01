@@ -43,10 +43,10 @@ func anthropicRegistration() *Registration {
 		// only and takes a single admin key (sk-ant-admin...) per org.
 		APIKeyHeader: "x-api-key",
 		Probe:        probeAnthropic,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewAnthropicDriver(c), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
 			return drivers.NewAnthropicNameResolver(c)
 		},
 	}

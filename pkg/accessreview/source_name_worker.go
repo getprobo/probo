@@ -292,5 +292,5 @@ func (h *sourceNameHandler) buildResolver(
 		return nil
 	}
 
-	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger)
+	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints)
 }

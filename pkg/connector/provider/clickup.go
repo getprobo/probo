@@ -40,7 +40,7 @@ func clickupRegistration() *Registration {
 			Token: "https://api.clickup.com/api/v2/oauth/token",
 			Probe: "https://api.clickup.com/api/v2/user",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
@@ -52,7 +52,7 @@ func clickupRegistration() *Registration {
 
 			return drivers.NewClickUpDriver(c, s.TeamID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read clickup connector settings", log.Error(err))

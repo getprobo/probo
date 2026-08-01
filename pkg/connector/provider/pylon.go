@@ -51,7 +51,7 @@ func pylonRegistration() *Registration {
 		// No NewNameResolver: GET /users carries no organization name, so the
 		// source keeps its generic name (the source-name worker degrades
 		// gracefully).
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewPylonDriver(c), nil
 		},
 	}

@@ -43,7 +43,7 @@ func signozRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			settings, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read signoz connector settings: %w", err)
@@ -56,7 +56,7 @@ func signozRegistration() *Registration {
 
 			return drivers.NewSigNozDriver(c, baseURL), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			settings, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read signoz connector settings", log.Error(err))

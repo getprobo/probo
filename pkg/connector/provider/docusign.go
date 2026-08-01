@@ -51,7 +51,7 @@ func docusignRegistration() *Registration {
 		// Basic auth (basic-form); PKCE rides along as the documented hardening
 		// layer, replaying the verifier in the token request body.
 		RequiresPKCE: true,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read docusign connector settings: %w", err)
@@ -63,7 +63,7 @@ func docusignRegistration() *Registration {
 
 			return drivers.NewDocuSignDriver(c, s.AccountID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read docusign connector settings", log.Error(err))

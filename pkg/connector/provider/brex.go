@@ -44,10 +44,10 @@ func brexRegistration() *Registration {
 		// reconnect to re-consent to the added scope.
 		OAuth2Scopes:   []string{"openid", "offline_access", "users.readonly", "companies.readonly"},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewBrexDriver(c), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
 			return drivers.NewBrexNameResolver(c)
 		},
 	}

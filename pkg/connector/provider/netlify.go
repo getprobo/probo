@@ -40,7 +40,7 @@ func netlifyRegistration() *Registration {
 			Token: "https://api.netlify.com/oauth/token",
 			Probe: "https://api.netlify.com/api/v1/user",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read netlify connector settings: %w", err)
@@ -52,7 +52,7 @@ func netlifyRegistration() *Registration {
 
 			return drivers.NewNetlifyDriver(c, s.AccountSlug), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read netlify connector settings", log.Error(err))

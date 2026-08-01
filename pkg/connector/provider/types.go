@@ -212,8 +212,15 @@ type Registration struct {
 	Probe func(context.Context, *http.Client, *coredata.Connector) error
 
 	// Factory closures — wired by Stages 2 and 3.
-	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error)
-	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger) drivers.NameResolver
+	// NewDriver and NewNameResolver receive the registration's resolved
+	// Endpoints as their last argument rather than closing over it. The
+	// closures are written inside a &Registration{...} composite literal and
+	// so cannot reference the value being built; capturing a copy declared
+	// above the literal would compile and test green while silently ignoring
+	// any later override of reg.Endpoints. Passing it at call time makes that
+	// failure unrepresentable.
+	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) (drivers.Driver, error)
+	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) drivers.NameResolver
 	SetOrganizationSettings func(*coredata.Connector, string) error
 }
 

@@ -53,7 +53,7 @@ func vercelRegistration() *Registration {
 
 			return u, nil
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
@@ -65,7 +65,7 @@ func vercelRegistration() *Registration {
 
 			return drivers.NewVercelDriver(c, s.TeamID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read vercel connector settings", log.Error(err))

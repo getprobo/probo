@@ -44,7 +44,7 @@ func githubRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organization", Label: "Organization", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read github connector settings: %w", err)
@@ -56,7 +56,7 @@ func githubRegistration() *Registration {
 
 			return drivers.NewGitHubDriver(c, s.Organization, logger.Named("github")), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read github connector settings", log.Error(err))

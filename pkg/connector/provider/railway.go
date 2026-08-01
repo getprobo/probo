@@ -41,10 +41,10 @@ func railwayRegistration() *Registration {
 		// returns HTTP 200 with an errors body for a rejected token, so the
 		// probe must inspect the body — hence a custom Probe.
 		Probe: probeRailway,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewRailwayDriver(c), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
 			return drivers.NewRailwayNameResolver(c)
 		},
 	}

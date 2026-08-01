@@ -42,7 +42,7 @@ func tallyRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
@@ -54,7 +54,7 @@ func tallyRegistration() *Registration {
 
 			return drivers.NewTallyDriver(c, s.OrganizationID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read tally connector settings", log.Error(err))

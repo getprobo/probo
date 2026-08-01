@@ -302,5 +302,5 @@ func (s *Service) resolveDriver(
 		return nil, fmt.Errorf("cannot resolve driver: unsupported provider %q", dbConnector.Provider)
 	}
 
-	return reg.NewDriver(ctx, httpClient, dbConnector, s.logger)
+	return reg.NewDriver(ctx, httpClient, dbConnector, s.logger, reg.Endpoints)
 }

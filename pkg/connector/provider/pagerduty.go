@@ -44,12 +44,12 @@ func pagerdutyRegistration() *Registration {
 		},
 		OAuth2Scopes: []string{"users.read"},
 		RequiresPKCE: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			// PagerDuty's REST API uses the regional api.pagerduty.com host;
 			// the driver does not consume the per-tenant subdomain.
 			return drivers.NewPagerDutyDriver(c), nil
 		},
-		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read pagerduty connector settings", log.Error(err))

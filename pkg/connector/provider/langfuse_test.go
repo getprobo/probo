@@ -76,7 +76,7 @@ func TestLangfuseNewDriver(t *testing.T) {
 			RawSettings: raw,
 		}
 
-		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil)
+		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.LangfuseDriver{}, drv)
 	})
@@ -89,7 +89,7 @@ func TestLangfuseNewDriver(t *testing.T) {
 			RawSettings: []byte(`{}`),
 		}
 
-		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil)
+		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "base_url is required")
 	})
@@ -107,7 +107,7 @@ func TestLangfuseNewDriver(t *testing.T) {
 			RawSettings: raw,
 		}
 
-		_, err = reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil)
+		_, err = reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "base_url must be an http(s) URL")
 	})

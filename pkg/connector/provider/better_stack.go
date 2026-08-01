@@ -48,7 +48,7 @@ func betterStackRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "teamName", Label: "Team Name", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read better stack connector settings: %w", err)
@@ -61,7 +61,7 @@ func betterStackRegistration() *Registration {
 
 			return drivers.NewBetterStackDriver(c, teamName), nil
 		},
-		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read better stack connector settings", log.Error(err))

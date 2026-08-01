@@ -40,7 +40,7 @@ func gitlabRegistration() *Registration {
 			Probe: "https://gitlab.com/api/v4/user",
 		},
 		OAuth2Scopes: []string{"read_api"},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
@@ -52,7 +52,7 @@ func gitlabRegistration() *Registration {
 
 			return drivers.NewGitLabDriver(c, s.GroupID), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read gitlab connector settings", log.Error(err))
