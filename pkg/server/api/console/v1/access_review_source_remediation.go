@@ -38,6 +38,12 @@ import (
 // owner can grant — Probo access to an organization that turned on OAuth App
 // access restrictions. Such an organization never appears in GET /user/orgs,
 // which is the usual reason the listing comes back empty.
+//
+// The page's origin comes from the registration's Endpoints.Auth rather than a
+// literal, because it is the same web app that served the authorize screen the
+// client ID below was consented on — a deployment that repoints GitHub would
+// otherwise send the user to look for a sandbox client ID in the real
+// github.com settings.
 func (r *Resolver) emptyOrganizationsRemediationURL(ctx context.Context, provider coredata.ConnectorProvider) *string {
 	if provider != coredata.ConnectorProviderGitHub {
 		return nil
@@ -53,8 +59,22 @@ func (r *Resolver) emptyOrganizationsRemediationURL(ctx context.Context, provide
 		return nil
 	}
 
+	reg, ok := r.providerRegistry.Get(provider)
+	if !ok {
+		return nil
+	}
+
+	authURL, err := url.Parse(reg.Endpoints.Auth)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot parse github authorize URL", log.Error(err))
+
+		return nil
+	}
+
+	origin := &url.URL{Scheme: authURL.Scheme, Host: authURL.Host}
+
 	u, err := url.JoinPath(
-		"https://github.com",
+		origin.String(),
 		"settings", "connections", "applications",
 		url.PathEscape(oauth2Connector.ClientID),
 	)

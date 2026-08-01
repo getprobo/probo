@@ -367,6 +367,18 @@ func (impl *Implm) Run(
 		l.Warn("connector provider endpoints overridden by configuration", log.String("provider", string(p)))
 	}
 
+	// The Slack notification service and sending worker talk to the workspace
+	// the SLACK connector row was minted against, presenting the token that
+	// row's OAuth handshake produced. They therefore have to follow the SLACK
+	// registration's APIBase rather than pin slack.com, or an override would
+	// send a sandbox-issued token to the real vendor.
+	slackRegistration, ok := providerRegistry.Get(coredata.ConnectorProviderSlack)
+	if !ok {
+		return fmt.Errorf("cannot configure slack notifications: no slack connector provider registered")
+	}
+
+	slackAPIBaseURL := slackRegistration.Endpoints.APIBase
+
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
@@ -651,6 +663,7 @@ func (impl *Implm) Run(
 		impl.cfg.GetSlackSigningSecret(),
 		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
+		slackAPIBaseURL,
 		l.Named("slack"),
 	)
 
@@ -885,6 +898,7 @@ func (impl *Implm) Run(
 		pgClient,
 		l.Named("slack-sending-worker"),
 		encryptionKey,
+		slackAPIBaseURL,
 		nil,
 		worker.WithInterval(time.Duration(impl.cfg.Notifications.Slack.SenderInterval)*time.Second),
 		worker.WithMaxConcurrency(1),

@@ -40,6 +40,12 @@ type (
 		logger        *log.Logger
 		encryptionKey cipher.EncryptionKey
 		staleAfter    time.Duration
+		// slackAPIBaseURL is the SLACK provider registration's
+		// Endpoints.APIBase. The handler loads the very connector row that
+		// override applies to (LoadOneByOrganizationIDAndProvider below), so
+		// the token it presents was minted by the overridden Endpoints.Token
+		// and must not be presented anywhere else.
+		slackAPIBaseURL string
 	}
 
 	SendingWorkerOption func(*sendingHandler)
@@ -58,14 +64,16 @@ func NewSendingWorker(
 	pgClient *pg.Client,
 	logger *log.Logger,
 	encryptionKey cipher.EncryptionKey,
+	slackAPIBaseURL string,
 	handlerOpts []SendingWorkerOption,
 	workerOpts ...worker.Option,
 ) *worker.Worker[coredata.SlackMessage] {
 	h := &sendingHandler{
-		pg:            pgClient,
-		logger:        logger,
-		encryptionKey: encryptionKey,
-		staleAfter:    5 * time.Minute,
+		pg:              pgClient,
+		logger:          logger,
+		encryptionKey:   encryptionKey,
+		staleAfter:      5 * time.Minute,
+		slackAPIBaseURL: slackAPIBaseURL,
 	}
 
 	for _, opt := range handlerOpts {
@@ -236,7 +244,7 @@ func (h *sendingHandler) sendMessage(ctx context.Context, message *coredata.Slac
 		return nil, nil, fmt.Errorf("cannot send slack message: connector has no channel ID")
 	}
 
-	client := NewClient(h.logger)
+	client := NewClient(h.slackAPIBaseURL, h.logger)
 
 	if message.Type == coredata.SlackMessageTypeWelcome {
 		if err := client.JoinChannel(ctx, slackConn.AccessToken, slackConn.Settings.ChannelID); err != nil {
@@ -263,7 +271,7 @@ func (h *sendingHandler) updateMessage(ctx context.Context, message *coredata.Sl
 		return fmt.Errorf("cannot update slack message: %w", err)
 	}
 
-	client := NewClient(h.logger)
+	client := NewClient(h.slackAPIBaseURL, h.logger)
 
 	if err := client.UpdateMessage(ctx, slackConn.AccessToken, *message.ChannelID, *message.MessageTS, message.Body); err != nil {
 		h.logger.ErrorCtx(ctx, "cannot update message on Slack", log.Error(err))

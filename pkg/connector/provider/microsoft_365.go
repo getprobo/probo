@@ -33,6 +33,15 @@ func microsoft365Registration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderMicrosoft365,
 		DisplayName: "Microsoft 365",
+		// See Registration.EndpointOverrideUnsupported: the SCIM bridge
+		// (pkg/iam/scim/bridge/provider/microsoft365) is a second consumer of
+		// this very connector row — bridge_runner_sync hands it the row's
+		// OAuth2 client — and it dials graphBaseURL, a const pinned in that
+		// package rather than a value read from Endpoints. An override would
+		// move the driver and the probe below while every bridge sync kept
+		// hitting the real Graph with a token the override minted. Its sibling
+		// Google Workspace is refused for the same class of reason.
+		EndpointOverrideUnsupported: "its SCIM bridge dials a graph.microsoft.com base pinned in pkg/iam/scim/bridge/provider/microsoft365, not a value in Endpoints",
 		Endpoints: Endpoints{
 			Auth:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
 			Token: "https://login.microsoftonline.com/common/oauth2/v2.0/token",

@@ -35,6 +35,10 @@ type Service struct {
 	slackSigningSecret string
 	baseURL            string
 	tokenSecret        string
+	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
+	// threaded in by probod so a deployment that repoints the Slack connector
+	// moves these calls too. See NewClient.
+	slackAPIBaseURL string
 }
 
 func NewService(
@@ -42,6 +46,7 @@ func NewService(
 	slackSigningSecret string,
 	baseURL string,
 	tokenSecret string,
+	slackAPIBaseURL string,
 	logger *log.Logger,
 ) *Service {
 	return &Service{
@@ -50,11 +55,12 @@ func NewService(
 		slackSigningSecret: slackSigningSecret,
 		baseURL:            baseURL,
 		tokenSecret:        tokenSecret,
+		slackAPIBaseURL:    slackAPIBaseURL,
 	}
 }
 
 func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.logger)
+	return NewClient(s.slackAPIBaseURL, s.logger)
 }
 
 func (s *Service) GetSlackSigningSecret() string {

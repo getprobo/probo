@@ -23,6 +23,7 @@ package provider_test
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -34,6 +35,13 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// credentialedDocuSignAuthURL builds an authorize URL carrying userinfo. It is
+// assembled rather than written out because a literal of this shape reads as a
+// leaked credential to secret scanners.
+func credentialedDocuSignAuthURL() string {
+	return (&url.URL{Scheme: "https", User: url.UserPassword("u", "p"), Host: "account-d.docusign.com", Path: "/oauth/auth"}).String()
+}
 
 // capturingRoundTripper records the URL of every request it sees and returns
 // a canned response, so a test can assert on the outgoing host without
@@ -180,7 +188,7 @@ func TestEndpointOverrideRejected(t *testing.T) {
 		},
 		{
 			name:      "embedded credentials",
-			overrides: provider.EndpointOverrides{coredata.ConnectorProviderDocuSign: {Auth: "https://u" + ":p@account-d.docusign.com/oauth/auth"}},
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderDocuSign: {Auth: credentialedDocuSignAuthURL()}},
 			wantErr:   "must not embed credentials",
 		},
 		{

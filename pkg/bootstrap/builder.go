@@ -844,13 +844,13 @@ func (b *Builder) checkConnectorEndpointEnvTypos(known map[string]bool) error {
 
 		rest := strings.TrimPrefix(key, prefix)
 
-		idx := strings.Index(rest, infix)
-		if idx < 0 {
+		before, after, ok := strings.Cut(rest, infix)
+		if !ok {
 			continue
 		}
 
-		providerSeg := rest[:idx]
-		fieldSeg := rest[idx+len(infix):]
+		providerSeg := before
+		fieldSeg := after
 
 		switch {
 		case !known[providerSeg]:
