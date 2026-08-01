@@ -34,7 +34,7 @@ func TestNotionDriver(t *testing.T) {
 
 	rec := newRecorder(t, "testdata/notion", "NOTION_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("NOTION_TOKEN")))
-	driver := NewNotionDriver(client)
+	driver := NewNotionDriver(client, "https://api.notion.com/v1")
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)

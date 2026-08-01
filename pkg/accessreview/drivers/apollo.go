@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -32,7 +33,7 @@ import (
 )
 
 const (
-	apolloUsersEndpoint = "https://api.apollo.io/api/v1/users/search"
+	apolloUsersPath     = "/users/search"
 	apolloUsersPageSize = 100
 )
 
@@ -42,6 +43,7 @@ const (
 // x-api-key header by the connection transport, not here.
 type ApolloDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*ApolloDriver)(nil)
@@ -69,8 +71,8 @@ type apolloUsersResponse struct {
 	} `json:"pagination"`
 }
 
-func NewApolloDriver(httpClient *http.Client) *ApolloDriver {
-	return &ApolloDriver{httpClient: httpClient}
+func NewApolloDriver(httpClient *http.Client, baseURL string) *ApolloDriver {
+	return &ApolloDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *ApolloDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -111,7 +113,12 @@ func (d *ApolloDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 }
 
 func (d *ApolloDriver) fetchUsersPage(ctx context.Context, page int) (*apolloUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apolloUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, apolloUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build apollo users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create apollo users request: %w", err)
 	}

@@ -45,7 +45,7 @@ func TestBetterStackDriver(t *testing.T) {
 
 	client := newVCRClient(rec, bearerAuth(os.Getenv("BETTER_STACK_TOKEN")))
 
-	records, err := NewBetterStackDriver(client, teamName).ListAccounts(context.Background())
+	records, err := NewBetterStackDriver(client, teamName, "https://betterstack.com/api/v2").ListAccounts(context.Background())
 	require.NoError(t, err)
 	assert.Len(t, records, 1)
 
@@ -83,7 +83,7 @@ func TestBetterStackDriverPagination(t *testing.T) {
 
 	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-	records, err := NewBetterStackDriver(client, "acme").ListAccounts(context.Background())
+	records, err := NewBetterStackDriver(client, "acme", "https://betterstack.com/api/v2").ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
 
@@ -108,7 +108,7 @@ func TestBetterStackDriverListAccountsError(t *testing.T) {
 
 	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-	_, err := NewBetterStackDriver(client, "acme").ListAccounts(context.Background())
+	_, err := NewBetterStackDriver(client, "acme", "https://betterstack.com/api/v2").ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected status 401")
 }

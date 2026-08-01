@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -34,6 +35,7 @@ import (
 // REST requests.
 type HubSpotDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*HubSpotDriver)(nil)
@@ -73,13 +75,15 @@ type (
 )
 
 const (
-	hubspotUsersEndpoint = "https://api.hubapi.com/settings/v3/users"
-	hubspotRolesEndpoint = "https://api.hubapi.com/settings/v3/users/roles"
+	hubspotUsersPath       = "/settings/v3/users"
+	hubspotRolesPath       = "/settings/v3/users/roles"
+	hubspotAccountInfoPath = "/account-info/v3/details"
 )
 
-func NewHubSpotDriver(httpClient *http.Client) *HubSpotDriver {
+func NewHubSpotDriver(httpClient *http.Client, baseURL string) *HubSpotDriver {
 	return &HubSpotDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -128,7 +132,12 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 }
 
 func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, hubspotUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, hubspotUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build hubspot users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create hubspot users request: %w", err)
 	}
@@ -166,7 +175,12 @@ func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotU
 }
 
 func (d *HubSpotDriver) fetchRoles(ctx context.Context) (map[string]string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, hubspotRolesEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, hubspotRolesPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build hubspot roles URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create hubspot roles request: %w", err)
 	}
@@ -287,17 +301,23 @@ func hubspotUserActive(user hubspotUser) *bool {
 // hubspotNameResolver resolves the HubSpot account name.
 type hubspotNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewHubSpotNameResolver(httpClient *http.Client) NameResolver {
-	return &hubspotNameResolver{httpClient: httpClient}
+func NewHubSpotNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &hubspotNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *hubspotNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	endpoint, err := url.JoinPath(r.baseURL, hubspotAccountInfoPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build hubspot account-info URL: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		"https://api.hubapi.com/account-info/v3/details",
+		endpoint,
 		nil,
 	)
 	if err != nil {

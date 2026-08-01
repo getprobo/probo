@@ -49,7 +49,7 @@ func TestQoveryDriverListAccounts(t *testing.T) {
 		orgID = "11111111-2222-3333-4444-555555555555"
 	}
 
-	driver := NewQoveryDriver(client, orgID)
+	driver := NewQoveryDriver(client, orgID, "https://api.qovery.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 
@@ -93,7 +93,7 @@ func TestQoveryDriverListAccountsError(t *testing.T) {
 		),
 	}
 
-	driver := NewQoveryDriver(client, "26ac87db-ae79-4be4-bd33-7f839f0e1647")
+	driver := NewQoveryDriver(client, "26ac87db-ae79-4be4-bd33-7f839f0e1647", "https://api.qovery.com")
 	_, err := driver.ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected status 401")

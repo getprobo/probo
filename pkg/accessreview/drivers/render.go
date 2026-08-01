@@ -31,11 +31,15 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const renderAPIBaseURL = "https://api.render.com/v1"
+const (
+	renderOwnersPath  = "owners"
+	renderMembersPath = "members"
+)
 
 type RenderDriver struct {
 	httpClient *http.Client
 	ownerID    string
+	baseURL    string
 }
 
 var _ Driver = (*RenderDriver)(nil)
@@ -53,19 +57,22 @@ type renderMember struct {
 	MFAEnabled bool   `json:"mfaEnabled"`
 }
 
-func NewRenderDriver(httpClient *http.Client, ownerID string) *RenderDriver {
+// NewRenderDriver builds a driver against baseURL, the versioned Render API
+// origin (e.g. https://api.render.com/v1).
+func NewRenderDriver(httpClient *http.Client, ownerID, baseURL string) *RenderDriver {
 	return &RenderDriver{
 		httpClient: httpClient,
 		ownerID:    ownerID,
+		baseURL:    baseURL,
 	}
 }
 
 func (d *RenderDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	endpoint, err := url.JoinPath(
-		renderAPIBaseURL,
-		"owners",
+		d.baseURL,
+		renderOwnersPath,
 		url.PathEscape(d.ownerID),
-		"members",
+		renderMembersPath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build render members URL: %w", err)
@@ -189,12 +196,14 @@ func renderActive(status string) *bool {
 type renderNameResolver struct {
 	httpClient *http.Client
 	ownerID    string
+	baseURL    string
 }
 
-func NewRenderNameResolver(httpClient *http.Client, ownerID string) NameResolver {
+func NewRenderNameResolver(httpClient *http.Client, ownerID, baseURL string) NameResolver {
 	return &renderNameResolver{
 		httpClient: httpClient,
 		ownerID:    ownerID,
+		baseURL:    baseURL,
 	}
 }
 
@@ -203,7 +212,7 @@ func (r *renderNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath(renderAPIBaseURL, "owners", url.PathEscape(r.ownerID))
+	endpoint, err := url.JoinPath(r.baseURL, renderOwnersPath, url.PathEscape(r.ownerID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build render owner URL: %w", err)
 	}

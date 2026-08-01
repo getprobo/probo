@@ -43,12 +43,13 @@ func betterStackRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("better-stack"),
 		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
-			Probe: "https://betterstack.com/api/v2/team-members",
+			APIBase: "https://betterstack.com/api/v2",
+			Probe:   "https://betterstack.com/api/v2/team-members",
 		},
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "teamName", Label: "Team Name", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read better stack connector settings: %w", err)
@@ -59,7 +60,7 @@ func betterStackRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create better stack driver: team_name is required")
 			}
 
-			return drivers.NewBetterStackDriver(c, teamName), nil
+			return drivers.NewBetterStackDriver(c, teamName, ep.APIBase), nil
 		},
 		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)

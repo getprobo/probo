@@ -36,7 +36,7 @@ func TestMercuryDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/mercury", "MERCURY_API_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("MERCURY_API_TOKEN")))
 
-	driver := NewMercuryDriver(client)
+	driver := NewMercuryDriver(client, "https://api.mercury.com/api/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)

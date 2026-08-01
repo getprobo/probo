@@ -165,7 +165,7 @@ func TestNotionNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewNotionNameResolver(client).ResolveInstanceName(context.Background())
+			got, err := NewNotionNameResolver(client, "https://api.notion.com/v1").ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				return
@@ -188,7 +188,7 @@ func TestSentryNameResolver(t *testing.T) {
 			return nil, nil
 		})}
 
-		got, err := NewSentryNameResolver(client, "").ResolveInstanceName(context.Background())
+		got, err := NewSentryNameResolver(client, "", "https://sentry.io/api/0").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -247,7 +247,7 @@ func TestSentryNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewSentryNameResolver(client, "acme").ResolveInstanceName(context.Background())
+			got, err := NewSentryNameResolver(client, "acme", "https://sentry.io/api/0").ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				return
@@ -270,7 +270,7 @@ func TestQoveryNameResolver(t *testing.T) {
 			return nil, nil
 		})}
 
-		got, err := NewQoveryNameResolver(client, "").ResolveInstanceName(context.Background())
+		got, err := NewQoveryNameResolver(client, "", "https://api.qovery.com").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -322,7 +322,7 @@ func TestQoveryNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewQoveryNameResolver(client, "26ac87db-ae79-4be4-bd33-7f839f0e1647").ResolveInstanceName(context.Background())
+			got, err := NewQoveryNameResolver(client, "26ac87db-ae79-4be4-bd33-7f839f0e1647", "https://api.qovery.com").ResolveInstanceName(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
@@ -340,7 +340,7 @@ func TestRenderNameResolver(t *testing.T) {
 			return nil, nil
 		})}
 
-		got, err := NewRenderNameResolver(client, "").ResolveInstanceName(context.Background())
+		got, err := NewRenderNameResolver(client, "", "https://api.render.com/v1").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -392,7 +392,7 @@ func TestRenderNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewRenderNameResolver(client, "tea-test").ResolveInstanceName(context.Background())
+			got, err := NewRenderNameResolver(client, "tea-test", "https://api.render.com/v1").ResolveInstanceName(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
@@ -410,7 +410,7 @@ func TestNeonNameResolver(t *testing.T) {
 			return nil, nil
 		})}
 
-		got, err := NewNeonNameResolver(client, "").ResolveInstanceName(context.Background())
+		got, err := NewNeonNameResolver(client, "", "https://console.neon.tech/api/v2").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -462,7 +462,7 @@ func TestNeonNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewNeonNameResolver(client, "org-cool-breeze-12345678").ResolveInstanceName(context.Background())
+			got, err := NewNeonNameResolver(client, "org-cool-breeze-12345678", "https://console.neon.tech/api/v2").ResolveInstanceName(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
@@ -636,7 +636,7 @@ func TestGitHubNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewGitHubNameResolver(client, tc.org).ResolveInstanceName(context.Background())
+			got, err := NewGitHubNameResolver(client, tc.org, "https://api.github.com").ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				return
@@ -1096,7 +1096,7 @@ func TestUpCloudNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewUpCloudNameResolver(client).ResolveInstanceName(context.Background())
+			got, err := NewUpCloudNameResolver(client, "https://api.upcloud.com/1.3").ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				assert.Equal(t, tc.isTerminal, errors.Is(err, ErrTerminalNameResolution))

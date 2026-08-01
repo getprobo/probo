@@ -43,6 +43,7 @@ func deepgramRegistration() *Registration {
 		// struct, no picker.
 		APIKeyAuthScheme: "Token",
 		Endpoints: Endpoints{
+			APIBase: "https://api.deepgram.com/v1",
 			// ProbeURL lets the connection-status check confirm the key with a
 			// lightweight GET; the transport attaches the `Token` credential and
 			// a dead key returns 401/403.
@@ -51,8 +52,8 @@ func deepgramRegistration() *Registration {
 		//
 		// No NewNameResolver: an account may span several projects, so there
 		// is no single instance name; the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewDeepgramDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewDeepgramDriver(c, ep.APIBase), nil
 		},
 	}
 }

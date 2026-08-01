@@ -43,11 +43,16 @@ import (
 type ClickUpDriver struct {
 	httpClient *http.Client
 	teamID     string
+	baseURL    string
 }
 
 var _ Driver = (*ClickUpDriver)(nil)
 
-func NewClickUpDriver(httpClient *http.Client, teamID string) *ClickUpDriver {
+const clickupTeamSegment = "team"
+
+// NewClickUpDriver builds a driver against baseURL, the versioned ClickUp
+// API origin (e.g. https://api.clickup.com/api/v2).
+func NewClickUpDriver(httpClient *http.Client, teamID, baseURL string) *ClickUpDriver {
 	return &ClickUpDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -55,7 +60,8 @@ func NewClickUpDriver(httpClient *http.Client, teamID string) *ClickUpDriver {
 				maxRetries: 3,
 			},
 		},
-		teamID: teamID,
+		teamID:  teamID,
+		baseURL: baseURL,
 	}
 }
 
@@ -77,7 +83,7 @@ type clickupTeamResponse struct {
 }
 
 func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", url.PathEscape(d.teamID))
+	endpoint, err := url.JoinPath(d.baseURL, clickupTeamSegment, url.PathEscape(d.teamID))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build clickup team URL: %w", err)
 	}
@@ -178,10 +184,13 @@ func parseClickUpTime(raw string) (time.Time, error) {
 type clickupNameResolver struct {
 	httpClient *http.Client
 	teamID     string
+	baseURL    string
 }
 
-func NewClickUpNameResolver(httpClient *http.Client, teamID string) NameResolver {
-	return &clickupNameResolver{httpClient: httpClient, teamID: teamID}
+// NewClickUpNameResolver resolves the team name against baseURL, the
+// versioned ClickUp API origin (e.g. https://api.clickup.com/api/v2).
+func NewClickUpNameResolver(httpClient *http.Client, teamID, baseURL string) NameResolver {
+	return &clickupNameResolver{httpClient: httpClient, teamID: teamID, baseURL: baseURL}
 }
 
 func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -189,7 +198,7 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", url.PathEscape(r.teamID))
+	endpoint, err := url.JoinPath(r.baseURL, clickupTeamSegment, url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build clickup team URL: %w", err)
 	}

@@ -40,7 +40,7 @@ func TestAsanaDriver(t *testing.T) {
 		workspaceGID = "9999999"
 	}
 
-	driver := NewAsanaDriver(client, workspaceGID)
+	driver := NewAsanaDriver(client, workspaceGID, "https://app.asana.com/api/1.0")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

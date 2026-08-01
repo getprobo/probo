@@ -45,11 +45,19 @@ import (
 type GitLabDriver struct {
 	httpClient *http.Client
 	groupID    string
+	baseURL    string
 }
 
 var _ Driver = (*GitLabDriver)(nil)
 
-func NewGitLabDriver(httpClient *http.Client, groupID string) *GitLabDriver {
+const (
+	gitlabGroupsSegment  = "groups"
+	gitlabAllMembersPath = "members/all"
+)
+
+// NewGitLabDriver builds a driver against baseURL, the versioned GitLab API
+// origin (e.g. https://gitlab.com/api/v4).
+func NewGitLabDriver(httpClient *http.Client, groupID, baseURL string) *GitLabDriver {
 	return &GitLabDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -58,6 +66,7 @@ func NewGitLabDriver(httpClient *http.Client, groupID string) *GitLabDriver {
 			},
 		},
 		groupID: groupID,
+		baseURL: baseURL,
 	}
 }
 
@@ -73,7 +82,7 @@ type gitlabMember struct {
 func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", url.PathEscape(d.groupID), "members", "all")
+	u, err := url.JoinPath(d.baseURL, gitlabGroupsSegment, url.PathEscape(d.groupID), gitlabAllMembersPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build gitlab members URL: %w", err)
 	}
@@ -182,10 +191,13 @@ func gitlabRoles(level int) []string {
 type gitlabNameResolver struct {
 	httpClient *http.Client
 	groupID    string
+	baseURL    string
 }
 
-func NewGitLabNameResolver(httpClient *http.Client, groupID string) NameResolver {
-	return &gitlabNameResolver{httpClient: httpClient, groupID: groupID}
+// NewGitLabNameResolver resolves the group name against baseURL, the
+// versioned GitLab API origin (e.g. https://gitlab.com/api/v4).
+func NewGitLabNameResolver(httpClient *http.Client, groupID, baseURL string) NameResolver {
+	return &gitlabNameResolver{httpClient: httpClient, groupID: groupID, baseURL: baseURL}
 }
 
 func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -193,7 +205,7 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", url.PathEscape(r.groupID))
+	endpoint, err := url.JoinPath(r.baseURL, gitlabGroupsSegment, url.PathEscape(r.groupID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build gitlab group URL: %w", err)
 	}

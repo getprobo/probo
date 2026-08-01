@@ -41,7 +41,7 @@ func TestGitLabDriver(t *testing.T) {
 		groupID = "12345"
 	}
 
-	driver := NewGitLabDriver(client, groupID)
+	driver := NewGitLabDriver(client, groupID, "https://gitlab.com/api/v4")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

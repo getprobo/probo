@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -33,6 +34,7 @@ import (
 // token-authenticated REST API requests.
 type IntercomDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*IntercomDriver)(nil)
@@ -50,13 +52,15 @@ type intercomAdminsResponse struct {
 }
 
 const (
-	intercomAdminsEndpoint = "https://api.intercom.io/admins"
-	intercomAPIVersion     = "2.11"
+	intercomAdminsPath = "/admins"
+	intercomMePath     = "/me"
+	intercomAPIVersion = "2.11"
 )
 
-func NewIntercomDriver(httpClient *http.Client) *IntercomDriver {
+func NewIntercomDriver(httpClient *http.Client, baseURL string) *IntercomDriver {
 	return &IntercomDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -90,7 +94,12 @@ func (d *IntercomDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 }
 
 func (d *IntercomDriver) fetchAdmins(ctx context.Context) (*intercomAdminsResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, intercomAdminsEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, intercomAdminsPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build intercom admins URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create intercom admins request: %w", err)
 	}
@@ -134,20 +143,26 @@ func intercomRoles(hasInboxSeat bool) []string {
 // intercomNameResolver resolves the Intercom app name.
 type intercomNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewIntercomNameResolver(httpClient *http.Client) NameResolver {
-	return &intercomNameResolver{httpClient: httpClient}
+func NewIntercomNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &intercomNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *intercomNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.intercom.io/me", nil)
+	endpoint, err := url.JoinPath(r.baseURL, intercomMePath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build intercom me URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create intercom me request: %w", err)
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Intercom-Version", "2.11")
+	req.Header.Set("Intercom-Version", intercomAPIVersion)
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {

@@ -43,7 +43,7 @@ func TestSentryDriver(t *testing.T) {
 		orgSlug = "acme-corp"
 	}
 
-	driver := NewSentryDriver(client, orgSlug)
+	driver := NewSentryDriver(client, orgSlug, "https://sentry.io/api/0")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)
@@ -84,7 +84,7 @@ func TestSentryDriverRequestsTrailingSlashPaths(t *testing.T) {
 
 	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-	records, err := NewSentryDriver(client, "acme-corp").ListAccounts(context.Background())
+	records, err := NewSentryDriver(client, "acme-corp", "https://sentry.io/api/0").ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 1)
 	assert.Equal(t, "alice@example.com", records[0].Email)
@@ -104,7 +104,7 @@ func TestSentryDriverListAccountsStaleSlug(t *testing.T) {
 
 	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-	_, err := NewSentryDriver(client, "acme-old").ListAccounts(context.Background())
+	_, err := NewSentryDriver(client, "acme-old", "https://sentry.io/api/0").ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `"acme-old"`)
 	assert.Contains(t, err.Error(), "not accessible")
@@ -137,7 +137,7 @@ func TestSentryDriverListAccountsAutoDiscoversSlug(t *testing.T) {
 
 	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-	records, err := NewSentryDriver(client, "").ListAccounts(context.Background())
+	records, err := NewSentryDriver(client, "", "https://sentry.io/api/0").ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 1)
 	assert.Equal(t, "alice@example.com", records[0].Email)

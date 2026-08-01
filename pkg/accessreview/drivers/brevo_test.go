@@ -38,7 +38,7 @@ func TestBrevoDriver(t *testing.T) {
 	// Brevo authenticates via the api-key header, not Authorization.
 	client := newVCRClientWithHeader(rec, "api-key", os.Getenv("BREVO_API_KEY"))
 
-	driver := NewBrevoDriver(client)
+	driver := NewBrevoDriver(client, "https://api.brevo.com/v3")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)

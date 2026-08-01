@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -32,7 +33,7 @@ import (
 )
 
 const (
-	incidentIOUsersEndpoint = "https://api.incident.io/v2/users"
+	incidentIOUsersPath = "/users"
 	// incidentIOPageSize is the page size requested from GET /v2/users (the
 	// API defaults to 25 and accepts up to 10000).
 	incidentIOPageSize = 100
@@ -43,6 +44,7 @@ const (
 // every user of that organization with no tenant selector.
 type IncidentIODriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*IncidentIODriver)(nil)
@@ -71,8 +73,8 @@ type incidentIOUsersResponse struct {
 	} `json:"pagination_meta"`
 }
 
-func NewIncidentIODriver(httpClient *http.Client) *IncidentIODriver {
-	return &IncidentIODriver{httpClient: httpClient}
+func NewIncidentIODriver(httpClient *http.Client, baseURL string) *IncidentIODriver {
+	return &IncidentIODriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *IncidentIODriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -120,7 +122,12 @@ func (d *IncidentIODriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 }
 
 func (d *IncidentIODriver) fetchUsersPage(ctx context.Context, after string) (*incidentIOUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, incidentIOUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, incidentIOUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build incident.io users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create incident.io users request: %w", err)
 	}

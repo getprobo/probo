@@ -43,7 +43,7 @@ func TestClickUpDriver(t *testing.T) {
 		teamID = "9999999"
 	}
 
-	driver := NewClickUpDriver(client, teamID)
+	driver := NewClickUpDriver(client, teamID, "https://api.clickup.com/api/v2")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

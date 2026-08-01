@@ -40,7 +40,7 @@ func TestNetlifyDriver(t *testing.T) {
 		accountSlug = "acme"
 	}
 
-	driver := NewNetlifyDriver(client, accountSlug)
+	driver := NewNetlifyDriver(client, accountSlug, "https://api.netlify.com/api/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

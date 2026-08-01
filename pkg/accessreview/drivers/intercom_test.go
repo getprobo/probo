@@ -34,7 +34,7 @@ func TestIntercomDriver(t *testing.T) {
 
 	rec := newRecorder(t, "testdata/intercom", "INTERCOM_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("INTERCOM_TOKEN")))
-	driver := NewIntercomDriver(client)
+	driver := NewIntercomDriver(client, "https://api.intercom.io")
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)

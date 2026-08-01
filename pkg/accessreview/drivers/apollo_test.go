@@ -37,7 +37,7 @@ func TestApolloDriver(t *testing.T) {
 	// Apollo authenticates via the x-api-key header, not Authorization.
 	client := newVCRClientWithHeader(rec, "x-api-key", os.Getenv("APOLLO_API_KEY"))
 
-	driver := NewApolloDriver(client)
+	driver := NewApolloDriver(client, "https://api.apollo.io/api/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 4)

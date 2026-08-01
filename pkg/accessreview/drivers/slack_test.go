@@ -35,7 +35,7 @@ func TestSlackDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/slack", "SLACK_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("SLACK_TOKEN")))
 
-	driver := NewSlackDriver(client)
+	driver := NewSlackDriver(client, "https://slack.com/api")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

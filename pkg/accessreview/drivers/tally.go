@@ -34,9 +34,16 @@ import (
 type TallyDriver struct {
 	httpClient     *http.Client
 	organizationID string
+	baseURL        string
 }
 
 var _ Driver = (*TallyDriver)(nil)
+
+const (
+	tallyOrganizationsPath = "/organizations"
+	tallyUsersSegment      = "users"
+	tallyInvitesSegment    = "invites"
+)
 
 type tallyUser struct {
 	ID                  string    `json:"id"`
@@ -54,10 +61,11 @@ type tallyInvite struct {
 	Email string `json:"email"`
 }
 
-func NewTallyDriver(httpClient *http.Client, organizationID string) *TallyDriver {
+func NewTallyDriver(httpClient *http.Client, organizationID, baseURL string) *TallyDriver {
 	return &TallyDriver{
 		httpClient:     httpClient,
 		organizationID: organizationID,
+		baseURL:        baseURL,
 	}
 }
 
@@ -78,13 +86,12 @@ func (d *TallyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 }
 
 func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
-	u := &url.URL{
-		Scheme: "https",
-		Host:   "api.tally.so",
+	endpoint, err := url.JoinPath(d.baseURL, tallyOrganizationsPath, d.organizationID, tallyUsersSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build tally users URL: %w", err)
 	}
-	u = u.JoinPath("organizations", d.organizationID, "users")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create tally users request: %w", err)
 	}
@@ -140,13 +147,12 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 }
 
 func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) {
-	u := &url.URL{
-		Scheme: "https",
-		Host:   "api.tally.so",
+	endpoint, err := url.JoinPath(d.baseURL, tallyOrganizationsPath, d.organizationID, tallyInvitesSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build tally invites URL: %w", err)
 	}
-	u = u.JoinPath("organizations", d.organizationID, "invites")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create tally invites request: %w", err)
 	}
@@ -203,17 +209,19 @@ func tallyRoles() []string {
 type tallyNameResolver struct {
 	httpClient     *http.Client
 	organizationID string
+	baseURL        string
 }
 
-func NewTallyNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+func NewTallyNameResolver(httpClient *http.Client, organizationID, baseURL string) NameResolver {
 	return &tallyNameResolver{
 		httpClient:     httpClient,
 		organizationID: organizationID,
+		baseURL:        baseURL,
 	}
 }
 
 func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	endpoint, err := url.JoinPath("https://api.tally.so", "organizations", url.PathEscape(r.organizationID))
+	endpoint, err := url.JoinPath(r.baseURL, tallyOrganizationsPath, url.PathEscape(r.organizationID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build tally organization URL: %w", err)
 	}

@@ -36,6 +36,7 @@ func yousignRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("yousign"),
 		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
+			APIBase: "https://api.yousign.app/v3",
 			// Yousign authenticates with an API key as Authorization: Bearer. The
 			// key is bound to one organization, so GET /v3/users returns everyone
 			// with nothing to pick (Pattern 3). The connector targets Yousign
@@ -50,8 +51,8 @@ func yousignRegistration() *Registration {
 			// so the source keeps its generic name.
 			Probe: "https://api.yousign.app/v3/users?limit=1",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewYousignDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewYousignDriver(c, ep.APIBase), nil
 		},
 	}
 }

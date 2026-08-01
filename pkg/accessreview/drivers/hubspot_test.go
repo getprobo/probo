@@ -37,7 +37,7 @@ func TestHubSpotDriver(t *testing.T) {
 
 	rec := newRecorder(t, "testdata/hubspot", "HUBSPOT_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("HUBSPOT_TOKEN")))
-	driver := NewHubSpotDriver(client)
+	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestHubSpotDriverArchivedUsers(t *testing.T) {
 		),
 	}
 
-	driver := NewHubSpotDriver(client)
+	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)

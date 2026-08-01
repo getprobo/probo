@@ -34,18 +34,19 @@ func notionRegistration() *Registration {
 		Provider:    coredata.ConnectorProviderNotion,
 		DisplayName: "Notion",
 		Endpoints: Endpoints{
-			Auth:  "https://api.notion.com/v1/oauth/authorize",
-			Token: "https://api.notion.com/v1/oauth/token",
-			Probe: "https://api.notion.com/v1/users/me",
+			Auth:    "https://api.notion.com/v1/oauth/authorize",
+			Token:   "https://api.notion.com/v1/oauth/token",
+			Probe:   "https://api.notion.com/v1/users/me",
+			APIBase: "https://api.notion.com/v1",
 		},
 		ExtraAuthParams:   map[string]string{"owner": "user"},
 		TokenEndpointAuth: "basic-json",
 		SupportsAPIKey:    true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewNotionDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewNotionDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewNotionNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewNotionNameResolver(c, ep.APIBase)
 		},
 	}
 }

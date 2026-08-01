@@ -38,7 +38,7 @@ func TestCursorDriver(t *testing.T) {
 	// needs no auth; the value matters only when re-recording.
 	client := newVCRClient(rec, basicAuth(os.Getenv("CURSOR_ADMIN_TOKEN")))
 
-	driver := NewCursorDriver(client)
+	driver := NewCursorDriver(client, "https://api.cursor.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 4)

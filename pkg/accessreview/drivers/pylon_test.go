@@ -36,7 +36,7 @@ func TestPylonDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/pylon", "PYLON_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("PYLON_API_KEY")))
 
-	driver := NewPylonDriver(client)
+	driver := NewPylonDriver(client, "https://api.usepylon.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)

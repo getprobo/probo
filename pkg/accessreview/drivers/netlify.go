@@ -42,14 +42,23 @@ import (
 type NetlifyDriver struct {
 	httpClient  *http.Client
 	accountSlug string
+	baseURL     string
 }
 
 var _ Driver = (*NetlifyDriver)(nil)
 
-func NewNetlifyDriver(httpClient *http.Client, accountSlug string) *NetlifyDriver {
+const (
+	netlifyAccountsSegment = "accounts"
+	netlifyMembersSegment  = "members"
+)
+
+// NewNetlifyDriver builds a driver against baseURL, the versioned Netlify
+// API origin (e.g. https://api.netlify.com/api/v1).
+func NewNetlifyDriver(httpClient *http.Client, accountSlug, baseURL string) *NetlifyDriver {
 	return &NetlifyDriver{
 		httpClient:  httpClient,
 		accountSlug: accountSlug,
+		baseURL:     baseURL,
 	}
 }
 
@@ -63,7 +72,9 @@ type netlifyMember struct {
 func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://api.netlify.com", "api", "v1", url.PathEscape(d.accountSlug), "members")
+	// The members endpoint hangs the account slug straight off the version
+	// root — there is no "accounts" segment, unlike the account endpoint.
+	u, err := url.JoinPath(d.baseURL, url.PathEscape(d.accountSlug), netlifyMembersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build netlify members URL: %w", err)
 	}
@@ -144,10 +155,13 @@ func (d *NetlifyDriver) queryMembers(ctx context.Context, endpoint string) ([]ne
 type netlifyNameResolver struct {
 	httpClient  *http.Client
 	accountSlug string
+	baseURL     string
 }
 
-func NewNetlifyNameResolver(httpClient *http.Client, accountSlug string) NameResolver {
-	return &netlifyNameResolver{httpClient: httpClient, accountSlug: accountSlug}
+// NewNetlifyNameResolver resolves the account name against baseURL, the
+// versioned Netlify API origin (e.g. https://api.netlify.com/api/v1).
+func NewNetlifyNameResolver(httpClient *http.Client, accountSlug, baseURL string) NameResolver {
+	return &netlifyNameResolver{httpClient: httpClient, accountSlug: accountSlug, baseURL: baseURL}
 }
 
 func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -155,7 +169,7 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.netlify.com", "api", "v1", "accounts", url.PathEscape(r.accountSlug))
+	endpoint, err := url.JoinPath(r.baseURL, netlifyAccountsSegment, url.PathEscape(r.accountSlug))
 	if err != nil {
 		return "", fmt.Errorf("cannot build netlify account URL: %w", err)
 	}

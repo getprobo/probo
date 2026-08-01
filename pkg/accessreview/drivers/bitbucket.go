@@ -40,11 +40,19 @@ import (
 type BitbucketDriver struct {
 	httpClient *http.Client
 	workspace  string
+	baseURL    string
 }
 
 var _ Driver = (*BitbucketDriver)(nil)
 
-func NewBitbucketDriver(httpClient *http.Client, workspace string) *BitbucketDriver {
+const (
+	bitbucketWorkspacesSegment = "workspaces"
+	bitbucketMembersSegment    = "members"
+)
+
+// NewBitbucketDriver builds a driver against baseURL, the versioned
+// Bitbucket Cloud API origin (e.g. https://api.bitbucket.org/2.0).
+func NewBitbucketDriver(httpClient *http.Client, workspace, baseURL string) *BitbucketDriver {
 	return &BitbucketDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -53,6 +61,7 @@ func NewBitbucketDriver(httpClient *http.Client, workspace string) *BitbucketDri
 			},
 		},
 		workspace: workspace,
+		baseURL:   baseURL,
 	}
 }
 
@@ -73,7 +82,7 @@ type bitbucketMembersPage struct {
 func (d *BitbucketDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", url.PathEscape(d.workspace), "members")
+	u, err := url.JoinPath(d.baseURL, bitbucketWorkspacesSegment, url.PathEscape(d.workspace), bitbucketMembersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build bitbucket members URL: %w", err)
 	}
@@ -153,10 +162,13 @@ func (d *BitbucketDriver) queryMembers(ctx context.Context, endpoint string) (*b
 type bitbucketNameResolver struct {
 	httpClient *http.Client
 	workspace  string
+	baseURL    string
 }
 
-func NewBitbucketNameResolver(httpClient *http.Client, workspace string) NameResolver {
-	return &bitbucketNameResolver{httpClient: httpClient, workspace: workspace}
+// NewBitbucketNameResolver resolves the workspace name against baseURL, the
+// versioned Bitbucket Cloud API origin (e.g. https://api.bitbucket.org/2.0).
+func NewBitbucketNameResolver(httpClient *http.Client, workspace, baseURL string) NameResolver {
+	return &bitbucketNameResolver{httpClient: httpClient, workspace: workspace, baseURL: baseURL}
 }
 
 func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -164,7 +176,7 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", url.PathEscape(r.workspace))
+	endpoint, err := url.JoinPath(r.baseURL, bitbucketWorkspacesSegment, url.PathEscape(r.workspace))
 	if err != nil {
 		return "", fmt.Errorf("cannot build bitbucket workspace URL: %w", err)
 	}

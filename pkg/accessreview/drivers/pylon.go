@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -32,8 +33,8 @@ import (
 )
 
 const (
-	pylonUsersEndpoint     = "https://api.usepylon.com/users"
-	pylonUserRolesEndpoint = "https://api.usepylon.com/user-roles"
+	pylonUsersPath     = "/users"
+	pylonUserRolesPath = "/user-roles"
 	// pylonPageSize is the page size requested from the cursor-paginated
 	// list endpoints. Pylon caps `limit` at 999 (it must be > 0 and < 1000);
 	// 100 returns every member of typical organizations in one page.
@@ -47,6 +48,7 @@ const (
 // role name via GET /user-roles.
 type PylonDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*PylonDriver)(nil)
@@ -80,8 +82,8 @@ type pylonRolesResponse struct {
 	Pagination pylonPagination `json:"pagination"`
 }
 
-func NewPylonDriver(httpClient *http.Client) *PylonDriver {
-	return &PylonDriver{httpClient: httpClient}
+func NewPylonDriver(httpClient *http.Client, baseURL string) *PylonDriver {
+	return &PylonDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *PylonDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -161,7 +163,7 @@ func (d *PylonDriver) fetchRoles(ctx context.Context) (map[string]pylonRole, err
 }
 
 func (d *PylonDriver) fetchUsersPage(ctx context.Context, cursor string) (*pylonUsersResponse, error) {
-	httpResp, err := d.fetchPage(ctx, pylonUsersEndpoint, cursor)
+	httpResp, err := d.fetchPage(ctx, pylonUsersPath, cursor)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +185,7 @@ func (d *PylonDriver) fetchUsersPage(ctx context.Context, cursor string) (*pylon
 }
 
 func (d *PylonDriver) fetchRolesPage(ctx context.Context, cursor string) (*pylonRolesResponse, error) {
-	httpResp, err := d.fetchPage(ctx, pylonUserRolesEndpoint, cursor)
+	httpResp, err := d.fetchPage(ctx, pylonUserRolesPath, cursor)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +206,12 @@ func (d *PylonDriver) fetchRolesPage(ctx context.Context, cursor string) (*pylon
 	return &resp, nil
 }
 
-func (d *PylonDriver) fetchPage(ctx context.Context, endpoint, cursor string) (*http.Response, error) {
+func (d *PylonDriver) fetchPage(ctx context.Context, path, cursor string) (*http.Response, error) {
+	endpoint, err := url.JoinPath(d.baseURL, path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build pylon URL: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create pylon request: %w", err)

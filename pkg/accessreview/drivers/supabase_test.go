@@ -40,7 +40,7 @@ func TestSupabaseDriver(t *testing.T) {
 		orgSlug = "acme-corp"
 	}
 
-	driver := NewSupabaseDriver(client, orgSlug)
+	driver := NewSupabaseDriver(client, orgSlug, "https://api.supabase.com/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

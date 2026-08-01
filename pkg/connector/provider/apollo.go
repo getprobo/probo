@@ -44,6 +44,7 @@ func apolloRegistration() *Registration {
 		// (Pattern 3): no settings struct, no picker.
 		APIKeyHeader: "x-api-key",
 		Endpoints: Endpoints{
+			APIBase: "https://api.apollo.io/api/v1",
 			// ProbeURL lets the connection-status check confirm the key with a
 			// lightweight GET; the transport attaches x-api-key, and a missing,
 			// dead, or non-master key returns 401/403.
@@ -53,8 +54,8 @@ func apolloRegistration() *Registration {
 		// No NewNameResolver: Apollo exposes no stable account-name
 		// endpoint reachable with the master key, so the source keeps its
 		// generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewApolloDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewApolloDriver(c, ep.APIBase), nil
 		},
 	}
 }

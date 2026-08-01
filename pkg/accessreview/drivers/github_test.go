@@ -41,7 +41,7 @@ func TestGitHubDriver(t *testing.T) {
 		org = "acme-corp"
 	}
 
-	driver := NewGitHubDriver(client, org, log.NewLogger(log.WithName("test")))
+	driver := NewGitHubDriver(client, org, log.NewLogger(log.WithName("test")), "https://api.github.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

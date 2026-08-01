@@ -25,12 +25,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 type NotionDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*NotionDriver)(nil)
@@ -50,13 +52,15 @@ type notionUsersResponse struct {
 }
 
 const (
-	notionUsersEndpoint = "https://api.notion.com/v1/users"
-	notionAPIVersion    = "2022-06-28"
+	notionUsersPath   = "/users"
+	notionUsersMePath = "/users/me"
+	notionAPIVersion  = "2022-06-28"
 )
 
-func NewNotionDriver(httpClient *http.Client) *NotionDriver {
+func NewNotionDriver(httpClient *http.Client, baseURL string) *NotionDriver {
 	return &NotionDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -111,7 +115,12 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 }
 
 func (d *NotionDriver) queryUsers(ctx context.Context, startCursor *string) (*notionUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, notionUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, notionUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build notion users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create notion users request: %w", err)
 	}
@@ -152,14 +161,20 @@ func (d *NotionDriver) queryUsers(ctx context.Context, startCursor *string) (*no
 // notionNameResolver resolves the Notion workspace name via /v1/users/me.
 type notionNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewNotionNameResolver(httpClient *http.Client) NameResolver {
-	return &notionNameResolver{httpClient: httpClient}
+func NewNotionNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &notionNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.notion.com/v1/users/me", nil)
+	endpoint, err := url.JoinPath(r.baseURL, notionUsersMePath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build notion users/me URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create notion users/me request: %w", err)
 	}

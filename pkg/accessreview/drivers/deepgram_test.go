@@ -44,7 +44,7 @@ func TestDeepgramDriver(t *testing.T) {
 
 	client := newVCRClient(rec, auth)
 
-	driver := NewDeepgramDriver(client)
+	driver := NewDeepgramDriver(client, "https://api.deepgram.com/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	// owner@example.com appears in both projects and must be deduped.

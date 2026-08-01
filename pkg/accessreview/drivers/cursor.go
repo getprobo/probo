@@ -25,21 +25,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 type CursorDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*CursorDriver)(nil)
 
-// cursorMembersEndpoint lists every member of the team the admin API key
+// cursorMembersPath lists every member of the team the admin API key
 // belongs to. Cursor's Admin API authenticates with the key as the HTTP
 // Basic auth username (handled by the connection transport) and exposes
 // no pagination on this endpoint, so a single GET returns the full team.
-const cursorMembersEndpoint = "https://api.cursor.com/teams/members"
+const cursorMembersPath = "/teams/members"
 
 type cursorMembersResponse struct {
 	TeamMembers []struct {
@@ -54,14 +56,20 @@ type cursorMembersResponse struct {
 	} `json:"teamMembers"`
 }
 
-func NewCursorDriver(httpClient *http.Client) *CursorDriver {
+func NewCursorDriver(httpClient *http.Client, baseURL string) *CursorDriver {
 	return &CursorDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
 func (d *CursorDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cursorMembersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, cursorMembersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build cursor members URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create cursor members request: %w", err)
 	}

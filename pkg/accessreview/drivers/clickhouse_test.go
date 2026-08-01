@@ -38,7 +38,7 @@ func TestClickHouseDriver(t *testing.T) {
 	// matcher ignores Authorization, so replay needs no auth.
 	client := newVCRClient(rec, basicAuthUserPass(os.Getenv("CLICKHOUSE_API_KEY")))
 
-	driver := NewClickHouseDriver(client)
+	driver := NewClickHouseDriver(client, "https://api.clickhouse.cloud/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)

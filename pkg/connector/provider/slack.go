@@ -34,16 +34,17 @@ func slackRegistration() *Registration {
 		Provider:    coredata.ConnectorProviderSlack,
 		DisplayName: "Slack",
 		Endpoints: Endpoints{
-			Auth:  "https://slack.com/oauth/v2/authorize",
-			Token: "https://slack.com/api/oauth.v2.access",
-			Probe: "https://slack.com/api/users.list?limit=1",
+			Auth:    "https://slack.com/oauth/v2/authorize",
+			Token:   "https://slack.com/api/oauth.v2.access",
+			Probe:   "https://slack.com/api/users.list?limit=1",
+			APIBase: "https://slack.com/api",
 		},
 		OAuth2Scopes: []string{"users:read", "users:read.email"},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewSlackDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewSlackDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewSlackNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewSlackNameResolver(c, ep.APIBase)
 		},
 	}
 }

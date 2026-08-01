@@ -35,14 +35,15 @@ func sendgridRegistration() *Registration {
 		DisplayName:      "SendGrid",
 		DocumentationURL: accessReviewDocsURL("sendgrid"),
 		Endpoints: Endpoints{
-			Probe: "https://api.sendgrid.com/v3/teammates?limit=1&offset=0",
+			Probe:   "https://api.sendgrid.com/v3/teammates?limit=1&offset=0",
+			APIBase: "https://api.sendgrid.com/v3",
 		},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewSendGridDriver(c, logger.Named("sendgrid")), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewSendGridDriver(c, logger.Named("sendgrid"), ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewSendGridNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewSendGridNameResolver(c, ep.APIBase)
 		},
 	}
 }

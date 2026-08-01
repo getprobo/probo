@@ -31,9 +31,15 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+const (
+	supabaseOrganizationsPath = "organizations"
+	supabaseMembersPath       = "members"
+)
+
 type SupabaseDriver struct {
 	httpClient *http.Client
 	orgSlug    string
+	baseURL    string
 }
 
 var _ Driver = (*SupabaseDriver)(nil)
@@ -46,10 +52,11 @@ type supabaseMember struct {
 	MFAEnabled bool   `json:"mfa_enabled"`
 }
 
-func NewSupabaseDriver(httpClient *http.Client, orgSlug string) *SupabaseDriver {
+func NewSupabaseDriver(httpClient *http.Client, orgSlug, baseURL string) *SupabaseDriver {
 	return &SupabaseDriver{
 		httpClient: httpClient,
 		orgSlug:    orgSlug,
+		baseURL:    baseURL,
 	}
 }
 
@@ -94,11 +101,14 @@ func (d *SupabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 }
 
 func (d *SupabaseDriver) queryMembers(ctx context.Context) ([]supabaseMember, error) {
-	u := &url.URL{
-		Scheme: "https",
-		Host:   "api.supabase.com",
+	// Kept on (*url.URL).JoinPath so the org slug keeps being escaped exactly
+	// as before: each element is treated as an already-escaped path segment.
+	base, err := url.Parse(d.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse supabase base URL: %w", err)
 	}
-	u = u.JoinPath("v1", "organizations", d.orgSlug, "members")
+
+	u := base.JoinPath(supabaseOrganizationsPath, d.orgSlug, supabaseMembersPath)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {

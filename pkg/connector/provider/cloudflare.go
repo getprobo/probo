@@ -35,14 +35,15 @@ func cloudflareRegistration() *Registration {
 		DisplayName:      "Cloudflare",
 		DocumentationURL: accessReviewDocsURL("cloudflare"),
 		Endpoints: Endpoints{
-			Probe: "https://api.cloudflare.com/client/v4/user/tokens/verify",
+			Probe:   "https://api.cloudflare.com/client/v4/user/tokens/verify",
+			APIBase: "https://api.cloudflare.com/client/v4",
 		},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewCloudflareDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewCloudflareDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewCloudflareNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewCloudflareNameResolver(c, ep.APIBase)
 		},
 	}
 }

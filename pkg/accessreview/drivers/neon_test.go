@@ -44,7 +44,7 @@ func TestNeonDriverListAccounts(t *testing.T) {
 		orgID = "org-cool-breeze-12345678"
 	}
 
-	driver := NewNeonDriver(client, orgID)
+	driver := NewNeonDriver(client, orgID, "https://console.neon.tech/api/v2")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 
@@ -101,7 +101,7 @@ func TestNeonDriverListAccountsError(t *testing.T) {
 		),
 	}
 
-	driver := NewNeonDriver(client, "org-cool-breeze-12345678")
+	driver := NewNeonDriver(client, "org-cool-breeze-12345678", "https://console.neon.tech/api/v2")
 	_, err := driver.ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected status 401")

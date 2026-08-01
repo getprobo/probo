@@ -36,7 +36,7 @@ func TestYousignDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/yousign", "YOUSIGN_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("YOUSIGN_API_KEY")))
 
-	driver := NewYousignDriver(client)
+	driver := NewYousignDriver(client, "https://api.yousign.app/v3")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 2)

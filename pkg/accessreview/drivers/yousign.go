@@ -33,8 +33,7 @@ import (
 )
 
 const (
-	yousignAPIHost   = "api.yousign.app"
-	yousignUsersPath = "/v3/users"
+	yousignUsersPath = "/users"
 	yousignPageSize  = 100
 )
 
@@ -45,6 +44,7 @@ const (
 // sandbox runs on a separate host and is not a reviewed environment.
 type YousignDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*YousignDriver)(nil)
@@ -67,8 +67,8 @@ type yousignUser struct {
 	Role      string `json:"role"`
 }
 
-func NewYousignDriver(httpClient *http.Client) *YousignDriver {
-	return &YousignDriver{httpClient: httpClient}
+func NewYousignDriver(httpClient *http.Client, baseURL string) *YousignDriver {
+	return &YousignDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *YousignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -123,12 +123,13 @@ func (d *YousignDriver) fetchPage(ctx context.Context, after string) (*yousignUs
 		q.Set("after", after)
 	}
 
-	endpoint := url.URL{
-		Scheme:   "https",
-		Host:     yousignAPIHost,
-		Path:     yousignUsersPath,
-		RawQuery: q.Encode(),
+	base, err := url.Parse(d.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse yousign base URL: %w", err)
 	}
+
+	endpoint := base.JoinPath(yousignUsersPath)
+	endpoint.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
 	if err != nil {

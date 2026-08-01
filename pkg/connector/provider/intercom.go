@@ -34,16 +34,17 @@ func intercomRegistration() *Registration {
 		Provider:    coredata.ConnectorProviderIntercom,
 		DisplayName: "Intercom",
 		Endpoints: Endpoints{
-			Auth:  "https://app.intercom.com/oauth",
-			Token: "https://api.intercom.io/auth/eagle/token",
-			Probe: "https://api.intercom.io/me",
+			Auth:    "https://app.intercom.com/oauth",
+			Token:   "https://api.intercom.io/auth/eagle/token",
+			Probe:   "https://api.intercom.io/me",
+			APIBase: "https://api.intercom.io",
 		},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewIntercomDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewIntercomDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewIntercomNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewIntercomNameResolver(c, ep.APIBase)
 		},
 	}
 }

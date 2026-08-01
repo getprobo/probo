@@ -35,7 +35,7 @@ func TestCloudflareDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/cloudflare", "CLOUDFLARE_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("CLOUDFLARE_TOKEN")))
 
-	driver := NewCloudflareDriver(client)
+	driver := NewCloudflareDriver(client, "https://api.cloudflare.com/client/v4")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

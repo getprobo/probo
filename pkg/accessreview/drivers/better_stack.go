@@ -33,12 +33,12 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// betterStackTeamMembersEndpoint is the Better Stack Uptime API team-members
-// resource. The team-members reference documents this apex host and returns
-// its pagination links on the same host, so the driver pins every page
-// request to it (instead of following the response's `next` URL) to avoid a
-// cross-host redirect that would drop the Authorization header.
-const betterStackTeamMembersEndpoint = "https://betterstack.com/api/v2/team-members"
+// betterStackTeamMembersPath is the Better Stack Uptime API team-members
+// resource. The team-members reference documents an apex-host base and returns
+// its pagination links on the same host, so the driver pins every page request
+// to the configured base (instead of following the response's `next` URL) to
+// avoid a cross-host redirect that would drop the Authorization header.
+const betterStackTeamMembersPath = "/team-members"
 
 // BetterStackDriver fetches team members and pending invitations from the
 // Better Stack Uptime API via Bearer token-authenticated REST requests. The
@@ -47,6 +47,7 @@ const betterStackTeamMembersEndpoint = "https://betterstack.com/api/v2/team-memb
 type BetterStackDriver struct {
 	httpClient *http.Client
 	teamName   string
+	baseURL    string
 }
 
 var _ Driver = (*BetterStackDriver)(nil)
@@ -69,7 +70,7 @@ type betterStackTeamMembersResponse struct {
 	} `json:"pagination"`
 }
 
-func NewBetterStackDriver(httpClient *http.Client, teamName string) *BetterStackDriver {
+func NewBetterStackDriver(httpClient *http.Client, teamName, baseURL string) *BetterStackDriver {
 	return &BetterStackDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -78,6 +79,7 @@ func NewBetterStackDriver(httpClient *http.Client, teamName string) *BetterStack
 			},
 		},
 		teamName: teamName,
+		baseURL:  baseURL,
 	}
 }
 
@@ -134,10 +136,12 @@ func (d *BetterStackDriver) fetchTeamMembersPage(
 	ctx context.Context,
 	page int,
 ) (*betterStackTeamMembersResponse, error) {
-	endpoint, err := url.Parse(betterStackTeamMembersEndpoint)
+	base, err := url.Parse(d.baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse better stack team members URL: %w", err)
+		return nil, fmt.Errorf("cannot parse better stack base URL: %w", err)
 	}
+
+	endpoint := base.JoinPath(betterStackTeamMembersPath)
 
 	q := endpoint.Query()
 	q.Set("page", strconv.Itoa(page))

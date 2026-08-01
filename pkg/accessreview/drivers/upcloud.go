@@ -33,8 +33,9 @@ import (
 )
 
 const (
-	upcloudAPIBaseURL     = "https://api.upcloud.com/1.3"
-	upcloudAccountListURL = upcloudAPIBaseURL + "/account/list"
+	upcloudAccountPath = "account"
+	upcloudListPath    = "list"
+	upcloudDetailsPath = "details"
 )
 
 // UpCloudDriver lists the main account and its sub-accounts via UpCloud's
@@ -52,14 +53,18 @@ const (
 type UpCloudDriver struct {
 	httpClient *http.Client
 	logger     *log.Logger
+	baseURL    string
 }
 
 var _ Driver = (*UpCloudDriver)(nil)
 
-func NewUpCloudDriver(httpClient *http.Client, logger *log.Logger) *UpCloudDriver {
+// NewUpCloudDriver builds a driver against baseURL, the versioned UpCloud API
+// origin (e.g. https://api.upcloud.com/1.3).
+func NewUpCloudDriver(httpClient *http.Client, logger *log.Logger, baseURL string) *UpCloudDriver {
 	return &UpCloudDriver{
 		httpClient: httpClient,
 		logger:     logger,
+		baseURL:    baseURL,
 	}
 }
 
@@ -92,7 +97,12 @@ type upcloudAccountDetails struct {
 }
 
 func (d *UpCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, upcloudAccountListURL, nil)
+	endpoint, err := url.JoinPath(d.baseURL, upcloudAccountPath, upcloudListPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build upcloud account list URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create upcloud account list request: %w", err)
 	}
@@ -167,7 +177,7 @@ func (d *UpCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 }
 
 func (d *UpCloudDriver) fetchAccountDetails(ctx context.Context, username string) (*upcloudAccountDetails, error) {
-	endpoint, err := url.JoinPath(upcloudAPIBaseURL, "account", "details", url.PathEscape(username))
+	endpoint, err := url.JoinPath(d.baseURL, upcloudAccountPath, upcloudDetailsPath, url.PathEscape(username))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build upcloud account details URL: %w", err)
 	}
@@ -229,14 +239,20 @@ func upcloudIsMainAccount(accountType string) bool {
 // the token authenticated as.
 type upcloudNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewUpCloudNameResolver(httpClient *http.Client) NameResolver {
-	return &upcloudNameResolver{httpClient: httpClient}
+func NewUpCloudNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &upcloudNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *upcloudNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, upcloudAPIBaseURL+"/account", nil)
+	endpoint, err := url.JoinPath(r.baseURL, upcloudAccountPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build upcloud account URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create upcloud account request: %w", err)
 	}

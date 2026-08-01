@@ -34,9 +34,15 @@ import (
 // CloudflareDriver fetches account members from the Cloudflare API.
 type CloudflareDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*CloudflareDriver)(nil)
+
+const (
+	cloudflareAccountsPath   = "/accounts"
+	cloudflareMembersSegment = "members"
+)
 
 type cloudflareAccount struct {
 	ID   string `json:"id"`
@@ -75,9 +81,10 @@ type cloudflareListMembersResponse struct {
 	ResultInfo cloudflareResultInfo `json:"result_info"`
 }
 
-func NewCloudflareDriver(httpClient *http.Client) *CloudflareDriver {
+func NewCloudflareDriver(httpClient *http.Client, baseURL string) *CloudflareDriver {
 	return &CloudflareDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -121,7 +128,12 @@ func (d *CloudflareDriver) queryAllAccounts(ctx context.Context) ([]cloudflareAc
 }
 
 func (d *CloudflareDriver) queryAccounts(ctx context.Context, page int) (*cloudflareListAccountsResponse, error) {
-	parsed, err := url.Parse("https://api.cloudflare.com/client/v4/accounts")
+	endpoint, err := url.JoinPath(d.baseURL, cloudflareAccountsPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build cloudflare accounts URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
 	}
@@ -219,7 +231,7 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 }
 
 func (d *CloudflareDriver) queryMembers(ctx context.Context, accountID string, page int) (*cloudflareListMembersResponse, error) {
-	u, err := url.JoinPath("https://api.cloudflare.com", "client", "v4", "accounts", url.PathEscape(accountID), "members")
+	u, err := url.JoinPath(d.baseURL, cloudflareAccountsPath, url.PathEscape(accountID), cloudflareMembersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build cloudflare members URL: %w", err)
 	}
@@ -266,14 +278,20 @@ func (d *CloudflareDriver) queryMembers(ctx context.Context, accountID string, p
 // cloudflareNameResolver resolves the Cloudflare account name.
 type cloudflareNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewCloudflareNameResolver(httpClient *http.Client) NameResolver {
-	return &cloudflareNameResolver{httpClient: httpClient}
+func NewCloudflareNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &cloudflareNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	cfURL, err := url.Parse("https://api.cloudflare.com/client/v4/accounts")
+	endpoint, err := url.JoinPath(r.baseURL, cloudflareAccountsPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build cloudflare accounts URL: %w", err)
+	}
+
+	cfURL, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
 	}

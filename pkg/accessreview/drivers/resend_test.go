@@ -35,7 +35,7 @@ func TestResendDriver(t *testing.T) {
 
 	rec := newRecorder(t, "testdata/resend", "RESEND_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("RESEND_TOKEN")))
-	driver := NewResendDriver(client)
+	driver := NewResendDriver(client, "https://api.resend.com")
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)

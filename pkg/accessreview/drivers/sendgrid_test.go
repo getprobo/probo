@@ -36,7 +36,7 @@ func TestSendGridDriver(t *testing.T) {
 
 	rec := newRecorder(t, "testdata/sendgrid", "SENDGRID_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("SENDGRID_API_KEY")))
-	driver := NewSendGridDriver(client, log.NewLogger(log.WithName("test")))
+	driver := NewSendGridDriver(client, log.NewLogger(log.WithName("test")), "https://api.sendgrid.com/v3")
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)

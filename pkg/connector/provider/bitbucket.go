@@ -41,8 +41,11 @@ func bitbucketRegistration() *Registration {
 			Auth:  "https://bitbucket.org/site/oauth2/authorize",
 			Token: "https://bitbucket.org/site/oauth2/access_token",
 			Probe: "https://api.bitbucket.org/2.0/user",
+			// Every data endpoint the driver calls shares the /2.0 prefix,
+			// so the version segment stays in APIBase.
+			APIBase: "https://api.bitbucket.org/2.0",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
@@ -52,16 +55,16 @@ func bitbucketRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create bitbucket driver: workspace is required")
 			}
 
-			return drivers.NewBitbucketDriver(c, s.Workspace), nil
+			return drivers.NewBitbucketDriver(c, s.Workspace, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read bitbucket connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewBitbucketNameResolver(c, s.Workspace)
+			return drivers.NewBitbucketNameResolver(c, s.Workspace, ep.APIBase)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, workspace string) error {
 			return c.SetSettings(&coredata.BitbucketConnectorSettings{Workspace: workspace})

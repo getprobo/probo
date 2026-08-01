@@ -32,7 +32,8 @@ import (
 )
 
 const (
-	neonAPIBaseURL = "https://console.neon.tech/api/v2"
+	neonOrganizationsPath = "organizations"
+	neonMembersPath       = "members"
 
 	// neonMembersPageLimit is the largest page size the Neon
 	// list-members endpoint documents (limit: 1..500).
@@ -42,6 +43,7 @@ const (
 type NeonDriver struct {
 	httpClient     *http.Client
 	organizationID string
+	baseURL        string
 }
 
 var _ Driver = (*NeonDriver)(nil)
@@ -67,10 +69,13 @@ type neonOrgMember struct {
 	} `json:"user"`
 }
 
-func NewNeonDriver(httpClient *http.Client, organizationID string) *NeonDriver {
+// NewNeonDriver builds a driver against baseURL, the versioned Neon API
+// origin (e.g. https://console.neon.tech/api/v2).
+func NewNeonDriver(httpClient *http.Client, organizationID, baseURL string) *NeonDriver {
 	return &NeonDriver{
 		httpClient:     httpClient,
 		organizationID: organizationID,
+		baseURL:        baseURL,
 	}
 }
 
@@ -120,10 +125,10 @@ func (d *NeonDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 
 func (d *NeonDriver) queryMembers(ctx context.Context, cursor string) (*neonMembersResponse, error) {
 	endpoint, err := url.JoinPath(
-		neonAPIBaseURL,
-		"organizations",
+		d.baseURL,
+		neonOrganizationsPath,
 		url.PathEscape(d.organizationID),
-		"members",
+		neonMembersPath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build neon members URL: %w", err)
@@ -218,12 +223,14 @@ func neonExternalID(m neonOrgMember) string {
 type neonNameResolver struct {
 	httpClient     *http.Client
 	organizationID string
+	baseURL        string
 }
 
-func NewNeonNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+func NewNeonNameResolver(httpClient *http.Client, organizationID, baseURL string) NameResolver {
 	return &neonNameResolver{
 		httpClient:     httpClient,
 		organizationID: organizationID,
+		baseURL:        baseURL,
 	}
 }
 
@@ -232,7 +239,7 @@ func (r *neonNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath(neonAPIBaseURL, "organizations", url.PathEscape(r.organizationID))
+	endpoint, err := url.JoinPath(r.baseURL, neonOrganizationsPath, url.PathEscape(r.organizationID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build neon organization URL: %w", err)
 	}

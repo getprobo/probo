@@ -36,6 +36,7 @@ func incidentioRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("incident-io"),
 		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
+			APIBase: "https://api.incident.io/v2",
 			// incident.io publishes an OAuth2 flow, but it is outbound-only (for
 			// incident.io to call other apps), so access review authenticates
 			// with an API key presented as Authorization: Bearer, the default
@@ -51,8 +52,8 @@ func incidentioRegistration() *Registration {
 		//
 		// No NewNameResolver: GET /v2/users carries no organization name, so
 		// the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewIncidentIODriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewIncidentIODriver(c, ep.APIBase), nil
 		},
 	}
 }

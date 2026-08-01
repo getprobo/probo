@@ -36,6 +36,7 @@ func mercuryRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("mercury"),
 		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
+			APIBase: "https://api.mercury.com/api/v1",
 			// Mercury authenticates with a self-serve API token presented as
 			// Authorization: Bearer, the default APIKeyConnection scheme. There
 			// is no third-party OAuth2 flow for the Users API. The token is
@@ -53,8 +54,8 @@ func mercuryRegistration() *Registration {
 		// name and a read-only token may lack other scopes, so the source
 		// keeps its generic name (the source-name worker degrades
 		// gracefully).
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewMercuryDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewMercuryDriver(c, ep.APIBase), nil
 		},
 	}
 }

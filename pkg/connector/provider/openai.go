@@ -35,14 +35,15 @@ func openaiRegistration() *Registration {
 		DisplayName:      "OpenAI",
 		DocumentationURL: accessReviewDocsURL("openai"),
 		Endpoints: Endpoints{
-			Probe: "https://api.openai.com/v1/models",
+			Probe:   "https://api.openai.com/v1/models",
+			APIBase: "https://api.openai.com/v1",
 		},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewOpenAIDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewOpenAIDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewOpenAINameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewOpenAINameResolver(c, ep.APIBase)
 		},
 	}
 }

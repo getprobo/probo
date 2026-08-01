@@ -40,7 +40,7 @@ func TestBitbucketDriver(t *testing.T) {
 		workspace = "acme"
 	}
 
-	driver := NewBitbucketDriver(client, workspace)
+	driver := NewBitbucketDriver(client, workspace, "https://api.bitbucket.org/2.0")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

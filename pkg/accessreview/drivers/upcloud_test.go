@@ -43,7 +43,7 @@ func TestUpCloudDriver(t *testing.T) {
 	// Authorization, so replay needs no auth.
 	client := newVCRClient(rec, bearerAuth(os.Getenv("UPCLOUD_API_KEY")))
 
-	driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")))
+	driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")), "https://api.upcloud.com/1.3")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 4)
@@ -109,7 +109,7 @@ func TestUpCloudDriverContextCancellation(t *testing.T) {
 		}),
 	}
 
-	driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")))
+	driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")), "https://api.upcloud.com/1.3")
 	records, err := driver.ListAccounts(ctx)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, context.Canceled))
@@ -168,7 +168,7 @@ func TestUpCloudFetchAccountDetails(t *testing.T) {
 				}, nil
 			})}
 
-			driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")))
+			driver := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")), "https://api.upcloud.com/1.3")
 
 			details, err := driver.fetchAccountDetails(context.Background(), "someone")
 			if tc.wantError {
@@ -206,7 +206,7 @@ func TestUpCloudDriverTransientDetailFailureAborts(t *testing.T) {
 		}, nil
 	})}
 
-	records, err := NewUpCloudDriver(client, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
+	records, err := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")), "https://api.upcloud.com/1.3").ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Nil(t, records)
 }
@@ -232,7 +232,7 @@ func TestUpCloudDriverBlankUsernameAborts(t *testing.T) {
 		}, nil
 	})}
 
-	records, err := NewUpCloudDriver(client, log.NewLogger(log.WithName("test"))).ListAccounts(context.Background())
+	records, err := NewUpCloudDriver(client, log.NewLogger(log.WithName("test")), "https://api.upcloud.com/1.3").ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Nil(t, records)
 }

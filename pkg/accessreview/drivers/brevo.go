@@ -25,13 +25,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const brevoInvitedUsersEndpoint = "https://api.brevo.com/v3/organization/invited/users"
+const brevoInvitedUsersPath = "/organization/invited/users"
 
 // BrevoDriver lists the invited users (organization seats) of a single Brevo
 // account. The API key (sent in the api-key header by the connection
@@ -40,6 +41,7 @@ const brevoInvitedUsersEndpoint = "https://api.brevo.com/v3/organization/invited
 // pagination.
 type BrevoDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*BrevoDriver)(nil)
@@ -68,12 +70,17 @@ type brevoInvitedUsersResponse struct {
 	Users []brevoInvitedUser `json:"users"`
 }
 
-func NewBrevoDriver(httpClient *http.Client) *BrevoDriver {
-	return &BrevoDriver{httpClient: httpClient}
+func NewBrevoDriver(httpClient *http.Client, baseURL string) *BrevoDriver {
+	return &BrevoDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *BrevoDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, brevoInvitedUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, brevoInvitedUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build brevo invited users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create brevo invited users request: %w", err)
 	}

@@ -45,6 +45,9 @@ func clickhouseRegistration() *Registration {
 		// (Pattern 3): no settings struct, no picker.
 		APIKeyBasicAuthUserPass: true,
 		Endpoints: Endpoints{
+			// Every control-plane endpoint the driver calls lives under the
+			// same /v1 prefix, so the version segment stays in APIBase.
+			APIBase: "https://api.clickhouse.cloud/v1",
 			// ProbeURL lets the connection-status check confirm the key/secret
 			// with a lightweight GET; the transport attaches the Basic
 			// credential and a dead key/secret returns 401/403.
@@ -54,8 +57,8 @@ func clickhouseRegistration() *Registration {
 		// No NewNameResolver: the organization name is available but would
 		// duplicate the driver's discovery call; the source keeps its
 		// generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewClickHouseDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewClickHouseDriver(c, ep.APIBase), nil
 		},
 	}
 }

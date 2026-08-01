@@ -46,7 +46,7 @@ func TestRenderDriverListAccounts(t *testing.T) {
 		ownerID = "tea-000000000000000000000"
 	}
 
-	driver := NewRenderDriver(client, ownerID)
+	driver := NewRenderDriver(client, ownerID, "https://api.render.com/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 
@@ -103,7 +103,7 @@ func TestRenderDriverListAccountsError(t *testing.T) {
 		),
 	}
 
-	driver := NewRenderDriver(client, "tea-000000000000000000000")
+	driver := NewRenderDriver(client, "tea-000000000000000000000", "https://api.render.com/v1")
 	_, err := driver.ListAccounts(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected status 401")

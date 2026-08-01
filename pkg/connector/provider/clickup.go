@@ -39,8 +39,12 @@ func clickupRegistration() *Registration {
 			Auth:  "https://app.clickup.com/api",
 			Token: "https://api.clickup.com/api/v2/oauth/token",
 			Probe: "https://api.clickup.com/api/v2/user",
+			// Every data endpoint the driver calls shares the /api/v2
+			// prefix, so the version segment stays in APIBase. The Auth
+			// endpoint lives on app.clickup.com and is unrelated.
+			APIBase: "https://api.clickup.com/api/v2",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
@@ -50,16 +54,16 @@ func clickupRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create clickup driver: team_id is required")
 			}
 
-			return drivers.NewClickUpDriver(c, s.TeamID), nil
+			return drivers.NewClickUpDriver(c, s.TeamID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read clickup connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewClickUpNameResolver(c, s.TeamID)
+			return drivers.NewClickUpNameResolver(c, s.TeamID, ep.APIBase)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, teamID string) error {
 			return c.SetSettings(&coredata.ClickUpConnectorSettings{TeamID: teamID})

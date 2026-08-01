@@ -43,6 +43,7 @@ func brevoRegistration() *Registration {
 		// picker.
 		APIKeyHeader: "api-key",
 		Endpoints: Endpoints{
+			APIBase: "https://api.brevo.com/v3",
 			// ProbeURL lets the connection-status check confirm the key with a
 			// lightweight GET; the transport attaches the api-key header and a
 			// dead key returns 401/403.
@@ -51,8 +52,8 @@ func brevoRegistration() *Registration {
 		//
 		// No NewNameResolver: the invited-users endpoint carries no account
 		// name, so the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewBrevoDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewBrevoDriver(c, ep.APIBase), nil
 		},
 	}
 }

@@ -36,13 +36,14 @@ func tallyRegistration() *Registration {
 		DisplayName:      "Tally",
 		DocumentationURL: accessReviewDocsURL("tally"),
 		Endpoints: Endpoints{
-			Probe: "https://api.tally.so/me",
+			Probe:   "https://api.tally.so/me",
+			APIBase: "https://api.tally.so",
 		},
 		SupportsAPIKey: true,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
@@ -52,16 +53,16 @@ func tallyRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create tally driver: organization_id is required")
 			}
 
-			return drivers.NewTallyDriver(c, s.OrganizationID), nil
+			return drivers.NewTallyDriver(c, s.OrganizationID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read tally connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewTallyNameResolver(c, s.OrganizationID)
+			return drivers.NewTallyNameResolver(c, s.OrganizationID, ep.APIBase)
 		},
 	}
 }

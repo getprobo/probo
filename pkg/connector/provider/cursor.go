@@ -29,7 +29,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const cursorMembersEndpoint = "https://api.cursor.com/teams/members"
+const (
+	cursorAPIBaseURL      = "https://api.cursor.com"
+	cursorMembersEndpoint = cursorAPIBaseURL + "/teams/members"
+)
 
 func cursorRegistration() *Registration {
 	return &Registration{
@@ -46,13 +49,14 @@ func cursorRegistration() *Registration {
 		// picker, and no SetOrganizationSettings.
 		APIKeyBasicAuth: true,
 		Endpoints: Endpoints{
-			Probe: cursorMembersEndpoint,
+			APIBase: cursorAPIBaseURL,
+			Probe:   cursorMembersEndpoint,
 		},
 		// No NewNameResolver: the Admin API exposes no team/organization
 		// name endpoint, so the source keeps its generic name (the
 		// source-name worker degrades gracefully when no resolver is set).
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewCursorDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewCursorDriver(c, ep.APIBase), nil
 		},
 	}
 }

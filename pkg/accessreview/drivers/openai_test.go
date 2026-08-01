@@ -35,7 +35,7 @@ func TestOpenAIDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/openai", "OPENAI_ADMIN_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("OPENAI_ADMIN_TOKEN")))
 
-	driver := NewOpenAIDriver(client)
+	driver := NewOpenAIDriver(client, "https://api.openai.com/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

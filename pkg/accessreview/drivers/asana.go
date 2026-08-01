@@ -41,11 +41,19 @@ import (
 type AsanaDriver struct {
 	httpClient   *http.Client
 	workspaceGID string
+	baseURL      string
 }
 
 var _ Driver = (*AsanaDriver)(nil)
 
-func NewAsanaDriver(httpClient *http.Client, workspaceGID string) *AsanaDriver {
+const (
+	asanaWorkspacesSegment = "workspaces"
+	asanaUsersSegment      = "users"
+)
+
+// NewAsanaDriver builds a driver against baseURL, the versioned Asana API
+// origin (e.g. https://app.asana.com/api/1.0).
+func NewAsanaDriver(httpClient *http.Client, workspaceGID, baseURL string) *AsanaDriver {
 	return &AsanaDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -54,6 +62,7 @@ func NewAsanaDriver(httpClient *http.Client, workspaceGID string) *AsanaDriver {
 			},
 		},
 		workspaceGID: workspaceGID,
+		baseURL:      baseURL,
 	}
 }
 
@@ -73,7 +82,7 @@ type asanaUsersPage struct {
 func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", url.PathEscape(d.workspaceGID), "users")
+	u, err := url.JoinPath(d.baseURL, asanaWorkspacesSegment, url.PathEscape(d.workspaceGID), asanaUsersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build asana users URL: %w", err)
 	}
@@ -156,10 +165,13 @@ func (d *AsanaDriver) queryUsers(ctx context.Context, endpoint string) (*asanaUs
 type asanaNameResolver struct {
 	httpClient   *http.Client
 	workspaceGID string
+	baseURL      string
 }
 
-func NewAsanaNameResolver(httpClient *http.Client, workspaceGID string) NameResolver {
-	return &asanaNameResolver{httpClient: httpClient, workspaceGID: workspaceGID}
+// NewAsanaNameResolver resolves the workspace name against baseURL, the
+// versioned Asana API origin (e.g. https://app.asana.com/api/1.0).
+func NewAsanaNameResolver(httpClient *http.Client, workspaceGID, baseURL string) NameResolver {
+	return &asanaNameResolver{httpClient: httpClient, workspaceGID: workspaceGID, baseURL: baseURL}
 }
 
 func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -167,7 +179,7 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", url.PathEscape(r.workspaceGID))
+	endpoint, err := url.JoinPath(r.baseURL, asanaWorkspacesSegment, url.PathEscape(r.workspaceGID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build asana workspace URL: %w", err)
 	}

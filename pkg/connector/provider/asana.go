@@ -38,9 +38,12 @@ func asanaRegistration() *Registration {
 			Auth:  "https://app.asana.com/-/oauth_authorize",
 			Token: "https://app.asana.com/-/oauth_token",
 			Probe: "https://app.asana.com/api/1.0/users/me",
+			// Every data endpoint the driver calls shares the /api/1.0
+			// prefix, so the version segment stays in APIBase.
+			APIBase: "https://app.asana.com/api/1.0",
 		},
 		OAuth2Scopes: []string{"workspaces:read", "users:read"},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read asana connector settings: %w", err)
@@ -50,16 +53,16 @@ func asanaRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create asana driver: workspace_gid is required")
 			}
 
-			return drivers.NewAsanaDriver(c, s.WorkspaceGID), nil
+			return drivers.NewAsanaDriver(c, s.WorkspaceGID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read asana connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewAsanaNameResolver(c, s.WorkspaceGID)
+			return drivers.NewAsanaNameResolver(c, s.WorkspaceGID, ep.APIBase)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, workspaceGID string) error {
 			return c.SetSettings(&coredata.AsanaConnectorSettings{WorkspaceGID: workspaceGID})

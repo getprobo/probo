@@ -38,13 +38,16 @@ func githubRegistration() *Registration {
 			Auth:  "https://github.com/login/oauth/authorize",
 			Token: "https://github.com/login/oauth/access_token",
 			Probe: "https://api.github.com/user",
+			// The REST API carries no version path segment; the version is
+			// negotiated through the Accept header instead.
+			APIBase: "https://api.github.com",
 		},
 		OAuth2Scopes:   []string{"read:org"},
 		SupportsAPIKey: true,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organization", Label: "Organization", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read github connector settings: %w", err)
@@ -54,16 +57,16 @@ func githubRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create github driver: organization is required")
 			}
 
-			return drivers.NewGitHubDriver(c, s.Organization, logger.Named("github")), nil
+			return drivers.NewGitHubDriver(c, s.Organization, logger.Named("github"), ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read github connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewGitHubNameResolver(c, s.Organization)
+			return drivers.NewGitHubNameResolver(c, s.Organization, ep.APIBase)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, org string) error {
 			return c.SetSettings(&coredata.GitHubConnectorSettings{Organization: org})

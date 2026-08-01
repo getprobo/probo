@@ -38,11 +38,27 @@ import (
 // slug; Sentry uses 404 (not 403) so this also covers revoked memberships.
 var errSentryOrgNotAccessible = errors.New("sentry organization is not accessible by this connector's token")
 
+// Sentry path elements joined onto the driver's base URL. Both carry a
+// trailing slash because Sentry's API only routes slashed paths and answers
+// 404 (without redirecting) otherwise; url.JoinPath keeps the slash only
+// when the LAST element carries it, so every join must end on one of these.
+const (
+	sentryOrganizationsPath = "organizations/"
+	sentryMembersPath       = "members/"
+)
+
+// sentryDefaultBaseURL is the Sentry SaaS API root. It backs only the
+// exported ListSentryOrganizations, which the access-source picker calls
+// with no registration — and therefore no Endpoints — in scope. Every
+// driver path goes through the injected baseURL instead.
+const sentryDefaultBaseURL = "https://sentry.io/api/0"
+
 // SentryDriver fetches organization members from Sentry via Bearer
 // token-authenticated REST API requests.
 type SentryDriver struct {
 	httpClient *http.Client
 	orgSlug    string
+	baseURL    string
 }
 
 var _ Driver = (*SentryDriver)(nil)
@@ -68,15 +84,18 @@ type sentryUser struct {
 	HasPasswordAuth bool   `json:"hasPasswordAuth"`
 }
 
-func NewSentryDriver(httpClient *http.Client, orgSlug string) *SentryDriver {
+// NewSentryDriver builds a driver against baseURL, the versioned Sentry API
+// origin (e.g. https://sentry.io/api/0).
+func NewSentryDriver(httpClient *http.Client, orgSlug, baseURL string) *SentryDriver {
 	return &SentryDriver{
 		httpClient: httpClient,
 		orgSlug:    orgSlug,
+		baseURL:    baseURL,
 	}
 }
 
 func (d *SentryDriver) resolveOrgSlug(ctx context.Context) (string, error) {
-	orgs, err := ListSentryOrganizations(ctx, d.httpClient)
+	orgs, err := listSentryOrganizations(ctx, d.httpClient, d.baseURL)
 	if err != nil {
 		return "", fmt.Errorf("cannot resolve sentry organization slug: %w", err)
 	}
@@ -101,10 +120,7 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 	var records []AccountRecord
 
-	// The trailing slash is required: Sentry's API only routes slashed
-	// paths and answers 404 (without redirecting) otherwise. url.JoinPath
-	// keeps it only when the last element carries it.
-	nextURL, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(orgSlug), "members/")
+	nextURL, err := url.JoinPath(d.baseURL, sentryOrganizationsPath, url.PathEscape(orgSlug), sentryMembersPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build sentry members URL: %w", err)
 	}
@@ -248,10 +264,13 @@ func sentryAuthMethod(flags map[string]bool, user *sentryUser) coredata.AccessRe
 type sentryNameResolver struct {
 	httpClient *http.Client
 	orgSlug    string
+	baseURL    string
 }
 
-func NewSentryNameResolver(httpClient *http.Client, orgSlug string) NameResolver {
-	return &sentryNameResolver{httpClient: httpClient, orgSlug: orgSlug}
+// NewSentryNameResolver resolves the org name against baseURL, the
+// versioned Sentry API origin (e.g. https://sentry.io/api/0).
+func NewSentryNameResolver(httpClient *http.Client, orgSlug, baseURL string) NameResolver {
+	return &sentryNameResolver{httpClient: httpClient, orgSlug: orgSlug, baseURL: baseURL}
 }
 
 func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -259,8 +278,8 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	// Trailing slash required; see SentryDriver.ListAccounts.
-	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug)+"/")
+	// Trailing slash required; see the sentryOrganizationsPath const.
+	endpoint, err := url.JoinPath(r.baseURL, sentryOrganizationsPath, url.PathEscape(r.orgSlug)+"/")
 	if err != nil {
 		return "", fmt.Errorf("cannot build sentry organization URL: %w", err)
 	}
@@ -301,14 +320,28 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 }
 
 // ListSentryOrganizations fetches the organizations the authenticated
-// Sentry user belongs to.
+// Sentry user belongs to. The access-source picker calls it as a bare
+// function, with no registration in scope, so it targets Sentry SaaS.
 func ListSentryOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://sentry.io/api/0/organizations/?member=true",
-		nil,
-	)
+	return listSentryOrganizations(ctx, httpClient, sentryDefaultBaseURL)
+}
+
+func listSentryOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	endpoint, err := url.JoinPath(baseURL, sentryOrganizationsPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build sentry organizations URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse sentry organizations URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("member", "true")
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create sentry organizations request: %w", err)
 	}

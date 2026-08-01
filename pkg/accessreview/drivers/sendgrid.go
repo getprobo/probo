@@ -36,6 +36,7 @@ import (
 type SendGridDriver struct {
 	httpClient *http.Client
 	logger     *log.Logger
+	baseURL    string
 }
 
 var _ Driver = (*SendGridDriver)(nil)
@@ -58,14 +59,16 @@ type sendGridTeammatesResponse struct {
 }
 
 const (
-	sendGridTeammatesEndpoint  = "https://api.sendgrid.com/v3/teammates"
+	sendGridTeammatesPath      = "/teammates"
+	sendGridUserProfilePath    = "/user/profile"
 	sendGridTeammatesPageLimit = 500
 )
 
-func NewSendGridDriver(httpClient *http.Client, logger *log.Logger) *SendGridDriver {
+func NewSendGridDriver(httpClient *http.Client, logger *log.Logger, baseURL string) *SendGridDriver {
 	return &SendGridDriver{
 		httpClient: httpClient,
 		logger:     logger,
+		baseURL:    baseURL,
 	}
 }
 
@@ -134,7 +137,12 @@ func (d *SendGridDriver) fetchTeammates(
 	ctx context.Context,
 	offset int,
 ) (*sendGridTeammatesResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sendGridTeammatesEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, sendGridTeammatesPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build sendgrid teammates url: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create sendgrid teammates request: %w", err)
 	}
@@ -168,7 +176,7 @@ func (d *SendGridDriver) fetchTeammates(
 }
 
 func (d *SendGridDriver) fetchTeammate(ctx context.Context, username string) (*sendGridTeammate, error) {
-	endpoint, err := url.JoinPath(sendGridTeammatesEndpoint, url.PathEscape(username))
+	endpoint, err := url.JoinPath(d.baseURL, sendGridTeammatesPath, url.PathEscape(username))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build sendgrid teammate details url: %w", err)
 	}
@@ -280,17 +288,23 @@ func sendGridMFAStatus(scopes []string) coredata.MFAStatus {
 // the user profile endpoint, used as the AccessReviewSource instance label.
 type sendGridNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewSendGridNameResolver(httpClient *http.Client) NameResolver {
-	return &sendGridNameResolver{httpClient: httpClient}
+func NewSendGridNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &sendGridNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *sendGridNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	endpoint, err := url.JoinPath(r.baseURL, sendGridUserProfilePath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build sendgrid profile url: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		"https://api.sendgrid.com/v3/user/profile",
+		endpoint,
 		nil,
 	)
 	if err != nil {

@@ -38,10 +38,15 @@ func qoveryRegistration() *Registration {
 		SupportsAPIKey:   true,
 		APIKeyAuthScheme: "Token",
 		BuildProbeURL:    buildQoveryProbeURL,
+		Endpoints: Endpoints{
+			// Qovery's API is unversioned in the path; the driver joins the
+			// resource segments onto this origin.
+			APIBase: "https://api.qovery.com",
+		},
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read qovery connector settings: %w", err)
@@ -51,16 +56,16 @@ func qoveryRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create qovery driver: organization_id is required")
 			}
 
-			return drivers.NewQoveryDriver(c, s.OrganizationID), nil
+			return drivers.NewQoveryDriver(c, s.OrganizationID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read qovery connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewQoveryNameResolver(c, s.OrganizationID)
+			return drivers.NewQoveryNameResolver(c, s.OrganizationID, ep.APIBase)
 		},
 	}
 }

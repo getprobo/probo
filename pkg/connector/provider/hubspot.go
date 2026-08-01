@@ -37,14 +37,18 @@ func hubspotRegistration() *Registration {
 			Auth:  "https://app.hubspot.com/oauth/authorize",
 			Token: "https://api.hubapi.com/oauth/v1/token",
 			Probe: "https://api.hubapi.com/account-info/v3/details",
+			// The users and account-info endpoints carry different version
+			// segments (settings/v3 vs account-info/v3), so the base stops at
+			// the host.
+			APIBase: "https://api.hubapi.com",
 		},
 		OAuth2Scopes:   []string{"settings.users.read"},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewHubSpotDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewHubSpotDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewHubSpotNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewHubSpotNameResolver(c, ep.APIBase)
 		},
 	}
 }

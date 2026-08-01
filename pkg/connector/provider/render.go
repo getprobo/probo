@@ -44,10 +44,15 @@ func renderRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("render"),
 		SupportsAPIKey:   true,
 		BuildProbeURL:    buildRenderProbeURL,
+		Endpoints: Endpoints{
+			// Every endpoint the driver calls lives under the same /v1 prefix,
+			// so the version segment stays in APIBase.
+			APIBase: "https://api.render.com/v1",
+		},
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "workspaceId", Label: "Workspace ID", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read render connector settings: %w", err)
@@ -57,16 +62,16 @@ func renderRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create render driver: owner_id is required")
 			}
 
-			return drivers.NewRenderDriver(c, s.OwnerID), nil
+			return drivers.NewRenderDriver(c, s.OwnerID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read render connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewRenderNameResolver(c, s.OwnerID)
+			return drivers.NewRenderNameResolver(c, s.OwnerID, ep.APIBase)
 		},
 	}
 }

@@ -32,11 +32,15 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const qoveryAPIBaseURL = "https://api.qovery.com"
+const (
+	qoveryOrganizationPath = "organization"
+	qoveryMemberPath       = "member"
+)
 
 type QoveryDriver struct {
 	httpClient     *http.Client
 	organizationID string
+	baseURL        string
 }
 
 var _ Driver = (*QoveryDriver)(nil)
@@ -55,19 +59,22 @@ type qoveryMember struct {
 	Role           string `json:"role"`
 }
 
-func NewQoveryDriver(httpClient *http.Client, organizationID string) *QoveryDriver {
+// NewQoveryDriver builds a driver against baseURL, the Qovery API origin
+// (e.g. https://api.qovery.com).
+func NewQoveryDriver(httpClient *http.Client, organizationID, baseURL string) *QoveryDriver {
 	return &QoveryDriver{
 		httpClient:     httpClient,
 		organizationID: organizationID,
+		baseURL:        baseURL,
 	}
 }
 
 func (d *QoveryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	endpoint, err := url.JoinPath(
-		qoveryAPIBaseURL,
-		"organization",
+		d.baseURL,
+		qoveryOrganizationPath,
 		url.PathEscape(d.organizationID),
-		"member",
+		qoveryMemberPath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build qovery members URL: %w", err)
@@ -177,12 +184,14 @@ func qoveryIsAdmin(role string) bool {
 type qoveryNameResolver struct {
 	httpClient     *http.Client
 	organizationID string
+	baseURL        string
 }
 
-func NewQoveryNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+func NewQoveryNameResolver(httpClient *http.Client, organizationID, baseURL string) NameResolver {
 	return &qoveryNameResolver{
 		httpClient:     httpClient,
 		organizationID: organizationID,
+		baseURL:        baseURL,
 	}
 }
 
@@ -191,7 +200,7 @@ func (r *qoveryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath(qoveryAPIBaseURL, "organization", url.PathEscape(r.organizationID))
+	endpoint, err := url.JoinPath(r.baseURL, qoveryOrganizationPath, url.PathEscape(r.organizationID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build qovery organization URL: %w", err)
 	}

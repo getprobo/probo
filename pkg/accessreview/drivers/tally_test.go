@@ -40,7 +40,7 @@ func TestTallyDriver(t *testing.T) {
 		orgID = "wvBzxD"
 	}
 
-	driver := NewTallyDriver(client, orgID)
+	driver := NewTallyDriver(client, orgID, "https://api.tally.so")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

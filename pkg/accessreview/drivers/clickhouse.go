@@ -32,7 +32,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const clickhouseAPIBaseURL = "https://api.clickhouse.cloud"
+const (
+	clickhouseOrganizationsPath = "organizations"
+	clickhouseMembersPath       = "members"
+)
 
 // ClickHouseDriver lists the members of a single ClickHouse Cloud
 // organization. A key/secret pair (HTTP Basic) is scoped to exactly one
@@ -41,6 +44,7 @@ const clickhouseAPIBaseURL = "https://api.clickhouse.cloud"
 // configured. The Basic credential is applied by the connection transport.
 type ClickHouseDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*ClickHouseDriver)(nil)
@@ -67,8 +71,10 @@ type clickhouseMember struct {
 	} `json:"assignedRoles"`
 }
 
-func NewClickHouseDriver(httpClient *http.Client) *ClickHouseDriver {
-	return &ClickHouseDriver{httpClient: httpClient}
+// NewClickHouseDriver builds a driver against baseURL, the versioned
+// ClickHouse Cloud control-plane origin (e.g. https://api.clickhouse.cloud/v1).
+func NewClickHouseDriver(httpClient *http.Client, baseURL string) *ClickHouseDriver {
+	return &ClickHouseDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *ClickHouseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -114,7 +120,7 @@ func (d *ClickHouseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 }
 
 func (d *ClickHouseDriver) resolveOrganizationID(ctx context.Context) (string, error) {
-	endpoint, err := url.JoinPath(clickhouseAPIBaseURL, "v1", "organizations")
+	endpoint, err := url.JoinPath(d.baseURL, clickhouseOrganizationsPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot build clickhouse organizations URL: %w", err)
 	}
@@ -132,7 +138,7 @@ func (d *ClickHouseDriver) resolveOrganizationID(ctx context.Context) (string, e
 }
 
 func (d *ClickHouseDriver) fetchMembers(ctx context.Context, organizationID string) ([]clickhouseMember, error) {
-	endpoint, err := url.JoinPath(clickhouseAPIBaseURL, "v1", "organizations", url.PathEscape(organizationID), "members")
+	endpoint, err := url.JoinPath(d.baseURL, clickhouseOrganizationsPath, url.PathEscape(organizationID), clickhouseMembersPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build clickhouse members URL: %w", err)
 	}

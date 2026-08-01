@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -32,6 +33,7 @@ import (
 
 type ResendDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*ResendDriver)(nil)
@@ -45,11 +47,12 @@ type resendAPIKeysResponse struct {
 	} `json:"data"`
 }
 
-const resendAPIKeysEndpoint = "https://api.resend.com/api-keys"
+const resendAPIKeysPath = "/api-keys"
 
-func NewResendDriver(httpClient *http.Client) *ResendDriver {
+func NewResendDriver(httpClient *http.Client, baseURL string) *ResendDriver {
 	return &ResendDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -92,7 +95,12 @@ func (d *ResendDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 }
 
 func (d *ResendDriver) fetchAPIKeys(ctx context.Context) (*resendAPIKeysResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, resendAPIKeysEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, resendAPIKeysPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build resend api-keys URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create resend api-keys request: %w", err)
 	}

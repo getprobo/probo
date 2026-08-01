@@ -35,12 +35,23 @@ import (
 	"go.probo.inc/probo/pkg/rfc5988"
 )
 
+// GitHub REST path segments joined onto the driver's base URL. They are
+// single segments rather than whole paths because every GitHub endpoint the
+// driver calls interleaves them with an escaped org or login.
+const (
+	githubOrgsSegment        = "orgs"
+	githubUsersSegment       = "users"
+	githubMembersSegment     = "members"
+	githubMembershipsSegment = "memberships"
+)
+
 // GitHubDriver fetches organization members from the GitHub REST API
 // using a pre-authenticated HTTP client (Bearer token).
 type GitHubDriver struct {
 	httpClient *http.Client
 	org        string
 	logger     *log.Logger
+	baseURL    string
 }
 
 var _ Driver = (*GitHubDriver)(nil)
@@ -64,11 +75,14 @@ type githubUserProfile struct {
 	Type      string `json:"type"`
 }
 
-func NewGitHubDriver(httpClient *http.Client, org string, logger *log.Logger) *GitHubDriver {
+// NewGitHubDriver builds a driver against baseURL, the GitHub REST API
+// origin (e.g. https://api.github.com).
+func NewGitHubDriver(httpClient *http.Client, org string, logger *log.Logger, baseURL string) *GitHubDriver {
 	return &GitHubDriver{
 		httpClient: httpClient,
 		org:        org,
 		logger:     logger,
+		baseURL:    baseURL,
 	}
 }
 
@@ -164,7 +178,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 func (d *GitHubDriver) fetchAllMembers(ctx context.Context) ([]githubMember, error) {
 	var members []githubMember
 
-	u, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(d.org), "members")
+	u, err := url.JoinPath(d.baseURL, githubOrgsSegment, url.PathEscape(d.org), githubMembersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github members URL: %w", err)
 	}
@@ -231,7 +245,7 @@ func (d *GitHubDriver) fetchMembersPage(ctx context.Context, url string) ([]gith
 func (d *GitHubDriver) fetchAll2FADisabledLogins(ctx context.Context) (map[string]bool, error) {
 	set := make(map[string]bool)
 
-	u, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(d.org), "members")
+	u, err := url.JoinPath(d.baseURL, githubOrgsSegment, url.PathEscape(d.org), githubMembersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github 2fa-disabled URL: %w", err)
 	}
@@ -268,7 +282,7 @@ func (d *GitHubDriver) fetchAll2FADisabledLogins(ctx context.Context) (map[strin
 }
 
 func (d *GitHubDriver) fetchMembership(ctx context.Context, login string) (*githubMembership, error) {
-	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(d.org), "memberships", url.PathEscape(login))
+	endpoint, err := url.JoinPath(d.baseURL, githubOrgsSegment, url.PathEscape(d.org), githubMembershipsSegment, url.PathEscape(login))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github membership URL: %w", err)
 	}
@@ -302,7 +316,7 @@ func (d *GitHubDriver) fetchMembership(ctx context.Context, login string) (*gith
 }
 
 func (d *GitHubDriver) fetchUserProfile(ctx context.Context, login string) (*githubUserProfile, error) {
-	endpoint, err := url.JoinPath("https://api.github.com", "users", url.PathEscape(login))
+	endpoint, err := url.JoinPath(d.baseURL, githubUsersSegment, url.PathEscape(login))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github user profile URL: %w", err)
 	}
@@ -339,10 +353,13 @@ func (d *GitHubDriver) fetchUserProfile(ctx context.Context, login string) (*git
 type githubNameResolver struct {
 	httpClient *http.Client
 	org        string
+	baseURL    string
 }
 
-func NewGitHubNameResolver(httpClient *http.Client, org string) NameResolver {
-	return &githubNameResolver{httpClient: httpClient, org: org}
+// NewGitHubNameResolver resolves the org name against baseURL, the GitHub
+// REST API origin (e.g. https://api.github.com).
+func NewGitHubNameResolver(httpClient *http.Client, org, baseURL string) NameResolver {
+	return &githubNameResolver{httpClient: httpClient, org: org, baseURL: baseURL}
 }
 
 func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -350,7 +367,7 @@ func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(r.org))
+	endpoint, err := url.JoinPath(r.baseURL, githubOrgsSegment, url.PathEscape(r.org))
 	if err != nil {
 		return "", fmt.Errorf("cannot build github organization URL: %w", err)
 	}

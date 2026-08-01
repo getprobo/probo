@@ -36,7 +36,7 @@ func TestIncidentIODriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/incidentio", "INCIDENT_IO_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("INCIDENT_IO_API_KEY")))
 
-	driver := NewIncidentIODriver(client)
+	driver := NewIncidentIODriver(client, "https://api.incident.io/v2")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	// Three records spread across two pages: the cassette's first page is

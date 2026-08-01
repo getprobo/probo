@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -32,7 +33,7 @@ import (
 )
 
 const (
-	mercuryUsersEndpoint = "https://api.mercury.com/api/v1/users"
+	mercuryUsersPath = "/users"
 	// mercuryUsersPageSize is the page size requested from GET /api/v1/users.
 	// The API caps `limit` at 1000; 500 keeps responses small while still
 	// returning every member of typical organizations in one page.
@@ -44,6 +45,7 @@ const (
 // returns every member of that organization with no tenant selector.
 type MercuryDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*MercuryDriver)(nil)
@@ -63,8 +65,8 @@ type mercuryUsersResponse struct {
 	} `json:"page"`
 }
 
-func NewMercuryDriver(httpClient *http.Client) *MercuryDriver {
-	return &MercuryDriver{httpClient: httpClient}
+func NewMercuryDriver(httpClient *http.Client, baseURL string) *MercuryDriver {
+	return &MercuryDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *MercuryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -108,7 +110,12 @@ func (d *MercuryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 }
 
 func (d *MercuryDriver) fetchUsersPage(ctx context.Context, startAfter string) (*mercuryUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, mercuryUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, mercuryUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build mercury users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create mercury users request: %w", err)
 	}

@@ -36,6 +36,7 @@ func pylonRegistration() *Registration {
 		DocumentationURL: accessReviewDocsURL("pylon"),
 		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
+			APIBase: "https://api.usepylon.com",
 			// Pylon authenticates with an account API token presented as
 			// Authorization: Bearer, the default APIKeyConnection scheme. There
 			// is no third-party OAuth2 flow for the Users API. The token is bound
@@ -51,8 +52,8 @@ func pylonRegistration() *Registration {
 		// No NewNameResolver: GET /users carries no organization name, so the
 		// source keeps its generic name (the source-name worker degrades
 		// gracefully).
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewPylonDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewPylonDriver(c, ep.APIBase), nil
 		},
 	}
 }

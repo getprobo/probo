@@ -25,12 +25,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 type SlackDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*SlackDriver)(nil)
@@ -68,11 +70,15 @@ type slackProfile struct {
 	Title string `json:"title"`
 }
 
-const slackUsersListEndpoint = "https://slack.com/api/users.list"
+const (
+	slackUsersListPath = "/users.list"
+	slackAuthTestPath  = "/auth.test"
+)
 
-func NewSlackDriver(httpClient *http.Client) *SlackDriver {
+func NewSlackDriver(httpClient *http.Client, baseURL string) *SlackDriver {
 	return &SlackDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -134,7 +140,12 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 }
 
 func (d *SlackDriver) queryUsers(ctx context.Context, cursor string) (*slackUsersListResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, slackUsersListEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, slackUsersListPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build slack users.list URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create slack users.list request: %w", err)
 	}
@@ -197,14 +208,20 @@ func slackMFAStatus(has2FA bool) coredata.MFAStatus {
 // slackNameResolver resolves the Slack workspace name via auth.test.
 type slackNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewSlackNameResolver(httpClient *http.Client) NameResolver {
-	return &slackNameResolver{httpClient: httpClient}
+func NewSlackNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &slackNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *slackNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://slack.com/api/auth.test", nil)
+	endpoint, err := url.JoinPath(r.baseURL, slackAuthTestPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build slack auth.test URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create slack auth.test request: %w", err)
 	}

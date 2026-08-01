@@ -31,7 +31,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const deepgramAPIBaseURL = "https://api.deepgram.com"
+const (
+	deepgramProjectsPath = "projects"
+	deepgramMembersPath  = "members"
+)
 
 // DeepgramDriver lists the members of every Deepgram project the API key
 // can access. The key (presented in the `Authorization: Token <key>`
@@ -40,6 +43,7 @@ const deepgramAPIBaseURL = "https://api.deepgram.com"
 // by member_id, unioning each member's per-project scopes.
 type DeepgramDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*DeepgramDriver)(nil)
@@ -65,8 +69,8 @@ type deepgramMembersResponse struct {
 	Members []deepgramMember `json:"members"`
 }
 
-func NewDeepgramDriver(httpClient *http.Client) *DeepgramDriver {
-	return &DeepgramDriver{httpClient: httpClient}
+func NewDeepgramDriver(httpClient *http.Client, baseURL string) *DeepgramDriver {
+	return &DeepgramDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *DeepgramDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -126,7 +130,7 @@ func (d *DeepgramDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 }
 
 func (d *DeepgramDriver) fetchProjects(ctx context.Context) ([]deepgramProject, error) {
-	endpoint, err := url.JoinPath(deepgramAPIBaseURL, "v1", "projects")
+	endpoint, err := url.JoinPath(d.baseURL, deepgramProjectsPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build deepgram projects URL: %w", err)
 	}
@@ -160,7 +164,7 @@ func (d *DeepgramDriver) fetchProjects(ctx context.Context) ([]deepgramProject, 
 }
 
 func (d *DeepgramDriver) fetchProjectMembers(ctx context.Context, projectID string) ([]deepgramMember, error) {
-	endpoint, err := url.JoinPath(deepgramAPIBaseURL, "v1", "projects", url.PathEscape(projectID), "members")
+	endpoint, err := url.JoinPath(d.baseURL, deepgramProjectsPath, url.PathEscape(projectID), deepgramMembersPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build deepgram members URL: %w", err)
 	}

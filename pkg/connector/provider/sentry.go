@@ -38,29 +38,34 @@ func sentryRegistration() *Registration {
 			Auth:  "https://sentry.io/oauth/authorize/",
 			Token: "https://sentry.io/oauth/token/",
 			Probe: "https://sentry.io/api/0/organizations/",
+			// Every data endpoint the driver calls shares the /api/0
+			// prefix, so the version segment stays in APIBase. The trailing
+			// slash Sentry requires belongs to the path elements the driver
+			// joins on, never to APIBase.
+			APIBase: "https://sentry.io/api/0",
 		},
 		OAuth2Scopes:   []string{"org:read", "member:read"},
 		SupportsAPIKey: true,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read sentry connector settings: %w", err)
 			}
 
 			// OrganizationSlug may be empty for OAuth connections; the driver auto-discovers it.
-			return drivers.NewSentryDriver(c, s.OrganizationSlug), nil
+			return drivers.NewSentryDriver(c, s.OrganizationSlug, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read sentry connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewSentryNameResolver(c, s.OrganizationSlug)
+			return drivers.NewSentryNameResolver(c, s.OrganizationSlug, ep.APIBase)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, slug string) error {
 			return c.SetSettings(&coredata.SentryConnectorSettings{OrganizationSlug: slug})

@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -32,6 +33,7 @@ import (
 
 type OpenAIDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*OpenAIDriver)(nil)
@@ -49,11 +51,15 @@ type openaiUsersResponse struct {
 	LastID  string `json:"last_id"`
 }
 
-const openaiUsersEndpoint = "https://api.openai.com/v1/organization/users"
+const (
+	openaiUsersPath        = "/organization/users"
+	openaiOrganizationPath = "/organization"
+)
 
-func NewOpenAIDriver(httpClient *http.Client) *OpenAIDriver {
+func NewOpenAIDriver(httpClient *http.Client, baseURL string) *OpenAIDriver {
 	return &OpenAIDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -103,7 +109,12 @@ func (d *OpenAIDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 }
 
 func (d *OpenAIDriver) fetchUsers(ctx context.Context, after string) (*openaiUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, openaiUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, openaiUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build openai users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create openai users request: %w", err)
 	}
@@ -158,17 +169,23 @@ func openaiRoles(role string) []string {
 // openaiNameResolver resolves the OpenAI organization name.
 type openaiNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewOpenAINameResolver(httpClient *http.Client) NameResolver {
-	return &openaiNameResolver{httpClient: httpClient}
+func NewOpenAINameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &openaiNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *openaiNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	endpoint, err := url.JoinPath(r.baseURL, openaiOrganizationPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build openai organization URL: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		"https://api.openai.com/v1/organization",
+		endpoint,
 		nil,
 	)
 	if err != nil {
