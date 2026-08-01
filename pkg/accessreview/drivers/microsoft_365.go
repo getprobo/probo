@@ -42,12 +42,21 @@ import (
 type Microsoft365Driver struct {
 	httpClient *http.Client
 	logger     *log.Logger
+	baseURL    string
 }
 
 var _ Driver = (*Microsoft365Driver)(nil)
 
 const (
-	microsoft365GraphBaseURL         = "https://graph.microsoft.com/v1.0"
+	// Microsoft Graph path elements joined onto the driver's base URL.
+	microsoft365UsersPath                   = "users"
+	microsoft365DirectoryRolesPath          = "directoryRoles"
+	microsoft365RoleMembersPath             = "members"
+	microsoft365ReportsPath                 = "reports"
+	microsoft365AuthenticationMethodsPath   = "authenticationMethods"
+	microsoft365UserRegistrationDetailsPath = "userRegistrationDetails"
+	microsoft365OrganizationPath            = "organization"
+
 	microsoft365UsersSelect          = "id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,createdDateTime"
 	microsoft365UserTypeMemberFilter = "userType eq 'Member'"
 	microsoft365UsersPageSize        = 999
@@ -71,7 +80,9 @@ var adminRoleDisplayNames = map[string]bool{
 	"Authentication Administrator":            true,
 }
 
-func NewMicrosoft365Driver(httpClient *http.Client, logger *log.Logger) *Microsoft365Driver {
+// NewMicrosoft365Driver builds a driver against baseURL, the versioned
+// Microsoft Graph origin (e.g. https://graph.microsoft.com/v1.0).
+func NewMicrosoft365Driver(httpClient *http.Client, logger *log.Logger, baseURL string) *Microsoft365Driver {
 	return &Microsoft365Driver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -79,7 +90,8 @@ func NewMicrosoft365Driver(httpClient *http.Client, logger *log.Logger) *Microso
 				maxRetries: 3,
 			},
 		},
-		logger: logger,
+		logger:  logger,
+		baseURL: baseURL,
 	}
 }
 
@@ -257,7 +269,7 @@ func microsoft365RegistrationMFAStatus(
 }
 
 func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User, error) {
-	pageURL, err := buildMicrosoft365UsersURL()
+	pageURL, err := buildMicrosoft365UsersURL(d.baseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -275,14 +287,29 @@ func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User,
 			return all, nil
 		}
 
-		pageURL = page.NextLink
+		pageURL, err = d.nextPageURL(page.NextLink)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, fmt.Errorf("cannot list all microsoft 365 users: %w", ErrPaginationLimitReached)
 }
 
-func buildMicrosoft365UsersURL() (string, error) {
-	u, err := url.Parse(microsoft365GraphBaseURL + "/users")
+// nextPageURL guards the @odata.nextLink Graph hands back: every Graph
+// collection the driver reads pages through an absolute URL, and the tenant's
+// bearer token rides along on each one.
+func (d *Microsoft365Driver) nextPageURL(next string) (string, error) {
+	return sameHostNextPageURL("microsoft 365", d.baseURL, next)
+}
+
+func buildMicrosoft365UsersURL(baseURL string) (string, error) {
+	endpoint, err := url.JoinPath(baseURL, microsoft365UsersPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build graph users URL: %w", err)
+	}
+
+	u, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse graph users URL: %w", err)
 	}
@@ -297,7 +324,7 @@ func buildMicrosoft365UsersURL() (string, error) {
 }
 
 func (d *Microsoft365Driver) listMFAStatuses(ctx context.Context) (map[string]coredata.MFAStatus, error) {
-	pageURL, err := buildMicrosoft365UserRegistrationDetailsURL()
+	pageURL, err := buildMicrosoft365UserRegistrationDetailsURL(d.baseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -325,18 +352,21 @@ func (d *Microsoft365Driver) listMFAStatuses(ctx context.Context) (map[string]co
 			return statuses, nil
 		}
 
-		pageURL = page.NextLink
+		pageURL, err = d.nextPageURL(page.NextLink)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, fmt.Errorf("cannot list all microsoft 365 MFA statuses: %w", ErrPaginationLimitReached)
 }
 
-func buildMicrosoft365UserRegistrationDetailsURL() (string, error) {
+func buildMicrosoft365UserRegistrationDetailsURL(baseURL string) (string, error) {
 	endpoint, err := url.JoinPath(
-		microsoft365GraphBaseURL,
-		"reports",
-		"authenticationMethods",
-		"userRegistrationDetails",
+		baseURL,
+		microsoft365ReportsPath,
+		microsoft365AuthenticationMethodsPath,
+		microsoft365UserRegistrationDetailsPath,
 	)
 	if err != nil {
 		return "", fmt.Errorf("cannot build graph user registration details URL: %w", err)
@@ -351,7 +381,7 @@ func buildMicrosoft365UserRegistrationDetailsURL() (string, error) {
 }
 
 func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsoft365DirectoryRole, error) {
-	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles")
+	endpoint, err := url.JoinPath(d.baseURL, microsoft365DirectoryRolesPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build graph directory roles URL: %w", err)
 	}
@@ -369,14 +399,17 @@ func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsof
 			return all, nil
 		}
 
-		endpoint = page.NextLink
+		endpoint, err = d.nextPageURL(page.NextLink)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, fmt.Errorf("cannot list all microsoft 365 directory roles: %w", ErrPaginationLimitReached)
 }
 
 func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string) ([]microsoft365RoleMember, error) {
-	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles", url.PathEscape(roleID), "members")
+	endpoint, err := url.JoinPath(d.baseURL, microsoft365DirectoryRolesPath, url.PathEscape(roleID), microsoft365RoleMembersPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build graph role members URL: %w", err)
 	}
@@ -394,7 +427,10 @@ func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string)
 			return all, nil
 		}
 
-		endpoint = page.NextLink
+		endpoint, err = d.nextPageURL(page.NextLink)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, fmt.Errorf("cannot list all members of role %q: %w", roleID, ErrPaginationLimitReached)
@@ -431,14 +467,22 @@ func (d *Microsoft365Driver) fetchJSON(ctx context.Context, url string, dst any)
 // via the Microsoft Graph organization endpoint.
 type microsoft365NameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewMicrosoft365NameResolver(httpClient *http.Client) NameResolver {
-	return &microsoft365NameResolver{httpClient: httpClient}
+// NewMicrosoft365NameResolver resolves the tenant name against baseURL, the
+// versioned Microsoft Graph origin (e.g. https://graph.microsoft.com/v1.0).
+func NewMicrosoft365NameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &microsoft365NameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	msURL, err := url.Parse("https://graph.microsoft.com/v1.0/organization")
+	endpoint, err := url.JoinPath(r.baseURL, microsoft365OrganizationPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build microsoft 365 organization URL: %w", err)
+	}
+
+	msURL, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse microsoft 365 organization URL: %w", err)
 	}

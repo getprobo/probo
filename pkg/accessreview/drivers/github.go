@@ -43,7 +43,17 @@ const (
 	githubUsersSegment       = "users"
 	githubMembersSegment     = "members"
 	githubMembershipsSegment = "memberships"
+
+	// Whole path, unlike the segments above: the picker's endpoint
+	// interleaves no org or login.
+	githubUserOrgsPath = "user/orgs"
 )
+
+// githubDefaultBaseURL is the GitHub REST API root. It backs only the
+// exported ListGitHubOrganizations, and only when its caller resolves no
+// APIBase for the provider (unregistered, or registered without one).
+// Every other path goes through the injected baseURL instead.
+const githubDefaultBaseURL = "https://api.github.com"
 
 // GitHubDriver fetches organization members from the GitHub REST API
 // using a pre-authenticated HTTP client (Bearer token).
@@ -238,6 +248,12 @@ func (d *GitHubDriver) fetchMembersPage(ctx context.Context, url string) ([]gith
 	}
 
 	nextURL := rfc5988.FindByRel(httpResp.Header.Get("Link"), "next")
+	if nextURL != "" {
+		nextURL, err = sameHostNextPageURL("github", d.baseURL, nextURL)
+		if err != nil {
+			return nil, "", err
+		}
+	}
 
 	return members, nextURL, nil
 }
@@ -405,9 +421,27 @@ func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 }
 
 // ListGitHubOrganizations fetches the organizations the authenticated
-// GitHub user belongs to.
-func ListGitHubOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/user/orgs?per_page=100", nil)
+// GitHub user belongs to, from baseURL ("" for GitHub.com).
+func ListGitHubOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = githubDefaultBaseURL
+	}
+
+	endpoint, err := url.JoinPath(baseURL, githubUserOrgsPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github organizations URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse github organizations URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("per_page", "100")
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create github organizations request: %w", err)
 	}

@@ -50,6 +50,12 @@ var _ Driver = (*ClickUpDriver)(nil)
 
 const clickupTeamSegment = "team"
 
+// clickupDefaultBaseURL is the ClickUp API root. It backs only the exported
+// ListClickUpOrganizations, and only when its caller resolves no APIBase for
+// the provider (unregistered, or registered without one). Every other path
+// goes through the injected baseURL instead.
+const clickupDefaultBaseURL = "https://api.clickup.com/api/v2"
+
 // NewClickUpDriver builds a driver against baseURL, the versioned ClickUp
 // API origin (e.g. https://api.clickup.com/api/v2).
 func NewClickUpDriver(httpClient *http.Client, teamID, baseURL string) *ClickUpDriver {
@@ -234,14 +240,18 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 }
 
 // ListClickUpOrganizations fetches the ClickUp teams (workspaces) the
-// authenticated user belongs to.
-func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://api.clickup.com/api/v2/team",
-		nil,
-	)
+// authenticated user belongs to, from baseURL ("" for the ClickUp SaaS API).
+func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = clickupDefaultBaseURL
+	}
+
+	endpoint, err := url.JoinPath(baseURL, clickupTeamSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build clickup organizations URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create clickup organizations request: %w", err)
 	}

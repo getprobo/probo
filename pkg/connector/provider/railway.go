@@ -35,17 +35,24 @@ func railwayRegistration() *Registration {
 		DisplayName:      "Railway",
 		DocumentationURL: accessReviewDocsURL("railway"),
 		SupportsAPIKey:   true,
+		Endpoints: Endpoints{
+			// Railway's data API is a single GraphQL endpoint, so APIBase is
+			// that endpoint (note the .com TLD — the legacy
+			// backboard.railway.app host is deprecated): the driver, name
+			// resolver and probe POST to it verbatim.
+			APIBase: "https://backboard.railway.com/graphql/v2",
+		},
 		// Railway authenticates with an account API token as Authorization:
 		// Bearer. A single GraphQL call resolves the account's workspaces and
 		// their members, so there is nothing to pick (Pattern 3). Railway
 		// returns HTTP 200 with an errors body for a rejected token, so the
 		// probe must inspect the body — hence a custom Probe.
 		Probe: probeRailway,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewRailwayDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewRailwayDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewRailwayNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewRailwayNameResolver(c, ep.APIBase)
 		},
 	}
 }

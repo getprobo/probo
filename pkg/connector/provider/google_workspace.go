@@ -33,6 +33,15 @@ func googleWorkspaceRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderGoogleWorkspace,
 		DisplayName: "Google Workspace",
+		// APIBase is deliberately empty. Unlike every other provider here, the
+		// Admin Directory host is not a Probo literal: it lives in the Google
+		// SDK's generated basePath, which admin.NewService picks up (see
+		// drivers.GoogleWorkspaceDriver). Honouring an override would mean
+		// threading option.WithEndpoint into the SDK, and the SDK expects a
+		// trailing-slash root — the opposite of the no-trailing-slash APIBase
+		// this struct documents. Declaring an APIBase nothing reads would be
+		// worse than declaring none: the Probe below would silently keep
+		// pointing at production while the SDK went on using its own basePath.
 		Endpoints: Endpoints{
 			Auth:  "https://accounts.google.com/o/oauth2/v2/auth",
 			Token: "https://oauth2.googleapis.com/token",

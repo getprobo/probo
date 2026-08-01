@@ -35,7 +35,7 @@ func TestPagerDutyDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/pagerduty", "PAGERDUTY_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("PAGERDUTY_TOKEN")))
 
-	driver := NewPagerDutyDriver(client)
+	driver := NewPagerDutyDriver(client, "https://api.pagerduty.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

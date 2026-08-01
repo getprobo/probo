@@ -44,6 +44,10 @@ func vercelRegistration() *Registration {
 		Endpoints: Endpoints{
 			Token: "https://api.vercel.com/v2/oauth/access_token",
 			Probe: "https://api.vercel.com/v2/user",
+			// No version segment: the driver reads members from v3 while the
+			// name resolver reads the team from v2, so each call site joins
+			// its own version onto this origin.
+			APIBase: "https://api.vercel.com",
 		},
 		BuildAuthURL: func(slug string) (string, error) {
 			u, err := url.JoinPath("https://vercel.com/integrations", url.PathEscape(slug), "new")
@@ -53,7 +57,7 @@ func vercelRegistration() *Registration {
 
 			return u, nil
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
@@ -63,16 +67,16 @@ func vercelRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create vercel driver: team_id is required")
 			}
 
-			return drivers.NewVercelDriver(c, s.TeamID), nil
+			return drivers.NewVercelDriver(c, s.TeamID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read vercel connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewVercelNameResolver(c, s.TeamID)
+			return drivers.NewVercelNameResolver(c, s.TeamID, ep.APIBase)
 		},
 	}
 }

@@ -32,10 +32,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// railwayGraphQLEndpoint is Railway's GraphQL API (note the .com TLD — the
-// legacy backboard.railway.app host is deprecated).
-const railwayGraphQLEndpoint = "https://backboard.railway.com/graphql/v2"
-
 // railwayMembersQuery fetches the authenticated account and the members of all
 // its workspaces. members/workspaces are plain lists (not Relay connections),
 // so a single request returns everyone; the same user id recurs across
@@ -47,12 +43,17 @@ const railwayMembersQuery = `query { me { id name email workspaces { id name mem
 // Bearer credential set by the connection transport.
 type RailwayDriver struct {
 	httpClient *http.Client
+	endpoint   string
 }
 
 var _ Driver = (*RailwayDriver)(nil)
 
-func NewRailwayDriver(httpClient *http.Client) *RailwayDriver {
-	return &RailwayDriver{httpClient: httpClient}
+// NewRailwayDriver builds a driver against endpoint, Railway's GraphQL API
+// (e.g. https://backboard.railway.com/graphql/v2 — note the .com TLD, the
+// legacy backboard.railway.app host is deprecated). It is the only endpoint
+// the driver calls, so there is no path to join onto it.
+func NewRailwayDriver(httpClient *http.Client, endpoint string) *RailwayDriver {
+	return &RailwayDriver{httpClient: httpClient, endpoint: endpoint}
 }
 
 type railwayMember struct {
@@ -195,7 +196,7 @@ func railwayRecords(me *railwayMe) []AccountRecord {
 }
 
 func (d *RailwayDriver) queryMe(ctx context.Context) (*railwayMe, error) {
-	httpResp, err := railwayPost(ctx, d.httpClient, "members", railwayMembersQuery)
+	httpResp, err := railwayPost(ctx, d.httpClient, d.endpoint, "members", railwayMembersQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -225,11 +226,12 @@ func (d *RailwayDriver) queryMe(ctx context.Context) (*railwayMe, error) {
 	return resp.Data.Me, nil
 }
 
-// railwayPost issues a GraphQL POST carrying query to Railway's endpoint,
-// setting the Content-Type and Accept headers; the Bearer credential is attached
-// by the connection transport. The caller owns status handling and must close
-// the returned response body. label names the request in wrapped errors.
-func railwayPost(ctx context.Context, httpClient *http.Client, label, query string) (*http.Response, error) {
+// railwayPost issues a GraphQL POST carrying query to endpoint, Railway's
+// GraphQL API, setting the Content-Type and Accept headers; the Bearer
+// credential is attached by the connection transport. The caller owns status
+// handling and must close the returned response body. label names the request
+// in wrapped errors.
+func railwayPost(ctx context.Context, httpClient *http.Client, endpoint, label, query string) (*http.Response, error) {
 	body := struct {
 		Query string `json:"query"`
 	}{
@@ -241,7 +243,7 @@ func railwayPost(ctx context.Context, httpClient *http.Client, label, query stri
 		return nil, fmt.Errorf("cannot marshal railway %s query: %w", label, err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, railwayGraphQLEndpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create railway %s request: %w", label, err)
 	}
@@ -303,14 +305,17 @@ func railwayMFAStatus(hasSignal, enabled bool) coredata.MFAStatus {
 // source spans all of the account's workspaces.
 type railwayNameResolver struct {
 	httpClient *http.Client
+	endpoint   string
 }
 
-func NewRailwayNameResolver(httpClient *http.Client) NameResolver {
-	return &railwayNameResolver{httpClient: httpClient}
+// NewRailwayNameResolver resolves the workspace name against endpoint,
+// Railway's GraphQL API (e.g. https://backboard.railway.com/graphql/v2).
+func NewRailwayNameResolver(httpClient *http.Client, endpoint string) NameResolver {
+	return &railwayNameResolver{httpClient: httpClient, endpoint: endpoint}
 }
 
 func (r *railwayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	httpResp, err := railwayPost(ctx, r.httpClient, "account", `query { me { name workspaces { id name } } }`)
+	httpResp, err := railwayPost(ctx, r.httpClient, r.endpoint, "account", `query { me { name workspaces { id name } } }`)
 	if err != nil {
 		return "", err
 	}

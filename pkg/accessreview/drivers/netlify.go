@@ -52,6 +52,12 @@ const (
 	netlifyMembersSegment  = "members"
 )
 
+// netlifyDefaultBaseURL is the Netlify API root. It backs only the exported
+// ListNetlifyOrganizations, and only when its caller resolves no APIBase for
+// the provider (unregistered, or registered without one). Every other path
+// goes through the injected baseURL instead.
+const netlifyDefaultBaseURL = "https://api.netlify.com/api/v1"
+
 // NewNetlifyDriver builds a driver against baseURL, the versioned Netlify
 // API origin (e.g. https://api.netlify.com/api/v1).
 func NewNetlifyDriver(httpClient *http.Client, accountSlug, baseURL string) *NetlifyDriver {
@@ -115,9 +121,14 @@ func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			records = append(records, record)
 		}
 
-		next = rfc5988.FindByRel(linkHeader, "next")
-		if next == "" {
+		rawNext := rfc5988.FindByRel(linkHeader, "next")
+		if rawNext == "" {
 			return records, nil
+		}
+
+		next, err = sameHostNextPageURL("netlify", d.baseURL, rawNext)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -203,14 +214,18 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 }
 
 // ListNetlifyOrganizations fetches the Netlify accounts the authenticated
-// user belongs to.
-func ListNetlifyOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://api.netlify.com/api/v1/accounts",
-		nil,
-	)
+// user belongs to, from baseURL ("" for the Netlify SaaS API).
+func ListNetlifyOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = netlifyDefaultBaseURL
+	}
+
+	endpoint, err := url.JoinPath(baseURL, netlifyAccountsSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build netlify organizations URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create netlify organizations request: %w", err)
 	}

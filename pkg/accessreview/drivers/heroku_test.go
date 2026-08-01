@@ -43,7 +43,7 @@ func TestHerokuDriver(t *testing.T) {
 		teamID = "acme"
 	}
 
-	driver := NewHerokuDriver(client, teamID)
+	driver := NewHerokuDriver(client, teamID, "https://api.heroku.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)
@@ -98,7 +98,7 @@ func TestHerokuDriverPersonalAccount(t *testing.T) {
 
 	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-	records, err := NewHerokuDriver(client, "").ListAccounts(context.Background())
+	records, err := NewHerokuDriver(client, "", "https://api.heroku.com").ListAccounts(context.Background())
 	require.NoError(t, err)
 
 	byEmail := make(map[string]AccountRecord, len(records))
@@ -140,7 +140,7 @@ func TestHerokuDriverPersonalAccountSlug(t *testing.T) {
 
 	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-	records, err := NewHerokuDriver(client, herokuPersonalAccountSlug).ListAccounts(context.Background())
+	records, err := NewHerokuDriver(client, herokuPersonalAccountSlug, "https://api.heroku.com").ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 1)
 	assert.Equal(t, "alice@example.com", records[0].Email)
@@ -183,7 +183,7 @@ func TestHerokuDriverPersonalAccountErrors(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			_, err := NewHerokuDriver(client, "").ListAccounts(context.Background())
+			_, err := NewHerokuDriver(client, "", "https://api.heroku.com").ListAccounts(context.Background())
 			require.Error(t, err)
 		})
 	}

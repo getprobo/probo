@@ -35,6 +35,11 @@ func anthropicRegistration() *Registration {
 		DisplayName:      "Anthropic",
 		DocumentationURL: accessReviewDocsURL("anthropic"),
 		SupportsAPIKey:   true,
+		Endpoints: Endpoints{
+			// Every Admin API endpoint the driver calls shares the /v1
+			// prefix, so the version segment stays in APIBase.
+			APIBase: "https://api.anthropic.com/v1",
+		},
 		// Anthropic's Admin API authenticates with the admin key in the
 		// x-api-key header; it rejects Authorization: Bearer and returns
 		// 400 when both headers are present. APIKeyHeader makes the
@@ -43,11 +48,11 @@ func anthropicRegistration() *Registration {
 		// only and takes a single admin key (sk-ant-admin...) per org.
 		APIKeyHeader: "x-api-key",
 		Probe:        probeAnthropic,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewAnthropicDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewAnthropicDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewAnthropicNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewAnthropicNameResolver(c, ep.APIBase)
 		},
 	}
 }

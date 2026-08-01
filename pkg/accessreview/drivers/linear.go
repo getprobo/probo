@@ -36,6 +36,7 @@ import (
 // GraphQL requests.
 type LinearDriver struct {
 	httpClient *http.Client
+	endpoint   string
 }
 
 var _ Driver = (*LinearDriver)(nil)
@@ -73,11 +74,13 @@ type linearUsersResponse struct {
 	} `json:"errors"`
 }
 
-const linearGraphQLEndpoint = "https://api.linear.app/graphql"
-
-func NewLinearDriver(httpClient *http.Client) *LinearDriver {
+// NewLinearDriver builds a driver against endpoint, Linear's GraphQL API
+// (e.g. https://api.linear.app/graphql). Linear exposes a single endpoint,
+// so there is no path to join onto it.
+func NewLinearDriver(httpClient *http.Client, endpoint string) *LinearDriver {
 	return &LinearDriver{
 		httpClient: httpClient,
+		endpoint:   endpoint,
 	}
 }
 
@@ -173,7 +176,7 @@ query AccessReviewLinearUsers($after: String) {
 		return nil, fmt.Errorf("cannot marshal linear users query: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, linearGraphQLEndpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create linear users request: %w", err)
 	}
@@ -220,10 +223,13 @@ func linearRoles(admin, guest bool) []string {
 // linearNameResolver resolves the Linear organization name via GraphQL.
 type linearNameResolver struct {
 	httpClient *http.Client
+	endpoint   string
 }
 
-func NewLinearNameResolver(httpClient *http.Client) NameResolver {
-	return &linearNameResolver{httpClient: httpClient}
+// NewLinearNameResolver resolves the org name against endpoint, Linear's
+// GraphQL API (e.g. https://api.linear.app/graphql).
+func NewLinearNameResolver(httpClient *http.Client, endpoint string) NameResolver {
+	return &linearNameResolver{httpClient: httpClient, endpoint: endpoint}
 }
 
 func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -238,7 +244,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", fmt.Errorf("cannot marshal linear organization query: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, linearGraphQLEndpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return "", fmt.Errorf("cannot create linear organization request: %w", err)
 	}

@@ -532,12 +532,25 @@ func (s *Service) ProviderOrganizations(
 		return nil, nil
 	}
 
-	orgs, err := cfg.ListOrgs(ctx, httpClient)
+	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerAPIBase(dbConnector.Provider))
 	if err != nil {
 		return nil, err
 	}
 
 	return orgs, nil
+}
+
+// providerAPIBase returns the API root declared by the provider's
+// registration, or "" when the provider is not registered or declares
+// none. Listers treat "" as "no override" and fall back to their
+// production base.
+func (s *Service) providerAPIBase(connectorProvider coredata.ConnectorProvider) string {
+	reg, ok := s.providerRegistry.Get(connectorProvider)
+	if !ok {
+		return ""
+	}
+
+	return reg.Endpoints.APIBase
 }
 
 // SelectedOrganizationSlug returns the org identifier currently configured on
@@ -709,7 +722,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 	listCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	orgs, err := cfg.ListOrgs(listCtx, httpClient)
+	orgs, err := cfg.ListOrgs(listCtx, httpClient, s.providerAPIBase(dbMeta.Provider))
 	if err != nil {
 		s.logger.WarnCtx(
 			ctx,

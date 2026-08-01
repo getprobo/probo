@@ -37,19 +37,15 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// Non-URL request metadata the probe closures need. Every host-bearing URL a
+// probe emits comes from the registration's Endpoints or from the connector's
+// own settings, never from a literal here, so an APIBase override moves the
+// connection check along with the driver.
 const (
-	anthropicAPIVersion       = "2023-06-01"
-	anthropicUsersProbeURL    = "https://api.anthropic.com/v1/organizations/users?limit=1"
-	herokuAccountProbeURL     = "https://api.heroku.com/account"
-	openRouterMembersProbeURL = "https://openrouter.ai/api/v1/organization/members?limit=1"
-	linearGraphQLEndpoint     = "https://api.linear.app/graphql"
-	mondayGraphQLEndpoint     = "https://api.monday.com/v2"
-	railwayGraphQLEndpoint    = "https://backboard.railway.com/graphql/v2"
-	crispAPIBaseURL           = "https://api.crisp.chat/v1"
-	crispTierHeader           = "X-Crisp-Tier"
-	crispTierValue            = "plugin"
-	squareVersion             = "2026-05-20"
-	squareMerchantProbeURL    = "https://connect.squareup.com/v2/merchants/me"
+	anthropicAPIVersion = "2023-06-01"
+	crispTierHeader     = "X-Crisp-Tier"
+	crispTierValue      = "plugin"
+	squareVersion       = "2026-05-20"
 )
 
 // ProbeConnection verifies that the connector credential is accepted by the
@@ -67,12 +63,12 @@ func (r *Registry) ProbeConnection(
 	}
 
 	if reg.Probe != nil {
-		return reg.Probe(ctx, httpClient, conn)
+		return reg.Probe(ctx, httpClient, conn, reg.Endpoints)
 	}
 
 	probeURL := reg.Endpoints.Probe
 	if reg.BuildProbeURL != nil {
-		built, err := reg.BuildProbeURL(conn)
+		built, err := reg.BuildProbeURL(conn, reg.Endpoints)
 		if err != nil {
 			return fmt.Errorf("cannot build probe URL: %w", err)
 		}
@@ -150,7 +146,7 @@ func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...i
 	return nil
 }
 
-func buildDatadogProbeURL(conn *coredata.Connector) (string, error) {
+func buildDatadogProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read datadog connector settings: %w", err)
@@ -174,7 +170,7 @@ func buildDatadogProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint.String(), nil
 }
 
-func buildZendeskProbeURL(conn *coredata.Connector) (string, error) {
+func buildZendeskProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read zendesk connector settings: %w", err)
@@ -199,7 +195,7 @@ func buildZendeskProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint.String(), nil
 }
 
-func buildOktaProbeURL(conn *coredata.Connector) (string, error) {
+func buildOktaProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read okta connector settings: %w", err)
@@ -219,7 +215,7 @@ func buildOktaProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint.String(), nil
 }
 
-func buildNeonProbeURL(conn *coredata.Connector) (string, error) {
+func buildNeonProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read neon connector settings: %w", err)
@@ -230,7 +226,7 @@ func buildNeonProbeURL(conn *coredata.Connector) (string, error) {
 	}
 
 	endpoint, err := url.JoinPath(
-		"https://console.neon.tech/api/v2",
+		ep.APIBase,
 		"organizations",
 		url.PathEscape(s.OrganizationID),
 		"members",
@@ -244,7 +240,7 @@ func buildNeonProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint + "?" + q.Encode(), nil
 }
 
-func buildScalewayProbeURL(conn *coredata.Connector) (string, error) {
+func buildScalewayProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read scaleway connector settings: %w", err)
@@ -267,7 +263,7 @@ func buildScalewayProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint.String(), nil
 }
 
-func buildRenderProbeURL(conn *coredata.Connector) (string, error) {
+func buildRenderProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read render connector settings: %w", err)
@@ -278,14 +274,14 @@ func buildRenderProbeURL(conn *coredata.Connector) (string, error) {
 	}
 
 	return url.JoinPath(
-		"https://api.render.com/v1",
+		ep.APIBase,
 		"owners",
 		url.PathEscape(s.OwnerID),
 		"members",
 	)
 }
 
-func buildQoveryProbeURL(conn *coredata.Connector) (string, error) {
+func buildQoveryProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read qovery connector settings: %w", err)
@@ -296,14 +292,14 @@ func buildQoveryProbeURL(conn *coredata.Connector) (string, error) {
 	}
 
 	return url.JoinPath(
-		"https://api.qovery.com",
+		ep.APIBase,
 		"organization",
 		url.PathEscape(s.OrganizationID),
 		"member",
 	)
 }
 
-func buildGrafanaProbeURL(conn *coredata.Connector) (string, error) {
+func buildGrafanaProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read grafana connector settings: %w", err)
@@ -328,7 +324,7 @@ func buildGrafanaProbeURL(conn *coredata.Connector) (string, error) {
 	return u.String(), nil
 }
 
-func buildMetabaseProbeURL(conn *coredata.Connector) (string, error) {
+func buildMetabaseProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read metabase connector settings: %w", err)
@@ -358,7 +354,7 @@ func buildMetabaseProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint.String(), nil
 }
 
-func buildLangfuseProbeURL(conn *coredata.Connector) (string, error) {
+func buildLangfuseProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.LangfuseConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read langfuse connector settings: %w", err)
@@ -377,7 +373,7 @@ func buildLangfuseProbeURL(conn *coredata.Connector) (string, error) {
 	return u.JoinPath("api", "public", "organizations", "memberships").String(), nil
 }
 
-func buildSigNozProbeURL(conn *coredata.Connector) (string, error) {
+func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read signoz connector settings: %w", err)
@@ -414,11 +410,12 @@ func probeLinear(
 	ctx context.Context,
 	httpClient *http.Client,
 	_ *coredata.Connector,
+	ep Endpoints,
 ) error {
 	return probePOSTJSON(
 		ctx,
 		httpClient,
-		linearGraphQLEndpoint,
+		ep.APIBase,
 		map[string]string{"query": "{ viewer { id } }"},
 		nil,
 	)
@@ -428,11 +425,12 @@ func probeMonday(
 	ctx context.Context,
 	httpClient *http.Client,
 	_ *coredata.Connector,
+	ep Endpoints,
 ) error {
 	return probePOSTJSON(
 		ctx,
 		httpClient,
-		mondayGraphQLEndpoint,
+		ep.APIBase,
 		map[string]string{"query": "query { users(limit: 1) { id } }"},
 		nil,
 	)
@@ -446,13 +444,14 @@ func probeRailway(
 	ctx context.Context,
 	httpClient *http.Client,
 	_ *coredata.Connector,
+	ep Endpoints,
 ) error {
 	body, err := json.Marshal(map[string]string{"query": "query { me { id } }"})
 	if err != nil {
 		return fmt.Errorf("cannot marshal railway probe request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, railwayGraphQLEndpoint, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ep.APIBase, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("cannot create railway probe request: %w", err)
 	}
@@ -505,6 +504,7 @@ func probeCrisp(
 	ctx context.Context,
 	httpClient *http.Client,
 	conn *coredata.Connector,
+	ep Endpoints,
 ) error {
 	s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](conn)
 	if err != nil {
@@ -515,7 +515,7 @@ func probeCrisp(
 		return fmt.Errorf("missing crisp website_id")
 	}
 
-	endpoint, err := url.JoinPath(crispAPIBaseURL, "website", url.PathEscape(s.WebsiteID), "operators", "list")
+	endpoint, err := url.JoinPath(ep.APIBase, "website", url.PathEscape(s.WebsiteID), "operators", "list")
 	if err != nil {
 		return fmt.Errorf("cannot build crisp probe URL: %w", err)
 	}
@@ -535,11 +535,19 @@ func probeAnthropic(
 	ctx context.Context,
 	httpClient *http.Client,
 	_ *coredata.Connector,
+	ep Endpoints,
 ) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, anthropicUsersProbeURL, nil)
+	endpoint, err := url.JoinPath(ep.APIBase, "organizations", "users")
+	if err != nil {
+		return fmt.Errorf("cannot build anthropic probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("cannot create probe request: %w", err)
 	}
+
+	req.URL.RawQuery = url.Values{"limit": {"1"}}.Encode()
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("anthropic-version", anthropicAPIVersion)
@@ -551,8 +559,14 @@ func probeHeroku(
 	ctx context.Context,
 	httpClient *http.Client,
 	_ *coredata.Connector,
+	ep Endpoints,
 ) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, herokuAccountProbeURL, nil)
+	endpoint, err := url.JoinPath(ep.APIBase, "account")
+	if err != nil {
+		return fmt.Errorf("cannot build heroku probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("cannot create probe request: %w", err)
 	}
@@ -577,21 +591,34 @@ func probeOpenRouter(
 	ctx context.Context,
 	httpClient *http.Client,
 	_ *coredata.Connector,
+	ep Endpoints,
 ) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, openRouterMembersProbeURL, nil)
+	endpoint, err := url.JoinPath(ep.APIBase, "organization", "members")
+	if err != nil {
+		return fmt.Errorf("cannot build openrouter probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("cannot create probe request: %w", err)
 	}
+
+	req.URL.RawQuery = url.Values{"limit": {"1"}}.Encode()
 
 	req.Header.Set("Accept", "application/json")
 
 	return doProbeRequest(httpClient, req, http.StatusNotFound)
 }
 
+// probePostHog ignores Endpoints because PostHog's APIBase is deliberately
+// empty: the data host is per-connection (an API-key region or a self-hosted
+// instance URL) or discovered at runtime, so it comes from the connector
+// settings below, never from the registration.
 func probePostHog(
 	ctx context.Context,
 	httpClient *http.Client,
 	conn *coredata.Connector,
+	_ Endpoints,
 ) error {
 	probeURL, err := buildPostHogProbeURL(conn)
 	if err != nil {
@@ -621,7 +648,7 @@ func probePostHog(
 // buildSegmentProbeURL builds the Segment users probe URL from the connector's
 // stored base URL (the region-resolved host). GET /users returns 401 on a dead
 // or under-scoped Public API token.
-func buildSegmentProbeURL(conn *coredata.Connector) (string, error) {
+func buildSegmentProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read segment connector settings: %w", err)
@@ -648,7 +675,7 @@ func buildSegmentProbeURL(conn *coredata.Connector) (string, error) {
 // buildGoogleAnalyticsProbeURL targets the selected account's accessBindings,
 // the driver's first call, so the probe fails for a connection that can list
 // accounts but cannot read access bindings.
-func buildGoogleAnalyticsProbeURL(conn *coredata.Connector) (string, error) {
+func buildGoogleAnalyticsProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read google analytics connector settings: %w", err)
@@ -658,7 +685,7 @@ func buildGoogleAnalyticsProbeURL(conn *coredata.Connector) (string, error) {
 		return "", fmt.Errorf("missing google analytics account ID")
 	}
 
-	return drivers.GoogleAnalyticsAccountBindingsProbeURL(s.AccountID)
+	return drivers.GoogleAnalyticsAccountBindingsProbeURL(s.AccountID, ep.APIBase)
 }
 
 // probeSquare checks a Square credential (OAuth Bearer token or Personal Access
@@ -669,8 +696,14 @@ func probeSquare(
 	ctx context.Context,
 	httpClient *http.Client,
 	_ *coredata.Connector,
+	ep Endpoints,
 ) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, squareMerchantProbeURL, nil)
+	endpoint, err := url.JoinPath(ep.APIBase, "merchants", "me")
+	if err != nil {
+		return fmt.Errorf("cannot build square probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("cannot create probe request: %w", err)
 	}

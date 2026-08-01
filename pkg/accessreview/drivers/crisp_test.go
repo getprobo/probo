@@ -38,7 +38,7 @@ func TestCrispDriver(t *testing.T) {
 	// token. The matcher ignores Authorization, so replay needs no credential.
 	client := newVCRClient(rec, basicAuthUserPass(os.Getenv("CRISP_API_KEY")))
 
-	driver := NewCrispDriver(client, "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d")
+	driver := NewCrispDriver(client, "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "https://api.crisp.chat/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 2)

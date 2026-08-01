@@ -36,7 +36,7 @@ func TestAnthropicDriver(t *testing.T) {
 	// Anthropic authenticates via x-api-key, not Authorization: Bearer.
 	client := newVCRClientWithHeader(rec, "x-api-key", os.Getenv("ANTHROPIC_ADMIN_TOKEN"))
 
-	driver := NewAnthropicDriver(client)
+	driver := NewAnthropicDriver(client, "https://api.anthropic.com/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	assert.Len(t, records, 3)

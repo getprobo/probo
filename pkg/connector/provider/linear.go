@@ -36,14 +36,18 @@ func linearRegistration() *Registration {
 		Endpoints: Endpoints{
 			Auth:  "https://linear.app/oauth/authorize",
 			Token: "https://api.linear.app/oauth/token",
+			// Linear's data API is a single GraphQL endpoint, so APIBase is
+			// that endpoint: the driver, name resolver and probe POST to it
+			// verbatim rather than joining a path onto it.
+			APIBase: "https://api.linear.app/graphql",
 		},
 		Probe:        probeLinear,
 		OAuth2Scopes: []string{"read"},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewLinearDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewLinearDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewLinearNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewLinearNameResolver(c, ep.APIBase)
 		},
 	}
 }

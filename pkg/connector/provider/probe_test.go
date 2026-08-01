@@ -60,7 +60,7 @@ func TestBuildDatadogProbeURL(t *testing.T) {
 		Region: "US3",
 	}))
 
-	probeURL, err := buildDatadogProbeURL(conn)
+	probeURL, err := buildDatadogProbeURL(conn, Endpoints{})
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -77,7 +77,7 @@ func TestBuildZendeskProbeURL(t *testing.T) {
 		Subdomain: "acme",
 	}))
 
-	probeURL, err := buildZendeskProbeURL(conn)
+	probeURL, err := buildZendeskProbeURL(conn, Endpoints{})
 	require.NoError(t, err)
 	assert.Contains(t, probeURL, "https://acme.zendesk.com/api/v2/users.json")
 }
@@ -90,7 +90,7 @@ func TestBuildOktaProbeURL(t *testing.T) {
 		Domain: "acme.okta.com",
 	}))
 
-	probeURL, err := buildOktaProbeURL(conn)
+	probeURL, err := buildOktaProbeURL(conn, Endpoints{})
 	require.NoError(t, err)
 	assert.Equal(t, "https://acme.okta.com/api/v1/users?limit=1", probeURL)
 }
@@ -103,7 +103,7 @@ func TestBuildLangfuseProbeURL(t *testing.T) {
 		BaseURL: "https://us.cloud.langfuse.com",
 	}))
 
-	probeURL, err := buildLangfuseProbeURL(conn)
+	probeURL, err := buildLangfuseProbeURL(conn, Endpoints{})
 	require.NoError(t, err)
 	assert.Equal(t, "https://us.cloud.langfuse.com/api/public/organizations/memberships", probeURL)
 }
@@ -187,7 +187,7 @@ func TestProbePostHog(t *testing.T) {
 			conn := &coredata.Connector{Provider: coredata.ConnectorProviderPostHog}
 			require.NoError(t, conn.SetSettings(&coredata.PostHogConnectorSettings{BaseURL: tc.baseURL}))
 
-			err := probePostHog(context.Background(), client, conn)
+			err := probePostHog(context.Background(), client, conn, posthogRegistration().Endpoints)
 
 			if !tc.wantErr {
 				require.NoError(t, err)
@@ -214,7 +214,7 @@ func TestBuildScalewayProbeURL(t *testing.T) {
 		OrganizationID: "11111111-2222-3333-4444-555555555555",
 	}))
 
-	probeURL, err := buildScalewayProbeURL(conn)
+	probeURL, err := buildScalewayProbeURL(conn, Endpoints{})
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -231,7 +231,7 @@ func TestBuildSegmentProbeURL(t *testing.T) {
 		BaseURL: "https://eu1.api.segmentapis.com",
 	}))
 
-	probeURL, err := buildSegmentProbeURL(conn)
+	probeURL, err := buildSegmentProbeURL(conn, Endpoints{})
 	require.NoError(t, err)
 	assert.Equal(t, "https://eu1.api.segmentapis.com/users?pagination.count=1", probeURL)
 }
@@ -265,7 +265,7 @@ func TestProbeOpenRouter(t *testing.T) {
 				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
 			})}
 
-			err := probeOpenRouter(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderOpenRouter})
+			err := probeOpenRouter(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderOpenRouter}, openrouterRegistration().Endpoints)
 
 			assert.Equal(t, "https://openrouter.ai/api/v1/organization/members?limit=1", gotURL)
 
@@ -308,7 +308,7 @@ func TestProbeHeroku(t *testing.T) {
 				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
 			})}
 
-			err := probeHeroku(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderHeroku})
+			err := probeHeroku(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderHeroku}, herokuRegistration().Endpoints)
 
 			assert.Equal(t, "application/vnd.heroku+json; version=3", gotAccept)
 			assert.Equal(t, "https://api.heroku.com/account", gotURL)
@@ -357,7 +357,7 @@ func TestProbeRailway(t *testing.T) {
 				}, nil
 			})}
 
-			err := probeRailway(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderRailway})
+			err := probeRailway(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderRailway}, railwayRegistration().Endpoints)
 
 			assert.Equal(t, "https://backboard.railway.com/graphql/v2", gotURL)
 			assert.Equal(t, "application/json", gotContentType)
@@ -406,7 +406,7 @@ func TestProbeCrisp(t *testing.T) {
 				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
 			})}
 
-			err := probeCrisp(context.Background(), client, conn)
+			err := probeCrisp(context.Background(), client, conn, crispRegistration().Endpoints)
 
 			assert.Equal(t, "https://api.crisp.chat/v1/website/abc-123/operators/list", gotURL)
 			assert.Equal(t, "plugin", gotTier)
@@ -416,6 +416,94 @@ func TestProbeCrisp(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+// TestBuildProbeURLFromAPIBase pins the URL of the three probe builders whose
+// host is a compile-time constant and now comes from the registration's
+// Endpoints.APIBase. Register can only check the agreement between APIBase and
+// the STATIC Endpoints.Probe, so these assertions are what keeps a built probe
+// URL on the same host as the driver.
+func TestBuildProbeURLFromAPIBase(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		reg      *Registration
+		settings any
+		wantURL  string
+	}{
+		{
+			name:     "neon",
+			reg:      neonRegistration(),
+			settings: &coredata.NeonConnectorSettings{OrganizationID: "org-cool-breeze-12345678"},
+			wantURL:  "https://console.neon.tech/api/v2/organizations/org-cool-breeze-12345678/members?limit=1",
+		},
+		{
+			name:     "render",
+			reg:      renderRegistration(),
+			settings: &coredata.RenderConnectorSettings{OwnerID: "tea-csp8nlbgbbvc73a8nn9g"},
+			wantURL:  "https://api.render.com/v1/owners/tea-csp8nlbgbbvc73a8nn9g/members",
+		},
+		{
+			name:     "qovery",
+			reg:      qoveryRegistration(),
+			settings: &coredata.QoveryConnectorSettings{OrganizationID: "c4f2de4d-3e50-4f98-bf00-065778f7f5b5"},
+			wantURL:  "https://api.qovery.com/organization/c4f2de4d-3e50-4f98-bf00-065778f7f5b5/member",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			conn := &coredata.Connector{Provider: tc.reg.Provider}
+			require.NoError(t, conn.SetSettings(tc.settings))
+			require.NotNil(t, tc.reg.BuildProbeURL)
+
+			probeURL, err := tc.reg.BuildProbeURL(conn, tc.reg.Endpoints)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantURL, probeURL)
+		})
+	}
+}
+
+// TestProbeClosureURL pins the URL each of these Probe closures emits now that
+// it composes from Endpoints.APIBase instead of a hardcoded literal. The other
+// closures (Crisp, Heroku, OpenRouter, Railway, PostHog) assert their own URL
+// in the dedicated tests above.
+func TestProbeClosureURL(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		reg     *Registration
+		wantURL string
+	}{
+		{"linear", linearRegistration(), "https://api.linear.app/graphql"},
+		{"monday", mondayRegistration(), "https://api.monday.com/v2"},
+		{"anthropic", anthropicRegistration(), "https://api.anthropic.com/v1/organizations/users?limit=1"},
+		{"square", squareRegistration(), "https://connect.squareup.com/v2/merchants/me"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var gotURL string
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				gotURL = r.URL.String()
+
+				return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Header: make(http.Header)}, nil
+			})}
+
+			require.NotNil(t, tc.reg.Probe)
+
+			conn := &coredata.Connector{Provider: tc.reg.Provider}
+			require.NoError(t, tc.reg.Probe(context.Background(), client, conn, tc.reg.Endpoints))
+			assert.Equal(t, tc.wantURL, gotURL)
 		})
 	}
 }

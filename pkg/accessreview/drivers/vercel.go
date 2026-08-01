@@ -33,6 +33,17 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// Vercel path elements joined onto the driver's base URL. The members
+// prefix/suffix pair is concatenated rather than joined because the team ID
+// between them must reach url.URL.String() unescaped; see queryMembers.
+const (
+	vercelTeamMembersPathPrefix = "/v3/teams/"
+	vercelTeamMembersPathSuffix = "/members"
+
+	vercelV2Segment    = "v2"
+	vercelTeamsSegment = "teams"
+)
+
 // VercelDriver fetches team members from the Vercel REST API using a
 // pre-authenticated HTTP client (Bearer token). The TeamID is captured
 // during the OAuth callback (Pattern 2-auto). Pagination is via the
@@ -49,14 +60,19 @@ import (
 type VercelDriver struct {
 	httpClient *http.Client
 	teamID     string
+	baseURL    string
 }
 
 var _ Driver = (*VercelDriver)(nil)
 
-func NewVercelDriver(httpClient *http.Client, teamID string) *VercelDriver {
+// NewVercelDriver builds a driver against baseURL, the Vercel REST API
+// origin (e.g. https://api.vercel.com). The version segment is per-call:
+// members come from v3, the team lookup from v2.
+func NewVercelDriver(httpClient *http.Client, teamID, baseURL string) *VercelDriver {
 	return &VercelDriver{
 		httpClient: httpClient,
 		teamID:     teamID,
+		baseURL:    baseURL,
 	}
 }
 
@@ -141,10 +157,18 @@ func (d *VercelDriver) queryMembers(ctx context.Context, cursor string) (*vercel
 		q.Set("until", cursor)
 	}
 
+	base, err := url.Parse(d.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse vercel base URL: %w", err)
+	}
+
+	// The team ID is concatenated, not url.PathEscape'd: url.URL.String()
+	// escapes the assembled Path on its own, and escaping here first would
+	// change the emitted URL.
 	u := url.URL{
-		Scheme:   "https",
-		Host:     "api.vercel.com",
-		Path:     "/v3/teams/" + d.teamID + "/members",
+		Scheme:   base.Scheme,
+		Host:     base.Host,
+		Path:     base.Path + vercelTeamMembersPathPrefix + d.teamID + vercelTeamMembersPathSuffix,
 		RawQuery: q.Encode(),
 	}
 
@@ -181,10 +205,13 @@ func (d *VercelDriver) queryMembers(ctx context.Context, cursor string) (*vercel
 type vercelNameResolver struct {
 	httpClient *http.Client
 	teamID     string
+	baseURL    string
 }
 
-func NewVercelNameResolver(httpClient *http.Client, teamID string) NameResolver {
-	return &vercelNameResolver{httpClient: httpClient, teamID: teamID}
+// NewVercelNameResolver resolves the team name against baseURL, the Vercel
+// REST API origin (e.g. https://api.vercel.com).
+func NewVercelNameResolver(httpClient *http.Client, teamID, baseURL string) NameResolver {
+	return &vercelNameResolver{httpClient: httpClient, teamID: teamID, baseURL: baseURL}
 }
 
 func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -192,7 +219,7 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	teamURL, err := url.JoinPath("https://api.vercel.com", "v2", "teams", url.PathEscape(r.teamID))
+	teamURL, err := url.JoinPath(r.baseURL, vercelV2Segment, vercelTeamsSegment, url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build vercel team URL: %w", err)
 	}
@@ -233,7 +260,7 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	// Personal-account fallback: /v2/teams/<uid> returns 404, but
 	// /v2/user works with the same Bearer token.
-	user, err := connector.FetchVercelUser(ctx, r.httpClient)
+	user, err := connector.FetchVercelUser(ctx, r.httpClient, r.baseURL)
 	if err != nil {
 		return "", err
 	}

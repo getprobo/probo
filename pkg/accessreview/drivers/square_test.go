@@ -36,7 +36,7 @@ func TestSquareDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/square", "SQUARE_ACCESS_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("SQUARE_ACCESS_TOKEN")))
 
-	driver := NewSquareDriver(client)
+	driver := NewSquareDriver(client, "https://connect.squareup.com/v2")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)

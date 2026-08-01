@@ -33,16 +33,22 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// PagerDuty path element joined onto the driver's base URL.
+const pagerdutyUsersPath = "users"
+
 // PagerDutyDriver fetches users from the PagerDuty REST API using a
 // pre-authenticated HTTP client (Bearer token from the Scoped OAuth
 // PKCE flow). Pagination is offset / limit based.
 type PagerDutyDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*PagerDutyDriver)(nil)
 
-func NewPagerDutyDriver(httpClient *http.Client) *PagerDutyDriver {
+// NewPagerDutyDriver builds a driver against baseURL, the PagerDuty REST API
+// origin (e.g. https://api.pagerduty.com).
+func NewPagerDutyDriver(httpClient *http.Client, baseURL string) *PagerDutyDriver {
 	return &PagerDutyDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -50,6 +56,7 @@ func NewPagerDutyDriver(httpClient *http.Client) *PagerDutyDriver {
 				maxRetries: 3,
 			},
 		},
+		baseURL: baseURL,
 	}
 }
 
@@ -136,13 +143,22 @@ func (d *PagerDutyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 }
 
 func (d *PagerDutyDriver) queryUsers(ctx context.Context, offset, limit int) (*pagerdutyUsersPage, error) {
+	endpoint, err := url.JoinPath(d.baseURL, pagerdutyUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build pagerduty users URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse pagerduty users URL: %w", err)
+	}
+
 	q := url.Values{}
 	q.Set("limit", strconv.Itoa(limit))
 	q.Set("offset", strconv.Itoa(offset))
-	u := url.URL{Scheme: "https", Host: "api.pagerduty.com", Path: "/users", RawQuery: q.Encode()}
-	endpoint := u.String()
+	parsed.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create pagerduty users request: %w", err)
 	}

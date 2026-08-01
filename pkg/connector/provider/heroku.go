@@ -37,13 +37,18 @@ func herokuRegistration() *Registration {
 		Endpoints: Endpoints{
 			Auth:  "https://id.heroku.com/oauth/authorize",
 			Token: "https://id.heroku.com/oauth/token",
+			// The Platform API lives on api.heroku.com, a different host
+			// from the id.heroku.com OAuth endpoints above; it carries no
+			// version segment (the version is negotiated through the Accept
+			// media type instead).
+			APIBase: "https://api.heroku.com",
 		},
 		// Heroku requires the versioned Accept header; a plain ProbeURL GET
 		// (Accept: application/json) returns 400 and would read as connected,
 		// so probe via a closure that sends application/vnd.heroku+json.
 		Probe:        probeHeroku,
 		OAuth2Scopes: []string{"read"},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
@@ -52,16 +57,16 @@ func herokuRegistration() *Registration {
 			// TeamID may be empty or the personal-account slug for a solo
 			// Heroku account (no Team); the driver runs in personal mode
 			// (app owner + collaborators) in that case.
-			return drivers.NewHerokuDriver(c, s.TeamID), nil
+			return drivers.NewHerokuDriver(c, s.TeamID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read heroku connector settings", log.Error(err))
 				return nil
 			}
 
-			return drivers.NewHerokuNameResolver(c, s.TeamID)
+			return drivers.NewHerokuNameResolver(c, s.TeamID, ep.APIBase)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, teamID string) error {
 			return c.SetSettings(&coredata.HerokuConnectorSettings{TeamID: teamID})

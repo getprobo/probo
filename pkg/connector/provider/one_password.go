@@ -36,6 +36,15 @@ func onePasswordRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderOnePassword,
 		DisplayName:      "1Password",
 		DocumentationURL: accessReviewDocsURL("one-password"),
+		// APIBase is deliberately empty: 1Password has no single data host to
+		// name. Four host families live under this one registration —
+		// the per-connection SCIM bridge URL (customer-hosted, from
+		// APIKeyExtraSettings), the three regional Users API hosts resolved
+		// from the Region setting (drivers.onePasswordBaseURL), and the
+		// events.1password.com probe below, which is yet another host and is
+		// therefore not the root any driver joins onto. A single APIBase would
+		// have to be wrong for at least two of them, and Register's
+		// Probe-host-matches-APIBase check would reject the honest pairing.
 		Endpoints: Endpoints{
 			Probe: "https://events.1password.com/api/v1/auditevents",
 		},

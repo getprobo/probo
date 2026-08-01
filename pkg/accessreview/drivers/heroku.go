@@ -43,7 +43,19 @@ const (
 	// herokuPersonalAccountDisplayName is the picker label and source name
 	// shown for a personal Heroku account.
 	herokuPersonalAccountDisplayName = "Personal account"
+
+	// Platform API path segments joined onto the driver's base URL.
+	herokuTeamsSegment         = "teams"
+	herokuAppsSegment          = "apps"
+	herokuMembersSegment       = "members"
+	herokuCollaboratorsSegment = "collaborators"
 )
+
+// herokuDefaultBaseURL is the Heroku Platform API root. It backs only the
+// exported ListHerokuOrganizations, and only when its caller resolves no
+// APIBase for the provider (unregistered, or registered without one). Every
+// driver path goes through the injected baseURL instead.
+const herokuDefaultBaseURL = "https://api.heroku.com"
 
 // HerokuDriver fetches members from the Heroku Platform API using a
 // pre-authenticated HTTP client (Bearer token). Pagination is via Heroku's
@@ -67,11 +79,14 @@ const (
 type HerokuDriver struct {
 	httpClient *http.Client
 	teamID     string
+	baseURL    string
 }
 
 var _ Driver = (*HerokuDriver)(nil)
 
-func NewHerokuDriver(httpClient *http.Client, teamID string) *HerokuDriver {
+// NewHerokuDriver builds a driver against baseURL, the Heroku Platform API
+// origin (e.g. https://api.heroku.com).
+func NewHerokuDriver(httpClient *http.Client, teamID, baseURL string) *HerokuDriver {
 	return &HerokuDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -79,7 +94,8 @@ func NewHerokuDriver(httpClient *http.Client, teamID string) *HerokuDriver {
 				maxRetries: 3,
 			},
 		},
-		teamID: teamID,
+		teamID:  teamID,
+		baseURL: baseURL,
 	}
 }
 
@@ -128,7 +144,7 @@ func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 }
 
 func (d *HerokuDriver) listTeamMembers(ctx context.Context) ([]AccountRecord, error) {
-	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(d.teamID), "members")
+	endpoint, err := url.JoinPath(d.baseURL, herokuTeamsSegment, url.PathEscape(d.teamID), herokuMembersSegment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build heroku members URL: %w", err)
 	}
@@ -202,7 +218,12 @@ func (d *HerokuDriver) listPersonalAccounts(ctx context.Context) ([]AccountRecor
 	// under review. Scoping strictly to apps the connector owns would need
 	// the account ID from GET /account, which requires the identity OAuth
 	// scope we deliberately do not request.
-	apps, err := herokuListAll[herokuApp](ctx, d.httpClient, "https://api.heroku.com/apps", "apps")
+	appsURL, err := url.JoinPath(d.baseURL, herokuAppsSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build heroku apps URL: %w", err)
+	}
+
+	apps, err := herokuListAll[herokuApp](ctx, d.httpClient, appsURL, "apps")
 	if err != nil {
 		return nil, fmt.Errorf("cannot list heroku personal apps: %w", err)
 	}
@@ -246,7 +267,7 @@ func (d *HerokuDriver) listPersonalAccounts(ctx context.Context) ([]AccountRecor
 		// the collaborators list.
 		upsert(herokuPersonalRecord(app.Owner.ID, app.Owner.Email, "owner", true))
 
-		endpoint, err := url.JoinPath("https://api.heroku.com", "apps", url.PathEscape(app.ID), "collaborators")
+		endpoint, err := url.JoinPath(d.baseURL, herokuAppsSegment, url.PathEscape(app.ID), herokuCollaboratorsSegment)
 		if err != nil {
 			return nil, fmt.Errorf("cannot build heroku collaborators URL: %w", err)
 		}
@@ -352,10 +373,13 @@ func herokuListAll[T any](ctx context.Context, client *http.Client, endpoint, la
 type herokuNameResolver struct {
 	httpClient *http.Client
 	teamID     string
+	baseURL    string
 }
 
-func NewHerokuNameResolver(httpClient *http.Client, teamID string) NameResolver {
-	return &herokuNameResolver{httpClient: httpClient, teamID: teamID}
+// NewHerokuNameResolver resolves the team name against baseURL, the Heroku
+// Platform API origin (e.g. https://api.heroku.com).
+func NewHerokuNameResolver(httpClient *http.Client, teamID, baseURL string) NameResolver {
+	return &herokuNameResolver{httpClient: httpClient, teamID: teamID, baseURL: baseURL}
 }
 
 func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -369,7 +393,7 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return herokuPersonalAccountDisplayName, nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(r.teamID))
+	endpoint, err := url.JoinPath(r.baseURL, herokuTeamsSegment, url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build heroku team URL: %w", err)
 	}
@@ -407,9 +431,19 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 // entry. Heroku Teams are an opt-in paid construct, so a solo account has
 // no team to discover; the personal entry lets the picker offer personal
 // mode (app owner + collaborators) instead of dead-ending at a free-text
-// slug the user cannot fill.
-func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.heroku.com/teams", nil)
+// slug the user cannot fill. Teams are fetched from baseURL ("" for the
+// Heroku SaaS Platform API).
+func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = herokuDefaultBaseURL
+	}
+
+	endpoint, err := url.JoinPath(baseURL, herokuTeamsSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build heroku organizations URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create heroku organizations request: %w", err)
 	}

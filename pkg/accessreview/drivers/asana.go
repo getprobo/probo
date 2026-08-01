@@ -51,6 +51,12 @@ const (
 	asanaUsersSegment      = "users"
 )
 
+// asanaDefaultBaseURL is the Asana API root. It backs only the exported
+// ListAsanaOrganizations, and only when its caller resolves no APIBase for
+// the provider (unregistered, or registered without one). Every other path
+// goes through the injected baseURL instead.
+const asanaDefaultBaseURL = "https://app.asana.com/api/1.0"
+
 // NewAsanaDriver builds a driver against baseURL, the versioned Asana API
 // origin (e.g. https://app.asana.com/api/1.0).
 func NewAsanaDriver(httpClient *http.Client, workspaceGID, baseURL string) *AsanaDriver {
@@ -128,7 +134,10 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			return records, nil
 		}
 
-		next = page.NextPage.URI
+		next, err = sameHostNextPageURL("asana", d.baseURL, page.NextPage.URI)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, fmt.Errorf("cannot list all asana accounts: %w", ErrPaginationLimitReached)
@@ -215,14 +224,27 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 }
 
 // ListAsanaOrganizations fetches the workspaces the authenticated Asana
-// user belongs to.
-func ListAsanaOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://app.asana.com/api/1.0/workspaces?limit=100",
-		nil,
-	)
+// user belongs to, from baseURL ("" for the Asana SaaS API).
+func ListAsanaOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = asanaDefaultBaseURL
+	}
+
+	endpoint, err := url.JoinPath(baseURL, asanaWorkspacesSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build asana organizations URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse asana organizations URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("limit", "100")
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create asana organizations request: %w", err)
 	}

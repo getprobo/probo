@@ -48,9 +48,9 @@ const (
 )
 
 // sentryDefaultBaseURL is the Sentry SaaS API root. It backs only the
-// exported ListSentryOrganizations, which the access-source picker calls
-// with no registration — and therefore no Endpoints — in scope. Every
-// driver path goes through the injected baseURL instead.
+// exported ListSentryOrganizations, and only when its caller resolves no
+// APIBase for the provider (unregistered, or registered without one).
+// Every driver path goes through the injected baseURL instead.
 const sentryDefaultBaseURL = "https://sentry.io/api/0"
 
 // SentryDriver fetches organization members from Sentry via Bearer
@@ -195,9 +195,14 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			}
 		}
 
-		nextURL = sentryNextLink(linkHeader)
-		if nextURL == "" {
+		rawNext := sentryNextLink(linkHeader)
+		if rawNext == "" {
 			return records, nil
+		}
+
+		nextURL, err = sameHostNextPageURL("sentry", d.baseURL, rawNext)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -320,10 +325,13 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 }
 
 // ListSentryOrganizations fetches the organizations the authenticated
-// Sentry user belongs to. The access-source picker calls it as a bare
-// function, with no registration in scope, so it targets Sentry SaaS.
-func ListSentryOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	return listSentryOrganizations(ctx, httpClient, sentryDefaultBaseURL)
+// Sentry user belongs to, from baseURL ("" for Sentry SaaS).
+func ListSentryOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = sentryDefaultBaseURL
+	}
+
+	return listSentryOrganizations(ctx, httpClient, baseURL)
 }
 
 func listSentryOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {

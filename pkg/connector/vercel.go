@@ -25,9 +25,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.gearno.de/kit/httpclient"
+)
+
+const (
+	// vercelUserPath is the path both helpers below join onto a Vercel REST
+	// API origin.
+	vercelUserPath = "v2/user"
+
+	// vercelDefaultBaseURL is the Vercel REST API root. Only
+	// FetchVercelUserID uses it: that helper runs inside the OAuth callback
+	// handler, which has no *provider.Registry — and therefore no resolved
+	// Endpoints — in scope. FetchVercelUser takes its origin from the
+	// caller instead.
+	vercelDefaultBaseURL = "https://api.vercel.com"
 )
 
 // VercelUser is the projection of Vercel's /v2/user response that Probo
@@ -40,12 +54,18 @@ type VercelUser struct {
 	Name     string `json:"name"`
 }
 
-// FetchVercelUser calls Vercel's /v2/user with the provided client. The
+// FetchVercelUser calls Vercel's /v2/user under baseURL, the Vercel REST
+// API origin (e.g. https://api.vercel.com), with the provided client. The
 // client is expected to carry valid Bearer auth (either via an OAuth2
 // round-tripper, as used by the source-name worker, or via a per-request
 // header set by the caller).
-func FetchVercelUser(ctx context.Context, client *http.Client) (VercelUser, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.vercel.com/v2/user", nil)
+func FetchVercelUser(ctx context.Context, client *http.Client, baseURL string) (VercelUser, error) {
+	endpoint, err := url.JoinPath(baseURL, vercelUserPath)
+	if err != nil {
+		return VercelUser{}, fmt.Errorf("cannot build vercel user URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return VercelUser{}, fmt.Errorf("cannot create vercel user request: %w", err)
 	}
@@ -82,7 +102,12 @@ func FetchVercelUserID(ctx context.Context, accessToken string) (string, error) 
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, "https://api.vercel.com/v2/user", nil)
+	endpoint, err := url.JoinPath(vercelDefaultBaseURL, vercelUserPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build vercel user URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create vercel user request: %w", err)
 	}

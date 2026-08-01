@@ -82,7 +82,7 @@ func TestNameResolversTerminalOnClientError(t *testing.T) {
 	}{
 		{name: "grafana", resolver: NewGrafanaNameResolver(srv.Client(), srv.URL)},
 		{name: "metabase", resolver: NewMetabaseNameResolver(srv.Client(), srv.URL)},
-		{name: "tailscale", resolver: NewTailscaleNameResolver(&http.Client{Transport: &hostRewriter{target: srv.URL}})},
+		{name: "tailscale", resolver: NewTailscaleNameResolver(&http.Client{Transport: &hostRewriter{target: srv.URL}}, "https://api.tailscale.com/api/v2")},
 	}
 
 	for _, tc := range cases {
@@ -520,7 +520,7 @@ func TestTailscaleNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewTailscaleNameResolver(client).ResolveInstanceName(context.Background())
+			got, err := NewTailscaleNameResolver(client, "https://api.tailscale.com/api/v2").ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				return
@@ -543,7 +543,7 @@ func TestHerokuNameResolver(t *testing.T) {
 			return nil, nil
 		})}
 
-		got, err := NewHerokuNameResolver(client, herokuPersonalAccountSlug).ResolveInstanceName(context.Background())
+		got, err := NewHerokuNameResolver(client, herokuPersonalAccountSlug, "https://api.heroku.com").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Equal(t, "Personal account", got)
 	})
@@ -562,7 +562,7 @@ func TestHerokuNameResolver(t *testing.T) {
 
 		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-		got, err := NewHerokuNameResolver(client, "acme").ResolveInstanceName(context.Background())
+		got, err := NewHerokuNameResolver(client, "acme", "https://api.heroku.com").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Equal(t, "Acme Inc", got)
 	})
@@ -717,7 +717,7 @@ func TestRailwayNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewRailwayNameResolver(client).ResolveInstanceName(context.Background())
+			got, err := NewRailwayNameResolver(client, "https://backboard.railway.com/graphql/v2").ResolveInstanceName(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
@@ -735,7 +735,7 @@ func TestCrispNameResolver(t *testing.T) {
 			return nil, nil
 		})}
 
-		got, err := NewCrispNameResolver(client, "").ResolveInstanceName(context.Background())
+		got, err := NewCrispNameResolver(client, "", "https://api.crisp.chat/v1").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -788,7 +788,7 @@ func TestCrispNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewCrispNameResolver(client, "1a2b3c4d").ResolveInstanceName(context.Background())
+			got, err := NewCrispNameResolver(client, "1a2b3c4d", "https://api.crisp.chat/v1").ResolveInstanceName(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
@@ -854,7 +854,7 @@ func TestSquareNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewSquareNameResolver(client).ResolveInstanceName(context.Background())
+			got, err := NewSquareNameResolver(client, "https://connect.squareup.com/v2").ResolveInstanceName(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
@@ -872,7 +872,7 @@ func TestGoogleAnalyticsNameResolver(t *testing.T) {
 			return nil, nil
 		})}
 
-		got, err := NewGoogleAnalyticsNameResolver(client, "").ResolveInstanceName(context.Background())
+		got, err := NewGoogleAnalyticsNameResolver(client, "", "https://analyticsadmin.googleapis.com/v1alpha").ResolveInstanceName(context.Background())
 		require.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -930,7 +930,7 @@ func TestGoogleAnalyticsNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewGoogleAnalyticsNameResolver(client, "123456").ResolveInstanceName(context.Background())
+			got, err := NewGoogleAnalyticsNameResolver(client, "123456", "https://analyticsadmin.googleapis.com/v1alpha").ResolveInstanceName(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})

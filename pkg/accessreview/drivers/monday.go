@@ -31,10 +31,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// mondayGraphQLEndpoint is Monday.com's REST endpoint that accepts
-// GraphQL queries via POST.
-const mondayGraphQLEndpoint = "https://api.monday.com/v2"
-
 // mondayUsersListQuery paginates Monday.com users by `page` (1-indexed).
 // MFA is exposed only via SCIM Enterprise — leave MFAStatus=Unknown.
 const mondayUsersListQuery = `query($p: Int!) { users(limit: 200, page: $p) { id email name enabled is_admin is_guest is_pending last_activity created_at title } }`
@@ -45,11 +41,16 @@ const mondayUsersListQuery = `query($p: Int!) { users(limit: 200, page: $p) { id
 // legacy bare-token form.
 type MondayDriver struct {
 	httpClient *http.Client
+	endpoint   string
 }
 
 var _ Driver = (*MondayDriver)(nil)
 
-func NewMondayDriver(httpClient *http.Client) *MondayDriver {
+// NewMondayDriver builds a driver against endpoint, Monday.com's REST
+// endpoint that accepts GraphQL queries via POST (e.g.
+// https://api.monday.com/v2). It is the only endpoint the driver calls, so
+// there is no path to join onto it.
+func NewMondayDriver(httpClient *http.Client, endpoint string) *MondayDriver {
 	return &MondayDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -57,6 +58,7 @@ func NewMondayDriver(httpClient *http.Client) *MondayDriver {
 				maxRetries: 3,
 			},
 		},
+		endpoint: endpoint,
 	}
 }
 
@@ -146,7 +148,7 @@ func (d *MondayDriver) queryUsers(ctx context.Context, page int) ([]mondayUser, 
 		return nil, fmt.Errorf("cannot marshal monday users query: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, mondayGraphQLEndpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create monday users request: %w", err)
 	}
@@ -182,10 +184,13 @@ func (d *MondayDriver) queryUsers(ctx context.Context, page int) ([]mondayUser, 
 // mondayNameResolver resolves the Monday.com account name via GraphQL.
 type mondayNameResolver struct {
 	httpClient *http.Client
+	endpoint   string
 }
 
-func NewMondayNameResolver(httpClient *http.Client) NameResolver {
-	return &mondayNameResolver{httpClient: httpClient}
+// NewMondayNameResolver resolves the account name against endpoint,
+// Monday.com's GraphQL endpoint (e.g. https://api.monday.com/v2).
+func NewMondayNameResolver(httpClient *http.Client, endpoint string) NameResolver {
+	return &mondayNameResolver{httpClient: httpClient, endpoint: endpoint}
 }
 
 func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -200,7 +205,7 @@ func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", fmt.Errorf("cannot marshal monday account query: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, mondayGraphQLEndpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return "", fmt.Errorf("cannot create monday account request: %w", err)
 	}

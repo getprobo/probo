@@ -35,7 +35,7 @@ func TestMondayDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/monday", "MONDAY_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("MONDAY_TOKEN")))
 
-	driver := NewMondayDriver(client)
+	driver := NewMondayDriver(client, "https://api.monday.com/v2")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

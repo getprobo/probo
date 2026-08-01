@@ -36,7 +36,7 @@ func TestRailwayDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/railway", "RAILWAY_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("RAILWAY_TOKEN")))
 
-	driver := NewRailwayDriver(client)
+	driver := NewRailwayDriver(client, "https://backboard.railway.com/graphql/v2")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 2)

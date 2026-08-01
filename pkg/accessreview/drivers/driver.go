@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -68,6 +69,47 @@ const maxPaginationPages = 500
 // ErrPaginationLimitReached is returned when a driver exhausts the maximum
 // number of pagination pages without reaching the end of the result set.
 var ErrPaginationLimitReached = fmt.Errorf("pagination limit of %d pages reached", maxPaginationPages)
+
+// sameHostNextPageURL pins a server-supplied next-page URL to the host the
+// driver was configured with, returning it unchanged when it is safe to
+// follow. The connection's bearer token is attached to every request, so an
+// absolute `next` pointing at a different host — a compromised or spoofed API
+// response, or a provider echoing its real host back at a deployment that
+// overrode the API base — would forward the token off-host. Refuse cross-host
+// pagination; the error is static so it never echoes an attacker-controlled
+// host.
+//
+// The reference is RESOLVED against the base before its host is checked,
+// rather than testing url.URL.IsAbs() first. IsAbs reports whether a scheme is
+// present, so a protocol-relative reference such as "//evil.example.com/x"
+// reads as relative while resolving to that host — checking before resolving
+// would wave it straight through. The scheme is compared too, so a spoofed
+// "http://" next page cannot downgrade the crawl and send the bearer token in
+// cleartext.
+func sameHostNextPageURL(provider, baseURL, next string) (string, error) {
+	nextURL, err := url.Parse(next)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse %s next page URL: %w", provider, err)
+	}
+
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse %s base URL: %w", provider, err)
+	}
+
+	resolved := base.ResolveReference(nextURL)
+
+	if !strings.EqualFold(resolved.Host, base.Host) || !strings.EqualFold(resolved.Scheme, base.Scheme) {
+		return "", fmt.Errorf("cannot follow %s next page URL: cross-host pagination is not allowed", provider)
+	}
+
+	// Credentials embedded in the reference would reach http.NewRequest and, on
+	// some transports, take precedence over the Authorization header the
+	// connection sets. Drop them; the host is already pinned to the base.
+	resolved.User = nil
+
+	return resolved.String(), nil
+}
 
 // Driver defines the interface for fetching accounts from an access or
 // identity source. Each driver implementation corresponds to a specific

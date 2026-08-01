@@ -41,13 +41,16 @@ func pagerdutyRegistration() *Registration {
 			Auth:  "https://identity.pagerduty.com/oauth/authorize",
 			Token: "https://identity.pagerduty.com/oauth/token",
 			Probe: "https://api.pagerduty.com/users/me",
+			// The REST API lives on api.pagerduty.com, a different host from
+			// the identity.pagerduty.com OAuth endpoints above.
+			APIBase: "https://api.pagerduty.com",
 		},
 		OAuth2Scopes: []string{"users.read"},
 		RequiresPKCE: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			// PagerDuty's REST API uses the regional api.pagerduty.com host;
 			// the driver does not consume the per-tenant subdomain.
-			return drivers.NewPagerDutyDriver(c), nil
+			return drivers.NewPagerDutyDriver(c, ep.APIBase), nil
 		},
 		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](conn)

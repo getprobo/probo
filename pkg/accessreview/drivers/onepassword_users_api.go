@@ -65,6 +65,10 @@ func NewOnePasswordUsersAPIDriver(httpClient *http.Client, accountID string, reg
 	}
 }
 
+// onePasswordBaseURL maps the connection's Region setting to a Users API
+// host. The map stays here rather than moving to the registration's APIBase:
+// the host is chosen per connection, not per deployment, and 1Password's
+// three regions are separate tenancies rather than environments of one API.
 func onePasswordBaseURL(region string) string {
 	switch region {
 	case "CA", "ca":

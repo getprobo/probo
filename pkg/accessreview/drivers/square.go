@@ -26,13 +26,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
-	squareTeamMembersSearchURL = "https://connect.squareup.com/v2/team-members/search"
+	// Square API paths joined onto the driver's base URL.
+	squareTeamMembersSearchPath = "team-members/search"
+	squareMerchantsMePath       = "merchants/me"
 	// squareAPIVersion pins the request version so behavior is deterministic
 	// rather than following the application's console default.
 	squareAPIVersion  = "2026-05-20"
@@ -46,6 +49,7 @@ const (
 // there is no role resolution.
 type SquareDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*SquareDriver)(nil)
@@ -65,7 +69,9 @@ type squareSearchResponse struct {
 	Cursor      string             `json:"cursor"`
 }
 
-func NewSquareDriver(httpClient *http.Client) *SquareDriver {
+// NewSquareDriver builds a driver against baseURL, the versioned Square
+// Connect API origin (e.g. https://connect.squareup.com/v2).
+func NewSquareDriver(httpClient *http.Client, baseURL string) *SquareDriver {
 	return &SquareDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -73,6 +79,7 @@ func NewSquareDriver(httpClient *http.Client) *SquareDriver {
 				maxRetries: 3,
 			},
 		},
+		baseURL: baseURL,
 	}
 }
 
@@ -138,7 +145,12 @@ func (d *SquareDriver) searchTeamMembers(ctx context.Context, cursor string) (*s
 		return nil, fmt.Errorf("cannot marshal square search request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, squareTeamMembersSearchURL, bytes.NewReader(body))
+	endpoint, err := url.JoinPath(d.baseURL, squareTeamMembersSearchPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build square team members URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create square team members request: %w", err)
 	}
@@ -184,14 +196,22 @@ func squareFullName(m squareTeamMember, email string) string {
 // merchant, so "me" resolves it for both connection kinds.
 type squareNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewSquareNameResolver(httpClient *http.Client) NameResolver {
-	return &squareNameResolver{httpClient: httpClient}
+// NewSquareNameResolver resolves the merchant name against baseURL, the
+// versioned Square Connect API origin (e.g. https://connect.squareup.com/v2).
+func NewSquareNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &squareNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *squareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://connect.squareup.com/v2/merchants/me", nil)
+	endpoint, err := url.JoinPath(r.baseURL, squareMerchantsMePath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build square merchant URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create square merchant request: %w", err)
 	}

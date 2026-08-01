@@ -35,7 +35,7 @@ func TestLinearDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/linear", "LINEAR_TOKEN")
 	client := newVCRClient(rec, os.Getenv("LINEAR_TOKEN"))
 
-	driver := NewLinearDriver(client)
+	driver := NewLinearDriver(client, "https://api.linear.app/graphql")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

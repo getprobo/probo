@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -32,12 +33,16 @@ import (
 
 type AnthropicDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*AnthropicDriver)(nil)
 
+// Admin API path segments joined onto the driver's base URL.
 const (
-	anthropicUsersEndpoint = "https://api.anthropic.com/v1/organizations/users"
+	anthropicOrganizationsSegment = "organizations"
+	anthropicUsersSegment         = "users"
+	anthropicMeSegment            = "me"
 	// anthropicAPIVersion is the required anthropic-version header value
 	// sent on every Admin API request. Shared with the name resolver.
 	anthropicAPIVersion = "2023-06-01"
@@ -55,9 +60,12 @@ type anthropicUsersResponse struct {
 	LastID  string `json:"last_id"`
 }
 
-func NewAnthropicDriver(httpClient *http.Client) *AnthropicDriver {
+// NewAnthropicDriver builds a driver against baseURL, the versioned Admin
+// API origin (e.g. https://api.anthropic.com/v1).
+func NewAnthropicDriver(httpClient *http.Client, baseURL string) *AnthropicDriver {
 	return &AnthropicDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -109,7 +117,12 @@ func (d *AnthropicDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 }
 
 func (d *AnthropicDriver) fetchUsers(ctx context.Context, afterID string) (*anthropicUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, anthropicUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, anthropicOrganizationsSegment, anthropicUsersSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build anthropic users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create anthropic users request: %w", err)
 	}
@@ -173,19 +186,22 @@ func anthropicRoles(role string) []string {
 // admin key belongs to.
 type anthropicNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewAnthropicNameResolver(httpClient *http.Client) NameResolver {
-	return &anthropicNameResolver{httpClient: httpClient}
+// NewAnthropicNameResolver resolves the org name against baseURL, the
+// versioned Admin API origin (e.g. https://api.anthropic.com/v1).
+func NewAnthropicNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &anthropicNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://api.anthropic.com/v1/organizations/me",
-		nil,
-	)
+	endpoint, err := url.JoinPath(r.baseURL, anthropicOrganizationsSegment, anthropicMeSegment)
+	if err != nil {
+		return "", fmt.Errorf("cannot build anthropic organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create anthropic organization request: %w", err)
 	}

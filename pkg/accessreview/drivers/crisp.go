@@ -59,7 +59,6 @@ type crispSubscriptionSettingsResponse struct {
 }
 
 const (
-	crispAPIBaseURL = "https://api.crisp.chat/v1"
 	// crispTierHeader selects the token tier on every Crisp request. A Probo
 	// connection uses a plugin token, so the value is always "plugin". This is
 	// not authentication (the Basic credential is attached by the transport),
@@ -68,6 +67,12 @@ const (
 	crispTierValue  = "plugin"
 )
 
+// crispDefaultBaseURL is the Crisp REST API root. It backs only the exported
+// GetCrispSubscriptionSettings, which the create-connector resolver calls with
+// no registration — and therefore no Endpoints — in scope. The driver and the
+// name resolver go through their injected baseURL instead.
+const crispDefaultBaseURL = "https://api.crisp.chat/v1"
+
 // CrispDriver lists the operators (dashboard agents) of a single Crisp website.
 // A plugin token can be connected to several websites, so the website is
 // captured up front as a connector setting; the Basic credential
@@ -75,6 +80,7 @@ const (
 type CrispDriver struct {
 	httpClient *http.Client
 	websiteID  string
+	baseURL    string
 }
 
 var _ Driver = (*CrispDriver)(nil)
@@ -94,15 +100,18 @@ type crispOperatorDetails struct {
 	Title     string `json:"title"`
 }
 
-func NewCrispDriver(httpClient *http.Client, websiteID string) *CrispDriver {
+// NewCrispDriver builds a driver against baseURL, the versioned Crisp REST
+// API origin (e.g. https://api.crisp.chat/v1).
+func NewCrispDriver(httpClient *http.Client, websiteID, baseURL string) *CrispDriver {
 	return &CrispDriver{
 		httpClient: httpClient,
 		websiteID:  websiteID,
+		baseURL:    baseURL,
 	}
 }
 
 func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	httpResp, err := crispGet(ctx, d.httpClient, "operators", "website", url.PathEscape(d.websiteID), "operators", "list")
+	httpResp, err := crispGet(ctx, d.httpClient, d.baseURL, "operators", "website", url.PathEscape(d.websiteID), "operators", "list")
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +169,7 @@ func GetCrispSubscriptionSettings(
 	httpResp, err := crispGet(
 		ctx,
 		httpClient,
+		crispDefaultBaseURL,
 		"subscription settings",
 		"plugins", "subscription",
 		url.PathEscape(websiteID),
@@ -193,12 +203,12 @@ func GetCrispSubscriptionSettings(
 }
 
 // crispGet issues an authenticated GET against the Crisp API for the given path
-// segments (joined onto crispAPIBaseURL), setting the Accept and X-Crisp-Tier
-// headers every Crisp request needs; the Basic plugin credential is attached by
-// the connection transport. The caller owns status-code handling and must close
-// the returned response body. label names the request in wrapped errors.
-func crispGet(ctx context.Context, httpClient *http.Client, label string, path ...string) (*http.Response, error) {
-	endpoint, err := url.JoinPath(crispAPIBaseURL, path...)
+// segments (joined onto baseURL), setting the Accept and X-Crisp-Tier headers
+// every Crisp request needs; the Basic plugin credential is attached by the
+// connection transport. The caller owns status-code handling and must close the
+// returned response body. label names the request in wrapped errors.
+func crispGet(ctx context.Context, httpClient *http.Client, baseURL, label string, path ...string) (*http.Response, error) {
+	endpoint, err := url.JoinPath(baseURL, path...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build crisp %s URL: %w", label, err)
 	}
@@ -233,10 +243,13 @@ func crispFullName(details crispOperatorDetails, fallback string) string {
 type crispNameResolver struct {
 	httpClient *http.Client
 	websiteID  string
+	baseURL    string
 }
 
-func NewCrispNameResolver(httpClient *http.Client, websiteID string) NameResolver {
-	return &crispNameResolver{httpClient: httpClient, websiteID: websiteID}
+// NewCrispNameResolver resolves the website name against baseURL, the
+// versioned Crisp REST API origin (e.g. https://api.crisp.chat/v1).
+func NewCrispNameResolver(httpClient *http.Client, websiteID, baseURL string) NameResolver {
+	return &crispNameResolver{httpClient: httpClient, websiteID: websiteID, baseURL: baseURL}
 }
 
 func (r *crispNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -244,7 +257,7 @@ func (r *crispNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 		return "", nil
 	}
 
-	httpResp, err := crispGet(ctx, r.httpClient, "website", "website", url.PathEscape(r.websiteID))
+	httpResp, err := crispGet(ctx, r.httpClient, r.baseURL, "website", "website", url.PathEscape(r.websiteID))
 	if err != nil {
 		return "", err
 	}

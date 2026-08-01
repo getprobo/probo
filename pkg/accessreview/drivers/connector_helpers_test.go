@@ -88,7 +88,7 @@ func TestGoogleAnalyticsAccountBindingsProbeURL(t *testing.T) {
 	t.Run("targets the account bindings with a single-item page", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := GoogleAnalyticsAccountBindingsProbeURL("123456")
+		got, err := GoogleAnalyticsAccountBindingsProbeURL("123456", "https://analyticsadmin.googleapis.com/v1alpha")
 		require.NoError(t, err)
 		assert.Equal(
 			t,
@@ -100,7 +100,7 @@ func TestGoogleAnalyticsAccountBindingsProbeURL(t *testing.T) {
 	t.Run("escapes the account ID", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := GoogleAnalyticsAccountBindingsProbeURL("12/34")
+		got, err := GoogleAnalyticsAccountBindingsProbeURL("12/34", "https://analyticsadmin.googleapis.com/v1alpha")
 		require.NoError(t, err)
 		assert.Contains(t, got, "/accounts/12%2F34/accessBindings")
 	})

@@ -34,6 +34,15 @@ func docusignRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderDocuSign,
 		DisplayName: "DocuSign",
+		// APIBase is deliberately empty. account.docusign.com above is the
+		// identity host only; the eSignature data host is per account,
+		// discovered at runtime from the `base_uri` field of the userinfo
+		// response (drivers.DocuSignDriver.discoverBaseURI). Recording the
+		// identity host as APIBase would look right and be wrong: an override
+		// would move the userinfo call while every data call still went to the
+		// account's real data center, splitting one connector across two
+		// environments. Probe below and drivers.docusignUserInfoEndpoint are
+		// the same URL and must stay byte-identical.
 		Endpoints: Endpoints{
 			Auth:  "https://account.docusign.com/oauth/auth",
 			Token: "https://account.docusign.com/oauth/token",

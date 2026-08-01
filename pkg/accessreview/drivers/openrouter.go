@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -32,7 +33,8 @@ import (
 )
 
 const (
-	openRouterMembersEndpoint = "https://openrouter.ai/api/v1/organization/members"
+	// openRouterMembersPath is joined onto the driver's base URL.
+	openRouterMembersPath = "organization/members"
 	// openRouterPageSize is the maximum page size GET /organization/members
 	// accepts (limit must be between 1 and 100).
 	openRouterPageSize = 100
@@ -44,6 +46,7 @@ const (
 // with no tenant selector.
 type OpenRouterDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*OpenRouterDriver)(nil)
@@ -63,8 +66,10 @@ type openRouterMembersResponse struct {
 	TotalCount int                `json:"total_count"`
 }
 
-func NewOpenRouterDriver(httpClient *http.Client) *OpenRouterDriver {
-	return &OpenRouterDriver{httpClient: httpClient}
+// NewOpenRouterDriver builds a driver against baseURL, the versioned
+// OpenRouter API origin (e.g. https://openrouter.ai/api/v1).
+func NewOpenRouterDriver(httpClient *http.Client, baseURL string) *OpenRouterDriver {
+	return &OpenRouterDriver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (d *OpenRouterDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
@@ -106,7 +111,12 @@ func (d *OpenRouterDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 }
 
 func (d *OpenRouterDriver) fetchMembersPage(ctx context.Context, offset int) (*openRouterMembersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, openRouterMembersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, openRouterMembersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build openrouter members URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create openrouter members request: %w", err)
 	}

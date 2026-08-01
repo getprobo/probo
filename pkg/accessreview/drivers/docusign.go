@@ -114,6 +114,14 @@ type docusignUsersResponse struct {
 }
 
 const (
+	// docusignUserInfoEndpoint is DocuSign's identity host, deliberately a
+	// literal rather than a value joined onto an injected base URL. DocuSign
+	// splits identity from data: this host is static, but the eSignature host
+	// is discovered per account from the `base_uri` this very response
+	// carries (see discoverBaseURI). Pinning it as the registration's APIBase
+	// would let an override move the userinfo call while the data calls kept
+	// going to production, splitting one connector across two environments.
+	// It must stay byte-identical to the registration's Endpoints.Probe.
 	docusignUserInfoEndpoint = "https://account.docusign.com/oauth/userinfo"
 	docusignUsersPageSize    = 100
 )

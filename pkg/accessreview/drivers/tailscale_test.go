@@ -35,7 +35,7 @@ func TestTailscaleDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/tailscale", "TAILSCALE_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("TAILSCALE_TOKEN")))
 
-	driver := NewTailscaleDriver(client)
+	driver := NewTailscaleDriver(client, "https://api.tailscale.com/api/v2")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

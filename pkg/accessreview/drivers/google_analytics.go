@@ -35,14 +35,24 @@ import (
 )
 
 const (
-	googleAnalyticsAPIHost  = "analyticsadmin.googleapis.com"
 	googleAnalyticsPageSize = 200
+	// Analytics Admin API path elements joined onto the driver's base URL.
+	googleAnalyticsAccountsSegment       = "accounts"
+	googleAnalyticsPropertiesSegment     = "properties"
+	googleAnalyticsAccessBindingsSegment = "accessBindings"
 	// googleAnalyticsAdminRole is the only GA4 predefined role that grants
 	// administrative access; viewer/analyst/editor do not, and no-cost-data /
 	// no-revenue-data are data restrictions rather than access levels.
 	googleAnalyticsAdminRole  = "predefinedRoles/admin"
 	googleAnalyticsRolePrefix = "predefinedRoles/"
 )
+
+// googleAnalyticsDefaultBaseURL is the versioned Analytics Admin API root
+// (v1alpha is the only version exposing accessBindings). It backs only the
+// exported ListGoogleAnalyticsOrganizations, and only when its caller
+// resolves no APIBase for the provider (unregistered, or registered without
+// one). Every driver path goes through the injected baseURL instead.
+const googleAnalyticsDefaultBaseURL = "https://analyticsadmin.googleapis.com/v1alpha"
 
 // GoogleAnalyticsDriver lists the users who have access to a single GA4 account
 // and every property beneath it, using the Analytics Admin API v1alpha (the
@@ -53,6 +63,7 @@ const (
 type GoogleAnalyticsDriver struct {
 	httpClient *http.Client
 	accountID  string
+	baseURL    string
 }
 
 var _ Driver = (*GoogleAnalyticsDriver)(nil)
@@ -85,7 +96,10 @@ type googleAnalyticsMember struct {
 	isAdmin bool
 }
 
-func NewGoogleAnalyticsDriver(httpClient *http.Client, accountID string) *GoogleAnalyticsDriver {
+// NewGoogleAnalyticsDriver builds a driver against baseURL, the versioned
+// Analytics Admin API origin (e.g.
+// https://analyticsadmin.googleapis.com/v1alpha).
+func NewGoogleAnalyticsDriver(httpClient *http.Client, accountID, baseURL string) *GoogleAnalyticsDriver {
 	return &GoogleAnalyticsDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -94,6 +108,7 @@ func NewGoogleAnalyticsDriver(httpClient *http.Client, accountID string) *Google
 			},
 		},
 		accountID: accountID,
+		baseURL:   baseURL,
 	}
 }
 
@@ -101,7 +116,7 @@ func (d *GoogleAnalyticsDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	members := make(map[string]*googleAnalyticsMember)
 
 	// Account-level bindings.
-	if err := d.collectBindings(ctx, members, "v1alpha", "accounts", url.PathEscape(d.accountID), "accessBindings"); err != nil {
+	if err := d.collectBindings(ctx, members, googleAnalyticsAccountsSegment, url.PathEscape(d.accountID), googleAnalyticsAccessBindingsSegment); err != nil {
 		return nil, fmt.Errorf("cannot list google analytics access bindings for account %q: %w", d.accountID, err)
 	}
 
@@ -112,7 +127,7 @@ func (d *GoogleAnalyticsDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	}
 
 	for _, propertyID := range propertyIDs {
-		err := d.collectBindings(ctx, members, "v1alpha", "properties", url.PathEscape(propertyID), "accessBindings")
+		err := d.collectBindings(ctx, members, googleAnalyticsPropertiesSegment, url.PathEscape(propertyID), googleAnalyticsAccessBindingsSegment)
 		if err == nil {
 			continue
 		}
@@ -138,7 +153,7 @@ func (d *GoogleAnalyticsDriver) collectBindings(ctx context.Context, members map
 	pageToken := ""
 
 	for range maxPaginationPages {
-		endpoint, err := googleAnalyticsURL(pageToken, nil, segments...)
+		endpoint, err := googleAnalyticsURL(d.baseURL, pageToken, nil, segments...)
 		if err != nil {
 			return err
 		}
@@ -174,7 +189,7 @@ func (d *GoogleAnalyticsDriver) listProperties(ctx context.Context) ([]string, e
 	filter := url.Values{"filter": {"ancestor:accounts/" + d.accountID}}
 
 	for range maxPaginationPages {
-		endpoint, err := googleAnalyticsURL(pageToken, filter, "v1alpha", "properties")
+		endpoint, err := googleAnalyticsURL(d.baseURL, pageToken, filter, googleAnalyticsPropertiesSegment)
 		if err != nil {
 			return nil, err
 		}
@@ -239,11 +254,12 @@ func (d *GoogleAnalyticsDriver) getJSON(ctx context.Context, endpoint string, ou
 	return nil
 }
 
-// googleAnalyticsURL builds a v1alpha Admin API URL from path segments, adding
-// the shared pageSize, an optional page token, and any extra query values.
-// Keys present in extra replace the default rather than adding to it.
-func googleAnalyticsURL(pageToken string, extra url.Values, segments ...string) (string, error) {
-	joined, err := url.JoinPath("https://"+googleAnalyticsAPIHost, segments...)
+// googleAnalyticsURL builds an Admin API URL under baseURL from path
+// segments, adding the shared pageSize, an optional page token, and any extra
+// query values. Keys present in extra replace the default rather than adding
+// to it.
+func googleAnalyticsURL(baseURL, pageToken string, extra url.Values, segments ...string) (string, error) {
+	joined, err := url.JoinPath(baseURL, segments...)
 	if err != nil {
 		return "", fmt.Errorf("cannot build google analytics URL: %w", err)
 	}
@@ -274,15 +290,18 @@ func googleAnalyticsURL(pageToken string, extra url.Values, segments ...string) 
 }
 
 // GoogleAnalyticsAccountBindingsProbeURL builds a single-item account-level
-// accessBindings request for accountID. The connection probe uses it so the
-// check exercises the permission the driver actually needs — Administrator on
-// the account, granted through analytics.manage.users.readonly — instead of the
-// accounts list, which any analytics.readonly grant can call.
-func GoogleAnalyticsAccountBindingsProbeURL(accountID string) (string, error) {
+// accessBindings request for accountID under baseURL. The connection probe
+// uses it so the check exercises the permission the driver actually needs —
+// Administrator on the account, granted through
+// analytics.manage.users.readonly — instead of the accounts list, which any
+// analytics.readonly grant can call. It takes baseURL rather than composing
+// its own so the probe follows the same host as the driver.
+func GoogleAnalyticsAccountBindingsProbeURL(accountID, baseURL string) (string, error) {
 	return googleAnalyticsURL(
+		baseURL,
 		"",
 		url.Values{"pageSize": {"1"}},
-		"v1alpha", "accounts", url.PathEscape(accountID), "accessBindings",
+		googleAnalyticsAccountsSegment, url.PathEscape(accountID), googleAnalyticsAccessBindingsSegment,
 	)
 }
 
@@ -359,10 +378,14 @@ func googleAnalyticsRecords(members map[string]*googleAnalyticsMember) []Account
 type googleAnalyticsNameResolver struct {
 	httpClient *http.Client
 	accountID  string
+	baseURL    string
 }
 
-func NewGoogleAnalyticsNameResolver(httpClient *http.Client, accountID string) NameResolver {
-	return &googleAnalyticsNameResolver{httpClient: httpClient, accountID: accountID}
+// NewGoogleAnalyticsNameResolver resolves the account name against baseURL,
+// the versioned Analytics Admin API origin (e.g.
+// https://analyticsadmin.googleapis.com/v1alpha).
+func NewGoogleAnalyticsNameResolver(httpClient *http.Client, accountID, baseURL string) NameResolver {
+	return &googleAnalyticsNameResolver{httpClient: httpClient, accountID: accountID, baseURL: baseURL}
 }
 
 func (r *googleAnalyticsNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
@@ -370,7 +393,7 @@ func (r *googleAnalyticsNameResolver) ResolveInstanceName(ctx context.Context) (
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://"+googleAnalyticsAPIHost, "v1alpha", "accounts", url.PathEscape(r.accountID))
+	endpoint, err := url.JoinPath(r.baseURL, googleAnalyticsAccountsSegment, url.PathEscape(r.accountID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build google analytics account URL: %w", err)
 	}
@@ -408,15 +431,20 @@ func (r *googleAnalyticsNameResolver) ResolveInstanceName(ctx context.Context) (
 }
 
 // ListGoogleAnalyticsOrganizations fetches the GA4 accounts the authenticated
-// Google user can access, surfacing each account's numeric ID as the picker
-// slug. Listing accounts requires the analytics.readonly scope.
-func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+// Google user can access from baseURL ("" for the production Admin API),
+// surfacing each account's numeric ID as the picker slug. Listing accounts
+// requires the analytics.readonly scope.
+func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = googleAnalyticsDefaultBaseURL
+	}
+
 	var orgs []Organization
 
 	pageToken := ""
 
 	for range maxPaginationPages {
-		endpoint, err := googleAnalyticsURL(pageToken, nil, "v1alpha", "accounts")
+		endpoint, err := googleAnalyticsURL(baseURL, pageToken, nil, googleAnalyticsAccountsSegment)
 		if err != nil {
 			return nil, err
 		}

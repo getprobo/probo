@@ -32,16 +32,23 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// tailscaleDefaultTailnet is the "-" shorthand Tailscale accepts in the
-// tailnet path segment; it resolves to the access token's own tailnet, so
-// the connector never needs to know the organization name up front.
-const tailscaleDefaultTailnet = "-"
+const (
+	// tailscaleDefaultTailnet is the "-" shorthand Tailscale accepts in the
+	// tailnet path segment; it resolves to the access token's own tailnet, so
+	// the connector never needs to know the organization name up front.
+	tailscaleDefaultTailnet = "-"
+
+	// Tailscale path elements joined onto the driver's base URL.
+	tailscaleTailnetSegment = "tailnet"
+	tailscaleUsersSegment   = "users"
+)
 
 // TailscaleDriver fetches tailnet users from the Tailscale API via Bearer
 // token-authenticated REST requests. It always targets the access token's
 // default tailnet, so no tailnet identifier is required.
 type TailscaleDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*TailscaleDriver)(nil)
@@ -61,9 +68,12 @@ type tailscaleUsersResponse struct {
 	Users []tailscaleUser `json:"users"`
 }
 
-func NewTailscaleDriver(httpClient *http.Client) *TailscaleDriver {
+// NewTailscaleDriver builds a driver against baseURL, the versioned Tailscale
+// API origin (e.g. https://api.tailscale.com/api/v2).
+func NewTailscaleDriver(httpClient *http.Client, baseURL string) *TailscaleDriver {
 	return &TailscaleDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -123,12 +133,10 @@ func (d *TailscaleDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 
 func (d *TailscaleDriver) fetchUsers(ctx context.Context) ([]tailscaleUser, error) {
 	endpoint, err := url.JoinPath(
-		"https://api.tailscale.com",
-		"api",
-		"v2",
-		"tailnet",
+		d.baseURL,
+		tailscaleTailnetSegment,
 		tailscaleDefaultTailnet,
-		"users",
+		tailscaleUsersSegment,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build tailscale users URL: %w", err)
@@ -195,16 +203,21 @@ func tailscaleUserIsAdmin(role string) bool {
 // provider domain, which is still a useful label.
 type tailscaleNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ NameResolver = (*tailscaleNameResolver)(nil)
 
-func NewTailscaleNameResolver(httpClient *http.Client) NameResolver {
-	return &tailscaleNameResolver{httpClient: httpClient}
+// NewTailscaleNameResolver resolves the tailnet name against baseURL, the
+// versioned Tailscale API origin (e.g. https://api.tailscale.com/api/v2).
+func NewTailscaleNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &tailscaleNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *tailscaleNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	driver := &TailscaleDriver{httpClient: r.httpClient}
+	// Constructed rather than composite-literalled so the driver always
+	// carries the resolver's base URL.
+	driver := NewTailscaleDriver(r.httpClient, r.baseURL)
 
 	users, err := driver.fetchUsers(ctx)
 	if err != nil {

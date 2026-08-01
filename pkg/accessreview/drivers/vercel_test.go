@@ -40,7 +40,7 @@ func TestVercelDriver(t *testing.T) {
 		teamID = "team_acme"
 	}
 
-	driver := NewVercelDriver(client, teamID)
+	driver := NewVercelDriver(client, teamID, "https://api.vercel.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

@@ -37,6 +37,9 @@ func squareRegistration() *Registration {
 		Endpoints: Endpoints{
 			Auth:  "https://connect.squareup.com/oauth2/authorize",
 			Token: "https://connect.squareup.com/oauth2/token",
+			// Every data endpoint the driver calls shares the /v2 prefix, so
+			// the version segment stays in APIBase.
+			APIBase: "https://connect.squareup.com/v2",
 		},
 		// EMPLOYEES_READ lists team members; MERCHANT_PROFILE_READ is needed
 		// for the merchant-name resolver and the /v2/merchants/me probe.
@@ -51,11 +54,11 @@ func squareRegistration() *Registration {
 		// merchant, so there is nothing to pick (Pattern 3): no settings
 		// struct, no picker, no OAuth-callback capture.
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewSquareDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewSquareDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewSquareNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewSquareNameResolver(c, ep.APIBase)
 		},
 	}
 }

@@ -55,6 +55,12 @@ const (
 	gitlabAllMembersPath = "members/all"
 )
 
+// gitlabDefaultBaseURL is the GitLab SaaS API root. It backs only the
+// exported ListGitLabOrganizations, and only when its caller resolves no
+// APIBase for the provider (unregistered, or registered without one).
+// Every other path goes through the injected baseURL instead.
+const gitlabDefaultBaseURL = "https://gitlab.com/api/v4"
+
 // NewGitLabDriver builds a driver against baseURL, the versioned GitLab API
 // origin (e.g. https://gitlab.com/api/v4).
 func NewGitLabDriver(httpClient *http.Client, groupID, baseURL string) *GitLabDriver {
@@ -128,9 +134,14 @@ func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			records = append(records, record)
 		}
 
-		next = rfc5988.FindByRel(linkHeader, "next")
-		if next == "" {
+		rawNext := rfc5988.FindByRel(linkHeader, "next")
+		if rawNext == "" {
 			return records, nil
+		}
+
+		next, err = sameHostNextPageURL("gitlab", d.baseURL, rawNext)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -244,15 +255,29 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 }
 
 // ListGitLabOrganizations fetches the GitLab groups the authenticated
-// user owns. Group IDs are int64; we surface them as strings so they fit
-// the Organization.Slug shape.
-func ListGitLabOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://gitlab.com/api/v4/groups?min_access_level=50&per_page=100",
-		nil,
-	)
+// user owns, from baseURL ("" for GitLab SaaS). Group IDs are int64; we
+// surface them as strings so they fit the Organization.Slug shape.
+func ListGitLabOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = gitlabDefaultBaseURL
+	}
+
+	endpoint, err := url.JoinPath(baseURL, gitlabGroupsSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build gitlab organizations URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse gitlab organizations URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("min_access_level", "50")
+	q.Set("per_page", "100")
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create gitlab organizations request: %w", err)
 	}

@@ -35,7 +35,7 @@ func TestGoogleAnalyticsDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/google_analytics", "GOOGLE_ANALYTICS_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("GOOGLE_ANALYTICS_TOKEN")))
 
-	driver := NewGoogleAnalyticsDriver(client, "123456")
+	driver := NewGoogleAnalyticsDriver(client, "123456", "https://analyticsadmin.googleapis.com/v1alpha")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 4)

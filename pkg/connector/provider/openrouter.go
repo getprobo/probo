@@ -35,6 +35,11 @@ func openrouterRegistration() *Registration {
 		DisplayName:      "OpenRouter",
 		DocumentationURL: accessReviewDocsURL("openrouter"),
 		SupportsAPIKey:   true,
+		Endpoints: Endpoints{
+			// Every endpoint the driver calls shares the /api/v1 prefix, so
+			// the version segment stays in APIBase.
+			APIBase: "https://openrouter.ai/api/v1",
+		},
 		// OpenRouter authenticates with an organization management
 		// (provisioning) API key presented as Authorization: Bearer, the
 		// default APIKeyConnection scheme. The key is bound to one
@@ -50,8 +55,8 @@ func openrouterRegistration() *Registration {
 		//
 		// No NewNameResolver: the members endpoint carries no organization
 		// name, so the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewOpenRouterDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewOpenRouterDriver(c, ep.APIBase), nil
 		},
 	}
 }

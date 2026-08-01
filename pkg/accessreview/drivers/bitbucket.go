@@ -48,7 +48,17 @@ var _ Driver = (*BitbucketDriver)(nil)
 const (
 	bitbucketWorkspacesSegment = "workspaces"
 	bitbucketMembersSegment    = "members"
+
+	// Whole path, unlike the segments above: the picker's endpoint
+	// interleaves no workspace.
+	bitbucketUserWorkspacesPath = "user/workspaces"
 )
+
+// bitbucketDefaultBaseURL is the Bitbucket Cloud API root. It backs only
+// the exported ListBitbucketOrganizations, and only when its caller
+// resolves no APIBase for the provider (unregistered, or registered
+// without one). Every other path goes through the injected baseURL.
+const bitbucketDefaultBaseURL = "https://api.bitbucket.org/2.0"
 
 // NewBitbucketDriver builds a driver against baseURL, the versioned
 // Bitbucket Cloud API origin (e.g. https://api.bitbucket.org/2.0).
@@ -122,9 +132,13 @@ func (d *BitbucketDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 			records = append(records, record)
 		}
 
-		next = page.Next
-		if next == "" {
+		if page.Next == "" {
 			return records, nil
+		}
+
+		next, err = sameHostNextPageURL("bitbucket", d.baseURL, page.Next)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -219,8 +233,27 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 // sunset by CHANGE-2770 (April 2026); /2.0/user/workspaces is the
 // supported cross-workspace replacement (CHANGE-3022). Bitbucket pages
 // via an absolute `next` URL on each response; follow until exhausted.
-func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
-	pageURL := "https://api.bitbucket.org/2.0/user/workspaces?pagelen=100"
+// Pages are fetched from baseURL ("" for Bitbucket Cloud).
+func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = bitbucketDefaultBaseURL
+	}
+
+	endpoint, err := url.JoinPath(baseURL, bitbucketUserWorkspacesPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build bitbucket organizations URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse bitbucket organizations URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("pagelen", "100")
+	parsed.RawQuery = q.Encode()
+
+	pageURL := parsed.String()
 	result := make([]Organization, 0)
 
 	for range maxPaginationPages {
@@ -280,7 +313,10 @@ func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client) ([
 			return result, nil
 		}
 
-		pageURL = body.Next
+		pageURL, err = sameHostNextPageURL("bitbucket", baseURL, body.Next)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, fmt.Errorf("cannot list all bitbucket organizations: %w", ErrPaginationLimitReached)

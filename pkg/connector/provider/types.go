@@ -65,13 +65,15 @@ type Endpoints struct {
 	// real provider while the driver talks to the override.
 	Probe string
 
-	// APIBase is the data API root the driver joins paths onto. Set it ONLY
-	// for a compile-time-constant host. Leave it EMPTY when the host comes
-	// from connector settings (Grafana, Metabase, Okta, SigNoz, Zendesk,
-	// Datadog, Langfuse, Segment, PostHog) or is discovered at runtime
-	// (DocuSign's per-account base_uri, PostHog's lazy region probe) — the
-	// NewDriver closure resolves those, with pkg/accessreview/drivers/posthog.go
-	// as the reference implementation.
+	// APIBase is the data API root the driver joins paths onto, or — for a
+	// GraphQL provider (Linear, Monday, Railway), which exposes a single
+	// endpoint and nothing to join — that endpoint, used verbatim. Set it
+	// ONLY for a compile-time-constant host. Leave it EMPTY when the host
+	// comes from connector settings (Grafana, Metabase, Okta, SigNoz,
+	// Zendesk, Datadog, Langfuse, Segment, PostHog) or is discovered at
+	// runtime (DocuSign's per-account base_uri, PostHog's lazy region probe)
+	// — the NewDriver closure resolves those, with
+	// pkg/accessreview/drivers/posthog.go as the reference implementation.
 	APIBase string
 }
 
@@ -204,12 +206,21 @@ type Registration struct {
 	// BuildProbeURL derives a per-connector probe URL when the API host or
 	// path depends on connector settings (e.g. a customer subdomain or
 	// instance URL). Nil for providers with a static ProbeURL.
-	BuildProbeURL func(*coredata.Connector) (string, error)
+	//
+	// Like NewDriver, it receives the registration's resolved Endpoints
+	// rather than closing over them: a builder whose host IS constant (Neon,
+	// Render, Qovery — only the path varies per connector) must compose from
+	// ep.APIBase, or an APIBase override would move the driver while the
+	// connection check kept hitting the real provider. Register can only
+	// enforce that agreement on the static Endpoints.Probe, so passing the
+	// Endpoints in is what extends the guarantee to the built URLs.
+	BuildProbeURL func(*coredata.Connector, Endpoints) (string, error)
 	// Probe runs a provider-specific connection check when a plain GET
 	// against ProbeURL/BuildProbeURL is insufficient (e.g. GraphQL POST,
 	// extra headers, or multi-host region probing). Takes precedence over
-	// ProbeURL and BuildProbeURL when set.
-	Probe func(context.Context, *http.Client, *coredata.Connector) error
+	// ProbeURL and BuildProbeURL when set. It receives the registration's
+	// resolved Endpoints for the same reason BuildProbeURL does.
+	Probe func(context.Context, *http.Client, *coredata.Connector, Endpoints) error
 
 	// Factory closures — wired by Stages 2 and 3.
 	// NewDriver and NewNameResolver receive the registration's resolved

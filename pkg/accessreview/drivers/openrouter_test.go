@@ -36,7 +36,7 @@ func TestOpenRouterDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/openrouter", "OPENROUTER_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("OPENROUTER_API_KEY")))
 
-	driver := NewOpenRouterDriver(client)
+	driver := NewOpenRouterDriver(client, "https://openrouter.ai/api/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 1)

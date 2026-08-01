@@ -35,6 +35,11 @@ import (
 
 // GoogleWorkspaceDriver fetches user accounts from Google Workspace
 // using the Admin Directory API via an OAuth2-authenticated HTTP client.
+//
+// It carries no baseURL, unlike its sibling drivers: the Admin Directory
+// host comes from the generated SDK's basePath, not from a literal here, so
+// there is nothing for the registration's Endpoints.APIBase to inject. See
+// the comment on googleWorkspaceRegistration.
 type GoogleWorkspaceDriver struct {
 	httpClient *http.Client
 }

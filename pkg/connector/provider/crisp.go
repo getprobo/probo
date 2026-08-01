@@ -61,8 +61,13 @@ func crispRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "websiteId", Label: "Website ID", Required: true},
 		},
+		Endpoints: Endpoints{
+			// Every endpoint the driver calls shares the /v1 prefix, so the
+			// version segment stays in APIBase.
+			APIBase: "https://api.crisp.chat/v1",
+		},
 		Probe: probeCrisp,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read crisp connector settings: %w", err)
@@ -72,9 +77,9 @@ func crispRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create crisp driver: website_id is required")
 			}
 
-			return drivers.NewCrispDriver(c, s.WebsiteID), nil
+			return drivers.NewCrispDriver(c, s.WebsiteID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read crisp connector settings", log.Error(err))
@@ -82,7 +87,7 @@ func crispRegistration() *Registration {
 				return nil
 			}
 
-			return drivers.NewCrispNameResolver(c, s.WebsiteID)
+			return drivers.NewCrispNameResolver(c, s.WebsiteID, ep.APIBase)
 		},
 	}
 }

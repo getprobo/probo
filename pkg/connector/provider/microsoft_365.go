@@ -37,6 +37,11 @@ func microsoft365Registration() *Registration {
 			Auth:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
 			Token: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
 			Probe: "https://graph.microsoft.com/v1.0/organization?$top=1",
+			// Microsoft Graph, a different host from the
+			// login.microsoftonline.com OAuth endpoints above. The scopes
+			// below only look like URLs — they are Graph permission
+			// identifiers, not endpoints, and must not be derived from this.
+			APIBase: "https://graph.microsoft.com/v1.0",
 		},
 		ExtraAuthParams: map[string]string{
 			"prompt": "consent",
@@ -50,11 +55,11 @@ func microsoft365Registration() *Registration {
 			"https://graph.microsoft.com/Directory.Read.All",
 			"https://graph.microsoft.com/RoleManagement.Read.Directory",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewMicrosoft365Driver(c, logger.Named("microsoft365")), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewMicrosoft365Driver(c, logger.Named("microsoft365"), ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewMicrosoft365NameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewMicrosoft365NameResolver(c, ep.APIBase)
 		},
 	}
 }

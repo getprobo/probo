@@ -40,7 +40,7 @@ func TestMicrosoft365Driver(t *testing.T) {
 	rec := newRecorder(t, "testdata/microsoft_365", "MICROSOFT_365_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("MICROSOFT_365_TOKEN")))
 
-	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")))
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")), "https://graph.microsoft.com/v1.0")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 4)
@@ -137,7 +137,7 @@ func TestMicrosoft365Driver_MFAFetchFailureLeavesUnknown(t *testing.T) {
 		}),
 	}
 
-	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")))
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")), "https://graph.microsoft.com/v1.0")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 1)
@@ -185,7 +185,7 @@ func TestMicrosoft365Driver_MFAFetchCanceledPropagates(t *testing.T) {
 		}),
 	}
 
-	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")))
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")), "https://graph.microsoft.com/v1.0")
 	_, err := driver.ListAccounts(context.Background())
 	require.ErrorIs(t, err, context.Canceled)
 }

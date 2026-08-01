@@ -183,40 +183,16 @@ func (d *PostHogDriver) membersURL() (string, error) {
 }
 
 func (d *PostHogDriver) resolveNextURL(next string) (string, error) {
-	nextURL, err := url.Parse(next)
-	if err != nil {
-		return "", fmt.Errorf("cannot parse posthog next page URL: %w", err)
-	}
-
-	if nextURL.IsAbs() {
-		base, err := url.Parse(d.baseURL)
-		if err != nil {
-			return "", fmt.Errorf("cannot parse posthog base URL: %w", err)
-		}
-
-		// Pin pagination to the resolved data host. The connection's bearer
-		// token is attached to every request, so an absolute `next` pointing
-		// at a different host (a compromised or spoofed API response) would
-		// forward the token off-host. Refuse cross-host pagination; the
-		// error is static so it never echoes an attacker-controlled host.
-		if !strings.EqualFold(nextURL.Host, base.Host) {
-			return "", fmt.Errorf("cannot follow posthog next page URL: cross-host pagination is not allowed")
-		}
-
-		return nextURL.String(), nil
-	}
-
+	// Resolve against the members endpoint so a relative `next` keeps its
+	// path context, and let sameHostNextPageURL pin the result to the data
+	// host. Both share one host, so checking against the members endpoint is
+	// equivalent to checking against d.baseURL.
 	endpoint, err := url.JoinPath(d.baseURL, posthogMembersPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot build posthog members base URL: %w", err)
 	}
 
-	baseURL, err := url.Parse(endpoint)
-	if err != nil {
-		return "", fmt.Errorf("cannot parse posthog members base URL: %w", err)
-	}
-
-	return baseURL.ResolveReference(nextURL).String(), nil
+	return sameHostNextPageURL("posthog", endpoint, next)
 }
 
 // PostHogRegionBaseURL maps a PostHog Cloud region ("US"/"EU",
