@@ -25,7 +25,9 @@ import {
   Badge,
   Button,
   DropdownItem,
+  IconArrowLink,
   IconTrashCan,
+  IconWarning,
   Input,
   Option,
   Select,
@@ -91,8 +93,12 @@ const orgsQuery = graphql`
     node(id: $accessReviewSourceId) @required(action: THROW) {
       ... on AccessReviewSource {
         providerOrganizations {
-          slug
-          displayName
+          status
+          remediationUrl
+          nodes {
+            slug
+            displayName
+          }
         }
       }
     }
@@ -242,6 +248,7 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
   };
 
   const showOrgSelector = accessSource.needsConfiguration || accessSource.selectedOrganization;
+  const providerLabel = sourceLabel(accessSource.connector?.provider ?? null, t);
   const canReconnect = (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
   const showReconnect
     = canReconnect
@@ -253,7 +260,7 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
       <Td>{accessSource.name}</Td>
       <Td>
         <Badge variant="neutral" size="sm">
-          {sourceLabel(accessSource.connector?.provider ?? null, t)}
+          {providerLabel}
         </Badge>
       </Td>
       <Td>
@@ -303,7 +310,10 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
             <InlineOrgSelect
               accessReviewSourceId={accessSource.id}
               selectedOrganization={accessSource.selectedOrganization ?? ""}
+              providerLabel={providerLabel}
+              canReconnect={canReconnect}
               onSelect={handleOrgChange}
+              onReconnect={handleReconnect}
             />
           </Suspense>
         )}
@@ -337,11 +347,17 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
 function InlineOrgSelect({
   accessReviewSourceId,
   selectedOrganization,
+  providerLabel,
+  canReconnect,
   onSelect,
+  onReconnect,
 }: {
   accessReviewSourceId: string;
   selectedOrganization: string;
+  providerLabel: string;
+  canReconnect: boolean;
   onSelect: (slug: string) => void;
+  onReconnect: () => void;
 }) {
   const { t } = useTranslation();
   const data = useLazyLoadQuery<AccessReviewSourceRowOrgsQuery>(
@@ -350,30 +366,141 @@ function InlineOrgSelect({
     { fetchPolicy: "store-or-network" },
   );
 
-  const orgs = data.node.providerOrganizations ?? [];
+  const providerOrganizations = data.node.providerOrganizations;
 
-  if (orgs.length === 0) {
-    return (
-      <ManualOrgInput
-        selectedOrganization={selectedOrganization}
-        onSubmit={onSelect}
-      />
-    );
+  switch (providerOrganizations?.status) {
+    case "AVAILABLE":
+      return (
+        <Select
+          variant="editor"
+          placeholder={t("accessReviewSourceRow.selectOrganization")}
+          value={selectedOrganization}
+          onValueChange={onSelect}
+        >
+          {providerOrganizations.nodes.map(org => (
+            <Option key={org.slug} value={org.slug}>
+              {org.displayName}
+            </Option>
+          ))}
+        </Select>
+      );
+    // The provider has no picker: its organization was captured during the
+    // OAuth callback. An empty list is expected here, so show the plain input
+    // rather than warning about a connection that is perfectly healthy.
+    case "NOT_APPLICABLE":
+      return (
+        <ManualOrgInput
+          selectedOrganization={selectedOrganization}
+          onSubmit={onSelect}
+        />
+      );
+    case "EMPTY":
+      return (
+        <ProviderOrganizationsEmpty
+          selectedOrganization={selectedOrganization}
+          providerLabel={providerLabel}
+          remediationUrl={providerOrganizations.remediationUrl}
+          onSubmit={onSelect}
+        />
+      );
+    // UNAVAILABLE, plus the impossible case of a node that is not an
+    // AccessReviewSource: either way the list could not be read.
+    default:
+      return (
+        <ProviderOrganizationsUnavailable
+          providerLabel={providerLabel}
+          canReconnect={canReconnect}
+          onReconnect={onReconnect}
+        />
+      );
   }
+}
+
+// The provider answered, with nothing. Typing a slug does not fix the usual
+// causes (unapproved app, personal account), so the explanation leads and the
+// manual input stays available underneath it.
+function ProviderOrganizationsEmpty({
+  selectedOrganization,
+  providerLabel,
+  remediationUrl,
+  onSubmit,
+}: {
+  selectedOrganization: string;
+  providerLabel: string;
+  remediationUrl: string | null | undefined;
+  onSubmit: (slug: string) => void;
+}) {
+  const { t } = useTranslation();
 
   return (
-    <Select
-      variant="editor"
-      placeholder={t("accessReviewSourceRow.selectOrganization")}
-      value={selectedOrganization}
-      onValueChange={onSelect}
-    >
-      {orgs.map(org => (
-        <Option key={org.slug} value={org.slug}>
-          {org.displayName}
-        </Option>
-      ))}
-    </Select>
+    <div className="flex max-w-80 flex-col gap-2">
+      <div className="flex items-start gap-2 text-xs text-txt-tertiary">
+        <IconWarning size={14} className="mt-0.5 shrink-0 text-txt-warning" />
+        <div className="space-y-1">
+          <p className="font-medium text-txt-primary">
+            {t("accessReviewSourceRow.organizations.empty.title", {
+              provider: providerLabel,
+            })}
+          </p>
+          <p>{t("accessReviewSourceRow.organizations.empty.description")}</p>
+          {remediationUrl && (
+            <a
+              href={remediationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 underline hover:no-underline"
+            >
+              {t("accessReviewSourceRow.organizations.empty.remediation")}
+              <IconArrowLink size={12} />
+            </a>
+          )}
+        </div>
+      </div>
+      <div className="space-y-1">
+        <p className="text-xs text-txt-tertiary">
+          {t("accessReviewSourceRow.organizations.empty.manualLabel")}
+        </p>
+        <ManualOrgInput
+          selectedOrganization={selectedOrganization}
+          onSubmit={onSubmit}
+        />
+      </div>
+    </div>
+  );
+}
+
+// The provider call failed. A free text box would hide that, so the only
+// affordance offered is reconnecting the connector.
+function ProviderOrganizationsUnavailable({
+  providerLabel,
+  canReconnect,
+  onReconnect,
+}: {
+  providerLabel: string;
+  canReconnect: boolean;
+  onReconnect: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex max-w-80 items-start gap-2 text-xs text-txt-tertiary">
+      <IconWarning size={14} className="mt-0.5 shrink-0 text-txt-danger" />
+      <div className="space-y-1">
+        <p className="font-medium text-txt-primary">
+          {t("accessReviewSourceRow.organizations.unavailable.title")}
+        </p>
+        <p>
+          {t("accessReviewSourceRow.organizations.unavailable.description", {
+            provider: providerLabel,
+          })}
+        </p>
+        {canReconnect && (
+          <Button variant="secondary" onClick={onReconnect}>
+            {t("accessReviewSourceRow.actions.reconnect")}
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 

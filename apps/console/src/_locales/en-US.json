@@ -1538,7 +1538,19 @@
     "actions": { "reconnect": "Reconnect", "delete": "Delete" },
     "loading": "Loading...",
     "selectOrganization": "Select organization",
-    "organizationSlugPlaceholder": "org-slug"
+    "organizationSlugPlaceholder": "org-slug",
+    "organizations": {
+      "empty": {
+        "title": "{{provider}} returned no organizations",
+        "description": "The organization may not have approved Probo's access yet, or the connected account may be a personal account rather than an organization. Entering a slug below only works once Probo has access.",
+        "remediation": "Review Probo's access",
+        "manualLabel": "Enter the organization slug manually"
+      },
+      "unavailable": {
+        "title": "Organizations could not be loaded",
+        "description": "Probo could not read the organization list from {{provider}}. The connection may have expired or be missing permissions."
+      }
+    }
   },
   "entryDecisionActions": {
     "errors": { "record": "Failed to record decision" },

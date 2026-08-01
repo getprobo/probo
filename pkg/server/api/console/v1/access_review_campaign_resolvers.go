@@ -439,27 +439,82 @@ func (r *accessReviewSourceResolver) Connector(ctx context.Context, obj *types.A
 }
 
 // ProviderOrganizations is the resolver for the providerOrganizations field.
-func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, obj *types.AccessReviewSource) ([]*types.ProviderOrganization, error) {
+//
+// A failed listing is reported as UNAVAILABLE rather than surfaced as a
+// GraphQL error: the field is non-null and erroring it would take the whole
+// source row down. The listing error itself stays in the logs; the status
+// enum is the only client-facing signal.
+func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, obj *types.AccessReviewSource) (*types.ProviderOrganizations, error) {
 	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceGet)
 	if err != nil {
 		return nil, err
 	}
 
 	if obj.ConnectorID == nil {
-		return []*types.ProviderOrganization{}, nil
+		return &types.ProviderOrganizations{
+			Status: types.ProviderOrganizationsStatusEmpty,
+			Nodes:  []*types.ProviderOrganization{},
+		}, nil
+	}
+
+	cnnctr, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return &types.ProviderOrganizations{
+				Status: types.ProviderOrganizationsStatusEmpty,
+				Nodes:  []*types.ProviderOrganization{},
+			}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+
+		return &types.ProviderOrganizations{
+			Status: types.ProviderOrganizationsStatusUnavailable,
+			Nodes:  []*types.ProviderOrganization{},
+		}, nil
+	}
+
+	// A provider with no picker returns an empty list for a reason that is not
+	// a problem: its organization is captured during the OAuth callback, not
+	// chosen by the user. Reporting that as EMPTY would warn a perfectly
+	// healthy source that its organization may not have approved Probo.
+	if !accessreview.ProviderSupportsOrganizationPicker(cnnctr.Provider) {
+		return &types.ProviderOrganizations{
+			Status: types.ProviderOrganizationsStatusNotApplicable,
+			Nodes:  []*types.ProviderOrganization{},
+		}, nil
 	}
 
 	orgs, err := r.accessReview.ProviderOrganizations(ctx, scope, *obj.ConnectorID)
 	if err != nil {
-		return nil, err
+		r.logger.ErrorCtx(ctx, "cannot list provider organizations",
+			log.String("provider", cnnctr.Provider.String()),
+			log.Error(err),
+		)
+
+		return &types.ProviderOrganizations{
+			Status: types.ProviderOrganizationsStatusUnavailable,
+			Nodes:  []*types.ProviderOrganization{},
+		}, nil
 	}
 
-	result := make([]*types.ProviderOrganization, len(orgs))
+	if len(orgs) == 0 {
+		return &types.ProviderOrganizations{
+			Status:         types.ProviderOrganizationsStatusEmpty,
+			Nodes:          []*types.ProviderOrganization{},
+			RemediationURL: r.emptyOrganizationsRemediationURL(ctx, cnnctr.Provider),
+		}, nil
+	}
+
+	nodes := make([]*types.ProviderOrganization, len(orgs))
 	for i, o := range orgs {
-		result[i] = &types.ProviderOrganization{Slug: o.Slug, DisplayName: o.DisplayName}
+		nodes[i] = &types.ProviderOrganization{Slug: o.Slug, DisplayName: o.DisplayName}
 	}
 
-	return result, nil
+	return &types.ProviderOrganizations{
+		Status: types.ProviderOrganizationsStatusAvailable,
+		Nodes:  nodes,
+	}, nil
 }
 
 // NeedsConfiguration is the resolver for the needsConfiguration field.

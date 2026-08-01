@@ -2966,7 +2966,19 @@
     },
     "loading": "Chargement...",
     "selectOrganization": "Sélectionner une organisation",
-    "organizationSlugPlaceholder": "org-slug"
+    "organizationSlugPlaceholder": "org-slug",
+    "organizations": {
+      "empty": {
+        "title": "{{provider}} n’a renvoyé aucune organisation",
+        "description": "L’organisation n’a peut-être pas encore approuvé l’accès de Probo, ou le compte connecté est un compte personnel et non une organisation. Saisir un identifiant ci-dessous ne fonctionnera qu’une fois l’accès accordé à Probo.",
+        "remediation": "Vérifier l’accès de Probo",
+        "manualLabel": "Saisir l’identifiant de l’organisation manuellement"
+      },
+      "unavailable": {
+        "title": "Impossible de charger les organisations",
+        "description": "Probo n’a pas pu lire la liste des organisations depuis {{provider}}. La connexion a peut-être expiré ou il manque des permissions."
+      }
+    }
   },
   "entryDecisionActions": {
     "errors": {

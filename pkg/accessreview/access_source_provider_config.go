@@ -173,3 +173,19 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 	},
 }
+
+// ProviderSupportsOrganizationPicker reports whether the provider surfaces an
+// organization picker at all.
+//
+// It distinguishes two cases the org listing itself cannot: a provider that
+// offers a picker and returned nothing, versus a provider that has no picker
+// because its identifier is captured during the OAuth callback (PagerDuty's
+// subdomain, Vercel's team, Datadog's domain, Zendesk's subdomain). Both come
+// back as an empty list, but only the first means something is wrong — telling
+// a healthy 2-auto source that its organization "may not have approved Probo"
+// would be a lie.
+func ProviderSupportsOrganizationPicker(p coredata.ConnectorProvider) bool {
+	cfg, ok := providerOrgConfigs[p]
+
+	return ok && cfg.ListOrgs != nil
+}

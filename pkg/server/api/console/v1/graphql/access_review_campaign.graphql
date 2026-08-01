@@ -284,6 +284,59 @@ type ProviderOrganization {
     displayName: String!
 }
 
+enum ProviderOrganizationsStatus {
+    """
+    The provider returned at least one organization.
+    """
+    AVAILABLE
+
+    """
+    The provider has no organization picker: its organization is captured
+    during the OAuth callback rather than chosen by the user (PagerDuty's
+    subdomain, Vercel's team, Datadog's domain, Zendesk's subdomain). An empty
+    list here is normal and says nothing about the health of the connection.
+    """
+    NOT_APPLICABLE
+
+    """
+    The call succeeded and returned no organization.
+    """
+    EMPTY
+
+    """
+    The call failed.
+    """
+    UNAVAILABLE
+}
+
+"""
+Organizations the connected provider exposes, together with why the list
+looks the way it does.
+
+EMPTY and UNAVAILABLE are deliberately distinct, and neither is fixable by
+typing an organization slug by hand: whatever prevented the listing also
+prevents the member listing that the access review actually runs.
+
+- EMPTY means the provider answered and owns no organization we can see.
+  On GitHub this is usually an organization that enabled OAuth App access
+  restrictions without approving Probo, or a personal account (which never
+  appears in the org listing). The user acts on remediationUrl.
+- UNAVAILABLE means the call itself failed: revoked or expired credential,
+  a missing scope, or a provider outage. The user must reconnect or retry;
+  the underlying error stays server-side.
+"""
+type ProviderOrganizations {
+    status: ProviderOrganizationsStatus!
+    nodes: [ProviderOrganization!]!
+
+    """
+    Where the user can act when the list is EMPTY — for GitHub, the page
+    listing their authorized OAuth Apps, where an org owner can be asked
+    to approve Probo. Null when we know of no such page.
+    """
+    remediationUrl: String
+}
+
 type AccessReviewSource implements Node {
     id: ID!
     organization: Organization! @goField(forceResolver: true)
@@ -291,7 +344,7 @@ type AccessReviewSource implements Node {
     connector: Connector @goField(forceResolver: true)
     name: String!
     csvData: String
-    providerOrganizations: [ProviderOrganization!]! @goField(forceResolver: true)
+    providerOrganizations: ProviderOrganizations! @goField(forceResolver: true)
     needsConfiguration: Boolean! @goField(forceResolver: true)
     connectionStatus: AccessReviewSourceConnectionStatus! @goField(forceResolver: true)
     selectedOrganization: String @goField(forceResolver: true)
