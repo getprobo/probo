@@ -234,7 +234,19 @@ func (s *Service) PutFile(
 	// Transfer manager accepts unseekable readers (e.g. io.Pipe) by buffering
 	// parts in memory, which works against plain-HTTP S3-compatible endpoints
 	// where PutObject checksums require a seekable body.
-	uploader := transfermanager.New(s.s3Client)
+	//
+	// The transfer manager keeps its OWN RequestChecksumCalculation, which takes
+	// precedence over the one configured on the S3 client and defaults to
+	// WhenSupported. Left alone it therefore discards the client's setting —
+	// including AWS_REQUEST_CHECKSUM_CALCULATION and the shared-config value —
+	// and adds a CRC32 checksum to every upload regardless. S3-compatible
+	// endpoints that do not implement AWS's checksum scheme reject those writes,
+	// and the failure surfaces as an opaque `SignatureDoesNotMatch: Access
+	// denied`, which reads as a credential problem rather than a checksum one.
+	// Propagate the client's setting so configuring it actually takes effect.
+	uploader := transfermanager.New(s.s3Client, func(o *transfermanager.Options) {
+		o.RequestChecksumCalculation = s.s3Client.Options().RequestChecksumCalculation
+	})
 
 	input := &transfermanager.UploadObjectInput{
 		Bucket:       new(file.BucketName),
