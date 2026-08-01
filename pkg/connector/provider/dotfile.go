@@ -43,6 +43,9 @@ func dotfileRegistration() *Registration {
 		// settings struct, no picker.
 		APIKeyHeader: "X-DOTFILE-API-KEY",
 		Endpoints: Endpoints{
+			// Every endpoint the driver calls lives under the same /v1
+			// prefix, so the version segment stays in APIBase.
+			APIBase: "https://api.dotfile.com/v1",
 			// ProbeURL lets the connection-status check confirm the key with a
 			// lightweight GET; the transport attaches X-DOTFILE-API-KEY and a dead
 			// key returns 401.
@@ -50,8 +53,8 @@ func dotfileRegistration() *Registration {
 		},
 		// No NewNameResolver: the users endpoint carries no workspace name, so
 		// the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewDotfileDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewDotfileDriver(c, ep.APIBase), nil
 		},
 	}
 }

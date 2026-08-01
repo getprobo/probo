@@ -240,7 +240,7 @@ func buildNeonProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	return endpoint + "?" + q.Encode(), nil
 }
 
-func buildScalewayProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
+func buildScalewayProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
 	if err != nil {
 		return "", fmt.Errorf("cannot read scaleway connector settings: %w", err)
@@ -250,17 +250,17 @@ func buildScalewayProbeURL(conn *coredata.Connector, _ Endpoints) (string, error
 		return "", fmt.Errorf("missing scaleway organization_id")
 	}
 
-	endpoint := url.URL{
-		Scheme: "https",
-		Host:   "api.scaleway.com",
-		Path:   "/iam/v1alpha1/users",
-		RawQuery: url.Values{
-			"organization_id": {s.OrganizationID},
-			"page_size":       {"1"},
-		}.Encode(),
+	endpoint, err := url.JoinPath(ep.APIBase, "users")
+	if err != nil {
+		return "", fmt.Errorf("cannot build scaleway probe URL: %w", err)
 	}
 
-	return endpoint.String(), nil
+	q := url.Values{
+		"organization_id": {s.OrganizationID},
+		"page_size":       {"1"},
+	}
+
+	return endpoint + "?" + q.Encode(), nil
 }
 
 func buildRenderProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {

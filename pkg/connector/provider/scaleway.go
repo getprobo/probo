@@ -43,6 +43,11 @@ func scalewayRegistration() *Registration {
 		// organization_id explicitly, so it is captured via APIKeyExtraSettings
 		// rather than discovered — hence no picker and a BuildProbeURL.
 		APIKeyHeader: "X-Auth-Token",
+		Endpoints: Endpoints{
+			// Every endpoint the driver calls lives under the same
+			// /iam/v1alpha1 prefix, so the version segment stays in APIBase.
+			APIBase: "https://api.scaleway.com/iam/v1alpha1",
+		},
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
@@ -50,7 +55,7 @@ func scalewayRegistration() *Registration {
 		// No NewNameResolver: Scaleway exposes no read-only endpoint that maps
 		// an Organization UUID to its display name, so the source keeps its
 		// generic name.
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read scaleway connector settings: %w", err)
@@ -60,7 +65,7 @@ func scalewayRegistration() *Registration {
 				return nil, fmt.Errorf("cannot create scaleway driver: organization_id is required")
 			}
 
-			return drivers.NewScalewayDriver(c, s.OrganizationID), nil
+			return drivers.NewScalewayDriver(c, s.OrganizationID, ep.APIBase), nil
 		},
 	}
 }

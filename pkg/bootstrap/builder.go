@@ -25,6 +25,7 @@ import (
 	"os"
 	"strings"
 
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
 
@@ -563,6 +564,8 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		)
 	}
 
+	cfg.Probod.ConnectorEndpoints = b.buildConnectorEndpoints()
+
 	if b.resolver.Err() != nil {
 		return nil, b.resolver.Err()
 	}
@@ -740,4 +743,43 @@ func (b *Builder) parseOriginsList(s string) []string {
 	}
 
 	return result
+}
+
+// buildConnectorEndpoints collects per-provider endpoint overrides from
+// PROBOD_CONNECTOR_<PROVIDER>_ENDPOINT_{AUTH,TOKEN,PROBE,API_BASE}, letting a
+// deployment point a connector at a vendor sandbox without a code change.
+//
+// The provider list comes from the connector registry rather than a literal
+// here, so a new provider is overridable the moment it is registered. The
+// resolver looks up keys one at a time and cannot enumerate the environment,
+// which is why the providers are iterated instead of the variables.
+//
+// probod rejects an override that names an unknown provider or a field the
+// provider does not resolve statically, so a typo fails at startup rather than
+// sitting in the config doing nothing.
+func (b *Builder) buildConnectorEndpoints() map[string]probodconfig.ConnectorEndpointsConfig {
+	var endpoints map[string]probodconfig.ConnectorEndpointsConfig
+
+	for _, reg := range provider.NewBuiltinRegistry().All() {
+		prefix := "PROBOD_CONNECTOR_" + string(reg.Provider) + "_ENDPOINT_"
+
+		e := probodconfig.ConnectorEndpointsConfig{
+			Auth:    b.resolver.getEnv(prefix + "AUTH"),
+			Token:   b.resolver.getEnv(prefix + "TOKEN"),
+			Probe:   b.resolver.getEnv(prefix + "PROBE"),
+			APIBase: b.resolver.getEnv(prefix + "API_BASE"),
+		}
+
+		if e == (probodconfig.ConnectorEndpointsConfig{}) {
+			continue
+		}
+
+		if endpoints == nil {
+			endpoints = make(map[string]probodconfig.ConnectorEndpointsConfig)
+		}
+
+		endpoints[string(reg.Provider)] = e
+	}
+
+	return endpoints
 }

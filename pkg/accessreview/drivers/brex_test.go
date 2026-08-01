@@ -35,7 +35,7 @@ func TestBrexDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/brex", "BREX_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("BREX_TOKEN")))
 
-	driver := NewBrexDriver(client)
+	driver := NewBrexDriver(client, "https://platform.brexapis.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, records)

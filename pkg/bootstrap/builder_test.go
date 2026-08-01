@@ -966,3 +966,45 @@ func TestBuilder_parseOriginsList(t *testing.T) {
 		})
 	}
 }
+
+// TestBuilder_Build_ConnectorEndpointOverrides covers the staging case the
+// override exists for: pointing DocuSign at the vendor's demo hosts from the
+// deployment's environment, with no code change and no effect on any other
+// provider.
+func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_AUTH"] = "https://account-d.docusign.com/oauth/auth"
+	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_TOKEN"] = "https://account-d.docusign.com/oauth/token"
+	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_PROBE"] = "https://account-d.docusign.com/oauth/userinfo"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.ConnectorEndpoints, 1, "only the configured provider should appear")
+
+	got, ok := cfg.Probod.ConnectorEndpoints["DOCUSIGN"]
+	require.True(t, ok)
+
+	assert.Equal(t, "https://account-d.docusign.com/oauth/auth", got.Auth)
+	assert.Equal(t, "https://account-d.docusign.com/oauth/token", got.Token)
+	assert.Equal(t, "https://account-d.docusign.com/oauth/userinfo", got.Probe)
+	assert.Empty(t, got.APIBase, "an unset field must stay empty so the compiled default survives")
+}
+
+// TestBuilder_Build_NoConnectorEndpointOverrides pins the default: a
+// deployment that configures nothing emits no override map at all, so every
+// connector keeps the endpoints compiled into it.
+func TestBuilder_Build_NoConnectorEndpointOverrides(t *testing.T) {
+	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.Empty(t, cfg.Probod.ConnectorEndpoints)
+}

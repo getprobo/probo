@@ -37,7 +37,7 @@ func TestScalewayDriver(t *testing.T) {
 	// Scaleway authenticates via the X-Auth-Token header, not Authorization.
 	client := newVCRClientWithHeader(rec, "X-Auth-Token", os.Getenv("SCALEWAY_API_KEY"))
 
-	driver := NewScalewayDriver(client, "11111111-2222-3333-4444-555555555555")
+	driver := NewScalewayDriver(client, "11111111-2222-3333-4444-555555555555", "https://api.scaleway.com/iam/v1alpha1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 2)

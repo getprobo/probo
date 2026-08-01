@@ -33,8 +33,7 @@ import (
 )
 
 const (
-	dotfileAPIHost   = "api.dotfile.com"
-	dotfileUsersPath = "/v1/users"
+	dotfileUsersPath = "/users"
 	dotfilePageSize  = 100
 )
 
@@ -44,6 +43,7 @@ const (
 // no tenant selector. Pagination is page/limit based.
 type DotfileDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*DotfileDriver)(nil)
@@ -70,7 +70,7 @@ type dotfileUsersResponse struct {
 	} `json:"pagination"`
 }
 
-func NewDotfileDriver(httpClient *http.Client) *DotfileDriver {
+func NewDotfileDriver(httpClient *http.Client, baseURL string) *DotfileDriver {
 	return &DotfileDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -78,6 +78,7 @@ func NewDotfileDriver(httpClient *http.Client) *DotfileDriver {
 				maxRetries: 3,
 			},
 		},
+		baseURL: baseURL,
 	}
 }
 
@@ -124,22 +125,21 @@ func (d *DotfileDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 }
 
 func (d *DotfileDriver) fetchPage(ctx context.Context, page int) (*dotfileUsersResponse, error) {
-	q := url.Values{}
-	q.Set("include_suspended", "true")
-	q.Set("limit", strconv.Itoa(dotfilePageSize))
-	q.Set("page", strconv.Itoa(page))
-
-	endpoint := url.URL{
-		Scheme:   "https",
-		Host:     dotfileAPIHost,
-		Path:     dotfileUsersPath,
-		RawQuery: q.Encode(),
+	endpoint, err := url.JoinPath(d.baseURL, dotfileUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build dotfile users URL: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create dotfile users request: %w", err)
 	}
+
+	q := req.URL.Query()
+	q.Set("include_suspended", "true")
+	q.Set("limit", strconv.Itoa(dotfilePageSize))
+	q.Set("page", strconv.Itoa(page))
+	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Accept", "application/json")
 

@@ -49,6 +49,27 @@ type ConnectorConfig struct {
 	ResourceID string `json:"-"`
 }
 
+// ConnectorEndpointsConfig overrides the endpoints compiled into a provider's
+// registration, so a non-production deployment can point a connector at the
+// provider's sandbox — DocuSign's account-d hosts, for instance — without a
+// code change.
+//
+// It is keyed by provider on Config.ConnectorEndpoints rather than nested in a
+// ConnectorConfig entry because a provider needs no credentials entry to have
+// endpoints: an API-key provider is configured by the customer, yet its API
+// base is still compiled in and still worth repointing on a staging
+// deployment.
+//
+// Every field is optional; an omitted field keeps the compiled default. A
+// field the provider builds per flow or per connection cannot be overridden —
+// probod refuses to start rather than accept a value it would ignore.
+type ConnectorEndpointsConfig struct {
+	Auth    string `json:"auth,omitempty"`
+	Token   string `json:"token,omitempty"`
+	Probe   string `json:"probe,omitempty"`
+	APIBase string `json:"api-base,omitempty"`
+}
+
 type ConnectorConfigOAuth2 struct {
 	ClientID     string `json:"client-id"`
 	ClientSecret string `json:"client-secret"`

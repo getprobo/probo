@@ -214,7 +214,7 @@ func TestBuildScalewayProbeURL(t *testing.T) {
 		OrganizationID: "11111111-2222-3333-4444-555555555555",
 	}))
 
-	probeURL, err := buildScalewayProbeURL(conn, Endpoints{})
+	probeURL, err := buildScalewayProbeURL(conn, Endpoints{APIBase: "https://api.scaleway.com/iam/v1alpha1"})
 	require.NoError(t, err)
 	assert.Equal(
 		t,

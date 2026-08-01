@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -34,6 +35,7 @@ import (
 // requests.
 type BrexDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*BrexDriver)(nil)
@@ -50,11 +52,12 @@ type brexUsersResponse struct {
 	NextCursor string `json:"next_cursor"`
 }
 
-const brexUsersEndpoint = "https://platform.brexapis.com/v2/users"
+const brexUsersPath = "/v2/users"
 
-func NewBrexDriver(httpClient *http.Client) *BrexDriver {
+func NewBrexDriver(httpClient *http.Client, baseURL string) *BrexDriver {
 	return &BrexDriver{
 		httpClient: httpClient,
+		baseURL:    baseURL,
 	}
 }
 
@@ -107,7 +110,12 @@ func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 }
 
 func (d *BrexDriver) queryUsers(ctx context.Context, cursor *string) (*brexUsersResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, brexUsersEndpoint, nil)
+	endpoint, err := url.JoinPath(d.baseURL, brexUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build brex users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create brex users request: %w", err)
 	}
@@ -142,20 +150,28 @@ func (d *BrexDriver) queryUsers(ctx context.Context, cursor *string) (*brexUsers
 	return &resp, nil
 }
 
+const brexCompanyPath = "/v2/company"
+
 // brexNameResolver resolves the Brex company name.
 type brexNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewBrexNameResolver(httpClient *http.Client) NameResolver {
-	return &brexNameResolver{httpClient: httpClient}
+func NewBrexNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &brexNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *brexNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	endpoint, err := url.JoinPath(r.baseURL, brexCompanyPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build brex company URL: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		"https://platform.brexapis.com/v2/company",
+		endpoint,
 		nil,
 	)
 	if err != nil {

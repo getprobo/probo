@@ -33,8 +33,7 @@ import (
 )
 
 const (
-	scalewayAPIHost   = "api.scaleway.com"
-	scalewayUsersPath = "/iam/v1alpha1/users"
+	scalewayUsersPath = "/users"
 	scalewayPageSize  = 100
 )
 
@@ -45,6 +44,7 @@ const (
 // setting rather than discovered.
 type ScalewayDriver struct {
 	httpClient     *http.Client
+	baseURL        string
 	organizationID string
 }
 
@@ -74,9 +74,10 @@ type scalewayUser struct {
 	Locked           bool  `json:"locked"`
 }
 
-func NewScalewayDriver(httpClient *http.Client, organizationID string) *ScalewayDriver {
+func NewScalewayDriver(httpClient *http.Client, organizationID string, baseURL string) *ScalewayDriver {
 	return &ScalewayDriver{
 		httpClient:     httpClient,
+		baseURL:        baseURL,
 		organizationID: organizationID,
 	}
 }
@@ -131,23 +132,22 @@ func (d *ScalewayDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 }
 
 func (d *ScalewayDriver) fetchPage(ctx context.Context, page int) (*scalewayUsersResponse, error) {
-	q := url.Values{}
+	endpoint, err := url.JoinPath(d.baseURL, scalewayUsersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build scaleway users URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create scaleway users request: %w", err)
+	}
+
+	q := req.URL.Query()
 	q.Set("organization_id", d.organizationID)
 	q.Set("order_by", "created_at_asc")
 	q.Set("page", strconv.Itoa(page))
 	q.Set("page_size", strconv.Itoa(scalewayPageSize))
-
-	endpoint := url.URL{
-		Scheme:   "https",
-		Host:     scalewayAPIHost,
-		Path:     scalewayUsersPath,
-		RawQuery: q.Encode(),
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create scaleway users request: %w", err)
-	}
+	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Accept", "application/json")
 

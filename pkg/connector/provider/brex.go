@@ -36,7 +36,10 @@ func brexRegistration() *Registration {
 		Endpoints: Endpoints{
 			Auth:  "https://accounts-api.brex.com/oauth2/default/v1/authorize",
 			Token: "https://accounts-api.brex.com/oauth2/default/v1/token",
-			Probe: "https://platform.brexapis.com/v2/users/me",
+			// Auth/Token live on accounts-api.brex.com (Brex's separate
+			// identity host); the data API below is on platform.brexapis.com.
+			APIBase: "https://platform.brexapis.com",
+			Probe:   "https://platform.brexapis.com/v2/users/me",
 		},
 		// companies.readonly is required by the name resolver's GET /v2/company
 		// call; without it Brex 403s that endpoint (users.readonly covers only
@@ -44,11 +47,11 @@ func brexRegistration() *Registration {
 		// reconnect to re-consent to the added scope.
 		OAuth2Scopes:   []string{"openid", "offline_access", "users.readonly", "companies.readonly"},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewBrexDriver(c), nil
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewBrexDriver(c, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewBrexNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewBrexNameResolver(c, ep.APIBase)
 		},
 	}
 }

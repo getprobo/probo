@@ -342,7 +342,30 @@ func (impl *Implm) Run(
 	}
 
 	redirectURI := baseURL.WithPath(connector.CallbackPath).MustString()
-	providerRegistry := provider.NewBuiltinRegistry()
+
+	endpointOverrides := make(provider.EndpointOverrides, len(impl.cfg.ConnectorEndpoints))
+	for p, e := range impl.cfg.ConnectorEndpoints {
+		endpointOverrides[coredata.ConnectorProvider(strings.ToUpper(p))] = provider.Endpoints{
+			Auth:    e.Auth,
+			Token:   e.Token,
+			Probe:   e.Probe,
+			APIBase: e.APIBase,
+		}
+	}
+
+	providerRegistry, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(endpointOverrides))
+	if err != nil {
+		return fmt.Errorf("cannot configure connector providers: %w", err)
+	}
+
+	for p := range endpointOverrides {
+		// Endpoint overrides are the difference between a connector reaching
+		// the real vendor and reaching a sandbox, so record which providers a
+		// deployment has repointed. The provider name is operator config, not
+		// tenant data.
+		l.Warn("connector provider endpoints overridden by configuration", log.String("provider", string(p)))
+	}
+
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {

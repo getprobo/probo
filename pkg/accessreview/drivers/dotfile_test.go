@@ -37,7 +37,7 @@ func TestDotfileDriver(t *testing.T) {
 	// Dotfile authenticates via the X-DOTFILE-API-KEY header, not Authorization.
 	client := newVCRClientWithHeader(rec, "X-DOTFILE-API-KEY", os.Getenv("DOTFILE_API_KEY"))
 
-	driver := NewDotfileDriver(client)
+	driver := NewDotfileDriver(client, "https://api.dotfile.com/v1")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
