@@ -450,9 +450,14 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 		return nil, err
 	}
 
+	// EMPTY means the provider answered and owns no organization, and the
+	// console renders it as "the organization may not have approved Probo's
+	// access". With no connector, or one whose row is gone, no call was made
+	// at all — reporting that as EMPTY blames the provider for a source-side
+	// problem.
 	if obj.ConnectorID == nil {
 		return &types.ProviderOrganizations{
-			Status: types.ProviderOrganizationsStatusEmpty,
+			Status: types.ProviderOrganizationsStatusUnavailable,
 			Nodes:  []*types.ProviderOrganization{},
 		}, nil
 	}
@@ -461,7 +466,7 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return &types.ProviderOrganizations{
-				Status: types.ProviderOrganizationsStatusEmpty,
+				Status: types.ProviderOrganizationsStatusUnavailable,
 				Nodes:  []*types.ProviderOrganization{},
 			}, nil
 		}
