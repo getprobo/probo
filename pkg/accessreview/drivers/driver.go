@@ -27,6 +27,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -125,10 +126,8 @@ func sameHostNextPageURL(provider, baseURL, next string) (string, error) {
 	// rather than cleaning it, so nothing here has to agree with the server's
 	// normalization order. Backslash is a separator too: RFC 3986 does not make
 	// it one, but a server that treats it as one would read "..\x" as a climb.
-	for _, segment := range strings.FieldsFunc(resolved.Path, isPathSeparator) {
-		if segment == "." || segment == ".." {
-			return "", fmt.Errorf("cannot follow %s next page URL: it leaves the collection path", provider)
-		}
+	if slices.ContainsFunc(strings.FieldsFunc(resolved.Path, isPathSeparator), isDotSegment) {
+		return "", fmt.Errorf("cannot follow %s next page URL: it leaves the collection path", provider)
 	}
 
 	// Credentials embedded in the reference would reach http.NewRequest and, on
@@ -143,6 +142,28 @@ func sameHostNextPageURL(provider, baseURL, next string) (string, error) {
 // the dot-segment check above.
 func isPathSeparator(r rune) bool {
 	return r == '/' || r == '\\'
+}
+
+// isDotSegment reports whether a path segment would climb the tree on some
+// server, which is broader than being exactly "." or "..".
+//
+// Two decorations survive url.Parse and are discarded again by common
+// servers: RFC 3986 path parameters, which Tomcat and Jetty strip (so "..;"
+// and "..;x=1" arrive as ".."), and a NUL byte, which anything backed by a C
+// string truncates (so "..\x00" arrives as ".."). Strip both, then treat any
+// all-dots remainder as a climb — "..." and "...." are not traversal
+// themselves, but a normalizer that collapses them yields one, and no real
+// collection has an all-dots segment to lose.
+//
+// A double-encoded climb ("%252e%252e") still passes: catching it would mean
+// refusing every decoded "%", which legitimate resource names may carry. The
+// host and scheme remain pinned regardless, so that path costs confinement,
+// not the token.
+func isDotSegment(segment string) bool {
+	segment, _, _ = strings.Cut(segment, ";")
+	segment = strings.ReplaceAll(segment, "\x00", "")
+
+	return segment != "" && strings.Trim(segment, ".") == ""
 }
 
 // Driver defines the interface for fetching accounts from an access or

@@ -367,6 +367,52 @@ func TestSameHostNextPageURLStaysOnCollection(t *testing.T) {
 			next: "https://sentry.io/api/0/organizations/acme/members/?cursor=x",
 			want: "https://sentry.io/api/0/organizations/acme/members/?cursor=x",
 		},
+		{
+			// Tomcat and Jetty strip RFC 3986 path parameters, so this
+			// segment arrives at the router as "..".
+			name:    "path parameter hides a traversal",
+			base:    versioned,
+			next:    versioned + "/..;/oauth2/token",
+			wantErr: true,
+		},
+		{
+			name:    "path parameter with a value hides a traversal",
+			base:    versioned,
+			next:    versioned + "/..;x=1/oauth2/token",
+			wantErr: true,
+		},
+		{
+			// Anything backed by a C string truncates at the NUL.
+			name:    "NUL byte hides a traversal",
+			base:    versioned,
+			next:    versioned + "/..%00/oauth2/token",
+			wantErr: true,
+		},
+		{
+			// Not traversal on its own, but a normalizer that collapses runs
+			// of dots turns it into one, and no real collection has an
+			// all-dots segment to lose.
+			name:    "all-dots segment",
+			base:    versioned,
+			next:    versioned + "/..../oauth2/token",
+			wantErr: true,
+		},
+		{
+			// A dot inside a segment is ordinary: versions and hostnames
+			// carry them, and refusing these would break real pagination.
+			name: "dots within a segment are allowed",
+			base: "https://api.example.com/v1",
+			next: "https://api.example.com/v1/files/report.v2.json?page=2",
+			want: "https://api.example.com/v1/files/report.v2.json?page=2",
+		},
+		{
+			// A segment carrying a path parameter is legal and must survive
+			// as long as what precedes the ";" is not a climb.
+			name: "path parameter on an ordinary segment is allowed",
+			base: "https://api.example.com/v1",
+			next: "https://api.example.com/v1/members;v=2?page=2",
+			want: "https://api.example.com/v1/members;v=2?page=2",
+		},
 	}
 
 	for _, tt := range tests {
