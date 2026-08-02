@@ -83,6 +83,12 @@ type (
 func NewClient(apiBaseURL string, logger *log.Logger) *Client {
 	httpClientOpts := []httpclient.Option{
 		httpclient.WithLogger(logger),
+		// The base is deployment configuration now, not a compiled constant,
+		// and endpoint validation only requires absolute HTTPS — a host
+		// resolving into the private network would otherwise make this worker
+		// POST notification bodies and the workspace token to an internal
+		// service. Every connector client already dials with this guard.
+		httpclient.WithSSRFProtection(),
 	}
 
 	return &Client{
