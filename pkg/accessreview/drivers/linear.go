@@ -203,7 +203,10 @@ query AccessReviewLinearUsers($after: String) {
 	}
 
 	if len(resp.Errors) > 0 {
-		return nil, fmt.Errorf("linear graphql error: %s", resp.Errors[0].Message)
+		// Provider-supplied messages may carry tenant identifiers or
+		// query fragments — never embed them. Resolver scrubs the same
+		// field; keep both call sites aligned.
+		return nil, fmt.Errorf("cannot fetch linear users: graphql error")
 	}
 
 	return &resp, nil
@@ -278,7 +281,10 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	if len(resp.Errors) > 0 {
-		return "", fmt.Errorf("linear graphql error: %s", resp.Errors[0].Message)
+		// Provider-supplied messages may carry tenant identifiers or
+		// query fragments — never embed them. Driver scrubs the same
+		// field; keep both call sites aligned.
+		return "", fmt.Errorf("cannot fetch linear organization: graphql error")
 	}
 
 	return resp.Data.Organization.Name, nil
