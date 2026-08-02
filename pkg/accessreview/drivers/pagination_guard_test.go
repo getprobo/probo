@@ -333,6 +333,40 @@ func TestSameHostNextPageURLStaysOnCollection(t *testing.T) {
 			next:    "https://api.example.com/v10/secrets",
 			wantErr: true,
 		},
+		{
+			// Resolving leaves percent-encoded dot segments alone, so this
+			// keeps the base prefix and would reach the wire still encoded;
+			// a server that decodes before routing then serves /oauth2/token.
+			name:    "percent-encoded traversal",
+			base:    versioned,
+			next:    versioned + "/%2e%2e/%2e%2e/oauth2/token",
+			wantErr: true,
+		},
+		{
+			// Same climb with the separator encoded instead of the dots.
+			name:    "encoded separator traversal",
+			base:    versioned,
+			next:    versioned + "/..%2f..%2foauth2/token",
+			wantErr: true,
+		},
+		{
+			// Backslash is not a separator per RFC 3986, so this is one
+			// segment to url.Parse — but a server that treats it as one reads
+			// it as a climb.
+			name:    "backslash traversal",
+			base:    versioned,
+			next:    versioned + "/..%5c..%5coauth2/token",
+			wantErr: true,
+		},
+		{
+			// The dot-segment check must not reject a legitimate trailing
+			// slash: Sentry's collections require one, and normalizing the
+			// path away would break its pagination.
+			name: "trailing slash collection is preserved",
+			base: "https://sentry.io/api/0/organizations/acme/members/",
+			next: "https://sentry.io/api/0/organizations/acme/members/?cursor=x",
+			want: "https://sentry.io/api/0/organizations/acme/members/?cursor=x",
+		},
 	}
 
 	for _, tt := range tests {

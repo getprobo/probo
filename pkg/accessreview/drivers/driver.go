@@ -117,12 +117,32 @@ func sameHostNextPageURL(provider, baseURL, next string) (string, error) {
 		}
 	}
 
+	// Resolving normalizes only literal dot segments, so percent-encoded ones
+	// ("%2e%2e", "..%2f") survive with the base prefix intact and pass the
+	// check above — then reach the wire still encoded, where a server that
+	// decodes before routing lands the bearer token on the path that check just
+	// refused. Inspect the DECODED path instead, and refuse a dot segment
+	// rather than cleaning it, so nothing here has to agree with the server's
+	// normalization order. Backslash is a separator too: RFC 3986 does not make
+	// it one, but a server that treats it as one would read "..\x" as a climb.
+	for _, segment := range strings.FieldsFunc(resolved.Path, isPathSeparator) {
+		if segment == "." || segment == ".." {
+			return "", fmt.Errorf("cannot follow %s next page URL: it leaves the collection path", provider)
+		}
+	}
+
 	// Credentials embedded in the reference would reach http.NewRequest and, on
 	// some transports, take precedence over the Authorization header the
 	// connection sets. Drop them; the host is already pinned to the base.
 	resolved.User = nil
 
 	return resolved.String(), nil
+}
+
+// isPathSeparator reports whether r separates path segments for the purpose of
+// the dot-segment check above.
+func isPathSeparator(r rune) bool {
+	return r == '/' || r == '\\'
 }
 
 // Driver defines the interface for fetching accounts from an access or
