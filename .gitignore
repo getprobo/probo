@@ -7,6 +7,9 @@ node_modules/
 dist/
 .env
 .env.*
+!keycloak/.env.example
+keycloak/test-client/test-client
+keycloak/test-client/test-client.exe
 .react-email/
 sbom.json
 sbom-docker.json

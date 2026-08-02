@@ -1,0 +1,9 @@
+.git
+.gitignore
+README.md
+test-client/
+*.exe
+.env
+.env.*
+.idea/
+.vscode/

@@ -1,3 +1,12 @@
+databases:
+  # Keycloak POC database — Render's free tier, deleted 30 days after creation.
+  # Separate from the probo application database on purpose; this is throwaway.
+  - name: govrly-keycloak-db
+    databaseName: keycloak
+    user: keycloak
+    plan: free
+    region: frankfurt
+
 services:
   - type: web
     name: probo
@@ -15,6 +24,10 @@ services:
         value: "Advance-Datasec.onrender.com"
       - key: AUTH_COOKIE_SECURE
         value: "true"
+      # Allowlist of CIMD (Client ID Metadata Document) client_id URLs permitted
+      # to authenticate via OAuth. Required for claude.ai's MCP connector.
+      - key: PROBOD_OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS
+        value: "https://claude.ai/oauth/mcp-oauth-client-metadata"
       - key: PG_ADDR
         sync: false
       - key: PG_USERNAME
@@ -65,3 +78,58 @@ services:
     image:
       url: chromedp/headless-shell:140.0.7259.2
     plan: starter
+
+  # ---------------------------------------------------------------------------
+  # Keycloak 26 MFA / OIDC-IdP test deployment. Standalone from the probo stack:
+  # its own image, its own database, no private-network link. See keycloak/README.md.
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: govrly-keycloak
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    dockerfilePath: ./keycloak/Dockerfile
+    dockerContext: ./keycloak
+    # Keycloak 26 serves /health on the *management* port (9000), which Render
+    # cannot reach — only one port is routed. /realms/master is on the main port,
+    # needs no auth, and only answers 200 once the DB is up and realms are loaded.
+    healthCheckPath: /realms/master
+    envVars:
+      # --- database wiring (Render -> JDBC happens in keycloak/entrypoint.sh) ---
+      - key: DB_HOST
+        fromDatabase:
+          name: govrly-keycloak-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: govrly-keycloak-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: govrly-keycloak-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: govrly-keycloak-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: govrly-keycloak-db
+          property: password
+
+      # --- bootstrap admin (temporary account, create a real one after login) ---
+      - key: KC_BOOTSTRAP_ADMIN_USERNAME
+        value: admin
+      - key: KC_BOOTSTRAP_ADMIN_PASSWORD
+        generateValue: true
+
+      # --- HTTP / proxy: TLS terminates at Render's edge, Keycloak speaks plain
+      # HTTP behind it and trusts X-Forwarded-* to rebuild the public URL. ---
+      - key: KC_HTTP_ENABLED
+        value: "true"
+      - key: KC_HTTP_PORT
+        value: "10000"
+      - key: KC_PROXY_HEADERS
+        value: xforwarded
+      - key: KC_HEALTH_ENABLED
+        value: "true"

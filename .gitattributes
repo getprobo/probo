@@ -3,3 +3,8 @@ pkg/server/api/connect/v1/*_resolvers.go -linguist-generated
 pkg/server/api/trust/v1/*_resolvers.go -linguist-generated
 pkg/server/api/mcp/v1/v1_resolver.go -linguist-generated
 pkg/server/api/mcp/v1/schema.resolvers.go -linguist-generated
+
+# keycloak/entrypoint.sh must keep LF endings or the container fails with
+# "bad interpreter" when the image is built from a Windows checkout.
+keycloak/entrypoint.sh text eol=lf
+keycloak/Dockerfile text eol=lf
