@@ -385,15 +385,14 @@ function InlineOrgSelect({
         </Select>
       );
     // The provider has no picker: its organization was captured during the
-    // OAuth callback. An empty list is expected here, so show the plain input
-    // rather than warning about a connection that is perfectly healthy.
+    // OAuth callback. An empty list is expected here, so do not warn about a
+    // connection that is perfectly healthy — but do not offer an input either.
+    // No provider in this branch implements SetOrganizationSettings, so
+    // submitting one could only ever return "does not support organization
+    // configuration". Show what the callback captured, read-only; changing it
+    // means reconnecting.
     case "NOT_APPLICABLE":
-      return (
-        <ManualOrgInput
-          selectedOrganization={selectedOrganization}
-          onSubmit={onSelect}
-        />
-      );
+      return <CapturedOrganization selectedOrganization={selectedOrganization} />;
     case "EMPTY":
       return (
         <ProviderOrganizationsEmpty
@@ -502,6 +501,22 @@ function ProviderOrganizationsUnavailable({
       </div>
     </div>
   );
+}
+
+// The organization a 2-auto provider captured during its OAuth callback
+// (PagerDuty's subdomain, Vercel's team, Datadog's domain, Zendesk's
+// subdomain). It is not user-editable: the value came from the handshake, and
+// the only way to change it is to reconnect against a different one.
+//
+// No empty state: these providers have NeedsPicker false, so an unset
+// organization leaves needsConfiguration false and the parent renders no
+// selector at all.
+function CapturedOrganization({
+  selectedOrganization,
+}: {
+  selectedOrganization: string;
+}) {
+  return <span className="text-sm text-txt-primary">{selectedOrganization}</span>;
 }
 
 function ManualOrgInput({
