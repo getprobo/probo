@@ -192,6 +192,24 @@ func TestEndpointOverrideRejected(t *testing.T) {
 			wantErr:   "must not embed credentials",
 		},
 		{
+			// A port keeps url.URL.Host non-empty with no hostname behind it,
+			// so this has to be caught by the hostname check or it boots and
+			// fails later on connector traffic.
+			name:      "port with no hostname",
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderDocuSign: {Auth: "https://:443/oauth/auth"}},
+			wantErr:   "must include a host",
+		},
+		{
+			// A bare "?" leaves RawQuery empty but still propagates into
+			// every path joined onto the base.
+			name: "base with a bare query marker",
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderTally: {
+				Probe:   "https://api.tally.so/me?",
+				APIBase: "https://api.tally.so?",
+			}},
+			wantErr: "must not carry a query string or fragment",
+		},
+		{
 			// Register's invariant must see the overridden values, not the
 			// compiled ones. Tally's only static fields are Probe and APIBase,
 			// so overriding both satisfies the atomicity check above and
@@ -266,6 +284,53 @@ func TestEndpointOverrideRejected(t *testing.T) {
 			require.Error(t, err)
 			assert.Nil(t, r)
 			assert.Contains(t, err.Error(), tt.wantErr)
+		})
+	}
+}
+
+// TestEndpointOverrideErrorsNeverEchoCredentials pins that a rejected override
+// keeps its password out of the error, whichever check refuses it. probod
+// prints this error and refuses to boot, so the message lands in the startup
+// log: an operator who pastes a credentialed URL must not have the secret
+// copied into it. The credentials check is not the one that fires first — a
+// plaintext-http URL is refused by the scheme check, which used to report the
+// override verbatim.
+func TestEndpointOverrideErrorsNeverEchoCredentials(t *testing.T) {
+	t.Parallel()
+
+	const secret = "sup3rs3cret"
+
+	credentialed := func(scheme, path string) string {
+		return (&url.URL{
+			Scheme: scheme,
+			User:   url.UserPassword("svc", secret),
+			Host:   "account-d.docusign.com",
+			Path:   path,
+		}).String()
+	}
+
+	tests := []struct {
+		name      string
+		overrides provider.EndpointOverrides
+	}{
+		{
+			name:      "refused by the scheme check",
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderDocuSign: {Auth: credentialed("http", "/oauth/auth")}},
+		},
+		{
+			name:      "refused by the credentials check",
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderDocuSign: {Auth: credentialed("https", "/oauth/auth")}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			r, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(tt.overrides))
+			require.Error(t, err)
+			assert.Nil(t, r)
+			assert.NotContains(t, err.Error(), secret)
 		})
 	}
 }

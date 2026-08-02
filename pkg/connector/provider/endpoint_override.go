@@ -21,6 +21,7 @@
 package provider
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -179,28 +180,46 @@ func applyEndpointOverride(p coredata.ConnectorProvider, unsupportedReason strin
 func validateEndpointOverride(raw string, isBase bool) error {
 	u, err := url.Parse(raw)
 	if err != nil {
-		return fmt.Errorf("cannot parse %q: %w", raw, err)
+		// url.Error embeds the URL it failed on, so wrapping it verbatim
+		// would put the override back in the message. Unwrap to the cause.
+		if urlErr, ok := errors.AsType[*url.Error](err); ok {
+			return fmt.Errorf("cannot parse endpoint override: %w", urlErr.Err)
+		}
+
+		return fmt.Errorf("cannot parse endpoint override: %w", err)
 	}
+
+	// Every message below reports the override back to the operator, and this
+	// error is what probod prints when it refuses to boot. An override that
+	// embeds credentials must not put them in that log line, and the
+	// credentials check is not the branch that fires first — a bad scheme on a
+	// credentialed URL reaches the scheme message. Redact once, up front.
+	safe := u.Redacted()
 
 	if !strings.EqualFold(u.Scheme, "https") {
-		return fmt.Errorf("must be an https URL, got %q", raw)
+		return fmt.Errorf("must be an https URL, got %q", safe)
 	}
 
-	if u.Host == "" {
-		return fmt.Errorf("must include a host, got %q", raw)
+	// A port makes Host non-empty even with no hostname ("https://:443"), so
+	// the emptiness check has to run against Hostname or a hostless override
+	// boots and fails later on connector traffic instead.
+	if u.Host == "" || u.Hostname() == "" {
+		return fmt.Errorf("must include a host, got %q", safe)
 	}
 
 	if u.User != nil {
-		return fmt.Errorf("must not embed credentials, got %q", u.Redacted())
+		return fmt.Errorf("must not embed credentials, got %q", safe)
 	}
 
 	if isBase {
-		if u.RawQuery != "" || u.Fragment != "" {
-			return fmt.Errorf("must not carry a query string or fragment when used as a base, got %q", raw)
+		// ForceQuery covers a bare "?": it leaves RawQuery empty but still
+		// rides along into every path joined from this base.
+		if u.RawQuery != "" || u.ForceQuery || u.Fragment != "" {
+			return fmt.Errorf("must not carry a query string or fragment when used as a base, got %q", safe)
 		}
 
 		if strings.HasSuffix(u.Path, "/") {
-			return fmt.Errorf("must not have a trailing slash, got %q", raw)
+			return fmt.Errorf("must not have a trailing slash, got %q", safe)
 		}
 	}
 
