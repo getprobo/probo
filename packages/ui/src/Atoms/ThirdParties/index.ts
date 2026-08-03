@@ -34,6 +34,7 @@ export { Monday } from "./Monday";
 export { Neon } from "./Neon";
 export { Netlify } from "./Netlify";
 export { Notion } from "./Notion";
+export { Nuki } from "./Nuki";
 export { Okta } from "./Okta";
 export { OnePassword } from "./OnePassword";
 export { OpenAI } from "./OpenAI";
