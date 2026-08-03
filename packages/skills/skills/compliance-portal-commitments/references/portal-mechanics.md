@@ -8,8 +8,7 @@ varies by environment (there may be more than one Probo server, e.g. US and EU).
 
 1. **Resolve the organization** — `listOrganizations`, match by name, keep the `id`.
 2. **Resolve the compliance portal** — `getCompliancePortal` with `organization_id`. Keep
-   `compliance_portal.id`; every group call still takes it as the `compliance_portal_id` argument (the resource
-   was renamed from "trust center" to "compliance portal" but the ID parameter kept its old name).
+   `compliance_portal.id`; every group call takes it as the `compliance_portal_id` argument.
 3. **Read what already exists** — `listCommitmentGroups` with the `compliance_portal_id`, and
    `listCommitments` with a `group_id`. Do this so you reuse the existing group instead of duplicating it.
    Order by `{field: "RANK", direction: "ASC"}`.

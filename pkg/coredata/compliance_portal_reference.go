@@ -257,7 +257,7 @@ RETURNING rank;
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_references_cp_id_rank_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_references_compliance_portal_id_rank_key" {
 				return ErrResourceAlreadyExists
 			}
 		}

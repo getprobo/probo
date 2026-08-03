@@ -288,7 +288,7 @@ INSERT INTO cp_accesses (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_accesses_identity_id_cp_id_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_accesses_identity_id_compliance_portal_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
