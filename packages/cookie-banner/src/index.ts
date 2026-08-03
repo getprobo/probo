@@ -33,6 +33,5 @@ export type {
   Presentation,
   Regulation,
   SettingsLinkStyle,
-  TextVariant,
   VisitorConsent,
 } from "./types";

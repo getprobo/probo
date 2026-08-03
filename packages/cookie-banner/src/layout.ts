@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerConfig, BannerLayout, BannerText, TextVariant } from "./types";
+import type { BannerConfig, BannerLayout, BannerText, Presentation } from "./types";
 
 // Strict, GDPR-safe layout used only as a defensive fallback: a config without a
 // `layout` means the (self-hosted) Probo backend is older than this SDK. We keep
@@ -31,7 +31,6 @@ const STRICT_LAYOUT: BannerLayout = {
   default_non_necessary_granted: false,
   buttons: { accept_all: true, reject_all: true, customize: true, save: true },
   settings_link: "default",
-  text_variant: "default",
 };
 
 let warned = false;
@@ -55,26 +54,26 @@ export function resolveLayout(config: BannerConfig): BannerLayout {
   return STRICT_LAYOUT;
 }
 
-// The banner-card text keys each presentation variant uses. Every variant falls
-// back to the base keys when a customer translation omits the variant-specific
-// wording.
-const VARIANT_TEXT_KEYS: Record<
-  TextVariant,
+// The banner-card text keys each presentation uses. Every presentation falls
+// back to the base keys when a customer translation omits the presentation-
+// specific wording.
+const PRESENTATION_TEXT_KEYS: Record<
+  Presentation,
   { title: string; description: string; primary: string; secondary?: string }
 > = {
-  default: {
+  OPT_IN: {
     title: "banner_title",
     description: "banner_description",
     primary: "button_accept_all",
     secondary: "button_reject_all",
   },
-  opt_out: {
+  OPT_OUT: {
     title: "banner_title_opt_out",
     description: "banner_description_opt_out",
     primary: "button_acknowledge",
     secondary: "button_opt_out",
   },
-  notice: {
+  NOTICE: {
     title: "banner_title_notice",
     description: "banner_description_notice",
     primary: "button_dismiss",
@@ -82,12 +81,12 @@ const VARIANT_TEXT_KEYS: Record<
 };
 
 // resolveBannerText builds the typed banner-card wording for the active
-// presentation from the flat text keys, so callers never touch variant-specific
-// key names. The themed renderers use their own keys directly; this is the
-// resolver headless integrators use to render the correct copy.
+// presentation from the flat text keys, so callers never touch presentation-
+// specific key names. The themed renderers use their own keys directly; this is
+// the resolver headless integrators use to render the correct copy.
 export function resolveBannerText(config: BannerConfig): BannerText {
-  const variant = resolveLayout(config).text_variant;
-  const keys = VARIANT_TEXT_KEYS[variant] ?? VARIANT_TEXT_KEYS.default;
+  const presentation = resolveLayout(config).presentation;
+  const keys = PRESENTATION_TEXT_KEYS[presentation] ?? PRESENTATION_TEXT_KEYS.OPT_IN;
   const texts = config.texts ?? {};
 
   const pick = (variantKey: string, baseKey: string): string =>

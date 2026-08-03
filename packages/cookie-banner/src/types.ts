@@ -66,8 +66,6 @@ export type BannerState = "banner" | "hidden" | "panel";
 
 export type SettingsLinkStyle = "default" | "ccpa_privacy_choices";
 
-export type TextVariant = "default" | "opt_out" | "notice";
-
 export interface LayoutButtons {
   accept_all: boolean;
   reject_all: boolean;
@@ -82,7 +80,6 @@ export interface BannerLayout {
   default_non_necessary_granted: boolean;
   buttons: LayoutButtons;
   settings_link: SettingsLinkStyle;
-  text_variant: TextVariant;
 }
 
 // BannerText is the wording for the top banner card, resolved for the active

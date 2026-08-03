@@ -55,16 +55,6 @@ const (
 	SettingsLinkCCPAPrivacyChoices SettingsLinkStyle = "ccpa_privacy_choices"
 )
 
-// TextVariant selects which wording set the banner uses. Text keys are remapped
-// server-side onto the generic keys so the client stays variant-unaware.
-type TextVariant string
-
-const (
-	TextVariantDefault TextVariant = "default"
-	TextVariantOptOut  TextVariant = "opt_out"
-	TextVariantNotice  TextVariant = "notice"
-)
-
 // Banner states shared with the client. The client also has a transient
 // "loading" state that never originates from the server.
 const (
@@ -85,7 +75,8 @@ type LayoutButtons struct {
 
 // Layout is the explicit, structured rendering policy the client consumes. It
 // replaces the implicit signalling (hardcoded regulation checks, blanked text
-// keys) the client previously relied on.
+// keys) the client previously relied on. The wording the client renders is
+// selected from Presentation; there is no separate text-variant axis.
 type Layout struct {
 	Presentation               Presentation      `json:"presentation"`
 	InitialState               string            `json:"initial_state"`
@@ -93,7 +84,6 @@ type Layout struct {
 	DefaultNonNecessaryGranted bool              `json:"default_non_necessary_granted"`
 	Buttons                    LayoutButtons     `json:"buttons"`
 	SettingsLink               SettingsLinkStyle `json:"settings_link"`
-	TextVariant                TextVariant       `json:"text_variant"`
 }
 
 // PresentationForRegulation maps a regulation to its banner presentation.
@@ -153,7 +143,6 @@ func layoutForPresentation(p Presentation) Layout {
 				Save:      true,
 			},
 			SettingsLink: SettingsLinkDefault,
-			TextVariant:  TextVariantOptOut,
 		}
 
 	case PresentationNotice:
@@ -169,7 +158,6 @@ func layoutForPresentation(p Presentation) Layout {
 				Save:      false,
 			},
 			SettingsLink: SettingsLinkDefault,
-			TextVariant:  TextVariantNotice,
 		}
 
 	default:
@@ -185,7 +173,6 @@ func layoutForPresentation(p Presentation) Layout {
 				Save:      true,
 			},
 			SettingsLink: SettingsLinkDefault,
-			TextVariant:  TextVariantDefault,
 		}
 	}
 }

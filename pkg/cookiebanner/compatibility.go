@@ -35,27 +35,27 @@ import (
 //   - 0.3-0.10 ("remap shim"): infer their UI from the generic text keys, so
 //     the server remaps the active variant's wording onto those keys.
 //   - >=0.11 ("layout-aware"): understand the structured layout and select
-//     their own wording per layout.text_variant; they receive the raw keys.
+//     their own wording from layout.presentation; they receive the raw keys.
 
 // applyBannerTextCompat adapts the config's text keys for clients that cannot
 // consume the structured layout. Layout-aware and pre-remap clients receive the
-// config untouched; only remap-shim clients get the variant wording folded onto
-// the generic keys.
+// config untouched; only remap-shim clients get the presentation's wording
+// folded onto the generic keys.
 func applyBannerTextCompat(config *BannerConfig, sdkVersion string) {
 	if supportsLayout(sdkVersion) || !supportsTextRemap(sdkVersion) {
 		return
 	}
 
-	variant := config.Layout.TextVariant
+	presentation := config.Layout.Presentation
 
-	// Remap-shim clients cannot render the notice presentation, so degrade its
-	// wording to opt-out: it matches the notice firing model (cookies fire
-	// immediately) and renders coherently with their fixed button set.
-	if variant == TextVariantNotice {
-		variant = TextVariantOptOut
+	// Remap-shim clients cannot render the notice presentation, so degrade it
+	// to opt-out: it matches the notice firing model (cookies fire immediately)
+	// and renders coherently with their fixed button set.
+	if presentation == PresentationNotice {
+		presentation = PresentationOptOut
 	}
 
-	remapTextsForVariant(config.Texts, variant)
+	remapTextsForPresentation(config.Texts, presentation)
 }
 
 // supportsLayout reports whether the SDK version understands the structured
@@ -99,18 +99,19 @@ func supportsTextRemap(version string) bool {
 	return minor >= 3
 }
 
-// remapTextsForVariant overrides the generic banner text keys with the
-// variant-specific wording so remap-shim clients, which infer their UI from the
-// generic keys, render the appropriate copy without presentation awareness.
+// remapTextsForPresentation overrides the generic banner text keys with the
+// presentation-specific wording so remap-shim clients, which infer their UI from
+// the generic keys, render the appropriate copy without presentation awareness.
 //
-// It only handles the opt-out variant: the notice presentation is unrenderable
-// by those clients and is degraded to opt-out by the caller before this runs.
-func remapTextsForVariant(texts map[string]string, variant TextVariant) {
+// It only handles the opt-out presentation: the notice presentation is
+// unrenderable by those clients and is degraded to opt-out by the caller before
+// this runs.
+func remapTextsForPresentation(texts map[string]string, presentation Presentation) {
 	if texts == nil {
 		return
 	}
 
-	if variant == TextVariantOptOut {
+	if presentation == PresentationOptOut {
 		remapTextKey(texts, "banner_title_opt_out", "banner_title")
 		remapTextKey(texts, "banner_description_opt_out", "banner_description")
 		remapTextKey(texts, "button_acknowledge", "button_accept_all")

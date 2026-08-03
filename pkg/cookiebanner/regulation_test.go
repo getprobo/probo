@@ -120,7 +120,6 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.False(t, layout.DefaultNonNecessaryGranted)
 		require.True(t, layout.Buttons.Customize)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
-		require.Equal(t, TextVariantDefault, layout.TextVariant)
 	})
 
 	t.Run("ccpa gets the statutory settings link", func(t *testing.T) {
@@ -133,7 +132,6 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.True(t, layout.DefaultNonNecessaryGranted)
 		require.False(t, layout.Buttons.Customize)
 		require.Equal(t, SettingsLinkCCPAPrivacyChoices, layout.SettingsLink)
-		require.Equal(t, TextVariantOptOut, layout.TextVariant)
 	})
 
 	t.Run("other opt-out regulation keeps the default settings link", func(t *testing.T) {
@@ -157,6 +155,5 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.False(t, layout.Buttons.Customize)
 		require.False(t, layout.Buttons.Save)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
-		require.Equal(t, TextVariantNotice, layout.TextVariant)
 	})
 }

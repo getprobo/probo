@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRemapTextsForVariant(t *testing.T) {
+func TestRemapTextsForPresentation(t *testing.T) {
 	t.Parallel()
 
 	baseTexts := func() map[string]string {
@@ -39,23 +39,23 @@ func TestRemapTextsForVariant(t *testing.T) {
 		}
 	}
 
-	t.Run("default variant keeps all buttons", func(t *testing.T) {
+	t.Run("opt-in presentation keeps all buttons", func(t *testing.T) {
 		t.Parallel()
 
 		texts := baseTexts()
-		remapTextsForVariant(texts, TextVariantDefault)
+		remapTextsForPresentation(texts, PresentationOptIn)
 
 		assert.Equal(t, "Accept All", texts["button_accept_all"])
 		assert.Equal(t, "Reject All", texts["button_reject_all"])
 		assert.Equal(t, "Customize", texts["button_customize"])
 	})
 
-	t.Run("opt out variant maps opt out to reject and clears customize", func(t *testing.T) {
+	t.Run("opt-out presentation maps opt out to reject and clears customize", func(t *testing.T) {
 		t.Parallel()
 
 		texts := baseTexts()
 		texts["button_opt_out"] = "Do Not Sell"
-		remapTextsForVariant(texts, TextVariantOptOut)
+		remapTextsForPresentation(texts, PresentationOptOut)
 
 		assert.Equal(t, "Do Not Sell", texts["button_reject_all"])
 		assert.Empty(t, texts["button_customize"])
