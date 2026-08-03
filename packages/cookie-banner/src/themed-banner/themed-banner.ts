@@ -86,7 +86,7 @@ export class ProboThemedBanner extends HTMLElement {
     const layout = resolveLayout(config);
     const position = this.getAttribute("position") ?? "bottom-left";
 
-    root.innerHTML = renderFor(layout.presentation)(position);
+    root.innerHTML = renderFor(layout.presentation, config, position);
 
     applyTexts(this.shadow, config);
 
@@ -139,13 +139,17 @@ export class ProboThemedBanner extends HTMLElement {
   }
 }
 
-function renderFor(presentation: Presentation): (position: string) => string {
+function renderFor(
+  presentation: Presentation,
+  config: BannerConfig,
+  position: string,
+): string {
   switch (presentation) {
     case "OPT_OUT":
-      return renderOptOut;
+      return renderOptOut(position);
     case "NOTICE":
-      return renderNotice;
+      return renderNotice(config, position);
     default:
-      return renderOptIn;
+      return renderOptIn(position);
   }
 }

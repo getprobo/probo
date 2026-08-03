@@ -19,11 +19,19 @@
 // SOFTWARE.
 
 import { BRANDING } from "../../html";
-import { floatingCard } from "./shared";
+import { getDismissLabel } from "../../i18n";
+import type { BannerConfig } from "../../types";
+import { esc, floatingCard } from "./shared";
 
 // Notice-only (implied consent): trackers fire immediately; the visitor merely
 // acknowledges an informational banner. No reject, customize, or panel.
-export function renderNotice(position: string): string {
+//
+// The dismiss button records ACKNOWLEDGE, so it must never borrow the
+// "Accept all" wording. When a translation omits `button_dismiss` it keeps a
+// localized "Got it" default (applyTexts leaves the inlined text untouched).
+export function renderNotice(config: BannerConfig, position: string): string {
+  const dismissDefault = esc(getDismissLabel(config.language));
+
   return `
     <probo-banner>
       ${floatingCard(
@@ -33,7 +41,7 @@ export function renderNotice(position: string): string {
         <p class="title" id="probo-banner-title" data-text="banner_title_notice" data-text-fallback="banner_title"></p>
         <p class="description" id="probo-banner-desc" data-text="banner_description_notice" data-text-fallback="banner_description"></p>
         <div class="buttons">
-          <probo-acknowledge-button><button class="btn btn-primary" data-text="button_dismiss" data-text-fallback="button_accept_all"></button></probo-acknowledge-button>
+          <probo-acknowledge-button><button class="btn btn-primary" data-text="button_dismiss">${dismissDefault}</button></probo-acknowledge-button>
         </div>
         ${BRANDING}`,
       )}

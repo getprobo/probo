@@ -103,3 +103,27 @@ const GPC_LABELS: Record<string, string> = {
 export function getGpcLabel(lang: string): string {
   return GPC_LABELS[lang] ?? GPC_LABELS.en;
 }
+
+// Acknowledgement label for the notice-only banner, used as the default when a
+// translation predates (or omits) the `button_dismiss` key. Kept in sync with
+// the server's default `button_dismiss` wording so it never falls back to an
+// "Accept all" label on a control that only records an acknowledgement.
+const DISMISS_LABELS: Record<string, string> = {
+  en: "Got it",
+  de: "Verstanden",
+  es: "Entendido",
+  fr: "Compris",
+  id: "Mengerti",
+  it: "Capito",
+  ja: "了解",
+  ko: "확인했습니다",
+  pl: "Rozumiem",
+  pt: "Entendi",
+  tr: "Anladım",
+  uk: "Зрозуміло",
+  zh: "知道了",
+};
+
+export function getDismissLabel(lang: string): string {
+  return DISMISS_LABELS[lang] ?? DISMISS_LABELS.en;
+}

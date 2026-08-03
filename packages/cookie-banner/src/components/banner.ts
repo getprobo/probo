@@ -61,24 +61,27 @@ export class ProboBanner extends ProboElement {
   }
 
   private validate(): void {
-    const buttons = this.root?.layout?.buttons;
-    if (!buttons) return;
+    const layout = this.root?.layout;
+    if (!layout) return;
 
     const missing: string[] = [];
 
-    // Every presentation needs a primary action: accept-all for the opt-in and
-    // opt-out banners, acknowledge for the notice banner.
-    if (
-      !this.querySelector("probo-accept-button") &&
-      !this.querySelector("probo-acknowledge-button")
-    ) {
-      missing.push("probo-accept-button");
+    // The primary action is presentation-specific: notice banners acknowledge,
+    // every other presentation accepts. Requiring the exact tag stops, e.g., an
+    // opt-in banner from silently recording ACKNOWLEDGE, and gives the correct
+    // missing-child diagnostic.
+    const primaryTag =
+      layout.presentation === "NOTICE"
+        ? "probo-acknowledge-button"
+        : "probo-accept-button";
+    if (!this.querySelector(primaryTag)) {
+      missing.push(primaryTag);
     }
 
-    if (buttons.reject_all && !this.querySelector("probo-reject-button")) {
+    if (layout.buttons.reject_all && !this.querySelector("probo-reject-button")) {
       missing.push("probo-reject-button");
     }
-    if (buttons.customize && !this.querySelector("probo-customize-button")) {
+    if (layout.buttons.customize && !this.querySelector("probo-customize-button")) {
       missing.push("probo-customize-button");
     }
 
