@@ -31,6 +31,26 @@ export KC_DB_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
 export KC_DB_USERNAME="$DB_USER"
 export KC_DB_PASSWORD="$DB_PASSWORD"
 
+# ---------------------------------------------------------------------------
+# Admin recovery hatch.
+#
+# KC_BOOTSTRAP_ADMIN_USERNAME/PASSWORD only take effect on the boot that creates
+# the master realm. If that first boot happened without them set, master exists
+# with no admin user and Keycloak will never retry — you are locked out.
+#
+# Set KC_BOOTSTRAP_ADMIN_RECOVER=1 on the service and redeploy to force the
+# admin to be (re)created, then remove the variable. Safe to leave failing: the
+# command errors harmlessly if the user already exists, and we never abort boot.
+# ---------------------------------------------------------------------------
+if [[ -n "${KC_BOOTSTRAP_ADMIN_RECOVER:-}" ]]; then
+  echo "KC_BOOTSTRAP_ADMIN_RECOVER set — creating admin '${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}'"
+  /opt/keycloak/bin/kc.sh bootstrap-admin user \
+      --username "${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}" \
+      --password:env KC_BOOTSTRAP_ADMIN_PASSWORD \
+    && echo "bootstrap-admin: OK — remove KC_BOOTSTRAP_ADMIN_RECOVER now" \
+    || echo "bootstrap-admin: FAILED (see error above; user may already exist)"
+fi
+
 echo "Starting Keycloak"
 echo "  KC_HOSTNAME  = ${KC_HOSTNAME:-<unset>}"
 echo "  KC_DB_URL    = ${KC_DB_URL}"
