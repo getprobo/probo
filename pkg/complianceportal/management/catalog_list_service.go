@@ -32,33 +32,33 @@ import (
 )
 
 type (
-	CatalogDocument struct {
+	PortalDocument struct {
 		ID         gid.GID
 		Document   *coredata.Document
 		Visibility coredata.CompliancePortalVisibility
 	}
 
-	CatalogAudit struct {
+	PortalAudit struct {
 		ID         gid.GID
 		Audit      *coredata.Audit
 		Visibility coredata.CompliancePortalVisibility
 	}
 
-	CatalogThirdParty struct {
+	PortalThirdParty struct {
 		ID         gid.GID
 		ThirdParty *coredata.ThirdParty
 	}
 )
 
-func (c *CatalogDocument) CursorKey(field coredata.DocumentOrderField) page.CursorKey {
+func (c *PortalDocument) CursorKey(field coredata.DocumentOrderField) page.CursorKey {
 	return c.Document.CursorKey(field)
 }
 
-func (c *CatalogAudit) CursorKey(field coredata.AuditOrderField) page.CursorKey {
+func (c *PortalAudit) CursorKey(field coredata.AuditOrderField) page.CursorKey {
 	return c.Audit.CursorKey(field)
 }
 
-func (c *CatalogThirdParty) CursorKey(field coredata.ThirdPartyOrderField) page.CursorKey {
+func (c *PortalThirdParty) CursorKey(field coredata.ThirdPartyOrderField) page.CursorKey {
 	return c.ThirdParty.CursorKey(field)
 }
 
@@ -82,7 +82,7 @@ func (s *Service) loadPortalOrganizationID(
 	return portal.OrganizationID, nil
 }
 
-func (s *Service) CountDocumentCatalog(
+func (s *Service) CountDocuments(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
@@ -122,18 +122,18 @@ func (s *Service) CountDocumentCatalog(
 	return count, nil
 }
 
-func (s *Service) ListDocumentCatalog(
+func (s *Service) ListDocuments(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.DocumentOrderField],
-) (*page.Page[*CatalogDocument, coredata.DocumentOrderField], error) {
+) (*page.Page[*PortalDocument, coredata.DocumentOrderField], error) {
 	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
 	if err != nil {
 		return nil, err
 	}
 
-	var entries []*CatalogDocument
+	var entries []*PortalDocument
 
 	err = s.pg.WithConn(
 		ctx,
@@ -157,24 +157,23 @@ func (s *Service) ListDocumentCatalog(
 				documentIDs[i] = document.ID
 			}
 
-			linksByDocumentID := map[gid.GID]*coredata.CompliancePortalDocument{}
-
-			if len(documentIDs) > 0 {
-				var loadErr error
-
-				linksByDocumentID, loadErr = coredata.LoadCompliancePortalDocumentsByCompliancePortalIDAndDocumentIDs(
-					ctx,
-					conn,
-					scope,
-					compliancePortalID,
-					documentIDs,
-				)
-				if loadErr != nil {
-					return fmt.Errorf("cannot load portal document links: %w", loadErr)
-				}
+			var links coredata.CompliancePortalDocuments
+			if err := links.LoadByCompliancePortalIDAndDocumentIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				documentIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load portal document links: %w", err)
 			}
 
-			entries = make([]*CatalogDocument, 0, len(documents))
+			linksByDocumentID := make(map[gid.GID]*coredata.CompliancePortalDocument, len(links))
+			for _, link := range links {
+				linksByDocumentID[link.DocumentID] = link
+			}
+
+			entries = make([]*PortalDocument, 0, len(documents))
 			for _, document := range documents {
 				link := linksByDocumentID[document.ID]
 				if link == nil {
@@ -185,7 +184,7 @@ func (s *Service) ListDocumentCatalog(
 					continue
 				}
 
-				entries = append(entries, &CatalogDocument{
+				entries = append(entries, &PortalDocument{
 					ID:         link.ID,
 					Document:   document,
 					Visibility: link.Visibility,
@@ -202,7 +201,7 @@ func (s *Service) ListDocumentCatalog(
 	return page.NewPage(entries, cursor), nil
 }
 
-func (s *Service) CountAuditCatalog(
+func (s *Service) CountAudits(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
@@ -242,18 +241,18 @@ func (s *Service) CountAuditCatalog(
 	return count, nil
 }
 
-func (s *Service) ListAuditCatalog(
+func (s *Service) ListAudits(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
-) (*page.Page[*CatalogAudit, coredata.AuditOrderField], error) {
+) (*page.Page[*PortalAudit, coredata.AuditOrderField], error) {
 	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
 	if err != nil {
 		return nil, err
 	}
 
-	var entries []*CatalogAudit
+	var entries []*PortalAudit
 
 	err = s.pg.WithConn(
 		ctx,
@@ -294,7 +293,7 @@ func (s *Service) ListAuditCatalog(
 				}
 			}
 
-			entries = make([]*CatalogAudit, 0, len(audits))
+			entries = make([]*PortalAudit, 0, len(audits))
 			for _, audit := range audits {
 				link := linksByAuditID[audit.ID]
 				if link == nil {
@@ -305,7 +304,7 @@ func (s *Service) ListAuditCatalog(
 					continue
 				}
 
-				entries = append(entries, &CatalogAudit{
+				entries = append(entries, &PortalAudit{
 					ID:         link.ID,
 					Audit:      audit,
 					Visibility: link.Visibility,
@@ -322,7 +321,7 @@ func (s *Service) ListAuditCatalog(
 	return page.NewPage(entries, cursor), nil
 }
 
-func (s *Service) CountThirdPartyCatalog(
+func (s *Service) CountThirdParties(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
@@ -363,18 +362,18 @@ func (s *Service) CountThirdPartyCatalog(
 	return count, nil
 }
 
-func (s *Service) ListThirdPartyCatalog(
+func (s *Service) ListThirdParties(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
-) (*page.Page[*CatalogThirdParty, coredata.ThirdPartyOrderField], error) {
+) (*page.Page[*PortalThirdParty, coredata.ThirdPartyOrderField], error) {
 	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
 	if err != nil {
 		return nil, err
 	}
 
-	var entries []*CatalogThirdParty
+	var entries []*PortalThirdParty
 
 	err = s.pg.WithConn(
 		ctx,
@@ -415,14 +414,14 @@ func (s *Service) ListThirdPartyCatalog(
 				}
 			}
 
-			entries = make([]*CatalogThirdParty, 0, len(thirdParties))
+			entries = make([]*PortalThirdParty, 0, len(thirdParties))
 			for _, thirdParty := range thirdParties {
 				link := linksByThirdPartyID[thirdParty.ID]
 				if link == nil {
 					continue
 				}
 
-				entries = append(entries, &CatalogThirdParty{
+				entries = append(entries, &PortalThirdParty{
 					ID:         link.ID,
 					ThirdParty: thirdParty,
 				})
@@ -438,12 +437,12 @@ func (s *Service) ListThirdPartyCatalog(
 	return page.NewPage(entries, cursor), nil
 }
 
-func (s *Service) GetCatalogDocument(
+func (s *Service) GetDocument(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	documentID gid.GID,
-) (*CatalogDocument, error) {
+) (*PortalDocument, error) {
 	link := &coredata.CompliancePortalDocument{}
 	document := &coredata.Document{}
 
@@ -469,19 +468,19 @@ func (s *Service) GetCatalogDocument(
 		return nil, fmt.Errorf("cannot load portal document catalog entry: %w", err)
 	}
 
-	return &CatalogDocument{
+	return &PortalDocument{
 		ID:         link.ID,
 		Document:   document,
 		Visibility: link.Visibility,
 	}, nil
 }
 
-func (s *Service) GetCatalogAudit(
+func (s *Service) GetAudit(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	auditID gid.GID,
-) (*CatalogAudit, error) {
+) (*PortalAudit, error) {
 	link := &coredata.CompliancePortalAudit{}
 	audit := &coredata.Audit{}
 
@@ -507,19 +506,19 @@ func (s *Service) GetCatalogAudit(
 		return nil, fmt.Errorf("cannot load portal audit catalog entry: %w", err)
 	}
 
-	return &CatalogAudit{
+	return &PortalAudit{
 		ID:         link.ID,
 		Audit:      audit,
 		Visibility: link.Visibility,
 	}, nil
 }
 
-func (s *Service) GetCatalogThirdParty(
+func (s *Service) GetThirdParty(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	thirdPartyID gid.GID,
-) (*CatalogThirdParty, error) {
+) (*PortalThirdParty, error) {
 	link := &coredata.CompliancePortalThirdParty{}
 	thirdParty := &coredata.ThirdParty{}
 
@@ -541,7 +540,7 @@ func (s *Service) GetCatalogThirdParty(
 		return nil, fmt.Errorf("cannot load portal third party catalog entry: %w", err)
 	}
 
-	return &CatalogThirdParty{
+	return &PortalThirdParty{
 		ID:         link.ID,
 		ThirdParty: thirdParty,
 	}, nil

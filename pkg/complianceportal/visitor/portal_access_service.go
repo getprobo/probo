@@ -377,27 +377,33 @@ func (s *Service) GrantPortalAccessByIDs(
 			}
 
 			now := time.Now()
+			shouldSendEmail := false
 
 			if len(documentIDs) > 0 {
+				shouldSendEmail = true
 				if err := coredata.GrantByDocumentIDs(ctx, tx, scope, access.ID, documentIDs, now); err != nil {
 					return fmt.Errorf("cannot grant document accesses: %w", err)
 				}
 			}
 
 			if len(reportIDs) > 0 {
+				shouldSendEmail = true
 				if err := coredata.GrantByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
 					return fmt.Errorf("cannot grant report accesses: %w", err)
 				}
 			}
 
 			if len(fileIDs) > 0 {
+				shouldSendEmail = true
 				if err := coredata.GrantByCompliancePortalFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
 					return fmt.Errorf("cannot grant compliance page file accesses: %w", err)
 				}
 			}
 
-			if err := s.sendPortalAccessEmail(ctx, tx, scope, access, profile); err != nil {
-				return fmt.Errorf("cannot send access email: %w", err)
+			if shouldSendEmail {
+				if err := s.sendPortalAccessEmail(ctx, tx, scope, access, profile); err != nil {
+					return fmt.Errorf("cannot send access email: %w", err)
+				}
 			}
 
 			return nil

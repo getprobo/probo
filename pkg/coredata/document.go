@@ -37,18 +37,15 @@ import (
 
 type (
 	Document struct {
-		ID                    gid.GID `db:"id"`
-		OrganizationID        gid.GID `db:"organization_id"`
-		CurrentPublishedMajor *int    `db:"current_published_major"`
-		CurrentPublishedMinor *int    `db:"current_published_minor"`
-		// Portal-scoped, so it lives in cp_documents rather than on
-		// the document row. Loaders that resolve a portal populate it.
-		CompliancePortalVisibility CompliancePortalVisibility `db:"-"`
-		WriteMode                  DocumentWriteMode          `db:"write_mode"`
-		Status                     DocumentStatus             `db:"status"`
-		ArchivedAt                 *time.Time                 `db:"archived_at"`
-		CreatedAt                  time.Time                  `db:"created_at"`
-		UpdatedAt                  time.Time                  `db:"updated_at"`
+		ID                    gid.GID           `db:"id"`
+		OrganizationID        gid.GID           `db:"organization_id"`
+		CurrentPublishedMajor *int              `db:"current_published_major"`
+		CurrentPublishedMinor *int              `db:"current_published_minor"`
+		WriteMode             DocumentWriteMode `db:"write_mode"`
+		Status                DocumentStatus    `db:"status"`
+		ArchivedAt            *time.Time        `db:"archived_at"`
+		CreatedAt             time.Time         `db:"created_at"`
+		UpdatedAt             time.Time         `db:"updated_at"`
 
 		// ordering only
 		Title        string       `db:"title"`
@@ -357,7 +354,7 @@ base AS (
         documents.current_published_major,
         documents.current_published_minor,
         documents.write_mode,
-            documents.status,
+        documents.status,
         documents.archived_at,
         documents.created_at,
         documents.updated_at,
@@ -486,29 +483,6 @@ SELECT * FROM base WHERE %s
 	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Document])
 	if err != nil {
 		return fmt.Errorf("cannot collect published documents: %w", err)
-	}
-
-	documentIDs := make([]gid.GID, len(documents))
-	for i, document := range documents {
-		documentIDs[i] = document.ID
-	}
-
-	visibilityByDocumentID := map[gid.GID]CompliancePortalVisibility{}
-	if len(documentIDs) > 0 {
-		visibilityByDocumentID, err = LoadDocumentVisibilitiesByCompliancePortalIDAndDocumentIDs(
-			ctx,
-			conn,
-			scope,
-			compliancePortalID,
-			documentIDs,
-		)
-		if err != nil {
-			return fmt.Errorf("cannot load compliance portal document visibilities: %w", err)
-		}
-	}
-
-	for _, document := range documents {
-		document.CompliancePortalVisibility = visibilityByDocumentID[document.ID]
 	}
 
 	*p = documents

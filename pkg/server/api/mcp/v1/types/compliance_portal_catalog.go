@@ -26,7 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewCompliancePortalCatalogDocument(entry *management.CatalogDocument) *CompliancePortalCatalogDocument {
+func NewCompliancePortalCatalogDocument(entry *management.PortalDocument) *CompliancePortalCatalogDocument {
 	return &CompliancePortalCatalogDocument{
 		ID:         entry.ID,
 		Document:   NewDocument(entry.Document),
@@ -34,7 +34,7 @@ func NewCompliancePortalCatalogDocument(entry *management.CatalogDocument) *Comp
 	}
 }
 
-func NewCompliancePortalCatalogAudit(entry *management.CatalogAudit, reportFile *coredata.File) *CompliancePortalCatalogAudit {
+func NewCompliancePortalCatalogAudit(entry *management.PortalAudit, reportFile *coredata.File) *CompliancePortalCatalogAudit {
 	return &CompliancePortalCatalogAudit{
 		ID:         entry.ID,
 		Audit:      NewAudit(entry.Audit, reportFile),
@@ -42,7 +42,7 @@ func NewCompliancePortalCatalogAudit(entry *management.CatalogAudit, reportFile 
 	}
 }
 
-func NewCompliancePortalCatalogThirdParty(entry *management.CatalogThirdParty) *CompliancePortalCatalogThirdParty {
+func NewCompliancePortalCatalogThirdParty(entry *management.PortalThirdParty) *CompliancePortalCatalogThirdParty {
 	return &CompliancePortalCatalogThirdParty{
 		ID:         entry.ID,
 		ThirdParty: NewThirdParty(entry.ThirdParty, nil),
@@ -51,7 +51,7 @@ func NewCompliancePortalCatalogThirdParty(entry *management.CatalogThirdParty) *
 
 func NewListCompliancePortalDocumentsOutput(
 	entries []*CompliancePortalCatalogDocument,
-	p *page.Page[*management.CatalogDocument, coredata.DocumentOrderField],
+	p *page.Page[*management.PortalDocument, coredata.DocumentOrderField],
 ) ListCompliancePortalDocumentsOutput {
 	var nextCursor *page.CursorKey
 
@@ -68,7 +68,7 @@ func NewListCompliancePortalDocumentsOutput(
 
 func NewListCompliancePortalAuditsOutput(
 	entries []*CompliancePortalCatalogAudit,
-	p *page.Page[*management.CatalogAudit, coredata.AuditOrderField],
+	p *page.Page[*management.PortalAudit, coredata.AuditOrderField],
 ) ListCompliancePortalAuditsOutput {
 	var nextCursor *page.CursorKey
 
@@ -85,7 +85,7 @@ func NewListCompliancePortalAuditsOutput(
 
 func NewListCompliancePortalThirdPartiesOutput(
 	entries []*CompliancePortalCatalogThirdParty,
-	p *page.Page[*management.CatalogThirdParty, coredata.ThirdPartyOrderField],
+	p *page.Page[*management.PortalThirdParty, coredata.ThirdPartyOrderField],
 ) ListCompliancePortalThirdPartiesOutput {
 	var nextCursor *page.CursorKey
 

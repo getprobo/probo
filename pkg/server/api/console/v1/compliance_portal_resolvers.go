@@ -320,7 +320,7 @@ func (r *compliancePortalResolver) Documents(ctx context.Context, obj *types.Com
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := r.management.ListDocumentCatalog(ctx, scope, obj.ID, cursor)
+	pageResult, err := r.management.ListDocuments(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal document catalog", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -349,7 +349,7 @@ func (r *compliancePortalResolver) Audits(ctx context.Context, obj *types.Compli
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := r.management.ListAuditCatalog(ctx, scope, obj.ID, cursor)
+	pageResult, err := r.management.ListAudits(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal audit catalog", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -378,7 +378,7 @@ func (r *compliancePortalResolver) ThirdParties(ctx context.Context, obj *types.
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := r.management.ListThirdPartyCatalog(ctx, scope, obj.ID, cursor)
+	pageResult, err := r.management.ListThirdParties(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal third party catalog", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -600,7 +600,7 @@ func (r *compliancePortalAuditConnectionResolver) TotalCount(ctx context.Context
 		return 0, err
 	}
 
-	count, err := r.management.CountAuditCatalog(ctx, scope, obj.ParentID)
+	count, err := r.management.CountAudits(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal audit catalog", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -817,7 +817,7 @@ func (r *compliancePortalDocumentConnectionResolver) TotalCount(ctx context.Cont
 		return 0, err
 	}
 
-	count, err := r.management.CountDocumentCatalog(ctx, scope, obj.ParentID)
+	count, err := r.management.CountDocuments(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal document catalog", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -930,7 +930,7 @@ func (r *compliancePortalThirdPartyConnectionResolver) TotalCount(ctx context.Co
 		return 0, err
 	}
 
-	count, err := r.management.CountThirdPartyCatalog(ctx, scope, obj.ParentID)
+	count, err := r.management.CountThirdParties(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal third party catalog", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1051,7 +1051,7 @@ func (r *mutationResolver) UpdateCompliancePortalDocumentVisibility(ctx context.
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	document, err := r.management.GetCatalogDocument(ctx, scope, input.CompliancePortalID, input.DocumentID)
+	document, err := r.management.GetDocument(ctx, scope, input.CompliancePortalID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load document catalog entry", log.Error(err))
 
@@ -1128,7 +1128,7 @@ func (r *mutationResolver) UpdateCompliancePortalAuditVisibility(ctx context.Con
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	audit, err := r.management.GetCatalogAudit(ctx, scope, input.CompliancePortalID, input.AuditID)
+	audit, err := r.management.GetAudit(ctx, scope, input.CompliancePortalID, input.AuditID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit catalog entry", log.Error(err))
 
@@ -1205,7 +1205,7 @@ func (r *mutationResolver) UpdateCompliancePortalThirdPartyPublished(ctx context
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	catalogThirdParty, err := r.management.GetCatalogThirdParty(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
+	catalogThirdParty, err := r.management.GetThirdParty(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load third party catalog entry", log.Error(err))
 

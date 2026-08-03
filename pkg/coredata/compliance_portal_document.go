@@ -136,74 +136,16 @@ LIMIT 1;
 	return nil
 }
 
-// LoadDocumentVisibilitiesByCompliancePortalIDAndDocumentIDs returns
-// portal-scoped visibility for a bounded page of documents.
-func LoadDocumentVisibilitiesByCompliancePortalIDAndDocumentIDs(
+func (cpds *CompliancePortalDocuments) LoadByCompliancePortalIDAndDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalID gid.GID,
 	documentIDs []gid.GID,
-) (map[gid.GID]CompliancePortalVisibility, error) {
-	q := `
-SELECT
-	document_id,
-	visibility
-FROM
-	cp_documents
-WHERE
-	%s
-	AND trust_center_id = @trust_center_id
-	AND document_id = ANY(@document_ids::text[]);
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"document_ids":    documentIDs,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query trust center documents: %w", err)
-	}
-	defer rows.Close()
-
-	visibilityByDocumentID := map[gid.GID]CompliancePortalVisibility{}
-
-	for rows.Next() {
-		var (
-			documentID gid.GID
-			visibility CompliancePortalVisibility
-		)
-
-		if err := rows.Scan(&documentID, &visibility); err != nil {
-			return nil, fmt.Errorf("cannot scan trust center document: %w", err)
-		}
-
-		visibilityByDocumentID[documentID] = visibility
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("cannot collect trust center documents: %w", err)
-	}
-
-	return visibilityByDocumentID, nil
-}
-
-// LoadCompliancePortalDocumentsByCompliancePortalIDAndDocumentIDs loads portal
-// document link rows for a bounded set of document IDs.
-func LoadCompliancePortalDocumentsByCompliancePortalIDAndDocumentIDs(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	compliancePortalID gid.GID,
-	documentIDs []gid.GID,
-) (map[gid.GID]*CompliancePortalDocument, error) {
+) error {
 	if len(documentIDs) == 0 {
-		return map[gid.GID]*CompliancePortalDocument{}, nil
+		*cpds = CompliancePortalDocuments{}
+		return nil
 	}
 
 	q := `
@@ -233,26 +175,17 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return nil, fmt.Errorf("cannot query trust center documents: %w", err)
-	}
-	defer rows.Close()
-
-	rowsByDocumentID := map[gid.GID]*CompliancePortalDocument{}
-
-	for rows.Next() {
-		row, err := pgx.RowToStructByName[CompliancePortalDocument](rows)
-		if err != nil {
-			return nil, fmt.Errorf("cannot scan trust center document: %w", err)
-		}
-
-		rowsByDocumentID[row.DocumentID] = &row
+		return fmt.Errorf("cannot query trust center documents: %w", err)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("cannot collect trust center documents: %w", err)
+	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocument])
+	if err != nil {
+		return fmt.Errorf("cannot collect trust center documents: %w", err)
 	}
 
-	return rowsByDocumentID, nil
+	*cpds = documents
+
+	return nil
 }
 
 func (cpd *CompliancePortalDocument) Upsert(

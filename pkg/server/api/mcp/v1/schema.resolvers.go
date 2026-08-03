@@ -8229,7 +8229,7 @@ func (r *Resolver) UpdateCompliancePortalDocumentVisibilityTool(ctx context.Cont
 		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("cannot update compliance portal document visibility: %w", err)
 	}
 
-	entry, err := r.management.GetCatalogDocument(ctx, scope, input.CompliancePortalID, input.DocumentID)
+	entry, err := r.management.GetDocument(ctx, scope, input.CompliancePortalID, input.DocumentID)
 	if err != nil {
 		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("cannot get compliance portal document: %w", err)
 	}
@@ -8276,7 +8276,7 @@ func (r *Resolver) UpdateCompliancePortalAuditVisibilityTool(ctx context.Context
 		return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, fmt.Errorf("cannot update compliance portal audit visibility: %w", err)
 	}
 
-	entry, err := r.management.GetCatalogAudit(ctx, scope, input.CompliancePortalID, input.AuditID)
+	entry, err := r.management.GetAudit(ctx, scope, input.CompliancePortalID, input.AuditID)
 	if err != nil {
 		return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, fmt.Errorf("cannot get compliance portal audit: %w", err)
 	}
@@ -8323,7 +8323,7 @@ func (r *Resolver) UpdateCompliancePortalThirdPartyPublishedTool(ctx context.Con
 		return nil, types.UpdateCompliancePortalThirdPartyPublishedOutput{}, fmt.Errorf("cannot update compliance portal third party: %w", err)
 	}
 
-	entry, err := r.management.GetCatalogThirdParty(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
+	entry, err := r.management.GetThirdParty(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
 	if err != nil {
 		return nil, types.UpdateCompliancePortalThirdPartyPublishedOutput{}, fmt.Errorf("cannot get compliance portal third party: %w", err)
 	}
@@ -8370,7 +8370,7 @@ func (r *Resolver) ListCompliancePortalDocumentsTool(ctx context.Context, req *m
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	entryPage, err := r.management.ListDocumentCatalog(ctx, scope, input.CompliancePortalID, cursor)
+	entryPage, err := r.management.ListDocuments(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
 		return nil, types.ListCompliancePortalDocumentsOutput{}, fmt.Errorf("cannot list compliance portal documents: %w", err)
 	}
@@ -8401,7 +8401,7 @@ func (r *Resolver) ListCompliancePortalAuditsTool(ctx context.Context, req *mcp.
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	entryPage, err := r.management.ListAuditCatalog(ctx, scope, input.CompliancePortalID, cursor)
+	entryPage, err := r.management.ListAudits(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
 		return nil, types.ListCompliancePortalAuditsOutput{}, fmt.Errorf("cannot list compliance portal audits: %w", err)
 	}
@@ -8432,7 +8432,7 @@ func (r *Resolver) ListCompliancePortalThirdPartiesTool(ctx context.Context, req
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	entryPage, err := r.management.ListThirdPartyCatalog(ctx, scope, input.CompliancePortalID, cursor)
+	entryPage, err := r.management.ListThirdParties(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
 		return nil, types.ListCompliancePortalThirdPartiesOutput{}, fmt.Errorf("cannot list compliance portal third parties: %w", err)
 	}

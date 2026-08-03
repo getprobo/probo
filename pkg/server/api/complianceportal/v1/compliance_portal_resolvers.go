@@ -711,7 +711,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
-	document, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, obj.ID)
+	_, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, obj.ID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
@@ -726,7 +726,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 		return false, gqlutils.Internal(ctx)
 	}
 
-	if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
+	if portalDocument.Visibility == coredata.CompliancePortalVisibilityPublic {
 		return true, nil
 	}
 
@@ -858,7 +858,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
-	document, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, input.DocumentID)
+	_, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
@@ -873,7 +873,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
+	if portalDocument.Visibility == coredata.CompliancePortalVisibilityPublic {
 		pdf, err := visitorService.ExportDocumentPDFWithoutWatermark(ctx, scope, compliancePortal.ID, input.DocumentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export document PDF", log.Error(err))
@@ -1050,7 +1050,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 	visitorService := r.visitor
 
-	document, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, input.DocumentID)
+	document, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
@@ -1065,7 +1065,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
+	if portalDocument.Visibility == coredata.CompliancePortalVisibilityPublic {
 		return nil, gqlutils.Invalidf(
 			ctx,
 			"document is publicly available and does not require access request",
@@ -1225,7 +1225,7 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 	requestFileIDs := make([]gid.GID, 0, len(input.CompliancePortalFileIds))
 
 	for _, documentID := range input.DocumentIds {
-		document, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, documentID)
+		document, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, documentID)
 		if err != nil {
 			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "document %q not found", documentID)
@@ -1242,7 +1242,7 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 
 		// Public resources are already accessible; skip them so no needless
 		// REQUESTED row is created (mirrors the per-resource resolver's guard).
-		if document.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
+		if portalDocument.Visibility == coredata.CompliancePortalVisibilityPublic {
 			continue
 		}
 

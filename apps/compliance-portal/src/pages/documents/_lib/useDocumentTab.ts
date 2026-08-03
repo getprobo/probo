@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
 // Single source of truth for the tab set. The type, the rendered tab list, and
@@ -30,14 +30,6 @@ export type DocumentTab = (typeof DOCUMENT_TABS)[number];
 
 // The default (no-filter) tab; kept out of the URL by `setTab`.
 const DEFAULT_DOCUMENT_TAB: DocumentTab = "all";
-
-function normalizeDocumentTabParam(value: string | null): DocumentTab {
-  if (value === "private") {
-    return "restricted";
-  }
-
-  return isDocumentTab(value) ? value : DEFAULT_DOCUMENT_TAB;
-}
 
 function isDocumentTab(value: string | null): value is DocumentTab {
   return value != null && (DOCUMENT_TABS as readonly string[]).includes(value);
@@ -55,17 +47,7 @@ export function useDocumentTab(): DocumentTabState {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const raw = searchParams.get("tab");
-  const tab: DocumentTab = normalizeDocumentTabParam(raw);
-
-  useEffect(() => {
-    if (raw === "private") {
-      setSearchParams((previous) => {
-        const next = new URLSearchParams(previous);
-        next.set("tab", "restricted");
-        return next;
-      }, { replace: true });
-    }
-  }, [raw, setSearchParams]);
+  const tab = isDocumentTab(raw) ? raw : DEFAULT_DOCUMENT_TAB;
 
   const setTab = useCallback((value: DocumentTab) => {
     setSearchParams((previous) => {

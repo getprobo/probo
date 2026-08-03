@@ -67,7 +67,7 @@ type (
 	}
 )
 
-func NewCompliancePortalDocument(entry *management.CatalogDocument) *CompliancePortalDocument {
+func NewCompliancePortalDocument(entry *management.PortalDocument) *CompliancePortalDocument {
 	return &CompliancePortalDocument{
 		ID:         entry.ID,
 		Document:   NewDocument(entry.Document),
@@ -75,7 +75,7 @@ func NewCompliancePortalDocument(entry *management.CatalogDocument) *ComplianceP
 	}
 }
 
-func NewCompliancePortalDocumentEdge(entry *management.CatalogDocument, orderBy coredata.DocumentOrderField) *CompliancePortalDocumentEdge {
+func NewCompliancePortalDocumentEdge(entry *management.PortalDocument, orderBy coredata.DocumentOrderField) *CompliancePortalDocumentEdge {
 	return &CompliancePortalDocumentEdge{
 		Cursor: entry.Document.CursorKey(orderBy),
 		Node:   NewCompliancePortalDocument(entry),
@@ -83,7 +83,7 @@ func NewCompliancePortalDocumentEdge(entry *management.CatalogDocument, orderBy 
 }
 
 func NewCompliancePortalDocumentConnection(
-	p *page.Page[*management.CatalogDocument, coredata.DocumentOrderField],
+	p *page.Page[*management.PortalDocument, coredata.DocumentOrderField],
 	parentID gid.GID,
 ) *CompliancePortalDocumentConnection {
 	edges := make([]*CompliancePortalDocumentEdge, len(p.Data))
@@ -98,7 +98,7 @@ func NewCompliancePortalDocumentConnection(
 	}
 }
 
-func NewCompliancePortalAudit(entry *management.CatalogAudit) *CompliancePortalAudit {
+func NewCompliancePortalAudit(entry *management.PortalAudit) *CompliancePortalAudit {
 	return &CompliancePortalAudit{
 		ID:         entry.ID,
 		Audit:      NewAudit(entry.Audit),
@@ -106,7 +106,7 @@ func NewCompliancePortalAudit(entry *management.CatalogAudit) *CompliancePortalA
 	}
 }
 
-func NewCompliancePortalAuditEdge(entry *management.CatalogAudit, orderBy coredata.AuditOrderField) *CompliancePortalAuditEdge {
+func NewCompliancePortalAuditEdge(entry *management.PortalAudit, orderBy coredata.AuditOrderField) *CompliancePortalAuditEdge {
 	return &CompliancePortalAuditEdge{
 		Cursor: entry.Audit.CursorKey(orderBy),
 		Node:   NewCompliancePortalAudit(entry),
@@ -114,7 +114,7 @@ func NewCompliancePortalAuditEdge(entry *management.CatalogAudit, orderBy coreda
 }
 
 func NewCompliancePortalAuditConnection(
-	p *page.Page[*management.CatalogAudit, coredata.AuditOrderField],
+	p *page.Page[*management.PortalAudit, coredata.AuditOrderField],
 	parentID gid.GID,
 ) *CompliancePortalAuditConnection {
 	edges := make([]*CompliancePortalAuditEdge, len(p.Data))
@@ -129,14 +129,14 @@ func NewCompliancePortalAuditConnection(
 	}
 }
 
-func NewCompliancePortalThirdParty(entry *management.CatalogThirdParty) *CompliancePortalThirdParty {
+func NewCompliancePortalThirdParty(entry *management.PortalThirdParty) *CompliancePortalThirdParty {
 	return &CompliancePortalThirdParty{
 		ID:         entry.ID,
 		ThirdParty: NewThirdParty(entry.ThirdParty),
 	}
 }
 
-func NewCompliancePortalThirdPartyEdge(entry *management.CatalogThirdParty, orderBy coredata.ThirdPartyOrderField) *CompliancePortalThirdPartyEdge {
+func NewCompliancePortalThirdPartyEdge(entry *management.PortalThirdParty, orderBy coredata.ThirdPartyOrderField) *CompliancePortalThirdPartyEdge {
 	return &CompliancePortalThirdPartyEdge{
 		Cursor: entry.ThirdParty.CursorKey(orderBy),
 		Node:   NewCompliancePortalThirdParty(entry),
@@ -144,7 +144,7 @@ func NewCompliancePortalThirdPartyEdge(entry *management.CatalogThirdParty, orde
 }
 
 func NewCompliancePortalThirdPartyConnection(
-	p *page.Page[*management.CatalogThirdParty, coredata.ThirdPartyOrderField],
+	p *page.Page[*management.PortalThirdParty, coredata.ThirdPartyOrderField],
 	parentID gid.GID,
 ) *CompliancePortalThirdPartyConnection {
 	edges := make([]*CompliancePortalThirdPartyEdge, len(p.Data))

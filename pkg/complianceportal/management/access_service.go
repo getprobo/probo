@@ -267,7 +267,7 @@ func (s *Service) UpdateAccess(
 					return fmt.Errorf("cannot load documents: %w", err)
 				}
 
-				if err := validatePortalCatalogAccessTargets(
+				if err := validatePortalAccessTargets(
 					ctx,
 					tx,
 					scope,
@@ -302,7 +302,7 @@ func (s *Service) UpdateAccess(
 					return fmt.Errorf("cannot load report files: %w", err)
 				}
 
-				if err := validatePortalCatalogAccessTargets(
+				if err := validatePortalAccessTargets(
 					ctx,
 					tx,
 					scope,
@@ -337,7 +337,7 @@ func (s *Service) UpdateAccess(
 					return fmt.Errorf("cannot load compliance page files: %w", err)
 				}
 
-				if err := validatePortalCatalogAccessTargets(
+				if err := validatePortalAccessTargets(
 					ctx,
 					tx,
 					scope,
@@ -408,7 +408,7 @@ func (s *Service) DeleteAccess(
 	return err
 }
 
-func validatePortalCatalogAccessTargets(
+func validatePortalAccessTargets(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,

@@ -107,16 +107,14 @@ func (s *Service) ExportDocumentPDFWithoutWatermark(
 	return s.exportDocumentPDFData(ctx, scope, compliancePortalID, documentID)
 }
 
-// GetDocument loads a document as published on the given compliance portal.
-// The returned document carries the portal-scoped visibility read from the
-// portal/document association: documents not attached to the portal, or
-// attached with a NONE visibility, are reported as not visible.
+// GetDocument loads a document and its association with the given compliance
+// portal.
 func (s *Service) GetDocument(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	documentID gid.GID,
-) (*coredata.Document, error) {
+) (*coredata.Document, *coredata.CompliancePortalDocument, error) {
 	document := &coredata.Document{}
 	portalDocument := &coredata.CompliancePortalDocument{}
 	compliancePortal := &coredata.CompliancePortal{}
@@ -149,12 +147,10 @@ func (s *Service) GetDocument(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	document.CompliancePortalVisibility = portalDocument.Visibility
-
-	return document, nil
+	return document, portalDocument, nil
 }
 
 func (s *Service) exportDocumentPDFData(

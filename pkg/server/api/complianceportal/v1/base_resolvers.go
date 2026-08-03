@@ -53,7 +53,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 	switch id.EntityType() {
 	case coredata.DocumentEntityType:
-		document, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, id)
+		document, _, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
