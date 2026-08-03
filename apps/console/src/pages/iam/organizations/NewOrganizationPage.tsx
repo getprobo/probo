@@ -83,7 +83,7 @@ function NewOrganizationPageInner() {
         }
 
         const org = r.createOrganization!.organization;
-        void navigate(`/organizations/${org!.id}`);
+        void navigate(`/organizations/${org!.id}/onboarding?welcome=1`);
         toast({
           title: t("common.success"), description: t("newOrganizationPage.messages.created"),
           variant: "success",

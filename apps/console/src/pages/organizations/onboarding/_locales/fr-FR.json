@@ -1,0 +1,89 @@
+{
+  "pageTitle": "Intégration de l’organisation",
+  "title": "Bienvenue sur Probo",
+  "description": "Connectez votre stack en quelques étapes. Vous pourrez terminer plus tard depuis les paramètres.",
+  "stepper": {
+    "ariaLabel": "Progression de l’intégration",
+    "scim": "SCIM",
+    "accessReview": "Revues d’accès",
+    "agent": "Agent Probo",
+    "mcp": "MCP",
+    "congrats": "Terminé"
+  },
+  "status": {
+    "complete": "Connecté",
+    "later": "Plus tard"
+  },
+  "actions": {
+    "continue": "Continuer",
+    "doLater": "Plus tard",
+    "openInSettings": "Ouvrir dans les paramètres",
+    "finishLater": "Terminer dans les paramètres"
+  },
+  "steps": {
+    "scim": {
+      "learnTitle": "Synchroniser les personnes depuis votre IdP",
+      "purpose": "SCIM aligne Probo avec les arrivées, mouvements et départs dans votre fournisseur d’identité. Des données personnes fiables alimentent les revues d’accès et la gouvernance.",
+      "bullets": [
+        "Approvisionnement automatique des utilisateurs et groupes",
+        "Moins d’invitations manuelles et de comptes obsolètes",
+        "Base cohérente pour l’IAM et la conformité"
+      ],
+      "doTitle": "Connecter SCIM",
+      "doDescription": "Connectez Google Workspace, Microsoft 365 ou activez un jeton SCIM manuel.",
+      "manualScimHeading": "Jeton SCIM manuel"
+    },
+    "accessReview": {
+      "learnTitle": "Connecter les systèmes pour les revues d’accès",
+      "purpose": "Les connecteurs remontent comptes et droits depuis vos SaaS et outils d’identité pour des campagnes fidèles à la réalité.",
+      "bullets": [
+        "Voir qui a accès dans chaque application connectée",
+        "Lancer des campagnes de revue périodiques",
+        "Des preuves pour les auditeurs sans chasse aux tableurs"
+      ],
+      "doTitle": "Ajouter un connecteur",
+      "doDescription": "Choisissez un fournisseur et autorisez Probo à lire les données d’accès.",
+      "addConnector": "Ajouter un connecteur",
+      "noPermission": "Vous n’avez pas la permission d’ajouter des sources. Demandez à un admin ou ouvrez les paramètres plus tard."
+    },
+    "agent": {
+      "learnTitle": "Inscrire des postes avec l’agent Probo",
+      "purpose": "L’agent Probo remonte la posture des postes (OS, chiffrement, etc.) pour gérer la conformité endpoint avec vos contrôles cloud.",
+      "bullets": [
+        "Lier les employés aux postes inscrits",
+        "Suivre la posture depuis la page Appareils",
+        "Soutenir les exigences endpoint de vos référentiels"
+      ],
+      "doTitle": "Enregistrer un appareil",
+      "doDescription": "Créez une inscription et installez l’agent sur une machine.",
+      "instructions": "Enregistrez un appareil pour obtenir un jeton d’inscription, puis installez probo-agent en suivant les instructions du dialogue.",
+      "registerDevice": "Enregistrer un appareil",
+      "noPermission": "Vous n’avez pas la permission d’enregistrer des appareils. Demandez à un admin ou ouvrez Appareils plus tard."
+    },
+    "mcp": {
+      "learnTitle": "Connecter vos outils IA via MCP Probo",
+      "purpose": "Le serveur MCP Probo permet à Cursor, Claude Code et d’autres agents d’appeler vos données org via OAuth—sans clé API statique.",
+      "bullets": [
+        "OAuth vers votre instance Probo",
+        "Skills et workflows conformité depuis l’IDE",
+        "Les mêmes politiques que le reste du produit"
+      ],
+      "doTitle": "Installer MCP dans l’éditeur",
+      "doDescription": "Pointez votre client MCP vers cette instance et validez OAuth.",
+      "steps": {
+        "oauth": "Dans Cursor ou votre agent, ajoutez un serveur MCP et choisissez OAuth.",
+        "url": "Utilisez l’endpoint ci-dessous (transport HTTP).",
+        "skills": "Optionnel : installez @probo/skills pour des workflows prêts à l’emploi."
+      },
+      "endpointLabel": "Endpoint MCP",
+      "docsLink": "Guide skills et MCP Probo"
+    },
+    "congrats": {
+      "title": "C’est bon pour l’instant",
+      "description": "Merci d’avoir suivi l’intégration. Vous pouvez fermer cet onglet ou ouvrir la console.",
+      "pendingTitle": "Encore à faire",
+      "goToConsole": "Aller aux tâches",
+      "closeHint": "Vous pouvez fermer cette page—le même lien rouvre l’intégration."
+    }
+  }
+}
