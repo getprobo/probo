@@ -239,7 +239,7 @@ func buildScopeMermaidChart(
 			continue
 		}
 
-		fmt.Fprintf(&b, "  %s -- \"%s\" --> %s\n", src, escapeMermaidLabel(p.Name), dst)
+		fmt.Fprintf(&b, "  %s -- \"%s\" --> %s\n", src, mermaidEdgeLabel(p.Name), dst)
 	}
 
 	processTarget := make(map[gid.GID]gid.GID, len(processes))
@@ -302,6 +302,8 @@ func mermaidNodeClass(t coredata.RiskAssessmentNodeType) string {
 	}
 }
 
+const mermaidEdgeLabelWrapWidth = 28
+
 var mermaidLabelReplacer = strings.NewReplacer(
 	"&", "&amp;",
 	`"`, "#quot;",
@@ -313,4 +315,46 @@ var mermaidLabelReplacer = strings.NewReplacer(
 
 func escapeMermaidLabel(s string) string {
 	return mermaidLabelReplacer.Replace(s)
+}
+
+// mermaidEdgeLabel escapes a process name and inserts <br> breaks so long
+// edge labels wrap. Mermaid's wrappingWidth only applies to nodes, not edges.
+func mermaidEdgeLabel(s string) string {
+	return strings.ReplaceAll(wrapWords(escapeMermaidLabel(s), mermaidEdgeLabelWrapWidth), "\n", "<br>")
+}
+
+func wrapWords(s string, width int) string {
+	if width <= 0 || len(s) <= width {
+		return s
+	}
+
+	words := strings.Fields(s)
+	if len(words) <= 1 {
+		return s
+	}
+
+	var (
+		b       strings.Builder
+		lineLen int
+	)
+
+	for _, word := range words {
+		if lineLen > 0 && lineLen+1+len(word) > width {
+			b.WriteByte('\n')
+
+			lineLen = 0
+		}
+
+		if lineLen > 0 {
+			b.WriteByte(' ')
+
+			lineLen++
+		}
+
+		b.WriteString(word)
+
+		lineLen += len(word)
+	}
+
+	return b.String()
 }
