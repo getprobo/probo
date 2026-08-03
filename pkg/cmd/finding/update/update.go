@@ -68,6 +68,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagPriority         string
 		flagRiskID           string
 		flagEffectivenessChk string
+		flagThirdPartyIDs    []string
 	)
 
 	cmd := &cobra.Command{
@@ -181,6 +182,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			if cmd.Flags().Changed("third-party-id") {
+				input["thirdPartyIds"] = flagThirdPartyIDs
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -221,6 +226,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Priority: LOW, MEDIUM, HIGH")
 	cmd.Flags().StringVar(&flagRiskID, "risk-id", "", "Associated risk ID")
 	cmd.Flags().StringVar(&flagEffectivenessChk, "effectiveness-check", "", "Effectiveness check")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-id", nil, "Third party ID (repeatable)")
 
 	return cmd
 }

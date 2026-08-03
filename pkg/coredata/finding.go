@@ -566,6 +566,101 @@ WHERE
 	return count, nil
 }
 
+func (fs *Findings) LoadByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+	cursor *page.Cursor[FindingOrderField],
+	filter *FindingFilter,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	kind,
+	reference_id,
+	description,
+	source,
+	identified_on,
+	root_cause,
+	corrective_action,
+	owner_id,
+	due_date,
+	status,
+	priority,
+	risk_id,
+	effectiveness_check,
+	created_at,
+	updated_at
+FROM findings
+WHERE
+	%s
+	AND id IN (
+		SELECT finding_id
+		FROM finding_third_parties
+		WHERE third_party_id = @third_party_id
+	)
+	AND %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query third party findings: %w", err)
+	}
+
+	findings, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Finding])
+	if err != nil {
+		return fmt.Errorf("cannot collect third party findings: %w", err)
+	}
+
+	*fs = findings
+
+	return nil
+}
+
+func (fs *Findings) CountByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+	filter *FindingFilter,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM findings
+WHERE
+	%s
+	AND id IN (
+		SELECT finding_id
+		FROM finding_third_parties
+		WHERE third_party_id = @third_party_id
+	)
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count third party findings: %w", err)
+	}
+
+	return count, nil
+}
+
 func (f Finding) GetGeneratedDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -353,7 +353,7 @@
     "messages": { "successTitle": "Success", "deleted": "Finding deleted successfully", "updated": "Finding updated successfully" },
     "errors": { "title": "Error", "delete": "Failed to delete finding", "update": "Failed to update finding" },
     "deleteConfirmation": "This will permanently delete the finding {{referenceId}}. This action cannot be undone.",
-    "fields": { "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "acceptedRisk": "Accepted risk", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
+    "fields": { "description": "Description", "source": "Source", "owner": "Owner", "status": "Status", "priority": "Priority", "acceptedRisk": "Accepted risk", "thirdParties": "Third parties", "dateIdentified": "Date identified", "dueDate": "Due date", "rootCause": "Root cause", "correctiveAction": "Corrective action", "effectivenessCheck": "Effectiveness check" },
     "placeholders": { "description": "Enter description", "source": "Enter source", "rootCause": "Enter root cause", "correctiveAction": "Enter corrective action", "effectivenessCheck": "Enter effectiveness check details" },
     "actions": { "delete": "Delete", "updating": "Updating...", "update": "Update" }
   },
@@ -2305,7 +2305,16 @@
     "level": "Level {{level}}",
     "from": "From:",
     "actions": { "startVetting": "Start Vetting", "delete": "Delete" },
-    "tabs": { "overview": "Overview", "certifications": "Certifications", "complianceReports": "Compliance reports", "riskAssessment": "Risk Assessment", "contacts": "Contacts", "services": "Services", "thirdParties": "Third Parties", "measures": "Measures" }
+    "tabs": { "overview": "Overview", "certifications": "Certifications", "complianceReports": "Compliance reports", "riskAssessment": "Risk Assessment", "contacts": "Contacts", "services": "Services", "thirdParties": "Third Parties", "measures": "Measures", "findings": "Findings" }
+  },
+  "thirdPartyFindingsPage": {
+    "title": "Findings",
+    "description": "Findings linked to this third party.",
+    "columns": { "referenceId": "Reference ID", "description": "Description", "status": "Status", "priority": "Priority" },
+    "empty": "No findings are linked to this third party.",
+    "noDescription": "No description",
+    "loading": "Loading...",
+    "loadMore": "Load more"
   },
   "addChildThirdPartyDialog": {
     "title": "Add a third party",

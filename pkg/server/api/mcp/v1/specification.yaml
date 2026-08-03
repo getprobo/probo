@@ -3740,7 +3740,6 @@ components:
         effectiveness_check:
           type: string
           description: Effectiveness check
-
     AddFindingOutput:
       type: object
       required:
@@ -3806,6 +3805,11 @@ components:
           type: ["string", "null"]
           description: Effectiveness check
           go.probo.inc/mcpgen/omittable: true
+        third_party_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Third parties linked to the finding
 
     UpdateFindingOutput:
       type: object

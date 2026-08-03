@@ -58,6 +58,7 @@ import type { FindingDetailsPageUpdateMutation } from "#/__generated__/core/Find
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { RiskSelectField } from "#/components/form/RiskSelectField";
+import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -85,6 +86,15 @@ export const findingDetailsPageQuery = graphql`
         risk {
           id
           name
+        }
+        thirdParties(first: 100, orderBy: { direction: ASC, field: NAME }) {
+          edges {
+            node {
+              id
+              name
+              websiteUrl
+            }
+          }
         }
         canUpdate: permission(action: "core:finding:update")
         canDelete: permission(action: "core:finding:delete")
@@ -154,6 +164,7 @@ const updateFindingSchema = z
     priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
     ownerId: z.string().nullable().optional(),
     riskId: z.string().nullable().optional(),
+    thirdPartyIds: z.array(z.string()),
   })
   .refine(
     data => data.status !== "RISK_ACCEPTED" || Boolean(data.riskId),
@@ -270,6 +281,7 @@ export default function FindingDetailsPage(props: Props) {
         priority: finding.priority || "MEDIUM",
         ownerId: finding.owner?.id ?? null,
         riskId: finding.risk?.id ?? null,
+        thirdPartyIds: finding.thirdParties?.edges.map(edge => edge.node.id) ?? [],
       },
     });
 
@@ -301,6 +313,7 @@ export default function FindingDetailsPage(props: Props) {
           riskId: formData.status === "RISK_ACCEPTED"
             ? formData.riskId || null
             : null,
+          thirdPartyIds: formData.thirdPartyIds,
         },
       },
       onCompleted() {
@@ -475,6 +488,14 @@ export default function FindingDetailsPage(props: Props) {
                 required
               />
             )}
+
+            <ThirdPartiesMultiSelectField
+              organizationId={organizationId}
+              control={control}
+              name="thirdPartyIds"
+              label={t("findingDetails.fields.thirdParties")}
+              selectedThirdParties={finding.thirdParties?.edges.map(edge => edge.node) ?? []}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label={t("findingDetails.fields.dateIdentified")}>

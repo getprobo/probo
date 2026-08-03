@@ -859,6 +859,48 @@ func (r *thirdPartyResolver) Measures(ctx context.Context, obj *types.ThirdParty
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
 }
 
+// Findings is the resolver for the findings field.
+func (r *thirdPartyResolver) Findings(ctx context.Context, obj *types.ThirdParty, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFindingList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
+		Field:     coredata.FindingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	var (
+		kind     *coredata.FindingKind
+		status   *coredata.FindingStatus
+		priority *coredata.FindingPriority
+		ownerID  *gid.GID
+	)
+	if filter != nil {
+		kind = filter.Kind
+		status = filter.Status
+		priority = filter.Priority
+		ownerID = filter.OwnerID
+	}
+
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	p, err := r.probo.Findings.ListForThirdPartyID(ctx, scope, obj.ID, cursor, findingFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list third party findings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFindingConnection(p, r, obj.ID, filter), nil
+}
+
 // Administrators is the resolver for the administrators field.
 func (r *thirdPartyResolver) Administrators(ctx context.Context, obj *types.ThirdParty) ([]*types.Profile, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet); err != nil {
@@ -1135,6 +1177,25 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 		count, err := r.probo.ThirdParties.CountForMeasureID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *findingResolver:
+		finding, err := r.probo.Findings.Get(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot get finding for third party count", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		count, err := r.probo.ThirdParties.CountForOrganizationID(
+			ctx,
+			scope,
+			finding.OrganizationID,
+			obj.Filters,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count finding third parties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 
