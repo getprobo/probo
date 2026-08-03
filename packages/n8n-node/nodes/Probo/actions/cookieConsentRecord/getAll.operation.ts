@@ -86,6 +86,10 @@ export const description: INodeProperties[] = [
 				value: 'ACCEPT_ALL',
 			},
 			{
+				name: 'Acknowledge',
+				value: 'ACKNOWLEDGE',
+			},
+			{
 				name: 'Customize',
 				value: 'CUSTOMIZE',
 			},

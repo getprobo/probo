@@ -64,16 +64,24 @@ export class ProboBanner extends ProboElement {
     const buttons = this.root?.layout?.buttons;
     if (!buttons) return;
 
-    const required: string[] = ["probo-accept-button"];
-    if (buttons.reject_all) required.push("probo-reject-button");
-    if (buttons.customize) required.push("probo-customize-button");
-
     const missing: string[] = [];
-    for (const tag of required) {
-      if (!this.querySelector(tag)) {
-        missing.push(tag);
-      }
+
+    // Every presentation needs a primary action: accept-all for the opt-in and
+    // opt-out banners, acknowledge for the notice banner.
+    if (
+      !this.querySelector("probo-accept-button") &&
+      !this.querySelector("probo-acknowledge-button")
+    ) {
+      missing.push("probo-accept-button");
     }
+
+    if (buttons.reject_all && !this.querySelector("probo-reject-button")) {
+      missing.push("probo-reject-button");
+    }
+    if (buttons.customize && !this.querySelector("probo-customize-button")) {
+      missing.push("probo-customize-button");
+    }
+
     if (missing.length > 0) {
       this.warn(`<probo-banner> is missing required children: ${missing.join(", ")}`);
       this.emitValidation(missing);

@@ -108,7 +108,12 @@ export interface BannerConfig {
   texts: BannerTexts;
 }
 
-export type ConsentAction = "ACCEPT_ALL" | "REJECT_ALL" | "CUSTOMIZE" | "GPC";
+export type ConsentAction =
+  | "ACCEPT_ALL"
+  | "REJECT_ALL"
+  | "CUSTOMIZE"
+  | "GPC"
+  | "ACKNOWLEDGE";
 
 export interface VisitorConsent {
   visitor_id: string;

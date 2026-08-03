@@ -237,6 +237,20 @@ export class CookieBannerClient {
     this.recordConsent("ACCEPT_ALL", consentData);
   }
 
+  // acknowledge records dismissal of a notice-only banner. Under implied
+  // consent all categories are already granted, so it persists that state with
+  // the ACKNOWLEDGE action to distinguish it from an explicit accept-all.
+  acknowledge(): void {
+    const cfg = this.config;
+
+    const consentData: Record<string, boolean> = {};
+    for (const cat of cfg.categories) {
+      consentData[cat.slug] = true;
+    }
+
+    this.recordConsent("ACKNOWLEDGE", consentData);
+  }
+
   rejectAll(): void {
     const cfg = this.config;
 

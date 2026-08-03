@@ -36,6 +36,10 @@ enum CookieConsentAction
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionGPC"
         )
+    ACKNOWLEDGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionAcknowledge"
+        )
 }
 
 enum Regulation

@@ -23,6 +23,7 @@ export type { ProboState, ProboRootElement, ConsentDraft } from "./base";
 export { ProboBanner } from "./banner";
 export {
   ProboAcceptButton,
+  ProboAcknowledgeButton,
   ProboCustomizeButton,
   ProboRejectButton,
 } from "./buttons";

@@ -184,6 +184,7 @@ export default function CookieBannerConsentRecordsPage({
           <Option value="REJECT_ALL">{t("consentRecordsPage.actions.rejectAll")}</Option>
           <Option value="CUSTOMIZE">{t("consentRecordsPage.actions.customize")}</Option>
           <Option value="GPC">{t("consentRecordsPage.actions.gpc")}</Option>
+          <Option value="ACKNOWLEDGE">{t("consentRecordsPage.actions.acknowledge")}</Option>
         </Select>
         <Input
           placeholder={t("consentRecordsPage.filters.visitorId")}

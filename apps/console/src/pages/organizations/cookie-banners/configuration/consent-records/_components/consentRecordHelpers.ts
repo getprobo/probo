@@ -31,6 +31,8 @@ export function getActionLabel(
       return t("consentRecordsPage.actions.customize");
     case "GPC":
       return t("consentRecordsPage.actions.gpc");
+    case "ACKNOWLEDGE":
+      return t("consentRecordsPage.actions.acknowledge");
     default:
       return action;
   }
@@ -47,6 +49,8 @@ export function getActionVariant(
     case "CUSTOMIZE":
       return "warning";
     case "GPC":
+      return "neutral";
+    case "ACKNOWLEDGE":
       return "neutral";
     default:
       return "neutral";

@@ -31,11 +31,11 @@ export function renderOptOut(position: string): string {
         position,
         { labelledby: "probo-banner-title", describedby: "probo-banner-desc" },
         `
-        <p class="title" id="probo-banner-title" data-text="banner_title_opt_out"></p>
-        <p class="description" id="probo-banner-desc" data-text="banner_description_opt_out"></p>
+        <p class="title" id="probo-banner-title" data-text="banner_title_opt_out" data-text-fallback="banner_title"></p>
+        <p class="description" id="probo-banner-desc" data-text="banner_description_opt_out" data-text-fallback="banner_description"></p>
         <div class="buttons">
-          <probo-accept-button><button class="btn btn-primary" data-text="button_acknowledge"></button></probo-accept-button>
-          <probo-reject-button><button class="btn" data-text="button_opt_out"></button></probo-reject-button>
+          <probo-accept-button><button class="btn btn-primary" data-text="button_acknowledge" data-text-fallback="button_accept_all"></button></probo-accept-button>
+          <probo-reject-button><button class="btn" data-text="button_opt_out" data-text-fallback="button_reject_all"></button></probo-reject-button>
         </div>
         ${BRANDING}`,
       )}

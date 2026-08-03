@@ -33,6 +33,9 @@ const (
 	CookieConsentActionCustomize CookieConsentAction = "CUSTOMIZE"
 	// Global Privacy Control
 	CookieConsentActionGPC CookieConsentAction = "GPC"
+	// Acknowledgement of a notice-only banner (implied consent): the visitor
+	// dismisses the informational notice rather than making an explicit choice.
+	CookieConsentActionAcknowledge CookieConsentAction = "ACKNOWLEDGE"
 )
 
 var (
@@ -47,6 +50,7 @@ func CookieConsentActions() []CookieConsentAction {
 		CookieConsentActionRejectAll,
 		CookieConsentActionCustomize,
 		CookieConsentActionGPC,
+		CookieConsentActionAcknowledge,
 	}
 }
 
@@ -56,7 +60,8 @@ func (v CookieConsentAction) IsValid() bool {
 		CookieConsentActionAcceptAll,
 		CookieConsentActionRejectAll,
 		CookieConsentActionCustomize,
-		CookieConsentActionGPC:
+		CookieConsentActionGPC,
+		CookieConsentActionAcknowledge:
 		return true
 	}
 

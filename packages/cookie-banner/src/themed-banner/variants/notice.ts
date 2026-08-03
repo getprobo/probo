@@ -30,10 +30,10 @@ export function renderNotice(position: string): string {
         position,
         { labelledby: "probo-banner-title", describedby: "probo-banner-desc" },
         `
-        <p class="title" id="probo-banner-title" data-text="banner_title_notice"></p>
-        <p class="description" id="probo-banner-desc" data-text="banner_description_notice"></p>
+        <p class="title" id="probo-banner-title" data-text="banner_title_notice" data-text-fallback="banner_title"></p>
+        <p class="description" id="probo-banner-desc" data-text="banner_description_notice" data-text-fallback="banner_description"></p>
         <div class="buttons">
-          <probo-accept-button><button class="btn btn-primary" data-text="button_dismiss"></button></probo-accept-button>
+          <probo-acknowledge-button><button class="btn btn-primary" data-text="button_dismiss" data-text-fallback="button_accept_all"></button></probo-acknowledge-button>
         </div>
         ${BRANDING}`,
       )}

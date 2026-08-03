@@ -11144,7 +11144,7 @@ components:
           description: Consent data JSON
         action:
           type: string
-          enum: [ACCEPT_ALL, REJECT_ALL, CUSTOMIZE, GPC]
+          enum: [ACCEPT_ALL, REJECT_ALL, CUSTOMIZE, GPC, ACKNOWLEDGE]
           description: Consent action taken
         sdk_version:
           type: string
@@ -11858,7 +11858,7 @@ components:
           $ref: "#/components/schemas/CursorKey"
         action:
           type: string
-          enum: [ACCEPT_ALL, REJECT_ALL, CUSTOMIZE, GPC]
+          enum: [ACCEPT_ALL, REJECT_ALL, CUSTOMIZE, GPC, ACKNOWLEDGE]
           description: Filter by consent action
         visitor_id:
           type: string

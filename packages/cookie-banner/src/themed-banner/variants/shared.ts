@@ -90,7 +90,11 @@ export function applyTexts(root: ParentNode, config: BannerConfig): void {
 
   root.querySelectorAll("[data-text]").forEach(el => {
     const key = el.getAttribute("data-text")!;
-    const raw = texts[key] ?? "";
+    // Presentation-specific keys (e.g. banner_title_opt_out) fall back to the
+    // generic key so custom translations that only persist the base wording
+    // still render instead of showing an empty element.
+    const fallbackKey = el.getAttribute("data-text-fallback");
+    const raw = texts[key] || (fallbackKey ? texts[fallbackKey] : "") || "";
     if (!raw) return;
 
     if (raw.includes("{{cookie_policy_link}}") || raw.includes("{{privacy_policy_link}}")) {
@@ -141,6 +145,7 @@ function renderPolicyLinks(
 // presentations that open a preference panel.
 export class ScrollLock {
   private locked = false;
+  private savedScrollX = 0;
   private savedScrollY = 0;
   private prevHtmlOverflow = "";
   private prevBodyPosition = "";
@@ -160,6 +165,7 @@ export class ScrollLock {
     const body = document.body;
 
     if (locked) {
+      this.savedScrollX = window.scrollX;
       this.savedScrollY = window.scrollY;
       const scrollbarWidth = window.innerWidth - html.clientWidth;
 
@@ -207,7 +213,7 @@ export class ScrollLock {
       window.removeEventListener("touchmove", this.onScrollLockEvent, { capture: true });
 
       // Restore the scroll position the body pinning discarded.
-      window.scrollTo(0, this.savedScrollY);
+      window.scrollTo(this.savedScrollX, this.savedScrollY);
     }
 
     this.locked = locked;

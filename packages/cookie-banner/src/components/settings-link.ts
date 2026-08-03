@@ -143,7 +143,14 @@ export class ProboSettingsLink extends HTMLElement {
 
   private hasConsumerChildren(): boolean {
     if (this.hasAttribute(AUTO_ATTR)) return false;
-    return this.childNodes.length > 0;
+    // Whitespace-only text nodes (e.g. from a pretty-printed empty element) do
+    // not count as consumer content, so the documented empty-element usage
+    // still gets the fallback label.
+    return Array.from(this.childNodes).some(
+      node =>
+        node.nodeType === Node.ELEMENT_NODE ||
+        (node.nodeType === Node.TEXT_NODE && (node.textContent?.trim().length ?? 0) > 0),
+    );
   }
 
   private applyGpc(applied: boolean, language: string): void {

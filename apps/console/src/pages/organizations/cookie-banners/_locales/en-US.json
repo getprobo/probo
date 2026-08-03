@@ -198,7 +198,7 @@
   },
   "consentRecordsPage": {
     "filters": { "allActions": "All actions", "visitorId": "Visitor ID", "bannerVersion": "Banner version" },
-    "actions": { "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "gpc": "GPC" },
+    "actions": { "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
     "columns": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "sdkVersion": "SDK version", "regulation": "Regulation", "source": "Source", "country": "Country", "date": "Date" },
     "empty": { "title": "No consent records", "description": "Consent records will appear here once visitors interact with your cookie banner." }
   },
@@ -206,7 +206,7 @@
     "breadcrumbs": { "index": "Cookie banners", "records": "Consent records" },
     "title": "Consent record",
     "properties": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "userAgent": "User agent", "sdkVersion": "SDK version", "regulation": "Regulation", "regulationSource": "Regulation source", "country": "Country", "date": "Date" },
-    "actions": { "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC" },
+    "actions": { "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
     "consentData": "Consent data",
     "required": "(Required)",
     "consent": { "accepted": "Accepted", "rejected": "Rejected" },

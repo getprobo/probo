@@ -86,6 +86,21 @@ export class ProboAcceptButton extends ProboActionButton {
   };
 }
 
+export class ProboAcknowledgeButton extends ProboActionButton {
+  protected handleClick = (): void => {
+    if (!this.root) return;
+    this.root.client.acknowledge();
+    this.root.setState("hidden");
+    this.root.dispatchEvent(
+      new CustomEvent("probo-consent", {
+        bubbles: true,
+        composed: true,
+        detail: { action: "ACKNOWLEDGE" },
+      }),
+    );
+  };
+}
+
 export class ProboRejectButton extends ProboHideableButton {
   protected layoutButton = "reject_all" as const;
 

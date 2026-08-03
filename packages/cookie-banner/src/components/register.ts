@@ -21,6 +21,7 @@
 import { ProboBanner } from "./banner";
 import {
   ProboAcceptButton,
+  ProboAcknowledgeButton,
   ProboCustomizeButton,
   ProboRejectButton,
 } from "./buttons";
@@ -36,6 +37,7 @@ const elements: [string, CustomElementConstructor][] = [
   ["probo-cookie-banner-root", ProboCookieBannerRoot],
   ["probo-banner", ProboBanner],
   ["probo-accept-button", ProboAcceptButton],
+  ["probo-acknowledge-button", ProboAcknowledgeButton],
   ["probo-reject-button", ProboRejectButton],
   ["probo-customize-button", ProboCustomizeButton],
   ["probo-preference-panel", ProboPreferencePanel],
