@@ -4,6 +4,29 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.244.0] - 2026-08-03
+
+### Added
+
+- Organizations can now operate multiple compliance portals: portal-scoped catalogs, access, visitor experience, and console management (including portal selection and catalog publication controls) replace the single organization-wide portal, with matching CLI, MCP, and n8n operations for managing portals and their audit, document, third-party, file, and reference catalogs. The legacy "trust center" terminology and database tables are renamed to "compliance portal" throughout.
+- Deployments can now override compiled-in connector endpoints (e.g. to point a connector at a vendor's sandbox), validated at boot with SSRF-hardened checks — atomic per-provider overrides, host/scheme/credential validation, and pagination guarded against off-host or path-traversal redirection so a spoofed next-page link cannot exfiltrate a connection's bearer token
+- Expose mailing lists, detected trackers, compliance portal frameworks, and document/control/framework mutations via MCP that were previously console-only
+
+### Changed
+
+- Third-party business and security owners are now migrated into a single shared administrators list across GraphQL, MCP, CLI, n8n, and the console
+- Access review source rows now explain why a provider returned no organizations (app not approved, personal account, or provider without a picker) instead of always falling back to a free-text slug input
+- Providers whose organization is captured during the OAuth callback (PagerDuty, Vercel, Datadog, Zendesk) now show it read-only instead of an editable slug input that always failed to save
+
+### Fixed
+
+- Access review connector rows now show which OAuth scopes are missing after a reconnect, instead of leaving "Reconnect required" unexplained
+- Microsoft 365 access review no longer fails an entire source fetch when `AuditLog.Read.All` is unavailable on the tenant; affected accounts import with MFA left unknown instead
+- Linear connector errors no longer echo the provider's raw error message, which could leak tenant identifiers or query fragments
+- A source with a missing or deleted connector is no longer reported the same way as a provider that legitimately returned no organizations
+- Long process names on risk assessment Mermaid flowchart edges no longer get clipped to a single line
+- Compliance portal document filtering is now consistent across the catalog, access, and visitor services
+
 ## [0.243.0] - 2026-07-31
 
 ### Added
