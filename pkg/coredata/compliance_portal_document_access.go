@@ -509,6 +509,7 @@ all_items AS (
     FROM documents d, tenant_organization o
     WHERE d.organization_id = o.organization_id
         AND d.deleted_at IS NULL
+        AND d.status = 'ACTIVE'::document_status
         AND d.current_published_major IS NOT NULL
         AND d.id IN (
             SELECT tcd.document_id
