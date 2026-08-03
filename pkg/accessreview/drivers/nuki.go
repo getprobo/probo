@@ -33,12 +33,14 @@ import (
 )
 
 const (
-	nukiAPIHost = "api.nuki.io"
-	// nukiAccountUsersPath lists the account users of the Nuki Web account the
-	// token belongs to — the people (and companies) the account holder has
-	// invited and can grant smart lock authorizations to. It needs both the
-	// `account` and `smartlock.auth` scopes.
-	nukiAccountUsersPath = "/account/user"
+	// nukiAccountSegment is the Nuki Web account the token belongs to; the name
+	// resolver reads its `name` to title the access source.
+	nukiAccountSegment = "account"
+	// nukiUserSegment completes the account-users collection: the people (and
+	// companies) the account holder has invited and can grant smart lock
+	// authorizations to. It needs both the `account` and `smartlock.auth`
+	// scopes.
+	nukiUserSegment = "user"
 	// nukiAccountUsersPageSize is the requested page size. Nuki documents an
 	// undocumented server-side maximum ("If the value exceeds the maximum, then
 	// the maximum value will be used"), so the pagination loop must not assume
@@ -62,6 +64,7 @@ const (
 // the doors at all.
 type NukiDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*NukiDriver)(nil)
@@ -80,7 +83,7 @@ type nukiAccountUser struct {
 	UpdateDate    string `json:"updateDate"`
 }
 
-func NewNukiDriver(httpClient *http.Client) *NukiDriver {
+func NewNukiDriver(httpClient *http.Client, baseURL string) *NukiDriver {
 	return &NukiDriver{
 		httpClient: &http.Client{
 			Transport: &retryRoundTripper{
@@ -88,6 +91,7 @@ func NewNukiDriver(httpClient *http.Client) *NukiDriver {
 				maxRetries: 3,
 			},
 		},
+		baseURL: baseURL,
 	}
 }
 
@@ -127,21 +131,20 @@ func (d *NukiDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 }
 
 func (d *NukiDriver) fetchAccountUsers(ctx context.Context, offset int) ([]nukiAccountUser, error) {
-	q := url.Values{}
-	q.Set("limit", strconv.Itoa(nukiAccountUsersPageSize))
-	q.Set("offset", strconv.Itoa(offset))
-
-	endpoint := url.URL{
-		Scheme:   "https",
-		Host:     nukiAPIHost,
-		Path:     nukiAccountUsersPath,
-		RawQuery: q.Encode(),
+	endpoint, err := url.JoinPath(d.baseURL, nukiAccountSegment, nukiUserSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build nuki account users URL: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create nuki account users request: %w", err)
 	}
+
+	q := req.URL.Query()
+	q.Set("limit", strconv.Itoa(nukiAccountUsersPageSize))
+	q.Set("offset", strconv.Itoa(offset))
+	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Accept", "application/json")
 
@@ -249,16 +252,20 @@ func nukiAccountType(accountUserType int) coredata.AccessReviewEntryAccountType 
 // name" is the only instance label available.
 type nukiNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewNukiNameResolver(httpClient *http.Client) NameResolver {
-	return &nukiNameResolver{httpClient: httpClient}
+func NewNukiNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &nukiNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *nukiNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	endpoint := url.URL{Scheme: "https", Host: nukiAPIHost, Path: "/account"}
+	endpoint, err := url.JoinPath(r.baseURL, nukiAccountSegment)
+	if err != nil {
+		return "", fmt.Errorf("cannot build nuki account URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create nuki account request: %w", err)
 	}
