@@ -34,6 +34,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// nukiTestBaseURL mirrors the APIBase declared in nukiRegistration, so the
+// cassette's recorded URLs keep matching.
+const nukiTestBaseURL = "https://api.nuki.io"
+
 func TestNukiDriver(t *testing.T) {
 	t.Parallel()
 
@@ -42,7 +46,7 @@ func TestNukiDriver(t *testing.T) {
 	// Authorization, so replay needs no auth.
 	client := newVCRClient(rec, bearerAuth(os.Getenv("NUKI_API_KEY")))
 
-	driver := NewNukiDriver(client)
+	driver := NewNukiDriver(client, nukiTestBaseURL)
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
@@ -109,7 +113,7 @@ func TestNukiDriverPaginatesPastShortPage(t *testing.T) {
 		}, nil
 	})}
 
-	records, err := NewNukiDriver(client).ListAccounts(context.Background())
+	records, err := NewNukiDriver(client, nukiTestBaseURL).ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
 	assert.Equal(t, []string{"0", "2", "3"}, offsets)
@@ -136,7 +140,7 @@ func TestNukiDriverPaginationLimit(t *testing.T) {
 		}, nil
 	})}
 
-	records, err := NewNukiDriver(client).ListAccounts(context.Background())
+	records, err := NewNukiDriver(client, nukiTestBaseURL).ListAccounts(context.Background())
 	require.ErrorIs(t, err, ErrPaginationLimitReached)
 	assert.Nil(t, records)
 }
@@ -156,7 +160,7 @@ func TestNukiDriverErrorStatus(t *testing.T) {
 				}, nil
 			})}
 
-			records, err := NewNukiDriver(client).ListAccounts(context.Background())
+			records, err := NewNukiDriver(client, nukiTestBaseURL).ListAccounts(context.Background())
 			require.Error(t, err)
 			assert.Nil(t, records)
 		})

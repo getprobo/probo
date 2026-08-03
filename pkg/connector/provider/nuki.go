@@ -45,17 +45,21 @@ func nukiRegistration() *Registration {
 		// The token is bound to one Nuki Web account and /account/user returns
 		// every account user of it, so there is nothing to pick (Pattern 3): no
 		// settings struct, no picker.
-		//
-		// ProbeURL lets the connection-status check confirm the token with the
-		// same lightweight GET the driver uses; a token that is dead or missing
-		// a scope returns 401.
-		ProbeURL: "https://api.nuki.io/account/user?limit=1",
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
-			return drivers.NewNukiDriver(c), nil
+		Endpoints: Endpoints{
+			// Both the driver and the name resolver join their paths onto this
+			// root, so an override moves the whole connector.
+			APIBase: "https://api.nuki.io",
+			// The connection check confirms the token with the same lightweight
+			// GET the driver uses; a token that is dead or missing a scope
+			// returns 401. Same host as APIBase, as Register requires.
+			Probe: "https://api.nuki.io/account/user?limit=1",
+		},
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewNukiDriver(c, ep.APIBase), nil
 		},
 		// GET /account names the source after the Nuki Web account itself.
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
-			return drivers.NewNukiNameResolver(c)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewNukiNameResolver(c, ep.APIBase)
 		},
 	}
 }
