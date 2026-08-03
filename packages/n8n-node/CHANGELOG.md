@@ -4,6 +4,17 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.211.0] - 2026-08-03
+
+### Added
+
+- Compliance Portal `Create`, `Delete`, `Get Many`, `Delete Audit`, `Delete Document`, `Delete Third Party`, `Update Audit Visibility`, `Update Document Visibility`, and `Update Third Party Published` operations
+
+### Changed
+
+- Third Party `Create`/`Update`: `Business Owner ID` and `Security Owner ID` fields replaced with a single `Administrator IDs` field (comma-separated)
+- Compliance Portal `Create Commitment Group`: `Trust Center ID` field renamed to `Compliance Portal ID`
+
 ## [0.210.0] - 2026-07-31
 
 ### Added
