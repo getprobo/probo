@@ -56,6 +56,7 @@ import { Monday } from "./Monday";
 import { Neon } from "./Neon";
 import { Netlify } from "./Netlify";
 import { Notion } from "./Notion";
+import { Nuki } from "./Nuki";
 import { Okta } from "./Okta";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
@@ -121,6 +122,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   NEON: Neon,
   NETLIFY: Netlify,
   NOTION: Notion,
+  NUKI: Nuki,
   OKTA: Okta,
   ONE_PASSWORD: OnePassword,
   ONEPASSWORD: OnePassword,
