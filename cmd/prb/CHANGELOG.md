@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.209.0] - 2026-08-03
+
+### Added
+
+- `prb compliance-portal` commands: `create`, `update`, `delete`, `list`, and `view`, plus `audit`, `document`, and `third-party` `update`/`delete` subcommands, and portal-scoped `file list` / `reference create`/`list`
+- `--administrator-id` flag on `prb thirdparty create`/`update`, and administrators shown on `prb thirdparty view`
+
 ## [0.208.0] - 2026-07-31
 
 ### Added
