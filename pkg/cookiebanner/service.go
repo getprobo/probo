@@ -28,7 +28,6 @@ import (
 	"maps"
 	"net/url"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -1773,24 +1772,9 @@ func (s *Service) GetActiveBannerConfig(
 
 	config.Regulation = regulation
 	config.ConsentMode = ConsentModeForRegulation(regulation)
+	config.Layout = LayoutForRegulation(regulation)
 
-	layout := LayoutForRegulation(regulation)
-	config.Layout = layout
-
-	if !isLegacySDK(sdkVersion) {
-		variant := layout.TextVariant
-
-		// The notice presentation is only renderable by layout-aware clients.
-		// Older clients still infer their UI from the text keys, so degrade the
-		// notice wording to opt-out for them: it matches the notice firing model
-		// (cookies fire immediately) and renders coherently with their fixed
-		// button set. Layout-aware clients get the real notice wording.
-		if variant == TextVariantNotice && !supportsLayout(sdkVersion) {
-			variant = TextVariantOptOut
-		}
-
-		remapTextsForVariant(config.Texts, variant)
-	}
+	applyBannerTextCompat(config, sdkVersion)
 
 	return config, nil
 }
@@ -1861,94 +1845,6 @@ func buildBannerConfig(
 		ShowBranding:      banner.ShowBranding,
 		Categories:        categories,
 		Texts:             texts,
-	}
-}
-
-// remapTextsForVariant overrides the generic banner text keys with the
-// variant-specific wording so the client renders the appropriate copy without
-// needing presentation awareness itself.
-func remapTextsForVariant(texts map[string]string, variant TextVariant) {
-	if texts == nil {
-		return
-	}
-
-	switch variant {
-	case TextVariantOptOut:
-		remapTextKey(texts, "banner_title_opt_out", "banner_title")
-		remapTextKey(texts, "banner_description_opt_out", "banner_description")
-		remapTextKey(texts, "button_acknowledge", "button_accept_all")
-		remapTextKey(texts, "button_opt_out", "button_reject_all")
-		texts["button_customize"] = ""
-
-	case TextVariantNotice:
-		remapTextKey(texts, "banner_title_notice", "banner_title")
-		remapTextKey(texts, "banner_description_notice", "banner_description")
-		remapTextKey(texts, "button_dismiss", "button_accept_all")
-		texts["button_reject_all"] = ""
-		texts["button_customize"] = ""
-	}
-}
-
-// supportsLayout reports whether the SDK version understands the structured
-// layout / presentation fields, which shipped in 0.11. Empty or unparseable
-// versions are treated as current (and therefore layout-aware), matching
-// isLegacySDK.
-func supportsLayout(version string) bool {
-	if version == "" {
-		return true
-	}
-
-	major, minor, ok := parseMajorMinor(version)
-	if !ok {
-		return true
-	}
-
-	if major > 0 {
-		return true
-	}
-
-	return minor >= 11
-}
-
-// isLegacySDK returns true when the SDK version is <= 0.2.x.
-// Empty or unparseable versions are treated as current.
-func isLegacySDK(version string) bool {
-	if version == "" {
-		return false
-	}
-
-	major, minor, ok := parseMajorMinor(version)
-	if !ok {
-		return false
-	}
-
-	return major == 0 && minor <= 2
-}
-
-func parseMajorMinor(version string) (major, minor int, ok bool) {
-	v := strings.TrimPrefix(version, "v")
-
-	parts := strings.SplitN(v, ".", 3)
-	if len(parts) < 2 {
-		return 0, 0, false
-	}
-
-	maj, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, 0, false
-	}
-
-	min, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, 0, false
-	}
-
-	return maj, min, true
-}
-
-func remapTextKey(texts map[string]string, src, dst string) {
-	if v, ok := texts[src]; ok && v != "" {
-		texts[dst] = v
 	}
 }
 

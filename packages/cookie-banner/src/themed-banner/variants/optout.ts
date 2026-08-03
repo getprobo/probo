@@ -18,21 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { registerHeadlessComponents } from "../components";
-export { resolveBannerText, resolveLayout } from "../layout";
-export type {
-  BannerConfig,
-  BannerLayout,
-  BannerState,
-  BannerText,
-  Category,
-  ConsentAction,
-  ConsentRecord,
-  CookieItem,
-  LayoutButtons,
-  Presentation,
-  Regulation,
-  SettingsLinkStyle,
-  TextVariant,
-  VisitorConsent,
-} from "../types";
+import { BRANDING } from "../../html";
+import { floatingCard } from "./shared";
+
+// Opt-out (CCPA-style): trackers fire immediately; the visitor acknowledges or
+// opts out. No preference panel. The statutory "Your Privacy Choices" reopen
+// link is handled by <probo-settings-link> via layout.settings_link.
+export function renderOptOut(position: string): string {
+  return `
+    <probo-banner>
+      ${floatingCard(
+        position,
+        { labelledby: "probo-banner-title", describedby: "probo-banner-desc" },
+        `
+        <p class="title" id="probo-banner-title" data-text="banner_title_opt_out"></p>
+        <p class="description" id="probo-banner-desc" data-text="banner_description_opt_out"></p>
+        <div class="buttons">
+          <probo-accept-button><button class="btn btn-primary" data-text="button_acknowledge"></button></probo-accept-button>
+          <probo-reject-button><button class="btn" data-text="button_opt_out"></button></probo-reject-button>
+        </div>
+        ${BRANDING}`,
+      )}
+    </probo-banner>`;
+}

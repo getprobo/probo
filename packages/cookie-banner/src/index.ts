@@ -19,12 +19,20 @@
 // SOFTWARE.
 
 export { registerCookieBanner } from "./themed-banner";
+export { resolveBannerText, resolveLayout } from "./layout";
 export type {
   BannerConfig,
+  BannerLayout,
+  BannerState,
+  BannerText,
   Category,
   ConsentAction,
   ConsentRecord,
   CookieItem,
+  LayoutButtons,
+  Presentation,
   Regulation,
+  SettingsLinkStyle,
+  TextVariant,
   VisitorConsent,
 } from "./types";

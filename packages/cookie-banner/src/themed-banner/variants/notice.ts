@@ -18,21 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { registerHeadlessComponents } from "../components";
-export { resolveBannerText, resolveLayout } from "../layout";
-export type {
-  BannerConfig,
-  BannerLayout,
-  BannerState,
-  BannerText,
-  Category,
-  ConsentAction,
-  ConsentRecord,
-  CookieItem,
-  LayoutButtons,
-  Presentation,
-  Regulation,
-  SettingsLinkStyle,
-  TextVariant,
-  VisitorConsent,
-} from "../types";
+import { BRANDING } from "../../html";
+import { floatingCard } from "./shared";
+
+// Notice-only (implied consent): trackers fire immediately; the visitor merely
+// acknowledges an informational banner. No reject, customize, or panel.
+export function renderNotice(position: string): string {
+  return `
+    <probo-banner>
+      ${floatingCard(
+        position,
+        { labelledby: "probo-banner-title", describedby: "probo-banner-desc" },
+        `
+        <p class="title" id="probo-banner-title" data-text="banner_title_notice"></p>
+        <p class="description" id="probo-banner-desc" data-text="banner_description_notice"></p>
+        <div class="buttons">
+          <probo-accept-button><button class="btn btn-primary" data-text="button_dismiss"></button></probo-accept-button>
+        </div>
+        ${BRANDING}`,
+      )}
+    </probo-banner>`;
+}

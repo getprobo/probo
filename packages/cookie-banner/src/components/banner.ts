@@ -21,7 +21,6 @@
 import { ProboElement } from "./base";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
-import type { BannerConfig } from "../types";
 
 export class ProboBanner extends ProboElement {
   private root: ProboRootElement | null = null;
@@ -33,9 +32,8 @@ export class ProboBanner extends ProboElement {
     }
   };
 
-  private onReady = (e: Event): void => {
-    const config = (e as CustomEvent).detail.config as BannerConfig;
-    this.validate(config);
+  private onReady = (): void => {
+    this.validate();
   };
 
   connectedCallback(): void {
@@ -44,9 +42,9 @@ export class ProboBanner extends ProboElement {
 
     if (this.root) {
       this.root.addEventListener("probo-state", this.onStateChange);
-      try {
-        this.validate(this.root.bannerConfig);
-      } catch {
+      if (this.root.layout) {
+        this.validate();
+      } else {
         this.root.addEventListener("probo-ready", this.onReady, { once: true });
       }
       if (this.root.state === "banner") {
@@ -62,11 +60,13 @@ export class ProboBanner extends ProboElement {
     }
   }
 
-  private validate(config: BannerConfig): void {
-    const texts = config.texts ?? {};
+  private validate(): void {
+    const buttons = this.root?.layout?.buttons;
+    if (!buttons) return;
+
     const required: string[] = ["probo-accept-button"];
-    if (texts.button_reject_all) required.push("probo-reject-button");
-    if (texts.button_customize) required.push("probo-customize-button");
+    if (buttons.reject_all) required.push("probo-reject-button");
+    if (buttons.customize) required.push("probo-customize-button");
 
     const missing: string[] = [];
     for (const tag of required) {

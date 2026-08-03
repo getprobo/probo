@@ -85,6 +85,16 @@ export interface BannerLayout {
   text_variant: TextVariant;
 }
 
+// BannerText is the wording for the top banner card, resolved for the active
+// presentation's text variant. `secondaryButton` is absent when the variant
+// has no secondary action (e.g. the notice presentation).
+export interface BannerText {
+  title: string;
+  description: string;
+  primaryButton: string;
+  secondaryButton?: string;
+}
+
 export interface BannerConfig {
   banner_id: string;
   version: number;

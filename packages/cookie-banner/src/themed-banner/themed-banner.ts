@@ -21,27 +21,26 @@
 import { registerHeadlessComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
 import { resolveLayout } from "../layout";
-import type { BannerConfig } from "../types";
-import { interpolate } from "../i18n";
-import { BRANDING, CHEVRON_DOWN, CLOSE_ICON } from "../html";
+import type { BannerConfig, Presentation } from "../types";
 import { THEMED_STYLES } from "./styles";
+import { applyTexts, esc, ScrollLock } from "./variants/shared";
+import { renderNotice } from "./variants/notice";
+import { renderOptIn } from "./variants/optin";
+import { renderOptOut } from "./variants/optout";
 
+// ProboThemedBanner is a thin dispatcher: it owns the shadow root and the data
+// root, then mounts the renderer matching the visitor's presentation once the
+// config is known. Each presentation's markup, wording, and behavior live in
+// its own renderer, so this component holds no per-variant branching beyond the
+// initial dispatch.
 export class ProboThemedBanner extends HTMLElement {
   private shadow: ShadowRoot;
-  private scrollLocked = false;
-  private savedScrollY = 0;
-  private prevHtmlOverflow = "";
-  private prevBodyPosition = "";
-  private prevBodyTop = "";
-  private prevBodyLeft = "";
-  private prevBodyRight = "";
-  private prevBodyWidth = "";
-  private prevBodyOverflow = "";
-  private prevBodyPaddingRight = "";
+  private scrollLock: ScrollLock;
 
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: "open" });
+    this.scrollLock = new ScrollLock(this);
   }
 
   static get observedAttributes(): string[] {
@@ -59,102 +58,56 @@ export class ProboThemedBanner extends HTMLElement {
       return;
     }
 
-    const position = this.getAttribute("position") ?? "bottom-left";
     const lang = this.getAttribute("lang");
-    const langAttr = lang ? ` lang="${this.esc(lang)}"` : "";
+    const langAttr = lang ? ` lang="${esc(lang)}"` : "";
 
     this.shadow.innerHTML = `
       <style>${THEMED_STYLES}</style>
-      <probo-cookie-banner-root banner-id="${this.esc(bannerId)}" base-url="${this.esc(baseUrl)}"${langAttr}>
-        <probo-banner>
-          <div class="floating" data-position="${this.esc(position)}">
-            <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-banner-title" aria-describedby="probo-banner-desc">
-              <p class="title" id="probo-banner-title" data-text="banner_title"></p>
-              <p class="description" id="probo-banner-desc" data-text="banner_description"></p>
-              <div class="buttons">
-                <probo-accept-button><button class="btn btn-primary" data-text="button_accept_all"></button></probo-accept-button>
-                <probo-reject-button><button class="btn" data-text="button_reject_all"></button></probo-reject-button>
-                <probo-customize-button><button class="btn btn-link" data-text="button_customize"></button></probo-customize-button>
-              </div>
-              ${BRANDING}
-            </div>
-          </div>
-        </probo-banner>
-
-        <probo-preference-panel>
-          <div class="floating" data-position="${this.esc(position)}">
-            <div class="card" role="dialog" aria-modal="true" aria-labelledby="probo-panel-title" aria-describedby="probo-panel-desc">
-              <div class="panel-header">
-                <div class="panel-header-title">
-                  <p class="title" id="probo-panel-title" style="margin:0" data-text="panel_title"></p>
-                  <button class="panel-close" data-action="back" data-aria-text="aria_close">
-                    ${CLOSE_ICON}
-                  </button>
-                </div>
-                <p class="description" id="probo-panel-desc" data-text="panel_description"></p>
-              </div>
-              <probo-category-list>
-                <template>
-                  <button class="cookie-toggle" data-action="toggle-cookies" aria-expanded="false" data-aria-text="aria_show_details">
-                    ${CHEVRON_DOWN}
-                  </button>
-                  <div class="category-header">
-                    <div class="category-info">
-                      <div class="category-name" data-slot="name"></div>
-                      <div class="category-description" data-slot="description"></div>
-                    </div>
-                    <probo-category-toggle>
-                      <label class="toggle">
-                        <input type="checkbox">
-                        <span class="toggle-track"></span>
-                      </label>
-                    </probo-category-toggle>
-                  </div>
-                  <probo-cookie-list hidden>
-                    <template>
-                      <div class="cookie-item">
-                        <span class="cookie-name" data-slot="name"></span>
-                        <span class="cookie-detail cookie-type" data-label="label_type"><span data-slot="type"></span></span>
-                        <span class="cookie-detail" data-label="label_description"><span data-slot="description"></span></span>
-                        <span class="cookie-detail" data-label="label_duration"><span data-slot="duration"></span></span>
-                      </div>
-                    </template>
-                  </probo-cookie-list>
-                </template>
-              </probo-category-list>
-              <div class="footer">
-                <div class="buttons">
-                  <probo-accept-button><button class="btn btn-primary" data-text="button_accept_all"></button></probo-accept-button>
-                  <probo-reject-button><button class="btn" data-text="button_reject_all"></button></probo-reject-button>
-                  <probo-save-button>
-                    <button class="btn btn-link" style="flex:1" data-text="button_save"></button>
-                  </probo-save-button>
-                </div>
-                ${BRANDING}
-              </div>
-            </div>
-          </div>
-        </probo-preference-panel>
-      </probo-cookie-banner-root>
+      <probo-cookie-banner-root banner-id="${esc(bannerId)}" base-url="${esc(baseUrl)}"${langAttr}></probo-cookie-banner-root>
     `;
 
     const root = this.shadow.querySelector("probo-cookie-banner-root") as ProboCookieBannerRoot;
 
-    root.addEventListener("probo-ready", (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      const config = detail.config as BannerConfig;
-      this.applyTexts(config);
-      this.applyLayout(config);
-      if (!config.show_branding) {
-        this.shadow.querySelectorAll("[data-branding]").forEach(el => {
-          (el as HTMLElement).setAttribute("hidden", "");
-        });
-      }
-    });
+    root.addEventListener(
+      "probo-ready",
+      (e: Event) => {
+        const config = (e as CustomEvent).detail.config as BannerConfig;
+        this.mount(root, config);
+      },
+      { once: true },
+    );
+  }
 
+  disconnectedCallback(): void {
+    this.scrollLock.set(false);
+  }
+
+  private mount(root: ProboCookieBannerRoot, config: BannerConfig): void {
+    const layout = resolveLayout(config);
+    const position = this.getAttribute("position") ?? "bottom-left";
+
+    root.innerHTML = renderFor(layout.presentation)(position);
+
+    applyTexts(this.shadow, config);
+
+    if (!config.show_branding) {
+      this.shadow.querySelectorAll("[data-branding]").forEach(el => {
+        (el as HTMLElement).setAttribute("hidden", "");
+      });
+    }
+
+    // Only the opt-in presentation opens a preference panel, so scroll-lock,
+    // the back control, and the per-category cookie-detail toggle are wired for
+    // it alone.
+    if (layout.presentation === "OPT_IN") {
+      this.wirePanel(root);
+    }
+  }
+
+  private wirePanel(root: ProboCookieBannerRoot): void {
     root.addEventListener("probo-state", (e: Event) => {
       const { state } = (e as CustomEvent).detail;
-      this.setScrollLock(state === "panel");
+      this.scrollLock.set(state === "panel");
     });
 
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
@@ -184,144 +137,15 @@ export class ProboThemedBanner extends HTMLElement {
       btn.setAttribute("aria-label", open ? hideLabel : showLabel);
     });
   }
+}
 
-  disconnectedCallback(): void {
-    this.setScrollLock(false);
-  }
-
-  private setScrollLock(locked: boolean): void {
-    if (locked === this.scrollLocked) return;
-
-    const html = document.documentElement;
-    const body = document.body;
-
-    if (locked) {
-      this.savedScrollY = window.scrollY;
-      const scrollbarWidth = window.innerWidth - html.clientWidth;
-
-      this.prevHtmlOverflow = html.style.overflow;
-      this.prevBodyPosition = body.style.position;
-      this.prevBodyTop = body.style.top;
-      this.prevBodyLeft = body.style.left;
-      this.prevBodyRight = body.style.right;
-      this.prevBodyWidth = body.style.width;
-      this.prevBodyOverflow = body.style.overflow;
-      this.prevBodyPaddingRight = body.style.paddingRight;
-
-      // Pin the body in place. Unlike `overflow: hidden`, this removes the
-      // viewport's scroll distance entirely, so JS-driven smooth-scroll
-      // libraries (Lenis, Locomotive, ...) have nothing left to animate even
-      // when they intercept wheel/touch in the capture phase before us.
-      html.style.overflow = "hidden";
-      body.style.position = "fixed";
-      body.style.top = `-${this.savedScrollY}px`;
-      body.style.left = "0";
-      body.style.right = "0";
-      body.style.width = "100%";
-      body.style.overflow = "hidden";
-      if (scrollbarWidth > 0) {
-        body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      // Defense in depth for the common case where the body is not the
-      // scroller (e.g. an inner scroll container): capture-phase listeners run
-      // before bubble-phase smooth-scroll handlers, cancelling page scroll
-      // while still letting the panel's own scrollable region scroll.
-      window.addEventListener("wheel", this.onScrollLockEvent, { capture: true, passive: false });
-      window.addEventListener("touchmove", this.onScrollLockEvent, { capture: true, passive: false });
-    } else {
-      html.style.overflow = this.prevHtmlOverflow;
-      body.style.position = this.prevBodyPosition;
-      body.style.top = this.prevBodyTop;
-      body.style.left = this.prevBodyLeft;
-      body.style.right = this.prevBodyRight;
-      body.style.width = this.prevBodyWidth;
-      body.style.overflow = this.prevBodyOverflow;
-      body.style.paddingRight = this.prevBodyPaddingRight;
-
-      window.removeEventListener("wheel", this.onScrollLockEvent, { capture: true });
-      window.removeEventListener("touchmove", this.onScrollLockEvent, { capture: true });
-
-      // Restore the scroll position the body pinning discarded.
-      window.scrollTo(0, this.savedScrollY);
-    }
-
-    this.scrollLocked = locked;
-  }
-
-  private onScrollLockEvent = (e: Event): void => {
-    // When the gesture happens inside the banner, only stop propagation so a
-    // smooth-scroll library does not move the page; the browser still performs
-    // the panel's native scroll (bounded by its overscroll-behavior: contain).
-    // Anywhere else, cancel the gesture entirely.
-    if (e.composedPath().includes(this)) {
-      e.stopImmediatePropagation();
-      return;
-    }
-    e.preventDefault();
-    e.stopImmediatePropagation();
-  };
-
-  private applyTexts(config: BannerConfig): void {
-    const texts = config.texts ?? {};
-
-    const necessaryCategory = config.categories.find(c => c.kind === "NECESSARY");
-    const necessaryCategoryName = necessaryCategory?.name ?? "Necessary";
-
-    this.shadow.querySelectorAll("[data-text]").forEach(el => {
-      const key = el.getAttribute("data-text")!;
-      const raw = texts[key] ?? "";
-      if (!raw) return;
-
-      if (key === "banner_description") {
-        let privacyLink = "";
-        if (config.privacy_policy_url) {
-          const linkText = this.esc(texts.privacy_policy_link_text ?? "Privacy Policy");
-          privacyLink = `<a href="${this.esc(config.privacy_policy_url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
-        }
-        let cookieLink = "";
-        if (config.cookie_policy_url) {
-          const linkText = this.esc(texts.cookie_policy_link_text ?? "Cookie Policy");
-          cookieLink = `<a href="${this.esc(config.cookie_policy_url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
-        }
-        const segments = raw.split("{{cookie_policy_link}}");
-        const html = segments.map(seg =>
-          seg.split("{{privacy_policy_link}}").map(p => this.esc(p)).join(privacyLink),
-        ).join(cookieLink);
-        el.innerHTML = html;
-      } else if (key === "panel_description") {
-        el.textContent = interpolate(raw, { necessary_category: necessaryCategoryName });
-      } else {
-        el.textContent = raw;
-      }
-    });
-
-    this.shadow.querySelectorAll("[data-aria-text]").forEach(el => {
-      const key = el.getAttribute("data-aria-text")!;
-      const raw = texts[key] ?? el.getAttribute("aria-label") ?? "";
-      if (raw) el.setAttribute("aria-label", raw);
-    });
-  }
-
-  private applyLayout(config: BannerConfig): void {
-    const { buttons } = resolveLayout(config);
-    this.toggleButton("probo-accept-button", buttons.accept_all);
-    this.toggleButton("probo-reject-button", buttons.reject_all);
-    this.toggleButton("probo-customize-button", buttons.customize);
-    this.toggleButton("probo-save-button", buttons.save);
-  }
-
-  private toggleButton(tag: string, show: boolean): void {
-    this.shadow.querySelectorAll(tag).forEach(el => {
-      if (show) {
-        el.removeAttribute("hidden");
-      } else {
-        el.setAttribute("hidden", "");
-      }
-    });
-  }
-
-  private esc(str: string): string {
-    return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function renderFor(presentation: Presentation): (position: string) => string {
+  switch (presentation) {
+    case "OPT_OUT":
+      return renderOptOut;
+    case "NOTICE":
+      return renderNotice;
+    default:
+      return renderOptIn;
   }
 }
