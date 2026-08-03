@@ -289,41 +289,83 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 	})
 }
 
-func TestRemapTextsForConsentMode(t *testing.T) {
+func TestRemapTextsForVariant(t *testing.T) {
 	t.Parallel()
 
 	baseTexts := func() map[string]string {
 		return map[string]string{
-			"banner_title":       "We use cookies",
-			"banner_description": "This site uses cookies.",
-			"button_accept_all":  "Accept All",
-			"button_reject_all":  "Reject All",
-			"button_customize":   "Customize",
-			"button_dismiss":     "Dismiss",
+			"banner_title":              "We use cookies",
+			"banner_description":        "This site uses cookies.",
+			"button_accept_all":         "Accept All",
+			"button_reject_all":         "Reject All",
+			"button_customize":          "Customize",
+			"banner_title_notice":       "Cookie Notice",
+			"banner_description_notice": "This site uses cookies to enhance your experience.",
+			"button_dismiss":            "Got it",
 		}
 	}
 
-	t.Run("opt in mode keeps all buttons", func(t *testing.T) {
+	t.Run("default variant keeps all buttons", func(t *testing.T) {
 		t.Parallel()
 
 		texts := baseTexts()
-		remapTextsForConsentMode(texts, ConsentModeOptIn)
+		remapTextsForVariant(texts, TextVariantDefault)
 
 		assert.Equal(t, "Accept All", texts["button_accept_all"])
 		assert.Equal(t, "Reject All", texts["button_reject_all"])
 		assert.Equal(t, "Customize", texts["button_customize"])
 	})
 
-	t.Run("opt out mode maps opt out to reject and clears customize", func(t *testing.T) {
+	t.Run("opt out variant maps opt out to reject and clears customize", func(t *testing.T) {
 		t.Parallel()
 
 		texts := baseTexts()
 		texts["button_opt_out"] = "Do Not Sell"
-		remapTextsForConsentMode(texts, ConsentModeOptOut)
+		remapTextsForVariant(texts, TextVariantOptOut)
 
 		assert.Equal(t, "Do Not Sell", texts["button_reject_all"])
 		assert.Empty(t, texts["button_customize"])
 	})
+
+	t.Run("notice variant collapses to a single dismiss button", func(t *testing.T) {
+		t.Parallel()
+
+		texts := baseTexts()
+		remapTextsForVariant(texts, TextVariantNotice)
+
+		assert.Equal(t, "Cookie Notice", texts["banner_title"])
+		assert.Equal(t, "This site uses cookies to enhance your experience.", texts["banner_description"])
+		assert.Equal(t, "Got it", texts["button_accept_all"])
+		assert.Empty(t, texts["button_reject_all"])
+		assert.Empty(t, texts["button_customize"])
+	})
+}
+
+func TestSupportsLayout(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		version string
+		want    bool
+	}{
+		{"0.10.1", false},
+		{"0.10.9", false},
+		{"0.11.0", true},
+		{"0.12.0", true},
+		{"1.0.0", true},
+		{"v0.11.0", true},
+		{"0.2.0", false},
+		{"", true},
+		{"invalid", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, supportsLayout(tt.version))
+		})
+	}
 }
 
 func TestIsLegacySDK(t *testing.T) {

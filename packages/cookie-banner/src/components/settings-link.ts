@@ -94,7 +94,7 @@ export class ProboSettingsLink extends HTMLElement {
 
     // CCPA always uses the statutory Alternative Opt-out Link label + icon,
     // even when the integrator provided children (those are for other regs).
-    if (root.regulation === "CCPA") {
+    if (root.layout?.settings_link === "ccpa_privacy_choices") {
       this.replaceChildren();
       this.setAttribute(AUTO_ATTR, "");
 

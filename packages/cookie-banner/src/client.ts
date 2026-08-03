@@ -29,6 +29,7 @@ import { CookieDetector, ReportQueue, ResourceDetector, StorageDetector } from "
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
+import { resolveLayout } from "./layout";
 import type { ConsentIntegration } from "./integrations";
 import { createDefaultIntegrations } from "./integrations";
 import { enqueue, flush } from "./queue";
@@ -310,10 +311,10 @@ export class CookieBannerClient {
 
   private buildDefaultConsentData(): Record<string, boolean> {
     const cfg = this.config;
+    const defaultGranted = resolveLayout(cfg).default_non_necessary_granted;
     const consentData: Record<string, boolean> = {};
     for (const cat of cfg.categories) {
-      consentData[cat.slug] =
-        cfg.consent_mode === "OPT_OUT" || cat.kind === "NECESSARY";
+      consentData[cat.slug] = defaultGranted || cat.kind === "NECESSARY";
     }
     return consentData;
   }

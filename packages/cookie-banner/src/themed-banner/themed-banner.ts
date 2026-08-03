@@ -20,6 +20,7 @@
 
 import { registerHeadlessComponents } from "../components";
 import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
+import { resolveLayout } from "../layout";
 import type { BannerConfig } from "../types";
 import { interpolate } from "../i18n";
 import { BRANDING, CHEVRON_DOWN, CLOSE_ICON } from "../html";
@@ -143,6 +144,7 @@ export class ProboThemedBanner extends HTMLElement {
       const detail = (e as CustomEvent).detail;
       const config = detail.config as BannerConfig;
       this.applyTexts(config);
+      this.applyLayout(config);
       if (!config.show_branding) {
         this.shadow.querySelectorAll("[data-branding]").forEach(el => {
           (el as HTMLElement).setAttribute("hidden", "");
@@ -157,7 +159,7 @@ export class ProboThemedBanner extends HTMLElement {
 
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
       root.setState(
-        root.client.hasConsent || root.regulation === "CCPA" ? "hidden" : "banner",
+        root.client.hasConsent ? "hidden" : (root.layout?.initial_state ?? "banner"),
       );
     });
 
@@ -298,6 +300,24 @@ export class ProboThemedBanner extends HTMLElement {
       const key = el.getAttribute("data-aria-text")!;
       const raw = texts[key] ?? el.getAttribute("aria-label") ?? "";
       if (raw) el.setAttribute("aria-label", raw);
+    });
+  }
+
+  private applyLayout(config: BannerConfig): void {
+    const { buttons } = resolveLayout(config);
+    this.toggleButton("probo-accept-button", buttons.accept_all);
+    this.toggleButton("probo-reject-button", buttons.reject_all);
+    this.toggleButton("probo-customize-button", buttons.customize);
+    this.toggleButton("probo-save-button", buttons.save);
+  }
+
+  private toggleButton(tag: string, show: boolean): void {
+    this.shadow.querySelectorAll(tag).forEach(el => {
+      if (show) {
+        el.removeAttribute("hidden");
+      } else {
+        el.setAttribute("hidden", "");
+      }
     });
   }
 

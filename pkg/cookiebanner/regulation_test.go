@@ -43,10 +43,10 @@ func TestResolveRegulation(t *testing.T) {
 			wantSource:     RegulationSourceDefault,
 		},
 		{
-			name:           "country with no known regulation defaults to GDPR",
+			name:           "identified country with no known regulation resolves to none as detected",
 			countryCode:    new(coredata.CountryCodeAQ),
-			wantRegulation: RegulationGDPR,
-			wantSource:     RegulationSourceDefault,
+			wantRegulation: RegulationNone,
+			wantSource:     RegulationSourceDetected,
 		},
 		{
 			name:           "EU country resolves to GDPR as detected",
@@ -77,4 +77,86 @@ func TestResolveRegulation(t *testing.T) {
 			require.Equal(t, tt.wantSource, source)
 		})
 	}
+}
+
+func TestPresentationForRegulation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		regulation Regulation
+		want       Presentation
+	}{
+		{RegulationGDPR, PresentationOptIn},
+		{RegulationUKGDPR, PresentationOptIn},
+		{RegulationFADP, PresentationOptIn},
+		{RegulationPOPIA, PresentationOptIn},
+		{RegulationCCPA, PresentationOptOut},
+		{RegulationPIPEDA, PresentationOptOut},
+		{RegulationLGPD, PresentationOptOut},
+		{RegulationAPPI, PresentationNotice},
+		{RegulationLFPDPPP, PresentationNotice},
+		{RegulationNone, PresentationNotice},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.regulation), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, tt.want, PresentationForRegulation(tt.regulation))
+		})
+	}
+}
+
+func TestLayoutForRegulation(t *testing.T) {
+	t.Parallel()
+
+	t.Run("opt-in regulation", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationGDPR)
+		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StatePanel, layout.ReopenState)
+		require.False(t, layout.DefaultNonNecessaryGranted)
+		require.True(t, layout.Buttons.Customize)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+		require.Equal(t, TextVariantDefault, layout.TextVariant)
+	})
+
+	t.Run("ccpa gets the statutory settings link", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationCCPA)
+		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
+		require.Equal(t, StateBanner, layout.ReopenState)
+		require.True(t, layout.DefaultNonNecessaryGranted)
+		require.False(t, layout.Buttons.Customize)
+		require.Equal(t, SettingsLinkCCPAPrivacyChoices, layout.SettingsLink)
+		require.Equal(t, TextVariantOptOut, layout.TextVariant)
+	})
+
+	t.Run("other opt-out regulation keeps the default settings link", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationLGPD)
+		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
+	t.Run("notice regulation", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationNone)
+		require.Equal(t, PresentationNotice, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StateBanner, layout.ReopenState)
+		require.True(t, layout.DefaultNonNecessaryGranted)
+		require.True(t, layout.Buttons.AcceptAll)
+		require.False(t, layout.Buttons.RejectAll)
+		require.False(t, layout.Buttons.Customize)
+		require.False(t, layout.Buttons.Save)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+		require.Equal(t, TextVariantNotice, layout.TextVariant)
+	})
 }

@@ -60,6 +60,31 @@ export type Regulation =
   | "DPDP"
   | "PDPL";
 
+export type Presentation = "OPT_IN" | "OPT_OUT" | "NOTICE";
+
+export type BannerState = "banner" | "hidden" | "panel";
+
+export type SettingsLinkStyle = "default" | "ccpa_privacy_choices";
+
+export type TextVariant = "default" | "opt_out" | "notice";
+
+export interface LayoutButtons {
+  accept_all: boolean;
+  reject_all: boolean;
+  customize: boolean;
+  save: boolean;
+}
+
+export interface BannerLayout {
+  presentation: Presentation;
+  initial_state: BannerState;
+  reopen_state: BannerState;
+  default_non_necessary_granted: boolean;
+  buttons: LayoutButtons;
+  settings_link: SettingsLinkStyle;
+  text_variant: TextVariant;
+}
+
 export interface BannerConfig {
   banner_id: string;
   version: number;
@@ -70,6 +95,7 @@ export interface BannerConfig {
   consent_expiry_days: number;
   consent_mode: "OPT_IN" | "OPT_OUT";
   regulation: Regulation | null;
+  layout: BannerLayout;
   show_branding: boolean;
   categories: Category[];
   texts: BannerTexts;

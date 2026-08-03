@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { CookieBannerClient } from "../client";
-import type { BannerConfig, Regulation } from "../types";
+import { resolveLayout } from "../layout";
+import type { BannerConfig, BannerLayout, Regulation } from "../types";
 import { ProboElement } from "./base";
 import type { ProboState, ProboRootElement, ConsentDraft } from "./base";
 
@@ -69,8 +70,12 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     return null;
   }
 
+  get layout(): BannerLayout | null {
+    return this._config ? resolveLayout(this._config) : null;
+  }
+
   get reopenState(): ProboState {
-    return this.consentMode === "OPT_OUT" ? "banner" : "panel";
+    return this.layout?.reopen_state ?? "panel";
   }
 
   connectedCallback(): void {
@@ -114,6 +119,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   private buildDraft(config: BannerConfig): ConsentDraft {
     const draft: ConsentDraft = {};
     const existing = this._client?.visitorConsent?.consent_data;
+    const defaultGranted = resolveLayout(config).default_non_necessary_granted;
 
     for (const cat of config.categories) {
       if (cat.kind === "NECESSARY") {
@@ -121,7 +127,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       } else if (existing && (cat.slug in existing || cat.name in existing)) {
         draft[cat.slug] = existing[cat.slug] ?? existing[cat.name];
       } else {
-        draft[cat.slug] = config.consent_mode === "OPT_OUT";
+        draft[cat.slug] = defaultGranted;
       }
     }
 
@@ -166,10 +172,10 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
 
     this.scheduleValidation(() => this.validateSettingsLink());
 
-    if (this._client.hasConsent || this._client.regulation === "CCPA") {
+    if (this._client.hasConsent) {
       this.setState("hidden");
     } else {
-      this.setState("banner");
+      this.setState(resolveLayout(this._config).initial_state);
     }
   }
 

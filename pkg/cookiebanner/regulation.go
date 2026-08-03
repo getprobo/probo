@@ -55,14 +55,16 @@ const (
 )
 
 // ResolveRegulation returns the regulation to apply for a visitor along
-// with its source. It defaults to GDPR when geolocation is unresolved
-// (cc is nil) or when the resolved country maps to no known regulation,
-// ensuring the strictest opt-in consent model applies by default.
+// with its source.
+//
+// When the country is positively identified it returns that country's
+// regulation as detected, including RegulationNone for jurisdictions with no
+// cookie-consent law (which the presentation layer maps to an informational
+// notice). When geolocation is unresolved (cc is nil) it falls back to GDPR,
+// applying the strictest opt-in consent model by default.
 func ResolveRegulation(cc *coredata.CountryCode) (Regulation, RegulationSource) {
 	if cc != nil {
-		if reg := RegulationForCountry(*cc); reg != RegulationNone {
-			return reg, RegulationSourceDetected
-		}
+		return RegulationForCountry(*cc), RegulationSourceDetected
 	}
 
 	return RegulationGDPR, RegulationSourceDefault

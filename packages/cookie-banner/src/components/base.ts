@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { CookieBannerClient } from "../client";
-import type { BannerConfig, Regulation } from "../types";
+import type { BannerConfig, BannerLayout, Regulation } from "../types";
 
 export type ProboState = "loading" | "banner" | "panel" | "hidden";
 
@@ -75,6 +75,7 @@ export interface ProboRootElement extends ProboElement {
   readonly gpcApplied: boolean;
   readonly regulation: Regulation | null;
   readonly consentMode: "OPT_IN" | "OPT_OUT" | null;
+  readonly layout: BannerLayout | null;
   readonly reopenState: ProboState;
   setState(state: ProboState): void;
   updateDraft(category: string, value: boolean): void;
