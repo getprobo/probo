@@ -55,7 +55,7 @@ type (
 	}
 
 	AccessData struct {
-		CompliancePortalID gid.GID   `json:"trust_center_id"`
+		CompliancePortalID gid.GID   `json:"compliance_portal_id"`
 		Email              mail.Addr `json:"email"`
 	}
 )

@@ -171,7 +171,7 @@ func seedCompliancePortalAccess(t *testing.T, owner *testutil.Client, compliance
 
 	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		_, err := conn.Exec(ctx, `
-			INSERT INTO cp_accesses (id, tenant_id, organization_id, trust_center_id, identity_id, email, name, state, created_at, updated_at)
+			INSERT INTO cp_accesses (id, tenant_id, organization_id, compliance_portal_id, identity_id, email, name, state, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE', $8, $8)
 		`,
 			accessID.String(), tenantID.String(), owner.GetOrganizationID().String(), tcID.String(),

@@ -37,7 +37,7 @@ type (
 	CompliancePortalDocument struct {
 		ID                 gid.GID                    `db:"id"`
 		OrganizationID     gid.GID                    `db:"organization_id"`
-		CompliancePortalID gid.GID                    `db:"trust_center_id"`
+		CompliancePortalID gid.GID                    `db:"compliance_portal_id"`
 		DocumentID         gid.GID                    `db:"document_id"`
 		Visibility         CompliancePortalVisibility `db:"visibility"`
 		CreatedAt          time.Time                  `db:"created_at"`
@@ -95,7 +95,7 @@ func (cpd *CompliancePortalDocument) LoadByCompliancePortalIDAndDocumentID(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	document_id,
 	visibility,
 	created_at,
@@ -104,7 +104,7 @@ FROM
 	cp_documents
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND document_id = @document_id
 LIMIT 1;
 `
@@ -112,8 +112,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"document_id":     documentID,
+		"compliance_portal_id": compliancePortalID,
+		"document_id":          documentID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -152,7 +152,7 @@ func (cpds *CompliancePortalDocuments) LoadByCompliancePortalIDAndDocumentIDs(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	document_id,
 	visibility,
 	created_at,
@@ -161,15 +161,15 @@ FROM
 	cp_documents
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND document_id = ANY(@document_ids::text[]);
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"document_ids":    documentIDs,
+		"compliance_portal_id": compliancePortalID,
+		"document_ids":         documentIDs,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -198,7 +198,7 @@ INSERT INTO cp_documents (
 	id,
 	tenant_id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	document_id,
 	visibility,
 	created_at,
@@ -207,20 +207,20 @@ INSERT INTO cp_documents (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@trust_center_id,
+	@compliance_portal_id,
 	@document_id,
 	@visibility,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (trust_center_id, document_id) DO UPDATE
+ON CONFLICT (compliance_portal_id, document_id) DO UPDATE
 SET
 	visibility = EXCLUDED.visibility,
 	updated_at = EXCLUDED.updated_at
 RETURNING
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	document_id,
 	visibility,
 	created_at,
@@ -228,14 +228,14 @@ RETURNING
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              cpd.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": cpd.OrganizationID,
-		"trust_center_id": cpd.CompliancePortalID,
-		"document_id":     cpd.DocumentID,
-		"visibility":      cpd.Visibility,
-		"created_at":      cpd.CreatedAt,
-		"updated_at":      cpd.UpdatedAt,
+		"id":                   cpd.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      cpd.OrganizationID,
+		"compliance_portal_id": cpd.CompliancePortalID,
+		"document_id":          cpd.DocumentID,
+		"visibility":           cpd.Visibility,
+		"created_at":           cpd.CreatedAt,
+		"updated_at":           cpd.UpdatedAt,
 	}
 
 	rows, err := conn.Query(ctx, q, args)
@@ -264,15 +264,15 @@ func DeleteCompliancePortalDocumentByCompliancePortalIDAndDocumentID(
 DELETE FROM cp_documents
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND document_id = @document_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"document_id":     documentID,
+		"compliance_portal_id": compliancePortalID,
+		"document_id":          documentID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

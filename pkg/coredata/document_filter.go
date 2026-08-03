@@ -155,16 +155,16 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 	}
 
 	return pgx.NamedArgs{
-		"query":                     f.query,
-		"compliance_portal_id":      compliancePortalID,
-		"trust_center_visibilities": visibilities,
-		"published":                 f.published,
-		"employee_identity_id":      f.employeeIdentityID,
-		"employee_filter_modes":     employeeFilterModes,
-		"document_types":            documentTypes,
-		"classifications":           classifications,
-		"write_modes":               writeModes,
-		"document_status":           status,
+		"query":                          f.query,
+		"compliance_portal_id":           compliancePortalID,
+		"compliance_portal_visibilities": visibilities,
+		"published":                      f.published,
+		"employee_identity_id":           f.employeeIdentityID,
+		"employee_filter_modes":          employeeFilterModes,
+		"document_types":                 documentTypes,
+		"classifications":                classifications,
+		"write_modes":                    writeModes,
+		"document_status":                status,
 	}
 }
 
@@ -188,17 +188,17 @@ func (f *DocumentFilter) SQLFragment() string {
 	AND
 	CASE
 		WHEN @compliance_portal_id::text IS NOT NULL
-			AND @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
+			AND @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
 			EXISTS (
 				SELECT 1
 				FROM cp_documents
 				WHERE cp_documents.document_id = documents.id
-					AND cp_documents.trust_center_id = @compliance_portal_id
+					AND cp_documents.compliance_portal_id = @compliance_portal_id
 					AND cp_documents.visibility = ANY(
-						@trust_center_visibilities::trust_center_visibility[]
+						@compliance_portal_visibilities::compliance_portal_visibility[]
 					)
 			)
-		WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
+		WHEN @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
 			FALSE
 		ELSE TRUE
 	END

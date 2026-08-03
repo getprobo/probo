@@ -38,11 +38,11 @@ type (
 	CompliancePortalFile struct {
 		ID                         gid.GID                    `db:"id"`
 		OrganizationID             gid.GID                    `db:"organization_id"`
-		CompliancePortalID         gid.GID                    `db:"trust_center_id"`
+		CompliancePortalID         gid.GID                    `db:"compliance_portal_id"`
 		Name                       string                     `db:"name"`
 		Category                   string                     `db:"category"`
 		FileID                     gid.GID                    `db:"file_id"`
-		CompliancePortalVisibility CompliancePortalVisibility `db:"trust_center_visibility"`
+		CompliancePortalVisibility CompliancePortalVisibility `db:"compliance_portal_visibility"`
 		CreatedAt                  time.Time                  `db:"created_at"`
 		UpdatedAt                  time.Time                  `db:"updated_at"`
 	}
@@ -112,23 +112,23 @@ func (t *CompliancePortalFile) LoadByID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     category,
     file_id,
-    trust_center_visibility,
+    compliance_portal_visibility,
     created_at,
     updated_at
 FROM
     cp_files
 WHERE
     %s
-    AND id = @trust_center_file_id
+    AND id = @compliance_portal_file_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_file_id": compliancePortalFileID}
+	args := pgx.StrictNamedArgs{"compliance_portal_file_id": compliancePortalFileID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -157,26 +157,26 @@ func (t *CompliancePortalFile) LoadByCompliancePortalIDAndID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     category,
     file_id,
-    trust_center_visibility,
+    compliance_portal_visibility,
     created_at,
     updated_at
 FROM
     cp_files
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
-    AND id = @trust_center_file_id
+    AND compliance_portal_id = @compliance_portal_id
+    AND id = @compliance_portal_file_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id":      compliancePortalID,
-		"trust_center_file_id": compliancePortalFileID,
+		"compliance_portal_id":      compliancePortalID,
+		"compliance_portal_file_id": compliancePortalFileID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -209,11 +209,11 @@ func (f *CompliancePortalFiles) LoadByIDs(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     category,
     file_id,
-    trust_center_visibility,
+    compliance_portal_visibility,
     created_at,
     updated_at
 FROM
@@ -259,11 +259,11 @@ INSERT INTO
         tenant_id,
         id,
         organization_id,
-        trust_center_id,
+        compliance_portal_id,
         name,
         category,
         file_id,
-        trust_center_visibility,
+        compliance_portal_visibility,
         created_at,
         updated_at
     )
@@ -271,27 +271,27 @@ VALUES (
     @tenant_id,
     @id,
     @organization_id,
-    @trust_center_id,
+    @compliance_portal_id,
     @name,
     @category,
     @file_id,
-    @trust_center_visibility,
+    @compliance_portal_visibility,
     @created_at,
     @updated_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":               scope.GetTenantID(),
-		"id":                      t.ID,
-		"organization_id":         t.OrganizationID,
-		"trust_center_id":         t.CompliancePortalID,
-		"name":                    t.Name,
-		"category":                t.Category,
-		"file_id":                 t.FileID,
-		"trust_center_visibility": t.CompliancePortalVisibility,
-		"created_at":              t.CreatedAt,
-		"updated_at":              t.UpdatedAt,
+		"tenant_id":                    scope.GetTenantID(),
+		"id":                           t.ID,
+		"organization_id":              t.OrganizationID,
+		"compliance_portal_id":         t.CompliancePortalID,
+		"name":                         t.Name,
+		"category":                     t.Category,
+		"file_id":                      t.FileID,
+		"compliance_portal_visibility": t.CompliancePortalVisibility,
+		"created_at":                   t.CreatedAt,
+		"updated_at":                   t.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -312,7 +312,7 @@ UPDATE cp_files
 SET
     name = @name,
     category = @category,
-    trust_center_visibility = @trust_center_visibility,
+    compliance_portal_visibility = @compliance_portal_visibility,
     updated_at = @updated_at
 WHERE
     %s
@@ -320,11 +320,11 @@ WHERE
 RETURNING
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     category,
     file_id,
-    trust_center_visibility,
+    compliance_portal_visibility,
     created_at,
     updated_at
 `
@@ -332,11 +332,11 @@ RETURNING
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                      t.ID,
-		"name":                    t.Name,
-		"category":                t.Category,
-		"trust_center_visibility": t.CompliancePortalVisibility,
-		"updated_at":              t.UpdatedAt,
+		"id":                           t.ID,
+		"name":                         t.Name,
+		"category":                     t.Category,
+		"compliance_portal_visibility": t.CompliancePortalVisibility,
+		"updated_at":                   t.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -393,25 +393,25 @@ func (t *CompliancePortalFiles) LoadByCompliancePortalID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     category,
     file_id,
-    trust_center_visibility,
+    compliance_portal_visibility,
     created_at,
     updated_at
 FROM
     cp_files
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
     AND %s
     AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -444,12 +444,12 @@ FROM
     cp_files
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int

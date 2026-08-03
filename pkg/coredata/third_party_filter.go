@@ -103,7 +103,7 @@ func (f *ThirdPartyFilter) SQLFragment() string {
 				SELECT 1
 				FROM cp_third_parties
 				WHERE cp_third_parties.third_party_id = third_parties.id
-					AND cp_third_parties.trust_center_id = @compliance_portal_id
+					AND cp_third_parties.compliance_portal_id = @compliance_portal_id
 			)
 		ELSE TRUE
 	END

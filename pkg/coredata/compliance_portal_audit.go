@@ -37,7 +37,7 @@ type (
 	CompliancePortalAudit struct {
 		ID                 gid.GID                    `db:"id"`
 		OrganizationID     gid.GID                    `db:"organization_id"`
-		CompliancePortalID gid.GID                    `db:"trust_center_id"`
+		CompliancePortalID gid.GID                    `db:"compliance_portal_id"`
 		AuditID            gid.GID                    `db:"audit_id"`
 		Visibility         CompliancePortalVisibility `db:"visibility"`
 		CreatedAt          time.Time                  `db:"created_at"`
@@ -95,7 +95,7 @@ func (cpa *CompliancePortalAudit) LoadByCompliancePortalIDAndAuditID(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	audit_id,
 	visibility,
 	created_at,
@@ -104,7 +104,7 @@ FROM
 	cp_audits
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND audit_id = @audit_id
 LIMIT 1;
 `
@@ -112,8 +112,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"audit_id":        auditID,
+		"compliance_portal_id": compliancePortalID,
+		"audit_id":             auditID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -147,7 +147,7 @@ func (cpa *CompliancePortalAudit) LoadByCompliancePortalIDAndReportFileID(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	audit_id,
 	visibility,
 	created_at,
@@ -156,7 +156,7 @@ FROM
 	cp_audits
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND audit_id IN (
 		SELECT
 			id
@@ -167,7 +167,7 @@ WHERE
 	)
 ORDER BY
 	CASE
-		WHEN visibility = @public_visibility::trust_center_visibility THEN 0
+		WHEN visibility = @public_visibility::compliance_portal_visibility THEN 0
 		ELSE 1
 	END,
 	audit_id
@@ -177,9 +177,9 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id":   compliancePortalID,
-		"report_file_id":    reportFileID,
-		"public_visibility": CompliancePortalVisibilityPublic,
+		"compliance_portal_id": compliancePortalID,
+		"report_file_id":       reportFileID,
+		"public_visibility":    CompliancePortalVisibilityPublic,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -213,7 +213,7 @@ func (cpa *CompliancePortalAudit) LoadByCompliancePortalIDAndFrameworkID(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	audit_id,
 	visibility,
 	created_at,
@@ -222,7 +222,7 @@ FROM
 	cp_audits
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND audit_id IN (
 		SELECT
 			id
@@ -237,8 +237,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"framework_id":    frameworkID,
+		"compliance_portal_id": compliancePortalID,
+		"framework_id":         frameworkID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -278,7 +278,7 @@ func LoadCompliancePortalAuditsByCompliancePortalIDAndAuditIDs(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	audit_id,
 	visibility,
 	created_at,
@@ -287,15 +287,15 @@ FROM
 	cp_audits
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND audit_id = ANY(@audit_ids::text[]);
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"audit_ids":       auditIDs,
+		"compliance_portal_id": compliancePortalID,
+		"audit_ids":            auditIDs,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -333,7 +333,7 @@ INSERT INTO cp_audits (
 	id,
 	tenant_id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	audit_id,
 	visibility,
 	created_at,
@@ -342,20 +342,20 @@ INSERT INTO cp_audits (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@trust_center_id,
+	@compliance_portal_id,
 	@audit_id,
 	@visibility,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (trust_center_id, audit_id) DO UPDATE
+ON CONFLICT (compliance_portal_id, audit_id) DO UPDATE
 SET
 	visibility = EXCLUDED.visibility,
 	updated_at = EXCLUDED.updated_at
 RETURNING
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	audit_id,
 	visibility,
 	created_at,
@@ -363,14 +363,14 @@ RETURNING
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              cpa.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": cpa.OrganizationID,
-		"trust_center_id": cpa.CompliancePortalID,
-		"audit_id":        cpa.AuditID,
-		"visibility":      cpa.Visibility,
-		"created_at":      cpa.CreatedAt,
-		"updated_at":      cpa.UpdatedAt,
+		"id":                   cpa.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      cpa.OrganizationID,
+		"compliance_portal_id": cpa.CompliancePortalID,
+		"audit_id":             cpa.AuditID,
+		"visibility":           cpa.Visibility,
+		"created_at":           cpa.CreatedAt,
+		"updated_at":           cpa.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -400,15 +400,15 @@ func DeleteCompliancePortalAuditByCompliancePortalIDAndAuditID(
 DELETE FROM cp_audits
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND audit_id = @audit_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"audit_id":        auditID,
+		"compliance_portal_id": compliancePortalID,
+		"audit_id":             auditID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

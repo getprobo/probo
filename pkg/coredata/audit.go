@@ -791,15 +791,15 @@ WHERE %s
 		FROM
 			cp_audits
 		WHERE %s
-			AND trust_center_id = @trust_center_id
+			AND compliance_portal_id = @compliance_portal_id
 	)
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"framework_id":    frameworkID,
-		"trust_center_id": compliancePortalID,
+		"framework_id":         frameworkID,
+		"compliance_portal_id": compliancePortalID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

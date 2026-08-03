@@ -38,7 +38,7 @@ type (
 	RightsRequest struct {
 		ID                 gid.GID            `db:"id"`
 		OrganizationID     gid.GID            `db:"organization_id"`
-		CompliancePortalID *gid.GID           `db:"trust_center_id"`
+		CompliancePortalID *gid.GID           `db:"compliance_portal_id"`
 		RequestType        RightsRequestType  `db:"request_type"`
 		RequestState       RightsRequestState `db:"request_state"`
 		DataSubject        *string            `db:"data_subject"`
@@ -118,7 +118,7 @@ func (rr *RightsRequest) LoadByID(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -204,7 +204,7 @@ func (rrs *RightsRequests) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -255,7 +255,7 @@ func (rrs *RightsRequests) LoadByCompliancePortalIDAndContact(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -269,7 +269,7 @@ FROM
 	rights_requests
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND contact = @contact
 	AND %s
 `
@@ -277,8 +277,8 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"contact":         contact,
+		"compliance_portal_id": compliancePortalID,
+		"contact":              contact,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -308,7 +308,7 @@ INSERT INTO rights_requests (
 	id,
 	tenant_id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -322,7 +322,7 @@ INSERT INTO rights_requests (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@trust_center_id,
+	@compliance_portal_id,
 	@request_type,
 	@request_state,
 	@data_subject,
@@ -336,19 +336,19 @@ INSERT INTO rights_requests (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              rr.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": rr.OrganizationID,
-		"trust_center_id": rr.CompliancePortalID,
-		"request_type":    rr.RequestType,
-		"request_state":   rr.RequestState,
-		"data_subject":    rr.DataSubject,
-		"contact":         rr.Contact,
-		"details":         rr.Details,
-		"deadline":        rr.Deadline,
-		"action_taken":    rr.ActionTaken,
-		"created_at":      rr.CreatedAt,
-		"updated_at":      rr.UpdatedAt,
+		"id":                   rr.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      rr.OrganizationID,
+		"compliance_portal_id": rr.CompliancePortalID,
+		"request_type":         rr.RequestType,
+		"request_state":        rr.RequestState,
+		"data_subject":         rr.DataSubject,
+		"contact":              rr.Contact,
+		"details":              rr.Details,
+		"deadline":             rr.Deadline,
+		"action_taken":         rr.ActionTaken,
+		"created_at":           rr.CreatedAt,
+		"updated_at":           rr.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

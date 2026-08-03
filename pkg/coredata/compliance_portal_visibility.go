@@ -48,7 +48,7 @@ func CompliancePortalVisibilities() []CompliancePortalVisibility {
 }
 
 // compliancePortalVisibilityStrings renders visibilities for a
-// trust_center_visibility[] bind. It returns nil for an empty slice so queries
+// compliance_portal_visibility[] bind. It returns nil for an empty slice so queries
 // can treat NULL as "no visibility restriction".
 func compliancePortalVisibilityStrings(visibilities []CompliancePortalVisibility) []string {
 	if len(visibilities) == 0 {

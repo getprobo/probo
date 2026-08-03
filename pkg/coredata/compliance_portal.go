@@ -75,7 +75,7 @@ func (tc *CompliancePortal) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_centers WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM compliance_portals WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -137,16 +137,16 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	%s
-	AND id = @trust_center_id
+	AND id = @compliance_portal_id
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -196,7 +196,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	%s
 	AND mailing_list_id = @mailing_list_id
@@ -256,7 +256,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	%s
 	AND organization_id = @organization_id
@@ -294,7 +294,7 @@ func (tcs *CompliancePortals) CountByOrganizationID(
 SELECT
 	COUNT(id)
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	%s
 	AND organization_id = @organization_id
@@ -343,7 +343,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	slug = @slug
 LIMIT 1;
@@ -402,7 +402,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	default_domain_id = @domain_id
 	OR custom_domain_id = @domain_id
@@ -436,7 +436,7 @@ func (tc *CompliancePortal) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_centers (
+INSERT INTO compliance_portals (
 	id,
 	organization_id,
 	tenant_id,
@@ -504,7 +504,7 @@ INSERT INTO trust_centers (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_centers_slug_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "compliance_portals_slug_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -521,7 +521,7 @@ func (tc *CompliancePortal) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_centers
+UPDATE compliance_portals
 SET
 	active = @active,
 	slug = @slug,
@@ -577,7 +577,7 @@ func (tc *CompliancePortal) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM trust_centers
+DELETE FROM compliance_portals
 WHERE
 	%s
 	AND id = @id

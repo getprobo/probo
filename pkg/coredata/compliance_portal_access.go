@@ -41,7 +41,7 @@ type (
 		OrganizationID        gid.GID      `db:"organization_id"`
 		TenantID              gid.TenantID `db:"tenant_id"`
 		IdentityID            gid.GID      `db:"identity_id"`
-		CompliancePortalID    gid.GID      `db:"trust_center_id"`
+		CompliancePortalID    gid.GID      `db:"compliance_portal_id"`
 		ElectronicSignatureID *gid.GID     `db:"electronic_signature_id"`
 		CreatedAt             time.Time    `db:"created_at"`
 		UpdatedAt             time.Time    `db:"updated_at"`
@@ -110,7 +110,7 @@ SELECT
 	organization_id,
 	tenant_id,
 	identity_id,
-	trust_center_id,
+	compliance_portal_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -159,7 +159,7 @@ SELECT
 	organization_id,
 	tenant_id,
 	identity_id,
-	trust_center_id,
+	compliance_portal_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -167,7 +167,7 @@ FROM
 	cp_accesses
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND identity_id = @identity_id
 LIMIT 1;
 `
@@ -175,8 +175,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"identity_id":     identityID,
+		"compliance_portal_id": compliancePortalID,
+		"identity_id":          identityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -211,7 +211,7 @@ SELECT
 	organization_id,
 	tenant_id,
 	identity_id,
-	trust_center_id,
+	compliance_portal_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -258,7 +258,7 @@ INSERT INTO cp_accesses (
 	tenant_id,
 	organization_id,
 	identity_id,
-	trust_center_id,
+	compliance_portal_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -267,7 +267,7 @@ INSERT INTO cp_accesses (
 	@tenant_id,
 	@organization_id,
 	@identity_id,
-	@trust_center_id,
+	@compliance_portal_id,
 	@electronic_signature_id,
 	@created_at,
 	@updated_at
@@ -279,7 +279,7 @@ INSERT INTO cp_accesses (
 		"tenant_id":               tca.TenantID,
 		"organization_id":         tca.OrganizationID,
 		"identity_id":             tca.IdentityID,
-		"trust_center_id":         tca.CompliancePortalID,
+		"compliance_portal_id":    tca.CompliancePortalID,
 		"electronic_signature_id": tca.ElectronicSignatureID,
 		"created_at":              tca.CreatedAt,
 		"updated_at":              tca.UpdatedAt,
@@ -370,7 +370,7 @@ SELECT
 	organization_id,
 	tenant_id,
 	identity_id,
-	trust_center_id,
+	compliance_portal_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -378,14 +378,14 @@ FROM
 	cp_accesses
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
+		"compliance_portal_id": compliancePortalID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())

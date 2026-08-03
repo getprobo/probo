@@ -139,18 +139,18 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 	}
 
 	return pgx.StrictNamedArgs{
-		"filter_email":             f.email,
-		"filter_user_name":         f.userName,
-		"filter_external_id":       f.externalID,
-		"with_membership":          f.withMembership,
-		"with_trust_center_access": f.withCompliancePortalAccess,
-		"contract_ended":           f.contractEnded,
-		"current_date":             f.currentDate,
-		"filter_states":            f.states,
-		"filter_source":            f.source,
-		"filter_query":             filterQuery,
-		"filter_role":              f.role,
-		"filter_kind":              f.kind,
+		"filter_email":                  f.email,
+		"filter_user_name":              f.userName,
+		"filter_external_id":            f.externalID,
+		"with_membership":               f.withMembership,
+		"with_compliance_portal_access": f.withCompliancePortalAccess,
+		"contract_ended":                f.contractEnded,
+		"current_date":                  f.currentDate,
+		"filter_states":                 f.states,
+		"filter_source":                 f.source,
+		"filter_query":                  filterQuery,
+		"filter_role":                   f.role,
+		"filter_kind":                   f.kind,
 	}
 }
 
@@ -158,9 +158,9 @@ func (f *MembershipProfileFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @with_trust_center_access::boolean IS NOT NULL AND @with_trust_center_access::boolean = TRUE THEN
+		WHEN @with_compliance_portal_access::boolean IS NOT NULL AND @with_compliance_portal_access::boolean = TRUE THEN
 			EXISTS (SELECT 1 FROM cp_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
-		WHEN @with_trust_center_access::boolean IS NOT NULL AND @with_trust_center_access::boolean = FALSE THEN
+		WHEN @with_compliance_portal_access::boolean IS NOT NULL AND @with_compliance_portal_access::boolean = FALSE THEN
 			NOT EXISTS (SELECT 1 FROM cp_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
 		ELSE TRUE
 	END

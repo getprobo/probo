@@ -59,8 +59,8 @@ func (f *AuditFilter) WithCompliancePortalVisibilities(visibilities ...Complianc
 
 func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 	args := pgx.NamedArgs{
-		"compliance_portal_id":      nil,
-		"trust_center_visibilities": nil,
+		"compliance_portal_id":           nil,
+		"compliance_portal_visibilities": nil,
 	}
 
 	if f.compliancePortalID != nil {
@@ -73,7 +73,7 @@ func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 			visibilities[i] = visibility.String()
 		}
 
-		args["trust_center_visibilities"] = visibilities
+		args["compliance_portal_visibilities"] = visibilities
 	}
 
 	return args
@@ -84,17 +84,17 @@ func (f *AuditFilter) SQLFragment() string {
 (
 	CASE
 		WHEN @compliance_portal_id::text IS NOT NULL
-			AND @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
+			AND @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
 			EXISTS (
 				SELECT 1
 				FROM cp_audits
 				WHERE cp_audits.audit_id = audits.id
-					AND cp_audits.trust_center_id = @compliance_portal_id
+					AND cp_audits.compliance_portal_id = @compliance_portal_id
 					AND cp_audits.visibility = ANY(
-						@trust_center_visibilities::trust_center_visibility[]
+						@compliance_portal_visibilities::compliance_portal_visibility[]
 					)
 			)
-		WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
+		WHEN @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
 			FALSE
 		ELSE TRUE
 	END

@@ -60,7 +60,7 @@ type (
 func (ctcrr *CreateReferenceRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(ctcrr.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
+	v.Check(ctcrr.CompliancePortalID, "compliance_portal_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(ctcrr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctcrr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ctcrr.WebsiteURL, "website_url", validator.Required(), validator.SafeText(2048))

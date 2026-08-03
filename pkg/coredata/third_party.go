@@ -800,7 +800,7 @@ WHERE
     AND id IN (
         SELECT third_party_id
         FROM cp_third_parties
-        WHERE trust_center_id = @compliance_portal_id
+        WHERE compliance_portal_id = @compliance_portal_id
     )
 ORDER BY
     category ASC
@@ -839,7 +839,7 @@ WHERE
     AND id IN (
         SELECT third_party_id
         FROM cp_third_parties
-        WHERE trust_center_id = @compliance_portal_id
+        WHERE compliance_portal_id = @compliance_portal_id
     )
 ORDER BY
     country ASC

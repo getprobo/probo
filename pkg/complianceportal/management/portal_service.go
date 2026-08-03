@@ -107,7 +107,7 @@ func (utcr *UpdateRequest) Validate() error {
 func (utcndar *UploadNDARequest) Validate() error {
 	v := validator.New()
 
-	v.Check(utcndar.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
+	v.Check(utcndar.CompliancePortalID, "compliance_portal_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(utcndar.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()

@@ -37,7 +37,7 @@ type (
 	CompliancePortalThirdParty struct {
 		ID                 gid.GID   `db:"id"`
 		OrganizationID     gid.GID   `db:"organization_id"`
-		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		CompliancePortalID gid.GID   `db:"compliance_portal_id"`
 		ThirdPartyID       gid.GID   `db:"third_party_id"`
 		CreatedAt          time.Time `db:"created_at"`
 		UpdatedAt          time.Time `db:"updated_at"`
@@ -93,7 +93,7 @@ INSERT INTO cp_third_parties (
 	id,
 	tenant_id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	third_party_id,
 	created_at,
 	updated_at
@@ -101,22 +101,22 @@ INSERT INTO cp_third_parties (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@trust_center_id,
+	@compliance_portal_id,
 	@third_party_id,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (trust_center_id, third_party_id) DO NOTHING
+ON CONFLICT (compliance_portal_id, third_party_id) DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              cptp.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": cptp.OrganizationID,
-		"trust_center_id": cptp.CompliancePortalID,
-		"third_party_id":  cptp.ThirdPartyID,
-		"created_at":      cptp.CreatedAt,
-		"updated_at":      cptp.UpdatedAt,
+		"id":                   cptp.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      cptp.OrganizationID,
+		"compliance_portal_id": cptp.CompliancePortalID,
+		"third_party_id":       cptp.ThirdPartyID,
+		"created_at":           cptp.CreatedAt,
+		"updated_at":           cptp.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -138,15 +138,15 @@ func DeleteCompliancePortalThirdPartyByCompliancePortalIDAndThirdPartyID(
 DELETE FROM cp_third_parties
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND third_party_id = @third_party_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"third_party_id":  thirdPartyID,
+		"compliance_portal_id": compliancePortalID,
+		"third_party_id":       thirdPartyID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -195,7 +195,7 @@ func (cptp *CompliancePortalThirdParty) LoadByCompliancePortalIDAndThirdPartyID(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	third_party_id,
 	created_at,
 	updated_at
@@ -203,7 +203,7 @@ FROM
 	cp_third_parties
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND third_party_id = @third_party_id
 LIMIT 1;
 `
@@ -211,8 +211,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"third_party_id":  thirdPartyID,
+		"compliance_portal_id": compliancePortalID,
+		"third_party_id":       thirdPartyID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -251,15 +251,15 @@ FROM
 	cp_third_parties
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND third_party_id = ANY(@third_party_ids::text[]);
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"third_party_ids": thirdPartyIDs,
+		"compliance_portal_id": compliancePortalID,
+		"third_party_ids":      thirdPartyIDs,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -305,7 +305,7 @@ func LoadCompliancePortalThirdPartiesByCompliancePortalIDAndThirdPartyIDs(
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	compliance_portal_id,
 	third_party_id,
 	created_at,
 	updated_at
@@ -313,15 +313,15 @@ FROM
 	cp_third_parties
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND third_party_id = ANY(@third_party_ids::text[]);
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"third_party_ids": thirdPartyIDs,
+		"compliance_portal_id": compliancePortalID,
+		"third_party_ids":      thirdPartyIDs,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

@@ -63,7 +63,7 @@ func (ctcfr *CreateFileRequest) Validate() error {
 	v.Check(ctcfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctcfr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 	v.Check(ctcfr.File, "file", validator.Required())
-	v.Check(ctcfr.CompliancePortalVisibility, "trust_center_visibility", validator.Required(), validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
+	v.Check(ctcfr.CompliancePortalVisibility, "compliance_portal_visibility", validator.Required(), validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }
@@ -74,7 +74,7 @@ func (utcfr *UpdateFileRequest) Validate() error {
 	v.Check(utcfr.ID, "id", validator.Required(), validator.GID(coredata.CompliancePortalFileEntityType))
 	v.Check(utcfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(utcfr.Category, "category", validator.SafeText(TitleMaxLength))
-	v.Check(utcfr.CompliancePortalVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
+	v.Check(utcfr.CompliancePortalVisibility, "compliance_portal_visibility", validator.OneOfSlice(coredata.CompliancePortalVisibilities()))
 
 	return v.Error()
 }

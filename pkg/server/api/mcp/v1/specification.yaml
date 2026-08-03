@@ -10296,11 +10296,11 @@ components:
     ListCommitmentGroupsInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Trust center ID
+          description: Compliance portal ID
         order_by:
           $ref: "#/components/schemas/CompliancePortalCommitmentGroupOrderBy"
           description: Commitment group order by
@@ -10327,13 +10327,13 @@ components:
     AddCommitmentGroupInput:
       type: object
       required:
-        - trust_center_id
+        - compliance_portal_id
         - title
         - description
       properties:
-        trust_center_id:
+        compliance_portal_id:
           $ref: "#/components/schemas/GID"
-          description: Trust center ID
+          description: Compliance portal ID
         title:
           type: string
           description: Group title

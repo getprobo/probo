@@ -39,7 +39,7 @@ type (
 	ComplianceFramework struct {
 		ID                 gid.GID   `db:"id"`
 		OrganizationID     gid.GID   `db:"organization_id"`
-		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		CompliancePortalID gid.GID   `db:"compliance_portal_id"`
 		FrameworkID        gid.GID   `db:"framework_id"`
 		Rank               int       `db:"rank"`
 		CreatedAt          time.Time `db:"created_at"`
@@ -112,7 +112,7 @@ func (c *ComplianceFramework) LoadByID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     framework_id,
     rank,
     'PUBLIC' AS visibility,
@@ -160,7 +160,7 @@ func (c *ComplianceFramework) LoadByCompliancePortalIDAndID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     framework_id,
     rank,
     'PUBLIC' AS visibility,
@@ -170,14 +170,14 @@ FROM
     compliance_frameworks
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
     AND id = @compliance_framework_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id":         compliancePortalID,
+		"compliance_portal_id":    compliancePortalID,
 		"compliance_framework_id": complianceFrameworkID,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -212,7 +212,7 @@ func (c *ComplianceFramework) LoadByCompliancePortalIDAndFrameworkID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     framework_id,
     rank,
     'PUBLIC' AS visibility,
@@ -222,15 +222,15 @@ FROM
     compliance_frameworks
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
     AND framework_id = @framework_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": compliancePortalID,
-		"framework_id":    frameworkID,
+		"compliance_portal_id": compliancePortalID,
+		"framework_id":         frameworkID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -264,7 +264,7 @@ INSERT INTO
         id,
         tenant_id,
         organization_id,
-        trust_center_id,
+        compliance_portal_id,
         framework_id,
         rank,
         created_at,
@@ -274,9 +274,9 @@ VALUES (
     @id,
     @tenant_id,
     @organization_id,
-    @trust_center_id,
+    @compliance_portal_id,
     @framework_id,
-    (SELECT COALESCE(MAX(rank), 0) + 1 FROM compliance_frameworks WHERE trust_center_id = @trust_center_id),
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM compliance_frameworks WHERE compliance_portal_id = @compliance_portal_id),
     @created_at,
     @updated_at
 )
@@ -284,19 +284,19 @@ RETURNING rank;
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              c.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": c.OrganizationID,
-		"trust_center_id": c.CompliancePortalID,
-		"framework_id":    c.FrameworkID,
-		"created_at":      c.CreatedAt,
-		"updated_at":      c.UpdatedAt,
+		"id":                   c.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      c.OrganizationID,
+		"compliance_portal_id": c.CompliancePortalID,
+		"framework_id":         c.FrameworkID,
+		"created_at":           c.CreatedAt,
+		"updated_at":           c.UpdatedAt,
 	}
 
 	err := conn.QueryRow(ctx, q, args).Scan(&c.Rank)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "compliance_frameworks_trust_center_id_framework_id_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "compliance_frameworks_compliance_portal_id_framework_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -317,7 +317,7 @@ WITH old AS (
   SELECT
     rank AS old_rank
   FROM compliance_frameworks
-  WHERE %s AND id = @id AND trust_center_id = @trust_center_id
+  WHERE %s AND id = @id AND compliance_portal_id = @compliance_portal_id
 )
 
 UPDATE compliance_frameworks
@@ -342,10 +342,10 @@ WHERE %s
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
-		"id":              c.ID,
-		"new_rank":        c.Rank,
-		"trust_center_id": c.CompliancePortalID,
-		"updated_at":      c.UpdatedAt,
+		"id":                   c.ID,
+		"new_rank":             c.Rank,
+		"compliance_portal_id": c.CompliancePortalID,
+		"updated_at":           c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -393,7 +393,7 @@ func (c *ComplianceFrameworks) LoadByCompliancePortalID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     framework_id,
     rank,
     'PUBLIC' AS visibility,
@@ -403,12 +403,12 @@ FROM
     compliance_frameworks
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.NamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -439,7 +439,7 @@ WITH combined AS (
     SELECT
         COALESCE(cf.id, f.id) AS id,
         COALESCE(cf.organization_id, tc.organization_id) AS organization_id,
-        COALESCE(cf.trust_center_id, tc.id) AS trust_center_id,
+        COALESCE(cf.compliance_portal_id, tc.id) AS compliance_portal_id,
         f.id AS framework_id,
         CASE
             WHEN cf.id IS NOT NULL THEN cf.rank
@@ -448,24 +448,24 @@ WITH combined AS (
         CASE WHEN cf.id IS NULL THEN 'NONE' ELSE 'PUBLIC' END AS visibility,
         COALESCE(cf.created_at, f.created_at) AS created_at,
         COALESCE(cf.updated_at, f.updated_at) AS updated_at
-    FROM trust_centers tc
+    FROM compliance_portals tc
     JOIN frameworks f
         ON f.organization_id = tc.organization_id
         AND f.tenant_id = @tenant_id
     LEFT JOIN compliance_frameworks cf
         ON cf.framework_id = f.id
-        AND cf.trust_center_id = tc.id
+        AND cf.compliance_portal_id = tc.id
         AND cf.tenant_id = @tenant_id
-    WHERE tc.id = @trust_center_id
+    WHERE tc.id = @compliance_portal_id
         AND tc.tenant_id = @tenant_id
 )
-SELECT id, organization_id, trust_center_id, framework_id, rank, visibility, created_at, updated_at
+SELECT id, organization_id, compliance_portal_id, framework_id, rank, visibility, created_at, updated_at
 FROM combined
 WHERE %s
 `
 	q = fmt.Sprintf(q, cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.NamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 

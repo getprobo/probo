@@ -7165,7 +7165,7 @@ func (r *Resolver) RemoveResourceAliasTool(ctx context.Context, req *mcp.CallToo
 // ListCommitmentGroupsTool handles the listCommitmentGroups tool
 // List all commitment groups for a trust center
 func (r *Resolver) ListCommitmentGroupsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCommitmentGroupsInput) (*mcp.CallToolResult, types.ListCommitmentGroupsOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalCommitmentGroupList)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalCommitmentGroupList)
 	if err != nil {
 		return nil, types.ListCommitmentGroupsOutput{}, err
 	}
@@ -7184,7 +7184,7 @@ func (r *Resolver) ListCommitmentGroupsTool(ctx context.Context, req *mcp.CallTo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := r.management.ListCommitmentGroups(ctx, scope, input.TrustCenterID, cursor)
+	p, err := r.management.ListCommitmentGroups(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
 		return nil, types.ListCommitmentGroupsOutput{}, fmt.Errorf("cannot list commitment groups: %w", err)
 	}
@@ -7195,7 +7195,7 @@ func (r *Resolver) ListCommitmentGroupsTool(ctx context.Context, req *mcp.CallTo
 // AddCommitmentGroupTool handles the addCommitmentGroup tool
 // Add a new commitment group to a trust center
 func (r *Resolver) AddCommitmentGroupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCommitmentGroupInput) (*mcp.CallToolResult, types.AddCommitmentGroupOutput, error) {
-	scope, err := r.Authorize(ctx, input.TrustCenterID, management.ActionCompliancePortalCommitmentGroupCreate)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalCommitmentGroupCreate)
 	if err != nil {
 		return nil, types.AddCommitmentGroupOutput{}, err
 	}
@@ -7203,7 +7203,7 @@ func (r *Resolver) AddCommitmentGroupTool(ctx context.Context, req *mcp.CallTool
 	group, err := r.management.CreateCommitmentGroup(
 		ctx, scope,
 		&management.CreateCompliancePortalCommitmentGroupRequest{
-			CompliancePortalID: input.TrustCenterID,
+			CompliancePortalID: input.CompliancePortalID,
 			Title:              input.Title,
 			Description:        input.Description,
 		},

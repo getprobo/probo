@@ -23,8 +23,8 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Trust Center ID',
-		name: 'trustCenterId',
+		displayName: 'Compliance Portal ID',
+		name: 'compliancePortalId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the trust center',
+		description: 'The ID of the compliance portal',
 		required: true,
 	},
 	{
@@ -73,7 +73,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const trustCenterId = this.getNodeParameter('trustCenterId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
 	const title = this.getNodeParameter('title', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex) as string;
 
@@ -95,7 +95,7 @@ export async function execute(
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, {
-		input: { trustCenterId, title, description },
+		input: { compliancePortalId, title, description },
 	});
 
 	return {
