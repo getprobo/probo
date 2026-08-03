@@ -194,6 +194,11 @@ export class Probo implements INodeType {
 						description: 'Manage resource aliases',
 					},
 					{
+						name: 'Resource Tag',
+						value: 'resourceTag',
+						description: 'Manage resource tags',
+					},
+					{
 						name: 'Rights Request',
 						value: 'rightsRequest',
 						description: 'Manage rights requests',

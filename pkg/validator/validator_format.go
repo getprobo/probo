@@ -31,8 +31,9 @@ import (
 )
 
 var (
-	domainRegex = regexp.MustCompile(`^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
-	slugRegex   = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+	domainRegex   = regexp.MustCompile(`^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
+	slugRegex     = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+	hexColorRegex = regexp.MustCompile(`^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$`)
 )
 
 // URL validates that a string is a valid URL with http or https scheme.
@@ -211,6 +212,31 @@ func Slug(maxLen int) ValidatorFunc {
 
 		if !slugRegex.MatchString(str) {
 			return newValidationError(ErrorCodeInvalidFormat, "slug must contain only lowercase letters, numbers, and hyphens")
+		}
+
+		return nil
+	}
+}
+
+// HexColor validates that a string is a CSS hex color (#RGB or #RRGGBB).
+func HexColor() ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if str == "" {
+			return nil
+		}
+
+		if !hexColorRegex.MatchString(str) {
+			return newValidationError(ErrorCodeInvalidFormat, "color must be a hex value (#RGB or #RRGGBB)")
 		}
 
 		return nil
