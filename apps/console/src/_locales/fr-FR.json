@@ -753,6 +753,7 @@
       "owner": "Propriétaire",
       "status": "Statut",
       "priority": "Priorité",
+      "thirdParties": "Tiers",
       "dateIdentified": "Date d’identification",
       "dueDate": "Date d’échéance",
       "rootCause": "Cause racine",
@@ -5345,8 +5346,23 @@
       "contacts": "Contacts",
       "services": "Services",
       "thirdParties": "Tiers",
-      "measures": "Mesures"
+      "measures": "Mesures",
+      "findings": "Constats"
     }
+  },
+  "thirdPartyFindingsPage": {
+    "title": "Constats",
+    "description": "Constats liés à ce tiers.",
+    "columns": {
+      "referenceId": "ID de référence",
+      "description": "Description",
+      "status": "Statut",
+      "priority": "Priorité"
+    },
+    "empty": "Aucun constat n’est lié à ce tiers.",
+    "noDescription": "Aucune description",
+    "loading": "Chargement...",
+    "loadMore": "Afficher plus"
   },
   "addChildThirdPartyDialog": {
     "title": "Ajouter un tiers",

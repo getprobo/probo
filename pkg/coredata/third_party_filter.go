@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -31,6 +32,7 @@ type (
 		query                  *string
 		category               *ThirdPartyCategory
 		country                *CountryCode
+		findingID              *gid.GID
 	}
 )
 
@@ -50,6 +52,12 @@ func NewThirdPartyFilter(
 	}
 }
 
+func (f *ThirdPartyFilter) WithFindingID(findingID gid.GID) *ThirdPartyFilter {
+	f.findingID = &findingID
+
+	return f
+}
+
 func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
 		"show_on_trust_center": nil,
@@ -57,6 +65,7 @@ func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 		"level":                nil,
 		"filter_category":      nil,
 		"filter_country":       nil,
+		"filter_finding_id":    nil,
 	}
 
 	if f.showOnCompliancePortal != nil {
@@ -77,6 +86,10 @@ func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.country != nil {
 		args["filter_country"] = string(*f.country)
+	}
+
+	if f.findingID != nil {
+		args["filter_finding_id"] = *f.findingID
 	}
 
 	return args
@@ -108,6 +121,15 @@ func (f *ThirdPartyFilter) SQLFragment() string {
 	AND CASE
 		WHEN @filter_country::text IS NOT NULL THEN
 			@filter_country::country_code = ANY(countries)
+		ELSE TRUE
+	END
+	AND CASE
+		WHEN @filter_finding_id::text IS NOT NULL THEN
+			id IN (
+				SELECT third_party_id
+				FROM finding_third_parties
+				WHERE finding_id = @filter_finding_id
+			)
 		ELSE TRUE
 	END
 )`

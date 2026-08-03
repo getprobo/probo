@@ -174,6 +174,13 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The status of the finding',
 			},
+			{
+				displayName: 'Third Party IDs',
+				name: 'thirdPartyIds',
+				type: 'string',
+				default: '',
+				description: 'Comma-separated IDs of third parties linked to the finding',
+			},
 		],
 	},
 ];
@@ -195,6 +202,7 @@ export async function execute(
 		priority?: string;
 		riskId?: string;
 		effectivenessCheck?: string;
+		thirdPartyIds?: string;
 	};
 
 	const query = `
@@ -231,6 +239,11 @@ export async function execute(
 	if (additionalFields.priority !== undefined) input.priority = additionalFields.priority;
 	if (additionalFields.riskId !== undefined) input.riskId = additionalFields.riskId === '' ? null : additionalFields.riskId;
 	if (additionalFields.effectivenessCheck !== undefined) input.effectivenessCheck = additionalFields.effectivenessCheck === '' ? null : additionalFields.effectivenessCheck;
+	if (additionalFields.thirdPartyIds !== undefined) {
+		input.thirdPartyIds = additionalFields.thirdPartyIds === ''
+			? []
+			: additionalFields.thirdPartyIds.split(',').map(id => id.trim()).filter(Boolean);
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

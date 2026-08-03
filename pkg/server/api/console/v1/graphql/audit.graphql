@@ -203,6 +203,13 @@ type Finding implements Node {
         before: CursorKey
         orderBy: AuditOrder
     ): AuditConnection @goField(forceResolver: true)
+    thirdParties(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
     identifiedOn: Datetime
     rootCause: String
     correctiveAction: String
@@ -345,6 +352,7 @@ input UpdateFindingInput {
     priority: FindingPriority
     riskId: ID @goField(omittable: true)
     effectivenessCheck: String @goField(omittable: true)
+    thirdPartyIds: [ID!]
 }
 
 input DeleteFindingInput {

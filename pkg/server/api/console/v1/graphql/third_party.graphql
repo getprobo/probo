@@ -285,6 +285,15 @@ type ThirdParty implements Node {
         filter: MeasureFilter
     ): MeasureConnection! @goField(forceResolver: true)
 
+    findings(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FindingOrder
+        filter: FindingFilter
+    ): FindingConnection! @goField(forceResolver: true)
+
     administrators: [Profile!]! @goField(forceResolver: true)
 
     statusPageUrl: String

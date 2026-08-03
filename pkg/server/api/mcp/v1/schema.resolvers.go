@@ -935,6 +935,7 @@ func (r *Resolver) UpdateFindingTool(ctx context.Context, req *mcp.CallToolReque
 			Priority:           input.Priority,
 			RiskID:             UnwrapOmittable(input.RiskID),
 			EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),
+			ThirdPartyIDs:      input.ThirdPartyIds,
 		},
 	)
 	if err != nil {

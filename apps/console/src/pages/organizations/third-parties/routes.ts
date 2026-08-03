@@ -85,6 +85,11 @@ export const thirdPartyRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("./measures/ThirdPartyMeasuresPageLoader")),
       },
+      {
+        path: "findings",
+        Fallback: PageSkeleton,
+        Component: lazy(() => import("./findings/ThirdPartyFindingsPageLoader")),
+      },
     ],
   },
 ] satisfies AppRoute[];

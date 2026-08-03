@@ -66,6 +66,7 @@ type (
 		Priority           *coredata.FindingPriority
 		RiskID             **gid.GID
 		EffectivenessCheck **string
+		ThirdPartyIDs      []gid.GID
 	}
 )
 
@@ -104,6 +105,9 @@ func (r *UpdateFindingRequest) Validate() error {
 	v.Check(r.Priority, "priority", validator.OneOfSlice(coredata.FindingPriorities()))
 	v.Check(r.RiskID, "risk_id", validator.GID(coredata.RiskEntityType))
 	v.Check(r.EffectivenessCheck, "effectiveness_check", validator.SafeText(ContentMaxLength))
+	v.CheckEach(r.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
+	})
 
 	return v.Error()
 }
@@ -281,6 +285,25 @@ func (s *FindingService) Update(
 
 			if err := finding.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update finding: %w", err)
+			}
+
+			if req.ThirdPartyIDs != nil {
+				if len(req.ThirdPartyIDs) > 0 {
+					var thirdParties coredata.ThirdParties
+					if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
+						return fmt.Errorf("cannot load finding third parties: %w", err)
+					}
+					for _, thirdParty := range thirdParties {
+						if thirdParty.OrganizationID != finding.OrganizationID {
+							return fmt.Errorf("cannot update finding third parties: third party belongs to another organization")
+						}
+					}
+				}
+
+				var findingThirdParties coredata.FindingThirdParties
+				if err := findingThirdParties.Merge(ctx, conn, scope, finding.ID, finding.OrganizationID, req.ThirdPartyIDs); err != nil {
+					return fmt.Errorf("cannot update finding third parties: %w", err)
+				}
 			}
 
 			return nil
@@ -491,6 +514,59 @@ func (s FindingService) CountForAuditID(
 			count, err = findings.CountByAuditID(ctx, conn, scope, auditID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count findings: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s FindingService) ListForThirdPartyID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	thirdPartyID gid.GID,
+	cursor *page.Cursor[coredata.FindingOrderField],
+	filter *coredata.FindingFilter,
+) (*page.Page[*coredata.Finding, coredata.FindingOrderField], error) {
+	var findings coredata.Findings
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := findings.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load third party findings: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(findings, cursor), nil
+}
+
+func (s FindingService) CountForThirdPartyID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	thirdPartyID gid.GID,
+	filter *coredata.FindingFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			var findings coredata.Findings
+			count, err = findings.CountByThirdPartyID(ctx, conn, scope, thirdPartyID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count third party findings: %w", err)
 			}
 
 			return nil

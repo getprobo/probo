@@ -79,6 +79,9 @@ export const thirdPartyDetailLayoutQuery = graphql`
         measuresInfo: measures(first: 0) {
           totalCount
         }
+        findingsInfo: findings(first: 0) {
+          totalCount
+        }
       }
     }
   }
@@ -196,6 +199,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
   const logo = faviconUrl(thirdParty.websiteUrl);
   const reportsCount = thirdParty.complianceReportsInfo?.edges.length ?? 0;
   const measuresCount = thirdParty.measuresInfo?.totalCount ?? 0;
+  const findingsCount = thirdParty.findingsInfo.totalCount;
   const isVettingFailed = thirdParty.vettingStatus === "FAILED";
   const ancestors = thirdParty.ancestors ?? [];
 
@@ -305,6 +309,10 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
         <TabLink to={`${baseThirdPartyUrl}/measures`}>
           {t("thirdPartyDetailLayout.tabs.measures")}
           {measuresCount > 0 && <TabBadge>{measuresCount}</TabBadge>}
+        </TabLink>
+        <TabLink to={`${baseThirdPartyUrl}/findings`}>
+          {t("thirdPartyDetailLayout.tabs.findings")}
+          {findingsCount > 0 && <TabBadge>{findingsCount}</TabBadge>}
         </TabLink>
       </Tabs>
 
