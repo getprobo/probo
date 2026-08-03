@@ -52,7 +52,7 @@ func (cpa *CompliancePortalAudit) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_audits WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_audits WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{"resource_ids": resourceIDs}
 
@@ -101,7 +101,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_audits
+	cp_audits
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -153,7 +153,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_audits
+	cp_audits
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -219,7 +219,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_audits
+	cp_audits
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -284,7 +284,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_audits
+	cp_audits
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -329,7 +329,7 @@ func (cpa *CompliancePortalAudit) Upsert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_center_audits (
+INSERT INTO cp_audits (
 	id,
 	tenant_id,
 	organization_id,
@@ -397,7 +397,7 @@ func DeleteCompliancePortalAuditByCompliancePortalIDAndAuditID(
 	auditID gid.GID,
 ) error {
 	q := `
-DELETE FROM trust_center_audits
+DELETE FROM cp_audits
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -427,7 +427,7 @@ func DeleteCompliancePortalAuditByID(
 	id gid.GID,
 ) error {
 	q := `
-DELETE FROM trust_center_audits
+DELETE FROM cp_audits
 WHERE
 	%s
 	AND id = @id

@@ -159,9 +159,9 @@ func (f *MembershipProfileFilter) SQLFragment() string {
 (
 	CASE
 		WHEN @with_trust_center_access::boolean IS NOT NULL AND @with_trust_center_access::boolean = TRUE THEN
-			EXISTS (SELECT 1 FROM trust_center_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
+			EXISTS (SELECT 1 FROM cp_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
 		WHEN @with_trust_center_access::boolean IS NOT NULL AND @with_trust_center_access::boolean = FALSE THEN
-			NOT EXISTS (SELECT 1 FROM trust_center_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
+			NOT EXISTS (SELECT 1 FROM cp_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
 		ELSE TRUE
 	END
 )

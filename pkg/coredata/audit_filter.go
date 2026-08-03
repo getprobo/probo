@@ -87,10 +87,10 @@ func (f *AuditFilter) SQLFragment() string {
 			AND @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
 			EXISTS (
 				SELECT 1
-				FROM trust_center_audits
-				WHERE trust_center_audits.audit_id = audits.id
-					AND trust_center_audits.trust_center_id = @compliance_portal_id
-					AND trust_center_audits.visibility = ANY(
+				FROM cp_audits
+				WHERE cp_audits.audit_id = audits.id
+					AND cp_audits.trust_center_id = @compliance_portal_id
+					AND cp_audits.visibility = ANY(
 						@trust_center_visibilities::trust_center_visibility[]
 					)
 			)

@@ -41,7 +41,7 @@ type (
 		OrganizationID        gid.GID `db:"organization_id"`
 		CurrentPublishedMajor *int    `db:"current_published_major"`
 		CurrentPublishedMinor *int    `db:"current_published_minor"`
-		// Portal-scoped, so it lives in trust_center_documents rather than on
+		// Portal-scoped, so it lives in cp_documents rather than on
 		// the document row. Loaders that resolve a portal populate it.
 		CompliancePortalVisibility CompliancePortalVisibility `db:"-"`
 		WriteMode                  DocumentWriteMode          `db:"write_mode"`

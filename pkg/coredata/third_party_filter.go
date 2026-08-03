@@ -101,9 +101,9 @@ func (f *ThirdPartyFilter) SQLFragment() string {
 		WHEN @compliance_portal_id::text IS NOT NULL THEN
 			EXISTS (
 				SELECT 1
-				FROM trust_center_third_parties
-				WHERE trust_center_third_parties.third_party_id = third_parties.id
-					AND trust_center_third_parties.trust_center_id = @compliance_portal_id
+				FROM cp_third_parties
+				WHERE cp_third_parties.third_party_id = third_parties.id
+					AND cp_third_parties.trust_center_id = @compliance_portal_id
 			)
 		ELSE TRUE
 	END

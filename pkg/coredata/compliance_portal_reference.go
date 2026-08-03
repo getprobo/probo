@@ -72,7 +72,7 @@ func (t *CompliancePortalReference) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_references WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_references WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -125,7 +125,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
     AND id = @trust_center_reference_id
@@ -138,7 +138,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_references: %w", err)
+		return fmt.Errorf("cannot query cp_references: %w", err)
 	}
 
 	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalReference])
@@ -171,7 +171,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
     AND trust_center_id = @trust_center_id
@@ -188,7 +188,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_references: %w", err)
+		return fmt.Errorf("cannot query cp_references: %w", err)
 	}
 
 	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalReference])
@@ -212,7 +212,7 @@ func (t *CompliancePortalReference) Insert(
 ) error {
 	q := `
 INSERT INTO
-    trust_center_references (
+    cp_references (
         tenant_id,
         id,
         organization_id,
@@ -234,7 +234,7 @@ VALUES (
     @description,
     @website_url,
     @logo_file_id,
-    (SELECT COALESCE(MAX(rank), 0) + 1 FROM trust_center_references WHERE trust_center_id = @trust_center_id),
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM cp_references WHERE trust_center_id = @trust_center_id),
     @created_at,
     @updated_at
 )
@@ -257,7 +257,7 @@ RETURNING rank;
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_references_trust_center_id_rank_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_references_cp_id_rank_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -274,7 +274,7 @@ func (t *CompliancePortalReference) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_references
+UPDATE cp_references
 SET
     name = @name,
     description = @description,
@@ -319,11 +319,11 @@ func (t *CompliancePortalReference) UpdateRank(
 WITH old AS (
   SELECT
 	rank AS old_rank
-  FROM trust_center_references
+  FROM cp_references
   WHERE %s AND id = @id AND trust_center_id = @trust_center_id
 )
 
-UPDATE trust_center_references
+UPDATE cp_references
 SET
     rank = CASE
         WHEN id = @id THEN @new_rank
@@ -367,7 +367,7 @@ func (t *CompliancePortalReference) Delete(
 ) error {
 	q := `
 DELETE FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
     AND id = @id
@@ -406,7 +406,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
     AND trust_center_id = @trust_center_id
@@ -421,7 +421,7 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_references: %w", err)
+		return fmt.Errorf("cannot query cp_references: %w", err)
 	}
 
 	references, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalReference])
@@ -444,7 +444,7 @@ func (t *CompliancePortalReferences) CountByCompliancePortalID(
 SELECT
     COUNT(*)
 FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
     AND trust_center_id = @trust_center_id

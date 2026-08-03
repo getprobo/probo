@@ -68,7 +68,7 @@ func (t *CompliancePortalFile) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_files WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_files WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -120,7 +120,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_files
+    cp_files
 WHERE
     %s
     AND id = @trust_center_file_id
@@ -133,7 +133,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_files: %w", err)
+		return fmt.Errorf("cannot query cp_files: %w", err)
 	}
 
 	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalFile])
@@ -165,7 +165,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_files
+    cp_files
 WHERE
     %s
     AND trust_center_id = @trust_center_id
@@ -182,7 +182,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_files: %w", err)
+		return fmt.Errorf("cannot query cp_files: %w", err)
 	}
 
 	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalFile])
@@ -217,7 +217,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_files
+    cp_files
 WHERE
     %s
     AND id = ANY(@ids);
@@ -255,7 +255,7 @@ func (t CompliancePortalFile) Insert(
 ) error {
 	q := `
 INSERT INTO
-    trust_center_files (
+    cp_files (
         tenant_id,
         id,
         organization_id,
@@ -308,7 +308,7 @@ func (t *CompliancePortalFile) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_files
+UPDATE cp_files
 SET
     name = @name,
     category = @category,
@@ -362,7 +362,7 @@ func (t *CompliancePortalFile) Delete(
 ) error {
 	q := `
 DELETE FROM
-    trust_center_files
+    cp_files
 WHERE
     %s
     AND id = @id
@@ -401,7 +401,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_files
+    cp_files
 WHERE
     %s
     AND trust_center_id = @trust_center_id
@@ -418,7 +418,7 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_files: %w", err)
+		return fmt.Errorf("cannot query cp_files: %w", err)
 	}
 
 	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalFile])
@@ -441,7 +441,7 @@ func (t *CompliancePortalFiles) CountByCompliancePortalID(
 SELECT
     COUNT(*)
 FROM
-    trust_center_files
+    cp_files
 WHERE
     %s
     AND trust_center_id = @trust_center_id

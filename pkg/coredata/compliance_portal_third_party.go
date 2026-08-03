@@ -51,7 +51,7 @@ func (cptp *CompliancePortalThirdParty) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_third_parties WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_third_parties WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{"resource_ids": resourceIDs}
 
@@ -89,7 +89,7 @@ func (cptp *CompliancePortalThirdParty) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_center_third_parties (
+INSERT INTO cp_third_parties (
 	id,
 	tenant_id,
 	organization_id,
@@ -135,7 +135,7 @@ func DeleteCompliancePortalThirdPartyByCompliancePortalIDAndThirdPartyID(
 	thirdPartyID gid.GID,
 ) error {
 	q := `
-DELETE FROM trust_center_third_parties
+DELETE FROM cp_third_parties
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -165,7 +165,7 @@ func DeleteCompliancePortalThirdPartyByID(
 	id gid.GID,
 ) error {
 	q := `
-DELETE FROM trust_center_third_parties
+DELETE FROM cp_third_parties
 WHERE
 	%s
 	AND id = @id
@@ -200,7 +200,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_third_parties
+	cp_third_parties
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -248,7 +248,7 @@ func LoadThirdPartyPublishedByCompliancePortalIDAndThirdPartyIDs(
 SELECT
 	third_party_id
 FROM
-	trust_center_third_parties
+	cp_third_parties
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -310,7 +310,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_third_parties
+	cp_third_parties
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id

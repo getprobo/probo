@@ -799,7 +799,7 @@ WHERE
     %s
     AND id IN (
         SELECT third_party_id
-        FROM trust_center_third_parties
+        FROM cp_third_parties
         WHERE trust_center_id = @compliance_portal_id
     )
 ORDER BY
@@ -838,7 +838,7 @@ WHERE
     %s
     AND id IN (
         SELECT third_party_id
-        FROM trust_center_third_parties
+        FROM cp_third_parties
         WHERE trust_center_id = @compliance_portal_id
     )
 ORDER BY

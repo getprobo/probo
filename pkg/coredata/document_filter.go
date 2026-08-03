@@ -191,10 +191,10 @@ func (f *DocumentFilter) SQLFragment() string {
 			AND @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
 			EXISTS (
 				SELECT 1
-				FROM trust_center_documents
-				WHERE trust_center_documents.document_id = documents.id
-					AND trust_center_documents.trust_center_id = @compliance_portal_id
-					AND trust_center_documents.visibility = ANY(
+				FROM cp_documents
+				WHERE cp_documents.document_id = documents.id
+					AND cp_documents.trust_center_id = @compliance_portal_id
+					AND cp_documents.visibility = ANY(
 						@trust_center_visibilities::trust_center_visibility[]
 					)
 			)

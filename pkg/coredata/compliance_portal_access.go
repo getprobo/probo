@@ -64,7 +64,7 @@ func (tca *CompliancePortalAccess) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_accesses WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_accesses WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -115,7 +115,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_accesses
+	cp_accesses
 WHERE
 	%s
 	AND id = @access_id
@@ -164,7 +164,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_accesses
+	cp_accesses
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -216,7 +216,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_accesses
+	cp_accesses
 WHERE
 	%s
 	AND electronic_signature_id = @electronic_signature_id
@@ -253,7 +253,7 @@ func (tca *CompliancePortalAccess) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_center_accesses (
+INSERT INTO cp_accesses (
 	id,
 	tenant_id,
 	organization_id,
@@ -288,7 +288,7 @@ INSERT INTO trust_center_accesses (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_accesses_identity_id_trust_center_id_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_accesses_identity_id_cp_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -305,7 +305,7 @@ func (tca *CompliancePortalAccess) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_accesses SET
+UPDATE cp_accesses SET
 	updated_at = @updated_at,
 	electronic_signature_id = @electronic_signature_id
 WHERE
@@ -336,7 +336,7 @@ func (tca *CompliancePortalAccess) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM trust_center_accesses
+DELETE FROM cp_accesses
 WHERE
 	%s
 	AND id = @id
@@ -375,7 +375,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_accesses
+	cp_accesses
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id

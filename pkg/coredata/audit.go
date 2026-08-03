@@ -789,7 +789,7 @@ WHERE %s
 		SELECT
 			audit_id
 		FROM
-			trust_center_audits
+			cp_audits
 		WHERE %s
 			AND trust_center_id = @trust_center_id
 	)

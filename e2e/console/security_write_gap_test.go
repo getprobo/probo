@@ -74,7 +74,7 @@ func TestSecurity_WriteGap_PublishRiskListApproverIDs(t *testing.T) {
 // TestSecurity_WriteGap_CompliancePortalAccessDocuments covers a write-gap found
 // while auditing GHSA-c74x-79w6-63jh's blast radius: CompliancePortalAccessService.Update
 // persisted caller-supplied document/report-file/trust-center-file ids into
-// trust_center_document_accesses (via coredata's MergeDocumentAccesses/
+// cp_document_accesses (via coredata's MergeDocumentAccesses/
 // MergeReportFileAccesses/MergeCompliancePortalFileAccesses) without validating
 // they belong to the compliance portal's own organization -- the DB-level FK check
 // alone doesn't catch this because those primary keys are globally unique,
@@ -150,7 +150,7 @@ func TestSecurity_WriteGap_CompliancePortalAccessDocuments(t *testing.T) {
 	})
 }
 
-// seedCompliancePortalAccess inserts a minimal trust_center_accesses row directly
+// seedCompliancePortalAccess inserts a minimal cp_accesses row directly
 // via SQL, bypassing the trust/v1 visitor request flow (which requires a
 // separate authenticated visitor identity and NDA acceptance) so that
 // updateCompliancePortalAccess -- the mutation under test -- can be exercised in
@@ -171,7 +171,7 @@ func seedCompliancePortalAccess(t *testing.T, owner *testutil.Client, compliance
 
 	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		_, err := conn.Exec(ctx, `
-			INSERT INTO trust_center_accesses (id, tenant_id, organization_id, trust_center_id, identity_id, email, name, state, created_at, updated_at)
+			INSERT INTO cp_accesses (id, tenant_id, organization_id, trust_center_id, identity_id, email, name, state, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE', $8, $8)
 		`,
 			accessID.String(), tenantID.String(), owner.GetOrganizationID().String(), tcID.String(),
@@ -180,7 +180,7 @@ func seedCompliancePortalAccess(t *testing.T, owner *testutil.Client, compliance
 
 		return err
 	})
-	require.NoError(t, err, "test setup: cannot seed trust_center_accesses row")
+	require.NoError(t, err, "test setup: cannot seed cp_accesses row")
 
 	return accessID.String()
 }

@@ -65,7 +65,7 @@ func (tcda *CompliancePortalDocumentAccess) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_document_accesses WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_document_accesses WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -117,7 +117,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND id = @access_id
@@ -167,7 +167,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
@@ -221,7 +221,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
@@ -262,7 +262,7 @@ func (tcda *CompliancePortalDocumentAccess) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,
@@ -305,9 +305,9 @@ INSERT INTO trust_center_document_accesses (
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
 				switch pgErr.ConstraintName {
-				case "trust_center_document_accesse_trust_center_access_id_docume_key",
-					"trust_center_document_accesses_trust_center_access_id_report_file_key",
-					"trust_center_document_accesses_trust_center_file_id_key":
+				case "cp_document_accesses_cp_access_id_document_id_key",
+					"cp_document_accesses_cp_access_id_report_file_id_key",
+					"cp_document_accesses_cp_file_id_key":
 					return ErrResourceAlreadyExists
 				}
 			}
@@ -325,7 +325,7 @@ func (tcda *CompliancePortalDocumentAccess) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses SET
+UPDATE cp_document_accesses SET
     status = @status::trust_center_document_access_status,
     updated_at = @updated_at
 WHERE
@@ -356,7 +356,7 @@ func (tcda *CompliancePortalDocumentAccess) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM trust_center_document_accesses
+DELETE FROM cp_document_accesses
 WHERE
     %s
     AND id = @id
@@ -387,7 +387,7 @@ func (tcdas *CompliancePortalDocumentAccesses) CountByCompliancePortalAccessID(
 SELECT
     COUNT(id)
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
@@ -420,7 +420,7 @@ func (tcdas *CompliancePortalDocumentAccesses) CountPendingRequestByCompliancePo
 SELECT
     COUNT(id)
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
@@ -454,7 +454,7 @@ func (tcdas *CompliancePortalDocumentAccesses) CountActiveByCompliancePortalAcce
 SELECT
     COUNT(id)
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
@@ -488,7 +488,7 @@ func (tcdas *CompliancePortalDocumentAccesses) LoadAvailableByCompliancePortalAc
 	q := `
 WITH organization AS (
     SELECT tc.organization_id, tc.id AS trust_center_id
-    FROM trust_center_accesses tca
+    FROM cp_accesses tca
     INNER JOIN trust_centers tc ON tca.trust_center_id = tc.id
     WHERE tca.tenant_id = @tenant_id
         AND tca.id = @trust_center_access_id
@@ -513,7 +513,7 @@ all_items AS (
         AND d.current_published_major IS NOT NULL
         AND d.id IN (
             SELECT tcd.document_id
-            FROM trust_center_documents tcd
+            FROM cp_documents tcd
             WHERE tcd.trust_center_id = (SELECT trust_center_id FROM organization)
                 AND tcd.visibility = 'RESTRICTED'::trust_center_visibility
         )
@@ -532,7 +532,7 @@ all_items AS (
         AND r.report_file_id IS NOT NULL
         AND r.id IN (
             SELECT tca.audit_id
-            FROM trust_center_audits tca
+            FROM cp_audits tca
             WHERE tca.trust_center_id = (SELECT trust_center_id FROM organization)
                 AND tca.visibility = 'RESTRICTED'::trust_center_visibility
         )
@@ -546,7 +546,7 @@ all_items AS (
         tcf.id AS trust_center_file_id,
         tcf.created_at AS item_created_at,
         tcf.updated_at AS item_updated_at
-    FROM trust_center_files tcf, tenant_organization o
+    FROM cp_files tcf, tenant_organization o
     WHERE tcf.organization_id = o.organization_id
         AND tcf.trust_center_id = (SELECT trust_center_id FROM organization)
         AND (
@@ -567,7 +567,7 @@ final_items AS (
       COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
       COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
   FROM all_items ai
-  LEFT JOIN trust_center_document_accesses tcda ON (
+  LEFT JOIN cp_document_accesses tcda ON (
       tcda.trust_center_access_id = @trust_center_access_id
       AND (
           (tcda.document_id = ai.document_id AND ai.document_id IS NOT NULL)
@@ -632,7 +632,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
@@ -671,7 +671,7 @@ func GrantByDocumentIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
     %s
@@ -705,7 +705,7 @@ func RejectOrRevokeByDocumentIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET
     status = CASE
         WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
@@ -744,7 +744,7 @@ func GrantByReportFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
     %s
@@ -778,7 +778,7 @@ func RejectOrRevokeByReportFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET
     status = CASE
         WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
@@ -831,7 +831,7 @@ WITH data AS (
             status trust_center_document_access_status
         )
 )
-MERGE INTO trust_center_document_accesses AS tcda
+MERGE INTO cp_document_accesses AS tcda
 USING data
     ON data.id = tcda.document_id
     AND tcda.tenant_id = @tenant_id
@@ -914,7 +914,7 @@ WITH document_access_data AS (
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,
@@ -966,7 +966,7 @@ WITH data AS (
             status trust_center_document_access_status
         )
 )
-MERGE INTO trust_center_document_accesses AS tcda
+MERGE INTO cp_document_accesses AS tcda
 USING data
     ON data.id = tcda.report_file_id
     AND tcda.tenant_id = @tenant_id
@@ -1049,7 +1049,7 @@ WITH report_file_access_data AS (
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,
@@ -1102,7 +1102,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
@@ -1146,7 +1146,7 @@ func GrantByCompliancePortalFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
     %s
@@ -1180,7 +1180,7 @@ func RejectOrRevokeByCompliancePortalFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET
     status = CASE
         WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
@@ -1228,7 +1228,7 @@ WITH data AS (
             status trust_center_document_access_status
         )
 )
-MERGE INTO trust_center_document_accesses AS tcda
+MERGE INTO cp_document_accesses AS tcda
 USING data
     ON data.id = tcda.trust_center_file_id
     AND tcda.tenant_id = @tenant_id
@@ -1307,7 +1307,7 @@ WITH trust_center_file_access_data AS (
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,

@@ -52,7 +52,7 @@ func (cpd *CompliancePortalDocument) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_documents WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_documents WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{"resource_ids": resourceIDs}
 
@@ -101,7 +101,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_documents
+	cp_documents
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -150,7 +150,7 @@ SELECT
 	document_id,
 	visibility
 FROM
-	trust_center_documents
+	cp_documents
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -216,7 +216,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_documents
+	cp_documents
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -261,7 +261,7 @@ func (cpd *CompliancePortalDocument) Upsert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_center_documents (
+INSERT INTO cp_documents (
 	id,
 	tenant_id,
 	organization_id,
@@ -328,7 +328,7 @@ func DeleteCompliancePortalDocumentByCompliancePortalIDAndDocumentID(
 	documentID gid.GID,
 ) error {
 	q := `
-DELETE FROM trust_center_documents
+DELETE FROM cp_documents
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -358,7 +358,7 @@ func DeleteCompliancePortalDocumentByID(
 	id gid.GID,
 ) error {
 	q := `
-DELETE FROM trust_center_documents
+DELETE FROM cp_documents
 WHERE
 	%s
 	AND id = @id
@@ -384,7 +384,7 @@ func DeleteCompliancePortalDocumentsByDocumentIDs(
 	documentIDs []gid.GID,
 ) error {
 	q := `
-DELETE FROM trust_center_documents
+DELETE FROM cp_documents
 WHERE
 	%s
 	AND document_id = ANY(@document_ids)
