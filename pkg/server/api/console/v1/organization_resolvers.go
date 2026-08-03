@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -57,6 +58,55 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 
 	return &types.UpdateOrganizationContextPayload{
 		Context: types.NewOrganizationContext(organizationContext),
+	}, nil
+}
+
+// UpdateMalaysiaPDPAProfile is the resolver for the updateMalaysiaPDPAProfile field.
+func (r *mutationResolver) UpdateMalaysiaPDPAProfile(ctx context.Context, input types.UpdateMalaysiaPDPAProfileInput) (*types.UpdateMalaysiaPDPAProfilePayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionMalaysiaPDPAProfileUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	assessor, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(
+		ctx,
+		identity.ID,
+		input.OrganizationID,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Malaysia PDPA assessor profile", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	pdpaProfile, err := r.probo.Organizations.UpdateMalaysiaPDPAProfile(
+		ctx,
+		scope,
+		probo.UpdateMalaysiaPDPAProfileRequest{
+			OrganizationID:                    input.OrganizationID,
+			TotalDataSubjects:                 input.TotalDataSubjects,
+			SensitiveDataSubjects:             input.SensitiveDataSubjects,
+			RegularSystematicMonitoring:       input.RegularSystematicMonitoring,
+			AssessedByProfileID:               assessor.ID,
+			DPOProfileID:                      input.DPOProfileID,
+			DPOAppointedAt:                    input.DPOAppointedAt,
+			CommissionerNotifiedAt:            input.CommissionerNotifiedAt,
+			CommissionerNotificationReference: input.CommissionerNotificationReference,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update Malaysia PDPA profile", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateMalaysiaPDPAProfilePayload{
+		MalaysiaPDPAProfile: types.NewMalaysiaPDPAProfile(pdpaProfile),
 	}, nil
 }
 
@@ -100,6 +150,23 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 	}
 
 	return types.NewOrganizationContext(orgContext), nil
+}
+
+// MalaysiaPDPAProfile is the resolver for the malaysiaPDPAProfile field.
+func (r *organizationResolver) MalaysiaPDPAProfile(ctx context.Context, obj *types.Organization) (*types.MalaysiaPDPAProfile, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMalaysiaPDPAProfileGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pdpaProfile, err := r.probo.Organizations.GetMalaysiaPDPAProfile(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Malaysia PDPA profile", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMalaysiaPDPAProfile(pdpaProfile), nil
 }
 
 // Profiles is the resolver for the profiles field.

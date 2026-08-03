@@ -164,6 +164,11 @@ export class Probo implements INodeType {
 						description: 'Manage frameworks',
 					},
 					{
+						name: 'Malaysia PDPA',
+						value: 'malaysiaPDPA',
+						description: 'Manage the Malaysia PDPA profile and DPO assessment',
+					},
+					{
 						name: 'Measure',
 						value: 'measure',
 						description: 'Manage measures',

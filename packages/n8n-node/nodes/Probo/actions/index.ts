@@ -36,6 +36,7 @@ import * as evidence from './evidence';
 import * as execute from './execute';
 import * as finding from './finding';
 import * as framework from './framework';
+import * as malaysiaPDPA from './malaysiaPDPA';
 import * as measure from './measure';
 import * as obligation from './obligation';
 import * as organization from './organization';
@@ -81,6 +82,7 @@ export const resources: Record<string, ResourceModule> = {
 	execute: execute as ResourceModule,
 	finding: finding as ResourceModule,
 	framework: framework as ResourceModule,
+	malaysiaPDPA: malaysiaPDPA as ResourceModule,
 	measure: measure as ResourceModule,
 	obligation: obligation as ResourceModule,
 	organization: organization as ResourceModule,

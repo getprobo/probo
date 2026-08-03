@@ -1,3 +1,23 @@
+# Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 type OrganizationContext {
     organizationId: ID!
     product: String
@@ -102,6 +122,58 @@ type UpdateOrganizationContextPayload {
     context: OrganizationContext!
 }
 
+enum DPORequirementReason
+    @goModel(
+        model: "go.probo.inc/probo/pkg/malaysiapdpa.DPORequirementReason"
+    ) {
+    PERSONAL_DATA_VOLUME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/malaysiapdpa.DPORequirementReasonPersonalDataVolume"
+        )
+    SENSITIVE_OR_FINANCIAL_DATA_VOLUME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/malaysiapdpa.DPORequirementReasonSensitiveDataVolume"
+        )
+    REGULAR_AND_SYSTEMATIC_MONITORING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/malaysiapdpa.DPORequirementReasonRegularMonitoring"
+        )
+}
+
+type MalaysiaPDPAProfile {
+    organizationId: ID!
+    totalDataSubjects: BigInt!
+    sensitiveDataSubjects: BigInt!
+    regularSystematicMonitoring: Boolean!
+    dpoRequired: Boolean! @goField(name: "DPORequired")
+    dpoRequirementReasons: [DPORequirementReason!]!
+        @goField(name: "DPORequirementReasons")
+    assessedByProfileId: ID
+    assessedAt: Datetime
+    dpoProfileId: ID @goField(name: "DPOProfileID")
+    dpoAppointedAt: Datetime @goField(name: "DPOAppointedAt")
+    commissionerNotificationDueAt: Datetime
+    commissionerNotifiedAt: Datetime
+    commissionerNotificationReference: String
+    createdAt: Datetime
+    updatedAt: Datetime
+}
+
+input UpdateMalaysiaPDPAProfileInput {
+    organizationId: ID!
+    totalDataSubjects: BigInt!
+    sensitiveDataSubjects: BigInt!
+    regularSystematicMonitoring: Boolean!
+    dpoProfileId: ID @goField(name: "DPOProfileID")
+    dpoAppointedAt: Datetime @goField(name: "DPOAppointedAt")
+    commissionerNotifiedAt: Datetime
+    commissionerNotificationReference: String
+}
+
+type UpdateMalaysiaPDPAProfilePayload {
+    malaysiaPDPAProfile: MalaysiaPDPAProfile!
+}
+
 type Organization implements Node {
     id: ID!
     name: String!
@@ -109,6 +181,8 @@ type Organization implements Node {
     horizontalLogo: File @goField(forceResolver: true)
 
     context: OrganizationContext @goField(forceResolver: true)
+
+    malaysiaPDPAProfile: MalaysiaPDPAProfile! @goField(forceResolver: true)
 
     profiles(
         first: Int
@@ -383,4 +457,8 @@ extend type Mutation {
     updateOrganizationContext(
         input: UpdateOrganizationContextInput!
     ): UpdateOrganizationContextPayload!
+
+    updateMalaysiaPDPAProfile(
+        input: UpdateMalaysiaPDPAProfileInput!
+    ): UpdateMalaysiaPDPAProfilePayload!
 }

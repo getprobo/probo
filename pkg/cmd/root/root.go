@@ -45,6 +45,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/evidence"
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
+	"go.probo.inc/probo/pkg/cmd/malaysiapdpa"
 	"go.probo.inc/probo/pkg/cmd/measure"
 	"go.probo.inc/probo/pkg/cmd/obligation"
 	"go.probo.inc/probo/pkg/cmd/org"
@@ -120,6 +121,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(evidence.NewCmdEvidence(f))
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))
+	cmd.AddCommand(malaysiapdpa.NewCmdMalaysiaPDPA(f))
 	cmd.AddCommand(measure.NewCmdMeasure(f))
 	cmd.AddCommand(obligation.NewCmdObligation(f))
 	cmd.AddCommand(org.NewCmdOrg(f))

@@ -8150,3 +8150,68 @@ func (r *Resolver) DeleteCompliancePortalFrameworkTool(ctx context.Context, req 
 		DeletedCompliancePortalFrameworkID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) GetMalaysiaPDPAProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMalaysiaPDPAProfileInput) (*mcp.CallToolResult, types.GetMalaysiaPDPAProfileOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionMalaysiaPDPAProfileGet)
+	if err != nil {
+		return nil, types.GetMalaysiaPDPAProfileOutput{}, err
+	}
+
+	profile, err := r.proboSvc.Organizations.GetMalaysiaPDPAProfile(ctx, scope, input.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get Malaysia PDPA profile", log.Error(err))
+
+		return nil, types.GetMalaysiaPDPAProfileOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetMalaysiaPDPAProfileOutput{
+		MalaysiaPdpaProfile: types.NewMalaysiaPDPAProfile(profile),
+	}, nil
+}
+func (r *Resolver) UpdateMalaysiaPDPAProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMalaysiaPDPAProfileInput) (*mcp.CallToolResult, types.UpdateMalaysiaPDPAProfileOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionMalaysiaPDPAProfileUpdate)
+	if err != nil {
+		return nil, types.UpdateMalaysiaPDPAProfileOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	assessor, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(
+		ctx,
+		identity.ID,
+		input.OrganizationID,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Malaysia PDPA assessor profile", log.Error(err))
+
+		return nil, types.UpdateMalaysiaPDPAProfileOutput{}, fmt.Errorf("internal server error")
+	}
+
+	profile, err := r.proboSvc.Organizations.UpdateMalaysiaPDPAProfile(
+		ctx,
+		scope,
+		probo.UpdateMalaysiaPDPAProfileRequest{
+			OrganizationID:                    input.OrganizationID,
+			TotalDataSubjects:                 int64(input.TotalDataSubjects),
+			SensitiveDataSubjects:             int64(input.SensitiveDataSubjects),
+			RegularSystematicMonitoring:       input.RegularSystematicMonitoring,
+			AssessedByProfileID:               assessor.ID,
+			DPOProfileID:                      input.DpoProfileID,
+			DPOAppointedAt:                    input.DpoAppointedAt,
+			CommissionerNotifiedAt:            input.CommissionerNotifiedAt,
+			CommissionerNotificationReference: input.CommissionerNotificationReference,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.UpdateMalaysiaPDPAProfileOutput{}, validationErrors
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update Malaysia PDPA profile", log.Error(err))
+
+		return nil, types.UpdateMalaysiaPDPAProfileOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.UpdateMalaysiaPDPAProfileOutput{
+		MalaysiaPdpaProfile: types.NewMalaysiaPDPAProfile(profile),
+	}, nil
+}

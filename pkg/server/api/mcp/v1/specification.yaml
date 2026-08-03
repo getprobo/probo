@@ -8848,6 +8848,140 @@ components:
         campaign:
           $ref: "#/components/schemas/AccessReviewCampaign"
 
+    DPORequirementReason:
+      type: string
+      enum:
+        - PERSONAL_DATA_VOLUME
+        - SENSITIVE_OR_FINANCIAL_DATA_VOLUME
+        - REGULAR_AND_SYSTEMATIC_MONITORING
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/malaysiapdpa.DPORequirementReason
+
+    MalaysiaPDPAProfile:
+      type: object
+      required:
+        - organization_id
+        - total_data_subjects
+        - sensitive_data_subjects
+        - regular_systematic_monitoring
+        - dpo_required
+        - dpo_requirement_reasons
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        total_data_subjects:
+          type: integer
+          format: int64
+          description: Estimated total number of data subjects
+        sensitive_data_subjects:
+          type: integer
+          format: int64
+          description: Estimated number of data subjects whose sensitive or financial data is processed
+        regular_systematic_monitoring:
+          type: boolean
+          description: Whether processing includes regular and systematic monitoring
+        dpo_required:
+          type: boolean
+          description: Server-calculated DPO appointment requirement
+        dpo_requirement_reasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/DPORequirementReason"
+          description: Criteria that triggered the DPO requirement
+        assessed_by_profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Membership profile that performed the latest assessment
+        assessed_at:
+          type: string
+          format: date-time
+          description: Latest assessment time
+        dpo_profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Appointed DPO membership profile
+        dpo_appointed_at:
+          type: string
+          format: date-time
+          description: DPO appointment time
+        commissioner_notification_due_at:
+          type: string
+          format: date-time
+          description: Date by which the DPO appointment should be notified to the Commissioner
+        commissioner_notified_at:
+          type: string
+          format: date-time
+          description: Date the DPO appointment was notified to the Commissioner
+        commissioner_notification_reference:
+          type: string
+          description: Evidence or reference for the Commissioner notification
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GetMalaysiaPDPAProfileInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    GetMalaysiaPDPAProfileOutput:
+      type: object
+      required:
+        - malaysia_pdpa_profile
+      properties:
+        malaysia_pdpa_profile:
+          $ref: "#/components/schemas/MalaysiaPDPAProfile"
+
+    UpdateMalaysiaPDPAProfileInput:
+      type: object
+      required:
+        - organization_id
+        - total_data_subjects
+        - sensitive_data_subjects
+        - regular_systematic_monitoring
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        total_data_subjects:
+          type: integer
+          format: int64
+          description: Estimated total number of data subjects
+        sensitive_data_subjects:
+          type: integer
+          format: int64
+          description: Estimated number of data subjects whose sensitive or financial data is processed
+        regular_systematic_monitoring:
+          type: boolean
+          description: Whether processing includes regular and systematic monitoring
+        dpo_profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Appointed DPO membership profile
+        dpo_appointed_at:
+          type: string
+          format: date-time
+          description: DPO appointment time
+        commissioner_notified_at:
+          type: string
+          format: date-time
+          description: Date the DPO appointment was notified to the Commissioner
+        commissioner_notification_reference:
+          type: string
+          description: Evidence or reference for the Commissioner notification
+
+    UpdateMalaysiaPDPAProfileOutput:
+      type: object
+      required:
+        - malaysia_pdpa_profile
+      properties:
+        malaysia_pdpa_profile:
+          $ref: "#/components/schemas/MalaysiaPDPAProfile"
+
     OrganizationContext:
       type: object
       required:
@@ -15713,6 +15847,30 @@ tools:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignSourceMCPOutput"
+  - name: getMalaysiaPDPAProfile
+    title: Get Malaysia PDPA Profile
+    description: Get the organization's Malaysia PDPA profile and server-calculated DPO assessment
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetMalaysiaPDPAProfileInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetMalaysiaPDPAProfileOutput"
+  - name: updateMalaysiaPDPAProfile
+    title: Update Malaysia PDPA Profile
+    description: Update Malaysia PDPA processing volumes, monitoring status, and DPO appointment records
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMalaysiaPDPAProfileInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMalaysiaPDPAProfileOutput"
   - name: getOrganizationContext
     title: Get Organization Context
     description: Get the organization context containing structured sections about the company

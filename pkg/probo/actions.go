@@ -33,6 +33,10 @@ const (
 	ActionOrganizationContextGet    = "core:organization-context:get"
 	ActionOrganizationContextUpdate = "core:organization-context:update"
 
+	// MalaysiaPDPAProfile actions
+	ActionMalaysiaPDPAProfileGet    = "core:malaysia-pdpa-profile:get"
+	ActionMalaysiaPDPAProfileUpdate = "core:malaysia-pdpa-profile:update"
+
 	// ThirdParty actions
 	ActionThirdPartyList    = "core:thirdParty:list"
 	ActionThirdPartyGet     = "core:thirdParty:get"
