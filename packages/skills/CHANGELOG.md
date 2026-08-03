@@ -5,6 +5,12 @@ this file.
 
 ## Unreleased
 
+## [0.2.1] - 2026-08-03
+
+### Fixed
+
+- `compliance-portal-commitments` skill: reference doc corrected to use the `compliance_portal_id` argument name (previously documented the stale `trust_center_id` name, which no longer matches the current API)
+
 ## [0.2.0] - 2026-07-25
 
 ### Added
