@@ -22,7 +22,7 @@ package cookiebanner
 
 import "go.probo.inc/probo/pkg/coredata"
 
-var SupportedLanguages = []string{"en", "de", "es", "fr", "id", "it", "ja", "ko", "pl", "pt", "tr", "uk", "zh"}
+var SupportedLanguages = []string{"en", "de", "es", "fr", "id", "it", "ja", "ko", "nl", "pl", "pt", "tr", "uk", "zh"}
 
 var defaultCategories = []struct {
 	Name            string
@@ -132,6 +132,13 @@ var defaultCategoryTranslationsByLanguage = map[string]map[string]struct {
 		"advertising":   {"광고", "관련 광고를 제공하고 캠페인을 추적하는 데 사용되는 쿠키입니다."},
 		"functional":    {"기능", "향상된 기능과 개인화를 가능하게 하는 쿠키입니다."},
 		"uncategorised": {"미분류", "아직 카테고리에 할당되지 않은 쿠키입니다."},
+	},
+	"nl": {
+		"necessary":     {"Noodzakelijk", "Essentiële cookies die nodig zijn voor het correct functioneren van de website."},
+		"analytics":     {"Analytisch", "Cookies die helpen te begrijpen hoe bezoekers de website gebruiken."},
+		"advertising":   {"Advertenties", "Cookies die worden gebruikt om relevante advertenties te tonen en campagnes te volgen."},
+		"functional":    {"Functioneel", "Cookies die uitgebreide functionaliteit en personalisatie mogelijk maken."},
+		"uncategorised": {"Niet gecategoriseerd", "Cookies die nog niet aan een categorie zijn toegewezen."},
 	},
 	"pl": {
 		"necessary":     {"Niezbędne", "Niezbędne pliki cookie wymagane do prawidłowego funkcjonowania strony internetowej."},
@@ -278,6 +285,33 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_notice":       "쿠키 알림",
 		"banner_description_notice": "이 사이트는 귀하의 경험을 향상시키기 위해 쿠키를 사용합니다. {{cookie_policy_link}}",
 		"button_dismiss":            "확인했습니다",
+	},
+	"nl": {
+		"banner_title":             "Cookievoorkeuren",
+		"banner_description":       "We gebruiken cookies om je ervaring te verbeteren en het websiteverkeer te analyseren. {{cookie_policy_link}}",
+		"button_accept_all":        "Alles accepteren",
+		"button_reject_all":        "Alles weigeren",
+		"button_customize":         "Aanpassen",
+		"button_save":              "Voorkeuren opslaan",
+		"panel_title":              "Voorkeuren aanpassen",
+		"panel_description":        "Kies welke cookiecategorieën je wilt toestaan. {{necessary_category}} cookies zijn altijd actief omdat ze nodig zijn om de website te laten werken.",
+		"aria_close":               "Sluiten",
+		"aria_show_details":        "Cookiedetails weergeven",
+		"aria_hide_details":        "Cookiedetails verbergen",
+		"aria_cookie_settings":     "Cookie-instellingen",
+		"privacy_policy_link_text": "Privacybeleid",
+		"cookie_policy_link_text":  "Cookiebeleid",
+		"placeholder_text":         "Deze inhoud vereist {{category}} cookies.",
+		"placeholder_button":       "Cookievoorkeuren beheren",
+
+		"banner_title_opt_out":       "Cookiemelding",
+		"banner_description_opt_out": "We gebruiken cookies en vergelijkbare technologieën. Je kunt niet-essentiële cookies weigeren. {{cookie_policy_link}}",
+		"button_acknowledge":         "OK",
+		"button_opt_out":             "Verkoop of deel mijn persoonlijke gegevens niet",
+
+		"banner_title_notice":       "Cookiemelding",
+		"banner_description_notice": "Deze website gebruikt cookies om je ervaring te verbeteren. {{cookie_policy_link}}",
+		"button_dismiss":            "Begrepen",
 	},
 	"pl": {
 		"banner_title":             "Preferencje plików cookie",
