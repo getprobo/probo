@@ -1,0 +1,117 @@
+{
+  "topBar": {
+    "tagline": "Complianceportaal",
+    "getAccess": "Toegang aanvragen",
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten",
+    "menuTitle": "Menu",
+    "nav": {
+      "documents": "Documenten",
+      "subprocessors": "Subverwerkers",
+      "updates": "Updates",
+      "requests": "Aanvragen"
+    }
+  },
+  "userMenu": {
+    "subscribe": "Abonneren op updates",
+    "subscribed": "Geabonneerd op updates",
+    "signOut": "Afmelden",
+    "signOutFailed": "Afmelden mislukt",
+    "switchToDarkMode": "Overschakelen naar donkere modus",
+    "switchToLightMode": "Overschakelen naar lichte modus"
+  },
+  "locale": {
+    "label": "Taal",
+    "updateFailed": "Taal bijwerken mislukt",
+    "mismatch": {
+      "message": "U bekijkt deze pagina in het {{language}}.",
+      "switchToMine": "Overschakelen naar {{language}}",
+      "useThis": "{{language}} als mijn taal gebruiken",
+      "dismiss": "Sluiten"
+    }
+  },
+  "common": {
+    "cancel": "Annuleren",
+    "error": "Er is iets misgegaan",
+    "previousPage": "Vorige pagina",
+    "nextPage": "Volgende pagina",
+    "pageOf": "Pagina {{current}} van {{total}}",
+    "zoomOut": "Uitzoomen",
+    "zoomIn": "Inzoomen"
+  },
+  "auth": {
+    "requestAccess": {
+      "success": "Toegang aangevraagd"
+    },
+    "fullName": {
+      "title": "Voeg uw naam toe",
+      "label": "Volledige naam",
+      "placeholder": "Jan Jansen",
+      "required": "Volledige naam is verplicht",
+      "tooShort": "Volledige naam is te kort",
+      "submit": "Doorgaan"
+    },
+    "errors": {
+      "fullNameFailed": "Uw naam kon niet worden opgeslagen. Probeer het opnieuw.",
+      "requestFailed": "Uw toegangsaanvraag kon niet worden voltooid. Probeer het opnieuw."
+    }
+  },
+  "home": {
+    "heroTitle": "Compliance bij {{name}}.",
+    "heroDescription": "Welkom bij ons complianceportaal. Hier vindt u onze beveiligingsdocumentatie en certificeringen.",
+    "sections": {
+      "compliance": "Compliance",
+      "securityCommitments": "Beveiligingstoezeggingen",
+      "trustedBy": "Vertrouwd door",
+      "recentUpdates": "Recente updates"
+    },
+    "recentUpdates": {
+      "viewAll": "Alles bekijken"
+    }
+  },
+  "notFound": {
+    "title": "Pagina niet gevonden",
+    "description": "De pagina die u zoekt bestaat niet of is verplaatst.",
+    "backHome": "Terug naar de startpagina"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Pagina niet gevonden",
+      "description": "De pagina die u zoekt bestaat niet of is mogelijk verplaatst."
+    },
+    "forbidden": {
+      "title": "Toegang geweigerd",
+      "description": "U heeft geen rechten om deze pagina te bekijken."
+    },
+    "serverError": {
+      "title": "Er is iets misgegaan",
+      "description": "Er is een onverwachte fout opgetreden. Probeer het over een moment opnieuw."
+    },
+    "generic": {
+      "title": "Er is iets misgegaan",
+      "description": "Er is een onverwachte fout opgetreden. Probeer het over een moment opnieuw."
+    },
+    "actions": {
+      "backToCompliancePortal": "Terug naar het complianceportaal",
+      "tryAgain": "Opnieuw proberen"
+    },
+    "inline": {
+      "message": "Inhoud kan niet worden geladen",
+      "retry": "Opnieuw proberen"
+    }
+  },
+  "footer": {
+    "poweredBy": "Mogelijk gemaakt door"
+  },
+  "pagination": {
+    "previous": "Vorige pagina",
+    "next": "Volgende pagina"
+  },
+  "nda": {
+    "unsignedBanner": {
+      "message": "Onderteken de NDA om toegang te krijgen tot privédocumenten.",
+      "sign": "Bekijken en ondertekenen",
+      "dismiss": "Sluiten"
+    }
+  }
+}

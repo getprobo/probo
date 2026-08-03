@@ -130,7 +130,7 @@
     "messages": { "successTitle": "Gelukt", "updated": "Bannerinstellingen bijgewerkt" },
     "errors": { "title": "Fout", "update": "Bijwerken mislukt" },
     "fields": { "name": "Naam", "origin": "Origin-URL", "cookiePolicyUrl": "URL cookiebeleid", "privacyPolicyUrl": "URL privacybeleid", "consentExpiryDays": "Vervaltermijn toestemming (dagen)", "defaultLanguage": "Standaardtaal" },
-    "languages": { "english": "Engels", "french": "Frans", "german": "Duits", "spanish": "Spaans" },
+    "languages": { "english": "Engels", "french": "Frans", "german": "Duits", "spanish": "Spaans", "dutch": "Nederlands" },
     "actions": { "saving": "Bezig met opslaan...", "save": "Opslaan" }
   },
   "trackerResourceRowEdit": {

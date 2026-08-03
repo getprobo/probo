@@ -153,6 +153,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
                     <Option value="fr">{t("bannerSettingsForm.languages.french")}</Option>
                     <Option value="de">{t("bannerSettingsForm.languages.german")}</Option>
                     <Option value="es">{t("bannerSettingsForm.languages.spanish")}</Option>
+                    <Option value="nl">{t("bannerSettingsForm.languages.dutch")}</Option>
                   </Select>
                 )}
               />

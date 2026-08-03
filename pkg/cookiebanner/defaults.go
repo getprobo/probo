@@ -135,7 +135,7 @@ var defaultCategoryTranslationsByLanguage = map[string]map[string]struct {
 	},
 	"nl": {
 		"necessary":     {"Noodzakelijk", "Essentiële cookies die nodig zijn voor het correct functioneren van de website."},
-		"analytics":     {"Analytisch", "Cookies die helpen te begrijpen hoe bezoekers de website gebruiken."},
+		"analytics":     {"Analytisch", "Cookies die helpen te begrijpen hoe bezoekers met de website omgaan."},
 		"advertising":   {"Advertenties", "Cookies die worden gebruikt om relevante advertenties te tonen en campagnes te volgen."},
 		"functional":    {"Functioneel", "Cookies die uitgebreide functionaliteit en personalisatie mogelijk maken."},
 		"uncategorised": {"Niet gecategoriseerd", "Cookies die nog niet aan een categorie zijn toegewezen."},
@@ -316,13 +316,13 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 	},
 	"nl": {
 		"banner_title":             "Cookievoorkeuren",
-		"banner_description":       "We gebruiken cookies om je ervaring te verbeteren en het websiteverkeer te analyseren. {{cookie_policy_link}}",
+		"banner_description":       "Wij gebruiken cookies om uw ervaring te verbeteren en het websiteverkeer te analyseren. {{cookie_policy_link}}",
 		"button_accept_all":        "Alles accepteren",
 		"button_reject_all":        "Alles weigeren",
 		"button_customize":         "Aanpassen",
 		"button_save":              "Voorkeuren opslaan",
 		"panel_title":              "Voorkeuren aanpassen",
-		"panel_description":        "Kies welke cookiecategorieën je wilt toestaan. {{necessary_category}} cookies zijn altijd actief omdat ze nodig zijn om de website te laten werken.",
+		"panel_description":        "Kies welke cookiecategorieën u wilt toestaan. {{necessary_category}} cookies zijn altijd actief omdat ze nodig zijn om de website te laten werken.",
 		"aria_close":               "Sluiten",
 		"aria_show_details":        "Cookiedetails weergeven",
 		"aria_hide_details":        "Cookiedetails verbergen",
@@ -333,7 +333,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"placeholder_button":       "Cookievoorkeuren beheren",
 
 		"banner_title_opt_out":       "Cookiemelding",
-		"banner_description_opt_out": "We gebruiken cookies en vergelijkbare technologieën. Je kunt niet-essentiële cookies weigeren. {{cookie_policy_link}}",
+		"banner_description_opt_out": "Wij gebruiken cookies en vergelijkbare technologieën. U kunt niet-essentiële cookies weigeren. {{cookie_policy_link}}",
 		"button_acknowledge":         "OK",
 		"button_opt_out":             "Verkoop of deel mijn persoonlijke gegevens niet",
 
@@ -345,7 +345,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"privacy_choices_spi_description":  "Je hebt het recht om het gebruik en de openbaarmaking van je gevoelige persoonlijke gegevens te beperken. Wij gebruiken of openbaren geen gevoelige persoonlijke gegevens voor andere doeleinden dan die zijn toegestaan door de Californische wet.",
 
 		"banner_title_notice":       "Cookiemelding",
-		"banner_description_notice": "Deze website gebruikt cookies om je ervaring te verbeteren. {{cookie_policy_link}}",
+		"banner_description_notice": "Deze website gebruikt cookies om uw ervaring te verbeteren. {{cookie_policy_link}}",
 		"button_dismiss":            "Begrepen",
 	},
 	"pl": {

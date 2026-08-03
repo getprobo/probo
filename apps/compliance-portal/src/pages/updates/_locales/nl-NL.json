@@ -1,0 +1,19 @@
+{
+  "title": "Updates",
+  "subscribe": "Abonneren op updates",
+  "backToUpdates": "Alle updates",
+  "empty": {
+    "title": "Nog geen updates.",
+    "description": "Abonneer u om een melding te ontvangen wanneer er nieuwe updates worden gepubliceerd."
+  },
+  "dialog": {
+    "title": "Abonneren op updates",
+    "description": "Ontvang een melding wanneer wij nieuwe compliance-updates publiceren, subverwerkers toevoegen of certificeringen verlengen.",
+    "email": "E-mailadres",
+    "consent": "Door u te abonneren stemt u ermee in compliance-updates van {{name}} te ontvangen. U kunt zich op elk moment afmelden.",
+    "cancel": "Annuleren",
+    "submit": "Abonneren",
+    "successToast": "U ontvangt een melding wanneer er nieuwe updates worden gepubliceerd.",
+    "unsubscribeToast": "U ontvangt geen updatemeldingen meer."
+  }
+}

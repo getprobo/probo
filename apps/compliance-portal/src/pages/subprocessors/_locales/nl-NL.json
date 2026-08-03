@@ -1,0 +1,110 @@
+{
+  "title": "Subverwerkers",
+  "filters": {
+    "allCategories": "Alle categorieën",
+    "allRegions": "Alle regio's",
+    "searchPlaceholder": "Zoeken..."
+  },
+  "empty": {
+    "title": "Geen subverwerkers vermeld.",
+    "description": "Dit complianceportaal heeft nog geen subverwerkers gepubliceerd.",
+    "filteredTitle": "Geen subverwerkers passen bij uw filters.",
+    "filteredDescription": "Pas uw zoekopdracht of filters aan om beschikbare subverwerkers te zien.",
+    "clearFilters": "Filters wissen"
+  },
+  "regions": {
+    "global": "Wereldwijd",
+    "eu": "Europese Unie",
+    "moreRegions": "{{count}} regio's meer weergeven"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analytics",
+      "description": "Gebruiksanalyse en producttelemetrie."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Cloudmonitoring",
+      "description": "Observability, logging en uptimemonitoring."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Cloudprovider",
+      "description": "Cloudhosting, rekenkracht, opslag en netwerken."
+    },
+    "COLLABORATION": {
+      "label": "Samenwerking",
+      "description": "Hulpmiddelen voor communicatie, planning en samenwerking."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Klantenservice",
+      "description": "Helpdesk, ticketing en klantcommunicatie."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Gegevensopslag en -verwerking",
+      "description": "Databases, datawarehouses en verwerkingspijplijnen."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Documentbeheer",
+      "description": "Documentopslag, ondertekening en elektronische handtekeningen."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Personeelsbeheer",
+      "description": "HR, salarisadministratie en people operations."
+    },
+    "ENGINEERING": {
+      "label": "Engineering",
+      "description": "Ontwikkelaarstools en engineeringplatformen."
+    },
+    "FINANCE": {
+      "label": "Financiën",
+      "description": "Facturatie, betalingen en boekhouding."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Identityprovider",
+      "description": "Authenticatie, SSO en identiteitsbeheer."
+    },
+    "IT": {
+      "label": "IT",
+      "description": "IT-beheer en apparaatbeheer."
+    },
+    "MARKETING": {
+      "label": "Marketing",
+      "description": "Marketing, CRM en doelgroepbetrokkenheid."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Kantoorbeheer",
+      "description": "Werkplek- en kantoorbeheer."
+    },
+    "OTHER": {
+      "label": "Overig",
+      "description": "Overige ondersteunende diensten."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Wachtwoordbeheer",
+      "description": "Beheer van inloggegevens en geheimen."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Product en design",
+      "description": "Tools voor product en design."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Professionele dienstverlening",
+      "description": "Consultancy en professionele dienstverlening."
+    },
+    "RECRUITING": {
+      "label": "Recruitment",
+      "description": "Aanname, sourcing en kandidatenbeheer."
+    },
+    "SALES": {
+      "label": "Sales",
+      "description": "Salesondersteuning en CRM."
+    },
+    "SECURITY": {
+      "label": "Beveiliging",
+      "description": "Beveiliging, monitoring en beveiligde toegang."
+    },
+    "VERSION_CONTROL": {
+      "label": "Versiebeheer",
+      "description": "Broncodebeheer en codehosting."
+    }
+  }
+}

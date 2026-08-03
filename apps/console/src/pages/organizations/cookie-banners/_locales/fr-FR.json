@@ -130,7 +130,7 @@
     "messages": { "successTitle": "Succès", "updated": "Paramètres de la bannière mis à jour" },
     "errors": { "title": "Erreur", "update": "Échec de la mise à jour" },
     "fields": { "name": "Nom", "origin": "URL d’origine", "cookiePolicyUrl": "URL de la politique de cookies", "privacyPolicyUrl": "URL de la politique de confidentialité", "consentExpiryDays": "Expiration du consentement (jours)", "defaultLanguage": "Langue par défaut" },
-    "languages": { "english": "Anglais", "french": "Français", "german": "Allemand", "spanish": "Espagnol" },
+    "languages": { "english": "Anglais", "french": "Français", "german": "Allemand", "spanish": "Espagnol", "dutch": "Néerlandais" },
     "actions": { "saving": "Enregistrement...", "save": "Enregistrer" }
   },
   "trackerResourceRowEdit": {

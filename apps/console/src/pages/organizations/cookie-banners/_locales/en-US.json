@@ -130,7 +130,7 @@
     "messages": { "successTitle": "Success", "updated": "Banner settings updated" },
     "errors": { "title": "Error", "update": "Failed to update" },
     "fields": { "name": "Name", "origin": "Origin URL", "cookiePolicyUrl": "Cookie policy URL", "privacyPolicyUrl": "Privacy policy URL", "consentExpiryDays": "Consent expiry (days)", "defaultLanguage": "Default language" },
-    "languages": { "english": "English", "french": "French", "german": "German", "spanish": "Spanish" },
+    "languages": { "english": "English", "french": "French", "german": "German", "spanish": "Spanish", "dutch": "Dutch" },
     "actions": { "saving": "Saving...", "save": "Save" }
   },
   "trackerResourceRowEdit": {
