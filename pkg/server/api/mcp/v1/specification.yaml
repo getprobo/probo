@@ -8219,6 +8219,8 @@ components:
         - id
         - campaign_id
         - access_review_campaign_source_id
+        - source_name
+        - connector_id
         - email
         - full_name
         - roles
@@ -8243,6 +8245,14 @@ components:
         access_review_campaign_source_id:
           $ref: "#/components/schemas/GID"
           description: Per-campaign source snapshot ID
+        source_name:
+          type: string
+          description: Name of the campaign source (connector or CSV) the entry belongs to, e.g. "Google Workspace" or "Cursor". Use this to label which tool an account came from instead of inferring it from the account data.
+        connector_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: ID of the connector backing the campaign source, or null for CSV/manually uploaded sources
         email:
           type: string
           description: User email

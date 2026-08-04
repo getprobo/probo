@@ -22,6 +22,7 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -72,7 +73,10 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 	}
 }
 
-func NewAccessReviewEntry(e *coredata.AccessReviewEntry) *AccessReviewEntry {
+func NewAccessReviewEntry(
+	e *coredata.AccessReviewEntry,
+	source *coredata.AccessReviewCampaignSource,
+) *AccessReviewEntry {
 	roles := e.Roles
 	if roles == nil {
 		roles = []string{}
@@ -82,6 +86,8 @@ func NewAccessReviewEntry(e *coredata.AccessReviewEntry) *AccessReviewEntry {
 		ID:                           e.ID,
 		CampaignID:                   e.AccessReviewCampaignID,
 		AccessReviewCampaignSourceID: e.AccessReviewCampaignSourceID,
+		SourceName:                   source.Name,
+		ConnectorID:                  source.ConnectorID,
 		Email:                        e.Email,
 		FullName:                     e.FullName,
 		Roles:                        roles,
@@ -131,10 +137,11 @@ func NewListAccessReviewCampaignsOutput(
 
 func NewListAccessEntriesOutput(
 	p *page.Page[*coredata.AccessReviewEntry, coredata.AccessReviewEntryOrderField],
+	sourcesByID map[gid.GID]*coredata.AccessReviewCampaignSource,
 ) ListAccessEntriesOutput {
 	entries := make([]*AccessReviewEntry, 0, len(p.Data))
 	for _, e := range p.Data {
-		entries = append(entries, NewAccessReviewEntry(e))
+		entries = append(entries, NewAccessReviewEntry(e, sourcesByID[e.AccessReviewCampaignSourceID]))
 	}
 
 	var nextCursor *page.CursorKey
