@@ -55,12 +55,21 @@ func TestResolveRegulation(t *testing.T) {
 			wantSource:     RegulationSourceDetected,
 		},
 		{
-			name: "regulated US state resolves to CCPA as detected",
+			name: "California resolves to CCPA as detected",
 			location: &coredata.IPLocation{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: new(coredata.SubdivisionCode("US-CA")),
 			},
 			wantRegulation: RegulationCCPA,
+			wantSource:     RegulationSourceDetected,
+		},
+		{
+			name: "Texas resolves to TDPSA as detected",
+			location: &coredata.IPLocation{
+				CountryCode:     coredata.CountryCodeUS,
+				SubdivisionCode: new(coredata.SubdivisionCode("US-TX")),
+			},
+			wantRegulation: RegulationTDPSA,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
@@ -109,6 +118,8 @@ func TestPresentationForRegulation(t *testing.T) {
 		{RegulationFADP, PresentationOptIn},
 		{RegulationPOPIA, PresentationOptIn},
 		{RegulationCCPA, PresentationOptOut},
+		{RegulationTDPSA, PresentationOptOut},
+		{RegulationVCDPA, PresentationOptOut},
 		{RegulationPIPEDA, PresentationOptOut},
 		{RegulationPIPACA, PresentationOptOut},
 		{RegulationLaw25, PresentationOptIn},
@@ -154,6 +165,16 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.Equal(t, SettingsLinkCCPAPrivacyChoices, layout.SettingsLink)
 	})
 
+	t.Run("other US state privacy law uses generic opt-out chrome", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationTDPSA)
+		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
+		require.Equal(t, StateBanner, layout.ReopenState)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
 	t.Run("other opt-out regulation keeps the default settings link", func(t *testing.T) {
 		t.Parallel()
 
@@ -181,40 +202,94 @@ func TestLayoutForRegulation(t *testing.T) {
 func TestRegulationForLocationUSPrivacyStates(t *testing.T) {
 	t.Parallel()
 
-	subdivisions := []coredata.SubdivisionCode{
-		"US-CA",
-		"US-CO",
-		"US-CT",
-		"US-DE",
-		"US-FL",
-		"US-IA",
-		"US-IN",
-		"US-KY",
-		"US-MD",
-		"US-MN",
-		"US-MT",
-		"US-NE",
-		"US-NH",
-		"US-NJ",
-		"US-OR",
-		"US-RI",
-		"US-TN",
-		"US-TX",
-		"US-UT",
-		"US-VA",
+	tests := []struct {
+		subdivision coredata.SubdivisionCode
+		want        Regulation
+	}{
+		{"US-CA", RegulationCCPA},
+		{"US-VA", RegulationVCDPA},
+		{"US-CO", RegulationCPA},
+		{"US-CT", RegulationCTDPA},
+		{"US-UT", RegulationUCPA},
+		{"US-TX", RegulationTDPSA},
+		{"US-OR", RegulationOCPA},
+		{"US-MT", RegulationMTCDPA},
+		{"US-FL", RegulationFDBR},
+		{"US-IA", RegulationIAICDPA},
+		{"US-DE", RegulationDEPDPA},
+		{"US-NH", RegulationNHPA},
+		{"US-NE", RegulationNENDPA},
+		{"US-NJ", RegulationNJDPA},
+		{"US-TN", RegulationTIPA},
+		{"US-MN", RegulationMNDPA},
+		{"US-MD", RegulationMODPA},
+		{"US-IN", RegulationINCDPA},
+		{"US-KY", RegulationKCDPA},
+		{"US-RI", RegulationRIDTPPA},
 	}
 
-	for _, subdivision := range subdivisions {
-		t.Run(subdivision.String(), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.subdivision.String(), func(t *testing.T) {
 			t.Parallel()
 
+			subdivision := tt.subdivision
 			location := coredata.IPLocation{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: &subdivision,
 			}
-			require.Equal(t, RegulationCCPA, RegulationForLocation(location))
+			require.Equal(t, tt.want, RegulationForLocation(location))
+			require.Equal(t, ConsentModeOptOut, ConsentModeForRegulation(tt.want))
 		})
 	}
+}
+
+func TestRegulationForLocationUSUnregulatedStates(t *testing.T) {
+	t.Parallel()
+
+	for _, subdivision := range []coredata.SubdivisionCode{"US-NY", "US-WA", "US-IL"} {
+		t.Run(subdivision.String(), func(t *testing.T) {
+			t.Parallel()
+
+			code := subdivision
+			location := coredata.IPLocation{
+				CountryCode:     coredata.CountryCodeUS,
+				SubdivisionCode: &code,
+			}
+			require.Equal(t, RegulationNone, RegulationForLocation(location))
+		})
+	}
+}
+
+func TestApplyUSStatePrivacyBannerTexts(t *testing.T) {
+	t.Parallel()
+
+	t.Run("non-California US state uses US opt-out copy", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationTDPSA,
+			Texts: map[string]string{
+				"banner_description_opt_out":    "generic",
+				"banner_description_us_opt_out": "us specific",
+			},
+		}
+		applyUSStatePrivacyBannerTexts(config)
+		require.Equal(t, "us specific", config.Texts["banner_description_opt_out"])
+	})
+
+	t.Run("California keeps generic opt-out copy", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationCCPA,
+			Texts: map[string]string{
+				"banner_description_opt_out":    "generic",
+				"banner_description_us_opt_out": "us specific",
+			},
+		}
+		applyUSStatePrivacyBannerTexts(config)
+		require.Equal(t, "generic", config.Texts["banner_description_opt_out"])
+	})
 }
 
 func TestRegulationForLocationCanada(t *testing.T) {

@@ -212,6 +212,25 @@ components:
         - UK_GDPR
         - FADP
         - CCPA
+        - VCDPA
+        - CPA
+        - CTDPA
+        - UCPA
+        - TDPSA
+        - OCPA
+        - MTCDPA
+        - FDBR
+        - IA_ICDPA
+        - DE_DPDPA
+        - NHPA
+        - NE_NDPA
+        - NJDPA
+        - TIPA
+        - MNDPA
+        - MODPA
+        - IN_ICDPA
+        - KCDPA
+        - RIDTPPA
         - PIPEDA
         - PIPA_CA
         - LAW_25

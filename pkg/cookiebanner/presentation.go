@@ -91,12 +91,31 @@ type Layout struct {
 //
 // Opt-out regimes with a statutory notice model (Japan's APPI, Mexico's
 // LFPDPPP) and jurisdictions with no cookie-consent law (RegulationNone) use
-// the informational notice presentation; the remaining opt-out regimes (CCPA,
-// PIPEDA, Canadian PIPA, LGPD) use the opt-out presentation; everything else
-// defaults to the strict opt-in presentation.
+// the informational notice presentation; the remaining opt-out regimes (US
+// state privacy laws, PIPEDA, Canadian PIPA, LGPD) use the opt-out
+// presentation; everything else defaults to the strict opt-in presentation.
 func PresentationForRegulation(r Regulation) Presentation {
 	switch r {
 	case RegulationCCPA,
+		RegulationVCDPA,
+		RegulationCPA,
+		RegulationCTDPA,
+		RegulationUCPA,
+		RegulationTDPSA,
+		RegulationOCPA,
+		RegulationMTCDPA,
+		RegulationFDBR,
+		RegulationIAICDPA,
+		RegulationDEPDPA,
+		RegulationNHPA,
+		RegulationNENDPA,
+		RegulationNJDPA,
+		RegulationTIPA,
+		RegulationMNDPA,
+		RegulationMODPA,
+		RegulationINCDPA,
+		RegulationKCDPA,
+		RegulationRIDTPPA,
 		RegulationPIPEDA,
 		RegulationPIPACA,
 		RegulationLGPD:
@@ -113,9 +132,10 @@ func PresentationForRegulation(r Regulation) Presentation {
 }
 
 // SettingsLinkForRegulation returns the reopen-link style for a regulation.
-// Only CCPA mandates the statutory "Your Privacy Choices" affordance.
+// Only California CCPA/CPRA mandates the statutory "Your Privacy Choices"
+// affordance (11 CCR § 7015).
 func SettingsLinkForRegulation(r Regulation) SettingsLinkStyle {
-	if r == RegulationCCPA {
+	if IsCaliforniaPrivacyRegulation(r) {
 		return SettingsLinkCCPAPrivacyChoices
 	}
 
@@ -127,10 +147,10 @@ func LayoutForRegulation(r Regulation) Layout {
 	layout := layoutForPresentation(PresentationForRegulation(r))
 	layout.SettingsLink = SettingsLinkForRegulation(r)
 
-	// CCPA's Alternative Opt-out Link (11 CCR § 7015) must open a surface that
-	// describes sale/sharing opt-out and the right to limit sensitive PI — not
-	// the compact opt-out banner used by other OPT_OUT regimes.
-	if r == RegulationCCPA {
+	// California's Alternative Opt-out Link (11 CCR § 7015) must open a surface
+	// that describes sale/sharing opt-out and the right to limit sensitive PI —
+	// not the compact opt-out banner used by other OPT_OUT regimes.
+	if IsCaliforniaPrivacyRegulation(r) {
 		layout.ReopenState = StatePrivacyChoices
 	}
 

@@ -30,6 +30,25 @@ const (
 	RegulationUKGDPR  = coredata.RegulationUKGDPR
 	RegulationFADP    = coredata.RegulationFADP
 	RegulationCCPA    = coredata.RegulationCCPA
+	RegulationVCDPA   = coredata.RegulationVCDPA
+	RegulationCPA     = coredata.RegulationCPA
+	RegulationCTDPA   = coredata.RegulationCTDPA
+	RegulationUCPA    = coredata.RegulationUCPA
+	RegulationTDPSA   = coredata.RegulationTDPSA
+	RegulationOCPA    = coredata.RegulationOCPA
+	RegulationMTCDPA  = coredata.RegulationMTCDPA
+	RegulationFDBR    = coredata.RegulationFDBR
+	RegulationIAICDPA = coredata.RegulationIAICDPA
+	RegulationDEPDPA  = coredata.RegulationDEPDPA
+	RegulationNHPA    = coredata.RegulationNHPA
+	RegulationNENDPA  = coredata.RegulationNENDPA
+	RegulationNJDPA   = coredata.RegulationNJDPA
+	RegulationTIPA    = coredata.RegulationTIPA
+	RegulationMNDPA   = coredata.RegulationMNDPA
+	RegulationMODPA   = coredata.RegulationMODPA
+	RegulationINCDPA  = coredata.RegulationINCDPA
+	RegulationKCDPA   = coredata.RegulationKCDPA
+	RegulationRIDTPPA = coredata.RegulationRIDTPPA
 	RegulationPIPEDA  = coredata.RegulationPIPEDA
 	RegulationPIPACA  = coredata.RegulationPIPACA
 	RegulationLaw25   = coredata.RegulationLaw25
@@ -56,6 +75,75 @@ const (
 	ConsentModeOptOut = "OPT_OUT"
 )
 
+// usPrivacyRegulationBySubdivision maps ISO 3166-2 US subdivisions with
+// comprehensive state privacy laws to their regulation identifier.
+//
+// Arkansas is intentionally omitted: the proposed Consumer Data Protection Act
+// was never enacted (see arkleg.state.ar.us ISP-2023-003).
+//
+// Upcoming (signed, not yet effective — do not map until effective date):
+//   - US-OK — OCDPA (SB 546), effective 2027-01-01
+//   - US-LA — LDPA (SB 386), effective 2027-01-01
+//   - US-AL — APDPA (HB 351), effective 2027-05-01 (verify)
+var usPrivacyRegulationBySubdivision = map[coredata.SubdivisionCode]Regulation{
+	"US-CA": RegulationCCPA,
+	"US-VA": RegulationVCDPA,
+	"US-CO": RegulationCPA,
+	"US-CT": RegulationCTDPA,
+	"US-UT": RegulationUCPA,
+	"US-TX": RegulationTDPSA,
+	"US-OR": RegulationOCPA,
+	"US-MT": RegulationMTCDPA,
+	"US-FL": RegulationFDBR,
+	"US-IA": RegulationIAICDPA,
+	"US-DE": RegulationDEPDPA,
+	"US-NH": RegulationNHPA,
+	"US-NE": RegulationNENDPA,
+	"US-NJ": RegulationNJDPA,
+	"US-TN": RegulationTIPA,
+	"US-MN": RegulationMNDPA,
+	"US-MD": RegulationMODPA,
+	"US-IN": RegulationINCDPA,
+	"US-KY": RegulationKCDPA,
+	"US-RI": RegulationRIDTPPA,
+}
+
+// IsCaliforniaPrivacyRegulation reports whether the regulation is California
+// CCPA/CPRA, which mandates the statutory Privacy Choices affordance (11 CCR § 7015).
+func IsCaliforniaPrivacyRegulation(r Regulation) bool {
+	return r == RegulationCCPA
+}
+
+// IsUSStatePrivacyRegulation reports whether the regulation is a US comprehensive
+// state privacy law (including California).
+func IsUSStatePrivacyRegulation(r Regulation) bool {
+	switch r {
+	case RegulationCCPA,
+		RegulationVCDPA,
+		RegulationCPA,
+		RegulationCTDPA,
+		RegulationUCPA,
+		RegulationTDPSA,
+		RegulationOCPA,
+		RegulationMTCDPA,
+		RegulationFDBR,
+		RegulationIAICDPA,
+		RegulationDEPDPA,
+		RegulationNHPA,
+		RegulationNENDPA,
+		RegulationNJDPA,
+		RegulationTIPA,
+		RegulationMNDPA,
+		RegulationMODPA,
+		RegulationINCDPA,
+		RegulationKCDPA,
+		RegulationRIDTPPA:
+		return true
+	}
+
+	return false
+}
+
 // ResolveRegulation returns the regulation to apply for a visitor along
 // with its source.
 //
@@ -80,32 +168,11 @@ func RegulationForLocation(location coredata.IPLocation) Regulation {
 			return RegulationNone
 		}
 
-		switch *location.SubdivisionCode {
-		case
-			"US-CA",
-			"US-CO",
-			"US-CT",
-			"US-DE",
-			"US-FL",
-			"US-IA",
-			"US-IN",
-			"US-KY",
-			"US-MD",
-			"US-MN",
-			"US-MT",
-			"US-NE",
-			"US-NH",
-			"US-NJ",
-			"US-OR",
-			"US-RI",
-			"US-TN",
-			"US-TX",
-			"US-UT",
-			"US-VA":
-			return RegulationCCPA
-		default:
-			return RegulationNone
+		if regulation, ok := usPrivacyRegulationBySubdivision[*location.SubdivisionCode]; ok {
+			return regulation
 		}
+
+		return RegulationNone
 	}
 
 	if location.CountryCode == coredata.CountryCodeCA {
@@ -229,6 +296,25 @@ func ConsentModeForRegulation(r Regulation) string {
 		return ConsentModeOptIn
 
 	case RegulationCCPA,
+		RegulationVCDPA,
+		RegulationCPA,
+		RegulationCTDPA,
+		RegulationUCPA,
+		RegulationTDPSA,
+		RegulationOCPA,
+		RegulationMTCDPA,
+		RegulationFDBR,
+		RegulationIAICDPA,
+		RegulationDEPDPA,
+		RegulationNHPA,
+		RegulationNENDPA,
+		RegulationNJDPA,
+		RegulationTIPA,
+		RegulationMNDPA,
+		RegulationMODPA,
+		RegulationINCDPA,
+		RegulationKCDPA,
+		RegulationRIDTPPA,
 		RegulationPIPEDA,
 		RegulationPIPACA,
 		RegulationLGPD,
@@ -238,5 +324,21 @@ func ConsentModeForRegulation(r Regulation) string {
 
 	default:
 		return ConsentModeOptOut
+	}
+}
+
+// applyUSStatePrivacyBannerTexts selects US-specific opt-out copy for
+// non-California state privacy regulations.
+func applyUSStatePrivacyBannerTexts(config *BannerConfig) {
+	if config == nil || config.Texts == nil {
+		return
+	}
+
+	if !IsUSStatePrivacyRegulation(config.Regulation) || IsCaliforniaPrivacyRegulation(config.Regulation) {
+		return
+	}
+
+	if description, ok := config.Texts["banner_description_us_opt_out"]; ok && description != "" {
+		config.Texts["banner_description_opt_out"] = description
 	}
 }
