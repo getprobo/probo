@@ -77,6 +77,7 @@ func unsignedAcceptEncoding(stack *middleware.Stack) error {
 
 				if value := req.Header.Get(acceptEncodingHeader); value != "" {
 					req.Header.Del(acceptEncodingHeader)
+
 					ctx = context.WithValue(ctx, acceptEncodingValueKey{}, value)
 				}
 

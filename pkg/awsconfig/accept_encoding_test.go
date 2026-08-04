@@ -75,7 +75,9 @@ func TestUnsignedAcceptEncoding(t *testing.T) {
 				http.HandlerFunc(
 					func(w http.ResponseWriter, r *http.Request) {
 						gotHeader = r.Header.Clone()
+
 						_, _ = io.Copy(io.Discard, r.Body)
+
 						w.WriteHeader(http.StatusOK)
 					},
 				),
