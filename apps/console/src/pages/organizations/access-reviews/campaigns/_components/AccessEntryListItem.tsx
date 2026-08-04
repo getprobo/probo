@@ -68,7 +68,7 @@ export function AccessEntryListItem({
 }: AccessEntryListItemProps) {
   const { i18n, t } = useTranslation();
   const entry = useFragment(accessEntryListItemFragment, entryKey);
-  const { item, content, trailing, status, statusLabel } = accessEntryList({
+  const { item, content, flags, trailing, status, statusLabel } = accessEntryList({
     inactive: entry.active === false,
   });
 
@@ -130,6 +130,27 @@ export function AccessEntryListItem({
         </div>
       </div>
 
+      {isPendingActions
+        ? (
+            <div className={flags()}>
+              <EntryFlagSelect
+                entryId={entry.id}
+                currentFlags={entry.flags}
+              />
+            </div>
+          )
+        : entry.flags.length > 0
+          ? (
+              <div className={flags()}>
+                {entry.flags.map(f => (
+                  <Badge key={f} variant={flagBadgeVariant(f)}>
+                    {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
+                  </Badge>
+                ))}
+              </div>
+            )
+          : null}
+
       <div className={trailing()}>
         <div className={status()}>
           <span className={statusLabel()}>{t("campaignDetailPage.columns.admin")}</span>
@@ -163,35 +184,18 @@ export function AccessEntryListItem({
 
         {isPendingActions
           ? (
-              <>
-                <EntryFlagSelect
-                  entryId={entry.id}
-                  currentFlags={entry.flags}
-                />
-                <EntryDecisionActions
-                  entryId={entry.id}
-                  decision={entry.decision}
-                />
-              </>
+              <EntryDecisionActions
+                entryId={entry.id}
+                decision={entry.decision}
+              />
             )
-          : (
-              <>
-                {entry.flags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {entry.flags.map(f => (
-                      <Badge key={f} variant={flagBadgeVariant(f)}>
-                        {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                {entry.decision !== "PENDING" && (
-                  <Badge variant={decisionBadgeVariant(entry.decision)}>
-                    {t(`campaignDetailPage.decisions.${entry.decision.toLowerCase()}`)}
-                  </Badge>
-                )}
-              </>
-            )}
+          : entry.decision !== "PENDING"
+            ? (
+                <Badge variant={decisionBadgeVariant(entry.decision)}>
+                  {t(`campaignDetailPage.decisions.${entry.decision.toLowerCase()}`)}
+                </Badge>
+              )
+            : null}
       </div>
     </li>
   );

@@ -41,8 +41,9 @@ export const accessEntryList = tv({
   slots: {
     root: "list-none overflow-hidden rounded-[10px] border border-border-low bg-level-1",
     item: "flex flex-wrap items-center gap-4 border-b border-border-low px-4 py-3 last:border-b-0",
-    content: "flex min-w-0 flex-1 flex-col gap-0.5",
-    trailing: "flex min-w-0 flex-wrap items-center gap-4",
+    content: "flex min-w-0 max-w-64 flex-col gap-0.5",
+    flags: "flex min-w-0 max-w-72 flex-wrap items-center gap-1",
+    trailing: "ml-auto flex min-w-0 flex-wrap items-center gap-4",
     status: "flex min-w-16 flex-col items-center gap-0.5",
     statusLabel: "text-[10px] font-medium uppercase tracking-wide text-txt-tertiary",
   },

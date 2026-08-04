@@ -121,6 +121,7 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     <>
       <Select
         variant="editor"
+        className="w-36 shrink-0"
         value={decision === "PENDING" ? undefined : decision}
         placeholder={t("entryDecisionActions.placeholder")}
         onValueChange={handleDecision}
