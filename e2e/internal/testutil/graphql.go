@@ -31,6 +31,7 @@ import (
 	"net"
 	"net/http"
 	"net/textproto"
+	"strings"
 	"testing"
 	"time"
 
@@ -92,11 +93,24 @@ func (e GraphQLErrors) Error() string {
 		return ""
 	}
 
-	if len(e) == 1 {
-		return e[0].Message
+	details := make([]string, 0, len(e))
+	for _, gqlErr := range e {
+		detail := gqlErr.Message
+		if code := gqlErr.Code(); code != "" {
+			detail = fmt.Sprintf("[%s] %s", code, detail)
+		}
+		if len(gqlErr.Path) > 0 {
+			path := make([]string, 0, len(gqlErr.Path))
+			for _, segment := range gqlErr.Path {
+				path = append(path, fmt.Sprint(segment))
+			}
+			detail += fmt.Sprintf(" (path: %s)", strings.Join(path, "."))
+		}
+
+		details = append(details, detail)
 	}
 
-	return fmt.Sprintf("%s (and %d more errors)", e[0].Message, len(e)-1)
+	return strings.Join(details, "; ")
 }
 
 func (c *Client) doWithEndpoint(endpoint string, query string, variables map[string]any) (*GraphQLResponse, error) {

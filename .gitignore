@@ -32,3 +32,4 @@ cfg/dev_local.yaml
 cfg/dev.yaml
 .env
 .oauth-credentials.txt
+e2e-artifacts/

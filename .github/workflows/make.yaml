@@ -540,17 +540,20 @@ jobs:
       - run: "make stack-ps"
       - name: "Run e2e tests"
         env:
+          PROBO_E2E_ARTIFACT_DIR: "${{ github.workspace }}/e2e-artifacts"
           PROBO_E2E_BINARY: "${{ github.workspace }}/bin/probod"
           GOTESTSUM_FORMAT: "testname"
           GOTESTSUM_JUNITFILE: "junit-e2e.xml"
         run: |
           PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
-            CGO_ENABLED=1 go tool gotestsum -- -race -cover -coverprofile=coverage.out -count=1 ./e2e/console/...
+            make test-e2e
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: "always()"
         continue-on-error: true
         with:
           name: "junit-e2e-results"
-          path: "junit-e2e.xml"
+          path: |
+            junit-e2e.xml
+            e2e-artifacts
           retention-days: 30

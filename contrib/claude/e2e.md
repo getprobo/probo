@@ -28,6 +28,12 @@ E2e config is built at test startup in `e2e/internal/testutil/testutil.go` (`gen
 make test-e2e # Run all e2e tests
 ```
 
+The regular target avoids instrumenting the test driver with race and coverage
+flags because probod runs as a separate process. Use
+`make test-e2e E2E_TEST_FLAGS=-race` when changing concurrent harness code, and
+use `make test-e2e-coverage` to run an instrumented probod and collect
+application coverage.
+
 ## Client setup
 
 **Standalone user (new organization):**
@@ -55,6 +61,55 @@ Each call creates a unique identity with a fresh email. Available roles: `RoleOw
 | `c.ExecuteWithFile(query, vars, path, file, &result)` | Console | Single file upload                |
 | `c.GetOrganizationID()`                               | —       | Current org GID                   |
 | `c.GetUserID()`                                       | —       | Current user GID                  |
+
+## Journey tests
+
+Use `e2e/internal/journey` for multi-step workflows and tests involving more
+than one person. A journey remains fully end-to-end: actors use the existing
+clients and exercise real HTTP, authentication, email delivery, workers, and
+persistence.
+
+Create one world per top-level test. The test runs in parallel with other
+journeys, while its steps remain sequential because later actions depend on
+earlier state:
+
+```go
+func TestDocumentApprovalJourney(t *testing.T) {
+	t.Parallel()
+
+	world := journey.New(t)
+	alice := world.NewActor("Alice", testutil.RoleOwner)
+	bob := world.NewMemberActor("Bob", testutil.RoleAdmin, alice)
+
+	var documentID string
+	alice.Step("creates the security policy", func() error {
+		// Exercise the Console API and assign documentID.
+		return nil
+	})
+
+	bob.Step("approves the security policy", func() error {
+		// Exercise the Console API as Bob.
+		return nil
+	})
+}
+```
+
+Step names must describe user-visible behavior rather than implementation
+details. Prefer `approves the security policy` over `calls approve mutation`.
+Return wrapped errors from steps so failures identify both the journey action
+and its technical cause. Assertions that call `FailNow` are supported: the
+active step is still recorded by its deferred diagnostic hook.
+
+Actors created by `NewActor` and `NewMemberActor` go through the complete
+signup or invitation flow. Reuse those actors for the duration of the scenario
+instead of onboarding a new user for each assertion.
+
+Failed journeys write a redacted `manifest.json` and human-readable
+`failure.txt`. By default they are placed under
+`${TMPDIR}/probo-e2e-artifacts`; set `PROBO_E2E_ARTIFACT_DIR` to control the
+location. CI uploads this directory with the JUnit results. Artifact metadata
+must never contain passwords, tokens, cookies, authorization headers, or other
+secrets.
 
 ## Test data factories
 
@@ -86,7 +141,10 @@ Use `factory.SafeName("prefix")` for unique names and `factory.SafeEmail()` for 
 
 ## Test structure
 
-Every test and subtest **must** call `t.Parallel()`. One test file per entity in `e2e/console/`. Function naming: `TestEntity_Operation`.
+Every test and subtest **must** call `t.Parallel()`. Journey steps are ordered
+function calls rather than subtests and must not run in parallel. One test file
+per entity in `e2e/console/`. Function naming:
+`TestEntity_Operation`.
 
 ```go
 func TestThirdParty_Create(t *testing.T) {

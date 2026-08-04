@@ -73,6 +73,7 @@ GO_VET=	$(GO_BASE) vet
 GO_TOOL=	$(GO_BASE) tool
 
 TEST_FLAGS?=	-race -cover -coverprofile=coverage.out
+E2E_TEST_FLAGS?=
 
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
@@ -218,7 +219,7 @@ test-e2e: CGO_ENABLED=1
 test-e2e: $(PROBOD_BIN) ## Run console e2e tests
 	PROBO_E2E_BINARY=$(CURDIR)/$(PROBOD_BIN) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
-	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
+	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
 
 bin/probod-coverage:
 	CGO_ENABLED=0 $(GO_BUILD) $(PROBOD_LDFLAGS) -cover -o $@ $(PROBOD_SRC)
