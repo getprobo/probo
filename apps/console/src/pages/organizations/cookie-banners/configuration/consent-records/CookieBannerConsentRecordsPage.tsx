@@ -226,6 +226,7 @@ export default function CookieBannerConsentRecordsPage({
                     <Th>{t("consentRecordsPage.columns.regulation")}</Th>
                     <Th>{t("consentRecordsPage.columns.source")}</Th>
                     <Th>{t("consentRecordsPage.columns.country")}</Th>
+                    <Th>{t("consentRecordsPage.columns.subdivision")}</Th>
                     <SortableTh field="CREATED_AT">{t("consentRecordsPage.columns.date")}</SortableTh>
                   </Tr>
                 </Thead>
