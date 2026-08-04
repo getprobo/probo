@@ -34,7 +34,11 @@ const pickerQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        thirdParties(first: 100, orderBy: { field: NAME, direction: ASC }) {
+        thirdParties(
+          first: 100
+          orderBy: { field: NAME, direction: ASC }
+          filter: { level: 3 }
+        ) {
           edges {
             node {
               id
