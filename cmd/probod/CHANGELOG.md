@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.245.0] - 2026-08-04
+
+### Added
+
+- Dutch (nl-NL) language support across the console, compliance portal, and cookie banner
+- MCP `tools/list` responses now include a cache TTL hint so well-behaved clients can skip refetching the static tool set every session
+
+### Changed
+
+- The compliance portal subprocessor picker is now limited to top-level (level one) third parties
+
+### Fixed
+
+- Uploads to S3-compatible endpoints that don't support AWS's checksum extensions (e.g. Google Cloud Storage's S3-interop endpoint) no longer fail with a misleading `SignatureDoesNotMatch: Access denied` error when checksum calculation is explicitly configured
+
 ## [0.244.0] - 2026-08-03
 
 ### Added
