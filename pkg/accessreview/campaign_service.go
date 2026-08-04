@@ -400,17 +400,11 @@ func (s *Service) CloseCampaign(
 				return NewCampaignNotPendingActionsError(campaign.ID)
 			}
 
-			entries := coredata.AccessReviewEntries{}
-			filter := &coredata.AccessReviewEntryFilter{
-				Decision: new(coredata.AccessReviewEntryDecisionPending),
-			}
-
-			pendingCount, err := entries.CountByCampaignID(
+			pendingCount, err := countPendingEntriesBlockingClose(
 				ctx,
 				conn,
 				scope,
 				campaignID,
-				filter,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot count pending entries: %w", err)
@@ -437,6 +431,63 @@ func (s *Service) CloseCampaign(
 	}
 
 	return campaign, nil
+}
+
+// countPendingEntriesBlockingClose returns pending entry decisions that still
+// block closing the campaign. Entries on sources whose latest fetch failed are
+// excluded: the connector could not be reached and reviewers proceed on the
+// sources that succeeded.
+func countPendingEntriesBlockingClose(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	campaignID gid.GID,
+) (int, error) {
+	latest := coredata.AccessReviewCampaignSourceFetchAttempts{}
+	if err := latest.LoadLatestByCampaignID(ctx, conn, scope, campaignID); err != nil {
+		return 0, fmt.Errorf("cannot load latest fetch attempts: %w", err)
+	}
+
+	failedSourceIDs := make([]gid.GID, 0, len(latest))
+	for _, attempt := range latest {
+		if attempt.Status == coredata.AccessReviewCampaignSourceFetchStatusFailed {
+			failedSourceIDs = append(failedSourceIDs, attempt.AccessReviewCampaignSourceID)
+		}
+	}
+
+	entries := coredata.AccessReviewEntries{}
+	filter := &coredata.AccessReviewEntryFilter{
+		Decision: new(coredata.AccessReviewEntryDecisionPending),
+	}
+
+	pendingCount, err := entries.CountByCampaignID(
+		ctx,
+		conn,
+		scope,
+		campaignID,
+		filter,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count pending entries: %w", err)
+	}
+
+	for _, sourceID := range failedSourceIDs {
+		failedSourcePending, err := entries.CountByCampaignIDAndSourceID(
+			ctx,
+			conn,
+			scope,
+			campaignID,
+			sourceID,
+			filter,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("cannot count pending entries for source: %w", err)
+		}
+
+		pendingCount -= failedSourcePending
+	}
+
+	return pendingCount, nil
 }
 
 func lockCampaignForUpdate(ctx context.Context, tx pg.Tx, scope coredata.Scoper, campaignID gid.GID) error {

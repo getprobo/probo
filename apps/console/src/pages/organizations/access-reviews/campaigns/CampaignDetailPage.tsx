@@ -65,6 +65,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AccessEntryRolesCell } from "../_components/AccessEntryRolesCell";
 import {
+  countPendingEntriesBlockingClose,
   decisionBadgeVariant,
   fetchStatusBadgeVariant,
   flagBadgeVariant,
@@ -225,7 +226,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   }, [campaign.id]);
 
   useEffect(() => {
-    if (!isInProgress) return;
+    if (!isInProgress && !isPendingActions) return;
     const interval = setInterval(() => {
       if (document.hidden) return;
       fetchQuery<CampaignDetailPageQuery>(
@@ -236,7 +237,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       ).subscribe({});
     }, 3000);
     return () => clearInterval(interval);
-  }, [isInProgress, environment]);
+  }, [isInProgress, isPendingActions, environment]);
   const existingCampaignSourceIds = useMemo(
     () => campaign.sources.flatMap(s => s.source?.id ? [s.source.id] : []),
     [campaign.sources],
@@ -253,7 +254,11 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [deleteCampaign, isDeleting]
     = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
 
-  const canComplete = campaign.pendingEntries.totalCount === 0;
+  const pendingBlockingClose = countPendingEntriesBlockingClose(
+    campaign.pendingEntries.totalCount,
+    campaign.sources,
+  );
+  const canComplete = pendingBlockingClose === 0;
 
   const handleStart = () => {
     startCampaign({
