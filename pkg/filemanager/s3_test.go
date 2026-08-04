@@ -380,14 +380,17 @@ func requestCarriesChecksum(h http.Header) bool {
 	if h.Get("X-Amz-Sdk-Checksum-Algorithm") != "" || h.Get("X-Amz-Trailer") != "" {
 		return true
 	}
+
 	if strings.Contains(h.Get("Content-Encoding"), "aws-chunked") {
 		return true
 	}
+
 	for name := range h {
 		if strings.HasPrefix(strings.ToLower(name), "x-amz-checksum-") {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -434,11 +437,15 @@ func TestPutFile_HonoursRequestChecksumCalculation(t *testing.T) {
 						mu.Lock()
 						putHeader = r.Header.Clone()
 						mu.Unlock()
+
 						_, _ = io.Copy(io.Discard, r.Body)
+
 						w.Header().Set("ETag", `"abc123"`)
 						w.WriteHeader(http.StatusOK)
+
 						return
 					}
+
 					// HeadObject, which PutFile issues to learn the stored size.
 					w.Header().Set("Content-Length", "16")
 					w.WriteHeader(http.StatusOK)
@@ -463,6 +470,7 @@ func TestPutFile_HonoursRequestChecksumCalculation(t *testing.T) {
 
 			mu.Lock()
 			defer mu.Unlock()
+
 			require.NotNil(t, putHeader, "expected an upload request to reach the server")
 			assert.Equal(t, tc.wantChecksum, requestCarriesChecksum(putHeader))
 		})
