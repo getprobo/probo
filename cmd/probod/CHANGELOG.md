@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.247.0] - 2026-08-05
+
+### Added
+
+- Organizations can now track DORA Critical ICT Functions via a new Business Functions register — link assets, third parties, and people to a business function, with matching CLI, MCP, and n8n operations
+- Dutch (nl-NL) language support extended to the compliance portal's documents, NDA, requests, subprocessors, and updates pages
+
+### Changed
+
+- Revamped the access review campaign bulk-decision UI: selection now survives partial and stale failures (retaining failed entries so bulk actions can be resubmitted), and accessibility and narrow-layout behavior were hardened
+
+### Fixed
+
+- Cloudflare access reviews are now scoped to a single account instead of merging members across every account reachable by the API token, which produced duplicate emails
+- Asana access review roles and admin status are now populated from membership data instead of always showing empty
+- Fixed the OpenAI connector probe endpoint
+- Uploads to Google Cloud Storage's S3-interoperability endpoint no longer fail with `SignatureDoesNotMatch`; the SDK no longer signs the `Accept-Encoding` header, which GCS rewrites in transit
+- Device codes are now kept for 15 minutes past expiry before garbage collection, so a client polling right at expiry gets `expired_token` instead of `invalid_grant`
+
 ## [0.246.0] - 2026-08-04
 
 ### Added
