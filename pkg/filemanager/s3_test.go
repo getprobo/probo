@@ -40,17 +40,34 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 )
 
-func newTestS3Service(t *testing.T, handler http.HandlerFunc) *filemanager.Service {
+// withRequestChecksumCalculation sets the S3 client's RequestChecksumCalculation
+// for a test built with newTestS3Service.
+func withRequestChecksumCalculation(v aws.RequestChecksumCalculation) func(*aws.Config) {
+	return func(cfg *aws.Config) {
+		cfg.RequestChecksumCalculation = v
+	}
+}
+
+func newTestS3Service(
+	t *testing.T,
+	handler http.HandlerFunc,
+	opts ...func(*aws.Config),
+) *filemanager.Service {
 	t.Helper()
 
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
 
+	cfg := aws.Config{
+		Region:      "us-east-1",
+		Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
+	}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	s3Client := awss3.NewFromConfig(
-		aws.Config{
-			Region:      "us-east-1",
-			Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
-		},
+		cfg,
 		func(o *awss3.Options) {
 			o.BaseEndpoint = aws.String(srv.URL)
 			o.UsePathStyle = true
@@ -356,31 +373,6 @@ type unseekableReader struct{ r io.Reader }
 
 func (u unseekableReader) Read(p []byte) (int, error) { return u.r.Read(p) }
 
-func newTestS3ServiceWithChecksum(
-	t *testing.T,
-	checksum aws.RequestChecksumCalculation,
-	handler http.HandlerFunc,
-) *filemanager.Service {
-	t.Helper()
-
-	srv := httptest.NewServer(handler)
-	t.Cleanup(srv.Close)
-
-	s3Client := awss3.NewFromConfig(
-		aws.Config{
-			Region:                     "us-east-1",
-			Credentials:                credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
-			RequestChecksumCalculation: checksum,
-		},
-		func(o *awss3.Options) {
-			o.BaseEndpoint = aws.String(srv.URL)
-			o.UsePathStyle = true
-		},
-	)
-
-	return filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
-}
-
 // requestCarriesChecksum reports whether an upload request asks the server to
 // verify an AWS checksum, in any of the forms the SDK can use: a declared
 // algorithm, a precomputed header, or a chunked body with a trailing checksum.
@@ -435,9 +427,8 @@ func TestPutFile_HonoursRequestChecksumCalculation(t *testing.T) {
 				putHeader http.Header
 			)
 
-			svc := newTestS3ServiceWithChecksum(
+			svc := newTestS3Service(
 				t,
-				tc.checksum,
 				func(w http.ResponseWriter, r *http.Request) {
 					if r.Method == http.MethodPut {
 						mu.Lock()
@@ -452,6 +443,7 @@ func TestPutFile_HonoursRequestChecksumCalculation(t *testing.T) {
 					w.Header().Set("Content-Length", "16")
 					w.WriteHeader(http.StatusOK)
 				},
+				withRequestChecksumCalculation(tc.checksum),
 			)
 
 			file := &coredata.File{

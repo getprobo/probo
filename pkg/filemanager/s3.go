@@ -244,9 +244,12 @@ func (s *Service) PutFile(
 	// and the failure surfaces as an opaque `SignatureDoesNotMatch: Access
 	// denied`, which reads as a credential problem rather than a checksum one.
 	// Propagate the client's setting so configuring it actually takes effect.
-	uploader := transfermanager.New(s.s3Client, func(o *transfermanager.Options) {
-		o.RequestChecksumCalculation = s.s3Client.Options().RequestChecksumCalculation
-	})
+	uploader := transfermanager.New(
+		s.s3Client,
+		func(o *transfermanager.Options) {
+			o.RequestChecksumCalculation = s.s3Client.Options().RequestChecksumCalculation
+		},
+	)
 
 	input := &transfermanager.UploadObjectInput{
 		Bucket:       new(file.BucketName),
