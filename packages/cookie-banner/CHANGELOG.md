@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.11.0] - 2026-08-04
+
+### Added
+
+- Dutch (nl-NL) translations for cookie banner texts and labels
+
 ## [0.10.1] - 2026-07-28
 
 ### Fixed
