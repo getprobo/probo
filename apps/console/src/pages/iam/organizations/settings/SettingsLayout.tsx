@@ -24,6 +24,7 @@ import {
   IconLock,
   IconSend,
   IconSettingsGear2,
+  IconShield,
   PageHeader,
   TabLink,
   Tabs,
@@ -36,6 +37,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 export default function SettingsLayout() {
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
+  const { t: tSettings } = useTranslation("organizations/settings");
 
   return (
     <div className="space-y-6">
@@ -61,6 +63,12 @@ export default function SettingsLayout() {
         <TabLink to={`/organizations/${organizationId}/settings/audit-log`}>
           <IconListStack size={20} />
           {t("settingsLayout.tabs.auditLog")}
+        </TabLink>
+        <TabLink
+          to={`/organizations/${organizationId}/settings/malaysia-pdpa`}
+        >
+          <IconShield size={20} />
+          {tSettings("malaysiaPDPA.tab")}
         </TabLink>
       </Tabs>
 

@@ -32,13 +32,13 @@ import {
 import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
-import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { settingsRoutes } from "./pages/organizations/settings/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { accessReviewRoutes } from "./routes/accessReviewRoutes";
@@ -278,57 +278,7 @@ const routes = [
               }
             },
           },
-          {
-            path: "settings",
-            Fallback: PageSkeleton,
-            Component: lazy(
-              () => import("./pages/iam/organizations/settings/SettingsLayout"),
-            ),
-            children: [
-              {
-                index: true,
-                loader: () => {
-                  // eslint-disable-next-line
-                  throw redirect("general");
-                },
-              },
-              {
-                path: "general",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "saml-sso",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "scim",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "webhooks",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "audit-log",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/AuditLogSettingsPageLoader"),
-                ),
-              },
-            ],
-          },
+          ...settingsRoutes,
           ...peopleRoutes,
           ...riskRoutes,
           ...measureRoutes,

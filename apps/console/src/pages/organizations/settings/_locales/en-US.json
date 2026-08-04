@@ -1,0 +1,100 @@
+{
+  "malaysiaPDPA": {
+    "tab": "Malaysia PDPA",
+    "page": {
+      "title": "Malaysia PDPA",
+      "description": "Assess whether your organization must appoint a Data Protection Officer (DPO) and track appointment and commissioner notification records.",
+      "jurisdiction": "Malaysia",
+      "readOnly": "You have read-only access to this Malaysia PDPA profile. An organization owner or administrator can update it."
+    },
+    "status": {
+      "title": "DPO requirement status",
+      "description": "This result is calculated by the server whenever the profile is saved.",
+      "notAssessed": "Not assessed",
+      "required": "DPO required",
+      "notRequired": "DPO not required",
+      "reasonsTitle": "Requirement triggers",
+      "thresholdNote": "A DPO is required when personal data processing exceeds 20,000 data subjects, sensitive or financial data exceeds 10,000 data subjects, or activities involve regular and systematic monitoring.",
+      "assessedAt": "Assessed {{date}}",
+      "assessedBy": "Assessed by {{name}}",
+      "unknownAssessor": "Unknown profile",
+      "reasons": {
+        "personalDataVolume": "Personal data processing exceeds 20,000 data subjects.",
+        "sensitiveDataVolume": "Sensitive or financial data processing exceeds 10,000 data subjects.",
+        "regularMonitoring": "Processing involves regular and systematic monitoring.",
+        "unknown": "An additional statutory trigger applies."
+      }
+    },
+    "assessment": {
+      "title": "DPO requirement assessment",
+      "description": "Enter the number of unique data subjects covered by the organization's processing activities.",
+      "totalDataSubjects": {
+        "label": "Total data subjects",
+        "help": "All individuals whose personal data is processed."
+      },
+      "sensitiveDataSubjects": {
+        "label": "Sensitive or financial data subjects",
+        "help": "Individuals whose sensitive personal data or financial information is processed."
+      },
+      "regularMonitoring": {
+        "label": "Regular and systematic monitoring",
+        "help": "Select this when the core processing activities regularly and systematically monitor data subjects."
+      }
+    },
+    "appointment": {
+      "title": "DPO appointment",
+      "description": "Record the organization profile appointed as DPO and the effective appointment time.",
+      "dpo": {
+        "label": "Appointed DPO",
+        "help": "Only active organization profiles can be newly selected.",
+        "none": "No DPO appointed"
+      },
+      "appointedAt": {
+        "label": "Appointed at",
+        "help": "Required when a DPO profile is selected."
+      }
+    },
+    "notification": {
+      "title": "Commissioner notification",
+      "description": "Track the notification that is due within 21 days after the DPO appointment.",
+      "dueAt": {
+        "label": "Notification due"
+      },
+      "notifiedAt": {
+        "label": "Notified at",
+        "help": "Leave blank until the notification has been submitted."
+      },
+      "reference": {
+        "label": "Notification reference",
+        "help": "Optional acknowledgement or registration reference."
+      }
+    },
+    "profileStates": {
+      "PENDING": "pending",
+      "ACTIVE": "active",
+      "DEACTIVATED": "deactivated"
+    },
+    "actions": {
+      "save": "Save and assess",
+      "saving": "Saving..."
+    },
+    "messages": {
+      "updated": "Malaysia PDPA profile updated"
+    },
+    "errors": {
+      "update": "Failed to update Malaysia PDPA profile"
+    },
+    "validation": {
+      "totalDataSubjectsRequired": "Enter the total number of data subjects.",
+      "sensitiveDataSubjectsRequired": "Enter the number of sensitive or financial data subjects.",
+      "nonNegativeInteger": "Enter a non-negative whole number.",
+      "numberTooLarge": "Enter a number within the supported safe range.",
+      "sensitiveExceedsTotal": "Sensitive or financial data subjects cannot exceed total data subjects.",
+      "dpoAndAppointmentRequired": "The DPO profile and appointment time must be provided together.",
+      "notificationRequiresDPO": "A commissioner notification requires an appointed DPO.",
+      "notificationBeforeAppointment": "The notification time cannot be earlier than the DPO appointment.",
+      "referenceRequiresNotification": "Enter a notification time before adding a reference.",
+      "referenceTooLong": "The notification reference must be 1,000 characters or fewer."
+    }
+  }
+}

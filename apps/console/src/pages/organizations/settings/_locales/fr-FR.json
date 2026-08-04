@@ -1,0 +1,100 @@
+{
+  "malaysiaPDPA": {
+    "tab": "PDPA Malaisie",
+    "page": {
+      "title": "PDPA Malaisie",
+      "description": "Évaluez si votre organisation doit désigner un délégué à la protection des données (DPO) et consignez la désignation ainsi que la notification au commissaire.",
+      "jurisdiction": "Malaisie",
+      "readOnly": "Vous disposez d'un accès en lecture seule à ce profil PDPA Malaisie. Un propriétaire ou un administrateur de l'organisation peut le modifier."
+    },
+    "status": {
+      "title": "Statut de l'obligation de désigner un DPO",
+      "description": "Ce résultat est calculé par le serveur à chaque enregistrement du profil.",
+      "notAssessed": "Non évalué",
+      "required": "DPO obligatoire",
+      "notRequired": "DPO non obligatoire",
+      "reasonsTitle": "Critères déclencheurs",
+      "thresholdNote": "Un DPO est obligatoire lorsque le traitement dépasse 20 000 personnes concernées, que les données sensibles ou financières dépassent 10 000 personnes concernées, ou que les activités impliquent un suivi régulier et systématique.",
+      "assessedAt": "Évalué le {{date}}",
+      "assessedBy": "Évalué par {{name}}",
+      "unknownAssessor": "Profil inconnu",
+      "reasons": {
+        "personalDataVolume": "Le traitement des données personnelles dépasse 20 000 personnes concernées.",
+        "sensitiveDataVolume": "Le traitement des données sensibles ou financières dépasse 10 000 personnes concernées.",
+        "regularMonitoring": "Le traitement implique un suivi régulier et systématique.",
+        "unknown": "Un autre critère légal s'applique."
+      }
+    },
+    "assessment": {
+      "title": "Évaluation de l'obligation de désigner un DPO",
+      "description": "Indiquez le nombre de personnes uniques concernées par les activités de traitement de l'organisation.",
+      "totalDataSubjects": {
+        "label": "Nombre total de personnes concernées",
+        "help": "Toutes les personnes dont les données personnelles sont traitées."
+      },
+      "sensitiveDataSubjects": {
+        "label": "Personnes concernées par des données sensibles ou financières",
+        "help": "Personnes dont les données personnelles sensibles ou les informations financières sont traitées."
+      },
+      "regularMonitoring": {
+        "label": "Suivi régulier et systématique",
+        "help": "Sélectionnez cette option lorsque les activités principales de traitement suivent régulièrement et systématiquement les personnes concernées."
+      }
+    },
+    "appointment": {
+      "title": "Désignation du DPO",
+      "description": "Consignez le profil de l'organisation désigné comme DPO et la date d'effet de sa désignation.",
+      "dpo": {
+        "label": "DPO désigné",
+        "help": "Seuls les profils actifs de l'organisation peuvent être nouvellement sélectionnés.",
+        "none": "Aucun DPO désigné"
+      },
+      "appointedAt": {
+        "label": "Date de désignation",
+        "help": "Obligatoire lorsqu'un profil DPO est sélectionné."
+      }
+    },
+    "notification": {
+      "title": "Notification au commissaire",
+      "description": "Suivez la notification à effectuer dans les 21 jours suivant la désignation du DPO.",
+      "dueAt": {
+        "label": "Échéance de notification"
+      },
+      "notifiedAt": {
+        "label": "Date de notification",
+        "help": "Laissez ce champ vide jusqu'à l'envoi de la notification."
+      },
+      "reference": {
+        "label": "Référence de notification",
+        "help": "Accusé de réception ou référence d'enregistrement facultative."
+      }
+    },
+    "profileStates": {
+      "PENDING": "en attente",
+      "ACTIVE": "actif",
+      "DEACTIVATED": "désactivé"
+    },
+    "actions": {
+      "save": "Enregistrer et évaluer",
+      "saving": "Enregistrement..."
+    },
+    "messages": {
+      "updated": "Profil PDPA Malaisie mis à jour"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour du profil PDPA Malaisie"
+    },
+    "validation": {
+      "totalDataSubjectsRequired": "Indiquez le nombre total de personnes concernées.",
+      "sensitiveDataSubjectsRequired": "Indiquez le nombre de personnes concernées par des données sensibles ou financières.",
+      "nonNegativeInteger": "Saisissez un nombre entier positif ou nul.",
+      "numberTooLarge": "Saisissez un nombre compris dans la plage prise en charge.",
+      "sensitiveExceedsTotal": "Le nombre de personnes concernées par des données sensibles ou financières ne peut pas dépasser le nombre total.",
+      "dpoAndAppointmentRequired": "Le profil du DPO et la date de désignation doivent être renseignés ensemble.",
+      "notificationRequiresDPO": "Une notification au commissaire nécessite un DPO désigné.",
+      "notificationBeforeAppointment": "La date de notification ne peut pas être antérieure à la désignation du DPO.",
+      "referenceRequiresNotification": "Indiquez une date de notification avant d'ajouter une référence.",
+      "referenceTooLong": "La référence de notification ne doit pas dépasser 1 000 caractères."
+    }
+  }
+}
