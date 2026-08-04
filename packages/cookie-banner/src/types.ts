@@ -50,6 +50,8 @@ export type Regulation =
   | "FADP"
   | "CCPA"
   | "PIPEDA"
+  | "PIPA_AB"
+  | "PIPA_BC"
   | "PIPA_CA"
   | "LAW_25"
   | "LGPD"

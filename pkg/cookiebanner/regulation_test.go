@@ -121,6 +121,8 @@ func TestPresentationForRegulation(t *testing.T) {
 		{RegulationTDPSA, PresentationOptOut},
 		{RegulationVCDPA, PresentationOptOut},
 		{RegulationPIPEDA, PresentationOptOut},
+		{RegulationPIPAAB, PresentationOptOut},
+		{RegulationPIPABC, PresentationOptOut},
 		{RegulationPIPACA, PresentationOptOut},
 		{RegulationLaw25, PresentationOptIn},
 		{RegulationLGPD, PresentationOptOut},
@@ -310,19 +312,19 @@ func TestRegulationForLocationCanada(t *testing.T) {
 			wantMode: ConsentModeOptIn,
 		},
 		{
-			name: "Alberta uses Canadian PIPA",
+			name: "Alberta uses provincial PIPA",
 			subdivision: new(
 				coredata.SubdivisionCode("CA-AB"),
 			),
-			want:     RegulationPIPACA,
+			want:     RegulationPIPAAB,
 			wantMode: ConsentModeOptOut,
 		},
 		{
-			name: "British Columbia uses Canadian PIPA",
+			name: "British Columbia uses provincial PIPA",
 			subdivision: new(
 				coredata.SubdivisionCode("CA-BC"),
 			),
-			want:     RegulationPIPACA,
+			want:     RegulationPIPABC,
 			wantMode: ConsentModeOptOut,
 		},
 		{
@@ -353,4 +355,49 @@ func TestRegulationForLocationCanada(t *testing.T) {
 			require.Equal(t, tt.wantMode, ConsentModeForRegulation(regulation))
 		})
 	}
+
+	for subdivision, want := range caPrivacyRegulationBySubdivision {
+		t.Run("all mapped provinces/"+subdivision.String(), func(t *testing.T) {
+			t.Parallel()
+
+			code := subdivision
+			location := coredata.IPLocation{
+				CountryCode:     coredata.CountryCodeCA,
+				SubdivisionCode: &code,
+			}
+			require.Equal(t, want, RegulationForLocation(location))
+		})
+	}
+}
+
+func TestApplyCanadianPrivacyBannerTexts(t *testing.T) {
+	t.Parallel()
+
+	t.Run("PIPEDA uses Canadian opt-out copy", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationPIPEDA,
+			Texts: map[string]string{
+				"banner_description_opt_out":    "generic",
+				"banner_description_ca_opt_out": "ca specific",
+			},
+		}
+		applyCanadianPrivacyBannerTexts(config)
+		require.Equal(t, "ca specific", config.Texts["banner_description_opt_out"])
+	})
+
+	t.Run("Quebec keeps generic opt-out copy", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationLaw25,
+			Texts: map[string]string{
+				"banner_description_opt_out":    "generic",
+				"banner_description_ca_opt_out": "ca specific",
+			},
+		}
+		applyCanadianPrivacyBannerTexts(config)
+		require.Equal(t, "generic", config.Texts["banner_description_opt_out"])
+	})
 }

@@ -117,6 +117,8 @@ func PresentationForRegulation(r Regulation) Presentation {
 		RegulationKCDPA,
 		RegulationRIDTPPA,
 		RegulationPIPEDA,
+		RegulationPIPAAB,
+		RegulationPIPABC,
 		RegulationPIPACA,
 		RegulationLGPD:
 		return PresentationOptOut

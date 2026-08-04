@@ -1776,6 +1776,7 @@ func (s *Service) GetActiveBannerConfig(
 	config.Layout = LayoutForRegulation(regulation)
 
 	applyUSStatePrivacyBannerTexts(config)
+	applyCanadianPrivacyBannerTexts(config)
 	applyBannerTextCompat(config, sdkVersion)
 
 	return config, nil

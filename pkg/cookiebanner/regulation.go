@@ -50,6 +50,8 @@ const (
 	RegulationKCDPA   = coredata.RegulationKCDPA
 	RegulationRIDTPPA = coredata.RegulationRIDTPPA
 	RegulationPIPEDA  = coredata.RegulationPIPEDA
+	RegulationPIPAAB  = coredata.RegulationPIPAAB
+	RegulationPIPABC  = coredata.RegulationPIPABC
 	RegulationPIPACA  = coredata.RegulationPIPACA
 	RegulationLaw25   = coredata.RegulationLaw25
 	RegulationLGPD    = coredata.RegulationLGPD
@@ -106,6 +108,42 @@ var usPrivacyRegulationBySubdivision = map[coredata.SubdivisionCode]Regulation{
 	"US-IN": RegulationINCDPA,
 	"US-KY": RegulationKCDPA,
 	"US-RI": RegulationRIDTPPA,
+}
+
+// caPrivacyRegulationBySubdivision maps ISO 3166-2 Canadian subdivisions to
+// their applicable private-sector privacy regulation.
+//
+// Quebec Law 25 requires opt-in consent for cookies/tracking. Alberta and
+// British Columbia have substantially similar provincial PIPA statutes.
+// All other provinces and territories fall back to the federal PIPEDA.
+var caPrivacyRegulationBySubdivision = map[coredata.SubdivisionCode]Regulation{
+	"CA-QC": RegulationLaw25,
+	"CA-AB": RegulationPIPAAB,
+	"CA-BC": RegulationPIPABC,
+	"CA-MB": RegulationPIPEDA,
+	"CA-NB": RegulationPIPEDA,
+	"CA-NL": RegulationPIPEDA,
+	"CA-NS": RegulationPIPEDA,
+	"CA-NT": RegulationPIPEDA,
+	"CA-NU": RegulationPIPEDA,
+	"CA-ON": RegulationPIPEDA,
+	"CA-PE": RegulationPIPEDA,
+	"CA-SK": RegulationPIPEDA,
+	"CA-YT": RegulationPIPEDA,
+}
+
+// IsCanadianOptOutPrivacyRegulation reports whether the regulation is a
+// Canadian opt-out privacy regime (PIPEDA or provincial PIPA outside Quebec).
+func IsCanadianOptOutPrivacyRegulation(r Regulation) bool {
+	switch r {
+	case RegulationPIPEDA,
+		RegulationPIPAAB,
+		RegulationPIPABC,
+		RegulationPIPACA:
+		return true
+	}
+
+	return false
 }
 
 // IsCaliforniaPrivacyRegulation reports whether the regulation is California
@@ -180,14 +218,11 @@ func RegulationForLocation(location coredata.IPLocation) Regulation {
 			return RegulationPIPEDA
 		}
 
-		switch *location.SubdivisionCode {
-		case "CA-QC":
-			return RegulationLaw25
-		case "CA-AB", "CA-BC":
-			return RegulationPIPACA
-		default:
-			return RegulationPIPEDA
+		if regulation, ok := caPrivacyRegulationBySubdivision[*location.SubdivisionCode]; ok {
+			return regulation
 		}
+
+		return RegulationPIPEDA
 	}
 
 	return RegulationForCountry(location.CountryCode)
@@ -316,6 +351,8 @@ func ConsentModeForRegulation(r Regulation) string {
 		RegulationKCDPA,
 		RegulationRIDTPPA,
 		RegulationPIPEDA,
+		RegulationPIPAAB,
+		RegulationPIPABC,
 		RegulationPIPACA,
 		RegulationLGPD,
 		RegulationLFPDPPP,
@@ -339,6 +376,22 @@ func applyUSStatePrivacyBannerTexts(config *BannerConfig) {
 	}
 
 	if description, ok := config.Texts["banner_description_us_opt_out"]; ok && description != "" {
+		config.Texts["banner_description_opt_out"] = description
+	}
+}
+
+// applyCanadianPrivacyBannerTexts selects Canadian-specific opt-out copy for
+// PIPEDA and provincial PIPA regulations (excluding Quebec Law 25).
+func applyCanadianPrivacyBannerTexts(config *BannerConfig) {
+	if config == nil || config.Texts == nil {
+		return
+	}
+
+	if !IsCanadianOptOutPrivacyRegulation(config.Regulation) {
+		return
+	}
+
+	if description, ok := config.Texts["banner_description_ca_opt_out"]; ok && description != "" {
 		config.Texts["banner_description_opt_out"] = description
 	}
 }

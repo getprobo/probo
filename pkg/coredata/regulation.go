@@ -53,7 +53,9 @@ const (
 	RegulationKCDPA   Regulation = "KCDPA"
 	RegulationRIDTPPA Regulation = "RIDTPPA"
 	RegulationPIPEDA  Regulation = "PIPEDA"
-	RegulationPIPACA  Regulation = "PIPA_CA"
+	RegulationPIPAAB  Regulation = "PIPA_AB"
+	RegulationPIPABC  Regulation = "PIPA_BC"
+	RegulationPIPACA  Regulation = "PIPA_CA" // Deprecated: use PIPA_AB or PIPA_BC; kept for legacy consent records.
 	RegulationLaw25   Regulation = "LAW_25"
 	RegulationLGPD    Regulation = "LGPD"
 	RegulationLFPDPPP Regulation = "LFPDPPP"
@@ -99,6 +101,8 @@ func Regulations() []Regulation {
 		RegulationKCDPA,
 		RegulationRIDTPPA,
 		RegulationPIPEDA,
+		RegulationPIPAAB,
+		RegulationPIPABC,
 		RegulationPIPACA,
 		RegulationLaw25,
 		RegulationLGPD,
@@ -141,6 +145,8 @@ func (v Regulation) IsValid() bool {
 		RegulationKCDPA,
 		RegulationRIDTPPA,
 		RegulationPIPEDA,
+		RegulationPIPAAB,
+		RegulationPIPABC,
 		RegulationPIPACA,
 		RegulationLaw25,
 		RegulationLGPD,
@@ -229,6 +235,10 @@ func ParseRegulation(s string) (Regulation, error) {
 		return RegulationRIDTPPA, nil
 	case RegulationPIPEDA:
 		return RegulationPIPEDA, nil
+	case RegulationPIPAAB:
+		return RegulationPIPAAB, nil
+	case RegulationPIPABC:
+		return RegulationPIPABC, nil
 	case RegulationPIPACA:
 		return RegulationPIPACA, nil
 	case RegulationLaw25:

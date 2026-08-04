@@ -199,6 +199,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Pemberitahuan Cookie",
 		"banner_description_opt_out":    "Kami menggunakan cookie dan teknologi serupa. Anda dapat menolak cookie yang tidak penting. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Kami menggunakan cookie dan teknologi serupa untuk analitik dan periklanan. Berdasarkan undang-undang privasi negara bagian AS yang berlaku, Anda dapat menolak penjualan atau pembagian informasi pribadi Anda serta iklan yang ditargetkan. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Kami menggunakan cookie dan teknologi serupa. Berdasarkan undang-undang privasi Kanada yang berlaku, Anda dapat menolak cookie yang tidak penting kapan saja. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Jangan Jual atau Bagikan Informasi Pribadi Saya",
 
@@ -234,6 +235,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Avviso sui Cookie",
 		"banner_description_opt_out":    "Utilizziamo cookie e tecnologie simili. Puoi rinunciare ai cookie non essenziali. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Utilizziamo cookie e tecnologie simili per analisi e pubblicità. Ai sensi delle leggi statali statunitensi sulla privacy applicabili, puoi rinunciare alla vendita o alla condivisione delle tue informazioni personali e alla pubblicità mirata. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Utilizziamo cookie e tecnologie simili. Ai sensi delle leggi canadesi sulla privacy applicabili, puoi rinunciare ai cookie non essenziali in qualsiasi momento. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Non vendere né condividere le mie informazioni personali",
 
@@ -269,6 +271,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "クッキーに関するお知らせ",
 		"banner_description_opt_out":    "私たちはクッキーおよび類似技術を使用しています。不要なクッキーを拒否することができます。{{cookie_policy_link}}",
 		"banner_description_us_opt_out": "当社は分析および広告のためにクッキーおよび類似技術を使用しています。適用される米国州プライバシー法に基づき、個人情報の販売または共有およびターゲット広告をオプトアウトできます。{{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "当社はクッキーおよび類似技術を使用しています。適用されるカナダのプライバシー法に基づき、不要なクッキーをいつでもオプトアウトできます。{{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "個人情報の販売・共有を拒否する",
 
@@ -304,6 +307,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "쿠키 알림",
 		"banner_description_opt_out":    "저희는 쿠키 및 유사 기술을 사용합니다. 비필수 쿠키를 거부할 수 있습니다. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "저희는 분석 및 광고를 위해 쿠키 및 유사 기술을 사용합니다. 적용되는 미국 주 개인정보 보호법에 따라 개인정보의 판매 또는 공유 및 맞춤형 광고를 거부할 수 있습니다. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "저희는 쿠키 및 유사 기술을 사용합니다. 적용되는 캐나다 개인정보 보호법에 따라 언제든지 필수적이지 않은 쿠키를 거부할 수 있습니다. {{cookie_policy_link}}",
 		"button_acknowledge":            "확인",
 		"button_opt_out":                "내 개인정보 판매 또는 공유 금지",
 
@@ -339,6 +343,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Cookiemelding",
 		"banner_description_opt_out":    "Wij gebruiken cookies en vergelijkbare technologieën. U kunt niet-essentiële cookies weigeren. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Wij gebruiken cookies en vergelijkbare technologieën voor analyse en advertenties. Op grond van toepasselijke Amerikaanse staatsprivacywetten kunt u zich afmelden voor de verkoop of het delen van uw persoonlijke gegevens en gerichte advertenties. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Wij gebruiken cookies en vergelijkbare technologieën. Op grond van toepasselijke Canadese privacywetgeving kunt u zich op elk moment afmelden voor niet-essentiële cookies. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Verkoop of deel mijn persoonlijke gegevens niet",
 
@@ -374,6 +379,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Powiadomienie o plikach cookie",
 		"banner_description_opt_out":    "Używamy plików cookie i podobnych technologii. Możesz zrezygnować z nieistotnych plików cookie. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Używamy plików cookie i podobnych technologii do analityki i reklam. Zgodnie z obowiązującymi amerykańskimi przepisami o prywatności stanowej możesz zrezygnować ze sprzedaży lub udostępniania swoich danych osobowych oraz reklam ukierunkowanych. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Używamy plików cookie i podobnych technologii. Zgodnie z obowiązującymi kanadyjskimi przepisami o prywatności możesz w każdej chwili zrezygnować z nieistotnych plików cookie. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Nie sprzedawaj ani nie udostępniaj moich danych osobowych",
 
@@ -409,6 +415,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Aviso de Cookies",
 		"banner_description_opt_out":    "Utilizamos cookies e tecnologias similares. Você pode recusar cookies não essenciais. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Utilizamos cookies e tecnologias similares para análise e publicidade. De acordo com as leis estaduais de privacidade dos EUA aplicáveis, você pode recusar a venda ou o compartilhamento de suas informações pessoais e a publicidade direcionada. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Utilizamos cookies e tecnologias similares. De acordo com as leis canadenses de privacidade aplicáveis, você pode recusar cookies não essenciais a qualquer momento. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Não vender nem compartilhar minhas informações pessoais",
 
@@ -444,6 +451,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Çerez Bildirimi",
 		"banner_description_opt_out":    "Çerezler ve benzer teknolojiler kullanıyoruz. Zorunlu olmayan çerezleri reddedebilirsiniz. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Analitik ve reklamcılık için çerezler ve benzer teknolojiler kullanıyoruz. Geçerli ABD eyalet gizlilik yasaları kapsamında kişisel bilgilerinizin satışından veya paylaşımından ve hedefli reklamcılıktan vazgeçebilirsiniz. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Çerezler ve benzer teknolojiler kullanıyoruz. Geçerli Kanada gizlilik yasaları kapsamında gerekli olmayan çerezlerden istediğiniz zaman vazgeçebilirsiniz. {{cookie_policy_link}}",
 		"button_acknowledge":            "Tamam",
 		"button_opt_out":                "Kişisel Bilgilerimi Satma veya Paylaşma",
 
@@ -479,6 +487,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Повідомлення про файли cookie",
 		"banner_description_opt_out":    "Ми використовуємо файли cookie та подібні технології. Ви можете відмовитися від неістотних файлів cookie. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Ми використовуємо файли cookie та подібні технології для аналітики та реклами. Відповідно до чинних законів штатів США про конфіденційність ви можете відмовитися від продажу або поширення ваших персональних даних і таргетованої реклами. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Ми використовуємо файли cookie та подібні технології. Відповідно до чинного канадського законодавства про конфіденційність ви можете відмовитися від неосновних файлів cookie у будь-який час. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Не продавати та не ділитися моїми персональними даними",
 
@@ -514,6 +523,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Cookie 通知",
 		"banner_description_opt_out":    "我们使用 Cookie 和类似技术。您可以选择拒绝非必要 Cookie。{{cookie_policy_link}}",
 		"banner_description_us_opt_out": "我们使用 Cookie 和类似技术进行分析和广告。根据适用的美国州隐私法，您可以选择退出出售或共享您的个人信息以及定向广告。{{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "我们使用 Cookie 和类似技术。根据适用的加拿大隐私法，您可以随时选择退出非必要 Cookie。{{cookie_policy_link}}",
 		"button_acknowledge":            "确定",
 		"button_opt_out":                "不要出售或共享我的个人信息",
 
@@ -549,6 +559,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Cookie Notice",
 		"banner_description_opt_out":    "We use cookies and similar technologies. You can opt out of non-essential cookies. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "We use cookies and similar technologies for analytics and advertising. Under applicable US state privacy laws, you may opt out of the sale or sharing of your personal information and targeted advertising. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "We use cookies and similar technologies. Under applicable Canadian privacy law, you may opt out of non-essential cookies at any time. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Do Not Sell or Share My Personal Information",
 
@@ -584,6 +595,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Avis sur les cookies",
 		"banner_description_opt_out":    "Nous utilisons des cookies et technologies similaires. Vous pouvez refuser les cookies non essentiels. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Nous utilisons des cookies et technologies similaires pour l'analyse et la publicité. En vertu des lois estatals américaines sur la confidentialité applicables, vous pouvez refuser la vente ou le partage de vos informations personnelles et la publicité ciblée. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Nous utilisons des cookies et technologies similaires. En vertu des lois canadiennes sur la confidentialité applicables, vous pouvez refuser les cookies non essentiels à tout moment. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Ne pas vendre ni partager mes informations personnelles",
 
@@ -619,6 +631,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Cookie-Hinweis",
 		"banner_description_opt_out":    "Wir verwenden Cookies und ähnliche Technologien. Sie können nicht wesentliche Cookies ablehnen. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Wir verwenden Cookies und ähnliche Technologien für Analysen und Werbung. Nach den geltenden US-Bundesstaats-Datenschutzgesetzen können Sie dem Verkauf oder der Weitergabe Ihrer personenbezogenen Daten und gezielter Werbung widersprechen. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Wir verwenden Cookies und ähnliche Technologien. Nach den geltenden kanadischen Datenschutzgesetzen können Sie nicht wesentliche Cookies jederzeit ablehnen. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Meine persönlichen Daten nicht verkaufen oder weitergeben",
 
@@ -654,6 +667,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_title_opt_out":          "Aviso de cookies",
 		"banner_description_opt_out":    "Utilizamos cookies y tecnologías similares. Puede optar por no recibir cookies no esenciales. {{cookie_policy_link}}",
 		"banner_description_us_opt_out": "Utilizamos cookies y tecnologías similares para análisis y publicidad. Según las leyes estatales de privacidad de EE. UU. aplicables, puede optar por no participar en la venta o el intercambio de su información personal y en la publicidad dirigida. {{cookie_policy_link}}",
+		"banner_description_ca_opt_out": "Utilizamos cookies y tecnologías similares. Según las leyes canadenses de privacidad aplicables, puede optar por no usar cookies no esenciales en cualquier momento. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "No vender ni compartir mi información personal",
 

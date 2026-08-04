@@ -144,6 +144,14 @@ enum Regulation
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RegulationPIPEDA"
         )
+    PIPA_AB
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPAAB"
+        )
+    PIPA_BC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPABC"
+        )
     PIPA_CA
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RegulationPIPACA"
