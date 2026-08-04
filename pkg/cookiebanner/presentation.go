@@ -92,12 +92,13 @@ type Layout struct {
 // Opt-out regimes with a statutory notice model (Japan's APPI, Mexico's
 // LFPDPPP) and jurisdictions with no cookie-consent law (RegulationNone) use
 // the informational notice presentation; the remaining opt-out regimes (CCPA,
-// PIPEDA, LGPD) use the opt-out presentation; everything else defaults to the
-// strict opt-in presentation.
+// PIPEDA, Canadian PIPA, LGPD) use the opt-out presentation; everything else
+// defaults to the strict opt-in presentation.
 func PresentationForRegulation(r Regulation) Presentation {
 	switch r {
 	case RegulationCCPA,
 		RegulationPIPEDA,
+		RegulationPIPACA,
 		RegulationLGPD:
 		return PresentationOptOut
 

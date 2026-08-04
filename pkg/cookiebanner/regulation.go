@@ -31,6 +31,8 @@ const (
 	RegulationFADP    = coredata.RegulationFADP
 	RegulationCCPA    = coredata.RegulationCCPA
 	RegulationPIPEDA  = coredata.RegulationPIPEDA
+	RegulationPIPACA  = coredata.RegulationPIPACA
+	RegulationLaw25   = coredata.RegulationLaw25
 	RegulationLGPD    = coredata.RegulationLGPD
 	RegulationLFPDPPP = coredata.RegulationLFPDPPP
 	RegulationPOPIA   = coredata.RegulationPOPIA
@@ -103,6 +105,21 @@ func RegulationForLocation(location coredata.IPLocation) Regulation {
 			return RegulationCCPA
 		default:
 			return RegulationNone
+		}
+	}
+
+	if location.CountryCode == coredata.CountryCodeCA {
+		if location.SubdivisionCode == nil {
+			return RegulationPIPEDA
+		}
+
+		switch *location.SubdivisionCode {
+		case "CA-QC":
+			return RegulationLaw25
+		case "CA-AB", "CA-BC":
+			return RegulationPIPACA
+		default:
+			return RegulationPIPEDA
 		}
 	}
 
@@ -202,6 +219,7 @@ func ConsentModeForRegulation(r Regulation) string {
 	case RegulationGDPR,
 		RegulationUKGDPR,
 		RegulationFADP,
+		RegulationLaw25,
 		RegulationPOPIA,
 		RegulationPDPA,
 		RegulationPIPL,
@@ -212,6 +230,7 @@ func ConsentModeForRegulation(r Regulation) string {
 
 	case RegulationCCPA,
 		RegulationPIPEDA,
+		RegulationPIPACA,
 		RegulationLGPD,
 		RegulationLFPDPPP,
 		RegulationAPPI:

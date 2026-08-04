@@ -34,6 +34,8 @@ const (
 	RegulationFADP    Regulation = "FADP"
 	RegulationCCPA    Regulation = "CCPA"
 	RegulationPIPEDA  Regulation = "PIPEDA"
+	RegulationPIPACA  Regulation = "PIPA_CA"
+	RegulationLaw25   Regulation = "LAW_25"
 	RegulationLGPD    Regulation = "LGPD"
 	RegulationLFPDPPP Regulation = "LFPDPPP"
 	RegulationPOPIA   Regulation = "POPIA"
@@ -59,6 +61,8 @@ func Regulations() []Regulation {
 		RegulationFADP,
 		RegulationCCPA,
 		RegulationPIPEDA,
+		RegulationPIPACA,
+		RegulationLaw25,
 		RegulationLGPD,
 		RegulationLFPDPPP,
 		RegulationPOPIA,
@@ -80,6 +84,8 @@ func (v Regulation) IsValid() bool {
 		RegulationFADP,
 		RegulationCCPA,
 		RegulationPIPEDA,
+		RegulationPIPACA,
+		RegulationLaw25,
 		RegulationLGPD,
 		RegulationLFPDPPP,
 		RegulationPOPIA,
@@ -128,6 +134,10 @@ func ParseRegulation(s string) (Regulation, error) {
 		return RegulationCCPA, nil
 	case RegulationPIPEDA:
 		return RegulationPIPEDA, nil
+	case RegulationPIPACA:
+		return RegulationPIPACA, nil
+	case RegulationLaw25:
+		return RegulationLaw25, nil
 	case RegulationLGPD:
 		return RegulationLGPD, nil
 	case RegulationLFPDPPP:

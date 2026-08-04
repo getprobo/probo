@@ -68,6 +68,14 @@ enum Regulation
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RegulationPIPEDA"
         )
+    PIPA_CA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPACA"
+        )
+    LAW_25
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationLaw25"
+        )
     LGPD
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RegulationLGPD"

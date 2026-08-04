@@ -64,19 +64,19 @@ func TestResolveRegulation(t *testing.T) {
 			wantSource:     RegulationSourceDetected,
 		},
 		{
-			name: "unregulated US state defaults to GDPR",
+			name: "unregulated US state resolves to none as detected",
 			location: &coredata.IPLocation{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: new(coredata.SubdivisionCode("US-NY")),
 			},
-			wantRegulation: RegulationGDPR,
-			wantSource:     RegulationSourceDefault,
+			wantRegulation: RegulationNone,
+			wantSource:     RegulationSourceDetected,
 		},
 		{
-			name:           "US without subdivision defaults to GDPR",
+			name:           "US without subdivision resolves to none as detected",
 			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeUS},
-			wantRegulation: RegulationGDPR,
-			wantSource:     RegulationSourceDefault,
+			wantRegulation: RegulationNone,
+			wantSource:     RegulationSourceDetected,
 		},
 		{
 			name:           "UK resolves to UK GDPR as detected",
@@ -110,6 +110,8 @@ func TestPresentationForRegulation(t *testing.T) {
 		{RegulationPOPIA, PresentationOptIn},
 		{RegulationCCPA, PresentationOptOut},
 		{RegulationPIPEDA, PresentationOptOut},
+		{RegulationPIPACA, PresentationOptOut},
+		{RegulationLaw25, PresentationOptIn},
 		{RegulationLGPD, PresentationOptOut},
 		{RegulationAPPI, PresentationNotice},
 		{RegulationLFPDPPP, PresentationNotice},
@@ -211,6 +213,69 @@ func TestRegulationForLocationUSPrivacyStates(t *testing.T) {
 				SubdivisionCode: &subdivision,
 			}
 			require.Equal(t, RegulationCCPA, RegulationForLocation(location))
+		})
+	}
+}
+
+func TestRegulationForLocationCanada(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		subdivision *coredata.SubdivisionCode
+		want        Regulation
+		wantMode    string
+	}{
+		{
+			name: "Quebec uses Law 25",
+			subdivision: new(
+				coredata.SubdivisionCode("CA-QC"),
+			),
+			want:     RegulationLaw25,
+			wantMode: ConsentModeOptIn,
+		},
+		{
+			name: "Alberta uses Canadian PIPA",
+			subdivision: new(
+				coredata.SubdivisionCode("CA-AB"),
+			),
+			want:     RegulationPIPACA,
+			wantMode: ConsentModeOptOut,
+		},
+		{
+			name: "British Columbia uses Canadian PIPA",
+			subdivision: new(
+				coredata.SubdivisionCode("CA-BC"),
+			),
+			want:     RegulationPIPACA,
+			wantMode: ConsentModeOptOut,
+		},
+		{
+			name: "Ontario uses PIPEDA",
+			subdivision: new(
+				coredata.SubdivisionCode("CA-ON"),
+			),
+			want:     RegulationPIPEDA,
+			wantMode: ConsentModeOptOut,
+		},
+		{
+			name:     "missing subdivision uses PIPEDA",
+			want:     RegulationPIPEDA,
+			wantMode: ConsentModeOptOut,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			location := coredata.IPLocation{
+				CountryCode:     coredata.CountryCodeCA,
+				SubdivisionCode: tt.subdivision,
+			}
+			regulation := RegulationForLocation(location)
+			require.Equal(t, tt.want, regulation)
+			require.Equal(t, tt.wantMode, ConsentModeForRegulation(regulation))
 		})
 	}
 }
