@@ -206,6 +206,13 @@ const (
 	ActionAuditReportUpload = "core:audit:upload-report"
 	ActionAuditReportDelete = "core:audit:delete-report"
 
+	// AuditProgram actions
+	ActionAuditProgramGet    = "core:audit-program:get"
+	ActionAuditProgramList   = "core:audit-program:list"
+	ActionAuditProgramCreate = "core:audit-program:create"
+	ActionAuditProgramUpdate = "core:audit-program:update"
+	ActionAuditProgramDelete = "core:audit-program:delete"
+
 	// Report actions
 	ActionReportGet            = "core:report:get"
 	ActionReportGetReportUrl   = "core:report:get-report-url"

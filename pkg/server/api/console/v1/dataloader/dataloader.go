@@ -60,6 +60,7 @@ type (
 	Loaders struct {
 		Organization               *dataloadgen.Loader[gid.GID, *coredata.Organization]
 		Framework                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
+		AuditProgram               *dataloadgen.Loader[gid.GID, *coredata.AuditProgram]
 		Control                    *dataloadgen.Loader[gid.GID, *coredata.Control]
 		ThirdParty                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
 		Document                   *dataloadgen.Loader[gid.GID, *coredata.Document]
@@ -112,6 +113,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 	return &Loaders{
 		Organization:               dataloadgen.NewMappedLoader(f.fetchOrganizations),
 		Framework:                  dataloadgen.NewMappedLoader(f.fetchFrameworks),
+		AuditProgram:               dataloadgen.NewMappedLoader(f.fetchAuditPrograms),
 		Control:                    dataloadgen.NewMappedLoader(f.fetchControls),
 		ThirdParty:                 dataloadgen.NewMappedLoader(f.fetchThirdParties),
 		Document:                   dataloadgen.NewMappedLoader(f.fetchDocuments),
@@ -158,6 +160,22 @@ func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map
 
 	result := make(map[gid.GID]*coredata.Framework, len(frameworks))
 	for _, v := range frameworks {
+		result[v.ID] = v
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchAuditPrograms(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.AuditProgram, error) {
+	scope := coredata.NewScopeFromObjectID(keys[0])
+
+	auditPrograms, err := f.probo.AuditPrograms.GetByIDs(ctx, scope, keys...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load audit programs: %w", err)
+	}
+
+	result := make(map[gid.GID]*coredata.AuditProgram, len(auditPrograms))
+	for _, v := range auditPrograms {
 		result[v.ID] = v
 	}
 

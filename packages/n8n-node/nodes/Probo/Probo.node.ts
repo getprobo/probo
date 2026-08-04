@@ -99,6 +99,11 @@ export class Probo implements INodeType {
 						description: 'View audit log entries',
 					},
 					{
+						name: 'Audit Program',
+						value: 'auditProgram',
+						description: 'Manage audit programs',
+					},
+					{
 						name: 'Compliance Portal',
 						value: 'compliancePortal',
 						description: 'Manage compliance portal',

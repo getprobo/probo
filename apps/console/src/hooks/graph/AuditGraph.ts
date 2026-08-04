@@ -72,6 +72,13 @@ export const auditNodeQuery = graphql`
           id
           name
         }
+        auditProgram {
+          id
+          name
+          framework {
+            id
+          }
+        }
         createdAt
         updatedAt
         canUpdate: permission(action: "core:audit:update")
@@ -104,6 +111,10 @@ export const createAuditMutation = graphql`
             id
             name
           }
+          auditProgram {
+            id
+            name
+          }
           createdAt
           canUpdate: permission(action: "core:audit:update")
           canDelete: permission(action: "core:audit:delete")
@@ -131,6 +142,13 @@ export const updateAuditMutation = graphql`
         framework {
           id
           name
+        }
+        auditProgram {
+          id
+          name
+          framework {
+            id
+          }
         }
         updatedAt
       }
@@ -196,6 +214,7 @@ export const useCreateAudit = (connectionId: string) => {
     auditEndDate?: string;
     reportKey?: string;
     state?: string;
+    auditProgramId?: string | null;
     file?: File | null;
   }) => {
     if (!input.organizationId) {
@@ -217,6 +236,7 @@ export const useCreateAudit = (connectionId: string) => {
           auditEndDate: input.auditEndDate,
           reportKey: input.reportKey,
           state: input.state || "NOT_STARTED",
+          auditProgramId: input.auditProgramId || null,
           file: input.file ? null : undefined,
         },
         connections: [connectionId],
@@ -239,6 +259,7 @@ export const useUpdateAudit = () => {
     auditStartDate?: string | null;
     auditEndDate?: string | null;
     state?: string;
+    auditProgramId?: string | null;
   }) => {
     if (!input.id) {
       return alert(t("auditGraph.errors.updateIdRequired"));

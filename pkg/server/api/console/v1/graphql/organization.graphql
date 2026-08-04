@@ -165,6 +165,14 @@ type Organization implements Node {
         orderBy: AuditOrder
     ): AuditConnection! @goField(forceResolver: true)
 
+    auditPrograms(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditProgramOrder
+    ): AuditProgramConnection! @goField(forceResolver: true)
+
     findingsDocument: Document @goField(forceResolver: true)
 
     findings(

@@ -5109,6 +5109,11 @@ components:
         framework_id:
           $ref: "#/components/schemas/GID"
           description: Framework ID
+        audit_program_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Optional audit program ID
         name:
           type:
             - string
@@ -5258,6 +5263,9 @@ components:
         framework_id:
           $ref: "#/components/schemas/GID"
           description: Framework ID
+        audit_program_id:
+          $ref: "#/components/schemas/GID"
+          description: Optional audit program ID
         name:
           type: string
           description: Audit name
@@ -5300,6 +5308,12 @@ components:
         name:
           type: ["string", "null"]
           description: Audit name
+          go.probo.inc/mcpgen/omittable: true
+        audit_program_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Audit program ID (set to null to unlink)
           go.probo.inc/mcpgen/omittable: true
         valid_from:
           type:
@@ -5357,6 +5371,205 @@ components:
         deleted_audit_id:
           $ref: "#/components/schemas/GID"
           description: Deleted audit ID
+
+    AuditProgramOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - VALID_FROM
+        - VALID_UNTIL
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditProgramOrderField
+
+    AuditProgramOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AuditProgramOrderField"
+          description: Audit program order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Audit program order direction
+
+    AuditProgram:
+      type: object
+      required:
+        - id
+        - organization_id
+        - framework_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit program ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        name:
+          type: string
+          description: Audit program name
+        valid_from:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Valid from date
+        valid_until:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Valid until date
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListAuditProgramsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AuditProgramOrderBy"
+          description: Audit program order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListAuditProgramsOutput:
+      type: object
+      required:
+        - audit_programs
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        audit_programs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditProgram"
+
+    GetAuditProgramInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit program ID
+
+    GetAuditProgramOutput:
+      type: object
+      required:
+        - audit_program
+      properties:
+        audit_program:
+          $ref: "#/components/schemas/AuditProgram"
+
+    AddAuditProgramInput:
+      type: object
+      required:
+        - organization_id
+        - framework_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        name:
+          type: string
+          description: Audit program name
+        valid_from:
+          type: string
+          format: date-time
+          description: Valid from date
+        valid_until:
+          type: string
+          format: date-time
+          description: Valid until date
+
+    AddAuditProgramOutput:
+      type: object
+      required:
+        - audit_program
+      properties:
+        audit_program:
+          $ref: "#/components/schemas/AuditProgram"
+
+    UpdateAuditProgramInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit program ID
+        name:
+          type: ["string", "null"]
+          description: Audit program name
+          go.probo.inc/mcpgen/omittable: true
+        valid_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+          description: Valid from date
+          go.probo.inc/mcpgen/omittable: true
+        valid_until:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+          description: Valid until date
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateAuditProgramOutput:
+      type: object
+      required:
+        - audit_program
+      properties:
+        audit_program:
+          $ref: "#/components/schemas/AuditProgram"
+
+    DeleteAuditProgramInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit program ID
+
+    DeleteAuditProgramOutput:
+      type: object
+      required:
+        - deleted_audit_program_id
+      properties:
+        deleted_audit_program_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted audit program ID
 
     ControlOrderField:
       type: string
@@ -15113,6 +15326,49 @@ tools:
       $ref: "#/components/schemas/DeleteAuditReportInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAuditReportOutput"
+  - name: listAuditPrograms
+    description: List all audit programs for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAuditProgramsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAuditProgramsOutput"
+  - name: getAuditProgram
+    description: Get an audit program by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetAuditProgramInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAuditProgramOutput"
+  - name: addAuditProgram
+    description: Add a new audit program to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddAuditProgramInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddAuditProgramOutput"
+  - name: updateAuditProgram
+    description: Update an existing audit program
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAuditProgramInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAuditProgramOutput"
+  - name: deleteAuditProgram
+    description: Delete an audit program (audits are detached, not deleted)
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAuditProgramInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAuditProgramOutput"
   - name: listControls
     title: List Controls
     description: List all controls for the organization or framework

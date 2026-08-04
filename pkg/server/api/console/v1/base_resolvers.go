@@ -283,6 +283,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAudit(audit), nil
 		}
+	case coredata.AuditProgramEntityType:
+		action = probo.ActionAuditProgramList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			auditProgram, err := r.probo.AuditPrograms.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAuditProgram(auditProgram), nil
+		}
 	case coredata.FindingEntityType:
 		action = probo.ActionFindingList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

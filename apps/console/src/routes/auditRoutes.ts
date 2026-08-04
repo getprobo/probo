@@ -24,7 +24,9 @@ import {
   loaderFromQueryLoader,
   withQueryRef,
 } from "@probo/routes";
+import { Fragment } from "react";
 import { loadQuery } from "react-relay";
+import { redirect } from "react-router";
 
 import type { AuditGraphListQuery } from "#/__generated__/core/AuditGraphListQuery.graphql";
 import type { AuditGraphNodeQuery } from "#/__generated__/core/AuditGraphNodeQuery.graphql";
@@ -37,13 +39,42 @@ export const auditRoutes = [
   {
     path: "audits",
     Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<AuditGraphListQuery>(coreEnvironment, auditsQuery, {
-        organizationId,
-      }),
+    Component: lazy(
+      () => import("#/pages/organizations/audits/AuditsLayoutLoader"),
     ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/audits/AuditsPage")),
+    children: [
+      {
+        index: true,
+        Fallback: PageSkeleton,
+        loader: loaderFromQueryLoader(({ organizationId }) =>
+          loadQuery<AuditGraphListQuery>(coreEnvironment, auditsQuery, {
+            organizationId,
+          }),
+        ),
+        Component: withQueryRef(
+          lazy(() => import("#/pages/organizations/audits/AuditsPage")),
+        ),
+      },
+      {
+        path: "programs",
+        Fallback: PageSkeleton,
+        Component: lazy(
+          () =>
+            import(
+              "#/pages/organizations/audit-programs/AuditProgramsPageLoader"
+            ),
+        ),
+      },
+    ],
+  },
+  {
+    path: "audits/programs/:auditProgramId",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () =>
+        import(
+          "#/pages/organizations/audit-programs/AuditProgramDetailsPageLoader"
+        ),
     ),
   },
   {
@@ -57,5 +88,23 @@ export const auditRoutes = [
     Component: withQueryRef(
       lazy(() => import("#/pages/organizations/audits/AuditDetailsPage")),
     ),
+  },
+  {
+    path: "audit-programs",
+    loader: ({ params: { organizationId } }) => {
+      // eslint-disable-next-line
+      throw redirect(`/organizations/${organizationId}/audits/programs`);
+    },
+    Component: Fragment,
+  },
+  {
+    path: "audit-programs/:auditProgramId",
+    loader: ({ params: { organizationId, auditProgramId } }) => {
+      // eslint-disable-next-line
+      throw redirect(
+        `/organizations/${organizationId}/audits/programs/${auditProgramId}`,
+      );
+    },
+    Component: Fragment,
   },
 ] satisfies AppRoute[];

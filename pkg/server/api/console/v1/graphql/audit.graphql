@@ -157,6 +157,7 @@ type Audit implements Node {
     name: String
     organization: Organization @goField(forceResolver: true)
     framework: Framework @goField(forceResolver: true)
+    auditProgram: AuditProgram @goField(forceResolver: true)
     validFrom: Datetime
     validUntil: Datetime
     auditStartDate: Datetime
@@ -281,6 +282,7 @@ type PublishFindingListPayload {
 input CreateAuditInput {
     organizationId: ID!
     frameworkId: ID!
+    auditProgramId: ID
     name: String
     validFrom: Datetime
     validUntil: Datetime
@@ -293,6 +295,7 @@ input CreateAuditInput {
 input UpdateAuditInput {
     id: ID!
     name: String @goField(omittable: true)
+    auditProgramId: ID @goField(omittable: true)
     validFrom: Datetime
     validUntil: Datetime
     auditStartDate: Datetime

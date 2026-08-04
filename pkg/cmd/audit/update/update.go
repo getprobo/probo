@@ -62,6 +62,8 @@ type updateResponse struct {
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagName           string
+		flagProgram        string
+		flagClearProgram   bool
 		flagState          string
 		flagValidFrom      string
 		flagValidUntil     string
@@ -98,6 +100,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
+			}
+
+			if flagClearProgram {
+				input["auditProgramId"] = nil
+			} else if cmd.Flags().Changed("program") {
+				input["auditProgramId"] = flagProgram
 			}
 
 			if cmd.Flags().Changed("state") {
@@ -150,6 +158,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Audit name")
+	cmd.Flags().StringVar(&flagProgram, "program", "", "Audit program ID")
+	cmd.Flags().BoolVar(&flagClearProgram, "clear-program", false, "Unlink the audit from its program")
 	cmd.Flags().StringVar(&flagState, "state", "", "Audit state: NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED, OUTDATED")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Valid from date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
