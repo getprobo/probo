@@ -533,20 +533,26 @@ jobs:
           docker compose pull
           mkdir -p /tmp/docker-images
           docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
-      - name: "Build probod"
-        run: "make bin/probod"
       - name: "Start stack"
         run: "make stack-up"
       - run: "make stack-ps"
       - name: "Run e2e tests"
         env:
           PROBO_E2E_ARTIFACT_DIR: "${{ github.workspace }}/e2e-artifacts"
-          PROBO_E2E_BINARY: "${{ github.workspace }}/bin/probod"
           GOTESTSUM_FORMAT: "testname"
           GOTESTSUM_JUNITFILE: "junit-e2e.xml"
         run: |
           PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
-            make test-e2e
+            make test-e2e-coverage
+      - name: "Report e2e coverage"
+        if: "always()"
+        run: |
+          if [ -f coverage-e2e.txt ]; then
+            coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e.txt)"
+            echo "### E2E application coverage: ${coverage}" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "### E2E application coverage unavailable" >> "${GITHUB_STEP_SUMMARY}"
+          fi
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: "always()"
@@ -556,4 +562,7 @@ jobs:
           path: |
             junit-e2e.xml
             e2e-artifacts
+            coverage-e2e.out
+            coverage-e2e.txt
+            coverage-e2e.html
           retention-days: 30

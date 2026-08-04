@@ -35,7 +35,15 @@ The regular target avoids instrumenting the test driver with race and coverage
 flags because probod runs as a separate process. Use
 `make test-e2e E2E_TEST_FLAGS=-race` when changing concurrent harness code, and
 use `make test-e2e-coverage` to run an instrumented probod and collect
-application coverage.
+application coverage. The coverage target writes:
+
+- `coverage-e2e.out` — Go coverage profile
+- `coverage-e2e.txt` — per-function and total statement coverage
+- `coverage-e2e.html` — browsable source report
+
+CI uses the coverage target, publishes the total in the job summary, and
+uploads all three reports with the JUnit and journey artifacts. Coverage is
+collected from the probod process, not from the E2E test driver.
 
 ## Client setup
 

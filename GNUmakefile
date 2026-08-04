@@ -221,18 +221,23 @@ test-e2e: $(PROBOD_BIN) ## Run console e2e tests
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
 
-bin/probod-coverage:
-	CGO_ENABLED=0 $(GO_BUILD) $(PROBOD_LDFLAGS) -cover -o $@ $(PROBOD_SRC)
+.PHONY: bin/probod-coverage
+bin/probod-coverage: CGO_ENABLED=0
+bin/probod-coverage: generate embed
+	$(GO_BUILD) $(PROBOD_LDFLAGS) -cover -covermode=atomic -o $@ $(PROBOD_SRC)
 
 .PHONY: test-e2e-coverage
+test-e2e-coverage: CGO_ENABLED=1
 test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
 	@$(RM) -rf $(E2E_COVER_DIR) && $(MKDIR) -p $(E2E_COVER_DIR)
 	PROBO_E2E_BINARY=$(CURDIR)/bin/probod-coverage \
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
-	CGO_ENABLED=1 $(GO) test -count=1 -v ./e2e/console/...
+	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -o=coverage-e2e.out
+	$(GO) tool cover -func=coverage-e2e.out > coverage-e2e.txt
 	$(GO) tool cover -html=coverage-e2e.out -o=coverage-e2e.html
+	$(CAT) coverage-e2e.txt
 
 .PHONY: coverage-combined
 coverage-combined: coverage-report test-e2e-coverage ## Generate combined coverage report (unit + e2e)
@@ -461,7 +466,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf apps/{console,compliance-portal}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
-	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
+	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.txt coverage-e2e.html coverage-combined.out coverage-combined.html
 	$(RM) -rf coverage/
 	$(RM) -rf compose/keycloak/certs/cert.pem compose/keycloak/certs/private-key.pem compose/keycloak/probo-realm.json
 	$(RM) -f pkg/server/api/connect/v1/schema/schema.go pkg/server/api/connect/v1/types/types.go

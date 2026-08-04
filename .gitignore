@@ -33,3 +33,4 @@ cfg/dev.yaml
 .env
 .oauth-credentials.txt
 e2e-artifacts/
+coverage-e2e.txt

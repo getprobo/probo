@@ -52,7 +52,7 @@ Individual codegen is driven by `go generate`:
 | Target                   | Purpose                                               |
 | ------------------------ | ----------------------------------------------------- |
 | `make coverage-report`   | Unit test HTML coverage report (`coverage.html`)      |
-| `make test-e2e-coverage` | E2E coverage report (`coverage-e2e.html`)             |
+| `make test-e2e-coverage` | E2E application coverage (`.out`, `.txt`, and `.html`) |
 | `make coverage-combined` | Combined unit + e2e report (`coverage-combined.html`) |
 
 ## Docker
@@ -84,6 +84,7 @@ Individual codegen is driven by `go generate`:
 | `CGO_ENABLED`        | `0`                                       | Enable/disable CGO                         |
 | `GOOS`               | (host)                                    | Cross-compile target OS                    |
 | `TEST_FLAGS`         | `-race -cover -coverprofile=coverage.out` | Extra flags passed to `go test`            |
+| `E2E_TEST_FLAGS`     | (empty)                                   | Extra flags passed to E2E test drivers     |
 | `DOCKER_BUILD_FLAGS` | (empty)                                   | Extra flags for `docker build`             |
 | `SWIFTLINTCMD`       | `swiftlint`                               | SwiftLint binary                           |
 | `SWIFTCMD`           | `swift`                                   | Swift toolchain binary (`swift format`)    |
