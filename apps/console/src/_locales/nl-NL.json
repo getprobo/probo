@@ -3558,6 +3558,10 @@
       "notUploaded": "Niet geüpload"
     }
   },
+  "auditsTabs": {
+    "audits": "Audits",
+    "programs": "Programma's"
+  },
   "createAuditDialog": {
     "breadcrumb": {
       "audits": "Audits",

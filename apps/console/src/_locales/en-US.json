@@ -1354,6 +1354,7 @@
   "membershipsDropdownInvitingItem": { "title": "Check your email to accept the invitation" },
   "membershipsDropdownMenu": { "pendingInvitations": "Pending invitations" },
   "sidebar": { "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "accessReviews": "Access Reviews", "compliancePortals": "Compliance Portals", "cookieBanners": "Cookie Banners", "settings": "Settings" },
+  "auditsTabs": { "audits": "Audits", "programs": "Programs" },
   "viewerMembershipDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "apiKeys": "API Keys", "oauthTokens": "OAuth tokens", "mySignatures": "My Signatures", "employeePortal": "Employee Portal", "help": "Help", "logout": "Logout" }
@@ -1706,11 +1707,12 @@
   "auditDetailsPage": {
     "breadcrumb": { "audits": "Audits" },
     "unknownAudit": "Unknown Audit",
+    "loading": "Loading...",
     "errors": { "update": "Failed to update audit" },
     "messages": { "success": "Success", "error": "Error", "updated": "Audit updated successfully" },
     "deleteReportConfirmation": "This will permanently delete the audit report \"{{name}}\". This action cannot be undone.",
     "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
-    "fields": { "name": "Name", "namePlaceholder": "Audit name", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "fields": { "name": "Name", "namePlaceholder": "Audit name", "state": "State", "auditProgram": "Audit program", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
     "actions": { "delete": "Delete", "update": "Update", "updating": "Updating...", "download": "Download" },
     "report": { "title": "Audit Report", "uploaded": "Uploaded {{date}}", "uploadDescription": "Upload the final audit report document (PDF recommended)", "dropzoneDescription": "Only PDF up to 25MB are allowed" }
   },
@@ -1731,7 +1733,7 @@
     "errors": { "create": "Failed to create audit" },
     "fileSize": "{{value}} MB",
     "loading": "Loading...",
-    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "name": "Name", "namePlaceholder": "Audit name", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "auditProgram": "Audit program", "name": "Name", "namePlaceholder": "Audit name", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
     "states": { "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "actions": { "create": "Create" }
   },

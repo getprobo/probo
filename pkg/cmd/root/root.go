@@ -26,6 +26,7 @@ import (
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
 	"go.probo.inc/probo/pkg/cmd/asset"
 	"go.probo.inc/probo/pkg/cmd/audit"
+	auditprogram "go.probo.inc/probo/pkg/cmd/audit-program"
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
@@ -101,6 +102,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
 	cmd.AddCommand(asset.NewCmdAsset(f))
 	cmd.AddCommand(audit.NewCmdAudit(f))
+	cmd.AddCommand(auditprogram.NewCmdAuditProgram(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))

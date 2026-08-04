@@ -1,0 +1,84 @@
+{
+  "auditProgramsPage": {
+    "title": "Programmes d'audit",
+    "description": "Regroupez les audits dans des programmes de certification pluriannuels par référentiel.",
+    "actions": { "add": "Ajouter un programme", "delete": "Supprimer" },
+    "columns": {
+      "name": "Nom",
+      "framework": "Référentiel",
+      "validFrom": "Valide à partir du",
+      "validUntil": "Valide jusqu'au"
+    },
+    "row": { "unknownFramework": "Référentiel inconnu", "notSet": "Non défini" }
+  },
+  "auditProgramDetailsPage": {
+    "breadcrumb": { "auditPrograms": "Programmes d'audit" },
+    "messages": {
+      "success": "Succès",
+      "error": "Erreur",
+      "updated": "Programme d'audit mis à jour"
+    },
+    "errors": { "update": "Échec de la mise à jour du programme d'audit" },
+    "fields": {
+      "name": "Nom",
+      "namePlaceholder": "Nom du programme",
+      "validFrom": "Valide à partir du",
+      "validUntil": "Valide jusqu'au"
+    },
+    "actions": {
+      "delete": "Supprimer",
+      "update": "Mettre à jour",
+      "updating": "Mise à jour..."
+    },
+    "audits": {
+      "title": "Audits liés",
+      "empty": "Aucun audit n'est lié à ce programme pour le moment.",
+      "columns": { "name": "Audit", "state": "État" }
+    },
+    "auditStates": {
+      "not_started": "Non démarré",
+      "in_progress": "En cours",
+      "completed": "Terminé",
+      "rejected": "Rejeté",
+      "outdated": "Obsolète"
+    },
+    "meta": { "updated": "Dernière mise à jour {{date}}" }
+  },
+  "createAuditProgramDialog": {
+    "breadcrumb": { "auditPrograms": "Programmes d'audit", "new": "Nouveau programme" },
+    "validation": {
+      "frameworkRequired": "Le référentiel est obligatoire",
+      "nameRequired": "Le nom est obligatoire"
+    },
+    "messages": {
+      "success": "Succès",
+      "error": "Erreur",
+      "created": "Programme d'audit créé"
+    },
+    "errors": { "create": "Échec de la création du programme d'audit" },
+    "loading": "Chargement...",
+    "fields": {
+      "framework": "Référentiel",
+      "frameworkPlaceholder": "Sélectionner un référentiel",
+      "name": "Nom",
+      "namePlaceholder": "Nom du programme",
+      "validFrom": "Valide à partir du",
+      "validUntil": "Valide jusqu'au"
+    },
+    "actions": { "create": "Créer" }
+  },
+  "auditProgramGraph": {
+    "deleteConfirmation": "Cette action supprimera définitivement le programme d'audit « {{name}} ». Les audits liés seront détachés. Cette action est irréversible.",
+    "messages": { "deleted": "Programme d'audit supprimé avec succès" },
+    "errors": {
+      "delete": "Échec de la suppression du programme d'audit",
+      "createOrganizationRequired": "Échec de la création du programme : l'organisation est requise",
+      "createFrameworkRequired": "Échec de la création du programme : le référentiel est requis",
+      "createNameRequired": "Échec de la création du programme : le nom est requis",
+      "updateIdRequired": "Échec de la mise à jour du programme : l'identifiant est requis"
+    }
+  },
+  "auditProgramSelect": {
+    "none": "Aucun programme d'audit"
+  }
+}

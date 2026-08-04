@@ -740,6 +740,10 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 		input["state"] = *state
 	}
 
+	if auditProgramID := a.getStringPtr("auditProgramId"); auditProgramID != nil {
+		input["auditProgramId"] = *auditProgramID
+	}
+
 	var result struct {
 		CreateAudit struct {
 			AuditEdge struct {
@@ -776,8 +780,89 @@ func (b *AuditBuilder) WithState(state string) *AuditBuilder {
 	return b
 }
 
+func (b *AuditBuilder) WithAuditProgramID(auditProgramID string) *AuditBuilder {
+	b.attrs["auditProgramId"] = auditProgramID
+	return b
+}
+
 func (b *AuditBuilder) Create() string {
 	return CreateAudit(b.client, b.frameworkID, b.attrs)
+}
+
+func CreateAuditProgram(c *testutil.Client, frameworkID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateAuditProgramInput!) {
+			createAuditProgram(input: $input) {
+				auditProgramEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": c.GetOrganizationID().String(),
+		"frameworkId":    frameworkID,
+		"name":           a.getString("name", SafeName("AuditProgram")),
+	}
+	if validFrom := a.getStringPtr("validFrom"); validFrom != nil {
+		input["validFrom"] = *validFrom
+	}
+
+	if validUntil := a.getStringPtr("validUntil"); validUntil != nil {
+		input["validUntil"] = *validUntil
+	}
+
+	var result struct {
+		CreateAuditProgram struct {
+			AuditProgramEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"auditProgramEdge"`
+		} `json:"createAuditProgram"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createAuditProgram mutation failed")
+
+	return result.CreateAuditProgram.AuditProgramEdge.Node.ID
+}
+
+type AuditProgramBuilder struct {
+	client      *testutil.Client
+	frameworkID string
+	attrs       Attrs
+}
+
+func NewAuditProgram(c *testutil.Client, frameworkID string) *AuditProgramBuilder {
+	return &AuditProgramBuilder{client: c, frameworkID: frameworkID, attrs: Attrs{}}
+}
+
+func (b *AuditProgramBuilder) WithName(name string) *AuditProgramBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *AuditProgramBuilder) WithValidFrom(validFrom string) *AuditProgramBuilder {
+	b.attrs["validFrom"] = validFrom
+	return b
+}
+
+func (b *AuditProgramBuilder) WithValidUntil(validUntil string) *AuditProgramBuilder {
+	b.attrs["validUntil"] = validUntil
+	return b
+}
+
+func (b *AuditProgramBuilder) Create() string {
+	return CreateAuditProgram(b.client, b.frameworkID, b.attrs)
 }
 
 func CreateDatum(c *testutil.Client, ownerID string, attrs ...Attrs) string {

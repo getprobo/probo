@@ -107,6 +107,7 @@ type (
 		Assets                                *AssetService
 		Data                                  *DatumService
 		Audits                                *AuditService
+		AuditPrograms                         *AuditProgramService
 		WebhookSubscriptions                  *WebhookSubscriptionService
 		Findings                              *FindingService
 		Obligations                           *ObligationService
@@ -221,6 +222,7 @@ func NewService(
 	svc.Assets = &AssetService{svc: svc}
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}
+	svc.AuditPrograms = &AuditProgramService{svc: svc}
 	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}
 	svc.Findings = &FindingService{svc: svc}
 	svc.Obligations = &ObligationService{svc: svc}

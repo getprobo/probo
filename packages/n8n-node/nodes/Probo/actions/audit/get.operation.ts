@@ -58,6 +58,9 @@ export async function execute(
 					reportUrl
 					createdAt
 					updatedAt
+					auditProgram {
+						id
+					}
 				}
 			}
 		}

@@ -57,6 +57,13 @@ export const description: INodeProperties[] = [
 				description: 'The end date of the audit engagement',
 			},
 			{
+				displayName: 'Audit Program ID',
+				name: 'auditProgramId',
+				type: 'string',
+				default: '',
+				description: 'The ID of the audit program to associate with this audit',
+			},
+			{
 				displayName: 'Audit Start Date',
 				name: 'auditStartDate',
 				type: 'dateTime',
@@ -123,6 +130,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const id = this.getNodeParameter('id', itemIndex) as string;
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
+		auditProgramId?: string;
 		name?: string;
 		state?: string;
 		validFrom?: string;
@@ -145,12 +153,16 @@ export async function execute(
 					reportUrl
 					createdAt
 					updatedAt
+					auditProgram {
+						id
+					}
 				}
 			}
 		}
 	`;
 
 	const input: Record<string, unknown> = { id };
+	if (updateFields.auditProgramId) input.auditProgramId = updateFields.auditProgramId;
 	if (updateFields.name) input.name = updateFields.name;
 	if (updateFields.state) input.state = updateFields.state;
 	if (updateFields.validFrom) input.validFrom = updateFields.validFrom;

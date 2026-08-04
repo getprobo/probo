@@ -71,6 +71,13 @@ export const description: INodeProperties[] = [
 				description: 'The end date of the audit engagement',
 			},
 			{
+				displayName: 'Audit Program ID',
+				name: 'auditProgramId',
+				type: 'string',
+				default: '',
+				description: 'The ID of the audit program to associate with this audit',
+			},
+			{
 				displayName: 'Audit Start Date',
 				name: 'auditStartDate',
 				type: 'dateTime',
@@ -138,6 +145,7 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
+		auditProgramId?: string;
 		name?: string;
 		state?: string;
 		validFrom?: string;
@@ -161,6 +169,9 @@ export async function execute(
 						reportUrl
 						createdAt
 						updatedAt
+						auditProgram {
+							id
+						}
 					}
 				}
 			}
@@ -171,6 +182,7 @@ export async function execute(
 		organizationId,
 		frameworkId,
 	};
+	if (additionalFields.auditProgramId) input.auditProgramId = additionalFields.auditProgramId;
 	if (additionalFields.name) input.name = additionalFields.name;
 	if (additionalFields.state) input.state = additionalFields.state;
 	if (additionalFields.validFrom) input.validFrom = additionalFields.validFrom;

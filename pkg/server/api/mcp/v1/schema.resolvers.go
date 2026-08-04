@@ -1518,9 +1518,14 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 			AuditEndDate:   input.AuditEndDate,
 			State:          input.State,
 			FrameworkID:    input.FrameworkID,
+			AuditProgramID: input.AuditProgramID,
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddAuditOutput{}, fmt.Errorf("resource not found")
+		}
+
 		return nil, types.AddAuditOutput{}, fmt.Errorf("failed to create audit: %w", err)
 	}
 
@@ -1542,6 +1547,7 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		&probo.UpdateAuditRequest{
 			ID:             input.ID,
 			Name:           UnwrapOmittable(input.Name),
+			AuditProgramID: UnwrapOmittable(input.AuditProgramID),
 			ValidFrom:      input.ValidFrom,
 			ValidUntil:     input.ValidUntil,
 			AuditStartDate: input.AuditStartDate,
@@ -1550,6 +1556,10 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.UpdateAuditOutput{}, fmt.Errorf("resource not found")
+		}
+
 		return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot update audit: %w", err)
 	}
 
@@ -8443,4 +8453,136 @@ func (r *Resolver) ListCompliancePortalThirdPartiesTool(ctx context.Context, req
 	}
 
 	return nil, types.NewListCompliancePortalThirdPartiesOutput(entries, entryPage), nil
+}
+
+func (r *Resolver) ListAuditProgramsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditProgramsInput) (*mcp.CallToolResult, types.ListAuditProgramsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAuditProgramList)
+	if err != nil {
+		return nil, types.ListAuditProgramsOutput{}, err
+	}
+
+	prb := r.proboSvc
+
+	pageOrderBy := page.OrderBy[coredata.AuditProgramOrderField]{
+		Field:     coredata.AuditProgramOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditProgramOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.AuditPrograms.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization audit programs: %w", err))
+	}
+
+	return nil, types.NewListAuditProgramsOutput(page), nil
+}
+
+func (r *Resolver) GetAuditProgramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditProgramInput) (*mcp.CallToolResult, types.GetAuditProgramOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAuditProgramGet)
+	if err != nil {
+		return nil, types.GetAuditProgramOutput{}, err
+	}
+
+	prb := r.proboSvc
+
+	auditProgram, err := prb.AuditPrograms.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetAuditProgramOutput{}, fmt.Errorf("failed to get audit program: %w", err)
+	}
+
+	return nil, types.GetAuditProgramOutput{
+		AuditProgram: types.NewAuditProgram(auditProgram),
+	}, nil
+}
+
+func (r *Resolver) AddAuditProgramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAuditProgramInput) (*mcp.CallToolResult, types.AddAuditProgramOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAuditProgramCreate)
+	if err != nil {
+		return nil, types.AddAuditProgramOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	auditProgram, err := svc.AuditPrograms.Create(
+		ctx, scope,
+		&probo.CreateAuditProgramRequest{
+			OrganizationID: input.OrganizationID,
+			FrameworkID:    input.FrameworkID,
+			Name:           input.Name,
+			ValidFrom:      input.ValidFrom,
+			ValidUntil:     input.ValidUntil,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddAuditProgramOutput{}, fmt.Errorf("resource not found")
+		}
+
+		return nil, types.AddAuditProgramOutput{}, fmt.Errorf("failed to create audit program: %w", err)
+	}
+
+	return nil, types.AddAuditProgramOutput{
+		AuditProgram: types.NewAuditProgram(auditProgram),
+	}, nil
+}
+
+func (r *Resolver) UpdateAuditProgramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditProgramInput) (*mcp.CallToolResult, types.UpdateAuditProgramOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAuditProgramUpdate)
+	if err != nil {
+		return nil, types.UpdateAuditProgramOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	var nameValue *string
+	if name := UnwrapOmittable(input.Name); name != nil {
+		nameValue = *name
+	}
+
+	auditProgram, err := svc.AuditPrograms.Update(
+		ctx, scope,
+		&probo.UpdateAuditProgramRequest{
+			ID:         input.ID,
+			Name:       nameValue,
+			ValidFrom:  UnwrapOmittable(input.ValidFrom),
+			ValidUntil: UnwrapOmittable(input.ValidUntil),
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.UpdateAuditProgramOutput{}, fmt.Errorf("resource not found")
+		}
+
+		return nil, types.UpdateAuditProgramOutput{}, fmt.Errorf("failed to update audit program: %w", err)
+	}
+
+	return nil, types.UpdateAuditProgramOutput{
+		AuditProgram: types.NewAuditProgram(auditProgram),
+	}, nil
+}
+
+func (r *Resolver) DeleteAuditProgramTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAuditProgramInput) (*mcp.CallToolResult, types.DeleteAuditProgramOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAuditProgramDelete)
+	if err != nil {
+		return nil, types.DeleteAuditProgramOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	err = svc.AuditPrograms.Delete(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteAuditProgramOutput{}, fmt.Errorf("failed to delete audit program: %w", err)
+	}
+
+	return nil, types.DeleteAuditProgramOutput{
+		DeletedAuditProgramID: input.ID,
+	}, nil
 }

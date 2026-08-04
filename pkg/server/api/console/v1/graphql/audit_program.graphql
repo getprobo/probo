@@ -1,0 +1,103 @@
+enum AuditProgramOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditProgramOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditProgramOrderFieldCreatedAt"
+        )
+    VALID_FROM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditProgramOrderFieldValidFrom"
+        )
+    VALID_UNTIL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditProgramOrderFieldValidUntil"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditProgramOrderFieldName"
+        )
+}
+
+input AuditProgramOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditProgramOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AuditProgramOrderField!
+}
+
+type AuditProgram implements Node {
+    id: ID!
+    name: String!
+    organization: Organization! @goField(forceResolver: true)
+    framework: Framework! @goField(forceResolver: true)
+    validFrom: Datetime
+    validUntil: Datetime
+    audits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AuditProgramConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditProgramConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AuditProgramEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AuditProgramEdge {
+    cursor: CursorKey!
+    node: AuditProgram!
+}
+
+extend type Mutation {
+    createAuditProgram(
+        input: CreateAuditProgramInput!
+    ): CreateAuditProgramPayload
+    updateAuditProgram(
+        input: UpdateAuditProgramInput!
+    ): UpdateAuditProgramPayload
+    deleteAuditProgram(
+        input: DeleteAuditProgramInput!
+    ): DeleteAuditProgramPayload
+}
+
+input CreateAuditProgramInput {
+    organizationId: ID!
+    frameworkId: ID!
+    name: String!
+    validFrom: Datetime
+    validUntil: Datetime
+}
+
+input UpdateAuditProgramInput {
+    id: ID!
+    name: String
+    validFrom: Datetime @goField(omittable: true)
+    validUntil: Datetime @goField(omittable: true)
+}
+
+input DeleteAuditProgramInput {
+    auditProgramId: ID!
+}
+
+type CreateAuditProgramPayload {
+    auditProgramEdge: AuditProgramEdge
+}
+
+type UpdateAuditProgramPayload {
+    auditProgram: AuditProgram
+}
+
+type DeleteAuditProgramPayload {
+    deletedAuditProgramId: ID
+}

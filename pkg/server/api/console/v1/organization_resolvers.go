@@ -369,6 +369,36 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 	return types.NewAuditConnection(page, r, obj.ID), nil
 }
 
+// AuditPrograms is the resolver for the auditPrograms field.
+func (r *organizationResolver) AuditPrograms(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditProgramOrderBy) (*types.AuditProgramConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditProgramList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditProgramOrderField]{
+		Field:     coredata.AuditProgramOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditProgramOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.probo.AuditPrograms.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization audit programs", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditProgramConnection(page, r, obj.ID), nil
+}
+
 // FindingsDocument is the resolver for the findingsDocument field.
 func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)

@@ -67,6 +67,32 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 	return types.NewFramework(framework), nil
 }
 
+// AuditProgram is the resolver for the auditProgram field.
+func (r *auditResolver) AuditProgram(ctx context.Context, obj *types.Audit) (*types.AuditProgram, error) {
+	if obj.AuditProgram == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.AuditProgram.ID, probo.ActionAuditProgramGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	auditProgram, err := loaders.AuditProgram.Load(ctx, obj.AuditProgram.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load audit program", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditProgram(auditProgram), nil
+}
+
 // ReportFile is the resolver for the reportFile field.
 func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*types.File, error) {
 	if obj.ReportFile == nil {
@@ -188,6 +214,14 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		count, err := r.probo.Audits.CountForOrganizationID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *auditProgramResolver:
+		count, err := r.probo.Audits.CountForAuditProgramID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -381,6 +415,7 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 	req := probo.CreateAuditRequest{
 		OrganizationID: input.OrganizationID,
 		FrameworkID:    input.FrameworkID,
+		AuditProgramID: input.AuditProgramID,
 		Name:           input.Name,
 		ValidFrom:      input.ValidFrom,
 		ValidUntil:     input.ValidUntil,
@@ -393,6 +428,10 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create audit", log.Error(err))
@@ -438,6 +477,7 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	req := probo.UpdateAuditRequest{
 		ID:             input.ID,
 		Name:           gqlutils.UnwrapOmittable(input.Name),
+		AuditProgramID: gqlutils.UnwrapOmittable(input.AuditProgramID),
 		ValidFrom:      input.ValidFrom,
 		ValidUntil:     input.ValidUntil,
 		AuditStartDate: input.AuditStartDate,
@@ -449,6 +489,10 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update audit", log.Error(err))

@@ -31,6 +31,7 @@ func NewAudit(a *coredata.Audit, file *coredata.File) *Audit {
 		Name:           a.Name,
 		OrganizationID: a.OrganizationID,
 		FrameworkID:    a.FrameworkID,
+		AuditProgramID: a.AuditProgramID,
 		State:          a.State,
 		HasReport:      a.ReportFileID != nil,
 		ValidFrom:      a.ValidFrom,

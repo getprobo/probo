@@ -1,0 +1,84 @@
+{
+  "auditProgramsPage": {
+    "title": "Auditprogramma's",
+    "description": "Groepeer audits per framework in meerjarige certificeringsprogramma's.",
+    "actions": { "add": "Programma toevoegen", "delete": "Verwijderen" },
+    "columns": {
+      "name": "Naam",
+      "framework": "Framework",
+      "validFrom": "Geldig vanaf",
+      "validUntil": "Geldig tot"
+    },
+    "row": { "unknownFramework": "Onbekend framework", "notSet": "Niet ingesteld" }
+  },
+  "auditProgramDetailsPage": {
+    "breadcrumb": { "auditPrograms": "Auditprogramma's" },
+    "messages": {
+      "success": "Succes",
+      "error": "Fout",
+      "updated": "Auditprogramma succesvol bijgewerkt"
+    },
+    "errors": { "update": "Bijwerken van auditprogramma mislukt" },
+    "fields": {
+      "name": "Naam",
+      "namePlaceholder": "Programmanaam",
+      "validFrom": "Geldig vanaf",
+      "validUntil": "Geldig tot"
+    },
+    "actions": {
+      "delete": "Verwijderen",
+      "update": "Bijwerken",
+      "updating": "Bezig met bijwerken..."
+    },
+    "audits": {
+      "title": "Gekoppelde audits",
+      "empty": "Er zijn nog geen audits aan dit programma gekoppeld.",
+      "columns": { "name": "Audit", "state": "Status" }
+    },
+    "auditStates": {
+      "not_started": "Niet gestart",
+      "in_progress": "In uitvoering",
+      "completed": "Voltooid",
+      "rejected": "Afgewezen",
+      "outdated": "Verouderd"
+    },
+    "meta": { "updated": "Laatst bijgewerkt op {{date}}" }
+  },
+  "createAuditProgramDialog": {
+    "breadcrumb": { "auditPrograms": "Auditprogramma's", "new": "Nieuw programma" },
+    "validation": {
+      "frameworkRequired": "Framework is verplicht",
+      "nameRequired": "Naam is verplicht"
+    },
+    "messages": {
+      "success": "Succes",
+      "error": "Fout",
+      "created": "Auditprogramma succesvol aangemaakt"
+    },
+    "errors": { "create": "Aanmaken van auditprogramma mislukt" },
+    "loading": "Laden...",
+    "fields": {
+      "framework": "Framework",
+      "frameworkPlaceholder": "Selecteer een framework",
+      "name": "Naam",
+      "namePlaceholder": "Programmanaam",
+      "validFrom": "Geldig vanaf",
+      "validUntil": "Geldig tot"
+    },
+    "actions": { "create": "Aanmaken" }
+  },
+  "auditProgramGraph": {
+    "deleteConfirmation": "Hiermee wordt auditprogramma \"{{name}}\" permanent verwijderd. Gekoppelde audits worden losgekoppeld. Deze actie kan niet ongedaan worden gemaakt.",
+    "messages": { "deleted": "Auditprogramma succesvol verwijderd" },
+    "errors": {
+      "delete": "Verwijderen van auditprogramma mislukt",
+      "createOrganizationRequired": "Aanmaken van auditprogramma mislukt: organisatie is verplicht",
+      "createFrameworkRequired": "Aanmaken van auditprogramma mislukt: framework is verplicht",
+      "createNameRequired": "Aanmaken van auditprogramma mislukt: naam is verplicht",
+      "updateIdRequired": "Bijwerken van auditprogramma mislukt: programma-ID is verplicht"
+    }
+  },
+  "auditProgramSelect": {
+    "none": "Geen auditprogramma"
+  }
+}

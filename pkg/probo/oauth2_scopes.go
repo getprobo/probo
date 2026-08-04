@@ -86,6 +86,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1AuditRead: {
 		ActionAuditGet,
 		ActionAuditList,
+		ActionAuditProgramGet,
+		ActionAuditProgramList,
 		ActionFindingGet,
 		ActionFindingList,
 		ActionReportGet,
@@ -95,6 +97,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1Audit: {
 		ActionAuditGet,
 		ActionAuditList,
+		ActionAuditProgramGet,
+		ActionAuditProgramList,
 		ActionFindingGet,
 		ActionFindingList,
 		ActionReportGet,
@@ -105,6 +109,9 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionAuditDelete,
 		ActionAuditReportUpload,
 		ActionAuditReportDelete,
+		ActionAuditProgramCreate,
+		ActionAuditProgramUpdate,
+		ActionAuditProgramDelete,
 		ActionFindingCreate,
 		ActionFindingUpdate,
 		ActionFindingDelete,
