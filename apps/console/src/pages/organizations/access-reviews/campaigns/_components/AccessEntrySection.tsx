@@ -69,7 +69,11 @@ export function AccessEntrySection({
         : null}
       {statusMessage && !error
         ? (
-            <div className="flex items-center justify-center gap-2 rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-sm text-txt-tertiary">
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center justify-center gap-2 rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-sm text-txt-tertiary"
+            >
               <Spinner size={16} />
               <span>{statusMessage}</span>
             </div>

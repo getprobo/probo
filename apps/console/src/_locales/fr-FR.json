@@ -3077,7 +3077,8 @@
       "start": "Échec du démarrage de la campagne",
       "delete": "Échec de la suppression de la campagne",
       "complete": "Échec de la finalisation de la campagne",
-      "recordDecisions": "Échec de l’enregistrement des décisions",
+      "recordDecisions_one": "Échec de l’enregistrement des décisions pour {{count}} entrée.",
+      "recordDecisions_other": "Échec de l’enregistrement des décisions pour {{count}} entrées.",
       "updateFlags_one": "Échec de la mise à jour des indicateurs pour {{count}} entrée.",
       "updateFlags_other": "Échec de la mise à jour des indicateurs pour {{count}} entrées."
     },

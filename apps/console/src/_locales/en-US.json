@@ -1583,7 +1583,7 @@
     "empty": "No access review campaigns yet. Create your first campaign to start reviewing access."
   },
   "campaignDetailPage": {
-    "errors": { "start": "Failed to start campaign", "delete": "Failed to delete campaign", "complete": "Failed to complete campaign", "recordDecisions": "Failed to record decisions", "updateFlags_one": "Failed to update flags for {{count}} entry.", "updateFlags_other": "Failed to update flags for {{count}} entries." },
+    "errors": { "start": "Failed to start campaign", "delete": "Failed to delete campaign", "complete": "Failed to complete campaign", "recordDecisions_one": "Failed to record decisions for {{count}} entry.", "recordDecisions_other": "Failed to record decisions for {{count}} entries.", "updateFlags_one": "Failed to update flags for {{count}} entry.", "updateFlags_other": "Failed to update flags for {{count}} entries." },
     "messages": { "error": "Error", "success": "Success", "started": "Campaign started. Sources are being fetched.", "deleted": "Campaign deleted successfully.", "completed": "Campaign completed successfully.", "decisionsRecorded": "Decisions recorded successfully.", "flagsUpdated": "Flags updated for selected entries." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
     "completeConfirmation": "Are you sure you want to complete this campaign? This action cannot be undone. All decisions will be finalized.",

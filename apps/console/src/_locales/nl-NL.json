@@ -3094,7 +3094,8 @@
       "start": "Starten van campagne mislukt",
       "delete": "Verwijderen van campagne mislukt",
       "complete": "Afronden van campagne mislukt",
-      "recordDecisions": "Vastleggen van beslissingen mislukt",
+      "recordDecisions_one": "Vastleggen van beslissingen voor {{count}} item mislukt.",
+      "recordDecisions_other": "Vastleggen van beslissingen voor {{count}} items mislukt.",
       "updateFlags_one": "Bijwerken van vlaggen voor {{count}} item mislukt.",
       "updateFlags_other": "Bijwerken van vlaggen voor {{count}} items mislukt."
     },

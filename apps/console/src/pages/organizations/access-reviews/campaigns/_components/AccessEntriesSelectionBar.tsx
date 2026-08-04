@@ -35,6 +35,7 @@ const NO_DECISION_VALUE = "__none__";
 
 interface AccessEntriesSelectionBarProps {
   selectedCount: number;
+  selectedIds: ReadonlyArray<string>;
   allEntryIds: string[];
   onClear: () => void;
   onSelectAll: () => void;
@@ -50,6 +51,7 @@ interface AccessEntriesSelectionBarProps {
 // Fixed bottom bar matching compliance-portal documents selection chrome.
 export function AccessEntriesSelectionBar({
   selectedCount,
+  selectedIds,
   allEntryIds,
   onClear,
   onSelectAll,
@@ -74,8 +76,12 @@ export function AccessEntriesSelectionBar({
     [t],
   );
 
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const canSubmit = bulkDecision !== null || bulkFlagsDirty;
-  const allSelected = allEntryIds.length > 0 && selectedCount >= allEntryIds.length;
+  // Compare against the current filtered set — global selectedCount can include
+  // rows outside the active filters and must not disable Select all.
+  const allSelected = allEntryIds.length > 0
+    && allEntryIds.every(id => selectedIdSet.has(id));
 
   if (selectedCount === 0) {
     return null;

@@ -34,7 +34,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { useNavigate } from "react-router";
@@ -287,10 +287,13 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     setBulkFlagsDirty(false);
   }
 
-  useEffect(() => {
+  // Layout effect so async bulk callbacks see the new id before paint / network replies.
+  useLayoutEffect(() => {
     campaignIdRef.current = campaign.id;
     selectionAnchorRef.current = null;
-  }, [campaign.id]);
+    // Close the note dialog so Confirm cannot submit against a cleared pending decision.
+    bulkNoteRef.current?.close();
+  }, [campaign.id, bulkNoteRef]);
 
   useEffect(() => {
     if (!isInProgress) return;
@@ -478,6 +481,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       return;
     }
 
+    const campaignIdAtStart = campaignIdRef.current;
     let errorCount = 0;
     let completedCount = 0;
     const total = selection.length;
@@ -490,6 +494,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       return;
     }
 
+    const isStale = () => campaignIdRef.current !== campaignIdAtStart;
+
     for (const entryId of selection) {
       bulkFlag({
         variables: {
@@ -499,6 +505,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           },
         },
         onCompleted(_, errors) {
+          if (isStale()) {
+            return;
+          }
           if (errors?.length) {
             errorCount++;
           }
@@ -523,6 +532,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           }
         },
         onError() {
+          if (isStale()) {
+            return;
+          }
           errorCount++;
           completedCount++;
           if (completedCount === total) {
@@ -546,6 +558,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     onDone?: () => void,
   ) => {
     const BATCH_SIZE = 100;
+    const campaignIdAtStart = campaignIdRef.current;
     const decisions = selection.map(id => ({
       accessReviewEntryId: id,
       decision,
@@ -562,27 +575,28 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       batches.push(decisions.slice(i, i + BATCH_SIZE));
     }
 
-    let errorCount = 0;
+    let failedEntryCount = 0;
     let completedCount = 0;
     const total = batches.length;
 
+    const isStale = () => campaignIdRef.current !== campaignIdAtStart;
+
     const finish = () => {
-      if (errorCount > 0) {
+      if (failedEntryCount > 0) {
         toast({
           title: t("campaignDetailPage.messages.error"),
-          description: t("campaignDetailPage.errors.recordDecisions"),
+          description: t("campaignDetailPage.errors.recordDecisions", { count: failedEntryCount }),
           variant: "error",
         });
-        if (errorCount === total) {
-          return;
-        }
-      } else {
-        toast({
-          title: t("campaignDetailPage.messages.success"),
-          description: t("campaignDetailPage.messages.decisionsRecorded"),
-          variant: "success",
-        });
+        // Keep selection and bulk decision state so the user can retry failures
+        // (total or partial). Only clear on full success.
+        return;
       }
+      toast({
+        title: t("campaignDetailPage.messages.success"),
+        description: t("campaignDetailPage.messages.decisionsRecorded"),
+        variant: "success",
+      });
       setBulkDecision(null);
       setBulkPendingDecision(null);
       setBulkNote("");
@@ -595,8 +609,11 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           input: { decisions: batch },
         },
         onCompleted(_, errors) {
+          if (isStale()) {
+            return;
+          }
           if (errors?.length) {
-            errorCount++;
+            failedEntryCount += batch.length;
           }
           completedCount++;
           if (completedCount === total) {
@@ -604,7 +621,10 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           }
         },
         onError() {
-          errorCount++;
+          if (isStale()) {
+            return;
+          }
+          failedEntryCount += batch.length;
           completedCount++;
           if (completedCount === total) {
             finish();
@@ -820,6 +840,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       {isPendingActions && (
         <AccessEntriesSelectionBar
           selectedCount={selection.length}
+          selectedIds={selection}
           allEntryIds={allFilteredEntryIds}
           onClear={() => {
             setBulkDecision(null);
