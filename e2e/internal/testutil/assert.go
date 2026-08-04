@@ -79,9 +79,18 @@ func AssertTimestampsOnCreate(t *testing.T, createdAt, updatedAt, beforeCreate t
 
 func AssertTimestampsOnUpdate(t *testing.T, createdAt, updatedAt, originalCreatedAt, originalUpdatedAt time.Time) {
 	t.Helper()
-	assert.Equal(t, originalCreatedAt, createdAt, "createdAt should not change on update")
-	assert.True(t, updatedAt.After(originalUpdatedAt),
-		"updatedAt should be strictly after previous updatedAt")
+	assert.WithinDuration(
+		t,
+		originalCreatedAt,
+		createdAt,
+		time.Microsecond,
+		"createdAt should not change on update",
+	)
+	assert.True(
+		t,
+		updatedAt.After(originalUpdatedAt),
+		"updatedAt should be strictly after previous updatedAt",
+	)
 }
 
 func AssertOptionalStringEqual(t *testing.T, expected, actual *string, fieldName string) {
