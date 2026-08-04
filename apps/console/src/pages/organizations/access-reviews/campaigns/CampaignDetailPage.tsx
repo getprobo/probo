@@ -245,6 +245,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const canDelete = campaign.canDelete && !isInProgress;
 
   const campaignIdRef = useRef(campaign.id);
+  // Bumped on every campaign navigation so returning to a prior campaign cannot
+  // revive in-flight bulk callbacks from an earlier visit.
+  const bulkGenerationRef = useRef(0);
   const selectionAnchorRef = useRef<string | null>(null);
   const { list: selection, toggle, clear: clearSelectionList, reset } = useList<string>([]);
   const clear = () => {
@@ -287,9 +290,10 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     setBulkFlagsDirty(false);
   }
 
-  // Layout effect so async bulk callbacks see the new id before paint / network replies.
+  // Layout effect so async bulk callbacks see the new generation before paint / network replies.
   useLayoutEffect(() => {
     campaignIdRef.current = campaign.id;
+    bulkGenerationRef.current += 1;
     selectionAnchorRef.current = null;
     // Close the note dialog so Confirm cannot submit against a cleared pending decision.
     bulkNoteRef.current?.close();
@@ -475,16 +479,20 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     );
   };
 
-  const applyBulkFlags = (onDone?: () => void) => {
+  const applyBulkFlags = (
+    entryIds?: ReadonlyArray<string>,
+    onDone?: () => void,
+  ) => {
     if (!bulkFlagsDirty) {
       onDone?.();
       return;
     }
 
-    const campaignIdAtStart = campaignIdRef.current;
+    const generationAtStart = bulkGenerationRef.current;
+    const ids = entryIds ?? selection;
     let errorCount = 0;
     let completedCount = 0;
-    const total = selection.length;
+    const total = ids.length;
     const flags = bulkFlagSelection;
 
     if (total === 0) {
@@ -494,9 +502,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       return;
     }
 
-    const isStale = () => campaignIdRef.current !== campaignIdAtStart;
+    const isStale = () => bulkGenerationRef.current !== generationAtStart;
 
-    for (const entryId of selection) {
+    for (const entryId of ids) {
       bulkFlag({
         variables: {
           input: {
@@ -552,13 +560,18 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     }
   };
 
+  type BulkDecisionResult = {
+    succeededIds: string[];
+    failedIds: string[];
+  };
+
   const applyBulkDecision = (
     decision: AccessReviewEntryDecision,
     decisionNote?: string,
-    onDone?: () => void,
+    onDone?: (result: BulkDecisionResult) => void,
   ) => {
     const BATCH_SIZE = 100;
-    const campaignIdAtStart = campaignIdRef.current;
+    const generationAtStart = bulkGenerationRef.current;
     const decisions = selection.map(id => ({
       accessReviewEntryId: id,
       decision,
@@ -566,7 +579,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     }));
 
     if (decisions.length === 0) {
-      onDone?.();
+      onDone?.({ succeededIds: [], failedIds: [] });
       return;
     }
 
@@ -575,23 +588,36 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       batches.push(decisions.slice(i, i + BATCH_SIZE));
     }
 
-    let failedEntryCount = 0;
+    const succeededIds: string[] = [];
+    const failedIds: string[] = [];
     let completedCount = 0;
     const total = batches.length;
 
-    const isStale = () => campaignIdRef.current !== campaignIdAtStart;
+    const isStale = () => bulkGenerationRef.current !== generationAtStart;
 
     const finish = () => {
-      if (failedEntryCount > 0) {
+      if (failedIds.length === decisions.length) {
         toast({
           title: t("campaignDetailPage.messages.error"),
-          description: t("campaignDetailPage.errors.recordDecisions", { count: failedEntryCount }),
+          description: t("campaignDetailPage.errors.recordDecisions", { count: failedIds.length }),
           variant: "error",
         });
-        // Keep selection and bulk decision state so the user can retry failures
-        // (total or partial). Only clear on full success.
+        // Full failure — keep selection and bulk state for retry; do not chain flags.
         return;
       }
+
+      if (failedIds.length > 0) {
+        toast({
+          title: t("campaignDetailPage.messages.error"),
+          description: t("campaignDetailPage.errors.recordDecisions", { count: failedIds.length }),
+          variant: "error",
+        });
+        // Partial failure — keep bulk decision state for retrying failed entries;
+        // caller applies flags to successes and narrows selection to failures.
+        onDone?.({ succeededIds, failedIds });
+        return;
+      }
+
       toast({
         title: t("campaignDetailPage.messages.success"),
         description: t("campaignDetailPage.messages.decisionsRecorded"),
@@ -600,7 +626,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       setBulkDecision(null);
       setBulkPendingDecision(null);
       setBulkNote("");
-      onDone?.();
+      onDone?.({ succeededIds, failedIds });
     };
 
     for (const batch of batches) {
@@ -612,8 +638,11 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           if (isStale()) {
             return;
           }
+          const batchIds = batch.map(d => d.accessReviewEntryId);
           if (errors?.length) {
-            failedEntryCount += batch.length;
+            failedIds.push(...batchIds);
+          } else {
+            succeededIds.push(...batchIds);
           }
           completedCount++;
           if (completedCount === total) {
@@ -624,7 +653,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           if (isStale()) {
             return;
           }
-          failedEntryCount += batch.length;
+          failedIds.push(...batch.map(d => d.accessReviewEntryId));
           completedCount++;
           if (completedCount === total) {
             finish();
@@ -632,6 +661,19 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         },
       });
     }
+  };
+
+  const continueAfterBulkDecision = (
+    result: BulkDecisionResult,
+    onFullyDone: () => void,
+  ) => {
+    if (result.failedIds.length > 0) {
+      // Keep only failed entries selected for retry; flag the successes.
+      reset(result.failedIds);
+      applyBulkFlags(result.succeededIds);
+      return;
+    }
+    applyBulkFlags(result.succeededIds, onFullyDone);
   };
 
   const handleSubmit = () => {
@@ -645,13 +687,13 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     const finish = () => clear();
 
     if (bulkDecision === "APPROVED") {
-      applyBulkDecision("APPROVED", undefined, () => {
-        applyBulkFlags(finish);
+      applyBulkDecision("APPROVED", undefined, (result) => {
+        continueAfterBulkDecision(result, finish);
       });
       return;
     }
 
-    applyBulkFlags(finish);
+    applyBulkFlags(undefined, finish);
   };
 
   const handleBulkFlagSelectionChange = (flags: AccessReviewEntryFlag[]) => {
@@ -878,8 +920,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
               if (!bulkPendingDecision) {
                 return;
               }
-              applyBulkDecision(bulkPendingDecision, bulkNote, () => {
-                applyBulkFlags(() => {
+              applyBulkDecision(bulkPendingDecision, bulkNote, (result) => {
+                continueAfterBulkDecision(result, () => {
                   bulkNoteRef.current?.close();
                   clear();
                 });

@@ -76,12 +76,14 @@ export function AccessEntriesSelectionBar({
     [t],
   );
 
-  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const allSelected = useMemo(() => {
+    if (allEntryIds.length === 0) {
+      return false;
+    }
+    const selectedIdSet = new Set(selectedIds);
+    return allEntryIds.every(id => selectedIdSet.has(id));
+  }, [allEntryIds, selectedIds]);
   const canSubmit = bulkDecision !== null || bulkFlagsDirty;
-  // Compare against the current filtered set — global selectedCount can include
-  // rows outside the active filters and must not disable Select all.
-  const allSelected = allEntryIds.length > 0
-    && allEntryIds.every(id => selectedIdSet.has(id));
 
   if (selectedCount === 0) {
     return null;
