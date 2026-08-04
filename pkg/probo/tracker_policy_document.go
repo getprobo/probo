@@ -41,9 +41,6 @@ import (
 var trackerPolicyTemplate = template.Must(
 	template.New("tracker_policy.md.tmpl").
 		Funcs(template.FuncMap{
-			"formatDate": func(t time.Time) string {
-				return t.Format("January 2, 2006")
-			},
 			"add": func(a, b int) int {
 				return a + b
 			},
@@ -254,7 +251,6 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 	return docgen.TrackerPolicyData{
 		OrganizationName:  organization.Name,
 		WebsiteOrigin:     banner.Origin,
-		GeneratedAt:       time.Now(),
 		PrivacyPolicyURL:  privacyPolicyURL,
 		ConsentExpiryDays: snapshot.ConsentExpiryDays,
 		Categories:        categories,

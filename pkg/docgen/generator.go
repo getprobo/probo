@@ -478,7 +478,6 @@ type (
 	TrackerPolicyData struct {
 		OrganizationName  string
 		WebsiteOrigin     string
-		GeneratedAt       time.Time
 		PrivacyPolicyURL  string
 		ConsentExpiryDays int
 		Categories        []TrackerPolicyCategory
