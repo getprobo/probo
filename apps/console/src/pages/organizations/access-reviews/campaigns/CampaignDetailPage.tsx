@@ -479,18 +479,24 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     );
   };
 
+  type BulkFlagsResult = {
+    succeededIds: string[];
+    failedIds: string[];
+  };
+
   const applyBulkFlags = (
     entryIds?: ReadonlyArray<string>,
-    onDone?: () => void,
+    onDone?: (result: BulkFlagsResult) => void,
   ) => {
     if (!bulkFlagsDirty) {
-      onDone?.();
+      onDone?.({ succeededIds: [], failedIds: [] });
       return;
     }
 
     const generationAtStart = bulkGenerationRef.current;
     const ids = entryIds ?? selection;
-    let errorCount = 0;
+    const succeededIds: string[] = [];
+    const failedIds: string[] = [];
     let completedCount = 0;
     const total = ids.length;
     const flags = bulkFlagSelection;
@@ -498,11 +504,33 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     if (total === 0) {
       setBulkFlagSelection([]);
       setBulkFlagsDirty(false);
-      onDone?.();
+      onDone?.({ succeededIds: [], failedIds: [] });
       return;
     }
 
     const isStale = () => bulkGenerationRef.current !== generationAtStart;
+
+    const finish = () => {
+      if (failedIds.length > 0) {
+        toast({
+          title: t("campaignDetailPage.messages.error"),
+          description: t("campaignDetailPage.errors.updateFlags", { count: failedIds.length }),
+          variant: "error",
+        });
+        // Keep flag selection/dirty so the user can retry failed entries.
+        onDone?.({ succeededIds, failedIds });
+        return;
+      }
+
+      toast({
+        title: t("campaignDetailPage.messages.success"),
+        description: t("campaignDetailPage.messages.flagsUpdated"),
+        variant: "success",
+      });
+      setBulkFlagSelection([]);
+      setBulkFlagsDirty(false);
+      onDone?.({ succeededIds, failedIds });
+    };
 
     for (const entryId of ids) {
       bulkFlag({
@@ -517,43 +545,23 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             return;
           }
           if (errors?.length) {
-            errorCount++;
+            failedIds.push(entryId);
+          } else {
+            succeededIds.push(entryId);
           }
           completedCount++;
           if (completedCount === total) {
-            if (errorCount > 0) {
-              toast({
-                title: t("campaignDetailPage.messages.error"),
-                description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
-                variant: "error",
-              });
-            } else {
-              toast({
-                title: t("campaignDetailPage.messages.success"),
-                description: t("campaignDetailPage.messages.flagsUpdated"),
-                variant: "success",
-              });
-            }
-            setBulkFlagSelection([]);
-            setBulkFlagsDirty(false);
-            onDone?.();
+            finish();
           }
         },
         onError() {
           if (isStale()) {
             return;
           }
-          errorCount++;
+          failedIds.push(entryId);
           completedCount++;
           if (completedCount === total) {
-            toast({
-              title: t("campaignDetailPage.messages.error"),
-              description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
-              variant: "error",
-            });
-            setBulkFlagSelection([]);
-            setBulkFlagsDirty(false);
-            onDone?.();
+            finish();
           }
         },
       });
@@ -668,12 +676,24 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     onFullyDone: () => void,
   ) => {
     if (result.failedIds.length > 0) {
-      // Keep only failed entries selected for retry; flag the successes.
-      reset(result.failedIds);
-      applyBulkFlags(result.succeededIds);
+      const decisionFailedIds = result.failedIds;
+      // Keep decision failures selected for retry; flag the successes.
+      reset(decisionFailedIds);
+      applyBulkFlags(result.succeededIds, (flagResult) => {
+        if (flagResult.failedIds.length > 0) {
+          // Also keep entries whose flags failed so both recovery paths remain.
+          reset([...decisionFailedIds, ...flagResult.failedIds]);
+        }
+      });
       return;
     }
-    applyBulkFlags(result.succeededIds, onFullyDone);
+    applyBulkFlags(result.succeededIds, (flagResult) => {
+      if (flagResult.failedIds.length > 0) {
+        reset(flagResult.failedIds);
+        return;
+      }
+      onFullyDone();
+    });
   };
 
   const handleSubmit = () => {
@@ -693,7 +713,13 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       return;
     }
 
-    applyBulkFlags(undefined, finish);
+    applyBulkFlags(undefined, (flagResult) => {
+      if (flagResult.failedIds.length > 0) {
+        reset(flagResult.failedIds);
+        return;
+      }
+      finish();
+    });
   };
 
   const handleBulkFlagSelectionChange = (flags: AccessReviewEntryFlag[]) => {
