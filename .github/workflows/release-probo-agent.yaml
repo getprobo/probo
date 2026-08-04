@@ -25,10 +25,10 @@ jobs:
           - { goos: freebsd, goarch: amd64 }
           - { goos: freebsd, goarch: arm64 }
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -85,7 +85,7 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
       - uses: "./.github/actions/setup"
@@ -181,10 +181,10 @@ jobs:
       id-token: "write"
       attestations: "write"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6" # v4.1.2
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
