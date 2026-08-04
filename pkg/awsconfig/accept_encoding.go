@@ -30,10 +30,10 @@ import (
 
 const acceptEncodingHeader = "Accept-Encoding"
 
-// signingMiddlewareID is the ID of the SigV4 middleware in the Finalize step
-// (aws/signer/v4.SignHTTPRequestMiddleware). The strip/restore pair below is
-// positioned relative to it by name so the ordering is explicit rather than a
-// consequence of registration order.
+// signingMiddlewareID is the ID every AWS SDK v2 service client registers for
+// its SigV4/SigV4a signing middleware in the Finalize step. The strip/restore
+// pair below is positioned relative to it by name so the ordering is explicit
+// rather than a consequence of registration order.
 const signingMiddlewareID = "Signing"
 
 // acceptEncodingValueKey carries the stripped header value from the middleware

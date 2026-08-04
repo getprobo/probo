@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package awsconfig
+package awsconfig_test
 
 import (
 	"context"
@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/awsconfig"
 )
 
 var signedHeadersRe = regexp.MustCompile(`SignedHeaders=([^,]+)`)
@@ -55,6 +56,8 @@ func signedHeaders(t *testing.T, h http.Header) string {
 // must be signed, with it the header must be absent from SignedHeaders but still
 // present on the wire.
 func TestUnsignedAcceptEncoding(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name       string
 		middleware bool
@@ -64,21 +67,25 @@ func TestUnsignedAcceptEncoding(t *testing.T) {
 		{name: "with middleware it is not", middleware: true, wantSigned: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			var gotHeader http.Header
 
-			srv := httptest.NewServer(http.HandlerFunc(
-				func(w http.ResponseWriter, r *http.Request) {
-					gotHeader = r.Header.Clone()
-					_, _ = io.Copy(io.Discard, r.Body)
-					w.WriteHeader(http.StatusOK)
-				},
-			))
+			srv := httptest.NewServer(
+				http.HandlerFunc(
+					func(w http.ResponseWriter, r *http.Request) {
+						gotHeader = r.Header.Clone()
+						_, _ = io.Copy(io.Discard, r.Body)
+						w.WriteHeader(http.StatusOK)
+					},
+				),
+			)
 			t.Cleanup(srv.Close)
 
-			cfg, err := NewConfig(
+			cfg, err := awsconfig.NewConfig(
 				log.NewLogger(log.WithOutput(io.Discard)),
 				nil,
-				Options{
+				awsconfig.Options{
 					Region:          "auto",
 					Endpoint:        srv.URL,
 					AccessKeyID:     "access-key",
@@ -91,9 +98,12 @@ func TestUnsignedAcceptEncoding(t *testing.T) {
 				cfg.APIOptions = nil
 			}
 
-			client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-				o.UsePathStyle = true
-			})
+			client := s3.NewFromConfig(
+				cfg,
+				func(o *s3.Options) {
+					o.UsePathStyle = true
+				},
+			)
 
 			_, err = client.PutObject(
 				context.Background(),
