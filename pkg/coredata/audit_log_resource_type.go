@@ -115,6 +115,10 @@ func ResourceTypeName(entityType uint16) string {
 		return "MailingListUpdate"
 	case AuditLogEntryEntityType:
 		return "AuditLogEntry"
+	case MalaysiaPDPABreachIncidentEntityType:
+		return "MalaysiaPDPABreachIncident"
+	case MalaysiaPDPABreachStatusHistoryEntityType:
+		return "MalaysiaPDPABreachStatusHistory"
 	default:
 		return "Unknown"
 	}

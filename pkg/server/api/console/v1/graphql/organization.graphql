@@ -184,6 +184,14 @@ type Organization implements Node {
 
     malaysiaPDPAProfile: MalaysiaPDPAProfile! @goField(forceResolver: true)
 
+    malaysiaPDPABreachIncidents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MalaysiaPDPABreachOrder
+    ): MalaysiaPDPABreachIncidentConnection! @goField(forceResolver: true)
+
     profiles(
         first: Int
         after: CursorKey

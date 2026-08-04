@@ -8982,6 +8982,509 @@ components:
         malaysia_pdpa_profile:
           $ref: "#/components/schemas/MalaysiaPDPAProfile"
 
+    MalaysiaPDPABreachStatus:
+      type: string
+      enum:
+        - OPEN
+        - ASSESSING
+        - CONTAINED
+        - CLOSED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatus
+
+    MalaysiaPDPABreachNotificationDecision:
+      type: string
+      enum:
+        - PENDING
+        - NOT_REQUIRED
+        - COMMISSIONER_ONLY
+        - COMMISSIONER_AND_DATA_SUBJECTS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachNotificationDecision
+
+    MalaysiaPDPABreachNotificationReason:
+      type: string
+      enum:
+        - PHYSICAL_HARM
+        - FINANCIAL_LOSS
+        - CREDIT_OR_PROPERTY_DAMAGE
+        - ILLEGAL_USE
+        - SENSITIVE_PERSONAL_DATA
+        - IDENTITY_FRAUD
+        - SIGNIFICANT_SCALE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReason
+
+    MalaysiaPDPABreachOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - UPDATED_AT
+        - AWARENESS_AT
+        - TITLE
+        - STATUS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachOrderField
+
+    MalaysiaPDPABreachOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/MalaysiaPDPABreachOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    MalaysiaPDPABreachIncident:
+      type: object
+      required:
+        - id
+        - organization_id
+        - title
+        - discovered_at
+        - awareness_at
+        - affected_data_subjects
+        - affected_data_records
+        - personal_data_types
+        - potential_physical_harm
+        - potential_financial_loss
+        - potential_credit_or_property_damage
+        - potential_illegal_use
+        - sensitive_personal_data
+        - potential_identity_fraud
+        - significant_harm
+        - significant_scale
+        - notification_recommendation
+        - notification_reasons
+        - notification_decision
+        - assessed_by_profile_id
+        - assessed_at
+        - rule_version
+        - rule_source
+        - commissioner_notification_overdue
+        - data_subjects_notification_overdue
+        - status
+        - created_by_profile_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        occurred_at:
+          type: ["string", "null"]
+          format: date-time
+        discovered_at:
+          type: string
+          format: date-time
+        awareness_at:
+          type: string
+          format: date-time
+        affected_data_subjects:
+          type: integer
+          format: int64
+        affected_data_records:
+          type: integer
+          format: int64
+        personal_data_types:
+          type: string
+        affected_system:
+          type: ["string", "null"]
+        likely_consequences:
+          type: ["string", "null"]
+        containment_actions:
+          type: ["string", "null"]
+        potential_physical_harm:
+          type: boolean
+        potential_financial_loss:
+          type: boolean
+        potential_credit_or_property_damage:
+          type: boolean
+        potential_illegal_use:
+          type: boolean
+        sensitive_personal_data:
+          type: boolean
+        potential_identity_fraud:
+          type: boolean
+        significant_harm:
+          type: boolean
+        significant_scale:
+          type: boolean
+        notification_recommendation:
+          $ref: "#/components/schemas/MalaysiaPDPABreachNotificationDecision"
+        notification_reasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/MalaysiaPDPABreachNotificationReason"
+        notification_decision:
+          $ref: "#/components/schemas/MalaysiaPDPABreachNotificationDecision"
+        decision_rationale:
+          type: ["string", "null"]
+        decision_evidence:
+          type: ["string", "null"]
+        assessed_by_profile_id:
+          $ref: "#/components/schemas/GID"
+        assessed_at:
+          type: string
+          format: date-time
+        rule_version:
+          type: string
+        rule_source:
+          type: string
+        commissioner_notification_due_at:
+          type: ["string", "null"]
+          format: date-time
+        commissioner_notification_overdue:
+          type: boolean
+        commissioner_notified_at:
+          type: ["string", "null"]
+          format: date-time
+        commissioner_notification_reference:
+          type: ["string", "null"]
+        commissioner_confirmation_received_at:
+          type: ["string", "null"]
+          format: date-time
+        commissioner_confirmation_reference:
+          type: ["string", "null"]
+        phased_information_due_at:
+          type: ["string", "null"]
+          format: date-time
+        delayed_notification_reason:
+          type: ["string", "null"]
+        delayed_notification_evidence:
+          type: ["string", "null"]
+        data_subjects_notification_due_at:
+          type: ["string", "null"]
+          format: date-time
+        data_subjects_notification_overdue:
+          type: boolean
+        data_subjects_notified_at:
+          type: ["string", "null"]
+          format: date-time
+        data_subjects_notification_evidence:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/MalaysiaPDPABreachStatus"
+        created_by_profile_id:
+          $ref: "#/components/schemas/GID"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MalaysiaPDPABreachStatusHistory:
+      type: object
+      required:
+        - id
+        - organization_id
+        - incident_id
+        - to_status
+        - changed_by_profile_id
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        incident_id:
+          $ref: "#/components/schemas/GID"
+        from_status:
+          anyOf:
+            - $ref: "#/components/schemas/MalaysiaPDPABreachStatus"
+            - type: "null"
+        to_status:
+          $ref: "#/components/schemas/MalaysiaPDPABreachStatus"
+        changed_by_profile_id:
+          $ref: "#/components/schemas/GID"
+        reason:
+          type: ["string", "null"]
+        created_at:
+          type: string
+          format: date-time
+
+    ListMalaysiaPDPABreachIncidentsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/MalaysiaPDPABreachOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListMalaysiaPDPABreachIncidentsOutput:
+      type: object
+      required:
+        - incidents
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        incidents:
+          type: array
+          items:
+            $ref: "#/components/schemas/MalaysiaPDPABreachIncident"
+
+    GetMalaysiaPDPABreachIncidentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetMalaysiaPDPABreachIncidentOutput:
+      type: object
+      required:
+        - incident
+      properties:
+        incident:
+          $ref: "#/components/schemas/MalaysiaPDPABreachIncident"
+
+    CreateMalaysiaPDPABreachIncidentInput:
+      type: object
+      required:
+        - organization_id
+        - title
+        - discovered_at
+        - awareness_at
+        - affected_data_subjects
+        - affected_data_records
+        - personal_data_types
+        - potential_physical_harm
+        - potential_financial_loss
+        - potential_credit_or_property_damage
+        - potential_illegal_use
+        - sensitive_personal_data
+        - potential_identity_fraud
+        - notification_decision
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        title:
+          type: string
+        description:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        discovered_at:
+          type: string
+          format: date-time
+        awareness_at:
+          type: string
+          format: date-time
+        affected_data_subjects:
+          type: integer
+          format: int64
+        affected_data_records:
+          type: integer
+          format: int64
+        personal_data_types:
+          type: string
+        affected_system:
+          type: string
+        likely_consequences:
+          type: string
+        containment_actions:
+          type: string
+        potential_physical_harm:
+          type: boolean
+        potential_financial_loss:
+          type: boolean
+        potential_credit_or_property_damage:
+          type: boolean
+        potential_illegal_use:
+          type: boolean
+        sensitive_personal_data:
+          type: boolean
+        potential_identity_fraud:
+          type: boolean
+        notification_decision:
+          $ref: "#/components/schemas/MalaysiaPDPABreachNotificationDecision"
+        decision_rationale:
+          type: string
+        decision_evidence:
+          type: string
+        commissioner_notified_at:
+          type: string
+          format: date-time
+        commissioner_notification_reference:
+          type: string
+        commissioner_confirmation_received_at:
+          type: string
+          format: date-time
+        commissioner_confirmation_reference:
+          type: string
+        delayed_notification_reason:
+          type: string
+        delayed_notification_evidence:
+          type: string
+        data_subjects_notified_at:
+          type: string
+          format: date-time
+        data_subjects_notification_evidence:
+          type: string
+
+    CreateMalaysiaPDPABreachIncidentOutput:
+      type: object
+      required:
+        - incident
+      properties:
+        incident:
+          $ref: "#/components/schemas/MalaysiaPDPABreachIncident"
+
+    UpdateMalaysiaPDPABreachIncidentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        occurred_at:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        discovered_at:
+          type: string
+          format: date-time
+        awareness_at:
+          type: string
+          format: date-time
+        affected_data_subjects:
+          type: integer
+          format: int64
+        affected_data_records:
+          type: integer
+          format: int64
+        personal_data_types:
+          type: string
+        affected_system:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        likely_consequences:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        containment_actions:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        potential_physical_harm:
+          type: boolean
+        potential_financial_loss:
+          type: boolean
+        potential_credit_or_property_damage:
+          type: boolean
+        potential_illegal_use:
+          type: boolean
+        sensitive_personal_data:
+          type: boolean
+        potential_identity_fraud:
+          type: boolean
+        notification_decision:
+          $ref: "#/components/schemas/MalaysiaPDPABreachNotificationDecision"
+        decision_rationale:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        decision_evidence:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        commissioner_notified_at:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        commissioner_notification_reference:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        commissioner_confirmation_received_at:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        commissioner_confirmation_reference:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        delayed_notification_reason:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        delayed_notification_evidence:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        data_subjects_notified_at:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        data_subjects_notification_evidence:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateMalaysiaPDPABreachIncidentOutput:
+      type: object
+      required:
+        - incident
+      properties:
+        incident:
+          $ref: "#/components/schemas/MalaysiaPDPABreachIncident"
+
+    TransitionMalaysiaPDPABreachStatusInput:
+      type: object
+      required:
+        - id
+        - to_status
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        to_status:
+          $ref: "#/components/schemas/MalaysiaPDPABreachStatus"
+        reason:
+          type: string
+
+    TransitionMalaysiaPDPABreachStatusOutput:
+      type: object
+      required:
+        - incident
+        - history
+      properties:
+        incident:
+          $ref: "#/components/schemas/MalaysiaPDPABreachIncident"
+        history:
+          $ref: "#/components/schemas/MalaysiaPDPABreachStatusHistory"
+
+    ListMalaysiaPDPABreachStatusHistoryInput:
+      type: object
+      required:
+        - incident_id
+      properties:
+        incident_id:
+          $ref: "#/components/schemas/GID"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListMalaysiaPDPABreachStatusHistoryOutput:
+      type: object
+      required:
+        - history
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/MalaysiaPDPABreachStatusHistory"
+
     OrganizationContext:
       type: object
       required:
@@ -15871,6 +16374,78 @@ tools:
       $ref: "#/components/schemas/UpdateMalaysiaPDPAProfileInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateMalaysiaPDPAProfileOutput"
+  - name: listMalaysiaPDPABreachIncidents
+    title: List Malaysia PDPA Breach Incidents
+    description: List personal data breach incidents and notification deadlines for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListMalaysiaPDPABreachIncidentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMalaysiaPDPABreachIncidentsOutput"
+  - name: getMalaysiaPDPABreachIncident
+    title: Get Malaysia PDPA Breach Incident
+    description: Get a personal data breach incident and its notification assessment
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetMalaysiaPDPABreachIncidentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetMalaysiaPDPABreachIncidentOutput"
+  - name: createMalaysiaPDPABreachIncident
+    title: Create Malaysia PDPA Breach Incident
+    description: Record a personal data breach and calculate the applicable notification deadlines
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateMalaysiaPDPABreachIncidentInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateMalaysiaPDPABreachIncidentOutput"
+  - name: updateMalaysiaPDPABreachIncident
+    title: Update Malaysia PDPA Breach Incident
+    description: Update a breach assessment, notification decision, or notification evidence
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMalaysiaPDPABreachIncidentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMalaysiaPDPABreachIncidentOutput"
+  - name: transitionMalaysiaPDPABreachStatus
+    title: Transition Malaysia PDPA Breach Status
+    description: Move a breach incident to an allowed workflow status and append immutable history
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/TransitionMalaysiaPDPABreachStatusInput"
+    outputSchema:
+      $ref: "#/components/schemas/TransitionMalaysiaPDPABreachStatusOutput"
+  - name: listMalaysiaPDPABreachStatusHistory
+    title: List Malaysia PDPA Breach Status History
+    description: List the immutable status transition history for a breach incident
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListMalaysiaPDPABreachStatusHistoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMalaysiaPDPABreachStatusHistoryOutput"
   - name: getOrganizationContext
     title: Get Organization Context
     description: Get the organization context containing structured sections about the company

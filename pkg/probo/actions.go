@@ -37,6 +37,13 @@ const (
 	ActionMalaysiaPDPAProfileGet    = "core:malaysia-pdpa-profile:get"
 	ActionMalaysiaPDPAProfileUpdate = "core:malaysia-pdpa-profile:update"
 
+	// MalaysiaPDPABreach actions
+	ActionMalaysiaPDPABreachGet        = "core:malaysia-pdpa-breach:get"
+	ActionMalaysiaPDPABreachList       = "core:malaysia-pdpa-breach:list"
+	ActionMalaysiaPDPABreachCreate     = "core:malaysia-pdpa-breach:create"
+	ActionMalaysiaPDPABreachUpdate     = "core:malaysia-pdpa-breach:update"
+	ActionMalaysiaPDPABreachTransition = "core:malaysia-pdpa-breach:transition"
+
 	// ThirdParty actions
 	ActionThirdPartyList    = "core:thirdParty:list"
 	ActionThirdPartyGet     = "core:thirdParty:get"

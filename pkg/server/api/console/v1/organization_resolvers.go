@@ -169,6 +169,39 @@ func (r *organizationResolver) MalaysiaPDPAProfile(ctx context.Context, obj *typ
 	return types.NewMalaysiaPDPAProfile(pdpaProfile), nil
 }
 
+// MalaysiaPDPABreachIncidents is the resolver for the malaysiaPDPABreachIncidents field.
+func (r *organizationResolver) MalaysiaPDPABreachIncidents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MalaysiaPDPABreachOrderBy) (*types.MalaysiaPDPABreachIncidentConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMalaysiaPDPABreachList)
+	if err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.MalaysiaPDPABreachIncidentConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MalaysiaPDPABreachOrderField]{
+		Field:     coredata.MalaysiaPDPABreachOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy.Field = orderBy.Field
+		pageOrderBy.Direction = orderBy.Direction
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	incidentPage, err := r.probo.MalaysiaPDPABreaches.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list Malaysia PDPA breach incidents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMalaysiaPDPABreachIncidentConnection(incidentPage, r, obj.ID), nil
+}
+
 // Profiles is the resolver for the profiles field.
 func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
 	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {

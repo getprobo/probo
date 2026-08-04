@@ -18,25 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package malaysiapdpa
+package mcp_v1
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/breach"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/get"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/update"
+	"context"
+	"errors"
+	"fmt"
+
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/validator"
 )
 
-func NewCmdMalaysiaPDPA(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "malaysia-pdpa <command>",
-		Short: "Manage the Malaysia PDPA profile",
+func (r *Resolver) malaysiaPDPABreachActor(ctx context.Context, organizationID gid.GID) (*coredata.MembershipProfile, error) {
+	identity := authn.IdentityFromContext(ctx)
+	actor, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Malaysia PDPA breach actor profile", log.Error(err))
+		return nil, fmt.Errorf("internal server error")
 	}
 
-	cmd.AddCommand(get.NewCmdGet(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(breach.NewCmdBreach(f))
+	return actor, nil
+}
 
-	return cmd
+func (r *Resolver) malaysiaPDPABreachMutationError(ctx context.Context, message string, err error) error {
+	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+		return validationErrors
+	}
+
+	r.logger.ErrorCtx(ctx, message, log.Error(err))
+	return fmt.Errorf("internal server error")
+}
+
+func intPointerFromMCP(value *int) *int64 {
+	if value == nil {
+		return nil
+	}
+
+	converted := int64(*value)
+	return &converted
 }

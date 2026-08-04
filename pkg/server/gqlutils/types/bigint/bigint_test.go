@@ -18,25 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package malaysiapdpa
+package bigint_test
 
 import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/breach"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/get"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/update"
+	"encoding/json"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/server/gqlutils/types/bigint"
 )
 
-func NewCmdMalaysiaPDPA(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "malaysia-pdpa <command>",
-		Short: "Manage the Malaysia PDPA profile",
-	}
+func TestUnmarshalBigIntScalar_JSONNumber(t *testing.T) {
+	t.Parallel()
 
-	cmd.AddCommand(get.NewCmdGet(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(breach.NewCmdBreach(f))
+	t.Run(
+		"integer",
+		func(t *testing.T) {
+			t.Parallel()
 
-	return cmd
+			value, err := bigint.UnmarshalBigIntScalar(json.Number("1001"))
+
+			require.NoError(t, err)
+			assert.Equal(t, int64(1001), value)
+		},
+	)
+
+	t.Run(
+		"fractional value",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := bigint.UnmarshalBigIntScalar(json.Number("1.5"))
+
+			assert.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"out of range",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := bigint.UnmarshalBigIntScalar(json.Number("9223372036854775808"))
+
+			assert.Error(t, err)
+		},
+	)
 }

@@ -75,12 +75,27 @@ profiles must belong to the same organization.
 
 ## Phase 2: data breach workflow
 
-Add an incident record with discovery time, awareness time, impact assessment,
+Each incident record contains discovery time, awareness time, impact assessment,
 notification decision, evidence, and immutable status history. The product
 calculates the 72-hour Commissioner deadline and, where applicable, the
 seven-day data-subject deadline from recorded regulatory trigger times. It must
 warn before deadlines but never submit a notification automatically without an
 authorized human confirmation.
+
+The server recommendation distinguishes the two official notification tests:
+
+- significant scale means more than 1,000 affected data subjects and recommends
+  notification to the Commissioner only;
+- significant harm recommends notification to both the Commissioner and the
+  affected data subjects.
+
+Exactly 1,000 affected data subjects does not meet the significant-scale test.
+When an initial Commissioner notification is recorded, the workflow also
+calculates the 30-day phased-information deadline. A late Commissioner notice
+requires both a recorded reason and supporting evidence. Status history is
+append-only, and incident records are retained for the organization's breach
+register; the guideline requires that register to be kept for at least two
+years.
 
 ## Phase 3: transfer and DPIA localization
 

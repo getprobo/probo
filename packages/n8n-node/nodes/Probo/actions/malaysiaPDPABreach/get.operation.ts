@@ -18,25 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package malaysiapdpa
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
+import { incidentFields, incidentIdField } from './fields';
 
-import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/breach"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/get"
-	"go.probo.inc/probo/pkg/cmd/malaysiapdpa/update"
-)
+export const description: INodeProperties[] = [incidentIdField('get')];
 
-func NewCmdMalaysiaPDPA(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "malaysia-pdpa <command>",
-		Short: "Manage the Malaysia PDPA profile",
-	}
-
-	cmd.AddCommand(get.NewCmdGet(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(breach.NewCmdBreach(f))
-
-	return cmd
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const incidentId = this.getNodeParameter('incidentId', itemIndex) as string;
+	const query = `
+		query GetMalaysiaPDPABreachIncident($incidentId: ID!) {
+			node(id: $incidentId) {
+				... on MalaysiaPDPABreachIncident { ${incidentFields} }
+			}
+		}
+	`;
+	const responseData = await proboApiRequest.call(this, query, { incidentId });
+	return { json: responseData, pairedItem: { item: itemIndex } };
 }

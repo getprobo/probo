@@ -105,6 +105,10 @@ var ViewerPolicy = policy.NewPolicy(
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
 	policy.Allow(ActionMalaysiaPDPAProfileGet).WithSID("malaysia-pdpa-profile-read").When(organizationCondition),
 	policy.Allow(
+		ActionMalaysiaPDPABreachGet,
+		ActionMalaysiaPDPABreachList,
+	).WithSID("malaysia-pdpa-breach-read").When(organizationCondition),
+	policy.Allow(
 		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
 
@@ -130,6 +134,10 @@ var AuditorPolicy = policy.NewPolicy(
 
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
 	policy.Allow(ActionMalaysiaPDPAProfileGet).WithSID("malaysia-pdpa-profile-read").When(organizationCondition),
+	policy.Allow(
+		ActionMalaysiaPDPABreachGet,
+		ActionMalaysiaPDPABreachList,
+	).WithSID("malaysia-pdpa-breach-read").When(organizationCondition),
 
 	policy.Allow(
 		ActionThirdPartyGet, ActionThirdPartyList,

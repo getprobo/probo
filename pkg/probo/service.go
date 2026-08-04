@@ -93,6 +93,7 @@ type (
 		Tasks                                 *TaskService
 		Evidences                             *EvidenceService
 		Organizations                         *OrganizationService
+		MalaysiaPDPABreaches                  *MalaysiaPDPABreachService
 		ThirdParties                          *ThirdPartyService
 		Documents                             *DocumentService
 		DocumentApprovals                     *DocumentApprovalService
@@ -204,6 +205,7 @@ func NewService(
 			filevalidation.WithCategories(filevalidation.CategoryImage),
 		),
 	}
+	svc.MalaysiaPDPABreaches = &MalaysiaPDPABreachService{svc: svc}
 	svc.Controls = &ControlService{svc: svc}
 	svc.Risks = &RiskService{svc: svc}
 	svc.ThirdPartyComplianceReports = &ThirdPartyComplianceReportService{

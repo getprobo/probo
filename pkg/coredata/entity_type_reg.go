@@ -140,6 +140,8 @@ const (
 	DevicePostureEntityType                          uint16 = 108
 	DeviceEnrollmentTokenEntityType                  uint16 = 109
 	DevicePostureReportEntityType                    uint16 = 110
+	MalaysiaPDPABreachIncidentEntityType             uint16 = 111
+	MalaysiaPDPABreachStatusHistoryEntityType        uint16 = 112
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -348,6 +350,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DeviceEnrollmentToken{ID: id}, true
 	case DevicePostureReportEntityType:
 		return &DevicePostureReport{ID: id}, true
+	case MalaysiaPDPABreachIncidentEntityType:
+		return &MalaysiaPDPABreachIncident{ID: id}, true
+	case MalaysiaPDPABreachStatusHistoryEntityType:
+		return &MalaysiaPDPABreachStatusHistory{ID: id}, true
 	default:
 		return nil, false
 	}

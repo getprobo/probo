@@ -21,6 +21,7 @@
 package bigint
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -51,6 +52,13 @@ func UnmarshalBigIntScalar(v any) (int64, error) {
 		return int64(val), nil
 	case int64:
 		return val, nil
+	case json.Number:
+		i, err := val.Int64()
+		if err != nil {
+			return 0, fmt.Errorf("invalid BigInt value: %v", err)
+		}
+
+		return i, nil
 	case float32:
 		if val != float32(int64(val)) {
 			return 0, fmt.Errorf("BigInt cannot represent non-integer value: %v", val)

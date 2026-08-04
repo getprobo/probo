@@ -266,6 +266,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	},
 	ScopeV1PrivacyRead: {
 		ActionMalaysiaPDPAProfileGet,
+		ActionMalaysiaPDPABreachGet,
+		ActionMalaysiaPDPABreachList,
 		ActionProcessingActivityList,
 		ActionProcessingActivityGet,
 		ActionDataProtectionImpactAssessmentList,
@@ -291,6 +293,11 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1Privacy: {
 		ActionMalaysiaPDPAProfileGet,
 		ActionMalaysiaPDPAProfileUpdate,
+		ActionMalaysiaPDPABreachGet,
+		ActionMalaysiaPDPABreachList,
+		ActionMalaysiaPDPABreachCreate,
+		ActionMalaysiaPDPABreachUpdate,
+		ActionMalaysiaPDPABreachTransition,
 		ActionProcessingActivityList,
 		ActionProcessingActivityGet,
 		ActionDataProtectionImpactAssessmentList,

@@ -1,0 +1,282 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+enum MalaysiaPDPABreachStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatus") {
+    OPEN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatusOpen")
+    ASSESSING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatusAssessing")
+    CONTAINED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatusContained")
+    CLOSED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatusClosed")
+}
+
+enum MalaysiaPDPABreachNotificationDecision
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachNotificationDecision") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachNotificationDecisionPending")
+    NOT_REQUIRED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachNotificationDecisionNotRequired")
+    COMMISSIONER_ONLY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachNotificationDecisionCommissionerOnly")
+    COMMISSIONER_AND_DATA_SUBJECTS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachNotificationDecisionCommissionerAndDataSubjects")
+}
+
+enum MalaysiaPDPABreachNotificationReason
+    @goModel(model: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReason") {
+    PHYSICAL_HARM
+        @goEnum(value: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReasonPhysicalHarm")
+    FINANCIAL_LOSS
+        @goEnum(value: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReasonFinancialLoss")
+    CREDIT_OR_PROPERTY_DAMAGE
+        @goEnum(value: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReasonCreditOrPropertyDamage")
+    ILLEGAL_USE
+        @goEnum(value: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReasonIllegalUse")
+    SENSITIVE_PERSONAL_DATA
+        @goEnum(value: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReasonSensitivePersonalData")
+    IDENTITY_FRAUD
+        @goEnum(value: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReasonIdentityFraud")
+    SIGNIFICANT_SCALE
+        @goEnum(value: "go.probo.inc/probo/pkg/malaysiapdpa.BreachNotificationReasonSignificantScale")
+}
+
+enum MalaysiaPDPABreachOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachOrderField") {
+    CREATED_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachOrderFieldCreatedAt")
+    UPDATED_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachOrderFieldUpdatedAt")
+    AWARENESS_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachOrderFieldAwarenessAt")
+    TITLE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachOrderFieldTitle")
+    STATUS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachOrderFieldStatus")
+}
+
+input MalaysiaPDPABreachOrder
+    @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MalaysiaPDPABreachOrderBy") {
+    direction: OrderDirection!
+    field: MalaysiaPDPABreachOrderField!
+}
+
+enum MalaysiaPDPABreachStatusHistoryOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatusHistoryOrderField") {
+    CREATED_AT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPABreachStatusHistoryOrderFieldCreatedAt")
+}
+
+input MalaysiaPDPABreachStatusHistoryOrder
+    @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MalaysiaPDPABreachStatusHistoryOrderBy") {
+    direction: OrderDirection!
+    field: MalaysiaPDPABreachStatusHistoryOrderField!
+}
+
+type MalaysiaPDPABreachIncident implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    title: String!
+    description: String
+    occurredAt: Datetime
+    discoveredAt: Datetime!
+    awarenessAt: Datetime!
+    affectedDataSubjects: BigInt!
+    affectedDataRecords: BigInt!
+    personalDataTypes: String!
+    affectedSystem: String
+    likelyConsequences: String
+    containmentActions: String
+    potentialPhysicalHarm: Boolean!
+    potentialFinancialLoss: Boolean!
+    potentialCreditOrPropertyDamage: Boolean!
+    potentialIllegalUse: Boolean!
+    sensitivePersonalData: Boolean!
+    potentialIdentityFraud: Boolean!
+    significantHarm: Boolean!
+    significantScale: Boolean!
+    notificationRecommendation: MalaysiaPDPABreachNotificationDecision!
+    notificationReasons: [MalaysiaPDPABreachNotificationReason!]!
+    notificationDecision: MalaysiaPDPABreachNotificationDecision!
+    decisionRationale: String
+    decisionEvidence: String
+    assessedByProfileId: ID!
+    assessedAt: Datetime!
+    ruleVersion: String!
+    ruleSource: String!
+    commissionerNotificationDueAt: Datetime
+    commissionerNotificationOverdue: Boolean!
+    commissionerNotifiedAt: Datetime
+    commissionerNotificationReference: String
+    commissionerConfirmationReceivedAt: Datetime
+    commissionerConfirmationReference: String
+    phasedInformationDueAt: Datetime
+    delayedNotificationReason: String
+    delayedNotificationEvidence: String
+    dataSubjectsNotificationDueAt: Datetime
+    dataSubjectsNotificationOverdue: Boolean!
+    dataSubjectsNotifiedAt: Datetime
+    dataSubjectsNotificationEvidence: String
+    status: MalaysiaPDPABreachStatus!
+    createdByProfileId: ID!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    statusHistory(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MalaysiaPDPABreachStatusHistoryOrder
+    ): MalaysiaPDPABreachStatusHistoryConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type MalaysiaPDPABreachStatusHistory {
+    id: ID!
+    incidentId: ID!
+    fromStatus: MalaysiaPDPABreachStatus
+    toStatus: MalaysiaPDPABreachStatus!
+    changedByProfileId: ID!
+    reason: String
+    createdAt: Datetime!
+}
+
+type MalaysiaPDPABreachIncidentConnection
+    @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MalaysiaPDPABreachIncidentConnection") {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [MalaysiaPDPABreachIncidentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type MalaysiaPDPABreachIncidentEdge {
+    cursor: CursorKey!
+    node: MalaysiaPDPABreachIncident!
+}
+
+type MalaysiaPDPABreachStatusHistoryConnection
+    @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MalaysiaPDPABreachStatusHistoryConnection") {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [MalaysiaPDPABreachStatusHistoryEdge!]!
+    pageInfo: PageInfo!
+}
+
+type MalaysiaPDPABreachStatusHistoryEdge {
+    cursor: CursorKey!
+    node: MalaysiaPDPABreachStatusHistory!
+}
+
+extend type Mutation {
+    createMalaysiaPDPABreachIncident(
+        input: CreateMalaysiaPDPABreachIncidentInput!
+    ): CreateMalaysiaPDPABreachIncidentPayload!
+    updateMalaysiaPDPABreachIncident(
+        input: UpdateMalaysiaPDPABreachIncidentInput!
+    ): UpdateMalaysiaPDPABreachIncidentPayload!
+    transitionMalaysiaPDPABreachStatus(
+        input: TransitionMalaysiaPDPABreachStatusInput!
+    ): TransitionMalaysiaPDPABreachStatusPayload!
+}
+
+input CreateMalaysiaPDPABreachIncidentInput {
+    organizationId: ID!
+    title: String!
+    description: String
+    occurredAt: Datetime
+    discoveredAt: Datetime!
+    awarenessAt: Datetime!
+    affectedDataSubjects: BigInt!
+    affectedDataRecords: BigInt!
+    personalDataTypes: String!
+    affectedSystem: String
+    likelyConsequences: String
+    containmentActions: String
+    potentialPhysicalHarm: Boolean!
+    potentialFinancialLoss: Boolean!
+    potentialCreditOrPropertyDamage: Boolean!
+    potentialIllegalUse: Boolean!
+    sensitivePersonalData: Boolean!
+    potentialIdentityFraud: Boolean!
+    notificationDecision: MalaysiaPDPABreachNotificationDecision!
+    decisionRationale: String
+    decisionEvidence: String
+    commissionerNotifiedAt: Datetime
+    commissionerNotificationReference: String
+    commissionerConfirmationReceivedAt: Datetime
+    commissionerConfirmationReference: String
+    delayedNotificationReason: String
+    delayedNotificationEvidence: String
+    dataSubjectsNotifiedAt: Datetime
+    dataSubjectsNotificationEvidence: String
+}
+
+input UpdateMalaysiaPDPABreachIncidentInput {
+    id: ID!
+    title: String
+    description: String @goField(omittable: true)
+    occurredAt: Datetime @goField(omittable: true)
+    discoveredAt: Datetime
+    awarenessAt: Datetime
+    affectedDataSubjects: BigInt
+    affectedDataRecords: BigInt
+    personalDataTypes: String
+    affectedSystem: String @goField(omittable: true)
+    likelyConsequences: String @goField(omittable: true)
+    containmentActions: String @goField(omittable: true)
+    potentialPhysicalHarm: Boolean
+    potentialFinancialLoss: Boolean
+    potentialCreditOrPropertyDamage: Boolean
+    potentialIllegalUse: Boolean
+    sensitivePersonalData: Boolean
+    potentialIdentityFraud: Boolean
+    notificationDecision: MalaysiaPDPABreachNotificationDecision
+    decisionRationale: String @goField(omittable: true)
+    decisionEvidence: String @goField(omittable: true)
+    commissionerNotifiedAt: Datetime @goField(omittable: true)
+    commissionerNotificationReference: String @goField(omittable: true)
+    commissionerConfirmationReceivedAt: Datetime @goField(omittable: true)
+    commissionerConfirmationReference: String @goField(omittable: true)
+    delayedNotificationReason: String @goField(omittable: true)
+    delayedNotificationEvidence: String @goField(omittable: true)
+    dataSubjectsNotifiedAt: Datetime @goField(omittable: true)
+    dataSubjectsNotificationEvidence: String @goField(omittable: true)
+}
+
+input TransitionMalaysiaPDPABreachStatusInput {
+    id: ID!
+    toStatus: MalaysiaPDPABreachStatus!
+    reason: String
+}
+
+type CreateMalaysiaPDPABreachIncidentPayload {
+    incidentEdge: MalaysiaPDPABreachIncidentEdge!
+}
+
+type UpdateMalaysiaPDPABreachIncidentPayload {
+    incident: MalaysiaPDPABreachIncident!
+}
+
+type TransitionMalaysiaPDPABreachStatusPayload {
+    incident: MalaysiaPDPABreachIncident!
+    historyEdge: MalaysiaPDPABreachStatusHistoryEdge!
+}

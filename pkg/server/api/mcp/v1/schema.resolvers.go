@@ -8215,3 +8215,208 @@ func (r *Resolver) UpdateMalaysiaPDPAProfileTool(ctx context.Context, req *mcp.C
 		MalaysiaPdpaProfile: types.NewMalaysiaPDPAProfile(profile),
 	}, nil
 }
+
+func (r *Resolver) ListMalaysiaPDPABreachIncidentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMalaysiaPDPABreachIncidentsInput) (*mcp.CallToolResult, types.ListMalaysiaPDPABreachIncidentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionMalaysiaPDPABreachList)
+	if err != nil {
+		return nil, types.ListMalaysiaPDPABreachIncidentsOutput{}, err
+	}
+
+	orderBy := page.OrderBy[coredata.MalaysiaPDPABreachOrderField]{
+		Field:     coredata.MalaysiaPDPABreachOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		orderBy.Field = input.OrderBy.Field
+		orderBy.Direction = input.OrderBy.Direction
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, orderBy)
+	incidentPage, err := r.proboSvc.MalaysiaPDPABreaches.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list Malaysia PDPA breach incidents", log.Error(err))
+		return nil, types.ListMalaysiaPDPABreachIncidentsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListMalaysiaPDPABreachIncidentsOutput(incidentPage), nil
+}
+
+func (r *Resolver) GetMalaysiaPDPABreachIncidentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMalaysiaPDPABreachIncidentInput) (*mcp.CallToolResult, types.GetMalaysiaPDPABreachIncidentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionMalaysiaPDPABreachGet)
+	if err != nil {
+		return nil, types.GetMalaysiaPDPABreachIncidentOutput{}, err
+	}
+
+	incident, err := r.proboSvc.MalaysiaPDPABreaches.Get(ctx, scope, input.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get Malaysia PDPA breach incident", log.Error(err))
+		return nil, types.GetMalaysiaPDPABreachIncidentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetMalaysiaPDPABreachIncidentOutput{
+		Incident: types.NewMalaysiaPDPABreachIncident(incident),
+	}, nil
+}
+
+func (r *Resolver) CreateMalaysiaPDPABreachIncidentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateMalaysiaPDPABreachIncidentInput) (*mcp.CallToolResult, types.CreateMalaysiaPDPABreachIncidentOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionMalaysiaPDPABreachCreate)
+	if err != nil {
+		return nil, types.CreateMalaysiaPDPABreachIncidentOutput{}, err
+	}
+
+	actor, err := r.malaysiaPDPABreachActor(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.CreateMalaysiaPDPABreachIncidentOutput{}, err
+	}
+
+	incident, err := r.proboSvc.MalaysiaPDPABreaches.Create(ctx, scope, &probo.CreateMalaysiaPDPABreachRequest{
+		OrganizationID:                     input.OrganizationID,
+		Title:                              input.Title,
+		Description:                        input.Description,
+		OccurredAt:                         input.OccurredAt,
+		DiscoveredAt:                       input.DiscoveredAt,
+		AwarenessAt:                        input.AwarenessAt,
+		AffectedDataSubjects:               int64(input.AffectedDataSubjects),
+		AffectedDataRecords:                int64(input.AffectedDataRecords),
+		PersonalDataTypes:                  input.PersonalDataTypes,
+		AffectedSystem:                     input.AffectedSystem,
+		LikelyConsequences:                 input.LikelyConsequences,
+		ContainmentActions:                 input.ContainmentActions,
+		PotentialPhysicalHarm:              input.PotentialPhysicalHarm,
+		PotentialFinancialLoss:             input.PotentialFinancialLoss,
+		PotentialCreditOrPropertyDamage:    input.PotentialCreditOrPropertyDamage,
+		PotentialIllegalUse:                input.PotentialIllegalUse,
+		SensitivePersonalData:              input.SensitivePersonalData,
+		PotentialIdentityFraud:             input.PotentialIdentityFraud,
+		NotificationDecision:               input.NotificationDecision,
+		DecisionRationale:                  input.DecisionRationale,
+		DecisionEvidence:                   input.DecisionEvidence,
+		CommissionerNotifiedAt:             input.CommissionerNotifiedAt,
+		CommissionerNotificationReference:  input.CommissionerNotificationReference,
+		CommissionerConfirmationReceivedAt: input.CommissionerConfirmationReceivedAt,
+		CommissionerConfirmationReference:  input.CommissionerConfirmationReference,
+		DelayedNotificationReason:          input.DelayedNotificationReason,
+		DelayedNotificationEvidence:        input.DelayedNotificationEvidence,
+		DataSubjectsNotifiedAt:             input.DataSubjectsNotifiedAt,
+		DataSubjectsNotificationEvidence:   input.DataSubjectsNotificationEvidence,
+		ActorProfileID:                     actor.ID,
+	})
+	if err != nil {
+		return nil, types.CreateMalaysiaPDPABreachIncidentOutput{}, r.malaysiaPDPABreachMutationError(ctx, "cannot create Malaysia PDPA breach incident", err)
+	}
+
+	return nil, types.CreateMalaysiaPDPABreachIncidentOutput{
+		Incident: types.NewMalaysiaPDPABreachIncident(incident),
+	}, nil
+}
+
+func (r *Resolver) UpdateMalaysiaPDPABreachIncidentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMalaysiaPDPABreachIncidentInput) (*mcp.CallToolResult, types.UpdateMalaysiaPDPABreachIncidentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionMalaysiaPDPABreachUpdate)
+	if err != nil {
+		return nil, types.UpdateMalaysiaPDPABreachIncidentOutput{}, err
+	}
+
+	current, err := r.proboSvc.MalaysiaPDPABreaches.Get(ctx, scope, input.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Malaysia PDPA breach incident for update", log.Error(err))
+		return nil, types.UpdateMalaysiaPDPABreachIncidentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	actor, err := r.malaysiaPDPABreachActor(ctx, current.OrganizationID)
+	if err != nil {
+		return nil, types.UpdateMalaysiaPDPABreachIncidentOutput{}, err
+	}
+
+	incident, err := r.proboSvc.MalaysiaPDPABreaches.Update(ctx, scope, &probo.UpdateMalaysiaPDPABreachRequest{
+		ID:                                 input.ID,
+		Title:                              input.Title,
+		Description:                        UnwrapOmittable(input.Description),
+		OccurredAt:                         UnwrapOmittable(input.OccurredAt),
+		DiscoveredAt:                       input.DiscoveredAt,
+		AwarenessAt:                        input.AwarenessAt,
+		AffectedDataSubjects:               intPointerFromMCP(input.AffectedDataSubjects),
+		AffectedDataRecords:                intPointerFromMCP(input.AffectedDataRecords),
+		PersonalDataTypes:                  input.PersonalDataTypes,
+		AffectedSystem:                     UnwrapOmittable(input.AffectedSystem),
+		LikelyConsequences:                 UnwrapOmittable(input.LikelyConsequences),
+		ContainmentActions:                 UnwrapOmittable(input.ContainmentActions),
+		PotentialPhysicalHarm:              input.PotentialPhysicalHarm,
+		PotentialFinancialLoss:             input.PotentialFinancialLoss,
+		PotentialCreditOrPropertyDamage:    input.PotentialCreditOrPropertyDamage,
+		PotentialIllegalUse:                input.PotentialIllegalUse,
+		SensitivePersonalData:              input.SensitivePersonalData,
+		PotentialIdentityFraud:             input.PotentialIdentityFraud,
+		NotificationDecision:               input.NotificationDecision,
+		DecisionRationale:                  UnwrapOmittable(input.DecisionRationale),
+		DecisionEvidence:                   UnwrapOmittable(input.DecisionEvidence),
+		CommissionerNotifiedAt:             UnwrapOmittable(input.CommissionerNotifiedAt),
+		CommissionerNotificationReference:  UnwrapOmittable(input.CommissionerNotificationReference),
+		CommissionerConfirmationReceivedAt: UnwrapOmittable(input.CommissionerConfirmationReceivedAt),
+		CommissionerConfirmationReference:  UnwrapOmittable(input.CommissionerConfirmationReference),
+		DelayedNotificationReason:          UnwrapOmittable(input.DelayedNotificationReason),
+		DelayedNotificationEvidence:        UnwrapOmittable(input.DelayedNotificationEvidence),
+		DataSubjectsNotifiedAt:             UnwrapOmittable(input.DataSubjectsNotifiedAt),
+		DataSubjectsNotificationEvidence:   UnwrapOmittable(input.DataSubjectsNotificationEvidence),
+		ActorProfileID:                     actor.ID,
+	})
+	if err != nil {
+		return nil, types.UpdateMalaysiaPDPABreachIncidentOutput{}, r.malaysiaPDPABreachMutationError(ctx, "cannot update Malaysia PDPA breach incident", err)
+	}
+
+	return nil, types.UpdateMalaysiaPDPABreachIncidentOutput{
+		Incident: types.NewMalaysiaPDPABreachIncident(incident),
+	}, nil
+}
+
+func (r *Resolver) TransitionMalaysiaPDPABreachStatusTool(ctx context.Context, req *mcp.CallToolRequest, input *types.TransitionMalaysiaPDPABreachStatusInput) (*mcp.CallToolResult, types.TransitionMalaysiaPDPABreachStatusOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionMalaysiaPDPABreachTransition)
+	if err != nil {
+		return nil, types.TransitionMalaysiaPDPABreachStatusOutput{}, err
+	}
+
+	current, err := r.proboSvc.MalaysiaPDPABreaches.Get(ctx, scope, input.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Malaysia PDPA breach incident for transition", log.Error(err))
+		return nil, types.TransitionMalaysiaPDPABreachStatusOutput{}, fmt.Errorf("internal server error")
+	}
+
+	actor, err := r.malaysiaPDPABreachActor(ctx, current.OrganizationID)
+	if err != nil {
+		return nil, types.TransitionMalaysiaPDPABreachStatusOutput{}, err
+	}
+
+	incident, history, err := r.proboSvc.MalaysiaPDPABreaches.TransitionStatus(ctx, scope, &probo.TransitionMalaysiaPDPABreachStatusRequest{
+		ID:             input.ID,
+		ToStatus:       input.ToStatus,
+		Reason:         input.Reason,
+		ActorProfileID: actor.ID,
+	})
+	if err != nil {
+		return nil, types.TransitionMalaysiaPDPABreachStatusOutput{}, r.malaysiaPDPABreachMutationError(ctx, "cannot transition Malaysia PDPA breach status", err)
+	}
+
+	return nil, types.TransitionMalaysiaPDPABreachStatusOutput{
+		Incident: types.NewMalaysiaPDPABreachIncident(incident),
+		History:  types.NewMalaysiaPDPABreachStatusHistory(history),
+	}, nil
+}
+
+func (r *Resolver) ListMalaysiaPDPABreachStatusHistoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMalaysiaPDPABreachStatusHistoryInput) (*mcp.CallToolResult, types.ListMalaysiaPDPABreachStatusHistoryOutput, error) {
+	scope, err := r.Authorize(ctx, input.IncidentID, probo.ActionMalaysiaPDPABreachGet)
+	if err != nil {
+		return nil, types.ListMalaysiaPDPABreachStatusHistoryOutput{}, err
+	}
+
+	orderBy := page.OrderBy[coredata.MalaysiaPDPABreachStatusHistoryOrderField]{
+		Field:     coredata.MalaysiaPDPABreachStatusHistoryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	cursor := types.NewCursor(input.Size, input.Cursor, orderBy)
+	historyPage, err := r.proboSvc.MalaysiaPDPABreaches.ListStatusHistory(ctx, scope, input.IncidentID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list Malaysia PDPA breach status history", log.Error(err))
+		return nil, types.ListMalaysiaPDPABreachStatusHistoryOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListMalaysiaPDPABreachStatusHistoryOutput(historyPage), nil
+}
