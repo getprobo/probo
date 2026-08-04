@@ -483,9 +483,6 @@ jobs:
   test-e2e:
     name: "test-e2e"
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    env:
-      COMPOSE_FILE: "compose.yaml:compose.github-action.yaml"
-      DOCKER_COMPOSE_FLAGS: "-f compose.github-action.yaml"
     permissions:
       contents: "read"
     steps:
@@ -494,8 +491,25 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "./.github/actions/setup"
+      - name: "Configure Docker image source"
+        # Pull requests from forks don't get repository secrets, so
+        # HARBOR_USERNAME/HARBOR_PASSWORD are unavailable and logging into
+        # the artifact.probo.inc mirror would fail. Fall back to pulling
+        # images straight from their origin registries in that case.
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "Fork pull request: pulling images from their origin registries, not the artifact.probo.inc mirror"
+            echo "USE_HARBOR_MIRROR=false" >> "$GITHUB_ENV"
+            echo "COMPOSE_FILE=compose.yaml" >> "$GITHUB_ENV"
+            echo "DOCKER_COMPOSE_FLAGS=" >> "$GITHUB_ENV"
+          else
+            echo "USE_HARBOR_MIRROR=true" >> "$GITHUB_ENV"
+            echo "COMPOSE_FILE=compose.yaml:compose.github-action.yaml" >> "$GITHUB_ENV"
+            echo "DOCKER_COMPOSE_FLAGS=-f compose.github-action.yaml" >> "$GITHUB_ENV"
+          fi
       - uses: "docker/setup-compose-action@4eb059ff7f16592f9c84d5ca339c53cb7c5064e2" # v2.3.0
       - uses: "docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee" # v4.2.0
+        if: "env.USE_HARBOR_MIRROR == 'true'"
         with:
           registry: artifact.probo.inc
           username: ${{ secrets.HARBOR_USERNAME }}
@@ -509,7 +523,7 @@ jobs:
         uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
         with:
           path: /tmp/docker-images
-          key: "docker-images-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
+          key: "docker-images-${{ env.USE_HARBOR_MIRROR }}-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
       - name: "Load cached Docker images"
         if: steps.docker-cache.outputs.cache-hit == 'true'
         run: "docker load -i /tmp/docker-images/images.tar"
