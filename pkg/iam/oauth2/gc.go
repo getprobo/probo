@@ -34,6 +34,12 @@ import (
 
 const (
 	DefaultGCInterval = 5 * time.Minute
+
+	// deviceCodeExpiryGracePeriod delays the hard delete of expired device
+	// codes past DefaultGCInterval so a client's terminal poll racing the GC
+	// sweep still finds the row and gets ErrExpiredToken instead of falling
+	// into the "not found" ErrInvalidGrant branch.
+	deviceCodeExpiryGracePeriod = 15 * time.Minute
 )
 
 type GarbageCollector = worker.Worker[struct{}]
@@ -116,7 +122,7 @@ func (h *gcHandler) cleanup(ctx context.Context) error {
 
 			var deviceCode coredata.OAuth2DeviceCode
 
-			deviceCodesDeleted, err := deviceCode.DeleteExpired(ctx, tx, now)
+			deviceCodesDeleted, err := deviceCode.DeleteExpired(ctx, tx, now.Add(-deviceCodeExpiryGracePeriod))
 			if err != nil {
 				return fmt.Errorf("cannot delete expired device codes: %w", err)
 			}
