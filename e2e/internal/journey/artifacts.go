@@ -123,6 +123,7 @@ func formatFailureSummary(steps []StepRecord) string {
 			step.Name,
 			step.Duration.Round(time.Millisecond),
 		)
+
 		if step.Failure != "" {
 			fmt.Fprintf(&b, "  %s\n", redactSensitiveText(step.Failure))
 		}
@@ -132,13 +133,16 @@ func formatFailureSummary(steps []StepRecord) string {
 }
 
 func sanitizePathSegment(value string) string {
-	value = strings.Map(func(r rune) rune {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' {
-			return r
-		}
+	value = strings.Map(
+		func(r rune) rune {
+			if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' {
+				return r
+			}
 
-		return '_'
-	}, value)
+			return '_'
+		},
+		value,
+	)
 
 	value = strings.Trim(value, "_")
 	if value == "" {

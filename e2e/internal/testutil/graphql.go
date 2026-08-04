@@ -99,11 +99,13 @@ func (e GraphQLErrors) Error() string {
 		if code := gqlErr.Code(); code != "" {
 			detail = fmt.Sprintf("[%s] %s", code, detail)
 		}
+
 		if len(gqlErr.Path) > 0 {
 			path := make([]string, 0, len(gqlErr.Path))
 			for _, segment := range gqlErr.Path {
 				path = append(path, fmt.Sprint(segment))
 			}
+
 			detail += fmt.Sprintf(" (path: %s)", strings.Join(path, "."))
 		}
 

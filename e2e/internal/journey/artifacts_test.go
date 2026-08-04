@@ -45,15 +45,18 @@ func TestRedactSensitiveText(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			actual := redactSensitiveText(tt.input)
+				actual := redactSensitiveText(tt.input)
 
-			assert.Contains(t, actual, "[REDACTED]")
-			assert.NotContains(t, actual, "private-value")
-			assert.NotContains(t, actual, "hunter2")
-		})
+				assert.Contains(t, actual, "[REDACTED]")
+				assert.NotContains(t, actual, "private-value")
+				assert.NotContains(t, actual, "hunter2")
+			},
+		)
 	}
 }
 

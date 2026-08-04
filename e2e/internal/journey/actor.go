@@ -40,10 +40,15 @@ func (w *World) NewActor(name string, role testutil.TestRole) *Actor {
 	w.t.Helper()
 
 	var client *testutil.Client
-	w.Step(name, fmt.Sprintf("signs up as %s and creates an organization", role), func() error {
-		client = testutil.NewClient(w.t, role)
-		return nil
-	})
+
+	w.Step(
+		name,
+		fmt.Sprintf("signs up as %s and creates an organization", role),
+		func() error {
+			client = testutil.NewClient(w.t, role)
+			return nil
+		},
+	)
 
 	return w.registerClient(name, client)
 }
@@ -58,10 +63,15 @@ func (w *World) NewMemberActor(
 	w.t.Helper()
 
 	var client *testutil.Client
-	w.Step(name, fmt.Sprintf("joins %s's organization as %s", owner.name, role), func() error {
-		client = testutil.NewClientInOrg(w.t, role, owner.client)
-		return nil
-	})
+
+	w.Step(
+		name,
+		fmt.Sprintf("joins %s's organization as %s", owner.name, role),
+		func() error {
+			client = testutil.NewClientInOrg(w.t, role, owner.client)
+			return nil
+		},
+	)
 
 	return w.registerClient(name, client)
 }

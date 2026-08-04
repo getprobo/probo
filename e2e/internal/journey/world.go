@@ -68,19 +68,21 @@ func New(t *testing.T) *World {
 		startedAt: time.Now(),
 	}
 
-	t.Cleanup(func() {
-		if !t.Failed() {
-			return
-		}
+	t.Cleanup(
+		func() {
+			if !t.Failed() {
+				return
+			}
 
-		artifactDir, err := w.writeFailureArtifacts()
-		if err != nil {
-			t.Logf("journey: cannot write failure artifacts: %v", err)
-			return
-		}
+			artifactDir, err := w.writeFailureArtifacts()
+			if err != nil {
+				t.Logf("journey: cannot write failure artifacts: %v", err)
+				return
+			}
 
-		t.Logf("journey: failure artifacts: %s", artifactDir)
-	})
+			t.Logf("journey: failure artifacts: %s", artifactDir)
+		},
+	)
 
 	return w
 }
@@ -103,6 +105,7 @@ func (w *World) Step(actor string, name string, fn func() error) {
 	w.t.Logf("journey: step %02d started: %s", number, describeStep(actor, name))
 
 	var stepErr error
+
 	defer func() {
 		record.Duration = time.Since(startedAt)
 		if stepErr != nil {

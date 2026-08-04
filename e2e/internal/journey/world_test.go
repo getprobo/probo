@@ -36,12 +36,20 @@ func TestWorld_StepRecordsReadableDiagnostics(t *testing.T) {
 		startedAt: time.Now(),
 	}
 
-	world.Step("Alice", "creates a document", func() error {
-		return nil
-	})
-	world.Step("Bob", "approves the document", func() error {
-		return nil
-	})
+	world.Step(
+		"Alice",
+		"creates a document",
+		func() error {
+			return nil
+		},
+	)
+	world.Step(
+		"Bob",
+		"approves the document",
+		func() error {
+			return nil
+		},
+	)
 
 	require.Len(t, world.steps, 2)
 	assert.Equal(t, 1, world.steps[0].Number)
