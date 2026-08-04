@@ -18,42 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package root
+package repair
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
-	"go.probo.inc/probo/pkg/proboctl/commonthirdparty"
-	"go.probo.inc/probo/pkg/proboctl/commontrackerpattern"
-	proboctlcookiebanner "go.probo.inc/probo/pkg/proboctl/cookiebanner"
-	"go.probo.inc/probo/pkg/proboctl/repair"
-	"go.probo.inc/probo/pkg/proboctl/seed"
-	"go.probo.inc/probo/pkg/proboctl/version"
 )
 
-func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
+func NewCmdRepair(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           "proboctl <command> [flags]",
-		Short:         "Probo instance management CLI",
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		Use:   "repair <command>",
+		Short: "One-shot repairs for stored data",
 	}
 
-	cmd.PersistentFlags().StringVar(
-		&f.PgDSN,
-		"pg-dsn",
-		os.Getenv("DATABASE_URL"),
-		"PostgreSQL connection URL (default: DATABASE_URL env)",
-	)
-
-	cmd.AddCommand(seed.NewCmdSeed(f))
-	cmd.AddCommand(commontrackerpattern.NewCmdCommonTrackerPattern(f))
-	cmd.AddCommand(commonthirdparty.NewCmdCommonThirdParty(f))
-	cmd.AddCommand(proboctlcookiebanner.NewCmdCookieBanner(f))
-	cmd.AddCommand(repair.NewCmdRepair(f))
-	cmd.AddCommand(version.NewCmdVersion(f))
+	cmd.AddCommand(newCmdThirdPartyRegisterNotes(f))
 
 	return cmd
 }
