@@ -2,6 +2,9 @@
 
 E2E tests live in `e2e/console/` (package `console_test`) and run against a live `bin/probod` instance. The test infrastructure handles server lifecycle, authentication, and test data creation.
 
+See [`e2e-refactor.md`](e2e-refactor.md) for the suite migration plan,
+fixture-isolation rules, and per-batch acceptance criteria.
+
 ## Prerequisites
 
 E2e uses the local [step-ca](https://github.com/smallstep/certificates) ACME server over HTTPS. The CA is persistent across restarts; install its root once per machine so probod and browsers trust issued custom-domain certificates:
