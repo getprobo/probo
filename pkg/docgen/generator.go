@@ -484,6 +484,11 @@ type (
 		DataSensitivity string
 		BusinessImpact  string
 		Notes           string
+		// NotesBlocks is a comma-separated sequence of ProseMirror block
+		// nodes (no surrounding array brackets), ready to splice into the
+		// third-party register JSON template after the "Notes:" label.
+		// Populated by BuildThirdPartyListDocument from Notes markdown.
+		NotesBlocks string
 	}
 
 	ThirdPartyListComplianceReport struct {

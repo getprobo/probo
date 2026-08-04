@@ -3301,12 +3301,97 @@ var thirdPartyListTemplate = template.Must(
 )
 
 func BuildThirdPartyListDocument(data docgen.ThirdPartyListData) (string, error) {
+	for i := range data.Rows {
+		for j := range data.Rows[i].RiskAssessments {
+			blocks, err := proseMirrorBlocksFromMarkdownNotes(data.Rows[i].RiskAssessments[j].Notes)
+			if err != nil {
+				return "", fmt.Errorf("cannot convert risk assessment notes: %w", err)
+			}
+
+			data.Rows[i].RiskAssessments[j].NotesBlocks = blocks
+		}
+	}
+
 	var buf bytes.Buffer
 	if err := thirdPartyListTemplate.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("cannot execute thirdParty list template: %w", err)
 	}
 
 	return buf.String(), nil
+}
+
+// proseMirrorBlocksFromMarkdownNotes converts markdown risk-assessment notes
+// into a comma-separated sequence of ProseMirror block nodes for splicing
+// into the third-party register JSON template. Headings are demoted so they
+// nest under the register's h3 "Risk Assessments" sections (h1→h4, …).
+func proseMirrorBlocksFromMarkdownNotes(notes string) (string, error) {
+	notes = strings.TrimSpace(notes)
+	if notes == "" {
+		notes = "—"
+	}
+
+	doc, err := prosemirror.ParseMarkdown(notes)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse notes markdown: %w", err)
+	}
+
+	if len(doc.Content) == 0 {
+		fallback := notes
+		doc.Content = []prosemirror.Node{
+			{
+				Type: prosemirror.NodeParagraph,
+				Content: []prosemirror.Node{
+					{Type: prosemirror.NodeText, Text: &fallback},
+				},
+			},
+		}
+	}
+
+	if err := demoteProseMirrorHeadingLevels(doc.Content, 3); err != nil {
+		return "", fmt.Errorf("cannot demote notes headings: %w", err)
+	}
+
+	parts := make([]string, 0, len(doc.Content))
+	for _, node := range doc.Content {
+		raw, err := json.Marshal(node)
+		if err != nil {
+			return "", fmt.Errorf("cannot marshal notes block: %w", err)
+		}
+
+		parts = append(parts, string(raw))
+	}
+
+	return strings.Join(parts, ","), nil
+}
+
+func demoteProseMirrorHeadingLevels(nodes []prosemirror.Node, delta int) error {
+	if delta <= 0 {
+		return nil
+	}
+
+	for i := range nodes {
+		if nodes[i].Type == prosemirror.NodeHeading {
+			attrs, err := nodes[i].HeadingAttrs()
+			if err != nil {
+				return fmt.Errorf("cannot parse heading attrs: %w", err)
+			}
+
+			level := min(attrs.Level+delta, 6)
+
+			raw, err := json.Marshal(prosemirror.HeadingAttrs{Level: level})
+			if err != nil {
+				return fmt.Errorf("cannot marshal heading attrs: %w", err)
+			}
+
+			nodes[i].Attrs = raw
+		}
+
+		if err := demoteProseMirrorHeadingLevels(nodes[i].Content, delta); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 var riskListTemplate = template.Must(

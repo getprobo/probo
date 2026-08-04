@@ -208,10 +208,10 @@
     {
       "type": "paragraph",
       "content": [
-        { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json (default "—" .Notes)}} }
+        { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] }
       ]
-    }{{end}}{{else}},
+    },
+    {{.NotesBlocks}}{{end}}{{else}},
     {
       "type": "paragraph",
       "content": [{ "type": "text", "text": "No risk assessments recorded." }]
