@@ -39,6 +39,7 @@ import {
   IconShield,
   IconStore,
   IconTodo,
+  IconWarning,
   SidebarItem,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
@@ -54,6 +55,9 @@ const fragment = graphql`
         canListTasks: permission(action: "core:task:list")
         canListMeasures: permission(action: "core:measure:list")
         canListRisks: permission(action: "core:risk:list")
+        canListMalaysiaPDPABreaches: permission(
+            action: "core:malaysia-pdpa-breach:list"
+        )
 
         canListFrameworks: permission(action: "core:framework:list")
         canListMembers: permission(action: "iam:membership:list")
@@ -119,6 +123,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={t("sidebar.risks")}
           icon={IconFire3}
           to={`${prefix}/risks`}
+        />
+      )}
+      {organization.canListMalaysiaPDPABreaches && (
+        <SidebarItem
+          label={t("sidebar.dataBreaches")}
+          icon={IconWarning}
+          to={`${prefix}/data-breaches`}
         />
       )}
 

@@ -1,0 +1,181 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "create": "Créer l’incident",
+    "creating": "Création…",
+    "notApplicable": "Sans objet",
+    "notProvided": "Non renseigné",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…"
+  },
+  "list": {
+    "title": "Violations de données",
+    "description": "Tenez le registre PDPA et les preuves de notification. {{count}} incident(s) enregistré(s).",
+    "actions": { "create": "Enregistrer une violation", "loadMore": "Afficher plus", "loading": "Chargement…" },
+    "columns": {
+      "incident": "Incident",
+      "status": "Statut",
+      "awarenessAt": "Prise de connaissance",
+      "affectedSubjects": "Personnes concernées",
+      "recommendation": "Recommandation du système",
+      "commissionerDeadline": "Échéance du Commissaire"
+    },
+    "flags": {
+      "significantHarm": "Préjudice important indiqué",
+      "significantScale": "Plus de 1 000 personnes concernées"
+    },
+    "empty": {
+      "title": "Aucune violation enregistrée",
+      "description": "Enregistrez un incident pour évaluer les obligations de notification et commencer le registre."
+    }
+  },
+  "create": {
+    "title": "Enregistrer une violation de données",
+    "description": "Consignez les faits, exécutez l’évaluation de notification PDPA malaisienne et enregistrez la décision humaine autorisée.",
+    "noPermission": "Vous pouvez consulter les violations, mais vous n’avez pas l’autorisation d’en créer une."
+  },
+  "detail": {
+    "description": "Examinez l’évaluation, les échéances, les preuves de notification et l’historique.",
+    "fallbackTitle": "Violation de données",
+    "readOnly": "Vous disposez d’un accès en lecture seule à cet incident."
+  },
+  "statuses": { "OPEN": "Ouvert", "ASSESSING": "En évaluation", "CONTAINED": "Maîtrisé", "CLOSED": "Clôturé" },
+  "decisions": {
+    "PENDING": "Décision en attente",
+    "NOT_REQUIRED": "Notification non requise",
+    "COMMISSIONER_ONLY": "Notifier uniquement le Commissaire",
+    "COMMISSIONER_AND_DATA_SUBJECTS": "Notifier le Commissaire et les personnes concernées"
+  },
+  "reasons": {
+    "PHYSICAL_HARM": "Risque de préjudice physique",
+    "FINANCIAL_LOSS": "Risque de perte financière",
+    "CREDIT_OR_PROPERTY_DAMAGE": "Risque d’atteinte au crédit ou aux biens",
+    "ILLEGAL_USE": "Risque d’utilisation illégale des données",
+    "SENSITIVE_PERSONAL_DATA": "Données personnelles sensibles concernées",
+    "IDENTITY_FRAUD": "Risque de fraude à l’identité",
+    "SIGNIFICANT_SCALE": "Plus de 1 000 personnes concernées"
+  },
+  "deadlines": {
+    "commissioner": "Notification au Commissaire (72 heures)",
+    "phasedInformation": "Informations complémentaires (30 jours)",
+    "dataSubjects": "Notification des personnes (7 jours)",
+    "completed": "Enregistré",
+    "overdue": "En retard",
+    "pending": "En attente"
+  },
+  "summary": {
+    "title": "Évaluation de notification",
+    "description": "La recommandation est calculée à partir des faits enregistrés. Une personne autorisée doit consigner séparément la décision.",
+    "significantHarm": "Préjudice important",
+    "significantScale": "Échelle importante",
+    "noTrigger": "Aucun critère légal indiqué",
+    "recommendation": "Recommandation du système",
+    "recordedDecision": "Décision humaine enregistrée",
+    "reasons": "Motifs de l’évaluation",
+    "decisionRationale": "Justification de la décision",
+    "decisionEvidence": "Preuve de la décision",
+    "commissionerReference": "Référence de notification au Commissaire",
+    "confirmationReference": "Référence de confirmation du Commissaire",
+    "dataSubjectsEvidence": "Preuve de notification des personnes",
+    "assessmentMetadata": "Évalué le {{date}} selon {{source}} (règle {{version}})."
+  },
+  "transition": {
+    "title": "Statut de l’incident",
+    "description": "Faites progresser ou rouvrez l’incident. Chaque changement est ajouté à l’historique.",
+    "readOnly": "Vous n’avez pas l’autorisation de modifier le statut.",
+    "closeRequirement": "Avant la clôture, consignez toutes les notifications requises par la recommandation ou la décision humaine.",
+    "fields": { "toStatus": "Passer à", "reason": "Motif", "reasonPlaceholder": "Pourquoi le statut change-t-il ?" },
+    "actions": { "update": "Mettre à jour", "updating": "Mise à jour…" }
+  },
+  "history": {
+    "title": "Historique des statuts",
+    "description": "{{count}} événement(s) de statut immuable(s).",
+    "created": "Créé",
+    "profile": "Profil …{{id}}",
+    "columns": { "transition": "Transition", "reason": "Motif", "changedAt": "Date", "changedBy": "Modifié par" }
+  },
+  "form": {
+    "incident": {
+      "title": "Détails de l’incident",
+      "description": "Consignez la survenance, la détection, la prise de connaissance, la portée et les mesures prises."
+    },
+    "harm": {
+      "title": "Évaluation du préjudice important",
+      "description": "Sélectionnez chaque conséquence potentielle étayée par les faits actuels.",
+      "fields": {
+        "potentialPhysicalHarm": { "label": "Risque de préjudice physique", "help": "La violation peut entraîner des risques pour la sécurité ou l’intégrité physique." },
+        "potentialFinancialLoss": { "label": "Risque de perte financière", "help": "La violation peut exposer une personne au vol, à la fraude ou à une perte financière." },
+        "potentialCreditOrPropertyDamage": { "label": "Risque d’atteinte au crédit ou aux biens", "help": "La violation peut porter atteinte au crédit, aux biens ou à la situation financière." },
+        "potentialIllegalUse": { "label": "Risque d’utilisation illégale", "help": "Les données personnelles peuvent être utilisées à des fins illicites." },
+        "sensitivePersonalData": { "label": "Données personnelles sensibles", "help": "Les données concernées comprennent des données sensibles au sens de la PDPA." },
+        "potentialIdentityFraud": { "label": "Risque de fraude à l’identité", "help": "La violation peut permettre une usurpation ou une fraude à l’identité." }
+      }
+    },
+    "decision": {
+      "title": "Décision de notification autorisée",
+      "description": "Consignez la décision du responsable séparément de la recommandation. La plateforme ne notifie jamais automatiquement le Commissaire."
+    },
+    "notifications": {
+      "title": "Notification et preuves",
+      "description": "Consignez l’envoi, la confirmation, les preuves de retard et la communication aux personnes concernées."
+    },
+    "fields": {
+      "title": { "label": "Titre de l’incident", "placeholder": "Accès non autorisé aux dossiers clients" },
+      "description": { "label": "Description", "placeholder": "Résumez les faits connus à ce jour." },
+      "occurredAt": { "label": "Date de survenance", "help": "Facultatif si l’heure exacte est inconnue." },
+      "discoveredAt": { "label": "Date de détection", "help": "Moment où l’organisation a détecté l’incident." },
+      "awarenessAt": { "label": "Date de prise de connaissance", "help": "Déclencheur réglementaire de l’échéance de 72 heures." },
+      "affectedDataSubjects": { "label": "Personnes concernées", "help": "Plus de 1 000 déclenche le critère d’échelle importante." },
+      "affectedDataRecords": { "label": "Enregistrements concernés", "help": "Nombre estimé d’enregistrements individuels." },
+      "personalDataTypes": { "label": "Types de données personnelles", "help": "Énumérez les catégories de données concernées." },
+      "affectedSystem": { "label": "Système concerné" },
+      "likelyConsequences": { "label": "Conséquences probables" },
+      "containmentActions": { "label": "Mesures de confinement et de remédiation" },
+      "notificationDecision": { "label": "Décision de notification", "help": "Il s’agit de la décision humaine autorisée, et non de la recommandation." },
+      "decisionRationale": { "label": "Justification de la décision", "help": "Obligatoire lorsqu’une décision autre qu’en attente est enregistrée." },
+      "decisionEvidence": { "label": "Preuve de la décision", "help": "Référencez les procès-verbaux, avis juridiques ou approbations." },
+      "commissionerNotifiedAt": { "label": "Commissaire notifié le" },
+      "commissionerNotificationReference": { "label": "Référence de notification", "help": "Obligatoire lorsque la date d’envoi est enregistrée." },
+      "commissionerConfirmationReceivedAt": { "label": "Confirmation du Commissaire reçue le" },
+      "commissionerConfirmationReference": { "label": "Référence de confirmation" },
+      "delayedNotificationReason": { "label": "Motif du retard", "help": "Obligatoire si la notification intervient après 72 heures." },
+      "delayedNotificationEvidence": { "label": "Preuve du retard", "help": "Obligatoire avec le motif du retard." },
+      "dataSubjectsNotifiedAt": { "label": "Personnes concernées notifiées le" },
+      "dataSubjectsNotificationEvidence": { "label": "Preuve de notification des personnes", "help": "Obligatoire lorsque la date de notification est enregistrée." }
+    },
+    "validation": {
+      "titleRequired": "Saisissez un titre.",
+      "titleTooLong": "Le titre est trop long.",
+      "contentTooLong": "Ce champ dépasse la longueur maximale.",
+      "discoveredAtRequired": "Saisissez la date de détection.",
+      "awarenessAtRequired": "Saisissez la date de prise de connaissance.",
+      "affectedSubjectsRequired": "Saisissez le nombre de personnes concernées.",
+      "affectedRecordsRequired": "Saisissez le nombre d’enregistrements concernés.",
+      "personalDataTypesRequired": "Décrivez les types de données personnelles.",
+      "nonNegativeInteger": "Saisissez un nombre entier supérieur ou égal à zéro.",
+      "numberTooLarge": "Saisissez un nombre entier plus petit.",
+      "referenceTooLong": "La référence est trop longue.",
+      "occurredAfterDiscovery": "La survenance ne peut pas être postérieure à la détection.",
+      "awarenessBeforeDiscovery": "La prise de connaissance ne peut pas précéder la détection.",
+      "decisionRationaleRequired": "Ajoutez une justification à la décision.",
+      "pairedFieldRequired": "Renseignez les deux champs de notification associés.",
+      "commissionerBeforeAwareness": "La notification ne peut pas précéder la prise de connaissance.",
+      "delayReasonRequired": "Ajoutez le motif de la notification après 72 heures.",
+      "delayEvidenceRequired": "Ajoutez une preuve du motif du retard.",
+      "confirmationRequiresNotification": "Enregistrez la notification avant sa confirmation.",
+      "confirmationBeforeNotification": "La confirmation ne peut pas précéder la notification.",
+      "dataSubjectsRequireCommissioner": "Enregistrez la notification au Commissaire avant celle des personnes.",
+      "dataSubjectsBeforeCommissioner": "La notification des personnes ne peut pas précéder celle du Commissaire."
+    }
+  },
+  "messages": {
+    "created": "Violation de données enregistrée.",
+    "updated": "Violation de données mise à jour.",
+    "transitioned": "Statut de l’incident mis à jour."
+  },
+  "errors": {
+    "create": "Impossible d’enregistrer la violation.",
+    "update": "Impossible de mettre à jour la violation.",
+    "transition": "Impossible de modifier le statut."
+  }
+}

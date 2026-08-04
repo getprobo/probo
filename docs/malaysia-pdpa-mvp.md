@@ -133,6 +133,8 @@ version.
 3. Authorized GraphQL query and mutation.
 4. Console settings page with assessment explanation and evidence prompts.
 5. Data breach workflow and deadline engine.
-6. Transfer/DPIA localization.
-7. Scanner ingestion API.
-8. MSP views, billing, and white-label features.
+6. Console data breach register, notification evidence, deadlines, and status
+   history.
+7. Transfer/DPIA localization.
+8. Scanner ingestion API.
+9. MSP views, billing, and white-label features.

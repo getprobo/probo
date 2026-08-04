@@ -1,0 +1,220 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "create": "Create incident",
+    "creating": "Creating…",
+    "notApplicable": "Not applicable",
+    "notProvided": "Not provided",
+    "save": "Save changes",
+    "saving": "Saving…"
+  },
+  "list": {
+    "title": "Data Breaches",
+    "description": "Maintain the PDPA breach register and notification evidence. {{count}} incident(s) recorded.",
+    "actions": {
+      "create": "Record breach",
+      "loadMore": "Load more",
+      "loading": "Loading…"
+    },
+    "columns": {
+      "incident": "Incident",
+      "status": "Status",
+      "awarenessAt": "Awareness time",
+      "affectedSubjects": "Affected subjects",
+      "recommendation": "System recommendation",
+      "commissionerDeadline": "Commissioner deadline"
+    },
+    "flags": {
+      "significantHarm": "Significant harm indicated",
+      "significantScale": "More than 1,000 affected subjects"
+    },
+    "empty": {
+      "title": "No data breaches recorded",
+      "description": "Record an incident to assess notification duties and start the breach register."
+    }
+  },
+  "create": {
+    "title": "Record a data breach",
+    "description": "Capture the incident facts, run the Malaysia PDPA notification assessment, and record the authorized human decision.",
+    "noPermission": "You can view breach records, but you do not have permission to create one."
+  },
+  "detail": {
+    "description": "Review the assessment, deadlines, notification evidence, and incident history.",
+    "fallbackTitle": "Data breach",
+    "readOnly": "You have read-only access to this incident."
+  },
+  "statuses": {
+    "OPEN": "Open",
+    "ASSESSING": "Assessing",
+    "CONTAINED": "Contained",
+    "CLOSED": "Closed"
+  },
+  "decisions": {
+    "PENDING": "Decision pending",
+    "NOT_REQUIRED": "Notification not required",
+    "COMMISSIONER_ONLY": "Notify Commissioner only",
+    "COMMISSIONER_AND_DATA_SUBJECTS": "Notify Commissioner and data subjects"
+  },
+  "reasons": {
+    "PHYSICAL_HARM": "Potential physical harm",
+    "FINANCIAL_LOSS": "Potential financial loss",
+    "CREDIT_OR_PROPERTY_DAMAGE": "Potential damage to credit or property",
+    "ILLEGAL_USE": "Potential illegal use of personal data",
+    "SENSITIVE_PERSONAL_DATA": "Sensitive personal data involved",
+    "IDENTITY_FRAUD": "Potential identity fraud",
+    "SIGNIFICANT_SCALE": "More than 1,000 affected data subjects"
+  },
+  "deadlines": {
+    "commissioner": "Commissioner notification (72 hours)",
+    "phasedInformation": "Phased information (30 days)",
+    "dataSubjects": "Data-subject notification (7 days)",
+    "completed": "Recorded",
+    "overdue": "Overdue",
+    "pending": "Pending"
+  },
+  "summary": {
+    "title": "Notification assessment",
+    "description": "The system recommendation is calculated from the recorded facts. An authorized person must separately record the notification decision.",
+    "significantHarm": "Significant harm",
+    "significantScale": "Significant scale",
+    "noTrigger": "No statutory trigger indicated",
+    "recommendation": "System recommendation",
+    "recordedDecision": "Recorded human decision",
+    "reasons": "Assessment reasons",
+    "decisionRationale": "Decision rationale",
+    "decisionEvidence": "Decision evidence",
+    "commissionerReference": "Commissioner notification reference",
+    "confirmationReference": "Commissioner confirmation reference",
+    "dataSubjectsEvidence": "Data-subject notification evidence",
+    "assessmentMetadata": "Assessed {{date}} using {{source}} (rule {{version}})."
+  },
+  "transition": {
+    "title": "Incident status",
+    "description": "Advance or reopen the incident. Every change is appended to the status history.",
+    "readOnly": "You do not have permission to change the incident status.",
+    "closeRequirement": "Before closing, record every notification required by the system recommendation or the authorized human decision.",
+    "fields": {
+      "toStatus": "Move to",
+      "reason": "Reason",
+      "reasonPlaceholder": "Why is the status changing?"
+    },
+    "actions": {
+      "update": "Update status",
+      "updating": "Updating…"
+    }
+  },
+  "history": {
+    "title": "Status history",
+    "description": "{{count}} append-only status event(s).",
+    "created": "Created",
+    "profile": "Profile …{{id}}",
+    "columns": {
+      "transition": "Transition",
+      "reason": "Reason",
+      "changedAt": "Changed at",
+      "changedBy": "Changed by"
+    }
+  },
+  "form": {
+    "incident": {
+      "title": "Incident details",
+      "description": "Record when the breach occurred, when it became known, the affected scope, and response actions."
+    },
+    "harm": {
+      "title": "Significant-harm assessment",
+      "description": "Select every potential consequence supported by the current incident facts.",
+      "fields": {
+        "potentialPhysicalHarm": {
+          "label": "Potential physical harm",
+          "help": "The breach may cause bodily harm, safety risks, or related physical consequences."
+        },
+        "potentialFinancialLoss": {
+          "label": "Potential financial loss",
+          "help": "The breach may expose a person to theft, fraud, or other financial loss."
+        },
+        "potentialCreditOrPropertyDamage": {
+          "label": "Potential credit or property damage",
+          "help": "The breach may damage a person's credit record, property, or financial standing."
+        },
+        "potentialIllegalUse": {
+          "label": "Potential illegal use",
+          "help": "The personal data may be used for an unlawful purpose."
+        },
+        "sensitivePersonalData": {
+          "label": "Sensitive personal data involved",
+          "help": "The affected data includes sensitive personal data under the PDPA."
+        },
+        "potentialIdentityFraud": {
+          "label": "Potential identity fraud",
+          "help": "The breach may enable impersonation or identity fraud."
+        }
+      }
+    },
+    "decision": {
+      "title": "Authorized notification decision",
+      "description": "Record the responsible person's decision separately from the system recommendation. The platform does not notify the Commissioner automatically."
+    },
+    "notifications": {
+      "title": "Notification and evidence",
+      "description": "Record submission, confirmation, late-notification evidence, and data-subject communication."
+    },
+    "fields": {
+      "title": { "label": "Incident title", "placeholder": "Unauthorized access to customer records" },
+      "description": { "label": "Description", "placeholder": "Summarize what happened and what is currently known." },
+      "occurredAt": { "label": "Occurred at", "help": "Optional when the exact occurrence time is unknown." },
+      "discoveredAt": { "label": "Discovered at", "help": "When the organization first detected the incident." },
+      "awarenessAt": { "label": "Awareness at", "help": "The regulatory trigger used for the 72-hour deadline." },
+      "affectedDataSubjects": { "label": "Affected data subjects", "help": "More than 1,000 triggers the significant-scale test." },
+      "affectedDataRecords": { "label": "Affected data records", "help": "Estimated number of individual records involved." },
+      "personalDataTypes": { "label": "Personal data types", "help": "List the categories of personal data involved." },
+      "affectedSystem": { "label": "Affected system" },
+      "likelyConsequences": { "label": "Likely consequences" },
+      "containmentActions": { "label": "Containment and remediation actions" },
+      "notificationDecision": { "label": "Notification decision", "help": "This is the authorized human decision, not the system recommendation." },
+      "decisionRationale": { "label": "Decision rationale", "help": "Required after a decision other than pending is recorded." },
+      "decisionEvidence": { "label": "Decision evidence", "help": "Reference minutes, legal advice, approvals, or other supporting evidence." },
+      "commissionerNotifiedAt": { "label": "Commissioner notified at" },
+      "commissionerNotificationReference": { "label": "Commissioner notification reference", "help": "Required when the submission time is recorded." },
+      "commissionerConfirmationReceivedAt": { "label": "Commissioner confirmation received at" },
+      "commissionerConfirmationReference": { "label": "Commissioner confirmation reference" },
+      "delayedNotificationReason": { "label": "Late-notification reason", "help": "Required when notification occurs more than 72 hours after awareness." },
+      "delayedNotificationEvidence": { "label": "Late-notification evidence", "help": "Required together with the late-notification reason." },
+      "dataSubjectsNotifiedAt": { "label": "Data subjects notified at" },
+      "dataSubjectsNotificationEvidence": { "label": "Data-subject notification evidence", "help": "Required when the data-subject notification time is recorded." }
+    },
+    "validation": {
+      "titleRequired": "Enter an incident title.",
+      "titleTooLong": "The title is too long.",
+      "contentTooLong": "This field exceeds the maximum length.",
+      "discoveredAtRequired": "Enter the discovery time.",
+      "awarenessAtRequired": "Enter the awareness time.",
+      "affectedSubjectsRequired": "Enter the affected data-subject count.",
+      "affectedRecordsRequired": "Enter the affected record count.",
+      "personalDataTypesRequired": "Describe the personal data types involved.",
+      "nonNegativeInteger": "Enter a whole number of zero or more.",
+      "numberTooLarge": "Enter a smaller whole number.",
+      "referenceTooLong": "The reference is too long.",
+      "occurredAfterDiscovery": "The occurrence time cannot be after discovery.",
+      "awarenessBeforeDiscovery": "The awareness time cannot be before discovery.",
+      "decisionRationaleRequired": "Add a rationale for the recorded decision.",
+      "pairedFieldRequired": "Complete both related notification fields.",
+      "commissionerBeforeAwareness": "Commissioner notification cannot be before awareness.",
+      "delayReasonRequired": "Add the reason for notifying after 72 hours.",
+      "delayEvidenceRequired": "Add evidence supporting the late-notification reason.",
+      "confirmationRequiresNotification": "Record the Commissioner notification before its confirmation.",
+      "confirmationBeforeNotification": "Confirmation cannot be before Commissioner notification.",
+      "dataSubjectsRequireCommissioner": "Record the Commissioner notification before notifying data subjects.",
+      "dataSubjectsBeforeCommissioner": "Data-subject notification cannot be before Commissioner notification."
+    }
+  },
+  "messages": {
+    "created": "Data breach recorded.",
+    "updated": "Data breach updated.",
+    "transitioned": "Incident status updated."
+  },
+  "errors": {
+    "create": "Failed to record the data breach.",
+    "update": "Failed to update the data breach.",
+    "transition": "Failed to update the incident status."
+  }
+}
