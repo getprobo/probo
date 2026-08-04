@@ -316,6 +316,10 @@ func generateConfig() (string, error) {
 		"PROBOD_MAILER_SENDER_EMAIL": "no-reply@test.getprobo.com",
 		"PROBOD_MAILER_INTERVAL":     "1",
 
+		// Drain webhook data promptly so event-persistence assertions do not
+		// queue behind the rest of the parallel E2E suite.
+		"PROBOD_WEBHOOK_SENDER_INTERVAL": "1",
+
 		// LLM.
 		"PROBOD_OPENAI_API_KEY": "thisisnotasecret",
 
