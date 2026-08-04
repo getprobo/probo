@@ -21,14 +21,9 @@
 package geoloc
 
 import (
-	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"net"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -42,110 +37,97 @@ func NewService(pgClient *pg.Client) *Service {
 	return &Service{pgClient: pgClient}
 }
 
-func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
-	countryDir := filepath.Join(dataDir, "country")
+func (s *Service) ReplaceLocations(
+	ctx context.Context,
+	source coredata.IPLocationBlockSource,
+) (count int64, err error) {
+	stagingCreated := false
+	swapped := false
 
-	entries, err := os.ReadDir(countryDir)
-	if err != nil {
-		return fmt.Errorf("cannot read country directory: %w", err)
-	}
-
-	var blocks []coredata.IPCountryBlock
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
+	defer func() {
+		if !stagingCreated || swapped {
+			return
 		}
 
-		code := strings.ToUpper(entry.Name())
-
-		var cc coredata.CountryCode
-		if err := cc.UnmarshalText([]byte(code)); err != nil {
-			continue
+		cleanupErr := s.pgClient.WithConn(
+			context.WithoutCancel(ctx),
+			func(ctx context.Context, conn pg.Querier) error {
+				return coredata.DropIPLocationBlocksStaging(ctx, conn)
+			},
+		)
+		if cleanupErr != nil && err == nil {
+			err = fmt.Errorf("cannot clean up IP location staging table: %w", cleanupErr)
 		}
-
-		for _, filename := range []string{"ipv4-aggregated.txt", "ipv6-aggregated.txt"} {
-			path := filepath.Join(countryDir, entry.Name(), filename)
-
-			cidrs, err := parseCIDRFile(path)
-			if errors.Is(err, os.ErrNotExist) {
-				continue
-			}
-
-			if err != nil {
-				return fmt.Errorf("cannot parse CIDR file %s: %w", path, err)
-			}
-
-			for _, cidr := range cidrs {
-				blocks = append(blocks, coredata.IPCountryBlock{
-					CIDR:        cidr,
-					CountryCode: cc,
-				})
-			}
-		}
-	}
+	}()
 
 	if err := s.pgClient.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := coredata.CreateIPCountryBlocksStaging(ctx, conn); err != nil {
-				return fmt.Errorf("cannot create staging table: %w", err)
+			if err := coredata.CreateIPLocationBlocksStaging(ctx, conn); err != nil {
+				return fmt.Errorf("cannot create IP location staging table: %w", err)
+			}
+			stagingCreated = true
+
+			var err error
+			if count, err = coredata.CopyIPLocationBlocksStaging(ctx, conn, source); err != nil {
+				return fmt.Errorf("cannot import IP locations: %w", err)
+			}
+			if count == 0 {
+				return fmt.Errorf("cannot import IP locations: source contains no ranges")
 			}
 
-			if err := coredata.CopyIPCountryBlocksStaging(ctx, conn, blocks); err != nil {
-				return fmt.Errorf("cannot copy IP country blocks to staging: %w", err)
-			}
-
-			if err := coredata.FinalizeIPCountryBlocksStaging(ctx, conn); err != nil {
-				return fmt.Errorf("cannot finalize staging table: %w", err)
+			if err := coredata.FinalizeIPLocationBlocksStaging(ctx, conn); err != nil {
+				return fmt.Errorf("cannot finalize IP locations: %w", err)
 			}
 
 			return nil
 		},
 	); err != nil {
-		return err
+		return 0, err
 	}
 
 	if err := s.pgClient.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := coredata.SwapIPCountryBlocksStaging(ctx, tx); err != nil {
-				return fmt.Errorf("cannot swap staging table: %w", err)
+			if err := coredata.SwapIPLocationBlocksStaging(ctx, tx); err != nil {
+				return fmt.Errorf("cannot activate IP locations: %w", err)
 			}
 
 			return nil
 		},
 	); err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	swapped = true
+
+	return count, nil
 }
 
-func (s *Service) LookupCountry(ctx context.Context, ip string) (coredata.CountryCode, error) {
+func (s *Service) LookupLocation(ctx context.Context, ip string) (coredata.IPLocation, error) {
 	parsed := net.ParseIP(ip)
 	if parsed == nil {
-		return "", fmt.Errorf("cannot parse IP address: %q", ip)
+		return coredata.IPLocation{}, fmt.Errorf("cannot parse IP address: %q", ip)
 	}
 
-	var cc coredata.CountryCode
+	var location coredata.IPLocation
 
 	err := s.pgClient.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
-			if cc, err = coredata.LookupCountryByIP(ctx, conn, ip); err != nil {
-				return fmt.Errorf("cannot lookup country by IP: %w", err)
+			if location, err = coredata.LookupLocationByIP(ctx, conn, ip); err != nil {
+				return fmt.Errorf("cannot lookup location by IP: %w", err)
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return "", err
+		return coredata.IPLocation{}, err
 	}
 
-	return cc, nil
+	return location, nil
 }
 
 func (s *Service) IsPopulated(ctx context.Context) (bool, error) {
@@ -155,8 +137,8 @@ func (s *Service) IsPopulated(ctx context.Context) (bool, error) {
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
-			if populated, err = coredata.IsIPCountryBlocksPopulated(ctx, conn); err != nil {
-				return fmt.Errorf("cannot check if IP country blocks are populated: %w", err)
+			if populated, err = coredata.IsIPLocationBlocksPopulated(ctx, conn); err != nil {
+				return fmt.Errorf("cannot check if IP location blocks are populated: %w", err)
 			}
 
 			return nil
@@ -167,37 +149,4 @@ func (s *Service) IsPopulated(ctx context.Context) (bool, error) {
 	}
 
 	return populated, nil
-}
-
-func parseCIDRFile(path string) ([]string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = f.Close() }()
-
-	var cidrs []string
-
-	scanner := bufio.NewScanner(f)
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		_, _, err := net.ParseCIDR(line)
-		if err != nil {
-			return nil, fmt.Errorf("cannot parse file: %w", err)
-		}
-
-		cidrs = append(cidrs, line)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("cannot scan file: %w", err)
-	}
-
-	return cidrs, nil
 }

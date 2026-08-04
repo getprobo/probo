@@ -32,37 +32,55 @@ func TestResolveRegulation(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		countryCode    *coredata.CountryCode
+		location       *coredata.IPLocation
 		wantRegulation Regulation
 		wantSource     RegulationSource
 	}{
 		{
 			name:           "unresolved geolocation defaults to GDPR",
-			countryCode:    nil,
+			location:       nil,
 			wantRegulation: RegulationGDPR,
 			wantSource:     RegulationSourceDefault,
 		},
 		{
 			name:           "identified country with no known regulation resolves to none as detected",
-			countryCode:    new(coredata.CountryCodeAQ),
+			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeAQ},
 			wantRegulation: RegulationNone,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
 			name:           "EU country resolves to GDPR as detected",
-			countryCode:    new(coredata.CountryCodeFR),
+			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeFR},
 			wantRegulation: RegulationGDPR,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
-			name:           "US resolves to CCPA as detected",
-			countryCode:    new(coredata.CountryCodeUS),
+			name: "regulated US state resolves to CCPA as detected",
+			location: &coredata.IPLocation{
+				CountryCode:     coredata.CountryCodeUS,
+				SubdivisionCode: new(coredata.SubdivisionCode("US-CA")),
+			},
 			wantRegulation: RegulationCCPA,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
+			name: "unregulated US state defaults to GDPR",
+			location: &coredata.IPLocation{
+				CountryCode:     coredata.CountryCodeUS,
+				SubdivisionCode: new(coredata.SubdivisionCode("US-NY")),
+			},
+			wantRegulation: RegulationGDPR,
+			wantSource:     RegulationSourceDefault,
+		},
+		{
+			name:           "US without subdivision defaults to GDPR",
+			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeUS},
+			wantRegulation: RegulationGDPR,
+			wantSource:     RegulationSourceDefault,
+		},
+		{
 			name:           "UK resolves to UK GDPR as detected",
-			countryCode:    new(coredata.CountryCodeGB),
+			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeGB},
 			wantRegulation: RegulationUKGDPR,
 			wantSource:     RegulationSourceDetected,
 		},
@@ -72,7 +90,7 @@ func TestResolveRegulation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			regulation, source := ResolveRegulation(tt.countryCode)
+			regulation, source := ResolveRegulation(tt.location)
 			require.Equal(t, tt.wantRegulation, regulation)
 			require.Equal(t, tt.wantSource, source)
 		})
@@ -156,4 +174,43 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.False(t, layout.Buttons.Save)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
+}
+
+func TestRegulationForLocationUSPrivacyStates(t *testing.T) {
+	t.Parallel()
+
+	subdivisions := []coredata.SubdivisionCode{
+		"US-CA",
+		"US-CO",
+		"US-CT",
+		"US-DE",
+		"US-FL",
+		"US-IA",
+		"US-IN",
+		"US-KY",
+		"US-MD",
+		"US-MN",
+		"US-MT",
+		"US-NE",
+		"US-NH",
+		"US-NJ",
+		"US-OR",
+		"US-RI",
+		"US-TN",
+		"US-TX",
+		"US-UT",
+		"US-VA",
+	}
+
+	for _, subdivision := range subdivisions {
+		t.Run(subdivision.String(), func(t *testing.T) {
+			t.Parallel()
+
+			location := coredata.IPLocation{
+				CountryCode:     coredata.CountryCodeUS,
+				SubdivisionCode: &subdivision,
+			}
+			require.Equal(t, RegulationCCPA, RegulationForLocation(location))
+		})
+	}
 }

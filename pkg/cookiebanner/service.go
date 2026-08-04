@@ -111,6 +111,7 @@ type (
 		Regulation       *Regulation
 		RegulationSource coredata.RegulationSource
 		CountryCode      *coredata.CountryCode
+		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
 	}
 
@@ -2095,6 +2096,7 @@ func (s *Service) RecordConsent(
 				Regulation:            req.Regulation,
 				RegulationSource:      &req.RegulationSource,
 				CountryCode:           req.CountryCode,
+				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
 				CreatedAt:             time.Now(),
 			}

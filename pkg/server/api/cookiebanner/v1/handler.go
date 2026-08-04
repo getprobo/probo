@@ -81,8 +81,8 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 
 	lang := r.URL.Query().Get("lang")
 	sdkVersion := sdkVersionFromContext(r.Context())
-	cc := h.resolveCountryCode(r)
-	regulation, _ := cookiebanner.ResolveRegulation(cc)
+	location := h.resolveLocation(r)
+	regulation, _ := cookiebanner.ResolveRegulation(location)
 
 	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation, sdkVersion)
 	if err != nil {
@@ -105,14 +105,14 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderJSON(w, http.StatusOK, config)
 }
 
-func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
+func (h *Handler) resolveLocation(r *http.Request) *coredata.IPLocation {
 	ip := clientip.Extract(r)
 
-	cc, err := h.geolocSvc.LookupCountry(r.Context(), ip)
+	location, err := h.geolocSvc.LookupLocation(r.Context(), ip)
 	if err != nil {
 		h.logger.ErrorCtx(
 			r.Context(),
-			"cannot resolve country for IP",
+			"cannot resolve location for IP",
 			log.Error(err),
 			log.String("sdk_version", sdkVersionFromContext(r.Context())),
 		)
@@ -120,11 +120,11 @@ func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
 		return nil
 	}
 
-	if cc == "" {
+	if location.CountryCode == "" {
 		return nil
 	}
 
-	return &cc
+	return &location
 }
 
 func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
@@ -198,8 +198,8 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	ip := clientip.Extract(r)
 	ua := r.UserAgent()
 	sdkVersion := sdkVersionFromContext(r.Context())
-	cc := h.resolveCountryCode(r)
-	regulation, regulationSource := cookiebanner.ResolveRegulation(cc)
+	location := h.resolveLocation(r)
+	regulation, regulationSource := cookiebanner.ResolveRegulation(location)
 
 	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(regulation))
 
@@ -213,8 +213,11 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		SdkVersion:       sdkVersion,
 		Regulation:       &regulation,
 		RegulationSource: regulationSource,
-		CountryCode:      cc,
 		ConsentMode:      &cm,
+	}
+	if location != nil {
+		req.CountryCode = &location.CountryCode
+		req.SubdivisionCode = location.SubdivisionCode
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)

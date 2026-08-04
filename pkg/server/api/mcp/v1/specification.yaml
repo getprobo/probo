@@ -11475,6 +11475,11 @@ components:
           $ref: "#/components/schemas/CountryCode"
           description: Visitor country code (ISO 3166-1 alpha-2)
           nullable: true
+        subdivision_code:
+          type:
+            - string
+            - "null"
+          description: Visitor subdivision code (ISO 3166-2)
         created_at:
           type: string
           format: date-time

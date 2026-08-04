@@ -62,21 +62,56 @@ const (
 // cookie-consent law (which the presentation layer maps to an informational
 // notice). When geolocation is unresolved (cc is nil) it falls back to GDPR,
 // applying the strictest opt-in consent model by default.
-func ResolveRegulation(cc *coredata.CountryCode) (Regulation, RegulationSource) {
-	if cc != nil {
-		return RegulationForCountry(*cc), RegulationSourceDetected
+func ResolveRegulation(location *coredata.IPLocation) (Regulation, RegulationSource) {
+	if location != nil {
+		return RegulationForLocation(*location), RegulationSourceDetected
 	}
 
 	return RegulationGDPR, RegulationSourceDefault
 }
 
+// RegulationForLocation maps a country and optional ISO 3166-2 subdivision to
+// the applicable privacy regulation.
+func RegulationForLocation(location coredata.IPLocation) Regulation {
+	if location.CountryCode == coredata.CountryCodeUS {
+		if location.SubdivisionCode == nil {
+			return RegulationNone
+		}
+
+		switch *location.SubdivisionCode {
+		case
+			"US-CA",
+			"US-CO",
+			"US-CT",
+			"US-DE",
+			"US-FL",
+			"US-IA",
+			"US-IN",
+			"US-KY",
+			"US-MD",
+			"US-MN",
+			"US-MT",
+			"US-NE",
+			"US-NH",
+			"US-NJ",
+			"US-OR",
+			"US-RI",
+			"US-TN",
+			"US-TX",
+			"US-UT",
+			"US-VA":
+			return RegulationCCPA
+		default:
+			return RegulationNone
+		}
+	}
+
+	return RegulationForCountry(location.CountryCode)
+}
+
 // RegulationForCountry maps a country code to the applicable privacy
 // regulation. For countries with no known cookie-consent regulation it
 // returns RegulationNone.
-//
-// US states (CCPA/CPRA, CPA, VCDPA, UCPA) and Canadian provinces
-// (PIPEDA, Law 25) are collapsed to the country level because IP
-// geolocation only resolves to a country code.
 func RegulationForCountry(cc coredata.CountryCode) Regulation {
 	switch cc {
 	// EU 27 member states
@@ -119,9 +154,6 @@ func RegulationForCountry(cc coredata.CountryCode) Regulation {
 
 	case coredata.CountryCodeCH:
 		return RegulationFADP
-
-	case coredata.CountryCodeUS:
-		return RegulationCCPA
 
 	case coredata.CountryCodeCA:
 		return RegulationPIPEDA

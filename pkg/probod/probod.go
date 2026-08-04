@@ -333,7 +333,7 @@ func (impl *Implm) Run(
 	if err != nil {
 		l.ErrorCtx(ctx, "cannot check geoloc table", log.Error(err))
 	} else if !populated {
-		l.Warn("IP geolocation table is empty; run geoloc-import to populate it")
+		l.Warn("IP geolocation table is empty; populate it with an external location importer")
 	}
 
 	hp, err := passwdhash.NewProfile(pepper, uint32(impl.cfg.Auth.Password.Iterations))
