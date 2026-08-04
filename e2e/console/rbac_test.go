@@ -441,10 +441,11 @@ func TestRBAC(t *testing.T) {
 		t.Run(
 			tt.resource+"/"+tt.operation+"/"+tt.name,
 			func(t *testing.T) {
-				t.Parallel()
-
 				client := org.Client(t, tt.role)
 				vars := rbacVariables(t, tt.resource, tt.operation, tt.role, org, shared)
+
+				t.Parallel()
+
 				err := executeRBACRequest(
 					client,
 					rbacQuery(tt.resource, tt.operation),
