@@ -1841,7 +1841,9 @@ func TestAudit_UploadReport_Validation(t *testing.T) {
 func TestAudit_UploadReport_RBAC(t *testing.T) {
 	t.Parallel()
 
-	query := `
+	org := testutil.NewOrganizationRoles(t)
+
+	const uploadAuditReportMutation = `
 		mutation UploadAuditReport($input: UploadAuditReportInput!) {
 			uploadAuditReport(input: $input) {
 				audit {
@@ -1853,61 +1855,75 @@ func TestAudit_UploadReport_RBAC(t *testing.T) {
 
 	pdfContent := []byte("%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF")
 
-	t.Run("owner can upload", func(t *testing.T) {
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-		frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-		auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Upload Test").Create()
+	uploadFile := testutil.UploadFile{
+		Filename:    "report.pdf",
+		ContentType: "application/pdf",
+		Content:     pdfContent,
+	}
 
-		err := owner.ExecuteWithFile(query, map[string]any{
-			"input": map[string]any{
-				"auditId": auditID,
-				"file":    nil,
+	tests := []struct {
+		name         string
+		role         testutil.TestRole
+		forbidden    bool
+		allowMsg     string
+		forbiddenMsg string
+	}{
+		{
+			name:     "owner can upload",
+			role:     testutil.RoleOwner,
+			allowMsg: "owner should be able to upload report",
+		},
+		{
+			name:     "admin can upload",
+			role:     testutil.RoleAdmin,
+			allowMsg: "admin should be able to upload report",
+		},
+		{
+			name:         "viewer cannot upload",
+			role:         testutil.RoleViewer,
+			forbidden:    true,
+			forbiddenMsg: "viewer should not be able to upload report",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				owner := org.Client(t, testutil.RoleOwner)
+
+				frameworkID := factory.NewFramework(owner).
+					WithName(factory.SafeName("RBAC framework upload " + string(tt.role))).
+					Create()
+
+				auditID := factory.NewAudit(owner, frameworkID).
+					WithName(factory.SafeName("RBAC upload " + string(tt.role))).
+					Create()
+
+				client := org.Client(t, tt.role)
+
+				err := client.ExecuteWithFile(
+					uploadAuditReportMutation,
+					map[string]any{
+						"input": map[string]any{
+							"auditId": auditID,
+							"file":    nil,
+						},
+					},
+					"input.file",
+					uploadFile,
+					nil,
+				)
+				if tt.forbidden {
+					testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+				} else {
+					require.NoError(t, err, tt.allowMsg)
+				}
 			},
-		}, "input.file", testutil.UploadFile{
-			Filename:    "report.pdf",
-			ContentType: "application/pdf",
-			Content:     pdfContent,
-		}, nil)
-		require.NoError(t, err, "owner should be able to upload report")
-	})
-
-	t.Run("admin can upload", func(t *testing.T) {
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-		frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-		auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Upload Test").Create()
-
-		err := admin.ExecuteWithFile(query, map[string]any{
-			"input": map[string]any{
-				"auditId": auditID,
-				"file":    nil,
-			},
-		}, "input.file", testutil.UploadFile{
-			Filename:    "report.pdf",
-			ContentType: "application/pdf",
-			Content:     pdfContent,
-		}, nil)
-		require.NoError(t, err, "admin should be able to upload report")
-	})
-
-	t.Run("viewer cannot upload", func(t *testing.T) {
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-		frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-		auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Upload Test").Create()
-
-		err := viewer.ExecuteWithFile(query, map[string]any{
-			"input": map[string]any{
-				"auditId": auditID,
-				"file":    nil,
-			},
-		}, "input.file", testutil.UploadFile{
-			Filename:    "report.pdf",
-			ContentType: "application/pdf",
-			Content:     pdfContent,
-		}, nil)
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to upload report")
-	})
+		)
+	}
 }
 
 func TestAudit_DeleteReport(t *testing.T) {
