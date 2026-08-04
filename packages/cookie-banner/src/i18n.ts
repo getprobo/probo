@@ -117,6 +117,7 @@ const DISMISS_LABELS: Record<string, string> = {
   it: "Capito",
   ja: "了解",
   ko: "확인했습니다",
+  nl: "Begrepen",
   pl: "Rozumiem",
   pt: "Entendi",
   tr: "Anladım",

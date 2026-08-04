@@ -337,6 +337,13 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"button_acknowledge":         "OK",
 		"button_opt_out":             "Verkoop of deel mijn persoonlijke gegevens niet",
 
+		"privacy_choices_title":            "Uw privacykeuzes",
+		"privacy_choices_intro":            "De Californische wet geeft je het recht om te bepalen hoe wij je persoonlijke gegevens gebruiken en delen. Gebruik de onderstaande opties om die rechten uit te oefenen. {{privacy_policy_link}}",
+		"privacy_choices_sale_title":       "Verkoop of delen van persoonlijke gegevens weigeren",
+		"privacy_choices_sale_description": "Je hebt het recht om je af te melden voor de verkoop of het delen van je persoonlijke gegevens. Als je Verkoop of deel mijn persoonlijke gegevens niet kiest, stoppen wij met het verkopen of delen van je persoonlijke gegevens voor deze browser.",
+		"privacy_choices_spi_title":        "Gebruik van gevoelige persoonlijke gegevens beperken",
+		"privacy_choices_spi_description":  "Je hebt het recht om het gebruik en de openbaarmaking van je gevoelige persoonlijke gegevens te beperken. Wij gebruiken of openbaren geen gevoelige persoonlijke gegevens voor andere doeleinden dan die zijn toegestaan door de Californische wet.",
+
 		"banner_title_notice":       "Cookiemelding",
 		"banner_description_notice": "Deze website gebruikt cookies om je ervaring te verbeteren. {{cookie_policy_link}}",
 		"button_dismiss":            "Begrepen",
