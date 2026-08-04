@@ -27,6 +27,7 @@ type Props = {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  "aria-label"?: string;
 };
 
 const checkbox = tv({
@@ -44,7 +45,12 @@ const checkbox = tv({
   },
 });
 
-export function Checkbox({ checked, onChange, disabled = false }: Props) {
+export function Checkbox({
+  checked,
+  onChange,
+  disabled = false,
+  "aria-label": ariaLabel,
+}: Props) {
   const [isFocused, setFocus] = useState(false);
   return (
     <div className={checkbox({ isFocused, checked, disabled })}>
@@ -53,6 +59,7 @@ export function Checkbox({ checked, onChange, disabled = false }: Props) {
         type="checkbox"
         checked={checked}
         disabled={disabled}
+        aria-label={ariaLabel}
         onChange={e => !disabled && onChange(e.target.checked)}
         onFocus={() => !disabled && setFocus(true)}
         onBlur={() => setFocus(false)}

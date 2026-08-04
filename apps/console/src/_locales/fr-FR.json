@@ -3134,7 +3134,8 @@
       "shared_account": "Compte partagé",
       "inactive": "Inactif",
       "role_mismatch": "Rôle incohérent",
-      "new": "Nouveau"
+      "new": "Nouveau",
+      "none": "Aucun"
     },
     "flagGroups": {
       "account": "Compte",
@@ -3157,6 +3158,7 @@
       "revoke": "Révoquer",
       "modify": "Modifier",
       "escalate": "Escalader",
+      "noDecision": "Aucune décision",
       "confirm": "Confirmer",
       "submit": "Soumettre"
     },
@@ -3191,6 +3193,7 @@
     "selected_one": "{{count}} sélectionné",
     "selected_other": "{{count}} sélectionnés",
     "decisionPlaceholder": "Définir une décision...",
+    "selectEntry": "Sélectionner {{name}}",
     "flagsSelected_one": "{{count}} indicateur",
     "flagsSelected_other": "{{count}} indicateurs",
     "flagsPlaceholder": "Définir des indicateurs...",

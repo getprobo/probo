@@ -35,6 +35,7 @@ type Props = {
   onOpenChange?: (open: boolean) => void;
   side?: "top" | "bottom";
   className?: string;
+  disabled?: boolean;
 };
 
 // Multi-select control matching the subprocessors toolbar trigger size.
@@ -47,6 +48,7 @@ export function FilterMultiSelect({
   onOpenChange,
   side = "bottom",
   className,
+  disabled = false,
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -69,6 +71,9 @@ export function FilterMultiSelect({
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
+    if (disabled) {
+      return;
+    }
     setOpen(nextOpen);
     onOpenChange?.(nextOpen);
   };
@@ -78,8 +83,9 @@ export function FilterMultiSelect({
       <Popover.Trigger asChild>
         <button
           type="button"
+          disabled={disabled}
           className={[
-            "flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border-low bg-level-1 px-3 text-sm text-txt-primary hover:bg-tertiary-hover",
+            "flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border-low bg-level-1 px-3 text-sm text-txt-primary hover:bg-tertiary-hover disabled:cursor-not-allowed disabled:opacity-50",
             className,
           ].filter(Boolean).join(" ")}
         >
@@ -94,8 +100,7 @@ export function FilterMultiSelect({
           align="start"
           side={side}
           sideOffset={4}
-          avoidCollisions={false}
-          className="z-100 w-(--radix-popover-trigger-width) min-w-48 rounded-[10px] border border-border-low bg-level-1 p-1 text-txt-primary shadow-mid animate-in fade-in slide-in-from-top-1"
+          className="z-100 max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) min-w-48 overflow-y-auto rounded-[10px] border border-border-low bg-level-1 p-1 text-txt-primary shadow-mid animate-in fade-in slide-in-from-top-1"
         >
           {options.map(option => (
             <label

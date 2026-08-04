@@ -261,6 +261,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [bulkNote, setBulkNote] = useState("");
   const bulkNoteRef = useDialogRef();
   const [bulkFlagSelection, setBulkFlagSelection] = useState<AccessReviewEntryFlag[]>([]);
+  const [bulkFlagsDirty, setBulkFlagsDirty] = useState(false);
 
   const [startCampaign, isStarting]
     = useMutation<CampaignDetailPageStartMutation>(startCampaignMutation);
@@ -268,13 +269,27 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     = useMutation<CampaignDetailPageCloseMutation>(closeCampaignMutation);
   const [deleteCampaign, isDeleting]
     = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
-  const [bulkDecide]
+  const [bulkDecide, isBulkDeciding]
     = useMutation<CampaignDetailPageBulkDecisionMutation>(bulkDecisionMutation);
-  const [bulkFlag]
+  const [bulkFlag, isBulkFlagging]
     = useMutation<CampaignDetailPageBulkFlagMutation>(bulkFlagMutation);
+  const isBulkSubmitting = isBulkDeciding || isBulkFlagging;
+
+  // Reset selection/bulk UI when navigating between campaigns (same page instance).
+  const [prevCampaignId, setPrevCampaignId] = useState(campaign.id);
+  if (campaign.id !== prevCampaignId) {
+    setPrevCampaignId(campaign.id);
+    clearSelectionList();
+    setBulkDecision(null);
+    setBulkPendingDecision(null);
+    setBulkNote("");
+    setBulkFlagSelection([]);
+    setBulkFlagsDirty(false);
+  }
 
   useEffect(() => {
     campaignIdRef.current = campaign.id;
+    selectionAnchorRef.current = null;
   }, [campaign.id]);
 
   useEffect(() => {
@@ -458,7 +473,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   };
 
   const applyBulkFlags = (onDone?: () => void) => {
-    if (bulkFlagSelection.length === 0) {
+    if (!bulkFlagsDirty) {
       onDone?.();
       return;
     }
@@ -467,6 +482,13 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     let completedCount = 0;
     const total = selection.length;
     const flags = bulkFlagSelection;
+
+    if (total === 0) {
+      setBulkFlagSelection([]);
+      setBulkFlagsDirty(false);
+      onDone?.();
+      return;
+    }
 
     for (const entryId of selection) {
       bulkFlag({
@@ -496,6 +518,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
               });
             }
             setBulkFlagSelection([]);
+            setBulkFlagsDirty(false);
             onDone?.();
           }
         },
@@ -509,6 +532,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
               variant: "error",
             });
             setBulkFlagSelection([]);
+            setBulkFlagsDirty(false);
             onDone?.();
           }
         },
@@ -521,43 +545,73 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     decisionNote?: string,
     onDone?: () => void,
   ) => {
-    bulkDecide({
-      variables: {
-        input: {
-          decisions: selection.map(id => ({
-            accessReviewEntryId: id,
-            decision,
-            decisionNote: decisionNote || null,
-          })),
-        },
-      },
-      onCompleted(_, errors) {
-        if (errors?.length) {
-          toast({
-            title: t("campaignDetailPage.messages.error"),
-            description: formatError(t("campaignDetailPage.errors.recordDecisions"), errors),
-            variant: "error",
-          });
+    const BATCH_SIZE = 100;
+    const decisions = selection.map(id => ({
+      accessReviewEntryId: id,
+      decision,
+      decisionNote: decisionNote || null,
+    }));
+
+    if (decisions.length === 0) {
+      onDone?.();
+      return;
+    }
+
+    const batches: typeof decisions[] = [];
+    for (let i = 0; i < decisions.length; i += BATCH_SIZE) {
+      batches.push(decisions.slice(i, i + BATCH_SIZE));
+    }
+
+    let errorCount = 0;
+    let completedCount = 0;
+    const total = batches.length;
+
+    const finish = () => {
+      if (errorCount > 0) {
+        toast({
+          title: t("campaignDetailPage.messages.error"),
+          description: t("campaignDetailPage.errors.recordDecisions"),
+          variant: "error",
+        });
+        if (errorCount === total) {
           return;
         }
+      } else {
         toast({
           title: t("campaignDetailPage.messages.success"),
           description: t("campaignDetailPage.messages.decisionsRecorded"),
           variant: "success",
         });
-        setBulkDecision(null);
-        setBulkPendingDecision(null);
-        setBulkNote("");
-        onDone?.();
-      },
-      onError(error) {
-        toast({
-          title: t("campaignDetailPage.messages.error"),
-          description: formatError(t("campaignDetailPage.errors.recordDecisions"), error),
-          variant: "error",
-        });
-      },
-    });
+      }
+      setBulkDecision(null);
+      setBulkPendingDecision(null);
+      setBulkNote("");
+      onDone?.();
+    };
+
+    for (const batch of batches) {
+      bulkDecide({
+        variables: {
+          input: { decisions: batch },
+        },
+        onCompleted(_, errors) {
+          if (errors?.length) {
+            errorCount++;
+          }
+          completedCount++;
+          if (completedCount === total) {
+            finish();
+          }
+        },
+        onError() {
+          errorCount++;
+          completedCount++;
+          if (completedCount === total) {
+            finish();
+          }
+        },
+      });
+    }
   };
 
   const handleSubmit = () => {
@@ -578,6 +632,11 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     }
 
     applyBulkFlags(finish);
+  };
+
+  const handleBulkFlagSelectionChange = (flags: AccessReviewEntryFlag[]) => {
+    setBulkFlagSelection(flags);
+    setBulkFlagsDirty(true);
   };
 
   const allFilteredEntryIds = useMemo(
@@ -689,9 +748,16 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       <div className={results()}>
         {filteredSources.map(({ source, entries }) => {
           const latestAttempt = source.fetchAttempts.edges[0]?.node;
-          const fetchError = latestAttempt?.status === "FAILED"
+          const fetchStatus = latestAttempt?.status;
+          const fetchError = fetchStatus === "FAILED"
             ? latestAttempt.error
             : null;
+          const isFetchInProgress = fetchStatus === "QUEUED" || fetchStatus === "FETCHING";
+          const statusMessage = entries.length === 0 && isFetchInProgress && fetchStatus
+            ? t(`campaignDetailPage.fetchStatus.${fetchStatus.toLowerCase()}`)
+            : null;
+          const hasNextPage = source.entries.pageInfo.hasNextPage;
+          const truncatedCount = hasNextPage ? source.entries.edges.length : null;
 
           return (
             <AccessEntrySection
@@ -700,12 +766,18 @@ export default function CampaignDetailPage({ queryRef }: Props) {
               count={entries.length}
               provider={source.source?.connector?.provider}
               error={fetchError}
+              statusMessage={statusMessage}
+              truncatedCount={truncatedCount}
             >
               {entries.length === 0
                 ? (
-                    <div className="rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-center text-sm text-txt-tertiary">
-                      {t("campaignDetailPage.emptyEntries")}
-                    </div>
+                    statusMessage || fetchError
+                      ? null
+                      : (
+                          <div className="rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-center text-sm text-txt-tertiary">
+                            {t("campaignDetailPage.emptyEntries")}
+                          </div>
+                        )
                   )
                 : (
                     <ul className={listRoot()}>
@@ -752,13 +824,16 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           onClear={() => {
             setBulkDecision(null);
             setBulkFlagSelection([]);
+            setBulkFlagsDirty(false);
             clear();
           }}
           onSelectAll={() => reset(allFilteredEntryIds)}
           bulkDecision={bulkDecision}
           onBulkDecisionChange={setBulkDecision}
           bulkFlagSelection={bulkFlagSelection}
-          onBulkFlagSelectionChange={setBulkFlagSelection}
+          onBulkFlagSelectionChange={handleBulkFlagSelectionChange}
+          bulkFlagsDirty={bulkFlagsDirty}
+          isSubmitting={isBulkSubmitting}
           onSubmit={handleSubmit}
         />
       )}
@@ -777,7 +852,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         </DialogContent>
         <DialogFooter>
           <Button
-            disabled={!bulkNote.trim()}
+            disabled={!bulkNote.trim() || isBulkSubmitting}
             onClick={() => {
               if (!bulkPendingDecision) {
                 return;

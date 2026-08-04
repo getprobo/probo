@@ -30,15 +30,20 @@ import { flagGroups } from "../../_components/accessReviewHelpers";
 import { FilterMultiSelect } from "./FilterMultiSelect";
 import { accessEntriesSelectionBar } from "./variants";
 
+// Radix Select reserves "" — use a sentinel for the clear-decision option.
+const NO_DECISION_VALUE = "__none__";
+
 interface AccessEntriesSelectionBarProps {
   selectedCount: number;
   allEntryIds: string[];
   onClear: () => void;
   onSelectAll: () => void;
   bulkDecision: AccessReviewEntryDecision | null;
-  onBulkDecisionChange: (decision: AccessReviewEntryDecision) => void;
+  onBulkDecisionChange: (decision: AccessReviewEntryDecision | null) => void;
   bulkFlagSelection: AccessReviewEntryFlag[];
   onBulkFlagSelectionChange: (flags: AccessReviewEntryFlag[]) => void;
+  bulkFlagsDirty: boolean;
+  isSubmitting: boolean;
   onSubmit: () => void;
 }
 
@@ -52,6 +57,8 @@ export function AccessEntriesSelectionBar({
   onBulkDecisionChange,
   bulkFlagSelection,
   onBulkFlagSelectionChange,
+  bulkFlagsDirty,
+  isSubmitting,
   onSubmit,
 }: AccessEntriesSelectionBarProps) {
   const { t } = useTranslation();
@@ -67,7 +74,8 @@ export function AccessEntriesSelectionBar({
     [t],
   );
 
-  const canSubmit = bulkDecision !== null || bulkFlagSelection.length > 0;
+  const canSubmit = bulkDecision !== null || bulkFlagsDirty;
+  const allSelected = allEntryIds.length > 0 && selectedCount >= allEntryIds.length;
 
   if (selectedCount === 0) {
     return null;
@@ -80,13 +88,13 @@ export function AccessEntriesSelectionBar({
           {t("campaignDetailPage.selected", { count: selectedCount })}
         </span>
         <div className={actions()}>
-          <Button variant="tertiary" onClick={onClear}>
+          <Button variant="tertiary" onClick={onClear} disabled={isSubmitting}>
             {t("campaignDetailPage.actions.clearSelection")}
           </Button>
           <Button
             variant="tertiary"
             onClick={onSelectAll}
-            disabled={allEntryIds.length === 0}
+            disabled={isSubmitting || allEntryIds.length === 0 || allSelected}
           >
             {t("campaignDetailPage.actions.selectAll")}
           </Button>
@@ -94,8 +102,18 @@ export function AccessEntriesSelectionBar({
             variant="editor"
             value={bulkDecision ?? undefined}
             placeholder={t("campaignDetailPage.decisionPlaceholder")}
-            onValueChange={value => onBulkDecisionChange(value as AccessReviewEntryDecision)}
+            disabled={isSubmitting}
+            onValueChange={(value) => {
+              if (value === NO_DECISION_VALUE) {
+                onBulkDecisionChange(null);
+                return;
+              }
+              onBulkDecisionChange(value as AccessReviewEntryDecision);
+            }}
           >
+            <Option value={NO_DECISION_VALUE}>
+              {t("campaignDetailPage.actions.noDecision")}
+            </Option>
             <Option value={"APPROVED" satisfies AccessReviewEntryDecision}>
               {t("campaignDetailPage.actions.approve")}
             </Option>
@@ -116,10 +134,11 @@ export function AccessEntriesSelectionBar({
               value={bulkFlagSelection}
               onChange={values => onBulkFlagSelectionChange(values as AccessReviewEntryFlag[])}
               side="top"
+              disabled={isSubmitting}
             />
           </div>
           <Button
-            disabled={!canSubmit}
+            disabled={!canSubmit || isSubmitting}
             onClick={onSubmit}
           >
             {t("campaignDetailPage.actions.submit")}

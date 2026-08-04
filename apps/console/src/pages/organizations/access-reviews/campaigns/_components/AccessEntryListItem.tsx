@@ -92,6 +92,9 @@ export function AccessEntryListItem({
           <Checkbox
             checked={selected}
             onChange={() => {}}
+            aria-label={t("campaignDetailPage.selectEntry", {
+              name: title || email || "N/A",
+            })}
           />
         </div>
       )}

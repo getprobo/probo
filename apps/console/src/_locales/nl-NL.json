@@ -3151,7 +3151,8 @@
       "shared_account": "Gedeeld account",
       "inactive": "Inactief",
       "role_mismatch": "Rolmismatch",
-      "new": "Nieuw"
+      "new": "Nieuw",
+      "none": "Geen"
     },
     "flagGroups": {
       "account": "Account",
@@ -3174,6 +3175,7 @@
       "revoke": "Intrekken",
       "modify": "Aanpassen",
       "escalate": "Escaleren",
+      "noDecision": "Geen beslissing",
       "confirm": "Bevestigen",
       "submit": "Indienen"
     },
@@ -3208,6 +3210,7 @@
     "selected_one": "{{count}} geselecteerd",
     "selected_other": "{{count}} geselecteerd",
     "decisionPlaceholder": "Beslissing instellen...",
+    "selectEntry": "Selecteer {{name}}",
     "flagsSelected_one": "{{count}} markering",
     "flagsSelected_other": "{{count}} markeringen",
     "flagsPlaceholder": "Markeringen instellen...",

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconWarning, ThirdPartyLogo } from "@probo/ui";
+import { IconWarning, Spinner, ThirdPartyLogo } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -29,6 +29,8 @@ interface AccessEntrySectionProps {
   count: number;
   provider?: string | null;
   error?: string | null;
+  statusMessage?: string | null;
+  truncatedCount?: number | null;
   children: ReactNode;
 }
 
@@ -38,6 +40,8 @@ export function AccessEntrySection({
   count,
   provider,
   error,
+  statusMessage,
+  truncatedCount,
   children,
 }: AccessEntrySectionProps) {
   const { t } = useTranslation();
@@ -63,7 +67,23 @@ export function AccessEntrySection({
             </div>
           )
         : null}
+      {statusMessage && !error
+        ? (
+            <div className="flex items-center justify-center gap-2 rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-sm text-txt-tertiary">
+              <Spinner size={16} />
+              <span>{statusMessage}</span>
+            </div>
+          )
+        : null}
       {children}
+      {truncatedCount != null
+        ? (
+            <div className="flex items-start gap-2 rounded-[10px] border border-border-warning bg-bg-warning/10 px-4 py-3 text-sm text-txt-warning">
+              <IconWarning className="mt-0.5 size-4 shrink-0" />
+              <p>{t("campaignDetailPage.showingFirst", { count: truncatedCount })}</p>
+            </div>
+          )
+        : null}
     </section>
   );
 }

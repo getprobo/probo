@@ -199,7 +199,7 @@ export function MfaStatusIcon({
 }) {
   if (status === "ENABLED") {
     return (
-      <span title={label} className="inline-flex text-txt-success">
+      <span role="img" aria-label={label} title={label} className="inline-flex text-txt-success">
         <IconCircleCheck size={16} />
       </span>
     );
@@ -207,14 +207,14 @@ export function MfaStatusIcon({
 
   if (status === "DISABLED") {
     return (
-      <span title={label} className="inline-flex text-txt-danger">
+      <span role="img" aria-label={label} title={label} className="inline-flex text-txt-danger">
         <IconCircleX size={16} />
       </span>
     );
   }
 
   return (
-    <span title={label} className="inline-flex text-txt-tertiary">
+    <span role="img" aria-label={label} title={label} className="inline-flex text-txt-tertiary">
       <IconCircleQuestionmark size={16} />
     </span>
   );
@@ -233,7 +233,7 @@ export function BooleanStatusIcon({
 }) {
   if (value == null) {
     return (
-      <span title={unknownLabel} className="inline-flex text-txt-tertiary">
+      <span role="img" aria-label={unknownLabel} title={unknownLabel} className="inline-flex text-txt-tertiary">
         <IconCircleQuestionmark size={16} />
       </span>
     );
@@ -241,14 +241,14 @@ export function BooleanStatusIcon({
 
   if (value) {
     return (
-      <span title={trueLabel} className="inline-flex text-txt-success">
+      <span role="img" aria-label={trueLabel} title={trueLabel} className="inline-flex text-txt-success">
         <IconCircleCheck size={16} />
       </span>
     );
   }
 
   return (
-    <span title={falseLabel} className="inline-flex text-txt-danger">
+    <span role="img" aria-label={falseLabel} title={falseLabel} className="inline-flex text-txt-danger">
       <IconCircleX size={16} />
     </span>
   );
@@ -268,22 +268,22 @@ export function LastLoginStatus({
   if (lastLogin) {
     if (compact) {
       return (
-        <span title={formatted} className="inline-flex text-txt-success">
+        <span role="img" aria-label={formatted} title={formatted} className="inline-flex text-txt-tertiary">
           <IconCircleCheck size={16} />
         </span>
       );
     }
 
     return (
-      <span className="inline-flex min-w-0 items-center gap-1.5" title={formatted}>
-        <IconCircleCheck size={16} className="shrink-0 text-txt-success" />
-        <span className="truncate">{formatted}</span>
+      <span role="img" aria-label={formatted} className="inline-flex min-w-0 items-center gap-1.5" title={formatted}>
+        <IconCircleCheck size={16} className="shrink-0 text-txt-tertiary" />
+        <span className="truncate" aria-hidden="true">{formatted}</span>
       </span>
     );
   }
 
   return (
-    <span title={unknownLabel} className="inline-flex text-txt-tertiary">
+    <span role="img" aria-label={unknownLabel} title={unknownLabel} className="inline-flex text-txt-tertiary">
       <IconCircleQuestionmark size={16} />
     </span>
   );
