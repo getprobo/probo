@@ -3459,10 +3459,11 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 	}
 
 	var (
-		scope      *coredata.Scope
-		campaignID gid.GID
-		sourceID   *gid.GID
-		err        error
+		scope       *coredata.Scope
+		campaignID  gid.GID
+		sourceID    *gid.GID
+		sourcesByID = map[gid.GID]*coredata.AccessReviewCampaignSource{}
+		err         error
 	)
 
 	if input.AccessReviewCampaignSourceID != nil {
@@ -3478,6 +3479,7 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 
 		campaignID = campaignSource.AccessReviewCampaignID
 		sourceID = input.AccessReviewCampaignSourceID
+		sourcesByID[campaignSource.ID] = campaignSource
 	} else {
 		scope, err = r.Authorize(ctx, *input.CampaignID, accessreview.ActionEntryList)
 		if err != nil {
@@ -3485,6 +3487,15 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 		}
 
 		campaignID = *input.CampaignID
+
+		campaignSources, err := r.accessReview.ListCampaignSources(ctx, scope, campaignID)
+		if err != nil {
+			panic(fmt.Errorf("cannot list campaign sources: %w", err))
+		}
+
+		for _, campaignSource := range campaignSources {
+			sourcesByID[campaignSource.ID] = campaignSource
+		}
 	}
 
 	pageOrderBy := page.OrderBy[coredata.AccessReviewEntryOrderField]{
@@ -3535,7 +3546,7 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 		}
 	}
 
-	return nil, types.NewListAccessEntriesOutput(p), nil
+	return nil, types.NewListAccessEntriesOutput(p, sourcesByID), nil
 }
 
 // GetAccessReviewStatisticsTool handles the getAccessReviewCampaignStatistics tool
@@ -3578,8 +3589,13 @@ func (r *Resolver) RecordAccessReviewEntryDecisionTool(ctx context.Context, req 
 		return nil, types.RecordAccessReviewEntryDecisionOutput{}, fmt.Errorf("cannot record decision: %w", err)
 	}
 
+	source, err := r.accessReview.GetCampaignSource(ctx, scope, entry.AccessReviewCampaignSourceID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get campaign source: %w", err))
+	}
+
 	return nil, types.RecordAccessReviewEntryDecisionOutput{
-		AccessEntry: types.NewAccessReviewEntry(entry),
+		AccessEntry: types.NewAccessReviewEntry(entry, source),
 	}, nil
 }
 
@@ -3598,13 +3614,18 @@ func (r *Resolver) RecordAccessReviewEntryDecisionsTool(ctx context.Context, req
 	}
 
 	// Authorize each entry individually to prevent cross-org bypass.
-	for _, d := range input.Decisions {
-		if _, err := r.Authorize(ctx, d.AccessReviewEntryID, accessreview.ActionEntryDecide); err != nil {
+	var scope *coredata.Scope
+
+	for i, d := range input.Decisions {
+		authorizedScope, err := r.Authorize(ctx, d.AccessReviewEntryID, accessreview.ActionEntryDecide)
+		if err != nil {
 			return nil, types.RecordAccessReviewEntryDecisionsOutput{}, err
 		}
-	}
 
-	scope := coredata.NewScopeFromObjectID(input.Decisions[0].AccessReviewEntryID)
+		if i == 0 {
+			scope = authorizedScope
+		}
+	}
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
@@ -3628,9 +3649,23 @@ func (r *Resolver) RecordAccessReviewEntryDecisionsTool(ctx context.Context, req
 		return nil, types.RecordAccessReviewEntryDecisionsOutput{}, fmt.Errorf("cannot record decisions: %w", err)
 	}
 
+	sourcesByID := map[gid.GID]*coredata.AccessReviewCampaignSource{}
+	for _, e := range entries {
+		if _, ok := sourcesByID[e.AccessReviewCampaignSourceID]; ok {
+			continue
+		}
+
+		source, err := r.accessReview.GetCampaignSource(ctx, scope, e.AccessReviewCampaignSourceID)
+		if err != nil {
+			panic(fmt.Errorf("cannot get campaign source: %w", err))
+		}
+
+		sourcesByID[e.AccessReviewCampaignSourceID] = source
+	}
+
 	accessEntries := make([]*types.AccessReviewEntry, len(entries))
 	for i, e := range entries {
-		accessEntries[i] = types.NewAccessReviewEntry(e)
+		accessEntries[i] = types.NewAccessReviewEntry(e, sourcesByID[e.AccessReviewCampaignSourceID])
 	}
 
 	return nil, types.RecordAccessReviewEntryDecisionsOutput{
@@ -3955,8 +3990,13 @@ func (r *Resolver) FlagAccessReviewEntryTool(ctx context.Context, req *mcp.CallT
 		return nil, types.FlagAccessReviewEntryOutput{}, fmt.Errorf("cannot flag access entry: %w", err)
 	}
 
+	source, err := r.accessReview.GetCampaignSource(ctx, scope, entry.AccessReviewCampaignSourceID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get campaign source: %w", err))
+	}
+
 	return nil, types.FlagAccessReviewEntryOutput{
-		AccessEntry: types.NewAccessReviewEntry(entry),
+		AccessEntry: types.NewAccessReviewEntry(entry, source),
 	}, nil
 }
 

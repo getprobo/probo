@@ -27,7 +27,9 @@ List entries for a campaign. Primary data source for this command.
 | `size` | Page size; use `50` per batch |
 | `cursor` | Resume pagination; store in notes file as `last_cursor` |
 
-Returns `entries[]` and `next_cursor`.
+Returns `entries[]` and `next_cursor`. Each entry includes `source_name` and
+nullable `connector_id`; use these fields to identify the source tool. Never
+infer the tool from account IDs, roles, email patterns, or other entry data.
 
 ### `getAccessReviewStatistics`
 
@@ -72,6 +74,7 @@ Do not call unless the user explicitly asks for campaign setup:
 
 | Field | Review use |
 | --- | --- |
+| `source_name`, `connector_id` | Authoritative source tool; do not infer it from account data |
 | `email`, `full_name` | Identity |
 | `roles`, `job_title` | Access level |
 | `is_admin` | Heightened scrutiny |
