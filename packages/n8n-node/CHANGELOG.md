@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.213.0] - 2026-08-05
+
+### Added
+
+- Business Function `Create`, `Get`, `Get Many`, `Update`, `Delete`, and `Publish` operations, for tracking DORA Critical ICT Functions
+
 ## [0.212.0] - 2026-08-04
 
 ### Added
