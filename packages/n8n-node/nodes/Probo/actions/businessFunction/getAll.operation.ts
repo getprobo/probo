@@ -212,8 +212,8 @@ export async function execute(
 		}
 	`;
 
-	const variables: Record<string, unknown> = { organizationId };
-	const filter: Record<string, unknown> = {};
+	const variables: IDataObject = { organizationId };
+	const filter: IDataObject = {};
 
 	if (filters.classification) {
 		filter.classification = filters.classification;
