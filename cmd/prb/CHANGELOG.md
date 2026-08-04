@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.210.0] - 2026-08-05
+
+### Added
+
+- `prb businessfunction` commands: `create`, `update`, `delete`, `list`, `view`, and `publish`, for tracking DORA Critical ICT Functions
+
 ## [0.209.0] - 2026-08-03
 
 ### Added
