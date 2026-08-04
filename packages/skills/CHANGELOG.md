@@ -5,6 +5,12 @@ this file.
 
 ## Unreleased
 
+## [0.2.2] - 2026-08-04
+
+### Fixed
+
+- `access-review` skill: reference doc now points agents to the new `source_name` and `connector_id` entry fields instead of inferring the source tool from account data
+
 ## [0.2.1] - 2026-08-03
 
 ### Fixed
