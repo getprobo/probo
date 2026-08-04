@@ -84,6 +84,11 @@ export class Probo implements INodeType {
 						description: 'Manage access review campaigns',
 					},
 					{
+						name: 'Access Review Source',
+						value: 'accessReviewSource',
+						description: 'Manage access review sources',
+					},
+					{
 						name: 'Asset',
 						value: 'asset',
 						description: 'Manage assets',
