@@ -947,249 +947,296 @@ func TestMeasure_SubResolvers(t *testing.T) {
 func TestMeasure_RBAC(t *testing.T) {
 	t.Parallel()
 
-	t.Run("create", func(t *testing.T) {
-		t.Run("owner can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+	org := testutil.NewOrganizationRoles(t)
 
-			_, err := owner.Do(`
-				mutation CreateMeasure($input: CreateMeasureInput!) {
-					createMeasure(input: $input) {
-						measureEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": owner.GetOrganizationID().String(),
-					"name":           "RBAC Test Measure",
-					"category":       "POLICY",
+	const createMeasureMutation = `
+		mutation CreateMeasure($input: CreateMeasureInput!) {
+			createMeasure(input: $input) {
+				measureEdge { node { id } }
+			}
+		}
+	`
+
+	const updateMeasureMutation = `
+		mutation UpdateMeasure($input: UpdateMeasureInput!) {
+			updateMeasure(input: $input) {
+				measure { id }
+			}
+		}
+	`
+
+	const deleteMeasureMutation = `
+		mutation DeleteMeasure($input: DeleteMeasureInput!) {
+			deleteMeasure(input: $input) {
+				deletedMeasureId
+			}
+		}
+	`
+
+	const readMeasureQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Measure { id name }
+			}
+		}
+	`
+
+	t.Run(
+		"create",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can create",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to create measure",
 				},
-			})
-			require.NoError(t, err, "owner should be able to create measure")
-		})
-
-		t.Run("admin can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-
-			_, err := admin.Do(`
-				mutation CreateMeasure($input: CreateMeasureInput!) {
-					createMeasure(input: $input) {
-						measureEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": admin.GetOrganizationID().String(),
-					"name":           "RBAC Test Measure",
-					"category":       "POLICY",
+				{
+					name:     "admin can create",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to create measure",
 				},
-			})
-			require.NoError(t, err, "admin should be able to create measure")
-		})
-
-		t.Run("viewer cannot create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-			_, err := viewer.Do(`
-				mutation CreateMeasure($input: CreateMeasureInput!) {
-					createMeasure(input: $input) {
-						measureEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": viewer.GetOrganizationID().String(),
-					"name":           "RBAC Test Measure",
-					"category":       "POLICY",
+				{
+					name:         "viewer cannot create",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to create measure",
 				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to create measure")
-		})
-	})
-
-	t.Run("update", func(t *testing.T) {
-		t.Run("owner can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Update Test").Create()
-
-			_, err := owner.Do(`
-				mutation UpdateMeasure($input: UpdateMeasureInput!) {
-					updateMeasure(input: $input) {
-						measure { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   measureID,
-					"name": "Updated by Owner",
-				},
-			})
-			require.NoError(t, err, "owner should be able to update measure")
-		})
-
-		t.Run("admin can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Update Test").Create()
-
-			_, err := admin.Do(`
-				mutation UpdateMeasure($input: UpdateMeasureInput!) {
-					updateMeasure(input: $input) {
-						measure { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   measureID,
-					"name": "Updated by Admin",
-				},
-			})
-			require.NoError(t, err, "admin should be able to update measure")
-		})
-
-		t.Run("viewer cannot update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Update Test").Create()
-
-			_, err := viewer.Do(`
-				mutation UpdateMeasure($input: UpdateMeasureInput!) {
-					updateMeasure(input: $input) {
-						measure { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   measureID,
-					"name": "Updated by Viewer",
-				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to update measure")
-		})
-	})
-
-	t.Run("delete", func(t *testing.T) {
-		t.Run("owner can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Delete Test").Create()
-
-			_, err := owner.Do(`
-				mutation DeleteMeasure($input: DeleteMeasureInput!) {
-					deleteMeasure(input: $input) {
-						deletedMeasureId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"measureId": measureID},
-			})
-			require.NoError(t, err, "owner should be able to delete measure")
-		})
-
-		t.Run("admin can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Delete Test").Create()
-
-			_, err := admin.Do(`
-				mutation DeleteMeasure($input: DeleteMeasureInput!) {
-					deleteMeasure(input: $input) {
-						deletedMeasureId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"measureId": measureID},
-			})
-			require.NoError(t, err, "admin should be able to delete measure")
-		})
-
-		t.Run("viewer cannot delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Delete Test").Create()
-
-			_, err := viewer.Do(`
-				mutation DeleteMeasure($input: DeleteMeasureInput!) {
-					deleteMeasure(input: $input) {
-						deletedMeasureId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"measureId": measureID},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to delete measure")
-		})
-	})
-
-	t.Run("read", func(t *testing.T) {
-		t.Run("owner can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Read Test").Create()
-
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
 			}
 
-			err := owner.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Measure { id name }
-					}
-				}
-			`, map[string]any{"id": measureID}, &result)
-			require.NoError(t, err, "owner should be able to read measure")
-			require.NotNil(t, result.Node, "owner should receive measure data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("admin can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Read Test").Create()
+						client := org.Client(t, tt.role)
 
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
+						_, err := client.Do(
+							createMeasureMutation,
+							map[string]any{
+								"input": map[string]any{
+									"organizationId": client.GetOrganizationID().String(),
+									"name":           factory.SafeName("RBAC create " + string(tt.role)),
+									"category":       "POLICY",
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"update",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				updateName   string
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:       "owner can update",
+					role:       testutil.RoleOwner,
+					updateName: "Updated by Owner",
+					allowMsg:   "owner should be able to update measure",
+				},
+				{
+					name:       "admin can update",
+					role:       testutil.RoleAdmin,
+					updateName: "Updated by Admin",
+					allowMsg:   "admin should be able to update measure",
+				},
+				{
+					name:         "viewer cannot update",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					updateName:   "Updated by Viewer",
+					forbiddenMsg: "viewer should not be able to update measure",
+				},
 			}
 
-			err := admin.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Measure { id name }
-					}
-				}
-			`, map[string]any{"id": measureID}, &result)
-			require.NoError(t, err, "admin should be able to read measure")
-			require.NotNil(t, result.Node, "admin should receive measure data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("viewer can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			measureID := factory.NewMeasure(owner).WithName("RBAC Read Test").Create()
+						ownerClient := org.Client(t, testutil.RoleOwner)
 
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
+						measureID := factory.NewMeasure(ownerClient).
+							WithName(factory.SafeName("RBAC update " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							updateMeasureMutation,
+							map[string]any{
+								"input": map[string]any{
+									"id":   measureID,
+									"name": tt.updateName,
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"delete",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can delete",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to delete measure",
+				},
+				{
+					name:     "admin can delete",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to delete measure",
+				},
+				{
+					name:         "viewer cannot delete",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to delete measure",
+				},
 			}
 
-			err := viewer.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Measure { id name }
-					}
-				}
-			`, map[string]any{"id": measureID}, &result)
-			require.NoError(t, err, "viewer should be able to read measure")
-			require.NotNil(t, result.Node, "viewer should receive measure data")
-		})
-	})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						measureID := factory.NewMeasure(ownerClient).
+							WithName(factory.SafeName("RBAC delete " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							deleteMeasureMutation,
+							map[string]any{
+								"input": map[string]any{
+									"measureId": measureID,
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"read",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name        string
+				role        testutil.TestRole
+				allowMsg    string
+				nodePresent string
+			}{
+				{
+					name:        "owner can read",
+					role:        testutil.RoleOwner,
+					allowMsg:    "owner should be able to read measure",
+					nodePresent: "owner should receive measure data",
+				},
+				{
+					name:        "admin can read",
+					role:        testutil.RoleAdmin,
+					allowMsg:    "admin should be able to read measure",
+					nodePresent: "admin should receive measure data",
+				},
+				{
+					name:        "viewer can read",
+					role:        testutil.RoleViewer,
+					allowMsg:    "viewer should be able to read measure",
+					nodePresent: "viewer should receive measure data",
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						measureID := factory.NewMeasure(ownerClient).
+							WithName(factory.SafeName("RBAC read " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						var result struct {
+							Node *struct {
+								ID   string `json:"id"`
+								Name string `json:"name"`
+							} `json:"node"`
+						}
+
+						err := client.Execute(
+							readMeasureQuery,
+							map[string]any{
+								"id": measureID,
+							},
+							&result,
+						)
+						require.NoError(t, err, tt.allowMsg)
+						require.NotNil(t, result.Node, tt.nodePresent)
+					},
+				)
+			}
+		},
+	)
 }
 
 func TestMeasure_MaxLength_Validation(t *testing.T) {

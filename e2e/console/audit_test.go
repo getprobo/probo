@@ -912,261 +912,311 @@ func TestAudit_SubResolvers(t *testing.T) {
 func TestAudit_RBAC(t *testing.T) {
 	t.Parallel()
 
-	t.Run("create", func(t *testing.T) {
-		t.Run("owner can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
+	org := testutil.NewOrganizationRoles(t)
 
-			_, err := owner.Do(`
-				mutation CreateAudit($input: CreateAuditInput!) {
-					createAudit(input: $input) {
-						auditEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": owner.GetOrganizationID().String(),
-					"frameworkId":    frameworkID,
-					"name":           "RBAC Test Audit",
+	const createAuditMutation = `
+		mutation CreateAudit($input: CreateAuditInput!) {
+			createAudit(input: $input) {
+				auditEdge { node { id } }
+			}
+		}
+	`
+
+	const updateAuditMutation = `
+		mutation UpdateAudit($input: UpdateAuditInput!) {
+			updateAudit(input: $input) {
+				audit { id }
+			}
+		}
+	`
+
+	const deleteAuditMutation = `
+		mutation DeleteAudit($input: DeleteAuditInput!) {
+			deleteAudit(input: $input) {
+				deletedAuditId
+			}
+		}
+	`
+
+	const readAuditQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Audit { id name }
+			}
+		}
+	`
+
+	t.Run(
+		"create",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can create",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to create audit",
 				},
-			})
-			require.NoError(t, err, "owner should be able to create audit")
-		})
-
-		t.Run("admin can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-
-			_, err := admin.Do(`
-				mutation CreateAudit($input: CreateAuditInput!) {
-					createAudit(input: $input) {
-						auditEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": admin.GetOrganizationID().String(),
-					"frameworkId":    frameworkID,
-					"name":           "RBAC Test Audit",
+				{
+					name:     "admin can create",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to create audit",
 				},
-			})
-			require.NoError(t, err, "admin should be able to create audit")
-		})
-
-		t.Run("viewer cannot create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-
-			_, err := viewer.Do(`
-				mutation CreateAudit($input: CreateAuditInput!) {
-					createAudit(input: $input) {
-						auditEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": viewer.GetOrganizationID().String(),
-					"frameworkId":    frameworkID,
-					"name":           "RBAC Test Audit",
+				{
+					name:         "viewer cannot create",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to create audit",
 				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to create audit")
-		})
-	})
-
-	t.Run("update", func(t *testing.T) {
-		t.Run("owner can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Update Test").Create()
-
-			_, err := owner.Do(`
-				mutation UpdateAudit($input: UpdateAuditInput!) {
-					updateAudit(input: $input) {
-						audit { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   auditID,
-					"name": "Updated by Owner",
-				},
-			})
-			require.NoError(t, err, "owner should be able to update audit")
-		})
-
-		t.Run("admin can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Update Test").Create()
-
-			_, err := admin.Do(`
-				mutation UpdateAudit($input: UpdateAuditInput!) {
-					updateAudit(input: $input) {
-						audit { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   auditID,
-					"name": "Updated by Admin",
-				},
-			})
-			require.NoError(t, err, "admin should be able to update audit")
-		})
-
-		t.Run("viewer cannot update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Update Test").Create()
-
-			_, err := viewer.Do(`
-				mutation UpdateAudit($input: UpdateAuditInput!) {
-					updateAudit(input: $input) {
-						audit { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   auditID,
-					"name": "Updated by Viewer",
-				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to update audit")
-		})
-	})
-
-	t.Run("delete", func(t *testing.T) {
-		t.Run("owner can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Delete Test").Create()
-
-			_, err := owner.Do(`
-				mutation DeleteAudit($input: DeleteAuditInput!) {
-					deleteAudit(input: $input) {
-						deletedAuditId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"auditId": auditID},
-			})
-			require.NoError(t, err, "owner should be able to delete audit")
-		})
-
-		t.Run("admin can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Delete Test").Create()
-
-			_, err := admin.Do(`
-				mutation DeleteAudit($input: DeleteAuditInput!) {
-					deleteAudit(input: $input) {
-						deletedAuditId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"auditId": auditID},
-			})
-			require.NoError(t, err, "admin should be able to delete audit")
-		})
-
-		t.Run("viewer cannot delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Delete Test").Create()
-
-			_, err := viewer.Do(`
-				mutation DeleteAudit($input: DeleteAuditInput!) {
-					deleteAudit(input: $input) {
-						deletedAuditId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"auditId": auditID},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to delete audit")
-		})
-	})
-
-	t.Run("read", func(t *testing.T) {
-		t.Run("owner can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Read Test").Create()
-
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
 			}
 
-			err := owner.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Audit { id name }
-					}
-				}
-			`, map[string]any{"id": auditID}, &result)
-			require.NoError(t, err, "owner should be able to read audit")
-			require.NotNil(t, result.Node, "owner should receive audit data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("admin can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Read Test").Create()
+						ownerClient := org.Client(t, testutil.RoleOwner)
 
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
+						frameworkID := factory.NewFramework(ownerClient).
+							WithName(factory.SafeName("RBAC framework create " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							createAuditMutation,
+							map[string]any{
+								"input": map[string]any{
+									"organizationId": client.GetOrganizationID().String(),
+									"frameworkId":    frameworkID,
+									"name":           factory.SafeName("RBAC create " + string(tt.role)),
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"update",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				updateName   string
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:       "owner can update",
+					role:       testutil.RoleOwner,
+					updateName: "Updated by Owner",
+					allowMsg:   "owner should be able to update audit",
+				},
+				{
+					name:       "admin can update",
+					role:       testutil.RoleAdmin,
+					updateName: "Updated by Admin",
+					allowMsg:   "admin should be able to update audit",
+				},
+				{
+					name:         "viewer cannot update",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					updateName:   "Updated by Viewer",
+					forbiddenMsg: "viewer should not be able to update audit",
+				},
 			}
 
-			err := admin.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Audit { id name }
-					}
-				}
-			`, map[string]any{"id": auditID}, &result)
-			require.NoError(t, err, "admin should be able to read audit")
-			require.NotNil(t, result.Node, "admin should receive audit data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("viewer can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			frameworkID := factory.NewFramework(owner).WithName("RBAC Framework").Create()
-			auditID := factory.NewAudit(owner, frameworkID).WithName("RBAC Read Test").Create()
+						ownerClient := org.Client(t, testutil.RoleOwner)
 
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
+						frameworkID := factory.NewFramework(ownerClient).
+							WithName(factory.SafeName("RBAC framework update " + string(tt.role))).
+							Create()
+						auditID := factory.NewAudit(ownerClient, frameworkID).
+							WithName(factory.SafeName("RBAC update " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							updateAuditMutation,
+							map[string]any{
+								"input": map[string]any{
+									"id":   auditID,
+									"name": tt.updateName,
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"delete",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can delete",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to delete audit",
+				},
+				{
+					name:     "admin can delete",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to delete audit",
+				},
+				{
+					name:         "viewer cannot delete",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to delete audit",
+				},
 			}
 
-			err := viewer.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Audit { id name }
-					}
-				}
-			`, map[string]any{"id": auditID}, &result)
-			require.NoError(t, err, "viewer should be able to read audit")
-			require.NotNil(t, result.Node, "viewer should receive audit data")
-		})
-	})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						frameworkID := factory.NewFramework(ownerClient).
+							WithName(factory.SafeName("RBAC framework delete " + string(tt.role))).
+							Create()
+						auditID := factory.NewAudit(ownerClient, frameworkID).
+							WithName(factory.SafeName("RBAC delete " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							deleteAuditMutation,
+							map[string]any{
+								"input": map[string]any{
+									"auditId": auditID,
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"read",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name        string
+				role        testutil.TestRole
+				allowMsg    string
+				nodePresent string
+			}{
+				{
+					name:        "owner can read",
+					role:        testutil.RoleOwner,
+					allowMsg:    "owner should be able to read audit",
+					nodePresent: "owner should receive audit data",
+				},
+				{
+					name:        "admin can read",
+					role:        testutil.RoleAdmin,
+					allowMsg:    "admin should be able to read audit",
+					nodePresent: "admin should receive audit data",
+				},
+				{
+					name:        "viewer can read",
+					role:        testutil.RoleViewer,
+					allowMsg:    "viewer should be able to read audit",
+					nodePresent: "viewer should receive audit data",
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						frameworkID := factory.NewFramework(ownerClient).
+							WithName(factory.SafeName("RBAC framework read " + string(tt.role))).
+							Create()
+						auditID := factory.NewAudit(ownerClient, frameworkID).
+							WithName(factory.SafeName("RBAC read " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						var result struct {
+							Node *struct {
+								ID   string `json:"id"`
+								Name string `json:"name"`
+							} `json:"node"`
+						}
+
+						err := client.Execute(
+							readAuditQuery,
+							map[string]any{
+								"id": auditID,
+							},
+							&result,
+						)
+						require.NoError(t, err, tt.allowMsg)
+						require.NotNil(t, result.Node, tt.nodePresent)
+					},
+				)
+			}
+		},
+	)
 }
 
 func TestAudit_MaxLength_Validation(t *testing.T) {

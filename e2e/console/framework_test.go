@@ -977,7 +977,9 @@ func TestFramework_RBAC(t *testing.T) {
 					func(t *testing.T) {
 						t.Parallel()
 
-						frameworkID := factory.NewFramework(org.Owner).
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						frameworkID := factory.NewFramework(ownerClient).
 							WithName(factory.SafeName("RBAC update " + string(tt.role))).
 							Create()
 
@@ -1039,7 +1041,9 @@ func TestFramework_RBAC(t *testing.T) {
 					func(t *testing.T) {
 						t.Parallel()
 
-						frameworkID := factory.NewFramework(org.Owner).
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						frameworkID := factory.NewFramework(ownerClient).
 							WithName(factory.SafeName("RBAC delete " + string(tt.role))).
 							Create()
 
@@ -1101,7 +1105,9 @@ func TestFramework_RBAC(t *testing.T) {
 					func(t *testing.T) {
 						t.Parallel()
 
-						frameworkID := factory.NewFramework(org.Owner).
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						frameworkID := factory.NewFramework(ownerClient).
 							WithName(factory.SafeName("RBAC read " + string(tt.role))).
 							Create()
 

@@ -26,9 +26,9 @@ type (
 	// OrganizationRoles is one organization with a signed-up owner and invited
 	// admin and viewer members, each using a real authenticated client.
 	OrganizationRoles struct {
-		Owner  *Client
-		Admin  *Client
-		Viewer *Client
+		owner  *Client
+		admin  *Client
+		viewer *Client
 	}
 )
 
@@ -40,26 +40,41 @@ func NewOrganizationRoles(t testing.TB) OrganizationRoles {
 	owner := NewClient(t, RoleOwner)
 
 	return OrganizationRoles{
-		Owner:  owner,
-		Admin:  NewClientInOrg(t, RoleAdmin, owner),
-		Viewer: NewClientInOrg(t, RoleViewer, owner),
+		owner:  owner,
+		admin:  NewClientInOrg(t, RoleAdmin, owner),
+		viewer: NewClientInOrg(t, RoleViewer, owner),
 	}
 }
 
-// Client returns the authenticated client for a standard organization role.
+// Client returns a shallow copy of the authenticated client for a standard
+// organization role, bound to the supplied testing.TB for correct failure
+// attribution in parallel subtests.
 func (o OrganizationRoles) Client(t testing.TB, role TestRole) *Client {
 	t.Helper()
 
 	switch role {
 	case RoleOwner:
-		return o.Owner
+		return bindClientTB(t, o.owner)
 	case RoleAdmin:
-		return o.Admin
+		return bindClientTB(t, o.admin)
 	case RoleViewer:
-		return o.Viewer
+		return bindClientTB(t, o.viewer)
 	default:
 		t.Fatalf("unsupported organization role: %s", role)
 
 		return nil
 	}
+}
+
+func bindClientTB(t testing.TB, stored *Client) *Client {
+	if stored == nil {
+		t.Fatal("organization role client is not initialized")
+
+		return nil
+	}
+
+	bound := *stored
+	bound.T = t
+
+	return &bound
 }

@@ -697,261 +697,303 @@ func TestDocument_SubResolvers(t *testing.T) {
 func TestDocument_RBAC(t *testing.T) {
 	t.Parallel()
 
-	t.Run("create", func(t *testing.T) {
-		t.Run("owner can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
+	org := testutil.NewOrganizationRoles(t)
 
-			_, err := owner.Do(`
-				mutation CreateDocument($input: CreateDocumentInput!) {
-					createDocument(input: $input) {
-						documentEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": owner.GetOrganizationID().String(),
-					"title":          "RBAC Test Document",
-					"content":        testutil.ProseMirrorTextDoc("Test content"),
-					"documentType":   "POLICY",
-					"classification": "INTERNAL",
+	const createDocumentMutation = `
+		mutation CreateDocument($input: CreateDocumentInput!) {
+			createDocument(input: $input) {
+				documentEdge { node { id } }
+			}
+		}
+	`
+
+	const updateDocumentMutation = `
+		mutation UpdateDocument($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				document { id }
+			}
+		}
+	`
+
+	const deleteDocumentMutation = `
+		mutation DeleteDocument($input: DeleteDocumentInput!) {
+			deleteDocument(input: $input) {
+				deletedDocumentId
+			}
+		}
+	`
+
+	const readDocumentQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document { id }
+			}
+		}
+	`
+
+	documentCreateInput := func(
+		client *testutil.Client,
+		title string,
+	) map[string]any {
+		return map[string]any{
+			"organizationId": client.GetOrganizationID().String(),
+			"title":          title,
+			"content":        testutil.ProseMirrorTextDoc("Test content"),
+			"documentType":   "POLICY",
+			"classification": "INTERNAL",
+		}
+	}
+
+	t.Run(
+		"create",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can create",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to create document",
 				},
-			})
-			require.NoError(t, err, "owner should be able to create document")
-		})
-
-		t.Run("admin can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-
-			_, err := admin.Do(`
-				mutation CreateDocument($input: CreateDocumentInput!) {
-					createDocument(input: $input) {
-						documentEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": admin.GetOrganizationID().String(),
-					"title":          "RBAC Test Document",
-					"content":        testutil.ProseMirrorTextDoc("Test content"),
-					"documentType":   "POLICY",
-					"classification": "INTERNAL",
+				{
+					name:     "admin can create",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to create document",
 				},
-			})
-			require.NoError(t, err, "admin should be able to create document")
-		})
-
-		t.Run("viewer cannot create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-			_, err := viewer.Do(`
-				mutation CreateDocument($input: CreateDocumentInput!) {
-					createDocument(input: $input) {
-						documentEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId": viewer.GetOrganizationID().String(),
-					"title":          "RBAC Test Document",
-					"content":        testutil.ProseMirrorTextDoc("Test content"),
-					"documentType":   "POLICY",
-					"classification": "INTERNAL",
+				{
+					name:         "viewer cannot create",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to create document",
 				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to create document")
-		})
-	})
-
-	t.Run("update", func(t *testing.T) {
-		t.Run("owner can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Update Test").Create()
-
-			_, err := owner.Do(`
-				mutation UpdateDocument($input: UpdateDocumentInput!) {
-					updateDocument(input: $input) {
-						document { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":             documentID,
-					"classification": "CONFIDENTIAL",
-				},
-			})
-			require.NoError(t, err, "owner should be able to update document")
-		})
-
-		t.Run("admin can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Update Test").Create()
-
-			_, err := admin.Do(`
-				mutation UpdateDocument($input: UpdateDocumentInput!) {
-					updateDocument(input: $input) {
-						document { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":             documentID,
-					"classification": "CONFIDENTIAL",
-				},
-			})
-			require.NoError(t, err, "admin should be able to update document")
-		})
-
-		t.Run("viewer cannot update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Update Test").Create()
-
-			_, err := viewer.Do(`
-				mutation UpdateDocument($input: UpdateDocumentInput!) {
-					updateDocument(input: $input) {
-						document { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":             documentID,
-					"classification": "CONFIDENTIAL",
-				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to update document")
-		})
-	})
-
-	t.Run("delete", func(t *testing.T) {
-		t.Run("owner can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Delete Test").Create()
-
-			_, err := owner.Do(`
-				mutation DeleteDocument($input: DeleteDocumentInput!) {
-					deleteDocument(input: $input) {
-						deletedDocumentId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"documentId": documentID},
-			})
-			require.NoError(t, err, "owner should be able to delete document")
-		})
-
-		t.Run("admin can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Delete Test").Create()
-
-			_, err := admin.Do(`
-				mutation DeleteDocument($input: DeleteDocumentInput!) {
-					deleteDocument(input: $input) {
-						deletedDocumentId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"documentId": documentID},
-			})
-			require.NoError(t, err, "admin should be able to delete document")
-		})
-
-		t.Run("viewer cannot delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Delete Test").Create()
-
-			_, err := viewer.Do(`
-				mutation DeleteDocument($input: DeleteDocumentInput!) {
-					deleteDocument(input: $input) {
-						deletedDocumentId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"documentId": documentID},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to delete document")
-		})
-	})
-
-	t.Run("read", func(t *testing.T) {
-		t.Run("owner can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Read Test").Create()
-
-			var result struct {
-				Node *struct {
-					ID string `json:"id"`
-				} `json:"node"`
 			}
 
-			err := owner.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Document { id }
-					}
-				}
-			`, map[string]any{"id": documentID}, &result)
-			require.NoError(t, err, "owner should be able to read document")
-			require.NotNil(t, result.Node, "owner should receive document data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("admin can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+						client := org.Client(t, tt.role)
 
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Read Test").Create()
+						_, err := client.Do(
+							createDocumentMutation,
+							map[string]any{
+								"input": documentCreateInput(
+									client,
+									factory.SafeName("RBAC create "+string(tt.role)),
+								),
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
 
-			var result struct {
-				Node *struct {
-					ID string `json:"id"`
-				} `json:"node"`
+	t.Run(
+		"update",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can update",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to update document",
+				},
+				{
+					name:     "admin can update",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to update document",
+				},
+				{
+					name:         "viewer cannot update",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to update document",
+				},
 			}
 
-			err := admin.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Document { id }
-					}
-				}
-			`, map[string]any{"id": documentID}, &result)
-			require.NoError(t, err, "admin should be able to read document")
-			require.NotNil(t, result.Node, "admin should receive document data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("viewer can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+						ownerClient := org.Client(t, testutil.RoleOwner)
 
-			documentID := factory.NewDocument(owner).WithTitle("RBAC Read Test").Create()
+						documentID := factory.NewDocument(ownerClient).
+							WithTitle(factory.SafeName("RBAC update " + string(tt.role))).
+							Create()
 
-			var result struct {
-				Node *struct {
-					ID string `json:"id"`
-				} `json:"node"`
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							updateDocumentMutation,
+							map[string]any{
+								"input": map[string]any{
+									"id":             documentID,
+									"classification": "CONFIDENTIAL",
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"delete",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can delete",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to delete document",
+				},
+				{
+					name:     "admin can delete",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to delete document",
+				},
+				{
+					name:         "viewer cannot delete",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to delete document",
+				},
 			}
 
-			err := viewer.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Document { id }
-					}
-				}
-			`, map[string]any{"id": documentID}, &result)
-			require.NoError(t, err, "viewer should be able to read document")
-			require.NotNil(t, result.Node, "viewer should receive document data")
-		})
-	})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						documentID := factory.NewDocument(ownerClient).
+							WithTitle(factory.SafeName("RBAC delete " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							deleteDocumentMutation,
+							map[string]any{
+								"input": map[string]any{
+									"documentId": documentID,
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"read",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name        string
+				role        testutil.TestRole
+				allowMsg    string
+				nodePresent string
+			}{
+				{
+					name:        "owner can read",
+					role:        testutil.RoleOwner,
+					allowMsg:    "owner should be able to read document",
+					nodePresent: "owner should receive document data",
+				},
+				{
+					name:        "admin can read",
+					role:        testutil.RoleAdmin,
+					allowMsg:    "admin should be able to read document",
+					nodePresent: "admin should receive document data",
+				},
+				{
+					name:        "viewer can read",
+					role:        testutil.RoleViewer,
+					allowMsg:    "viewer should be able to read document",
+					nodePresent: "viewer should receive document data",
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+
+						documentID := factory.NewDocument(ownerClient).
+							WithTitle(factory.SafeName("RBAC read " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						var result struct {
+							Node *struct {
+								ID string `json:"id"`
+							} `json:"node"`
+						}
+
+						err := client.Execute(
+							readDocumentQuery,
+							map[string]any{
+								"id": documentID,
+							},
+							&result,
+						)
+						require.NoError(t, err, tt.allowMsg)
+						require.NotNil(t, result.Node, tt.nodePresent)
+					},
+				)
+			}
+		},
+	)
 }
 
 func TestDocument_MaxLength_Validation(t *testing.T) {

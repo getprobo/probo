@@ -793,264 +793,299 @@ func TestDatum_SubResolvers(t *testing.T) {
 func TestDatum_RBAC(t *testing.T) {
 	t.Parallel()
 
-	t.Run("create", func(t *testing.T) {
-		t.Run("owner can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			profileID := factory.CreateUser(owner)
+	org := testutil.NewOrganizationRoles(t)
 
-			_, err := owner.Do(`
-				mutation CreateDatum($input: CreateDatumInput!) {
-					createDatum(input: $input) {
-						datumEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId":     owner.GetOrganizationID().String(),
-					"ownerId":            profileID,
-					"name":               "RBAC Test Datum",
-					"dataClassification": "INTERNAL",
+	const createDatumMutation = `
+		mutation CreateDatum($input: CreateDatumInput!) {
+			createDatum(input: $input) {
+				datumEdge { node { id } }
+			}
+		}
+	`
+
+	const updateDatumMutation = `
+		mutation UpdateDatum($input: UpdateDatumInput!) {
+			updateDatum(input: $input) {
+				datum { id }
+			}
+		}
+	`
+
+	const deleteDatumMutation = `
+		mutation DeleteDatum($input: DeleteDatumInput!) {
+			deleteDatum(input: $input) {
+				deletedDatumId
+			}
+		}
+	`
+
+	const readDatumQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Datum { id name }
+			}
+		}
+	`
+
+	t.Run(
+		"create",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can create",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to create datum",
 				},
-			})
-			require.NoError(t, err, "owner should be able to create datum")
-		})
-
-		t.Run("admin can create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			profileID := factory.CreateUser(owner)
-
-			_, err := admin.Do(`
-				mutation CreateDatum($input: CreateDatumInput!) {
-					createDatum(input: $input) {
-						datumEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId":     admin.GetOrganizationID().String(),
-					"ownerId":            profileID,
-					"name":               "RBAC Test Datum",
-					"dataClassification": "INTERNAL",
+				{
+					name:     "admin can create",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to create datum",
 				},
-			})
-			require.NoError(t, err, "admin should be able to create datum")
-		})
-
-		t.Run("viewer cannot create", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			profileID := factory.CreateUser(owner)
-
-			_, err := viewer.Do(`
-				mutation CreateDatum($input: CreateDatumInput!) {
-					createDatum(input: $input) {
-						datumEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"organizationId":     viewer.GetOrganizationID().String(),
-					"ownerId":            profileID,
-					"name":               "RBAC Test Datum",
-					"dataClassification": "INTERNAL",
+				{
+					name:         "viewer cannot create",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to create datum",
 				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to create datum")
-		})
-	})
-
-	t.Run("update", func(t *testing.T) {
-		t.Run("owner can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Update Test").Create()
-
-			_, err := owner.Do(`
-				mutation UpdateDatum($input: UpdateDatumInput!) {
-					updateDatum(input: $input) {
-						datum { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   datumID,
-					"name": "Updated by Owner",
-				},
-			})
-			require.NoError(t, err, "owner should be able to update datum")
-		})
-
-		t.Run("admin can update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Update Test").Create()
-
-			_, err := admin.Do(`
-				mutation UpdateDatum($input: UpdateDatumInput!) {
-					updateDatum(input: $input) {
-						datum { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   datumID,
-					"name": "Updated by Admin",
-				},
-			})
-			require.NoError(t, err, "admin should be able to update datum")
-		})
-
-		t.Run("viewer cannot update", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Update Test").Create()
-
-			_, err := viewer.Do(`
-				mutation UpdateDatum($input: UpdateDatumInput!) {
-					updateDatum(input: $input) {
-						datum { id }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"id":   datumID,
-					"name": "Updated by Viewer",
-				},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to update datum")
-		})
-	})
-
-	t.Run("delete", func(t *testing.T) {
-		t.Run("owner can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Delete Test").Create()
-
-			_, err := owner.Do(`
-				mutation DeleteDatum($input: DeleteDatumInput!) {
-					deleteDatum(input: $input) {
-						deletedDatumId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"datumId": datumID},
-			})
-			require.NoError(t, err, "owner should be able to delete datum")
-		})
-
-		t.Run("admin can delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Delete Test").Create()
-
-			_, err := admin.Do(`
-				mutation DeleteDatum($input: DeleteDatumInput!) {
-					deleteDatum(input: $input) {
-						deletedDatumId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"datumId": datumID},
-			})
-			require.NoError(t, err, "admin should be able to delete datum")
-		})
-
-		t.Run("viewer cannot delete", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Delete Test").Create()
-
-			_, err := viewer.Do(`
-				mutation DeleteDatum($input: DeleteDatumInput!) {
-					deleteDatum(input: $input) {
-						deletedDatumId
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{"datumId": datumID},
-			})
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to delete datum")
-		})
-	})
-
-	t.Run("read", func(t *testing.T) {
-		t.Run("owner can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Read Test").Create()
-
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
 			}
 
-			err := owner.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Datum { id name }
-					}
-				}
-			`, map[string]any{"id": datumID}, &result)
-			require.NoError(t, err, "owner should be able to read datum")
-			require.NotNil(t, result.Node, "owner should receive datum data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("admin can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Read Test").Create()
+						client := org.Client(t, tt.role)
+						ownerClient := org.Client(t, testutil.RoleOwner)
+						profileID := factory.CreateUser(ownerClient)
 
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
+						_, err := client.Do(
+							createDatumMutation,
+							map[string]any{
+								"input": map[string]any{
+									"organizationId":     client.GetOrganizationID().String(),
+									"ownerId":            profileID,
+									"name":               factory.SafeName("RBAC create " + string(tt.role)),
+									"dataClassification": "INTERNAL",
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"update",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				updateName   string
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:       "owner can update",
+					role:       testutil.RoleOwner,
+					updateName: "Updated by Owner",
+					allowMsg:   "owner should be able to update datum",
+				},
+				{
+					name:       "admin can update",
+					role:       testutil.RoleAdmin,
+					updateName: "Updated by Admin",
+					allowMsg:   "admin should be able to update datum",
+				},
+				{
+					name:         "viewer cannot update",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					updateName:   "Updated by Viewer",
+					forbiddenMsg: "viewer should not be able to update datum",
+				},
 			}
 
-			err := admin.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Datum { id name }
-					}
-				}
-			`, map[string]any{"id": datumID}, &result)
-			require.NoError(t, err, "admin should be able to read datum")
-			require.NotNil(t, result.Node, "admin should receive datum data")
-		})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
 
-		t.Run("viewer can read", func(t *testing.T) {
-			owner := testutil.NewClient(t, testutil.RoleOwner)
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			profileID := factory.CreateUser(owner)
-			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Read Test").Create()
+						ownerClient := org.Client(t, testutil.RoleOwner)
+						profileID := factory.CreateUser(ownerClient)
+						datumID := factory.NewDatum(ownerClient, profileID).
+							WithName(factory.SafeName("RBAC update " + string(tt.role))).
+							Create()
 
-			var result struct {
-				Node *struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"node"`
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							updateDatumMutation,
+							map[string]any{
+								"input": map[string]any{
+									"id":   datumID,
+									"name": tt.updateName,
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"delete",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name         string
+				role         testutil.TestRole
+				forbidden    bool
+				allowMsg     string
+				forbiddenMsg string
+			}{
+				{
+					name:     "owner can delete",
+					role:     testutil.RoleOwner,
+					allowMsg: "owner should be able to delete datum",
+				},
+				{
+					name:     "admin can delete",
+					role:     testutil.RoleAdmin,
+					allowMsg: "admin should be able to delete datum",
+				},
+				{
+					name:         "viewer cannot delete",
+					role:         testutil.RoleViewer,
+					forbidden:    true,
+					forbiddenMsg: "viewer should not be able to delete datum",
+				},
 			}
 
-			err := viewer.Execute(`
-				query($id: ID!) {
-					node(id: $id) {
-						... on Datum { id name }
-					}
-				}
-			`, map[string]any{"id": datumID}, &result)
-			require.NoError(t, err, "viewer should be able to read datum")
-			require.NotNil(t, result.Node, "viewer should receive datum data")
-		})
-	})
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+						profileID := factory.CreateUser(ownerClient)
+						datumID := factory.NewDatum(ownerClient, profileID).
+							WithName(factory.SafeName("RBAC delete " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						_, err := client.Do(
+							deleteDatumMutation,
+							map[string]any{
+								"input": map[string]any{
+									"datumId": datumID,
+								},
+							},
+						)
+						if tt.forbidden {
+							testutil.RequireForbiddenError(t, err, tt.forbiddenMsg)
+						} else {
+							require.NoError(t, err, tt.allowMsg)
+						}
+					},
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"read",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name        string
+				role        testutil.TestRole
+				allowMsg    string
+				nodePresent string
+			}{
+				{
+					name:        "owner can read",
+					role:        testutil.RoleOwner,
+					allowMsg:    "owner should be able to read datum",
+					nodePresent: "owner should receive datum data",
+				},
+				{
+					name:        "admin can read",
+					role:        testutil.RoleAdmin,
+					allowMsg:    "admin should be able to read datum",
+					nodePresent: "admin should receive datum data",
+				},
+				{
+					name:        "viewer can read",
+					role:        testutil.RoleViewer,
+					allowMsg:    "viewer should be able to read datum",
+					nodePresent: "viewer should receive datum data",
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ownerClient := org.Client(t, testutil.RoleOwner)
+						profileID := factory.CreateUser(ownerClient)
+						datumID := factory.NewDatum(ownerClient, profileID).
+							WithName(factory.SafeName("RBAC read " + string(tt.role))).
+							Create()
+
+						client := org.Client(t, tt.role)
+
+						var result struct {
+							Node *struct {
+								ID   string `json:"id"`
+								Name string `json:"name"`
+							} `json:"node"`
+						}
+
+						err := client.Execute(
+							readDatumQuery,
+							map[string]any{
+								"id": datumID,
+							},
+							&result,
+						)
+						require.NoError(t, err, tt.allowMsg)
+						require.NotNil(t, result.Node, tt.nodePresent)
+					},
+				)
+			}
+		},
+	)
 }
 
 func TestDatum_MaxLength_Validation(t *testing.T) {
