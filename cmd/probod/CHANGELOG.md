@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.246.0] - 2026-08-04
+
+### Added
+
+- Cookie banners can now present a dedicated CCPA "Your Privacy Choices" panel (right to opt out of sale/sharing, right to limit sensitive personal information) and a first-class notice-only presentation for jurisdictions with no cookie-consent law, driven by an additive `layout` field in the banner config
+- Consent records can now capture a distinct `ACKNOWLEDGE` action for notice-only banners instead of always recording an accept-all; exposed through GraphQL, MCP, the console consent-records view, and n8n
+- MCP access review entries now include the campaign source name and connector ID, so agents no longer have to infer the source tool from account metadata
+
+### Changed
+
+- Generated tracker policy documents no longer show a "Last updated" timestamp in the body, since it churned on every automatic regeneration
+
+### Fixed
+
+- Dutch (nl-NL) cookie banner translations were missing the Privacy Choices panel copy and the notice dismiss label added after the nl-NL backfill; both are now included
+
 ## [0.245.0] - 2026-08-04
 
 ### Added
