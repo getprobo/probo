@@ -3110,7 +3110,8 @@
     },
     "mfaStatus": {
       "enabled": "Activé",
-      "disabled": "Désactivé"
+      "disabled": "Désactivé",
+      "unknown": "Inconnu"
     },
     "decisions": {
       "pending": "En attente",
@@ -3150,17 +3151,27 @@
       "starting": "Démarrage...",
       "startCampaign": "Démarrer la campagne",
       "clear": "Effacer",
+      "clearSelection": "Effacer",
+      "selectAll": "Tout sélectionner",
       "approve": "Approuver",
       "revoke": "Révoquer",
       "modify": "Modifier",
       "escalate": "Escalader",
-      "confirm": "Confirmer"
+      "confirm": "Confirmer",
+      "submit": "Soumettre"
     },
     "emptySources": "Aucune source configurée pour cette campagne.",
+    "emptyFiltered": "Aucune entrée ne correspond aux filtres actuels.",
     "accounts_one": "{{count}} compte",
     "accounts_other": "{{count}} comptes",
     "fetchFailed": "Échec de la récupération",
     "emptyEntries": "Aucune entrée trouvée pour cette source.",
+    "filters": {
+      "searchEmail": "Rechercher un e-mail...",
+      "allConnectors": "Tous les connecteurs",
+      "allMfa": "Tous les MFA",
+      "allAdmin": "Tous les administrateurs"
+    },
     "columns": {
       "name": "Nom",
       "email": "E-mail",
@@ -3174,7 +3185,8 @@
     },
     "values": {
       "yes": "Oui",
-      "no": "Non"
+      "no": "Non",
+      "unknown": "Inconnu"
     },
     "selected_one": "{{count}} sélectionné",
     "selected_other": "{{count}} sélectionnés",

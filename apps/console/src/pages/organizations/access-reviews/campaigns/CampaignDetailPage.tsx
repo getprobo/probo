@@ -20,35 +20,20 @@
 
 import { formatError } from "@probo/helpers";
 import { useList } from "@probo/hooks";
-import { dateFormat } from "@probo/i18n";
 import {
-  Badge,
   Breadcrumb,
   Button,
   Card,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogFooter,
   Field,
-  IconChevronDown,
-  IconChevronRight,
   IconPlusLarge,
-  IconRobot,
   IconTrashCan,
-  IconWarning,
-  Option,
-  Select,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
   useConfirm,
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import * as Popover from "@radix-ui/react-popover";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironment } from "react-relay";
@@ -63,18 +48,13 @@ import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetai
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { AccessEntryRolesCell } from "../_components/AccessEntryRolesCell";
-import {
-  decisionBadgeVariant,
-  fetchStatusBadgeVariant,
-  flagBadgeVariant,
-  flagGroups,
-  NotAvailable,
-  statusBadgeVariant,
-} from "../_components/accessReviewHelpers";
-import { EntryDecisionActions } from "../_components/EntryDecisionActions";
-import { EntryFlagSelect } from "../_components/EntryFlagSelect";
 import { AddCampaignSourceDialog } from "../dialogs/AddCampaignSourceDialog";
+
+import { AccessEntriesSelectionBar } from "./_components/AccessEntriesSelectionBar";
+import { AccessEntriesToolbar } from "./_components/AccessEntriesToolbar";
+import { AccessEntryListItem } from "./_components/AccessEntryListItem";
+import { AccessEntrySection } from "./_components/AccessEntrySection";
+import { accessEntriesLayout, accessEntryList } from "./_components/variants";
 
 const startCampaignMutation = graphql`
   mutation CampaignDetailPageStartMutation(
@@ -159,13 +139,15 @@ export const campaignDetailPageQuery = graphql`
           id
           source {
             id
+            connector {
+              provider
+            }
           }
           name
           fetchAttempts(first: 1) {
             edges {
               node {
                 status
-                fetchedAccountsCount
                 error
               }
             }
@@ -176,14 +158,9 @@ export const campaignDetailPageQuery = graphql`
                 id
                 email
                 fullName
-                ...AccessEntryRolesCell_accessEntry
                 isAdmin
-                active
                 mfaStatus
-                accountType
-                lastLogin
-                decision
-                flags
+                ...AccessEntryListItem_entry
               }
             }
             pageInfo {
@@ -200,25 +177,101 @@ type Props = {
   queryRef: PreloadedQuery<CampaignDetailPageQuery>;
 };
 
+type CampaignSource = NonNullable<
+  Extract<
+    CampaignDetailPageQuery["response"]["node"],
+    { readonly __typename: "AccessReviewCampaign" }
+  >["sources"]
+>[number];
+
+type CampaignEntryEdge = CampaignSource["entries"]["edges"][number];
+
+type EntryFilters = {
+  email: string;
+  connectorIds: ReadonlyArray<string>;
+  mfa: ReadonlyArray<string>;
+  admin: ReadonlyArray<string>;
+};
+
+function entryMatchesFilters(
+  edge: CampaignEntryEdge,
+  sourceId: string,
+  filters: EntryFilters,
+): boolean {
+  if (filters.connectorIds.length > 0 && !filters.connectorIds.includes(sourceId)) {
+    return false;
+  }
+
+  const query = filters.email.trim().toLowerCase();
+  if (query) {
+    const email = edge.node.email.toLowerCase();
+    const fullName = edge.node.fullName.toLowerCase();
+    if (!email.includes(query) && !fullName.includes(query)) {
+      return false;
+    }
+  }
+
+  if (filters.mfa.length > 0 && !filters.mfa.includes(edge.node.mfaStatus)) {
+    return false;
+  }
+
+  if (filters.admin.length > 0) {
+    const adminValue = edge.node.isAdmin ? "YES" : "NO";
+    if (!filters.admin.includes(adminValue)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export default function CampaignDetailPage({ queryRef }: Props) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const environment = useRelayEnvironment();
   const data = usePreloadedQuery<CampaignDetailPageQuery>(campaignDetailPageQuery, queryRef);
+  const { toast } = useToast();
+  const confirm = useConfirm();
 
   if (data.node.__typename !== "AccessReviewCampaign") {
     throw new Error("Campaign not found");
   }
 
   const campaign = data.node;
-  const { toast } = useToast();
   const isInProgress = campaign.status === "IN_PROGRESS";
   const isDraft = campaign.status === "DRAFT";
   const isPendingActions = campaign.status === "PENDING_ACTIONS";
   const canDelete = campaign.canDelete && !isInProgress;
 
   const campaignIdRef = useRef(campaign.id);
+  const selectionAnchorRef = useRef<string | null>(null);
+  const { list: selection, toggle, clear: clearSelectionList, reset } = useList<string>([]);
+  const clear = () => {
+    selectionAnchorRef.current = null;
+    clearSelectionList();
+  };
+  const [emailFilter, setEmailFilter] = useState("");
+  const [connectorFilter, setConnectorFilter] = useState<string[]>([]);
+  const [mfaFilter, setMfaFilter] = useState<string[]>([]);
+  const [adminFilter, setAdminFilter] = useState<string[]>([]);
+
+  const [bulkDecision, setBulkDecision] = useState<AccessReviewEntryDecision | null>(null);
+  const [bulkPendingDecision, setBulkPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
+  const [bulkNote, setBulkNote] = useState("");
+  const bulkNoteRef = useDialogRef();
+  const [bulkFlagSelection, setBulkFlagSelection] = useState<AccessReviewEntryFlag[]>([]);
+
+  const [startCampaign, isStarting]
+    = useMutation<CampaignDetailPageStartMutation>(startCampaignMutation);
+  const [closeCampaign, isClosing]
+    = useMutation<CampaignDetailPageCloseMutation>(closeCampaignMutation);
+  const [deleteCampaign, isDeleting]
+    = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
+  const [bulkDecide]
+    = useMutation<CampaignDetailPageBulkDecisionMutation>(bulkDecisionMutation);
+  const [bulkFlag]
+    = useMutation<CampaignDetailPageBulkFlagMutation>(bulkFlagMutation);
 
   useEffect(() => {
     campaignIdRef.current = campaign.id;
@@ -237,31 +290,56 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     }, 3000);
     return () => clearInterval(interval);
   }, [isInProgress, environment]);
+
   const existingCampaignSourceIds = useMemo(
     () => campaign.sources.flatMap(s => s.source?.id ? [s.source.id] : []),
     [campaign.sources],
   );
 
-  const confirm = useConfirm();
+  const filters = useMemo<EntryFilters>(() => ({
+    email: emailFilter,
+    connectorIds: connectorFilter,
+    mfa: mfaFilter,
+    admin: adminFilter,
+  }), [emailFilter, connectorFilter, mfaFilter, adminFilter]);
 
-  const [startCampaign, isStarting]
-    = useMutation<CampaignDetailPageStartMutation>(startCampaignMutation);
+  const hasActiveFilters = emailFilter.trim() !== ""
+    || connectorFilter.length > 0
+    || mfaFilter.length > 0
+    || adminFilter.length > 0;
 
-  const [closeCampaign, isClosing]
-    = useMutation<CampaignDetailPageCloseMutation>(closeCampaignMutation);
+  const filteredSources = useMemo(() => {
+    return campaign.sources
+      .map(source => ({
+        source,
+        entries: (source.entries?.edges ?? []).filter(edge =>
+          entryMatchesFilters(edge, source.id, filters),
+        ),
+      }))
+      .filter(({ source, entries }) => {
+        if (filters.connectorIds.length > 0 && !filters.connectorIds.includes(source.id)) {
+          return false;
+        }
+        if (hasActiveFilters && entries.length === 0) {
+          return false;
+        }
+        return true;
+      });
+  }, [campaign.sources, filters, hasActiveFilters]);
 
-  const [deleteCampaign, isDeleting]
-    = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
+  const connectorOptions = useMemo(
+    () => campaign.sources.map(source => ({
+      value: source.id,
+      label: source.name,
+    })),
+    [campaign.sources],
+  );
 
   const canComplete = campaign.pendingEntries.totalCount === 0;
 
   const handleStart = () => {
     startCampaign({
-      variables: {
-        input: {
-          accessReviewCampaignId: campaign.id,
-        },
-      },
+      variables: { input: { accessReviewCampaignId: campaign.id } },
       onCompleted(_, errors) {
         if (errors?.length) {
           toast({
@@ -343,9 +421,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       () =>
         new Promise<void>((resolve) => {
           closeCampaign({
-            variables: {
-              input: { accessReviewCampaignId: campaign.id },
-            },
+            variables: { input: { accessReviewCampaignId: campaign.id } },
             onCompleted(_, errors) {
               if (errors?.length) {
                 toast({
@@ -381,8 +457,160 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     );
   };
 
+  const applyBulkFlags = (onDone?: () => void) => {
+    if (bulkFlagSelection.length === 0) {
+      onDone?.();
+      return;
+    }
+
+    let errorCount = 0;
+    let completedCount = 0;
+    const total = selection.length;
+    const flags = bulkFlagSelection;
+
+    for (const entryId of selection) {
+      bulkFlag({
+        variables: {
+          input: {
+            accessReviewEntryId: entryId,
+            flags,
+          },
+        },
+        onCompleted(_, errors) {
+          if (errors?.length) {
+            errorCount++;
+          }
+          completedCount++;
+          if (completedCount === total) {
+            if (errorCount > 0) {
+              toast({
+                title: t("campaignDetailPage.messages.error"),
+                description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
+                variant: "error",
+              });
+            } else {
+              toast({
+                title: t("campaignDetailPage.messages.success"),
+                description: t("campaignDetailPage.messages.flagsUpdated"),
+                variant: "success",
+              });
+            }
+            setBulkFlagSelection([]);
+            onDone?.();
+          }
+        },
+        onError() {
+          errorCount++;
+          completedCount++;
+          if (completedCount === total) {
+            toast({
+              title: t("campaignDetailPage.messages.error"),
+              description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
+              variant: "error",
+            });
+            setBulkFlagSelection([]);
+            onDone?.();
+          }
+        },
+      });
+    }
+  };
+
+  const applyBulkDecision = (
+    decision: AccessReviewEntryDecision,
+    decisionNote?: string,
+    onDone?: () => void,
+  ) => {
+    bulkDecide({
+      variables: {
+        input: {
+          decisions: selection.map(id => ({
+            accessReviewEntryId: id,
+            decision,
+            decisionNote: decisionNote || null,
+          })),
+        },
+      },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({
+            title: t("campaignDetailPage.messages.error"),
+            description: formatError(t("campaignDetailPage.errors.recordDecisions"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: t("campaignDetailPage.messages.success"),
+          description: t("campaignDetailPage.messages.decisionsRecorded"),
+          variant: "success",
+        });
+        setBulkDecision(null);
+        setBulkPendingDecision(null);
+        setBulkNote("");
+        onDone?.();
+      },
+      onError(error) {
+        toast({
+          title: t("campaignDetailPage.messages.error"),
+          description: formatError(t("campaignDetailPage.errors.recordDecisions"), error),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleSubmit = () => {
+    if (bulkDecision !== null && bulkDecision !== "APPROVED") {
+      setBulkPendingDecision(bulkDecision);
+      setBulkNote("");
+      bulkNoteRef.current?.open();
+      return;
+    }
+
+    const finish = () => clear();
+
+    if (bulkDecision === "APPROVED") {
+      applyBulkDecision("APPROVED", undefined, () => {
+        applyBulkFlags(finish);
+      });
+      return;
+    }
+
+    applyBulkFlags(finish);
+  };
+
+  const allFilteredEntryIds = useMemo(
+    () => filteredSources.flatMap(({ entries }) => entries.map(edge => edge.node.id)),
+    [filteredSources],
+  );
+
+  const handleSelectedChange = (entryId: string, { shiftKey }: { shiftKey: boolean }) => {
+    if (shiftKey && selectionAnchorRef.current) {
+      const start = allFilteredEntryIds.indexOf(selectionAnchorRef.current);
+      const end = allFilteredEntryIds.indexOf(entryId);
+      if (start !== -1 && end !== -1) {
+        const from = Math.min(start, end);
+        const to = Math.max(start, end);
+        const rangeIds = allFilteredEntryIds.slice(from, to + 1);
+        const next = new Set(selection);
+        for (const id of rangeIds) {
+          next.add(id);
+        }
+        reset([...next]);
+        return;
+      }
+    }
+
+    toggle(entryId);
+    selectionAnchorRef.current = entryId;
+  };
+
+  const { page, results } = accessEntriesLayout();
+  const { root: listRoot } = accessEntryList();
+
   return (
-    <div className="space-y-6">
+    <div className={page()}>
       <Breadcrumb
         items={[
           {
@@ -394,519 +622,178 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       />
 
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-semibold">{campaign.name}</h1>
-        <Badge variant={statusBadgeVariant(campaign.status)}>
-          {t(`campaignDetailPage.status.${campaign.status.toLowerCase()}`)}
-        </Badge>
-        {isPendingActions && (
-          <Button
-            onClick={handleComplete}
-            disabled={!canComplete || isClosing}
-          >
-            {isClosing
-              ? t("campaignDetailPage.actions.completing")
-              : t("campaignDetailPage.actions.completeCampaign")}
-          </Button>
-        )}
-        {canDelete && (
-          <Button
-            icon={IconTrashCan}
-            variant="danger"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="ml-auto"
-          >
-            {isDeleting
-              ? t("campaignDetailPage.actions.deleting")
-              : t("campaignDetailPage.actions.delete")}
-          </Button>
-        )}
+        <h1 className="text-2xl font-semibold">
+          {campaign.name}
+          <span className="font-normal text-txt-tertiary">
+            {` (${t(`campaignDetailPage.status.${campaign.status.toLowerCase()}`)})`}
+          </span>
+        </h1>
+        <div className="ml-auto flex items-center gap-2">
+          {isPendingActions && (
+            <Button onClick={handleComplete} disabled={!canComplete || isClosing}>
+              {isClosing
+                ? t("campaignDetailPage.actions.completing")
+                : t("campaignDetailPage.actions.completeCampaign")}
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              icon={IconTrashCan}
+              variant="danger"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting
+                ? t("campaignDetailPage.actions.deleting")
+                : t("campaignDetailPage.actions.delete")}
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {isDraft && (
-          <div className="flex items-center justify-end gap-2">
-            <AddCampaignSourceDialog
-              organizationId={organizationId}
-              campaignId={campaign.id}
-              existingCampaignSourceIds={existingCampaignSourceIds}
-            >
-              <Button icon={IconPlusLarge} variant="secondary">
-                {t("campaignDetailPage.actions.addSource")}
-              </Button>
-            </AddCampaignSourceDialog>
-            {campaign.sources.length > 0 && (
-              <Button
-                onClick={handleStart}
-                disabled={isStarting}
-              >
-                {isStarting
-                  ? t("campaignDetailPage.actions.starting")
-                  : t("campaignDetailPage.actions.startCampaign")}
-              </Button>
-            )}
-          </div>
-        )}
+      {isDraft && (
+        <div className="flex items-center justify-end gap-2">
+          <AddCampaignSourceDialog
+            organizationId={organizationId}
+            campaignId={campaign.id}
+            existingCampaignSourceIds={existingCampaignSourceIds}
+          >
+            <Button icon={IconPlusLarge} variant="secondary">
+              {t("campaignDetailPage.actions.addSource")}
+            </Button>
+          </AddCampaignSourceDialog>
+          {campaign.sources.length > 0 && (
+            <Button onClick={handleStart} disabled={isStarting}>
+              {isStarting
+                ? t("campaignDetailPage.actions.starting")
+                : t("campaignDetailPage.actions.startCampaign")}
+            </Button>
+          )}
+        </div>
+      )}
 
-        {campaign.sources.map(source => (
-          <CampaignSourceCard
-            key={source.id}
-            source={source}
-            isPendingActions={isPendingActions}
-          />
-        ))}
+      {campaign.sources.length > 0 && (
+        <AccessEntriesToolbar
+          emailFilter={emailFilter}
+          onEmailFilterChange={setEmailFilter}
+          connectorOptions={connectorOptions}
+          connectorFilter={connectorFilter}
+          onConnectorFilterChange={setConnectorFilter}
+          mfaFilter={mfaFilter}
+          onMfaFilterChange={setMfaFilter}
+          adminFilter={adminFilter}
+          onAdminFilterChange={setAdminFilter}
+        />
+      )}
+
+      <div className={results()}>
+        {filteredSources.map(({ source, entries }) => {
+          const latestAttempt = source.fetchAttempts.edges[0]?.node;
+          const fetchError = latestAttempt?.status === "FAILED"
+            ? latestAttempt.error
+            : null;
+
+          return (
+            <AccessEntrySection
+              key={source.id}
+              title={source.name}
+              count={entries.length}
+              provider={source.source?.connector?.provider}
+              error={fetchError}
+            >
+              {entries.length === 0
+                ? (
+                    <div className="rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-center text-sm text-txt-tertiary">
+                      {t("campaignDetailPage.emptyEntries")}
+                    </div>
+                  )
+                : (
+                    <ul className={listRoot()}>
+                      {entries.map(edge => (
+                        <AccessEntryListItem
+                          key={edge.node.id}
+                          entryKey={edge.node}
+                          isPendingActions={isPendingActions}
+                          selected={selection.includes(edge.node.id)}
+                          onSelectedChange={event => handleSelectedChange(edge.node.id, event)}
+                        />
+                      ))}
+                    </ul>
+                  )}
+            </AccessEntrySection>
+          );
+        })}
 
         {campaign.sources.length === 0 && (
           <Card padded>
-            <div className="text-center py-8">
+            <div className="py-8 text-center">
               <p className="text-txt-tertiary">
                 {t("campaignDetailPage.emptySources")}
               </p>
             </div>
           </Card>
         )}
+
+        {campaign.sources.length > 0 && filteredSources.length === 0 && (
+          <Card padded>
+            <div className="py-8 text-center">
+              <p className="text-txt-tertiary">
+                {t("campaignDetailPage.emptyFiltered")}
+              </p>
+            </div>
+          </Card>
+        )}
       </div>
-    </div>
-  );
-}
 
-type CampaignSource = NonNullable<
-  Extract<
-    CampaignDetailPageQuery["response"]["node"],
-    { readonly __typename: "AccessReviewCampaign" }
-  >["sources"]
->[number];
+      {isPendingActions && (
+        <AccessEntriesSelectionBar
+          selectedCount={selection.length}
+          allEntryIds={allFilteredEntryIds}
+          onClear={() => {
+            setBulkDecision(null);
+            setBulkFlagSelection([]);
+            clear();
+          }}
+          onSelectAll={() => reset(allFilteredEntryIds)}
+          bulkDecision={bulkDecision}
+          onBulkDecisionChange={setBulkDecision}
+          bulkFlagSelection={bulkFlagSelection}
+          onBulkFlagSelectionChange={setBulkFlagSelection}
+          onSubmit={handleSubmit}
+        />
+      )}
 
-function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSource; isPendingActions: boolean }) {
-  const { i18n, t } = useTranslation();
-  const { toast } = useToast();
-  const [expanded, setExpanded] = useState(false);
-  const { list: selection, toggle, clear, reset } = useList<string>([]);
-  const [bulkPendingDecision, setBulkPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
-  const [bulkNote, setBulkNote] = useState("");
-  const bulkNoteRef = useDialogRef();
-
-  const [bulkDecide]
-    = useMutation<CampaignDetailPageBulkDecisionMutation>(bulkDecisionMutation);
-  const [bulkFlag]
-    = useMutation<CampaignDetailPageBulkFlagMutation>(bulkFlagMutation);
-
-  const entries = source.entries?.edges ?? [];
-  const entryIds = entries.map(edge => edge.node.id);
-  const latestAttempt = source.fetchAttempts.edges[0]?.node;
-  const fetchStatus = latestAttempt?.status ?? "QUEUED";
-  const fetchedAccountsCount = latestAttempt?.fetchedAccountsCount ?? 0;
-  const lastError = latestAttempt?.error;
-
-  const handleBulkDecision = (value: string) => {
-    const decision = value as AccessReviewEntryDecision;
-    if (decision === "APPROVED") {
-      bulkDecide({
-        variables: {
-          input: {
-            decisions: selection.map(id => ({
-              accessReviewEntryId: id,
-              decision: "APPROVED",
-            })),
-          },
-        },
-        onCompleted(_, errors) {
-          if (errors?.length) {
-            toast({
-              title: t("campaignDetailPage.messages.error"),
-              description: formatError(
-                t("campaignDetailPage.errors.recordDecisions"),
-                errors,
-              ),
-              variant: "error",
-            });
-            return;
-          }
-          toast({
-            title: t("campaignDetailPage.messages.success"),
-            description: t("campaignDetailPage.messages.decisionsRecorded"),
-            variant: "success",
-          });
-          clear();
-        },
-        onError(error) {
-          toast({
-            title: t("campaignDetailPage.messages.error"),
-            description: formatError(
-              t("campaignDetailPage.errors.recordDecisions"),
-              error,
-            ),
-            variant: "error",
-          });
-        },
-      });
-    } else {
-      setBulkPendingDecision(decision);
-      setBulkNote("");
-      bulkNoteRef.current?.open();
-    }
-  };
-
-  const [bulkFlagSelection, setBulkFlagSelection] = useState<AccessReviewEntryFlag[]>([]);
-  const [bulkFlagOpen, setBulkFlagOpen] = useState(false);
-  const bulkFlagOpenedWithRef = useRef<AccessReviewEntryFlag[]>([]);
-
-  const toggleBulkFlag = (flagValue: AccessReviewEntryFlag) => {
-    setBulkFlagSelection(prev =>
-      prev.includes(flagValue)
-        ? prev.filter(f => f !== flagValue)
-        : [...prev, flagValue],
-    );
-  };
-
-  const handleBulkFlagOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      bulkFlagOpenedWithRef.current = [];
-      setBulkFlagSelection([]);
-    }
-
-    if (!nextOpen && bulkFlagSelection.length > 0) {
-      let errorCount = 0;
-      let completedCount = 0;
-      const total = selection.length;
-
-      for (const entryId of selection) {
-        bulkFlag({
-          variables: {
-            input: {
-              accessReviewEntryId: entryId,
-              flags: bulkFlagSelection,
-            },
-          },
-          onCompleted(_, errors) {
-            if (errors?.length) {
-              errorCount++;
-            }
-            completedCount++;
-            if (completedCount === total) {
-              if (errorCount > 0) {
-                toast({
-                  title: t("campaignDetailPage.messages.error"),
-                  description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
-                  variant: "error",
-                });
-              } else {
-                toast({
-                  title: t("campaignDetailPage.messages.success"),
-                  description: t("campaignDetailPage.messages.flagsUpdated"),
-                  variant: "success",
-                });
+      <Dialog ref={bulkNoteRef} title={t("campaignDetailPage.note.title")}>
+        <DialogContent padded className="space-y-4">
+          <p className="text-sm text-txt-secondary">
+            {t("campaignDetailPage.note.description")}
+          </p>
+          <Field
+            label={t("campaignDetailPage.note.label")}
+            type="textarea"
+            value={bulkNote}
+            onValueChange={setBulkNote}
+          />
+        </DialogContent>
+        <DialogFooter>
+          <Button
+            disabled={!bulkNote.trim()}
+            onClick={() => {
+              if (!bulkPendingDecision) {
+                return;
               }
-              clear();
-            }
-          },
-          onError() {
-            errorCount++;
-            completedCount++;
-            if (completedCount === total) {
-              toast({
-                title: t("campaignDetailPage.messages.error"),
-                description: t("campaignDetailPage.errors.updateFlags", { count: errorCount }),
-                variant: "error",
+              applyBulkDecision(bulkPendingDecision, bulkNote, () => {
+                applyBulkFlags(() => {
+                  bulkNoteRef.current?.close();
+                  clear();
+                });
               });
-              clear();
-            }
-          },
-        });
-      }
-    }
-
-    setBulkFlagOpen(nextOpen);
-  };
-
-  return (
-    <Card>
-      <button
-        type="button"
-        className="flex w-full items-center justify-between p-4 text-left hover:bg-bg-subtle transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex items-center gap-3">
-          {expanded
-            ? <IconChevronDown className="size-4 text-txt-tertiary" />
-            : <IconChevronRight className="size-4 text-txt-tertiary" />}
-          <span className="font-medium">{source.name}</span>
-          <Badge variant="neutral">
-            {t("campaignDetailPage.accounts", { count: fetchedAccountsCount })}
-          </Badge>
-          <Badge variant={fetchStatusBadgeVariant(fetchStatus)}>
-            {t(`campaignDetailPage.fetchStatus.${fetchStatus.toLowerCase()}`)}
-          </Badge>
-        </div>
-      </button>
-
-      {fetchStatus === "FAILED" && lastError && (
-        <div className="flex items-start gap-2 border-t bg-danger px-4 py-3 text-sm text-txt-danger">
-          <IconWarning className="mt-0.5 size-4 shrink-0" />
-          <div>
-            <p className="font-medium">{t("campaignDetailPage.fetchFailed")}</p>
-            <p>{lastError}</p>
-          </div>
-        </div>
-      )}
-
-      {expanded && (
-        <div className="border-t">
-          {entries.length === 0
-            ? (
-                <div className="px-4 py-6 text-center text-txt-tertiary">
-                  {t("campaignDetailPage.emptyEntries")}
-                </div>
-              )
-            : (
-                <div className="relative w-full overflow-auto">
-                  <table className="w-full text-left">
-                    <Thead>
-                      <Tr>
-                        {isPendingActions && (
-                          <Th className="w-12">
-                            <Checkbox
-                              checked={selection.length === entryIds.length && entryIds.length > 0}
-                              onChange={() => selection.length === entryIds.length ? clear() : reset(entryIds)}
-                            />
-                          </Th>
-                        )}
-                        <Th>{t("campaignDetailPage.columns.name")}</Th>
-                        <Th>{t("campaignDetailPage.columns.email")}</Th>
-                        <Th>{t("campaignDetailPage.columns.role")}</Th>
-                        <Th>{t("campaignDetailPage.columns.admin")}</Th>
-                        <Th>{t("campaignDetailPage.columns.status")}</Th>
-                        <Th>{t("campaignDetailPage.columns.mfa")}</Th>
-                        <Th>{t("campaignDetailPage.columns.lastLogin")}</Th>
-                        <Th>{t("campaignDetailPage.columns.flag")}</Th>
-                        <Th>{t("campaignDetailPage.columns.decision")}</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {entries.map(edge => (
-                        <Tr key={edge.node.id}>
-                          {isPendingActions && (
-                            <Td noLink>
-                              <Checkbox
-                                checked={selection.includes(edge.node.id)}
-                                onChange={() => toggle(edge.node.id)}
-                              />
-                            </Td>
-                          )}
-                          <Td>
-                            <span className="flex items-center gap-1.5">
-                              {edge.node.accountType === "SERVICE_ACCOUNT" && (
-                                <IconRobot size={16} className="text-txt-tertiary shrink-0" />
-                              )}
-                              {edge.node.fullName || <NotAvailable />}
-                            </span>
-                          </Td>
-                          <Td>{edge.node.email || <NotAvailable />}</Td>
-                          <AccessEntryRolesCell accessEntryKey={edge.node} />
-                          <Td>
-                            {edge.node.isAdmin
-                              ? t("campaignDetailPage.values.yes")
-                              : t("campaignDetailPage.values.no")}
-                          </Td>
-                          <Td>
-                            {edge.node.active == null
-                              ? <NotAvailable />
-                              : (
-                                  <Badge variant={edge.node.active ? "success" : "danger"}>
-                                    {edge.node.active
-                                      ? t("campaignDetailPage.status.active")
-                                      : t("campaignDetailPage.status.disabled")}
-                                  </Badge>
-                                )}
-                          </Td>
-                          <Td>
-                            {edge.node.mfaStatus === "UNKNOWN"
-                              ? <NotAvailable />
-                              : (
-                                  <Badge variant={edge.node.mfaStatus === "ENABLED" ? "success" : "neutral"}>
-                                    {t(`campaignDetailPage.mfaStatus.${edge.node.mfaStatus.toLowerCase()}`)}
-                                  </Badge>
-                                )}
-                          </Td>
-                          <Td>
-                            {edge.node.lastLogin
-                              ? dateFormat(i18n.language, edge.node.lastLogin)
-                              : <NotAvailable />}
-                          </Td>
-                          <Td>
-                            {isPendingActions
-                              ? (
-                                  <EntryFlagSelect
-                                    entryId={edge.node.id}
-                                    currentFlags={edge.node.flags}
-                                  />
-                                )
-                              : edge.node.flags.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {edge.node.flags.map(f => (
-                                    <Badge key={f} variant={flagBadgeVariant(f)}>
-                                      {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
-                          </Td>
-                          <Td>
-                            {isPendingActions
-                              ? (
-                                  <EntryDecisionActions
-                                    entryId={edge.node.id}
-                                    decision={edge.node.decision}
-                                  />
-                                )
-                              : edge.node.decision !== "PENDING" && (
-                                <Badge variant={decisionBadgeVariant(edge.node.decision)}>
-                                  {t(`campaignDetailPage.decisions.${edge.node.decision.toLowerCase()}`)}
-                                </Badge>
-                              )}
-                          </Td>
-                        </Tr>
-                      ))}
-                    </Tbody>
-                  </table>
-                </div>
-              )}
-
-          {selection.length > 0 && (
-            <div className="flex items-center gap-4 p-4 border-t">
-              <span className="text-sm text-txt-secondary">
-                {t("campaignDetailPage.selected", { count: selection.length })}
-              </span>
-              <Button variant="secondary" onClick={clear}>
-                {t("campaignDetailPage.actions.clear")}
-              </Button>
-              <Select
-                variant="editor"
-                placeholder={t("campaignDetailPage.decisionPlaceholder")}
-                onValueChange={handleBulkDecision}
-              >
-                <Option value="APPROVED">{t("campaignDetailPage.actions.approve")}</Option>
-                <Option value="REVOKE">{t("campaignDetailPage.actions.revoke")}</Option>
-                <Option value="DEFER">{t("campaignDetailPage.actions.modify")}</Option>
-                <Option value="ESCALATE">{t("campaignDetailPage.actions.escalate")}</Option>
-              </Select>
-              <Popover.Root open={bulkFlagOpen} onOpenChange={handleBulkFlagOpenChange}>
-                <Popover.Trigger asChild>
-                  <Button variant="secondary">
-                    {bulkFlagSelection.length > 0
-                      ? t("campaignDetailPage.flagsSelected", { count: bulkFlagSelection.length })
-                      : t("campaignDetailPage.flagsPlaceholder")}
-                  </Button>
-                </Popover.Trigger>
-                <Popover.Portal>
-                  <Popover.Content
-                    sideOffset={5}
-                    className="z-100 w-64 rounded-[10px] bg-level-1 p-2 shadow-mid animate-in fade-in slide-in-from-top-2"
-                  >
-                    {flagGroups.map(group => (
-                      <div key={group.label} className="mb-2 last:mb-0">
-                        <div className="px-2 py-1 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">
-                          {t(`campaignDetailPage.flagGroups.${group.label.toLowerCase()}`)}
-                        </div>
-                        {group.flags.map(flag => (
-                          <label
-                            key={flag.value}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-tertiary-hover"
-                          >
-                            <Checkbox
-                              checked={bulkFlagSelection.includes(flag.value)}
-                              onChange={() => toggleBulkFlag(flag.value)}
-                            />
-                            <span className="text-sm text-txt-primary">
-                              {t(`campaignDetailPage.flags.${flag.value.toLowerCase()}`)}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    ))}
-                  </Popover.Content>
-                </Popover.Portal>
-              </Popover.Root>
-            </div>
-          )}
-
-          <Dialog ref={bulkNoteRef} title={t("campaignDetailPage.note.title")}>
-            <DialogContent padded className="space-y-4">
-              <p className="text-sm text-txt-secondary">
-                {t("campaignDetailPage.note.description")}
-              </p>
-              <Field
-                label={t("campaignDetailPage.note.label")}
-                type="textarea"
-                value={bulkNote}
-                onValueChange={setBulkNote}
-              />
-            </DialogContent>
-            <DialogFooter>
-              <Button
-                disabled={!bulkNote.trim()}
-                onClick={() => {
-                  if (bulkPendingDecision) {
-                    bulkDecide({
-                      variables: {
-                        input: {
-                          decisions: selection.map(id => ({
-                            accessReviewEntryId: id,
-                            decision: bulkPendingDecision,
-                            decisionNote: bulkNote,
-                          })),
-                        },
-                      },
-                      onCompleted(_, errors) {
-                        if (errors?.length) {
-                          toast({
-                            title: t("campaignDetailPage.messages.error"),
-                            description: formatError(
-                              t("campaignDetailPage.errors.recordDecisions"),
-                              errors,
-                            ),
-                            variant: "error",
-                          });
-                          return;
-                        }
-                        toast({
-                          title: t("campaignDetailPage.messages.success"),
-                          description: t("campaignDetailPage.messages.decisionsRecorded"),
-                          variant: "success",
-                        });
-                        clear();
-                        setBulkPendingDecision(null);
-                        setBulkNote("");
-                        bulkNoteRef.current?.close();
-                      },
-                      onError(error) {
-                        toast({
-                          title: t("campaignDetailPage.messages.error"),
-                          description: formatError(
-                            t("campaignDetailPage.errors.recordDecisions"),
-                            error,
-                          ),
-                          variant: "error",
-                        });
-                      },
-                    });
-                  }
-                }}
-              >
-                {t("campaignDetailPage.actions.confirm")}
-              </Button>
-            </DialogFooter>
-          </Dialog>
-
-          {source.entries?.pageInfo.hasNextPage && (
-            <div className="p-4 border-t text-center">
-              <p className="text-sm text-txt-tertiary">
-                {t("campaignDetailPage.showingFirst", { count: entries.length })}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
+            }}
+          >
+            {t("campaignDetailPage.actions.confirm")}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+    </div>
   );
 }

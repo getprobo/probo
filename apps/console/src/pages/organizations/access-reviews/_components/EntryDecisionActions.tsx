@@ -20,13 +20,11 @@
 
 import { formatError } from "@probo/helpers";
 import {
-  Badge,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
   Field,
-  IconPencil,
   Option,
   Select,
   useDialogRef,
@@ -38,8 +36,6 @@ import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { AccessReviewEntryDecision, EntryDecisionActionsMutation } from "#/__generated__/core/EntryDecisionActionsMutation.graphql";
-
-import { decisionBadgeVariant } from "./accessReviewHelpers";
 
 const mutation = graphql`
   mutation EntryDecisionActionsMutation(
@@ -64,7 +60,6 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const ref = useDialogRef();
-  const [editing, setEditing] = useState(false);
   const [pendingDecision, setPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
   const [note, setNote] = useState("");
   const [recordDecision, isRecording]
@@ -93,7 +88,6 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
         }
         setPendingDecision(null);
         setNote("");
-        setEditing(false);
         ref.current?.close();
       },
       onError(error) {
@@ -109,44 +103,25 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     });
   };
 
-  const openNoteDialog = (decisionValue: AccessReviewEntryDecision) => {
-    setPendingDecision(decisionValue);
+  const handleDecision = (value: string) => {
+    const nextDecision = value as AccessReviewEntryDecision;
+    if (nextDecision === decision) {
+      return;
+    }
+    if (nextDecision === "APPROVED") {
+      submitDecision(nextDecision);
+      return;
+    }
+    setPendingDecision(nextDecision);
     setNote("");
     ref.current?.open();
   };
-
-  const handleDecision = (value: string) => {
-    const decision = value as AccessReviewEntryDecision;
-    if (decision === "APPROVED") {
-      submitDecision(decision);
-    } else {
-      openNoteDialog(decision);
-    }
-  };
-
-  // Already decided -- show badge with edit button
-  if (decision !== "PENDING" && !editing) {
-    return (
-      <div className="flex items-center gap-1">
-        <Badge variant={decisionBadgeVariant(decision)}>
-          {t(`entryDecisionActions.decisions.${decision.toLowerCase()}`)}
-        </Badge>
-        <button
-          type="button"
-          className="text-txt-tertiary hover:text-txt-primary cursor-pointer"
-          onClick={() => setEditing(true)}
-          title={t("entryDecisionActions.actions.change")}
-        >
-          <IconPencil size={14} />
-        </button>
-      </div>
-    );
-  }
 
   return (
     <>
       <Select
         variant="editor"
+        value={decision === "PENDING" ? undefined : decision}
         placeholder={t("entryDecisionActions.placeholder")}
         onValueChange={handleDecision}
         disabled={isRecording}

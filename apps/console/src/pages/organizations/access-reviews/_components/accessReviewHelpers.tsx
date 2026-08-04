@@ -18,6 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import {
+  IconCircleCheck,
+  IconCircleQuestionmark,
+  IconCircleX,
+} from "@probo/ui";
+
 type BadgeVariant = "neutral" | "info" | "warning" | "success" | "danger";
 
 export function statusBadgeVariant(status: string): BadgeVariant {
@@ -181,5 +187,104 @@ export function formatStatus(status: string): string {
 export function NotAvailable() {
   return (
     <span className="text-xs text-txt-tertiary">N/A</span>
+  );
+}
+
+export function MfaStatusIcon({
+  status,
+  label,
+}: {
+  status: string;
+  label: string;
+}) {
+  if (status === "ENABLED") {
+    return (
+      <span title={label} className="inline-flex text-txt-success">
+        <IconCircleCheck size={16} />
+      </span>
+    );
+  }
+
+  if (status === "DISABLED") {
+    return (
+      <span title={label} className="inline-flex text-txt-danger">
+        <IconCircleX size={16} />
+      </span>
+    );
+  }
+
+  return (
+    <span title={label} className="inline-flex text-txt-tertiary">
+      <IconCircleQuestionmark size={16} />
+    </span>
+  );
+}
+
+export function BooleanStatusIcon({
+  value,
+  trueLabel,
+  falseLabel,
+  unknownLabel,
+}: {
+  value: boolean | null | undefined;
+  trueLabel: string;
+  falseLabel: string;
+  unknownLabel: string;
+}) {
+  if (value == null) {
+    return (
+      <span title={unknownLabel} className="inline-flex text-txt-tertiary">
+        <IconCircleQuestionmark size={16} />
+      </span>
+    );
+  }
+
+  if (value) {
+    return (
+      <span title={trueLabel} className="inline-flex text-txt-success">
+        <IconCircleCheck size={16} />
+      </span>
+    );
+  }
+
+  return (
+    <span title={falseLabel} className="inline-flex text-txt-danger">
+      <IconCircleX size={16} />
+    </span>
+  );
+}
+
+export function LastLoginStatus({
+  lastLogin,
+  formatted,
+  unknownLabel,
+  compact = false,
+}: {
+  lastLogin: string | null | undefined;
+  formatted: string;
+  unknownLabel: string;
+  compact?: boolean;
+}) {
+  if (lastLogin) {
+    if (compact) {
+      return (
+        <span title={formatted} className="inline-flex text-txt-success">
+          <IconCircleCheck size={16} />
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex min-w-0 items-center gap-1.5" title={formatted}>
+        <IconCircleCheck size={16} className="shrink-0 text-txt-success" />
+        <span className="truncate">{formatted}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span title={unknownLabel} className="inline-flex text-txt-tertiary">
+      <IconCircleQuestionmark size={16} />
+    </span>
   );
 }

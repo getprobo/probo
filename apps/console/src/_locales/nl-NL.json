@@ -3127,7 +3127,8 @@
     },
     "mfaStatus": {
       "enabled": "Ingeschakeld",
-      "disabled": "Uitgeschakeld"
+      "disabled": "Uitgeschakeld",
+      "unknown": "Onbekend"
     },
     "decisions": {
       "pending": "In behandeling",
@@ -3167,17 +3168,27 @@
       "starting": "Starten...",
       "startCampaign": "Campagne starten",
       "clear": "Wissen",
+      "clearSelection": "Wissen",
+      "selectAll": "Alles selecteren",
       "approve": "Goedkeuren",
       "revoke": "Intrekken",
       "modify": "Aanpassen",
       "escalate": "Escaleren",
-      "confirm": "Bevestigen"
+      "confirm": "Bevestigen",
+      "submit": "Indienen"
     },
     "emptySources": "Geen bronnen geconfigureerd voor deze campagne.",
+    "emptyFiltered": "Geen items komen overeen met de huidige filters.",
     "accounts_one": "{{count}} account",
     "accounts_other": "{{count}} accounts",
     "fetchFailed": "Ophalen mislukt",
     "emptyEntries": "Geen items gevonden voor deze bron.",
+    "filters": {
+      "searchEmail": "Zoek e-mail...",
+      "allConnectors": "Alle connectoren",
+      "allMfa": "Alle MFA",
+      "allAdmin": "Alle beheerders"
+    },
     "columns": {
       "name": "Naam",
       "email": "E-mail",
@@ -3191,7 +3202,8 @@
     },
     "values": {
       "yes": "Ja",
-      "no": "Nee"
+      "no": "Nee",
+      "unknown": "Onbekend"
     },
     "selected_one": "{{count}} geselecteerd",
     "selected_other": "{{count}} geselecteerd",
