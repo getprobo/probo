@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.212.0] - 2026-08-04
+
+### Added
+
+- Cookie Consent Record `Get Many`: new `Acknowledge` action filter option, matching the new `ACKNOWLEDGE` consent action recorded for notice-only banners
+
 ## [0.211.0] - 2026-08-03
 
 ### Added
