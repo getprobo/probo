@@ -153,9 +153,27 @@ Use `factory.SafeName("prefix")` for unique names and `factory.SafeEmail()` for 
 ## Test structure
 
 Every test and subtest **must** call `t.Parallel()`. Journey steps are ordered
-function calls rather than subtests and must not run in parallel. One test file
-per entity in `e2e/console/`. Function naming:
-`TestEntity_Operation`.
+function calls rather than subtests and must not run in parallel. Function
+naming follows `TestEntity_Operation`.
+
+Keep all console tests in the shared `console_test` package. Splitting domains
+into Go subdirectories would create independent packages and `TestMain`
+processes that contend for the same probod ports and database migrations.
+
+Organize large resources by concern:
+
+| File | Contents |
+| --- | --- |
+| `<resource>_test.go` | Primary CRUD and resolver behavior |
+| `<resource>_contract_test.go` | Validation, enums, ordering, and pagination |
+| `<resource>_rbac_test.go` | Role permission matrices |
+| `<resource>_tenant_test.go` | Cross-organization isolation |
+| `<resource>_journey_test.go` | Ordered user-visible workflows |
+| `<resource>_helpers_test.go` | Resource-specific setup and typed responses |
+
+Small resources may remain in one `<resource>_test.go` file. Split a file when
+the concern has its own fixture strategy or the combined source becomes hard to
+review. Do not create generic `helpers_test.go` dumping grounds.
 
 ```go
 func TestThirdParty_Create(t *testing.T) {

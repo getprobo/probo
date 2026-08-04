@@ -336,47 +336,6 @@ func TestAsset_PublishAssetList(t *testing.T) {
 	)
 }
 
-func TestAsset_PublishAssetList_RBAC(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	profileID := factory.CreateUser(owner)
-	createAssetForPublish(t, owner, profileID, "RBAC Test Asset")
-
-	const query = `
-		mutation($input: PublishAssetListInput!) {
-			publishAssetList(input: $input) {
-				documentEdge {
-					node { id }
-				}
-				documentVersionEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	t.Run(
-		"viewer cannot publish asset list",
-		func(t *testing.T) {
-			t.Parallel()
-
-			err := viewer.ExecuteShouldFail(
-				query,
-				map[string]any{
-					"input": map[string]any{
-						"minor":          false,
-						"organizationId": owner.GetOrganizationID(),
-					},
-				},
-			)
-			testutil.RequireForbiddenError(t, err)
-		},
-	)
-}
-
 func createAssetForPublish(t *testing.T, client *testutil.Client, ownerProfileID string, name string) string {
 	t.Helper()
 

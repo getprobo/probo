@@ -391,31 +391,6 @@ func TestDeleteConnector(t *testing.T) {
 	assert.Equal(t, connectorID, deleteResult.DeleteConnector.DeletedConnectorID)
 }
 
-func TestCreateAPIKeyConnector_RBAC(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	t.Run("viewer cannot create connector", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := viewer.Do(`
-			mutation($input: CreateAPIKeyConnectorInput!) {
-				createAPIKeyConnector(input: $input) {
-					connector { id }
-				}
-			}
-		`, map[string]any{
-			"input": map[string]any{
-				"organizationId": viewer.GetOrganizationID().String(),
-				"provider":       "BREX",
-				"apiKey":         "test-key",
-			},
-		})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to create connector")
-	})
-}
-
 // TestCrispVerificationCode exercises the crispVerificationCode query end to end
 // through the live schema and authorization stack. The code is a deterministic
 // HMAC bound to (organization, website), so the query needs only the managed
