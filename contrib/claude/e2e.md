@@ -41,9 +41,11 @@ application coverage. The coverage target writes:
 - `coverage-e2e.txt` — per-function and total statement coverage
 - `coverage-e2e.html` — browsable source report
 
-CI uses the coverage target, publishes the total in the job summary, and
-uploads all three reports with the JUnit and journey artifacts. Coverage is
-collected from the probod process, not from the E2E test driver.
+CI runs the normal and instrumented suites in parallel. The required
+`test-e2e` check provides fast feedback, while `test-e2e-coverage` publishes the
+total in its job summary and uploads all three reports with its JUnit and
+journey artifacts. Coverage is collected from the probod process, not from the
+E2E test driver.
 
 ## Client setup
 

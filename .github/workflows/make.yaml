@@ -481,8 +481,26 @@ jobs:
           retention-days: 30
 
   test-e2e:
-    name: "test-e2e"
+    name: "${{ matrix.name }}"
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "test-e2e"
+            build_target: "bin/probod"
+            run_target: "test-e2e-run"
+            binary: "bin/probod"
+            junit_file: "junit-e2e.xml"
+            artifact_name: "junit-e2e-results"
+            coverage: false
+          - name: "test-e2e-coverage"
+            build_target: "bin/probod-coverage"
+            run_target: "test-e2e-coverage-run"
+            binary: "bin/probod-coverage"
+            junit_file: "junit-e2e-coverage.xml"
+            artifact_name: "junit-e2e-coverage-results"
+            coverage: true
     permissions:
       contents: "read"
     steps:
@@ -533,6 +551,8 @@ jobs:
           docker compose pull
           mkdir -p /tmp/docker-images
           docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
+      - name: "Build probod"
+        run: "make ${{ matrix.build_target }}"
       - name: "Start stack"
         run: "make stack-up"
       - run: "make stack-ps"
@@ -540,12 +560,12 @@ jobs:
         env:
           PROBO_E2E_ARTIFACT_DIR: "${{ github.workspace }}/e2e-artifacts"
           GOTESTSUM_FORMAT: "testname"
-          GOTESTSUM_JUNITFILE: "junit-e2e.xml"
+          GOTESTSUM_JUNITFILE: "${{ matrix.junit_file }}"
         run: |
           PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
-            make test-e2e-coverage
+            make "${{ matrix.run_target }}" E2E_BINARY="${{ github.workspace }}/${{ matrix.binary }}"
       - name: "Report e2e coverage"
-        if: "always()"
+        if: "${{ always() && matrix.coverage }}"
         run: |
           if [ -f coverage-e2e.txt ]; then
             coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e.txt)"
@@ -558,9 +578,9 @@ jobs:
         if: "always()"
         continue-on-error: true
         with:
-          name: "junit-e2e-results"
+          name: "${{ matrix.artifact_name }}"
           path: |
-            junit-e2e.xml
+            ${{ matrix.junit_file }}
             e2e-artifacts
             coverage-e2e.out
             coverage-e2e.txt

@@ -77,6 +77,7 @@ E2E_TEST_FLAGS?=
 
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
+E2E_BINARY ?= $(CURDIR)/$(PROBOD_BIN)
 
 DOCKER_REGISTRY=	artifact.probo.inc
 DOCKER_PROXY=		$(DOCKER_REGISTRY)/dockerhub
@@ -215,9 +216,13 @@ test-bench: TEST_FLAGS+=-bench=.
 test-bench: test ## Run benchmark tests
 
 .PHONY: test-e2e
-test-e2e: CGO_ENABLED=1
 test-e2e: $(PROBOD_BIN) ## Run console e2e tests
-	PROBO_E2E_BINARY=$(CURDIR)/$(PROBOD_BIN) \
+	$(MAKE) test-e2e-run E2E_BINARY=$(CURDIR)/$(PROBOD_BIN)
+
+.PHONY: test-e2e-run
+test-e2e-run: CGO_ENABLED=1
+test-e2e-run:
+	PROBO_E2E_BINARY=$(E2E_BINARY) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
 
@@ -227,10 +232,14 @@ bin/probod-coverage: generate embed
 	$(GO_BUILD) $(PROBOD_LDFLAGS) -cover -covermode=atomic -o $@ $(PROBOD_SRC)
 
 .PHONY: test-e2e-coverage
-test-e2e-coverage: CGO_ENABLED=1
 test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
+	$(MAKE) test-e2e-coverage-run E2E_BINARY=$(CURDIR)/bin/probod-coverage
+
+.PHONY: test-e2e-coverage-run
+test-e2e-coverage-run: CGO_ENABLED=1
+test-e2e-coverage-run:
 	@$(RM) -rf $(E2E_COVER_DIR) && $(MKDIR) -p $(E2E_COVER_DIR)
-	PROBO_E2E_BINARY=$(CURDIR)/bin/probod-coverage \
+	PROBO_E2E_BINARY=$(E2E_BINARY) \
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
