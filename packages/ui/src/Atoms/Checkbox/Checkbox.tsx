@@ -24,9 +24,9 @@ import { tv } from "tailwind-variants";
 import { IconCheckmark1 } from "../Icons";
 
 type Props = {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
+  "checked": boolean;
+  "onChange": (checked: boolean) => void;
+  "disabled"?: boolean;
   "aria-label"?: string;
 };
 
