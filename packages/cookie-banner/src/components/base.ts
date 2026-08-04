@@ -21,7 +21,7 @@
 import type { CookieBannerClient } from "../client";
 import type { BannerConfig, BannerLayout, Regulation } from "../types";
 
-export type ProboState = "loading" | "banner" | "panel" | "hidden";
+export type ProboState = "loading" | "banner" | "panel" | "privacy_choices" | "hidden";
 
 export interface ConsentDraft {
   [category: string]: boolean;

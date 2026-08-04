@@ -6,6 +6,7 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ### Added
 
+- CCPA Privacy Choices panel (`privacy_choices` state + `<probo-privacy-choices>`): under CCPA, the settings link opens a dedicated surface that describes the right to opt out of sale/sharing and the right to limit sensitive personal information, with a Do Not Sell or Share action (11 CCR § 7015). SPI is explained as a statement in v1 (no toggle)
 - `<probo-settings-link>` always shows the statutory “Your Privacy Choices” label plus the official CPPA opt-out icon under CCPA (overriding integrator children); otherwise keeps children or falls back to `aria_cookie_settings`; optional GPC badge when the opt-out preference signal was applied
 - Soft-validate that `<probo-settings-link>` is present (warn + `probo-validation`), since it is the sole reopen control
 - Structured `layout` object in the banner config (`presentation`, `initial_state`, `reopen_state`, `default_non_necessary_granted`, `buttons`, `settings_link`, `text_variant`). The banner now renders from these explicit fields instead of inferring behavior from hardcoded regulation checks and empty text keys. A config without `layout` means a self-hosted Probo backend older than this SDK: the client logs an error asking to update probod and falls back to a strict opt-in layout
@@ -15,6 +16,7 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ### Changed
 
+- Under CCPA, `layout.reopen_state` is `privacy_choices` (not the compact opt-out banner). Other OPT_OUT regimes (PIPEDA, LGPD) still reopen the compact banner
 - Under CCPA, the banner starts closed by default (cookies already follow the opt-out model until the visitor opts out)
 - Auto-filled settings-link text inherits font and color from the host; the CCPA icon scales with `1em`
 - Initial state, reopen target, default toggle state, button visibility, and the statutory settings-link style are now driven by the server-provided `layout` rather than `regulation === "CCPA"` / `consent_mode` branching

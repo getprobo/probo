@@ -62,7 +62,7 @@ export type Regulation =
 
 export type Presentation = "OPT_IN" | "OPT_OUT" | "NOTICE";
 
-export type BannerState = "banner" | "hidden" | "panel";
+export type BannerState = "banner" | "hidden" | "panel" | "privacy_choices";
 
 export type SettingsLinkStyle = "default" | "ccpa_privacy_choices";
 

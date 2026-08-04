@@ -31,6 +31,7 @@ import { ProboCategoryToggle } from "./category-toggle";
 import { ProboCookieBannerRoot } from "./cookie-banner-root";
 import { ProboCookie, ProboCookieList } from "./cookie-list";
 import { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
+import { ProboPrivacyChoices } from "./privacy-choices";
 import { ProboSettingsLink } from "./settings-link";
 
 const elements: [string, CustomElementConstructor][] = [
@@ -41,6 +42,7 @@ const elements: [string, CustomElementConstructor][] = [
   ["probo-reject-button", ProboRejectButton],
   ["probo-customize-button", ProboCustomizeButton],
   ["probo-preference-panel", ProboPreferencePanel],
+  ["probo-privacy-choices", ProboPrivacyChoices],
   ["probo-category-list", ProboCategoryList],
   ["probo-category", ProboCategory],
   ["probo-category-toggle", ProboCategoryToggle],

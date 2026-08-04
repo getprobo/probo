@@ -141,8 +141,8 @@ function renderPolicyLinks(
     .join(cookieLink);
 }
 
-// ScrollLock pins the page while a full-height panel is open. It is only used by
-// presentations that open a preference panel.
+// ScrollLock pins the page while a full-height panel is open (preference panel
+// or Privacy Choices).
 export class ScrollLock {
   private locked = false;
   private savedScrollX = 0;

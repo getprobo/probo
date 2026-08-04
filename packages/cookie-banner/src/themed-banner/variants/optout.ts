@@ -18,14 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BRANDING } from "../../html";
+import { BRANDING, CLOSE_ICON } from "../../html";
 import { floatingCard } from "./shared";
 
 // Opt-out (CCPA-style): trackers fire immediately; the visitor acknowledges or
-// opts out. No preference panel. The statutory "Your Privacy Choices" reopen
-// link is handled by <probo-settings-link> via layout.settings_link.
+// opts out. Compact banner for first paint / non-CCPA reopen; Privacy Choices
+// panel for CCPA's Alternative Opt-out Link (layout.reopen_state). The statutory
+// "Your Privacy Choices" link is handled by <probo-settings-link>.
 export function renderOptOut(position: string): string {
-  return `
+  const banner = `
     <probo-banner>
       ${floatingCard(
         position,
@@ -40,4 +41,43 @@ export function renderOptOut(position: string): string {
         ${BRANDING}`,
       )}
     </probo-banner>`;
+
+  const privacyChoices = `
+    <probo-privacy-choices>
+      ${floatingCard(
+        position,
+        {
+          labelledby: "probo-privacy-choices-title",
+          describedby: "probo-privacy-choices-desc",
+        },
+        `
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <p class="title" id="probo-privacy-choices-title" style="margin:0" data-text="privacy_choices_title"></p>
+            <button class="panel-close" data-action="close-privacy-choices" data-aria-text="aria_close">
+              ${CLOSE_ICON}
+            </button>
+          </div>
+          <p class="description" id="probo-privacy-choices-desc" data-text="privacy_choices_intro"></p>
+        </div>
+        <div class="privacy-choices-body">
+          <section class="privacy-choices-section">
+            <p class="privacy-choices-section-title" data-text="privacy_choices_sale_title"></p>
+            <p class="description" data-text="privacy_choices_sale_description"></p>
+            <div class="buttons">
+              <probo-reject-button><button class="btn" data-text="button_opt_out" data-text-fallback="button_reject_all"></button></probo-reject-button>
+            </div>
+          </section>
+          <section class="privacy-choices-section privacy-choices-section-spi">
+            <p class="privacy-choices-section-title" data-text="privacy_choices_spi_title"></p>
+            <p class="description" data-text="privacy_choices_spi_description"></p>
+          </section>
+        </div>
+        <div class="footer">
+          ${BRANDING}
+        </div>`,
+      )}
+    </probo-privacy-choices>`;
+
+  return banner + privacyChoices;
 }

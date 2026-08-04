@@ -128,7 +128,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		layout := LayoutForRegulation(RegulationCCPA)
 		require.Equal(t, PresentationOptOut, layout.Presentation)
 		require.Equal(t, StateHidden, layout.InitialState)
-		require.Equal(t, StateBanner, layout.ReopenState)
+		require.Equal(t, StatePrivacyChoices, layout.ReopenState)
 		require.True(t, layout.DefaultNonNecessaryGranted)
 		require.False(t, layout.Buttons.Customize)
 		require.Equal(t, SettingsLinkCCPAPrivacyChoices, layout.SettingsLink)

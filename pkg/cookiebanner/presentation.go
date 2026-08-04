@@ -58,9 +58,10 @@ const (
 // Banner states shared with the client. The client also has a transient
 // "loading" state that never originates from the server.
 const (
-	StateBanner = "banner"
-	StateHidden = "hidden"
-	StatePanel  = "panel"
+	StateBanner         = "banner"
+	StateHidden         = "hidden"
+	StatePanel          = "panel"
+	StatePrivacyChoices = "privacy_choices"
 )
 
 // LayoutButtons declares which action buttons the banner renders. The client
@@ -124,6 +125,13 @@ func SettingsLinkForRegulation(r Regulation) SettingsLinkStyle {
 func LayoutForRegulation(r Regulation) Layout {
 	layout := layoutForPresentation(PresentationForRegulation(r))
 	layout.SettingsLink = SettingsLinkForRegulation(r)
+
+	// CCPA's Alternative Opt-out Link (11 CCR § 7015) must open a surface that
+	// describes sale/sharing opt-out and the right to limit sensitive PI — not
+	// the compact opt-out banner used by other OPT_OUT regimes.
+	if r == RegulationCCPA {
+		layout.ReopenState = StatePrivacyChoices
+	}
 
 	return layout
 }

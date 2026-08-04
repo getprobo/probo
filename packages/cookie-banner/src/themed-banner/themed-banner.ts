@@ -96,11 +96,13 @@ export class ProboThemedBanner extends HTMLElement {
       });
     }
 
-    // Only the opt-in presentation opens a preference panel, so scroll-lock,
-    // the back control, and the per-category cookie-detail toggle are wired for
-    // it alone.
+    // Opt-in opens a preference panel; CCPA opt-out reopens Privacy Choices.
+    // Both need scroll-lock while their larger surface is open.
     if (layout.presentation === "OPT_IN") {
       this.wirePanel(root);
+    }
+    if (layout.presentation === "OPT_OUT") {
+      this.wirePrivacyChoices(root);
     }
   }
 
@@ -136,6 +138,19 @@ export class ProboThemedBanner extends HTMLElement {
       const hideLabel = texts?.aria_hide_details ?? "Hide cookie details";
       btn.setAttribute("aria-label", open ? hideLabel : showLabel);
     });
+  }
+
+  private wirePrivacyChoices(root: ProboCookieBannerRoot): void {
+    root.addEventListener("probo-state", (e: Event) => {
+      const { state } = (e as CustomEvent).detail;
+      this.scrollLock.set(state === "privacy_choices");
+    });
+
+    this.shadow
+      .querySelector("[data-action=close-privacy-choices]")
+      ?.addEventListener("click", () => {
+        root.setState("hidden");
+      });
   }
 }
 
