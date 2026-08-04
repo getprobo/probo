@@ -297,1152 +297,591 @@ const (
 		}`
 )
 
+type (
+	rbacShared struct {
+		orgID       string
+		frameworkID string
+		measureID   string
+	}
+
+	rbacTestCase struct {
+		resource    string
+		operation   string
+		name        string
+		role        testutil.TestRole
+		shouldAllow bool
+		useConnect  bool
+	}
+)
+
 func TestRBAC(t *testing.T) {
 	t.Parallel()
 
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	// Pre-create resources for update/delete tests
-	frameworkID := factory.NewFramework(owner).WithName("RBAC Test Framework").Create()
-	controlID := factory.NewControl(owner, frameworkID).WithName("RBAC Test Control").Create()
-	measureID := factory.NewMeasure(owner).WithName("RBAC Test Measure").Create()
-	taskID := factory.NewTask(owner, measureID).WithName("RBAC Test Task").Create()
-	riskID := factory.NewRisk(owner).WithName("RBAC Test Risk").Create()
-	thirdPartyID := factory.NewThirdParty(owner).WithName("RBAC Test ThirdParty").Create()
-	accessReviewSourceID := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Source").Create()
-	accessReviewCampaignID := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Campaign").Create()
-
-	tests := []struct {
-		name        string
-		role        string
-		client      *testutil.Client
-		query       string
-		variables   func() map[string]any
-		shouldAllow bool
-		useConnect  bool // use connect API instead of console API
-	}{
-		{
-			name:   "owner can create framework",
-			role:   "owner",
-			client: owner,
-			query:  createFrameworkMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Framework")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create framework",
-			role:   "admin",
-			client: admin,
-			query:  createFrameworkMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Framework")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create framework",
-			role:   "viewer",
-			client: viewer,
-			query:  createFrameworkMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Framework")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can update framework",
-			role:   "owner",
-			client: owner,
-			query:  updateFrameworkMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": frameworkID, "name": factory.SafeName("Updated Framework")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update framework",
-			role:   "admin",
-			client: admin,
-			query:  updateFrameworkMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": frameworkID, "name": factory.SafeName("Updated Framework")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update framework",
-			role:   "viewer",
-			client: viewer,
-			query:  updateFrameworkMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": frameworkID, "name": factory.SafeName("Updated Framework")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can delete framework",
-			role:   "owner",
-			client: owner,
-			query:  deleteFrameworkMutation,
-			variables: func() map[string]any {
-				id := factory.NewFramework(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"frameworkId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete framework",
-			role:   "admin",
-			client: admin,
-			query:  deleteFrameworkMutation,
-			variables: func() map[string]any {
-				id := factory.NewFramework(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"frameworkId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete framework",
-			role:   "viewer",
-			client: viewer,
-			query:  deleteFrameworkMutation,
-			variables: func() map[string]any {
-				id := factory.NewFramework(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"frameworkId": id}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can list frameworks",
-			role:   "owner",
-			client: owner,
-			query:  listFrameworksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list frameworks",
-			role:   "admin",
-			client: admin,
-			query:  listFrameworksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list frameworks",
-			role:   "viewer",
-			client: viewer,
-			query:  listFrameworksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "owner can create control",
-			role:   "owner",
-			client: owner,
-			query:  createControlMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Owner"), "bestPractice": true, "maturityLevel": "INITIAL"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create control",
-			role:   "admin",
-			client: admin,
-			query:  createControlMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Admin"), "bestPractice": true, "maturityLevel": "INITIAL"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create control",
-			role:   "viewer",
-			client: viewer,
-			query:  createControlMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Viewer"), "bestPractice": true, "maturityLevel": "INITIAL"}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can update control",
-			role:   "owner",
-			client: owner,
-			query:  updateControlMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": controlID, "name": factory.SafeName("Updated Control")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update control",
-			role:   "admin",
-			client: admin,
-			query:  updateControlMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": controlID, "name": factory.SafeName("Updated Control")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update control",
-			role:   "viewer",
-			client: viewer,
-			query:  updateControlMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": controlID, "name": factory.SafeName("Updated Control")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can delete control",
-			role:   "owner",
-			client: owner,
-			query:  deleteControlMutation,
-			variables: func() map[string]any {
-				id := factory.NewControl(owner, frameworkID).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"controlId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete control",
-			role:   "admin",
-			client: admin,
-			query:  deleteControlMutation,
-			variables: func() map[string]any {
-				id := factory.NewControl(owner, frameworkID).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"controlId": id}}
-			},
-			shouldAllow: true,
-		},
-		// TODO: Fix permission bug - viewer should not be able to delete controls
-		// {
-		// 	name:   "viewer cannot delete control",
-		// 	role:   "viewer",
-		// 	client: viewer,
-		// 	query:  deleteControlMutation,
-		// 	variables: func() map[string]any {
-		// 		id := factory.NewControl(owner, frameworkID).WithName(factory.SafeName("ToDelete")).Create()
-		// 		return map[string]any{"input": map[string]any{"controlId": id}}
-		// 	},
-		// 	shouldAllow: false,
-		// },
-		{
-			name:   "owner can list controls",
-			role:   "owner",
-			client: owner,
-			query:  listControlsQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": frameworkID}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list controls",
-			role:   "admin",
-			client: admin,
-			query:  listControlsQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": frameworkID}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list controls",
-			role:   "viewer",
-			client: viewer,
-			query:  listControlsQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": frameworkID}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "owner can create measure",
-			role:   "owner",
-			client: owner,
-			query:  createMeasureMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Measure"), "category": "POLICY"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create measure",
-			role:   "admin",
-			client: admin,
-			query:  createMeasureMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Measure"), "category": "POLICY"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create measure",
-			role:   "viewer",
-			client: viewer,
-			query:  createMeasureMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Measure"), "category": "POLICY"}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can update measure",
-			role:   "owner",
-			client: owner,
-			query:  updateMeasureMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": measureID, "name": factory.SafeName("Updated Measure")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update measure",
-			role:   "admin",
-			client: admin,
-			query:  updateMeasureMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": measureID, "name": factory.SafeName("Updated Measure")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update measure",
-			role:   "viewer",
-			client: viewer,
-			query:  updateMeasureMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": measureID, "name": factory.SafeName("Updated Measure")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can delete measure",
-			role:   "owner",
-			client: owner,
-			query:  deleteMeasureMutation,
-			variables: func() map[string]any {
-				id := factory.NewMeasure(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"measureId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete measure",
-			role:   "admin",
-			client: admin,
-			query:  deleteMeasureMutation,
-			variables: func() map[string]any {
-				id := factory.NewMeasure(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"measureId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete measure",
-			role:   "viewer",
-			client: viewer,
-			query:  deleteMeasureMutation,
-			variables: func() map[string]any {
-				id := factory.NewMeasure(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"measureId": id}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can list measures",
-			role:   "owner",
-			client: owner,
-			query:  listMeasuresQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list measures",
-			role:   "admin",
-			client: admin,
-			query:  listMeasuresQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list measures",
-			role:   "viewer",
-			client: viewer,
-			query:  listMeasuresQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "owner can create task",
-			role:   "owner",
-			client: owner,
-			query:  createTaskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task"), "priority": "MEDIUM"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create task",
-			role:   "admin",
-			client: admin,
-			query:  createTaskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task"), "priority": "MEDIUM"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create task",
-			role:   "viewer",
-			client: viewer,
-			query:  createTaskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "measureId": measureID, "name": factory.SafeName("Task"), "priority": "MEDIUM"}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can update task",
-			role:   "owner",
-			client: owner,
-			query:  updateTaskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"taskId": taskID, "name": factory.SafeName("Updated Task")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update task",
-			role:   "admin",
-			client: admin,
-			query:  updateTaskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"taskId": taskID, "name": factory.SafeName("Updated Task")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update task",
-			role:   "viewer",
-			client: viewer,
-			query:  updateTaskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"taskId": taskID, "name": factory.SafeName("Updated Task")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can delete task",
-			role:   "owner",
-			client: owner,
-			query:  deleteTaskMutation,
-			variables: func() map[string]any {
-				id := factory.NewTask(owner, measureID).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"taskId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete task",
-			role:   "admin",
-			client: admin,
-			query:  deleteTaskMutation,
-			variables: func() map[string]any {
-				id := factory.NewTask(owner, measureID).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"taskId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete task",
-			role:   "viewer",
-			client: viewer,
-			query:  deleteTaskMutation,
-			variables: func() map[string]any {
-				id := factory.NewTask(owner, measureID).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"taskId": id}}
-			},
-			shouldAllow: false,
-		},
-
-		// Task - List
-		{
-			name:   "owner can list tasks",
-			role:   "owner",
-			client: owner,
-			query:  listTasksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": measureID}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list tasks",
-			role:   "admin",
-			client: admin,
-			query:  listTasksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": measureID}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list tasks",
-			role:   "viewer",
-			client: viewer,
-			query:  listTasksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": measureID}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "owner can create risk",
-			role:   "owner",
-			client: owner,
-			query:  createRiskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Risk"), "category": "SECURITY", "treatment": "MITIGATED", "inherentLikelihood": 2, "inherentImpact": 2}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create risk",
-			role:   "admin",
-			client: admin,
-			query:  createRiskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Risk"), "category": "SECURITY", "treatment": "MITIGATED", "inherentLikelihood": 2, "inherentImpact": 2}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create risk",
-			role:   "viewer",
-			client: viewer,
-			query:  createRiskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Risk"), "category": "SECURITY", "treatment": "MITIGATED", "inherentLikelihood": 2, "inherentImpact": 2}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can update risk",
-			role:   "owner",
-			client: owner,
-			query:  updateRiskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": riskID, "name": factory.SafeName("Updated Risk")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update risk",
-			role:   "admin",
-			client: admin,
-			query:  updateRiskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": riskID, "name": factory.SafeName("Updated Risk")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update risk",
-			role:   "viewer",
-			client: viewer,
-			query:  updateRiskMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": riskID, "name": factory.SafeName("Updated Risk")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can delete risk",
-			role:   "owner",
-			client: owner,
-			query:  deleteRiskMutation,
-			variables: func() map[string]any {
-				id := factory.NewRisk(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"riskId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete risk",
-			role:   "admin",
-			client: admin,
-			query:  deleteRiskMutation,
-			variables: func() map[string]any {
-				id := factory.NewRisk(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"riskId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete risk",
-			role:   "viewer",
-			client: viewer,
-			query:  deleteRiskMutation,
-			variables: func() map[string]any {
-				id := factory.NewRisk(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"riskId": id}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can list risks",
-			role:   "owner",
-			client: owner,
-			query:  listRisksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list risks",
-			role:   "admin",
-			client: admin,
-			query:  listRisksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list risks",
-			role:   "viewer",
-			client: viewer,
-			query:  listRisksQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "owner can create thirdParty",
-			role:   "owner",
-			client: owner,
-			query:  createThirdPartyMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("ThirdParty")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create thirdParty",
-			role:   "admin",
-			client: admin,
-			query:  createThirdPartyMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("ThirdParty")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create thirdParty",
-			role:   "viewer",
-			client: viewer,
-			query:  createThirdPartyMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("ThirdParty")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can update thirdParty",
-			role:   "owner",
-			client: owner,
-			query:  updateThirdPartyMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": thirdPartyID, "name": factory.SafeName("Updated ThirdParty")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update thirdParty",
-			role:   "admin",
-			client: admin,
-			query:  updateThirdPartyMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": thirdPartyID, "name": factory.SafeName("Updated ThirdParty")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update thirdParty",
-			role:   "viewer",
-			client: viewer,
-			query:  updateThirdPartyMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": thirdPartyID, "name": factory.SafeName("Updated ThirdParty")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can delete thirdParty",
-			role:   "owner",
-			client: owner,
-			query:  deleteThirdPartyMutation,
-			variables: func() map[string]any {
-				id := factory.NewThirdParty(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"thirdPartyId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete thirdParty",
-			role:   "admin",
-			client: admin,
-			query:  deleteThirdPartyMutation,
-			variables: func() map[string]any {
-				id := factory.NewThirdParty(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"thirdPartyId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete thirdParty",
-			role:   "viewer",
-			client: viewer,
-			query:  deleteThirdPartyMutation,
-			variables: func() map[string]any {
-				id := factory.NewThirdParty(owner).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"thirdPartyId": id}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can list third parties",
-			role:   "owner",
-			client: owner,
-			query:  listThirdPartiesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list third parties",
-			role:   "admin",
-			client: admin,
-			query:  listThirdPartiesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list third parties",
-			role:   "viewer",
-			client: viewer,
-			query:  listThirdPartiesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		// Access Source - Create
-		{
-			name:   "owner can create access source",
-			role:   "owner",
-			client: owner,
-			query:  createAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessReviewSource")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create access source",
-			role:   "admin",
-			client: admin,
-			query:  createAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessReviewSource")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create access source",
-			role:   "viewer",
-			client: viewer,
-			query:  createAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessReviewSource")}}
-			},
-			shouldAllow: false,
-		},
-		// Access Source - Update
-		{
-			name:   "owner can update access source",
-			role:   "owner",
-			client: owner,
-			query:  updateAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessReviewSourceId": accessReviewSourceID, "name": factory.SafeName("Updated Source")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update access source",
-			role:   "admin",
-			client: admin,
-			query:  updateAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessReviewSourceId": accessReviewSourceID, "name": factory.SafeName("Updated Source")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update access source",
-			role:   "viewer",
-			client: viewer,
-			query:  updateAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessReviewSourceId": accessReviewSourceID, "name": factory.SafeName("Updated Source")}}
-			},
-			shouldAllow: false,
-		},
-		// Access Source - Delete
-		{
-			name:   "owner can delete access source",
-			role:   "owner",
-			client: owner,
-			query:  deleteAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				id := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessReviewSourceId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete access source",
-			role:   "admin",
-			client: admin,
-			query:  deleteAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				id := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessReviewSourceId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete access source",
-			role:   "viewer",
-			client: viewer,
-			query:  deleteAccessReviewSourceMutation,
-			variables: func() map[string]any {
-				id := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessReviewSourceId": id}}
-			},
-			shouldAllow: false,
-		},
-		// Access Source - List
-		{
-			name:   "owner can list access sources",
-			role:   "owner",
-			client: owner,
-			query:  listAccessReviewSourcesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list access sources",
-			role:   "admin",
-			client: admin,
-			query:  listAccessReviewSourcesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list access sources",
-			role:   "viewer",
-			client: viewer,
-			query:  listAccessReviewSourcesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		// Access Review Campaign - Create
-		{
-			name:   "owner can create access review campaign",
-			role:   "owner",
-			client: owner,
-			query:  createAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Campaign")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create access review campaign",
-			role:   "admin",
-			client: admin,
-			query:  createAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Campaign")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create access review campaign",
-			role:   "viewer",
-			client: viewer,
-			query:  createAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Campaign")}}
-			},
-			shouldAllow: false,
-		},
-		// Access Review Campaign - Update
-		{
-			name:   "owner can update access review campaign",
-			role:   "owner",
-			client: owner,
-			query:  updateAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessReviewCampaignId": accessReviewCampaignID, "name": factory.SafeName("Updated Campaign")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can update access review campaign",
-			role:   "admin",
-			client: admin,
-			query:  updateAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessReviewCampaignId": accessReviewCampaignID, "name": factory.SafeName("Updated Campaign")}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot update access review campaign",
-			role:   "viewer",
-			client: viewer,
-			query:  updateAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessReviewCampaignId": accessReviewCampaignID, "name": factory.SafeName("Updated Campaign")}}
-			},
-			shouldAllow: false,
-		},
-		// Access Review Campaign - Delete
-		{
-			name:   "owner can delete access review campaign",
-			role:   "owner",
-			client: owner,
-			query:  deleteAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				id := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessReviewCampaignId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete access review campaign",
-			role:   "admin",
-			client: admin,
-			query:  deleteAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				id := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessReviewCampaignId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete access review campaign",
-			role:   "viewer",
-			client: viewer,
-			query:  deleteAccessReviewCampaignMutation,
-			variables: func() map[string]any {
-				id := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessReviewCampaignId": id}}
-			},
-			shouldAllow: false,
-		},
-		// Access Review Campaign - List
-		{
-			name:   "owner can list access review campaigns",
-			role:   "owner",
-			client: owner,
-			query:  listAccessReviewCampaignsQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list access review campaigns",
-			role:   "admin",
-			client: admin,
-			query:  listAccessReviewCampaignsQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list access review campaigns",
-			role:   "viewer",
-			client: viewer,
-			query:  listAccessReviewCampaignsQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "owner can update organization",
-			role:   "owner",
-			client: owner,
-			query:  updateOrganizationMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Updated Org")}}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
-		{
-			name:   "admin can update organization",
-			role:   "admin",
-			client: admin,
-			query:  updateOrganizationMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Updated Org")}}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
-		{
-			name:   "viewer cannot update organization",
-			role:   "viewer",
-			client: viewer,
-			query:  updateOrganizationMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("Updated Org")}}
-			},
-			shouldAllow: false,
-			useConnect:  true,
-		},
-		{
-			name:   "owner can get organization",
-			role:   "owner",
-			client: owner,
-			query:  getOrganizationQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
-		{
-			name:   "admin can get organization",
-			role:   "admin",
-			client: admin,
-			query:  getOrganizationQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
-		{
-			name:   "viewer can get organization",
-			role:   "viewer",
-			client: viewer,
-			query:  getOrganizationQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
-		{
-			name:   "owner can list users",
-			role:   "owner",
-			client: owner,
-			query:  listUsersQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
-		{
-			name:   "admin can list users",
-			role:   "admin",
-			client: admin,
-			query:  listUsersQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
-		{
-			name:   "viewer can list users",
-			role:   "viewer",
-			client: viewer,
-			query:  listUsersQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-			useConnect:  true,
-		},
+	org := testutil.NewOrganizationRoles(t)
+	ownerClient := org.Client(t, testutil.RoleOwner)
+	shared := rbacShared{
+		orgID:       ownerClient.GetOrganizationID().String(),
+		frameworkID: factory.NewFramework(ownerClient).WithName("RBAC Test Framework").Create(),
+		measureID:   factory.NewMeasure(ownerClient).WithName("RBAC Test Measure").Create(),
 	}
+	_ = factory.NewControl(ownerClient, shared.frameworkID).WithName("RBAC Test Control").Create()
+	_ = factory.NewTask(ownerClient, shared.measureID).WithName("RBAC Test Task").Create()
+
+	tests := []rbacTestCase{
+		{resource: "framework", operation: "create", name: "owner can create framework", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "framework", operation: "create", name: "admin can create framework", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "framework", operation: "create", name: "viewer cannot create framework", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "framework", operation: "update", name: "owner can update framework", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "framework", operation: "update", name: "admin can update framework", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "framework", operation: "update", name: "viewer cannot update framework", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "framework", operation: "delete", name: "owner can delete framework", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "framework", operation: "delete", name: "admin can delete framework", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "framework", operation: "delete", name: "viewer cannot delete framework", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "framework", operation: "list", name: "owner can list frameworks", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "framework", operation: "list", name: "admin can list frameworks", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "framework", operation: "list", name: "viewer can list frameworks", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "control", operation: "create", name: "owner can create control", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "control", operation: "create", name: "admin can create control", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "control", operation: "create", name: "viewer cannot create control", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "control", operation: "update", name: "owner can update control", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "control", operation: "update", name: "admin can update control", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "control", operation: "update", name: "viewer cannot update control", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "control", operation: "delete", name: "owner can delete control", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "control", operation: "delete", name: "admin can delete control", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "control", operation: "list", name: "owner can list controls", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "control", operation: "list", name: "admin can list controls", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "control", operation: "list", name: "viewer can list controls", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "measure", operation: "create", name: "owner can create measure", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "measure", operation: "create", name: "admin can create measure", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "measure", operation: "create", name: "viewer cannot create measure", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "measure", operation: "update", name: "owner can update measure", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "measure", operation: "update", name: "admin can update measure", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "measure", operation: "update", name: "viewer cannot update measure", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "measure", operation: "delete", name: "owner can delete measure", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "measure", operation: "delete", name: "admin can delete measure", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "measure", operation: "delete", name: "viewer cannot delete measure", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "measure", operation: "list", name: "owner can list measures", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "measure", operation: "list", name: "admin can list measures", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "measure", operation: "list", name: "viewer can list measures", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "task", operation: "create", name: "owner can create task", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "task", operation: "create", name: "admin can create task", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "task", operation: "create", name: "viewer cannot create task", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "task", operation: "update", name: "owner can update task", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "task", operation: "update", name: "admin can update task", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "task", operation: "update", name: "viewer cannot update task", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "task", operation: "delete", name: "owner can delete task", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "task", operation: "delete", name: "admin can delete task", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "task", operation: "delete", name: "viewer cannot delete task", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "task", operation: "list", name: "owner can list tasks", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "task", operation: "list", name: "admin can list tasks", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "task", operation: "list", name: "viewer can list tasks", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "risk", operation: "create", name: "owner can create risk", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "risk", operation: "create", name: "admin can create risk", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "risk", operation: "create", name: "viewer cannot create risk", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "risk", operation: "update", name: "owner can update risk", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "risk", operation: "update", name: "admin can update risk", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "risk", operation: "update", name: "viewer cannot update risk", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "risk", operation: "delete", name: "owner can delete risk", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "risk", operation: "delete", name: "admin can delete risk", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "risk", operation: "delete", name: "viewer cannot delete risk", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "risk", operation: "list", name: "owner can list risks", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "risk", operation: "list", name: "admin can list risks", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "risk", operation: "list", name: "viewer can list risks", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "third_party", operation: "create", name: "owner can create thirdParty", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "third_party", operation: "create", name: "admin can create thirdParty", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "third_party", operation: "create", name: "viewer cannot create thirdParty", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "third_party", operation: "update", name: "owner can update thirdParty", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "third_party", operation: "update", name: "admin can update thirdParty", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "third_party", operation: "update", name: "viewer cannot update thirdParty", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "third_party", operation: "delete", name: "owner can delete thirdParty", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "third_party", operation: "delete", name: "admin can delete thirdParty", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "third_party", operation: "delete", name: "viewer cannot delete thirdParty", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "third_party", operation: "list", name: "owner can list third parties", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "third_party", operation: "list", name: "admin can list third parties", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "third_party", operation: "list", name: "viewer can list third parties", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "access_review_source", operation: "create", name: "owner can create access source", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_source", operation: "create", name: "admin can create access source", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_source", operation: "create", name: "viewer cannot create access source", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "access_review_source", operation: "update", name: "owner can update access source", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_source", operation: "update", name: "admin can update access source", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_source", operation: "update", name: "viewer cannot update access source", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "access_review_source", operation: "delete", name: "owner can delete access source", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_source", operation: "delete", name: "admin can delete access source", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_source", operation: "delete", name: "viewer cannot delete access source", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "access_review_source", operation: "list", name: "owner can list access sources", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_source", operation: "list", name: "admin can list access sources", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_source", operation: "list", name: "viewer can list access sources", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "create", name: "owner can create access review campaign", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "create", name: "admin can create access review campaign", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "create", name: "viewer cannot create access review campaign", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "access_review_campaign", operation: "update", name: "owner can update access review campaign", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "update", name: "admin can update access review campaign", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "update", name: "viewer cannot update access review campaign", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "access_review_campaign", operation: "delete", name: "owner can delete access review campaign", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "delete", name: "admin can delete access review campaign", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "delete", name: "viewer cannot delete access review campaign", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "access_review_campaign", operation: "list", name: "owner can list access review campaigns", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "list", name: "admin can list access review campaigns", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "access_review_campaign", operation: "list", name: "viewer can list access review campaigns", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "organization", operation: "update", name: "owner can update organization", role: testutil.RoleOwner, shouldAllow: true, useConnect: true},
+		{resource: "organization", operation: "update", name: "admin can update organization", role: testutil.RoleAdmin, shouldAllow: true, useConnect: true},
+		{resource: "organization", operation: "update", name: "viewer cannot update organization", role: testutil.RoleViewer, shouldAllow: false, useConnect: true},
+		{resource: "organization", operation: "get", name: "owner can get organization", role: testutil.RoleOwner, shouldAllow: true, useConnect: true},
+		{resource: "organization", operation: "get", name: "admin can get organization", role: testutil.RoleAdmin, shouldAllow: true, useConnect: true},
+		{resource: "organization", operation: "get", name: "viewer can get organization", role: testutil.RoleViewer, shouldAllow: true, useConnect: true},
+		{resource: "organization", operation: "list_users", name: "owner can list users", role: testutil.RoleOwner, shouldAllow: true, useConnect: true},
+		{resource: "organization", operation: "list_users", name: "admin can list users", role: testutil.RoleAdmin, shouldAllow: true, useConnect: true},
+		{resource: "organization", operation: "list_users", name: "viewer can list users", role: testutil.RoleViewer, shouldAllow: true, useConnect: true},
+	}
+
+	// TODO: Fix permission bug - viewer should not be able to delete controls
+	// {resource: "control", operation: "delete", name: "viewer cannot delete control", role: testutil.RoleViewer, shouldAllow: false},
 
 	for _, tt := range tests {
 		t.Run(
-			tt.name,
+			tt.resource+"/"+tt.operation+"/"+tt.name,
 			func(t *testing.T) {
-				var err error
-				if tt.useConnect {
-					_, err = tt.client.DoConnect(tt.query, tt.variables())
-				} else {
-					_, err = tt.client.Do(tt.query, tt.variables())
-				}
+				t.Parallel()
 
-				if tt.shouldAllow {
-					require.NoError(t, err, "expected request to be allowed")
-				} else {
-					var gqlErrors testutil.GraphQLErrors
-					require.ErrorAs(t, err, &gqlErrors, "expected GraphQL error, got: %T", err)
-					require.Len(t, gqlErrors, 1, "expected exactly one GraphQL error, got %d errors: %v", len(gqlErrors), gqlErrors)
-					// Connect API uses a different error format - check either code or message
-					code := gqlErrors[0].Code()
-					msg := gqlErrors[0].Message
-					isForbidden := code == "FORBIDDEN" || (code == "" && (strings.Contains(msg, "does not have sufficient permissions") || strings.Contains(msg, "insufficient permissions")))
-					require.True(t, isForbidden, "expected FORBIDDEN error, got code=%q message=%q", code, msg)
-				}
+				client := org.Client(t, tt.role)
+				vars := rbacVariables(t, tt.resource, tt.operation, tt.role, org, shared)
+				err := executeRBACRequest(
+					client,
+					rbacQuery(tt.resource, tt.operation),
+					vars,
+					tt.useConnect,
+				)
+				assertRBACRequestResult(t, err, tt.shouldAllow)
 			},
 		)
 	}
+}
+
+func rbacQuery(resource, operation string) string {
+	switch resource {
+	case "framework":
+		switch operation {
+		case "create":
+			return createFrameworkMutation
+		case "update":
+			return updateFrameworkMutation
+		case "delete":
+			return deleteFrameworkMutation
+		case "list":
+			return listFrameworksQuery
+		}
+	case "control":
+		switch operation {
+		case "create":
+			return createControlMutation
+		case "update":
+			return updateControlMutation
+		case "delete":
+			return deleteControlMutation
+		case "list":
+			return listControlsQuery
+		}
+	case "measure":
+		switch operation {
+		case "create":
+			return createMeasureMutation
+		case "update":
+			return updateMeasureMutation
+		case "delete":
+			return deleteMeasureMutation
+		case "list":
+			return listMeasuresQuery
+		}
+	case "task":
+		switch operation {
+		case "create":
+			return createTaskMutation
+		case "update":
+			return updateTaskMutation
+		case "delete":
+			return deleteTaskMutation
+		case "list":
+			return listTasksQuery
+		}
+	case "risk":
+		switch operation {
+		case "create":
+			return createRiskMutation
+		case "update":
+			return updateRiskMutation
+		case "delete":
+			return deleteRiskMutation
+		case "list":
+			return listRisksQuery
+		}
+	case "third_party":
+		switch operation {
+		case "create":
+			return createThirdPartyMutation
+		case "update":
+			return updateThirdPartyMutation
+		case "delete":
+			return deleteThirdPartyMutation
+		case "list":
+			return listThirdPartiesQuery
+		}
+	case "access_review_source":
+		switch operation {
+		case "create":
+			return createAccessReviewSourceMutation
+		case "update":
+			return updateAccessReviewSourceMutation
+		case "delete":
+			return deleteAccessReviewSourceMutation
+		case "list":
+			return listAccessReviewSourcesQuery
+		}
+	case "access_review_campaign":
+		switch operation {
+		case "create":
+			return createAccessReviewCampaignMutation
+		case "update":
+			return updateAccessReviewCampaignMutation
+		case "delete":
+			return deleteAccessReviewCampaignMutation
+		case "list":
+			return listAccessReviewCampaignsQuery
+		}
+	case "organization":
+		switch operation {
+		case "update":
+			return updateOrganizationMutation
+		case "get":
+			return getOrganizationQuery
+		case "list_users":
+			return listUsersQuery
+		}
+	}
+
+	panic("unknown rbac query: " + resource + "/" + operation)
+}
+
+func rbacVariables(
+	t *testing.T,
+	resource string,
+	operation string,
+	role testutil.TestRole,
+	org testutil.OrganizationRoles,
+	shared rbacShared,
+) map[string]any {
+	owner := org.Client(t, testutil.RoleOwner)
+
+	switch resource {
+	case "framework":
+		switch operation {
+		case "create":
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId": shared.orgID,
+					"name":           factory.SafeName("Framework"),
+				},
+			}
+		case "update":
+			frameworkID := factory.NewFramework(owner).
+				WithName(factory.SafeName("RBAC Test Framework")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"id":   frameworkID,
+					"name": factory.SafeName("Updated Framework"),
+				},
+			}
+		case "delete":
+			id := factory.NewFramework(owner).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"frameworkId": id}}
+		case "list":
+			return map[string]any{"id": shared.orgID}
+		}
+	case "control":
+		switch operation {
+		case "create":
+			frameworkID := factory.NewFramework(owner).
+				WithName(factory.SafeName("RBAC control framework")).
+				Create()
+
+			var sectionTitle string
+
+			switch role {
+			case testutil.RoleOwner:
+				sectionTitle = factory.SafeName("Section Owner")
+			case testutil.RoleAdmin:
+				sectionTitle = factory.SafeName("Section Admin")
+			case testutil.RoleViewer:
+				sectionTitle = factory.SafeName("Section Viewer")
+			}
+
+			return map[string]any{
+				"input": map[string]any{
+					"frameworkId":   frameworkID,
+					"name":          factory.SafeName("Control"),
+					"description":   "Test",
+					"sectionTitle":  sectionTitle,
+					"bestPractice":  true,
+					"maturityLevel": "INITIAL",
+				},
+			}
+		case "update":
+			frameworkID := factory.NewFramework(owner).
+				WithName(factory.SafeName("RBAC control framework")).
+				Create()
+			controlID := factory.NewControl(owner, frameworkID).
+				WithName(factory.SafeName("RBAC Test Control")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"id":   controlID,
+					"name": factory.SafeName("Updated Control"),
+				},
+			}
+		case "delete":
+			frameworkID := factory.NewFramework(owner).
+				WithName(factory.SafeName("RBAC control framework")).
+				Create()
+			id := factory.NewControl(owner, frameworkID).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"controlId": id}}
+		case "list":
+			return map[string]any{"id": shared.frameworkID}
+		}
+	case "measure":
+		switch operation {
+		case "create":
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId": shared.orgID,
+					"name":           factory.SafeName("Measure"),
+					"category":       "POLICY",
+				},
+			}
+		case "update":
+			measureID := factory.NewMeasure(owner).
+				WithName(factory.SafeName("RBAC Test Measure")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"id":   measureID,
+					"name": factory.SafeName("Updated Measure"),
+				},
+			}
+		case "delete":
+			id := factory.NewMeasure(owner).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"measureId": id}}
+		case "list":
+			return map[string]any{"id": shared.orgID}
+		}
+	case "task":
+		switch operation {
+		case "create":
+			measureID := factory.NewMeasure(owner).
+				WithName(factory.SafeName("RBAC task measure")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId": shared.orgID,
+					"measureId":      measureID,
+					"name":           factory.SafeName("Task"),
+					"priority":       "MEDIUM",
+				},
+			}
+		case "update":
+			measureID := factory.NewMeasure(owner).
+				WithName(factory.SafeName("RBAC task measure")).
+				Create()
+			taskID := factory.NewTask(owner, measureID).
+				WithName(factory.SafeName("RBAC Test Task")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"taskId": taskID,
+					"name":   factory.SafeName("Updated Task"),
+				},
+			}
+		case "delete":
+			measureID := factory.NewMeasure(owner).
+				WithName(factory.SafeName("RBAC task measure")).
+				Create()
+			id := factory.NewTask(owner, measureID).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"taskId": id}}
+		case "list":
+			return map[string]any{"id": shared.measureID}
+		}
+	case "risk":
+		switch operation {
+		case "create":
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId":     shared.orgID,
+					"name":               factory.SafeName("Risk"),
+					"category":           "SECURITY",
+					"treatment":          "MITIGATED",
+					"inherentLikelihood": 2,
+					"inherentImpact":     2,
+				},
+			}
+		case "update":
+			riskID := factory.NewRisk(owner).
+				WithName(factory.SafeName("RBAC Test Risk")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"id":   riskID,
+					"name": factory.SafeName("Updated Risk"),
+				},
+			}
+		case "delete":
+			id := factory.NewRisk(owner).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"riskId": id}}
+		case "list":
+			return map[string]any{"id": shared.orgID}
+		}
+	case "third_party":
+		switch operation {
+		case "create":
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId": shared.orgID,
+					"name":           factory.SafeName("ThirdParty"),
+				},
+			}
+		case "update":
+			thirdPartyID := factory.NewThirdParty(owner).
+				WithName(factory.SafeName("RBAC Test ThirdParty")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"id":   thirdPartyID,
+					"name": factory.SafeName("Updated ThirdParty"),
+				},
+			}
+		case "delete":
+			id := factory.NewThirdParty(owner).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"thirdPartyId": id}}
+		case "list":
+			return map[string]any{"id": shared.orgID}
+		}
+	case "access_review_source":
+		switch operation {
+		case "create":
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId": shared.orgID,
+					"name":           factory.SafeName("AccessReviewSource"),
+				},
+			}
+		case "update":
+			accessReviewSourceID := factory.NewAccessReviewSource(owner, shared.orgID).
+				WithName(factory.SafeName("RBAC Test Source")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"accessReviewSourceId": accessReviewSourceID,
+					"name":                 factory.SafeName("Updated Source"),
+				},
+			}
+		case "delete":
+			id := factory.NewAccessReviewSource(owner, shared.orgID).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"accessReviewSourceId": id}}
+		case "list":
+			return map[string]any{"id": shared.orgID}
+		}
+	case "access_review_campaign":
+		switch operation {
+		case "create":
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId": shared.orgID,
+					"name":           factory.SafeName("Campaign"),
+				},
+			}
+		case "update":
+			accessReviewCampaignID := factory.NewAccessReviewCampaign(owner, shared.orgID).
+				WithName(factory.SafeName("RBAC Test Campaign")).
+				Create()
+
+			return map[string]any{
+				"input": map[string]any{
+					"accessReviewCampaignId": accessReviewCampaignID,
+					"name":                   factory.SafeName("Updated Campaign"),
+				},
+			}
+		case "delete":
+			id := factory.NewAccessReviewCampaign(owner, shared.orgID).WithName(factory.SafeName("ToDelete")).Create()
+
+			return map[string]any{"input": map[string]any{"accessReviewCampaignId": id}}
+		case "list":
+			return map[string]any{"id": shared.orgID}
+		}
+	case "organization":
+		switch operation {
+		case "update":
+			return map[string]any{
+				"input": map[string]any{
+					"organizationId": shared.orgID,
+					"name":           factory.SafeName("Updated Org"),
+				},
+			}
+		case "get", "list_users":
+			return map[string]any{"id": shared.orgID}
+		}
+	}
+
+	t.Fatalf("unknown rbac variables: %s/%s", resource, operation)
+
+	return nil
+}
+
+func executeRBACRequest(
+	client *testutil.Client,
+	query string,
+	variables map[string]any,
+	useConnect bool,
+) error {
+	if useConnect {
+		_, err := client.DoConnect(query, variables)
+
+		return err
+	}
+
+	_, err := client.Do(query, variables)
+
+	return err
+}
+
+func assertRBACRequestResult(t *testing.T, err error, shouldAllow bool) {
+	t.Helper()
+
+	if shouldAllow {
+		require.NoError(t, err, "expected request to be allowed")
+
+		return
+	}
+
+	var gqlErrors testutil.GraphQLErrors
+
+	require.ErrorAs(t, err, &gqlErrors, "expected GraphQL error, got: %T", err)
+	require.Len(t, gqlErrors, 1, "expected exactly one GraphQL error, got %d errors: %v", len(gqlErrors), gqlErrors)
+	// Connect API uses a different error format - check either code or message
+	code := gqlErrors[0].Code()
+	msg := gqlErrors[0].Message
+	isForbidden := code == "FORBIDDEN" || (code == "" && (strings.Contains(msg, "does not have sufficient permissions") || strings.Contains(msg, "insufficient permissions")))
+	require.True(t, isForbidden, "expected FORBIDDEN error, got code=%q message=%q", code, msg)
 }
