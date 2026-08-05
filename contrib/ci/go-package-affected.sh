@@ -30,8 +30,8 @@ repository_root="$(git rev-parse --show-toplevel)"
 
 # A shallow checkout can omit the comparison commit after a multi-commit push.
 # Build in that case instead of risking a false negative.
-if ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null ||
-  ! git cat-file -e "${head_sha}^{commit}" 2>/dev/null; then
+if ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null \
+  || ! git cat-file -e "${head_sha}^{commit}" 2>/dev/null; then
   echo "true"
   exit 0
 fi
@@ -42,10 +42,10 @@ mapfile -t changed_files < <(
 
 for changed_file in "${changed_files[@]}"; do
   case "$changed_file" in
-  go.mod | go.sum | .github/workflows/make.yaml | contrib/ci/go-package-affected.sh)
-    echo "true"
-    exit 0
-    ;;
+    go.mod | go.sum | .github/workflows/make.yaml | contrib/ci/go-package-affected.sh)
+      echo "true"
+      exit 0
+      ;;
   esac
 done
 
