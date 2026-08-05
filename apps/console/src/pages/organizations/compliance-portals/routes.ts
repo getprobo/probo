@@ -22,7 +22,6 @@ import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 import { redirect } from "react-router";
 
-import { ContentErrorBoundary } from "#/components/ContentErrorBoundary";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
@@ -73,61 +72,51 @@ export const compliancePortalRoutes = [
       {
         index: true,
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/overview/CompliancePortalOverviewPageLoader")),
       },
       {
         path: "brand",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/brand/CompliancePortalBrandPageLoader")),
       },
       {
         path: "references",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/references/CompliancePortalReferencesPageLoader")),
       },
       {
         path: "commitments",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/commitments/CompliancePortalCommitmentsPageLoader")),
       },
       {
         path: "audits",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/audits/CompliancePortalAuditsPageLoader")),
       },
       {
         path: "documents",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/documents/CompliancePortalDocumentsPageLoader")),
       },
       {
         path: "files",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/files/CompliancePortalFilesPageLoader")),
       },
       {
         path: "third-parties",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/third-parties/CompliancePortalThirdPartiesPageLoader")),
       },
       {
         path: "access",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/access/CompliancePortalAccessPageLoader")),
       },
       {
         path: "mailing-list",
         Fallback: LinkCardSkeleton,
-        ErrorBoundary: ContentErrorBoundary,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/mailing-list/CompliancePortalMailingListPageLoader")),
       },
     ],

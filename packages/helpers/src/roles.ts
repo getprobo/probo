@@ -26,8 +26,8 @@ export const Role = {
   VIEWER: "VIEWER",
   AUDITOR: "AUDITOR",
   EMPLOYEE: "EMPLOYEE",
-  COMPLIANCE_MANAGER: "COMPLIANCE_MANAGER",
-  COMPLIANCE_ACCESS_MANAGER: "COMPLIANCE_ACCESS_MANAGER",
+  COMPLIANCE_PORTAL_MANAGER: "COMPLIANCE_PORTAL_MANAGER",
+  COMPLIANCE_PORTAL_ACCESS_MANAGER: "COMPLIANCE_PORTAL_ACCESS_MANAGER",
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role];
@@ -37,8 +37,8 @@ export const roles = [
   "VIEWER",
   "AUDITOR",
   "EMPLOYEE",
-  "COMPLIANCE_MANAGER",
-  "COMPLIANCE_ACCESS_MANAGER",
+  "COMPLIANCE_PORTAL_MANAGER",
+  "COMPLIANCE_PORTAL_ACCESS_MANAGER",
 ] as const
 
 export function getAssignableRoles(currentRole: Role): Role[] {
@@ -49,8 +49,8 @@ export function getAssignableRoles(currentRole: Role): Role[] {
       Role.VIEWER,
       Role.AUDITOR,
       Role.EMPLOYEE,
-      Role.COMPLIANCE_MANAGER,
-      Role.COMPLIANCE_ACCESS_MANAGER,
+      Role.COMPLIANCE_PORTAL_MANAGER,
+      Role.COMPLIANCE_PORTAL_ACCESS_MANAGER,
     ];
   }
 
@@ -60,8 +60,8 @@ export function getAssignableRoles(currentRole: Role): Role[] {
       Role.VIEWER,
       Role.AUDITOR,
       Role.EMPLOYEE,
-      Role.COMPLIANCE_MANAGER,
-      Role.COMPLIANCE_ACCESS_MANAGER,
+      Role.COMPLIANCE_PORTAL_MANAGER,
+      Role.COMPLIANCE_PORTAL_ACCESS_MANAGER,
     ];
   }
 
@@ -91,12 +91,12 @@ export function getMembershipRoles(t: Translator) {
       label: t("helpers.membershipRole.employee"),
     },
     {
-      value: Role.COMPLIANCE_MANAGER,
-      label: t("helpers.membershipRole.complianceManager"),
+      value: Role.COMPLIANCE_PORTAL_MANAGER,
+      label: t("helpers.membershipRole.compliancePortalManager"),
     },
     {
-      value: Role.COMPLIANCE_ACCESS_MANAGER,
-      label: t("helpers.membershipRole.complianceAccessManager"),
+      value: Role.COMPLIANCE_PORTAL_ACCESS_MANAGER,
+      label: t("helpers.membershipRole.compliancePortalAccessManager"),
     },
   ] as const;
 }
@@ -113,10 +113,10 @@ export function getMembershipRole(t: Translator, role?: string): string {
       return t("helpers.membershipRole.auditor");
     case Role.EMPLOYEE:
       return t("helpers.membershipRole.employee");
-    case Role.COMPLIANCE_MANAGER:
-      return t("helpers.membershipRole.complianceManager");
-    case Role.COMPLIANCE_ACCESS_MANAGER:
-      return t("helpers.membershipRole.complianceAccessManager");
+    case Role.COMPLIANCE_PORTAL_MANAGER:
+      return t("helpers.membershipRole.compliancePortalManager");
+    case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER:
+      return t("helpers.membershipRole.compliancePortalAccessManager");
     default:
       return t("helpers.common.unknown");
   }
