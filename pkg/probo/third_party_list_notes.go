@@ -76,7 +76,10 @@ func rewriteThirdPartyRegisterNotesNodes(nodes []prosemirror.Node) ([]prosemirro
 
 		blocks, err := markdownNotesToProseMirrorNodes(notes)
 		if err != nil {
-			return nil, false, fmt.Errorf("cannot convert notes markdown: %w", err)
+			// Leave the legacy paragraph in place so one unparseable note
+			// does not abort repairing the rest of the document.
+			out = append(out, node)
+			continue
 		}
 
 		out = append(out, notesLabelParagraph())
@@ -178,10 +181,12 @@ func looksLikeMarkdownNotes(s string) bool {
 // into a comma-separated sequence of ProseMirror block nodes for splicing
 // into the third-party register JSON template. Headings are demoted so they
 // nest under the register's h3 "Risk Assessments" sections (h1→h4, …).
+// On conversion failure it falls back to a plain-text paragraph so one
+// malformed note cannot block publishing the whole register.
 func proseMirrorBlocksFromMarkdownNotes(notes string) (string, error) {
 	nodes, err := markdownNotesToProseMirrorNodes(notes)
 	if err != nil {
-		return "", err
+		nodes = plainTextNotesNodes(notes)
 	}
 
 	parts := make([]string, 0, len(nodes))
@@ -209,15 +214,7 @@ func markdownNotesToProseMirrorNodes(notes string) ([]prosemirror.Node, error) {
 	}
 
 	if len(doc.Content) == 0 {
-		fallback := notes
-		doc.Content = []prosemirror.Node{
-			{
-				Type: prosemirror.NodeParagraph,
-				Content: []prosemirror.Node{
-					{Type: prosemirror.NodeText, Text: &fallback},
-				},
-			},
-		}
+		return plainTextNotesNodes(notes), nil
 	}
 
 	if err := demoteProseMirrorHeadingLevels(doc.Content, thirdPartyRegisterNotesHeadingDemote); err != nil {
@@ -225,6 +222,24 @@ func markdownNotesToProseMirrorNodes(notes string) ([]prosemirror.Node, error) {
 	}
 
 	return doc.Content, nil
+}
+
+func plainTextNotesNodes(notes string) []prosemirror.Node {
+	notes = strings.TrimSpace(notes)
+	if notes == "" {
+		notes = "—"
+	}
+
+	text := notes
+
+	return []prosemirror.Node{
+		{
+			Type: prosemirror.NodeParagraph,
+			Content: []prosemirror.Node{
+				{Type: prosemirror.NodeText, Text: &text},
+			},
+		},
+	}
 }
 
 func demoteProseMirrorHeadingLevels(nodes []prosemirror.Node, delta int) error {

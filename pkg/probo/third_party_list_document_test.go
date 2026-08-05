@@ -127,6 +127,48 @@ func TestBuildThirdPartyListDocument_PlainNotesFallback(t *testing.T) {
 	assert.Contains(t, collectText(doc), "Notes: Not specified")
 }
 
+func TestBuildThirdPartyListDocument_DoesNotFailWholeRegisterOnOddNotes(t *testing.T) {
+	t.Parallel()
+
+	// Edge-case Markdown and a second normal assessment must still produce a
+	// publishable register; note conversion must not hard-fail the document.
+	raw, err := probo.BuildThirdPartyListDocument(
+		docgen.ThirdPartyListData{
+			Title:             "ThirdParties",
+			OrganizationName:  "Probo",
+			TotalThirdParties: 1,
+			Rows: []docgen.ThirdPartyListRow{
+				{
+					Name: "Acme",
+					RiskAssessments: []docgen.ThirdPartyListRiskAssessment{
+						{
+							AssessedAt:      "2026-07-31",
+							ExpiresAt:       "2027-07-31",
+							DataSensitivity: "Low",
+							BusinessImpact:  "Low",
+							Notes:           "### Only h3\n\n_italic_ and [link](https://example.com)\n\n1. ordered\n2. item",
+						},
+						{
+							AssessedAt:      "2026-08-01",
+							ExpiresAt:       "2027-08-01",
+							DataSensitivity: "Medium",
+							BusinessImpact:  "Medium",
+							Notes:           "## Executive Summary\nApprove.",
+						},
+					},
+				},
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	doc, err := prosemirror.Parse(raw)
+	require.NoError(t, err)
+	assert.Contains(t, collectText(doc), "Only h3")
+	assert.Contains(t, collectText(doc), "Approve.")
+	assert.True(t, containsHeading(doc, 5, "Executive Summary"))
+}
+
 func TestBuildThirdPartyListDocument_EmptyNotesPlaceholder(t *testing.T) {
 	t.Parallel()
 

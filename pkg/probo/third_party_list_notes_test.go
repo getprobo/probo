@@ -114,3 +114,37 @@ func TestRewriteThirdPartyRegisterNotesContent_Idempotent(t *testing.T) {
 	assert.False(t, changedAgain)
 	assert.Equal(t, once, twice)
 }
+
+func TestRewriteThirdPartyRegisterNotesContent_RewritesSiblingWhenOneLooksLikeMarkdown(t *testing.T) {
+	t.Parallel()
+
+	raw := `{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": "Not specified" }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": "## Executive Summary\nApprove." }
+      ]
+    }
+  ]
+}`
+
+	out, changed, err := probo.RewriteThirdPartyRegisterNotesContent(raw)
+	require.NoError(t, err)
+	require.True(t, changed)
+
+	doc, err := prosemirror.Parse(out)
+	require.NoError(t, err)
+	assert.Contains(t, collectText(doc), "Not specified")
+	assert.True(t, containsHeading(doc, 5, "Executive Summary"))
+	assert.Contains(t, collectText(doc), "Approve.")
+}
