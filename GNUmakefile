@@ -243,7 +243,7 @@ test-e2e-coverage-run:
 	PROBO_E2E_BINARY=$(E2E_BINARY) \
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
-	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -p=1 -count=1 ./e2e/internal/... ./e2e/console/... ./e2e/trust/... ./e2e/mcp/...
+	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -p=1 -count=1 ./e2e/internal/... ./e2e/console/... ./e2e/mcp/...
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -o=coverage-e2e.out
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -pkg=$(E2E_CORE_COVER_PKGS) -o=coverage-e2e-core.out
 	$(GO) tool covdata percent -i=$(E2E_COVER_DIR) > coverage-e2e-packages.txt

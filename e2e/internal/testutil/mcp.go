@@ -110,7 +110,7 @@ func NewMCPClient(t require.TestingT, owner *Client) *MCPClient {
 func NewMCPClientWithAccessToken(t require.TestingT, owner *Client, accessToken string) *MCPClient {
 	mc := &MCPClient{
 		t:        t,
-		baseURL:  owner.BaseURL() + "/mcp/v1",
+		baseURL:  owner.BaseURL() + "/api/mcp/v1",
 		apiToken: accessToken,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
