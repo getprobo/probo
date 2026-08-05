@@ -23,7 +23,6 @@ package console_test
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -290,10 +289,8 @@ func queryOrganizationName(t *testing.T, client *testutil.Client) string {
 	return result.Node.Name
 }
 
-func postMailingListConfirmSubscription(t *testing.T, token string) {
+func postMailingListConfirmSubscription(t *testing.T, confirmURL string) {
 	t.Helper()
-
-	confirmURL := testutil.GetBaseURL() + "/mail-actions/confirm?token=" + url.QueryEscape(token)
 
 	resp, err := http.Post(confirmURL, "", nil)
 	require.NoError(t, err, "post mailing list confirm subscription")
@@ -721,7 +718,7 @@ func requireMailingListUpdateStatusEventually(
 	}
 }
 
-func requireMailpitLinkTokenEventually(
+func requireMailpitConfirmationURLEventually(
 	t *testing.T,
 	client *testutil.Client,
 	searchQuery string,
@@ -729,27 +726,27 @@ func requireMailpitLinkTokenEventually(
 	t.Helper()
 
 	var (
-		token   string
+		linkURL string
 		lastErr error
 	)
 
 	ok := assert.Eventually(
 		t,
 		func() bool {
-			token, lastErr = client.FindLinkTokenFromMailpitSearch(searchQuery)
-			return lastErr == nil && token != ""
+			linkURL, lastErr = client.FindLinkFromMailpitSearch(searchQuery, "/mail-actions/confirm")
+			return lastErr == nil && linkURL != ""
 		},
 		90*time.Second,
 		500*time.Millisecond,
-		"mailpit should contain a link token for query %s",
+		"mailpit should contain a confirmation link for query %s",
 		searchQuery,
 	)
 	if !ok {
-		require.NoError(t, lastErr, "last mailpit link token search failed")
-		require.FailNow(t, "mailpit link token not found")
+		require.NoError(t, lastErr, "last mailpit confirmation link search failed")
+		require.FailNow(t, "mailpit confirmation link not found")
 	}
 
-	return token
+	return linkURL
 }
 
 func requireMailingListUpdateEmailEventually(

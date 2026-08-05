@@ -213,8 +213,8 @@ func TestCompliancePortal_MailingList_PendingSubscriberConfirmation(t *testing.T
 		"to:%s subject:\"Confirm Your Compliance Updates Subscription\"",
 		subscriberEmail,
 	)
-	token := requireMailpitLinkTokenEventually(t, owner, searchQuery)
-	postMailingListConfirmSubscription(t, token)
+	confirmURL := requireMailpitConfirmationURLEventually(t, owner, searchQuery)
+	postMailingListConfirmSubscription(t, confirmURL)
 
 	confirmed := queryMailingListSubscriberNode(t, owner, subscriber.ID)
 	assert.Equal(t, "CONFIRMED", confirmed.Status)

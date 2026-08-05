@@ -207,9 +207,9 @@ func (c *Client) FindMailpitMessage(
 	return nil, lastErr
 }
 
-// FindLinkTokenFromMailpitSearch scans all messages from search and returns the
-// first token query parameter found among their links.
-func (c *Client) FindLinkTokenFromMailpitSearch(searchQuery string) (string, error) {
+// FindLinkFromMailpitSearch scans all messages from search and returns the first
+// link whose parsed path matches linkPath.
+func (c *Client) FindLinkFromMailpitSearch(searchQuery string, linkPath string) (string, error) {
 	searchMails, err := c.SearchMails(searchQuery)
 	if err != nil {
 		return "", fmt.Errorf("mailpit search failed: %w", err)
@@ -242,12 +242,12 @@ func (c *Client) FindLinkTokenFromMailpitSearch(searchQuery string) (string, err
 				continue
 			}
 
-			if token := linkURL.Query().Get("token"); token != "" {
-				return token, nil
+			if linkURL.Path == linkPath && linkURL.Query().Get("token") != "" {
+				return link.URL, nil
 			}
 		}
 
-		lastErr = fmt.Errorf("mailpit message %s contained no token link", messageID)
+		lastErr = fmt.Errorf("mailpit message %s contained no link for path %q", messageID, linkPath)
 	}
 
 	return "", lastErr
