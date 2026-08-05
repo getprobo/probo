@@ -532,7 +532,7 @@ func (c *Client) pollForLinkToken(searchQuery string) string {
 		require.NoError(c.T, err, "mailpit messages search failed")
 
 		for _, msg := range searchMails.Messages {
-			linksCheck, err := c.CheckMessageLinks(msg.ID)
+			linksCheck, err := c.CheckMessageLinks(msg.ResolvedID())
 			require.NoError(c.T, err, "mailpit link check failed")
 
 			for _, link := range linksCheck.Links {
