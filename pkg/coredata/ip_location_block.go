@@ -42,40 +42,7 @@ type (
 		CountryCode     CountryCode
 		SubdivisionCode *SubdivisionCode
 	}
-
-	IPLocationBlockSource interface {
-		Next() bool
-		LocationBlock() (IPLocationBlock, error)
-		Err() error
-	}
-
-	ipLocationCopySource struct {
-		source IPLocationBlockSource
-	}
 )
-
-func (s *ipLocationCopySource) Next() bool {
-	return s.source.Next()
-}
-
-func (s *ipLocationCopySource) Values() ([]any, error) {
-	block, err := s.source.LocationBlock()
-	if err != nil {
-		return nil, err
-	}
-
-	return []any{
-		block.AddressFamily,
-		block.IPStart,
-		block.IPEnd,
-		block.CountryCode.String(),
-		block.SubdivisionCode,
-	}, nil
-}
-
-func (s *ipLocationCopySource) Err() error {
-	return s.source.Err()
-}
 
 func LookupLocationByIP(ctx context.Context, conn pg.Querier, ip string) (IPLocation, error) {
 	q := `
@@ -124,8 +91,6 @@ func IsIPLocationBlocksPopulated(ctx context.Context, conn pg.Querier) (bool, er
 	return populated, nil
 }
 
-const ipLocationBlocksStagingTable = "common_ip_location_blocks_staging"
-
 func CreateIPLocationBlocksStaging(ctx context.Context, conn pg.Querier) error {
 	q := `
 DROP TABLE IF EXISTS common_ip_location_blocks_staging;
@@ -139,30 +104,6 @@ CREATE TABLE common_ip_location_blocks_staging
 	}
 
 	return nil
-}
-
-func CopyIPLocationBlocksStaging(
-	ctx context.Context,
-	conn pg.Querier,
-	source IPLocationBlockSource,
-) (int64, error) {
-	count, err := conn.CopyFrom(
-		ctx,
-		pgx.Identifier{ipLocationBlocksStagingTable},
-		[]string{
-			"address_family",
-			"ip_start",
-			"ip_end",
-			"country_code",
-			"subdivision_code",
-		},
-		&ipLocationCopySource{source: source},
-	)
-	if err != nil {
-		return 0, fmt.Errorf("cannot copy IP location blocks to staging: %w", err)
-	}
-
-	return count, nil
 }
 
 func FinalizeIPLocationBlocksStaging(ctx context.Context, conn pg.Querier) error {
