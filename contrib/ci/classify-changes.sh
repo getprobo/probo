@@ -49,7 +49,7 @@ mapfile -t changed_files < <(
 
 for changed_file in "${changed_files[@]}"; do
   case "$changed_file" in
-    .github/actions/* | .github/actions/**/* | .github/workflows/* | \
+    .github/actions/* | .github/workflows/* | \
       contrib/ci/* | GNUmakefile | go.mod | go.sum)
       emit_all "true"
       exit 0
@@ -82,7 +82,7 @@ for changed_file in "${changed_files[@]}"; do
   case "$changed_file" in
     *.cjs | *.css | *.js | *.jsx | *.mjs | *.ts | *.tsx | \
       package.json | package-lock.json | turbo.json | \
-      apps/* | apps/**/* | packages/* | packages/**/*)
+      apps/* | packages/*)
       javascript="true"
       ;;
   esac
@@ -95,15 +95,14 @@ for changed_file in "${changed_files[@]}"; do
 
   case "$changed_file" in
     .swift-format | .swiftlint.yml | \
-      cmd/probo-agent/installer/macos/enroll-ui/* | \
-      cmd/probo-agent/installer/macos/enroll-ui/**/*)
+      cmd/probo-agent/installer/macos/enroll-ui/*)
       swift="true"
       ;;
   esac
 
   case "$changed_file" in
-    Dockerfile | cfg/* | cfg/**/* | compose.yaml | compose.github-action.yaml | \
-      compose/* | compose/**/* | e2e/* | e2e/**/*)
+    Dockerfile | cfg/* | compose.yaml | compose.github-action.yaml | \
+      compose/* | e2e/*)
       e2e="true"
       ;;
   esac
