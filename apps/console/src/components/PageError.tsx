@@ -80,8 +80,8 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     return (
       <ErrorLayout
         {...layoutProps}
-        title={t("pageError.notFound.title")}
-        description={t("pageError.notFound.description")}
+        title={t("pageError.forbidden.title")}
+        description={t("pageError.forbidden.description")}
       />
     );
   }
