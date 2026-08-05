@@ -19,9 +19,9 @@
   },
   "devDependencies": {
     "@probo/eslint-config": "1.0.0",
-    "eslint": "^10.6.0",
+    "eslint": "^10.8.0",
     "relay-compiler": "^21.0.1",
-    "turbo": "^2.10.2"
+    "turbo": "^2.10.8"
   },
   "overrides": {
     "uuid": "^14.0.0",
@@ -41,6 +41,6 @@
   "license": "MIT",
   "packageManager": "npm@11.8.0",
   "dependencies": {
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.8"
   }
 }
