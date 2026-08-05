@@ -1003,7 +1003,7 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 		return nil, err
 	}
 
-	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ID)
+	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1036,7 +1036,7 @@ func (r *thirdPartyComplianceReportResolver) ThirdParty(ctx context.Context, obj
 		return nil, err
 	}
 
-	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ID)
+	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1193,7 +1193,7 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 		return nil, err
 	}
 
-	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ID)
+	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
