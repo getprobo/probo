@@ -37,13 +37,13 @@ func NewService(pgClient *pg.Client) *Service {
 	return &Service{pgClient: pgClient}
 }
 
-func (s *Service) LookupLocation(ctx context.Context, ip string) (coredata.IPLocation, error) {
+func (s *Service) LookupLocation(ctx context.Context, ip string) (coredata.IPLocationBlock, error) {
 	parsed := net.ParseIP(ip)
 	if parsed == nil {
-		return coredata.IPLocation{}, fmt.Errorf("cannot parse IP address: %q", ip)
+		return coredata.IPLocationBlock{}, fmt.Errorf("cannot parse IP address: %q", ip)
 	}
 
-	var location coredata.IPLocation
+	var location coredata.IPLocationBlock
 
 	err := s.pgClient.WithConn(
 		ctx,
@@ -57,7 +57,7 @@ func (s *Service) LookupLocation(ctx context.Context, ip string) (coredata.IPLoc
 		},
 	)
 	if err != nil {
-		return coredata.IPLocation{}, err
+		return coredata.IPLocationBlock{}, err
 	}
 
 	return location, nil

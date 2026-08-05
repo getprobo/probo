@@ -105,7 +105,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderJSON(w, http.StatusOK, config)
 }
 
-func (h *Handler) resolveLocation(r *http.Request) *coredata.IPLocation {
+func (h *Handler) resolveLocation(r *http.Request) *coredata.IPLocationBlock {
 	ip := clientip.Extract(r)
 
 	location, err := h.geolocSvc.LookupLocation(r.Context(), ip)

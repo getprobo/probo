@@ -190,7 +190,7 @@ func IsUSStatePrivacyRegulation(r Regulation) bool {
 // cookie-consent law (which the presentation layer maps to an informational
 // notice). When geolocation is unresolved (cc is nil) it falls back to GDPR,
 // applying the strictest opt-in consent model by default.
-func ResolveRegulation(location *coredata.IPLocation) (Regulation, RegulationSource) {
+func ResolveRegulation(location *coredata.IPLocationBlock) (Regulation, RegulationSource) {
 	if location != nil {
 		return RegulationForLocation(*location), RegulationSourceDetected
 	}
@@ -200,7 +200,7 @@ func ResolveRegulation(location *coredata.IPLocation) (Regulation, RegulationSou
 
 // RegulationForLocation maps a country and optional ISO 3166-2 subdivision to
 // the applicable privacy regulation.
-func RegulationForLocation(location coredata.IPLocation) Regulation {
+func RegulationForLocation(location coredata.IPLocationBlock) Regulation {
 	if location.CountryCode == coredata.CountryCodeUS {
 		if location.SubdivisionCode == nil {
 			return RegulationNone

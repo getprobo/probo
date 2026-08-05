@@ -32,7 +32,7 @@ func TestResolveRegulation(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		location       *coredata.IPLocation
+		location       *coredata.IPLocationBlock
 		wantRegulation Regulation
 		wantSource     RegulationSource
 	}{
@@ -44,19 +44,19 @@ func TestResolveRegulation(t *testing.T) {
 		},
 		{
 			name:           "identified country with no known regulation resolves to none as detected",
-			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeAQ},
+			location:       &coredata.IPLocationBlock{CountryCode: coredata.CountryCodeAQ},
 			wantRegulation: RegulationNone,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
 			name:           "EU country resolves to GDPR as detected",
-			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeFR},
+			location:       &coredata.IPLocationBlock{CountryCode: coredata.CountryCodeFR},
 			wantRegulation: RegulationGDPR,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
 			name: "California resolves to CCPA as detected",
-			location: &coredata.IPLocation{
+			location: &coredata.IPLocationBlock{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: new(coredata.SubdivisionCode("US-CA")),
 			},
@@ -65,7 +65,7 @@ func TestResolveRegulation(t *testing.T) {
 		},
 		{
 			name: "Texas resolves to TDPSA as detected",
-			location: &coredata.IPLocation{
+			location: &coredata.IPLocationBlock{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: new(coredata.SubdivisionCode("US-TX")),
 			},
@@ -74,7 +74,7 @@ func TestResolveRegulation(t *testing.T) {
 		},
 		{
 			name: "unregulated US state resolves to none as detected",
-			location: &coredata.IPLocation{
+			location: &coredata.IPLocationBlock{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: new(coredata.SubdivisionCode("US-NY")),
 			},
@@ -83,13 +83,13 @@ func TestResolveRegulation(t *testing.T) {
 		},
 		{
 			name:           "US without subdivision resolves to none as detected",
-			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeUS},
+			location:       &coredata.IPLocationBlock{CountryCode: coredata.CountryCodeUS},
 			wantRegulation: RegulationNone,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
 			name:           "UK resolves to UK GDPR as detected",
-			location:       &coredata.IPLocation{CountryCode: coredata.CountryCodeGB},
+			location:       &coredata.IPLocationBlock{CountryCode: coredata.CountryCodeGB},
 			wantRegulation: RegulationUKGDPR,
 			wantSource:     RegulationSourceDetected,
 		},
@@ -235,7 +235,7 @@ func TestRegulationForLocationUSPrivacyStates(t *testing.T) {
 			t.Parallel()
 
 			subdivision := tt.subdivision
-			location := coredata.IPLocation{
+			location := coredata.IPLocationBlock{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: &subdivision,
 			}
@@ -253,7 +253,7 @@ func TestRegulationForLocationUSUnregulatedStates(t *testing.T) {
 			t.Parallel()
 
 			code := subdivision
-			location := coredata.IPLocation{
+			location := coredata.IPLocationBlock{
 				CountryCode:     coredata.CountryCodeUS,
 				SubdivisionCode: &code,
 			}
@@ -346,7 +346,7 @@ func TestRegulationForLocationCanada(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			location := coredata.IPLocation{
+			location := coredata.IPLocationBlock{
 				CountryCode:     coredata.CountryCodeCA,
 				SubdivisionCode: tt.subdivision,
 			}
@@ -361,7 +361,7 @@ func TestRegulationForLocationCanada(t *testing.T) {
 			t.Parallel()
 
 			code := subdivision
-			location := coredata.IPLocation{
+			location := coredata.IPLocationBlock{
 				CountryCode:     coredata.CountryCodeCA,
 				SubdivisionCode: &code,
 			}
