@@ -219,11 +219,11 @@ var EmployeePolicy = policy.NewPolicy(
 	).WithSID("document-version-approval").When(organizationCondition),
 ).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 
-// ComplianceManagerPolicy defines permissions needed to manage the compliance
-// portal and toggle portal visibility on related core entities.
-var ComplianceManagerPolicy = policy.NewPolicy(
-	"probo:compliance-manager",
-	"Probo Compliance Manager",
+// CompliancePortalManagerPolicy defines permissions needed to manage the
+// compliance portal and toggle portal visibility on related core entities.
+var CompliancePortalManagerPolicy = policy.NewPolicy(
+	"probo:compliance-portal-manager",
+	"Probo Compliance Portal Manager",
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
@@ -244,11 +244,11 @@ var ComplianceManagerPolicy = policy.NewPolicy(
 	).WithSID("compliance-portal-related-access").When(organizationCondition),
 ).WithDescription("Access required to manage the compliance portal and related entity visibility")
 
-// ComplianceAccessManagerPolicy defines permissions needed to review and
+// CompliancePortalAccessManagerPolicy defines permissions needed to review and
 // approve compliance portal visitor access requests.
-var ComplianceAccessManagerPolicy = policy.NewPolicy(
-	"probo:compliance-access-manager",
-	"Probo Compliance Access Manager",
+var CompliancePortalAccessManagerPolicy = policy.NewPolicy(
+	"probo:compliance-portal-access-manager",
+	"Probo Compliance Portal Access Manager",
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
@@ -274,7 +274,7 @@ func ProboPolicySet() *iam.PolicySet {
 		AddRolePolicy("VIEWER", ViewerPolicy).
 		AddRolePolicy("AUDITOR", AuditorPolicy).
 		AddRolePolicy("EMPLOYEE", EmployeePolicy).
-		AddRolePolicy("COMPLIANCE_MANAGER", ComplianceManagerPolicy).
-		AddRolePolicy("COMPLIANCE_ACCESS_MANAGER", ComplianceAccessManagerPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", CompliancePortalManagerPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_ACCESS_MANAGER", CompliancePortalAccessManagerPolicy).
 		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy)
 }

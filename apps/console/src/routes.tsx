@@ -274,9 +274,9 @@ const routes = [
                   return <Navigate to="employee" />;
                 case Role.AUDITOR:
                   return <Navigate to="measures" />;
-                case Role.COMPLIANCE_MANAGER:
+                case Role.COMPLIANCE_PORTAL_MANAGER:
                   return <Navigate to="compliance-portals" />;
-                case Role.COMPLIANCE_ACCESS_MANAGER:
+                case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER:
                   return <Navigate to="compliance-portals" />;
                 default:
                   return <Navigate to="tasks" />;

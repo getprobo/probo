@@ -1689,7 +1689,9 @@
       "admin": "Beheerder",
       "viewer": "Lezer",
       "auditor": "Auditor",
-      "employee": "Werknemer"
+      "employee": "Werknemer",
+      "compliancePortalManager": "Compliance Portal Manager",
+      "compliancePortalAccessManager": "Compliance Portal Access Manager"
     },
     "registryStatus": {
       "open": "Open",
@@ -2524,7 +2526,9 @@
       "admin": "Volledige toegang, behalve organisatie-instellingen en API-sleutels",
       "viewer": "Alleen-lezen toegang",
       "auditor": "Alleen-lezen toegang zonder instellingen en taken",
-      "employee": "Toegang tot de medewerkerspagina"
+      "employee": "Toegang tot de medewerkerspagina",
+      "compliancePortalManager": "Kan het compliance-portaal beheren",
+      "compliancePortalAccessManager": "Kan bezoekers toegang tot het compliance-portaal beheren"
     },
     "kinds": {
       "EMPLOYEE": "Werknemer",

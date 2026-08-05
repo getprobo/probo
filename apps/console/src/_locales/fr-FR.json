@@ -1688,8 +1688,8 @@
       "viewer": "Lecteur",
       "auditor": "Auditeur",
       "employee": "Employé",
-      "complianceManager": "Gestionnaire de conformité",
-      "complianceAccessManager": "Gestionnaire d’accès conformité"
+      "compliancePortalManager": "Gestionnaire du portail de conformité",
+      "compliancePortalAccessManager": "Gestionnaire d’accès du portail de conformité"
     },
     "registryStatus": {
       "open": "Ouvert",
@@ -2526,8 +2526,8 @@
       "viewer": "Accès en lecture seule",
       "auditor": "Accès en lecture seule sans les paramètres et les tâches",
       "employee": "Accès à la page employé",
-      "complianceManager": "Peut gérer le portail de conformité",
-      "complianceAccessManager": "Peut gérer les accès visiteurs du portail de conformité"
+      "compliancePortalManager": "Peut gérer le portail de conformité",
+      "compliancePortalAccessManager": "Peut gérer les accès visiteurs du portail de conformité"
     },
     "kinds": {
       "EMPLOYEE": "Employé",
