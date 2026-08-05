@@ -25,6 +25,18 @@
   },
   "overrides": {
     "uuid": "^14.0.0",
+    "@langchain/classic": {
+      "uuid": "$uuid"
+    },
+    "@langchain/community": {
+      "uuid": "$uuid"
+    },
+    "langchain": {
+      "uuid": "$uuid"
+    },
+    "n8n-workflow": {
+      "uuid": "$uuid"
+    },
     "js-yaml": "^4.2.0",
     "glob": "^13.0.6",
     "postcss": "8.5.23",
