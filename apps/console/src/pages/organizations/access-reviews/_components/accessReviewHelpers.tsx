@@ -18,11 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { parseDate } from "@probo/helpers";
 import {
   IconCircleCheck,
   IconCircleQuestionmark,
   IconCircleX,
 } from "@probo/ui";
+
+const MS_PER_MINUTE = 1000 * 60;
+const MS_PER_HOUR = MS_PER_MINUTE * 60;
+const MS_PER_DAY = MS_PER_HOUR * 24;
+
+// Compact elapsed age for dense list cells (e.g. "20m", "4h", "1d", "1m", "2y").
+function shortAgeFormat(date: string, now: Date = new Date()): string {
+  const elapsedMs = Math.max(0, now.getTime() - parseDate(date).getTime());
+  const minutes = Math.floor(elapsedMs / MS_PER_MINUTE);
+
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+
+  const hours = Math.floor(elapsedMs / MS_PER_HOUR);
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+
+  const days = Math.floor(elapsedMs / MS_PER_DAY);
+  if (days < 30) {
+    return `${days}d`;
+  }
+  if (days < 365) {
+    return `${Math.floor(days / 30)}mo`;
+  }
+  return `${Math.floor(days / 365)}y`;
+}
 
 type BadgeVariant = "neutral" | "info" | "warning" | "success" | "danger";
 
@@ -43,8 +72,6 @@ export function statusBadgeVariant(status: string): BadgeVariant {
   }
 }
 
-// Deleting a running campaign would discard reviewer decisions mid-flight, so
-// the status gate is checked on top of the delete permission at every call site.
 export function isCampaignDeletableStatus(status: string): boolean {
   return status !== "IN_PROGRESS";
 }
@@ -274,8 +301,12 @@ export function LastLoginStatus({
   if (lastLogin) {
     if (compact) {
       return (
-        <span role="img" aria-label={formatted} title={formatted} className="inline-flex text-txt-tertiary">
-          <IconCircleCheck size={16} />
+        <span
+          aria-label={formatted}
+          title={formatted}
+          className="text-xs tabular-nums text-txt-primary"
+        >
+          {shortAgeFormat(lastLogin)}
         </span>
       );
     }
