@@ -43,8 +43,8 @@ func TestMCP_Framework_CRUD(t *testing.T) {
 		} `json:"framework"`
 	}
 	mc.CallToolInto("addFramework", map[string]any{
-		"organizationId": orgID,
-		"name":           factory.SafeName("Framework"),
+		"organization_id": orgID,
+		"name":            factory.SafeName("Framework"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Framework.ID)
 
@@ -79,7 +79,7 @@ func TestMCP_Framework_CRUD(t *testing.T) {
 		} `json:"frameworks"`
 	}
 	mc.CallToolInto("listFrameworks", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Frameworks)
 }
@@ -88,6 +88,7 @@ func TestMCP_Control_CRUD(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
 
 	frameworkID := factory.CreateFramework(owner)
 
@@ -99,8 +100,12 @@ func TestMCP_Control_CRUD(t *testing.T) {
 		} `json:"control"`
 	}
 	mc.CallToolInto("addControl", map[string]any{
-		"frameworkId": frameworkID,
-		"name":        factory.SafeName("Control"),
+		"organization_id": orgID,
+		"framework_id":    frameworkID,
+		"section_title":   "Access Control",
+		"name":            factory.SafeName("Control"),
+		"best_practice":   true,
+		"maturity_level":  "INITIAL",
 	}, &addResult)
 	require.NotEmpty(t, addResult.Control.ID)
 
@@ -135,7 +140,10 @@ func TestMCP_Control_CRUD(t *testing.T) {
 		} `json:"controls"`
 	}
 	mc.CallToolInto("listControls", map[string]any{
-		"frameworkId": frameworkID,
+		"organization_id": orgID,
+		"filter": map[string]any{
+			"framework_id": frameworkID,
+		},
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Controls)
 }

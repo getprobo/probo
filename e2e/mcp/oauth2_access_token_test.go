@@ -57,7 +57,7 @@ func TestMCP_OAuth2AccessToken_ScopeEnforcement(t *testing.T) {
 	mc := testutil.NewMCPClientWithAccessToken(t, owner, token)
 
 	msg := mc.CallToolExpectToolError("listThirdParties", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	})
 	assert.Equal(t, "insufficient scope", msg)
 }

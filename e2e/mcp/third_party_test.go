@@ -45,8 +45,8 @@ func TestMCP_ThirdParty_CRUD(t *testing.T) {
 
 	name := factory.SafeName("ThirdParty")
 	mc.CallToolInto("addThirdParty", map[string]any{
-		"organizationId": orgID,
-		"name":           name,
+		"organization_id": orgID,
+		"name":            name,
 	}, &addResult)
 	require.NotEmpty(t, addResult.ThirdParty.ID)
 	assert.Equal(t, name, addResult.ThirdParty.Name)
@@ -71,13 +71,13 @@ func TestMCP_ThirdParty_CRUD(t *testing.T) {
 		} `json:"third_parties"`
 	}
 	mc.CallToolInto("listThirdParties", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.ThirdParties)
 
 	// Delete
 	var deleteResult struct {
-		DeletedThirdPartyID string `json:"deletedThirdPartyId"`
+		DeletedThirdPartyID string `json:"deleted_third_party_id"`
 	}
 	mc.CallToolInto("deleteThirdParty", map[string]any{
 		"id": addResult.ThirdParty.ID,
@@ -107,9 +107,9 @@ func TestMCP_ThirdParty_UpdatePreservesCategoryWhenOmitted(t *testing.T) {
 
 	name := factory.SafeName("ThirdParty")
 	mc.CallToolInto("addThirdParty", map[string]any{
-		"organizationId": orgID,
-		"name":           name,
-		"category":       "CLOUD_PROVIDER",
+		"organization_id": orgID,
+		"name":            name,
+		"category":        "CLOUD_PROVIDER",
 	}, &addResult)
 	require.NotEmpty(t, addResult.ThirdParty.ID)
 	assert.Equal(t, "CLOUD_PROVIDER", addResult.ThirdParty.Category)
@@ -136,8 +136,8 @@ func TestMCP_ThirdParty_ValidationError(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	msg := mc.CallToolExpectToolError("addThirdParty", map[string]any{
-		"organizationId": orgID,
-		"name":           "",
+		"organization_id": orgID,
+		"name":            "",
 	})
 	assert.Contains(t, msg, "name")
 	assert.NotContains(t, msg, "pq:")
@@ -152,8 +152,8 @@ func TestMCP_ThirdParty_PermissionDenied(t *testing.T) {
 	viewerMC := testutil.NewMCPClient(t, viewer)
 
 	msg := viewerMC.CallToolExpectToolError("addThirdParty", map[string]any{
-		"organizationId": orgID,
-		"name":           factory.SafeName("ThirdParty"),
+		"organization_id": orgID,
+		"name":            factory.SafeName("ThirdParty"),
 	})
 	assert.Contains(t, msg, "permission denied")
 	assert.NotContains(t, msg, "pq:")

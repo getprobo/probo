@@ -43,9 +43,11 @@ func TestMCP_Document_CRUD(t *testing.T) {
 		} `json:"document"`
 	}
 	mc.CallToolInto("addDocument", map[string]any{
-		"organizationId": orgID,
-		"title":          factory.SafeName("Document"),
-		"documentType":   "POLICY",
+		"organization_id": orgID,
+		"title":           factory.SafeName("Document"),
+		"content":         "Document body",
+		"classification":  "INTERNAL",
+		"document_type":   "POLICY",
 	}, &addResult)
 	require.NotEmpty(t, addResult.Document.ID)
 
@@ -80,16 +82,16 @@ func TestMCP_Document_CRUD(t *testing.T) {
 		} `json:"documents"`
 	}
 	mc.CallToolInto("listDocuments", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Documents)
 
 	// Delete
 	var deleteResult struct {
-		DeletedDocumentID string `json:"deletedDocumentId"`
+		DeletedDocumentID string `json:"deleted_document_id"`
 	}
 	mc.CallToolInto("deleteDocument", map[string]any{
-		"id": addResult.Document.ID,
+		"document_id": addResult.Document.ID,
 	}, &deleteResult)
 	assert.Equal(t, addResult.Document.ID, deleteResult.DeletedDocumentID)
 }
@@ -103,14 +105,14 @@ func TestMCP_Document_PublishUsesDefaultApprovers(t *testing.T) {
 
 	addDocument := func(defaultApproverIDs []string) string {
 		input := map[string]any{
-			"organizationId": orgID,
-			"title":          factory.SafeName("Document"),
-			"content":        "Body content",
-			"classification": "INTERNAL",
-			"documentType":   "POLICY",
+			"organization_id": orgID,
+			"title":           factory.SafeName("Document"),
+			"content":         "Body content",
+			"classification":  "INTERNAL",
+			"document_type":   "POLICY",
 		}
 		if defaultApproverIDs != nil {
-			input["defaultApproverIds"] = defaultApproverIDs
+			input["default_approver_ids"] = defaultApproverIDs
 		}
 
 		var addResult struct {
@@ -127,10 +129,10 @@ func TestMCP_Document_PublishUsesDefaultApprovers(t *testing.T) {
 	type publishResult struct {
 		DocumentVersion struct {
 			Status string `json:"status"`
-		} `json:"documentVersion"`
+		} `json:"document_version"`
 		ApprovalQuorum *struct {
 			ID string `json:"id"`
-		} `json:"approvalQuorum"`
+		} `json:"approval_quorum"`
 	}
 
 	t.Run("requests approval from default approvers", func(t *testing.T) {
@@ -138,9 +140,9 @@ func TestMCP_Document_PublishUsesDefaultApprovers(t *testing.T) {
 
 		var result publishResult
 		mc.CallToolInto("publishDocument", map[string]any{
-			"documentId": docID,
-			"minor":      false,
-			"changelog":  "Initial major",
+			"document_id": docID,
+			"minor":       false,
+			"changelog":   "Initial major",
 		}, &result)
 
 		require.NotNil(t, result.ApprovalQuorum)
@@ -152,9 +154,9 @@ func TestMCP_Document_PublishUsesDefaultApprovers(t *testing.T) {
 
 		var result publishResult
 		mc.CallToolInto("publishDocument", map[string]any{
-			"documentId": docID,
-			"minor":      false,
-			"changelog":  "Initial major",
+			"document_id": docID,
+			"minor":       false,
+			"changelog":   "Initial major",
 		}, &result)
 
 		assert.Nil(t, result.ApprovalQuorum)

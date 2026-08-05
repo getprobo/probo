@@ -39,11 +39,11 @@ func createCookieBannerAndCategory(t *testing.T, mc *testutil.MCPClient, orgID s
 		} `json:"cookie_banner"`
 	}
 	mc.CallToolInto("addCookieBanner", map[string]any{
-		"organizationId":    orgID,
-		"name":              factory.SafeName("CookieBanner"),
-		"origin":            "https://example.com",
-		"cookiePolicyUrl":   "https://example.com/cookies",
-		"consentExpiryDays": 365,
+		"organization_id":     orgID,
+		"name":                factory.SafeName("CookieBanner"),
+		"origin":              "https://example.com",
+		"cookie_policy_url":   "https://example.com/cookies",
+		"consent_expiry_days": 365,
 	}, &bannerResult)
 	require.NotEmpty(t, bannerResult.CookieBanner.ID)
 
@@ -53,11 +53,11 @@ func createCookieBannerAndCategory(t *testing.T, mc *testutil.MCPClient, orgID s
 		} `json:"cookie_category"`
 	}
 	mc.CallToolInto("addCookieCategory", map[string]any{
-		"cookieBannerId": bannerResult.CookieBanner.ID,
-		"name":           factory.SafeName("Category"),
-		"slug":           factory.SafeName("category"),
-		"description":    "Test category",
-		"rank":           1,
+		"cookie_banner_id": bannerResult.CookieBanner.ID,
+		"name":             factory.SafeName("Category"),
+		"slug":             factory.SafeName("category"),
+		"description":      "Test category",
+		"rank":             1,
 	}, &categoryResult)
 	require.NotEmpty(t, categoryResult.CookieCategory.ID)
 
@@ -90,16 +90,18 @@ func TestSecurity_MCP_MoveTrackerPatternToCategory_TenantIsolation(t *testing.T)
 		} `json:"tracker_pattern"`
 	}
 	org1MC.CallToolInto("addTrackerPattern", map[string]any{
-		"cookieCategoryId": org1CategoryID,
-		"pattern":          "org1-tracker",
-		"matchType":        "EXACT",
-		"displayName":      "Org1 Tracker",
+		"cookie_category_id": org1CategoryID,
+		"tracker_type":       "COOKIE",
+		"pattern":            "org1-tracker",
+		"match_type":         "EXACT",
+		"display_name":       "Org1 Tracker",
+		"description":        "Org1 tracker pattern",
 	}, &patternResult)
 	require.NotEmpty(t, patternResult.TrackerPattern.ID)
 
 	errText := org1MC.CallToolExpectToolError("moveTrackerPatternToCategory", map[string]any{
-		"trackerPatternId":       patternResult.TrackerPattern.ID,
-		"targetCookieCategoryId": org2CategoryID,
+		"tracker_pattern_id":        patternResult.TrackerPattern.ID,
+		"target_cookie_category_id": org2CategoryID,
 	})
 	require.NotEmpty(t, errText, "must not accept a targetCookieCategoryId belonging to another organization")
 }
@@ -123,15 +125,17 @@ func TestSecurity_MCP_MoveTrackerResourceToCategory_TenantIsolation(t *testing.T
 		} `json:"tracker_resource"`
 	}
 	org1MC.CallToolInto("addTrackerResource", map[string]any{
-		"cookieCategoryId": org1CategoryID,
-		"url":              "https://org1.example.com/tracker.js",
-		"displayName":      "Org1 Resource",
+		"cookie_category_id": org1CategoryID,
+		"resource_type":      "SCRIPT",
+		"origin":             "https://org1.example.com",
+		"path":               "/tracker.js",
+		"display_name":       "Org1 Resource",
 	}, &resourceResult)
 	require.NotEmpty(t, resourceResult.TrackerResource.ID)
 
 	errText := org1MC.CallToolExpectToolError("moveTrackerResourceToCategory", map[string]any{
-		"trackerResourceId":      resourceResult.TrackerResource.ID,
-		"targetCookieCategoryId": org2CategoryID,
+		"tracker_resource_id":       resourceResult.TrackerResource.ID,
+		"target_cookie_category_id": org2CategoryID,
 	})
 	require.NotEmpty(t, errText, "must not accept a targetCookieCategoryId belonging to another organization")
 }

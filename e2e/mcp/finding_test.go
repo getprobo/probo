@@ -43,8 +43,8 @@ func TestMCP_Finding_CRUD(t *testing.T) {
 		} `json:"finding"`
 	}
 	mc.CallToolInto("addFinding", map[string]any{
-		"organizationId": orgID,
-		"title":          factory.SafeName("Finding"),
+		"organization_id": orgID,
+		"title":           factory.SafeName("Finding"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Finding.ID)
 
@@ -79,13 +79,13 @@ func TestMCP_Finding_CRUD(t *testing.T) {
 		} `json:"findings"`
 	}
 	mc.CallToolInto("listFindings", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Findings)
 
 	// Delete
 	var deleteResult struct {
-		DeletedFindingID string `json:"deletedFindingId"`
+		DeletedFindingID string `json:"deleted_finding_id"`
 	}
 	mc.CallToolInto("deleteFinding", map[string]any{
 		"id": addResult.Finding.ID,
