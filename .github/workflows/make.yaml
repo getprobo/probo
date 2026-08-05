@@ -7,6 +7,10 @@ on:
     branches:
       - "main"
 
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: "read"
 
@@ -101,6 +105,7 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o "dist/prb${EXT}" ./cmd/prb/main.go
       - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        if: matrix.goos == 'linux'
         with:
           name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "dist/"
@@ -267,6 +272,11 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o bin/prb ./cmd/prb/main.go & pids+=($!)
           for pid in "${pids[@]}"; do wait "$pid"; done
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        with:
+          name: "probod-ci"
+          path: "bin/probod"
+          retention-days: 1
 
   build-probo-agent:
     name: "build-probo-agent"
@@ -486,6 +496,7 @@ jobs:
 
   test-e2e:
     name: "${{ matrix.name }}"
+    needs: [build]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     strategy:
       fail-fast: false
@@ -513,6 +524,16 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        if: "${{ !matrix.coverage }}"
+        with:
+          name: "probod-ci"
+          path: "bin"
+      - name: "Prepare probod"
+        if: "${{ !matrix.coverage }}"
+        run: "chmod +x bin/probod"
       - name: "Configure Docker image source"
         # Pull requests from forks don't get repository secrets, so
         # HARBOR_USERNAME/HARBOR_PASSWORD are unavailable and logging into
@@ -556,6 +577,7 @@ jobs:
           mkdir -p /tmp/docker-images
           docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
       - name: "Build probod"
+        if: "${{ matrix.coverage }}"
         run: "make ${{ matrix.build_target }}"
       - name: "Start stack"
         run: "make stack-up"
