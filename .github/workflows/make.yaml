@@ -563,7 +563,9 @@ jobs:
           GOTESTSUM_JUNITFILE: "${{ matrix.junit_file }}"
         run: |
           PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
-            make "${{ matrix.run_target }}" E2E_BINARY="${{ github.workspace }}/${{ matrix.binary }}"
+            make "${{ matrix.run_target }}" \
+              E2E_BINARY="${{ github.workspace }}/${{ matrix.binary }}" \
+              E2E_TEST_FLAGS="-parallel=8"
       - name: "Report e2e coverage"
         if: "${{ always() && matrix.coverage }}"
         run: |
