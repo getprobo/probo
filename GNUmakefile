@@ -78,6 +78,7 @@ E2E_TEST_FLAGS?=
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 E2E_BINARY ?= $(CURDIR)/$(PROBOD_BIN)
+E2E_TRUST_JUNIT_FILE ?= junit-e2e-trust.xml
 E2E_CORE_COVER_PKGS ?= go.probo.inc/probo/pkg/coredata,go.probo.inc/probo/pkg/probo,go.probo.inc/probo/pkg/server/api/console/v1,go.probo.inc/probo/pkg/server/api/connect/v1,go.probo.inc/probo/pkg/server/api/complianceportal/v1,go.probo.inc/probo/pkg/server/api/mcp/v1,go.probo.inc/probo/pkg/accessreview,go.probo.inc/probo/pkg/agentrun,go.probo.inc/probo/pkg/complianceportal/management,go.probo.inc/probo/pkg/complianceportal/visitor,go.probo.inc/probo/pkg/cookiebanner,go.probo.inc/probo/pkg/riskmanagement,go.probo.inc/probo/pkg/thirdparty,go.probo.inc/probo/pkg/webhook
 
 DOCKER_REGISTRY=	artifact.probo.inc
@@ -244,6 +245,10 @@ test-e2e-coverage-run:
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -p=1 -count=1 ./e2e/internal/... ./e2e/console/... ./e2e/mcp/...
+	PROBO_E2E_BINARY=$(E2E_BINARY) \
+	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
+	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
+	GOTESTSUM_FORMAT=testname GOTESTSUM_JUNITFILE=$(E2E_TRUST_JUNIT_FILE) $(GO_BASE) tool gotestsum -- -parallel=1 -count=1 ./e2e/trust/...
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -o=coverage-e2e.out
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -pkg=$(E2E_CORE_COVER_PKGS) -o=coverage-e2e-core.out
 	$(GO) tool covdata percent -i=$(E2E_COVER_DIR) > coverage-e2e-packages.txt
