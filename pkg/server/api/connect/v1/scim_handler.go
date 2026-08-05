@@ -22,6 +22,7 @@ package connect_v1
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
@@ -54,13 +55,15 @@ type (
 	}
 
 	scimRequestContext struct {
-		ctx       context.Context
-		config    *coredata.SCIMConfiguration
-		ipAddress net.IP
-		method    string
-		path      string
-		userName  string
-		handler   *scimResourceHandler
+		ctx          context.Context
+		config       *coredata.SCIMConfiguration
+		ipAddress    net.IP
+		method       string
+		path         string
+		userName     string
+		requestBody  *string
+		responseBody *string
+		handler      *scimResourceHandler
 	}
 )
 
@@ -163,7 +166,18 @@ func (rc *scimRequestContext) logAndWrapError(err error, logMsg string) error {
 			userName = ""
 		}
 
-		rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, userName, rc.ipAddress, scimErr.Status, &errMsg)
+		rc.handler.handler.iam.SCIMService.LogEvent(
+			rc.ctx,
+			rc.config,
+			rc.method,
+			rc.path,
+			userName,
+			rc.ipAddress,
+			scimErr.Status,
+			&errMsg,
+			rc.requestBody,
+			rc.responseBody,
+		)
 
 		return err
 	}
@@ -171,23 +185,46 @@ func (rc *scimRequestContext) logAndWrapError(err error, logMsg string) error {
 	rc.handler.handler.logger.ErrorCtx(rc.ctx, logMsg, log.Error(err))
 
 	errMsg := "internal server error"
-	rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, rc.userName, rc.ipAddress, 500, &errMsg)
+	rc.handler.handler.iam.SCIMService.LogEvent(
+		rc.ctx,
+		rc.config,
+		rc.method,
+		rc.path,
+		rc.userName,
+		rc.ipAddress,
+		500,
+		&errMsg,
+		rc.requestBody,
+		rc.responseBody,
+	)
 
 	return scimerrors.ScimErrorInternal
 }
 
 func (rc *scimRequestContext) logSuccess(statusCode int) {
-	rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, rc.userName, rc.ipAddress, statusCode, nil)
+	rc.handler.handler.iam.SCIMService.LogEvent(
+		rc.ctx,
+		rc.config,
+		rc.method,
+		rc.path,
+		rc.userName,
+		rc.ipAddress,
+		statusCode,
+		nil,
+		rc.requestBody,
+		rc.responseBody,
+	)
 }
 
 func (h *scimResourceHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
 	rc := &scimRequestContext{
-		ctx:       r.Context(),
-		config:    scimConfigFromContext(r.Context()),
-		ipAddress: getIPAddress(r),
-		method:    "POST",
-		path:      "/Users",
-		handler:   h,
+		ctx:         r.Context(),
+		config:      scimConfigFromContext(r.Context()),
+		ipAddress:   getIPAddress(r),
+		method:      "POST",
+		path:        "/Users",
+		requestBody: marshalSCIMPayload(attributes),
+		handler:     h,
 	}
 
 	resource, err := h.handler.iam.SCIMService.CreateUser(rc.ctx, rc.config, attributes)
@@ -196,6 +233,7 @@ func (h *scimResourceHandler) Create(r *http.Request, attributes scim.ResourceAt
 	}
 
 	rc.userName = resource.Attributes["userName"].(string)
+	rc.responseBody = marshalSCIMResource(resource)
 
 	rc.logSuccess(201)
 
@@ -223,6 +261,7 @@ func (h *scimResourceHandler) Get(r *http.Request, id string) (scim.Resource, er
 	}
 
 	rc.userName = resource.Attributes["userName"].(string)
+	rc.responseBody = marshalSCIMResource(resource)
 
 	rc.logSuccess(200)
 
@@ -269,12 +308,13 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 
 func (h *scimResourceHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
 	rc := &scimRequestContext{
-		ctx:       r.Context(),
-		config:    scimConfigFromContext(r.Context()),
-		ipAddress: getIPAddress(r),
-		method:    "PUT",
-		path:      "/Users/" + id,
-		handler:   h,
+		ctx:         r.Context(),
+		config:      scimConfigFromContext(r.Context()),
+		ipAddress:   getIPAddress(r),
+		method:      "PUT",
+		path:        "/Users/" + id,
+		requestBody: marshalSCIMPayload(attributes),
+		handler:     h,
 	}
 
 	profileID, err := gid.ParseGID(id)
@@ -288,6 +328,7 @@ func (h *scimResourceHandler) Replace(r *http.Request, id string, attributes sci
 	}
 
 	rc.userName = resource.Attributes["userName"].(string)
+	rc.responseBody = marshalSCIMResource(resource)
 
 	rc.logSuccess(200)
 
@@ -296,12 +337,13 @@ func (h *scimResourceHandler) Replace(r *http.Request, id string, attributes sci
 
 func (h *scimResourceHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
 	rc := &scimRequestContext{
-		ctx:       r.Context(),
-		config:    scimConfigFromContext(r.Context()),
-		ipAddress: getIPAddress(r),
-		method:    "PATCH",
-		path:      "/Users/" + id,
-		handler:   h,
+		ctx:         r.Context(),
+		config:      scimConfigFromContext(r.Context()),
+		ipAddress:   getIPAddress(r),
+		method:      "PATCH",
+		path:        "/Users/" + id,
+		requestBody: marshalSCIMPatchOperations(operations),
+		handler:     h,
 	}
 
 	profileID, err := gid.ParseGID(id)
@@ -315,6 +357,7 @@ func (h *scimResourceHandler) Patch(r *http.Request, id string, operations []sci
 	}
 
 	rc.userName = resource.Attributes["userName"].(string)
+	rc.responseBody = marshalSCIMResource(resource)
 
 	rc.logSuccess(200)
 
@@ -354,4 +397,62 @@ func getIPAddress(r *http.Request) net.IP {
 	}
 
 	return net.IPv4(127, 0, 0, 1)
+}
+
+func marshalSCIMPayload(v any) *string {
+	if v == nil {
+		return nil
+	}
+
+	body, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+
+	s := string(body)
+
+	return &s
+}
+
+func marshalSCIMResource(resource scim.Resource) *string {
+	payload := map[string]any{
+		"id": resource.ID,
+	}
+
+	for key, value := range resource.Attributes {
+		payload[key] = value
+	}
+
+	if resource.ExternalID.Present() {
+		payload["externalId"] = resource.ExternalID.Value()
+	}
+
+	return marshalSCIMPayload(payload)
+}
+
+func marshalSCIMPatchOperations(operations []scim.PatchOperation) *string {
+	ops := make([]map[string]any, 0, len(operations))
+
+	for _, operation := range operations {
+		op := map[string]any{
+			"op": operation.Op,
+		}
+
+		if operation.Path != nil {
+			op["path"] = operation.Path.String()
+		}
+
+		if operation.Value != nil {
+			op["value"] = operation.Value
+		}
+
+		ops = append(ops, op)
+	}
+
+	return marshalSCIMPayload(
+		map[string]any{
+			"schemas":    []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+			"Operations": ops,
+		},
+	)
 }
