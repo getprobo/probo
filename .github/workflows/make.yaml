@@ -246,14 +246,12 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
-        with:
-          node: "false"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
-          echo dev-server > packages/emails/dist/placeholder
+      - run: "npm --workspace @probo/emails run build"
       - name: "Generate Go code"
         run: |
           go generate ./pkg/server/api/connect/v1
