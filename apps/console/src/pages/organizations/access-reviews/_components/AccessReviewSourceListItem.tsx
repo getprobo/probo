@@ -204,12 +204,12 @@ export function AccessReviewSourceListItem({
   const accessSource = useFragment(fragment, sourceKey);
   const { item, content, trailing } = accessReviewSourceSection();
 
-  const [deleteAccessReviewSource] =
-    useMutation<AccessReviewSourceListItemDeleteMutation>(
+  const [deleteAccessReviewSource]
+    = useMutation<AccessReviewSourceListItemDeleteMutation>(
       deleteAccessReviewSourceMutation,
     );
-  const [configure] =
-    useMutation<AccessReviewSourceListItemConfigureMutation>(configureMutation);
+  const [configure]
+    = useMutation<AccessReviewSourceListItemConfigureMutation>(configureMutation);
 
   const handleDelete = () => {
     confirm(
@@ -346,13 +346,13 @@ export function AccessReviewSourceListItem({
       <div className={trailing()}>
         {showOrgSelector && (
           <Suspense
-            fallback={
+            fallback={(
               <Select
                 variant="editor"
                 disabled
                 placeholder={t("accessReviewSourceRow.loading")}
               />
-            }
+            )}
           >
             <InlineOrgSelect
               accessReviewSourceId={accessSource.id}
@@ -403,8 +403,8 @@ function InlineOrgSelect({
     { fetchPolicy: "store-or-network" },
   );
 
-  const source =
-    useFragment<AccessReviewSourceListItemOrganizations_source$key>(
+  const source
+    = useFragment<AccessReviewSourceListItemOrganizations_source$key>(
       organizationsFragment,
       data.node,
     );
@@ -419,7 +419,7 @@ function InlineOrgSelect({
           value={source.selectedOrganization ?? ""}
           onValueChange={onSelect}
         >
-          {providerOrganizations.nodes.map((org) => (
+          {providerOrganizations.nodes.map(org => (
             <Option key={org.slug} value={org.slug}>
               {org.displayName}
             </Option>
@@ -624,7 +624,7 @@ function ManualOrgInput({
     <Input
       placeholder={t("accessReviewSourceRow.organizationSlugPlaceholder")}
       value={value}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={e => setValue(e.target.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       className="max-w-40"

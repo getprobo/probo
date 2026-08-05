@@ -43,6 +43,12 @@ export function statusBadgeVariant(status: string): BadgeVariant {
   }
 }
 
+// Deleting a running campaign would discard reviewer decisions mid-flight, so
+// the status gate is checked on top of the delete permission at every call site.
+export function isCampaignDeletableStatus(status: string): boolean {
+  return status !== "IN_PROGRESS";
+}
+
 export function fetchStatusBadgeVariant(status: string): BadgeVariant {
   switch (status) {
     case "SUCCESS":

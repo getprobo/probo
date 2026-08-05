@@ -41,6 +41,7 @@ import type { AccessReviewCampaignsTabPaginationQuery } from "#/__generated__/co
 import type { AccessReviewCampaignsTabQuery } from "#/__generated__/core/AccessReviewCampaignsTabQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { isCampaignDeletableStatus } from "../_components/accessReviewHelpers";
 import { CreateAccessReviewCampaignDialog } from "../dialogs/CreateAccessReviewCampaignDialog";
 
 import { AccessReviewCampaignListItem } from "./_components/AccessReviewCampaignListItem";
@@ -126,8 +127,6 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
     deleteCampaignMutation,
   );
 
-  const isDeletableStatus = (status: string) => status !== "IN_PROGRESS";
-
   const handleDelete = (campaignId: string, campaignName: string) => {
     confirm(
       () => {
@@ -175,7 +174,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
   };
 
   const hasActions = accessReviewCampaigns.edges.some(
-    edge => edge.node.canDelete && isDeletableStatus(edge.node.status),
+    edge => edge.node.canDelete && isCampaignDeletableStatus(edge.node.status),
   );
 
   return (

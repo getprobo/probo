@@ -104,7 +104,15 @@ export function AccessEntrySection({
             </div>
           )
         : null}
-      {children}
+      {count > 0
+        ? children
+        : error || statusMessage
+          ? null
+          : (
+              <div className="rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-center text-sm text-txt-tertiary">
+                {t("campaignDetailPage.emptyEntries")}
+              </div>
+            )}
       {truncatedCount != null
         ? (
             <div className="flex items-start gap-2 rounded-[10px] border border-border-warning bg-bg-warning/10 px-4 py-3 text-sm text-txt-warning">
