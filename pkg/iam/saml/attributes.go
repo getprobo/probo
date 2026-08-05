@@ -122,14 +122,27 @@ func extractAttributeValue(assertion *saml.Assertion, attributeName string) (str
 }
 
 func mapSAMLRoleToSystemRole(samlRole string) *coredata.MembershipRole {
-	if samlRole == "" {
-		return nil
+	if samlRole != "" && isValidSAMLRole(samlRole) {
+		role := coredata.MembershipRole(samlRole)
+		return &role
 	}
 
-	role := coredata.MembershipRole(samlRole)
-	if !role.IsValid() {
-		return nil
-	}
+	return nil
+}
 
-	return &role
+// isValidSAMLRole keeps the IdP-claimable set explicit. MembershipRole.IsValid
+// also accepts AUDITOR, which remains assignable in-app but is not granted via
+// SAML attribute mapping.
+func isValidSAMLRole(role string) bool {
+	switch role {
+	case "OWNER",
+		"ADMIN",
+		"EMPLOYEE",
+		"VIEWER",
+		"COMPLIANCE_PORTAL_MANAGER",
+		"COMPLIANCE_PORTAL_ACCESS_MANAGER":
+		return true
+	default:
+		return false
+	}
 }

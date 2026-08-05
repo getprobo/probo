@@ -248,6 +248,11 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 
 // CompliancePortalAccessManagerPolicy defines permissions needed to review and
 // approve compliance portal visitor access requests.
+//
+// Related document, audit, report, and file reads are intentionally
+// organization-scoped: access requests reference those entities by ID, and the
+// authorizer has no request-entitlement condition yet. Callers still only load
+// the IDs attached to requests they can list.
 var CompliancePortalAccessManagerPolicy = policy.NewPolicy(
 	"probo:compliance-portal-access-manager",
 	"Probo Compliance Portal Access Manager",
@@ -266,7 +271,7 @@ var CompliancePortalAccessManagerPolicy = policy.NewPolicy(
 		ActionFileGet,
 		ActionElectronicSignatureGet,
 	).WithSID("compliance-portal-access-related").When(organizationCondition),
-).WithDescription("Read access to entities referenced by compliance portal access requests")
+).WithDescription("Organization-scoped read of entities that portal access requests may reference")
 
 // ProboPolicySet returns the PolicySet for the probo service.
 func ProboPolicySet() *iam.PolicySet {
