@@ -62,6 +62,14 @@ type acceptEncodingValueKey struct{}
 // against real S3 and is applied unconditionally rather than only for custom
 // endpoints.
 func unsignedAcceptEncoding(stack *middleware.Stack) error {
+	// Presigning swaps the signing middleware out for a presigner and drops the
+	// DisableGzip middleware that sets Accept-Encoding in the first place, so on
+	// those stacks there is nothing to strip and nothing to anchor to. Inserting
+	// relative to a middleware that is gone fails the whole operation.
+	if _, ok := stack.Finalize.Get(signingMiddlewareID); !ok {
+		return nil
+	}
+
 	err := stack.Finalize.Insert(
 		middleware.FinalizeMiddlewareFunc(
 			"proboStripAcceptEncodingBeforeSigning",

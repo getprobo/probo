@@ -148,3 +148,46 @@ func TestUnsignedAcceptEncoding(t *testing.T) {
 		})
 	}
 }
+
+// TestUnsignedAcceptEncodingPresign guards the presign stack, which swaps the signing
+// middleware out for a presigner. Anchoring the strip/restore pair to a middleware
+// that is no longer there failed every presign call with "cannot insert accept-encoding
+// strip middleware: not found".
+func TestUnsignedAcceptEncodingPresign(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := awsconfig.NewConfig(
+		log.NewLogger(log.WithOutput(io.Discard)),
+		nil,
+		awsconfig.Options{
+			Region:          "auto",
+			Endpoint:        "https://storage.example.com",
+			AccessKeyID:     "access-key",
+			SecretAccessKey: "secret-key",
+		},
+	)
+	require.NoError(t, err)
+
+	client := s3.NewFromConfig(
+		cfg,
+		func(o *s3.Options) {
+			o.UsePathStyle = true
+		},
+	)
+
+	req, err := s3.NewPresignClient(client).PresignGetObject(
+		context.Background(),
+		&s3.GetObjectInput{
+			Bucket: aws.String("bucket"),
+			Key:    aws.String("key"),
+		},
+	)
+	require.NoError(t, err)
+
+	assert.NotContains(
+		t,
+		req.URL,
+		"accept-encoding",
+		"a presigned URL must not commit the caller to sending Accept-Encoding",
+	)
+}
