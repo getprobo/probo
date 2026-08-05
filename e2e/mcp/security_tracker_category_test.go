@@ -146,6 +146,7 @@ func TestSecurity_MCP_MoveTrackerResourceToCategory_TenantIsolation(t *testing.T
 		"origin":             "https://org1.example.com",
 		"path":               "/tracker.js",
 		"display_name":       "Org1 Resource",
+		"description":        "Org1 tracker resource",
 	}, &resourceResult)
 	require.NotEmpty(t, resourceResult.TrackerResource.ID)
 

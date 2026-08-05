@@ -5859,6 +5859,8 @@ func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.AddTrackerPatternOutput{}, err
 	}
 
+	source := coredata.CookieSourceScript
+
 	pattern, err := r.cookieBanner.CreateTrackerPattern(ctx, scope, cookiebanner.CreateTrackerPatternRequest{
 		CookieCategoryID: input.CookieCategoryID,
 		TrackerType:      coredata.TrackerType(input.TrackerType),
@@ -5867,6 +5869,7 @@ func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		DisplayName:      input.DisplayName,
 		MaxAgeSeconds:    input.MaxAgeSeconds,
 		Description:      input.Description,
+		Source:           &source,
 	})
 	if err != nil {
 		return nil, types.AddTrackerPatternOutput{}, fmt.Errorf("cannot create tracker pattern: %w", err)
