@@ -21,9 +21,11 @@
 package connect_v1
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net"
 	"net/http"
 
@@ -54,21 +56,28 @@ type (
 		handler *SCIMHandler
 	}
 
-	scimRequestContext struct {
-		ctx          context.Context
-		config       *coredata.SCIMConfiguration
-		ipAddress    net.IP
-		method       string
-		path         string
+	// scimEventRecorder collects the parts of a SCIM audit event that only the
+	// resource handler knows about. The event itself is written by
+	// EventLoggingMiddleware once the response has been served.
+	scimEventRecorder struct {
+		handled      bool
 		userName     string
-		requestBody  *string
-		responseBody *string
-		handler      *scimResourceHandler
+		errorMessage *string
+	}
+
+	// scimResponseRecorder captures the status code and body served to the
+	// provisioning client so the audit event stores the exact response.
+	scimResponseRecorder struct {
+		http.ResponseWriter
+
+		statusCode int
+		body       bytes.Buffer
 	}
 )
 
 var (
-	scimConfigCtxKey = &ctxKey{name: "scim_config"}
+	scimConfigCtxKey        = &ctxKey{name: "scim_config"}
+	scimEventRecorderCtxKey = &ctxKey{name: "scim_event_recorder"}
 )
 
 func NewSCIMHandler(iam *iam.Service, logger *log.Logger) *SCIMHandler {
@@ -78,6 +87,48 @@ func NewSCIMHandler(iam *iam.Service, logger *log.Logger) *SCIMHandler {
 func scimConfigFromContext(ctx context.Context) *coredata.SCIMConfiguration {
 	config, _ := ctx.Value(scimConfigCtxKey).(*coredata.SCIMConfiguration)
 	return config
+}
+
+func scimEventRecorderFromContext(ctx context.Context) *scimEventRecorder {
+	recorder, _ := ctx.Value(scimEventRecorderCtxKey).(*scimEventRecorder)
+	return recorder
+}
+
+// markHandled flags the request as one of our resource operations, which is what
+// makes it eligible for a SCIM audit event. Discovery endpoints served directly
+// by the SCIM server never reach a resource handler and stay unlogged.
+func (rec *scimEventRecorder) markHandled() {
+	if rec == nil {
+		return
+	}
+
+	rec.handled = true
+}
+
+func (rec *scimEventRecorder) setUserName(userName string) {
+	if rec == nil {
+		return
+	}
+
+	rec.userName = userName
+}
+
+func (rec *scimEventRecorder) setErrorMessage(errorMessage string) {
+	if rec == nil {
+		return
+	}
+
+	rec.errorMessage = &errorMessage
+}
+
+func (rr *scimResponseRecorder) WriteHeader(statusCode int) {
+	rr.statusCode = statusCode
+	rr.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (rr *scimResponseRecorder) Write(b []byte) (int, error) {
+	rr.body.Write(b)
+	return rr.ResponseWriter.Write(b)
 }
 
 // NewSCIMServer creates a new SCIM server using elimity-com/scim
@@ -156,149 +207,162 @@ func (h *SCIMHandler) BearerTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (rc *scimRequestContext) logAndWrapError(err error, logMsg string) error {
-	if scimErr, ok := errors.AsType[scimerrors.ScimError](err); ok {
-		errMsg := scimErr.Detail
-
-		// Don't reference profileID for 404 errors - the resource doesn't exist
-		userName := rc.userName
-		if scimErr.Status == http.StatusNotFound {
-			userName = ""
+// EventLoggingMiddleware records a SCIM audit event for every resource
+// operation, storing the request and response bodies exactly as they were
+// exchanged with the provisioning client. It must run after
+// BearerTokenMiddleware, which resolves the SCIM configuration.
+func (h *SCIMHandler) EventLoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		config := scimConfigFromContext(r.Context())
+		if config == nil {
+			next.ServeHTTP(w, r)
+			return
 		}
 
-		rc.handler.handler.iam.SCIMService.LogEvent(
-			rc.ctx,
-			rc.config,
-			rc.method,
-			rc.path,
-			userName,
-			rc.ipAddress,
-			scimErr.Status,
-			&errMsg,
-			rc.requestBody,
-			rc.responseBody,
+		requestBody, err := drainRequestBody(r)
+		if err != nil {
+			h.logger.ErrorCtx(r.Context(), "cannot read SCIM request body", log.Error(err))
+			httpserver.RenderError(w, http.StatusBadRequest, errors.New("cannot read request body"))
+
+			return
+		}
+
+		recorder := &scimEventRecorder{}
+		responseRecorder := &scimResponseRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+
+		ctx := context.WithValue(r.Context(), scimEventRecorderCtxKey, recorder)
+		next.ServeHTTP(responseRecorder, r.WithContext(ctx))
+
+		if !recorder.handled {
+			return
+		}
+
+		h.iam.SCIMService.LogEvent(
+			r.Context(),
+			config,
+			r.Method,
+			requestPath(r),
+			recorder.userName,
+			getIPAddress(r),
+			responseRecorder.statusCode,
+			recorder.errorMessage,
+			bodyOrNil(requestBody),
+			bodyOrNil(responseRecorder.body.Bytes()),
 		)
+	})
+}
+
+// recordError turns a service error into the error returned to the provisioning
+// client, and records its detail on the audit event. Unexpected errors are
+// logged and reported as an opaque internal error.
+func (h *scimResourceHandler) recordError(
+	ctx context.Context,
+	recorder *scimEventRecorder,
+	err error,
+	logMsg string,
+) error {
+	if scimErr, ok := errors.AsType[scimerrors.ScimError](err); ok {
+		recorder.setErrorMessage(scimErr.Detail)
 
 		return err
 	}
 
-	rc.handler.handler.logger.ErrorCtx(rc.ctx, logMsg, log.Error(err))
-
-	errMsg := "internal server error"
-	rc.handler.handler.iam.SCIMService.LogEvent(
-		rc.ctx,
-		rc.config,
-		rc.method,
-		rc.path,
-		rc.userName,
-		rc.ipAddress,
-		500,
-		&errMsg,
-		rc.requestBody,
-		rc.responseBody,
-	)
+	h.handler.logger.ErrorCtx(ctx, logMsg, log.Error(err))
+	recorder.setErrorMessage("internal server error")
 
 	return scimerrors.ScimErrorInternal
 }
 
-func (rc *scimRequestContext) logSuccess(statusCode int) {
-	rc.handler.handler.iam.SCIMService.LogEvent(
-		rc.ctx,
-		rc.config,
-		rc.method,
-		rc.path,
-		rc.userName,
-		rc.ipAddress,
-		statusCode,
-		nil,
-		rc.requestBody,
-		rc.responseBody,
-	)
+// drainRequestBody reads the request body so it can be stored on the audit
+// event, and restores it for the SCIM server to consume.
+func drainRequestBody(r *http.Request) ([]byte, error) {
+	if r.Body == nil {
+		return nil, nil
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read request body: %w", err)
+	}
+
+	_ = r.Body.Close()
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
+	return body, nil
+}
+
+func requestPath(r *http.Request) string {
+	if r.URL.RawQuery == "" {
+		return r.URL.Path
+	}
+
+	return r.URL.Path + "?" + r.URL.RawQuery
+}
+
+func bodyOrNil(body []byte) *string {
+	if len(body) == 0 {
+		return nil
+	}
+
+	s := string(body)
+
+	return &s
 }
 
 func (h *scimResourceHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	rc := &scimRequestContext{
-		ctx:         r.Context(),
-		config:      scimConfigFromContext(r.Context()),
-		ipAddress:   getIPAddress(r),
-		method:      "POST",
-		path:        "/Users",
-		requestBody: marshalSCIMPayload(attributes),
-		handler:     h,
-	}
+	ctx := r.Context()
+	recorder := scimEventRecorderFromContext(ctx)
+	recorder.markHandled()
 
-	resource, err := h.handler.iam.SCIMService.CreateUser(rc.ctx, rc.config, attributes)
+	resource, err := h.handler.iam.SCIMService.CreateUser(ctx, scimConfigFromContext(ctx), attributes)
 	if err != nil {
-		return scim.Resource{}, rc.logAndWrapError(err, "cannot create user")
+		return scim.Resource{}, h.recordError(ctx, recorder, err, "cannot create user")
 	}
 
-	rc.userName = resource.Attributes["userName"].(string)
-	rc.responseBody = marshalSCIMResource(resource)
-
-	rc.logSuccess(201)
+	recorder.setUserName(resource.Attributes["userName"].(string))
 
 	return resource, nil
 }
 
 func (h *scimResourceHandler) Get(r *http.Request, id string) (scim.Resource, error) {
-	rc := &scimRequestContext{
-		ctx:       r.Context(),
-		config:    scimConfigFromContext(r.Context()),
-		ipAddress: getIPAddress(r),
-		method:    "GET",
-		path:      "/Users/" + id,
-		handler:   h,
-	}
+	ctx := r.Context()
+	recorder := scimEventRecorderFromContext(ctx)
+	recorder.markHandled()
 
 	profileID, err := gid.ParseGID(id)
 	if err != nil {
-		return scim.Resource{}, rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
+		return scim.Resource{}, h.recordError(ctx, recorder, scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
 	}
 
-	resource, err := h.handler.iam.SCIMService.GetUser(rc.ctx, rc.config, profileID)
+	resource, err := h.handler.iam.SCIMService.GetUser(ctx, scimConfigFromContext(ctx), profileID)
 	if err != nil {
-		return scim.Resource{}, rc.logAndWrapError(err, "cannot get user")
+		return scim.Resource{}, h.recordError(ctx, recorder, err, "cannot get user")
 	}
 
-	rc.userName = resource.Attributes["userName"].(string)
-	rc.responseBody = marshalSCIMResource(resource)
-
-	rc.logSuccess(200)
+	recorder.setUserName(resource.Attributes["userName"].(string))
 
 	return resource, nil
 }
 
 func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
-	path := "/Users"
-	if r.URL.RawQuery != "" {
-		path += "?" + r.URL.RawQuery
-	}
-
-	rc := &scimRequestContext{
-		ctx:       r.Context(),
-		config:    scimConfigFromContext(r.Context()),
-		ipAddress: getIPAddress(r),
-		method:    "GET",
-		path:      path,
-		handler:   h,
-	}
+	ctx := r.Context()
+	recorder := scimEventRecorderFromContext(ctx)
+	recorder.markHandled()
 
 	var filterExpr scimfilter.Expression
 
 	if params.FilterValidator != nil {
 		if err := params.FilterValidator.Validate(); err != nil {
-			return scim.Page{}, rc.logAndWrapError(scimerrors.ScimErrorBadRequest(err.Error()), "invalid filter")
+			return scim.Page{}, h.recordError(ctx, recorder, scimerrors.ScimErrorBadRequest(err.Error()), "invalid filter")
 		}
 
 		filterExpr = params.FilterValidator.GetFilter()
 	}
 
-	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(rc.ctx, rc.config, filterExpr, params.StartIndex, params.Count)
+	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(ctx, scimConfigFromContext(ctx), filterExpr, params.StartIndex, params.Count)
 	if err != nil {
-		return scim.Page{}, rc.logAndWrapError(err, "cannot list users")
+		return scim.Page{}, h.recordError(ctx, recorder, err, "cannot list users")
 	}
-
-	rc.logSuccess(200)
 
 	return scim.Page{
 		TotalResults: totalCount,
@@ -307,86 +371,58 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 }
 
 func (h *scimResourceHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	rc := &scimRequestContext{
-		ctx:         r.Context(),
-		config:      scimConfigFromContext(r.Context()),
-		ipAddress:   getIPAddress(r),
-		method:      "PUT",
-		path:        "/Users/" + id,
-		requestBody: marshalSCIMPayload(attributes),
-		handler:     h,
-	}
+	ctx := r.Context()
+	recorder := scimEventRecorderFromContext(ctx)
+	recorder.markHandled()
 
 	profileID, err := gid.ParseGID(id)
 	if err != nil {
-		return scim.Resource{}, rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
+		return scim.Resource{}, h.recordError(ctx, recorder, scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
 	}
 
-	resource, err := h.handler.iam.SCIMService.ReplaceUser(rc.ctx, rc.config, profileID, attributes)
+	resource, err := h.handler.iam.SCIMService.ReplaceUser(ctx, scimConfigFromContext(ctx), profileID, attributes)
 	if err != nil {
-		return scim.Resource{}, rc.logAndWrapError(err, "cannot update user")
+		return scim.Resource{}, h.recordError(ctx, recorder, err, "cannot update user")
 	}
 
-	rc.userName = resource.Attributes["userName"].(string)
-	rc.responseBody = marshalSCIMResource(resource)
-
-	rc.logSuccess(200)
+	recorder.setUserName(resource.Attributes["userName"].(string))
 
 	return resource, nil
 }
 
 func (h *scimResourceHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
-	rc := &scimRequestContext{
-		ctx:         r.Context(),
-		config:      scimConfigFromContext(r.Context()),
-		ipAddress:   getIPAddress(r),
-		method:      "PATCH",
-		path:        "/Users/" + id,
-		requestBody: marshalSCIMPatchOperations(operations),
-		handler:     h,
-	}
+	ctx := r.Context()
+	recorder := scimEventRecorderFromContext(ctx)
+	recorder.markHandled()
 
 	profileID, err := gid.ParseGID(id)
 	if err != nil {
-		return scim.Resource{}, rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
+		return scim.Resource{}, h.recordError(ctx, recorder, scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
 	}
 
-	resource, err := h.handler.iam.SCIMService.PatchUser(rc.ctx, rc.config, profileID, operations)
+	resource, err := h.handler.iam.SCIMService.PatchUser(ctx, scimConfigFromContext(ctx), profileID, operations)
 	if err != nil {
-		return scim.Resource{}, rc.logAndWrapError(err, "cannot patch user")
+		return scim.Resource{}, h.recordError(ctx, recorder, err, "cannot patch user")
 	}
 
-	rc.userName = resource.Attributes["userName"].(string)
-	rc.responseBody = marshalSCIMResource(resource)
-
-	rc.logSuccess(200)
+	recorder.setUserName(resource.Attributes["userName"].(string))
 
 	return resource, nil
 }
 
 func (h *scimResourceHandler) Delete(r *http.Request, id string) error {
-	rc := &scimRequestContext{
-		ctx:       r.Context(),
-		config:    scimConfigFromContext(r.Context()),
-		ipAddress: getIPAddress(r),
-		method:    "DELETE",
-		path:      "/Users/" + id,
-		handler:   h,
-	}
+	ctx := r.Context()
+	recorder := scimEventRecorderFromContext(ctx)
+	recorder.markHandled()
 
 	profileID, err := gid.ParseGID(id)
 	if err != nil {
-		return rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
+		return h.recordError(ctx, recorder, scimerrors.ScimErrorResourceNotFound(id), "invalid profile ID")
 	}
 
-	err = h.handler.iam.SCIMService.DeleteUser(rc.ctx, rc.config, profileID)
-	if err != nil {
-		return rc.logAndWrapError(err, "cannot delete user")
+	if err := h.handler.iam.SCIMService.DeleteUser(ctx, scimConfigFromContext(ctx), profileID); err != nil {
+		return h.recordError(ctx, recorder, err, "cannot delete user")
 	}
-
-	rc.userName = ""
-
-	rc.logSuccess(204)
 
 	return nil
 }
@@ -397,62 +433,4 @@ func getIPAddress(r *http.Request) net.IP {
 	}
 
 	return net.IPv4(127, 0, 0, 1)
-}
-
-func marshalSCIMPayload(v any) *string {
-	if v == nil {
-		return nil
-	}
-
-	body, err := json.Marshal(v)
-	if err != nil {
-		return nil
-	}
-
-	s := string(body)
-
-	return &s
-}
-
-func marshalSCIMResource(resource scim.Resource) *string {
-	payload := map[string]any{
-		"id": resource.ID,
-	}
-
-	for key, value := range resource.Attributes {
-		payload[key] = value
-	}
-
-	if resource.ExternalID.Present() {
-		payload["externalId"] = resource.ExternalID.Value()
-	}
-
-	return marshalSCIMPayload(payload)
-}
-
-func marshalSCIMPatchOperations(operations []scim.PatchOperation) *string {
-	ops := make([]map[string]any, 0, len(operations))
-
-	for _, operation := range operations {
-		op := map[string]any{
-			"op": operation.Op,
-		}
-
-		if operation.Path != nil {
-			op["path"] = operation.Path.String()
-		}
-
-		if operation.Value != nil {
-			op["value"] = operation.Value
-		}
-
-		ops = append(ops, op)
-	}
-
-	return marshalSCIMPayload(
-		map[string]any{
-			"schemas":    []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-			"Operations": ops,
-		},
-	)
 }

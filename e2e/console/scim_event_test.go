@@ -92,11 +92,11 @@ func findSCIMEvent(t *testing.T, events []scimEventNode, method string, userName
 		}
 	}
 
-	t.Fatalf("SCIM event not found for method=%s userName=%s", method, userName)
+	t.Fatalf("SCIM event not found for method=%s among %d events", method, len(events))
 	return scimEventNode{}
 }
 
-func requireJSONContains(t *testing.T, raw *string, key string, want any) {
+func decodeJSON(t *testing.T, raw *string) map[string]any {
 	t.Helper()
 
 	require.NotNil(t, raw)
@@ -104,7 +104,14 @@ func requireJSONContains(t *testing.T, raw *string, key string, want any) {
 
 	var payload map[string]any
 	require.NoError(t, json.Unmarshal([]byte(*raw), &payload))
-	assert.Equal(t, want, payload[key])
+
+	return payload
+}
+
+func requireJSONContains(t *testing.T, raw *string, key string, want any) {
+	t.Helper()
+
+	assert.Equal(t, want, decodeJSON(t, raw)[key])
 }
 
 func TestSCIMEvent_StoresPayload(t *testing.T) {
@@ -149,6 +156,12 @@ func TestSCIMEvent_StoresPayload(t *testing.T) {
 		requireJSONContains(t, event.RequestBody, "userName", email)
 		requireJSONContains(t, event.ResponseBody, "userName", email)
 		requireJSONContains(t, event.ResponseBody, "id", userID)
+
+		// The stored response is the payload served to the client, so it carries
+		// the envelope fields the SCIM server adds.
+		response := decodeJSON(t, event.ResponseBody)
+		assert.Contains(t, response, "schemas")
+		assert.Contains(t, response, "meta")
 	})
 
 	t.Run("replace stores request and response bodies", func(t *testing.T) {
@@ -169,11 +182,7 @@ func TestSCIMEvent_StoresPayload(t *testing.T) {
 		assert.Equal(t, 200, event.StatusCode)
 		assert.Equal(t, "/Users/"+userID, event.Path)
 
-		require.NotNil(t, event.RequestBody)
-		var request map[string]any
-		require.NoError(t, json.Unmarshal([]byte(*event.RequestBody), &request))
-
-		ops, ok := request["Operations"].([]any)
+		ops, ok := decodeJSON(t, event.RequestBody)["Operations"].([]any)
 		require.True(t, ok)
 		require.Len(t, ops, 1)
 
