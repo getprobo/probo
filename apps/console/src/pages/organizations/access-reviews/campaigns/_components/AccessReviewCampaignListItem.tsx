@@ -32,7 +32,10 @@ import { graphql, useFragment } from "react-relay";
 
 import type { AccessReviewCampaignListItem_campaign$key } from "#/__generated__/core/AccessReviewCampaignListItem_campaign.graphql";
 
-import { statusBadgeVariant } from "../../_components/accessReviewHelpers";
+import {
+  isCampaignDeletableStatus,
+  statusBadgeVariant,
+} from "../../_components/accessReviewHelpers";
 
 const accessReviewCampaignListItemFragment = graphql`
   fragment AccessReviewCampaignListItem_campaign on AccessReviewCampaign {
@@ -62,7 +65,8 @@ export function AccessReviewCampaignListItem({
     accessReviewCampaignListItemFragment,
     campaignKey,
   );
-  const canDelete = campaign.canDelete && campaign.status !== "IN_PROGRESS";
+  const canDelete
+    = campaign.canDelete && isCampaignDeletableStatus(campaign.status);
 
   return (
     <Tr

@@ -64,6 +64,7 @@ import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetai
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { isCampaignDeletableStatus } from "../_components/accessReviewHelpers";
 import { AddCampaignSourceDialog } from "../dialogs/AddCampaignSourceDialog";
 
 import { AccessEntriesSelectionBar } from "./_components/AccessEntriesSelectionBar";
@@ -168,14 +169,6 @@ export const campaignDetailPageQuery = graphql`
             id
           }
           name
-          fetchAttempts(first: 1) {
-            edges {
-              node {
-                status
-                error
-              }
-            }
-          }
           entries(first: 1000) {
             edges {
               node {
@@ -259,7 +252,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const isInProgress = campaign.status === "IN_PROGRESS";
   const isDraft = campaign.status === "DRAFT";
   const isPendingActions = campaign.status === "PENDING_ACTIONS";
-  const canDelete = campaign.canDelete && !isInProgress;
+  const canDelete
+    = campaign.canDelete && isCampaignDeletableStatus(campaign.status);
 
   const campaignIdRef = useRef(campaign.id);
   // Bumped on every campaign navigation so returning to a prior campaign cannot
@@ -895,15 +889,6 @@ export default function CampaignDetailPage({ queryRef }: Props) {
 
       <div className={results()}>
         {filteredSources.map(({ source, entries }) => {
-          const latestAttempt = source.fetchAttempts.edges[0]?.node;
-          const fetchStatus = latestAttempt?.status;
-          const fetchError = fetchStatus === "FAILED"
-            ? latestAttempt.error
-            : null;
-          const isFetchInProgress = fetchStatus === "QUEUED" || fetchStatus === "FETCHING";
-          const statusMessage = entries.length === 0 && isFetchInProgress && fetchStatus
-            ? t(`campaignDetailPage.fetchStatus.${fetchStatus.toLowerCase()}`)
-            : null;
           const hasNextPage = source.entries.pageInfo.hasNextPage;
           const truncatedCount = hasNextPage ? source.entries.edges.length : null;
 
@@ -914,25 +899,13 @@ export default function CampaignDetailPage({ queryRef }: Props) {
               count={entries.length}
               truncatedCount={truncatedCount}
             >
-              {entries.length === 0
-                ? (
-                    statusMessage || fetchError
-                      ? null
-                      : (
-                          <div className="rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-center text-sm text-txt-tertiary">
-                            {t("campaignDetailPage.emptyEntries")}
-                          </div>
-                        )
-                  )
-                : (
-                    <AccessEntrySectionList
-                      key={deferredFilterKey}
-                      entryKeys={entries}
-                      isPendingActions={isPendingActions}
-                      selectedIds={selectedIdSet}
-                      onSelectedChange={handleSelectedChange}
-                    />
-                  )}
+              <AccessEntrySectionList
+                key={deferredFilterKey}
+                entryKeys={entries}
+                isPendingActions={isPendingActions}
+                selectedIds={selectedIdSet}
+                onSelectedChange={handleSelectedChange}
+              />
             </AccessEntrySection>
           );
         })}

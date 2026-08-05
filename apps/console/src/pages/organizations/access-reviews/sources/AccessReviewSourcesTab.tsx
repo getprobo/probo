@@ -142,6 +142,21 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     [existingSourceProviders],
   );
   const normalizedSearch = searchQuery.trim().toLowerCase();
+  const isSearching = normalizedSearch !== "";
+  // accessReviewSources has no server-side filter, so the search matches only
+  // the pages already in the store. Pull the remaining ones while a search is
+  // active, otherwise a source past the first page is reported as absent.
+  // hasNext stays true when a page fails to load, so the failing term is
+  // latched to stop the effect from retrying in a loop; a new term retries.
+  const [failedSearch, setFailedSearch] = useState<string | null>(null);
+  const isLoadingRemainingSources
+    = isSearching && hasNext && failedSearch !== normalizedSearch;
+  useEffect(() => {
+    if (!isLoadingRemainingSources || isLoadingNext) return;
+    loadNext(50, {
+      onComplete: error => setFailedSearch(error ? normalizedSearch : null),
+    });
+  }, [isLoadingRemainingSources, isLoadingNext, loadNext, normalizedSearch]);
   const filteredSources = useMemo(
     () => accessReviewSources.edges.filter(({ node }) => {
       if (!normalizedSearch) return true;
@@ -300,9 +315,11 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
       <SourceSection
         title={t("accessReviewSourcesTab.sections.connected")}
         count={filteredSources.length}
-        empty={normalizedSearch
-          ? t("accessReviewSourcesTab.emptyConnectedSearch")
-          : t("accessReviewSourcesTab.emptyConnected")}
+        empty={isLoadingRemainingSources
+          ? t("accessReviewSourcesTab.actions.loading")
+          : isSearching
+            ? t("accessReviewSourcesTab.emptyConnectedSearch")
+            : t("accessReviewSourcesTab.emptyConnected")}
       >
         {filteredSources.map(({ node }) => (
           <AccessReviewSourceListItem
@@ -314,7 +331,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
         ))}
       </SourceSection>
 
-      {hasNext && (
+      {hasNext && !isSearching && (
         <Button
           variant="secondary"
           onClick={() => loadNext(50)}

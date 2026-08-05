@@ -73,6 +73,14 @@ export function AccessReviewSourceProviderListItem({
     "apiKey" | "clientCredentials" | "datadog" | "zendesk" | null
   >(null);
 
+  // Every row renders the dialogs its provider can actually reach, so a list of
+  // providers does not mount three unusable dialogs per row.
+  const supportsAPIKey = provider.apiKeySupported || provider.apiKeyManaged;
+  const supportsDatadogOAuth
+    = provider.oauthConfigured && provider.provider === "DATADOG";
+  const supportsZendeskOAuth
+    = provider.oauthConfigured && provider.provider === "ZENDESK";
+
   const connectWithOAuth = () => {
     if (provider.provider === "DATADOG") {
       setActiveDialog("datadog");
@@ -106,7 +114,7 @@ export function AccessReviewSourceProviderListItem({
             {t("addAccessReviewSourceDialog.actions.connectWithOAuth")}
           </Button>
         )}
-        {(provider.apiKeySupported || provider.apiKeyManaged) && (
+        {supportsAPIKey && (
           <Button variant="primary" onClick={() => setActiveDialog("apiKey")}>
             {t("addAccessReviewSourceDialog.actions.connectWithApiKey")}
           </Button>
@@ -122,30 +130,38 @@ export function AccessReviewSourceProviderListItem({
           </Button>
         )}
       </div>
-      <APIKeyConnectorDialog
-        providerKey={activeDialog === "apiKey" ? provider : null}
-        organizationId={organizationId}
-        connectionId={connectionId}
-        onClose={() => setActiveDialog(null)}
-        onSuccess={() => setActiveDialog(null)}
-      />
-      <ClientCredentialsConnectorDialog
-        providerKey={activeDialog === "clientCredentials" ? provider : null}
-        organizationId={organizationId}
-        connectionId={connectionId}
-        onClose={() => setActiveDialog(null)}
-        onSuccess={() => setActiveDialog(null)}
-      />
-      <DatadogConnectDialog
-        providerKey={activeDialog === "datadog" ? provider : null}
-        organizationId={organizationId}
-        onClose={() => setActiveDialog(null)}
-      />
-      <ZendeskConnectDialog
-        providerKey={activeDialog === "zendesk" ? provider : null}
-        organizationId={organizationId}
-        onClose={() => setActiveDialog(null)}
-      />
+      {supportsAPIKey && (
+        <APIKeyConnectorDialog
+          providerKey={activeDialog === "apiKey" ? provider : null}
+          organizationId={organizationId}
+          connectionId={connectionId}
+          onClose={() => setActiveDialog(null)}
+          onSuccess={() => setActiveDialog(null)}
+        />
+      )}
+      {provider.clientCredentialsSupported && (
+        <ClientCredentialsConnectorDialog
+          providerKey={activeDialog === "clientCredentials" ? provider : null}
+          organizationId={organizationId}
+          connectionId={connectionId}
+          onClose={() => setActiveDialog(null)}
+          onSuccess={() => setActiveDialog(null)}
+        />
+      )}
+      {supportsDatadogOAuth && (
+        <DatadogConnectDialog
+          providerKey={activeDialog === "datadog" ? provider : null}
+          organizationId={organizationId}
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+      {supportsZendeskOAuth && (
+        <ZendeskConnectDialog
+          providerKey={activeDialog === "zendesk" ? provider : null}
+          organizationId={organizationId}
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
     </li>
   );
 }
