@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/jsonx"
 	"go.probo.inc/probo/pkg/uri"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type Handler struct {
@@ -229,6 +230,11 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) || errors.Is(err, cookiebanner.ErrVersionNotPublished) {
 			jsonx.RenderBadRequest(w, fmt.Errorf("invalid version"))
+			return
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			jsonx.RenderBadRequest(w, validationErrors)
 			return
 		}
 

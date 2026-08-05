@@ -22,12 +22,14 @@ package cookiebanner
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 func TestSnapshotsEqual(t *testing.T) {
@@ -286,5 +288,43 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 
 		require.Len(t, snap.Categories, 3)
 		assert.Equal(t, coredata.CookieCategoryKindNecessary, snap.Categories[0].Kind)
+	})
+}
+
+func TestRecordConsentRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	t.Run("rejects empty visitor id", func(t *testing.T) {
+		t.Parallel()
+
+		req := RecordConsentRequest{
+			Version:   1,
+			VisitorID: "",
+			Action:    coredata.CookieConsentActionAcceptAll,
+		}
+
+		err := req.Validate()
+		require.Error(t, err)
+
+		validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+		require.True(t, ok)
+		assert.NotEmpty(t, validationErrors.ByField("visitor_id"))
+	})
+
+	t.Run("rejects invalid action", func(t *testing.T) {
+		t.Parallel()
+
+		req := RecordConsentRequest{
+			Version:   1,
+			VisitorID: "visitor-1",
+			Action:    coredata.CookieConsentAction("NOT_A_REAL_ACTION"),
+		}
+
+		err := req.Validate()
+		require.Error(t, err)
+
+		validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+		require.True(t, ok)
+		assert.NotEmpty(t, validationErrors.ByField("action"))
 	})
 }
