@@ -37,51 +37,6 @@ func NewService(pgClient *pg.Client) *Service {
 	return &Service{pgClient: pgClient}
 }
 
-func (s *Service) ReplaceLocations(
-	ctx context.Context,
-	source coredata.IPLocationBlockSource,
-) (count int64, err error) {
-	err = s.pgClient.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if _, err := tx.Exec(
-				ctx,
-				`SELECT pg_advisory_xact_lock(hashtext('common_ip_location_blocks_import'))`,
-			); err != nil {
-				return fmt.Errorf("cannot acquire IP location import lock: %w", err)
-			}
-
-			if err := coredata.CreateIPLocationBlocksStaging(ctx, tx); err != nil {
-				return fmt.Errorf("cannot create IP location staging table: %w", err)
-			}
-
-			var copyErr error
-			if count, copyErr = coredata.CopyIPLocationBlocksStaging(ctx, tx, source); copyErr != nil {
-				return fmt.Errorf("cannot import IP locations: %w", copyErr)
-			}
-
-			if count == 0 {
-				return fmt.Errorf("cannot import IP locations: source contains no ranges")
-			}
-
-			if err := coredata.FinalizeIPLocationBlocksStaging(ctx, tx); err != nil {
-				return fmt.Errorf("cannot finalize IP locations: %w", err)
-			}
-
-			if err := coredata.SwapIPLocationBlocksStaging(ctx, tx); err != nil {
-				return fmt.Errorf("cannot activate IP locations: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 func (s *Service) LookupLocation(ctx context.Context, ip string) (coredata.IPLocation, error) {
 	parsed := net.ParseIP(ip)
 	if parsed == nil {
