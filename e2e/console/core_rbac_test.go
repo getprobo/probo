@@ -444,7 +444,12 @@ func TestRBAC(t *testing.T) {
 				client := org.Client(t, tt.role)
 				vars := rbacVariables(t, tt.resource, tt.operation, tt.role, org, shared)
 
-				t.Parallel()
+				// Task creation contends on organization-scoped state. Keep
+				// these three role checks serial while the rest of the matrix
+				// runs in parallel.
+				if tt.resource != "task" || tt.operation != "create" {
+					t.Parallel()
+				}
 
 				err := executeRBACRequest(
 					client,
