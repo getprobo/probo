@@ -93,6 +93,7 @@ func findSCIMEvent(t *testing.T, events []scimEventNode, method string, userName
 	}
 
 	t.Fatalf("SCIM event not found for method=%s among %d events", method, len(events))
+
 	return scimEventNode{}
 }
 
