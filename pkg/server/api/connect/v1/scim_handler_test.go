@@ -62,6 +62,50 @@ func TestRedactSCIMCredentials(t *testing.T) {
 		assert.JSONEq(t, `{"urn:example":{"password":"[REDACTED]"}}`, string(got))
 	})
 
+	t.Run("redacts a fully qualified password attribute", func(t *testing.T) {
+		t.Parallel()
+
+		got := redactSCIMCredentials(
+			[]byte(`{"urn:ietf:params:scim:schemas:core:2.0:User:password":"s3cret"}`),
+		)
+
+		assert.JSONEq(
+			t,
+			`{"urn:ietf:params:scim:schemas:core:2.0:User:password":"[REDACTED]"}`,
+			string(got),
+		)
+	})
+
+	t.Run("redacts a patch operation using a fully qualified path", func(t *testing.T) {
+		t.Parallel()
+
+		got := redactSCIMCredentials(
+			[]byte(`{"Operations":[{"op":"replace","path":"urn:ietf:params:scim:schemas:core:2.0:User:password","value":"s3cret"}]}`),
+		)
+
+		assert.NotContains(t, string(got), "s3cret")
+		assert.Contains(t, string(got), scimRedactedValue)
+	})
+
+	t.Run("leaves a body that merely mentions the word untouched", func(t *testing.T) {
+		t.Parallel()
+
+		body := []byte(`{"userName":"password@example.com","displayName":"Password Reset Bot"}`)
+
+		assert.Equal(t, body, redactSCIMCredentials(body))
+	})
+
+	t.Run("preserves large integers when redacting", func(t *testing.T) {
+		t.Parallel()
+
+		got := redactSCIMCredentials(
+			[]byte(`{"employeeNumber":9007199254740993,"password":"s3cret"}`),
+		)
+
+		assert.Contains(t, string(got), "9007199254740993")
+		assert.NotContains(t, string(got), "s3cret")
+	})
+
 	t.Run("redacts a patch operation targeting the password", func(t *testing.T) {
 		t.Parallel()
 
@@ -107,6 +151,9 @@ func TestRedactSCIMCredentials(t *testing.T) {
 			`{"password":"s3cret"}`,
 			`{"PASSWORD":"s3cret"}`,
 			`{"Operations":[{"op":"add","path":"Password","value":"s3cret"}]}`,
+			`{"urn:ietf:params:scim:schemas:core:2.0:User:password":"s3cret"}`,
+			`{"Operations":[{"op":"add","path":"urn:ietf:params:scim:schemas:core:2.0:User:Password","value":"s3cret"}]}`,
+			`{"emails":[{"value":"a@example.com"}],"password":"s3cret"}`,
 		}
 
 		for _, body := range bodies {
