@@ -21,6 +21,8 @@
 package mcp_test
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -55,13 +57,27 @@ func createCookieBannerAndCategory(t *testing.T, mc *testutil.MCPClient, orgID s
 	mc.CallToolInto("addCookieCategory", map[string]any{
 		"cookie_banner_id": bannerResult.CookieBanner.ID,
 		"name":             factory.SafeName("Category"),
-		"slug":             factory.SafeName("category"),
+		"slug":             mcpCookieCategorySlug(),
 		"description":      "Test category",
 		"rank":             1,
 	}, &categoryResult)
 	require.NotEmpty(t, categoryResult.CookieCategory.ID)
 
 	return categoryResult.CookieCategory.ID
+}
+
+var mcpCookieCategorySlugSanitizer = regexp.MustCompile(`[^a-z0-9-]+`)
+
+func mcpCookieCategorySlug() string {
+	raw := strings.ToLower(strings.ReplaceAll(factory.SafeName("category"), " ", "-"))
+	slug := mcpCookieCategorySlugSanitizer.ReplaceAllString(raw, "-")
+	slug = strings.Trim(slug, "-")
+
+	if slug == "" {
+		return "category-e2e"
+	}
+
+	return slug
 }
 
 // TestSecurity_MCP_MoveTrackerPatternToCategory_TenantIsolation covers a

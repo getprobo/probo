@@ -104,6 +104,7 @@ func TestMCP_Control_CRUD(t *testing.T) {
 		"framework_id":    frameworkID,
 		"section_title":   "Access Control",
 		"name":            factory.SafeName("Control"),
+		"description":     "Control description",
 		"best_practice":   true,
 		"maturity_level":  "INITIAL",
 	}, &addResult)

@@ -38,15 +38,18 @@ func TestMCP_Finding_CRUD(t *testing.T) {
 	// Create
 	var addResult struct {
 		Finding struct {
-			ID    string `json:"id"`
-			Title string `json:"title"`
+			ID          string  `json:"id"`
+			Kind        string  `json:"kind"`
+			Description *string `json:"description"`
 		} `json:"finding"`
 	}
 	mc.CallToolInto("addFinding", map[string]any{
 		"organization_id": orgID,
-		"title":           factory.SafeName("Finding"),
+		"kind":            "OBSERVATION",
+		"description":     factory.SafeName("Finding"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Finding.ID)
+	assert.Equal(t, "OBSERVATION", addResult.Finding.Kind)
 
 	// Get
 	var getResult struct {
@@ -60,17 +63,20 @@ func TestMCP_Finding_CRUD(t *testing.T) {
 	assert.Equal(t, addResult.Finding.ID, getResult.Finding.ID)
 
 	// Update
+	updatedDescription := "Updated finding description"
+
 	var updateResult struct {
 		Finding struct {
-			ID    string `json:"id"`
-			Title string `json:"title"`
+			ID          string  `json:"id"`
+			Description *string `json:"description"`
 		} `json:"finding"`
 	}
 	mc.CallToolInto("updateFinding", map[string]any{
-		"id":    addResult.Finding.ID,
-		"title": "Updated Finding",
+		"id":          addResult.Finding.ID,
+		"description": updatedDescription,
 	}, &updateResult)
-	assert.Equal(t, "Updated Finding", updateResult.Finding.Title)
+	require.NotNil(t, updateResult.Finding.Description)
+	assert.Equal(t, updatedDescription, *updateResult.Finding.Description)
 
 	// List
 	var listResult struct {

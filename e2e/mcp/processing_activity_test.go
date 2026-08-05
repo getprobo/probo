@@ -36,8 +36,8 @@ func mcpAddProcessingActivityInput(orgID, name string) map[string]any {
 		"special_or_criminal_data": "NO",
 		"lawful_basis":             "CONSENT",
 		"international_transfers":  false,
-		"data_protection_impact_assessment_needed": false,
-		"transfer_impact_assessment_needed":        false,
+		"data_protection_impact_assessment_needed": "NOT_NEEDED",
+		"transfer_impact_assessment_needed":        "NOT_NEEDED",
 		"role":                                     "CONTROLLER",
 	}
 }

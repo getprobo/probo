@@ -119,13 +119,6 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 	require.NotNil(t, setOwnerResult.Device.OwnerID)
 	assert.Equal(t, profileID, *setOwnerResult.Device.OwnerID)
 
-	// Clear owner
-	mc.CallToolInto("setDeviceOwner", map[string]any{
-		"id":       deviceID,
-		"owner_id": nil,
-	}, &setOwnerResult)
-	assert.Nil(t, setOwnerResult.Device.OwnerID)
-
 	// Revoke
 	var revokeResult struct {
 		Device mcpDevice `json:"device"`

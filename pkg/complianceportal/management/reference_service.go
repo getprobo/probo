@@ -170,6 +170,8 @@ func (s *Service) CreateReference(
 
 	referenceID := gid.New(scope.GetTenantID(), coredata.CompliancePortalReferenceEntityType)
 
+	logoFile := referenceLogoFileForCreate(req.LogoFile)
+
 	var reference *coredata.CompliancePortalReference
 
 	var logoKey string
@@ -182,7 +184,7 @@ func (s *Service) CreateReference(
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			fileID, s3Key, err := s.uploadReferenceLogoFile(ctx, scope, tx, req.LogoFile, referenceID, req.CompliancePortalID, now)
+			fileID, s3Key, err := s.uploadReferenceLogoFile(ctx, scope, tx, logoFile, referenceID, req.CompliancePortalID, now)
 			if err != nil {
 				return fmt.Errorf("cannot upload logo file: %w", err)
 			}
@@ -446,6 +448,35 @@ func (s *Service) uploadReferenceLogoFile(
 	}
 
 	return fileID, objectKey.String(), nil
+}
+
+func referenceLogoFileForCreate(file File) File {
+	if file.Content != nil || file.Filename != "" || file.Size > 0 {
+		return file
+	}
+
+	return defaultReferenceLogoFile()
+}
+
+func defaultReferenceLogoFile() File {
+	png := []byte{
+		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+		0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+		0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+		0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+		0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41,
+		0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+		0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
+		0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+		0x42, 0x60, 0x82,
+	}
+
+	return File{
+		Content:     bytes.NewReader(png),
+		Filename:    "reference-logo.png",
+		Size:        int64(len(png)),
+		ContentType: "image/png",
+	}
 }
 
 func (s *Service) cleanupReferenceS3Object(
