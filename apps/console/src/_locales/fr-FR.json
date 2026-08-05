@@ -3373,7 +3373,8 @@
     },
     "actions": {
       "loading": "Chargement...",
-      "loadMore": "Charger plus"
+      "loadMore": "Charger plus",
+      "retry": "Réessayer"
     },
     "sections": {
       "connected": "Connectées",
@@ -3382,6 +3383,7 @@
     "searchPlaceholder": "Rechercher des sources et des fournisseurs...",
     "emptyConnected": "Aucune source d’accès n’est encore connectée.",
     "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",
+    "searchLoadFailed": "Certaines sources n’ont pas pu être chargées, la recherche est donc incomplète. Réessayez pour toutes les rechercher.",
     "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche."
   },
   "assetDetailsPage": {
