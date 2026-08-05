@@ -49,16 +49,16 @@ const accessEntrySectionFragment = graphql`
 interface AccessEntrySectionProps {
   sourceKey: AccessEntrySection_source$key;
   count: number;
-  truncatedCount?: number | null;
   children: ReactNode;
+  footer?: ReactNode;
 }
 
 // One connector group: header (logo + name + count) above a bordered list of entries.
 export function AccessEntrySection({
   sourceKey,
   count,
-  truncatedCount,
   children,
+  footer,
 }: AccessEntrySectionProps) {
   const { t } = useTranslation();
   const source = useFragment(accessEntrySectionFragment, sourceKey);
@@ -106,21 +106,16 @@ export function AccessEntrySection({
         : null}
       {count > 0
         ? children
-        : error || statusMessage
+        // A footer means more pages are still coming, so "no entries" would be
+        // premature.
+        : error || statusMessage || footer
           ? null
           : (
               <div className="rounded-[10px] border border-border-low bg-level-1 px-4 py-8 text-center text-sm text-txt-tertiary">
                 {t("campaignDetailPage.emptyEntries")}
               </div>
             )}
-      {truncatedCount != null
-        ? (
-            <div className="flex items-start gap-2 rounded-[10px] border border-border-warning bg-bg-warning/10 px-4 py-3 text-sm text-txt-warning">
-              <IconWarning className="mt-0.5 size-4 shrink-0" />
-              <p>{t("campaignDetailPage.showingFirst", { count: truncatedCount })}</p>
-            </div>
-          )
-        : null}
+      {footer}
     </section>
   );
 }

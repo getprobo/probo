@@ -1618,9 +1618,7 @@
     "flagsSelected_one": "{{count}} flag",
     "flagsSelected_other": "{{count}} flags",
     "flagsPlaceholder": "Set flags...",
-    "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" },
-    "showingFirst_one": "Showing first {{count}} entry. Use the CLI for the full list.",
-    "showingFirst_other": "Showing first {{count}} entries. Use the CLI for the full list."
+    "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
   "addAccessReviewSourceDialog": {
     "actions": { "connect": "Connect", "connectWithOAuth": "OAuth", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "open": "Open" },

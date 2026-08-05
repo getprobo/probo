@@ -47,19 +47,13 @@ import {
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { useNavigate } from "react-router";
-import {
-  ConnectionHandler,
-  fetchQuery,
-  graphql,
-  readInlineData,
-} from "relay-runtime";
+import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
 import type { AccessReviewEntryDecision, CampaignDetailPageBulkDecisionMutation } from "#/__generated__/core/CampaignDetailPageBulkDecisionMutation.graphql";
 import type { AccessReviewEntryFlag, CampaignDetailPageBulkFlagMutation } from "#/__generated__/core/CampaignDetailPageBulkFlagMutation.graphql";
 import type { CampaignDetailPageCloseMutation } from "#/__generated__/core/CampaignDetailPageCloseMutation.graphql";
 import type { CampaignDetailPageDeleteMutation } from "#/__generated__/core/CampaignDetailPageDeleteMutation.graphql";
-import type { CampaignDetailPageFilter_entry$key } from "#/__generated__/core/CampaignDetailPageFilter_entry.graphql";
 import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetailPageQuery.graphql";
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -69,8 +63,8 @@ import { AddCampaignSourceDialog } from "../dialogs/AddCampaignSourceDialog";
 
 import { AccessEntriesSelectionBar } from "./_components/AccessEntriesSelectionBar";
 import { AccessEntriesToolbar } from "./_components/AccessEntriesToolbar";
-import { AccessEntrySection } from "./_components/AccessEntrySection";
-import { AccessEntrySectionList } from "./_components/AccessEntrySectionList";
+import type { EntryFilters, SourceMatches } from "./_components/AccessEntrySourceSection";
+import { AccessEntrySourceSection } from "./_components/AccessEntrySourceSection";
 import { accessEntriesLayout } from "./_components/variants";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -142,15 +136,6 @@ const bulkFlagMutation = graphql`
   }
 `;
 
-const campaignDetailPageFilterFragment = graphql`
-  fragment CampaignDetailPageFilter_entry on AccessReviewEntry @inline {
-    email
-    fullName
-    isAdmin
-    mfaStatus
-  }
-`;
-
 export const campaignDetailPageQuery = graphql`
   query CampaignDetailPageQuery($campaignId: ID!) {
     node(id: $campaignId) {
@@ -169,21 +154,7 @@ export const campaignDetailPageQuery = graphql`
             id
           }
           name
-          entries(first: 1000) {
-            edges {
-              node {
-                id
-                ...CampaignDetailPageFilter_entry
-                # eslint-disable-next-line relay/must-colocate-fragment-spreads
-                ...AccessEntrySectionList_entry
-              }
-            }
-            pageInfo {
-              hasNextPage
-            }
-          }
-          # eslint-disable-next-line relay/must-colocate-fragment-spreads
-          ...AccessEntrySection_source
+          ...AccessEntrySourceSection_source
         }
       }
     }
@@ -193,47 +164,6 @@ export const campaignDetailPageQuery = graphql`
 type Props = {
   queryRef: PreloadedQuery<CampaignDetailPageQuery>;
 };
-
-type EntryFilters = {
-  email: string;
-  connectorIds: ReadonlyArray<string>;
-  mfa: ReadonlyArray<string>;
-  admin: ReadonlyArray<string>;
-};
-
-function entryMatchesFilters(
-  entryKey: CampaignDetailPageFilter_entry$key,
-  sourceId: string,
-  filters: EntryFilters,
-): boolean {
-  const entry = readInlineData(campaignDetailPageFilterFragment, entryKey);
-
-  if (filters.connectorIds.length > 0 && !filters.connectorIds.includes(sourceId)) {
-    return false;
-  }
-
-  const query = filters.email;
-  if (query) {
-    const email = entry.email.toLowerCase();
-    const fullName = entry.fullName.toLowerCase();
-    if (!email.includes(query) && !fullName.includes(query)) {
-      return false;
-    }
-  }
-
-  if (filters.mfa.length > 0 && !filters.mfa.includes(entry.mfaStatus)) {
-    return false;
-  }
-
-  if (filters.admin.length > 0) {
-    const adminValue = entry.isAdmin ? "YES" : "NO";
-    if (!filters.admin.includes(adminValue)) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 export default function CampaignDetailPage({ queryRef }: Props) {
   const { t } = useTranslation();
@@ -270,6 +200,10 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [connectorFilter, setConnectorFilter] = useState<string[]>([]);
   const [mfaFilter, setMfaFilter] = useState<string[]>([]);
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
+  const [sourceMatches, setSourceMatches] = useState<Record<string, SourceMatches>>({});
+  // Polling replaces every connection with its first page, so it has to stop
+  // once the reviewer has scrolled past it.
+  const [hasLoadedMore, setHasLoadedMore] = useState(false);
   const [, startTransition] = useTransition();
 
   const debouncedApplyEmailFilter = useDebounceCallback(
@@ -331,6 +265,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     setBulkNote("");
     setBulkFlagSelection([]);
     setBulkFlagsDirty(false);
+    setSourceMatches({});
+    setHasLoadedMore(false);
   }
 
   // Layout effect so async bulk callbacks see the new generation before paint / network replies.
@@ -343,7 +279,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   }, [campaign.id, bulkNoteRef]);
 
   useEffect(() => {
-    if (!isInProgress) return;
+    if (!isInProgress || hasLoadedMore) return;
     const interval = setInterval(() => {
       if (document.hidden) return;
       fetchQuery<CampaignDetailPageQuery>(
@@ -354,7 +290,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       ).subscribe({});
     }, 3000);
     return () => clearInterval(interval);
-  }, [isInProgress, environment]);
+  }, [isInProgress, hasLoadedMore, environment]);
 
   const existingCampaignSourceIds = useMemo(
     () => campaign.sources.flatMap(s => s.source?.id ? [s.source.id] : []),
@@ -374,27 +310,39 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     || deferredFilters.mfa.length > 0
     || deferredFilters.admin.length > 0;
 
-  const filteredSources = useMemo(() => {
-    return campaign.sources
-      .map(source => ({
-        source,
-        entries: (source.entries?.edges ?? []).filter(edge =>
-          entryMatchesFilters(edge.node, source.id, deferredFilters),
-        ).map(edge => edge.node),
-      }))
-      .filter(({ source, entries }) => {
+  // Each source section paginates on its own and reports the entries it shows,
+  // so the page can still offer select-all and shift-range across connectors.
+  const handleMatchesChange = useCallback(
+    (sourceId: string, matches: SourceMatches) => {
+      setSourceMatches((previous) => {
+        const current = previous[sourceId];
         if (
-          deferredFilters.connectorIds.length > 0
-          && !deferredFilters.connectorIds.includes(source.id)
+          current
+          && current.hasNext === matches.hasNext
+          && current.entryIds.length === matches.entryIds.length
+          && current.entryIds.every((id, index) => id === matches.entryIds[index])
         ) {
-          return false;
+          return previous;
         }
-        if (hasActiveFilters && entries.length === 0) {
-          return false;
-        }
-        return true;
+        return { ...previous, [sourceId]: matches };
       });
-  }, [campaign.sources, deferredFilters, hasActiveFilters]);
+    },
+    [],
+  );
+
+  const handleLoadNext = useCallback(() => setHasLoadedMore(true), []);
+
+  const allFilteredEntryIds = useMemo(
+    () => campaign.sources.flatMap(
+      source => sourceMatches[source.id]?.entryIds ?? [],
+    ),
+    [campaign.sources, sourceMatches],
+  );
+  // A source that has not reported yet counts as unfinished, so the empty state
+  // cannot flash before the sections have applied the filters.
+  const mayHaveMoreMatches = campaign.sources.some(
+    source => sourceMatches[source.id]?.hasNext ?? true,
+  );
 
   const connectorOptions = useMemo(
     () => campaign.sources.map(source => ({
@@ -774,15 +722,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     setBulkFlagsDirty(true);
   };
 
-  const allFilteredEntryIds = useMemo(
-    () => filteredSources.flatMap(({ entries }) => entries.map(entry => entry.id)),
-    [filteredSources],
-  );
   const selectedIdSet = useMemo(() => new Set(selection), [selection]);
-  const deferredFilterKey = useMemo(
-    () => JSON.stringify(deferredFilters),
-    [deferredFilters],
-  );
 
   const handleSelectedChange = useCallback(
     (entryId: string, { shiftKey }: { shiftKey: boolean }) => {
@@ -888,27 +828,18 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       )}
 
       <div className={results()}>
-        {filteredSources.map(({ source, entries }) => {
-          const hasNextPage = source.entries.pageInfo.hasNextPage;
-          const truncatedCount = hasNextPage ? source.entries.edges.length : null;
-
-          return (
-            <AccessEntrySection
-              key={source.id}
-              sourceKey={source}
-              count={entries.length}
-              truncatedCount={truncatedCount}
-            >
-              <AccessEntrySectionList
-                key={deferredFilterKey}
-                entryKeys={entries}
-                isPendingActions={isPendingActions}
-                selectedIds={selectedIdSet}
-                onSelectedChange={handleSelectedChange}
-              />
-            </AccessEntrySection>
-          );
-        })}
+        {campaign.sources.map(source => (
+          <AccessEntrySourceSection
+            key={source.id}
+            sourceKey={source}
+            filters={deferredFilters}
+            isPendingActions={isPendingActions}
+            selectedIds={selectedIdSet}
+            onSelectedChange={handleSelectedChange}
+            onMatchesChange={handleMatchesChange}
+            onLoadNext={handleLoadNext}
+          />
+        ))}
 
         {campaign.sources.length === 0 && (
           <Card padded>
@@ -920,7 +851,10 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           </Card>
         )}
 
-        {campaign.sources.length > 0 && filteredSources.length === 0 && (
+        {campaign.sources.length > 0
+          && hasActiveFilters
+          && allFilteredEntryIds.length === 0
+          && !mayHaveMoreMatches && (
           <Card padded>
             <div className="py-8 text-center">
               <p className="text-txt-tertiary">

@@ -3223,9 +3223,7 @@
       "title": "Opmerking bij beslissing",
       "description": "Geef een reden op voor deze beslissing.",
       "label": "Opmerking"
-    },
-    "showingFirst_one": "Eerste {{count}} item wordt getoond. Gebruik de CLI voor de volledige lijst.",
-    "showingFirst_other": "Eerste {{count}} items worden getoond. Gebruik de CLI voor de volledige lijst."
+    }
   },
   "addAccessReviewSourceDialog": {
     "actions": {

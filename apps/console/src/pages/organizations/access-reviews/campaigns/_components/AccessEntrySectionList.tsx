@@ -18,16 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { InfiniteScrollTrigger } from "@probo/ui";
-import { memo, useCallback, useState } from "react";
+import { memo } from "react";
 import { graphql, readInlineData } from "relay-runtime";
 
 import type { AccessEntrySectionList_entry$key } from "#/__generated__/core/AccessEntrySectionList_entry.graphql";
 
 import { AccessEntryListItem } from "./AccessEntryListItem";
 import { accessEntryList } from "./variants";
-
-const PAGE_SIZE = 100;
 
 const accessEntrySectionListFragment = graphql`
   fragment AccessEntrySectionList_entry on AccessReviewEntry @inline {
@@ -52,42 +49,27 @@ function AccessEntrySectionListComponent({
   selectedIds,
   onSelectedChange,
 }: AccessEntrySectionListProps) {
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { root } = accessEntryList();
-  const visibleEntryKeys = entryKeys.slice(0, visibleCount);
-  const hasMore = visibleCount < entryKeys.length;
-  const handleView = useCallback(() => {
-    setVisibleCount(count =>
-      Math.min(count + PAGE_SIZE, entryKeys.length),
-    );
-  }, [entryKeys.length]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <ul className={root()}>
-        {visibleEntryKeys.map((entryKey) => {
-          const entry = readInlineData(
-            accessEntrySectionListFragment,
-            entryKey,
-          );
+    <ul className={root()}>
+      {entryKeys.map((entryKey) => {
+        const entry = readInlineData(
+          accessEntrySectionListFragment,
+          entryKey,
+        );
 
-          return (
-            <AccessEntryListItem
-              key={entry.id}
-              entryKey={entry}
-              isPendingActions={isPendingActions}
-              selected={selectedIds.has(entry.id)}
-              onSelectedChange={onSelectedChange}
-            />
-          );
-        })}
-      </ul>
-      {hasMore && (
-        <InfiniteScrollTrigger onView={handleView}>
-          <span aria-hidden="true" className="h-px w-full" />
-        </InfiniteScrollTrigger>
-      )}
-    </div>
+        return (
+          <AccessEntryListItem
+            key={entry.id}
+            entryKey={entry}
+            isPendingActions={isPendingActions}
+            selected={selectedIds.has(entry.id)}
+            onSelectedChange={onSelectedChange}
+          />
+        );
+      })}
+    </ul>
   );
 }
 

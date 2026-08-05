@@ -3206,9 +3206,7 @@
       "title": "Note de décision",
       "description": "Veuillez indiquer un motif pour cette décision.",
       "label": "Note"
-    },
-    "showingFirst_one": "Affichage de la première {{count}} entrée. Utilisez la CLI pour la liste complète.",
-    "showingFirst_other": "Affichage des {{count}} premières entrées. Utilisez la CLI pour la liste complète."
+    }
   },
   "addAccessReviewSourceDialog": {
     "actions": {
