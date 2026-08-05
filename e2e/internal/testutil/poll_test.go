@@ -18,33 +18,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package journey
+package testutil
 
 import (
-	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWorld_StepFailureMessagesAreRedacted(t *testing.T) {
+func TestPoll(t *testing.T) {
 	t.Parallel()
 
-	raw := fmt.Errorf("request failed: Authorization: Bearer secret-frag-token").Error()
-	redacted := redactSensitiveText(raw)
+	t.Run(
+		"returns true when condition succeeds immediately",
+		func(t *testing.T) {
+			t.Parallel()
 
-	assert.Contains(t, redacted, "[REDACTED]")
-	assert.NotContains(t, redacted, "secret-frag-token")
-	assert.Contains(t, redacted, "request failed:")
-}
+			calls := 0
 
-func TestRedactSensitiveTextPreservesNonSecretContext(t *testing.T) {
-	t.Parallel()
+			ok := Poll(
+				t,
+				time.Second,
+				10*time.Millisecond,
+				func() bool {
+					calls++
 
-	input := "step 02 [Alice] cannot load document doc-123: token=leak-value"
-	actual := redactSensitiveText(input)
+					return true
+				},
+			)
 
-	assert.Contains(t, actual, "step 02 [Alice]")
-	assert.Contains(t, actual, "doc-123")
-	assert.NotContains(t, actual, "leak-value")
+			assert.True(t, ok)
+			assert.Equal(t, 1, calls)
+		},
+	)
+
+	t.Run(
+		"returns false when condition never succeeds",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ok := Poll(
+				t,
+				50*time.Millisecond,
+				10*time.Millisecond,
+				func() bool {
+					return false
+				},
+			)
+
+			assert.False(t, ok)
+		},
+	)
 }

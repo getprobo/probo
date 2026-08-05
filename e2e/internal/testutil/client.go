@@ -548,7 +548,7 @@ func (c *Client) pollForLinkToken(searchQuery string) string {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	c.T.Logf("link token not found for query %q", searchQuery)
+	c.T.Logf("link token not found in mailpit")
 	c.T.FailNow()
 
 	return ""

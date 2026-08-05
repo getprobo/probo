@@ -289,6 +289,11 @@ type (
 func TestDocumentVersion(t *testing.T) {
 	t.Parallel()
 
+	// Shared owner/viewer clients are intentional: each parallel subtest creates
+	// its own documents and mutable resources in this organization. net/http
+	// Client and cookiejar.Jar are safe for concurrent use; the full suite runs
+	// without race instrumentation for speed while ./e2e/internal/... is
+	// race-gated in CI.
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 	actors := documentVersionActors{owner: owner, viewer: viewer}

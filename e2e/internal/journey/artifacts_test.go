@@ -42,6 +42,9 @@ func TestRedactSensitiveText(t *testing.T) {
 		{name: "password", input: `password: hunter2`},
 		{name: "authorization", input: `Authorization=Bearer-private-value`},
 		{name: "API key", input: `api_key:private-value`},
+		{name: "Bearer header", input: `Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.frag`},
+		{name: "Bearer hyphenated", input: `cannot authorize: Bearer-secret-frag expired`},
+		{name: "multi-word password", input: `password: my secret is hunter2; retry denied`},
 	}
 
 	for _, tt := range tests {
@@ -55,6 +58,9 @@ func TestRedactSensitiveText(t *testing.T) {
 				assert.Contains(t, actual, "[REDACTED]")
 				assert.NotContains(t, actual, "private-value")
 				assert.NotContains(t, actual, "hunter2")
+				assert.NotContains(t, actual, "secret-frag")
+				assert.NotContains(t, actual, "eyJhbGciOiJIUzI1NiJ9")
+				assert.NotContains(t, actual, "my secret is")
 			},
 		)
 	}
@@ -85,7 +91,7 @@ func TestFormatFailureSummary(t *testing.T) {
 		t,
 		"PASS step 01 [Alice] creates a document (12ms)\n"+
 			"FAIL step 02 [Bob] approves the document (8ms)\n"+
-			"  token=[REDACTED] expired\n",
+			"  token=[REDACTED]\n",
 		summary,
 	)
 	assert.False(t, strings.Contains(summary, "private-value"))
@@ -127,7 +133,7 @@ func TestWorld_WriteFailureArtifacts(t *testing.T) {
 	manifest, err := os.ReadFile(filepath.Join(directory, "manifest.json"))
 	require.NoError(t, err)
 	assert.Contains(t, string(manifest), `"test": "TestWorld_WriteFailureArtifacts"`)
-	assert.Contains(t, string(manifest), `"failure": "token=[REDACTED] expired"`)
+	assert.Contains(t, string(manifest), `"failure": "token=[REDACTED]"`)
 	assert.NotContains(t, string(manifest), "private-value")
 
 	summary, err := os.ReadFile(filepath.Join(directory, "failure.txt"))

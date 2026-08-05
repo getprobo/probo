@@ -292,7 +292,9 @@ func queryOrganizationName(t *testing.T, client *testutil.Client) string {
 func postMailingListConfirmSubscription(t *testing.T, confirmURL string) {
 	t.Helper()
 
-	resp, err := http.Post(confirmURL, "", nil)
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	resp, err := client.Post(confirmURL, "", nil)
 	require.NoError(t, err, "post mailing list confirm subscription")
 
 	defer func() { _ = resp.Body.Close() }()
@@ -685,8 +687,10 @@ func requireMailingListUpdateStatusEventually(
 		lastErr error
 	)
 
-	ok := assert.Eventually(
+	ok := testutil.Poll(
 		t,
+		90*time.Second,
+		500*time.Millisecond,
 		func() bool {
 			var result struct {
 				Node *mailingListUpdateWire `json:"node"`
@@ -707,10 +711,6 @@ func requireMailingListUpdateStatusEventually(
 
 			return last.Status == expectedStatus
 		},
-		90*time.Second,
-		500*time.Millisecond,
-		"mailing list update should reach status %s",
-		expectedStatus,
 	)
 	if !ok {
 		require.NoError(t, lastErr, "last mailing list update query failed")
@@ -730,19 +730,20 @@ func requireMailpitConfirmationURLEventually(
 		lastErr error
 	)
 
-	ok := assert.Eventually(
+	ok := testutil.Poll(
 		t,
+		90*time.Second,
+		500*time.Millisecond,
 		func() bool {
 			linkURL, lastErr = client.FindLinkFromMailpitSearch(searchQuery, "/mail-actions/confirm")
 			return lastErr == nil && linkURL != ""
 		},
-		90*time.Second,
-		500*time.Millisecond,
-		"mailpit should contain a confirmation link for query %s",
-		searchQuery,
 	)
 	if !ok {
-		require.NoError(t, lastErr, "last mailpit confirmation link search failed")
+		if lastErr != nil {
+			t.Log("last mailpit confirmation search did not find a matching link")
+		}
+
 		require.FailNow(t, "mailpit confirmation link not found")
 	}
 
@@ -770,8 +771,10 @@ func requireMailingListUpdateEmailEventually(
 		lastErr error
 	)
 
-	ok := assert.Eventually(
+	ok := testutil.Poll(
 		t,
+		90*time.Second,
+		500*time.Millisecond,
 		func() bool {
 			match, err := client.FindMailpitMessage(
 				searchQuery,
@@ -805,13 +808,10 @@ func requireMailingListUpdateEmailEventually(
 
 			return true
 		},
-		90*time.Second,
-		500*time.Millisecond,
-		"subscriber should receive mailing list update email",
 	)
 	if !ok {
 		if lastErr != nil {
-			require.NoError(t, lastErr, "last mailpit poll failed")
+			t.Log("last mailpit poll did not find a matching message")
 		}
 
 		require.FailNow(t, "mailing list update email did not match expected subject/body/recipient")

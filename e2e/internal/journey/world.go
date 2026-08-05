@@ -129,7 +129,7 @@ func (w *World) Step(actor string, name string, fn func() error) {
 				number,
 				record.Duration.Round(time.Millisecond),
 				describeStep(actor, name),
-				record.Failure,
+				redactSensitiveText(record.Failure),
 			)
 		}
 	}()
@@ -137,10 +137,10 @@ func (w *World) Step(actor string, name string, fn func() error) {
 	stepErr = fn()
 	if stepErr != nil {
 		w.t.Fatalf(
-			"journey failed at step %02d (%s): %v",
+			"journey failed at step %02d (%s): %s",
 			number,
 			describeStep(actor, name),
-			stepErr,
+			redactSensitiveText(stepErr.Error()),
 		)
 	}
 }

@@ -867,8 +867,10 @@ func assertCompliancePortalCMSOverview(
 		Node cmsPortalOverviewWire `json:"node"`
 	}
 
-	require.Eventually(
+	ok := testutil.Poll(
 		t,
+		30*time.Second,
+		500*time.Millisecond,
 		func() bool {
 			err = owner.Execute(
 				compliancePortalCMSOverviewQuery,
@@ -878,10 +880,8 @@ func assertCompliancePortalCMSOverview(
 
 			return err == nil && result.Node.DefaultDomain != nil
 		},
-		30*time.Second,
-		500*time.Millisecond,
-		"default managed domain should be provisioned",
 	)
+	require.True(t, ok, "default managed domain should be provisioned")
 	require.NoError(t, err)
 
 	node := result.Node

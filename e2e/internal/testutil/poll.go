@@ -18,33 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package journey
+package testutil
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"time"
 )
 
-func TestWorld_StepFailureMessagesAreRedacted(t *testing.T) {
-	t.Parallel()
+// Poll runs condition on the calling goroutine until it returns true or waitFor
+// elapses, sleeping tick between attempts. Unlike testify's Eventually, this
+// does not spawn a background goroutine, so it is safe under the race detector
+// when the condition mutates local state.
+func Poll(
+	t testing.TB,
+	waitFor time.Duration,
+	tick time.Duration,
+	condition func() bool,
+) bool {
+	t.Helper()
 
-	raw := fmt.Errorf("request failed: Authorization: Bearer secret-frag-token").Error()
-	redacted := redactSensitiveText(raw)
+	deadline := time.Now().Add(waitFor)
 
-	assert.Contains(t, redacted, "[REDACTED]")
-	assert.NotContains(t, redacted, "secret-frag-token")
-	assert.Contains(t, redacted, "request failed:")
-}
+	for {
+		if condition() {
+			return true
+		}
 
-func TestRedactSensitiveTextPreservesNonSecretContext(t *testing.T) {
-	t.Parallel()
+		if !time.Now().Before(deadline) {
+			return false
+		}
 
-	input := "step 02 [Alice] cannot load document doc-123: token=leak-value"
-	actual := redactSensitiveText(input)
-
-	assert.Contains(t, actual, "step 02 [Alice]")
-	assert.Contains(t, actual, "doc-123")
-	assert.NotContains(t, actual, "leak-value")
+		time.Sleep(tick)
+	}
 }

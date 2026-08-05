@@ -21,11 +21,11 @@
 package console_test
 
 import (
+	"errors"
 	"net/url"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -218,7 +218,42 @@ func createWebhookSubscription(
 	)
 	require.NoError(t, err, "create webhook subscription")
 
-	return result.CreateWebhookSubscription.WebhookSubscriptionEdge.Node
+	node := result.CreateWebhookSubscription.WebhookSubscriptionEdge.Node
+	require.NotEmpty(t, node.ID)
+
+	subscriptionID := node.ID
+
+	t.Cleanup(func() {
+		bestEffortDeleteWebhookSubscription(client, subscriptionID)
+	})
+
+	return node
+}
+
+func bestEffortDeleteWebhookSubscription(
+	client *testutil.Client,
+	subscriptionID string,
+) {
+	_, err := client.Do(
+		deleteWebhookSubscriptionMutation,
+		map[string]any{
+			"input": map[string]any{
+				"webhookSubscriptionId": subscriptionID,
+			},
+		},
+	)
+	if err == nil {
+		return
+	}
+
+	var gqlErrors testutil.GraphQLErrors
+	if errors.As(err, &gqlErrors) {
+		for _, gqlErr := range gqlErrors {
+			if gqlErr.Code() == "NOT_FOUND" {
+				return
+			}
+		}
+	}
 }
 
 func requireWebhookEventsEventually(
@@ -234,8 +269,10 @@ func requireWebhookEventsEventually(
 		lastErr error
 	)
 
-	ok := assert.Eventually(
+	ok := testutil.Poll(
 		t,
+		90*time.Second,
+		500*time.Millisecond,
 		func() bool {
 			lastErr = client.Execute(
 				webhookSubscriptionNodeQuery,
@@ -254,9 +291,6 @@ func requireWebhookEventsEventually(
 
 			return false
 		},
-		90*time.Second,
-		500*time.Millisecond,
-		"webhook subscription should persist and process at least one event",
 	)
 	if !ok {
 		require.NoError(t, lastErr, "last webhook event query failed")

@@ -25,7 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -187,8 +186,10 @@ func requireAccessReviewCampaignPendingActions(
 		}
 	)
 
-	ok := assert.Eventually(
+	ok := testutil.Poll(
 		t,
+		accessReviewCampaignWorkerPollTimeout,
+		accessReviewCampaignWorkerPollTick,
 		func() bool {
 			lastErr = client.Execute(query, map[string]any{"id": campaignID}, &result)
 			if lastErr != nil {
@@ -202,9 +203,6 @@ func requireAccessReviewCampaignPendingActions(
 				lastCount == accessReviewGovernanceExpectedEntries &&
 				len(result.Node.Entries.Edges) == accessReviewGovernanceExpectedEntries
 		},
-		accessReviewCampaignWorkerPollTimeout,
-		accessReviewCampaignWorkerPollTick,
-		"campaign worker should import CSV entries and reach PENDING_ACTIONS",
 	)
 	if !ok {
 		if lastErr != nil {

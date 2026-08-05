@@ -33,8 +33,11 @@ import (
 
 const artifactDirectoryEnvironmentVariable = "PROBO_E2E_ARTIFACT_DIR"
 
-var sensitiveValuePattern = regexp.MustCompile(
-	`(?i)(password|token|secret|authorization|cookie|api[_-]?key)([[:space:]]*["':=]+[[:space:]]*)([^,}\]\s"']+)`,
+var (
+	sensitiveValuePattern = regexp.MustCompile(
+		`(?i)(password|token|secret|authorization|cookie|api[_-]?key)([[:space:]]*["':=]+[[:space:]]*)([^,;}\]\n"']+)`,
+	)
+	bearerTokenPattern = regexp.MustCompile(`(?i)Bearer[\s-]+[^\s,;)\]]+`)
 )
 
 type failureManifest struct {
@@ -153,5 +156,8 @@ func sanitizePathSegment(value string) string {
 }
 
 func redactSensitiveText(value string) string {
-	return sensitiveValuePattern.ReplaceAllString(value, "$1$2[REDACTED]")
+	value = bearerTokenPattern.ReplaceAllString(value, "Bearer [REDACTED]")
+	value = sensitiveValuePattern.ReplaceAllString(value, "$1$2[REDACTED]")
+
+	return value
 }

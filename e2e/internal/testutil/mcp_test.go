@@ -32,7 +32,7 @@ func TestDecodeMCPResponseBody_JSON(t *testing.T) {
 
 	body := []byte(`{"jsonrpc":"2.0","id":1,"result":{}}`)
 
-	decoded, err := decodeMCPResponseBody("application/json", body)
+	decoded, err := decodeMCPResponseBody("application/json", body, 1)
 	require.NoError(t, err)
 	assert.Equal(t, body, decoded)
 }
@@ -47,7 +47,64 @@ func TestDecodeMCPResponseBody_EventStream(t *testing.T) {
 			"\n\n",
 	)
 
-	decoded, err := decodeMCPResponseBody("text/event-stream; charset=utf-8", body)
+	decoded, err := decodeMCPResponseBody("text/event-stream; charset=utf-8", body, 1)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"jsonrpc":"2.0","id":1,"result":{"ok":true}}`, string(decoded))
+}
+
+func TestDecodeMCPResponseBody_EventStreamMultilineData(t *testing.T) {
+	t.Parallel()
+
+	body := []byte(
+		`data: {"jsonrpc":"2.0",` + "\n" +
+			`data: "id":1,"result":{"ok":true}}` + "\n\n",
+	)
+
+	decoded, err := decodeMCPResponseBody("text/event-stream", body, 1)
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{"jsonrpc":"2.0","id":1,"result":{"ok":true}}`,
+		string(decoded),
+	)
+}
+
+func TestDecodeMCPResponseBody_EventStreamSkipsNotification(t *testing.T) {
+	t.Parallel()
+
+	body := []byte(
+		`data: {"jsonrpc":"2.0","method":"notifications/progress"}` + "\n\n" +
+			`data: {"jsonrpc":"2.0","id":1,"result":{"ok":true}}` + "\n\n",
+	)
+
+	decoded, err := decodeMCPResponseBody("text/event-stream", body, 1)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"jsonrpc":"2.0","id":1,"result":{"ok":true}}`, string(decoded))
+}
+
+func TestDecodeMCPResponseBody_EventStreamWrongIDThenMatch(t *testing.T) {
+	t.Parallel()
+
+	body := []byte(
+		`data: {"jsonrpc":"2.0","id":99,"result":{"ignored":true}}` + "\n\n" +
+			`data: {"jsonrpc":"2.0","id":1,"result":{"ok":true}}` + "\n\n",
+	)
+
+	decoded, err := decodeMCPResponseBody("text/event-stream", body, 1)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"jsonrpc":"2.0","id":1,"result":{"ok":true}}`, string(decoded))
+}
+
+func TestCollectSSEDataPayloads(t *testing.T) {
+	t.Parallel()
+
+	payloads := collectSSEDataPayloads([]byte(
+		`data: line-one` + "\n" +
+			`data: line-two` + "\n\n" +
+			`data: second-event` + "\n\n",
+	))
+
+	require.Len(t, payloads, 2)
+	assert.Equal(t, "line-one\nline-two", string(payloads[0]))
+	assert.Equal(t, "second-event", string(payloads[1]))
 }

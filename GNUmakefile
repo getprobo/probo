@@ -77,7 +77,8 @@ E2E_TEST_FLAGS?=
 
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
-E2E_BINARY ?= $(CURDIR)/$(PROBOD_BIN)
+E2E_BINARY ?=
+E2E_COVERAGE_BINARY ?= $(CURDIR)/bin/probod-coverage
 E2E_CORE_COVER_PKGS ?= go.probo.inc/probo/pkg/coredata,go.probo.inc/probo/pkg/probo,go.probo.inc/probo/pkg/server/api/console/v1,go.probo.inc/probo/pkg/server/api/connect/v1,go.probo.inc/probo/pkg/server/api/complianceportal/v1,go.probo.inc/probo/pkg/server/api/mcp/v1,go.probo.inc/probo/pkg/accessreview,go.probo.inc/probo/pkg/agentrun,go.probo.inc/probo/pkg/complianceportal/management,go.probo.inc/probo/pkg/complianceportal/visitor,go.probo.inc/probo/pkg/cookiebanner,go.probo.inc/probo/pkg/riskmanagement,go.probo.inc/probo/pkg/thirdparty,go.probo.inc/probo/pkg/webhook
 
 DOCKER_REGISTRY=	artifact.probo.inc
@@ -218,12 +219,12 @@ test-bench: test ## Run benchmark tests
 
 .PHONY: test-e2e
 test-e2e: $(PROBOD_BIN) ## Run console e2e tests
-	$(MAKE) test-e2e-run E2E_BINARY=$(CURDIR)/$(PROBOD_BIN)
+	$(MAKE) test-e2e-run E2E_BINARY=$(E2E_BINARY)
 
 .PHONY: test-e2e-run
 test-e2e-run: CGO_ENABLED=1
 test-e2e-run:
-	PROBO_E2E_BINARY=$(E2E_BINARY) \
+	PROBO_E2E_BINARY=$(or $(E2E_BINARY),$(CURDIR)/$(PROBOD_BIN)) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
 
@@ -234,13 +235,13 @@ bin/probod-coverage: generate embed
 
 .PHONY: test-e2e-coverage
 test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
-	$(MAKE) test-e2e-coverage-run E2E_BINARY=$(CURDIR)/bin/probod-coverage
+	$(MAKE) test-e2e-coverage-run E2E_BINARY=$(E2E_BINARY)
 
 .PHONY: test-e2e-coverage-run
 test-e2e-coverage-run: CGO_ENABLED=1
 test-e2e-coverage-run:
 	@$(RM) -rf $(E2E_COVER_DIR) && $(MKDIR) -p $(E2E_COVER_DIR)
-	PROBO_E2E_BINARY=$(E2E_BINARY) \
+	PROBO_E2E_BINARY=$(or $(E2E_BINARY),$(E2E_COVERAGE_BINARY)) \
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -p=1 -count=1 ./e2e/internal/... ./e2e/console/... ./e2e/mcp/...
