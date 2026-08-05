@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.211.0] - 2026-08-05
+
+### Added
+
+- `SUBDIVISION` column on `prb consent-record list` and the subdivision code on `prb consent-record view`, showing the ISO 3166-2 state or province detected for each consent record
+
 ## [0.210.0] - 2026-08-05
 
 ### Added
