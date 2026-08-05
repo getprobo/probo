@@ -2548,8 +2548,14 @@
     "export": {
       "title": "Exporter le journal d'audit",
       "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d'audit au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
-      "fields": { "from": "Du", "to": "Au" },
-      "actions": { "export": "Exporter", "exporting": "Exportation..." },
+      "fields": {
+        "from": "Du",
+        "to": "Au"
+      },
+      "actions": {
+        "export": "Exporter",
+        "exporting": "Exportation..."
+      },
       "messages": {
         "successTitle": "Succès",
         "success": "L'export a démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu'il sera prêt."
@@ -2597,8 +2603,14 @@
     "export": {
       "title": "Exporter les événements SCIM",
       "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
-      "fields": { "from": "Du", "to": "Au" },
-      "actions": { "export": "Exporter", "exporting": "Exportation..." },
+      "fields": {
+        "from": "Du",
+        "to": "Au"
+      },
+      "actions": {
+        "export": "Exporter",
+        "exporting": "Exportation..."
+      },
       "messages": {
         "successTitle": "Succès",
         "success": "Export démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
@@ -4582,7 +4594,7 @@
   },
   "risksTabs": {
     "risks": "Risques",
-    "riskAssessments": "Évaluations des risques"
+    "riskAnalyses": "Analyses des risques"
   },
   "formRiskDialog": {
     "breadcrumb": {
@@ -4709,18 +4721,18 @@
     },
     "empty": "Aucun contrôle associé"
   },
-  "riskAssessmentDetailPage": {
-    "title": "Évaluation des risques",
+  "riskAnalysisDetailPage": {
+    "title": "Analyse des risques",
     "breadcrumb": {
-      "assessments": "Évaluations des risques"
+      "assessments": "Analyses des risques"
     },
     "messages": {
       "error": "Erreur"
     },
     "errors": {
-      "delete": "Échec de la suppression de l’évaluation des risques"
+      "delete": "Échec de la suppression de l’analyse des risques"
     },
-    "deleteConfirmation": "Cette action supprimera définitivement cette évaluation des risques ainsi que toutes ses portées, nœuds, processus et menaces. Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement cette analyse des risques ainsi que toutes ses portées, nœuds, processus et menaces. Cette action est irréversible.",
     "actions": {
       "delete": "Supprimer"
     },
@@ -4732,16 +4744,16 @@
     "scopes": "Portées",
     "emptyScopes": "Aucune portée pour l’instant. Créez une portée pour commencer à définir des nœuds, des processus et des menaces."
   },
-  "riskAssessmentsPage": {
-    "title": "Évaluations des risques",
-    "description": "Gérez les évaluations des risques avec leurs portées, nœuds, processus, menaces et scénarios.",
+  "riskAnalysesPage": {
+    "title": "Analyses des risques",
+    "description": "Gérez les analyses des risques avec leurs portées, nœuds, processus, menaces et scénarios.",
     "columns": {
       "name": "Nom",
       "description": "Description",
       "created": "Créé le"
     }
   },
-  "riskAssessmentBoundaryActions": {
+  "riskAnalysisBoundaryActions": {
     "breadcrumb": {
       "boundaries": "Périmètres"
     },
@@ -4760,7 +4772,7 @@
       "save": "Enregistrer"
     }
   },
-  "createRiskAssessmentBoundaryDialog": {
+  "createRiskAnalysisBoundaryDialog": {
     "breadcrumb": {
       "boundaries": "Périmètres",
       "addBoundary": "Ajouter un périmètre"
@@ -4777,7 +4789,7 @@
       "add": "Ajouter"
     }
   },
-  "createRiskAssessmentNodeDialog": {
+  "createRiskAnalysisNodeDialog": {
     "breadcrumb": {
       "nodes": "Nœuds",
       "addNode": "Ajouter un nœud"
@@ -4800,7 +4812,7 @@
       "add": "Ajouter"
     }
   },
-  "createRiskAssessmentProcessDialog": {
+  "createRiskAnalysisProcessDialog": {
     "breadcrumb": {
       "processes": "Processus",
       "addProcess": "Ajouter un processus"
@@ -4822,10 +4834,10 @@
       "add": "Ajouter"
     }
   },
-  "createRiskAssessmentDialog": {
-    "title": "Nouvelle évaluation des risques",
+  "createRiskAnalysisDialog": {
+    "title": "Nouvelle analyse des risques",
     "breadcrumb": {
-      "riskAssessments": "Évaluations des risques"
+      "riskAnalyses": "Analyses des risques"
     },
     "fields": {
       "name": "Nom",
@@ -4867,7 +4879,7 @@
       "add": "Ajouter"
     }
   },
-  "createRiskAssessmentScopeDialog": {
+  "createRiskAnalysisScopeDialog": {
     "breadcrumb": {
       "scopes": "Portées",
       "newScope": "Nouvelle portée"
@@ -4886,7 +4898,7 @@
       "create": "Créer"
     }
   },
-  "createRiskAssessmentThreatDialog": {
+  "createRiskAnalysisThreatDialog": {
     "breadcrumb": {
       "threats": "Menaces",
       "addThreat": "Ajouter une menace"
@@ -4908,7 +4920,7 @@
       "add": "Ajouter"
     }
   },
-  "riskAssessmentNodeActions": {
+  "riskAnalysisNodeActions": {
     "breadcrumb": {
       "nodes": "Nœuds"
     },
@@ -4933,7 +4945,7 @@
       "save": "Enregistrer"
     }
   },
-  "riskAssessmentProcessActions": {
+  "riskAnalysisProcessActions": {
     "breadcrumb": {
       "processes": "Processus"
     },
@@ -4956,7 +4968,7 @@
       "save": "Enregistrer"
     }
   },
-  "riskAssessmentScenarioActions": {
+  "riskAnalysisScenarioActions": {
     "breadcrumb": {
       "scenarios": "Scénarios"
     },
@@ -4982,7 +4994,7 @@
       "save": "Enregistrer"
     }
   },
-  "riskAssessmentScopeActions": {
+  "riskAnalysisScopeActions": {
     "breadcrumb": {
       "scopes": "Portées",
       "editScope": "Modifier la portée"
@@ -5060,7 +5072,7 @@
       "threat": "Menace"
     }
   },
-  "riskAssessmentThreatActions": {
+  "riskAnalysisThreatActions": {
     "breadcrumb": {
       "threats": "Menaces"
     },

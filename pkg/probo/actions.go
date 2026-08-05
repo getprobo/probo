@@ -327,62 +327,62 @@ const (
 	ActionCookieCategoryUpdate = "core:cookie-category:update"
 	ActionCookieCategoryDelete = "core:cookie-category:delete"
 
-	// RiskAssessment actions
-	ActionRiskAssessmentGet    = "core:risk-assessment:get"
-	ActionRiskAssessmentList   = "core:risk-assessment:list"
-	ActionRiskAssessmentCreate = "core:risk-assessment:create"
-	ActionRiskAssessmentUpdate = "core:risk-assessment:update"
-	ActionRiskAssessmentDelete = "core:risk-assessment:delete"
+	// RiskAnalysis actions
+	ActionRiskAnalysisGet    = "core:risk-analysis:get"
+	ActionRiskAnalysisList   = "core:risk-analysis:list"
+	ActionRiskAnalysisCreate = "core:risk-analysis:create"
+	ActionRiskAnalysisUpdate = "core:risk-analysis:update"
+	ActionRiskAnalysisDelete = "core:risk-analysis:delete"
 
-	// RiskAssessmentScope actions
-	ActionRiskAssessmentScopeGet    = "core:risk-assessment-scope:get"
-	ActionRiskAssessmentScopeList   = "core:risk-assessment-scope:list"
-	ActionRiskAssessmentScopeCreate = "core:risk-assessment-scope:create"
-	ActionRiskAssessmentScopeUpdate = "core:risk-assessment-scope:update"
-	ActionRiskAssessmentScopeDelete = "core:risk-assessment-scope:delete"
+	// RiskAnalysisScope actions
+	ActionRiskAnalysisScopeGet    = "core:risk-analysis-scope:get"
+	ActionRiskAnalysisScopeList   = "core:risk-analysis-scope:list"
+	ActionRiskAnalysisScopeCreate = "core:risk-analysis-scope:create"
+	ActionRiskAnalysisScopeUpdate = "core:risk-analysis-scope:update"
+	ActionRiskAnalysisScopeDelete = "core:risk-analysis-scope:delete"
 
-	// RiskAssessmentNode actions
-	ActionRiskAssessmentNodeGet    = "core:risk-assessment-node:get"
-	ActionRiskAssessmentNodeList   = "core:risk-assessment-node:list"
-	ActionRiskAssessmentNodeCreate = "core:risk-assessment-node:create"
-	ActionRiskAssessmentNodeUpdate = "core:risk-assessment-node:update"
-	ActionRiskAssessmentNodeDelete = "core:risk-assessment-node:delete"
+	// RiskAnalysisNode actions
+	ActionRiskAnalysisNodeGet    = "core:risk-analysis-node:get"
+	ActionRiskAnalysisNodeList   = "core:risk-analysis-node:list"
+	ActionRiskAnalysisNodeCreate = "core:risk-analysis-node:create"
+	ActionRiskAnalysisNodeUpdate = "core:risk-analysis-node:update"
+	ActionRiskAnalysisNodeDelete = "core:risk-analysis-node:delete"
 
-	// RiskAssessmentBoundary actions
-	ActionRiskAssessmentBoundaryGet    = "core:risk-assessment-boundary:get"
-	ActionRiskAssessmentBoundaryList   = "core:risk-assessment-boundary:list"
-	ActionRiskAssessmentBoundaryCreate = "core:risk-assessment-boundary:create"
-	ActionRiskAssessmentBoundaryUpdate = "core:risk-assessment-boundary:update"
-	ActionRiskAssessmentBoundaryDelete = "core:risk-assessment-boundary:delete"
+	// RiskAnalysisBoundary actions
+	ActionRiskAnalysisBoundaryGet    = "core:risk-analysis-boundary:get"
+	ActionRiskAnalysisBoundaryList   = "core:risk-analysis-boundary:list"
+	ActionRiskAnalysisBoundaryCreate = "core:risk-analysis-boundary:create"
+	ActionRiskAnalysisBoundaryUpdate = "core:risk-analysis-boundary:update"
+	ActionRiskAnalysisBoundaryDelete = "core:risk-analysis-boundary:delete"
 
-	// RiskAssessmentProcess actions
-	ActionRiskAssessmentProcessGet    = "core:risk-assessment-process:get"
-	ActionRiskAssessmentProcessList   = "core:risk-assessment-process:list"
-	ActionRiskAssessmentProcessCreate = "core:risk-assessment-process:create"
-	ActionRiskAssessmentProcessUpdate = "core:risk-assessment-process:update"
-	ActionRiskAssessmentProcessDelete = "core:risk-assessment-process:delete"
+	// RiskAnalysisProcess actions
+	ActionRiskAnalysisProcessGet    = "core:risk-analysis-process:get"
+	ActionRiskAnalysisProcessList   = "core:risk-analysis-process:list"
+	ActionRiskAnalysisProcessCreate = "core:risk-analysis-process:create"
+	ActionRiskAnalysisProcessUpdate = "core:risk-analysis-process:update"
+	ActionRiskAnalysisProcessDelete = "core:risk-analysis-process:delete"
 
-	// RiskAssessmentThreat actions
-	ActionRiskAssessmentThreatGet    = "core:risk-assessment-threat:get"
-	ActionRiskAssessmentThreatList   = "core:risk-assessment-threat:list"
-	ActionRiskAssessmentThreatCreate = "core:risk-assessment-threat:create"
-	ActionRiskAssessmentThreatUpdate = "core:risk-assessment-threat:update"
-	ActionRiskAssessmentThreatDelete = "core:risk-assessment-threat:delete"
+	// RiskAnalysisThreat actions
+	ActionRiskAnalysisThreatGet    = "core:risk-analysis-threat:get"
+	ActionRiskAnalysisThreatList   = "core:risk-analysis-threat:list"
+	ActionRiskAnalysisThreatCreate = "core:risk-analysis-threat:create"
+	ActionRiskAnalysisThreatUpdate = "core:risk-analysis-threat:update"
+	ActionRiskAnalysisThreatDelete = "core:risk-analysis-threat:delete"
 
-	// RiskAssessmentScenario actions
-	ActionRiskAssessmentScenarioGet    = "core:risk-assessment-scenario:get"
-	ActionRiskAssessmentScenarioList   = "core:risk-assessment-scenario:list"
-	ActionRiskAssessmentScenarioCreate = "core:risk-assessment-scenario:create"
-	ActionRiskAssessmentScenarioUpdate = "core:risk-assessment-scenario:update"
-	ActionRiskAssessmentScenarioDelete = "core:risk-assessment-scenario:delete"
+	// RiskAnalysisScenario actions
+	ActionRiskAnalysisScenarioGet    = "core:risk-analysis-scenario:get"
+	ActionRiskAnalysisScenarioList   = "core:risk-analysis-scenario:list"
+	ActionRiskAnalysisScenarioCreate = "core:risk-analysis-scenario:create"
+	ActionRiskAnalysisScenarioUpdate = "core:risk-analysis-scenario:update"
+	ActionRiskAnalysisScenarioDelete = "core:risk-analysis-scenario:delete"
 
-	// RiskAssessmentScenarioThreat actions
-	ActionRiskAssessmentScenarioThreatLink   = "core:risk-assessment-scenario-threat:create"
-	ActionRiskAssessmentScenarioThreatUnlink = "core:risk-assessment-scenario-threat:delete"
+	// RiskAnalysisScenarioThreat actions
+	ActionRiskAnalysisScenarioThreatLink   = "core:risk-analysis-scenario-threat:create"
+	ActionRiskAnalysisScenarioThreatUnlink = "core:risk-analysis-scenario-threat:delete"
 
-	// RiskAssessmentScenarioRisk actions
-	ActionRiskAssessmentScenarioRiskLink   = "core:risk-assessment-scenario-risk:create"
-	ActionRiskAssessmentScenarioRiskUnlink = "core:risk-assessment-scenario-risk:delete"
+	// RiskAnalysisScenarioRisk actions
+	ActionRiskAnalysisScenarioRiskLink   = "core:risk-analysis-scenario-risk:create"
+	ActionRiskAnalysisScenarioRiskUnlink = "core:risk-analysis-scenario-risk:delete"
 
 	// Cookie actions
 	ActionCookieGet    = "core:cookie:get"

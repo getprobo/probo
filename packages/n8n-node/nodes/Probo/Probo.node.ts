@@ -214,9 +214,9 @@ export class Probo implements INodeType {
 						description: 'Manage risks',
 					},
 					{
-						name: 'Risk Assessment',
-						value: 'riskAssessment',
-						description: 'Manage risk assessments',
+						name: 'Risk Analysis',
+						value: 'riskAnalysis',
+						description: 'Manage risk analyses',
 					},
 					{
 						name: 'Statement of Applicability',

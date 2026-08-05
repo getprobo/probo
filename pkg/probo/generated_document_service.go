@@ -3070,7 +3070,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 		}
 
 		for _, ra := range assessmentsByThirdParty[v.ID] {
-			row.RiskAssessments = append(row.RiskAssessments, docgen.ThirdPartyListRiskAssessment{
+			row.RiskAnalyses = append(row.RiskAnalyses, docgen.ThirdPartyListRiskAssessment{
 				AssessedAt:      ra.CreatedAt.Format("2006-01-02"),
 				ExpiresAt:       ra.ExpiresAt.Format("2006-01-02"),
 				DataSensitivity: formatDataSensitivity(ra.DataSensitivity),
@@ -3302,13 +3302,13 @@ var thirdPartyListTemplate = template.Must(
 
 func BuildThirdPartyListDocument(data docgen.ThirdPartyListData) (string, error) {
 	for i := range data.Rows {
-		for j := range data.Rows[i].RiskAssessments {
-			blocks, err := proseMirrorBlocksFromMarkdownNotes(data.Rows[i].RiskAssessments[j].Notes)
+		for j := range data.Rows[i].RiskAnalyses {
+			blocks, err := proseMirrorBlocksFromMarkdownNotes(data.Rows[i].RiskAnalyses[j].Notes)
 			if err != nil {
 				return "", fmt.Errorf("cannot convert risk assessment notes: %w", err)
 			}
 
-			data.Rows[i].RiskAssessments[j].NotesBlocks = blocks
+			data.Rows[i].RiskAnalyses[j].NotesBlocks = blocks
 		}
 	}
 

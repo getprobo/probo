@@ -30,7 +30,7 @@ export const risksTabsQuery = graphql`
     organization: node(id: $organizationId) {
       ... on Organization {
         canListRisks: permission(action: "core:risk:list")
-        canListRiskAssessments: permission(action: "core:risk-assessment:list")
+        canListRiskAnalyses: permission(action: "core:risk-analysis:list")
       }
     }
   }
@@ -46,8 +46,8 @@ export function RisksTabs({ queryRef }: RisksTabsProps) {
   const data = usePreloadedQuery<RisksTabsQuery>(risksTabsQuery, queryRef);
 
   const canListRisks = data.organization?.canListRisks ?? false;
-  const canListRiskAssessments
-    = data.organization?.canListRiskAssessments ?? false;
+  const canListRiskAnalyses
+    = data.organization?.canListRiskAnalyses ?? false;
   const baseUrl = `/organizations/${organizationId}`;
 
   return (
@@ -57,9 +57,9 @@ export function RisksTabs({ queryRef }: RisksTabsProps) {
           {t("risksTabs.risks")}
         </TabLink>
       )}
-      {canListRiskAssessments && (
-        <TabLink to={`${baseUrl}/risk-assessments`} end>
-          {t("risksTabs.riskAssessments")}
+      {canListRiskAnalyses && (
+        <TabLink to={`${baseUrl}/risk-analyses`} end>
+          {t("risksTabs.riskAnalyses")}
         </TabLink>
       )}
     </Tabs>

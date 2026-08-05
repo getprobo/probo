@@ -55,7 +55,7 @@ export const riskScenariosPageQuery = graphql`
               id
               name
               description
-              scope { riskAssessmentId }
+              scope { riskAnalysisId }
             }
           }
         }
@@ -66,16 +66,16 @@ export const riskScenariosPageQuery = graphql`
 
 const linkMutation = graphql`
   mutation RiskScenariosPageLinkMutation(
-    $input: LinkRiskAssessmentScenarioRiskInput!
+    $input: LinkRiskAnalysisScenarioRiskInput!
     $connections: [ID!]!
   ) {
-    linkRiskAssessmentScenarioRisk(input: $input) {
-      riskAssessmentScenarioEdge @appendEdge(connections: $connections) {
+    linkRiskAnalysisScenarioRisk(input: $input) {
+      riskAnalysisScenarioEdge @appendEdge(connections: $connections) {
         node {
           id
           name
           description
-          scope { riskAssessmentId }
+          scope { riskAnalysisId }
         }
       }
     }
@@ -84,11 +84,11 @@ const linkMutation = graphql`
 
 const unlinkMutation = graphql`
   mutation RiskScenariosPageUnlinkMutation(
-    $input: UnlinkRiskAssessmentScenarioRiskInput!
+    $input: UnlinkRiskAnalysisScenarioRiskInput!
     $connections: [ID!]!
   ) {
-    unlinkRiskAssessmentScenarioRisk(input: $input) {
-      deletedRiskAssessmentScenarioId @deleteEdge(connections: $connections)
+    unlinkRiskAnalysisScenarioRisk(input: $input) {
+      deletedRiskAnalysisScenarioId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -136,7 +136,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
     linkScenario({
       variables: {
         input: {
-          riskAssessmentScenarioId: scenarioId,
+          riskAnalysisScenarioId: scenarioId,
           riskId,
         },
         connections: [connectionId],
@@ -148,7 +148,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
     unlinkScenario({
       variables: {
         input: {
-          riskAssessmentScenarioId: scenarioId,
+          riskAnalysisScenarioId: scenarioId,
           riskId,
         },
         connections: [connectionId],
@@ -174,7 +174,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
           </Tr>
         )}
         {scenarios.map(scenario => (
-          <Tr key={scenario.id} to={`/organizations/${organizationId}/risk-assessments/${scenario.scope?.riskAssessmentId}`}>
+          <Tr key={scenario.id} to={`/organizations/${organizationId}/risk-analyses/${scenario.scope?.riskAnalysisId}`}>
             <Td className="font-medium">{scenario.name}</Td>
             <Td className="text-txt-secondary">
               {scenario.description || "—"}

@@ -4545,7 +4545,7 @@
   },
   "risksTabs": {
     "risks": "Risico's",
-    "riskAssessments": "Risicobeoordelingen"
+    "riskAnalyses": "Risicobeoordelingen"
   },
   "formRiskDialog": {
     "breadcrumb": {
@@ -4672,7 +4672,7 @@
     },
     "empty": "Geen controls gekoppeld"
   },
-  "riskAssessmentDetailPage": {
+  "riskAnalysisDetailPage": {
     "title": "Risicobeoordeling",
     "breadcrumb": {
       "assessments": "Risicobeoordelingen"
@@ -4695,16 +4695,16 @@
     "scopes": "Scopes",
     "emptyScopes": "Nog geen scopes. Maak een scope aan om nodes, processen en dreigingen te definiëren."
   },
-  "riskAssessmentsPage": {
+  "riskAnalysesPage": {
     "title": "Risicobeoordelingen",
-    "description": "Beheer risicobeoordelingen met scopes, nodes, processen, dreigingen en scenario's.",
+    "description": "Beheer risicoanalyses met scopes, nodes, processen, dreigingen en scenario's.",
     "columns": {
       "name": "Naam",
       "description": "Beschrijving",
       "created": "Aangemaakt"
     }
   },
-  "riskAssessmentBoundaryActions": {
+  "riskAnalysisBoundaryActions": {
     "breadcrumb": {
       "boundaries": "Grenzen"
     },
@@ -4723,7 +4723,7 @@
       "save": "Opslaan"
     }
   },
-  "createRiskAssessmentBoundaryDialog": {
+  "createRiskAnalysisBoundaryDialog": {
     "breadcrumb": {
       "boundaries": "Grenzen",
       "addBoundary": "Grens toevoegen"
@@ -4740,7 +4740,7 @@
       "add": "Toevoegen"
     }
   },
-  "createRiskAssessmentNodeDialog": {
+  "createRiskAnalysisNodeDialog": {
     "breadcrumb": {
       "nodes": "Nodes",
       "addNode": "Node toevoegen"
@@ -4763,7 +4763,7 @@
       "add": "Toevoegen"
     }
   },
-  "createRiskAssessmentProcessDialog": {
+  "createRiskAnalysisProcessDialog": {
     "breadcrumb": {
       "processes": "Processen",
       "addProcess": "Proces toevoegen"
@@ -4785,10 +4785,10 @@
       "add": "Toevoegen"
     }
   },
-  "createRiskAssessmentDialog": {
+  "createRiskAnalysisDialog": {
     "title": "Nieuwe risicobeoordeling",
     "breadcrumb": {
-      "riskAssessments": "Risicobeoordelingen"
+      "riskAnalyses": "Risicobeoordelingen"
     },
     "fields": {
       "name": "Naam",
@@ -4830,7 +4830,7 @@
       "add": "Toevoegen"
     }
   },
-  "createRiskAssessmentScopeDialog": {
+  "createRiskAnalysisScopeDialog": {
     "breadcrumb": {
       "scopes": "Scopes",
       "newScope": "Nieuwe scope"
@@ -4849,7 +4849,7 @@
       "create": "Aanmaken"
     }
   },
-  "createRiskAssessmentThreatDialog": {
+  "createRiskAnalysisThreatDialog": {
     "breadcrumb": {
       "threats": "Dreigingen",
       "addThreat": "Dreiging toevoegen"
@@ -4871,7 +4871,7 @@
       "add": "Toevoegen"
     }
   },
-  "riskAssessmentNodeActions": {
+  "riskAnalysisNodeActions": {
     "breadcrumb": {
       "nodes": "Nodes"
     },
@@ -4896,7 +4896,7 @@
       "save": "Opslaan"
     }
   },
-  "riskAssessmentProcessActions": {
+  "riskAnalysisProcessActions": {
     "breadcrumb": {
       "processes": "Processen"
     },
@@ -4919,7 +4919,7 @@
       "save": "Opslaan"
     }
   },
-  "riskAssessmentScenarioActions": {
+  "riskAnalysisScenarioActions": {
     "breadcrumb": {
       "scenarios": "Scenario's"
     },
@@ -4945,7 +4945,7 @@
       "save": "Opslaan"
     }
   },
-  "riskAssessmentScopeActions": {
+  "riskAnalysisScopeActions": {
     "breadcrumb": {
       "scopes": "Scopes",
       "editScope": "Scope bewerken"
@@ -5023,7 +5023,7 @@
       "threat": "Dreiging"
     }
   },
-  "riskAssessmentThreatActions": {
+  "riskAnalysisThreatActions": {
     "breadcrumb": {
       "threats": "Dreigingen"
     },

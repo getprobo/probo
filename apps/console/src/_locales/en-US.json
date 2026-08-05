@@ -2066,7 +2066,7 @@
   },
   "risksTabs": {
     "risks": "Risks",
-    "riskAssessments": "Risk assessments"
+    "riskAnalyses": "Risk analyses"
   },
   "formRiskDialog": {
     "breadcrumb": { "risks": "Risks", "edit": "Edit Risk", "new": "New Risk" },
@@ -2107,9 +2107,9 @@
     "columns": { "reference": "Reference", "name": "Name" },
     "empty": "No controls linked"
   },
-  "riskAssessmentDetailPage": {
-    "title": "Risk Assessment",
-    "breadcrumb": { "assessments": "Risk Assessments" },
+  "riskAnalysisDetailPage": {
+    "title": "Risk Analysis",
+    "breadcrumb": { "assessments": "Risk Analyses" },
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk assessment" },
     "deleteConfirmation": "This will permanently delete this risk assessment and all its scopes, nodes, processes, and threats. This action cannot be undone.",
@@ -2119,12 +2119,12 @@
     "scopes": "Scopes",
     "emptyScopes": "No scopes yet. Create a scope to start defining nodes, processes, and threats."
   },
-  "riskAssessmentsPage": {
-    "title": "Risk Assessments",
-    "description": "Manage risk assessments with scopes, nodes, processes, threats, and scenarios.",
+  "riskAnalysesPage": {
+    "title": "Risk Analyses",
+    "description": "Manage risk analyses with scopes, nodes, processes, threats, and scenarios.",
     "columns": { "name": "Name", "description": "Description", "created": "Created" }
   },
-  "riskAssessmentBoundaryActions": {
+  "riskAnalysisBoundaryActions": {
     "breadcrumb": { "boundaries": "Boundaries" },
     "deleteConfirmation": "Delete this boundary? Nodes and nested boundaries inside it will be moved to the top level.",
     "fields": { "name": "Name", "parentBoundary": "Parent boundary" },
@@ -2132,14 +2132,14 @@
     "noneTopLevel": "None (top level)",
     "actions": { "edit": "Edit", "delete": "Delete", "save": "Save" }
   },
-  "createRiskAssessmentBoundaryDialog": {
+  "createRiskAnalysisBoundaryDialog": {
     "breadcrumb": { "boundaries": "Boundaries", "addBoundary": "Add Boundary" },
     "fields": { "name": "Name", "parentBoundary": "Parent boundary" },
     "validation": { "nameRequired": "This field is required" },
     "noneTopLevel": "None (top level)",
     "actions": { "add": "Add" }
   },
-  "createRiskAssessmentNodeDialog": {
+  "createRiskAnalysisNodeDialog": {
     "breadcrumb": { "nodes": "Nodes", "addNode": "Add Node" },
     "fields": { "type": "Type", "name": "Name", "boundary": "Boundary" },
     "types": { "entity": "Entity", "asset": "Asset", "data": "Data" },
@@ -2147,16 +2147,16 @@
     "none": "None",
     "actions": { "add": "Add" }
   },
-  "createRiskAssessmentProcessDialog": {
+  "createRiskAnalysisProcessDialog": {
     "breadcrumb": { "processes": "Processes", "addProcess": "Add Process" },
     "fields": { "source": "Source", "target": "Target", "name": "Name" },
     "validation": { "required": "This field is required" },
     "placeholders": { "sourceNode": "Select source node", "targetNode": "Select target node", "name": "e.g. User → API" },
     "actions": { "add": "Add" }
   },
-  "createRiskAssessmentDialog": {
-    "title": "New Risk Assessment",
-    "breadcrumb": { "riskAssessments": "Risk Assessments" },
+  "createRiskAnalysisDialog": {
+    "title": "New Risk Analysis",
+    "breadcrumb": { "riskAnalyses": "Risk Analyses" },
     "fields": { "name": "Name", "description": "Description" },
     "validation": { "nameRequired": "This field is required" },
     "placeholders": { "name": "e.g. Platform Threat Model 2026", "description": "Describe the scope and purpose of this assessment..." },
@@ -2171,21 +2171,21 @@
     "loadingRisks": "Loading risks...",
     "actions": { "add": "Add" }
   },
-  "createRiskAssessmentScopeDialog": {
+  "createRiskAnalysisScopeDialog": {
     "breadcrumb": { "scopes": "Scopes", "newScope": "New Scope" },
     "fields": { "name": "Name" },
     "validation": { "nameRequired": "This field is required" },
     "placeholders": { "name": "e.g. API layer" },
     "actions": { "addScope": "Add Scope", "create": "Create" }
   },
-  "createRiskAssessmentThreatDialog": {
+  "createRiskAnalysisThreatDialog": {
     "breadcrumb": { "threats": "Threats", "addThreat": "Add Threat" },
     "fields": { "process": "Process", "name": "Name", "category": "Category" },
     "validation": { "required": "This field is required" },
     "placeholders": { "process": "Select process", "name": "e.g. SQL injection", "category": "e.g. Confidentiality" },
     "actions": { "add": "Add" }
   },
-  "riskAssessmentNodeActions": {
+  "riskAnalysisNodeActions": {
     "breadcrumb": { "nodes": "Nodes" },
     "deleteConfirmation": "Delete this node?",
     "fields": { "type": "Type", "name": "Name", "boundary": "Boundary" },
@@ -2194,7 +2194,7 @@
     "none": "None",
     "actions": { "edit": "Edit", "delete": "Delete", "save": "Save" }
   },
-  "riskAssessmentProcessActions": {
+  "riskAnalysisProcessActions": {
     "breadcrumb": { "processes": "Processes" },
     "deleteConfirmation": "Delete this process?",
     "fields": { "source": "Source", "target": "Target", "name": "Name" },
@@ -2202,7 +2202,7 @@
     "placeholders": { "sourceNode": "Select source node", "targetNode": "Select target node" },
     "actions": { "edit": "Edit", "delete": "Delete", "save": "Save" }
   },
-  "riskAssessmentScenarioActions": {
+  "riskAnalysisScenarioActions": {
     "breadcrumb": { "scenarios": "Scenarios" },
     "deleteConfirmation": "Delete this scenario?",
     "fields": { "name": "Name", "description": "Description", "threats": "Threats", "risks": "Risks" },
@@ -2212,7 +2212,7 @@
     "loadingRisks": "Loading risks...",
     "actions": { "edit": "Edit", "delete": "Delete", "save": "Save" }
   },
-  "riskAssessmentScopeActions": {
+  "riskAnalysisScopeActions": {
     "breadcrumb": { "scopes": "Scopes", "editScope": "Edit Scope" },
     "deleteConfirmation": "Delete this scope and all its nodes, processes, and threats?",
     "fields": { "name": "Name" },
@@ -2246,7 +2246,7 @@
     "copyMermaidSource": "Copy mermaid source",
     "legend": { "entity": "Entity", "boundary": "Boundary", "asset": "Asset", "data": "Data", "threat": "Threat" }
   },
-  "riskAssessmentThreatActions": {
+  "riskAnalysisThreatActions": {
     "breadcrumb": { "threats": "Threats" },
     "deleteConfirmation": "Delete this threat?",
     "fields": { "name": "Name", "category": "Category" },

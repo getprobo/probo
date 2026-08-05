@@ -52,7 +52,7 @@ type organizationRelationGraph struct {
 	compliancePortalID   string
 	thirdPartyID         string
 	riskID               string
-	riskAssessmentID     string
+	riskAnalysisID       string
 	riskScenarioID       string
 }
 
@@ -131,16 +131,16 @@ func populateOrganizationRelationGraph(
 		WithName(marker + " risk").
 		WithCategory("OPERATIONAL").
 		Create()
-	g.riskAssessmentID = factory.CreateRiskAssessment(
+	g.riskAnalysisID = factory.CreateRiskAnalysis(
 		owner,
 		factory.Attrs{"name": marker + " assessment"},
 	)
-	scopeID := factory.CreateRiskAssessmentScope(
+	scopeID := factory.CreateRiskAnalysisScope(
 		owner,
-		g.riskAssessmentID,
+		g.riskAnalysisID,
 		factory.Attrs{"name": marker + " scope"},
 	)
-	g.riskScenarioID = factory.CreateRiskAssessmentScenario(
+	g.riskScenarioID = factory.CreateRiskAnalysisScenario(
 		owner,
 		scopeID,
 		factory.Attrs{"name": marker + " scenario"},
@@ -782,22 +782,22 @@ func orgRelationsRiskPortfolio(
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"risks"`
-			RiskAssessments struct {
+			RiskAnalyses struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
 						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"riskAssessments"`
-			RiskAssessmentScenarios struct {
+			} `json:"riskAnalyses"`
+			RiskAnalysisScenarios struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
 						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"riskAssessmentScenarios"`
+			} `json:"riskAnalysisScenarios"`
 		} `json:"node"`
 	}
 
@@ -809,11 +809,11 @@ func orgRelationsRiskPortfolio(
 						totalCount
 						edges { node { id } }
 					}
-					riskAssessments(first: 50) {
+					riskAnalyses(first: 50) {
 						totalCount
 						edges { node { id } }
 					}
-					riskAssessmentScenarios(first: 50) {
+					riskAnalysisScenarios(first: 50) {
 						totalCount
 						edges { node { id } }
 					}
@@ -825,15 +825,15 @@ func orgRelationsRiskPortfolio(
 
 	assert.GreaterOrEqual(t, result.Node.Risks.TotalCount, 1)
 	assert.True(t, collectRelationNodeIDs(result.Node.Risks.Edges)[g.riskID])
-	assert.GreaterOrEqual(t, result.Node.RiskAssessments.TotalCount, 1)
+	assert.GreaterOrEqual(t, result.Node.RiskAnalyses.TotalCount, 1)
 	assert.True(
 		t,
-		collectRelationNodeIDs(result.Node.RiskAssessments.Edges)[g.riskAssessmentID],
+		collectRelationNodeIDs(result.Node.RiskAnalyses.Edges)[g.riskAnalysisID],
 	)
-	assert.GreaterOrEqual(t, result.Node.RiskAssessmentScenarios.TotalCount, 1)
+	assert.GreaterOrEqual(t, result.Node.RiskAnalysisScenarios.TotalCount, 1)
 	assert.True(
 		t,
-		collectRelationNodeIDs(result.Node.RiskAssessmentScenarios.Edges)[g.riskScenarioID],
+		collectRelationNodeIDs(result.Node.RiskAnalysisScenarios.Edges)[g.riskScenarioID],
 	)
 
 	var riskReverse struct {

@@ -1119,20 +1119,20 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 	return types.NewDocument(document), nil
 }
 
-// RiskAssessments is the resolver for the riskAssessments field.
-func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentOrderBy) (*types.RiskAssessmentConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentList)
+// RiskAnalyses is the resolver for the riskAnalyses field.
+func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisOrderBy) (*types.RiskAnalysisConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAssessmentOrderField]{
-		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisOrderField]{
+		Field:     coredata.RiskAnalysisOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAssessmentOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1146,23 +1146,23 @@ func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.O
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAssessmentConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisConnection(p, r, obj.ID), nil
 }
 
-// RiskAssessmentScenarios is the resolver for the riskAssessmentScenarios field.
-func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+// RiskAnalysisScenarios is the resolver for the riskAnalysisScenarios field.
+func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
-		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
+		Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1176,7 +1176,7 @@ func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
 }
 
 // Tasks is the resolver for the tasks field.

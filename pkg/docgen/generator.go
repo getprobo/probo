@@ -460,7 +460,7 @@ type (
 		Administrators                string
 		Services                      []ThirdPartyListService
 		Contacts                      []ThirdPartyListContact
-		RiskAssessments               []ThirdPartyListRiskAssessment
+		RiskAnalyses                  []ThirdPartyListRiskAssessment
 		ComplianceReports             []ThirdPartyListComplianceReport
 		BusinessAssociateAgreement    *ThirdPartyListAgreement
 		DataPrivacyAgreement          *ThirdPartyListAgreement

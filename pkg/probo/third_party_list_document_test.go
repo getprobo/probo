@@ -59,7 +59,7 @@ Approve with conditions.
 			Rows: []docgen.ThirdPartyListRow{
 				{
 					Name: "Nango",
-					RiskAssessments: []docgen.ThirdPartyListRiskAssessment{
+					RiskAnalyses: []docgen.ThirdPartyListRiskAssessment{
 						{
 							AssessedAt:      "2026-07-31",
 							ExpiresAt:       "2027-07-31",
@@ -107,7 +107,7 @@ func TestBuildThirdPartyListDocument_PlainNotesFallback(t *testing.T) {
 			Rows: []docgen.ThirdPartyListRow{
 				{
 					Name: "Acme",
-					RiskAssessments: []docgen.ThirdPartyListRiskAssessment{
+					RiskAnalyses: []docgen.ThirdPartyListRiskAssessment{
 						{
 							AssessedAt:      "2026-07-31",
 							ExpiresAt:       "2027-07-31",
@@ -140,7 +140,7 @@ func TestBuildThirdPartyListDocument_DoesNotFailWholeRegisterOnOddNotes(t *testi
 			Rows: []docgen.ThirdPartyListRow{
 				{
 					Name: "Acme",
-					RiskAssessments: []docgen.ThirdPartyListRiskAssessment{
+					RiskAnalyses: []docgen.ThirdPartyListRiskAssessment{
 						{
 							AssessedAt:      "2026-07-31",
 							ExpiresAt:       "2027-07-31",
@@ -180,7 +180,7 @@ func TestBuildThirdPartyListDocument_EmptyNotesPlaceholder(t *testing.T) {
 			Rows: []docgen.ThirdPartyListRow{
 				{
 					Name: "Acme",
-					RiskAssessments: []docgen.ThirdPartyListRiskAssessment{
+					RiskAnalyses: []docgen.ThirdPartyListRiskAssessment{
 						{
 							AssessedAt:      "2026-07-31",
 							ExpiresAt:       "2027-07-31",
@@ -211,7 +211,7 @@ func TestBuildThirdPartyListDocument_EscapesNotesJSON(t *testing.T) {
 			Rows: []docgen.ThirdPartyListRow{
 				{
 					Name: `Vendor "Quotes"`,
-					RiskAssessments: []docgen.ThirdPartyListRiskAssessment{
+					RiskAnalyses: []docgen.ThirdPartyListRiskAssessment{
 						{
 							AssessedAt:      "2026-07-31",
 							ExpiresAt:       "2027-07-31",
