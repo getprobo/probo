@@ -167,8 +167,8 @@ func CopyIPLocationBlocksStaging(
 
 func FinalizeIPLocationBlocksStaging(ctx context.Context, conn pg.Querier) error {
 	q := `
-CREATE UNIQUE INDEX idx_common_ip_location_blocks_staging_start
-	ON common_ip_location_blocks_staging (address_family, ip_start);
+CREATE UNIQUE INDEX idx_common_ip_location_blocks_staging_range
+	ON common_ip_location_blocks_staging (address_family, ip_start, ip_end);
 CREATE INDEX idx_common_ip_location_blocks_staging_lookup
 	ON common_ip_location_blocks_staging (address_family, ip_start DESC, ip_end ASC);
 ANALYZE common_ip_location_blocks_staging;
@@ -186,8 +186,8 @@ func SwapIPLocationBlocksStaging(ctx context.Context, conn pg.Querier) error {
 DROP TABLE common_ip_location_blocks;
 ALTER TABLE common_ip_location_blocks_staging
 	RENAME TO common_ip_location_blocks;
-ALTER INDEX idx_common_ip_location_blocks_staging_start
-	RENAME TO idx_common_ip_location_blocks_start;
+ALTER INDEX idx_common_ip_location_blocks_staging_range
+	RENAME TO idx_common_ip_location_blocks_range;
 ALTER INDEX idx_common_ip_location_blocks_staging_lookup
 	RENAME TO idx_common_ip_location_blocks_lookup;
 `
