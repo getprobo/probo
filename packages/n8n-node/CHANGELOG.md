@@ -4,6 +4,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.214.0] - 2026-08-05
+
 ### Added
 
 - Access Review Source `Get Many` operation to list organization access review sources
