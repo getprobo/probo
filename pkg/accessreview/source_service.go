@@ -673,7 +673,27 @@ func missingOAuthScopesForConnector(
 		granted = dbConnector.Connection.Scopes()
 	}
 
+	// Microsoft (and similar OIDC providers) omit offline_access from the
+	// token scope echo even when a refresh token was issued. Treat a
+	// refresh token as proof of that grant for missing-scope checks only —
+	// never synthesize it into Connection.Scopes(), which reconnect uses
+	// to build the next authorize request (Google rejects offline_access).
+	if connectionHasRefreshToken(dbConnector.Connection) {
+		granted = connector.UnionScopes(granted, []string{"offline_access"})
+	}
+
 	return connector.MissingScopes(required, granted)
+}
+
+func connectionHasRefreshToken(c connector.Connection) bool {
+	switch conn := c.(type) {
+	case *connector.OAuth2Connection:
+		return conn.RefreshToken != ""
+	case *connector.SlackConnection:
+		return conn.RefreshToken != ""
+	default:
+		return false
+	}
 }
 
 // AutoSelectDefaultOrganization picks the first workspace/org a freshly linked

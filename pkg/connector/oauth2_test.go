@@ -571,6 +571,106 @@ func TestCompleteWithState_ScopeFallback(t *testing.T) {
 	assert.Equal(t, []string{"read:user", "write:user"}, returnedState.RequestedScopes)
 }
 
+// TestCompleteWithState_OfflineAccessFromRefreshToken verifies that when a
+// provider that requested offline_access (Microsoft identity platform v2)
+// returns a refresh_token but omits offline_access from the scope field, we
+// persist offline_access. Providers that use access_type=offline (Google)
+// must not get offline_access written into Scope — reconnect unions
+// Scopes() into the next authorize request, and Google rejects that scope.
+func TestCompleteWithState_OfflineAccessFromRefreshToken(t *testing.T) {
+	t.Parallel()
+
+	newConnector := func(tokenURL string) *OAuth2Connector {
+		return &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+			TokenURL:     tokenURL,
+			HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		}
+	}
+
+	t.Run("backfills when offline_access was requested", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(
+				`{"access_token":"at","refresh_token":"rt","expires_in":3600,"token_type":"Bearer","scope":"openid profile User.Read.All"}`,
+			))
+		}))
+		defer server.Close()
+
+		c := newConnector(server.URL)
+		orgID := gid.New(gid.NewTenantID(), 0)
+		stateToken, err := statelesstoken.NewToken(
+			c.ClientSecret,
+			OAuth2TokenType,
+			OAuth2TokenTTL,
+			OAuth2State{
+				OrganizationID:  orgID.String(),
+				Provider:        "MICROSOFT365",
+				RequestedScopes: []string{"openid", "profile", "offline_access", "https://graph.microsoft.com/User.Read.All"},
+			},
+		)
+		require.NoError(t, err)
+
+		conn, _, err := c.CompleteWithState(
+			context.Background(),
+			httptest.NewRequest(http.MethodGet, "https://example.com/cb?code=the-code&state="+stateToken, nil),
+		)
+		require.NoError(t, err)
+
+		oauth2Conn, ok := conn.(*OAuth2Connection)
+		require.True(t, ok, "expected *OAuth2Connection, got %T", conn)
+
+		assert.Equal(t, "rt", oauth2Conn.RefreshToken)
+		assert.Equal(t, "User.Read.All offline_access openid profile", oauth2Conn.Scope)
+		assert.Equal(t, []string{"User.Read.All", "offline_access", "openid", "profile"}, oauth2Conn.Scopes())
+	})
+
+	t.Run("does not invent offline_access for access_type=offline providers", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(
+				`{"access_token":"at","refresh_token":"rt","expires_in":3600,"token_type":"Bearer","scope":"https://www.googleapis.com/auth/analytics.readonly"}`,
+			))
+		}))
+		defer server.Close()
+
+		c := newConnector(server.URL)
+		orgID := gid.New(gid.NewTenantID(), 0)
+		stateToken, err := statelesstoken.NewToken(
+			c.ClientSecret,
+			OAuth2TokenType,
+			OAuth2TokenTTL,
+			OAuth2State{
+				OrganizationID:  orgID.String(),
+				Provider:        "GOOGLE_ANALYTICS",
+				RequestedScopes: []string{"https://www.googleapis.com/auth/analytics.readonly"},
+			},
+		)
+		require.NoError(t, err)
+
+		conn, _, err := c.CompleteWithState(
+			context.Background(),
+			httptest.NewRequest(http.MethodGet, "https://example.com/cb?code=the-code&state="+stateToken, nil),
+		)
+		require.NoError(t, err)
+
+		oauth2Conn, ok := conn.(*OAuth2Connection)
+		require.True(t, ok, "expected *OAuth2Connection, got %T", conn)
+
+		assert.Equal(t, "rt", oauth2Conn.RefreshToken)
+		assert.Equal(t, "https://www.googleapis.com/auth/analytics.readonly", oauth2Conn.Scope)
+		assert.Equal(t, []string{"https://www.googleapis.com/auth/analytics.readonly"}, oauth2Conn.Scopes())
+		assert.NotContains(t, oauth2Conn.Scopes(), "offline_access")
+	})
+}
+
 // TestInitiateWithState_PKCE verifies that connectors with RequiresPKCE=true
 // embed the S256 challenge in the authorization URL (RFC 7636 §4.3) and
 // persist a random nonce (not the verifier) in the signed state token, so

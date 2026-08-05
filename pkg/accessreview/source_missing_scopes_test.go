@@ -109,4 +109,50 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 
 		assert.Empty(t, missingOAuthScopesForConnector(dbConnector, required))
 	})
+
+	t.Run("refresh token satisfies offline_access even when omitted from scope", func(t *testing.T) {
+		t.Parallel()
+
+		// Microsoft's v2 token response returns Graph scopes (and often
+		// openid/profile) but never offline_access, despite issuing a
+		// refresh token. Existing connections may also lack it in Scope.
+		requiredWithOffline := []string{
+			"openid",
+			"offline_access",
+			"https://graph.microsoft.com/User.Read.All",
+		}
+
+		dbConnector := coredata.Connector{
+			Protocol: coredata.ConnectorProtocolOAuth2,
+			Connection: &connector.OAuth2Connection{
+				RefreshToken: "rt",
+				Scope:        "openid User.Read.All",
+			},
+		}
+
+		assert.Empty(t, missingOAuthScopesForConnector(dbConnector, requiredWithOffline))
+	})
+
+	t.Run("offline_access still missing without refresh token", func(t *testing.T) {
+		t.Parallel()
+
+		requiredWithOffline := []string{
+			"openid",
+			"offline_access",
+			"https://graph.microsoft.com/User.Read.All",
+		}
+
+		dbConnector := coredata.Connector{
+			Protocol: coredata.ConnectorProtocolOAuth2,
+			Connection: &connector.OAuth2Connection{
+				Scope: "openid User.Read.All",
+			},
+		}
+
+		assert.Equal(
+			t,
+			[]string{"offline_access"},
+			missingOAuthScopesForConnector(dbConnector, requiredWithOffline),
+		)
+	})
 }
