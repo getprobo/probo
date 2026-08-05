@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.215.0] - 2026-08-05
+
+### Added
+
+- `subdivisionCode` (ISO 3166-2) returned by the Cookie Consent Record `Get` and `Get Many` operations, so workflows can branch on the detected state or province rather than country alone
+
 ## [0.214.0] - 2026-08-05
 
 ### Added
