@@ -4,6 +4,8 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.9.0] - 2026-08-05
+
 ### Added
 
 - `proboctl repair third-party-register-notes` — rewrite risk-assessment notes that were stored as raw Markdown in generated third-party register document versions into structured ProseMirror blocks, clearing cached PDFs so exports regenerate (`--dry-run`, `--yes`, `--org`, `--continue-on-error`)
