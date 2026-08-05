@@ -23,7 +23,6 @@ package console_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
@@ -63,7 +62,11 @@ func TestStatementOfApplicability_TenantIsolation(t *testing.T) {
 					},
 				},
 			)
-			require.Error(t, err)
+			testutil.RequireForbiddenError(
+				t,
+				err,
+				"must not publish another organization's statement of applicability",
+			)
 		},
 	)
 
@@ -88,7 +91,11 @@ func TestStatementOfApplicability_TenantIsolation(t *testing.T) {
 					"applicability":              true,
 				},
 			})
-			require.Error(t, err, "must not accept a controlId belonging to another organization")
+			testutil.RequireForbiddenError(
+				t,
+				err,
+				"must not create applicability statement for another organization's control",
+			)
 		},
 	)
 }

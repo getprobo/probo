@@ -22,6 +22,7 @@ package console_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
@@ -56,32 +57,51 @@ func TestAuditLog_TenantIsolation(t *testing.T) {
 		}
 	`
 
-	// org2 should not see org1's audit log entries about thirdParties.
-	var result struct {
-		Node struct {
-			AuditLogEntries struct {
-				Edges []struct {
-					Node struct {
-						ID           string `json:"id"`
-						Action       string `json:"action"`
-						ResourceType string `json:"resourceType"`
-					} `json:"node"`
-				} `json:"edges"`
-				TotalCount int `json:"totalCount"`
-			} `json:"auditLogEntries"`
-		} `json:"node"`
-	}
+	org1OrgID := org1Owner.GetOrganizationID().String()
+
+	require.Eventually(
+		t,
+		func() bool {
+			var result struct {
+				Node struct {
+					AuditLogEntries struct {
+						Edges []struct {
+							Node struct {
+								ID           string `json:"id"`
+								Action       string `json:"action"`
+								ResourceType string `json:"resourceType"`
+							} `json:"node"`
+						} `json:"edges"`
+						TotalCount int `json:"totalCount"`
+					} `json:"auditLogEntries"`
+				} `json:"node"`
+			}
+
+			if err := org1Owner.Execute(query, map[string]any{"orgId": org1OrgID}, &result); err != nil {
+				return false
+			}
+
+			for _, edge := range result.Node.AuditLogEntries.Edges {
+				if edge.Node.Action == "core:thirdParty:create" {
+					return true
+				}
+			}
+
+			return false
+		},
+		10*time.Second,
+		200*time.Millisecond,
+		"org1 should have a core:thirdParty:create audit log entry",
+	)
+
+	var crossOrgResult struct{}
 
 	err := org2Owner.Execute(query, map[string]any{
-		"orgId": org2Owner.GetOrganizationID().String(),
-	}, &result)
-	require.NoError(t, err)
-
-	for _, edge := range result.Node.AuditLogEntries.Edges {
-		// org2 may have its own audit log entries (from user/org creation),
-		// but should never see org1's thirdParty entries.
-		if edge.Node.ResourceType == "ThirdParty" {
-			t.Fatalf("org2 should not see org1's thirdParty audit log entries, but found: %s", edge.Node.Action)
-		}
-	}
+		"orgId": org1OrgID,
+	}, &crossOrgResult)
+	testutil.RequireForbiddenError(
+		t,
+		err,
+		"must not list another organization's audit log entries",
+	)
 }

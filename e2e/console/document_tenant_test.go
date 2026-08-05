@@ -23,7 +23,6 @@ package console_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -125,11 +124,7 @@ func TestDocument_TenantIsolation(t *testing.T) {
 		err := org2Owner.Execute(query, map[string]any{
 			"id": org1Owner.GetOrganizationID().String(),
 		}, &result)
-		if err == nil {
-			for _, edge := range result.Node.Documents.Edges {
-				assert.NotEqual(t, documentID, edge.Node.ID, "Should not see document from another org")
-			}
-		}
+		testutil.RequireForbiddenError(t, err, "must not list documents for another organization")
 	})
 
 	t.Run("cannot create document referencing a default approver from another organization", func(t *testing.T) {

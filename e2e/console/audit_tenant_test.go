@@ -23,7 +23,6 @@ package console_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -130,10 +129,6 @@ func TestAudit_TenantIsolation(t *testing.T) {
 		err := org2Owner.Execute(query, map[string]any{
 			"id": org1Owner.GetOrganizationID().String(),
 		}, &result)
-		if err == nil {
-			for _, edge := range result.Node.Audits.Edges {
-				assert.NotEqual(t, auditID, edge.Node.ID, "Should not see audit from another org")
-			}
-		}
+		testutil.RequireForbiddenError(t, err, "must not list audits for another organization")
 	})
 }

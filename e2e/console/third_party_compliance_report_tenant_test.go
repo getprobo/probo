@@ -86,7 +86,11 @@ func TestThirdPartyComplianceReport_TenantIsolation(t *testing.T) {
 				"reportId": reportID,
 			},
 		})
-		require.Error(t, err, "Should not be able to delete thirdPartyComplianceReport from another org")
+		testutil.RequireForbiddenError(
+			t,
+			err,
+			"must not delete thirdPartyComplianceReport from another organization",
+		)
 	})
 
 	t.Run("cannot upload thirdPartyComplianceReport on a thirdParty from another organization", func(t *testing.T) {
@@ -114,6 +118,10 @@ func TestThirdPartyComplianceReport_TenantIsolation(t *testing.T) {
 			},
 			&result,
 		)
-		require.Error(t, err, "must not accept a thirdPartyId belonging to another organization")
+		testutil.RequireForbiddenError(
+			t,
+			err,
+			"must not upload thirdPartyComplianceReport for another organization's third party",
+		)
 	})
 }

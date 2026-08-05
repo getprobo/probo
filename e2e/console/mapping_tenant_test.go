@@ -49,7 +49,7 @@ func TestControlMeasureMapping_TenantIsolation(t *testing.T) {
 			"measureId": org2MeasureID,
 		},
 	})
-	require.Error(t, err, "must not link a control to a measure from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a control to a measure from another organization")
 }
 func TestRiskMeasureMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
@@ -71,7 +71,7 @@ func TestRiskMeasureMapping_TenantIsolation(t *testing.T) {
 			"measureId": org2MeasureID,
 		},
 	})
-	require.Error(t, err, "must not link a risk to a measure from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a risk to a measure from another organization")
 }
 func TestControlDocumentMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
@@ -94,7 +94,7 @@ func TestControlDocumentMapping_TenantIsolation(t *testing.T) {
 			"documentId": org2DocumentID,
 		},
 	})
-	require.Error(t, err, "must not link a control to a document from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a control to a document from another organization")
 }
 func TestControlAuditMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
@@ -118,7 +118,7 @@ func TestControlAuditMapping_TenantIsolation(t *testing.T) {
 			"auditId":   org2AuditID,
 		},
 	})
-	require.Error(t, err, "must not link a control to an audit from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a control to an audit from another organization")
 }
 func TestRiskDocumentMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
@@ -140,7 +140,7 @@ func TestRiskDocumentMapping_TenantIsolation(t *testing.T) {
 			"documentId": org2DocumentID,
 		},
 	})
-	require.Error(t, err, "must not link a risk to a document from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a risk to a document from another organization")
 }
 func TestRiskObligationMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
@@ -195,7 +195,7 @@ func TestRiskObligationMapping_TenantIsolation(t *testing.T) {
 			"obligationId": org2ObligationID,
 		},
 	})
-	require.Error(t, err, "must not link a risk to an obligation from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a risk to an obligation from another organization")
 }
 func TestMeasureDocumentMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
@@ -217,5 +217,5 @@ func TestMeasureDocumentMapping_TenantIsolation(t *testing.T) {
 			"documentId": org2DocumentID,
 		},
 	})
-	require.Error(t, err, "must not link a measure to a document from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a measure to a document from another organization")
 }
