@@ -44,44 +44,7 @@ export interface Category {
   posthog_consent: boolean;
 }
 
-export type Regulation =
-  | "GDPR"
-  | "UK_GDPR"
-  | "FADP"
-  | "CCPA"
-  | "VCDPA"
-  | "CPA"
-  | "CTDPA"
-  | "UCPA"
-  | "TDPSA"
-  | "OCPA"
-  | "MTCDPA"
-  | "FDBR"
-  | "IA_ICDPA"
-  | "DE_DPDPA"
-  | "NHPA"
-  | "NE_NDPA"
-  | "NJDPA"
-  | "TIPA"
-  | "MNDPA"
-  | "MODPA"
-  | "IN_ICDPA"
-  | "KCDPA"
-  | "RIDTPPA"
-  | "PIPEDA"
-  | "PIPA_AB"
-  | "PIPA_BC"
-  | "PIPA_CA"
-  | "LAW_25"
-  | "LGPD"
-  | "LFPDPPP"
-  | "POPIA"
-  | "PDPA"
-  | "PIPL"
-  | "PIPA"
-  | "APPI"
-  | "DPDP"
-  | "PDPL";
+export type Regulation = string;
 
 export type Presentation = "OPT_IN" | "OPT_OUT" | "NOTICE";
 

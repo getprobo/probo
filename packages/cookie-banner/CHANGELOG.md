@@ -15,9 +15,10 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 - First-class notice-only presentation (single acknowledge button) for jurisdictions with no cookie-consent law and implied-consent regimes (Japan APPI, Mexico LFPDPPP). Dismissing it records a distinct `ACKNOWLEDGE` consent action (via `<probo-acknowledge-button>` / `client.acknowledge()`) rather than `ACCEPT_ALL`, so the audit trail reflects an acknowledgement
 - The themed `<probo-cookie-banner>` is now a thin dispatcher that mounts a focused renderer per presentation (opt-in / opt-out / notice); each renderer owns only its own markup, wording keys, and quirks, replacing the single component's runtime button-toggling
 - Export `resolveLayout` and `resolveBannerText` (plus the `BannerLayout` / `BannerText` / `Presentation` types) so headless integrators can resolve the active presentation and its wording
-- Canadian subdivision-aware regulation values: Quebec resolves to `LAW_25`, Alberta resolves to `PIPA_AB`, British Columbia resolves to `PIPA_BC`, and other provinces retain the national `PIPEDA` fallback
 
 ### Changed
+
+- `Regulation` is a `string` alias rather than an exhaustive union; banner behavior is driven by the server-provided `layout`, so the SDK no longer mirrors every backend regulation identifier
 
 - Under CCPA, `layout.reopen_state` is `privacy_choices` (not the compact opt-out banner). Other OPT_OUT regimes (PIPEDA, Canadian PIPA, LGPD) still reopen the compact banner
 - Under CCPA, the banner starts closed by default (cookies already follow the opt-out model until the visitor opts out)
