@@ -59,6 +59,7 @@ func (s *Service) ReplaceLocations(
 			if count, copyErr = coredata.CopyIPLocationBlocksStaging(ctx, tx, source); copyErr != nil {
 				return fmt.Errorf("cannot import IP locations: %w", copyErr)
 			}
+
 			if count == 0 {
 				return fmt.Errorf("cannot import IP locations: source contains no ranges")
 			}

@@ -33,6 +33,7 @@ func (v SubdivisionCode) String() string {
 
 func (v *SubdivisionCode) UnmarshalText(text []byte) error {
 	value := string(text)
+
 	country, subdivision, ok := strings.Cut(value, "-")
 	if !ok || len(country) != 2 || len(subdivision) < 1 || len(subdivision) > 3 {
 		return fmt.Errorf("invalid ISO 3166-2 subdivision code %q", value)
@@ -42,6 +43,7 @@ func (v *SubdivisionCode) UnmarshalText(text []byte) error {
 	if err := cc.UnmarshalText([]byte(country)); err != nil {
 		return fmt.Errorf("invalid ISO 3166-2 country code: %w", err)
 	}
+
 	if cc == CountryCodeEU {
 		return fmt.Errorf("invalid ISO 3166-2 country code %q", country)
 	}

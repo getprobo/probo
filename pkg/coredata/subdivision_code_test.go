@@ -77,6 +77,7 @@ func TestSubdivisionCodeUnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			var got SubdivisionCode
+
 			err := got.UnmarshalText([]byte(tt.input))
 			if tt.wantErr {
 				require.Error(t, err)

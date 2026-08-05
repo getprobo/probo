@@ -32,6 +32,7 @@ func NewCookieConsentRecord(r *coredata.CookieConsentRecord) *CookieConsentRecor
 	}
 
 	var subdivisionCode *string
+
 	if r.SubdivisionCode != nil {
 		value := r.SubdivisionCode.String()
 		subdivisionCode = &value
