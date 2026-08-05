@@ -38,6 +38,7 @@ type scimClient struct {
 	client   *http.Client
 	token    string
 	endpoint string
+	configID string
 }
 
 func newSCIMClient(t testing.TB, owner *testutil.Client) *scimClient {
@@ -69,12 +70,14 @@ func newSCIMClient(t testing.TB, owner *testutil.Client) *scimClient {
 	require.NoError(t, err, "GraphQL request failed")
 
 	require.NotEmpty(t, result.CreateSCIMConfiguration.Token)
+	require.NotEmpty(t, result.CreateSCIMConfiguration.ScimConfiguration.ID)
 
 	return &scimClient{
 		t:        t,
 		client:   &http.Client{},
 		token:    result.CreateSCIMConfiguration.Token,
 		endpoint: testutil.GetBaseURL() + "/api/connect/v1/scim/2.0",
+		configID: result.CreateSCIMConfiguration.ScimConfiguration.ID,
 	}
 }
 
@@ -112,6 +115,38 @@ func (sc *scimClient) getUser(id string) (string, int) {
 func (sc *scimClient) deleteUser(id string) (string, int) {
 	sc.t.Helper()
 	return sc.doRequest("DELETE", "/Users/"+id, nil)
+}
+
+func (sc *scimClient) replaceUser(id, userName, fullName, externalID string, active bool) (string, int) {
+	sc.t.Helper()
+
+	payload := map[string]any{
+		"schemas":    []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
+		"userName":   userName,
+		"active":     active,
+		"externalId": externalID,
+		"name": map[string]any{
+			"givenName":  "Test",
+			"familyName": "User",
+		},
+		"displayName": fullName,
+		"emails": []map[string]any{
+			{"value": userName, "primary": true},
+		},
+	}
+
+	return sc.doRequest("PUT", "/Users/"+id, payload)
+}
+
+func (sc *scimClient) patchUser(id string, operations []map[string]any) (string, int) {
+	sc.t.Helper()
+
+	payload := map[string]any{
+		"schemas":    []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+		"Operations": operations,
+	}
+
+	return sc.doRequest("PATCH", "/Users/"+id, payload)
 }
 
 func (sc *scimClient) doRequest(method, path string, payload any) (string, int) {

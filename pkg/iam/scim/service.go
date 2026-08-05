@@ -1016,10 +1016,22 @@ func (s *Service) LogEvent(
 	ipAddress net.IP,
 	statusCode int,
 	errorMessage *string,
+	requestBody *string,
+	responseBody *string,
 ) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	event := s.createEvent(config, method, path, userName, ipAddress, statusCode, errorMessage)
+	event := s.createEvent(
+		config,
+		method,
+		path,
+		userName,
+		ipAddress,
+		statusCode,
+		errorMessage,
+		requestBody,
+		responseBody,
+	)
 
 	err := s.pg.WithTx(
 		ctx,
@@ -1045,6 +1057,8 @@ func (s *Service) createEvent(
 	ipAddress net.IP,
 	statusCode int,
 	errorMessage *string,
+	requestBody *string,
+	responseBody *string,
 ) *coredata.SCIMEvent {
 	event := &coredata.SCIMEvent{
 		ID:                  gid.New(config.OrganizationID.TenantID(), coredata.SCIMEventEntityType),
@@ -1052,6 +1066,8 @@ func (s *Service) createEvent(
 		SCIMConfigurationID: config.ID,
 		Method:              method,
 		Path:                path,
+		RequestBody:         requestBody,
+		ResponseBody:        responseBody,
 		StatusCode:          statusCode,
 		ErrorMessage:        errorMessage,
 		IPAddress:           ipAddress,
