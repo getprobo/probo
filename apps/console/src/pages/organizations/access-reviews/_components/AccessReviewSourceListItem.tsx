@@ -327,7 +327,6 @@ export function AccessReviewSourceListItem({
       {accessSource.connector?.provider && (
         <ThirdPartyLogo
           thirdParty={accessSource.connector.provider}
-          tint
           className="size-6 shrink-0"
         />
       )}

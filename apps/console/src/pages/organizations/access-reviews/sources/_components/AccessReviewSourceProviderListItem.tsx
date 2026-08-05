@@ -99,7 +99,6 @@ export function AccessReviewSourceProviderListItem({
     <li className={item()}>
       <ThirdPartyLogo
         thirdParty={provider.provider}
-        tint
         className="size-6 shrink-0"
       />
       <div className={content()}>
