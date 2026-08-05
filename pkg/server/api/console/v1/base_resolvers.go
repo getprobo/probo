@@ -365,6 +365,26 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewCompliancePortalAccess(compliancePortalAccess), nil
 		}
+	case coredata.MailingListSubscriberEntityType:
+		action = management.ActionMailingListSubscriberList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			subscriber, err := r.mailman.GetSubscriberByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewMailingListSubscriber(subscriber), nil
+		}
+	case coredata.MailingListUpdateEntityType:
+		action = management.ActionMailingListUpdateList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			update, err := r.mailman.GetMailingListUpdate(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewMailingListUpdate(update), nil
+		}
 	case coredata.RightsRequestEntityType:
 		action = probo.ActionRightsRequestGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
