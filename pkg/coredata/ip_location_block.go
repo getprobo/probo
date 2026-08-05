@@ -87,7 +87,7 @@ WHERE
 	address_family = family(@ip::inet)
 	AND ip_start <= @ip::inet
 	AND ip_end >= @ip::inet
-ORDER BY ip_end - ip_start
+ORDER BY ip_start DESC, ip_end ASC
 LIMIT 1;
 `
 
@@ -169,6 +169,8 @@ func FinalizeIPLocationBlocksStaging(ctx context.Context, conn pg.Querier) error
 	q := `
 CREATE UNIQUE INDEX idx_common_ip_location_blocks_staging_start
 	ON common_ip_location_blocks_staging (address_family, ip_start);
+CREATE INDEX idx_common_ip_location_blocks_staging_lookup
+	ON common_ip_location_blocks_staging (address_family, ip_start DESC, ip_end ASC);
 ANALYZE common_ip_location_blocks_staging;
 `
 
@@ -186,6 +188,8 @@ ALTER TABLE common_ip_location_blocks_staging
 	RENAME TO common_ip_location_blocks;
 ALTER INDEX idx_common_ip_location_blocks_staging_start
 	RENAME TO idx_common_ip_location_blocks_start;
+ALTER INDEX idx_common_ip_location_blocks_staging_lookup
+	RENAME TO idx_common_ip_location_blocks_lookup;
 `
 
 	if _, err := conn.Exec(ctx, q); err != nil {

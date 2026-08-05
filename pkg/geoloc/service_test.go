@@ -134,6 +134,40 @@ func TestReplaceLocationsAndLookupBoundaries(t *testing.T) {
 	assert.Equal(t, &subdivision, location.SubdivisionCode)
 }
 
+func TestLookupLocationWideIPv6Block(t *testing.T) {
+	client := test.PGClient(t)
+	service := geoloc.NewService(client)
+
+	_, err := service.ReplaceLocations(
+		context.Background(),
+		&blockSource{
+			blocks: []coredata.IPLocationBlock{
+				{
+					AddressFamily: 6,
+					IPStart:       netip.MustParseAddr("2001:db8::"),
+					IPEnd:         netip.MustParseAddr("2001:db8:ffff:ffff:ffff:ffff:ffff:ffff"),
+					CountryCode:   coredata.CountryCodeUS,
+				},
+				{
+					AddressFamily: 6,
+					IPStart:       netip.MustParseAddr("2001:db8:1::"),
+					IPEnd:         netip.MustParseAddr("2001:db8:1:ffff:ffff:ffff:ffff:ffff"),
+					CountryCode:   coredata.CountryCodeFR,
+				},
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	location, err := service.LookupLocation(context.Background(), "2001:db8:1::1")
+	require.NoError(t, err)
+	assert.Equal(t, coredata.CountryCodeFR, location.CountryCode)
+
+	location, err = service.LookupLocation(context.Background(), "2001:db8::1")
+	require.NoError(t, err)
+	assert.Equal(t, coredata.CountryCodeUS, location.CountryCode)
+}
+
 func TestLookupLocationNestedRanges(t *testing.T) {
 	client := test.PGClient(t)
 	service := geoloc.NewService(client)

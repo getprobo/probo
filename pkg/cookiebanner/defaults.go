@@ -594,7 +594,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 
 		"banner_title_opt_out":          "Avis sur les cookies",
 		"banner_description_opt_out":    "Nous utilisons des cookies et technologies similaires. Vous pouvez refuser les cookies non essentiels. {{cookie_policy_link}}",
-		"banner_description_us_opt_out": "Nous utilisons des cookies et technologies similaires pour l'analyse et la publicité. En vertu des lois étatales américaines sur la confidentialité applicables, vous pouvez refuser la vente ou le partage de vos informations personnelles et la publicité ciblée. {{cookie_policy_link}}",
+		"banner_description_us_opt_out": "Nous utilisons des cookies et technologies similaires pour l'analyse et la publicité. En vertu des lois étatiques américaines sur la confidentialité applicables, vous pouvez refuser la vente ou le partage de vos informations personnelles et la publicité ciblée. {{cookie_policy_link}}",
 		"banner_description_ca_opt_out": "Nous utilisons des cookies et technologies similaires. En vertu des lois canadiennes sur la confidentialité applicables, vous pouvez refuser les cookies non essentiels à tout moment. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Ne pas vendre ni partager mes informations personnelles",
