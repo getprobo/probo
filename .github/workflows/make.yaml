@@ -570,8 +570,13 @@ jobs:
         if: "${{ always() && matrix.coverage }}"
         run: |
           if [ -f coverage-e2e.txt ]; then
-            coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e.txt)"
-            echo "### E2E application coverage: ${coverage}" >> "${GITHUB_STEP_SUMMARY}"
+            full_coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e.txt)"
+            core_coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e-core.txt)"
+            {
+              echo "### E2E coverage"
+              echo "- Full probod: ${full_coverage}"
+              echo "- Core product: ${core_coverage}"
+            } >> "${GITHUB_STEP_SUMMARY}"
           else
             echo "### E2E application coverage unavailable" >> "${GITHUB_STEP_SUMMARY}"
           fi
@@ -587,4 +592,8 @@ jobs:
             coverage-e2e.out
             coverage-e2e.txt
             coverage-e2e.html
+            coverage-e2e-core.out
+            coverage-e2e-core.txt
+            coverage-e2e-core.html
+            coverage-e2e-packages.txt
           retention-days: 30

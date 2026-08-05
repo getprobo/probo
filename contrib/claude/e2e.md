@@ -40,12 +40,15 @@ application coverage. The coverage target writes:
 - `coverage-e2e.out` — Go coverage profile
 - `coverage-e2e.txt` — per-function and total statement coverage
 - `coverage-e2e.html` — browsable source report
+- `coverage-e2e-core.*` — profile, text, and HTML for core product packages
+- `coverage-e2e-packages.txt` — package-level statement coverage
 
 CI runs the normal and instrumented suites in parallel. The required
 `test-e2e` check provides fast feedback, while `test-e2e-coverage` publishes the
-total in its job summary and uploads all three reports with its JUnit and
-journey artifacts. Coverage is collected from the probod process, not from the
-E2E test driver.
+full-binary and core-product totals in its job summary and uploads all reports
+with its JUnit and journey artifacts. Coverage is collected from the probod
+process, not from the E2E test driver. Override `E2E_CORE_COVER_PKGS` when
+auditing a different product-package boundary.
 
 ## Client setup
 

@@ -78,6 +78,7 @@ E2E_TEST_FLAGS?=
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 E2E_BINARY ?= $(CURDIR)/$(PROBOD_BIN)
+E2E_CORE_COVER_PKGS ?= go.probo.inc/probo/pkg/coredata,go.probo.inc/probo/pkg/probo,go.probo.inc/probo/pkg/server/api/console/v1,go.probo.inc/probo/pkg/server/api/connect/v1,go.probo.inc/probo/pkg/server/api/complianceportal/v1,go.probo.inc/probo/pkg/accessreview,go.probo.inc/probo/pkg/agentrun,go.probo.inc/probo/pkg/complianceportal/management,go.probo.inc/probo/pkg/complianceportal/visitor,go.probo.inc/probo/pkg/cookiebanner,go.probo.inc/probo/pkg/riskmanagement,go.probo.inc/probo/pkg/thirdparty,go.probo.inc/probo/pkg/webhook
 
 DOCKER_REGISTRY=	artifact.probo.inc
 DOCKER_PROXY=		$(DOCKER_REGISTRY)/dockerhub
@@ -244,9 +245,14 @@ test-e2e-coverage-run:
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -o=coverage-e2e.out
+	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -pkg=$(E2E_CORE_COVER_PKGS) -o=coverage-e2e-core.out
+	$(GO) tool covdata percent -i=$(E2E_COVER_DIR) > coverage-e2e-packages.txt
 	$(GO) tool cover -func=coverage-e2e.out > coverage-e2e.txt
+	$(GO) tool cover -func=coverage-e2e-core.out > coverage-e2e-core.txt
 	$(GO) tool cover -html=coverage-e2e.out -o=coverage-e2e.html
+	$(GO) tool cover -html=coverage-e2e-core.out -o=coverage-e2e-core.html
 	$(CAT) coverage-e2e.txt
+	$(CAT) coverage-e2e-core.txt
 
 .PHONY: coverage-combined
 coverage-combined: coverage-report test-e2e-coverage ## Generate combined coverage report (unit + e2e)
@@ -475,7 +481,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf apps/{console,compliance-portal}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
-	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.txt coverage-e2e.html coverage-combined.out coverage-combined.html
+	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.txt coverage-e2e.html coverage-e2e-core.out coverage-e2e-core.txt coverage-e2e-core.html coverage-e2e-packages.txt coverage-combined.out coverage-combined.html
 	$(RM) -rf coverage/
 	$(RM) -rf compose/keycloak/certs/cert.pem compose/keycloak/certs/private-key.pem compose/keycloak/probo-realm.json
 	$(RM) -f pkg/server/api/connect/v1/schema/schema.go pkg/server/api/connect/v1/types/types.go
