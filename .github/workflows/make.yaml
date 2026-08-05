@@ -49,7 +49,7 @@ jobs:
             packages/emails/dist/
           retention-days: 1
 
-  # ── Snapshot: build probod group binaries (matrix by GOOS/GOARCH) ──
+  # ── Snapshot: build the Linux/amd64 probod group binaries ─────────
   build-snapshot-binary:
     name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
@@ -62,14 +62,6 @@ jobs:
       matrix:
         include:
           - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
-          - { goos: openbsd, goarch: amd64 }
-          - { goos: openbsd, goarch: arm64 }
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
@@ -105,52 +97,12 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o "dist/prb${EXT}" ./cmd/prb/main.go
       - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
-        if: matrix.goos == 'linux'
         with:
           name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "dist/"
           retention-days: 1
 
-  # ── Snapshot: build probo-agent binaries (matrix by GOOS/GOARCH) ───
-  build-snapshot-probo-agent:
-    name: "probo-agent (${{ matrix.goos }}/${{ matrix.goarch }})"
-    if: github.event_name == 'push'
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    permissions:
-      contents: "read"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: windows, goarch: arm64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
-    steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
-        with:
-          submodules: recursive
-      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
-      - uses: "./.github/actions/setup"
-        with:
-          node: "false"
-      - name: "Build probo-agent"
-        env:
-          CGO_ENABLED: "0"
-          GOOS: "${{ matrix.goos }}"
-          GOARCH: "${{ matrix.goarch }}"
-        run: |
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-
-          go build -ldflags "-s -w -X 'main.version=snapshot'" \
-            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent
-
-  # ── Snapshot: build Docker images (matrix by architecture) ─────────
+  # ── Snapshot: build the Linux/amd64 Docker image ───────────────────
   build-snapshot-docker:
     name: "docker (${{ matrix.arch }})"
     if: github.event_name == 'push'
@@ -166,9 +118,6 @@ jobs:
           - arch: amd64
             platform: "linux/amd64"
             runner: "4cpu-linux-x64"
-          - arch: arm64
-            platform: "linux/arm64"
-            runner: "4cpu-linux-arm64"
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
@@ -284,12 +233,23 @@ jobs:
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
+          fetch-depth: 2
           submodules: recursive
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+      - name: "Check probo-agent dependency changes"
+        id: agent-changes
+        env:
+          BASE_SHA: "${{ github.event.pull_request.base.sha || github.event.before }}"
+          HEAD_SHA: "${{ github.event.pull_request.head.sha || github.sha }}"
+        run: |
+          affected="$(contrib/ci/go-package-affected.sh \
+            "$BASE_SHA" "$HEAD_SHA" ./cmd/probo-agent)"
+          echo "affected=$affected" >> "$GITHUB_OUTPUT"
       - name: "Build probo-agent"
+        if: steps.agent-changes.outputs.affected == 'true'
         env:
           CGO_ENABLED: "0"
         run: |
