@@ -25,7 +25,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -194,9 +196,14 @@ func (mc *MCPClient) doRequest(method string, params any) (json.RawMessage, erro
 		mc.sessionID = sid
 	}
 
+	responseBody, err := decodeMCPResponseBody(resp.Header.Get("Content-Type"), respBody)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode response body: %w", err)
+	}
+
 	var rpcResp jsonrpcResponse
-	if err := json.Unmarshal(respBody, &rpcResp); err != nil {
-		return nil, fmt.Errorf("cannot decode response: %w (body: %s)", err, string(respBody))
+	if err := json.Unmarshal(responseBody, &rpcResp); err != nil {
+		return nil, fmt.Errorf("cannot decode response: %w (body: %s)", err, string(responseBody))
 	}
 
 	if rpcResp.Error != nil {
@@ -204,6 +211,31 @@ func (mc *MCPClient) doRequest(method string, params any) (json.RawMessage, erro
 	}
 
 	return rpcResp.Result, nil
+}
+
+func decodeMCPResponseBody(contentType string, body []byte) ([]byte, error) {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil || mediaType != "text/event-stream" {
+		return body, nil
+	}
+
+	for line := range strings.Lines(string(body)) {
+		data, ok := strings.CutPrefix(strings.TrimSpace(line), "data:")
+		if !ok {
+			continue
+		}
+
+		candidate := []byte(strings.TrimSpace(data))
+
+		var envelope struct {
+			ID *int `json:"id"`
+		}
+		if err := json.Unmarshal(candidate, &envelope); err == nil && envelope.ID != nil {
+			return candidate, nil
+		}
+	}
+
+	return nil, fmt.Errorf("SSE response did not contain a JSON-RPC message")
 }
 
 func (mc *MCPClient) initialize() {
