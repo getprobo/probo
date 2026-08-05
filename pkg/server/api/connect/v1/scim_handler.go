@@ -23,11 +23,13 @@ package connect_v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/elimity-com/scim"
 	scimerrors "github.com/elimity-com/scim/errors"
@@ -73,6 +75,11 @@ type (
 		statusCode int
 		body       bytes.Buffer
 	}
+)
+
+const (
+	scimPasswordAttribute = "password"
+	scimRedactedValue     = "[REDACTED]"
 )
 
 var (
@@ -246,8 +253,8 @@ func (h *SCIMHandler) EventLoggingMiddleware(next http.Handler) http.Handler {
 			getIPAddress(r),
 			responseRecorder.statusCode,
 			recorder.errorMessage,
-			bodyOrNil(requestBody),
-			bodyOrNil(responseRecorder.body.Bytes()),
+			bodyOrNil(redactSCIMCredentials(requestBody)),
+			bodyOrNil(redactSCIMCredentials(responseRecorder.body.Bytes())),
 		)
 	})
 }
@@ -307,6 +314,63 @@ func bodyOrNil(body []byte) *string {
 	s := string(body)
 
 	return &s
+}
+
+// redactSCIMCredentials strips credentials from a captured SCIM body. The core
+// User schema defines a write-only "password" attribute that provisioning
+// clients may send even though SCIM-managed profiles never carry one, and a
+// stored credential would turn the audit trail into a breach. Bodies without a
+// credential are returned untouched so they stay byte-identical to the wire.
+func redactSCIMCredentials(body []byte) []byte {
+	if !bytes.Contains(bytes.ToLower(body), []byte(scimPasswordAttribute)) {
+		return body
+	}
+
+	var payload any
+	if err := json.Unmarshal(body, &payload); err != nil {
+		// A body that mentions a credential but cannot be parsed cannot be
+		// redacted, so store nothing rather than risk persisting it.
+		return nil
+	}
+
+	redacted, err := json.Marshal(redactSCIMValue(payload))
+	if err != nil {
+		return nil
+	}
+
+	return redacted
+}
+
+func redactSCIMValue(value any) any {
+	switch v := value.(type) {
+	case map[string]any:
+		for key, nested := range v {
+			if strings.EqualFold(key, scimPasswordAttribute) {
+				v[key] = scimRedactedValue
+				continue
+			}
+
+			v[key] = redactSCIMValue(nested)
+		}
+
+		// A PATCH operation carries its target in "path" and the credential in
+		// "value", so the attribute name never appears as a key.
+		if path, ok := v["path"].(string); ok && strings.EqualFold(path, scimPasswordAttribute) {
+			if _, ok := v["value"]; ok {
+				v["value"] = scimRedactedValue
+			}
+		}
+
+		return v
+	case []any:
+		for i, nested := range v {
+			v[i] = redactSCIMValue(nested)
+		}
+
+		return v
+	default:
+		return value
+	}
 }
 
 func (h *scimResourceHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
