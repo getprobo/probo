@@ -2909,7 +2909,7 @@
     "description": "Passez en revue et gérez les accès des utilisateurs à travers les systèmes et applications de votre organisation.",
     "tabs": {
       "campaigns": "Campagnes",
-      "sources": "Sources"
+      "sources": "Connexions"
     }
   },
   "createCsvAccessReviewSourcePage": {
@@ -2945,7 +2945,9 @@
       "slack": "Slack",
       "metabase": "Metabase",
       "signoz": "SigNoz",
-      "cursor": "Cursor"
+      "cursor": "Cursor",
+      "github": "GitHub",
+      "cloudflare": "Cloudflare"
     },
     "errors": {
       "delete": "Échec de la suppression de la source d’accès",
@@ -2978,8 +2980,10 @@
         "manualLabel": "Saisir l’identifiant de l’organisation manuellement"
       },
       "unavailable": {
-        "title": "Impossible de charger les organisations",
-        "description": "Probo n’a pas pu lire la liste des organisations depuis {{provider}}. La connexion a peut-être expiré ou il manque des permissions."
+        "reconnectTitle": "{{provider}} est déconnecté",
+        "credentialsTitle": "Les identifiants de {{provider}} sont invalides",
+        "reconnectDescription": "Reconnectez cette source pour rétablir l’accès aux organisations.",
+        "credentialsDescription": "Probo ne peut pas accéder aux organisations avec les identifiants actuels. Vérifiez les identifiants et les permissions de cette source."
       }
     }
   },
@@ -3209,21 +3213,11 @@
   "addAccessReviewSourceDialog": {
     "actions": {
       "connect": "Connecter",
-      "apiKey": "Clé API",
-      "clientCredentials": "Identifiants client",
-      "connectWithApiKey": "Connecter avec une clé API",
-      "connectWithClientCredentials": "Connecter avec des identifiants client",
-      "open": "Ouvrir",
-      "close": "Fermer"
+      "connectWithOAuth": "OAuth",
+      "connectWithApiKey": "Clé API",
+      "connectWithClientCredentials": "Identifiants client",
+      "open": "Ouvrir"
     },
-    "status": {
-      "connected": "Connecté"
-    },
-    "breadcrumb": {
-      "accessReviews": "Revues d’accès",
-      "addSource": "Ajouter une source"
-    },
-    "searchPlaceholder": "Rechercher des fournisseurs...",
     "csv": {
       "title": "CSV",
       "description": "Téléversez des données CSV directement comme source d’accès."
@@ -3378,18 +3372,17 @@
       "created": "Source d’accès créée avec succès."
     },
     "actions": {
-      "addSource": "Ajouter une source",
       "loading": "Chargement...",
       "loadMore": "Charger plus"
     },
-    "columns": {
-      "name": "Nom",
-      "source": "Source",
-      "status": "Statut",
-      "organization": "Organisation",
-      "createdAt": "Créé le"
+    "sections": {
+      "connected": "Connectées",
+      "notConnected": "Non connectées"
     },
-    "empty": "Aucune source d’accès configurée pour le moment. Ajoutez votre première source pour commencer à réviser les accès."
+    "searchPlaceholder": "Rechercher des sources et des fournisseurs...",
+    "emptyConnected": "Aucune source d’accès n’est encore connectée.",
+    "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",
+    "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche."
   },
   "assetDetailsPage": {
     "breadcrumb": {

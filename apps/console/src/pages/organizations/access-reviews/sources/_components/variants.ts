@@ -18,22 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql } from "relay-runtime";
+import { tv } from "tailwind-variants";
 
-export const createAccessReviewSourceMutation = graphql`
-  mutation accessReviewSourceMutationsCreateMutation(
-    $input: CreateAccessReviewSourceInput!
-    $connections: [ID!]!
-  ) {
-    createAccessReviewSource(input: $input) {
-      accessReviewSourceEdge @prependEdge(connections: $connections) {
-        node {
-          id
-          name
-          createdAt
-          ...AccessReviewSourceListItem_source
-        }
-      }
-    }
-  }
-`;
+export const accessReviewSourceSection = tv({
+  slots: {
+    root: "flex flex-col gap-3",
+    header: "flex items-center gap-2.5",
+    title: "text-sm font-medium uppercase tracking-wide text-txt-primary",
+    count: "text-sm text-txt-tertiary",
+    list: "list-none overflow-hidden rounded-[10px] border border-border-low bg-level-1",
+    item: "flex flex-wrap items-center gap-4 border-b border-border-low px-4 py-3 last:border-b-0",
+    content: "flex min-w-48 flex-1 flex-col gap-0.5 sm:max-w-64",
+    trailing: "ml-auto flex min-w-64 flex-1 flex-wrap items-center justify-end gap-3",
+    issue: "flex min-w-0 flex-1 flex-wrap items-center gap-2.5",
+    issueIcon: "shrink-0 text-txt-danger",
+    issueContent: "min-w-48 flex-1 space-y-0.5",
+    issueTitle: "text-sm font-medium text-txt-primary",
+    issueDescription: "text-xs leading-5 text-txt-secondary",
+  },
+});

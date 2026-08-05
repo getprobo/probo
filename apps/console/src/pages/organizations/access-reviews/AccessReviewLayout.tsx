@@ -20,8 +20,8 @@
 
 import { usePageTitle } from "@probo/hooks";
 import {
-  IconFolder2,
   IconKey,
+  IconSquareBehindSquare2,
   PageHeader,
   TabLink,
   Tabs,
@@ -50,7 +50,7 @@ export default function AccessReviewLayout() {
           {t("accessReviewLayout.tabs.campaigns")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/access-reviews/sources`}>
-          <IconFolder2 className="size-4" />
+          <IconSquareBehindSquare2 className="size-4" />
           {t("accessReviewLayout.tabs.sources")}
         </TabLink>
       </Tabs>

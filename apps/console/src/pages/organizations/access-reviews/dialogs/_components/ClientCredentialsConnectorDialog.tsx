@@ -31,9 +31,10 @@ import {
 } from "@probo/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { ClientCredentialsConnectorDialog_provider$key } from "#/__generated__/core/ClientCredentialsConnectorDialog_provider.graphql";
 import type { ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation.graphql";
 
 import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
@@ -42,7 +43,18 @@ import {
   hasRequiredExtraSettings,
   mapClientCredentialsExtraSettingToField,
 } from "../_lib/connectorSettings";
-import type { ProviderInfo } from "../AddAccessReviewSourceDialog";
+
+const clientCredentialsConnectorDialogFragment = graphql`
+  fragment ClientCredentialsConnectorDialog_provider on ConnectorProviderInfo {
+    provider
+    displayName
+    clientCredentialsExtraSettings {
+      key
+      label
+      required
+    }
+  }
+`;
 
 const createClientCredentialsConnectorMutation = graphql`
   mutation ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation(
@@ -58,7 +70,7 @@ const createClientCredentialsConnectorMutation = graphql`
 `;
 
 type Props = {
-  provider: ProviderInfo | null;
+  providerKey: ClientCredentialsConnectorDialog_provider$key | null;
   organizationId: string;
   connectionId: string;
   onClose: () => void;
@@ -66,7 +78,7 @@ type Props = {
 };
 
 export function ClientCredentialsConnectorDialog({
-  provider,
+  providerKey,
   organizationId,
   connectionId,
   onClose,
@@ -74,6 +86,10 @@ export function ClientCredentialsConnectorDialog({
 }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const provider = useFragment(
+    clientCredentialsConnectorDialogFragment,
+    providerKey,
+  );
   const dialogRef = useDialogRef();
 
   const [clientId, setClientId] = useState("");
@@ -101,7 +117,7 @@ export function ClientCredentialsConnectorDialog({
     if (provider) {
       dialogRef.current?.open();
     }
-  }, [provider]);
+  }, [dialogRef, provider]);
 
   const connectClientCredentialsProvider = () => {
     if (!provider || !clientId.trim() || !clientSecret.trim() || !tokenUrl.trim()) {

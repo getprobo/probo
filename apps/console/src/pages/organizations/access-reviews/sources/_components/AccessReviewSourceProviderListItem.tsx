@@ -1,0 +1,151 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { Button, ThirdPartyLogo } from "@probo/ui";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
+
+import type { AccessReviewSourceProviderListItem_provider$key } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
+
+import { APIKeyConnectorDialog } from "../../dialogs/_components/APIKeyConnectorDialog";
+import { ClientCredentialsConnectorDialog } from "../../dialogs/_components/ClientCredentialsConnectorDialog";
+import { ConnectorDocumentationLink } from "../../dialogs/_components/ConnectorDocumentationLink";
+import {
+  DatadogConnectDialog,
+  ZendeskConnectDialog,
+} from "../../dialogs/_components/OAuthExtraDialog";
+import { connectOAuthProvider } from "../../dialogs/_lib/connectorSettings";
+
+import { accessReviewSourceSection } from "./variants";
+
+export const accessReviewSourceProviderListItemFragment = graphql`
+  fragment AccessReviewSourceProviderListItem_provider on ConnectorProviderInfo {
+    provider
+    displayName
+    documentationUrl
+    oauthConfigured
+    apiKeySupported
+    apiKeyManaged
+    clientCredentialsSupported
+    oauth2Scopes
+    ...APIKeyConnectorDialog_provider
+    ...ClientCredentialsConnectorDialog_provider
+    ...OAuthExtraDialog_provider
+  }
+`;
+
+interface AccessReviewSourceProviderListItemProps {
+  providerKey: AccessReviewSourceProviderListItem_provider$key;
+  organizationId: string;
+  connectionId: string;
+}
+
+export function AccessReviewSourceProviderListItem({
+  providerKey,
+  organizationId,
+  connectionId,
+}: AccessReviewSourceProviderListItemProps) {
+  const { t } = useTranslation();
+  const provider = useFragment(
+    accessReviewSourceProviderListItemFragment,
+    providerKey,
+  );
+  const { item, content, trailing } = accessReviewSourceSection();
+  const [activeDialog, setActiveDialog] = useState<
+    "apiKey" | "clientCredentials" | "datadog" | "zendesk" | null
+  >(null);
+
+  const connectWithOAuth = () => {
+    if (provider.provider === "DATADOG") {
+      setActiveDialog("datadog");
+    } else if (provider.provider === "ZENDESK") {
+      setActiveDialog("zendesk");
+    } else {
+      connectOAuthProvider(
+        organizationId,
+        provider.provider,
+        provider.oauth2Scopes,
+      );
+    }
+  };
+
+  return (
+    <li className={item()}>
+      <ThirdPartyLogo
+        thirdParty={provider.provider}
+        tint
+        className="size-6 shrink-0"
+      />
+      <div className={content()}>
+        <span className="text-sm font-medium text-txt-primary">
+          {provider.displayName}
+        </span>
+        <ConnectorDocumentationLink url={provider.documentationUrl} />
+      </div>
+      <div className={trailing()}>
+        {provider.oauthConfigured && (
+          <Button variant="primary" onClick={connectWithOAuth}>
+            {t("addAccessReviewSourceDialog.actions.connectWithOAuth")}
+          </Button>
+        )}
+        {(provider.apiKeySupported || provider.apiKeyManaged) && (
+          <Button variant="primary" onClick={() => setActiveDialog("apiKey")}>
+            {t("addAccessReviewSourceDialog.actions.connectWithApiKey")}
+          </Button>
+        )}
+        {provider.clientCredentialsSupported && (
+          <Button
+            variant="primary"
+            onClick={() => setActiveDialog("clientCredentials")}
+          >
+            {t(
+              "addAccessReviewSourceDialog.actions.connectWithClientCredentials",
+            )}
+          </Button>
+        )}
+      </div>
+      <APIKeyConnectorDialog
+        providerKey={activeDialog === "apiKey" ? provider : null}
+        organizationId={organizationId}
+        connectionId={connectionId}
+        onClose={() => setActiveDialog(null)}
+        onSuccess={() => setActiveDialog(null)}
+      />
+      <ClientCredentialsConnectorDialog
+        providerKey={activeDialog === "clientCredentials" ? provider : null}
+        organizationId={organizationId}
+        connectionId={connectionId}
+        onClose={() => setActiveDialog(null)}
+        onSuccess={() => setActiveDialog(null)}
+      />
+      <DatadogConnectDialog
+        providerKey={activeDialog === "datadog" ? provider : null}
+        organizationId={organizationId}
+        onClose={() => setActiveDialog(null)}
+      />
+      <ZendeskConnectDialog
+        providerKey={activeDialog === "zendesk" ? provider : null}
+        organizationId={organizationId}
+        onClose={() => setActiveDialog(null)}
+      />
+    </li>
+  );
+}

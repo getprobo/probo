@@ -50,6 +50,8 @@ const accessEntryListItemFragment = graphql`
     lastLogin
     decision
     flags
+    ...EntryDecisionActions_entry
+    ...EntryFlagSelect_entry
   }
 `;
 
@@ -57,7 +59,10 @@ interface AccessEntryListItemProps {
   entryKey: AccessEntryListItem_entry$key;
   isPendingActions: boolean;
   selected: boolean;
-  onSelectedChange: (event: { shiftKey: boolean }) => void;
+  onSelectedChange: (
+    entryId: string,
+    event: { shiftKey: boolean },
+  ) => void;
 }
 
 export function AccessEntryListItem({
@@ -86,7 +91,7 @@ export function AccessEntryListItem({
           onClickCapture={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            onSelectedChange({ shiftKey: event.shiftKey });
+            onSelectedChange(entry.id, { shiftKey: event.shiftKey });
           }}
         >
           <Checkbox
@@ -134,8 +139,7 @@ export function AccessEntryListItem({
         ? (
             <div className={flags()}>
               <EntryFlagSelect
-                entryId={entry.id}
-                currentFlags={entry.flags}
+                entryKey={entry}
               />
             </div>
           )
@@ -185,8 +189,7 @@ export function AccessEntryListItem({
         {isPendingActions
           ? (
               <EntryDecisionActions
-                entryId={entry.id}
-                decision={entry.decision}
+                entryKey={entry}
               />
             )
           : entry.decision !== "PENDING"

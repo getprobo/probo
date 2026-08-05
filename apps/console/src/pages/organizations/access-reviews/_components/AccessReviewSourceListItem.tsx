@@ -22,7 +22,6 @@ import { formatError } from "@probo/helpers";
 import { dateTimeFormat } from "@probo/i18n";
 import {
   ActionDropdown,
-  Badge,
   Button,
   DropdownItem,
   IconArrowLink,
@@ -31,8 +30,7 @@ import {
   Input,
   Option,
   Select,
-  Td,
-  Tr,
+  ThirdPartyLogo,
   useConfirm,
   useToast,
 } from "@probo/ui";
@@ -41,13 +39,20 @@ import { useTranslation } from "react-i18next";
 import { useFragment, useLazyLoadQuery, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { AccessReviewSourceRowConfigureMutation } from "#/__generated__/core/AccessReviewSourceRowConfigureMutation.graphql";
-import type { AccessReviewSourceRowDeleteMutation } from "#/__generated__/core/AccessReviewSourceRowDeleteMutation.graphql";
-import type { AccessReviewSourceRowFragment$key } from "#/__generated__/core/AccessReviewSourceRowFragment.graphql";
-import type { AccessReviewSourceRowOrgsQuery } from "#/__generated__/core/AccessReviewSourceRowOrgsQuery.graphql";
+import type { AccessReviewSourceListItem_source$key } from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
+import type { AccessReviewSourceListItemCapturedOrganization_source$key } from "#/__generated__/core/AccessReviewSourceListItemCapturedOrganization_source.graphql";
+import type { AccessReviewSourceListItemConfigureMutation } from "#/__generated__/core/AccessReviewSourceListItemConfigureMutation.graphql";
+import type { AccessReviewSourceListItemDeleteMutation } from "#/__generated__/core/AccessReviewSourceListItemDeleteMutation.graphql";
+import type { AccessReviewSourceListItemManualOrgInput_source$key } from "#/__generated__/core/AccessReviewSourceListItemManualOrgInput_source.graphql";
+import type { AccessReviewSourceListItemOrganizations_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizations_source.graphql";
+import type { AccessReviewSourceListItemOrganizationsEmpty_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsEmpty_source.graphql";
+import type { AccessReviewSourceListItemOrganizationsUnavailable_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsUnavailable_source.graphql";
+import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
+
+import { accessReviewSourceSection } from "../sources/_components/variants";
 
 const fragment = graphql`
-  fragment AccessReviewSourceRowFragment on AccessReviewSource {
+  fragment AccessReviewSourceListItem_source on AccessReviewSource {
     id
     name
     connectorId
@@ -64,7 +69,7 @@ const fragment = graphql`
 `;
 
 export const deleteAccessReviewSourceMutation = graphql`
-  mutation AccessReviewSourceRowDeleteMutation(
+  mutation AccessReviewSourceListItemDeleteMutation(
     $input: DeleteAccessReviewSourceInput!
     $connections: [ID!]!
   ) {
@@ -75,7 +80,7 @@ export const deleteAccessReviewSourceMutation = graphql`
 `;
 
 const configureMutation = graphql`
-  mutation AccessReviewSourceRowConfigureMutation(
+  mutation AccessReviewSourceListItemConfigureMutation(
     $input: ConfigureAccessReviewSourceInput!
   ) {
     configureAccessReviewSource(input: $input) {
@@ -88,25 +93,69 @@ const configureMutation = graphql`
   }
 `;
 
+const organizationsFragment = graphql`
+  fragment AccessReviewSourceListItemOrganizations_source on AccessReviewSource {
+    id
+    selectedOrganization
+    providerOrganizations {
+      status
+      nodes {
+        slug
+        displayName
+      }
+    }
+    ...AccessReviewSourceListItemCapturedOrganization_source
+    ...AccessReviewSourceListItemOrganizationsEmpty_source
+    ...AccessReviewSourceListItemOrganizationsUnavailable_source
+  }
+`;
+
+const organizationsEmptyFragment = graphql`
+  fragment AccessReviewSourceListItemOrganizationsEmpty_source on AccessReviewSource {
+    selectedOrganization
+    connector {
+      provider
+    }
+    providerOrganizations {
+      remediationUrl
+    }
+    ...AccessReviewSourceListItemManualOrgInput_source
+  }
+`;
+
+const organizationsUnavailableFragment = graphql`
+  fragment AccessReviewSourceListItemOrganizationsUnavailable_source on AccessReviewSource {
+    connector {
+      provider
+      oauth2Scopes
+    }
+  }
+`;
+
+const capturedOrganizationFragment = graphql`
+  fragment AccessReviewSourceListItemCapturedOrganization_source on AccessReviewSource {
+    selectedOrganization
+  }
+`;
+
+const manualOrgInputFragment = graphql`
+  fragment AccessReviewSourceListItemManualOrgInput_source on AccessReviewSource {
+    selectedOrganization
+  }
+`;
+
 const orgsQuery = graphql`
-  query AccessReviewSourceRowOrgsQuery($accessReviewSourceId: ID!) {
+  query AccessReviewSourceListItemOrgsQuery($accessReviewSourceId: ID!) {
     node(id: $accessReviewSourceId) @required(action: THROW) {
       ... on AccessReviewSource {
-        providerOrganizations {
-          status
-          remediationUrl
-          nodes {
-            slug
-            displayName
-          }
-        }
+        ...AccessReviewSourceListItemOrganizations_source
       }
     }
   }
 `;
 
 type Props = {
-  fKey: AccessReviewSourceRowFragment$key;
+  sourceKey: AccessReviewSourceListItem_source$key;
   connectionId: string;
   organizationId: string;
 };
@@ -134,20 +183,33 @@ function sourceLabel(
       return t("accessReviewSourceRow.sources.signoz");
     case "CURSOR":
       return t("accessReviewSourceRow.sources.cursor");
+    case "GITHUB":
+      return t("accessReviewSourceRow.sources.github");
+    case "CLOUDFLARE":
+      return t("accessReviewSourceRow.sources.cloudflare");
     default:
       return connectorProvider;
   }
 }
 
-export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Props) {
+export function AccessReviewSourceListItem({
+  sourceKey,
+  connectionId,
+  organizationId,
+}: Props) {
   const { i18n, t } = useTranslation();
   const confirm = useConfirm();
   const { toast } = useToast();
 
-  const accessSource = useFragment(fragment, fKey);
+  const accessSource = useFragment(fragment, sourceKey);
+  const { item, content, trailing } = accessReviewSourceSection();
 
-  const [deleteAccessReviewSource] = useMutation<AccessReviewSourceRowDeleteMutation>(deleteAccessReviewSourceMutation);
-  const [configure] = useMutation<AccessReviewSourceRowConfigureMutation>(configureMutation);
+  const [deleteAccessReviewSource] =
+    useMutation<AccessReviewSourceListItemDeleteMutation>(
+      deleteAccessReviewSourceMutation,
+    );
+  const [configure] =
+    useMutation<AccessReviewSourceListItemConfigureMutation>(configureMutation);
 
   const handleDelete = () => {
     confirm(
@@ -228,9 +290,9 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
     });
   };
 
-  const handleReconnect = () => {
+  const buildReconnectUrl = () => {
     const connector = accessSource.connector;
-    if (!connector || !accessSource.connectorId) return;
+    if (!connector || !accessSource.connectorId) return null;
 
     const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseURL);
@@ -244,87 +306,68 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
       "continue",
       `/organizations/${organizationId}/access-reviews/sources`,
     );
-    window.location.href = url.toString();
+    return url.toString();
   };
+  const reconnectUrl = buildReconnectUrl();
 
-  const showOrgSelector = accessSource.needsConfiguration || accessSource.selectedOrganization;
-  const providerLabel = sourceLabel(accessSource.connector?.provider ?? null, t);
+  const showOrgSelector
+    = accessSource.needsConfiguration || accessSource.selectedOrganization;
   const canReconnect = (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
   const showReconnect
     = canReconnect
       && (accessSource.connectionStatus === "DISCONNECTED"
         || accessSource.connectionStatus === "RECONNECT_REQUIRED");
+  const showStandaloneIssue
+    = (accessSource.connectionStatus === "DISCONNECTED"
+      || accessSource.connectionStatus === "RECONNECT_REQUIRED")
+    && !showOrgSelector;
 
   return (
-    <Tr>
-      <Td>{accessSource.name}</Td>
-      <Td>
-        <Badge variant="neutral" size="sm">
-          {providerLabel}
-        </Badge>
-      </Td>
-      <Td>
-        {accessSource.connectionStatus === "CONNECTED" && (
-          <Badge variant="success" size="sm">
-            {t("accessReviewSourceRow.status.connected")}
-          </Badge>
-        )}
-        {accessSource.connectionStatus === "RECONNECT_REQUIRED" && (
-          <div className="flex items-center gap-2">
-            <Badge variant="warning" size="sm">
-              {t("accessReviewSourceRow.status.reconnectRequired")}
-            </Badge>
-            {showReconnect && (
-              <Button variant="secondary" onClick={handleReconnect}>
-                {t("accessReviewSourceRow.actions.reconnect")}
-              </Button>
-            )}
-          </div>
-        )}
-        {accessSource.connectionStatus === "DISCONNECTED" && (
-          <div className="flex items-center gap-2">
-            <Badge variant="danger" size="sm">
-              {canReconnect
-                ? t("accessReviewSourceRow.status.disconnected")
-                : t("accessReviewSourceRow.status.invalidCredentials")}
-            </Badge>
-            {showReconnect && (
-              <Button variant="secondary" onClick={handleReconnect}>
-                {t("accessReviewSourceRow.actions.reconnect")}
-              </Button>
-            )}
-          </div>
-        )}
-      </Td>
-      <Td>
+    <li className={item()}>
+      {accessSource.connector?.provider && (
+        <ThirdPartyLogo
+          thirdParty={accessSource.connector.provider}
+          tint
+          className="size-6 shrink-0"
+        />
+      )}
+      <div className={content()}>
+        <span className="truncate text-sm font-medium text-txt-primary">
+          {accessSource.name}
+        </span>
+        <time
+          dateTime={accessSource.createdAt}
+          className="text-xs text-txt-tertiary"
+        >
+          {dateTimeFormat(i18n.language, accessSource.createdAt)}
+        </time>
+      </div>
+
+      <div className={trailing()}>
         {showOrgSelector && (
           <Suspense
-            fallback={(
+            fallback={
               <Select
                 variant="editor"
                 disabled
                 placeholder={t("accessReviewSourceRow.loading")}
               />
-            )}
+            }
           >
             <InlineOrgSelect
               accessReviewSourceId={accessSource.id}
-              selectedOrganization={accessSource.selectedOrganization ?? ""}
-              providerLabel={providerLabel}
-              canReconnect={canReconnect}
               onSelect={handleOrgChange}
-              onReconnect={handleReconnect}
+              reconnectUrl={reconnectUrl}
             />
           </Suspense>
         )}
-      </Td>
-      <Td>
-        <time dateTime={accessSource.createdAt}>
-          {dateTimeFormat(i18n.language, accessSource.createdAt)}
-        </time>
-      </Td>
-      {accessSource.canDelete && (
-        <Td noLink width={50} className="text-end">
+        {showStandaloneIssue && (
+          <SourceConnectionIssue
+            provider={sourceLabel(accessSource.connector?.provider, t)}
+            reconnectUrl={showReconnect ? reconnectUrl : null}
+          />
+        )}
+        {accessSource.canDelete && (
           <ActionDropdown>
             <DropdownItem
               icon={IconTrashCan}
@@ -338,35 +381,34 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
               {t("accessReviewSourceRow.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
-        </Td>
-      )}
-    </Tr>
+        )}
+      </div>
+    </li>
   );
 }
 
 function InlineOrgSelect({
   accessReviewSourceId,
-  selectedOrganization,
-  providerLabel,
-  canReconnect,
   onSelect,
-  onReconnect,
+  reconnectUrl,
 }: {
   accessReviewSourceId: string;
-  selectedOrganization: string;
-  providerLabel: string;
-  canReconnect: boolean;
+  reconnectUrl: string | null;
   onSelect: (slug: string) => void;
-  onReconnect: () => void;
 }) {
   const { t } = useTranslation();
-  const data = useLazyLoadQuery<AccessReviewSourceRowOrgsQuery>(
+  const data = useLazyLoadQuery<AccessReviewSourceListItemOrgsQuery>(
     orgsQuery,
     { accessReviewSourceId },
     { fetchPolicy: "store-or-network" },
   );
 
-  const providerOrganizations = data.node.providerOrganizations;
+  const source =
+    useFragment<AccessReviewSourceListItemOrganizations_source$key>(
+      organizationsFragment,
+      data.node,
+    );
+  const providerOrganizations = source.providerOrganizations;
 
   switch (providerOrganizations?.status) {
     case "AVAILABLE":
@@ -374,10 +416,10 @@ function InlineOrgSelect({
         <Select
           variant="editor"
           placeholder={t("accessReviewSourceRow.selectOrganization")}
-          value={selectedOrganization}
+          value={source.selectedOrganization ?? ""}
           onValueChange={onSelect}
         >
-          {providerOrganizations.nodes.map(org => (
+          {providerOrganizations.nodes.map((org) => (
             <Option key={org.slug} value={org.slug}>
               {org.displayName}
             </Option>
@@ -392,44 +434,88 @@ function InlineOrgSelect({
     // configuration". Show what the callback captured, read-only; changing it
     // means reconnecting.
     case "NOT_APPLICABLE":
-      return <CapturedOrganization selectedOrganization={selectedOrganization} />;
+      return <CapturedOrganization sourceKey={source} />;
     case "EMPTY":
       return (
-        <ProviderOrganizationsEmpty
-          selectedOrganization={selectedOrganization}
-          providerLabel={providerLabel}
-          remediationUrl={providerOrganizations.remediationUrl}
-          onSubmit={onSelect}
-        />
+        <ProviderOrganizationsEmpty sourceKey={source} onSubmit={onSelect} />
       );
     // UNAVAILABLE, plus the impossible case of a node that is not an
     // AccessReviewSource: either way the list could not be read.
     default:
       return (
         <ProviderOrganizationsUnavailable
-          providerLabel={providerLabel}
-          canReconnect={canReconnect}
-          onReconnect={onReconnect}
+          sourceKey={source}
+          reconnectUrl={reconnectUrl}
         />
       );
   }
+}
+
+function SourceConnectionIssue({
+  provider,
+  reconnectUrl,
+}: {
+  provider: string;
+  reconnectUrl: string | null;
+}) {
+  const { t } = useTranslation();
+  const {
+    issue,
+    issueIcon,
+    issueContent,
+    issueTitle,
+    issueDescription,
+  } = accessReviewSourceSection();
+
+  return (
+    <div className={issue()}>
+      <IconWarning size={16} className={issueIcon()} />
+      <div className={issueContent()}>
+        <p className={issueTitle()}>
+          {reconnectUrl
+            ? t("accessReviewSourceRow.organizations.unavailable.reconnectTitle", {
+                provider,
+              })
+            : t(
+                "accessReviewSourceRow.organizations.unavailable.credentialsTitle",
+                { provider },
+              )}
+        </p>
+        <p className={issueDescription()}>
+          {reconnectUrl
+            ? t(
+                "accessReviewSourceRow.organizations.unavailable.reconnectDescription",
+              )
+            : t(
+                "accessReviewSourceRow.organizations.unavailable.credentialsDescription",
+              )}
+        </p>
+      </div>
+      {reconnectUrl && (
+        <Button variant="primary" asChild>
+          <a href={reconnectUrl}>
+            {t("accessReviewSourceRow.actions.reconnect")}
+          </a>
+        </Button>
+      )}
+    </div>
+  );
 }
 
 // The provider answered, with nothing. Typing a slug does not fix the usual
 // causes (unapproved app, personal account), so the explanation leads and the
 // manual input stays available underneath it.
 function ProviderOrganizationsEmpty({
-  selectedOrganization,
-  providerLabel,
-  remediationUrl,
+  sourceKey,
   onSubmit,
 }: {
-  selectedOrganization: string;
-  providerLabel: string;
-  remediationUrl: string | null | undefined;
+  sourceKey: AccessReviewSourceListItemOrganizationsEmpty_source$key;
   onSubmit: (slug: string) => void;
 }) {
   const { t } = useTranslation();
+  const source = useFragment(organizationsEmptyFragment, sourceKey);
+  const providerLabel = sourceLabel(source.connector?.provider ?? null, t);
+  const remediationUrl = source.providerOrganizations.remediationUrl;
 
   return (
     <div className="flex max-w-80 flex-col gap-2">
@@ -459,10 +545,7 @@ function ProviderOrganizationsEmpty({
         <p className="text-xs text-txt-tertiary">
           {t("accessReviewSourceRow.organizations.empty.manualLabel")}
         </p>
-        <ManualOrgInput
-          selectedOrganization={selectedOrganization}
-          onSubmit={onSubmit}
-        />
+        <ManualOrgInput sourceKey={source} onSubmit={onSubmit} />
       </div>
     </div>
   );
@@ -471,35 +554,22 @@ function ProviderOrganizationsEmpty({
 // The provider call failed. A free text box would hide that, so the only
 // affordance offered is reconnecting the connector.
 function ProviderOrganizationsUnavailable({
-  providerLabel,
-  canReconnect,
-  onReconnect,
+  sourceKey,
+  reconnectUrl,
 }: {
-  providerLabel: string;
-  canReconnect: boolean;
-  onReconnect: () => void;
+  sourceKey: AccessReviewSourceListItemOrganizationsUnavailable_source$key;
+  reconnectUrl: string | null;
 }) {
   const { t } = useTranslation();
+  const source = useFragment(organizationsUnavailableFragment, sourceKey);
+  const providerLabel = sourceLabel(source.connector?.provider ?? null, t);
+  const canReconnect = (source.connector?.oauth2Scopes.length ?? 0) > 0;
 
   return (
-    <div className="flex max-w-80 items-start gap-2 text-xs text-txt-tertiary">
-      <IconWarning size={14} className="mt-0.5 shrink-0 text-txt-danger" />
-      <div className="space-y-1">
-        <p className="font-medium text-txt-primary">
-          {t("accessReviewSourceRow.organizations.unavailable.title")}
-        </p>
-        <p>
-          {t("accessReviewSourceRow.organizations.unavailable.description", {
-            provider: providerLabel,
-          })}
-        </p>
-        {canReconnect && (
-          <Button variant="secondary" onClick={onReconnect}>
-            {t("accessReviewSourceRow.actions.reconnect")}
-          </Button>
-        )}
-      </div>
-    </div>
+    <SourceConnectionIssue
+      provider={providerLabel}
+      reconnectUrl={canReconnect ? reconnectUrl : null}
+    />
   );
 }
 
@@ -512,21 +582,28 @@ function ProviderOrganizationsUnavailable({
 // organization leaves needsConfiguration false and the parent renders no
 // selector at all.
 function CapturedOrganization({
-  selectedOrganization,
+  sourceKey,
 }: {
-  selectedOrganization: string;
+  sourceKey: AccessReviewSourceListItemCapturedOrganization_source$key;
 }) {
-  return <span className="text-sm text-txt-primary">{selectedOrganization}</span>;
+  const source = useFragment(capturedOrganizationFragment, sourceKey);
+  return (
+    <span className="text-sm text-txt-primary">
+      {source.selectedOrganization}
+    </span>
+  );
 }
 
 function ManualOrgInput({
-  selectedOrganization,
+  sourceKey,
   onSubmit,
 }: {
-  selectedOrganization: string;
+  sourceKey: AccessReviewSourceListItemManualOrgInput_source$key;
   onSubmit: (slug: string) => void;
 }) {
   const { t } = useTranslation();
+  const source = useFragment(manualOrgInputFragment, sourceKey);
+  const selectedOrganization = source.selectedOrganization ?? "";
   const [value, setValue] = useState(selectedOrganization);
 
   const handleBlur = () => {
@@ -547,7 +624,7 @@ function ManualOrgInput({
     <Input
       placeholder={t("accessReviewSourceRow.organizationSlugPlaceholder")}
       value={value}
-      onChange={e => setValue(e.target.value)}
+      onChange={(e) => setValue(e.target.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       className="max-w-40"

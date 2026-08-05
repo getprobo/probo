@@ -21,31 +21,56 @@
 import { IconWarning, Spinner, ThirdPartyLogo } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
+
+import type { AccessEntrySection_source$key } from "#/__generated__/core/AccessEntrySection_source.graphql";
 
 import { accessEntrySection } from "./variants";
 
+const accessEntrySectionFragment = graphql`
+  fragment AccessEntrySection_source on AccessReviewCampaignSource {
+    name
+    source {
+      connector {
+        provider
+      }
+    }
+    fetchAttempts(first: 1) {
+      edges {
+        node {
+          status
+          error
+        }
+      }
+    }
+  }
+`;
+
 interface AccessEntrySectionProps {
-  title: string;
+  sourceKey: AccessEntrySection_source$key;
   count: number;
-  provider?: string | null;
-  error?: string | null;
-  statusMessage?: string | null;
   truncatedCount?: number | null;
   children: ReactNode;
 }
 
 // One connector group: header (logo + name + count) above a bordered list of entries.
 export function AccessEntrySection({
-  title,
+  sourceKey,
   count,
-  provider,
-  error,
-  statusMessage,
   truncatedCount,
   children,
 }: AccessEntrySectionProps) {
   const { t } = useTranslation();
+  const source = useFragment(accessEntrySectionFragment, sourceKey);
   const { root, header, title: titleClass, count: countClass } = accessEntrySection();
+  const latestAttempt = source.fetchAttempts.edges[0]?.node;
+  const fetchStatus = latestAttempt?.status;
+  const error = fetchStatus === "FAILED" ? latestAttempt.error : null;
+  const statusMessage
+    = count === 0 && (fetchStatus === "QUEUED" || fetchStatus === "FETCHING")
+      ? t(`campaignDetailPage.fetchStatus.${fetchStatus.toLowerCase()}`)
+      : null;
+  const provider = source.source?.connector?.provider;
 
   return (
     <section className={root()}>
@@ -53,7 +78,7 @@ export function AccessEntrySection({
         {provider
           ? <ThirdPartyLogo thirdParty={provider} className="size-5 shrink-0" />
           : null}
-        <h2 className={titleClass()}>{title}</h2>
+        <h2 className={titleClass()}>{source.name}</h2>
         <span className={countClass()}>{`(${count})`}</span>
       </div>
       {error

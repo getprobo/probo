@@ -30,27 +30,37 @@ import {
 } from "@probo/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
+
+import type { OAuthExtraDialog_provider$key } from "#/__generated__/core/OAuthExtraDialog_provider.graphql";
 
 import {
   cleanZendeskSubdomain,
   connectOAuthProvider,
   DATADOG_SITES,
 } from "../_lib/connectorSettings";
-import type { ProviderInfo } from "../AddAccessReviewSourceDialog";
+
+const oAuthExtraDialogFragment = graphql`
+  fragment OAuthExtraDialog_provider on ConnectorProviderInfo {
+    provider
+    oauth2Scopes
+  }
+`;
 
 type OAuthExtraDialogProps = {
-  provider: ProviderInfo | null;
+  providerKey: OAuthExtraDialog_provider$key | null;
   organizationId: string;
   onClose: () => void;
 };
 
 export function DatadogConnectDialog({
-  provider,
+  providerKey,
   organizationId,
   onClose,
 }: OAuthExtraDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useDialogRef();
+  const provider = useFragment(oAuthExtraDialogFragment, providerKey);
   const [datadogSite, setDatadogSite] = useState<string>("US1");
 
   // Opening is driven imperatively by the parent's active-provider state; the
@@ -59,7 +69,7 @@ export function DatadogConnectDialog({
     if (provider) {
       dialogRef.current?.open();
     }
-  }, [provider]);
+  }, [dialogRef, provider]);
 
   return (
     <Dialog
@@ -74,7 +84,12 @@ export function DatadogConnectDialog({
         onSubmit={(e) => {
           e.preventDefault();
           if (provider) {
-            connectOAuthProvider(organizationId, provider, { site: datadogSite });
+            connectOAuthProvider(
+              organizationId,
+              provider.provider,
+              provider.oauth2Scopes,
+              { site: datadogSite },
+            );
           }
         }}
       >
@@ -108,12 +123,13 @@ export function DatadogConnectDialog({
 }
 
 export function ZendeskConnectDialog({
-  provider,
+  providerKey,
   organizationId,
   onClose,
 }: OAuthExtraDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useDialogRef();
+  const provider = useFragment(oAuthExtraDialogFragment, providerKey);
   const [zendeskSubdomain, setZendeskSubdomain] = useState<string>("");
 
   // Opening is driven imperatively by the parent's active-provider state; the
@@ -122,7 +138,7 @@ export function ZendeskConnectDialog({
     if (provider) {
       dialogRef.current?.open();
     }
-  }, [provider]);
+  }, [dialogRef, provider]);
 
   return (
     <Dialog
@@ -139,7 +155,12 @@ export function ZendeskConnectDialog({
           if (provider) {
             const site = cleanZendeskSubdomain(zendeskSubdomain);
             if (site) {
-              connectOAuthProvider(organizationId, provider, { site });
+              connectOAuthProvider(
+                organizationId,
+                provider.provider,
+                provider.oauth2Scopes,
+                { site },
+              );
             }
           }
         }}
