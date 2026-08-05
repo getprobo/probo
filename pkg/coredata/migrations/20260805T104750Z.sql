@@ -18,7 +18,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-DROP INDEX idx_common_ip_location_blocks_start;
+DROP INDEX IF EXISTS idx_common_ip_location_blocks_start;
 
-CREATE UNIQUE INDEX idx_common_ip_location_blocks_range
+CREATE UNIQUE INDEX IF NOT EXISTS idx_common_ip_location_blocks_range
     ON common_ip_location_blocks (address_family, ip_start, ip_end);

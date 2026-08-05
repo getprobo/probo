@@ -18,7 +18,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE TABLE common_ip_location_blocks (
+CREATE TABLE IF NOT EXISTS common_ip_location_blocks (
     address_family   SMALLINT    NOT NULL,
     ip_start         INET        NOT NULL,
     ip_end           INET        NOT NULL,
@@ -30,5 +30,5 @@ CREATE TABLE common_ip_location_blocks (
     CHECK (ip_start <= ip_end)
 );
 
-CREATE UNIQUE INDEX idx_common_ip_location_blocks_start
+CREATE UNIQUE INDEX IF NOT EXISTS idx_common_ip_location_blocks_start
     ON common_ip_location_blocks (address_family, ip_start);

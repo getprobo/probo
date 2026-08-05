@@ -18,5 +18,5 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE INDEX idx_common_ip_location_blocks_lookup
+CREATE INDEX IF NOT EXISTS idx_common_ip_location_blocks_lookup
     ON common_ip_location_blocks (address_family, ip_start DESC, ip_end ASC);

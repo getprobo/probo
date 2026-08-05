@@ -19,4 +19,4 @@
 -- SOFTWARE.
 
 ALTER TABLE cookie_consent_records
-    ADD COLUMN subdivision_code VARCHAR(15);
+    ADD COLUMN IF NOT EXISTS subdivision_code VARCHAR(15);
