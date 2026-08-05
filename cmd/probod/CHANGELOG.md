@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.249.0] - 2026-08-05
+
+### Added
+
+- Subdivision-aware geolocation: IP lookups now resolve an ISO 3166-2 subdivision alongside the country, and the resolved jurisdiction is persisted on consent records. Bundled country blocks are replaced by provider-neutral ranges so licensed importers can supply subdivision data
+- US visitors are mapped to their own state privacy law (VCDPA, TDPSA, CPA, and so on) instead of being labeled CCPA. California keeps the statutory Privacy Choices experience; other mapped states use a generic opt-out banner with US-specific copy
+- Canadian visitors are mapped per province: Quebec to Law 25, Alberta to PIPA_AB, and British Columbia to PIPA_BC, with PIPEDA retained elsewhere. Canadian opt-out banner copy applies to PIPEDA and provincial PIPA; `PIPA_CA` remains valid for legacy records
+- `subdivisionCode` on the consent record list and detail pages, so operators can verify the detected jurisdiction
+
+### Changed
+
+- Vetting agent notes in the third-party register are parsed into structured document blocks instead of being embedded as raw Markdown, so headings, tables, and bold markers render correctly in generated documents and PDFs
+
+### Fixed
+
+- MS365 OAuth reconnects no longer appear incomplete: a refresh token is treated as `offline_access` even though Microsoft's v2 token response omits that scope
+- A Markdown conversion failure in a single risk-assessment note no longer aborts the whole third-party register publish; the note falls back to a plain-text paragraph
+
 ## [0.248.0] - 2026-08-05
 
 ### Changed
