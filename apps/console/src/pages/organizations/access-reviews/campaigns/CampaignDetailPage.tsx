@@ -34,16 +34,32 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { useNavigate } from "react-router";
-import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
+import {
+  ConnectionHandler,
+  fetchQuery,
+  graphql,
+  readInlineData,
+} from "relay-runtime";
+import { useDebounceCallback } from "usehooks-ts";
 
 import type { AccessReviewEntryDecision, CampaignDetailPageBulkDecisionMutation } from "#/__generated__/core/CampaignDetailPageBulkDecisionMutation.graphql";
 import type { AccessReviewEntryFlag, CampaignDetailPageBulkFlagMutation } from "#/__generated__/core/CampaignDetailPageBulkFlagMutation.graphql";
 import type { CampaignDetailPageCloseMutation } from "#/__generated__/core/CampaignDetailPageCloseMutation.graphql";
 import type { CampaignDetailPageDeleteMutation } from "#/__generated__/core/CampaignDetailPageDeleteMutation.graphql";
+import type { CampaignDetailPageFilter_entry$key } from "#/__generated__/core/CampaignDetailPageFilter_entry.graphql";
 import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetailPageQuery.graphql";
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -52,9 +68,11 @@ import { AddCampaignSourceDialog } from "../dialogs/AddCampaignSourceDialog";
 
 import { AccessEntriesSelectionBar } from "./_components/AccessEntriesSelectionBar";
 import { AccessEntriesToolbar } from "./_components/AccessEntriesToolbar";
-import { AccessEntryListItem } from "./_components/AccessEntryListItem";
 import { AccessEntrySection } from "./_components/AccessEntrySection";
-import { accessEntriesLayout, accessEntryList } from "./_components/variants";
+import { AccessEntrySectionList } from "./_components/AccessEntrySectionList";
+import { accessEntriesLayout } from "./_components/variants";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 const startCampaignMutation = graphql`
   mutation CampaignDetailPageStartMutation(
@@ -123,6 +141,15 @@ const bulkFlagMutation = graphql`
   }
 `;
 
+const campaignDetailPageFilterFragment = graphql`
+  fragment CampaignDetailPageFilter_entry on AccessReviewEntry @inline {
+    email
+    fullName
+    isAdmin
+    mfaStatus
+  }
+`;
+
 export const campaignDetailPageQuery = graphql`
   query CampaignDetailPageQuery($campaignId: ID!) {
     node(id: $campaignId) {
@@ -139,9 +166,6 @@ export const campaignDetailPageQuery = graphql`
           id
           source {
             id
-            connector {
-              provider
-            }
           }
           name
           fetchAttempts(first: 1) {
@@ -152,21 +176,21 @@ export const campaignDetailPageQuery = graphql`
               }
             }
           }
-          entries(first: 500) {
+          entries(first: 1000) {
             edges {
               node {
                 id
-                email
-                fullName
-                isAdmin
-                mfaStatus
-                ...AccessEntryListItem_entry
+                ...CampaignDetailPageFilter_entry
+                # eslint-disable-next-line relay/must-colocate-fragment-spreads
+                ...AccessEntrySectionList_entry
               }
             }
             pageInfo {
               hasNextPage
             }
           }
+          # eslint-disable-next-line relay/must-colocate-fragment-spreads
+          ...AccessEntrySection_source
         }
       }
     }
@@ -177,15 +201,6 @@ type Props = {
   queryRef: PreloadedQuery<CampaignDetailPageQuery>;
 };
 
-type CampaignSource = NonNullable<
-  Extract<
-    CampaignDetailPageQuery["response"]["node"],
-    { readonly __typename: "AccessReviewCampaign" }
-  >["sources"]
->[number];
-
-type CampaignEntryEdge = CampaignSource["entries"]["edges"][number];
-
 type EntryFilters = {
   email: string;
   connectorIds: ReadonlyArray<string>;
@@ -194,29 +209,31 @@ type EntryFilters = {
 };
 
 function entryMatchesFilters(
-  edge: CampaignEntryEdge,
+  entryKey: CampaignDetailPageFilter_entry$key,
   sourceId: string,
   filters: EntryFilters,
 ): boolean {
+  const entry = readInlineData(campaignDetailPageFilterFragment, entryKey);
+
   if (filters.connectorIds.length > 0 && !filters.connectorIds.includes(sourceId)) {
     return false;
   }
 
-  const query = filters.email.trim().toLowerCase();
+  const query = filters.email;
   if (query) {
-    const email = edge.node.email.toLowerCase();
-    const fullName = edge.node.fullName.toLowerCase();
+    const email = entry.email.toLowerCase();
+    const fullName = entry.fullName.toLowerCase();
     if (!email.includes(query) && !fullName.includes(query)) {
       return false;
     }
   }
 
-  if (filters.mfa.length > 0 && !filters.mfa.includes(edge.node.mfaStatus)) {
+  if (filters.mfa.length > 0 && !filters.mfa.includes(entry.mfaStatus)) {
     return false;
   }
 
   if (filters.admin.length > 0) {
-    const adminValue = edge.node.isAdmin ? "YES" : "NO";
+    const adminValue = entry.isAdmin ? "YES" : "NO";
     if (!filters.admin.includes(adminValue)) {
       return false;
     }
@@ -255,9 +272,41 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     clearSelectionList();
   };
   const [emailFilter, setEmailFilter] = useState("");
+  const [appliedEmailFilter, setAppliedEmailFilter] = useState("");
   const [connectorFilter, setConnectorFilter] = useState<string[]>([]);
   const [mfaFilter, setMfaFilter] = useState<string[]>([]);
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
+  const [, startTransition] = useTransition();
+
+  const debouncedApplyEmailFilter = useDebounceCallback(
+    setAppliedEmailFilter,
+    SEARCH_DEBOUNCE_MS,
+  );
+  const handleEmailFilterChange = useCallback(
+    (value: string) => {
+      setEmailFilter(value);
+      debouncedApplyEmailFilter(value);
+    },
+    [debouncedApplyEmailFilter],
+  );
+  const handleConnectorFilterChange = useCallback(
+    (value: string[]) => {
+      startTransition(() => setConnectorFilter(value));
+    },
+    [],
+  );
+  const handleMfaFilterChange = useCallback(
+    (value: string[]) => {
+      startTransition(() => setMfaFilter(value));
+    },
+    [],
+  );
+  const handleAdminFilterChange = useCallback(
+    (value: string[]) => {
+      startTransition(() => setAdminFilter(value));
+    },
+    [],
+  );
 
   const [bulkDecision, setBulkDecision] = useState<AccessReviewEntryDecision | null>(null);
   const [bulkPendingDecision, setBulkPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
@@ -319,27 +368,31 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   );
 
   const filters = useMemo<EntryFilters>(() => ({
-    email: emailFilter,
+    email: appliedEmailFilter.trim().toLowerCase(),
     connectorIds: connectorFilter,
     mfa: mfaFilter,
     admin: adminFilter,
-  }), [emailFilter, connectorFilter, mfaFilter, adminFilter]);
+  }), [appliedEmailFilter, connectorFilter, mfaFilter, adminFilter]);
+  const deferredFilters = useDeferredValue(filters);
 
-  const hasActiveFilters = emailFilter.trim() !== ""
-    || connectorFilter.length > 0
-    || mfaFilter.length > 0
-    || adminFilter.length > 0;
+  const hasActiveFilters = deferredFilters.email !== ""
+    || deferredFilters.connectorIds.length > 0
+    || deferredFilters.mfa.length > 0
+    || deferredFilters.admin.length > 0;
 
   const filteredSources = useMemo(() => {
     return campaign.sources
       .map(source => ({
         source,
         entries: (source.entries?.edges ?? []).filter(edge =>
-          entryMatchesFilters(edge, source.id, filters),
-        ),
+          entryMatchesFilters(edge.node, source.id, deferredFilters),
+        ).map(edge => edge.node),
       }))
       .filter(({ source, entries }) => {
-        if (filters.connectorIds.length > 0 && !filters.connectorIds.includes(source.id)) {
+        if (
+          deferredFilters.connectorIds.length > 0
+          && !deferredFilters.connectorIds.includes(source.id)
+        ) {
           return false;
         }
         if (hasActiveFilters && entries.length === 0) {
@@ -347,7 +400,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         }
         return true;
       });
-  }, [campaign.sources, filters, hasActiveFilters]);
+  }, [campaign.sources, deferredFilters, hasActiveFilters]);
 
   const connectorOptions = useMemo(
     () => campaign.sources.map(source => ({
@@ -728,33 +781,40 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   };
 
   const allFilteredEntryIds = useMemo(
-    () => filteredSources.flatMap(({ entries }) => entries.map(edge => edge.node.id)),
+    () => filteredSources.flatMap(({ entries }) => entries.map(entry => entry.id)),
     [filteredSources],
   );
+  const selectedIdSet = useMemo(() => new Set(selection), [selection]);
+  const deferredFilterKey = useMemo(
+    () => JSON.stringify(deferredFilters),
+    [deferredFilters],
+  );
 
-  const handleSelectedChange = (entryId: string, { shiftKey }: { shiftKey: boolean }) => {
-    if (shiftKey && selectionAnchorRef.current) {
-      const start = allFilteredEntryIds.indexOf(selectionAnchorRef.current);
-      const end = allFilteredEntryIds.indexOf(entryId);
-      if (start !== -1 && end !== -1) {
-        const from = Math.min(start, end);
-        const to = Math.max(start, end);
-        const rangeIds = allFilteredEntryIds.slice(from, to + 1);
-        const next = new Set(selection);
-        for (const id of rangeIds) {
-          next.add(id);
+  const handleSelectedChange = useCallback(
+    (entryId: string, { shiftKey }: { shiftKey: boolean }) => {
+      if (shiftKey && selectionAnchorRef.current) {
+        const start = allFilteredEntryIds.indexOf(selectionAnchorRef.current);
+        const end = allFilteredEntryIds.indexOf(entryId);
+        if (start !== -1 && end !== -1) {
+          const from = Math.min(start, end);
+          const to = Math.max(start, end);
+          const rangeIds = allFilteredEntryIds.slice(from, to + 1);
+          const next = new Set(selection);
+          for (const id of rangeIds) {
+            next.add(id);
+          }
+          reset([...next]);
+          return;
         }
-        reset([...next]);
-        return;
       }
-    }
 
-    toggle(entryId);
-    selectionAnchorRef.current = entryId;
-  };
+      toggle(entryId);
+      selectionAnchorRef.current = entryId;
+    },
+    [allFilteredEntryIds, reset, selection, toggle],
+  );
 
   const { page, results } = accessEntriesLayout();
-  const { root: listRoot } = accessEntryList();
 
   return (
     <div className={page()}>
@@ -822,14 +882,14 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       {campaign.sources.length > 0 && (
         <AccessEntriesToolbar
           emailFilter={emailFilter}
-          onEmailFilterChange={setEmailFilter}
+          onEmailFilterChange={handleEmailFilterChange}
           connectorOptions={connectorOptions}
           connectorFilter={connectorFilter}
-          onConnectorFilterChange={setConnectorFilter}
+          onConnectorFilterChange={handleConnectorFilterChange}
           mfaFilter={mfaFilter}
-          onMfaFilterChange={setMfaFilter}
+          onMfaFilterChange={handleMfaFilterChange}
           adminFilter={adminFilter}
-          onAdminFilterChange={setAdminFilter}
+          onAdminFilterChange={handleAdminFilterChange}
         />
       )}
 
@@ -850,11 +910,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           return (
             <AccessEntrySection
               key={source.id}
-              title={source.name}
+              sourceKey={source}
               count={entries.length}
-              provider={source.source?.connector?.provider}
-              error={fetchError}
-              statusMessage={statusMessage}
               truncatedCount={truncatedCount}
             >
               {entries.length === 0
@@ -868,17 +925,13 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                         )
                   )
                 : (
-                    <ul className={listRoot()}>
-                      {entries.map(edge => (
-                        <AccessEntryListItem
-                          key={edge.node.id}
-                          entryKey={edge.node}
-                          isPendingActions={isPendingActions}
-                          selected={selection.includes(edge.node.id)}
-                          onSelectedChange={event => handleSelectedChange(edge.node.id, event)}
-                        />
-                      ))}
-                    </ul>
+                    <AccessEntrySectionList
+                      key={deferredFilterKey}
+                      entryKeys={entries}
+                      isPendingActions={isPendingActions}
+                      selectedIds={selectedIdSet}
+                      onSelectedChange={handleSelectedChange}
+                    />
                   )}
             </AccessEntrySection>
           );

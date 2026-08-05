@@ -32,10 +32,18 @@ import {
 } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { EntryDecisionActions_entry$key } from "#/__generated__/core/EntryDecisionActions_entry.graphql";
 import type { AccessReviewEntryDecision, EntryDecisionActionsMutation } from "#/__generated__/core/EntryDecisionActionsMutation.graphql";
+
+const entryDecisionActionsFragment = graphql`
+  fragment EntryDecisionActions_entry on AccessReviewEntry {
+    id
+    decision
+  }
+`;
 
 const mutation = graphql`
   mutation EntryDecisionActionsMutation(
@@ -52,14 +60,14 @@ const mutation = graphql`
 `;
 
 type Props = {
-  entryId: string;
-  decision: string;
+  entryKey: EntryDecisionActions_entry$key;
 };
 
-export function EntryDecisionActions({ entryId, decision }: Props) {
+export function EntryDecisionActions({ entryKey }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const ref = useDialogRef();
+  const entry = useFragment(entryDecisionActionsFragment, entryKey);
   const [pendingDecision, setPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
   const [note, setNote] = useState("");
   const [recordDecision, isRecording]
@@ -69,7 +77,7 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     recordDecision({
       variables: {
         input: {
-          accessReviewEntryId: entryId,
+          accessReviewEntryId: entry.id,
           decision: decisionValue,
           decisionNote: decisionNote || null,
         },
@@ -105,7 +113,7 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
 
   const handleDecision = (value: string) => {
     const nextDecision = value as AccessReviewEntryDecision;
-    if (nextDecision === decision) {
+    if (nextDecision === entry.decision) {
       return;
     }
     if (nextDecision === "APPROVED") {
@@ -122,7 +130,7 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
       <Select
         variant="editor"
         className="w-36 shrink-0"
-        value={decision === "PENDING" ? undefined : decision}
+        value={entry.decision === "PENDING" ? undefined : entry.decision}
         placeholder={t("entryDecisionActions.placeholder")}
         onValueChange={handleDecision}
         disabled={isRecording}

@@ -2926,7 +2926,7 @@
     "description": "Beoordeel en beheer gebruikerstoegang tot de systemen en applicaties van uw organisatie.",
     "tabs": {
       "campaigns": "Campagnes",
-      "sources": "Bronnen"
+      "sources": "Verbindingen"
     }
   },
   "createCsvAccessReviewSourcePage": {
@@ -2962,7 +2962,9 @@
       "slack": "Slack",
       "metabase": "Metabase",
       "signoz": "SigNoz",
-      "cursor": "Cursor"
+      "cursor": "Cursor",
+      "github": "GitHub",
+      "cloudflare": "Cloudflare"
     },
     "errors": {
       "delete": "Verwijderen van toegangsbron mislukt",
@@ -2995,8 +2997,10 @@
         "manualLabel": "Voer de organisatieslug handmatig in"
       },
       "unavailable": {
-        "title": "Organisaties konden niet worden geladen",
-        "description": "Probo kon de organisatielijst niet laden vanuit {{provider}}. De verbinding is mogelijk verlopen of mist rechten."
+        "reconnectTitle": "{{provider}} is niet verbonden",
+        "credentialsTitle": "De inloggegevens van {{provider}} zijn ongeldig",
+        "reconnectDescription": "Verbind deze bron opnieuw om de toegang tot organisaties te herstellen.",
+        "credentialsDescription": "Probo heeft met de huidige inloggegevens geen toegang tot organisaties. Controleer de inloggegevens en rechten van deze bron."
       }
     }
   },
@@ -3226,21 +3230,11 @@
   "addAccessReviewSourceDialog": {
     "actions": {
       "connect": "Verbinden",
-      "apiKey": "API-sleutel",
-      "clientCredentials": "Clientreferenties",
-      "connectWithApiKey": "Verbinden met API-sleutel",
-      "connectWithClientCredentials": "Verbinden met clientreferenties",
-      "open": "Open",
-      "close": "Sluiten"
+      "connectWithOAuth": "OAuth",
+      "connectWithApiKey": "API-sleutel",
+      "connectWithClientCredentials": "Clientreferenties",
+      "open": "Open"
     },
-    "status": {
-      "connected": "Verbonden"
-    },
-    "breadcrumb": {
-      "accessReviews": "Toegangsbeoordelingen",
-      "addSource": "Bron toevoegen"
-    },
-    "searchPlaceholder": "Providers zoeken...",
     "csv": {
       "title": "CSV",
       "description": "Upload CSV-gegevens direct als toegangsbron."
@@ -3395,18 +3389,17 @@
       "created": "Toegangsbron succesvol aangemaakt."
     },
     "actions": {
-      "addSource": "Bron toevoegen",
       "loading": "Laden...",
       "loadMore": "Meer laden"
     },
-    "columns": {
-      "name": "Naam",
-      "source": "Bron",
-      "status": "Status",
-      "organization": "Organisatie",
-      "createdAt": "Aangemaakt op"
+    "sections": {
+      "connected": "Verbonden",
+      "notConnected": "Niet verbonden"
     },
-    "empty": "Nog geen toegangsbronnen geconfigureerd. Voeg uw eerste bron toe om toegang te gaan beoordelen."
+    "searchPlaceholder": "Bronnen en providers zoeken...",
+    "emptyConnected": "Er zijn nog geen toegangsbronnen verbonden.",
+    "emptyConnectedSearch": "Geen verbonden bronnen komen overeen met uw zoekopdracht.",
+    "emptyAvailableSearch": "Geen beschikbare providers komen overeen met uw zoekopdracht."
   },
   "assetDetailsPage": {
     "breadcrumb": {

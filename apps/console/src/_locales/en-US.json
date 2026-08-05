@@ -1518,7 +1518,7 @@
   "accessReviewLayout": {
     "title": "Access Reviews",
     "description": "Review and manage user access across your organization's systems and applications.",
-    "tabs": { "campaigns": "Campaigns", "sources": "Sources" }
+    "tabs": { "campaigns": "Campaigns", "sources": "Connections" }
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "Add CSV Access Source",
@@ -1532,7 +1532,7 @@
     "actions": { "back": "Back", "create": "Create" }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV", "googleWorkspace": "Google Workspace", "microsoft365": "Microsoft 365", "linear": "Linear", "slack": "Slack", "metabase": "Metabase", "signoz": "SigNoz", "cursor": "Cursor" },
+    "sources": { "csv": "CSV", "googleWorkspace": "Google Workspace", "microsoft365": "Microsoft 365", "linear": "Linear", "slack": "Slack", "metabase": "Metabase", "signoz": "SigNoz", "cursor": "Cursor", "github": "GitHub", "cloudflare": "Cloudflare" },
     "errors": { "delete": "Failed to delete access source", "configure": "Failed to configure source" },
     "messages": { "error": "Error", "success": "Success", "organizationUpdated": "Organization updated." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
@@ -1549,8 +1549,10 @@
         "manualLabel": "Enter the organization slug manually"
       },
       "unavailable": {
-        "title": "Organizations could not be loaded",
-        "description": "Probo could not read the organization list from {{provider}}. The connection may have expired or be missing permissions."
+        "reconnectTitle": "{{provider}} is disconnected",
+        "credentialsTitle": "{{provider}} credentials are invalid",
+        "reconnectDescription": "Reconnect this source to restore access to organizations.",
+        "credentialsDescription": "Probo cannot access organizations with the current credentials. Check this source's credentials and permissions."
       }
     }
   },
@@ -1621,10 +1623,7 @@
     "showingFirst_other": "Showing first {{count}} entries. Use the CLI for the full list."
   },
   "addAccessReviewSourceDialog": {
-    "actions": { "connect": "Connect", "apiKey": "API Key", "clientCredentials": "Client Credentials", "connectWithApiKey": "Connect with API Key", "connectWithClientCredentials": "Connect with Client Credentials", "open": "Open", "close": "Close" },
-    "status": { "connected": "Connected" },
-    "breadcrumb": { "accessReviews": "Access Reviews", "addSource": "Add Source" },
-    "searchPlaceholder": "Search providers...",
+    "actions": { "connect": "Connect", "connectWithOAuth": "OAuth", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "open": "Open" },
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {
@@ -1682,9 +1681,12 @@
   "accessReviewSourcesTab": {
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." },
-    "actions": { "addSource": "Add source", "loading": "Loading...", "loadMore": "Load more" },
-    "columns": { "name": "Name", "source": "Source", "status": "Status", "organization": "Organization", "createdAt": "Created at" },
-    "empty": "No access sources configured yet. Add your first source to start reviewing access."
+    "actions": { "loading": "Loading...", "loadMore": "Load more" },
+    "sections": { "connected": "Connected", "notConnected": "Not connected" },
+    "searchPlaceholder": "Search sources and providers...",
+    "emptyConnected": "No access sources are connected yet.",
+    "emptyConnectedSearch": "No connected sources match your search.",
+    "emptyAvailableSearch": "No available providers match your search."
   },
   "assetDetailsPage": {
     "breadcrumb": { "assets": "Assets" },
