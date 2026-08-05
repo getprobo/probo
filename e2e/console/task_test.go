@@ -864,6 +864,139 @@ func TestTask_OmittableDeadline(t *testing.T) {
 	})
 }
 
+func TestTask_Recurrence(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	measureID := factory.NewMeasure(owner).WithName("Task Recurrence Test").Create()
+
+	createQuery := `
+		mutation CreateTask($input: CreateTaskInput!) {
+			createTask(input: $input) {
+				taskEdge {
+					node {
+						id
+						deadline
+						recurrenceIntervalUnit
+						recurrenceIntervalCount
+					}
+				}
+			}
+		}
+	`
+
+	t.Run("create with recurrence and deadline round-trips", func(t *testing.T) {
+		t.Parallel()
+
+		var result struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID                      string  `json:"id"`
+						Deadline                *string `json:"deadline"`
+						RecurrenceIntervalUnit  *string `json:"recurrenceIntervalUnit"`
+						RecurrenceIntervalCount *int    `json:"recurrenceIntervalCount"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":          owner.GetOrganizationID().String(),
+				"measureId":               measureID,
+				"name":                    factory.SafeName("Recurring Task"),
+				"priority":                "MEDIUM",
+				"deadline":                "2026-01-15T00:00:00Z",
+				"recurrenceIntervalUnit":  "WEEK",
+				"recurrenceIntervalCount": 3,
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		node := result.CreateTask.TaskEdge.Node
+		assert.NotEmpty(t, node.ID)
+		require.NotNil(t, node.RecurrenceIntervalUnit)
+		assert.Equal(t, "WEEK", *node.RecurrenceIntervalUnit)
+		require.NotNil(t, node.RecurrenceIntervalCount)
+		assert.Equal(t, 3, *node.RecurrenceIntervalCount)
+	})
+
+	t.Run("create with recurrence but no deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":          owner.GetOrganizationID().String(),
+				"measureId":               measureID,
+				"name":                    factory.SafeName("Recurring Task"),
+				"priority":                "MEDIUM",
+				"recurrenceIntervalUnit":  "WEEK",
+				"recurrenceIntervalCount": 3,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "deadline")
+	})
+
+	t.Run("create with unit but no count fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":         owner.GetOrganizationID().String(),
+				"measureId":              measureID,
+				"name":                   factory.SafeName("Recurring Task"),
+				"priority":               "MEDIUM",
+				"deadline":               "2026-01-15T00:00:00Z",
+				"recurrenceIntervalUnit": "WEEK",
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "recurrence_interval_count")
+	})
+
+	t.Run("create with count but no unit fails", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":          owner.GetOrganizationID().String(),
+				"measureId":               measureID,
+				"name":                    factory.SafeName("Recurring Task"),
+				"priority":                "MEDIUM",
+				"deadline":                "2026-01-15T00:00:00Z",
+				"recurrenceIntervalCount": 3,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "recurrence_interval_unit")
+	})
+
+	t.Run("update to add recurrence without a deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		taskID := factory.NewTask(owner, measureID).
+			WithName("Task without deadline").
+			Create()
+
+		_, err := owner.Do(`
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
+					task { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"taskId":                  taskID,
+				"recurrenceIntervalUnit":  "MONTH",
+				"recurrenceIntervalCount": 1,
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "deadline")
+	})
+}
+
 func TestTask_TenantIsolation(t *testing.T) {
 	t.Parallel()
 

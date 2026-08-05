@@ -6156,6 +6156,15 @@ components:
         - LOW
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskPriority
 
+    TaskRecurrenceIntervalUnit:
+      type: string
+      enum:
+        - DAY
+        - WEEK
+        - MONTH
+        - YEAR
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskRecurrenceIntervalUnit
+
     Task:
       type: object
       required:
@@ -6214,6 +6223,20 @@ components:
             - type: "null"
               description: No deadline
           description: Deadline
+        recurrence_interval_unit:
+          anyOf:
+            - $ref: "#/components/schemas/TaskRecurrenceIntervalUnit"
+              description: Recurrence interval unit
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval unit
+        recurrence_interval_count:
+          anyOf:
+            - type: integer
+              description: Recurrence interval count
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval count
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -6313,6 +6336,12 @@ components:
           type: string
           format: date-time
           description: Deadline
+        recurrence_interval_unit:
+          $ref: "#/components/schemas/TaskRecurrenceIntervalUnit"
+          description: Recurrence interval unit (requires deadline to be set)
+        recurrence_interval_count:
+          type: integer
+          description: Recurrence interval count, e.g. 3 with unit WEEK means "every 3 weeks"
         assigned_to_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -6380,6 +6409,22 @@ components:
             - type: "null"
               description: No deadline
           description: Deadline
+          go.probo.inc/mcpgen/omittable: true
+        recurrence_interval_unit:
+          anyOf:
+            - $ref: "#/components/schemas/TaskRecurrenceIntervalUnit"
+              description: Recurrence interval unit
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval unit
+          go.probo.inc/mcpgen/omittable: true
+        recurrence_interval_count:
+          anyOf:
+            - type: integer
+              description: Recurrence interval count
+            - type: "null"
+              description: Not recurring
+          description: Recurrence interval count
           go.probo.inc/mcpgen/omittable: true
         assigned_to_id:
           anyOf:

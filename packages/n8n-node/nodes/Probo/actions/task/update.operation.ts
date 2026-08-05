@@ -193,6 +193,54 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The ID of the measure this task belongs to',
 	},
+	{
+		displayName: 'Recurrence Interval Unit',
+		name: 'recurrenceIntervalUnit',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['update'],
+			},
+		},
+		options: [
+			{
+				name: '(Unchanged)',
+				value: '',
+			},
+			{
+				name: 'Day',
+				value: 'DAY',
+			},
+			{
+				name: 'Month',
+				value: 'MONTH',
+			},
+			{
+				name: 'Week',
+				value: 'WEEK',
+			},
+			{
+				name: 'Year',
+				value: 'YEAR',
+			},
+		],
+		default: '',
+		description: 'The recurrence unit for the task, e.g. "Week" with a count of 3 means "every 3 weeks". Requires a deadline to be set.',
+	},
+	{
+		displayName: 'Recurrence Interval Count',
+		name: 'recurrenceIntervalCount',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The recurrence count, used together with the recurrence interval unit',
+	},
 ];
 
 export async function execute(
@@ -209,6 +257,8 @@ export async function execute(
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
 	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
+	const recurrenceIntervalUnit = this.getNodeParameter('recurrenceIntervalUnit', itemIndex, '') as string;
+	const recurrenceIntervalCount = this.getNodeParameter('recurrenceIntervalCount', itemIndex, '') as string;
 
 	const query = `
 		mutation UpdateTask($input: UpdateTaskInput!) {
@@ -221,6 +271,8 @@ export async function execute(
 					priority
 					timeEstimate
 					deadline
+					recurrenceIntervalUnit
+					recurrenceIntervalCount
 					createdAt
 					updatedAt
 				}
@@ -238,6 +290,8 @@ export async function execute(
 	if (deadline) input.deadline = deadline;
 	if (assignedToId) input.assignedToId = assignedToId;
 	if (measureId) input.measureId = measureId;
+	if (recurrenceIntervalUnit) input.recurrenceIntervalUnit = recurrenceIntervalUnit;
+	if (recurrenceIntervalCount) input.recurrenceIntervalCount = recurrenceIntervalCount;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

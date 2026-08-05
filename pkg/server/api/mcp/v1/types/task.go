@@ -27,19 +27,21 @@ import (
 
 func NewTask(t *coredata.Task) *Task {
 	return &Task{
-		ID:             t.ID,
-		OrganizationID: t.OrganizationID,
-		MeasureID:      t.MeasureID,
-		Name:           t.Name,
-		Description:    t.Description,
-		State:          t.State,
-		Priority:       t.Priority,
-		Rank:           t.Rank,
-		TimeEstimate:   t.TimeEstimate,
-		AssignedToID:   t.AssignedToID,
-		CreatedAt:      t.CreatedAt,
-		UpdatedAt:      t.UpdatedAt,
-		Deadline:       t.Deadline,
+		ID:                      t.ID,
+		OrganizationID:          t.OrganizationID,
+		MeasureID:               t.MeasureID,
+		Name:                    t.Name,
+		Description:             t.Description,
+		State:                   t.State,
+		Priority:                t.Priority,
+		Rank:                    t.Rank,
+		TimeEstimate:            t.TimeEstimate,
+		AssignedToID:            t.AssignedToID,
+		CreatedAt:               t.CreatedAt,
+		UpdatedAt:               t.UpdatedAt,
+		Deadline:                t.Deadline,
+		RecurrenceIntervalUnit:  t.RecurrenceIntervalUnit,
+		RecurrenceIntervalCount: t.RecurrenceIntervalCount,
 	}
 }
 

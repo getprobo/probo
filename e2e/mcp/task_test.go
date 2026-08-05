@@ -92,3 +92,59 @@ func TestMCP_Task_CRUD(t *testing.T) {
 	}, &deleteResult)
 	assert.Equal(t, addResult.Task.ID, deleteResult.DeletedTaskID)
 }
+
+func TestMCP_Task_Recurrence(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	measureID := factory.CreateMeasure(owner)
+
+	t.Run("add with recurrence and deadline round-trips", func(t *testing.T) {
+		t.Parallel()
+
+		var addResult struct {
+			Task struct {
+				ID                      string `json:"id"`
+				RecurrenceIntervalUnit  string `json:"recurrence_interval_unit"`
+				RecurrenceIntervalCount int    `json:"recurrence_interval_count"`
+			} `json:"task"`
+		}
+		mc.CallToolInto("addTask", map[string]any{
+			"organization_id":           owner.GetOrganizationID().String(),
+			"measure_id":                measureID,
+			"name":                      factory.SafeName("Recurring Task"),
+			"deadline":                  "2026-01-15T00:00:00Z",
+			"recurrence_interval_unit":  "WEEK",
+			"recurrence_interval_count": 3,
+		}, &addResult)
+		require.NotEmpty(t, addResult.Task.ID)
+		assert.Equal(t, "WEEK", addResult.Task.RecurrenceIntervalUnit)
+		assert.Equal(t, 3, addResult.Task.RecurrenceIntervalCount)
+	})
+
+	t.Run("add with recurrence but no deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		errText := mc.CallToolExpectToolError("addTask", map[string]any{
+			"organization_id":           owner.GetOrganizationID().String(),
+			"measure_id":                measureID,
+			"name":                      factory.SafeName("Recurring Task"),
+			"recurrence_interval_unit":  "WEEK",
+			"recurrence_interval_count": 3,
+		})
+		assert.Contains(t, errText, "deadline")
+	})
+
+	t.Run("update to add recurrence without a deadline fails", func(t *testing.T) {
+		t.Parallel()
+
+		taskID := factory.CreateTask(owner, &measureID, factory.Attrs{"name": factory.SafeName("Task")})
+
+		errText := mc.CallToolExpectToolError("updateTask", map[string]any{
+			"id":                        taskID,
+			"recurrence_interval_unit":  "MONTH",
+			"recurrence_interval_count": 1,
+		})
+		assert.Contains(t, errText, "deadline")
+	})
+}

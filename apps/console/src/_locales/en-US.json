@@ -781,12 +781,14 @@
       "assignedTo": { "label": "Assigned to" },
       "measure": { "label": "Measure" },
       "timeEstimate": { "label": "Time estimate" },
-      "deadline": { "label": "Deadline" }
+      "deadline": { "label": "Deadline" },
+      "recurrence": { "label": "Repeats" }
     },
     "states": { "todo": "To do", "inProgress": "In progress", "done": "Done" },
     "priorities": { "urgent": "Urgent", "high": "High", "medium": "Medium", "low": "Low" },
+    "recurrenceIntervalUnits": { "none": "Does not repeat", "day": "Day", "week": "Week", "month": "Month", "year": "Year" },
     "messages": { "created": "Task created successfully.", "updated": "Task updated successfully." },
-    "errors": { "create": "Failed to create task", "update": "Failed to update task" },
+    "errors": { "create": "Failed to create task", "update": "Failed to update task", "recurrenceRequiresDeadline": "Deadline is required for a recurring task" },
     "actions": { "create": "Create task", "update": "Update task" }
   },
   "tasksCard": {
@@ -808,7 +810,11 @@
       "days_other": "{{count}} Days"
     },
     "deleteConfirmation": "Are you sure you want to delete this task?",
-    "actions": { "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" }
+    "actions": { "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" },
+    "recurringBadge": {
+      "tooltip_one": "Repeats every {{unit}}",
+      "tooltip_other": "Repeats every {{count}} {{unit}}s"
+    }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Delete Reference",

@@ -24,6 +24,28 @@ enum TaskPriority
         )
 }
 
+enum TaskRecurrenceIntervalUnit
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TaskRecurrenceIntervalUnit"
+    ) {
+    DAY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskRecurrenceIntervalUnitDay"
+        )
+    WEEK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskRecurrenceIntervalUnitWeek"
+        )
+    MONTH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskRecurrenceIntervalUnitMonth"
+        )
+    YEAR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskRecurrenceIntervalUnitYear"
+        )
+}
+
 enum TaskOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskOrderField") {
     PRIORITY_RANK
@@ -47,6 +69,8 @@ type Task implements Node {
     rank: Int!
     timeEstimate: Duration
     deadline: Datetime
+    recurrenceIntervalUnit: TaskRecurrenceIntervalUnit
+    recurrenceIntervalCount: Int
     assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
@@ -95,6 +119,8 @@ input CreateTaskInput {
     timeEstimate: Duration
     assignedToId: ID
     deadline: Datetime
+    recurrenceIntervalUnit: TaskRecurrenceIntervalUnit
+    recurrenceIntervalCount: Int
 }
 
 input UpdateTaskInput {
@@ -108,6 +134,8 @@ input UpdateTaskInput {
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
     measureId: ID @goField(omittable: true)
+    recurrenceIntervalUnit: TaskRecurrenceIntervalUnit @goField(omittable: true)
+    recurrenceIntervalCount: Int @goField(omittable: true)
 }
 
 input DeleteTaskInput {
