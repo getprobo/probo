@@ -20,7 +20,7 @@
 
 import { formatError } from "@probo/helpers";
 import { Button, Input, useToast } from "@probo/ui";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
@@ -147,16 +147,22 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   // the pages already in the store. Pull the remaining ones while a search is
   // active, otherwise a source past the first page is reported as absent.
   // hasNext stays true when a page fails to load, so the failing term is
-  // latched to stop the effect from retrying in a loop; a new term retries.
+  // latched to stop the effect from retrying in a loop; the load-more button
+  // stays available on that term to retry, and success clears the latch.
   const [failedSearch, setFailedSearch] = useState<string | null>(null);
-  const isLoadingRemainingSources
-    = isSearching && hasNext && failedSearch !== normalizedSearch;
-  useEffect(() => {
-    if (!isLoadingRemainingSources || isLoadingNext) return;
+  const loadMoreSources = useCallback(() => {
     loadNext(50, {
       onComplete: error => setFailedSearch(error ? normalizedSearch : null),
     });
-  }, [isLoadingRemainingSources, isLoadingNext, loadNext, normalizedSearch]);
+  }, [loadNext, normalizedSearch]);
+  const hasFailedSearchLoad
+    = isSearching && hasNext && failedSearch === normalizedSearch;
+  const isLoadingRemainingSources
+    = isSearching && hasNext && !hasFailedSearchLoad;
+  useEffect(() => {
+    if (!isLoadingRemainingSources || isLoadingNext) return;
+    loadMoreSources();
+  }, [isLoadingRemainingSources, isLoadingNext, loadMoreSources]);
   const filteredSources = useMemo(
     () => accessReviewSources.edges.filter(({ node }) => {
       if (!normalizedSearch) return true;
@@ -317,9 +323,11 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
         count={filteredSources.length}
         empty={isLoadingRemainingSources
           ? t("accessReviewSourcesTab.actions.loading")
-          : isSearching
-            ? t("accessReviewSourcesTab.emptyConnectedSearch")
-            : t("accessReviewSourcesTab.emptyConnected")}
+          : hasFailedSearchLoad
+            ? t("accessReviewSourcesTab.searchLoadFailed")
+            : isSearching
+              ? t("accessReviewSourcesTab.emptyConnectedSearch")
+              : t("accessReviewSourcesTab.emptyConnected")}
       >
         {filteredSources.map(({ node }) => (
           <AccessReviewSourceListItem
@@ -331,16 +339,18 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
         ))}
       </SourceSection>
 
-      {hasNext && !isSearching && (
+      {hasNext && (!isSearching || hasFailedSearchLoad) && (
         <Button
           variant="secondary"
-          onClick={() => loadNext(50)}
+          onClick={loadMoreSources}
           disabled={isLoadingNext}
           className="self-start"
         >
           {isLoadingNext
             ? t("accessReviewSourcesTab.actions.loading")
-            : t("accessReviewSourcesTab.actions.loadMore")}
+            : hasFailedSearchLoad
+              ? t("accessReviewSourcesTab.actions.retry")
+              : t("accessReviewSourcesTab.actions.loadMore")}
         </Button>
       )}
 

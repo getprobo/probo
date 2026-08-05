@@ -3390,7 +3390,8 @@
     },
     "actions": {
       "loading": "Laden...",
-      "loadMore": "Meer laden"
+      "loadMore": "Meer laden",
+      "retry": "Opnieuw proberen"
     },
     "sections": {
       "connected": "Verbonden",
@@ -3399,6 +3400,7 @@
     "searchPlaceholder": "Bronnen en providers zoeken...",
     "emptyConnected": "Er zijn nog geen toegangsbronnen verbonden.",
     "emptyConnectedSearch": "Geen verbonden bronnen komen overeen met uw zoekopdracht.",
+    "searchLoadFailed": "Sommige bronnen konden niet worden geladen, dus de zoekopdracht is onvolledig. Probeer opnieuw om alle bronnen te doorzoeken.",
     "emptyAvailableSearch": "Geen beschikbare providers komen overeen met uw zoekopdracht."
   },
   "assetDetailsPage": {
