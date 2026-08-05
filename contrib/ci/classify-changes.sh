@@ -80,6 +80,9 @@ shell="false"
 swift="false"
 e2e="$probod"
 frontend="false"
+isolated_package_changed="false"
+isolated_package_only="true"
+lockfile_changed="false"
 snapshot="false"
 
 for changed_file in "${changed_files[@]}"; do
@@ -109,13 +112,25 @@ for changed_file in "${changed_files[@]}"; do
   esac
 
   case "$changed_file" in
-    .nvmrc | package.json | package-lock.json | turbo.json | \
+    .nvmrc | package.json | turbo.json | \
       apps/compliance-portal/* | apps/console/* | \
       packages/coredata/* | packages/emails/* | packages/helpers/* | \
       packages/hooks/* | packages/i18n/* | packages/prosemirror/* | \
       packages/react-lazy/* | packages/relay/* | packages/routes/* | \
       packages/tsconfig/* | packages/ui/*)
       frontend="true"
+      ;;
+  esac
+
+  case "$changed_file" in
+    package-lock.json)
+      lockfile_changed="true"
+      ;;
+    packages/cookie-banner/* | packages/n8n-node/* | packages/skills/*)
+      isolated_package_changed="true"
+      ;;
+    *)
+      isolated_package_only="false"
       ;;
   esac
 
@@ -147,6 +162,11 @@ for changed_file in "${changed_files[@]}"; do
       ;;
   esac
 done
+
+if [[ "$lockfile_changed" == "true" &&
+  ("$isolated_package_changed" == "false" || "$isolated_package_only" == "false") ]]; then
+  frontend="true"
+fi
 
 if [[ "$probod" == "true" ||
   "$prb" == "true" ||
