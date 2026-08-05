@@ -41,65 +41,42 @@ func (s *Service) ReplaceLocations(
 	ctx context.Context,
 	source coredata.IPLocationBlockSource,
 ) (count int64, err error) {
-	stagingCreated := false
-	swapped := false
-
-	defer func() {
-		if !stagingCreated || swapped {
-			return
-		}
-
-		cleanupErr := s.pgClient.WithConn(
-			context.WithoutCancel(ctx),
-			func(ctx context.Context, conn pg.Querier) error {
-				return coredata.DropIPLocationBlocksStaging(ctx, conn)
-			},
-		)
-		if cleanupErr != nil && err == nil {
-			err = fmt.Errorf("cannot clean up IP location staging table: %w", cleanupErr)
-		}
-	}()
-
-	if err := s.pgClient.WithConn(
+	err = s.pgClient.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := coredata.CreateIPLocationBlocksStaging(ctx, conn); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if _, err := tx.Exec(
+				ctx,
+				`SELECT pg_advisory_xact_lock(hashtext('common_ip_location_blocks_import'))`,
+			); err != nil {
+				return fmt.Errorf("cannot acquire IP location import lock: %w", err)
+			}
+
+			if err := coredata.CreateIPLocationBlocksStaging(ctx, tx); err != nil {
 				return fmt.Errorf("cannot create IP location staging table: %w", err)
 			}
-			stagingCreated = true
 
-			var err error
-			if count, err = coredata.CopyIPLocationBlocksStaging(ctx, conn, source); err != nil {
-				return fmt.Errorf("cannot import IP locations: %w", err)
+			var copyErr error
+			if count, copyErr = coredata.CopyIPLocationBlocksStaging(ctx, tx, source); copyErr != nil {
+				return fmt.Errorf("cannot import IP locations: %w", copyErr)
 			}
 			if count == 0 {
 				return fmt.Errorf("cannot import IP locations: source contains no ranges")
 			}
 
-			if err := coredata.FinalizeIPLocationBlocksStaging(ctx, conn); err != nil {
+			if err := coredata.FinalizeIPLocationBlocksStaging(ctx, tx); err != nil {
 				return fmt.Errorf("cannot finalize IP locations: %w", err)
 			}
 
-			return nil
-		},
-	); err != nil {
-		return 0, err
-	}
-
-	if err := s.pgClient.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
 			if err := coredata.SwapIPLocationBlocksStaging(ctx, tx); err != nil {
 				return fmt.Errorf("cannot activate IP locations: %w", err)
 			}
 
 			return nil
 		},
-	); err != nil {
+	)
+	if err != nil {
 		return 0, err
 	}
-
-	swapped = true
 
 	return count, nil
 }

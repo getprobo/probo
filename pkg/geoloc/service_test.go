@@ -25,6 +25,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
@@ -91,19 +92,19 @@ func TestReplaceLocationsAndLookupBoundaries(t *testing.T) {
 	for _, ip := range []string{"10.0.0.0", "10.0.0.255"} {
 		location, err := service.LookupLocation(context.Background(), ip)
 		require.NoError(t, err)
-		require.Equal(t, coredata.CountryCodeUS, location.CountryCode)
-		require.Equal(t, &subdivision, location.SubdivisionCode)
+		assert.Equal(t, coredata.CountryCodeUS, location.CountryCode)
+		assert.Equal(t, &subdivision, location.SubdivisionCode)
 	}
 
 	location, err := service.LookupLocation(context.Background(), "10.0.1.0")
 	require.NoError(t, err)
-	require.Equal(t, coredata.IPLocation{}, location)
+	assert.Equal(t, coredata.IPLocation{}, location)
 
 	for _, ip := range []string{"2001:db8::", "2001:db8::ffff"} {
 		location, err := service.LookupLocation(context.Background(), ip)
 		require.NoError(t, err)
-		require.Equal(t, coredata.CountryCodeGB, location.CountryCode)
-		require.Nil(t, location.SubdivisionCode)
+		assert.Equal(t, coredata.CountryCodeGB, location.CountryCode)
+		assert.Nil(t, location.SubdivisionCode)
 	}
 
 	_, err = service.ReplaceLocations(
@@ -129,6 +130,44 @@ func TestReplaceLocationsAndLookupBoundaries(t *testing.T) {
 
 	location, err = service.LookupLocation(context.Background(), "10.0.0.0")
 	require.NoError(t, err)
-	require.Equal(t, coredata.CountryCodeUS, location.CountryCode)
-	require.Equal(t, &subdivision, location.SubdivisionCode)
+	assert.Equal(t, coredata.CountryCodeUS, location.CountryCode)
+	assert.Equal(t, &subdivision, location.SubdivisionCode)
+}
+
+func TestLookupLocationNestedRanges(t *testing.T) {
+	client := test.PGClient(t)
+	service := geoloc.NewService(client)
+	subdivision := coredata.SubdivisionCode("US-CA")
+
+	_, err := service.ReplaceLocations(
+		context.Background(),
+		&blockSource{
+			blocks: []coredata.IPLocationBlock{
+				{
+					AddressFamily: 4,
+					IPStart:       netip.MustParseAddr("10.0.0.0"),
+					IPEnd:         netip.MustParseAddr("10.0.255.255"),
+					CountryCode:   coredata.CountryCodeUS,
+				},
+				{
+					AddressFamily:   4,
+					IPStart:         netip.MustParseAddr("10.0.0.128"),
+					IPEnd:           netip.MustParseAddr("10.0.0.255"),
+					CountryCode:     coredata.CountryCodeUS,
+					SubdivisionCode: &subdivision,
+				},
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	location, err := service.LookupLocation(context.Background(), "10.0.0.200")
+	require.NoError(t, err)
+	assert.Equal(t, coredata.CountryCodeUS, location.CountryCode)
+	assert.Equal(t, &subdivision, location.SubdivisionCode)
+
+	location, err = service.LookupLocation(context.Background(), "10.0.1.0")
+	require.NoError(t, err)
+	assert.Equal(t, coredata.CountryCodeUS, location.CountryCode)
+	assert.Nil(t, location.SubdivisionCode)
 }

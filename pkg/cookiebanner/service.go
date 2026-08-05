@@ -1775,8 +1775,12 @@ func (s *Service) GetActiveBannerConfig(
 	config.ConsentMode = ConsentModeForRegulation(regulation)
 	config.Layout = LayoutForRegulation(regulation)
 
-	applyUSStatePrivacyBannerTexts(config)
-	applyCanadianPrivacyBannerTexts(config)
+	if IsUSStatePrivacyRegulation(regulation) && !IsCaliforniaPrivacyRegulation(regulation) {
+		applyUSStatePrivacyBannerTexts(config)
+	}
+	if IsCanadianOptOutPrivacyRegulation(regulation) {
+		applyCanadianPrivacyBannerTexts(config)
+	}
 	applyBannerTextCompat(config, sdkVersion)
 
 	return config, nil

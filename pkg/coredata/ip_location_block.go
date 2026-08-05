@@ -79,23 +79,16 @@ func (s *ipLocationCopySource) Err() error {
 
 func LookupLocationByIP(ctx context.Context, conn pg.Querier, ip string) (IPLocation, error) {
 	q := `
-WITH candidate AS (
-	SELECT
-		ip_end,
-		country_code,
-		subdivision_code
-	FROM common_ip_location_blocks
-	WHERE
-		address_family = family(@ip::inet)
-		AND ip_start <= @ip::inet
-	ORDER BY ip_start DESC
-	LIMIT 1
-)
 SELECT
 	country_code,
 	subdivision_code
-FROM candidate
-WHERE ip_end >= @ip::inet;
+FROM common_ip_location_blocks
+WHERE
+	address_family = family(@ip::inet)
+	AND ip_start <= @ip::inet
+	AND ip_end >= @ip::inet
+ORDER BY ip_end - ip_start
+LIMIT 1;
 `
 
 	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"ip": ip})
