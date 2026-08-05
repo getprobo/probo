@@ -280,8 +280,8 @@ func generateConfig() (string, error) {
 
 		// PG.
 		"PROBOD_PG_DATABASE":      "probod_test",
-		"PROBOD_PG_POOL_SIZE":     "10",
-		"PROBOD_PG_MIN_POOL_SIZE": "1",
+		"PROBOD_PG_POOL_SIZE":     "20",
+		"PROBOD_PG_MIN_POOL_SIZE": "2",
 
 		// Auth.
 		"PROBOD_AUTH_COOKIE_SECURE":       "false",
