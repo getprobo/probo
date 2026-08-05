@@ -588,7 +588,6 @@ jobs:
           name: "${{ matrix.artifact_name }}"
           path: |
             ${{ matrix.junit_file }}
-            junit-e2e-trust.xml
             e2e-artifacts
             coverage-e2e.out
             coverage-e2e.txt

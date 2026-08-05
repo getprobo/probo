@@ -48,10 +48,10 @@ CI runs the normal and instrumented suites in parallel. The required
 full-binary and core-product totals in its job summary and uploads all reports
 with its JUnit and journey artifacts. Coverage is collected from the probod
 process, not from the E2E test driver. Override `E2E_CORE_COVER_PKGS` when
-auditing a different product-package boundary. The coverage job runs Console,
-MCP, and Trust packages sequentially because each package starts probod on the
-same fixed ports. Trust uses `-parallel=1` so managed-domain certificates are
-provisioned without worker contention.
+auditing a different product-package boundary. The coverage job runs Console
+and MCP packages sequentially because each package starts probod on the same
+fixed ports. Trust remains separate until its managed-domain certificate
+harness can be coverage-gated reliably.
 
 ## Client setup
 
