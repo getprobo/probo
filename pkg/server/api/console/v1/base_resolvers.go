@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -380,6 +381,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			update, err := r.mailman.GetMailingListUpdate(ctx, scope, id)
 			if err != nil {
+				if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
 				return nil, err
 			}
 

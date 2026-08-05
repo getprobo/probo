@@ -8038,7 +8038,7 @@ func (r *Resolver) UpdateMailingListUpdateTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) SendMailingListUpdateTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SendMailingListUpdateInput) (*mcp.CallToolResult, types.SendMailingListUpdateOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, management.ActionMailingListUpdateUpdate); err != nil {
+	if _, err := r.Authorize(ctx, input.ID, management.ActionMailingListUpdateSend); err != nil {
 		return nil, types.SendMailingListUpdateOutput{}, err
 	}
 

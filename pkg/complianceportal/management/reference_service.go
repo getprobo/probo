@@ -451,7 +451,7 @@ func (s *Service) uploadReferenceLogoFile(
 }
 
 func referenceLogoFileForCreate(file File) File {
-	if file.Content != nil || file.Filename != "" || file.Size > 0 {
+	if file.Content != nil {
 		return file
 	}
 
