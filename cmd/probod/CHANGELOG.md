@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.248.0] - 2026-08-05
+
+### Changed
+
+- Restructured the access review console list UI: dedicated list item components for campaigns, sources, and entry sections; replaced the add-source dialog with the provider list flow; consolidated fetch-status UI, shared the campaign deletable-status helper, and now load remaining sources while searching so matches beyond the first page aren't missed
+
+### Fixed
+
+- Presigned S3 requests (`PresignGetObject`) no longer fail with a misleading "not found" error
+- A failed page load during source search no longer hides "Load more", so later pages stay reachable
+
 ## [0.247.0] - 2026-08-05
 
 ### Added
