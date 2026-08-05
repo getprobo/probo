@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.13.0] - 2026-08-05
+
+### Changed
+
+- `Regulation` is a `string` alias rather than an exhaustive union, so the SDK no longer mirrors every backend regulation identifier. Banner behavior is driven by the server-provided `layout`, and new jurisdictions (US state laws, Canadian provincial PIPA) no longer require an SDK release
+
 ## [0.12.0] - 2026-08-05
 
 ### Added
@@ -17,8 +23,6 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 - Export `resolveLayout` and `resolveBannerText` (plus the `BannerLayout` / `BannerText` / `Presentation` types) so headless integrators can resolve the active presentation and its wording
 
 ### Changed
-
-- `Regulation` is a `string` alias rather than an exhaustive union; banner behavior is driven by the server-provided `layout`, so the SDK no longer mirrors every backend regulation identifier
 
 - Under CCPA, `layout.reopen_state` is `privacy_choices` (not the compact opt-out banner). Other OPT_OUT regimes (PIPEDA, Canadian PIPA, LGPD) still reopen the compact banner
 - Under CCPA, the banner starts closed by default (cookies already follow the opt-out model until the visitor opts out)
