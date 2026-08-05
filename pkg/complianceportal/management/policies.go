@@ -55,7 +55,7 @@ var AccessManagerPolicy = policy.NewPolicy(
 	"compliance-portal:access-manager",
 	"Compliance Portal Access Manager",
 	policy.Allow(
-		ActionCompliancePortalGet,
+		ActionCompliancePortalGet, ActionCompliancePortalList,
 		ActionCompliancePortalAccessGet, ActionCompliancePortalAccessList,
 		ActionCompliancePortalAccessCreate, ActionCompliancePortalAccessUpdate,
 		ActionCompliancePortalAccessDelete,

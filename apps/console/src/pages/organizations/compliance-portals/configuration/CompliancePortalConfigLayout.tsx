@@ -23,7 +23,7 @@ import { usePageTitle } from "@probo/hooks";
 import { Badge, Breadcrumb, Button, IconBell2, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconShield, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Outlet, useParams } from "react-router";
+import { Navigate, Outlet, useLocation, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalConfigLayoutQuery } from "#/__generated__/core/CompliancePortalConfigLayoutQuery.graphql";
@@ -41,6 +41,18 @@ export const compliancePortalConfigLayoutQuery = graphql`
         organization {
           id
         }
+        canListFrameworks: permission(action: "compliance-portal:compliance-framework:list")
+        canListCustomLinks: permission(action: "compliance-portal:compliance-custom-link:list")
+        canListReferences: permission(action: "compliance-portal:portal-reference:list")
+        canListCommitmentGroups: permission(action: "compliance-portal:commitment-group:list")
+        canListAudits: permission(action: "core:audit:list")
+        canListDocuments: permission(action: "core:document:list")
+        canListFiles: permission(action: "compliance-portal:portal-file:list")
+        canGetThirdParty: permission(action: "core:thirdParty:get")
+        canListAccesses: permission(action: "compliance-portal:portal-access:list")
+        canListMailingListSubscribers: permission(
+          action: "compliance-portal:mailing-list-subscriber:list"
+        )
       }
     }
   }
@@ -53,6 +65,7 @@ interface CompliancePortalConfigLayoutProps {
 export default function CompliancePortalConfigLayout({ queryRef }: CompliancePortalConfigLayoutProps) {
   const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
+  const { pathname } = useLocation();
   const { t } = useTranslation("organizations/compliance-portals");
 
   usePageTitle(t("configLayout.title"));
@@ -72,6 +85,16 @@ export default function CompliancePortalConfigLayout({ queryRef }: CompliancePor
 
   const portalBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}`;
   const compliancePortalUrl = compliancePortal.publicUrl;
+
+  // Access managers land on the portal root (overview) from the list, but lack
+  // overview permissions — send them to Access instead of a forbidden page.
+  if (
+    pathname === portalBase
+    && !compliancePortal.canListFrameworks
+    && compliancePortal.canListAccesses
+  ) {
+    return <Navigate to={`${portalBase}/access`} replace />;
+  }
 
   return (
     <div className="space-y-6">
@@ -107,46 +130,66 @@ export default function CompliancePortalConfigLayout({ queryRef }: CompliancePor
       </PageHeader>
 
       <Tabs>
-        <TabLink to={portalBase} end>
-          <IconSettingsGear2 className="size-4" />
-          {t("configLayout.tabs.overview")}
-        </TabLink>
-        <TabLink to={`${portalBase}/brand`}>
-          <IconPencil className="size-4" />
-          {t("configLayout.tabs.brand")}
-        </TabLink>
-        <TabLink to={`${portalBase}/references`}>
-          <IconCheckmark1 className="size-4" />
-          {t("configLayout.tabs.references")}
-        </TabLink>
-        <TabLink to={`${portalBase}/commitments`}>
-          <IconShield className="size-4" />
-          {t("configLayout.tabs.commitments")}
-        </TabLink>
-        <TabLink to={`${portalBase}/audits`}>
-          <IconMedal className="size-4" />
-          {t("configLayout.tabs.audits")}
-        </TabLink>
-        <TabLink to={`${portalBase}/documents`}>
-          <IconPageTextLine className="size-4" />
-          {t("configLayout.tabs.documents")}
-        </TabLink>
-        <TabLink to={`${portalBase}/files`}>
-          <IconFolder2 className="size-4" />
-          {t("configLayout.tabs.files")}
-        </TabLink>
-        <TabLink to={`${portalBase}/third-parties`}>
-          <IconStore className="size-4" />
-          {t("configLayout.tabs.subprocessors")}
-        </TabLink>
-        <TabLink to={`${portalBase}/access`}>
-          <IconPeopleAdd className="size-4" />
-          {t("configLayout.tabs.access")}
-        </TabLink>
-        <TabLink to={`${portalBase}/mailing-list`}>
-          <IconBell2 className="size-4" />
-          {t("configLayout.tabs.mailingList")}
-        </TabLink>
+        {compliancePortal.canListFrameworks && (
+          <TabLink to={portalBase} end>
+            <IconSettingsGear2 className="size-4" />
+            {t("configLayout.tabs.overview")}
+          </TabLink>
+        )}
+        {compliancePortal.canListCustomLinks && (
+          <TabLink to={`${portalBase}/brand`}>
+            <IconPencil className="size-4" />
+            {t("configLayout.tabs.brand")}
+          </TabLink>
+        )}
+        {compliancePortal.canListReferences && (
+          <TabLink to={`${portalBase}/references`}>
+            <IconCheckmark1 className="size-4" />
+            {t("configLayout.tabs.references")}
+          </TabLink>
+        )}
+        {compliancePortal.canListCommitmentGroups && (
+          <TabLink to={`${portalBase}/commitments`}>
+            <IconShield className="size-4" />
+            {t("configLayout.tabs.commitments")}
+          </TabLink>
+        )}
+        {compliancePortal.canListAudits && (
+          <TabLink to={`${portalBase}/audits`}>
+            <IconMedal className="size-4" />
+            {t("configLayout.tabs.audits")}
+          </TabLink>
+        )}
+        {compliancePortal.canListDocuments && (
+          <TabLink to={`${portalBase}/documents`}>
+            <IconPageTextLine className="size-4" />
+            {t("configLayout.tabs.documents")}
+          </TabLink>
+        )}
+        {compliancePortal.canListFiles && (
+          <TabLink to={`${portalBase}/files`}>
+            <IconFolder2 className="size-4" />
+            {t("configLayout.tabs.files")}
+          </TabLink>
+        )}
+        {compliancePortal.canGetThirdParty && (
+          <TabLink to={`${portalBase}/third-parties`}>
+            <IconStore className="size-4" />
+            {t("configLayout.tabs.subprocessors")}
+          </TabLink>
+        )}
+        {compliancePortal.canListAccesses && (
+          <TabLink to={`${portalBase}/access`}>
+            <IconPeopleAdd className="size-4" />
+            {t("configLayout.tabs.access")}
+          </TabLink>
+        )}
+        {compliancePortal.canListMailingListSubscribers && (
+          <TabLink to={`${portalBase}/mailing-list`}>
+            <IconBell2 className="size-4" />
+            {t("configLayout.tabs.mailingList")}
+          </TabLink>
+        )}
       </Tabs>
 
       <Outlet />
