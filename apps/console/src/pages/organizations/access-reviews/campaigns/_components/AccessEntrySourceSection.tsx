@@ -63,6 +63,7 @@ const accessEntrySourceSectionEntryFragment = graphql`
     fullName
     isAdmin
     mfaStatus
+    authMethod
   }
 `;
 
@@ -70,6 +71,7 @@ export type EntryFilters = {
   email: string;
   connectorIds: ReadonlyArray<string>;
   mfa: ReadonlyArray<string>;
+  authMethod: ReadonlyArray<string>;
   admin: ReadonlyArray<string>;
 };
 
@@ -96,6 +98,13 @@ function entryMatchesFilters(
   }
 
   if (filters.mfa.length > 0 && !filters.mfa.includes(entry.mfaStatus)) {
+    return false;
+  }
+
+  if (
+    filters.authMethod.length > 0
+    && !filters.authMethod.includes(entry.authMethod)
+  ) {
     return false;
   }
 
@@ -148,6 +157,7 @@ export function AccessEntrySourceSection({
   // make the loaded count diverge from the connector's real total.
   const hasEntryFilters = filters.email !== ""
     || filters.mfa.length > 0
+    || filters.authMethod.length > 0
     || filters.admin.length > 0;
 
   const matchedEntries = useMemo(

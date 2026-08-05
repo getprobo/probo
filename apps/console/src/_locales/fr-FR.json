@@ -3118,6 +3118,13 @@
       "disabled": "Désactivé",
       "unknown": "Inconnu"
     },
+    "authMethod": {
+      "sso": "SSO",
+      "password": "Mot de passe",
+      "api_key": "Clé API",
+      "service_account": "Compte de service",
+      "unknown": "Inconnu"
+    },
     "decisions": {
       "pending": "En attente",
       "approved": "Approuvé",
@@ -3177,6 +3184,7 @@
       "searchEmail": "Rechercher un e-mail...",
       "allConnectors": "Tous les connecteurs",
       "allMfa": "Tous les MFA",
+      "allAuthMethods": "Toutes les méthodes d’auth",
       "allAdmin": "Tous les administrateurs"
     },
     "columns": {
@@ -3186,6 +3194,7 @@
       "admin": "Administrateur",
       "status": "Statut",
       "mfa": "MFA",
+      "authMethod": "Auth",
       "lastLogin": "Dernière connexion",
       "flag": "Indicateur",
       "decision": "Décision"

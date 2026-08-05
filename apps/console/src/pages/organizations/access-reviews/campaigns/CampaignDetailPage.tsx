@@ -199,6 +199,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [appliedEmailFilter, setAppliedEmailFilter] = useState("");
   const [connectorFilter, setConnectorFilter] = useState<string[]>([]);
   const [mfaFilter, setMfaFilter] = useState<string[]>([]);
+  const [authMethodFilter, setAuthMethodFilter] = useState<string[]>([]);
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
   const [sourceMatches, setSourceMatches] = useState<Record<string, SourceMatches>>({});
   // Polling replaces every connection with its first page, so it has to stop
@@ -226,6 +227,12 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const handleMfaFilterChange = useCallback(
     (value: string[]) => {
       startTransition(() => setMfaFilter(value));
+    },
+    [],
+  );
+  const handleAuthMethodFilterChange = useCallback(
+    (value: string[]) => {
+      startTransition(() => setAuthMethodFilter(value));
     },
     [],
   );
@@ -301,13 +308,15 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     email: appliedEmailFilter.trim().toLowerCase(),
     connectorIds: connectorFilter,
     mfa: mfaFilter,
+    authMethod: authMethodFilter,
     admin: adminFilter,
-  }), [appliedEmailFilter, connectorFilter, mfaFilter, adminFilter]);
+  }), [appliedEmailFilter, connectorFilter, mfaFilter, authMethodFilter, adminFilter]);
   const deferredFilters = useDeferredValue(filters);
 
   const hasActiveFilters = deferredFilters.email !== ""
     || deferredFilters.connectorIds.length > 0
     || deferredFilters.mfa.length > 0
+    || deferredFilters.authMethod.length > 0
     || deferredFilters.admin.length > 0;
 
   // Each source section paginates on its own and reports the entries it shows,
@@ -822,6 +831,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           onConnectorFilterChange={handleConnectorFilterChange}
           mfaFilter={mfaFilter}
           onMfaFilterChange={handleMfaFilterChange}
+          authMethodFilter={authMethodFilter}
+          onAuthMethodFilterChange={handleAuthMethodFilterChange}
           adminFilter={adminFilter}
           onAdminFilterChange={handleAdminFilterChange}
         />

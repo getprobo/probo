@@ -31,6 +31,8 @@ type Props = {
   onConnectorFilterChange: (value: string[]) => void;
   mfaFilter: ReadonlyArray<string>;
   onMfaFilterChange: (value: string[]) => void;
+  authMethodFilter: ReadonlyArray<string>;
+  onAuthMethodFilterChange: (value: string[]) => void;
   adminFilter: ReadonlyArray<string>;
   onAdminFilterChange: (value: string[]) => void;
 };
@@ -45,6 +47,8 @@ export function AccessEntriesToolbar({
   onConnectorFilterChange,
   mfaFilter,
   onMfaFilterChange,
+  authMethodFilter,
+  onAuthMethodFilterChange,
   adminFilter,
   onAdminFilterChange,
 }: Props) {
@@ -70,6 +74,23 @@ export function AccessEntriesToolbar({
           ]}
           value={mfaFilter}
           onChange={onMfaFilterChange}
+        />
+      </div>
+      <div className="w-44 max-sm:w-full">
+        <FilterMultiSelect
+          placeholder={t("campaignDetailPage.filters.allAuthMethods")}
+          options={[
+            { value: "SSO", label: t("campaignDetailPage.authMethod.sso") },
+            { value: "PASSWORD", label: t("campaignDetailPage.authMethod.password") },
+            { value: "API_KEY", label: t("campaignDetailPage.authMethod.api_key") },
+            {
+              value: "SERVICE_ACCOUNT",
+              label: t("campaignDetailPage.authMethod.service_account"),
+            },
+            { value: "UNKNOWN", label: t("campaignDetailPage.authMethod.unknown") },
+          ]}
+          value={authMethodFilter}
+          onChange={onAuthMethodFilterChange}
         />
       </div>
       <div className="w-36 max-sm:w-full">

@@ -26,6 +26,7 @@ import { graphql, useFragment } from "react-relay";
 import type { AccessEntryListItem_entry$key } from "#/__generated__/core/AccessEntryListItem_entry.graphql";
 
 import {
+  AuthMethodStatus,
   BooleanStatusIcon,
   decisionBadgeVariant,
   flagBadgeVariant,
@@ -46,6 +47,7 @@ const accessEntryListItemFragment = graphql`
     isAdmin
     active
     mfaStatus
+    authMethod
     accountType
     lastLogin
     decision
@@ -170,6 +172,16 @@ export function AccessEntryListItem({
           <MfaStatusIcon
             status={entry.mfaStatus}
             label={t(`campaignDetailPage.mfaStatus.${entry.mfaStatus.toLowerCase()}`)}
+          />
+        </div>
+        <div className={status()}>
+          <span className={statusLabel()}>{t("campaignDetailPage.columns.authMethod")}</span>
+          <AuthMethodStatus
+            method={entry.authMethod}
+            label={t(
+              `campaignDetailPage.authMethod.${entry.authMethod.toLowerCase()}`,
+            )}
+            unknownLabel={t("campaignDetailPage.values.unknown")}
           />
         </div>
         <div className={status()}>

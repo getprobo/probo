@@ -253,6 +253,39 @@ export function MfaStatusIcon({
   );
 }
 
+export function AuthMethodStatus({
+  method,
+  label,
+  unknownLabel,
+}: {
+  method: string;
+  label: string;
+  unknownLabel: string;
+}) {
+  if (method === "UNKNOWN") {
+    return (
+      <span
+        role="img"
+        aria-label={unknownLabel}
+        title={unknownLabel}
+        className="inline-flex text-txt-tertiary"
+      >
+        <IconCircleQuestionmark size={16} />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      aria-label={label}
+      title={label}
+      className="text-xs text-txt-primary"
+    >
+      {label}
+    </span>
+  );
+}
+
 export function BooleanStatusIcon({
   value,
   trueLabel,
