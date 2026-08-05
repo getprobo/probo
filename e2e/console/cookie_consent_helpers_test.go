@@ -47,6 +47,9 @@ type (
 		BannerID    string
 		Path        []string
 		ContentType string
+
+		AccessControlRequestMethod  string
+		AccessControlRequestHeaders string
 	}
 
 	cookieBannerHTTPResult struct {
@@ -116,6 +119,14 @@ func doCookieBannerHTTP(t *testing.T, c *testutil.Client, opts cookieBannerHTTPO
 
 	if opts.UserAgent != "" {
 		req.Header.Set("User-Agent", opts.UserAgent)
+	}
+
+	if opts.AccessControlRequestMethod != "" {
+		req.Header.Set("Access-Control-Request-Method", opts.AccessControlRequestMethod)
+	}
+
+	if opts.AccessControlRequestHeaders != "" {
+		req.Header.Set("Access-Control-Request-Headers", opts.AccessControlRequestHeaders)
 	}
 
 	if len(opts.Body) > 0 {

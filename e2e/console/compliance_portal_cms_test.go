@@ -167,6 +167,10 @@ func TestCompliancePortal_CMS_OwnerLifecycle(t *testing.T) {
 		)
 		require.NoError(t, err)
 		assert.Equal(t, group.ID, deleteGroupResult.DeleteCompliancePortalCommitmentGroup.DeletedCompliancePortalCommitmentGroupID)
+
+		groupTotal, _, commitmentTotal, _ = queryCompliancePortalCMSCommitmentGroups(t, owner, portalID)
+		assert.Equal(t, 0, groupTotal)
+		assert.Equal(t, 0, commitmentTotal)
 	})
 
 	t.Run("custom links", func(t *testing.T) {
@@ -225,6 +229,9 @@ func TestCompliancePortal_CMS_OwnerLifecycle(t *testing.T) {
 		)
 		require.NoError(t, err)
 		assert.Equal(t, link.ID, deleteResult.DeleteComplianceCustomLink.DeletedComplianceCustomLinkID)
+
+		linkCount, _ = queryCompliancePortalCMSCustomLinks(t, owner, portalID)
+		assert.Equal(t, 0, linkCount)
 	})
 
 	t.Run("portal files", func(t *testing.T) {

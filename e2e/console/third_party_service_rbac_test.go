@@ -157,6 +157,10 @@ func TestThirdPartyService_RBAC(t *testing.T) {
 			&m,
 		)
 		require.NoError(t, err)
+		require.NotEmpty(
+			t,
+			m.CreateThirdPartyService.ThirdPartyServiceEdge.Node.ID,
+		)
 
 		return m.CreateThirdPartyService.ThirdPartyServiceEdge.Node.ID
 	}

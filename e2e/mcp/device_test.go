@@ -119,6 +119,23 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 	require.NotNil(t, setOwnerResult.Device.OwnerID)
 	assert.Equal(t, profileID, *setOwnerResult.Device.OwnerID)
 
+	var clearOwnerResult struct {
+		Device mcpDevice `json:"device"`
+	}
+	mc.CallToolInto("setDeviceOwner", map[string]any{
+		"id":       deviceID,
+		"owner_id": nil,
+	}, &clearOwnerResult)
+	assert.Nil(t, clearOwnerResult.Device.OwnerID)
+
+	var getAfterClear struct {
+		Device mcpDevice `json:"device"`
+	}
+	mc.CallToolInto("getDevice", map[string]any{
+		"id": deviceID,
+	}, &getAfterClear)
+	assert.Nil(t, getAfterClear.Device.OwnerID)
+
 	// Revoke
 	var revokeResult struct {
 		Device mcpDevice `json:"device"`

@@ -594,14 +594,19 @@ func TestCookieConsent_PublicValidationAndSecurity(t *testing.T) {
 				t,
 				fixture.Owner,
 				cookieBannerHTTPOptions{
-					Method:   http.MethodOptions,
-					BannerID: fixture.BannerID,
-					Path:     []string{"consents"},
-					Origin:   fixture.Origin,
+					Method:                      http.MethodOptions,
+					BannerID:                    fixture.BannerID,
+					Path:                        []string{"consents"},
+					Origin:                      fixture.Origin,
+					AccessControlRequestMethod:  http.MethodPost,
+					AccessControlRequestHeaders: "Content-Type, X-SDK-Version",
 				},
 			)
 			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 			assert.Equal(t, fixture.Origin, resp.Header.Get("Access-Control-Allow-Origin"))
+			assert.Contains(t, resp.Header.Get("Access-Control-Allow-Methods"), http.MethodPost)
+			assert.Contains(t, resp.Header.Get("Access-Control-Allow-Headers"), "Content-Type")
+			assert.Contains(t, resp.Header.Get("Access-Control-Allow-Headers"), "X-SDK-Version")
 		},
 	)
 }

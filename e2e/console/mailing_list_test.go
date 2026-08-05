@@ -101,6 +101,16 @@ func TestCompliancePortal_MailingList_OwnerLifecycle(t *testing.T) {
 
 	deleteMailingListUpdate(t, owner, draftUpdate.ID)
 
+	_, err := owner.Do(
+		mailingListUpdateNodeQuery,
+		map[string]any{"id": draftUpdate.ID},
+	)
+
+	var deletedNodeErrors testutil.GraphQLErrors
+	require.ErrorAs(t, err, &deletedNodeErrors)
+	require.Len(t, deletedNodeErrors, 1)
+	assert.Equal(t, "NOT_FOUND", deletedNodeErrors[0].Code())
+
 	portalAfterDelete := queryCompliancePortalMailingList(t, owner, portalID)
 	assert.Equal(t, 0, portalAfterDelete.MailingList.Updates.TotalCount)
 

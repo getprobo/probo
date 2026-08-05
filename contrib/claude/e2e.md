@@ -130,6 +130,21 @@ location. CI uploads this directory with the JUnit results. Artifact metadata
 must never contain passwords, tokens, cookies, authorization headers, or other
 secrets.
 
+## Resource cleanup
+
+Helpers that create durable resources (webhook subscriptions, uploaded
+files, and similar worker-backed rows) should register `t.Cleanup` to remove
+them when the test ends. Cleanup is **best-effort**: it must tolerate
+resources the test already deleted (`NOT_FOUND` on read or delete) and must
+not fail the test or mask assertion failures from the test body. When a test
+explicitly deletes a resource, cleanup still helps if the test fails before
+reaching that delete.
+
+Register cleanup in the helper that creates the resource (for example
+`createWebhookSubscription` deletes by subscription id and ignores
+`NOT_FOUND`). Keep explicit delete assertions in lifecycle tests; cleanup
+complements them rather than replacing list or connection checks.
+
 ## Test data factories
 
 Two patterns in `e2e/internal/factory/`:

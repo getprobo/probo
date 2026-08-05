@@ -28,6 +28,12 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+// TestComplianceFramework_TenantIsolation covers GHSA-c74x-79w6-63jh's
+// structural sibling: ComplianceFrameworkService.Create must not accept a
+// frameworkId belonging to another organization -- the FK is tenant-agnostic
+// (ON DELETE CASCADE) so a cross-tenant reference would let org A pin a link
+// to org B's framework and would let org B silently cascade-delete org A's
+// compliance page entry.
 func TestComplianceFramework_TenantIsolation(t *testing.T) {
 	t.Parallel()
 

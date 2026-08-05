@@ -23,7 +23,6 @@ package console_test
 import (
 	"testing"
 
-	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -32,10 +31,6 @@ func TestDatum_PublishDataList_RBAC(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	factory.NewDatum(owner, owner.GetProfileID().String()).
-		WithName("RBAC Test Data").
-		Create()
 
 	const query = `
 		mutation($input: PublishDataListInput!) {

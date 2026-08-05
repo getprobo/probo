@@ -30,6 +30,8 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+const applicabilityStatementNodeSelectionMarker = "__APPLICABILITY_STATEMENT_NODE_SELECTION__"
+
 const applicabilityStatementNodeSelection = `
 	id
 	applicability
@@ -168,7 +170,7 @@ func createApplicabilityStatementLeaf(
 				applicabilityStatementEdge {
 					cursor
 					node {
-						NODE
+						__APPLICABILITY_STATEMENT_NODE_SELECTION__
 					}
 				}
 			}
@@ -192,7 +194,7 @@ func createApplicabilityStatementLeaf(
 		} `json:"createApplicabilityStatement"`
 	}
 
-	query := replaceApplicabilityStatementNodeSelection(mutation)
+	query := withApplicabilityStatementNodeSelection(mutation)
 
 	err := client.Execute(query, map[string]any{"input": input}, &result)
 	require.NoError(t, err)
@@ -243,7 +245,7 @@ func updateApplicabilityStatementLeaf(
 		mutation($input: UpdateApplicabilityStatementInput!) {
 			updateApplicabilityStatement(input: $input) {
 				applicabilityStatement {
-					NODE
+					__APPLICABILITY_STATEMENT_NODE_SELECTION__
 				}
 			}
 		}
@@ -263,7 +265,7 @@ func updateApplicabilityStatementLeaf(
 		} `json:"updateApplicabilityStatement"`
 	}
 
-	query := replaceApplicabilityStatementNodeSelection(mutation)
+	query := withApplicabilityStatementNodeSelection(mutation)
 
 	err := client.Execute(query, map[string]any{"input": input}, &result)
 	require.NoError(t, err)
@@ -369,7 +371,7 @@ func queryApplicabilityStatementNode(
 		query($id: ID!) {
 			node(id: $id) {
 				... on ApplicabilityStatement {
-					NODE
+					__APPLICABILITY_STATEMENT_NODE_SELECTION__
 				}
 			}
 		}
@@ -380,7 +382,7 @@ func queryApplicabilityStatementNode(
 	}
 
 	err := client.Execute(
-		replaceApplicabilityStatementNodeSelection(query),
+		withApplicabilityStatementNodeSelection(query),
 		map[string]any{"id": id},
 		&result,
 	)
@@ -787,6 +789,20 @@ func queryControlObligations(
 	return result.Node.Obligations.TotalCount, ids
 }
 
-func replaceApplicabilityStatementNodeSelection(query string) string {
-	return strings.ReplaceAll(query, "NODE", applicabilityStatementNodeSelection)
+func withApplicabilityStatementNodeSelection(query string) string {
+	if !strings.Contains(query, applicabilityStatementNodeSelectionMarker) {
+		panic("graphql document missing applicability statement node selection marker")
+	}
+
+	replaced := strings.Replace(
+		query,
+		applicabilityStatementNodeSelectionMarker,
+		applicabilityStatementNodeSelection,
+		1,
+	)
+	if strings.Contains(replaced, applicabilityStatementNodeSelectionMarker) {
+		panic("graphql document contains multiple applicability statement node selection markers")
+	}
+
+	return replaced
 }

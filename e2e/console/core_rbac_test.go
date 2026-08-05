@@ -432,10 +432,8 @@ func TestRBAC(t *testing.T) {
 		{resource: "organization", operation: "list_users", name: "owner can list users", role: testutil.RoleOwner, shouldAllow: true, useConnect: true},
 		{resource: "organization", operation: "list_users", name: "admin can list users", role: testutil.RoleAdmin, shouldAllow: true, useConnect: true},
 		{resource: "organization", operation: "list_users", name: "viewer can list users", role: testutil.RoleViewer, shouldAllow: true, useConnect: true},
+		{resource: "control", operation: "delete", name: "viewer cannot delete control", role: testutil.RoleViewer, shouldAllow: false},
 	}
-
-	// TODO: Fix permission bug - viewer should not be able to delete controls
-	// {resource: "control", operation: "delete", name: "viewer cannot delete control", role: testutil.RoleViewer, shouldAllow: false},
 
 	for _, tt := range tests {
 		t.Run(
