@@ -835,6 +835,24 @@ func extractContinueQueryParam(loginURL string) string {
 	return parsed.Query().Get("continue")
 }
 
+// ForTest returns a shallow copy of c bound to t for correct failure
+// attribution in parallel subtests while sharing the HTTP session and
+// identity metadata.
+func (c *Client) ForTest(t testing.TB) *Client {
+	t.Helper()
+
+	if c == nil {
+		t.Fatal("client is nil")
+
+		return nil
+	}
+
+	bound := *c
+	bound.T = t
+
+	return &bound
+}
+
 func (c *Client) GetEmail() string {
 	return c.email
 }

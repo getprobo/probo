@@ -54,27 +54,14 @@ func (o OrganizationRoles) Client(t testing.TB, role TestRole) *Client {
 
 	switch role {
 	case RoleOwner:
-		return bindClientTB(t, o.owner)
+		return o.owner.ForTest(t)
 	case RoleAdmin:
-		return bindClientTB(t, o.admin)
+		return o.admin.ForTest(t)
 	case RoleViewer:
-		return bindClientTB(t, o.viewer)
+		return o.viewer.ForTest(t)
 	default:
 		t.Fatalf("unsupported organization role: %s", role)
 
 		return nil
 	}
-}
-
-func bindClientTB(t testing.TB, stored *Client) *Client {
-	if stored == nil {
-		t.Fatal("organization role client is not initialized")
-
-		return nil
-	}
-
-	bound := *stored
-	bound.T = t
-
-	return &bound
 }
