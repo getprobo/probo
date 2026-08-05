@@ -79,6 +79,7 @@ javascript="false"
 shell="false"
 swift="false"
 e2e="$probod"
+frontend="false"
 snapshot="false"
 
 for changed_file in "${changed_files[@]}"; do
@@ -104,6 +105,17 @@ for changed_file in "${changed_files[@]}"; do
       package.json | package-lock.json | turbo.json | \
       apps/* | packages/*)
       javascript="true"
+      ;;
+  esac
+
+  case "$changed_file" in
+    .nvmrc | package.json | package-lock.json | turbo.json | \
+      apps/compliance-portal/* | apps/console/* | \
+      packages/coredata/* | packages/emails/* | packages/helpers/* | \
+      packages/hooks/* | packages/i18n/* | packages/prosemirror/* | \
+      packages/react-lazy/* | packages/relay/* | packages/routes/* | \
+      packages/tsconfig/* | packages/ui/*)
+      frontend="true"
       ;;
   esac
 
@@ -139,7 +151,7 @@ done
 if [[ "$probod" == "true" ||
   "$prb" == "true" ||
   "$probod_bootstrap" == "true" ||
-  "$javascript" == "true" ]]; then
+  "$frontend" == "true" ]]; then
   snapshot="true"
 fi
 
