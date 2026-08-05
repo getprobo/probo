@@ -81,10 +81,8 @@ func newSCIMClient(t testing.TB, owner *testutil.Client) *scimClient {
 	}
 }
 
-func (sc *scimClient) createUser(userName, fullName, externalID string, active bool) (string, int) {
-	sc.t.Helper()
-
-	payload := map[string]any{
+func buildUserPayload(userName, fullName, externalID string, active bool) map[string]any {
+	return map[string]any{
 		"schemas":    []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
 		"userName":   userName,
 		"active":     active,
@@ -98,8 +96,12 @@ func (sc *scimClient) createUser(userName, fullName, externalID string, active b
 			{"value": userName, "primary": true},
 		},
 	}
+}
 
-	return sc.doRequest("POST", "/Users", payload)
+func (sc *scimClient) createUser(userName, fullName, externalID string, active bool) (string, int) {
+	sc.t.Helper()
+
+	return sc.doRequest("POST", "/Users", buildUserPayload(userName, fullName, externalID, active))
 }
 
 func (sc *scimClient) listUsers() (string, int) {
@@ -120,22 +122,7 @@ func (sc *scimClient) deleteUser(id string) (string, int) {
 func (sc *scimClient) replaceUser(id, userName, fullName, externalID string, active bool) (string, int) {
 	sc.t.Helper()
 
-	payload := map[string]any{
-		"schemas":    []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-		"userName":   userName,
-		"active":     active,
-		"externalId": externalID,
-		"name": map[string]any{
-			"givenName":  "Test",
-			"familyName": "User",
-		},
-		"displayName": fullName,
-		"emails": []map[string]any{
-			{"value": userName, "primary": true},
-		},
-	}
-
-	return sc.doRequest("PUT", "/Users/"+id, payload)
+	return sc.doRequest("PUT", "/Users/"+id, buildUserPayload(userName, fullName, externalID, active))
 }
 
 func (sc *scimClient) patchUser(id string, operations []map[string]any) (string, int) {
