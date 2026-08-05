@@ -37,6 +37,7 @@ interface AccessEntriesSelectionBarProps {
   selectedCount: number;
   selectedIds: ReadonlyArray<string>;
   allEntryIds: string[];
+  hasUnloadedEntries: boolean;
   onClear: () => void;
   onSelectAll: () => void;
   bulkDecision: AccessReviewEntryDecision | null;
@@ -53,6 +54,7 @@ export function AccessEntriesSelectionBar({
   selectedCount,
   selectedIds,
   allEntryIds,
+  hasUnloadedEntries,
   onClear,
   onSelectAll,
   bulkDecision,
@@ -92,9 +94,16 @@ export function AccessEntriesSelectionBar({
   return (
     <div className={bar()}>
       <div className={inner()}>
-        <span className="text-sm font-medium text-txt-primary">
-          {t("campaignDetailPage.selected", { count: selectedCount })}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-txt-primary">
+            {t("campaignDetailPage.selected", { count: selectedCount })}
+          </span>
+          {hasUnloadedEntries && (
+            <span className="text-xs text-txt-tertiary">
+              {t("campaignDetailPage.selectionLoadedOnly")}
+            </span>
+          )}
+        </div>
         <div className={actions()}>
           <Button variant="tertiary" onClick={onClear} disabled={isSubmitting}>
             {t("campaignDetailPage.actions.clearSelection")}
@@ -104,7 +113,11 @@ export function AccessEntriesSelectionBar({
             onClick={onSelectAll}
             disabled={isSubmitting || allEntryIds.length === 0 || allSelected}
           >
-            {t("campaignDetailPage.actions.selectAll")}
+            {hasUnloadedEntries
+              ? t("campaignDetailPage.actions.selectAllLoaded", {
+                  loaded: allEntryIds.length,
+                })
+              : t("campaignDetailPage.actions.selectAll")}
           </Button>
           <Select
             variant="editor"

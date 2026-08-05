@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { InfiniteScrollTrigger } from "@probo/ui";
-import { useCallback, useEffect, useMemo } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef } from "react";
 import { graphql, usePaginationFragment } from "react-relay";
 import { readInlineData } from "relay-runtime";
 
@@ -41,6 +41,13 @@ const accessEntrySourceSectionFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
   ) {
     id
+    fetchAttempts(first: 1) {
+      edges {
+        node {
+          status
+        }
+      }
+    }
     entries(first: $first, after: $after)
       @connection(key: "AccessEntrySourceSection_entries", filters: []) {
       totalCount
@@ -125,7 +132,6 @@ interface AccessEntrySourceSectionProps {
   selectedIds: ReadonlySet<string>;
   onSelectedChange: (entryId: string, event: { shiftKey: boolean }) => void;
   onMatchesChange: (sourceId: string, matches: SourceMatches) => void;
-  onLoadNext: () => void;
 }
 
 // Owns one connector's entries connection: paginates it, applies the toolbar
@@ -138,19 +144,21 @@ export function AccessEntrySourceSection({
   selectedIds,
   onSelectedChange,
   onMatchesChange,
-  onLoadNext,
 }: AccessEntrySourceSectionProps) {
   const {
     data: source,
     loadNext,
     hasNext,
     isLoadingNext,
+    refetch,
   } = usePaginationFragment<
     AccessEntrySourceSectionPaginationQuery,
     AccessEntrySourceSection_source$key
   >(accessEntrySourceSectionFragment, sourceKey);
 
   const sourceId = source.id;
+  const fetchStatus = source.fetchAttempts.edges[0]?.node.status ?? null;
+  const isFetchRunning = fetchStatus === "QUEUED" || fetchStatus === "FETCHING";
   const isExcluded = filters.connectorIds.length > 0
     && !filters.connectorIds.includes(sourceId);
   // The connector filter picks whole sections, so only the per-entry filters
@@ -180,18 +188,45 @@ export function AccessEntrySourceSection({
     onMatchesChange(sourceId, { entryIds: contributedIds, hasNext: isPending });
   }, [sourceId, contributedIds, isPending, onMatchesChange]);
 
+  // A connector writes its entries when its fetch attempt commits, so the
+  // section reloads its own connection once the attempt settles. The campaign
+  // poll only refreshes statuses: it must not replace paginated connections.
+  const previousFetchStatusRef = useRef(fetchStatus);
+  useEffect(() => {
+    const previous = previousFetchStatusRef.current;
+    previousFetchStatusRef.current = fetchStatus;
+    if (previous === fetchStatus) {
+      return;
+    }
+    if (previous !== "QUEUED" && previous !== "FETCHING") {
+      return;
+    }
+    // A transition keeps the section on screen instead of suspending it while
+    // the refreshed page is in flight.
+    startTransition(() => {
+      refetch({ first: PAGE_SIZE }, { fetchPolicy: "network-only" });
+    });
+  }, [fetchStatus, refetch]);
+
   const handleView = useCallback(() => {
-    onLoadNext();
     loadNext(PAGE_SIZE);
-  }, [loadNext, onLoadNext]);
+  }, [loadNext]);
 
   if (isExcluded) {
     return null;
   }
 
   // Filters run over loaded pages only, so an empty section still means "keep
-  // looking" until the connection is exhausted.
-  if (hasEntryFilters && matchedEntries.length === 0 && !hasNext) {
+  // looking" until the connection is exhausted. A source that is still fetching
+  // or that failed keeps its section too, so filters cannot hide its progress
+  // or its error.
+  if (
+    hasEntryFilters
+    && matchedEntries.length === 0
+    && !hasNext
+    && !isFetchRunning
+    && fetchStatus !== "FAILED"
+  ) {
     return null;
   }
 

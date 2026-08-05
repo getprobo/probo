@@ -54,6 +54,7 @@ import type { AccessReviewEntryDecision, CampaignDetailPageBulkDecisionMutation 
 import type { AccessReviewEntryFlag, CampaignDetailPageBulkFlagMutation } from "#/__generated__/core/CampaignDetailPageBulkFlagMutation.graphql";
 import type { CampaignDetailPageCloseMutation } from "#/__generated__/core/CampaignDetailPageCloseMutation.graphql";
 import type { CampaignDetailPageDeleteMutation } from "#/__generated__/core/CampaignDetailPageDeleteMutation.graphql";
+import type { CampaignDetailPagePollQuery } from "#/__generated__/core/CampaignDetailPagePollQuery.graphql";
 import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetailPageQuery.graphql";
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -161,6 +162,29 @@ export const campaignDetailPageQuery = graphql`
   }
 `;
 
+// Refresh query for an in-progress campaign: it deliberately leaves the entries
+// connections out, because re-fetching their first page would drop the extra
+// pages a reviewer already scrolled through. Each source reloads its own
+// entries when its fetch attempt settles.
+const campaignDetailPagePollQuery = graphql`
+  query CampaignDetailPagePollQuery($campaignId: ID!) {
+    node(id: $campaignId) {
+      ... on AccessReviewCampaign {
+        id
+        status
+        pendingEntries: entries(first: 0, filter: { decision: PENDING }) {
+          totalCount
+        }
+        sources {
+          id
+          # eslint-disable-next-line relay/must-colocate-fragment-spreads
+          ...AccessEntrySection_source
+        }
+      }
+    }
+  }
+`;
+
 type Props = {
   queryRef: PreloadedQuery<CampaignDetailPageQuery>;
 };
@@ -202,9 +226,6 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [authMethodFilter, setAuthMethodFilter] = useState<string[]>([]);
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
   const [sourceMatches, setSourceMatches] = useState<Record<string, SourceMatches>>({});
-  // Polling replaces every connection with its first page, so it has to stop
-  // once the reviewer has scrolled past it.
-  const [hasLoadedMore, setHasLoadedMore] = useState(false);
   const [, startTransition] = useTransition();
 
   const debouncedApplyEmailFilter = useDebounceCallback(
@@ -273,7 +294,6 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     setBulkFlagSelection([]);
     setBulkFlagsDirty(false);
     setSourceMatches({});
-    setHasLoadedMore(false);
   }
 
   // Layout effect so async bulk callbacks see the new generation before paint / network replies.
@@ -286,18 +306,18 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   }, [campaign.id, bulkNoteRef]);
 
   useEffect(() => {
-    if (!isInProgress || hasLoadedMore) return;
+    if (!isInProgress) return;
     const interval = setInterval(() => {
       if (document.hidden) return;
-      fetchQuery<CampaignDetailPageQuery>(
+      fetchQuery<CampaignDetailPagePollQuery>(
         environment,
-        campaignDetailPageQuery,
+        campaignDetailPagePollQuery,
         { campaignId: campaignIdRef.current },
         { fetchPolicy: "network-only" },
       ).subscribe({});
     }, 3000);
     return () => clearInterval(interval);
-  }, [isInProgress, hasLoadedMore, environment]);
+  }, [isInProgress, environment]);
 
   const existingCampaignSourceIds = useMemo(
     () => campaign.sources.flatMap(s => s.source?.id ? [s.source.id] : []),
@@ -339,8 +359,6 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     [],
   );
 
-  const handleLoadNext = useCallback(() => setHasLoadedMore(true), []);
-
   const allFilteredEntryIds = useMemo(
     () => campaign.sources.flatMap(
       source => sourceMatches[source.id]?.entryIds ?? [],
@@ -351,6 +369,12 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   // cannot flash before the sections have applied the filters.
   const mayHaveMoreMatches = campaign.sources.some(
     source => sourceMatches[source.id]?.hasNext ?? true,
+  );
+  // Selection only reaches entries the sections have loaded. A source that has
+  // not reported yet is unknown, not unfinished, so the bar does not warn about
+  // unloaded entries until a section says it has more pages.
+  const hasUnloadedEntries = campaign.sources.some(
+    source => sourceMatches[source.id]?.hasNext ?? false,
   );
 
   const connectorOptions = useMemo(
@@ -848,7 +872,6 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             selectedIds={selectedIdSet}
             onSelectedChange={handleSelectedChange}
             onMatchesChange={handleMatchesChange}
-            onLoadNext={handleLoadNext}
           />
         ))}
 
@@ -865,7 +888,10 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         {campaign.sources.length > 0
           && hasActiveFilters
           && allFilteredEntryIds.length === 0
-          && !mayHaveMoreMatches && (
+          && !mayHaveMoreMatches
+          // Connectors are still importing accounts, so "nothing matches" would
+          // be premature while the sections show their fetch progress.
+          && !isInProgress && (
           <Card padded>
             <div className="py-8 text-center">
               <p className="text-txt-tertiary">
@@ -881,6 +907,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           selectedCount={selection.length}
           selectedIds={selection}
           allEntryIds={allFilteredEntryIds}
+          hasUnloadedEntries={hasUnloadedEntries}
           onClear={() => {
             setBulkDecision(null);
             setBulkFlagSelection([]);
