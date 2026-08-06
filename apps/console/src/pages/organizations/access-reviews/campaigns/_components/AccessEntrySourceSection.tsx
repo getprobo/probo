@@ -44,6 +44,7 @@ const accessEntrySourceSectionFragment = graphql`
     fetchAttempts(first: 1) {
       edges {
         node {
+          id
           status
         }
       }
@@ -157,7 +158,8 @@ export function AccessEntrySourceSection({
   >(accessEntrySourceSectionFragment, sourceKey);
 
   const sourceId = source.id;
-  const fetchStatus = source.fetchAttempts.edges[0]?.node.status ?? null;
+  const latestAttempt = source.fetchAttempts.edges[0]?.node ?? null;
+  const fetchStatus = latestAttempt?.status ?? null;
   const isFetchRunning = fetchStatus === "QUEUED" || fetchStatus === "FETCHING";
   const isExcluded = filters.connectorIds.length > 0
     && !filters.connectorIds.includes(sourceId);
@@ -188,25 +190,41 @@ export function AccessEntrySourceSection({
     onMatchesChange(sourceId, { entryIds: contributedIds, hasNext: isPending });
   }, [sourceId, contributedIds, isPending, onMatchesChange]);
 
-  // A connector writes its entries when its fetch attempt commits, so the
-  // section reloads its own connection once the attempt settles. The campaign
-  // poll only refreshes statuses: it must not replace paginated connections.
-  const previousFetchStatusRef = useRef(fetchStatus);
+  // Reloading only the first page would drop the pages a reviewer already
+  // scrolled through, so the refresh asks for every entry loaded so far.
+  const loadedCount = source.entries.edges.length;
+  const loadedCountRef = useRef(loadedCount);
   useEffect(() => {
-    const previous = previousFetchStatusRef.current;
-    previousFetchStatusRef.current = fetchStatus;
-    if (previous === fetchStatus) {
-      return;
-    }
-    if (previous !== "QUEUED" && previous !== "FETCHING") {
+    loadedCountRef.current = loadedCount;
+  }, [loadedCount]);
+
+  // A connector writes its entries when its fetch attempt commits, so the
+  // section reloads its own connection once the attempt settles. Polling
+  // samples statuses every few seconds and can miss the QUEUED and FETCHING
+  // states of a quick attempt, and a retry settles on the same status as the
+  // attempt it replaces, so the reload keys off the attempt identity instead of
+  // off a status transition. The campaign poll only refreshes statuses: it must
+  // not replace paginated connections.
+  const attemptKey = latestAttempt
+    ? `${latestAttempt.id}:${latestAttempt.status}`
+    : "";
+  const isAttemptSettled = fetchStatus === "SUCCESS" || fetchStatus === "FAILED";
+  const previousAttemptKeyRef = useRef(attemptKey);
+  useEffect(() => {
+    const previous = previousAttemptKeyRef.current;
+    previousAttemptKeyRef.current = attemptKey;
+    if (previous === attemptKey || !isAttemptSettled) {
       return;
     }
     // A transition keeps the section on screen instead of suspending it while
-    // the refreshed page is in flight.
+    // the refreshed pages are in flight.
     startTransition(() => {
-      refetch({ first: PAGE_SIZE }, { fetchPolicy: "network-only" });
+      refetch(
+        { first: Math.max(loadedCountRef.current, PAGE_SIZE) },
+        { fetchPolicy: "network-only" },
+      );
     });
-  }, [fetchStatus, refetch]);
+  }, [attemptKey, isAttemptSettled, refetch]);
 
   const handleView = useCallback(() => {
     loadNext(PAGE_SIZE);
