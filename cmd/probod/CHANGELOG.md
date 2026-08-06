@@ -4,13 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.250.0] - 2026-08-06
+
 ### Added
 
 - HubSpot access-review connector now derives last login from successful events on the Account Activity login API (past 90 days). Existing HubSpot connectors must reconnect (or private apps must grant `account-info.security.read`) before last-login population works; missing scope leaves last login unset rather than failing the fetch.
+- Access review campaign entries now show each account's authentication method (e.g. SSO or password), with a matching filter in the campaign toolbar.
+- Obligations linked to a control now expose a total count in the console API.
+- Mailing list subscribers and updates are now resolvable as GraphQL nodes in the console API.
 
 ### Fixed
 
 - HubSpot access-review connector now marks deactivated/archived users as inactive by consulting the Owners API (`archived=true`) instead of treating every Settings Users row as active. Existing HubSpot connectors must reconnect (or private apps must grant `crm.objects.owners.read`) before inactive detection works.
+- Closed an open-redirect bypass where a control byte (tab, newline, etc.) before a path segment could collapse to an off-origin protocol-relative URL, evading the fix for CVE-2026-49820.
+- Access review campaign entries no longer silently truncate for sources with more than 500 entries; entries are now paginated instead of clamped to the API's page limit.
+- Third-party business associate agreement, compliance report, and data privacy agreement resolvers now return the correct linked third party instead of erroring or resolving the wrong one.
+- Creating a compliance portal reference without a logo file no longer fails; a default placeholder logo is used instead.
+- The MCP `SendMailingListUpdateTool` now checks the send permission instead of the update permission.
+- Evidence uploads now reject empty files, and evidence without an associated task no longer returns an internal server error.
+- MCP-created tracker patterns now default to the script source instead of leaving it unset.
 
 ## [0.249.1] - 2026-08-06
 
